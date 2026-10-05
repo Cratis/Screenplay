@@ -2,12 +2,56 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { ApplicationCompilation, compileApplication, Diagnostic, DiagnosticCodes, normalizePlayPath, PlayPlacement } from '@cratis/screenplay-compiler';
-import { DocumentSymbols, importablePaths, mergeSymbols, scanDocument } from '@cratis/screenplay-language';
+import { analyzeOperations, DocumentSymbols, importablePaths, mergeSymbols, scanDocument } from '@cratis/screenplay-language';
 
 // What the compiler says about a file of the application that the editor's own checks cannot: whether its
 // imports resolve, and whether it holds what the module or feature it is placed in can. An import with the
 // wrong shape is left out - the editor reports that itself, as it is typed.
 const surfacedCodes = new Set<string>([
+    DiagnosticCodes.InvalidEventSourceDeclaration,
+    DiagnosticCodes.InvalidCommandStream,
+    DiagnosticCodes.AmbiguousCommandStream,
+    DiagnosticCodes.UnsupportedStreamIdType,
+    DiagnosticCodes.RedundantSourceStreamId,
+    DiagnosticCodes.InvalidSystemDeclaration,
+    DiagnosticCodes.InvalidOperationDeclaration,
+    DiagnosticCodes.InvalidProductionReference,
+    DiagnosticCodes.ProductionDeclarationCollision,
+    DiagnosticCodes.OperationOutsideCommand,
+    DiagnosticCodes.InvalidSystemReference,
+    DiagnosticCodes.InvalidOperationMapping,
+    DiagnosticCodes.InvalidOperationSpecification,
+    DiagnosticCodes.LegacyOptionalSuffix,
+    DiagnosticCodes.InvalidOptionalModifierOrder,
+    DiagnosticCodes.OptionalReadsNotSupported,
+    DiagnosticCodes.GeneratedPropertyOutsideCommand,
+    DiagnosticCodes.InvalidGeneratedType,
+    DiagnosticCodes.InvalidGeneratedModifierOrder,
+    DiagnosticCodes.GeneratedPropertySuppliedAsInput,
+    DiagnosticCodes.InvalidCommandResponse,
+    DiagnosticCodes.InvalidResponseSource,
+    DiagnosticCodes.DuplicateResponseField,
+    DiagnosticCodes.InvalidResponseShape,
+    DiagnosticCodes.InvalidGeneratedFixture,
+    DiagnosticCodes.InvalidReturnExpectation,
+    DiagnosticCodes.InvalidProducesDeclaration,
+    DiagnosticCodes.ProducesWhenWithoutEvent,
+    DiagnosticCodes.InvalidPropertyMapping,
+    DiagnosticCodes.DuplicateProducesTarget,
+    DiagnosticCodes.DuplicateDeclaration,
+    DiagnosticCodes.InvalidDescription,
+    DiagnosticCodes.DuplicateDescription,
+    DiagnosticCodes.EmptyDescription,
+    DiagnosticCodes.ExpectedCodeFence,
+    DiagnosticCodes.EventSourceIdInPayload,
+    DiagnosticCodes.ExplicitProducesTargetsRequired,
+    DiagnosticCodes.RedundantEventId,
+    DiagnosticCodes.InvalidEventId,
+    DiagnosticCodes.InlineEventCollision,
+    DiagnosticCodes.InlineEventOutsideCommand,
+    DiagnosticCodes.InlineEventGeneration,
+    DiagnosticCodes.ReservedProductionMetadata,
+    DiagnosticCodes.InvalidEventDocumentation,
     DiagnosticCodes.FileImportMatchesNothing,
     DiagnosticCodes.ImportedFileNotFound,
     DiagnosticCodes.ConflictingImportPlacement,
@@ -51,7 +95,18 @@ export class WorkspaceApplication {
     // What every other file of the application declares - the file's own names are its own to scan.
     symbolsExcept(path: string): DocumentSymbols {
         const key = normalizePlayPath(path);
-        return mergeSymbols(...[...this.#symbols].filter(([other]) => other !== key).map(([, symbols]) => symbols));
+        const symbols = mergeSymbols(...[...this.#symbols].filter(([other]) => other !== key).map(([, symbols]) => symbols));
+        return { ...symbols, authoringDocuments: this.#compiled().documents.filter(document => document.path !== key), authoringPath: key, authoringPlacement: this.placementOf(key), authoringPlacementResolved: this.#compiled().documents.find(document => document.path === key)?.isPlacementResolved };
+    }
+
+    // Inline events are scanned with their slice-owned declarations, so navigation is independent of syntax form.
+    eventDeclarations(name: string): { path: string; line: number }[] {
+        return [...this.#symbols].flatMap(([path, symbols]) => symbols.events.filter(event => event.name === name).map(event => ({ path, line: event.line })));
+    }
+
+    operationDeclarations(path: string): ReturnType<typeof analyzeOperations> {
+        const key = normalizePlayPath(path);
+        return analyzeOperations((this.#texts.get(key) ?? '').split(/\r?\n/), this.symbolsExcept(key));
     }
 
     // What compiling the application reports in a file about its imports and its placement.

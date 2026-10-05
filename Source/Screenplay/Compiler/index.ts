@@ -1,9 +1,13 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+export * from './Authoring/QuickFixes';
 export * from './Diagnostics';
 export * from './Syntax';
 export * from './ScreenplayCompiler';
+export { eventBodyReservedWords } from './Text/ReservedWords';
+export { pattern } from './Text/patterns';
+export { isSourceStreamName, isSourceStreamTypeName, sourceStreamPattern } from './Text/SourceStreamNames';
 export * from './Files/PlayFolderMerge';
 export * from './Files/PlayApplicationAssembly';
 export * from './Files/PlayDocumentSource';

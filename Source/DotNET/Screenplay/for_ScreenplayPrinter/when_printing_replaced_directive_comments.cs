@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Diagnostics;
+
 namespace Cratis.Screenplay.for_ScreenplayPrinter;
 
 public class when_printing_replaced_directive_comments : given.a_printer
@@ -32,7 +34,10 @@ public class when_printing_replaced_directive_comments : given.a_printer
     void should_keep_header_and_replaced_directive_comments_apart(string headerComment, string header, string replacedComment, string retained)
     {
         var roundtrip = RoundTrip(Source);
-        roundtrip.Original!.Success.ShouldBeTrue();
+
+        // Duplicate keys are diagnosed, but printing the recovery tree must still preserve their comments.
+        roundtrip.Original!.Success.ShouldBeFalse();
+        roundtrip.Original.Diagnostics.Single(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).Code.ShouldEqual(DiagnosticCodes.InvalidQueryParameter);
         roundtrip.Reparsed.Success.ShouldBeTrue();
         var lines = roundtrip.Printed.Split('\n');
         lines.Count(line => line.Trim() == $"{header} // {headerComment}").ShouldEqual(1);

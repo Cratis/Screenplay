@@ -198,10 +198,84 @@
                         }
                       },
                       "description": null,
+                      "handler": null,
                       "name": "ApplyDiscount",
+                      "produces": [
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "DiscountApplied",
+                          "for": null,
+                          "inlineEvent": null,
+                          "inlineOperation": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "invoiceId",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "invoiceId"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "percentage",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "percentage"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "appliedAt",
+                              "source": {
+                                "kind": "ContextExpressionSyntax",
+                                "path": "occurred"
+                              }
+                            }
+                          ],
+                          "tags": []
+                        },
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "DiscountReviewRequested",
+                          "for": null,
+                          "inlineEvent": null,
+                          "inlineOperation": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "invoiceId",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "invoiceId"
+                              }
+                            }
+                          ],
+                          "tags": []
+                        },
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "DiscountAutoApproved",
+                          "for": null,
+                          "inlineEvent": null,
+                          "inlineOperation": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "invoiceId",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "invoiceId"
+                              }
+                            }
+                          ],
+                          "tags": []
+                        }
+                      ],
                       "properties": [
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "invoiceId",
                           "type": {
@@ -213,6 +287,7 @@
                         },
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "percentage",
                           "type": {
@@ -224,6 +299,7 @@
                         },
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "reason",
                           "type": {
@@ -235,6 +311,7 @@
                         },
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "requiresReview",
                           "type": {
@@ -245,6 +322,7 @@
                           }
                         }
                       ],
+                      "response": null,
                       "validations": [
                         {
                           "kind": "DeclarativeValidateSyntax",
@@ -292,12 +370,16 @@
                   "events": [
                     {
                       "kind": "EventSyntax",
+                      "description": null,
+                      "documentation": null,
                       "generation": 1,
                       "hasGenerationMarker": false,
+                      "id": null,
                       "name": "DiscountApplied",
                       "properties": [
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "invoiceId",
                           "type": {
@@ -309,6 +391,7 @@
                         },
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "percentage",
                           "type": {
@@ -320,6 +403,7 @@
                         },
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "appliedAt",
                           "type": {
@@ -334,12 +418,16 @@
                     },
                     {
                       "kind": "EventSyntax",
+                      "description": null,
+                      "documentation": null,
                       "generation": 1,
                       "hasGenerationMarker": false,
+                      "id": null,
                       "name": "DiscountReviewRequested",
                       "properties": [
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "invoiceId",
                           "type": {
@@ -354,12 +442,16 @@
                     },
                     {
                       "kind": "EventSyntax",
+                      "description": null,
+                      "documentation": null,
                       "generation": 1,
                       "hasGenerationMarker": false,
+                      "id": null,
                       "name": "DiscountAutoApproved",
                       "properties": [
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "invoiceId",
                           "type": {
@@ -374,6 +466,7 @@
                     }
                   ],
                   "name": "ApplyDiscount",
+                  "operations": [],
                   "projections": [],
                   "queries": [],
                   "reactions": [],
@@ -396,10 +489,84 @@
                         }
                       },
                       "description": null,
+                      "handler": null,
                       "name": "WriteOffInvoice",
+                      "produces": [
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "InvoiceWrittenOff",
+                          "for": null,
+                          "inlineEvent": null,
+                          "inlineOperation": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "invoiceId",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "invoiceId"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "amount",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "amount"
+                              }
+                            },
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "writtenOffAt",
+                              "source": {
+                                "kind": "ContextExpressionSyntax",
+                                "path": "occurred"
+                              }
+                            }
+                          ],
+                          "tags": []
+                        },
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "LargeWriteOffFlagged",
+                          "for": null,
+                          "inlineEvent": null,
+                          "inlineOperation": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "invoiceId",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "invoiceId"
+                              }
+                            }
+                          ],
+                          "tags": []
+                        },
+                        {
+                          "kind": "ProducesSyntax",
+                          "event": "SmallWriteOffRecorded",
+                          "for": null,
+                          "inlineEvent": null,
+                          "inlineOperation": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "invoiceId",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "invoiceId"
+                              }
+                            }
+                          ],
+                          "tags": []
+                        }
+                      ],
                       "properties": [
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": true,
                           "name": "invoiceId",
                           "type": {
@@ -411,6 +578,7 @@
                         },
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "amount",
                           "type": {
@@ -422,6 +590,7 @@
                         },
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "reason",
                           "type": {
@@ -433,6 +602,7 @@
                         },
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "confirmation",
                           "type": {
@@ -443,6 +613,7 @@
                           }
                         }
                       ],
+                      "response": null,
                       "validations": [
                         {
                           "kind": "DeclarativeValidateSyntax",
@@ -498,12 +669,16 @@
                   "events": [
                     {
                       "kind": "EventSyntax",
+                      "description": null,
+                      "documentation": null,
                       "generation": 1,
                       "hasGenerationMarker": false,
+                      "id": null,
                       "name": "InvoiceWrittenOff",
                       "properties": [
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "invoiceId",
                           "type": {
@@ -515,6 +690,7 @@
                         },
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "amount",
                           "type": {
@@ -526,6 +702,7 @@
                         },
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "writtenOffAt",
                           "type": {
@@ -540,12 +717,16 @@
                     },
                     {
                       "kind": "EventSyntax",
+                      "description": null,
+                      "documentation": null,
                       "generation": 1,
                       "hasGenerationMarker": false,
+                      "id": null,
                       "name": "LargeWriteOffFlagged",
                       "properties": [
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "invoiceId",
                           "type": {
@@ -560,12 +741,16 @@
                     },
                     {
                       "kind": "EventSyntax",
+                      "description": null,
+                      "documentation": null,
                       "generation": 1,
                       "hasGenerationMarker": false,
+                      "id": null,
                       "name": "SmallWriteOffRecorded",
                       "properties": [
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "invoiceId",
                           "type": {
@@ -580,6 +765,7 @@
                     }
                   ],
                   "name": "WriteOffInvoice",
+                  "operations": [],
                   "projections": [],
                   "queries": [],
                   "reactions": [],
@@ -617,10 +803,256 @@
                     }
                   },
                   "description": "Registers a new invoice with its lines and payment terms",
+                  "handler": null,
                   "name": "RegisterInvoice",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceRegistered",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "customerId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "customerId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceNumber",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceNumber"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "lines",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "lines"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "billingContact",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "billingContact"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "currency",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "currency"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "paymentTerms",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "paymentTerms"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dueDate",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "dueDate"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "registeredAt",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "occurred"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "registeredBy",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "identity.id"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "registeredFor",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "tenant"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "registeredByOn",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "causedBy.subject"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "source",
+                          "source": {
+                            "kind": "EnvironmentExpressionSyntax",
+                            "name": "SERVICE_NAME"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "draft"
+                          }
+                        }
+                      ],
+                      "tags": [
+                        {
+                          "kind": "TagSyntax",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "audit"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "ProFormaInvoiceIssued",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "issuedAt",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "occurred"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    },
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "ForeignCurrencyInvoiceRegistered",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "currency",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "currency"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    },
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "ImmediatePaymentInvoiceRegistered",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dueDate",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "dueDate"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    },
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "DeferredPaymentInvoiceRegistered",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "paymentTerms",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "paymentTerms"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dueDate",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "dueDate"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": true,
                       "name": "invoiceId",
                       "type": {
@@ -632,6 +1064,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "customerId",
                       "type": {
@@ -643,6 +1076,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceNumber",
                       "type": {
@@ -654,6 +1088,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "lines",
                       "type": {
@@ -665,6 +1100,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "billingContact",
                       "type": {
@@ -676,6 +1112,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "currency",
                       "type": {
@@ -687,6 +1124,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "paymentTerms",
                       "type": {
@@ -698,6 +1136,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "dueDate",
                       "type": {
@@ -709,6 +1148,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "isProForma",
                       "type": {
@@ -719,6 +1159,7 @@
                       }
                     }
                   ],
+                  "response": null,
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -839,12 +1280,16 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceRegistered",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -856,6 +1301,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "customerId",
                       "type": {
@@ -867,6 +1313,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceNumber",
                       "type": {
@@ -878,6 +1325,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "lines",
                       "type": {
@@ -889,6 +1337,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "billingContact",
                       "type": {
@@ -900,6 +1349,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "currency",
                       "type": {
@@ -911,6 +1361,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "paymentTerms",
                       "type": {
@@ -922,6 +1373,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "dueDate",
                       "type": {
@@ -933,6 +1385,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "registeredAt",
                       "type": {
@@ -944,6 +1397,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "registeredBy",
                       "type": {
@@ -955,6 +1409,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "registeredFor",
                       "type": {
@@ -966,6 +1421,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "registeredByOn",
                       "type": {
@@ -977,6 +1433,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "source",
                       "type": {
@@ -988,6 +1445,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "status",
                       "type": {
@@ -1024,12 +1482,16 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "ProFormaInvoiceIssued",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -1041,6 +1503,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "issuedAt",
                       "type": {
@@ -1055,12 +1518,16 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "ForeignCurrencyInvoiceRegistered",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -1072,6 +1539,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "currency",
                       "type": {
@@ -1086,12 +1554,16 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "ImmediatePaymentInvoiceRegistered",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -1103,6 +1575,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "dueDate",
                       "type": {
@@ -1117,12 +1590,16 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "DeferredPaymentInvoiceRegistered",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -1134,6 +1611,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "paymentTerms",
                       "type": {
@@ -1145,6 +1623,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "dueDate",
                       "type": {
@@ -1159,6 +1638,7 @@
                 }
               ],
               "name": "RegisterInvoice",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -1194,8 +1674,11 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringADraftInvoice",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -1240,12 +1723,15 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "RegisterInvoice",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -1292,8 +1778,11 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAnInvoiceWithNoLines",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [
                     {
                       "kind": "SpecificationErrorSyntax",
@@ -1303,12 +1792,15 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "RegisterInvoice",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -1347,8 +1839,11 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAnInvoiceWhoseNumberIsAlreadyTaken",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [
                     {
                       "kind": "SpecificationErrorSyntax",
@@ -1358,12 +1853,15 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "RegisterInvoice",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -1406,10 +1904,98 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "CancelInvoice",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceCancelled",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reason",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "reason"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "cancelledAt",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "occurred"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "cancelledBy",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "identity.id"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "cancelledVia",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "causation.type"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    },
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceRefundRequested",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "requestedAt",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "occurred"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "refundAccount",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "refundAccount"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": true,
                       "name": "invoiceId",
                       "type": {
@@ -1421,6 +2007,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "reason",
                       "type": {
@@ -1432,6 +2019,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "refund",
                       "type": {
@@ -1443,6 +2031,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "refundAccount",
                       "type": {
@@ -1453,6 +2042,7 @@
                       }
                     }
                   ],
+                  "response": null,
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -1497,12 +2087,16 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceCancelled",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -1514,6 +2108,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "reason",
                       "type": {
@@ -1525,6 +2120,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "cancelledAt",
                       "type": {
@@ -1536,6 +2132,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "cancelledBy",
                       "type": {
@@ -1547,6 +2144,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "cancelledVia",
                       "type": {
@@ -1561,12 +2159,16 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceRefundRequested",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -1578,6 +2180,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "requestedAt",
                       "type": {
@@ -1589,6 +2192,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "refundAccount",
                       "type": {
@@ -1603,6 +2207,7 @@
                 }
               ],
               "name": "CancelInvoice",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -1625,10 +2230,142 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "ChangeInvoiceStatus",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceSent",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "sentAt",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "occurred"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "note",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "note"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    },
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoicePaid",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "paidAt",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "occurred"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "note",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "note"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    },
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceMarkedOverdue",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "overdueAt",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "occurred"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    },
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceStatusChanged",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "invoiceId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "status",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "status"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "changedAt",
+                          "source": {
+                            "kind": "ContextExpressionSyntax",
+                            "path": "occurred"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": true,
                       "name": "invoiceId",
                       "type": {
@@ -1640,6 +2377,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "status",
                       "type": {
@@ -1651,6 +2389,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "note",
                       "type": {
@@ -1661,6 +2400,7 @@
                       }
                     }
                   ],
+                  "response": null,
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -1696,12 +2436,16 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceSent",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -1713,6 +2457,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "sentAt",
                       "type": {
@@ -1724,6 +2469,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "note",
                       "type": {
@@ -1738,12 +2484,16 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoicePaid",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -1755,6 +2505,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "paidAt",
                       "type": {
@@ -1766,6 +2517,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "note",
                       "type": {
@@ -1780,12 +2532,16 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceMarkedOverdue",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -1797,6 +2553,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "overdueAt",
                       "type": {
@@ -1811,12 +2568,16 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceStatusChanged",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -1828,6 +2589,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "status",
                       "type": {
@@ -1839,6 +2601,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "changedAt",
                       "type": {
@@ -1853,6 +2616,7 @@
                 }
               ],
               "name": "ChangeInvoiceStatus",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -1864,6 +2628,7 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -1890,6 +2655,8 @@
                     }
                   ],
                   "name": "SendingADraftInvoice",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -1910,6 +2677,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -1928,10 +2696,12 @@
                     }
                   ],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "ChangeInvoiceStatus",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -1974,10 +2744,22 @@
                     }
                   },
                   "description": null,
+                  "handler": {
+                    "kind": "HandlerSyntax",
+                    "code": {
+                      "kind": "CodeBlockSyntax",
+                      "code": "var events = new List<object>();\nevents.Add(new InvoiceBatchProcessingStarted(BatchId, InvoiceIds.Count, DateTimeOffset.UtcNow));\nforeach (var id in InvoiceIds)\n    events.Add(Action switch {\n        \"send\"   => new InvoiceSent(id, DateTimeOffset.UtcNow, context.Identity.Id, null),\n        \"cancel\" => new InvoiceCancelled(id, \"Batch\", DateTimeOffset.UtcNow, context.Identity.Id),\n        _        => throw new InvalidOperationException($\"Unknown action: {Action}\")\n    });\nevents.Add(new InvoiceBatchProcessingCompleted(BatchId, InvoiceIds.Count, DateTimeOffset.UtcNow));\nreturn events;",
+                      "language": "csharp"
+                    },
+                    "file": null,
+                    "implementation": null
+                  },
                   "name": "ProcessInvoiceBatch",
+                  "produces": [],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": true,
                       "name": "batchId",
                       "type": {
@@ -1989,6 +2771,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceIds",
                       "type": {
@@ -2000,6 +2783,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "action",
                       "type": {
@@ -2010,6 +2794,7 @@
                       }
                     }
                   ],
+                  "response": null,
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -2040,12 +2825,16 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceBatchProcessingStarted",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "batchId",
                       "type": {
@@ -2057,6 +2846,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "count",
                       "type": {
@@ -2068,6 +2858,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "startedAt",
                       "type": {
@@ -2082,12 +2873,16 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceBatchProcessingCompleted",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "batchId",
                       "type": {
@@ -2099,6 +2894,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "processedCount",
                       "type": {
@@ -2110,6 +2906,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "completedAt",
                       "type": {
@@ -2124,6 +2921,7 @@
                 }
               ],
               "name": "ProcessInvoiceBatch",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -2146,10 +2944,21 @@
                     }
                   },
                   "description": null,
+                  "handler": {
+                    "kind": "HandlerSyntax",
+                    "code": null,
+                    "file": {
+                      "kind": "FileReferenceSyntax",
+                      "path": "Handlers/ArchiveOldInvoicesHandler.cs"
+                    },
+                    "implementation": null
+                  },
                   "name": "ArchiveOldInvoices",
+                  "produces": [],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "olderThan",
                       "type": {
@@ -2160,6 +2969,7 @@
                       }
                     }
                   ],
+                  "response": null,
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -2184,6 +2994,7 @@
               "description": null,
               "events": [],
               "name": "ArchiveOldInvoices",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -2279,12 +3090,16 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoicePaidFromSent",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -2296,6 +3111,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "paidAt",
                       "type": {
@@ -2310,12 +3126,16 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceNeedsAttention",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -2330,12 +3150,16 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceFullyApproved",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -2350,12 +3174,16 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceFlagged",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -2370,12 +3198,16 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceLineItemAdded",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -2387,6 +3219,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "lineNumber",
                       "type": {
@@ -2398,6 +3231,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "quantity",
                       "type": {
@@ -2409,6 +3243,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "unitPrice",
                       "type": {
@@ -2423,12 +3258,16 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceLineItemRemoved",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -2440,6 +3279,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "lineNumber",
                       "type": {
@@ -2454,12 +3294,16 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "BillingContactUpdated",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -2471,6 +3315,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "email",
                       "type": {
@@ -2485,6 +3330,7 @@
                 }
               ],
               "name": "LegacyInvoiceSync",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -2501,6 +3347,7 @@
               "description": null,
               "events": [],
               "name": "InvoiceList",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -2702,6 +3549,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "id",
                       "type": {
@@ -2713,6 +3561,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -2724,6 +3573,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "customerId",
                       "type": {
@@ -2735,6 +3585,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceNumber",
                       "type": {
@@ -2746,6 +3597,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "currency",
                       "type": {
@@ -2757,6 +3609,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "status",
                       "type": {
@@ -2768,6 +3621,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "lineCount",
                       "type": {
@@ -2779,6 +3633,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "dueDate",
                       "type": {
@@ -2790,6 +3645,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "channel",
                       "type": {
@@ -2801,6 +3657,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "touched",
                       "type": {
@@ -2812,6 +3669,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "lastActivityAt",
                       "type": {
@@ -2920,6 +3778,7 @@
               "description": null,
               "events": [],
               "name": "InvoiceDetails",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -3190,6 +4049,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -3201,6 +4061,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "customerId",
                       "type": {
@@ -3212,6 +4073,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceNumber",
                       "type": {
@@ -3223,6 +4085,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "currency",
                       "type": {
@@ -3234,6 +4097,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "paymentTerms",
                       "type": {
@@ -3245,6 +4109,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "status",
                       "type": {
@@ -3256,6 +4121,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "dueDate",
                       "type": {
@@ -3267,6 +4133,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "registeredAt",
                       "type": {
@@ -3278,6 +4145,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "registeredBy",
                       "type": {
@@ -3289,6 +4157,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "registeredByUser",
                       "type": {
@@ -3300,6 +4169,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "registeredForSubject",
                       "type": {
@@ -3311,6 +4181,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "displayLabel",
                       "type": {
@@ -3322,6 +4193,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "sentAt",
                       "type": {
@@ -3333,6 +4205,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "paidAt",
                       "type": {
@@ -3344,6 +4217,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "overdueAt",
                       "type": {
@@ -3355,6 +4229,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "customerName",
                       "type": {
@@ -3366,6 +4241,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "lineItems",
                       "type": {
@@ -3377,6 +4253,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "shipping",
                       "type": {
@@ -3388,6 +4265,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "lastUpdatedAt",
                       "type": {
@@ -3549,6 +4427,7 @@
               "description": null,
               "events": [],
               "name": "InvoiceLineReport",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -3623,6 +4502,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -3634,6 +4514,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "lineNumber",
                       "type": {
@@ -3645,6 +4526,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "quantity",
                       "type": {
@@ -3656,6 +4538,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "unitPrice",
                       "type": {
@@ -3686,6 +4569,7 @@
               "description": "Archive of cancelled invoices - every property auto-maps from the event",
               "events": [],
               "name": "CancelledInvoices",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -3740,6 +4624,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -3751,6 +4636,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "reason",
                       "type": {
@@ -3762,6 +4648,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "cancelledAt",
                       "type": {
@@ -3773,6 +4660,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "cancelledBy",
                       "type": {
@@ -3784,6 +4672,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "cancelledVia",
                       "type": {
@@ -3808,6 +4697,7 @@
               "description": null,
               "events": [],
               "name": "InvoiceDashboard",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -3984,6 +4874,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "totalCount",
                       "type": {
@@ -3995,6 +4886,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "draftCount",
                       "type": {
@@ -4006,6 +4898,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "sentCount",
                       "type": {
@@ -4017,6 +4910,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "paidCount",
                       "type": {
@@ -4028,6 +4922,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "overdueCount",
                       "type": {
@@ -4039,6 +4934,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "touches",
                       "type": {
@@ -4050,6 +4946,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "writeOffTotal",
                       "type": {
@@ -4061,6 +4958,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "outstandingTotal",
                       "type": {
@@ -4079,6 +4977,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -4090,6 +4989,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "tenantId",
                       "type": {
@@ -4101,6 +5001,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceNumber",
                       "type": {
@@ -4112,6 +5013,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "status",
                       "type": {
@@ -4123,6 +5025,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "dueDate",
                       "type": {
@@ -4288,6 +5191,7 @@
               "description": "Counts every event in the system for the activity ticker",
               "events": [],
               "name": "SystemActivity",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -4346,6 +5250,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "totalEvents",
                       "type": {
@@ -4357,6 +5262,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "lastOccurred",
                       "type": {
@@ -4381,6 +5287,7 @@
               "description": null,
               "events": [],
               "name": "NotifyCustomerOnInvoiceRegistered",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -4415,6 +5322,7 @@
               "description": null,
               "events": [],
               "name": "DetectOverdueInvoices",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -4459,6 +5367,7 @@
               "description": "Described before any of it is implemented - no 'file' anywhere",
               "events": [],
               "name": "ReconcilePayments",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -4503,6 +5412,7 @@
               "description": "Driven by the clock rather than by an event",
               "events": [],
               "name": "ChaseOverdueInvoices",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -4518,7 +5428,21 @@
                       "produces": [
                         {
                           "kind": "ProducesSyntax",
-                          "event": "InvoiceMarkedOverdue"
+                          "event": "InvoiceMarkedOverdue",
+                          "for": null,
+                          "inlineEvent": null,
+                          "inlineOperation": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "overdueAt",
+                              "source": {
+                                "kind": "ContextExpressionSyntax",
+                                "path": "occurred"
+                              }
+                            }
+                          ],
+                          "tags": []
                         }
                       ],
                       "source": {
@@ -4544,6 +5468,7 @@
               "description": null,
               "events": [],
               "name": "SyncBillingDirectory",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -4608,6 +5533,7 @@
       ]
     }
   ],
+  "systems": [],
   "types": [
     {
       "kind": "TypeSyntax",
@@ -4616,6 +5542,7 @@
       "properties": [
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "lineNumber",
           "type": {
@@ -4627,6 +5554,7 @@
         },
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "productName",
           "type": {
@@ -4638,6 +5566,7 @@
         },
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "quantity",
           "type": {
@@ -4649,6 +5578,7 @@
         },
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "unitPrice",
           "type": {
@@ -4660,6 +5590,7 @@
         },
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "discount",
           "type": {
@@ -4678,6 +5609,7 @@
       "properties": [
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "name",
           "type": {
@@ -4689,6 +5621,7 @@
         },
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "email",
           "type": {
@@ -4707,6 +5640,7 @@
       "properties": [
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "lineNumber",
           "type": {
@@ -4718,6 +5652,7 @@
         },
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "quantity",
           "type": {
@@ -4729,6 +5664,7 @@
         },
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "unitPrice",
           "type": {
@@ -4740,6 +5676,7 @@
         },
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "subtotal",
           "type": {
@@ -4751,6 +5688,7 @@
         },
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "itemCount",
           "type": {
@@ -4769,6 +5707,7 @@
       "properties": [
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "carrier",
           "type": {
@@ -4787,6 +5726,7 @@
       "properties": [
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "invoiceId",
           "type": {
@@ -4798,6 +5738,7 @@
         },
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "lineNumber",
           "type": {

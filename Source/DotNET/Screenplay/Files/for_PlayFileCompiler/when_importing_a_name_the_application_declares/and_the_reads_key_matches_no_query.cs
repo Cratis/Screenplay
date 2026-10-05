@@ -18,7 +18,7 @@ public class and_the_reads_key_matches_no_query : given.a_folder_with_and_withou
                 slice StateView ItemView
                   readmodel ItemView
                     itemId ItemId
-                  query GetItem => ItemView?
+                  query GetItem => ItemView optional
                     by itemId ItemId
             """);
         Write(

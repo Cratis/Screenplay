@@ -11,12 +11,25 @@ static class McpDeclarationDetails
     internal static object Read(McpSnapshot snapshot, JsonElement arguments)
     {
         var declaration = Target(snapshot, arguments);
+        var readiness = snapshot.Index.Readiness;
         var view = McpJson.OptionalString(arguments, "view") ?? "summary";
-        object details = view switch
+        var details = view switch
         {
             "summary" => new
             {
                 propertyCount = Properties(declaration.Syntax).Count(),
+                syntaxOnly = readiness.SyntaxOnly(declaration.Syntax),
+                executionReadiness = readiness.ExecutionReadiness(declaration.Syntax),
+                eventCount = declaration.Syntax is SliceSyntax eventOwner ? EventDeclarations.In(eventOwner).Count() : 0,
+                eventId = (declaration.Syntax as EventSyntax)?.Id,
+                documentation = (declaration.Syntax as EventSyntax)?.Documentation,
+                uses = (declaration.Syntax as OperationSyntax)?.Uses,
+                identifier = (declaration.Syntax as EventSourceSyntax)?.Identifier,
+                streamId = (declaration.Syntax as EventStreamSyntax)?.StreamId,
+                renameOnlyId = declaration.Syntax switch { EventSourceSyntax source => source.Id, EventStreamSyntax stream => stream.Id, _ => null },
+                authoredRoute = (declaration.Syntax as CommandSyntax)?.Stream,
+                ambiguousStreamCandidates = (declaration.Syntax as CommandSyntax)?.StreamCandidates,
+                operationInputCount = (declaration.Syntax as OperationSyntax)?.Inputs.Count() ?? 0,
                 partCount = declaration.Parts.Count,
                 commandCount = declaration.Syntax is SliceSyntax slice ? slice.Commands.Count() : 0,
                 specificationCount = declaration.Syntax is SliceSyntax described ? described.Specifications.Count() : 0,
@@ -31,6 +44,7 @@ static class McpDeclarationDetails
                     property.Type.IsCollection,
                     property.Type.IsOptional,
                     property.IsIdentifier,
+                    property.IsGenerated,
                     property.Location
                 },
                 arguments,
@@ -44,7 +58,11 @@ static class McpDeclarationDetails
                     command.Description,
                     command.Location,
                     propertyCount = command.Properties.Count(),
-                    producedEvents = command.Produces.Select(produces => produces.Event).Distinct(StringComparer.Ordinal).ToArray()
+                    generatedProperties = command.Properties.Where(property => property.IsGenerated).Select(property => property.Name),
+                    response = Response(command, readiness),
+                    syntaxOnly = readiness.SyntaxOnly(command),
+                    executionReadiness = readiness.ExecutionReadiness(command),
+                    producedEvents = readiness.ProducedEvents(command).ToArray()
                 },
                 arguments,
                 snapshot.SourceRevision),
@@ -57,6 +75,13 @@ static class McpDeclarationDetails
                     command = specification.When?.CommandType,
                     whenAppendedEvent = specification.WhenAppended?.EventType,
                     thenDenied = specification.ThenDenied is not null,
+                    generatedValues = specification.When?.GeneratedValues,
+                    thenReturns = specification.ThenReturns,
+                    givenOperationFailures = specification.GivenOperationFailures,
+                    thenOperations = specification.ThenOperations,
+                    thenCompensated = specification.ThenCompensated,
+                    syntaxOnly = readiness.SyntaxOnly(specification),
+                    executionReadiness = readiness.ExecutionReadiness(specification),
                     givenEvents = specification.Given.Count(),
                     thenEvents = specification.ThenEvents.Count(),
                     thenErrors = specification.ThenErrors.Count(),
@@ -66,6 +91,22 @@ static class McpDeclarationDetails
                 },
                 arguments,
                 snapshot.SourceRevision),
+            "inputs" when declaration.Syntax is OperationSyntax operation => McpPaging.Page(operation.Inputs, arguments, snapshot.SourceRevision),
+            "phases" when declaration.Syntax is OperationSyntax operation => McpPaging.Page(
+                new[] { (Name: "execute", Phase: operation.Execute), (Name: "compensate", Phase: operation.Compensate) }.Where(value => value.Phase is not null),
+                value => new
+                {
+                    phase = value.Name, value.Phase!.Description, value.Phase.Location,
+                    state = value.Phase switch { { File: not null } => "file", { Code: not null } => "inline", _ => "pending" },
+                    file = value.Phase.File?.Path, language = value.Phase.Code?.Language,
+                    hintCount = value.Phase.Implementation?.Hints.Count() ?? 0,
+                    executionAvailable = false
+                },
+                arguments,
+                snapshot.SourceRevision),
+            "streams" when declaration.Syntax is EventSourceSyntax source => McpPaging.Page(source.Streams, arguments, snapshot.SourceRevision),
+            "route" when declaration.Syntax is CommandSyntax routed => new { authoredRoute = routed.Stream, ambiguousStreamCandidates = routed.StreamCandidates, executionAvailable = false, executionReadiness = readiness.ExecutionReadiness(routed) },
+            "response" when declaration.Syntax is CommandSyntax responseOwner => Response(responseOwner, readiness),
             "produces" when declaration.Syntax is CommandSyntax command => McpPaging.Page(command.Produces, arguments, snapshot.SourceRevision),
             "values" when declaration.Syntax is ConceptSyntax concept => McpPaging.Page(concept.Values, arguments, snapshot.SourceRevision),
             "syntax" => declaration.Syntax,
@@ -87,17 +128,54 @@ static class McpDeclarationDetails
         var address = McpJson.RequiredString(arguments, "address");
         var kind = McpJson.RequiredString(arguments, "kind");
         var matches = snapshot.Index.Find(address, kind);
+        if (kind == "EventSource" || kind == "EventStream")
+        {
+            var parts = address.Split('.');
+            var stream = kind == "EventStream" ? parts.ElementAtOrDefault(1) ?? string.Empty : null;
+            var confidence = snapshot.Index.SourceConfidence?.Resolve(parts[0], stream);
+            if (confidence?.State == "ambiguous" || confidence?.State == "incomplete")
+            {
+                var candidates = confidence.Sources.Select(source => new { source.Name, source.Location });
+                throw new McpFailure($"{(confidence.State == "ambiguous" ? "AmbiguousDeclaration" : "IncompleteSource")}: {string.Join(' ', confidence.Reasons)} Physical candidates: {JsonSerializer.Serialize(candidates)}")
+                {
+                    FailureKind = confidence.State == "ambiguous" ? "AmbiguousDeclaration" : "IncompleteSource"
+                };
+            }
+        }
         return matches.Length == 1 ? matches[0] : throw new McpFailure($"Declaration target must identify exactly one logical declaration; found {matches.Length}.");
     }
 
     static IEnumerable<string> Views(SyntaxNode node) => node switch
     {
         SliceSyntax => ["summary", "occurrences", "commands", "specifications", "syntax"],
-        CommandSyntax => ["summary", "properties", "occurrences", "produces", "syntax"],
+        CommandSyntax => ["summary", "properties", "occurrences", "produces", "response", "route", "syntax"],
+        EventSourceSyntax => ["summary", "streams", "occurrences", "syntax"],
+        OperationSyntax => ["summary", "inputs", "phases", "occurrences", "syntax"],
         EventSyntax or ReadModelSyntax or TypeSyntax => ["summary", "properties", "occurrences", "syntax"],
         ConceptSyntax => ["summary", "values", "occurrences", "syntax"],
         _ => ["summary", "occurrences", "syntax"]
     };
+
+    static object Response(CommandSyntax command, McpAuthoringReadiness readiness)
+    {
+        var properties = command.Properties.GroupBy(property => property.Name, StringComparer.Ordinal)
+            .Where(group => group.Count() == 1).ToDictionary(group => group.Key, group => group.Single(), StringComparer.Ordinal);
+        return new
+        {
+            syntaxOnly = readiness.SyntaxOnly(command),
+            executionReadiness = readiness.ExecutionReadiness(command, "no response type is emitted."),
+            syntax = command.Response,
+            fields = command.Response is RecordCommandResponseSyntax record ? record.Fields.Select(field => new
+            {
+                field.Name,
+                declaredType = field.Type,
+                inferredType = properties.GetValueOrDefault(field.Source.Property)?.Type,
+                source = field.Source.Property,
+                field.Location
+            }) : null,
+            scalarType = command.Response is ScalarCommandResponseSyntax scalar ? properties.GetValueOrDefault(scalar.Source.Property)?.Type : null
+        };
+    }
 
     static IEnumerable<PropertySyntax> Properties(SyntaxNode node) => node switch
     {

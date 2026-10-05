@@ -8,7 +8,7 @@ Commands are input definitions — imperative intents. A command declares its pr
 command <Name>
   [description "<text>"]
 
-  <property> <Type>[?] [identifier]
+  <property> <Type> [optional] [generated] [identifier]
   ...
 
   [reads <ReadModel> [as <alias>] [by <property>]]   ← state the command decides against
@@ -24,6 +24,9 @@ command <Name>
     ...]
 
   [validate <inline csharp block yielding messages for broken rules>]
+
+  [stream <EventSource>.<Stream>   ← syntax-only authored classification
+    [streamId = <value>]]
 
   [produces ...]                  ← declarative — repeatable
 
@@ -59,7 +62,67 @@ command RegisterInvoice
     ```
 ````
 
-Descriptions work the same on modules, features, slices, and personas — see [Descriptions](slices.md#descriptions).
+Command descriptions use `text` fences, not `markdown`; Markdown description fences are available only on events. Descriptions work the same on modules, features, slices, and personas — see [Descriptions](slices.md#descriptions).
+
+## Declare an event inline
+
+Use `produces event <Name>` to declare a new event where the command produces it. Each payload property declares its type and mapping together:
+
+```screenplay
+command Rename
+  projectId Uuid identifier
+  name String
+  produces event Renamed
+    description "The project acquired another name"
+    tag audit
+    name String = name
+```
+
+Here the omitted `for` means `for projectId`; the identifier is **not** copied into the payload. The declaration belongs to the slice, so extracting it into a standalone `event Renamed` plus `produces Renamed` with explicit `for projectId` preserves its identity and canonical ESM bytes. Declarations remain order-independent. A plain `produces Renamed` still references a declared event rather than creating one.
+
+Each inline payload property is declared once; repeating its name reports `PLAY0168`. Inline events are generation 1 only, local to the command, and cannot declare `generation` or `origin`. Reactions cannot declare inline events. Names must not collide with another standalone, imported, or inline event. `tag` inside this block is an **event-type** tag, unlike a tag on plain `produces`. [Event metadata](events.md#authoring-metadata) covers descriptions, documentation, and rename-only identity pins.
+
+If any production targets a source other than the command identifier, **every production must state `for` explicitly** (`PLAY0470`). The same rule applies when an inline production and a plain production both omit `for`: their defaults differ. The diagnostic names the production that needs a destination; adding an inline event never silently retargets a plain sibling. The compiler compares authored paths, not runtime values. Cross-source execution remains unsupported; explicit syntax does not make it executable. An inline omission without a required scalar identifier cannot bind. `PLAY0470` currently has no verified workspace/MCP repair: these invalid mixed-destination models do not bind, so the before/after ESM routing and version checks cannot prove an edit safe. State the destinations through coordinated typed edits; do not assume an omitted plain production meant the identifier.
+
+Plain `produces <Name>` retains its legacy omission behavior; it does not acquire the inline default. Copying an identifier into a same-source payload reports `PLAY0469`: warning for inline declarations, information for plain productions with explicit `for`. Review the persisted contract before removing a payload field. The inline-only typed repair removes the property and mapping together, retires the property's semantic address, and is labeled “changes the event contract”. It is excluded from fix-all. The narrow repair refuses other consumers of that event, opaque implementation impact, routing changes and comment loss; standalone/plain contracts receive guidance only, not an automatic shape change.
+
+The unescaped directives `namespace`, `sequence`, `correlation`, `causation`, `causedBy`, and `occurred` are reserved system-assigned metadata in production bodies. Escape a genuine payload field, for example `@sequence String = name`; `occurred at` is not supported yet.
+
+## Command stream routing (syntax-only)
+
+Use `stream Source.Stream` to select a declared [event source and stream](event-sources.md). Map a keyed stream with nested `streamId = <value>`. This route never supplies the event's `for` destination and does not change plain-production allocation or inline defaults. Handler commands may author routing without statically declared events; `handler` with `produces` is still prohibited.
+
+Both viable stream/property interpretations remain blocking `PLAY0505` candidates, never a guessed route. Source/stream declarations and routed commands remain unavailable until ESM v10 (`PLAY0268`). Per-production overrides, reaction/reducer filters and new concurrency flags are not supported. The board shows only the authored route and readable key expression in existing command details.
+
+## Operations and external systems (syntax-only)
+
+A command can describe external effects through inline `produces operation <Name>` declarations or plain references to standalone operations. [Operations and external systems](operations.md) covers typed inputs, `uses`, execution/compensation intent and manual promotion. Event and operation productions stay in one ordered sequence, but operations do not participate in event destinations or payload identity diagnostics. **Execution is unavailable until ESM v9**; binding reports `PLAY0268` without an executable model.
+
+## Generated values and responses (syntax-only)
+
+You can author generated values and a response contract, but **execution is unavailable until ESM v8**. Binding any generated property, response, generated fixture or return expectation reports `PLAY0268` and produces no semantic model. Syntax validation and editor or MCP acceptance are not proof of execution.
+
+```screenplay
+command RegisterProject
+  projectId ProjectId generated identifier
+  receiptId ReceiptId generated
+  name ProjectName
+  returns
+    projectId = projectId
+    receiptId ReceiptId = receiptId
+```
+
+This fragment assumes `ProjectId` and `ReceiptId` are concepts backed by `Uuid`, and `ProjectName` is a concept backed by `String`. The [complete syntax-only example](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/generated-responses.play) includes their declarations and specification fixtures. Executable samples deliberately do not use this syntax yet.
+
+- `generated` is command-only and requires a required, scalar concept backed by `Uuid`; bare `Uuid`, optional values and collections are invalid. Generated values are not request inputs, form fields, invocation arguments or ordinary specification inputs.
+- Modifier order is `Type optional generated identifier`. This order does not permit an optional generated value or optional identifier. `generated String` still declares a property named `generated`.
+- `returns <property>` declares one scalar response. Bare `returns` opens an unnamed record, even when it has just one field. Declare at most one unconditional response, as a command sibling, not inside a production.
+- Each record field is `<name> [<Type>] = <property>`. Its type is inferred from a direct command property, or explicitly annotated with exactly the same type identity and optionality. Fields are unique and stay in authored order. Arithmetic, read aliases, collections and whole read-model responses are not supported.
+- A two-token `returns name` is a response when `name` identifies another property of **this command**, regardless of declaration order; otherwise it remains a property named `returns` whose type is `name`. This is a local property lookup, not a type-inventory or capitalization rule. Use `returns @name` to force a source reference, including an unknown source that needs a diagnostic; use `@returns Type` to force a property declaration. Returning a property named `returns` uses `returns @returns`.
+
+Responses also parse beside a handler; they do not add handler-return semantics. Future renderers favor an official `<Command>Response` type, but no such type is emitted here. Form `on submit` and interaction `on success` response-name scopes, failure clearing and response execution remain unavailable until their coordinated v8 implementation.
+
+The board excludes generated properties from the request schema and shows generated/response details in the existing command description. It creates no response event or response identity. See [syntax-only specification fixtures](specifications.md#generated-fixtures-and-return-expectations-syntax-only).
 
 ## The identifier
 
@@ -344,8 +407,8 @@ authorize IsAccountant
 This is the language's [one condition grammar](grammar.md) again, over policies instead of comparisons — so `and` binds tighter than `or`, and parentheses group:
 
 ```screenplay
-authorize IsAccountant or IsFinance and OwnsInvoice     ← IsAccountant, or both of the others
-authorize (IsAccountant or IsFinance) and OwnsInvoice   ← one of the first two, and OwnsInvoice
+authorize IsAccountant or IsFinance and OwnsInvoice     // IsAccountant, or both of the others
+authorize (IsAccountant or IsFinance) and OwnsInvoice   // one of the first two, and OwnsInvoice
 ```
 
 Those two admit different callers, and the parentheses are the only thing that distinguishes them. Printing writes them back wherever the grouping is not the one precedence gives, so a document always says which one it means.
@@ -405,6 +468,12 @@ A plain `produces <Event>` without `for` does not say where the event lands, and
 - **Executable model** (reference execution and Stage's semantic host). A plain `produces` is appended to an identity the execution request allocates for the command. When none is supplied, the command is reported as unsupported with `IdentityAllocation`, so name the destination with `for` or supply an allocated identity.
 - **Rendered Arc commands** (code generated by Stage's default renderer). The renderer does not read `for`: the command's identifier is used as the event source for every append, whatever `for` says, and a command with no identifier leaves Arc to allocate the id. This is tracked in [Cratis/Stage#187](https://github.com/Cratis/Stage/issues/187); until it is fixed, treat `for` as binding only in the executable model.
 
+A plain omission with an available identifier reports information diagnostic
+[`PLAY0478`](diagnostics.md#production-destination-advice-and-repairs). Its typed
+[MCP repair](mcp/authoring-tools.md#fix-a-diagnostic) inserts `for <identifier>` after
+review; it does not apply automatically. Accept it when the identifier is the
+intended destination, not when you deliberately want an allocated identity.
+
 The rest of this section describes the executable model. In ESM v2, a plain `produces` in a command where another production states `for` uses that destination. State `for` on every production that belongs to the command's event source; the event source id is never payload. An explicit `for` can name the command's required scalar identifier on an indented line:
 
 ```screenplay
@@ -455,6 +524,7 @@ produces when paymentTerms == "net30" or paymentTerms == "net60"
 
 produces when $env.WELCOME_EMAILS_ENABLED == "true"
   CustomerWelcomeEmailRequested
+    for invoiceId
     customerId  = customerId
 ```
 
@@ -490,6 +560,28 @@ handler
 A command uses either `produces` blocks or a `handler` — not both. Keep handler logic small; anything substantial belongs in a `file` reference where it can be tested on its own.
 
 Inside either form, `context` is the [`CommandContext`](context.md) — the command itself, the tenant, the caller, the identity recorded as having caused it, the causation, and when the command was received. An inline block and a `file` reference compile against exactly the same type.
+
+### Implementation intent (handlers only)
+
+You can keep implementation guidance beside the handler's existing attachment:
+
+```screenplay
+handler
+  implementation
+    hint "Archive only invoices dated before the requested cutoff"
+    file Handlers/ArchiveOldInvoicesHandler.cs
+```
+
+This is the handler from [Invoicing](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play). The wrapper also accepts an existing tagged fence instead of `file`. Omit the payload to record **pending** intent; bare `implementation` is valid too. Hints are ordered, nonblank quoted strings, with the usual string escaping. Their decoded text is retained without trimming. A handler allows one wrapper and at most one payload. Unknown children, duplicate wrappers, multiple payloads and mixed direct/wrapped sources are errors.
+
+| Owner | `implementation` wrapper |
+| --- | --- |
+| Command handler | Supported; direct file/fence forms remain supported |
+| Query performer, validation rule, reducer rule, policy, reaction trigger | Deferred; existing direct forms only |
+| Operation execute/compensate phases | New syntax-only authoring wrapper; not an admitted ESM implementation role (v9 future) |
+| Provisioning | Deferred |
+
+`implementation` and `hint` are contextual, not globally reserved property names. Intent authoring does not execute, confirm or regenerate code. Command handlers still fail executable admission with `PLAY0268`, including when attached. There is no lock, drift checker, confirmation or AI action in this slice. See [AST authoring](ast-authoring.md#handler-intent-edits) and [MCP inventory](mcp/reference.md#handler-intent-inventory).
 
 ## Concurrency
 

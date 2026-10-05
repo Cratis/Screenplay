@@ -908,7 +908,7 @@ public static class DiagnosticCodes
     public const string UnknownPolicy = "PLAY0167";
 
     /// <summary>
-    /// A concept and a type, or two of either, are declared under one name.
+    /// A concept and a type, or two of either, are declared under one name, or an inline event repeats a payload property name.
     /// </summary>
     public const string DuplicateDeclaration = "PLAY0168";
 
@@ -2080,4 +2080,187 @@ public static class DiagnosticCodes
 
     /// <summary>A <c>when query</c> argument is not a <c>by</c> or <c>filter</c> parameter of the query.</summary>
     public const string UnknownSpecificationQueryArgument = "PLAY0468";
+
+    /// <summary>
+    /// The command identifier is also copied into its same-source event payload.
+    /// </summary>
+    public const string EventSourceIdInPayload = "PLAY0469";
+
+    /// <summary>
+    /// Mixed event sources require explicit destinations on every production.
+    /// </summary>
+    public const string ExplicitProducesTargetsRequired = "PLAY0470";
+
+    /// <summary>
+    /// An event identity pin repeats the current name.
+    /// </summary>
+    public const string RedundantEventId = "PLAY0471";
+
+    /// <summary>
+    /// An event identity pin is malformed or duplicated.
+    /// </summary>
+    public const string InvalidEventId = "PLAY0472";
+
+    /// <summary>
+    /// An inline event collides with another declaration or import.
+    /// </summary>
+    public const string InlineEventCollision = "PLAY0473";
+
+    /// <summary>
+    /// An inline event is declared outside a command.
+    /// </summary>
+    public const string InlineEventOutsideCommand = "PLAY0474";
+
+    /// <summary>
+    /// An inline event declares a generation instead of being extracted first.
+    /// </summary>
+    public const string InlineEventGeneration = "PLAY0475";
+
+    /// <summary>
+    /// A production supplies system-assigned metadata or an inline origin.
+    /// </summary>
+    public const string ReservedProductionMetadata = "PLAY0476";
+
+    /// <summary>
+    /// Event documentation is not a single nonempty fenced Markdown block.
+    /// </summary>
+    public const string InvalidEventDocumentation = "PLAY0477";
+
+    /// <summary>A plain production omits its destination although the command has an identifier.</summary>
+    public const string OmittedProductionDestination = "PLAY0478";
+
+    /// <summary>
+    /// A type reference uses the legacy optional suffix.
+    /// </summary>
+    public const string LegacyOptionalSuffix = "PLAY0479";
+
+    /// <summary>
+    /// The optional modifier follows identifier instead of the type.
+    /// </summary>
+    public const string InvalidOptionalModifierOrder = "PLAY0480";
+
+    /// <summary>
+    /// An optional read requests absence semantics that are not yet supported.
+    /// </summary>
+    public const string OptionalReadsNotSupported = "PLAY0481";
+
+    /// <summary>
+    /// A generated property is declared outside a command.
+    /// </summary>
+    public const string GeneratedPropertyOutsideCommand = "PLAY0482";
+
+    /// <summary>
+    /// A generated property is not a required scalar Uuid-backed concept.
+    /// </summary>
+    public const string InvalidGeneratedType = "PLAY0483";
+
+    /// <summary>
+    /// Property modifiers are repeated or out of order.
+    /// </summary>
+    public const string InvalidGeneratedModifierOrder = "PLAY0484";
+
+    /// <summary>
+    /// A generated property is supplied as request or form input.
+    /// </summary>
+    public const string GeneratedPropertySuppliedAsInput = "PLAY0485";
+
+    /// <summary>
+    /// A response is malformed, empty, repeated or conditional.
+    /// </summary>
+    public const string InvalidCommandResponse = "PLAY0486";
+
+    /// <summary>
+    /// A response source is unknown or is not a direct command property.
+    /// </summary>
+    public const string InvalidResponseSource = "PLAY0487";
+
+    /// <summary>
+    /// A record response repeats a field name.
+    /// </summary>
+    public const string DuplicateResponseField = "PLAY0488";
+
+    /// <summary>
+    /// A response has an unsupported shape or mismatched explicit type.
+    /// </summary>
+    public const string InvalidResponseShape = "PLAY0489";
+
+    /// <summary>
+    /// A generated fixture is invalid.
+    /// </summary>
+    public const string InvalidGeneratedFixture = "PLAY0490";
+
+    /// <summary>
+    /// A return expectation is invalid or conflicts with another outcome.
+    /// </summary>
+    public const string InvalidReturnExpectation = "PLAY0491";
+
+    /// <summary>
+    /// Implementation wrapper syntax is invalid.
+    /// </summary>
+    public const string InvalidImplementationBlock = "PLAY0492";
+
+    /// <summary>
+    /// An implementation hint is not one nonblank quoted string.
+    /// </summary>
+    public const string InvalidImplementationHint = "PLAY0493";
+
+    /// <summary>
+    /// Wrapped and direct sources conflict, or multiple payloads were supplied.
+    /// </summary>
+    public const string ConflictingImplementationSources = "PLAY0494";
+
+    /// <summary>
+    /// A system declaration is malformed.
+    /// </summary>
+    public const string InvalidSystemDeclaration = "PLAY0495";
+
+    /// <summary>
+    /// An operation declaration is malformed.
+    /// </summary>
+    public const string InvalidOperationDeclaration = "PLAY0496";
+
+    /// <summary>
+    /// A production reference is unresolved, ambiguous or qualifies an event.
+    /// </summary>
+    public const string InvalidProductionReference = "PLAY0497";
+
+    /// <summary>
+    /// Event and operation declarations collide in a slice.
+    /// </summary>
+    public const string ProductionDeclarationCollision = "PLAY0498";
+
+    /// <summary>
+    /// An operation production appears outside a command.
+    /// </summary>
+    public const string OperationOutsideCommand = "PLAY0499";
+
+    /// <summary>
+    /// An operation's system reference is missing, repeated or unknown.
+    /// </summary>
+    public const string InvalidSystemReference = "PLAY0500";
+
+    /// <summary>
+    /// An operation input mapping is invalid.
+    /// </summary>
+    public const string InvalidOperationMapping = "PLAY0501";
+
+    /// <summary>
+    /// An operation specification step is invalid.
+    /// </summary>
+    public const string InvalidOperationSpecification = "PLAY0502";
+
+    /// <summary>An event source or stream declaration is invalid or ambiguous.</summary>
+    public const string InvalidEventSourceDeclaration = "PLAY0503";
+
+    /// <summary>A command stream reference or mapping is invalid.</summary>
+    public const string InvalidCommandStream = "PLAY0504";
+
+    /// <summary>A command header has viable property and route interpretations.</summary>
+    public const string AmbiguousCommandStream = "PLAY0505";
+
+    /// <summary>A stream id type is neither text/UUID (or their concepts) nor an integer-backed concept.</summary>
+    public const string UnsupportedStreamIdType = "PLAY0506";
+
+    /// <summary>A rename pin repeats a source or stream's current name.</summary>
+    public const string RedundantSourceStreamId = "PLAY0507";
 }

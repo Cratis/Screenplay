@@ -20,6 +20,15 @@ internal static partial class CommandParser
     /// <returns>The parsed <see cref="CommandSyntax"/>.</returns>
     public static CommandSyntax Parse(ParserContext context, SourceLine header)
     {
+        // Ordinary properties are leaves even when later members have a greater indent.
+        // Resolve ambiguous scalar spelling using a noncommitting command-body pass first.
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        ParseBody(new(context.Reader.Fork(), context.Start.Path, context.Languages) { StreamCandidates = context.StreamCandidates }, header, null, names);
+        return ParseBody(context, header, names, null);
+    }
+
+    static CommandSyntax ParseBody(ParserContext context, SourceLine header, HashSet<string>? responseNames, HashSet<string>? discoveredNames)
+    {
         var name = HeaderRegex().Match(header.Content);
         if (!name.Success)
         {
@@ -27,12 +36,15 @@ internal static partial class CommandParser
         }
 
         var properties = new List<PropertySyntax>();
+        var responses = new List<(SourceLine Line, PropertySyntax? Candidate, CommandResponseSyntax? Response)>();
         AuthorizeSyntax? authorize = null;
         var validations = new List<ValidateSyntax>();
         var produces = new List<ProducesSyntax>();
         var reads = new List<ReadsSyntax>();
         HandlerSyntax? handler = null;
         ConcurrencySyntax? concurrency = null;
+        CommandStreamSyntax? stream = null;
+        var streamCandidates = new List<CommandStreamSyntax>();
         string? description = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
 
@@ -46,10 +58,49 @@ internal static partial class CommandParser
                 // property called description. Only the directives that do take an identifier operand
                 // ('authorize', 'produces') stay ambiguous, and those use the '@' escape.
                 case "description" or "handler" or "concurrency" when PropertyLineParser.TryParse(line) is { } named:
-                    AddProperty(context, properties, named, name.Groups[1].Value);
+                    AddProperty(context, properties, named, name.Groups[1].Value, line);
                     break;
                 case "validate" when line.Content != "validate csharp" && PropertyLineParser.TryParse(line) is { } validated:
-                    AddProperty(context, properties, validated, name.Groups[1].Value);
+                    AddProperty(context, properties, validated, name.Groups[1].Value, line);
+                    break;
+                case "returns":
+                    if (ScalarResponseRegex().Match(line.Content) is { Success: true } scalar && !scalar.Groups[1].Value.StartsWith('@') && PropertyLineParser.TryParse(line) is { } candidate)
+                    {
+                        if (responseNames is null)
+                        {
+                            properties.Add(candidate);
+                            responses.Add((line, candidate, null));
+                        }
+                        else if (responseNames.Contains(candidate.Type.Name))
+                        {
+                            responses.Add((line, null, ParseResponse(context, line)));
+                        }
+                        else
+                        {
+                            AddProperty(context, properties, candidate, name.Groups[1].Value, line);
+                        }
+                    }
+                    else if (PropertyLineParser.TryParse(line) is { } returnsProperty)
+                    {
+                        AddProperty(context, properties, returnsProperty, name.Groups[1].Value, line);
+                    }
+                    else if (PropertyLineParser.ReportInvalidModifierOrder(context, line))
+                    {
+                        context.SkipBlock(line.Indent);
+                    }
+                    else
+                    {
+                        responses.Add((line, null, ParseResponse(context, line)));
+                    }
+
+                    break;
+                case "stream" when RouteRegex().IsMatch(line.Content) && PropertyLineParser.TryParse(line) is { } streamProperty && context.StreamCandidates?.HasSource(streamProperty.Type.Name.Split('.')[0]) == true:
+                    var segments = streamProperty.Type.Name.Split('.');
+                    var ambiguous = context.StreamCandidates.HasPropertyType(streamProperty.Type.Name) && context.StreamCandidates.HasUniqueStream(segments[0], segments[1]);
+                    var route = EventSourceParser.ParseRoute(context, line, streamProperty, ambiguous);
+                    if (stream is not null || streamCandidates.Count > 0) context.Error(DiagnosticCodes.InvalidCommandStream, "A command declares at most one stream route.", line.Location);
+                    if (ambiguous || stream is not null) streamCandidates.Add(route);
+                    else stream = route;
                     break;
                 case "description":
                     var previousDescription = description;
@@ -74,7 +125,7 @@ internal static partial class CommandParser
 
                     break;
                 case "produces":
-                    if (ProducesParser.Parse(context, line) is { } production)
+                    if (ProducesParser.Parse(context, line, true) is { } production)
                     {
                         produces.Add(production);
                     }
@@ -111,10 +162,11 @@ internal static partial class CommandParser
                 default:
                     if (PropertyLineParser.TryParse(line) is { } property)
                     {
-                        AddProperty(context, properties, property, name.Groups[1].Value);
+                        AddProperty(context, properties, property, name.Groups[1].Value, line);
                     }
                     else
                     {
+                        PropertyLineParser.ReportInvalidModifierOrder(context, line);
                         context.Error(DiagnosticCodes.UnknownCommandDirective, $"Unexpected '{line.Content}' in command body", line.Location);
                         context.SkipBlock(line.Indent);
                     }
@@ -123,6 +175,38 @@ internal static partial class CommandParser
             }
         }
 
+        var candidates = responses.Where(entry => entry.Candidate is not null).Select(entry => entry.Candidate).ToHashSet();
+        var names = properties.Where(property => !candidates.Contains(property)).Select(property => property.Name).ToHashSet(StringComparer.Ordinal);
+        if (responses.Exists(entry => entry.Candidate is { } candidate && !names.Contains(candidate.Type.Name) && candidate.Type.Name != "returns"))
+        {
+            names.Add("returns");
+        }
+
+        discoveredNames?.UnionWith(names);
+        CommandResponseSyntax? response = null;
+        var removed = new HashSet<PropertySyntax>();
+        foreach (var entry in responses)
+        {
+            var parsed = entry.Response;
+            if (entry.Candidate is { } candidate)
+            {
+                if (!names.Contains(candidate.Type.Name)) continue;
+                removed.Add(candidate);
+                parsed = new ScalarCommandResponseSyntax(new(candidate.Type.Name, candidate.Type.Location), entry.Line.Location);
+            }
+
+            if (parsed is null) continue;
+            if (response is not null)
+            {
+                context.Error(DiagnosticCodes.InvalidCommandResponse, "A command declares at most one unconditional response.", entry.Line.Location);
+            }
+            else
+            {
+                response = parsed;
+            }
+        }
+
+        properties = [.. properties.Where(property => !removed.Contains(property))];
         if (handler is not null && produces.Count > 0)
         {
             context.Error(DiagnosticCodes.CommandWithProducesAndHandler, $"Command '{name.Groups[1].Value}' cannot declare both 'produces' and 'handler'", header.Location);
@@ -130,7 +214,10 @@ internal static partial class CommandParser
 
         return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency, description, reads)
         {
-            DirectiveLocations = directiveLocations
+            DirectiveLocations = directiveLocations,
+            Response = response,
+            Stream = stream,
+            StreamCandidates = streamCandidates
         };
     }
 
@@ -141,12 +228,14 @@ internal static partial class CommandParser
     /// <param name="properties">The properties parsed so far.</param>
     /// <param name="property">The <see cref="PropertySyntax"/> to add.</param>
     /// <param name="commandName">The name of the command, used in diagnostics.</param>
+    /// <param name="line">The committed property line.</param>
     /// <remarks>
     /// The identifier is what a runtime resolves the event source id from, so a second one would leave it
     /// with no way to choose. The first declaration wins and the rest are reported.
     /// </remarks>
-    static void AddProperty(ParserContext context, List<PropertySyntax> properties, PropertySyntax property, string commandName)
+    static void AddProperty(ParserContext context, List<PropertySyntax> properties, PropertySyntax property, string commandName, SourceLine line)
     {
+        PropertyLineParser.ReportLegacyOptionalSuffix(context, property.Type, line);
         if (property.IsIdentifier && properties.Find(existing => existing.IsIdentifier) is { } identifier)
         {
             context.Error(DiagnosticCodes.DuplicateCommandIdentifier, $"Command '{commandName}' already marks '{identifier.Name}' as identifier - only one property can be the identifier", property.Location);
@@ -290,21 +379,40 @@ internal static partial class CommandParser
         }
 
         context.Reader.TakeSignificant();
-        if (FileReferenceParser.IsDirective(body))
+        if (LineText.FirstWord(body.Content) == "implementation")
         {
-            return new(FileReferenceParser.Parse(context, body), null, line.Location);
+            return ImplementationParser.Parse(context, line, body);
         }
 
-        if (CodeBlockParser.IsCodeLine(context, body))
+        HandlerSyntax? result = null;
+        if (FileReferenceParser.IsDirective(body))
+        {
+            result = new(FileReferenceParser.Parse(context, body), null, line.Location);
+        }
+        else if (CodeBlockParser.IsCodeLine(context, body))
         {
             var code = CodeBlockParser.Parse(context, body);
-            return code is null ? null : new HandlerSyntax(null, code, line.Location);
+            result = code is null ? null : new HandlerSyntax(null, code, line.Location);
+        }
+
+        if (result is not null)
+        {
+            if (context.TryPeekChild(line.Indent, out var extra) && LineText.FirstWord(extra.Content) == "implementation")
+            {
+                context.Error(DiagnosticCodes.ConflictingImplementationSources, "A handler cannot mix wrapped and direct sources.", extra.Location);
+                context.SkipBlock(line.Indent);
+            }
+
+            return result;
         }
 
         context.Error(DiagnosticCodes.UnknownHandlerDirective, $"Unexpected '{body.Content}' in handler - expected 'file <path>' or an inline code block", body.Location);
         context.SkipBlock(line.Indent);
         return null;
     }
+
+    [GeneratedRegex(@"^stream\s+[A-Za-z_]\w*\.[A-Za-z_]\w*$", RegexOptions.None, 1000)]
+    private static partial Regex RouteRegex();
 
     [GeneratedRegex(@"^command\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();

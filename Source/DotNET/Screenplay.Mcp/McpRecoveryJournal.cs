@@ -68,14 +68,14 @@ internal sealed partial class McpRecoveryJournal
     internal ScreenplayWorkspace Before { get; }
     internal ScreenplayWorkspace After { get; }
     internal McpDiskChange[] Changes { get; }
-    internal string StateStage => _files.PathFor($"{Record.OperationId}.stage");
-    internal string StateBackup => _files.PathFor($"{Record.OperationId}.backup");
+    internal string StateStage => OperationPath(_root, Record.OperationId, "stage");
+    internal string StateBackup => OperationPath(_root, Record.OperationId, "backup");
 
     internal static void RefusePending(McpRoot root)
     {
         if (new McpManagedFiles(root).Read(FileName, McpManagedFiles.MaximumJournalBytes) is not null)
         {
-            throw new McpFailure("PendingOperation: .screenplay/pending.json records an interrupted or uncertain apply. Use workspace-state, then explicitly recover-workspace with its operationId before opening or editing.");
+            throw new McpFailure("PendingOperation: .screenplay/pending.json records an interrupted or uncertain apply. Use workspace-state, then explicitly recover-workspace with its operationId before opening or editing.") { FailureKind = "PendingOperation" };
         }
     }
 
@@ -103,13 +103,13 @@ internal sealed partial class McpRecoveryJournal
         }
     }
 
-    internal static McpRecoveryJournal Prepare(McpRoot root, IMcpProposal proposal, McpStatePlan state)
+    internal static McpRecoveryJournal Prepare(McpRoot root, IMcpProposal proposal, McpStatePlan state, string? operationId = null)
     {
         RefusePending(root);
         var files = new McpManagedFiles(root);
         var record = new McpRecoveryRecord(
             1,
-            Guid.NewGuid().ToString("N"),
+            operationId ?? Guid.NewGuid().ToString("N"),
             Encoding.UTF8.GetString(McpWorkspaceTransport.ExportBytes(proposal.Before)),
             Encoding.UTF8.GetString(McpWorkspaceTransport.ExportBytes(proposal.Workspace)),
             state.Before,
@@ -125,7 +125,7 @@ internal sealed partial class McpRecoveryJournal
         var journal = new McpRecoveryJournal(root, record, bytes);
         files.Verify(McpState.FileName, state.Before);
         root.Verify(proposal.Before);
-        var temporary = files.PathFor($"{record.OperationId}.journal", create: true);
+        var temporary = OperationPath(root, record.OperationId, "journal", create: true);
         McpManagedFiles.WritePrivate(temporary, bytes);
         File.Move(temporary, files.PathFor(FileName));
         journal.VerifyMarker();

@@ -17,12 +17,15 @@ sealed class WorkspaceReferenceBindings
     readonly WorkspaceReferenceDeclaration[] _declarations;
     readonly Dictionary<(WorkspaceReferenceDomain Domain, string Name), WorkspaceReferenceDeclaration[]> _byName;
     readonly Dictionary<string, string[]> _imports;
+    readonly Dictionary<(string? Source, string Stream), WorkspaceReferenceDeclaration[]> _streams;
 
     internal WorkspaceReferenceBindings(WorkspaceSyntaxIndex index)
     {
         _index = index;
         _declarations = [.. Declarations(index)];
         _byName = _declarations.GroupBy(declaration => (declaration.Domain, declaration.Name)).ToDictionary(group => group.Key, group => group.ToArray());
+        _streams = _declarations.Where(declaration => declaration.Domain == WorkspaceReferenceDomain.EventStream && declaration.Owner is not null)
+            .GroupBy(declaration => (declaration.Owner, declaration.Name)).ToDictionary(group => group.Key, group => group.ToArray());
         _imports = index.Entries.Select(entry => entry.Node).OfType<ImportSyntax>().GroupBy(import => import.Name, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.Select(import => import.QualifiedName).Distinct(StringComparer.Ordinal).ToArray(), StringComparer.Ordinal);
         Bindings = [.. WorkspaceReferenceMembers.All(index).Select(Bind)];
@@ -92,6 +95,10 @@ sealed class WorkspaceReferenceBindings
             {
                 ConceptSyntax or TypeSyntax => WorkspaceReferenceDomain.Type,
                 EventSyntax => WorkspaceReferenceDomain.Event,
+                OperationSyntax => WorkspaceReferenceDomain.Operation,
+                SystemSyntax => WorkspaceReferenceDomain.System,
+                EventSourceSyntax => WorkspaceReferenceDomain.EventSource,
+                EventStreamSyntax => WorkspaceReferenceDomain.EventStream,
                 CommandSyntax => WorkspaceReferenceDomain.Command,
                 ReadModelSyntax => WorkspaceReferenceDomain.View,
                 QuerySyntax => WorkspaceReferenceDomain.Query,
@@ -103,8 +110,14 @@ sealed class WorkspaceReferenceBindings
             };
             if (domain is { } actual)
             {
-                var owner = actual == WorkspaceReferenceDomain.Property ? ((TypeSyntax)index.Find(entry.Parent!)!.Node).Name : null;
-                yield return new(Key(entry), Name(entry.Node)!, Scope(entry, index), actual, entry, owner);
+                var owner = actual switch
+                {
+                    WorkspaceReferenceDomain.Property => ((TypeSyntax)index.Find(entry.Parent!)!.Node).Name,
+                    WorkspaceReferenceDomain.EventStream when entry.Parent is { } parent && index.Find(parent)?.Node is EventSourceSyntax source => source.Name,
+                    _ => null
+                };
+                var scope = actual == WorkspaceReferenceDomain.EventStream && owner is not null ? new DeclarationScope([owner]) : Scope(entry, index);
+                yield return new(Key(entry), Name(entry.Node)!, scope, actual, entry, owner);
             }
         }
 
@@ -140,6 +153,24 @@ sealed class WorkspaceReferenceBindings
     WorkspaceReferenceBinding Bind(WorkspaceReferenceMember reference)
     {
         var domain = reference.Domain;
+        if (domain is WorkspaceReferenceDomain.EventSource or WorkspaceReferenceDomain.EventStream)
+        {
+            var parents = _byName.GetValueOrDefault((WorkspaceReferenceDomain.EventSource, domain == WorkspaceReferenceDomain.EventSource ? reference.Text : reference.Owner ?? string.Empty)) ?? [];
+            if (parents.Length != 1) return new(reference, null, parents.Length == 0 ? "unresolved" : "ambiguous");
+            var targets = domain == WorkspaceReferenceDomain.EventSource ? parents : _streams.GetValueOrDefault((reference.Owner, reference.Text)) ?? [];
+            var outcome = targets.Length switch { 0 => "unresolved", 1 => "resolved", _ => "ambiguous" };
+            return new(reference, targets.Length == 1 ? targets[0] : null, outcome);
+        }
+        if (domain == WorkspaceReferenceDomain.Operation && _index.OwningSlice(reference.Entry) is { } slice)
+        {
+            var operationResolution = _index.Productions.Resolve(reference.Text, slice);
+            var operationMatches = operationResolution.Kind == AuthoringProductionKind.Operation
+                ? _declarations.Where(declaration => ReferenceEquals(declaration.Entry?.Node, operationResolution.Declaration?.Node)).Take(2).ToArray() : [];
+            var target = operationMatches.Length == 1 ? operationMatches[0] : null;
+            var outcome = operationMatches.Length > 1 || operationResolution.Kind == AuthoringProductionKind.Ambiguous ? "ambiguous" : "unresolved";
+            return new(reference, target, target is not null ? "resolved" : outcome);
+        }
+
         if (domain == WorkspaceReferenceDomain.Property)
         {
             var properties = (_byName.GetValueOrDefault((domain, reference.Text)) ?? [])

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Serialization;
 using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Printing;
@@ -13,12 +14,14 @@ public partial class ScreenplayPrinter
 {
     void WriteCommand(ScreenplayWriter writer, CommandSyntax command)
     {
+        EventSourceInvariants.Validate(command);
+        if (command.StreamCandidates.Any()) throw new InvalidSyntaxJson("Ambiguous or duplicate command stream headers cannot be exported as .play text; repair the draft or retain syntax JSON.");
         using var anchor = writer.Anchor(command);
         writer.Line($"command {command.Name}");
         using (writer.Indent())
         {
             WriteDescription(writer, command.Description, command);
-            WriteProperties(writer, command.Properties, ReservedWords.CommandBody);
+            WriteCommandProperties(writer, command);
 
             // What the command reads comes before what references it - a mapping fed from state and a rule
             // stated against state both read as though the read model were already in scope, because it is.
@@ -37,6 +40,8 @@ public partial class ScreenplayPrinter
                 WriteValidate(writer, validation);
             }
 
+            if (command.Stream is not null) WriteCommandStream(writer, command.Stream);
+
             foreach (var produces in command.Produces)
             {
                 WriteProduces(writer, produces);
@@ -51,6 +56,8 @@ public partial class ScreenplayPrinter
             {
                 WriteConcurrency(writer, command.Concurrency);
             }
+
+            WriteCommandResponse(writer, command);
         }
     }
 
@@ -94,6 +101,7 @@ public partial class ScreenplayPrinter
         writer.Line(@event.HasGenerationMarker || @event.Generation != 1 ? $"event {@event.Name} generation {@event.Generation}" : $"event {@event.Name}");
         using (writer.Indent())
         {
+            WriteEventMetadata(writer, @event);
             WriteFile(writer, @event.File);
             WriteTags(writer, @event.Tags);
             WriteProperties(writer, @event.Properties, ReservedWords.EventBody);
@@ -288,7 +296,7 @@ public partial class ScreenplayPrinter
     {
         foreach (var property in properties)
         {
-            var modifier = property.IsIdentifier ? $" {PropertySyntax.IdentifierModifier}" : string.Empty;
+            var modifier = (property.IsGenerated ? " generated" : string.Empty) + (property.IsIdentifier ? $" {PropertySyntax.IdentifierModifier}" : string.Empty);
             writer.Line($"{ReservedWords.Escape(property.Name, reserved)} {ScreenplaySyntaxText.TypeRef(property.Type)}{modifier}", property);
         }
     }
@@ -393,6 +401,34 @@ public partial class ScreenplayPrinter
     void WriteProduces(ScreenplayWriter writer, ProducesSyntax produces)
     {
         using var anchor = writer.Anchor(produces);
+        OperationInvariants.Validate(produces);
+        if (produces.InlineOperation is { } operation)
+        {
+            writer.Line($"produces operation {operation.Name}");
+            using (writer.Indent()) WriteOperationBody(writer, operation, produces.Mappings);
+            return;
+        }
+
+        if (produces.InlineEvent is { } inline)
+        {
+            writer.Line($"produces event {inline.Name}");
+            using (writer.Indent())
+            {
+                WriteEventMetadata(writer, inline);
+                WriteProducesTarget(writer, produces.For);
+                WriteTags(writer, inline.Tags);
+
+                // The parser creates each property and mapping together, including on erroneous trees.
+                foreach (var (property, mapping) in inline.Properties.Zip(produces.Mappings))
+                {
+                    using var propertyAnchor = writer.Anchor(property);
+                    writer.Line($"{ReservedWords.Escape(property.Name, ReservedWords.InlineEventBody)} {ScreenplaySyntaxText.TypeRef(property.Type)} = {ScreenplaySyntaxText.Expression(mapping.Source)}", mapping);
+                }
+            }
+
+            return;
+        }
+
         if (produces.When is null)
         {
             writer.Line($"produces {produces.Event}");
@@ -419,6 +455,26 @@ public partial class ScreenplayPrinter
         }
     }
 
+    void WriteEventMetadata(ScreenplayWriter writer, EventSyntax declaration)
+    {
+        if (declaration.Id is not null)
+        {
+            writer.DirectiveLine($"id {StringLiteral.Quote(declaration.Id)}", declaration, "id");
+        }
+
+        WriteDescription(writer, declaration.Description, declaration);
+        if (declaration.Documentation is not null)
+        {
+            writer.DirectiveLine("documentation", declaration, "documentation");
+            using (writer.Indent())
+            {
+                writer.Line("```markdown");
+                foreach (var line in declaration.Documentation.Split('\n')) writer.Line(line);
+                writer.Line("```");
+            }
+        }
+    }
+
     // Where the event lands comes before what fills it - the same order the reader asks the questions in.
     void WriteProducesTarget(ScreenplayWriter writer, ExpressionSyntax? target)
     {
@@ -428,26 +484,44 @@ public partial class ScreenplayPrinter
         }
     }
 
+    void WriteHandlerPayload(ScreenplayWriter writer, HandlerSyntax handler)
+    {
+        if (handler.File is not null) writer.Line($"file {handler.File.Path}", handler.File);
+        if (handler.Code is not null) WriteCodeBlock(writer, handler.Code);
+    }
+
     void WriteHandler(ScreenplayWriter writer, HandlerSyntax handler)
     {
+        ImplementationInvariants.Validate(handler);
         using var anchor = writer.Anchor(handler);
         writer.Line("handler");
         using (writer.Indent())
         {
-            if (handler.File is null)
+            if (handler.Implementation is { } implementation)
             {
-                if (handler.Code is not null)
+                ImplementationInvariants.Validate(implementation);
+                using var implementationAnchor = writer.Anchor(implementation);
+                writer.Line("implementation");
+                using (writer.Indent())
                 {
-                    WriteCodeBlock(writer, handler.Code);
+                    foreach (var hint in implementation.Hints)
+                    {
+                        if (hint is null) throw new InvalidSyntaxJson("Implementation hints cannot contain null.");
+                        ImplementationInvariants.Validate(hint);
+                        writer.Line($"hint {StringLiteral.Quote(hint.Text)}", hint);
+                    }
+
+                    WriteHandlerPayload(writer, handler);
                 }
-
-                return;
             }
-
-            writer.Line($"file {handler.File.Path}", handler.File);
-            if (handler.Code is not null)
+            else if (handler.File is null)
             {
-                WriteOmittedCode(writer, handler.Code, ReadsOneImplementation("a handler"));
+                if (handler.Code is not null) WriteCodeBlock(writer, handler.Code);
+            }
+            else
+            {
+                writer.Line($"file {handler.File.Path}", handler.File);
+                if (handler.Code is not null) WriteOmittedCode(writer, handler.Code, ReadsOneImplementation("a handler"));
             }
         }
     }

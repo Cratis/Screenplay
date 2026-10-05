@@ -12,6 +12,10 @@ import {
 import { MonarchTokenRules, SubLanguage } from './sub-language-registry';
 
 // Maps a Screenplay inline code tag to the Monaco language id used for embedded highlighting.
+// Declaration registration must not globally reserve existing property names.
+// Ambiguous standalone operation headers are supplied by typed semantic tokens.
+const contextualConstructs = new Set(['operation', 'system', 'eventsource']);
+
 const embeddedLanguages: Record<string, string> = {
     csharp: 'csharp',
     typescript: 'typescript',
@@ -26,7 +30,7 @@ function subLanguageState(keyword: string): string {
 
 // A construct keyword at the start of a line ends any indented sub-language block.
 function subLanguageExitRule(subLanguages: SubLanguage[]): MonarchTokenRules[number] {
-    const exitKeywords = [...constructKeywords, ...subLanguages.map((subLanguage) => subLanguage.keyword)];
+    const exitKeywords = [...constructKeywords.filter(keyword => !contextualConstructs.has(keyword)), ...subLanguages.map((subLanguage) => subLanguage.keyword)];
     return [
         new RegExp(`^\\s*(?:${exitKeywords.join('|')})\\b`),
         { token: '@rematch', next: '@pop' },
@@ -53,15 +57,40 @@ export const commonTokenRules: MonarchTokenRules = [
 export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMonarchLanguage {
     const tokenizer: Record<string, MonarchTokenRules> = {
         root: [
+            [/^(eventsource)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
+            [/^(system)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
+            [/^(\s*)(produces\s+operation)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/,
+                ['white', 'keyword', 'white', { token: 'type.identifier', next: '@operationBody.$1' }]],
+            [/^(\s*)(given\s+operation)(\s+)([\w.]+)(\s+)(fails)(?=\s*(?:\/\/.*)?$)/,
+                ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword']],
+            [/^(\s*)(then\s+(?:operation|compensated))(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/,
+                ['white', 'keyword', 'white', 'type.identifier']],
+            [/^(\s*)(handler)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@handlerBody.$1' }]],
+            [/^(\s*@?[a-z_]\w*\s+)([\w.]+(?:\[\])?(?:\?|\s+optional)?)(\s+)(generated)(\s+identifier)?(?=\s*(?:\/\/.*)?$)/,
+                ['identifier', 'type.identifier', 'white', 'keyword', 'keyword']],
+            [/^(\s*)(generated)(\s+)([a-z_]\w*)(\s*=(?!=|>))/, ['white', 'keyword', 'white', 'identifier', 'operator']],
+            [/^(\s*)(then)(\s+)(returns)\b/, ['white', 'keyword', 'white', 'keyword']],
+            // Only unambiguous response headers: two-token property declarations keep their names.
+            [/^(\s*)(returns)(?=\s*(?:\/\/.*)?$|\s+@\w+\s*(?:\/\/.*)?$)/, ['white', 'keyword']],
+            // A modifier only after a complete type; names called optional remain ordinary names.
+            [/^(\s*(?:by|filter)\s+[a-z_]\w*\s+)([\w.]+(?:\[\])?)(\s+)(optional)\b(?=\s*(?:from\b|\/\/|$))/,
+                ['identifier', 'type.identifier', 'white', 'keyword']],
+            // Query prefixes cannot fall back to being property names.
+            [/^(?!\s*(?:by|filter)\s+)(\s*@?[a-z_]\w*\s+)([\w.]+(?:\[\])?)(\s+)(optional)\b(?=\s*(?:identifier\b|from\b|=(?!=|>)|\/\/|$))/,
+                ['identifier', 'type.identifier', 'white', 'keyword']],
+            [/^(\s*query\s+[A-Za-z_]\w*\s*=>\s*(?!observable\s+optional\s*(?:\/\/.*)?$)(?:observable\s+)?)([\w.]+(?:\[\])?)(\s+)(optional)\b(?=\s*(?:\/\/.*)?$)/,
+                ['keyword', 'type.identifier', 'white', 'keyword']],
             // A specification's clock, trigger, capture and query steps - matched before a sub-language keyword
             // can claim 'capture' and read the rest of the specification as change data capture.
             [/^(\s*)(given|when)(\s+)(clock|capture|trigger|query)\b/, ['white', 'keyword', 'white', 'keyword']],
             [/^(\s*)(then)(\s+)(result|no\s+result)\b/, ['white', 'keyword', 'white', 'keyword']],
             // A quoted import names .play files rather than a qualified name - the path reads as a link.
             [/^(\s*)(import)(\s+)("[^"\\]*")/, ['white', 'keyword', 'white', 'string.link']],
-            // Only an event header reserves 'generation'; properties and context paths do not.
-            [/^(\s*)(event)(\s+)([A-Za-z_]\w*)(\s+)(generation)(?=\s+\d+\s*$)/,
-                ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword']],
+            // Retain the header indent so event metadata stops at the enclosing block boundary.
+            [/^(\s*)((?:produces\s+)?event)(\s+)([A-Za-z_]\w*)(\s+)(generation)(\s+)(\d+)(?=\s*(?:\/\/.*)?$)/,
+                ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword', 'white', { token: 'number', next: '@eventBody.$1' }]],
+            [/^(\s*)((?:produces\s+)?event)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/,
+                ['white', 'keyword', 'white', { token: 'type.identifier', next: '@eventBody.$1' }]],
             // A tagged opening fence carries the embedded language; legacy tag lines still highlight.
             ...codeBlockTags.map(
                 (tag): MonarchTokenRules[number] => [
@@ -111,6 +140,40 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             { include: '@common' },
         ],
 
+        operationBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(execute|compensate)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@operationPhase.$1' }]],
+            [/^(\s*)(uses)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
+            [/^(\s*)(@?[a-z_]\w*)(\s+)([\w.]+(?:\[\])?(?:\?|\s+optional)?)(?=\s*(?:=(?!=|>)|\/\/|$))/,
+                ['white', 'identifier', 'white', 'type.identifier']],
+            { include: '@root' },
+        ],
+
+        operationPhase: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(implementation)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@implementationBody.$1' }]],
+            { include: '@root' },
+        ],
+
+        handlerBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(implementation)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@implementationBody.$1' }]],
+            { include: '@root' },
+        ],
+
+        implementationBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(hint)(?=\s+")/, ['white', 'keyword']],
+            { include: '@root' },
+        ],
+
+        eventBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(id)(?=\s+")/, ['white', 'keyword']],
+            [/^(\s*)(documentation)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@descriptionBlockPending' }]],
+            { include: '@root' },
+        ],
+
         common: commonTokenRules,
 
         // After a code tag, the only thing allowed before the opening fence is whitespace.
@@ -131,7 +194,8 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
 
         // After a bare description, the only thing allowed before the opening fence is whitespace.
         descriptionBlockPending: [
-            [/^\s*```(?:text)?\s*$/, { token: 'string.quote', switchTo: '@descriptionBlock' }],
+            [/\/\/.*$/, 'comment'],
+            [/^\s*```(?:text|markdown)?\s*$/, { token: 'string.quote', switchTo: '@descriptionBlock' }],
             [/^\s*[^\s`].*$/, { token: '@rematch', next: '@pop' }],
             [/\s+/, 'white'],
         ],
@@ -156,7 +220,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
         defaultToken: '',
         tokenPostfix: '.play',
         ignoreCase: false,
-        keywords: [...constructKeywords, ...clauseKeywords, ...codeBlockTags],
+        keywords: [...constructKeywords.filter(keyword => !contextualConstructs.has(keyword)), ...clauseKeywords, ...codeBlockTags],
         sliceTypes,
         primitiveTypes,
         tokenizer,

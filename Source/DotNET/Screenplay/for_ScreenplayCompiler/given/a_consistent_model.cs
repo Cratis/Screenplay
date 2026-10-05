@@ -56,7 +56,7 @@ public class a_consistent_model : a_compiler
             slice StateView Browse
               readmodel EntryView
                 rows Row[]
-                detail Detail?
+                detail Detail optional
               projection Entries => EntryView
                 every
                   audit = "recorded"

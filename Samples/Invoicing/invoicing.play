@@ -114,7 +114,7 @@ type InvoiceLine
   productName ProductName
   quantity    Quantity
   unitPrice   Money
-  discount    DiscountPercentage?
+  discount    DiscountPercentage optional
 
 type BillingContact
   description "Who to reach about an invoice - the personal data lives here, not on the invoice itself"
@@ -127,8 +127,8 @@ type InvoiceLineItem
   lineNumber Int
   quantity   Quantity
   unitPrice  Money
-  subtotal   Money?
-  itemCount  Int?
+  subtotal   Money optional
+  itemCount  Int optional
 
 type Shipment
   description "How an invoice travels to the customer"
@@ -807,14 +807,14 @@ module Invoicing
 
         // In a mapping block and an event body 'tag' is reserved, so a field of
         // that name is escaped with '@'.
-        produces InvoiceTagged
-          for invoiceId
-          @tag     = tag
-          taggedAt = $context.occurred
-
-      event InvoiceTagged
-        @tag     InvoiceTag
-        taggedAt DateTime
+        produces event InvoiceTagged
+          description "An invoice was labeled for follow-up"
+          documentation
+            ```markdown
+            The label belongs to the invoice's event source, not its payload identity.
+            ```
+          @tag     InvoiceTag = tag
+          taggedAt DateTime   = $context.occurred
 
       screen TagInvoiceScreen
         template CommandDialog
@@ -848,7 +848,7 @@ module Invoicing
       command ChangeInvoiceStatus
         invoiceId InvoiceId identifier
         status    InvoiceStatus
-        note      String?
+        note      String optional
 
         authorize IsAccountant
 
@@ -881,11 +881,11 @@ module Invoicing
 
       event InvoiceSent
         sentAt DateTime
-        note   String?
+        note   String optional
 
       event InvoicePaid
         paidAt DateTime
-        note   String?
+        note   String optional
 
       event InvoiceMarkedOverdue
         overdueAt DateTime
@@ -1041,7 +1041,9 @@ module Invoicing
           olderThan < today  message "Can only archive invoices dated before today"
 
         handler
-          file Handlers/ArchiveOldInvoicesHandler.cs
+          implementation
+            hint "Archive only invoices dated before the requested cutoff"
+            file Handlers/ArchiveOldInvoicesHandler.cs
 
       event InvoicesArchived
         olderThan Date
@@ -1139,11 +1141,11 @@ module Invoicing
         lineCount      Int
         dueDate        Date
         channel        String
-        touched        Bool?
-        lastActivityAt DateTime?
+        touched        Bool optional
+        lastActivityAt DateTime optional
 
       // A keyed query is what identifies a read model instance in specifications.
-      query GetInvoiceListEntry => InvoiceListReadModel?
+      query GetInvoiceListEntry => InvoiceListReadModel optional
         description "One row of the invoice list"
         by invoiceId InvoiceId
         authorize CanManageInvoice
@@ -1151,8 +1153,8 @@ module Invoicing
       // 'from' fills a parameter from the query context instead of the caller.
       query ListInvoices => observable InvoiceListReadModel[]
         description "Every invoice the caller may see, narrowed by status and customer"
-        filter status     InvoiceStatus?
-        filter customerId CustomerId?
+        filter status     InvoiceStatus optional
+        filter customerId CustomerId optional
         filter tenantId   TenantId from $context.tenant
         authorize CanManageInvoice
 
@@ -1283,15 +1285,15 @@ module Invoicing
         registeredByUser     String
         registeredForSubject String
         displayLabel         String
-        sentAt               DateTime?
-        paidAt               DateTime?
-        overdueAt            DateTime?
-        customerName         String?
+        sentAt               DateTime optional
+        paidAt               DateTime optional
+        overdueAt            DateTime optional
+        customerName         String optional
         lineItems            InvoiceLineItem[]
-        shipping             Shipment?
-        lastUpdatedAt        DateTime?
+        shipping             Shipment optional
+        lastUpdatedAt        DateTime optional
 
-      query GetInvoice => InvoiceDetailsReadModel?
+      query GetInvoice => InvoiceDetailsReadModel optional
         description "One invoice with its lines, customer and shipping status"
         by invoiceId InvoiceId
         authorize CanManageInvoice
@@ -1425,7 +1427,7 @@ module Invoicing
         quantity   Quantity
         unitPrice  Money
 
-      query GetInvoiceLine => InvoiceLineReportReadModel?
+      query GetInvoiceLine => InvoiceLineReportReadModel optional
         by invoiceId InvoiceId
         authorize IsAccountant
 
@@ -1477,12 +1479,12 @@ module Invoicing
         summaryId        String
         totalCount       Int
         draftCount       Int
-        sentCount        Int?
-        paidCount        Int?
-        overdueCount     Int?
+        sentCount        Int optional
+        paidCount        Int optional
+        overdueCount     Int optional
         touches          Int
-        writeOffTotal    Money?
-        outstandingTotal Money?
+        writeOffTotal    Money optional
+        outstandingTotal Money optional
 
       // Nothing builds this one from events - its performer composes it from
       // stored invoices, so it declares its shape and no builder points at it.
@@ -1493,7 +1495,7 @@ module Invoicing
         status        InvoiceStatus
         dueDate       Date
 
-      query GetInvoiceSummary => observable InvoiceSummaryReadModel?
+      query GetInvoiceSummary => observable InvoiceSummaryReadModel optional
         description "The counters behind the dashboard header"
         by summaryId String
         authorize IsAccountant
@@ -1946,7 +1948,7 @@ module Invoicing
         paid        Money
         outstanding Money
 
-      query GetInvoiceBalance => InvoiceBalanceReadModel?
+      query GetInvoiceBalance => InvoiceBalanceReadModel optional
         by invoiceId InvoiceId
         authorize IsAccountant
 
@@ -1999,7 +2001,7 @@ module Invoicing
         reminders     Int
         lastChangedAt DateTime
 
-      query GetInvoiceAging => InvoiceAgingReadModel?
+      query GetInvoiceAging => InvoiceAgingReadModel optional
         by invoiceId InvoiceId
         authorize IsAccountant
 
@@ -2062,15 +2064,15 @@ module Invoicing
         paidAt    DateTime
         reminders Int
 
-      query GetDueInvoice => DueInvoice?
+      query GetDueInvoice => DueInvoice optional
         by invoiceId InvoiceId
         authorize IsAccountant
 
-      query GetOverdueInvoice => OverdueInvoice?
+      query GetOverdueInvoice => OverdueInvoice optional
         by invoiceId InvoiceId
         authorize IsAccountant
 
-      query GetSettledInvoice => SettledInvoice?
+      query GetSettledInvoice => SettledInvoice optional
         by invoiceId InvoiceId
         authorize IsAccountant
 
@@ -2160,7 +2162,7 @@ module Invoicing
         rate     ExchangeRate
         asOf     Date
 
-      query GetExchangeRate => ExchangeRateReadModel?
+      query GetExchangeRate => ExchangeRateReadModel optional
         description "The rate for one currency"
         by currency CurrencyCode
         authorize IsAccountant
@@ -2344,7 +2346,7 @@ module Invoicing
         dueDate       Date
         status        InvoiceStatus
 
-      query GetMyInvoice => CustomerInvoiceReadModel?
+      query GetMyInvoice => CustomerInvoiceReadModel optional
         by invoiceId InvoiceId
         authorize OwnsInvoice
 
@@ -2472,7 +2474,7 @@ module Invoicing
         used         Money
         lastAssessed Date
 
-      query GetMyCreditStatus => CustomerCreditReadModel?
+      query GetMyCreditStatus => CustomerCreditReadModel optional
         by customerId CustomerId from $context.identity.claims.customerId
         authorize OwnsInvoice
         performer
@@ -2525,7 +2527,7 @@ module Invoicing
         cancelledBy  String
         cancelledVia String
 
-      query GetCancelledInvoice => CancelledInvoiceReadModel?
+      query GetCancelledInvoice => CancelledInvoiceReadModel optional
         by invoiceId InvoiceId
         authorize IsAuditor
 
@@ -2581,9 +2583,9 @@ module Invoicing
       readmodel SourceActivityReadModel
         sourceId     String
         totalEvents  Int
-        lastOccurred DateTime?
+        lastOccurred DateTime optional
 
-      query GetSourceActivity => observable SourceActivityReadModel?
+      query GetSourceActivity => observable SourceActivityReadModel optional
         by sourceId String
         scoped to global
         authorize IsAuditor

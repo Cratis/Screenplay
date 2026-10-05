@@ -22,6 +22,7 @@ internal sealed class SyntaxMember(PropertyInfo property, ParameterInfo? paramet
     internal Type? ElementType { get; } = CollectionElement(property.PropertyType);
 
     internal bool Required => ElementType is null && !Nullable && Parameter?.HasDefaultValue != true &&
+        !(Property.DeclaringType == typeof(PropertySyntax) && Property.Name == nameof(PropertySyntax.IsGenerated)) &&
         !(Property.DeclaringType == typeof(EventSyntax) &&
           (Property.Name == nameof(EventSyntax.Generation) || Property.Name == nameof(EventSyntax.HasGenerationMarker)));
 
@@ -33,6 +34,8 @@ internal sealed class SyntaxMember(PropertyInfo property, ParameterInfo? paramet
             {
                 return Array.CreateInstance(ElementType, 0);
             }
+
+            if (Property.DeclaringType == typeof(PropertySyntax) && Property.Name == nameof(PropertySyntax.IsGenerated)) return false;
 
             if (Property.DeclaringType == typeof(EventSyntax))
             {

@@ -28,6 +28,8 @@ export function parseConstraint(context: ParserContext, line: SourceLine): Const
     const name = headerMatch?.[1] ?? firstWord(line.content);
     const rules: ConstraintSyntax[] = [];
     const releases: string[] = [];
+    const releasedEvents = new Set<string>();
+    const targets = new Set<string>();
     let message: string | null = null;
     let ignoreCasing = false;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
@@ -35,10 +37,11 @@ export function parseConstraint(context: ParserContext, line: SourceLine): Const
         const release = releasePattern.exec(child.content);
         const text = messagePattern.exec(child.content);
         if (release !== null) {
-            if (releases.includes(release[1])) {
+            if (releasedEvents.has(release[1])) {
                 context.error(DiagnosticCodes.DuplicateConstraintBody, `Constraint '${name}' already releases with event '${release[1]}'`, locationOf(child));
             } else {
                 releases.push(release[1]);
+                releasedEvents.add(release[1]);
             }
         } else if (text !== null) {
             if (message !== null) {
@@ -52,10 +55,10 @@ export function parseConstraint(context: ParserContext, line: SourceLine): Const
             }
             ignoreCasing = true;
         } else {
-            addRule(context, name, child, rules);
+            addRule(context, name, child, rules, targets);
         }
     }
-    for (const release of releases.filter(release => rules.some(rule => targetOf(rule) === release))) {
+    for (const release of releases.filter(release => targets.has(release))) {
         context.error(DiagnosticCodes.DuplicateConstraintBody, `Constraint '${name}' cannot target and release event '${release}'`, locationOf(line));
     }
     if (rules.length === 0) {
@@ -68,7 +71,7 @@ export function parseConstraint(context: ParserContext, line: SourceLine): Const
     return { ...rules[0], additionalRules: rules.slice(1), releasedBy: releases, message, ignoreCasing };
 }
 
-function addRule(context: ParserContext, name: string, line: SourceLine, rules: ConstraintSyntax[]): void {
+function addRule(context: ParserContext, name: string, line: SourceLine, rules: ConstraintSyntax[], targets: Set<string>): void {
     const parsed = parseRule(context, name, line);
     if (parsed === undefined) {
         return;
@@ -79,10 +82,11 @@ function addRule(context: ParserContext, name: string, line: SourceLine, rules: 
         return;
     }
     const target = targetOf(parsed);
-    if (target !== undefined && rules.some(existing => targetOf(existing) === target)) {
+    if (target !== undefined && targets.has(target)) {
         context.error(DiagnosticCodes.DuplicateConstraintBody, `Constraint '${name}' already targets event '${target}'`, locationOf(line));
         return;
     }
+    if (target !== undefined) targets.add(target);
     rules.push(parsed);
 }
 

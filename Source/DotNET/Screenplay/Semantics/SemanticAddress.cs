@@ -84,7 +84,22 @@ public enum SemanticKind
     /// <summary>
     /// A keyed-query argument.
     /// </summary>
-    QueryArgument = 13
+    QueryArgument = 13,
+
+    /// <summary>
+    /// An application trigger.
+    /// </summary>
+    Trigger = 14,
+
+    /// <summary>
+    /// A reaction.
+    /// </summary>
+    Reaction = 15,
+
+    /// <summary>
+    /// A capture.
+    /// </summary>
+    Capture = 16
 }
 
 /// <summary>
@@ -344,16 +359,41 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
     public static SemanticAddress ForSpecification(SemanticAddress slice, string name) => BuildSliceDeclaration(SemanticKind.Specification, slice, name);
 
     /// <summary>
+    /// Creates an application trigger address.
+    /// </summary>
+    /// <param name="application">The application identity.</param>
+    /// <param name="name">The trigger name.</param>
+    /// <returns>The trigger address.</returns>
+    public static SemanticAddress ForTrigger(ApplicationIdentity application, string name) =>
+        BuildApplicationDeclaration(SemanticKind.Trigger, application, name);
+
+    /// <summary>
+    /// Creates a reaction address in a slice.
+    /// </summary>
+    /// <param name="slice">The owning slice address.</param>
+    /// <param name="name">The reaction name.</param>
+    /// <returns>The reaction address.</returns>
+    public static SemanticAddress ForReaction(SemanticAddress slice, string name) => BuildSliceDeclaration(SemanticKind.Reaction, slice, name);
+
+    /// <summary>
+    /// Creates a capture address in a slice.
+    /// </summary>
+    /// <param name="slice">The owning slice address.</param>
+    /// <param name="name">The capture name.</param>
+    /// <returns>The capture address.</returns>
+    public static SemanticAddress ForCapture(SemanticAddress slice, string name) => BuildSliceDeclaration(SemanticKind.Capture, slice, name);
+
+    /// <summary>
     /// Creates a property address below a legal property owner.
     /// </summary>
-    /// <param name="owner">A composite-type, command, event-contract, or read-model address.</param>
+    /// <param name="owner">A composite-type, trigger, command, event-contract, or read-model address.</param>
     /// <param name="name">The property name.</param>
     /// <returns>The property address.</returns>
     public static SemanticAddress ForProperty(SemanticAddress owner, string name)
     {
-        if (owner is null || owner.Kind is not (SemanticKind.CompositeType or SemanticKind.Command or SemanticKind.EventContract or SemanticKind.ReadModel))
+        if (owner is null || owner.Kind is not (SemanticKind.CompositeType or SemanticKind.Trigger or SemanticKind.Command or SemanticKind.EventContract or SemanticKind.ReadModel))
         {
-            throw new InvalidSemanticContract("A property address requires a composite-type, command, event-contract, or read-model owner.");
+            throw new InvalidSemanticContract("A property address requires a composite-type, trigger, command, event-contract, or read-model owner.");
         }
 
         return Build(SemanticKind.Property, [.. owner.Parts, OwnerKindPart(owner.Kind), Part(SemanticAddressPartKind.Member, name)]);
@@ -454,8 +494,9 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
             SemanticKind.Module => Matches(parts, SemanticAddressPartKind.Application, SemanticAddressPartKind.Module),
             SemanticKind.Feature => IsFeature(parts),
             SemanticKind.Slice => IsSlice(parts),
-            SemanticKind.Concept or SemanticKind.CompositeType => Matches(parts, SemanticAddressPartKind.Application, SemanticAddressPartKind.Declaration),
-            SemanticKind.Command or SemanticKind.EventContract or SemanticKind.ReadModel or SemanticKind.Projection or SemanticKind.Query or SemanticKind.Specification => IsSliceDeclaration(parts),
+            SemanticKind.Concept or SemanticKind.CompositeType or SemanticKind.Trigger => Matches(parts, SemanticAddressPartKind.Application, SemanticAddressPartKind.Declaration),
+            SemanticKind.Command or SemanticKind.EventContract or SemanticKind.ReadModel or SemanticKind.Projection or SemanticKind.Query or SemanticKind.Specification or
+                SemanticKind.Reaction or SemanticKind.Capture => IsSliceDeclaration(parts),
             SemanticKind.Property => IsProperty(parts),
             SemanticKind.QueryArgument => IsQueryArgument(parts),
             _ => false
@@ -501,7 +542,7 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
 
         return ownerKind switch
         {
-            SemanticKind.CompositeType => Matches(ownerParts, SemanticAddressPartKind.Application, SemanticAddressPartKind.Declaration),
+            SemanticKind.CompositeType or SemanticKind.Trigger => Matches(ownerParts, SemanticAddressPartKind.Application, SemanticAddressPartKind.Declaration),
             SemanticKind.Command or SemanticKind.EventContract or SemanticKind.ReadModel => IsSliceDeclaration(ownerParts),
             _ => false
         };
@@ -545,7 +586,7 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
         }
 
         ownerKind = (SemanticKind)value;
-        return ownerKind is SemanticKind.CompositeType or SemanticKind.Command or SemanticKind.EventContract or SemanticKind.ReadModel or SemanticKind.Query;
+        return ownerKind is SemanticKind.CompositeType or SemanticKind.Trigger or SemanticKind.Command or SemanticKind.EventContract or SemanticKind.ReadModel or SemanticKind.Query;
     }
 
     static SemanticAddressPart Part(SemanticAddressPartKind kind, string key) => SemanticAddressPart.Create(kind, key);

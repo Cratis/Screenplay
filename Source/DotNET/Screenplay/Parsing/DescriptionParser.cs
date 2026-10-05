@@ -41,12 +41,18 @@ internal static partial class DescriptionParser
     /// <param name="owner">The owning declaration, used in diagnostics.</param>
     /// <param name="span">The exact source span of the raw quoted body when a new single-line description was accepted; otherwise <c>null</c>.</param>
     /// <returns>The parsed description, or <paramref name="existing"/> when the line is invalid or a duplicate.</returns>
-    internal static string? Parse(ParserContext context, SourceLine line, string? existing, string owner, out DescriptionSpan? span)
+    internal static string? Parse(ParserContext context, SourceLine line, string? existing, string owner, out DescriptionSpan? span) =>
+        Parse(context, line, existing, owner, false, out span);
+
+    internal static string? ParseEvent(ParserContext context, SourceLine line, string? existing, string owner) =>
+        Parse(context, line, existing, owner, true, out _);
+
+    static string? Parse(ParserContext context, SourceLine line, string? existing, string owner, bool allowMarkdown, out DescriptionSpan? span)
     {
         span = null;
         if (line.Content == "description")
         {
-            return ParseFenced(context, line, existing, owner);
+            return ParseFenced(context, line, existing, owner, allowMarkdown);
         }
 
         var match = DescriptionRegex().Match(line.Content);
@@ -66,9 +72,9 @@ internal static partial class DescriptionParser
         return description;
     }
 
-    static string? ParseFenced(ParserContext context, SourceLine line, string? existing, string owner)
+    static string? ParseFenced(ParserContext context, SourceLine line, string? existing, string owner, bool allowMarkdown)
     {
-        var text = CodeBlockParser.ParseFencedText(context, "description", line);
+        var text = CodeBlockParser.ParseFencedText(context, "description", line, allowMarkdown);
         if (text is null)
         {
             return existing;

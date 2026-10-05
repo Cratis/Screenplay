@@ -15,7 +15,7 @@ slice StateView ProductList
     authorize IsMerchandiser
 
   // The keyed query is what identifies a ProductListItem in specifications.
-  query ProductById => ProductListItem?
+  query ProductById => ProductListItem optional
     description "One product, as the price form is populated from it"
     by productId ProductId
     authorize IsMerchandiser

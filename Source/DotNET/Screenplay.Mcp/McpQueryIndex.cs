@@ -10,18 +10,27 @@ sealed class McpQueryIndex
     readonly Dictionary<(string Name, string Scope), List<McpDeclaration>> _prefixes = [];
     readonly Dictionary<(string Name, string Scope), List<McpDeclaration>> _suffixes = [];
     readonly Dictionary<(string Kind, string Address), McpDeclaration[]> _addresses;
+    readonly McpProductionInventory _productions;
+    readonly ILookup<string, McpDeclaration> _sources;
+    readonly ILookup<string, McpDeclaration> _streams;
+    readonly ILookup<string, McpDeclaration> _sourceValueTypes;
     readonly Dictionary<McpReference, McpDeclaration[]> _resolutions = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<(string Name, string Kinds, string Scope), McpDeclaration[]> _names = [];
+    readonly Dictionary<(string Name, string Kinds, string Scope), McpDeclaration[]> _productionNames = [];
     readonly Lock _resolutionLock = new();
     readonly Dictionary<McpDeclaration, List<McpQueryIndexResolution>> _incoming = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<McpReadOwner, List<McpReference>> _outgoing = [];
     readonly Dictionary<string, List<McpReference>> _outgoingByAddress = new(StringComparer.Ordinal);
     readonly List<McpQueryIndexResolution> _resolvedReferences = [];
 
-    internal McpQueryIndex(IEnumerable<McpDeclaration> declarations, IEnumerable<McpReference> references)
+    internal McpQueryIndex(IEnumerable<McpDeclaration> declarations, IEnumerable<McpReference> references, McpProductionInventory productions)
     {
         var declared = declarations.ToArray();
         _addresses = declared.GroupBy(declaration => (declaration.Kind, declaration.Address)).ToDictionary(group => group.Key, group => group.ToArray());
+        _productions = productions;
+        _sources = declared.Where(declaration => declaration.Kind == "EventSource" && declaration.Scope.Length == 0).ToLookup(declaration => declaration.Name, StringComparer.Ordinal);
+        _streams = declared.Where(declaration => declaration.Kind == "EventStream" && declaration.Scope.Length == 1).ToLookup(declaration => declaration.Address, StringComparer.Ordinal);
+        _sourceValueTypes = declared.Where(declaration => (declaration.Kind == "Concept" || declaration.Kind == "Type") && declaration.Scope.Length == 0).ToLookup(declaration => declaration.Name, StringComparer.Ordinal);
         foreach (var declaration in declared)
         {
             for (var depth = 0; depth <= declaration.Scope.Length; depth++)
@@ -60,6 +69,8 @@ sealed class McpQueryIndex
 
     internal McpDeclaration[] Find(string address, string kind) => _addresses.GetValueOrDefault((kind, address)) ?? [];
 
+    internal bool HasExactOwnershipCollision(string kind, string name, string[] scope) => _productions.HasExactOwnershipCollision(kind, name, scope);
+
     internal IEnumerable<McpQueryIndexResolution> Incoming(McpDeclaration declaration) => _incoming.GetValueOrDefault(declaration) ?? [];
 
     internal IEnumerable<McpReference> Outgoing(McpReadOwner owner) => _outgoing.GetValueOrDefault(owner) ?? [];
@@ -73,6 +84,40 @@ sealed class McpQueryIndex
             return resolved;
         }
 
+        if (reference.UseProductionCandidates)
+        {
+            var key = (reference.Name, ScopeKey(reference.Kinds.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)), ScopeKey(reference.Scope));
+            lock (_resolutionLock)
+            {
+                if (!_productionNames.TryGetValue(key, out var candidates))
+                {
+                    ResolutionCount++;
+                    candidates = _productions.ResolveReference(reference.Name, reference.Scope);
+                    CandidateInspectionCount += candidates.Length;
+                    _productionNames.Add(key, candidates);
+                }
+
+                return candidates;
+            }
+        }
+
+        return ResolveCachedName(reference);
+    }
+
+    static void Add<TKey, TValue>(Dictionary<TKey, List<TValue>> dictionary, TKey key, TValue value)
+        where TKey : notnull
+    {
+        if (!dictionary.TryGetValue(key, out var values))
+        {
+            values = [];
+            dictionary.Add(key, values);
+        }
+
+        values.Add(value);
+    }
+
+    McpDeclaration[] ResolveCachedName(McpReference reference)
+    {
         // Fixture queries also construct equivalent references on demand. Cache those
         // by meaning, not object identity, and serialize cache misses across readers.
         var key = (reference.Name, ScopeKey(reference.Kinds.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)), ScopeKey(reference.Scope));
@@ -89,20 +134,14 @@ sealed class McpQueryIndex
         }
     }
 
-    static void Add<TKey, TValue>(Dictionary<TKey, List<TValue>> dictionary, TKey key, TValue value)
-        where TKey : notnull
-    {
-        if (!dictionary.TryGetValue(key, out var values))
-        {
-            values = [];
-            dictionary.Add(key, values);
-        }
-
-        values.Add(value);
-    }
-
     McpDeclaration[] ResolveName(McpReference reference)
     {
+        if (reference.Kinds.Contains("EventSource", StringComparer.Ordinal))
+        {
+            var sources = _sources[reference.Name].ToArray();
+            return sources.Length > 0 ? sources : [.. _sourceValueTypes[reference.Name]];
+        }
+        if (reference.Kinds.Contains("EventStream", StringComparer.Ordinal)) return [.. _streams[reference.Name]];
         var segments = reference.Name.Split('.', StringSplitOptions.RemoveEmptyEntries);
         if (segments.Length == 0)
         {

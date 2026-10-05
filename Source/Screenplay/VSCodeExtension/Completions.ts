@@ -5,15 +5,19 @@ import * as vscode from 'vscode';
 import { ApplicationIndex } from './ApplicationIndex';
 import {
     CompletionEntry,
+    eventSourceCompletions,
     contextVariableItems,
     knownEventNames,
     knownTriggerNames,
     languageId,
-    mergeSymbols,
+    symbolsForBuffer,
+    operationCompletions,
     planCompletions,
     primitiveTypes,
     producesItems,
-    scanDocument,
+    responseCompletions,
+    typeReferenceSymbol,
+    typeReferenceText,
 } from '@cratis/screenplay-language';
 
 function snippetItem(entry: CompletionEntry): vscode.CompletionItem {
@@ -43,15 +47,18 @@ const providerFor = (index: ApplicationIndex): vscode.CompletionItemProvider => 
         const lines = document.getText().split(/\r?\n/);
         const currentLine = lines[position.line] ?? '';
         const textBefore = currentLine.substring(0, position.character);
-        const plan = planCompletions(lines, position.line, textBefore);
-        if (plan.kind === 'none') return [];
-
         const file = index.fileOf(document.uri);
-        const symbols = file === undefined ? scanDocument(lines) : mergeSymbols(scanDocument(lines), file.application.symbolsExcept(file.path));
-        const eventNames = () =>
-            [...new Set(knownEventNames(symbols))].map((name) =>
-                symbolItem(name, vscode.CompletionItemKind.Event, 'event'),
+        const application = file?.application.symbolsExcept(file.path);
+        const symbols = symbolsForBuffer(lines, application);
+        const responseEntries = eventSourceCompletions(lines, position.line, textBefore, symbols) ?? operationCompletions(lines, position.line, textBefore, symbols) ?? responseCompletions(lines, position.line, textBefore, symbols);
+        const plan = responseEntries === null ? planCompletions(lines, position.line, textBefore) : { kind: 'entries' as const, entries: responseEntries };
+        if (plan.kind === 'none') return [];
+        const eventNames = () => {
+            const inlineNames = new Set(symbols.events.filter(event => event.inline).map(event => event.name));
+            return [...new Set(knownEventNames(symbols))].map((name) =>
+                symbolItem(name, vscode.CompletionItemKind.Event, inlineNames.has(name) ? 'inline event' : 'event'),
             );
+        };
 
         switch (plan.kind) {
             case 'playFiles': {
@@ -98,7 +105,7 @@ const providerFor = (index: ApplicationIndex): vscode.CompletionItemProvider => 
                     symbolItem(
                         query.name,
                         vscode.CompletionItemKind.Function,
-                        `query => ${query.returnType}`,
+                        `query => ${typeReferenceText(query.returnTypeReference ?? typeReferenceSymbol(query.returnType))}`,
                     ),
                 );
             case 'types':

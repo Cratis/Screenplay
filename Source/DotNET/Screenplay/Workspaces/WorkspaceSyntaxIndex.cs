@@ -4,6 +4,8 @@
 using System.Collections;
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Files;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
@@ -84,12 +86,21 @@ public sealed class WorkspaceSyntaxIndex
             .ToArray());
 
     readonly IReadOnlyDictionary<WorkspaceNodeHandle, WorkspaceSyntaxEntry> _handles;
+    readonly IReadOnlyDictionary<string, PlacedPlayDocument> _placements;
 
-    WorkspaceSyntaxIndex(ImmutableArray<WorkspaceSyntaxEntry> entries, ImmutableArray<Diagnostic> diagnostics)
+    WorkspaceSyntaxIndex(ScreenplayWorkspace workspace, ImmutableArray<WorkspaceSyntaxEntry> entries, ImmutableArray<Diagnostic> diagnostics, IReadOnlyDictionary<string, PlacedPlayDocument> placements, CommandStreamCandidates candidates)
     {
+        Workspace = workspace;
+        _placements = placements;
+        StreamCandidates = candidates;
         Entries = entries;
         Diagnostics = diagnostics;
+        RepairableDiagnostics = [.. diagnostics.Concat(workspace.Compilation.Diagnostics).Distinct()];
+        RepairableDiagnosticSet = RepairableDiagnostics.ToHashSet();
         _handles = entries.ToDictionary(entry => entry.Handle);
+        var applications = entries.Select(entry => entry.Node).OfType<ApplicationSyntax>()
+            .Select(application => new CompilationResult<ApplicationSyntax>(application, [])).ToArray();
+        Productions = new(PlayFolderMerge.Merge(applications).Value!);
     }
 
     /// <summary>
@@ -98,32 +109,65 @@ public sealed class WorkspaceSyntaxIndex
     public ImmutableArray<WorkspaceSyntaxEntry> Entries { get; }
 
     /// <summary>
-    /// Gets parse diagnostics; erroneous documents are not indexed as editable syntax.
+    /// Gets parser diagnostics. Erroneous documents are not indexed as editable syntax except
+    /// fully retained command stream/property ambiguity candidates.
     /// </summary>
     public ImmutableArray<Diagnostic> Diagnostics { get; }
+
+    /// <summary>
+    /// Gets documents whose import placement is unresolved. They have no indexed semantic owner or identity.
+    /// Repair their conflicting or cyclic imports before selecting handlers or editing their AST.
+    /// </summary>
+    public ImmutableArray<WorkspaceDocument> UnresolvedPlacementDocuments =>
+        [.. Workspace.Documents.Where(document => !_placements[document.Path.Value].IsPlacementResolved)];
+
+    /// <summary>
+    /// Gets parser and compilation diagnostics for revision-bound repair discovery, preserving distinct messages.
+    /// </summary>
+    public ImmutableArray<Diagnostic> RepairableDiagnostics { get; }
+
+    internal ScreenplayWorkspace Workspace { get; }
+
+    internal AuthoringProductionResolver Productions { get; }
+
+    internal CommandStreamCandidates StreamCandidates { get; }
+
+    internal IReadOnlySet<Diagnostic> RepairableDiagnosticSet { get; }
 
     /// <summary>
     /// Creates an index from exact source without requiring ESM binding.
     /// </summary>
     /// <param name="workspace">The original workspace.</param>
-    /// <returns>The occurrence index and parser diagnostics.</returns>
+    /// <returns>The original occurrence index, parser diagnostics, and separate repair-discovery diagnostics.</returns>
     public static WorkspaceSyntaxIndex Create(ScreenplayWorkspace workspace)
     {
         var entries = ImmutableArray.CreateBuilder<WorkspaceSyntaxEntry>();
         var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
         var semantics = workspace.IdentityCatalog.Semantics.ToDictionary(assignment => assignment.Address, assignment => assignment.Id);
         var events = workspace.IdentityCatalog.EventContracts.ToDictionary(assignment => assignment.Address, assignment => assignment.Id);
+
+        // Use the same roots, source and placement resolution as workspace compilation. Index each
+        // original tree once, never the merged application; structural handles remain document-local.
+        var texts = workspace.Documents.ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal);
+        var (placed, importDiagnostics) = PlayImports.Resolve(texts.Keys, new InMemoryPlayDocumentSource(texts));
+        var placements = placed.ToDictionary(document => document.Path, StringComparer.Ordinal);
+        diagnostics.AddRange(importDiagnostics);
+        var compiler = new ScreenplayCompiler();
+        var candidates = ((ICommandStreamCandidateParser)compiler).CaptureCandidates(placed.Where(document => document.IsPlacementResolved)
+            .Select(document => (SourceLineSplitter.Split(document.Source, path: document.Path), document.Placement)));
         foreach (var document in workspace.Documents)
         {
-            var parsed = new ScreenplayCompiler().Parse(document.Text, document.Path.Value);
+            var placement = placements[document.Path.Value];
+            if (!placement.IsPlacementResolved) continue;
+            var parsed = compiler.ParseWithCandidates(document.Text, document.Path.Value, placement.Placement, candidates);
             diagnostics.AddRange(parsed.Diagnostics);
-            if (parsed.Success && parsed.Value is not null)
+            if (parsed.Value is not null && (parsed.Success || parsed.Diagnostics.All(diagnostic => diagnostic.Severity != DiagnosticSeverity.Error || diagnostic.Code == DiagnosticCodes.AmbiguousCommandStream)))
             {
                 Visit(parsed.Value, new(workspace.Revision, document.Id, string.Empty), null, null, null, [], workspace.IdentityCatalog.Application, semantics, events, entries);
             }
         }
 
-        return new(entries.ToImmutable(), diagnostics.ToImmutable());
+        return new(workspace, entries.ToImmutable(), diagnostics.ToImmutable(), placements, candidates);
     }
 
     /// <summary>
@@ -150,6 +194,28 @@ public sealed class WorkspaceSyntaxIndex
         return entries.ToImmutable();
     }
 
+    // Read traversal does not confer edit eligibility, semantic identities or resolved placement.
+    internal static ImmutableArray<WorkspaceSyntaxEntry> PhysicalEntries(ApplicationSyntax syntax, ScreenplayWorkspace workspace, WorkspaceDocument document)
+    {
+        var entries = ImmutableArray.CreateBuilder<WorkspaceSyntaxEntry>();
+        Visit(syntax, new(workspace.Revision, document.Id, string.Empty), null, null, null, [], workspace.IdentityCatalog.Application, new Dictionary<SemanticAddress, SemanticId>(), new Dictionary<SemanticAddress, EventContractId>(), entries);
+        return entries.ToImmutable();
+    }
+
+    internal SliceSyntax? OwningSlice(WorkspaceSyntaxEntry entry)
+    {
+        for (var current = entry; current is not null; current = current.Parent is { } parent ? Find(parent) : null)
+        {
+            if (current.Node is SliceSyntax slice) return slice;
+        }
+
+        return null;
+    }
+
+    internal PlayPlacement Placement(WorkspaceDocument document) => _placements[document.Path.Value].IsPlacementResolved
+        ? _placements[document.Path.Value].Placement
+        : throw new InvalidWorkspaceAuthoring($"UnresolvedPlacement: repair conflicting or cyclic imports for '{document.Path}' before editing its syntax.");
+
     static void Visit(
         SyntaxNode node,
         WorkspaceNodeHandle handle,
@@ -160,9 +226,16 @@ public sealed class WorkspaceSyntaxIndex
         ApplicationIdentity application,
         IReadOnlyDictionary<SemanticAddress, SemanticId> semantics,
         IReadOnlyDictionary<SemanticAddress, EventContractId> events,
-        ImmutableArray<WorkspaceSyntaxEntry>.Builder entries)
+        ImmutableArray<WorkspaceSyntaxEntry>.Builder entries,
+        IReadOnlyDictionary<string, int>? standaloneEventCounts = null)
     {
-        var address = WorkspaceSyntaxAddresses.Address(node, member, ancestors, application);
+        if (node is SliceSyntax slice)
+        {
+            standaloneEventCounts = slice.Events.GroupBy(@event => @event.Name, StringComparer.Ordinal)
+                .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
+        }
+
+        var address = WorkspaceSyntaxAddresses.Address(node, member, ancestors, application, standaloneEventCounts);
         var entry = new WorkspaceSyntaxEntry
         {
             Handle = handle,
@@ -183,7 +256,7 @@ public sealed class WorkspaceSyntaxIndex
             var path = $"{handle.Path}/{name}";
             if (value is SyntaxNode child)
             {
-                Visit(child, handle with { Path = path }, entry, name, null, lineage, application, semantics, events, entries);
+                Visit(child, handle with { Path = path }, entry, name, null, lineage, application, semantics, events, entries, standaloneEventCounts);
             }
             else if (value is IEnumerable children and not string)
             {
@@ -192,7 +265,7 @@ public sealed class WorkspaceSyntaxIndex
                 {
                     if (item is SyntaxNode childNode)
                     {
-                        Visit(childNode, handle with { Path = $"{path}/{childIndex}" }, entry, name, childIndex, lineage, application, semantics, events, entries);
+                        Visit(childNode, handle with { Path = $"{path}/{childIndex}" }, entry, name, childIndex, lineage, application, semantics, events, entries, standaloneEventCounts);
                     }
 
                     childIndex++;

@@ -105,6 +105,26 @@ public record SpecificationSyntax(
     /// Gets the assertion that the query performed by <c>when query</c> returns nothing, stated with <c>then no result</c>.
     /// </summary>
     public SpecificationNoResultSyntax? ThenNoResult { get; init; }
+
+    /// <summary>
+    /// Gets the syntax-only scalar or record response expectation.
+    /// </summary>
+    public SpecificationReturnSyntax? ThenReturns { get; init; }
+
+    /// <summary>
+    /// Gets the explicitly failing operation fixtures.
+    /// </summary>
+    public IEnumerable<SpecificationOperationFailureSyntax> GivenOperationFailures { get; init; } = [];
+
+    /// <summary>
+    /// Gets the requested operation value assertions.
+    /// </summary>
+    public IEnumerable<SpecificationOperationSyntax> ThenOperations { get; init; } = [];
+
+    /// <summary>
+    /// Gets the compensation assertions.
+    /// </summary>
+    public IEnumerable<SpecificationCompensatedSyntax> ThenCompensated { get; init; } = [];
 }
 
 /// <summary>
@@ -148,6 +168,11 @@ public record SpecificationCommandSyntax(
     /// It must agree with the command's semantic destination and is not a second source of truth.
     /// </remarks>
     public ExpressionSyntax? For { get; init; }
+
+    /// <summary>
+    /// Gets the nonidentifier generated-value fixtures, separate from request inputs.
+    /// </summary>
+    public IEnumerable<PropertyMappingSyntax> GeneratedValues { get; init; } = [];
 }
 
 /// <summary>

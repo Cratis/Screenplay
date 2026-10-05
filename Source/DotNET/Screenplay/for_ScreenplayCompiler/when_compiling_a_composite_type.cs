@@ -20,7 +20,7 @@ public class when_compiling_a_composite_type : given.a_compiler
           productName ProductName
           quantity    Quantity
           unitPrice   Money
-          discount    DiscountPercentage?
+          discount    DiscountPercentage optional
 
         module Invoicing
           feature Invoices

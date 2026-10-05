@@ -54,12 +54,36 @@ public sealed partial class SemanticModelBinder
                 .Where(_ => _.condition is not null)
                 .Select(_ => new SemanticRequirement(_.condition!, _.requirement.Message) { Severity = Severity(_.requirement.Severity) })
                 .ToImmutableArray();
-            var produced = command.Produces
+
+            // Binding a parsed tree directly must not silently promote an inline default onto a plain sibling.
+            if (command.Produces.Any(value => value.InlineEvent is not null && value.For is null))
+            {
+                foreach (var plain in command.Produces.Where(value => value.InlineEvent is null && value.For is null))
+                {
+                    Error(DiagnosticCodes.ExplicitProducesTargetsRequired, $"Production '{plain.Event}' in command '{command.Name}' must state 'for' explicitly - every production must state 'for' when destinations differ", plain.Location);
+                }
+            }
+
+            // Resolve the identifier once, and only when an inline omission needs it.
+            var identifier = command.Produces.Any(value => value.InlineEvent is not null && value.For is null)
+                ? command.Properties.SingleOrDefault(property => property.IsIdentifier)
+                : null;
+            var productions = command.Produces.Select(value => value.InlineEvent is not null && value.For is null
+                ? value with { For = identifier is not null
+                    ? new PathExpressionSyntax(identifier.Name, value.Location)
+                    : null }
+                : value).ToArray();
+            foreach (var production in productions.Where(value => value.InlineEvent is not null && value.For is null))
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"Inline event '{production.Event}' requires a command identifier or an explicit 'for'", production.Location);
+            }
+
+            var produced = productions
                 .Select(value => BindProducedEvent(command, value, propertiesByName, events))
                 .Where(_ => _ is not null)
                 .Select(_ => _!)
                 .ToImmutableArray();
-            var typedDestination = command.Produces.Any(value => value.For is PathExpressionSyntax source &&
+            var typedDestination = productions.Any(value => value.For is PathExpressionSyntax source &&
                 events.TryGetValue(value.Event, out var @event) && !@event.Properties.ContainsKey(source.Path));
             if (typedDestination) UsesV2 = true;
             var defaultDestination = typedDestination || UsesV2

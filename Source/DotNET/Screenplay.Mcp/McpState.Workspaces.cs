@@ -10,7 +10,7 @@ internal sealed partial class McpWorkspaces
     internal object State(JsonElement arguments)
     {
         var view = McpJson.OptionalString(arguments, "view") ?? "status";
-        var files = new McpManagedFiles(root);
+        var files = new McpManagedFiles(Root);
         var persisted = view == "status" || view == "persisted" ? files.Read(McpState.FileName) : null;
         var proposal = McpJson.OptionalString(arguments, "proposalId") is null ? null : Proposal(arguments);
         if (view != "status")
@@ -46,7 +46,7 @@ internal sealed partial class McpWorkspaces
     internal object Recover(JsonElement arguments)
     {
         var operationId = McpJson.RequiredString(arguments, "operationId");
-        var journal = McpRecoveryJournal.Load(root) ?? throw new McpFailure("NoPendingOperation: there is no operation to roll back.");
+        var journal = McpRecoveryJournal.Load(Root) ?? throw new McpFailure("NoPendingOperation: there is no operation to roll back.");
         if (operationId != journal.Record.OperationId)
         {
             throw new McpFailure("PendingOperationChanged: inspect workspace-state before recovering this operation.");
@@ -54,7 +54,7 @@ internal sealed partial class McpWorkspaces
 
         try
         {
-            new McpRecovery(root, journal).Rollback();
+            new McpRecovery(Root, journal).Rollback();
         }
         catch (Exception exception)
         {
@@ -62,6 +62,7 @@ internal sealed partial class McpWorkspaces
             {
                 success = false,
                 status = "RecoveryRequired",
+                failureKind = "RecoveryRequired",
                 operationId,
                 conflict = exception.Message,
                 recovery = "Marker and remaining backups retained. Restore unexpected external files separately, inspect workspace-state, then explicitly retry rollback."
@@ -117,9 +118,9 @@ internal sealed partial class McpWorkspaces
     {
         try
         {
-            var journal = McpRecoveryJournal.Load(root);
+            var journal = McpRecoveryJournal.Load(Root);
             return journal is null ? new { pending = false, operationId = (string?)null, canRollback = false, conflict = (string?)null }
-                : new McpRecovery(root, journal).Status();
+                : new McpRecovery(Root, journal).Status();
         }
         catch (Exception exception)
         {

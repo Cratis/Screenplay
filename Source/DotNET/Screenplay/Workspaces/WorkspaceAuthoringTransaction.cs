@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Text.Json;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
@@ -110,7 +111,13 @@ sealed class WorkspaceAuthoringTransaction(
     {
         var index = WorkspaceSyntaxIndex.Create(workspace);
         var edits = new WorkspaceAstEdits(index);
-        edits.Prepare(request.Operations);
+        if (request.Operations.OfType<MigrateOptionalTypeSpelling>().Any(operation => operation.Target is null || operation.Expected is null))
+        {
+            throw new InvalidWorkspaceAuthoring("Optionality migrations require a target and expected type.");
+        }
+
+        var spellingMigrations = request.Operations.OfType<MigrateOptionalTypeSpelling>().GroupBy(operation => operation.Target.Document).ToArray();
+        edits.Prepare([.. request.Operations.Where(operation => operation is not MigrateOptionalTypeSpelling)]);
         var candidates = workspace.Documents.ToDictionary(document => document.Id);
         var documentRenames = ImmutableArray.CreateBuilder<DocumentIdentityRename>();
         var retiredDocuments = ImmutableArray.CreateBuilder<string>();
@@ -159,25 +166,42 @@ sealed class WorkspaceAuthoringTransaction(
             }
         }
 
+        foreach (var spellings in spellingMigrations)
+        {
+            if (edits.Touched.Contains(spellings.Key) || targeted.Contains(spellings.Key) || !candidates.TryGetValue(spellings.Key, out var document))
+            {
+                throw new InvalidWorkspaceAuthoring("A spelling migration requires an existing document not targeted by another edit.");
+            }
+
+            candidates[spellings.Key] = WorkspaceOptionalityRepairs.Print(index, document, [.. spellings], request.Formatting, _diagnostics);
+        }
+
         edits.ValidateFragmentRenames(replacements);
+
+        // Printing uses the original placement to identify authored tokens. Structural validation waits
+        // until all source edits and document moves have settled the final import placements.
+        var intendedDocuments = new Dictionary<DocumentId, ApplicationSyntax>();
 
         // Every handle, expectation, typed slot, overlap and original anchor has now been validated.
         foreach (var (id, syntax) in edits.Apply())
         {
             var document = candidates[id];
-            candidates[id] = WorkspaceAuthoringPrinter.Print(id, document.StableKey, document.Path, document.Encoding, syntax, request.Formatting, _diagnostics, document);
+            intendedDocuments[id] = syntax;
+            candidates[id] = WorkspaceAuthoringPrinter.Print(id, document.StableKey, document.Path, document.Encoding, syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == id)), validatePlacement: false, candidates: index.StreamCandidates);
         }
 
         foreach (var replacement in replacements)
         {
             var document = candidates[replacement.Document];
-            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, document.Encoding, replacement.Syntax, request.Formatting, _diagnostics, document);
+            intendedDocuments[document.Id] = replacement.Syntax;
+            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, document.Encoding, replacement.Syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == document.Id)), validatePlacement: false, candidates: index.StreamCandidates);
         }
 
         foreach (var creation in creations)
         {
             var document = WorkspaceDocument.Create(creation.StableKey, creation.Path, []);
-            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, creation.Encoding, creation.Syntax, request.Formatting, _diagnostics);
+            intendedDocuments[document.Id] = creation.Syntax;
+            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, creation.Encoding, creation.Syntax, request.Formatting, _diagnostics, validatePlacement: false);
         }
 
         var ordered = candidates.Values.OrderBy(document => document.Id.ToString(), StringComparer.Ordinal).ToImmutableArray();
@@ -195,6 +219,20 @@ sealed class WorkspaceAuthoringTransaction(
         var compiler = new ScreenplayCompiler();
         var draftAuthoring = request.Validation == WorkspaceAuthoringValidation.Authoring && request.ReferencePolicy == WorkspaceAuthoringReferencePolicy.Draft;
         var texts = ordered.OrderBy(document => document.Path.Value, StringComparer.Ordinal).ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal);
+        var (placed, placementDiagnostics) = PlayImports.Resolve(texts.Keys, new InMemoryPlayDocumentSource(texts));
+        if (placed.Any(document => !document.IsPlacementResolved))
+        {
+            _diagnostics.AddRange(placementDiagnostics);
+            return Failure(WorkspaceConflictKind.CompilationFailed, "UnresolvedPlacement: repair conflicting or cyclic imports in the final document set before committing syntax edits.");
+        }
+
+        var placements = placed.ToDictionary(document => document.Path, document => document.Placement, StringComparer.Ordinal);
+        var streamCandidates = ((ICommandStreamCandidateParser)compiler).CaptureCandidates(placed.Select(document => (SourceLineSplitter.Split(document.Source, path: document.Path), document.Placement)));
+        foreach (var document in ordered.Where(document => intendedDocuments.ContainsKey(document.Id)))
+        {
+            WorkspaceAuthoringPrinter.Validate(document.Text, document.Path, intendedDocuments[document.Id], placements[document.Path.Value], _diagnostics, request.Formatting, streamCandidates);
+        }
+
         var (_, merged) = PlayApplicationAssembly.Compile(compiler, texts.Keys, new InMemoryPlayDocumentSource(texts), draftAuthoring);
         _diagnostics.AddRange(merged.Diagnostics);
         if (!merged.Success || merged.Value is null)
@@ -205,9 +243,17 @@ sealed class WorkspaceAuthoringTransaction(
         }
 
         var catalog = WorkspaceAuthoringIdentity.Migrate(workspace, request, ordered, merged.Value, documentRenames.ToImmutable(), retiredDocuments.ToImmutable());
+
+        // Original-source loader warnings are not evidence for different candidate sources.
+        var attachments = request.AttachmentLoader?.Invoke(ordered) ?? new AttachmentFileResult
+        {
+            Contents = workspace.AttachmentContents,
+            Diagnostics = []
+        };
         var compilation = ordered.IsEmpty
             ? ScreenplayWorkspace.EmptyCompilation()
-            : new SemanticModelCompiler().Compile(workspace.ApplicationName, ScreenplayWorkspace.CreateDocumentSet(ordered, catalog, workspace.AttachmentContents));
+            : new SemanticModelCompiler().Compile(workspace.ApplicationName, ScreenplayWorkspace.CreateDocumentSet(ordered, catalog, attachments.Contents));
+        compilation = compilation with { Diagnostics = [.. compilation.Diagnostics, .. attachments.Diagnostics] };
         if (request.Validation == WorkspaceAuthoringValidation.Executable && !compilation.Success)
         {
             return Failure(WorkspaceConflictKind.CompilationFailed, "The final source is authorable but is not executable by the semantic backend.") with
@@ -216,7 +262,7 @@ sealed class WorkspaceAuthoringTransaction(
             };
         }
 
-        var candidate = ScreenplayWorkspace.CreateValidated(workspace.ApplicationName, ordered, catalog, compilation, workspace.AttachmentContents);
+        var candidate = ScreenplayWorkspace.CreateValidated(workspace.ApplicationName, ordered, catalog, compilation, attachments.Contents, attachments.Diagnostics);
         var migrations = IdentifierMigrations(index, edits, referenceRenames);
         WorkspaceAuthoringReferences.Validate(workspace, candidate, request, _diagnostics, migrations);
         ValidateAbsenceKeys(request, index, candidate, edits, replacements, migrations);

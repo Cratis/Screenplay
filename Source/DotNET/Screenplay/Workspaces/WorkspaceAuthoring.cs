@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 
@@ -177,6 +178,10 @@ public sealed record WorkspaceAuthoringRequest
     /// Gets event contract assignments explicitly retired by deliberate removals.
     /// </summary>
     public ImmutableArray<SemanticAddress> RetiredEventAddresses { get; init; } = [];
+
+    // A physical host can supply final-source inputs before validation. Pure callers keep snapshot text, not old loader warnings.
+    // This is not serialized, persisted, or invoked during discovery.
+    internal Func<ImmutableArray<WorkspaceDocument>, AttachmentFileResult>? AttachmentLoader { get; init; }
 }
 
 /// <summary>

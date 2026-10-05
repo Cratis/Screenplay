@@ -29,7 +29,12 @@ enum WorkspaceTriviaChangeKind
     /// <summary>
     /// One property mapping changes its target property, patched from the mapping start to the end of its source.
     /// </summary>
-    Mapping = 3
+    Mapping = 3,
+
+    /// <summary>
+    /// An event identity pin is inserted or removed without reprinting the declaration.
+    /// </summary>
+    EventPin = 4
 }
 
 /// <summary>
@@ -49,7 +54,7 @@ sealed class WorkspaceTriviaChanges(IEnumerable<WorkspaceSyntaxEntry> entries)
 {
     readonly Dictionary<string, SyntaxNode> _spanned = entries
         .Where(entry => entry.Node is LiteralExpressionSyntax { RawLocation: not null, RawLength: not null } or
-            PropertyMappingSyntax { SourceLocation: not null, SourceLength: not null })
+            PropertyMappingSyntax { SourceLocation: not null, SourceLength: not null } or EventSyntax)
         .ToDictionary(entry => entry.Handle.Path, entry => entry.Node, StringComparer.Ordinal);
 
     /// <summary>
@@ -114,6 +119,11 @@ sealed class WorkspaceTriviaChanges(IEnumerable<WorkspaceSyntaxEntry> entries)
     WorkspaceTriviaChange? Atomic(JsonNode? before, JsonNode? after, string path)
     {
         var separator = path.LastIndexOf('/');
+        if (separator >= 0 && path[(separator + 1)..] == "id" && _spanned.GetValueOrDefault(path[..separator]) is EventSyntax)
+        {
+            return new(path[..separator], WorkspaceTriviaChangeKind.EventPin);
+        }
+
         if (separator >= 0 && path[(separator + 1)..] == "value" && _spanned.GetValueOrDefault(path[..separator]) is LiteralExpressionSyntax)
         {
             return new(path[..separator], WorkspaceTriviaChangeKind.LiteralValue);

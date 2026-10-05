@@ -10,6 +10,13 @@ export class LineReader {
 
     constructor(private readonly lines: readonly SourceLine[]) {}
 
+    // Independent lookahead must not consume the committed parser's source.
+    fork(): LineReader {
+        const reader = new LineReader(this.lines);
+        reader.#index = this.#index;
+        return reader;
+    }
+
     peekSignificant(): SourceLine | undefined {
         while (this.#index < this.lines.length && isBlank(this.lines[this.#index])) {
             this.#index++;

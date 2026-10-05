@@ -5,8 +5,11 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { DayOfWeek, IntervalUnit, InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from '../Syntax/Reactions';
 import { pattern } from '../Text/patterns';
 import { parseDescription } from './DescriptionParser';
+import { collectInputUses } from './InputUses';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
+import { parseTriggerData } from './TriggerDataParser';
+import { parseProduces } from './ProducesParser';
 import { locationOf, SourceLine } from './SourceLine';
 
 const header = pattern('^reaction\\s+([A-Za-z_]\\w*)$');
@@ -14,10 +17,8 @@ const whenPattern = pattern('^when\\s+([A-Za-z_]\\w*)$');
 const everyPattern = pattern('^every\\s+(\\d+)\\s+(seconds?|minutes?|hours?|days?)$');
 const atPattern = pattern('^at\\s+(\\d{2}:\\d{2})(?:\\s+on\\s+(?:(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)|day\\s+(\\d{1,2})))?$');
 const clauseKeywords = new Set(['when', 'every', 'at']);
-const producesPattern = pattern('^produces\\s+([A-Z]\\w*)$');
-const producesWhenPattern = pattern('^produces\\s+when\\s+(.+)$');
-const eventNamePattern = pattern('^([A-Z]\\w*)$');
 const invokesPattern = pattern('^invokes\\s+([A-Z]\\w*)$');
+const optionalReads = pattern('^reads\\s+[A-Z]\\w*\\s+optional(?:\\s|$)');
 
 export function parseReaction(context: ParserContext, line: SourceLine): ReactionSyntax {
     const name = header.exec(line.content)?.[1] ?? '';
@@ -26,6 +27,7 @@ export function parseReaction(context: ParserContext, line: SourceLine): Reactio
     }
     let description: string | null = null;
     const triggers: ReactionTriggerSyntax[] = [];
+    const sources = new Set<string>();
     // A reaction whose only trigger is misspelled has no trigger, but saying so as well turns one mistake
     // into two diagnostics.
     let reported = false;
@@ -51,11 +53,13 @@ export function parseReaction(context: ParserContext, line: SourceLine): Reactio
             reported = true;
             continue;
         }
-        if (triggers.some(existing => sameSource(existing.source, source))) {
+        const key = sourceKey(source);
+        if (sources.has(key)) {
             context.error(DiagnosticCodes.DuplicateReactionTrigger, `Reaction '${name}' already declares '${child.content}' - a second says nothing the first did not`, locationOf(child));
             context.skipBlock(child.indent);
             continue;
         }
+        sources.add(key);
         triggers.push(parseTrigger(context, child, source));
     }
     if (triggers.length === 0 && !reported) {
@@ -80,48 +84,36 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
             if (produced !== undefined) {
                 produces.push(produced);
             }
-        } else if (keyword === 'invokes' && invokesPattern.test(child.content)) {
-            invokes.push({ kind: 'InvokesSyntax', command: invokesPattern.exec(child.content)![1], location: locationOf(child) });
-            context.skipOpaqueBlock(child.indent);
-        } else {
+        } else if (keyword === 'invokes') {
+            const match = invokesPattern.exec(child.content);
+            if (match === null) {
+                context.error(DiagnosticCodes.InvalidInvokesDeclaration, `Invalid invokes declaration '${child.content}' - expected 'invokes <Command>'`, locationOf(child));
+                context.skipBlock(child.indent);
+            } else {
+                invokes.push({ kind: 'InvokesSyntax', command: match[1], location: locationOf(child) });
+                collectInputUses(context, child);
+            }
+        } else if (keyword === 'reads' || keyword === 'file' || child.content === 'csharp' || child.content.startsWith('```')) {
+            if (optionalReads.test(child.content)) {
+                context.error(DiagnosticCodes.OptionalReadsNotSupported, 'Optional reads are not yet supported (see #308).', locationOf(child));
+            }
             if (child.content.startsWith('```')) {
                 context.skipFencedBody();
             }
             context.skipOpaqueBlock(child.indent);
+        } else {
+            parseTriggerData(context, child);
         }
     }
     return { kind: 'ReactionTriggerSyntax', source, description, produces, invokes, location: locationOf(line) };
 }
 
-// 'produces <Event>' with its mappings, or 'produces when <condition>' with the event on the line below it.
-function parseProduces(context: ParserContext, line: SourceLine): ProducesSyntax | undefined {
-    const location = locationOf(line);
-    const unconditional = producesPattern.exec(line.content);
-    if (unconditional !== null) {
-        context.skipOpaqueBlock(line.indent);
-        return { kind: 'ProducesSyntax', event: unconditional[1], location };
+function sourceKey(source: TriggerSourceSyntax): string {
+    switch (source.kind) {
+        case 'NamedTriggerSourceSyntax': return JSON.stringify([source.kind, source.name]);
+        case 'IntervalTriggerSourceSyntax': return JSON.stringify([source.kind, source.amount, source.unit]);
+        case 'ScheduleTriggerSourceSyntax': return JSON.stringify([source.kind, source.time, source.dayOfWeek, source.dayOfMonth]);
     }
-    if (producesWhenPattern.test(line.content)) {
-        const eventLine = context.peekChild(line.indent);
-        const event = eventLine === undefined ? null : eventNamePattern.exec(eventLine.content);
-        context.skipOpaqueBlock(line.indent);
-        return event === null || event === undefined ? undefined : { kind: 'ProducesSyntax', event: event[1], location };
-    }
-    context.skipOpaqueBlock(line.indent);
-    return undefined;
-}
-
-function sameSource(left: TriggerSourceSyntax, right: TriggerSourceSyntax): boolean {
-    if (left.kind === 'NamedTriggerSourceSyntax' && right.kind === 'NamedTriggerSourceSyntax') {
-        return left.name === right.name;
-    }
-    if (left.kind === 'IntervalTriggerSourceSyntax' && right.kind === 'IntervalTriggerSourceSyntax') {
-        return left.amount === right.amount && left.unit === right.unit;
-    }
-    if (left.kind === 'ScheduleTriggerSourceSyntax' && right.kind === 'ScheduleTriggerSourceSyntax') {
-        return left.time === right.time && left.dayOfWeek === right.dayOfWeek && left.dayOfMonth === right.dayOfMonth;
-    }
-    return false;
 }
 
 // Reads a 'when', 'every' or 'at' clause - the port of the C# TriggerParser.ParseSource. The caller only

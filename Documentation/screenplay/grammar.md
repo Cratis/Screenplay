@@ -1,13 +1,24 @@
 # Grammar
 
-The full EBNF grammar of the Screenplay DSL. `INDENT`/`DEDENT` are synthesized by the lexer from changes in indentation (offside rule), as in Python. The PDL and CDL bodies are built-in first-class sub-grammars — see [Sub-languages and inline code](sub-languages.md).
+> Systems, operations, operation phases and their specification forms below are syntax-only authoring. Execution is unavailable until ESM v9 (`PLAY0268`); see [Operations and external systems](operations.md). A phase source or wrapper is not an admitted executable implementation role.
+
+> [Event sources, source-owned streams and command stream routes](event-sources.md) are authoring-only. Binding reports `PLAY0268`, naming their allocated ESM v10. Per-event overrides, observer filters, new concurrency flags, occurrence time and constraint scopes are not part of this increment.
+
+The Screenplay syntax reference in EBNF. `INDENT`/`DEDENT` represent indented bodies: parsers read lines at greater indentation until the body ends. PDL and CDL have their own [sub-grammars](sub-languages.md). The C# compiler validates the full language; the TypeScript compiler models a subset and recognizes the remaining shipped constructs as opaque bodies.
+
+Declarations and body directives can appear in any order unless a rule below states otherwise. A repeated group such as { A | B } means its members may appear in any order; it does not allow repeating singleton directives such as description, for or where. References may name declarations later in the document; scope and semantic checks still apply.
 
 ```ebnf
 (* ============================================================ *)
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ DomainDecl ], { Import }, { ConceptDecl }, { TypeDecl }, { PolicyDecl }, { PersonaDecl }, [ AuthenticationDecl ], { TriggerDecl }, { ThemeDecl }, { LayoutDecl }, { UiProfileDecl }, { BehaviorDecl }, { Module }, { SeedDecl } ;
+Document       = [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl
+               | PersonaDecl | AuthenticationDecl | TriggerDecl | ThemeDecl
+               | LayoutDecl | UiProfileDecl | BehaviorDecl | SystemDecl | EventSourceDecl | Module | SeedDecl } ;
+
+(* At most one domain and authentication block. Put domain first; the compiler
+   reports PLAY0004 when it follows another application declaration. *)
 
 (* A document a FileImport placed in a module or feature holds, besides the
    declarations above, the body of that module or feature at its top level - see
@@ -39,13 +50,46 @@ ImportPattern  = ? a path or glob relative to the importing file's folder -
    imported once, at the deepest placement - see imports.md.                  *)
 
 (* -------------------------------------------------------------- *)
+(* External systems — syntax-only                                  *)
+(* -------------------------------------------------------------- *)
+
+SystemDecl     = "system", Ident, NL,
+                 [ INDENT, { DescriptionDecl }, DEDENT ] ;
+
+(* Systems are application-scoped, including in placed files. They name external
+   systems without provider types or abilities. Systems, operations and their
+   specification steps are authoring-only: binding rejects them with PLAY0268;
+   executable admission is allocated to ESM v9, not available today. *)
+
+(* -------------------------------------------------------------- *)
+(* Event sources and streams — syntax-only                         *)
+(* -------------------------------------------------------------- *)
+
+EventSourceDecl = "eventsource", Ident, NL,
+                  [ INDENT, { EventDescriptionDecl | EventIdDecl
+                            | SourceIdentifierDecl | EventStreamDecl }, DEDENT ] ;
+SourceIdentifierDecl = "identifier", QualifiedName, NL ;
+EventStreamDecl = "stream", Ident, NL,
+                  [ INDENT, { EventDescriptionDecl | EventIdDecl | StreamIdentifierDecl }, DEDENT ] ;
+StreamIdentifierDecl = "streamId", QualifiedName, NL ;
+
+(* Sources belong to the application; streams belong to their physical parent.
+   A duplicate parent makes its children's ownership ambiguous. Identifier and
+   stream-id types are nonoptional scalars. Known stream-id types are limited to
+   text and UUID values and their nominal concepts, plus integer-backed concepts;
+   bare Int is rejected and unavailable imported shapes remain unresolved.
+   No formatter is executed. Description, rename-only id and identifier/streamId
+   directives appear at most once per declaration.
+   Pins retain old stored names only, not semantic ids. *)
+
+(* -------------------------------------------------------------- *)
 (* Concepts                                                        *)
 (* -------------------------------------------------------------- *)
 
 ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL,
-                   [ INDENT, [ FileDirective ], { AttributeReason }, { ConceptValidate }, DEDENT ]
+                   [ INDENT, { FileDirective | AttributeReason | ConceptValidate }, DEDENT ]
                | "concept", Ident, ":", "Enum", { Attribute }, NL,
-                   INDENT, [ FileDirective ], { AttributeReason }, { [ "@" ], Ident, NL }, { ConceptValidate }, DEDENT ;
+                   INDENT, { FileDirective | AttributeReason | [ "@" ], LowerIdent, NL | ConceptValidate }, DEDENT ;
 
 AttributeReason = AttributeName, "reason", StringLiteral, NL ;
 
@@ -66,7 +110,8 @@ AttributeName  = "pii" | "sensitive" ;
 (* -------------------------------------------------------------- *)
 
 TypeDecl       = "type", Ident, NL,
-                 INDENT, [ DescriptionDecl ], [ FileDirective ], PropertyLine, { PropertyLine }, DEDENT ;
+                 INDENT, { DescriptionDecl | FileDirective | PropertyLine }, DEDENT ;
+(* A type must have at least one property. *)
 
 (* -------------------------------------------------------------- *)
 (* Policies                                                        *)
@@ -115,8 +160,7 @@ ClaimTarget    = "subject"
 
 PersonaDecl    = "persona", Ident, NL,
                  INDENT,
-                   [ DescriptionDecl ],
-                   { "policy", Ident, NL },
+                   { DescriptionDecl | "policy", Ident, NL },
                  DEDENT ;
 
 (* -------------------------------------------------------------- *)
@@ -148,11 +192,8 @@ CompatibleWithDecl = "compatible", "with", PackageName, NL ;
 
 UiProfileDecl  = "ui", "profile", Ident, NL,
                  INDENT,
-                   [ TargetPlatformDecl ],
-                   [ TargetSizeDecl ],
-                   [ PackagesBlock ],
-                   [ ProfileLayoutDecl ],
-                   [ ProfileThemeDecl ],
+                   { TargetPlatformDecl | TargetSizeDecl | PackagesBlock
+                   | ProfileLayoutDecl | ProfileThemeDecl },
                  DEDENT ;
 
 TargetPlatformDecl = "target", "platform", PlatformName, { ",", PlatformName }, NL ;
@@ -207,22 +248,45 @@ Module         = "module", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 BehaviorDecl   = "behavior", Ident, NL,
-                 [ INDENT, [ DescriptionDecl ], [ FileDirective ],
-                   { "parameter", Ident, [ TypeRef ], NL | "order", SignedInteger, NL | InteractionBinding }, DEDENT ] ;
+                 [ INDENT, { DescriptionDecl | FileDirective
+                   | "parameter", Ident, [ RequiredTypeRef ], NL
+                   | "order", SignedInteger, NL | InteractionBinding }, DEDENT ] ;
 
 InteractionBinding = "on", InteractionTrigger, NL,
-                 INDENT, { "where", Condition, NL | InteractionAction }, DEDENT ;
+                 INDENT, { "where", BindingText, NL | InteractionAction }, DEDENT ;
 
 UsesBehaviorDecl = "uses", Ident, NL,
                  [ INDENT, { Ident, BehaviorArgument, NL }, DEDENT ] ;
 BehaviorArgument = ? nonempty argument text (literal, binding or parameter) ? ;
 SignedInteger  = [ "-" ], Integer ;
 
-(* Interaction triggers, actions and continuations are described in
-   interactions.md; the same attachments also occur in layouts, templates,
-   forms and screens. *)
-InteractionTrigger = ? built-in kind or declared application trigger ? ;
-InteractionAction = ? interaction action with optional continuation ? ;
+InteractionTrigger = "click" | "double", "click" | "select" | "submit"
+                   | "change" | "load" | "unload" | "enter" | "leave"
+                   | "event", QualifiedName
+                   | "interval", Integer, IntervalUnit
+                   | Ident ; (* declared application trigger; starts uppercase *)
+
+InteractionAction = InteractionActionHeader, NL,
+                    [ INDENT, { InteractionArgument | InteractionContinuation }, DEDENT ] ;
+InteractionActionHeader = "execute", QualifiedName
+                        | "navigate", "to", QualifiedName | "navigate", "back"
+                        | "open", "dialog", QualifiedName | "close", "dialog"
+                        | "refresh", QualifiedName
+                        | "set", Path, "to", BindingText
+                        | "notify", ( "info" | "warning" | "error" ), InteractionMessage
+                        | "confirm", InteractionMessage
+                        | "raise", QualifiedName ;
+InteractionArgument = "with", Ident, "from", BindingText, NL ;
+InteractionMessage = LocalizableString | Path ;
+InteractionContinuation = "on", ( "success" | "failure" | "result" ), NL,
+                          INDENT, { InteractionAction }, DEDENT ;
+BindingText    = ? nonempty remainder of the line, stored verbatim ? ;
+
+(* A binding needs at least one action and at most one where guard. Guards,
+   set values and argument bindings are opaque text, not Condition operands.
+   on success/failure are allowed only on execute, refresh, confirm, open dialog
+   and raise; on result only on open dialog. Continuations nest up to 16 action
+   levels. An interval below 5 seconds warns. See interactions.md. *)
 
 (* -------------------------------------------------------------- *)
 (* Forms and contributions                                         *)
@@ -233,7 +297,7 @@ FormDecl       = "form", Ident, "for", QualifiedName, NL,
 
 FormDirective  = FormPopulateDecl
                | FormFieldDecl
-               | FormSubmitDecl ;
+               | FormSubmitDecl | InteractionBinding | UsesBehaviorDecl ;
 
 FormPopulateDecl = "populate", "via", "query", QualifiedName, [ "by", Ident ], NL
                  | "populate", "from", "item", NL ;
@@ -268,14 +332,16 @@ LayoutDecl     = "layout", Ident, NL,
                  INDENT, StructureBody, DEDENT ;
 
 ScreenTemplateDecl = "screen", "template", Ident, NL,
-                 INDENT, [ FitsSlotDecl ], StructureBody, DEDENT ;
+                 INDENT, { FitsSlotDecl | SlotDecl | ArrangementDecl
+                         | InteractionBinding | UsesBehaviorDecl }, DEDENT ;
 
 DialogTemplateDecl = "dialog", "template", Ident, NL,
                  INDENT, StructureBody, DEDENT ;
 
 FitsSlotDecl   = "fits", "slot", Ident, NL ;
 
-StructureBody  = { SlotDecl }, [ ArrangementDecl ] ;
+StructureBody  = { SlotDecl | ArrangementDecl | InteractionBinding | UsesBehaviorDecl } ;
+(* At most one arrangement; a screen template has at most one fits slot. *)
 
 SlotDecl       = Ident, [ "contributes", Ident ], NL ;
 
@@ -339,11 +405,12 @@ Feature        = "feature", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 SliceDecl      = "slice", SliceType, Ident, NL,
-                 INDENT, [ DescriptionDecl ], [ FileDirective ], { SliceBody }, DEDENT ;
+                 INDENT, { DescriptionDecl | FileDirective | SliceBody }, DEDENT ;
 
 SliceType      = "StateChange" | "StateView" | "Automation" | "Translate" ;
 
 SliceBody      = EventDecl
+               | OperationDecl
                | CommandDecl
                | QueryDecl
                | ReadModelDecl
@@ -356,10 +423,10 @@ SliceBody      = EventDecl
                | ConstraintDecl ;
 
 ReadModelDecl  = "readmodel", Ident, NL,
-                 INDENT, [ DescriptionDecl ], [ FileDirective ], { PropertyLine }, DEDENT ;
+                 INDENT, { DescriptionDecl | FileDirective | PropertyLine }, DEDENT ;
 
 ReducerDecl    = "reducer", Ident, "=>", Ident, NL,
-                 INDENT, [ DescriptionDecl ], { ReducerRule }, DEDENT ;
+                 INDENT, { DescriptionDecl | ReducerRule }, DEDENT ;
 
 ReducerRule    = "on", Ident, NL,
                  [ INDENT, [ DescriptionDecl ], [ FileDirective | InlineBlock ], DEDENT ] ;
@@ -380,7 +447,14 @@ ReducerRule    = "on", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 EventDecl      = "event", Ident, [ "generation", PositiveUInt32 ], NL,
-                 INDENT, [ FileDirective ], { TagDecl }, { PropertyLine }, DEDENT ;
+                 INDENT, { FileDirective | EventMetadata | TagDecl | PropertyLine }, DEDENT ;
+
+EventMetadata  = EventDescriptionDecl | DocumentationDecl | EventIdDecl ;
+
+EventDescriptionDecl = "description", ( StringLiteral | EventFencedText ), NL ;
+EventIdDecl    = "id", StringLiteral, NL ;        (* nonempty old persisted name; at most one *)
+DocumentationDecl = "documentation", NL, INDENT,
+                    "```markdown", NL, { AnyLine }, "```", NL, DEDENT ;
 
 (* Without a marker the generation is 1. Declarations of the same event name in
    the same slice are complete, distinct revisions and must be numbered from 1
@@ -397,12 +471,21 @@ TagValue       = Ident
 
 Path           = Ident, { ".", Ident } ;
 
-PropertyLine   = [ "@" ], Ident, TypeRef, [ "identifier" ], NL ;
+PropertyLine   = [ "@" ], Ident, TypeRef, [ "generated" ], [ "identifier" ], NL ;
+
+(* "generated" is command-only and requires a required scalar Uuid-backed concept.
+   Generated values and responses are syntax-only: binding reports PLAY0268. *)
 
 (* "identifier" is only accepted on a command property, and on at most one of
    them - it marks the property a runtime resolves the event source id from.  *)
 
-TypeRef        = Ident, [ "[]" ], [ "?" ] ;
+TypeRef        = QualifiedName, [ "[]" ], [ "optional" | "?" ] ;
+RequiredTypeRef = QualifiedName, [ "[]" ] ;
+
+(* "optional" follows the complete type, including any collection marker.
+   It is case-sensitive and contextual, not a reserved name. The attached ?
+   suffix still parses, with information diagnostic PLAY0479; prefer optional. Modifiers cannot
+   be repeated. Optional reads are not yet supported. *)
 
 (* -------------------------------------------------------------- *)
 (* Commands                                                        *)
@@ -410,14 +493,38 @@ TypeRef        = Ident, [ "[]" ], [ "?" ] ;
 
 CommandDecl    = "command", Ident, NL,
                  INDENT,
-                   [ DescriptionDecl ],
-                   { PropertyLine },
-                   { ReadsDecl },
-                   [ AuthorizeDecl ],
-                   { ValidateDecl },
-                   ( { ProducesDecl } | HandlerDecl ),
-                   [ ConcurrencyDecl ],
+                   { DescriptionDecl | PropertyLine | ReadsDecl | AuthorizeDecl
+                   | ValidateDecl | ProducesDecl | HandlerDecl | ConcurrencyDecl | CommandResponse | CommandStreamDecl },
                  DEDENT ;
+
+(* A command cannot have both produces and handler. At most one concurrency
+   block; repeated authorize lines combine with and in authored order. *)
+
+CommandStreamDecl = "stream", Ident, ".", Ident, NL,
+                    [ INDENT, "streamId", "=", MappingSource, NL, DEDENT ] ;
+
+(* At most one authored command route, including on a handler command. It selects
+   classification, not the identity destination supplied by for. Resolve exact
+   headers once against the complete immutable compilation input and authoritative
+   import placements: @stream Qualified.Type and modified property forms remain
+   properties; production stream mappings remain payload. A uniquely owned route
+   and a viable imported value type together produce blocking PLAY0505 with both
+   candidates retained. A known source with missing/duplicate stream ownership
+   produces PLAY0504. Neither resolved interpretation keeps legacy property syntax,
+   including deeper legacy members and unknown-type evidence. A nested streamId
+   does not force route interpretation; typo sources are not distinguishable from
+   unresolved qualified property types by spelling alone. Every ambiguous or duplicate
+   header is retained structurally in streamCandidates; stream holds at most one
+   unambiguous route. Invalid candidate drafts support syntax JSON transport, but
+   printing and folder expansion refuse them with InvalidSyntaxJson. *)
+
+CommandResponse = "returns", [ "@" ], Ident, NL
+                | "returns", NL, INDENT, ResponseField, { ResponseField }, DEDENT ;
+ResponseField  = [ "@" ], LowerIdent, [ TypeRef ], "=", [ "@" ], LowerIdent, NL ;
+(* At most one unconditional response. A two-token returns line refers to a source
+   only when that source is another property of the same command. Otherwise it is
+   a property declaration. @returns Type forces a property; returns @name forces
+   a response. Types are inferred or must exactly match the direct source. *)
 
 ReadsDecl      = "reads", Ident, [ "as", LowerIdent ], [ "by", LowerIdent ], NL ;
 
@@ -445,9 +552,9 @@ AuthorizeDecl  = "authorize", PolicyRequirement, NL ;
 
 PolicyRequirement = PolicyAll, { "or", PolicyAll } ;
 
-PolicyAll      = PolicyOperand, { [ "and" ], PolicyOperand } ;
+PolicyAll      = PolicyRequirementOperand, { [ "and" ], PolicyRequirementOperand } ;
 
-PolicyOperand  = PolicyRef
+PolicyRequirementOperand = PolicyRef
                | "(", PolicyRequirement, ")" ;
 
 PolicyRef      = Ident ;
@@ -466,8 +573,9 @@ ValidationRule = Path, RuleOp, [ "severity", ValidationSeverity ], [ "message", 
                    [ INDENT, RuleImplementation, DEDENT ] ;
 
 RequireRule    = "require", Condition, NL,
-                   [ INDENT, [ "severity", ValidationSeverity, NL ],
-                     [ "message", LocalizableString, NL ], DEDENT ] ;
+                   [ INDENT, { "severity", ValidationSeverity, NL
+                             | "message", LocalizableString, NL }, DEDENT ] ;
+(* At most one severity directive per require. *)
 
 ValidationSeverity = "information" | "warning" | "error" ;
 
@@ -510,7 +618,7 @@ RuleImplementation = FileDirective
    block yields the message of every rule the artifact breaks -
    see Documentation/screenplay/context.md.                                  *)
 
-Value          = Number | StringLiteral | "today" | "true" | "false" | Path ;
+Value          = Number | StringLiteral | "today" | "true" | "false" | "null" | Path ;
 
 (* "max" and "min" take their meaning from the property type: a text length or
    a number's value. In a ValidationRule a Path operand names a member of an
@@ -521,28 +629,46 @@ Value          = Number | StringLiteral | "today" | "true" | "false" | Path ;
 (* Produces                                                        *)
 (* -------------------------------------------------------------- *)
 
-ProducesDecl   = "produces", Ident, NL,
-                   [ INDENT, [ ForDecl ], { TagDecl }, { PropertyMapping }, DEDENT ]
+ProducesDecl   = "produces", ProductionReference, NL,
+                   [ INDENT, { ForDecl | TagDecl | PropertyMapping }, DEDENT ]
                | "produces", "when", Condition, NL,
-                   INDENT, Ident, NL,
-                   [ INDENT, [ ForDecl ], { TagDecl }, { PropertyMapping }, DEDENT ],
-                   DEDENT ;
+                   INDENT, ProductionReference, NL,
+                   [ INDENT, { ForDecl | TagDecl | PropertyMapping }, DEDENT ],
+                   DEDENT
+               | InlineEventProduction
+               | InlineOperationProduction ;
 
+ProductionReference = Ident | QualifiedOperationReference ;
+QualifiedOperationReference = Ident, ".", Ident, { ".", Ident } ;
+(* A qualified production must resolve to an explicit operation declaration.
+   Event productions retain their existing bare-name grammar and binding rules.
+   Operations have no for destination or event metadata and do not participate
+   in event destination defaults. Plain references never declare a target. *)
+
+InlineEventProduction = "produces", "event", Ident, NL,
+                        [ INDENT, { ForDecl | TagDecl | EventMetadata | TypedMapping }, DEDENT ] ;
+TypedMapping   = [ "@" ], Ident, TypeRef, "=", MappingSource, NL ;
 ForDecl        = "for", MappingSource, NL ;
 
-(* Where the event lands. Absent, it lands on the command's own event source,
-   which is the common case and stays unstated. A decision that appends to
-   several event sources is several "produces", each saying where it goes -
-   which is what the handler doing it already looks like.                    *)
+(* InlineEventProduction is allowed only inside commands. It declares a slice-owned
+   generation-1 event; origin and generation are forbidden. Tags are event-type tags.
+   At most one for, id, description and documentation directive is allowed.
+   An inline omission means the command identifier only when no production names
+   another source and no plain production omits for. Otherwise every destination
+   must be explicit. Typed payload property names must be unique (PLAY0168).
+   Plain omission retains legacy allocation semantics. Cross-source execution is not admitted.
+   Unescaped namespace, sequence, correlation, causation, causedBy and occurred
+   are reserved system-assigned metadata in both production forms. *)
 
-(* Combines exactly as a policy condition does - see the note under Policies. *)
+(* At most one for directive in each production. A conditional production has
+   one event child, not a list of alternative events. Conditions combine as
+   policy conditions do - see the note under Policies. *)
 
 Condition      = ConditionAnd, { "or", ConditionAnd } ;
 
 ConditionAnd   = ConditionOperand, { "and", ConditionOperand } ;
 
-ConditionOperand = Ident, CompOp, Value
-               | Ident, CompOp, Ident
+ConditionOperand = Path, CompOp, Value
                | "(", Condition, ")" ;
 
 CompOp         = "==" | "!=" | ">" | ">=" | "<" | "<="
@@ -589,11 +715,44 @@ IdentityProp   = "id" | "name" | "userName" | "isAuthenticated"
 Expression     = (* arithmetic / method-call expression — freeform *) ;
 
 (* -------------------------------------------------------------- *)
+(* Operations — syntax-only                                        *)
+(* -------------------------------------------------------------- *)
+
+OperationDecl  = "operation", Ident, NL,
+                 INDENT, { DescriptionDecl | UsesSystem | OperationInput | OperationPhase }, DEDENT ;
+InlineOperationProduction = "produces", "operation", Ident, NL,
+                 INDENT, { DescriptionDecl | UsesSystem | TypedMapping | OperationPhase }, DEDENT ;
+UsesSystem     = "uses", Ident, NL ;
+OperationInput = [ "@" ], Ident, TypeRef, NL ;
+OperationPhase = ( "execute" | "compensate" ), NL,
+                 [ INDENT, { DescriptionDecl | FileDirective | InlineBlock | OperationImplementation }, DEDENT ] ;
+OperationImplementation = "implementation", NL,
+                 [ INDENT, { ImplementationHint | FileDirective | InlineBlock }, DEDENT ] ;
+
+(* Operations are slice-owned and command-only; event and operation names share
+   the slice namespace. Exactly one uses must resolve to a declared system.
+   Each phase occurs at most once and owns at most one file OR tagged fence;
+   wrapped and direct sources cannot mix. Hints are ordered and nonblank.
+   Inputs cannot be identifier or generated properties. Code and phases are
+   optional: intent-only and description-only forms remain valid authoring.
+   New words are contextual, not globally reserved property names. Within an
+   operation, @uses escapes an input named uses; event metadata input names
+   also use @. Typed inputs named execute or compensate are not phase headers.
+   Execution, failure fixtures and compensation remain unavailable until ESM v9. *)
+
+(* -------------------------------------------------------------- *)
 (* Handler                                                         *)
 (* -------------------------------------------------------------- *)
 
 HandlerDecl    = "handler", NL,
-                 INDENT, ( FileDirective | InlineBlock ), DEDENT ;
+                 INDENT, ( FileDirective | InlineBlock | HandlerImplementation ), DEDENT ;
+HandlerImplementation = "implementation", NL,
+                        [ INDENT, { ImplementationHint | FileDirective | InlineBlock }, DEDENT ] ;
+ImplementationHint = "hint", StringLiteral, NL ;
+(* The handler wrapper retains its existing contract: hints are ordered, nonblank quoted strings.
+   At most one payload (file OR tagged fence); direct and wrapped sources cannot mix.
+   A bare or hints-only implementation is pending, not executable.
+   Operation phases also support a wrapper; forms on other owners are deferred. *)
 
 (* -------------------------------------------------------------- *)
 (* Queries                                                         *)
@@ -601,12 +760,8 @@ HandlerDecl    = "handler", NL,
 
 QueryDecl      = "query", Ident, "=>", [ "observable" ], TypeRef, NL,
                  [ INDENT,
-                     [ DescriptionDecl ],
-                     [ ByClause ],
-                     { FilterClause },
-                     [ ScopeDecl ],
-                     [ AuthorizeDecl ],
-                     [ PerformerDecl ],
+                     { DescriptionDecl | ByClause | FilterClause | ScopeDecl
+                     | AuthorizeDecl | PerformerDecl },
                    DEDENT ] ;
 
 (* "observable" qualifies the return type as a live read - the query keeps
@@ -634,8 +789,12 @@ PerformerDecl  = "performer", NL,
 (* Projections — PDL sub-language                                  *)
 (* -------------------------------------------------------------- *)
 
-ProjectionDecl = "projection", Ident, "=>", Ident, NL,
+ProjectionDecl = "projection", QualifiedName, [ "=>", QualifiedName ], NL,
                  INDENT, PDLBody, DEDENT ;
+
+(* Variant groups omit the target: each variant names its read model.
+   A non-variant projection in a Screenplay application needs a target to bind
+   its read model. Standalone PDL also accepts a targetless header. *)
 
 PDLBody        = (* Projection Declaration Language grammar - covers the projection
                     directives (automap, sequence, file, key), the from/every/join/
@@ -661,7 +820,8 @@ CDLBody        = (* Change Data Capture Language grammar - covers source/key/map
 SpecificationDecl = "specification", Ident, NL,
                  INDENT, [ FileDirective ], { SpecificationGiven | SpecificationWhen | SpecificationThen }, DEDENT ;
 
-SpecificationGiven = "given", "caller", NL,
+SpecificationGiven = OperationFailureFixture
+               | "given", "caller", NL,
                  [ INDENT, { "authenticated", NL | "role", StringLiteral, NL | "claim", StringLiteral, "=", StringLiteral, NL }, DEDENT ]
                | "given", "readmodel", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
@@ -675,7 +835,9 @@ SpecificationGiven = "given", "caller", NL,
    occurrence time of everything it does. "given capture" states an earlier record
    of a capture's source, so a value transition has something to transition from. *)
 
-SpecificationWhen = "when", ( Ident | "append", Ident ), NL,
+SpecificationWhen = "when", Ident, NL,
+                 [ INDENT, { SpecificationEventSource | PropertyMapping | GeneratedFixture }, DEDENT ]
+               | "when", "append", Ident, NL,
                  [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ]
                | "when", "clock", StringLiteral, NL
                | "when", "trigger", Ident, NL,
@@ -691,7 +853,29 @@ SpecificationWhen = "when", ( Ident | "append", Ident ), NL,
    one record of its source. "when query" performs a query with its arguments;
    its outcome is "then result", "then no result" or "then denied".           *)
 
-SpecificationThen = "then", "readmodel", Ident, [ "exactly" ], NL,
+GeneratedFixture = "generated", LowerIdent, "=", ConcreteValue, NL ;
+ReturnExpectation = "then", "returns", ConcreteValue, NL
+                  | "then", "returns", NL, INDENT, ReturnField, { ReturnField }, DEDENT ;
+ReturnField    = LowerIdent, "=", ConcreteValue, NL ;
+ConcreteValue  = ? a completely consumed literal, list or object, without raw expressions ? ;
+(* Fixtures and return expectations are syntax-only, unavailable until ESM v8.
+   Generated identifiers use SpecificationEventSource, not GeneratedFixture.
+   Return expectations require a command and cannot accompany errors or denial. *)
+
+OperationFailureFixture = "given", "operation", QualifiedName, "fails", NL ;
+OperationExpectation = "then", "operation", QualifiedName, NL,
+                 [ INDENT, { OperationValue }, DEDENT ] ;
+OperationValue = Path, "=", ConcreteValue, NL ;
+CompensationExpectation = "then", "compensated", QualifiedName, NL ;
+(* Failure and compensation lines are leaves. Operation assertions may be partial
+   but require compatible concrete values. All three require an operation-kind
+   reference and a command action; compensation must be declared. These forms
+   are syntax-only and rejected by executable binding until ESM v9 admission. *)
+
+SpecificationThen = ReturnExpectation
+               | OperationExpectation
+               | CompensationExpectation
+               | "then", "readmodel", Ident, [ "exactly" ], NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "then", "no", "readmodel", Ident, "for", Expression, NL
                | "then", "query", QualifiedName, [ "exactly" ], NL,
@@ -778,23 +962,18 @@ ConstraintOption = "released", "by", Ident, NL
 
 ReactionDecl   = "reaction", Ident, NL,
                  INDENT,
-                   [ DescriptionDecl ],
-                   TriggerClause, { TriggerClause },
-                   [ WhereDecl ],
+                   { DescriptionDecl | TriggerClause | WhereDecl },
                  DEDENT ;
 
-(* A trigger with no body is a complete statement of intent - the reaction runs
+(* A reaction needs at least one trigger and at most one where condition.
+   A trigger with no body is a complete statement of intent - the reaction runs
    when that happens. The file reference and the inline block are optional
    realization metadata.                                                      *)
 
 TriggerClause  = TriggerSource, NL,
                  [ INDENT,
-                     [ DescriptionDecl ],
-                     { TriggerValue },
-                     { ReadsDecl },
-                     { ProducesDecl },
-                     { InvokesDecl },
-                     [ FileDirective | InlineBlock ],
+                     { DescriptionDecl | TriggerValue | ReadsDecl | ProducesDecl
+                     | InvokesDecl | FileDirective | InlineBlock },
                    DEDENT ] ;
 
 TriggerSource  = "when", Ident                      (* event, declared or registered trigger *)
@@ -830,13 +1009,13 @@ WhereDecl      = "where", Condition, NL ;
    it. That boundary is what lets the set of triggers be open.                *)
 
 TriggerDecl    = "trigger", Ident, NL,
-                 INDENT, [ DescriptionDecl ], [ FileDirective ], { TriggerValue }, DEDENT ;
+                 INDENT, { DescriptionDecl | FileDirective | TriggerValue }, DEDENT ;
 
 InvokesDecl    = "invokes", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ] ;
 
-(* What the reaction sets off. "produces" is the same declaration a command
-   carries, because appending an event is the same act wherever it happens.
+(* What the reaction sets off. Plain "produces" has the same form as on a command;
+   InlineEventProduction is not allowed inside reactions.
    A command is not produced but asked for, so it is "invokes" - an event is a
    fact the reaction appends, a command is an intent it hands on, and something
    else may still reject it. One word for both would say those are the same
@@ -870,7 +1049,7 @@ ScreenDirective = DataDecl
 (* A screen, a section and a filled slot attach interactions the same way a
    module or feature does - see interactions.md.                              *)
 
-DataDecl       = "data", TypeRef, "via", "query", QualifiedName,
+DataDecl       = "data", RequiredTypeRef, "via", "query", QualifiedName,
                  [ "by", Ident ], NL ;
 
 ActionDecl     = "action", QualifiedName, NL,
@@ -904,7 +1083,10 @@ WidgetOption   = "column", Ident, [ "label", LocalizableString ], NL
 
 DescriptionDecl = "description", ( StringLiteral | FencedText ), NL ;
 
-FencedText     = NL, "```", NL, { AnyLine }, "```" ;
+FencedText     = NL, INDENT, ( "```text" | "```" ), NL, { AnyLine }, "```", DEDENT ;
+EventFencedText = NL, INDENT, ( "```text" | "```markdown" | "```" ), NL, { AnyLine }, "```", DEDENT ;
+(* Bare description fences are accepted for compatibility with warning PLAY0397.
+   Only event descriptions accept the markdown tag; documentation requires it. *)
 
 LocalizableString = StringLiteral
                | "$strings.", Path ;
@@ -1064,10 +1246,12 @@ The escape works wherever a name of your choosing meets a reserved first word - 
 
 | Block | Reserved first words |
 |---|---|
-| `command` body | `authorize`, `produces` (`description`, `validate`, `handler` and `concurrency` resolve by shape) |
-| `event` body | `tag` |
+| `command` body | `authorize`, `produces`, `reads` (`description`, `validate`, `handler` and `concurrency` resolve by shape) |
+| `event` body | `tag` (`id`, `description`, and `documentation` resolve by shape) |
+| inline `produces event` body | `tag`, `for`, `generation`, `origin`, `namespace`, `sequence`, `correlation`, `causation`, `causedBy`, `occurred`; metadata names resolve by shape |
 | reaction trigger body | `description`, `file`, `produces`, `invokes`, `reads` (use `@reads` for a value named `reads`) |
-| mapping block | `tag` |
+| plain `produces` body | `tag`, `for`, `namespace`, `sequence`, `correlation`, `causation`, `causedBy`, `occurred` |
+| other mapping blocks | `tag`; the printer also escapes the production metadata names above |
 | projection `from` block | `key`, `parent` |
 | projection `clear` mapping target | `with` |
 | enumeration `concept` body | `validate` |

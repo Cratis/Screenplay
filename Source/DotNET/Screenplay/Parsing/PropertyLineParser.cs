@@ -32,23 +32,29 @@ internal static partial class PropertyLineParser
 
         return new(
             LineText.Unescape(match.Groups[1].Value),
-            ParseTypeRef(match.Groups[2].Value, line.Location),
+            ParseTypeRef(match.Groups[2].Value, line.LocationAt(match.Groups[2].Index)),
             line.Location,
-            match.Groups[3].Success);
+            match.Groups[4].Success)
+        {
+            IsGenerated = match.Groups[3].Success,
+            NameWasEscaped = match.Groups[1].Value.StartsWith('@')
+        };
     }
 
     /// <summary>
-    /// Parses a type reference with its optional <c>[]</c> and <c>?</c> suffixes.
+    /// Parses a type reference with its collection and optionality modifiers.
     /// </summary>
     /// <param name="text">The type reference text.</param>
     /// <param name="location">The <see cref="SourceLocation"/> of the reference.</param>
     /// <returns>The parsed <see cref="TypeRefSyntax"/>.</returns>
     public static TypeRefSyntax ParseTypeRef(string text, SourceLocation location)
     {
-        var isOptional = text.EndsWith('?');
+        var legacy = text.EndsWith('?');
+        var canonical = text.Length > "optional".Length && text.EndsWith("optional", StringComparison.Ordinal) && char.IsWhiteSpace(text[^("optional".Length + 1)]);
+        var isOptional = legacy || canonical;
         if (isOptional)
         {
-            text = text[..^1];
+            text = (legacy ? text[..^1] : text[..^"optional".Length]).TrimEnd();
         }
 
         var isCollection = text.EndsWith("[]", StringComparison.Ordinal);
@@ -60,6 +66,77 @@ internal static partial class PropertyLineParser
         return new(text, isCollection, isOptional, location);
     }
 
-    [GeneratedRegex(@"^(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(?:\s+(identifier))?$", RegexOptions.None, 1000)]
+    /// <summary>
+    /// Parses a property in a committed property position, reporting spelling diagnostics.
+    /// </summary>
+    /// <param name="context">The parser collecting diagnostics.</param>
+    /// <param name="line">The committed property line.</param>
+    /// <returns>The property, or null for an invalid line.</returns>
+    public static PropertySyntax? Parse(ParserContext context, SourceLine line)
+    {
+        var property = TryParse(line);
+        if (property is not null)
+        {
+            ReportLegacyOptionalSuffix(context, property.Type, line);
+        }
+        else
+        {
+            ReportInvalidModifierOrder(context, line);
+        }
+
+        return property;
+    }
+
+    /// <summary>
+    /// Reports a legacy suffix only after its owning parser has committed the type.
+    /// </summary>
+    /// <param name="context">The parser collecting diagnostics.</param>
+    /// <param name="type">The committed type occurrence.</param>
+    /// <param name="line">The source line holding the type.</param>
+    public static void ReportLegacyOptionalSuffix(ParserContext context, TypeRefSyntax type, SourceLine line)
+    {
+        var length = type.Name.Length + (type.IsCollection ? 2 : 0);
+        var offset = type.Location.Column - line.Indent - 1 + length;
+        if (type.IsOptional && offset < line.Content.Length && line.Content[offset] == '?')
+        {
+            context.Add(new(
+                DiagnosticSeverity.Information,
+                DiagnosticCodes.LegacyOptionalSuffix,
+                $"Write '{type.Name}{(type.IsCollection ? "[]" : string.Empty)} optional' instead of '{type.Name}{(type.IsCollection ? "[]" : string.Empty)}?'.",
+                type.Location));
+        }
+    }
+
+    /// <summary>
+    /// Explains the order of property modifiers without accepting the reversed form.
+    /// </summary>
+    /// <param name="context">The parser collecting diagnostics.</param>
+    /// <param name="line">The invalid property line.</param>
+    /// <returns>Whether a property modifier diagnostic was reported.</returns>
+    public static bool ReportInvalidModifierOrder(ParserContext context, SourceLine line)
+    {
+        if (ReversedModifiersRegex().IsMatch(line.Content))
+        {
+            context.Error(DiagnosticCodes.InvalidOptionalModifierOrder, "Write 'optional' before 'identifier': '<name> <Type> optional identifier'.", line.Location);
+            return true;
+        }
+
+        if (InvalidGeneratedModifiersRegex().Match(line.Content) is { Success: true } modifiers &&
+            modifiers.Groups[1].Value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Any(modifier => modifier == "generated" || modifier == "identifier"))
+        {
+            context.Error(DiagnosticCodes.InvalidGeneratedModifierOrder, "Write each modifier once in order: '<name> <Type> optional generated identifier'.", line.Location);
+            return true;
+        }
+
+        return false;
+    }
+
+    [GeneratedRegex(@"^(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(?:\s+(generated))?(?:\s+(identifier))?$", RegexOptions.None, 1000)]
     private static partial Regex PropertyRegex();
+
+    [GeneratedRegex(@"^@?[a-z_]\w*\s+[\w.]+(?:\[\])?\s+identifier\s+optional(?:\s*=.*)?$", RegexOptions.None, 1000)]
+    private static partial Regex ReversedModifiersRegex();
+
+    [GeneratedRegex(@"^@?[a-z_]\w*\s+[\w.]+(?:\[\])?\??\s+((?:optional|generated|identifier)(?:\s+(?:optional|generated|identifier))*)$", RegexOptions.None, 1000)]
+    private static partial Regex InvalidGeneratedModifiersRegex();
 }

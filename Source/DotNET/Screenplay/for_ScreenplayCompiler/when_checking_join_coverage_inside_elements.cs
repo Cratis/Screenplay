@@ -26,7 +26,7 @@ public class when_checking_join_coverage_inside_elements : given.a_compiler
                 name String
               readmodel EntryView
                 rows Row[]
-                detail Detail?
+                detail Detail optional
               projection Entries => EntryView
                 children rows identified by rowId
                   no automap

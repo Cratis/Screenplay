@@ -29,7 +29,26 @@ internal static class syntax_examples
             property.SetValue(node, Value(property.PropertyType, depth + 1));
         }
 
-        return node;
+        // Implementation intent adds a single authoritative payload invariant; keep this example valid
+        // while still independently populating every other structural member.
+        return node switch
+        {
+            EventSourceSyntax source => source with { Identifier = source.Identifier is null ? null : source.Identifier with { IsCollection = false, IsOptional = false } },
+            EventStreamSyntax stream => stream with { StreamId = stream.StreamId is null ? null : stream.StreamId with { IsCollection = false, IsOptional = false } },
+            CommandStreamSyntax route => route with { PropertyCandidate = null, StreamId = route.StreamId is null ? null : route.StreamId with { Property = "streamId" } },
+            HandlerSyntax handler => handler with { Code = null },
+            OperationPhaseSyntax phase => phase with { Code = null },
+            ProducesSyntax { InlineOperation: { } operation } production => production with
+            {
+                InlineEvent = null,
+                Event = operation.Name,
+                When = null,
+                For = null,
+                Tags = [],
+                Mappings = [.. operation.Inputs.Select(input => new PropertyMappingSyntax(input.Name, new LiteralExpressionSyntax("example", input.Location), input.Location))]
+            },
+            _ => node
+        };
     }
 
     internal static bool SameValues(object? left, object? right)

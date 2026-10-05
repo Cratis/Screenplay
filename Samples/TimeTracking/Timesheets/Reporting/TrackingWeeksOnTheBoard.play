@@ -40,19 +40,19 @@ slice StateView TimesheetBoard
   query ReturnedTimesheets => ReturnedTimesheet[]
     authorize IsEngagementManager
 
-  query SubmittedTimesheetById => SubmittedTimesheet?
+  query SubmittedTimesheetById => SubmittedTimesheet optional
     by timesheetId TimesheetId
     authorize IsEngagementManager
 
-  query DraftTimesheetById => DraftTimesheet?
+  query DraftTimesheetById => DraftTimesheet optional
     by timesheetId TimesheetId
     authorize IsEngagementManager
 
-  query ApprovedTimesheetById => ApprovedTimesheet?
+  query ApprovedTimesheetById => ApprovedTimesheet optional
     by timesheetId TimesheetId
     authorize IsEngagementManager
 
-  query ReturnedTimesheetById => ReturnedTimesheet?
+  query ReturnedTimesheetById => ReturnedTimesheet optional
     by timesheetId TimesheetId
     authorize IsEngagementManager
 

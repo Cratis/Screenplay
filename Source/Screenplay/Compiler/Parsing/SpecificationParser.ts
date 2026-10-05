@@ -6,16 +6,21 @@ import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
 import {
     SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationErrorSyntax, SpecificationEventSyntax,
     SpecificationNoResultSyntax, SpecificationQueryResultSyntax, SpecificationReadModelSyntax, SpecificationSyntax, SpecificationTriggerSyntax,
-    SpecificationWhenQuerySyntax,
+    SpecificationWhenQuerySyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax,
 } from '../Syntax/Specifications';
+import { SpecificationDeniedSyntax, SpecificationReturnSyntax } from '../Syntax/Responses';
 import { pattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { parseMappingSource } from './ExpressionParser';
 import { isFileDirective } from './FileReferences';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
+import { rejectOperationChildren } from './OperationParser';
+import { generatedFixturePattern, generatedFixturePrefix, parseConcreteMapping, parseReturn, thenReturnsPrefix } from './SpecificationResponseParser';
 import { locationOf, SourceLine } from './SourceLine';
 
+const operationStepPrefix = pattern('^(?:given\\s+operation|then\\s+(?:operation|compensated))(?:\\s|$)');
+const operationStep = pattern('^(given operation|then operation|then compensated)\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)(\\s+fails)?$');
 const header = pattern('^specification\\s+([A-Za-z_]\\w*)$');
 const givenPattern = pattern('^given\\s+([A-Z]\\w*)$');
 const whenAppendPattern = pattern('^when\\s+append\\s+([A-Z]\\w*)$');
@@ -63,6 +68,11 @@ interface SpecificationBody {
     whenQuery: SpecificationWhenQuerySyntax | null;
     thenResults: SpecificationQueryResultSyntax[];
     thenNoResult: SpecificationNoResultSyntax | null;
+    thenDenied: SpecificationDeniedSyntax | null;
+    thenReturns: SpecificationReturnSyntax | null;
+    givenOperationFailures: SpecificationOperationFailureSyntax[];
+    thenOperations: SpecificationOperationSyntax[];
+    thenCompensated: SpecificationCompensatedSyntax[];
 }
 
 export function parseSpecification(context: ParserContext, line: SourceLine): SpecificationSyntax {
@@ -71,15 +81,17 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
         context.error(DiagnosticCodes.InvalidSpecificationDeclaration, `Invalid specification declaration '${line.content}' - expected 'specification <Name>'`, locationOf(line));
     }
     const body: SpecificationBody = {
+        givenOperationFailures: [], thenOperations: [], thenCompensated: [],
         given: [], givenReadModels: [], when: null, whenAppended: null, whenDeclared: false,
         thenEvents: [], thenEventsInAnyOrder: false, thenReadModels: [], thenErrors: [],
-        givenClock: null, givenCaptures: [], whenClock: null, whenTrigger: null, whenCapture: null, whenQuery: null, thenResults: [], thenNoResult: null,
+        givenClock: null, givenCaptures: [], whenClock: null, whenTrigger: null, whenCapture: null, whenQuery: null, thenResults: [], thenNoResult: null, thenDenied: null, thenReturns: null,
     };
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         if (isFileDirective(child)) {
             continue;
         }
+        if (parseOperationStep(context, child, body)) continue;
         // Absence assertions admit any whitespace after 'then'; every other directive keeps its first word.
         const keyword = thenNoPrefix.test(child.content) ? 'then' : firstWord(child.content);
         if (keyword === 'given') {
@@ -95,6 +107,28 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
     }
     const { whenDeclared: _, ...members } = body;
     return { kind: 'SpecificationSyntax', name, ...members, location: locationOf(line) };
+}
+
+function parseOperationStep(context: ParserContext, line: SourceLine, body: SpecificationBody): boolean {
+    if (!operationStepPrefix.test(line.content)) return false;
+    const match = operationStep.exec(line.content);
+    if (match === null || (match[1] === 'given operation') !== (match[3] !== undefined)) {
+        context.error(DiagnosticCodes.InvalidOperationSpecification, "Expected 'given operation <Name> fails', 'then operation <Name>' or 'then compensated <Name>'.", locationOf(line));
+        context.skipBlock(line.indent);
+    } else if (match[1] === 'then operation') {
+        const values: PropertyMappingSyntax[] = [];
+        for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
+            context.reader.takeSignificant();
+            const value = parseConcreteMapping(context, child, mappingPattern, DiagnosticCodes.InvalidOperationSpecification);
+            if (value !== null) values.push(value);
+        }
+        body.thenOperations.push({ kind: 'SpecificationOperationSyntax', operation: match[2], values, location: locationOf(line) });
+    } else {
+        rejectOperationChildren(context, line, DiagnosticCodes.InvalidOperationSpecification, 'Failure and compensation assertions cannot have children.');
+        if (match[1] === 'given operation') body.givenOperationFailures.push({ kind: 'SpecificationOperationFailureSyntax', operation: match[2], location: locationOf(line) });
+        else body.thenCompensated.push({ kind: 'SpecificationCompensatedSyntax', operation: match[2], location: locationOf(line) });
+    }
+    return true;
 }
 
 function parseGiven(context: ParserContext, line: SourceLine, body: SpecificationBody): void {
@@ -163,11 +197,21 @@ function parseWhen(context: ParserContext, line: SourceLine, body: Specification
         context.skipBlock(line.indent);
         return;
     }
-    const values = parseValuesWithEventSource(context, line);
-    body.when = { kind: 'SpecificationCommandSyntax', commandType: match[1], ...values, location: locationOf(line) };
+    const generatedValues: PropertyMappingSyntax[] = [];
+    const values = parseValuesWithEventSource(context, line, generatedValues);
+    body.when = { kind: 'SpecificationCommandSyntax', commandType: match[1], ...values, generatedValues, location: locationOf(line) };
 }
 
 function parseThen(context: ParserContext, line: SourceLine, body: SpecificationBody): void {
+    if (thenReturnsPrefix.test(line.content)) {
+        const expectation = parseReturn(context, line);
+        if (body.thenReturns !== null) {
+            context.error(DiagnosticCodes.InvalidReturnExpectation, 'A specification declares at most one return expectation.', locationOf(line));
+        } else {
+            body.thenReturns = expectation;
+        }
+        return;
+    }
     if (line.content.startsWith('then events')) {
         if (line.content !== 'then events in any order' || body.thenEventsInAnyOrder) {
             context.error(DiagnosticCodes.InvalidSpecificationEventOrder, 'Expected one \'then events in any order\' directive.', locationOf(line));
@@ -191,10 +235,13 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
         return;
     }
     if (line.content.startsWith('then denied')) {
-        // Denial is not modeled; only its shape is checked.
         if (line.content !== 'then denied') {
             context.error(DiagnosticCodes.InvalidSpecificationDenied, 'Expected exactly \'then denied\'.', locationOf(line));
             context.skipBlock(line.indent);
+        } else if (body.thenDenied !== null) {
+            context.error(DiagnosticCodes.DuplicateSpecificationCallerOrDenied, "A specification has at most one 'then denied' outcome.", locationOf(line));
+        } else {
+            body.thenDenied = { kind: 'SpecificationDeniedSyntax', location: locationOf(line) };
         }
         return;
     }
@@ -295,11 +342,16 @@ function parseEventStep(context: ParserContext, line: SourceLine, regex: RegExp,
     return { kind: 'SpecificationEventSyntax', eventType: match[1], ...parseValuesWithEventSource(context, line), location: locationOf(line) };
 }
 
-function parseValuesWithEventSource(context: ParserContext, parent: SourceLine): { values: PropertyMappingSyntax[]; for: ExpressionSyntax | null } {
+function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, generated?: PropertyMappingSyntax[]): { values: PropertyMappingSyntax[]; for: ExpressionSyntax | null } {
     const values: PropertyMappingSyntax[] = [];
     let eventSource: ExpressionSyntax | null = null;
     for (let child = context.peekChild(parent.indent); child !== undefined; child = context.peekChild(parent.indent)) {
         context.reader.takeSignificant();
+        if (generated !== undefined && generatedFixturePrefix.test(child.content)) {
+            const fixture = parseConcreteMapping(context, child, generatedFixturePattern, DiagnosticCodes.InvalidGeneratedFixture);
+            if (fixture !== null) generated.push(fixture);
+            continue;
+        }
         const mapping = mappingPattern.exec(child.content);
         if (mapping !== null) {
             values.push(mappingOf(context, child, mapping));

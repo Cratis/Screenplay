@@ -11,7 +11,7 @@ namespace Cratis.Screenplay.Workspaces;
 
 static class WorkspaceSyntaxAddresses
 {
-    internal static SemanticAddress? Address(SyntaxNode node, string? member, ImmutableArray<WorkspaceSyntaxEntry> ancestors, ApplicationIdentity application)
+    internal static SemanticAddress? Address(SyntaxNode node, string? member, ImmutableArray<WorkspaceSyntaxEntry> ancestors, ApplicationIdentity application, IReadOnlyDictionary<string, int>? standaloneEventCounts)
     {
         var parent = ancestors.LastOrDefault();
         var owner = parent?.Address;
@@ -43,6 +43,13 @@ static class WorkspaceSyntaxAddresses
             return SemanticAddress.ForSlice(application, moduleName, features, slice.Name);
         }
 
+        // Inline declaration placement is authoring structure, not event contract ownership.
+        if (node is EventSyntax inlineEvent && member == "inlineEvent" && parent?.Node is ProducesSyntax &&
+            ancestors.LastOrDefault(entry => entry.Node is SliceSyntax)?.Address is { } sliceAddress)
+        {
+            return SemanticAddress.ForEventContract(sliceAddress, inlineEvent.Name);
+        }
+
         if (owner?.Kind == SemanticKind.Slice)
         {
             return node switch
@@ -60,8 +67,8 @@ static class WorkspaceSyntaxAddresses
         if (node is PropertySyntax property && member == "properties" && owner?.Kind is SemanticKind.CompositeType or SemanticKind.Command or SemanticKind.EventContract or SemanticKind.ReadModel)
         {
             if (owner.Kind == SemanticKind.EventContract && parent?.Node is EventSyntax eventSyntax &&
-                ancestors.Length >= 2 && ancestors[^2].Node is SliceSyntax eventSlice &&
-                eventSlice.Events.Count(candidate => candidate.Name == eventSyntax.Name) > 1)
+                ancestors.Length >= 2 && ancestors[^2].Node is SliceSyntax &&
+                standaloneEventCounts?.GetValueOrDefault(eventSyntax.Name) > 1)
             {
                 return SemanticAddress.ForEventProperty(owner, new(eventSyntax.Generation), property.Name);
             }

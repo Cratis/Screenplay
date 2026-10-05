@@ -42,10 +42,35 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "handler": null,
                   "name": "RegisterProject",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "ProjectRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "projectId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "name"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": true,
                       "name": "projectId",
                       "type": {
@@ -57,6 +82,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {
@@ -67,6 +93,7 @@
                       }
                     }
                   ],
+                  "response": null,
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -89,12 +116,16 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": true,
+                  "id": null,
                   "name": "ProjectRegistered",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "projectId",
                       "type": {
@@ -106,6 +137,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {
@@ -120,12 +152,16 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 2,
                   "hasGenerationMarker": true,
+                  "id": null,
                   "name": "ProjectRegistered",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {
@@ -140,6 +176,7 @@
                 }
               ],
               "name": "RegisterProject",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -151,8 +188,11 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringAProject",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -176,6 +216,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -202,10 +243,12 @@
                     }
                   ],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "RegisterProject",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -236,8 +279,11 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAnEmptyProjectName",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [
                     {
                       "kind": "SpecificationErrorSyntax",
@@ -247,12 +293,15 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "RegisterProject",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -289,6 +338,7 @@
               "description": null,
               "events": [],
               "name": "ProjectLookup",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -351,6 +401,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "projectId",
                       "type": {
@@ -362,6 +413,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {
@@ -387,5 +439,6 @@
     }
   ],
   "personas": [],
+  "systems": [],
   "types": []
 }

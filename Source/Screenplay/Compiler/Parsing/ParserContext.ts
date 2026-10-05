@@ -2,7 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { Diagnostic } from '../Diagnostics/Diagnostic';
+import { CommandStreamCandidates } from './CommandStreamCandidates';
 import { SourceLocation, sourceLocation } from '../Diagnostics/SourceLocation';
+import { PropertySyntax } from '../Syntax/Declarations';
+import { InputUse } from './InputUses';
 import { LineReader } from './LineReader';
 import { SourceLine } from './SourceLine';
 
@@ -10,6 +13,11 @@ import { SourceLine } from './SourceLine';
 // the file the document came from.
 export class ParserContext {
     readonly #diagnostics: Diagnostic[] = [];
+    // Authoring verification needs these committed values even though SyntaxJson omits them.
+    readonly triggerData: PropertySyntax[] = [];
+    readonly inputUses: InputUse[] = [];
+    scope: readonly string[] = [];
+    streamCandidates?: CommandStreamCandidates;
 
     constructor(readonly reader: LineReader, readonly path?: string) {}
 
@@ -19,6 +27,10 @@ export class ParserContext {
 
     get diagnostics(): readonly Diagnostic[] {
         return this.#diagnostics;
+    }
+
+    information(code: string, message: string, location: SourceLocation): void {
+        this.#diagnostics.push({ severity: 'information', code, message, location });
     }
 
     error(code: string, message: string, location: SourceLocation): void {

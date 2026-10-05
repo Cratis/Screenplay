@@ -1,21 +1,27 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { DiagnosticCodes, legacyOptionalTypeLength } from '@cratis/screenplay-compiler';
+import { AnalysisDiagnostic, responseAnalysis, responseAvailability } from './response-analysis';
+import { validateInlineEvents } from './inline-event-validation';
 import { causedByProperties, contextRoots, identityProperties, primitiveTypes, sliceTypes } from './language';
 import { DiagnosticCode, diagnosticCodes } from './diagnostic-codes';
 import { enclosingChain, fenceMap, indentOf } from './document-context';
+import { eventAnalysisSource } from './event-analysis-source';
 import { resolveEventContextPath } from './event-context';
 import {
     DocumentSymbols,
     PropertySymbol,
+    propertyTypeReference,
     knownEventNames,
     knownTypeNames,
     mergeSymbols,
     scanDocument,
+    symbolsForBuffer,
 } from './symbols';
 import { fileImportOn, isFileImportLine } from './file-imports';
 
-export type ValidationSeverity = 'error' | 'warning';
+export type ValidationSeverity = 'error' | 'warning' | 'information';
 
 export interface ValidationIssue {
     line: number;
@@ -35,6 +41,9 @@ export interface ValidationContext {
     // brings in - so a name declared in another file is not reported unknown. Merge the scanned symbols of
     // those files with mergeSymbols. The document's own declarations are always known.
     application?: DocumentSymbols;
+    placement?: readonly string[];
+    path?: string;
+    compilerDiagnostics?: readonly AnalysisDiagnostic[];
 }
 
 function issue(
@@ -68,16 +77,18 @@ function validateDeclarations(lines: string[], symbols: DocumentSymbols, applica
 
     const checkProperties = (properties: PropertySymbol[], owner: string) => {
         for (const property of properties.filter(
-            (candidate) => !types.has(candidate.type.replace(/[[\]?]/g, '')),
+            (candidate) => !types.has(propertyTypeReference(candidate).name),
         )) {
-            const bare = property.type.replace(/[[\]?]/g, '');
+            const bare = propertyTypeReference(property).name;
             issues.push(
-                tokenIssue(
+                issue(
                     'warning',
                     property.line,
-                    lines[property.line],
-                    property.type,
-                    `Unknown type '${bare}' on '${property.name}' of ${owner} — declare it with 'concept ${bare} : <Primitive>' or 'type ${bare}'.`,
+                    property.sourceType!.startColumn,
+                    property.sourceType!.text.length,
+                    bare === 'optional'
+                        ? `Unknown type 'optional' on '${property.name}' of ${owner} — did you forget the type before 'optional'?`
+                        : `Unknown type '${bare}' on '${property.name}' of ${owner} — declare it with 'concept ${bare} : <Primitive>' or 'type ${bare}'.`,
                     diagnosticCodes.unknownType,
                 ),
             );
@@ -134,11 +145,40 @@ function validateDeclarations(lines: string[], symbols: DocumentSymbols, applica
 // Where it is placed, and whether its imports resolve, is the compiler's to say.
 export function validateLines(lines: string[], context: ValidationContext = {}): ValidationIssue[] {
     const fences = fenceMap(lines);
-    const symbols = scanDocument(lines);
+    const scanned = scanDocument(lines);
     const application = context.application ?? mergeSymbols();
+    const input = symbolsForBuffer(lines, { ...application, authoringPath: context.path ?? application.authoringPath, authoringPlacement: context.placement ?? application.authoringPlacement });
+    const analysis = responseAnalysis(lines, input.authoringDocuments ?? input.authoringSources?.filter(source => source !== lines.join('\n')), input.authoringPlacement, input.authoringPath, input.authoringPlacementResolved);
+    const routeLines = new Set(analysis.eventSources.routes.map(route => route.location.line - 1));
+    const symbols = { ...scanned, commands: scanned.commands.map(command => ({ ...command,
+        properties: command.properties.filter(property => !routeLines.has(property.line)),
+        produces: command.produces?.filter(production => !analysis.operationProductionLines?.has(production.line)),
+        productionHeaders: command.productionHeaders?.filter(line => !analysis.operationProductionLines?.has(line)),
+    })) };
     const events = new Set([...knownEventNames(symbols), ...knownEventNames(application)]);
     const policies = new Set([...symbols.policies, ...application.policies].map((policy) => policy.name));
     const issues: ValidationIssue[] = validateDeclarations(lines, symbols, application);
+    issues.push(...validateProductionDestinations(lines, symbols));
+    // One parser pass covers committed types, including query results and trigger data, without
+    // speculative property scans mistaking tags, paths, strings or code for optionality.
+    const optionalCodes = new Set<string>([DiagnosticCodes.LegacyOptionalSuffix, DiagnosticCodes.InvalidOptionalModifierOrder, DiagnosticCodes.OptionalReadsNotSupported]);
+    for (const diagnostic of context.compilerDiagnostics ?? analysis.diagnostics) {
+        if (!optionalCodes.has(diagnostic.code) && diagnostic.code !== DiagnosticCodes.RepeatedDeclarationAcrossFiles && !/^PLAY049[0-9]$|^PLAY050[0-7]$|^PLAY048[2-9]$|^PLAY004[56]$/.test(diagnostic.code)) continue;
+        const line = diagnostic.location.line - 1;
+        const length = legacyOptionalTypeLength(lines[line], diagnostic) || lines[line].length - diagnostic.location.column + 1;
+        issues.push(issue(diagnostic.severity, line, diagnostic.location.column, length, diagnostic.message, diagnostic.code as DiagnosticCode));
+    }
+
+    for (const command of analysis.commands.values()) {
+        for (const property of command.properties.filter(property => property.isGenerated)) {
+            issues.push(issue('information', property.location.line - 1, property.location.column, property.name.length, `Generated value '${property.name}' is not a request or form input. ${responseAvailability}`, diagnosticCodes.unavailableResponseExecution));
+        }
+        if (command.response) issues.push(issue('information', command.response.location.line - 1, command.response.location.column, 7, responseAvailability, diagnosticCodes.unavailableResponseExecution));
+    }
+    for (const specification of analysis.specifications.values()) {
+        for (const fixture of specification.when?.generatedValues ?? []) issues.push(issue('information', fixture.location.line - 1, fixture.location.column, 9, responseAvailability, diagnosticCodes.unavailableResponseExecution));
+        if (specification.thenReturns) issues.push(issue('information', specification.thenReturns.location.line - 1, specification.thenReturns.location.column, 12, responseAvailability, diagnosticCodes.unavailableResponseExecution));
+    }
 
     const checkEvent = (line: number, text: string, name: string) => {
         if (!events.has(name)) {
@@ -256,9 +296,9 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
         if (reactsOn) checkEvent(index, line, reactsOn[1]);
 
         const produces = trimmed.match(/^produces\s+([A-Z]\w*)\s*$/);
-        if (produces) checkEvent(index, line, produces[1]);
+        if (produces && !analysis.operationProductionLines?.has(index)) checkEvent(index, line, produces[1]);
 
-        if (/^produces\s+when\b/.test(trimmed)) {
+        if (/^produces\s+when\b/.test(trimmed) && !analysis.operationProductionLines?.has(index)) {
             for (let next = index + 1; next < lines.length; next++) {
                 const candidate = lines[next];
                 if (fences[next] || candidate.trim().length === 0) continue;
@@ -325,6 +365,7 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
     }
 
     issues.push(...validateEventContextPaths(lines, fences));
+    issues.push(...validateInlineEvents(lines, symbols, application, analysis.operationProductionLines));
 
     const fenceLines = lines
         .map((line, index) => ({ line, index }))
@@ -343,6 +384,24 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
         );
     }
 
+    return issues;
+}
+
+// This is advice, not a semantic default: accepting the typed workspace repair changes routing.
+function validateProductionDestinations(lines: string[], symbols: DocumentSymbols): ValidationIssue[] {
+    const issues: ValidationIssue[] = [];
+    lines = eventAnalysisSource(lines);
+    for (const command of symbols.commands) {
+        const identifiers = command.properties.filter(property => property.isIdentifier && !propertyTypeReference(property).isOptional && !propertyTypeReference(property).isCollection);
+        if (identifiers.length !== 1) continue;
+        for (const production of command.produces ?? []) {
+            if (production.inline || production.conditional || production.target !== undefined) continue;
+            const line = production.line;
+            issues.push(issue('information', line, indentOf(lines[line]) + 1, lines[line].trim().length,
+                `Plain 'produces ${production.name}' omits its destination — use 'for ${identifiers[0].name}' to explicitly select the command's identifier.`,
+                diagnosticCodes.omittedProductionDestination));
+        }
+    }
     return issues;
 }
 

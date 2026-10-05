@@ -86,6 +86,38 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0005` | Error | An `import` line is not `import <Qualified.Name>`. |
 | `PLAY0006` | Warning | A line is indented with tabs, and Screenplay decides nesting from spaces. |
 
+### Event sources and command streams
+
+Event-source declarations and command stream routes are authoring-only. Binding any of them reports
+`PLAY0268`: decision 0023 allocates their executable contract to ESM v10, which is not admitted yet.
+A stream reference selects a classification, never the identity destination supplied by `for`.
+Handler commands may author routes without declaring their returned events.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0503` | Error | An event source or its source-owned stream has invalid syntax, a repeated directive or physical declaration, an invalid rename pin, or an optional, collection or known composite identifier type. Duplicate physical sources make their child ownership ambiguous. |
+| `PLAY0504` | Error or warning | A known source's stream does not resolve uniquely, or a command route or stream-id mapping is invalid, missing or incompatible. A command identifier with a different known nominal source identifier type is a warning; it is not silently retargeted. |
+| `PLAY0505` | Error | An exact `stream Source.Stream` header resolves both to one source-owned stream and to a viable imported value type. Both candidates remain visible; neither is selected automatically. |
+| `PLAY0506` | Error | A known stream-id type falls outside text and UUID values and their nominal concepts, plus integer-backed concepts. Bare Int is rejected. Other types need a future portable formatting contract. Unavailable imported shapes remain unresolved. |
+| `PLAY0507` | Information | A source or stream's rename-only `id` pin repeats its current name. New declarations omit the pin. |
+
+Command headers are classified against the complete immutable compilation input, including resolved file
+imports. `@stream Qualified.Type`, `stream String` and modified property forms remain properties;
+production `stream = value` and `stream String = value` remain payload mappings. When neither a source
+nor a property type resolves, the header keeps its legacy property interpretation and unknown-type
+evidence, including deeper legacy command members. A misspelled source name cannot be distinguished
+from an unresolved qualified property by spelling alone. Stream-id children do not override this rule.
+Candidate discovery uses the same inline-language registry as the committed parse; registered code
+payloads cannot declare sources or property types.
+
+Syntax JSON retains every ambiguous or duplicate header in `CommandSyntax.streamCandidates`, including
+its property interpretation when ambiguous. `stream` holds at most one unambiguous route. Deeper legacy
+properties remain command members, without duplicating the candidate property. Such invalid drafts
+cannot be printed or expanded into `.play` files: export throws `InvalidSyntaxJson` rather than selecting
+an interpretation or dropping a header. Retain syntax JSON until you repair the draft. Use `@stream`
+for an intended qualified property, or remove the competing type interpretation for an intended route;
+remove duplicate route headers before export.
+
 ### Concepts
 
 | Code | Severity | Reported when |
@@ -156,7 +188,7 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0042` | Error | A `produces` line is neither `produces <EventType>` nor `produces when <condition>`. |
 | `PLAY0043` | Error | A `produces when` condition is followed by no event to produce. |
 | `PLAY0044` | Error | A mapping line is not `<property> = <source>`. |
-| `PLAY0045` | Error | A handler names neither a `file` nor an inline code block. |
+| `PLAY0045` | Error | A handler names neither a `file`, an inline code block nor an explicit `implementation` wrapper. |
 | `PLAY0046` | Error | A line in a handler body opens with a word a handler declares nothing by. |
 
 ### Queries
@@ -363,7 +395,7 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0165` | Warning | A property names a type nothing in the document or its imports declares. |
 | `PLAY0166` | Warning | An event is referred to that nothing in the document or its imports declares. |
 | `PLAY0167` | Warning or error | A policy is referred to that nothing in the document declares. A persona's unknown policy is an error during compilation, Safe authoring, and executable binding. Draft authoring retains it as a warning with explicit unresolved-reference debt; other unresolved policy references are warnings. |
-| `PLAY0168` | Error | A concept and a type, or two of either, are declared under one name. |
+| `PLAY0168` | Error | A concept and a type, or two of either, are declared under one name; also reused when an inline event repeats a typed payload property name. |
 | `PLAY0169` | Error | An authentication block declares two providers under one name. |
 | `PLAY0170` | Error | A seed block seeds nothing. |
 | `PLAY0171` | Error | A concurrency block narrows nothing. |
@@ -813,6 +845,144 @@ See [Specifications](specifications.md#clocks-triggers-and-captures).
 | `PLAY0466` | Warning | A `when trigger` names a trigger nothing declares or registers, or a value its declaration does not carry. |
 | `PLAY0467` | Warning | A `given capture` or `when capture` names a capture the application does not declare. |
 | `PLAY0468` | Error | A `when query` argument is not a `by` or `filter` parameter of the query. |
+
+### Inline event declarations and metadata
+
+These codes cover [inline command events](commands.md#declare-an-event-inline) and [event metadata](events.md#authoring-metadata).
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0469` | Warning (inline), information (plain) | A production copies the command identifier into payload while targeting that same identifier. The inline-only repair removes the property and mapping, explicitly changes the event contract, retires its property address, and is excluded from fix-all. Consumers, opaque implementation impact or comment loss refuse the repair. Plain/standalone contracts receive guidance only: review persistence and generation evolution before changing their shape. |
+| `PLAY0470` | Error | A command targets another event source but one or more productions omit `for`, or both an inline and a plain production omit `for` and therefore have different defaults. The diagnostic names the production. State every destination explicitly; cross-source execution is still unsupported. |
+| `PLAY0471` | Information | An event's `id` equals its current name. The typed removal repair covers inline and standalone declarations, preserves the executable model and catalog, and refuses comment loss. Monaco and VS Code also offer an [editor quick fix](vscode.md#event-quick-fixes) to remove the complete line unless it has a trailing comment. |
+| `PLAY0472` | Error | Event `id` is missing its nonempty quoted value or is repeated. |
+| `PLAY0473` | Error | An inline event name collides with a standalone declaration, import, or another inline declaration. |
+| `PLAY0474` | Error | `produces event` occurs outside a command, such as in a reaction. |
+| `PLAY0475` | Error | An inline event declares `generation` in its header or body. Extract it before evolving generations. |
+| `PLAY0476` | Error | A production supplies unescaped system-assigned `namespace`, `sequence`, `correlation`, `causation`, `causedBy`, or `occurred`, or an inline event supplies `origin`. |
+| `PLAY0477` | Error | Event documentation is not one nonempty fenced Markdown block, or is repeated. |
+
+Malformed typed mappings and duplicate destinations retain `PLAY0044` and `PLAY0193`. Descriptions retain their existing diagnostics. Event descriptions, documentation, and rename pins are authoring-only metadata (`PLAY0270`); none changes canonical ESM bytes.
+
+### Production destination advice and repairs
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0478` | Information | A plain `produces <Event>` omits `for` and its command has one required scalar identifier. Conditional productions and optional or collection identifiers are not reported. |
+
+`PLAY0478` does not change routing or executable-model bytes. Its typed repair
+replaces the production with one that explicitly states `for <identifier>`.
+Accept it only when that event should address the command's identifier: a plain
+omission can intentionally use an allocated identity, or inherit another
+production's explicit destination. The repair is not offered for an optional or
+collection identifier. It is also refused when the original or candidate has no executable model,
+when the repair would change the language or semantic version, or when any other production's
+effective destination would change (including through a command default).
+Discovery verifies these conditions and comment preservation once per subject on an
+immutable workspace snapshot; a new snapshot cannot reuse those verification results.
+
+The verified `PLAY0478` repair is available through the
+[MCP repair workflow](mcp/authoring-tools.md#fix-a-diagnostic).
+Monaco and VS Code do not offer a quick fix for `PLAY0478` or `PLAY0470`.
+
+For `PLAY0166` on a command production, a typed repair can add an `event`
+declaration to the producing slice. Properties follow mapping order; command
+property paths retain their types and concepts (including compliance markings),
+and `$context.occurred` becomes `DateTime`. No generation, tags, subject or origin
+is inferred. Unknown sources, literals, computations, reads, conflicting producer
+shapes, imported or already-declared events, and cross-file producers have no
+repair. Any workspace document with parser errors also blocks inference, because its partial
+syntax may hide a contract or another producer. Reaction and capture producers are not inferred.
+
+Both repairs require canonical formatting consent and refuse any dropped comment.
+Discovery verifies authoring acceptance for `PLAY0166` too: an inferred event whose
+fields conflict with a specification is not offered. Discovery reuses cached acceptance
+and conflicts on the same immutable workspace snapshot; diagnostics are never cached.
+Every proposal runs one fresh transaction, even after discovery. A matched repair
+that fails returns that transaction's typed conflicts and full diagnostics; `UnknownRepair`
+means no recipe matches the code and original subject, not a verification failure.
+Discovery and preview never write source. Review the write plan and explicitly
+accept it through the [workspace authoring contract](ast-authoring.md) or
+[MCP repair workflow](mcp/authoring-tools.md#fix-a-diagnostic). Stale workspace or catalog
+revisions are rejected. Source authoring and executable readiness remain separate;
+for example, compliance attributes and nested mapping paths can require capabilities
+the executable model does not yet admit.
+
+### Optional values and spelling repairs
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0479` | Information | A type uses the [legacy optional suffix](types.md#compatibility-note). Write `optional` after the type. This does not fail `--warnaserror`. |
+| `PLAY0480` | Error | `optional` follows `identifier`. Write the modifiers in the order `Type optional identifier`; command identifiers must still be required and scalar. |
+| `PLAY0481` | Error | A read uses `optional`. Optional reads are not yet supported; their absence behavior is reserved for #308. |
+
+`query Q => observable?` is the sole exception: its `?` is the only spelling that preserves a one-shot query returning an optional scalar type named `observable`. It produces no `PLAY0479` and is excluded from occurrence repairs and document migrations. See [Queries](queries.md#observable-queries).
+
+`PLAY0479` points at the complete type reference. VS Code marks it deprecated.
+Its workspace repair replaces only the spelling at that occurrence; a document
+repair combines all such replacements in one verified transaction. Both reparse
+the result, require unchanged syntax structure, and check that the selected
+information diagnostics disappear. Use `PreserveTrivia` to keep comments, alignment,
+line endings and encoding. Canonical reprinting is a separate explicit choice.
+Discovery and preview never write files; acceptance still requires current workspace
+and catalog revisions. Monaco and VS Code also offer verified TypeScript quick fixes
+for one occurrence or the entire document, without requiring .NET.
+
+### Generated values and command responses
+
+Generated properties, command responses, generated fixtures and return expectations are syntax-only. Binding any one reports `PLAY0268` and produces no semantic model until ESM v8 admits these constructs. Editors surface this unavailability alongside compiler syntax diagnostics; MCP `Authoring` acceptance does not establish executable readiness. See [commands](commands.md#generated-values-and-responses-syntax-only) and [fixtures](specifications.md#generated-fixtures-and-return-expectations-syntax-only).
+
+For response and generated-fixture compatibility checks only, `Date` values must be quoted `yyyy-MM-dd` calendar dates. `DateTime` values must be quoted `yyyy-MM-ddTHH:mm:ss`, optionally followed by a decimal fraction of 1–7 digits, and always end in uppercase `Z` or an explicit `+HH:mm` / `-HH:mm` offset. Years range from 0001 to 9999; calendar days must exist, hours range from 00 to 23, and minutes and seconds from 00 to 59. Offsets range from `-14:00` to `+14:00`; at 14 hours the minutes must be 00. These checks do not change general literal parsing. Imported or unresolved value shapes remain unknown rather than being inferred from their names.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0482` | Error | A generated property is declared outside a command. |
+| `PLAY0483` | Error | A generated property is not a required, noncollection concept backed by `Uuid`. |
+| `PLAY0484` | Error | Property modifiers repeat or are out of order. Write `Type optional generated identifier`. |
+| `PLAY0485` | Error | A generated property is supplied as request or form input. |
+| `PLAY0486` | Error | A command response is malformed, empty, repeated or conditional. |
+| `PLAY0487` | Error | A response source does not reference one direct command property. |
+| `PLAY0488` | Error | A response block repeats a field name. |
+| `PLAY0489` | Error | A response uses a collection or whole read model, or an explicit field type differs from its source's type, collection shape or optionality. |
+| `PLAY0490` | Error | A generated fixture repeats a target, names an unknown, nongenerated or identifier property, or supplies an incompatible or nonconcrete value. |
+| `PLAY0491` | Error | A return expectation is malformed, repeated, incompatible with the response contract, lacks a command action, or accompanies an error or denial. |
+
+### Handler implementation intent
+
+| Code | Severity | Reported when |
+| --- | --- | --- |
+| `PLAY0492` | Error | An implementation wrapper has an operand, duplicate wrapper, unknown child or nested file child. |
+| `PLAY0493` | Error | A hint is not one nonblank quoted string, or has children. |
+| `PLAY0494` | Error | A handler mixes direct/wrapped sources, or a wrapper selects more than one file/inline payload. |
+
+These wrapper diagnostics also apply to operation phases. Pending or attached intent is not executable admission.
+
+### Operations and external systems
+
+| Code | Severity | Reported when |
+| --- | --- | --- |
+| `PLAY0495` | Error | An external system declaration is malformed or repeated. |
+| `PLAY0496` | Error | An operation declaration or phase is malformed, or supplies event-only metadata. |
+| `PLAY0497` | Error | A production reference is ambiguous, or a qualified production does not resolve to an explicit operation. |
+| `PLAY0498` | Error | An operation name collides with an event or another operation in its owning slice. |
+| `PLAY0499` | Error | An operation is produced outside a command. |
+| `PLAY0500` | Error | An operation must reference exactly one uniquely declared external system. |
+| `PLAY0501` | Error | An operation input mapping is missing, repeated, unknown or incompatible with its declared type. |
+| `PLAY0502` | Error | An operation specification step is malformed, unresolved, duplicated, incompatible with its command action or asserts undeclared compensation. |
+
+These are syntax diagnostics. A valid system, operation or operation specification still cannot bind: `PLAY0268` names unavailable ESM v9 admission. [Operations](operations.md) do not trigger event destination or payload-identity diagnostics. A valid pending or attached handler remains unsupported independently. Diagnostic repairs for `PLAY0471` and `PLAY0479` are unchanged.
+
+### Event sources and command streams
+
+| Code | Condition |
+| --- | --- |
+| `PLAY0503` | Invalid or duplicate source/stream declaration, including non-scalar identifier/key types |
+| `PLAY0504` | Missing or ambiguous source-owned stream, invalid key mapping, or known incompatible command identifier/key type |
+| `PLAY0505` | Both the route and qualified value-property interpretations are viable; neither is selected |
+| `PLAY0506` | Known stream-id type needs an unsupported portable formatter; bare `Int` is not supported |
+| `PLAY0507` | Redundant rename-only stored-name pin |
+
+Valid [source/stream authoring](event-sources.md) still refuses executable binding with `PLAY0268` for ESM v10. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
 
 ## Retired codes
 

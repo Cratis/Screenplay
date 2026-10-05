@@ -91,13 +91,18 @@ sealed record McpState(string ApplicationName, SemanticIdentityCatalog Catalog, 
         {
             throw new McpFailure($"IdentityReconciliationRequired: current source cannot be admitted with the persisted catalog. Restore its declaration names and use explicit identity-change proposals. {exception.Message}");
         }
-        var addresses = McpWorkspaceAnalysis.For(workspace).Syntax.Entries
-            .Where(entry => entry.Address is not null).Select(entry => entry.Address).ToHashSet();
+        var syntax = McpWorkspaceAnalysis.For(workspace).Syntax;
+        var addresses = syntax.Entries.Where(entry => entry.Address is not null).Select(entry => entry.Address).ToHashSet();
 
         // Failed binding retains the old catalog, so identical catalog bytes alone cannot prove source continuity.
         var missingAssignments = !workspace.Compilation.Success &&
             (Catalog.Semantics.Any(assignment => !addresses.Contains(assignment.Address)) ||
              Catalog.EventContracts.Any(assignment => !addresses.Contains(assignment.Address)));
+        if (missingAssignments && !syntax.UnresolvedPlacementDocuments.IsEmpty)
+        {
+            throw new McpFailure("UnresolvedPlacement: conflicting or cyclic imports prevent proving continuity with the persisted identity catalog. Repair those imports and reopen; identity state was not replaced.");
+        }
+
         if (missingAssignments || !SemanticIdentityCatalogSerializer.Serialize(Catalog).AsSpan().SequenceEqual(SemanticIdentityCatalogSerializer.Serialize(workspace.IdentityCatalog)))
         {
             throw new McpFailure("IdentityReconciliationRequired: external source edits would change persisted identities. Restore the previous declaration names and apply an explicit semantic/event rename or retirement proposal. Identity state was not replaced.");

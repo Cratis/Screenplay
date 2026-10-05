@@ -11,6 +11,7 @@ import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { pattern } from '../Text/patterns';
 import { parseFencedText } from './CodeBlockParser';
 import { isFileDirective } from './FileReferences';
+import { collectInputUses } from './InputUses';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseTypeRef } from './PropertyLineParser';
@@ -91,7 +92,7 @@ function parseDirective(context: ParserContext, line: SourceLine): ScreenDirecti
         case 'navigate':
             return parseNavigate(context, line.content, line);
         case 'on':
-            context.skipOpaqueBlock(line.indent);
+            collectInputUses(context, line);
             return { kind: 'ScreenBehaviorSyntax', location: locationOf(line) };
         case 'uses':
             context.skipOpaqueBlock(line.indent);
@@ -189,6 +190,8 @@ function parseTable(context: ParserContext, line: SourceLine): ScreenTableSyntax
             columns.push({ kind: 'ScreenColumnSyntax', property: columnMatch[1], label: labelled ? operandText(columnMatch, 2) : null, location: locationOf(child) });
         } else if (clickMatch !== null) {
             click = parseNavigate(context, clickMatch[1], child) ?? null;
+        } else if (firstWord(child.content) === 'on') {
+            collectInputUses(context, child);
         } else if (isInteraction(child)) {
             context.skipOpaqueBlock(child.indent);
         } else {

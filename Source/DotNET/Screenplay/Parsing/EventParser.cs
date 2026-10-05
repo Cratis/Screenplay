@@ -34,6 +34,7 @@ internal static partial class EventParser
             generation = 1;
         }
 
+        var metadata = new EventMetadataParser(name.Groups[1].Value);
         var properties = new List<PropertySyntax>();
         var tags = new List<TagSyntax>();
         var directiveLocations = new Dictionary<string, SourceLocation>();
@@ -53,7 +54,7 @@ internal static partial class EventParser
                     tags.Add(tag);
                 }
             }
-            else if (PropertyLineParser.TryParse(line) is { } property)
+            else if (PropertyLineParser.Parse(context, line) is { } property)
             {
                 if (property.IsIdentifier)
                 {
@@ -63,13 +64,13 @@ internal static partial class EventParser
 
                 properties.Add(property);
             }
-            else
+            else if (!metadata.TryParse(context, line))
             {
                 context.Error(DiagnosticCodes.InvalidPropertyDeclaration, $"Invalid property '{line.Content}' - expected '<name> <Type>'", line.Location);
             }
         }
 
-        return new(name.Groups[1].Value, properties, header.Location, tags) { File = file, Generation = generation, HasGenerationMarker = hasGenerationMarker, DirectiveLocations = directiveLocations };
+        return metadata.Apply(new(name.Groups[1].Value, properties, header.Location, tags) { File = file, Generation = generation, HasGenerationMarker = hasGenerationMarker, DirectiveLocations = directiveLocations });
     }
 
     /// <summary>
@@ -99,6 +100,6 @@ internal static partial class EventParser
     [GeneratedRegex(@"^event\s+([A-Za-z_]\w*)(?:\s+generation\s+([0-9]+))?$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^[A-Z]\w*(?:\[\])?\??$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^[A-Z]\w*(?:\[\])?(?:\?|\s+optional)?$", RegexOptions.None, 1000)]
     private static partial Regex TypeShapedRegex();
 }

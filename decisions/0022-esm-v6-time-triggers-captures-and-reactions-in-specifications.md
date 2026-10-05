@@ -1,8 +1,10 @@
 ---
 id: 0022
 title: Admit clocks, application triggers, capture records and reactions into specifications as ESM v6
-status: proposed
-stage: none
+status: accepted
+stage: implemented
+decided: 2026-10-02
+decider: Einar Ingebrigtsen
 class: contract
 reversibility: costly
 applies-to:
@@ -63,3 +65,117 @@ Automation and translate slices become specifiable and executable. In exchange, 
 ## Related
 
 Decisions [0004](0004-admission-and-governance-of-portable-executable-semantics.md), [0006](0006-reaction-triggers-declare-reads.md), [0009](0009-external-event-origin-and-translation-slices.md), [0020](0020-keyed-read-model-absence-in-esm-v5.md).
+
+## Status notes
+
+**2026-10-02 - accepted.** Accepted by Einar Ingebrigtsen. Two points the decision text leaves open are settled
+for the implementation, without changing the choice:
+
+- `when clock` advances from the instant `given clock` states, so a specification using `when clock` states
+  `given clock` too. Starting from the Unix epoch would make every daily schedule due tens of thousands of times.
+- After `when append`, the appended event is the action itself, like a command's input. `then` events compare
+  the facts that follow it - what reactions appended. After every other action, `then` events compare every new
+  fact, the ones the action produced and the ones reactions appended. Models before v6 keep their rule: after
+  `when append`, `then` events equal the appended fact.
+
+**2026-10-02 - implemented.** ESM v6 is in the tree: the model, binder, validator, canonical JSON reader and writer,
+reference evaluator, `Semantics/Serialization/Golden/full-esm-v6.json` and `ReactionsCorpus.V6` in
+`Cratis.Screenplay.CanonicalCorpus`. v1-v5 golden vectors are byte-identical. The implementation settles these
+points the decision text leaves open, without changing the choice:
+
+- A reaction appending from a clock, application or built-in trigger states `for` - a value the trigger carries,
+  or literal text. Only an event's reaction appends to that event's source by default.
+- `where` narrows the occurrences that carry the values it names. A trigger carrying none of them, such as the
+  clock, is not narrowed; one carrying only some of them does not bind.
+- An invoked command runs with no caller, so a command requiring one rejects the reaction, and that rejection
+  ends the scenario. A reaction's `reads` are not consulted by the reference evaluator.
+- The reactions to one fact run in semantic-identity order, which canonical form preserves. Clock occurrences at
+  the same instant follow the same order. An interval counts from the Unix epoch, and schedules are UTC.
+- `given clock` states a time, not a caller: a mapping from `$context.causedBy` in a scenario that states one is
+  Unsupported. A scenario appending more than 1 000 facts, or a clock advance making more than 10 000
+  occurrences due, is Unsupported rather than run.
+- A capture appends to the event source its key names, typed as the event's commands type it, or as text.
+  `` when `<expression>` `` admits a small portable grammar of fields, literals, comparisons, `&&`, `||`, `!` and
+  parentheses.
+
+`Samples/Invoicing` uses imported events, PII concepts and other constructs the ESM does not admit, so it does
+not bind as a whole. The verification the decision names for it runs on `ReactionsCorpus.V6` and the
+specifications under `Semantics/Execution/for_SemanticSpecificationRunner/when_running_reactions` instead, which
+cover each of the five forms. The tracking issues in Stage, CLI, Studio and Generation are not opened yet.
+
+**2026-10-04 — independent integration in progress (#369).** The true merge preserves all six commits through
+`4fc16226d66b4e8ae8bc222e568c31f8023972ee` and Einar Ingebrigtsen's acceptance above. This is not a claim that
+his branch, the integration, or consumer admission is verified. Under Sindre Alstad Wilting's delegated
+integration request, the following conservative hardening applies; these resolutions are not attributed
+to Einar Ingebrigtsen:
+
+- Apply accepted 0006: direct production or opaque effects with declared reads fail binding until their
+  decision dependencies can be protected. The historical report-only implementation note above does
+  not waive that accepted requirement. Invocation-only reactions delegate decisions to the full command
+  pipeline; no new decision-read guarantees or v11 admission are introduced.
+- Check audit-identity use only in reached effects. Time-only occurrence cannot supply caller audit
+  identity. Reaction causation is explicit and separate from caller authorization. Unrelated effects
+  and bodies excluded by `where` do not poison executable scenarios.
+- Preserve 0023's legacy allocated-identity rule: invocation does not substitute a command identifier
+  for an unavailable allocation. This profile returns typed IdentityAllocation unsupported instead.
+- Each accepted append and invoked-command transaction keeps its own disposition. A later cascade
+  failure retains facts already accepted; a failed invoked command contributes none of its own facts.
+  No whole-cascade atomicity, retry, durable fan-out or acknowledgement guarantee is invented (#286).
+- Intervals floor pre-epoch boundaries, schedule enumeration stops at the final calendar day, capture
+  keys distinguish numbers from text, and missing/duplicate child identities fail without appending.
+
+Focused reference vectors replace the impossible whole-Invoicing execution named in the original
+verification text, as the historical note explains. Release/Debug, canonical runtime, JavaScript and
+package verification remain integration checkpoints, not implied by a merge. Stage#79 and Stage#15
+remain open for rendering and shared execution; the bounded CLI ESM issue search found no open v6
+admission ticket. CLI, Studio and Generation admission/tracking remain follow-ups before release.
+The record remains `stage: implemented`, not `verified`.
+
+**2026-10-04 — consumer tracking established.** Explicit consumer admission is tracked separately in
+[Stage rendering #79](https://github.com/Cratis/Stage/issues/79),
+[Stage shared execution #15](https://github.com/Cratis/Stage/issues/15),
+[CLI #239](https://github.com/Cratis/cli/issues/239),
+[Studio #475](https://github.com/Cratis/StudioIssues/issues/475) and
+[Generation #66](https://github.com/Cratis/Screenplay.Generation/issues/66).
+A dependency update does not admit v6 reading, rendering or execution. Providers must retain blocking
+unsupported diagnostics until their own admission criteria are met. Screenplay's controlled occurrence
+implements the reference-runtime portion of #304; Stage realization remains separate.
+
+**2026-10-04 — fail-closed runtime clarification (#369).** Under the delegated integration request,
+`where` is one guard for the whole reaction, not an optional filter that can disappear on a trigger
+whose shape cannot resolve it. Binding checks both comparison operands recursively through admitted
+logical groups, using each occurrence's complete declared shape, independent of input selection.
+Missing operands and unadmitted nested or read-alias paths are blocking diagnostics. This replaces
+the historical implementation note permitting an unguarded trigger when it carries none of the operands;
+it does not admit new condition grammar or weaken decision 0006's read protection.
+
+Audit identity requirements are checked immediately before each reached effect, in the existing
+semantic-identity/reaction-trigger/production/invocation order. A later unsupported effect cannot
+suppress an earlier append or replace an earlier constraint rejection. Command transactions remain
+atomic. The 1,000-fact scenario budget counts new accepted facts, excluding established history;
+an initiating or invoked command batch that exceeds the remaining budget is refused before adopting
+its world, retaining prior facts and projections. Capture and direct reaction appends retain their
+individual append dispositions. No caller audit identity, allocated destination or whole-cascade
+transaction is fabricated. These clarifications do not advance this record's verification stage or
+admit downstream consumers.
+
+**2026-10-04 — capture append dispositions and condition-value admission (#369).** Under Sindre Alstad
+Wilting's delegated integration request, capture evaluation separates record preconditions from reached
+effects. Required root/event-source keys, declared child and nested shapes, child identities and duplicate
+identities are checked before side effects. Maps apply once per reached record; guards and append mappings
+then run in authored order. Each append passes constraints and projection and settles its reaction cascade
+before the next capture effect is evaluated. The first rejection or typed Unsupported ends the scenario;
+a later unsupported map or guard cannot replace an earlier rejection. Already accepted facts and projections
+remain, while a rejected append contributes neither. Invoked commands retain their own atomicity and the
+existing shared scenario budgets. This does not introduce capture-wide atomicity or source acknowledgement.
+
+The reference scenario takes immutable `given capture` records as its last-seen input. Neither successful
+presentation nor partial failure writes a new last-seen record into `SemanticWorld` or acknowledges the
+external source. A subsequent specification must explicitly supply its baseline. Durable source-state
+advancement, retries and acknowledgement remain realization responsibilities, not implied by retained
+prefix facts. These integration clarifications are not attributed to Einar Ingebrigtsen and do not change
+his acceptance or advance the record's verification stage.
+
+All condition constants validate their recursive semantic-value variant before type inference. A CLR
+record carrying another value-kind discriminator is invalid, not normalized into a valid literal. The
+existing condition type rules and valid v1–v5 canonical bytes remain unchanged.

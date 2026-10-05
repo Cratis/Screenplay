@@ -10,5 +10,17 @@ namespace Cratis.Screenplay.Mcp;
 /// <param name="code">The JSON-RPC error code, or zero for a tool execution failure.</param>
 public sealed class McpFailure(string message, int code = 0) : Exception(message)
 {
+    /// <summary>
+    /// Gets the stable failure discriminator; messages are not machine-readable identifiers.
+    /// </summary>
+    public string FailureKind { get; init; } = code switch
+    {
+        -32700 => "InvalidJson",
+        -32600 => "InvalidRequest",
+        -32601 => "UnknownMethod",
+        -32602 => "InvalidArguments",
+        _ => "RequestFailed"
+    };
+
     internal int Code { get; } = code;
 }

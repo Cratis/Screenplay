@@ -7,6 +7,9 @@ Events are immutable, past-tense facts — the record of something that happened
 ```screenplay
 event <Name> [generation <N>]
   [file <path>]
+  [description "<text>"]
+  [documentation <fenced markdown>]
+  [id "<old-name>"]             // only after renaming a persisted event
   [tag <value>]*
   <property> <Type>
   ...
@@ -40,12 +43,48 @@ event InvoiceRegistered
   status        InvoiceStatus
 ```
 
+## Authoring metadata
+
+Standalone events and [inline command events](commands.md#declare-an-event-inline) accept:
+
+- `description "<text>"`, or `description` followed by a fence tagged `text` or `markdown`;
+- `documentation` followed by one nonempty fenced `markdown` block;
+- optional `id "<old-name>"` when renaming an event that already has stored events.
+
+Markdown description fences are specific to events, including inline declarations; descriptions on other constructs use `text`. A bare description fence remains accepted with deprecation warning `PLAY0397`.
+
+Each directive can appear at most once. These are authoring metadata: binding reports `PLAY0270`, but they add no ESM bytes. The `id` string does **not** replace or rehash the portable `EventContractId`; catalog identity remains authoritative. Rendering documentation into generated XML or TypeScript comments is a separate downstream capability.
+
+Leave `id` absent for a new event. Cratis convention is plain `[EventType]` without arguments; a pin exists to preserve an old persisted name on a rename, not to decorate a new declaration. A pin equal to the current name reports information diagnostic `PLAY0471` with a typed removal repair.
+
+Workspace and MCP event renames pin the previous effective name by default, because an authoring catalog does not prove whether events have been stored. If you know the event has never been persisted, set `EventNeverPersisted` on the rename request (`eventNeverPersisted: true` in MCP) to omit a new pin. That option also removes a redundant pin equal to the current name (the one `PLAY0471` reports); a pin naming an earlier, different identity is never overwritten. Renaming back to the pinned name removes the pin. Generations must agree on their effective identity; contradictory pins refuse the rename. Command, slice and module renames do not add event pins.
+
+Rename preserves trivia by default, including when inserting or removing the pin. Unsupported source edits refuse rather than silently reformatting the document.
+
+To evolve an inline event, first use `WorkspaceEventRefactorings.ProposeExtractInlineEvent` or MCP `propose-extract-inline-event`. The declaration moves into the slice, keeping its id, description, documentation, tags and property identities. Its production keeps explicit routing or receives the previously implicit identifier destination. Extraction requires unchanged canonical ESM and catalog assignments, preserves comments exactly once or refuses, and needs explicit canonical formatting consent. Add later generations only after extraction; there is no reverse inlining refactoring.
+
+````screenplay
+event Renamed
+  description "The project acquired another name"
+  documentation
+    ```markdown
+    The project keeps its event source identity.
+    ```
+  name String
+````
+
+Property-shaped lines remain properties: `id String`, `description String`, and `documentation String` still declare payload fields. Inside an inline event they must also provide their mapping, such as `description String = name`.
+
+## Inline declarations
+
+`produces event <Name>` inside a command declares the same slice-owned event as a standalone declaration. The [command reference](commands.md#declare-an-event-inline) explains its typed mappings and destination default. Extract an inline event before introducing later generations. Plain productions can reference it regardless of declaration order. The event and its properties have the same workspace addresses and stable identities as the equivalent standalone event in that slice. Inline typed mappings cannot repeat a property name (`PLAY0168`).
+
 ## Type modifiers
 
 | Modifier | Syntax | Example |
 | --- | --- | --- |
 | Collection | `<Type>[]` | `lines InvoiceLine[]` |
-| Optional | `<Type>?` | `note String?` |
+| Optional | `<Type> optional` | `note String optional` |
 
 ## Tags
 
@@ -61,7 +100,7 @@ event InvoiceRegistered
 
 Each historical revision retains its declared literal tags; new appends use the current revision's event tags.
 
-Tags can also be declared per production site — on a [`produces` block](commands.md#the-produces-block) and on a capture [`append` block](captures.md) — where they apply to that specific append rather than every occurrence of the event type. ESM v1 admits literal event-level and production-level tags as append metadata, in that order. Chronicle's `IEventSequence.Append` accepts tags and persists them in `EventContext.Tags` (Decision 0001); tags do not change the event payload. `$context`-computed tags remain syntax-only; ESM v2 admits selected scalar `$context` **produces mappings**, not computed tags.
+Tags inside `produces event` are event-type tags, just like the standalone form. Tags can also be declared per production site — on a plain [`produces` block](commands.md#the-produces-block) and on a capture [`append` block](captures.md) — where they apply to that specific append rather than every occurrence of the event type. ESM v1 admits literal event-level and production-level tags as append metadata, in that order. Chronicle's `IEventSequence.Append` accepts tags and persists them in `EventContext.Tags` (Decision 0001); tags do not change the event payload. `$context`-computed tags remain syntax-only; ESM v2 admits selected scalar `$context` **produces mappings**, not computed tags.
 
 ## Guidance
 

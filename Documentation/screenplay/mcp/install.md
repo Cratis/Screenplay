@@ -1,13 +1,99 @@
 ---
 title: Install the MCP server
-description: Install the screenplay tool and connect Claude Code, Codex, VS Code, Claude Desktop or another MCP client to one Screenplay application.
+description: Install Screenplay desktop bundles or a local ChatGPT plugin, with Docker and .NET options for advanced and headless clients.
 ---
 
-Use this guide to connect an MCP client to a Screenplay application. You need
-Docker (or the .NET 10 SDK), an MCP client that supports local stdio servers, and a
-model directory you own.
+Use this guide to connect an MCP client to a Screenplay application. Screenplay
+runs **locally**, against a model directory you own. Desktop packages include their
+runtime: you do not need Docker, a .NET SDK, or a separately installed `cratis`
+executable to run a downloaded bundle.
 
-## Get the server
+## Desktop installation
+
+Choose the simplest supported channel, in this order:
+
+1. **Curated directory:** when Screenplay is listed, install it from Claude Desktop
+   **Settings → Extensions → Browse extensions** or ChatGPT **Plugins**. Directory
+   submissions require publisher review; this release does **not** claim an
+   approved listing. OpenAI public local-MCP distribution still requires OpenAI's
+   explicit support. Until a listing is live, use the download below.
+2. **Desktop download:** get the native package from the
+   [Screenplay releases](https://github.com/Cratis/Screenplay/releases).
+3. **Advanced/headless clients:** use Docker, the .NET tool, or manual stdio
+   registration below. These options remain supported.
+
+### Claude Desktop bundle
+
+Download `screenplay-VERSION-RID.mcpb` and its matching `.sha256` file. Select
+`osx-arm64` for Apple Silicon, `osx-x64` for Intel macOS, or `win-x64` for Windows
+x64. Verify the checksum before opening it. Bundles currently are unsigned;
+checksums from the Cratis-owned HTTPS release verify integrity, not publisher
+signing. Review the package's permissions and origin.
+
+Open the MCPB in an up-to-date Claude Desktop. If your OS does not associate the
+file, use **Settings → Extensions → Advanced settings → Extension Developer →
+Install Extension**. Review the trust dialog, complete installation and enable the
+extension. There is no model folder to configure: Screenplay works in the folder
+the host shares with it, and otherwise asks Claude to open the folder you name in
+the conversation ("open the Screenplay model in ~/Projects/shop"). Check its tools
+and version in **Settings → Extensions**. Enterprise device policies can restrict
+installation; do not bypass them.
+
+Install an updated bundle to update a privately downloaded extension; remove it
+in Claude's Extensions UI. The CLI cannot verify this host-owned state.
+
+### ChatGPT Desktop plugin
+
+Download `screenplay-VERSION-RID-plugin.zip` and its `.sha256`. Use the same native
+macOS/Windows RID choices, and a ChatGPT Desktop version/account that exposes local
+**Plugins** and stdio MCP. An empty model starts in the plugin's persistent data
+folder. To choose an existing model without authoring JSON, use the coordinated
+CLI desktop installer (Cratis CLI 3.25.0 or later). First,
+[install the Cratis CLI][cli-installation]; you do not need a running Chronicle
+store for these desktop commands:
+
+```bash
+cratis screenplay mcp install --clients chatgpt --model-root /absolute/path/to/specifications
+```
+
+It registers a source in your **personal marketplace**, preserving unrelated
+plugins. Restart ChatGPT, open **Plugins**, and install/enable Screenplay from the
+local marketplace. This is source registration, not an unattended host install.
+Keep confirmation enabled for tools that change files. Local plugins are not a
+hosted Screenplay service and are not automatically in the public directory.
+
+For manual local/repository marketplace development, follow the
+[maintainer packaging guide](https://github.com/Cratis/Screenplay/blob/main/Source/DotNET/Screenplay.Mcp/README.md#personal-or-repository-marketplace-testing).
+Never copy files into an undocumented host-internal cache.
+
+### Install and manage with the Cratis CLI
+
+[Install the Cratis CLI][cli-installation] using the procedure for your operating
+system, then check `cratis --version`. Desktop management requires CLI 3.25.0 or
+later. These commands do not require a Chronicle connection. For all options and
+recovery steps, see [Screenplay desktop MCP lifecycle][cli-desktop-mcp].
+
+```bash
+cratis screenplay mcp install --clients claude,chatgpt --model-root /absolute/path/to/specifications
+cratis screenplay mcp status
+cratis screenplay mcp update --clients claude,chatgpt
+cratis screenplay mcp uninstall --clients chatgpt
+```
+
+Omit `--clients` in an interactive terminal to choose detected supported hosts.
+Noninteractive management requires explicit clients. Add `--dry-run` to preview
+without downloading, writing or launching; release metadata may still be checked.
+`--version VERSION` pins a Screenplay release independently of the CLI version.
+Claude needs no model folder: the server picks the folder the host or the
+conversation names. `--model-root` configures the ChatGPT source. Status distinguishes source registration/handoff from a
+verified host install and reports available updates when the release check works.
+Host-owned removal still happens in each host's UI.
+
+Linux self-contained packages are available for compatible local MCP clients,
+but Claude/ChatGPT Desktop support on Linux is not claimed. Windows arm64 is not
+packaged. Docker and the .NET tool below are the portable/headless alternatives.
+
+## Get the server for advanced clients
 
 The server ships in the `cratis/screenplay` Docker image, and in the .NET tool
 `Cratis.Screenplay.Tool`. Both contain the same `screenplay` program, including
@@ -28,7 +114,7 @@ docker pull cratis/screenplay
 example `cratis/screenplay:1.2.3`, in every configuration below.
 
 Cratis CLI hosting shipped in **CLI 3.11.0**. If you have the CLI installed,
-use its bundled server without installing a second tool:
+use its bundled `Cratis.Screenplay.Mcp` library without installing a second tool:
 
 ```bash
 cratis screenplay mcp ./specifications
@@ -41,11 +127,66 @@ must also support MCP Apps. See [View a model](view.md).
 
 In a client configuration, use `"command": "cratis"` and
 `"args": ["screenplay", "mcp", "/Users/you/work/shop/specifications"]`.
-Installing AI guidance alone does not install the server.
-`cratis screenplay generate` generates source models; `cratis screenplay mcp`
-hosts the MCP server.
+Project-local AI registration and user-level desktop installation are separate
+operations. Installing AI guidance alone does not install a desktop extension or
+the server. `cratis screenplay generate` generates source models;
+`cratis screenplay mcp` hosts the MCP server.
 
 Host developers can consult the [embedding API](reference.md#embedding-api).
+
+## Repair-capable server setup
+
+The server exposes a [repair contract v1](reference.md#repair-contract-v1-and-pinned-evidence)
+for saved-file `PLAY0166` and `PLAY0478` proposals. This is server support, not a
+released VS Code repair-process bridge or a browser Monaco process. Registering
+Copilot MCP or installing a desktop plugin does not enable those editor actions.
+
+An editor host must explicitly approve an executable and one existing physical
+application root. Supported process forms are `cratis screenplay mcp ROOT`,
+`screenplay mcp ROOT`, or the `server/Cratis.Screenplay.Tool` binary from a complete,
+checksum-verified unpacked native bundle (`.exe` on Windows). Launch without a shell
+and pass the approved root as one argument. Do not use a project's executable,
+download on startup, inspect desktop-private caches or fall back to Docker silently.
+Native bundles include their runtime; the .NET global tool needs the installation
+below. Linux packages require compatible native dependencies; Windows arm64 is not
+packaged. Checksums do not provide publisher signatures.
+
+A compatible host checks `repair-capabilities` after the MCP handshake and refuses
+older or incompatible contracts rather than downgrading evidence protection. Both
+initial actions require pinned mode in that host, complete preview and explicit
+Apply. CLI 3.25.0 is the desktop-management prerequisite only; it does not prove
+repair-contract support in an embedded compiler. Check the actual server's tool
+and contract, and only claim compatibility for distributions containing it.
+
+## Choose where the model lives
+
+You rarely have to. When the server starts without a root, it picks the folder the
+first time it needs one:
+
+1. A `path` the assistant passes to `open-workspace`, which also switches to another
+   folder in the same session.
+2. The folder your MCP client offers through its workspace roots, when the client
+   offers exactly one. When it offers several, the assistant is told to choose with
+   `path`. When the client changes its roots, a folder bound from them is let go.
+3. The folder the server was launched from, when it already holds `.play` files or a
+   `.screenplay` folder. This is what a terminal client such as Claude Code or Pi
+   gives you: start it in the project and the model is the project.
+
+```bash
+screenplay mcp
+```
+
+If none of these applies, the server says so and asks for a path instead of guessing
+at your home folder. In Claude and ChatGPT desktop the host manages the files, so
+the model lives wherever the host puts them, and `open-workspace` with
+`workspaceJson` carries a model between sessions.
+
+Pass a root, as below, when you want one fixed folder for every session. A fixed-root
+connection refuses `open-workspace.path` naming a different physical directory
+with `RootChangeRefused`. A case alias is accepted only when native directory
+identity proves it is the same folder, after the symbolic-link and reparse-point
+guards; the originally approved root stays bound. Changing applications requires
+a new authorized connection.
 
 ## Choose one application root
 
@@ -231,8 +372,11 @@ Configure `docker` with the same arguments in the client's stdio server
 configuration. Do not add flags that write to standard output; the server's
 output must carry only protocol messages.
 
-Keep approval enabled for `apply` and `recover-workspace`. Read, inspection and
-proposal tools do not publish source changes; those two tools do.
+Read, inspection and proposal tools do not publish source changes; `apply` and
+`recover-workspace` do. The server does not mark them destructive, because both are
+journaled and recoverable, so a client that confirms every destructive call does not
+ask each time. Keep approval on for them where you want a deliberate step, and
+allow them where you would rather just say what you want.
 
 ## Use the .NET tool instead
 
@@ -273,10 +417,11 @@ Use the screenplay server to describe the application: how many modules,
 features and slices does it have, and are there any diagnostics?
 ```
 
-You should receive compact model counts and a `sourceRevision`, not the entire
-model text. For an empty model directory, the answer is an empty application;
-continue with [Create a model](create.md). No source is written until an accepted
-proposal is applied.
+For an existing model, you should receive compact model counts and a
+`sourceRevision`, not the entire model text. Application-read tools can report
+that an empty root contains no `.play` files; continue with
+[Create a model](create.md) to open a workspace and propose its first documents.
+No source is written until an accepted proposal is applied.
 
 ## Keep the model's identity state
 
@@ -301,3 +446,6 @@ See [identity state and recovery](recovery.md).
 - **Pending operation:** inspect recovery status before opening or editing the model.
 
 The [MCP reference](reference.md) lists tools, validation policies and limits.
+
+[cli-installation]: /cli/getting-started/#install-it
+[cli-desktop-mcp]: /cli/reference/screenplay-desktop-mcp/

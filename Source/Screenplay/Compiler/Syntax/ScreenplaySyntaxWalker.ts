@@ -7,16 +7,20 @@ import { CommandSyntax, ValidateSyntax, ValidationRuleSyntax } from './Commands'
 import { ConstraintSyntax } from './Constraints';
 import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, PropertySyntax, ReadModelSyntax, TagSyntax, TypeRefSyntax, TypeSyntax } from './Declarations';
 import { ExpressionSyntax, ObjectMemberSyntax, PropertyMappingSyntax } from './Expressions';
+import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax } from './EventSources';
 import { JoinEventSyntax, MappingSyntax, ProjectionBlockSyntax, ProjectionSyntax } from './Projections';
 import { QueryParameterSyntax, QuerySyntax } from './Queries';
 import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
 import { ScreenDirectiveSyntax, ScreenSyntax } from './Screens';
 import {
     SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax,
-    SpecificationReadModelSyntax, SpecificationSyntax, SpecificationTriggerSyntax, SpecificationWhenQuerySyntax,
+    SpecificationReadModelSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationSyntax, SpecificationTriggerSyntax, SpecificationWhenQuerySyntax,
 } from './Specifications';
 import { ApplicationSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax, SliceSyntax } from './Structure';
+import { CommandResponseSyntax, PropertyResponseSourceSyntax, RecordCommandResponseSyntax, RecordSpecificationReturnSyntax, ResponseFieldSyntax, ScalarCommandResponseSyntax, ScalarSpecificationReturnSyntax, SpecificationReturnSyntax } from './Responses';
 import { SyntaxNode } from './SyntaxNode';
+import { OperationSyntax, OperationPhaseSyntax, SystemSyntax } from './Operations';
+import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSyntax, ImplementationHintSyntax } from './Implementations';
 
 // Walks a whole syntax tree, depth first, in the order the C# ScreenplaySyntaxWalker does. Every visit
 // method calls visitNode and then walks the node's children, so an emitter overrides only the nodes it
@@ -29,6 +33,8 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.domain !== null) this.visitDomain(syntax.domain);
         syntax.imports.forEach(node => this.visitImport(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
+        syntax.systems?.forEach(node => this.visitSystem(node));
+        syntax.eventSources?.forEach(node => this.visitEventSource(node));
         syntax.concepts.forEach(node => this.visitConcept(node));
         syntax.types.forEach(node => this.visitType(node));
         syntax.personas.forEach(node => this.visitPersona(node));
@@ -92,6 +98,7 @@ export abstract class ScreenplaySyntaxWalker {
     visitSlice(syntax: SliceSyntax): void {
         this.visitNode(syntax);
         syntax.commands.forEach(node => this.visitCommand(node));
+        syntax.operations?.forEach(node => this.visitOperation(node));
         syntax.events.forEach(node => this.visitEvent(node));
         syntax.constraints.forEach(node => this.visitConstraint(node));
         syntax.queries.forEach(node => this.visitQuery(node));
@@ -107,7 +114,103 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
         syntax.properties.forEach(node => this.visitProperty(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
+        if (syntax.stream != null) this.visitCommandStream(syntax.stream);
+        syntax.streamCandidates?.forEach(candidate => this.visitCommandStream(candidate));
         syntax.validations.forEach(node => this.visitValidate(node));
+        syntax.produces.forEach(node => this.visitProduces(node));
+        if (syntax.handler != null) this.visitHandler(syntax.handler);
+        if (syntax.response != null) this.visitCommandResponse(syntax.response);
+    }
+
+    visitEventSource(syntax: EventSourceSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.identifier !== null) this.visitTypeRef(syntax.identifier);
+        syntax.streams.forEach(stream => this.visitEventStream(stream));
+    }
+    visitEventStream(syntax: EventStreamSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.streamId !== null) this.visitTypeRef(syntax.streamId);
+    }
+    visitCommandStream(syntax: CommandStreamSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.streamId !== null) this.visitPropertyMapping(syntax.streamId);
+        if (syntax.propertyCandidate !== null) this.visitProperty(syntax.propertyCandidate);
+    }
+
+    visitSystem(syntax: SystemSyntax): void { this.visitNode(syntax); }
+    visitOperation(syntax: OperationSyntax): void {
+        this.visitNode(syntax);
+        syntax.inputs.forEach(input => this.visitProperty(input));
+        if (syntax.execute !== null) this.visitOperationPhase(syntax.execute);
+        if (syntax.compensate !== null) this.visitOperationPhase(syntax.compensate);
+    }
+    visitOperationPhase(syntax: OperationPhaseSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.implementation !== null) this.visitImplementation(syntax.implementation);
+        if (syntax.file !== null) this.visitFileReference(syntax.file);
+        if (syntax.code !== null) this.visitCodeBlock(syntax.code);
+    }
+    visitSpecificationOperationFailure(syntax: SpecificationOperationFailureSyntax): void { this.visitNode(syntax); }
+    visitSpecificationCompensated(syntax: SpecificationCompensatedSyntax): void { this.visitNode(syntax); }
+    visitSpecificationOperation(syntax: SpecificationOperationSyntax): void {
+        this.visitNode(syntax);
+        syntax.values.forEach(value => this.visitPropertyMapping(value));
+    }
+
+    visitHandler(syntax: HandlerSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.implementation != null) this.visitImplementation(syntax.implementation);
+        if (syntax.file !== null) this.visitFileReference(syntax.file);
+        if (syntax.code !== null) this.visitCodeBlock(syntax.code);
+    }
+
+    visitImplementation(syntax: ImplementationSyntax): void {
+        this.visitNode(syntax);
+        syntax.hints.forEach(hint => this.visitImplementationHint(hint));
+    }
+
+    visitImplementationHint(syntax: ImplementationHintSyntax): void { this.visitNode(syntax); }
+    visitFileReference(syntax: FileReferenceSyntax): void { this.visitNode(syntax); }
+    visitCodeBlock(syntax: CodeBlockSyntax): void { this.visitNode(syntax); }
+
+    visitCommandResponse(syntax: CommandResponseSyntax): void {
+        if (syntax.kind === 'ScalarCommandResponseSyntax') this.visitScalarCommandResponse(syntax);
+        else this.visitRecordCommandResponse(syntax);
+    }
+
+    visitScalarCommandResponse(syntax: ScalarCommandResponseSyntax): void {
+        this.visitNode(syntax);
+        this.visitPropertyResponseSource(syntax.source);
+    }
+
+    visitRecordCommandResponse(syntax: RecordCommandResponseSyntax): void {
+        this.visitNode(syntax);
+        syntax.fields.forEach(field => this.visitResponseField(field));
+    }
+
+    visitResponseField(syntax: ResponseFieldSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.type !== null) this.visitTypeRef(syntax.type);
+        this.visitPropertyResponseSource(syntax.source);
+    }
+
+    visitPropertyResponseSource(syntax: PropertyResponseSourceSyntax): void {
+        this.visitNode(syntax);
+    }
+
+    visitSpecificationReturn(syntax: SpecificationReturnSyntax): void {
+        if (syntax.kind === 'ScalarSpecificationReturnSyntax') this.visitScalarSpecificationReturn(syntax);
+        else this.visitRecordSpecificationReturn(syntax);
+    }
+
+    visitScalarSpecificationReturn(syntax: ScalarSpecificationReturnSyntax): void {
+        this.visitNode(syntax);
+        this.visitExpression(syntax.value);
+    }
+
+    visitRecordSpecificationReturn(syntax: RecordSpecificationReturnSyntax): void {
+        this.visitNode(syntax);
+        syntax.fields.forEach(field => this.visitPropertyMapping(field));
     }
 
     visitValidate(syntax: ValidateSyntax): void {
@@ -208,6 +311,11 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitProduces(syntax: ProducesSyntax): void {
         this.visitNode(syntax);
+        if (syntax.inlineEvent !== null) this.visitEvent(syntax.inlineEvent);
+        if (syntax.inlineOperation != null) this.visitOperation(syntax.inlineOperation);
+        if (syntax.for !== null) this.visitExpression(syntax.for);
+        syntax.mappings.forEach(node => this.visitPropertyMapping(node));
+        syntax.tags.forEach(node => this.visitTag(node));
     }
 
     visitInvokes(syntax: InvokesSyntax): void {
@@ -288,6 +396,9 @@ export abstract class ScreenplaySyntaxWalker {
     visitSpecification(syntax: SpecificationSyntax): void {
         this.visitNode(syntax);
         if (syntax.givenClock !== null) this.visitSpecificationClock(syntax.givenClock);
+        syntax.givenOperationFailures?.forEach(node => this.visitSpecificationOperationFailure(node));
+        syntax.thenOperations?.forEach(node => this.visitSpecificationOperation(node));
+        syntax.thenCompensated?.forEach(node => this.visitSpecificationCompensated(node));
         syntax.given.forEach(node => this.visitSpecificationEvent(node));
         syntax.givenReadModels.forEach(node => this.visitSpecificationReadModel(node));
         if (syntax.when !== null) this.visitSpecificationCommand(syntax.when);
@@ -301,6 +412,8 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.thenReadModels.forEach(node => this.visitSpecificationReadModel(node));
         syntax.thenResults.forEach(node => this.visitSpecificationQueryResult(node));
         if (syntax.thenNoResult !== null) this.visitNode(syntax.thenNoResult);
+        if (syntax.thenDenied != null) this.visitNode(syntax.thenDenied);
+        if (syntax.thenReturns != null) this.visitSpecificationReturn(syntax.thenReturns);
         syntax.thenErrors.forEach(node => this.visitNode(node));
     }
 
@@ -336,6 +449,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitSpecificationCommand(syntax: SpecificationCommandSyntax): void {
         this.visitNode(syntax);
+        (syntax.generatedValues ?? []).forEach(fixture => this.visitPropertyMapping(fixture));
         syntax.values.forEach(node => this.visitPropertyMapping(node));
         if (syntax.for !== null) this.visitExpression(syntax.for);
     }

@@ -4,7 +4,11 @@
 import { AuthorizeSyntax } from './Authorization';
 import { PropertySyntax } from './Declarations';
 import { ExpressionSyntax } from './Expressions';
+import { CommandStreamSyntax } from './EventSources';
+import { ProducesSyntax } from './Reactions';
+import { CommandResponseSyntax } from './Responses';
 import { SyntaxNode } from './SyntaxNode';
+import { HandlerSyntax } from './Implementations';
 
 // The C# ValidationRuleKind members.
 export type ValidationRuleKind =
@@ -41,4 +45,10 @@ export interface CommandSyntax extends SyntaxNode {
     readonly authorize: AuthorizeSyntax | null;
     readonly properties: readonly PropertySyntax[];
     readonly validations: readonly ValidateSyntax[];
+    readonly produces: readonly ProducesSyntax[];
+    readonly response?: CommandResponseSyntax | null;
+    readonly stream?: CommandStreamSyntax | null;
+    // Rejected headers own their property candidates; none selects an authoritative route.
+    readonly streamCandidates?: readonly CommandStreamSyntax[];
+    readonly handler?: HandlerSyntax | null;
 }

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Languages;
 
 namespace Cratis.Screenplay.Syntax;
 
@@ -44,9 +45,21 @@ public record ApplicationSyntax(
     public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];
 
     /// <summary>
+    /// Gets the application-scoped external systems.
+    /// </summary>
+    public IEnumerable<SystemSyntax> Systems { get; init; } = [];
+
+    /// <summary>Gets every physical application-owned event source declaration.</summary>
+    public IEnumerable<EventSourceSyntax> EventSources { get; init; } = [];
+
+    /// <summary>
     /// Gets the files the document imports at its top level - whole documents, merged into the application.
     /// </summary>
     public IEnumerable<FileImportSyntax> FileImports { get; init; } = [];
+
+    // Immutable parse-time host facts, not an executable typed trigger descriptor. Programmatic syntax
+    // without a compiler context uses the language defaults; copying parsed syntax retains its context.
+    internal IReadOnlyDictionary<string, TriggerDefinition>? RegisteredTriggers { get; init; }
 }
 
 /// <summary>

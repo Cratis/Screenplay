@@ -54,12 +54,15 @@ right. *View* sets the detail level, whether properties are shown and whether
 connections are drawn as arrows or lines. Where the host allows it, the toolbar
 also draws the board again from disk and switches to fullscreen.
 
-```text
-Show the board again. I changed a file by hand.
-```
+The board follows the model on disk. While it is on screen it checks every couple of
+seconds and draws again when a file changed, whether the assistant applied a change
+or you edited a file by hand. Open it fullscreen and keep prompting: each applied
+change shows up on its own. A proposal you are looking at stays until the files
+change, and then the board shows the application as it is. The refresh button in the
+toolbar draws it again at once, and reports why when it cannot.
 
-Every call draws a new board from the model as it is at that moment. A board you
-already have on screen does not follow edits by itself.
+Hosts that do not let a view call the server cannot follow the files. Ask for the
+board again there; every call draws the model as it is at that moment.
 
 ## See what a proposal would change
 

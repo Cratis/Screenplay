@@ -19,7 +19,7 @@ public class and_it_is_used_from_another_module : given.a_folder_with_and_withou
                   readmodel ItemView
                     itemId ItemId
                     channel Channel
-                  query GetItem => ItemView?
+                  query GetItem => ItemView optional
                     by itemId ItemId
             """);
         Write(
@@ -54,7 +54,7 @@ public class and_it_is_used_from_another_module : given.a_folder_with_and_withou
 
     void Because() => CompileBoth();
 
-    [Fact] void should_report_the_value_outside_the_enum_without_the_import() => ValidationWithoutImport.Select(diagnostic => diagnostic.Code).ShouldContainOnly(DiagnosticCodes.UnknownSpecificationEnumMember);
+    [Fact] void should_report_the_value_outside_the_enum_without_the_import() => ValidationWithoutImport.Select(diagnostic => diagnostic.Code).ShouldContainOnly(DiagnosticCodes.EventSourceIdInPayload, DiagnosticCodes.UnknownSpecificationEnumMember);
     [Fact] void should_report_the_same_validation_results_with_the_import() => ValidationWithImport.ShouldContainOnly(ValidationWithoutImport);
     [Fact] void should_report_the_import_as_redundant() => _importing.Result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.RedundantImport).Message.ShouldEqual("Import 'Catalog.ItemView' names 'ItemView', which this application declares - the import has no effect");
     [Fact] void should_report_the_redundant_import_as_a_warning() => _importing.Result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.RedundantImport).Severity.ShouldEqual(DiagnosticSeverity.Warning);

@@ -91,8 +91,9 @@ internal static partial class TriggerParser
     /// </remarks>
     public static TriggerDataSyntax? ParseData(ParserContext context, SourceLine line)
     {
-        if (PropertyLineParser.TryParse(line) is { } property)
+        if (PropertyLineParser.Parse(context, line) is { } property)
         {
+            if (property.IsGenerated) context.Error(DiagnosticCodes.GeneratedPropertyOutsideCommand, "Generated properties can only be declared on commands.", property.Location);
             return new(property.Name, property.Type, line.Location);
         }
 

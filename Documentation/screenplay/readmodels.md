@@ -10,7 +10,7 @@ A [projection](projections/index.md) says how state is built from events, and un
 readmodel <Name>
   [description "<text>"]
   [file <path>]
-  <property> <Type>[?]
+  <property> <Type> [optional]
   ...
 ```
 
@@ -29,7 +29,7 @@ readmodel AccountBalance
 
 ## Identifying an instance in specifications
 
-In the executable semantic model, the read model's identifier is inferred from its single unambiguous keyed query: `query InvoiceById => InvoiceSummary?` with `by invoiceId InvoiceId` in its body identifies `InvoiceSummary` instances by `invoiceId`. Do not mark a read-model property `identifier`; supply a keyed query instead. `given readmodel` and `then readmodel` blocks must state that property to select an instance. A `then query … result` block can omit it because its `arguments` already supply the key. See [Specifications](specifications.md#read-model-state).
+In the executable semantic model, the read model's identifier is inferred from its single unambiguous keyed query: `query InvoiceById => InvoiceSummary optional` with `by invoiceId InvoiceId` in its body identifies `InvoiceSummary` instances by `invoiceId`. Do not mark a read-model property `identifier`; supply a keyed query instead. `given readmodel` and `then readmodel` blocks must state that property to select an instance. A `then query … result` block can omit it because its `arguments` already supply the key. See [Specifications](specifications.md#read-model-state).
 
 ## The arrow always points the same way
 

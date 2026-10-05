@@ -1,7 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { enclosingChain, fenceMap, indentOf, nearestEnclosingLine } from './document-context';
+import { enclosingChain, fenceMap, indentOf, nearestEnclosingLine, withoutComment } from './document-context';
+import { responseCompletions } from './response-completions';
+import { scanDocument } from './symbols';
 import { getSubLanguage } from './sub-language-registry';
 import * as items from './completion-items';
 import { CompletionEntry } from './completion-items';
@@ -45,10 +47,21 @@ export function completionEntriesFor(chain: string[]): CompletionEntry[] {
             return items.typeItems;
         case 'command':
             return items.commandItems;
+        case 'event':
+            return items.eventItems;
+        case 'system':
+            return items.operationItems.filter(item => item.label === 'description');
+        case 'operation':
+            return items.operationItems;
+        case 'execute':
+        case 'compensate':
+            return items.operationPhaseItems;
         case 'produces':
             return items.producesItems;
         case 'handler':
             return items.handlerItems;
+        case 'implementation':
+            return chain[1] === 'handler' ? items.implementationItems : ['execute', 'compensate'].includes(chain[1]) ? items.operationImplementationItems : [];
         case 'query':
             return items.queryItems;
         case 'performer':
@@ -92,7 +105,9 @@ export function planCompletions(
     textBefore: string,
 ): CompletionPlan {
     const fences = fenceMap(lines);
-    if (fences[lineIndex]) return { kind: 'none' };
+    if (fences[lineIndex] || withoutComment(textBefore).length < textBefore.length) return { kind: 'none' };
+    const responseEntries = responseCompletions(lines, lineIndex, textBefore, scanDocument(lines));
+    if (responseEntries !== null) return { kind: 'entries', entries: responseEntries };
 
     // Inside the quotes of a file import, what is wanted is a path - replacing what has been typed so far.
     const importPath = textBefore.match(/^\s*import\s+"([^"]*)$/);
@@ -112,6 +127,18 @@ export function planCompletions(
     const effectiveIndent =
         textBefore.trim().length === 0 ? textBefore.length : indentOf(currentLine);
     const chain = enclosingChain(lines, fences, lineIndex, effectiveIndent);
+
+    const propertyOwner = ['event', 'command', 'type', 'readmodel', 'trigger', 'when', 'every', 'at'].includes(chain[0]) ||
+        (chain[0] === 'produces' && /^produces\s+event\b/.test(nearestEnclosingLine(lines, fences, lineIndex, effectiveIndent) ?? ''));
+    const propertyName = textBefore.trimStart().split(/\s+/)[0];
+    const reservedProperty = (chain[0] === 'command' && ['reads', 'authorize', 'produces'].includes(propertyName)) ||
+        (chain[0] === 'event' && propertyName === 'tag') ||
+        (['trigger', 'when', 'every', 'at'].includes(chain[0]) && ['description', 'file', 'reads', 'produces', 'invokes'].includes(propertyName));
+    const optionalPrefix = (match: RegExpMatchArray | null) => match !== null && 'optional'.startsWith(match[1]);
+    const afterPropertyType = propertyOwner && !reservedProperty && optionalPrefix(textBefore.match(/^\s*@?[a-z_]\w*\s+[\w.]+(?:\[\])?\s+(\w*)$/));
+    const afterQueryType = (chain[0] === 'query' && optionalPrefix(textBefore.match(/^\s*(?:by|filter)\s+[a-z_]\w*\s+[\w.]+(?:\[\])?\s+(\w*)$/))) ||
+        optionalPrefix(textBefore.match(/^\s*query\s+[A-Za-z_]\w*\s*=>\s*(?:observable\s+)?[\w.]+(?:\[\])?\s+(\w*)$/));
+    if ((afterPropertyType || afterQueryType) && !/=>\s*observable\s+$/.test(textBefore)) return { kind: 'entries', entries: items.optionalTypeItems };
 
     if (/\bauthorize\s+[\w\s]*$/.test(textBefore) || chain[0] === 'authorize') {
         return { kind: 'policies' };
@@ -153,6 +180,11 @@ export function planCompletions(
     }
 
     const enclosingLine = nearestEnclosingLine(lines, fences, lineIndex, effectiveIndent);
+    if (enclosingLine && /^produces\s+operation\b/.test(enclosingLine)) return { kind: 'entries', entries: items.operationItems };
+    if (enclosingLine && /^produces\s+event\b/.test(enclosingLine)) {
+        if (/^\s+@?[a-z_]\w*\s+[\w[\]?]*$/.test(textBefore)) return { kind: 'types' };
+        return { kind: 'entries', entries: items.inlineEventItems };
+    }
     if (enclosingLine && RULE_LINE_PATTERN.test(enclosingLine)) {
         return { kind: 'entries', entries: items.ruleItems };
     }

@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Screenplay repair capabilities v1 structuredContent",
+  "type": "object",
+  "required": ["schema", "schemaVersion", "serverVersion", "repairContractVersion", "actions", "evidence", "structuredFailures", "savedFilesOnly", "journaledApply", "cancellation", "limits"],
+  "properties": {
+    "schema": { "const": "cratis.screenplay.mcp.repair-capabilities" },
+    "schemaVersion": { "const": 1 },
+    "serverVersion": { "type": "string", "minLength": 1 },
+    "repairContractVersion": { "const": 1 },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["diagnosticCode", "tool", "requiredFormatting", "pinRepairEvidence"],
+        "properties": {
+          "diagnosticCode": { "type": "string", "pattern": "^PLAY[0-9]{4}$" },
+          "tool": { "const": "propose-repair" },
+          "requiredFormatting": { "type": "string" },
+          "pinRepairEvidence": { "type": "boolean" }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["version", "optional", "revisionPrefix", "candidateResolutionChanges"],
+      "properties": {
+        "version": { "const": 1 },
+        "optional": { "const": true },
+        "revisionPrefix": { "const": "re1:" },
+        "candidateResolutionChanges": { "const": "Refused" },
+        "plannedWriteOverlap": { "const": "Refused" },
+        "plannedWriteOverlapFailureKind": { "const": "RepairEvidenceWriteConflict" }
+      }
+    },
+    "structuredFailures": {
+      "type": "object",
+      "required": ["version", "discriminator", "unknownApplyOutcome"],
+      "properties": {
+        "version": { "const": 1 },
+        "discriminator": { "const": "failureKind" },
+        "unknownApplyOutcome": { "const": "ApplyOutcomeUnknown" }
+      }
+    },
+    "savedFilesOnly": { "const": true },
+    "journaledApply": { "const": true },
+    "cancellation": {
+      "type": "object",
+      "required": ["supported", "notifications", "applyOutcomeAfterDisconnect"],
+      "properties": {
+        "supported": { "const": false },
+        "notifications": { "const": "Ignored" },
+        "applyOutcomeAfterDisconnect": { "const": "Unknown" }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "required": ["retainedProposals", "sourceFiles", "sourceBytes", "attachmentFileBytes", "attachmentBytes", "bytePageBytes", "itemPageItems", "structuredResponseBytes", "requestCharacters"],
+      "properties": {
+        "retainedProposals": { "type": "integer", "minimum": 1 },
+        "sourceFiles": { "type": "integer", "minimum": 1 },
+        "sourceBytes": { "type": "integer", "minimum": 1 },
+        "attachmentFileBytes": { "type": "integer", "minimum": 1 },
+        "attachmentBytes": { "type": "integer", "minimum": 1 },
+        "bytePageBytes": { "type": "integer", "minimum": 1 },
+        "itemPageItems": { "type": "integer", "minimum": 1 },
+        "structuredResponseBytes": { "type": "integer", "minimum": 1 },
+        "requestCharacters": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "repairEvidenceRevision": { "type": "string", "pattern": "^re1:[0-9a-f]{64}$" },
+    "repairEvidence": {
+      "type": "object",
+      "required": ["beforeRevision", "candidateRevision"],
+      "properties": {
+        "beforeRevision": { "$ref": "#/$defs/repairEvidenceRevision" },
+        "candidateRevision": { "$ref": "#/$defs/repairEvidenceRevision" }
+      }
+    },
+    "recoveryFailure": {
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/failure" }],
+      "required": ["success", "status", "failureKind", "operationId", "conflict", "recovery"],
+      "properties": {
+        "success": { "const": false },
+        "status": { "const": "RecoveryRequired" },
+        "failureKind": { "const": "RecoveryRequired" },
+        "operationId": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+        "conflict": { "type": "string" },
+        "recovery": { "type": "string" }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "required": ["failureKind"],
+      "properties": { "failureKind": { "type": "string", "minLength": 1 } }
+    }
+  }
+}

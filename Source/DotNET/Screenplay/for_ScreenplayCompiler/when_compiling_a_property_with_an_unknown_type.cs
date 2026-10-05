@@ -22,7 +22,7 @@ public class when_compiling_a_property_with_an_unknown_type : given.a_compiler
 
             slice StateView InvoiceList
               query ListInvoices => InvoiceListReadModel[]
-                filter status InvoiceStatus?
+                filter status InvoiceStatus optional
         """;
 
     CompilationResult<ApplicationSyntax> _result;

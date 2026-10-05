@@ -12,9 +12,9 @@ const descriptionPattern = pattern(`^description\\s+"(${stringBodyPattern})"$`);
 
 // Reads 'description "<text>"' or a 'description' followed by a ```text fence. A construct keeps its first
 // description; a second one is reported and ignored.
-export function parseDescription(context: ParserContext, line: SourceLine, existing: string | null, owner: string): string | null {
+export function parseDescription(context: ParserContext, line: SourceLine, existing: string | null, owner: string, allowMarkdown = false): string | null {
     if (line.content === 'description') {
-        const text = parseFencedText(context, 'description', line);
+        const text = parseFencedText(context, 'description', line, allowMarkdown);
         if (text === null) {
             return existing;
         }

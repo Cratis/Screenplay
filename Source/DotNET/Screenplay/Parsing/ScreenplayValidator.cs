@@ -32,7 +32,7 @@ internal static class ScreenplayValidator
             .SelectMany(feature => feature.Slices)
             .ToList();
 
-        var knownEvents = slices.SelectMany(slice => slice.Events.Select(@event => @event.Name))
+        var knownEvents = slices.SelectMany(slice => EventDeclarations.In(slice).Select(@event => @event.Name))
             .Concat(application.Imports.Select(import => import.Name))
             .ToHashSet();
         var knownPolicies = application.Policies.Select(policy => policy.Name).ToHashSet();
@@ -106,24 +106,30 @@ internal static class ScreenplayValidator
             .ToHashSet();
 
         var declaredTriggers = (application.Triggers ?? []).ToDictionary(trigger => trigger.Name, StringComparer.Ordinal);
-        var eventsByName = slices.SelectMany(slice => slice.Events)
+        var eventsByName = slices.SelectMany(EventDeclarations.In)
             .GroupBy(@event => @event.Name, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.OrderByDescending(@event => @event.Generation).First(), StringComparer.Ordinal);
 
-        var eventDeclarations = slices.SelectMany(slice => slice.Events).ToLookup(@event => @event.Name, StringComparer.Ordinal);
+        var eventDeclarations = slices.SelectMany(EventDeclarations.In).ToLookup(@event => @event.Name, StringComparer.Ordinal);
+        var productionResolver = new AuthoringProductionResolver(application);
+        InlineEventValidator.Validate(application, slices, context);
         foreach (var slice in slices)
         {
             ValidateEventGenerations(slice, context);
             ValidateConstraintProperties(slice, eventDeclarations, context);
-            ValidateSlice(slice, knownEvents, knownPolicies, knownTypes, knownReadModels, context);
-            ValidateReactionConsequences(slice, knownEvents, knownCommands, context);
+            ValidateSlice(slice, knownEvents, knownPolicies, knownTypes, knownReadModels, context, productionResolver);
+            ValidateReactionConsequences(slice, knownEvents, knownCommands, context, productionResolver);
             ValidateReactionTriggers(slice, knownEvents, knownReadModels, declaredTriggers, eventsByName, context);
         }
 
         var scopedSlices = ScopedSlices(application).ToList();
         var declarations = new ConsistencyDeclarations(application, scopedSlices);
+        EventSourceValidator.Validate(application, declarations, context);
+        OperationValidator.Validate(application, declarations, context);
         ImportValidator.Validate(application, declarations, context);
         CommandConsistencyValidator.Validate(declarations, context);
+        CommandResponseValidator.Validate(application, declarations, context);
+        SpecificationResponseValidator.Validate(application, declarations, context);
         EventFieldConsistencyValidator.Validate(declarations, context);
         ProjectionCompletenessValidator.Validate(declarations, context);
         ProjectionVariantValidator.Validate(declarations, context);
@@ -171,7 +177,7 @@ internal static class ScreenplayValidator
     static void ValidateEventGenerations(SliceSyntax slice, ParserContext context)
     {
         // The same event name denotes one contract only within one owning slice.
-        foreach (var @event in slice.Events.Where(@event => @event.Generation is 0 or uint.MaxValue))
+        foreach (var @event in EventDeclarations.In(slice).Where(@event => @event.Generation is 0 or uint.MaxValue))
         {
             context.Error(
                 DiagnosticCodes.InvalidEventGeneration,
@@ -179,14 +185,15 @@ internal static class ScreenplayValidator
                 @event.Location);
         }
 
-        foreach (var group in slice.Events.GroupBy(@event => @event.Name, StringComparer.Ordinal))
+        foreach (var group in EventDeclarations.In(slice).GroupBy(@event => @event.Name, StringComparer.Ordinal))
         {
+            var unmarkedFirstGenerations = group.Count(@event => @event.Generation == 1 && !@event.HasGenerationMarker);
             foreach (var duplicate in group.GroupBy(@event => @event.Generation).SelectMany(generation => generation.Skip(1)))
             {
                 context.Error(
                     DiagnosticCodes.DuplicateEventGeneration,
                     duplicate.Generation == 1 && !duplicate.HasGenerationMarker &&
-                    group.Count(@event => @event.Generation == 1 && !@event.HasGenerationMarker) > 1
+                    unmarkedFirstGenerations > 1
                         ? $"Event '{group.Key}' is declared more than once without a generation marker in slice '{slice.Name}' (both are generation 1)"
                         : $"Event '{group.Key}' declares generation {duplicate.Generation} more than once in slice '{slice.Name}'",
                     duplicate.Location);
@@ -478,7 +485,9 @@ internal static class ScreenplayValidator
         {
             context.Warning(
                 DiagnosticCodes.UnknownType,
-                $"Unknown type '{property.Type.Name}' on '{property.Name}' of {owner} - declare it with 'concept {property.Type.Name} : <Primitive>' or 'type {property.Type.Name}'",
+                property.Type.Name == "optional"
+                    ? $"Unknown type 'optional' on '{property.Name}' of {owner} - did you forget the type before 'optional'?"
+                    : $"Unknown type '{property.Type.Name}' on '{property.Name}' of {owner} - declare it with 'concept {property.Type.Name} : <Primitive>' or 'type {property.Type.Name}'",
                 property.Location);
         }
     }
@@ -787,11 +796,12 @@ internal static class ScreenplayValidator
         SliceSyntax slice,
         HashSet<string> knownEvents,
         HashSet<string> knownCommands,
-        ParserContext context)
+        ParserContext context,
+        AuthoringProductionResolver productionResolver)
     {
         foreach (var trigger in slice.Reactions.SelectMany(reaction => reaction.Triggers))
         {
-            foreach (var produces in (trigger.Produces ?? []).Where(produces => !knownEvents.Contains(produces.Event)))
+            foreach (var produces in (trigger.Produces ?? []).Where(produces => productionResolver.IsEventProduction(produces, slice) && !produces.Event.Contains('.', StringComparison.Ordinal) && !knownEvents.Contains(produces.Event)))
             {
                 context.Warning(
                     DiagnosticCodes.UnknownEvent,
@@ -1415,9 +1425,10 @@ internal static class ScreenplayValidator
         HashSet<string> knownPolicies,
         HashSet<string> knownTypes,
         HashSet<string> knownReadModels,
-        ParserContext context)
+        ParserContext context,
+        AuthoringProductionResolver productionResolver)
     {
-        foreach (var @event in slice.Events)
+        foreach (var @event in EventDeclarations.In(slice))
         {
             ValidatePropertyTypes(@event.Properties, $"event '{@event.Name}'", knownTypes, context);
         }
@@ -1453,7 +1464,7 @@ internal static class ScreenplayValidator
         }
 
         foreach (var produces in slice.Commands.SelectMany(command => command.Produces)
-            .Where(produces => !knownEvents.Contains(produces.Event)))
+            .Where(produces => productionResolver.IsEventProduction(produces, slice) && !produces.Event.Contains('.', StringComparison.Ordinal) && !knownEvents.Contains(produces.Event)))
         {
             context.Warning(DiagnosticCodes.UnknownEvent, $"Unknown event '{produces.Event}' - declare it with 'event {produces.Event}'", produces.Location);
         }

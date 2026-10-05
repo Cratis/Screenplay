@@ -16,6 +16,9 @@ export interface PropertySyntax extends SyntaxNode {
     readonly name: string;
     readonly type: TypeRefSyntax;
     readonly isIdentifier: boolean;
+    readonly isGenerated?: boolean;
+    // Parser-owned escape evidence, excluded from structural JSON.
+    readonly nameWasEscaped?: boolean;
 }
 
 export interface DomainSyntax extends SyntaxNode {
@@ -62,6 +65,9 @@ export interface EventSyntax extends SyntaxNode {
     readonly tags: readonly TagSyntax[];
     readonly generation: number;
     readonly hasGenerationMarker: boolean;
+    readonly id: string | null;
+    readonly description: string | null;
+    readonly documentation: string | null;
 }
 
 export interface ReadModelSyntax extends SyntaxNode {

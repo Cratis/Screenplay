@@ -29,6 +29,8 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Policy** — a named authorization rule (role-based, claim-based, or custom) that commands and queries reference by name via `authorize`.
 - **Command** — an imperative intent with properties, `authorize`, `validate`, and a `produces` block declaring the events it appends.
 - **Event** — a past-tense fact declaration: a named type and its properties.
+- **Inline event** — a slice-owned generation-1 event declared inside a command with `produces event <Name>`, with each payload property typed and mapped on one line. Extracting it to a standalone declaration in the same slice preserves identity.
+- **Event identity pin** — optional `id "<old-name>"` metadata for preserving a previously persisted event name after a rename. New events leave it absent; it does not alter the portable hashed `EventContractId`.
 - **Query** — a read-side entry point mapping identifying and filter parameters to a read-model return type (`=> ReadModel[]`), optionally with a `performer` that performs it.
 - **Observable query** — a query whose return type is qualified with `observable` (`=> observable ReadModel[]`): a live read that keeps pushing as the read model changes, rather than answering once.
 - **Performer** — the code that performs a query — an external `file` or an inline `csharp`/`sql` block. The query's counterpart to a command's `handler`.
@@ -46,9 +48,8 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Arrangement** — how a layout or template positions the slots it declares: responsive `flow` or pixel-precise `freeform`.
 - **Contribution point** — a named many-to-one extension point declared on a slot. `Navigation` is the first user of the mechanism.
 - **Contribution** — one piece of content targeting a contribution point, declared with `contribute to`. It attaches to the nearest enclosing structure declaring a matching point.
-- **UI profile** — a build's selections: `target platform`, `target size`, `layout`, `theme`, `packages`, `blueprint` and `start screen`. Names artifacts; does not contain them.
+- **UI profile** — a build's selections: `target platform`, `target size`, `layout`, `theme` and `packages`. Names artifacts; does not contain them.
 - **Package** — a named set of components a profile draws from, in override-priority order. `core` is the final fallback.
-- **Blueprint** — a shipped bundle selected by a `ui profile`: layouts, shell chrome, a template set and theme tokens. Selected by name, like a theme; never declared in the document.
 - **Size class** — `compact`, `regular` or `expanded`, on the width and height axes. A class, not a pixel breakpoint.
 
 ### Interaction
@@ -57,8 +58,7 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Action** — one declarative effect: `execute`, `navigate to`, `navigate back`, `open dialog`, `close dialog`, `refresh`, `set`, `notify`, `confirm`, `raise`. Every operand is a model reference, so an action that names nothing real is a diagnostic rather than a dead control.
 - **Continuation** — the `on success` / `on failure` / `on result` block of an action, holding the actions that run after it. Only actions that can fail carry one.
 - **Behavior** — a bundle of interaction-trigger-to-action bindings, attachable to an element, form, screen, template, layout, module or feature. Written inline as an anonymous `on` block, or declared as `behavior <Name>` with `parameter`s and attached with `uses`. Attachments are additive: a template's behavior and an element's both run.
-- **Route** — the concrete address a renderer gives a screen. The document says `navigate to <Screen>`; the renderer decides that means `/invoicing/invoices`. Parameters come from the screen's `accepts` declarations.
-- **Screen state** — a screen's declared values. `accepts` is route-backed, so it is shareable and reload-safe; `state` is transient and screen-local. Both are writable by `set`; nothing undeclared exists.
+- **Route** — the concrete address a renderer gives a screen. The document says `navigate to <Screen>`; the renderer decides that means `/invoicing/invoices`. Bindings are passed with `with <name> from <binding>`; legacy navigation forms also accept `by <parameter>`.
 
 ## Sub-languages
 

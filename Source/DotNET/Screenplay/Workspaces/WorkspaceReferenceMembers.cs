@@ -19,7 +19,11 @@ enum WorkspaceReferenceDomain
     Screen,
     Policy,
     Trigger,
-    Property
+    Property,
+    Operation,
+    System,
+    EventSource,
+    EventStream
 }
 
 sealed record WorkspaceReferenceMember(WorkspaceSyntaxEntry Entry, string Member, int? Index, string Text, WorkspaceReferenceDomain Domain, string? Owner = null)
@@ -40,7 +44,12 @@ static class WorkspaceReferenceMembers
                 var value = property.GetValue(entry.Node);
                 if (value is string text && text.Length > 0)
                 {
-                    var owner = domain == WorkspaceReferenceDomain.Property ? WorkspaceStructuredReferences.Owner(entry, index) : null;
+                    var owner = domain switch
+                    {
+                        WorkspaceReferenceDomain.Property => WorkspaceStructuredReferences.Owner(entry, index),
+                        WorkspaceReferenceDomain.EventStream when entry.Node is CommandStreamSyntax route => route.EventSource,
+                        _ => null
+                    };
                     if (domain != WorkspaceReferenceDomain.Property || owner is not null)
                     {
                         yield return new(entry, member, null, text, domain, owner);
@@ -63,16 +72,40 @@ static class WorkspaceReferenceMembers
         }
     }
 
-    internal static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> Members(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index) => entry.Node switch
+    internal static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> Members(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index)
     {
+        if (entry.Node is ProducesSyntax production && index.OwningSlice(entry) is { } slice && !index.Productions.IsEventProduction(production, slice))
+            return [("event", WorkspaceReferenceDomain.Operation)];
+
+        return EventMembers(entry.Node).Concat(OtherMembers(entry, index));
+    }
+
+    // The event-name catalog shared by repair consumer detection, rename and reference validation.
+    // The syntax index recursively visits additional constraint rules, projection children/nested/variants,
+    // reaction productions, capture appends, specification occurrences and screen/behavior interactions.
+    // Policies have no typed event member; their code/files (like imports) go through WorkspaceOpaqueText.
+    static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> EventMembers(SyntaxNode node) => node switch
+    {
+        UniquePropertyConstraintSyntax or UniqueEventConstraintSyntax => [("event", WorkspaceReferenceDomain.Event), ("releasedBy", WorkspaceReferenceDomain.Event)],
+        ConstraintSyntax => [("releasedBy", WorkspaceReferenceDomain.Event)],
+        ProducesSyntax or SeedEventSyntax or EventSpecSyntax or JoinEventSyntax or ClearWithSyntax or RemoveWithSyntax or
+            RemoveViaJoinSyntax or ProjectionEntersOnSyntax or CaptureAppendSyntax or ReducerRuleSyntax => [("event", WorkspaceReferenceDomain.Event)],
+        SpecificationEventSyntax => [("eventType", WorkspaceReferenceDomain.Event)],
+        EventInteractionTriggerSyntax => [("eventName", WorkspaceReferenceDomain.Event)],
+        ConcurrencySyntax => [("eventTypes", WorkspaceReferenceDomain.Event)],
+        NamedTriggerSourceSyntax => [("name", WorkspaceReferenceDomain.Trigger)],
+        _ => []
+    };
+
+    static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> OtherMembers(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index) => entry.Node switch
+    {
+        CommandStreamSyntax { PropertyCandidate: null } => [("eventSource", WorkspaceReferenceDomain.EventSource), ("stream", WorkspaceReferenceDomain.EventStream)],
+        OperationSyntax => [("uses", WorkspaceReferenceDomain.System)],
+        SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax => [("operation", WorkspaceReferenceDomain.Operation)],
         ObjectMemberSyntax => [("name", WorkspaceReferenceDomain.Property)],
         TypeRefSyntax => [("name", entry.Parent is { } parent && index.Find(parent)?.Node is QuerySyntax or ScreenDataSyntax
             ? WorkspaceReferenceDomain.View : WorkspaceReferenceDomain.Type)],
         CompositeKeySyntax => [("type", WorkspaceReferenceDomain.Type)],
-        ProducesSyntax or SeedEventSyntax or UniquePropertyConstraintSyntax or UniqueEventConstraintSyntax or EventSpecSyntax or JoinEventSyntax or
-            ClearWithSyntax or RemoveWithSyntax or RemoveViaJoinSyntax or ProjectionEntersOnSyntax or CaptureAppendSyntax or ReducerRuleSyntax => [("event", WorkspaceReferenceDomain.Event)],
-        SpecificationEventSyntax => [("eventType", WorkspaceReferenceDomain.Event)],
-        ConcurrencySyntax => [("eventTypes", WorkspaceReferenceDomain.Event)],
         SpecificationCommandSyntax => [("commandType", WorkspaceReferenceDomain.Command)],
         InvokesSyntax or ScreenActionSyntax => [("command", WorkspaceReferenceDomain.Command)],
         FormSyntax => [("for", WorkspaceReferenceDomain.Command)],
@@ -82,7 +115,6 @@ static class WorkspaceReferenceMembers
         ScreenNavigateSyntax => [("screen", WorkspaceReferenceDomain.Screen)],
         PolicyReferenceSyntax => [("name", WorkspaceReferenceDomain.Policy)],
         PersonaSyntax => [("policies", WorkspaceReferenceDomain.Policy)],
-        NamedTriggerSourceSyntax => [("name", WorkspaceReferenceDomain.Trigger)],
         _ => []
     };
 }

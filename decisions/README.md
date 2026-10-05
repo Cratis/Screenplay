@@ -22,5 +22,6 @@
 | [0018](0018-provider-identifiers-and-portable-default-tenant.md) | Use provider-generated identifiers in code bodies and keep the portable default tenant | accepted | implemented | 2026-09-26 | Sindre Alstad Wilting |
 | [0019](0019-publish-the-context-family-separately.md) | Publish the context family in a slim package with compiler type forwarding | accepted | implemented | 2026-09-26 | Sindre Alstad Wilting |
 | [0020](0020-keyed-read-model-absence-in-esm-v5.md) | Admit keyed read-model absence assertions in ESM v5 | accepted | none | 2026-09-26 | Sindre Alstad Wilting |
-| [0021](0021-commands-produce-events-operations-and-responses.md) | Commands produce events, operations and responses | accepted | none | 2026-09-28 | Sindre Alstad Wilting |
-| [0022](0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md) | Admit clocks, application triggers, capture records and reactions into specifications as ESM v6 | proposed | none | — | — |
+| [0021](0021-commands-produce-events-operations-and-responses.md) | Commands produce events, operations and responses | superseded | none | 2026-09-28 | Sindre Alstad Wilting |
+| [0022](0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md) | Admit clocks, application triggers, capture records and reactions into specifications as ESM v6 | accepted | implemented | 2026-10-02 | Einar Ingebrigtsen |
+| [0023](0023-command-production-model.md) | Model command productions and allocate their ESM versions | accepted | none | 2026-10-02 | Sindre Alstad Wilting |

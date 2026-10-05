@@ -3,12 +3,19 @@
 
 import { eventContextPaths } from './event-context';
 
+// These words are contextual beneath a handler, never global property keywords.
+export const handlerIntentDocs = {
+    implementation: 'Handler-only intent with ordered hints and at most one file or tagged fence. No payload means pending. Handler execution is unsupported; this is not confirmation.',
+    hint: 'One nonblank quoted implementation hint. Order and decoded text are retained; hints do not execute or confirm code.',
+};
+
 export const keywordDocs: Record<string, string> = {
     domain: 'The domain the file belongs to — optional, at most one per file, before everything else.',
     import: 'Imports a type from another module by its qualified name — `import Module.Type` — making it available by its short name; or, quoted, other `.play` files by path or glob — `import "Orders/**/*.play"`, relative to this file\'s folder. Written inside a module or feature, a file import places the imported files there: their top level is that module\'s or feature\'s body.',
     concept: 'A formalized value type wrapping a primitive. Attributes such as `@pii` travel with every usage, optionally with a `<attribute> reason "..."` line saying why.',
     type: 'A composite value type — a named shape built from several properties, referenced by events, commands and other types the same way a concept is.',
     reason: 'Records why a concept attribute applies — the purpose, the lawful basis, whose subject the value lives under. Written as `pii reason "..."` in the concept body.',
+    optional: 'Allows a value to be absent. Write it after the type: `note String optional` or `lines InvoiceLine[] optional`. The collection itself may be absent; its items keep their declared type.',
     identifier: 'Marks the command property a runtime resolves the event source id from. At most one per command; without it a new Uuid is generated.',
     policy: 'A named authorization rule referenced by commands and queries. Multiple policies AND together.',
     persona: 'A named role interacting with the application, with an optional description and its associated policies.',
@@ -20,7 +27,9 @@ export const keywordDocs: Record<string, string> = {
     template: 'Declares the named slots of a layout.',
     feature: 'A vertical slice grouping. Features nest arbitrarily deep.',
     slice: 'The atomic unit of behavior, aligned with Event Modeling. Has a type and a name.',
-    event: 'An event type — an immutable, past-tense fact. Properties use concepts or primitives.',
+    event: 'An immutable, past-tense fact. Declare it in a slice or inline with `produces event <Name>` in a command. Inline properties are typed mappings; inline tags belong to the event type.',
+    documentation: 'Authoring-only event documentation in a fenced ```markdown block. It does not change executable model bytes.',
+    id: 'Preserves the previous persisted event name after a rename. Leave absent on new events; repeating the current name is redundant.',
     command: 'An imperative intent. Declares authorization, validation, and what events it produces — declaratively, or via a full handler.',
     query: 'A read-side entry point mapping to a return type, with an optional description, parameters and performer.',
     observable: 'Qualifies a query return type as a live read — `query <Name> => observable <ReadModel>` keeps pushing as the read model changes, instead of answering once.',
@@ -38,7 +47,7 @@ export const keywordDocs: Record<string, string> = {
     constraint: 'A server-side rule enforced in the Chronicle kernel before events are committed.',
     authorize: 'References the policies that must all pass for the construct to execute.',
     validate: 'Declarative validation rules, or `validate` followed by ```csharp for imperative rules — on commands and concepts.',
-    produces: 'Declares the events a command emits — single, multiple, or conditional.',
+    produces: 'References a declared event with `produces <Name>`, or declares one inline with `produces event <Name>`. An inline omitted `for` uses the command identifier only when all destinations are the same source; legacy plain omission allocates an identity.',
     reads: 'Declares a view consulted by a command or reaction trigger: `reads <View> [as <alias>] [by <value>]`. A reaction `by` names a value taken by its trigger; clock triggers cannot use `by`. Repeated views require unique aliases. Runtime binding is not yet supported for command or reaction reads.',
     as: 'Names an instance of a view in a command or reaction trigger reads declaration, for example `reads Account as source by sourceId`.',
     handler: 'A fully imperative command implementation — a `file <Path>` reference or an inline `csharp` block, instead of `produces`.',
@@ -67,7 +76,7 @@ export const keywordDocs: Record<string, string> = {
     streamId: 'Concurrency dimension — scope the check to an event stream id.',
     tag: 'Attaches a tag to appended events — a static identifier or string, or a `$context.` expression resolved at append time.',
     seed: 'Declares events to seed into the event store per event source id — multiple blocks accumulate.',
-    for: 'Introduces a seed group — the events to seed for one event source id.',
+    for: 'Names the event source of a production or seed group. Inside `produces event`, omission uses the command identifier unless another production targets a different source.',
     readmodel: 'Read model state in a specification — `given readmodel` establishes it, `then readmodel` asserts it, `then no readmodel <View> for <key>` asserts keyed absence.',
     no: 'A keyed absence assertion: `then no readmodel <View> for <key>`.',
     arguments: 'The values supplied to a query asserted by `then query`.',

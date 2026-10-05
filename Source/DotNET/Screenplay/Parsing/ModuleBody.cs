@@ -27,6 +27,7 @@ internal sealed class ModuleBody(string name)
     readonly List<BehaviorSyntax> _behaviors = [];
     readonly List<UsesBehaviorSyntax> _usedBehaviors = [];
     readonly List<FileImportSyntax> _fileImports = [];
+    int _restatedHeaders;
     string? _description;
     AuthorizeSyntax? _authorize;
 
@@ -97,6 +98,9 @@ internal sealed class ModuleBody(string name)
             FileImports = _fileImports,
             IsPlacement = isPlacement
         };
+
+    internal void RecordRestatedHeader(SourceLocation location) =>
+        _directiveLocations[$"{DirectiveLocationKeys.PlacementHeaderPrefix}{_restatedHeaders++}"] = location;
 
     void AddForm(ParserContext context, FormSyntax form)
     {

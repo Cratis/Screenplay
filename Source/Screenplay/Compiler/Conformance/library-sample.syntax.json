@@ -92,10 +92,51 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "AddBook",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "BookAdded",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "bookId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "isbn",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "isbn"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "title",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "title"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "author",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "author"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": true,
                       "name": "bookId",
                       "type": {
@@ -107,6 +148,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "isbn",
                       "type": {
@@ -118,6 +160,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "title",
                       "type": {
@@ -129,6 +172,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "author",
                       "type": {
@@ -139,6 +183,7 @@
                       }
                     }
                   ],
+                  "response": null,
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -184,12 +229,16 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "BookAdded",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "isbn",
                       "type": {
@@ -201,6 +250,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "title",
                       "type": {
@@ -212,6 +262,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "author",
                       "type": {
@@ -226,6 +277,7 @@
                 }
               ],
               "name": "AddBook",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -272,8 +324,11 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "AddingABook",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -313,12 +368,15 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "AddBook",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -365,8 +423,11 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAMalformedIsbn",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [
                     {
                       "kind": "SpecificationErrorSyntax",
@@ -376,12 +437,15 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "AddBook",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -428,18 +492,26 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RefusingAMemberAddingBooks",
+                  "thenCompensated": [],
+                  "thenDenied": {
+                    "kind": "SpecificationDeniedSyntax"
+                  },
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "AddBook",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -492,6 +564,7 @@
               "description": "Every book, and whether it is on the shelf",
               "events": [],
               "name": "BookCatalog",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -640,6 +713,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "bookId",
                       "type": {
@@ -651,6 +725,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "title",
                       "type": {
@@ -662,6 +737,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "author",
                       "type": {
@@ -673,6 +749,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "available",
                       "type": {
@@ -783,12 +860,16 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "BorrowingTakesABookOffTheShelf",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -815,6 +896,7 @@
                     }
                   ],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": {
                     "kind": "SpecificationEventSyntax",
@@ -858,6 +940,7 @@
               "description": "When the library is open this week",
               "events": [],
               "name": "OpeningHours",
+              "operations": [],
               "projections": [],
               "queries": [
                 {
@@ -939,6 +1022,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "day",
                       "type": {
@@ -950,6 +1034,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "opens",
                       "type": {
@@ -961,6 +1046,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "closes",
                       "type": {
@@ -1024,6 +1110,7 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -1058,10 +1145,13 @@
                     }
                   ],
                   "name": "ShowingTodaysOpeningHours",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [
                     {
@@ -1087,6 +1177,7 @@
                       ]
                     }
                   ],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": null,
                   "whenCapture": null,
@@ -1135,10 +1226,35 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "RegisterMember",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "MemberRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "memberId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "name"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": true,
                       "name": "memberId",
                       "type": {
@@ -1150,6 +1266,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {
@@ -1160,6 +1277,7 @@
                       }
                     }
                   ],
+                  "response": null,
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -1182,12 +1300,16 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "MemberRegistered",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {
@@ -1202,6 +1324,7 @@
                 }
               ],
               "name": "RegisterMember",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -1248,8 +1371,11 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringAMember",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -1273,12 +1399,15 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "RegisterMember",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -1309,8 +1438,11 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAMemberWithNoName",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [
                     {
                       "kind": "SpecificationErrorSyntax",
@@ -1320,12 +1452,15 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "RegisterMember",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -1363,12 +1498,16 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "WelcomeLetterSent",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "addressedTo",
                       "type": {
@@ -1383,6 +1522,7 @@
                 }
               ],
               "name": "WelcomeNewMembers",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -1398,7 +1538,21 @@
                       "produces": [
                         {
                           "kind": "ProducesSyntax",
-                          "event": "WelcomeLetterSent"
+                          "event": "WelcomeLetterSent",
+                          "for": null,
+                          "inlineEvent": null,
+                          "inlineOperation": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "addressedTo",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "name"
+                              }
+                            }
+                          ],
+                          "tags": []
                         }
                       ],
                       "source": {
@@ -1436,8 +1590,11 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "WelcomingANewMember",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -1458,8 +1615,10 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": {
                     "kind": "SpecificationEventSyntax",
@@ -1512,10 +1671,43 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "BorrowBook",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "BookBorrowed",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "bookId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "memberId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "memberId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "dueDate",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "dueDate"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": true,
                       "name": "bookId",
                       "type": {
@@ -1527,6 +1719,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "memberId",
                       "type": {
@@ -1538,6 +1731,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "dueDate",
                       "type": {
@@ -1548,6 +1742,7 @@
                       }
                     }
                   ],
+                  "response": null,
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -1573,12 +1768,16 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "BookBorrowed",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "memberId",
                       "type": {
@@ -1590,6 +1789,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "dueDate",
                       "type": {
@@ -1604,6 +1804,7 @@
                 }
               ],
               "name": "BorrowBook",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -1654,6 +1855,7 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -1696,6 +1898,8 @@
                     }
                   ],
                   "name": "BorrowingAnAvailableBook",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -1727,12 +1931,15 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "BorrowBook",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -1771,6 +1978,7 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -1813,6 +2021,8 @@
                     }
                   ],
                   "name": "RefusingABookThatIsOnLoan",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [
                     {
                       "kind": "SpecificationErrorSyntax",
@@ -1822,12 +2032,15 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "BorrowBook",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -1878,10 +2091,35 @@
                     }
                   },
                   "description": null,
+                  "handler": null,
                   "name": "ReturnBook",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "BookReturned",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "bookId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "returnedOn",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "returnedOn"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": true,
                       "name": "bookId",
                       "type": {
@@ -1893,6 +2131,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "returnedOn",
                       "type": {
@@ -1903,6 +2142,7 @@
                       }
                     }
                   ],
+                  "response": null,
                   "validations": []
                 }
               ],
@@ -1911,12 +2151,16 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "BookReturned",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "returnedOn",
                       "type": {
@@ -1931,6 +2175,7 @@
                 }
               ],
               "name": "ReturnBook",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -2038,8 +2283,11 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ReturningABook",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -2063,12 +2311,15 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "ReturnBook",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -2105,6 +2356,7 @@
               "description": null,
               "events": [],
               "name": "MyLoans",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -2233,6 +2485,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "bookId",
                       "type": {
@@ -2244,6 +2497,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "memberId",
                       "type": {
@@ -2255,6 +2509,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "dueDate",
                       "type": {
@@ -2266,6 +2521,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "status",
                       "type": {
@@ -2396,12 +2652,16 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "SeeingAReturnedLoan",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -2428,6 +2688,7 @@
                     }
                   ],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": {
                     "kind": "SpecificationEventSyntax",
@@ -2481,5 +2742,6 @@
       ]
     }
   ],
+  "systems": [],
   "types": []
 }

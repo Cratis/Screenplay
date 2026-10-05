@@ -34,7 +34,14 @@ internal static partial class QueryParser
 
         var name = match.Groups[1].Value;
         var isObservable = match.Groups[2].Success;
-        var returnType = PropertyLineParser.ParseTypeRef(match.Groups[3].Value, header.Location);
+        var returnType = PropertyLineParser.ParseTypeRef(match.Groups[3].Value, header.LocationAt(match.Groups[3].Index));
+
+        // This one '?' has no equivalent keyword spelling: 'observable optional' is a live query
+        // returning the type named 'optional'. It is neither deprecated nor a migration occurrence.
+        if (!(!isObservable && returnType.Name == QuerySyntax.ObservableModifier && returnType is { IsOptional: true, IsCollection: false }))
+        {
+            PropertyLineParser.ReportLegacyOptionalSuffix(context, returnType, header);
+        }
         QueryParameterSyntax? by = null;
         var filters = new List<QueryParameterSyntax>();
         AuthorizeSyntax? authorize = null;
@@ -62,6 +69,7 @@ internal static partial class QueryParser
                     {
                         if (directiveLocations.TryGetValue("by", out var previousBy))
                         {
+                            context.Error(DiagnosticCodes.InvalidQueryParameter, $"Query '{name}' already declares 'by' - a query can have at most one key parameter", line.Location);
                             directiveLocations[$"omitted:by:{previousBy.Line}"] = previousBy;
                         }
 
@@ -120,7 +128,10 @@ internal static partial class QueryParser
             ? ExpressionParser.ParseMapping(context, match.Groups[1].Value, match.Groups[3], line with { Indent = line.Indent + keyword.Length + leading }).Source
             : null;
 
-        return new(match.Groups[1].Value, PropertyLineParser.ParseTypeRef(match.Groups[2].Value, line.Location), line.Location, source);
+        var type = PropertyLineParser.ParseTypeRef(match.Groups[2].Value, line.LocationAt(keyword.Length + leading + match.Groups[2].Index));
+        PropertyLineParser.ReportLegacyOptionalSuffix(context, type, line);
+
+        return new(match.Groups[1].Value, type, line.Location, source);
     }
 
     static PerformerSyntax? ParsePerformer(ParserContext context, SourceLine line, PerformerSyntax? existing, string queryName)
@@ -188,15 +199,15 @@ internal static partial class QueryParser
         return match.Groups[1].Value;
     }
 
-    [GeneratedRegex(@"^query\s+[A-Za-z_]\w*\s*=>\s*(?:observable\s+)?[\w.]+(?:\[\])?\??\s+by\s+(.+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^query\s+[A-Za-z_]\w*\s*=>\s*(?:observable\s+)?[\w.]+(?:\[\])?(?:\?|\s+optional)?\s+by\s+(.+)$", RegexOptions.None, 1000)]
     private static partial Regex KeyedHeaderRegex();
 
     [GeneratedRegex(@"^scoped\s+to\s+([a-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex ScopeRegex();
 
-    [GeneratedRegex(@"^query\s+([A-Za-z_]\w*)\s*=>\s*(observable\s+)?([\w.]+(?:\[\])?\??)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^query\s+([A-Za-z_]\w*)\s*=>\s*(observable\s+)?([\w.]+(?:\[\])?(?:\?|\s+optional)?)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^([a-z_]\w*)\s+([\w.]+(?:\[\])?\??)(?:\s+from\s+(.+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(?:\s+from\s+(.+))?$", RegexOptions.None, 1000)]
     private static partial Regex ParameterRegex();
 }

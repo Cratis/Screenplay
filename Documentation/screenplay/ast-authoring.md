@@ -30,6 +30,30 @@ An intentional edit to a valid reference target is different from an untouched
 reference silently changing meaning. Acceptance never proves business correctness
 or executes specifications.
 
+## Handler intent edits
+
+`HandlerSyntax.Implementation` is a nullable init-only member; existing positional constructors and deconstruction are unchanged. `ImplementationSyntax` holds ordered `ImplementationHintSyntax` children, each with `text` and its own source/comment anchor. It stores no payload or lifecycle state. The handler's existing `file`/`code` is the only payload; structural paths remain `handler.file`/`handler.code` even when printing nests them under the wrapper.
+
+Use ordinary typed add/replace/remove operations with **Authoring** validation to edit hints, payloads or the wrapper. Switch file/inline sources atomically in one proposal. Parsed and typed authoring candidates reject multiple payloads and blank hints. Wrapped printing refuses conflicting sources rather than choosing one; the legacy direct printer retains its explicit omission comments for old structural trees. Removing attached metadata unwraps while retaining its payload. Removing pending metadata creates an invalid bare handler and is refused. Revision and expected-node checks remain mandatory; authoring acceptance does not confirm implementation behavior.
+
+Old handler JSON without `implementation` reads as null. New metadata needs a capable syntax reader: strict older readers reject unknown kinds/members. Schema discovery includes both new kinds; no ESM version or canonical bytes change.
+
+## Operation intent edits (syntax-only)
+
+Systems, standalone/inline operations, typed inputs, phase attachments and hints are discoverable through `WorkspaceSyntaxIndex` without an executable model. Original document occurrences retain source and placement; unsupported operation/system kinds have no `SemanticId`, semantic address or `RequirementId`. MCP logical keys include declaration kind and full owning scope and are authoring-only, not persistent identity. Existing catalog assignments remain unchanged when editing this intent.
+
+Use typed add/replace/remove with Authoring validation for inputs, phases, hints or a sole phase source. The phase owns `File`/`Code`; `ImplementationSyntax` owns hints only. Existing revision checks, expected-node validation, reference policy and source-preserving printing still apply. Stale handles, collisions, invalid shapes and unresolved placement refuse rather than choose a target. Executable validation reports `PLAY0268` and refuses; acceptance does not execute, realize or confirm code. Operation/system automatic rename and extraction are not claimed; use coordinated typed edits and validate references. [Manual promotion](operations.md#promote-an-inline-operation-manually) preserves production order explicitly.
+
+## Source and stream edits (syntax-only)
+
+Discover `EventSourceSyntax`, `EventStreamSyntax` and `CommandStreamSyntax` through the same strict syntax schema and original-document handles. `ApplicationSyntax.eventSources`, `EventSourceSyntax.streams`, `CommandSyntax.stream`, `CommandSyntax.streamCandidates` and `CommandStreamSyntax.streamId` are additive members. Old JSON omissions retain null/empty defaults and existing C# positional constructors remain unchanged. Every retained ambiguity candidate, including its `propertyCandidate`, is structural JSON; source spans and reference lengths are server-owned metadata.
+
+Use typed Add/Replace/Remove under Authoring validation. Add a source to the application's `eventSources`, a stream to its source's `streams`, or a route to the command's `stream`. A key mapping is a `PropertyMappingSyntax` with `property: "streamId"` and a typed expression in `source`; it is not an arbitrary Syntax JSON value. Read each schema rather than inventing required members or numeric envelopes. Coordinated changes must pass full-input validation, print/parse fidelity and existing revision/catalog guards, with explicit preview and apply.
+
+To select a retained property interpretation, replace the containing command: move that candidate's `propertyCandidate` into `properties` and remove it from `streamCandidates`. Canonical printing escapes the qualified property as `@stream`. If the compiler still reports an unknown qualified type, this deliberate debt requires `referencePolicy: "Draft"`; Safe refuses it rather than certifying an unavailable imported shape. To select routing, replace the containing command with that exact retained candidate in `stream`, clear its `propertyCandidate`, and remove it from `streamCandidates`. Resolve the competing qualified value-type import/declaration in the same explicit proposal; supply a required `streamId` mapping on the selected route. Use `CanonicalizeTouchedDocuments`: structural candidate selection is not supported by `PreserveTrivia`. The proof requires complete, resolved source, unchanged unique physical source/stream declarations and otherwise unchanged command members. A different route, changed source declaration, unrelated removed reference or ambiguous parent is refused. Merely deleting `propertyCandidate` cannot override blocking `PLAY0505`. These are deliberate typed authoring edits, not automatic diagnostic repairs.
+
+Sources and streams have exact application/kind/full-owner logical keys and separate physical handles. Physical read inventories retain partial declarations and routes from errorful documents without making those documents editable. Duplicate parent sources refuse child details even if only one contains the requested stream. Unknown parsed extent reports incomplete ownership, and incomplete source refuses confident details. Unresolved placement has no authoritative key or owner. No source/stream `SemanticId` or `RequirementId` is enrolled, and rename-only pins are metadata, not identity-catalog instructions. Automatic source/stream rename and routing repair are unavailable. Invalid draft shapes return a structured `InvalidSyntaxJson` refusal when strict content or merged syntax export cannot represent them; compact AST handles remain useful for deliberate replacement.
+
 ## Typed syntax JSON
 
 The public codec lives in `Cratis.Screenplay.Syntax.Serialization`.
@@ -95,10 +119,20 @@ is rejected rather than silently becoming a different hierarchy.
 | `ReplaceWorkspaceNode` | Target handle, expected node, replacement node |
 | `RemoveWorkspaceNode` | Target handle and expected node |
 | `MoveWorkspaceNode` | Target/expectation and destination parent/expectation/member/index |
+| `MigrateOptionalTypeSpelling` | Original type handle and expected `TypeRefSyntax`; the compiler derives the spelling change |
 
 All handles and expectations address the **base snapshot**. Multiple disjoint
 edits to the same document compose in memory; intermediate states do not need
 to compile. The final complete application does.
+
+`PLAY0479` repairs use `MigrateOptionalTypeSpelling` rather than a caller-supplied
+text patch. With `PreserveTrivia`, each operation changes only the optionality spelling;
+a document-wide repair submits all occurrences in one transaction. The candidate is
+reparsed and must have the same syntax structure, without the selected diagnostics.
+Do not mix spelling migrations with other edits to the same document. Explicit
+`CanonicalizeTouchedDocuments` consent opts into reprinting instead. Discover a
+single occurrence with `WorkspaceDiagnosticRepairs.Find`, or a whole document with
+`FindDocumentOptionality` and its root handle; preview either through `ProposeRepair`.
 
 Overlapping subtree edits, incompatible slots, moving a node into itself and
 conflicting insertion boundaries are rejected. Replace one containing subtree
@@ -133,7 +167,15 @@ document with `RepairWouldDropComments`. Review the candidate and `WritePlan`,
 then explicitly accept the plan through the usual destination adapter.
 Stale requests return typed stale conflicts with no partial candidate.
 
-The first repair handles only `PLAY0397` on a `validate csharp` header. Its parsed
+Discovery verifies `PLAY0166`, `PLAY0478`, `PLAY0469` and `PLAY0471` repairs before
+listing them: authoring acceptance and comment preservation, plus each repair's
+routing, consumer or executable-model constraints. Verdicts are cached only on the
+current immutable snapshot; proposals run one fresh transaction. See the
+[repair conditions](mcp/authoring-tools.md#fix-a-diagnostic). `PLAY0470` remains deferred.
+
+The legacy-fence repair handles only `PLAY0397` on a `validate csharp` header.
+Its discovery identifies the recipe without verifying the candidate; the proposal
+may still be refused. Its parsed
 subject has the unique warning location. The operation is an **identity replacement**:
 it replaces the node with its own original syntax, and canonical printing performs
 the migration to `validate` followed by a `` ```csharp `` fence. This reprints the
@@ -160,6 +202,8 @@ composite types**, commands, events, read models, queries, modules, features and
 slices. Other property declarations are not automatic rename targets. Module/feature fragments change
 together. Proven typed references and qualified descendant references are repaired;
 read-model output aliases remain distinct from projection builder identities.
+Event renames also update constraint `released by` references and screen/behavior
+`on event` triggers.
 
 The planner rechecks bindings after the change. Name collisions, ambiguous
 references, capture, affected opaque realizations/imports, unsupported spans and
@@ -178,7 +222,10 @@ column, the syntax pointer, and the matched name.
 The default rename formatting is `PreserveTrivia`: verified byte patches retain
 comments, BOM, line endings and every byte outside the proved member spans.
 Unsupported changes require an explicit canonical formatting choice; semantic
-uncertainty cannot be waived by that choice.
+uncertainty cannot be waived by that choice. Event renames retain an existing `id`
+pin or insert the previous name by default. `EventNeverPersisted = true` omits a new
+pin and removes a redundant pin equal to the current name; an earlier identity pin is kept. A pin-inserting rename refuses comment loss or duplication;
+other renames retain the ordinary explicit-canonicalization contract.
 
 ## Identity continuity
 
@@ -208,7 +255,7 @@ source stays byte-identical; touched documents preserve their UTF-8 BOM policy.
 applies only byte patches whose result reparses to the complete intended AST;
 unsupported changes reject without a canonicalization fallback.
 
-`PreserveTrivia` patches three kinds of change in place:
+`PreserveTrivia` patches these changes in place:
 
 - An identifier member, such as a declaration name or an event reference, through
   its proven identifier span.
@@ -218,12 +265,19 @@ unsupported changes reject without a canonicalization fallback.
 - A whole property mapping of a `produces` block or a specification value. When
   only its source changes, only the right-hand side is rewritten; when its target
   property changes too, the mapping text is rewritten up to the end of its source.
+- An event `id` pin inserted or removed by a rename. Removing an uncommented pin
+  removes the entire directive line; a trailing comment remains exactly once.
 
-Adding, removing or reordering nodes is structural and still requires
+Other additions, removals or reorderings of nodes are structural and still require
 `CanonicalizeTouchedDocuments`.
 
 Canonical printing retains attached comments and normalizes blank lines. It preserves
-parsed member order within a document; new members follow the insertion rule in
+parsed member order within a document. Added nodes do not inherit source positions
+or comments from their supplied values. Moves retain their comments and internal
+order. A same-document move retains its root source position only when it agrees
+with the requested order among destination siblings of the same kind;
+cross-document moves discard that root position. In either case,
+new members follow the insertion rule in
 [Printing and generating](printing.md#what-printing-does-not-keep). Before applying such a result, call
 `WorkspaceDroppedComments.In(result.WritePlan)` to list any comment that could not be
 placed, with its path, line, column and text. The `PLAY0288` warning for each

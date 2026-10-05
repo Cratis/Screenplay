@@ -9,11 +9,11 @@ import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseDescription } from './DescriptionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
-import { parseTypeRef } from './PropertyLineParser';
+import { parseTypeRef, reportLegacyOptionalSuffix } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
 
-const header = pattern('^query\\s+([A-Za-z_]\\w*)\\s*=>\\s*(observable\\s+)?([\\w.]+(?:\\[\\])?\\??)$');
-const parameterPattern = pattern('^([a-z_]\\w*)\\s+([\\w.]+(?:\\[\\])?\\??)(?:\\s+from\\s+(.+))?$');
+const header = pattern('^query\\s+([A-Za-z_]\\w*)\\s*=>\\s*(observable\\s+)?([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)$');
+const parameterPattern = pattern('^([a-z_]\\w*)\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)(?:\\s+from\\s+(.+))?$');
 const scopePattern = pattern('^scoped\\s+to\\s+([a-z_]\\w*)$');
 
 // Query directives this compiler does not model. They are skipped whole.
@@ -30,6 +30,12 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
         };
     }
     const name = match[1];
+    const returnType = parseTypeRef(match[3], { ...locationOf(line), column: line.indent + 1 + match[0].length - match[3].length });
+    // This one '?' has no equivalent keyword spelling: 'observable optional' is a live query
+    // returning the type named 'optional'. It is neither deprecated nor a migration occurrence.
+    if (!(match[2] === undefined && returnType.name === 'observable' && returnType.isOptional && !returnType.isCollection)) {
+        reportLegacyOptionalSuffix(context, returnType, line);
+    }
     let by: QueryParameterSyntax | null = null;
     const filters: QueryParameterSyntax[] = [];
     let description: string | null = null;
@@ -41,7 +47,13 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
         if (keyword === 'description') {
             description = parseDescription(context, child, description, `Query '${name}'`);
         } else if (keyword === 'by') {
-            by = parseParameter(context, child, 'by') ?? by;
+            const parameter = parseParameter(context, child, 'by');
+            if (parameter !== undefined) {
+                if (by !== null) {
+                    context.error(DiagnosticCodes.InvalidQueryParameter, `Query '${name}' already declares 'by' - a query can have at most one key parameter`, locationOf(child));
+                }
+                by = parameter;
+            }
         } else if (keyword === 'filter') {
             const filter = parseParameter(context, child, 'filter');
             if (filter !== undefined) {
@@ -61,7 +73,7 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
     return {
         kind: 'QuerySyntax',
         name,
-        returnType: parseTypeRef(match[3], locationOf(line)),
+        returnType,
         by,
         filters,
         description,
@@ -78,7 +90,10 @@ function parseParameter(context: ParserContext, line: SourceLine, keyword: strin
         context.error(DiagnosticCodes.InvalidQueryParameter, `Invalid '${keyword}' parameter '${line.content}' - expected '${keyword} <name> <Type> [from <source>]'`, locationOf(line));
         return undefined;
     }
-    return { kind: 'QueryParameterSyntax', name: match[1], type: parseTypeRef(match[2], locationOf(line)), location: locationOf(line) };
+    const nameOffset = line.content.indexOf(match[1], keyword.length);
+    const type = parseTypeRef(match[2], { ...locationOf(line), column: line.indent + 1 + line.content.indexOf(match[2], nameOffset + match[1].length) });
+    reportLegacyOptionalSuffix(context, type, line);
+    return { kind: 'QueryParameterSyntax', name: match[1], type, location: locationOf(line) };
 }
 
 function parseScope(context: ParserContext, line: SourceLine, existing: string | null, queryName: string): string | undefined {

@@ -55,6 +55,8 @@ public record PolicyContext(
 
 These live in the `Cratis.Screenplay.Contexts` package (namespace `Cratis.Screenplay.Contexts`). Generated applications can reference this package without the compiler; existing compiler consumers continue to resolve these types through type forwarding. A runtime such as Stage supplies the instance; inline `csharp` blocks and imported files compile against it, in scope as `context`. Reducer rules receive a `ReducerContext` with `State` (null before the first event) and `Event`; they have `StateAs<T>()` and `EventAs<T>()` too. In C# bodies, use the provider's generated PascalCase member names (for example `context.Event.Amount` for an authored `amount` property). Screenplay keeps authored names in the DSL and never rewrites opaque bodies; a provider maps compilation errors to body source locations.
 
+A handler's [`implementation` hints](commands.md#implementation-intent-handlers-only) do not add context members or change its result contract. Pending/file/inline describes model selection only. Handler executable admission remains unsupported; a context descriptor is not permission to execute, render or confirm an implementation.
+
 ## Typed context sidecars
 
 Semantic compilation publishes `TypedContextDescriptors` beside `ImplementationRequirements` (pair by `ContextsFor(requirementId)`). The descriptor contract is revision 1, independently of ESM and the role's result contract. Each ordered member names a portable model type or runtime token, its nullability and source identity/path. Shaped payloads include ordered properties with their resolved portable types and stable IDs; an optional payload property does not make its containing payload nullable. `IsFirst` and `IsWholeArtifact` are marked derived. `*As<T>()` accessors are methods, not stored data members. A wrapper provider must reject unknown descriptor contract/context versions, unresolved shapes and unsupported roles rather than generating `dynamic`. Successful descriptors carry the exact `ModelRevision` of the same compilation and `IsWrapperReady = true`; failed compilations publish only resolvable command-handler descriptors, with `IsWrapperReady = false` and no model revision. Each descriptor includes a transitive `Types` table for referenced concepts (including their primitive) and composite types (including their property references). A failed handler with missing type definitions is not renderable. Never attach a failed descriptor to an ESM from elsewhere.
@@ -143,7 +145,7 @@ A query parameter declared with `from` is filled from the context instead of the
 ```screenplay
 query ListInvoices => InvoiceListReadModel[]
   description "Every invoice the caller may see"
-  filter status   InvoiceStatus?
+  filter status   InvoiceStatus optional
   filter tenantId TenantId from $context.tenant
   authorize IsAuthenticated
 ```

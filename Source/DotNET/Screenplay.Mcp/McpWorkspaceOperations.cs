@@ -16,7 +16,7 @@ static class McpWorkspaceOperations
         new("update-slice-description", ["semanticId", "expectedDescription", "description"]),
         new("move-document", ["documentId", "path"]),
         new("rename-document-key", ["documentId", "stableKey"]),
-        new("add-document", ["stableKey", "path", "bytesBase64"]),
+        new("add-document", ["path", "bytesBase64"], ["stableKey"]),
         new("replace-document", ["documentId", "bytesBase64"]),
         new("remove-document", ["documentId"])
     ];
@@ -27,6 +27,7 @@ static class McpWorkspaceOperations
         {
             type = "object",
             properties = definition.Fields.ToDictionary(member => member, _ => (object)new { type = "string" }, StringComparer.Ordinal)
+                .Concat(definition.Optional.Select(member => new KeyValuePair<string, object>(member, new { type = "string" })))
                 .Append(new KeyValuePair<string, object>("operation", new { type = "string", @enum = new[] { definition.Name } })).ToDictionary(),
             required = (string[])["operation", .. definition.Fields],
             additionalProperties = false
@@ -42,7 +43,7 @@ static class McpWorkspaceOperations
             var definition = Definition(operation);
             McpJson.ValidateObject(
                 arguments,
-                ["expectedRevision", "expectedCatalogRevision", "includeContent", "operation", .. McpToolCatalog.IdentityProperties, .. definition.Fields],
+                ["expectedRevision", "expectedCatalogRevision", "includeContent", "operation", .. McpToolCatalog.IdentityProperties, .. definition.Fields, .. definition.Optional],
                 ["operation"]);
             var payload = JsonSerializer.SerializeToElement(arguments.EnumerateObject()
                 .Where(property => property.Name == "operation" || definition.Fields.Contains(property.Name, StringComparer.Ordinal))
@@ -66,7 +67,7 @@ static class McpWorkspaceOperations
     {
         var operation = McpJson.RequiredString(value, "operation");
         var definition = Definition(operation);
-        McpJson.ValidateObject(value, ["operation", .. definition.Fields], ["operation", .. definition.Fields]);
+        McpJson.ValidateObject(value, ["operation", .. definition.Fields, .. definition.Optional], ["operation", .. definition.Fields]);
         foreach (var field in definition.Fields)
         {
             _ = McpJson.RequiredString(value, field);
@@ -90,12 +91,7 @@ static class McpWorkspaceOperations
                 Document = DocumentId.Parse(McpJson.RequiredString(value, "documentId")),
                 StableKey = McpJson.RequiredString(value, "stableKey")
             },
-            "add-document" => new AddWorkspaceDocument
-            {
-                StableKey = McpJson.RequiredString(value, "stableKey"),
-                Path = PortablePlayPath.Parse(McpJson.RequiredString(value, "path")),
-                Bytes = Bytes(value)
-            },
+            "add-document" => AddDocument(value),
             "replace-document" => new ReplaceWorkspaceDocument
             {
                 Document = DocumentId.Parse(McpJson.RequiredString(value, "documentId")),
@@ -108,6 +104,30 @@ static class McpWorkspaceOperations
 
     static McpOperationDefinition Definition(string operation) => _definitions.SingleOrDefault(definition => definition.Name == operation)
         ?? throw new McpFailure($"Unsupported operation '{operation}'.", -32602);
+
+    // A stable key is derived from the path when the caller does not supply one; admission rejects collisions,
+    // and rename-document-key remains the explicit way to change a key later.
+    static AddWorkspaceDocument AddDocument(JsonElement value)
+    {
+        var path = PortablePlayPath.Parse(McpJson.RequiredString(value, "path"));
+        return new AddWorkspaceDocument
+        {
+            StableKey = value.TryGetProperty("stableKey", out var supplied) && supplied.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(supplied.GetString())
+                ? supplied.GetString()!
+                : DeriveStableKey(path),
+            Path = path,
+            Bytes = Bytes(value)
+        };
+    }
+
+    static string DeriveStableKey(PortablePlayPath path)
+    {
+        var value = path.Value.Replace('\\', '/');
+        var fileName = value[(value.LastIndexOf('/') + 1)..];
+        return fileName.EndsWith(".play", StringComparison.Ordinal) && fileName.Length > ".play".Length
+            ? fileName[..^".play".Length]
+            : throw new McpFailure("Supply a stableKey; the path has no derivable document name.", -32602);
+    }
 
     static ImmutableArray<byte> Bytes(JsonElement arguments)
     {

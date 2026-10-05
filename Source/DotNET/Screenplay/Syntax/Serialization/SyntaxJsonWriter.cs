@@ -10,6 +10,7 @@ internal static class SyntaxJsonWriter
     internal static Dictionary<string, object?> Write(SyntaxNode node, string path, int depth)
     {
         SyntaxJson.CheckDepth(depth, path);
+        ImplementationInvariants.Validate(node);
         var descriptor = SyntaxKinds.For(node.GetType());
         var result = new Dictionary<string, object?>(StringComparer.Ordinal) { ["kind"] = descriptor.Type.Name };
         foreach (var member in descriptor.Members)

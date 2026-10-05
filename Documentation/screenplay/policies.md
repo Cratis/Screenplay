@@ -92,7 +92,7 @@ policy CanManageInvoice
     or (role "Accountant" and claim "department" matches invoice.department)
 ```
 
-`IsFinanceDepartment` compares against the literal text `Finance`. `CanManageInvoice` compares against whatever `invoice.department` resolves to, and its parentheses are load bearing - without them the condition would mean `(role "InvoiceManager" or role "Accountant") and claim "department" matches invoice.department`, which lets an `InvoiceManager` through only when their department also matches.
+`IsFinanceDepartment` compares against the literal text `Finance`. `CanManageInvoice` allows an `InvoiceManager`, or an `Accountant` whose department matches `invoice.department`. Its parentheses make the grouping explicit but do not change it: `and` already binds tighter than `or`.
 
 ## Portable evaluation
 

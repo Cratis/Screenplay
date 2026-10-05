@@ -97,10 +97,13 @@
                       "kind": "CommandSyntax",
                       "authorize": null,
                       "description": null,
+                      "handler": null,
                       "name": "SaveDraft",
+                      "produces": [],
                       "properties": [
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": true,
                           "name": "customerId",
                           "type": {
@@ -112,6 +115,7 @@
                         },
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "name",
                           "type": {
@@ -122,6 +126,7 @@
                           }
                         }
                       ],
+                      "response": null,
                       "validations": []
                     }
                   ],
@@ -130,12 +135,16 @@
                   "events": [
                     {
                       "kind": "EventSyntax",
+                      "description": null,
+                      "documentation": null,
                       "generation": 1,
                       "hasGenerationMarker": false,
+                      "id": null,
                       "name": "DraftSaved",
                       "properties": [
                         {
                           "kind": "PropertySyntax",
+                          "isGenerated": false,
                           "isIdentifier": false,
                           "name": "name",
                           "type": {
@@ -150,6 +159,7 @@
                     }
                   ],
                   "name": "SaveDraft",
+                  "operations": [],
                   "projections": [],
                   "queries": [],
                   "reactions": [],
@@ -216,10 +226,35 @@
                     }
                   },
                   "description": "Register a customer",
+                  "handler": null,
                   "name": "Register",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "CustomerRegistered",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "customerId"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "name",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "name"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": true,
                       "name": "customerId",
                       "type": {
@@ -231,6 +266,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {
@@ -242,6 +278,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "email",
                       "type": {
@@ -253,6 +290,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "age",
                       "type": {
@@ -264,6 +302,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "tags",
                       "type": {
@@ -274,6 +313,7 @@
                       }
                     }
                   ],
+                  "response": null,
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -399,12 +439,16 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 2,
                   "hasGenerationMarker": true,
+                  "id": null,
                   "name": "CustomerRegistered",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {
@@ -416,6 +460,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "email",
                       "type": {
@@ -452,12 +497,16 @@
                 },
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "CustomerArchived",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "reason",
                       "type": {
@@ -472,6 +521,7 @@
                 }
               ],
               "name": "Register",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [],
@@ -499,8 +549,11 @@
                   ],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringACustomer",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -524,6 +577,7 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -542,10 +596,12 @@
                     }
                   ],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "Register",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -672,8 +728,11 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAMinor",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [
                     {
                       "kind": "SpecificationErrorSyntax",
@@ -687,12 +746,15 @@
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "Register",
                     "for": null,
+                    "generatedValues": [],
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
@@ -747,8 +809,11 @@
                     "kind": "SpecificationClockSyntax",
                     "instant": "2026-10-05T08:00:00Z"
                   },
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ArchivingWhenTheClockStrikes",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -769,8 +834,10 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": null,
                   "whenCapture": null,
@@ -786,8 +853,11 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ArchivingWhenTriggered",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -799,8 +869,10 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": null,
                   "whenCapture": null,
@@ -826,8 +898,11 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringFromACapture",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [
                     {
@@ -839,8 +914,10 @@
                   ],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": null,
                   "whenCapture": {
@@ -874,12 +951,16 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "LookingUpACustomer",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [
                     {
@@ -911,6 +992,7 @@
                       ]
                     }
                   ],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": null,
                   "whenCapture": null,
@@ -936,16 +1018,21 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "LookingUpNobody",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": {
                     "kind": "SpecificationNoResultSyntax"
                   },
+                  "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": null,
                   "whenCapture": null,
@@ -979,6 +1066,7 @@
               "description": null,
               "events": [],
               "name": "CustomerList",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -1228,6 +1316,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "customerId",
                       "type": {
@@ -1239,6 +1328,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "name",
                       "type": {
@@ -1250,6 +1340,7 @@
                     },
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "visits",
                       "type": {
@@ -1432,6 +1523,7 @@
               "description": null,
               "events": [],
               "name": "Reminders",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -1506,6 +1598,7 @@
               "description": null,
               "events": [],
               "name": "Mirroring",
+              "operations": [],
               "projections": [],
               "queries": [],
               "reactions": [
@@ -1521,7 +1614,21 @@
                       "produces": [
                         {
                           "kind": "ProducesSyntax",
-                          "event": "CustomerMirrored"
+                          "event": "CustomerMirrored",
+                          "for": null,
+                          "inlineEvent": null,
+                          "inlineOperation": null,
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "name",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "name"
+                              }
+                            }
+                          ],
+                          "tags": []
                         }
                       ],
                       "source": {
@@ -1581,6 +1688,7 @@
       "policies": []
     }
   ],
+  "systems": [],
   "types": [
     {
       "kind": "TypeSyntax",
@@ -1589,6 +1697,7 @@
       "properties": [
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "street",
           "type": {
@@ -1600,6 +1709,7 @@
         },
         {
           "kind": "PropertySyntax",
+          "isGenerated": false,
           "isIdentifier": false,
           "name": "lines",
           "type": {

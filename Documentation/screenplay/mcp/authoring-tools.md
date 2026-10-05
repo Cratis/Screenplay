@@ -27,6 +27,51 @@ For an existing application, call `read-workspace` with `view: "documents"` and
 Use `describe-application` for the logical hierarchy rather than reconstructing
 it from directory names.
 
+## Inspect inline event declarations
+
+An event declared with `produces event` appears as an `Event` in declaration queries at its **slice-owned** address, not beneath the command. `declaration-details` exposes its typed properties and authoring documentation; the command's `produces` view retains `InlineEvent`. Reference queries include `declares` relationships from the command and slice, alongside the command's `produces` relationship. The visualization counts and draws the event like a standalone declaration. Workspace syntax entries assign the event and its properties the same stable addresses and catalog identities as their standalone equivalents in that slice. Event and containing-slice rename proposals preserve those assignments.
+
+Descriptions, documentation, and optional rename-only `id` remain syntax metadata. They do not replace the workspace identity catalog or the portable hashed event contract id. Workspace repair and rename proposals remain separate, explicit transactions; querying or visualizing an inline event never applies a repair.
+
+## Event source and stream authoring
+
+After opening the workspace, use these paged `read-workspace` views with `expectedRevision`:
+
+| View | Contents |
+| --- | --- |
+| `event-sources` | Application-owned source keys, identifier types, pins and physical handles |
+| `event-streams` | Exact source-owned stream keys, key types, pins and ownership status |
+| `event-source-details`, `event-stream-details` | Exact `authoringKey`; compact header with metadata sizes and source/AST read pointers, followed by independently paged children; rejects ambiguous or incomplete ownership |
+| `command-routes` | Authored routes and all retained ambiguity candidates, never inferred effective routing |
+| `event-source-diagnostics` | Paged physical parser/import and whole-assembly diagnostics, including errorful and unresolved files |
+
+Continuation also requires `expectedCatalogRevision`. The immutable physical inventory retains partial declarations, duplicate routes and route/property candidates from all parsed files, independently of editable AST eligibility. `inventoryComplete`, `authoringDiagnosticsView` and `authoringDiagnosticsCount` disclose parser/import and whole-assembly evidence. Unknown extent reports `ownership: "incomplete"`; details refuse with `IncompleteSource`. Duplicate physical parents make every child ambiguous, including parents in errorful files. Unresolved-placement entries name refused documents, and retained nodes in those files have a null `authoringKey` rather than a fabricated owner. Keys include application, declaration kind, full owner path and name; they are not persistent semantic identities. All these entries disclose ESM v10 execution unavailability. A command/specification/slice readiness message describes that member's constructs and command dependencies; model readiness also includes unrelated source declarations.
+
+The detail boundary is `compact-header-v1`, not full typed syntax. No header embeds all child stream subtrees. Child items follow the actual physical parent's authored order. Pages honor item and serialized-byte budgets; continue from `nextOffset`, not `offset + limit`. Pins and descriptions above 4096 UTF-8 bytes are explicitly omitted with exact sizes and a `read-document` byte-page pointer. Use a separate `read-ast` content request for the full node when it fits; a single oversized identity cannot be narrowed by reducing the item count.
+
+Generic source details, dependency resolution and editor navigation share physical source confidence, including unresolved placement candidates and unknown root extent. Unique unrelated event and operation references retain their existing resolution rules.
+
+Generic `EventSource`/`EventStream` declaration queries and dependencies include source identifier/stream-id type references and separate `commandEventSource`/`commandStream` links. Stream references accept exactly `Source.Stream`, not arbitrary suffixes. Combined type/declaration collisions remain blocking and are not navigated confidently.
+
+For edits, read the actual `read-ast` handles and `syntax-schema` kinds, then use Authoring Add/Replace/Remove with preview and explicit apply. The member paths and candidate-selection rules are in [AST authoring](../ast-authoring.md#source-and-stream-edits-syntax-only). No source or stream rename, semantic catalog enrollment or new routing quick fix is automatic. Executable validation still refuses with `PLAY0268`, and `PLAY0470`/`PLAY0478` repairs require unavailable before/after executable proof.
+
+## Operation and system intent
+
+Systems and operations are **syntax-only**, with execution unavailable until ESM v9 (`PLAY0268`). After `open-workspace`, call `read-workspace` with the current `expectedRevision`:
+
+| View | Contents |
+| --- | --- |
+| `system-intents` | Application-scoped systems, descriptions through details, kind/full-scope authoring keys and source occurrence handles |
+| `operation-intents` | Slice-owned operation keys, uses, input counts, execute/compensate state and selected source handles |
+| `system-intent-details`, `operation-intent-details` | Supply the inventory's `authoringKey`; pages contain declaration intent, typed inputs, phases and ordered hints |
+| `ordered-productions` | Command scope/handle and every production occurrence in authored order, including repeated events, resolved kind, candidates and mappings |
+
+Echo `expectedRevision` for every page. Stale snapshots, wrong declaration kinds, ambiguous keys and unresolved placement refuse details rather than selecting an occurrence. Inventory includes unresolved-placement document entries so you can repair conflicting/cyclic imports. Authoring keys are name-derived logical keys, **not** admitted `SemanticId` or `RequirementId`; use revision-local handles for physical edits. Attachment states describe model selection only; no source is executed or confirmed.
+
+Declaration search/details and dependency traversal also include systems, operations and operation specification references. `declaration-details` supports `inputs` and `phases` on Operation; `syntax` returns explicit typed content. Produces links resolve event/operation kinds together and report ambiguity without guessing. Authoring read views work without ESM binding.
+
+Use `read-ast includeContent`, `syntax-schema` and ordinary typed `propose-ast` add/replace/remove operations with `validation: "Authoring"` to edit inputs, phases, source or hints. Each phase alone owns `file`/`code`; the wrapper owns hints. `validation: "Executable"` refuses with `PLAY0268`. Existing catalog assignments are not replaced by operation keys. Automatic operation extraction and operation/system rename are not available; [manual promotion](../operations.md#promote-an-inline-operation-manually) requires coordinated typed edits and full-source validation.
+
 ## Create the first typed document
 
 Call `syntax-schema` for `ApplicationSyntax`, `ModuleSyntax`, `FeatureSyntax`,
@@ -137,7 +182,8 @@ rejected.
 For a supported declaration, call `propose-rename` with its handle, exact
 `expectedName`, `newName`, and both workspace revisions. The default formatting
 is `PreserveTrivia`: verified identifier patches leave comments, line endings,
-BOM and unrelated text intact.
+BOM and unrelated text intact. Event renames update typed consumers, including
+constraint `released by` references and screen/behavior `on event` triggers.
 
 The planner coordinates logical fragments, repairs proven typed references and
 preserves assigned descendant/event identities. It refuses ambiguous targets,
@@ -178,16 +224,73 @@ Use explicit retirement addresses when removing assigned declarations. If edits
 overlap, replace their common containing subtree instead of sending conflicting
 parent/child operations. See [the authoring contract](../ast-authoring.md).
 
+## Extract an inline event
+
+Use `read-ast` to find the inline `EventSyntax` handle, then call
+`propose-extract-inline-event` with `subject`, `expectedRevision`,
+`expectedCatalogRevision` and `formatting: "CanonicalizeTouchedDocuments"`.
+This is an explicit refactoring, not a diagnostic repair. The declaration moves
+into the owning slice; an omitted inline destination becomes `for <identifier>`.
+An existing destination stays unchanged. Event metadata and tags move with the
+declaration, while production and mapping comments remain attached to their intent.
+
+Extraction requires byte-identical canonical ESM, unchanged catalog assignments
+and every comment preserved exactly once. It refuses unsupported or unbindable
+models rather than guessing. Extract before adding `generation`; parser-invalid
+inline generations cannot be edited through occurrence handles. There is no reverse
+inlining operation. Review and apply the returned proposal as any other edit.
+
 ## Fix a diagnostic
 
-Call `read-workspace` with `view: "repairs"` at the current revision. For a
-`PLAY0397` `validate csharp` repair, pass its `diagnosticCode` and `subject` to
-`propose-repair` with both current revisions and
-`formatting: "CanonicalizeTouchedDocuments"`. Its identity replacement reprints
-the entire file canonically, so whitespace and other legacy fences can change;
-a proposal that would drop any comment is refused. No file is written until you
-review the `before`/`after` bytes with `read-proposal` and explicitly call `apply`.
-Other `PLAY0397` forms have no individual repair.
+Call `read-workspace` with `view: "diagnostics"` to inspect source diagnostics,
+then `view: "repairs"` at the same current revision. `read-ast` reports parser diagnostics only;
+compilation diagnostics belong to the paged diagnostics view. Available typed repairs include:
+
+| Diagnostic | Proposal |
+| --- | --- |
+| `PLAY0166` on command `produces` | Add an event declaration in the producing slice. Types come from command property paths, retaining concepts, or from `$context.occurred` as `DateTime`. Uncertain types, conflicting producer shapes, imported/already-declared events and cross-file producers have no repair. Parser errors in any workspace document also block inference. |
+| `PLAY0478` (Information) | Replace a plain production with an explicit `for <identifier>`. This deliberately selects the identifier rather than preserving allocated-identity routing. Optional or collection identifiers have no repair. Both models must be executable; a change to the language/semantic version or any other production's effective destination refuses the repair. |
+| `PLAY0469` on an inline mapping | Remove the payload property and its mapping together, retiring the property address. The label says “changes the event contract”; `canFixAll` is false. This narrow repair requires an executable model without other consumers of that event (including constraint releases, projection subscriptions and `on event` triggers) or opaque syntax/attachments. It refuses changed routing or lost comments. Plain productions receive guidance only. |
+| `PLAY0471` | Remove a redundant event `id`, inline or standalone, only when the executable model, catalog and comments are preserved. |
+| `PLAY0397` on `validate csharp` | Replace the validation with itself so canonical printing migrates its legacy fence. Other forms of `PLAY0397` have no individual repair. |
+| `PLAY0479` (Information) | Write `optional` after the type. An occurrence repair changes one type; a document repair contains all spelling changes in one transaction. Both preserve syntax structure. |
+
+Discovery verifies listed `PLAY0166`, `PLAY0478`, `PLAY0469`, `PLAY0471` and `PLAY0479` repairs.
+It checks authoring acceptance and comment preservation, plus routing safety for
+`PLAY0478`, consumer/routing impact and executable readiness for `PLAY0469`, and
+executable-model/catalog preservation for `PLAY0471`. For example, an inferred
+event that conflicts with a specification's asserted fields is not listed.
+`PLAY0479` verifies all spellings together once per document and snapshot; occurrence
+repairs are offered only when that document migration passes.
+`PLAY0397` discovery identifies the recipe only; its proposal may still be refused.
+Only acceptance and conflicts for verified repairs are cached per subject
+on the current immutable workspace snapshot for discovery reuse; diagnostics are
+never cached. Paging or rereading reuses the verdict; a new snapshot requires fresh
+verification. `propose-repair` always verifies only the selected subject in one fresh
+authoring transaction and returns its full diagnostics, even after discovery.
+
+An unknown code, subject or recipe returns the `UnknownRepair` argument error.
+A matched repair that fails verification instead returns `success: false` with typed
+`conflicts`, `authoringDiagnostics` and `executableDiagnostics`, without a proposal ID.
+`InvalidOperation` remains a transaction conflict, including refusal to change another
+production's routing or the model version; it does not mean the repair is unknown.
+
+Pass the selected repair's `diagnosticCode` and `subject` to `propose-repair` with
+both current revisions and the returned `requiredFormatting`.
+For `PLAY0479`, this is `"PreserveTrivia"`: only the selected type spellings change.
+Choose `scope: "document"` in the discovered results to migrate the whole document
+using its root `subject` handle; pass that handle, not a scope argument, to
+`propose-repair`. All splices are verified together in one transaction. The server
+reparses the candidate, requires unchanged syntax structure, and checks that the
+selected diagnostics have disappeared. Comments, alignment, line endings and the
+UTF-8 BOM are retained. `"CanonicalizeTouchedDocuments"` remains an explicit opt-in.
+
+Other listed repairs require `"CanonicalizeTouchedDocuments"` and reprint the entire
+touched file, so whitespace and other legacy fences can change. A proposal that
+would drop any comment, or duplicate one, is refused. No file is written until you review the `before`/`after` bytes
+with `read-proposal` and explicitly call `apply`. After external edits, reopen and
+rediscover repairs rather than reusing stale handles. Applying a repair uses the
+same [identity state and recovery](recovery.md) contract as other proposals.
 
 ## Review and apply
 
@@ -213,7 +316,11 @@ keeps all comments reports zero dropped comments.
    its `path`, `line`, `column` and `text`.
 2. For each changed document, retrieve `before` and `after` byte pages by
    `documentId`. Base64 pages reconstruct exact source bytes, including BOM and
-   Unicode. Inspect authoring and executable diagnostics separately.
+   Unicode. Inspect authoring and executable diagnostics separately. The proposal's
+   `introducedExecutableErrors` lists only the executable-model errors this
+   proposal adds, each with `code`, `message`, `path`, `line` and `column`; errors
+   the model already had are not repeated. When the list is not empty,
+   `executableGuidance` says to fix them in a new proposal before apply.
 3. Inspect `stateChange` and, if needed, retrieve exact before/after identity state
    with `workspace-state`, the proposal ID and corresponding state revision.
 4. Call `apply` with the proposal ID and the **before** workspace/catalog revisions.

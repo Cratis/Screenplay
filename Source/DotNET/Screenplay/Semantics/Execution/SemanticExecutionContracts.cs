@@ -90,7 +90,12 @@ public enum SemanticExecutionCapability
     /// <summary>
     /// Authorization depends on a policy predicate that requires a target provider.
     /// </summary>
-    Authorization = 5
+    Authorization = 5,
+
+    /// <summary>
+    /// A reaction: its body, or a cascade of reactions that does not settle.
+    /// </summary>
+    Reaction = 6
 }
 
 /// <summary>
@@ -147,6 +152,17 @@ public sealed record SemanticFact(
     /// Gets append metadata from the event declaration followed by production-specific tags.
     /// </summary>
     public ImmutableArray<string> Tags { get; init; } = [];
+
+    /// <summary>
+    /// Gets the controlled occurrence time, when supplied by the execution host.
+    /// </summary>
+    public DateTimeOffset? Occurred { get; init; }
+
+    /// <summary>
+    /// Gets the reaction that directly produced or invoked the command producing this fact.
+    /// This causation identity is not a caller identity.
+    /// </summary>
+    public SemanticId? ReactionOrigin { get; init; }
 }
 
 /// <summary>
@@ -210,6 +226,11 @@ public sealed record SemanticExecutionRequest(
     public SemanticCaller? Caller { get; init; }
 
     /// <summary>
+    /// Gets the reaction invoking this command, independently of caller authorization and audit identity.
+    /// </summary>
+    public SemanticId? ReactionOrigin { get; init; }
+
+    /// <summary>
     /// Creates a request that only queries established world state.
     /// </summary>
     /// <param name="queries">Queries to execute.</param>
@@ -238,7 +259,7 @@ public sealed record SemanticExecutionRequest(
 /// Represents the base of every normalized execution result.
 /// </summary>
 /// <param name="Kind">The outcome kind.</param>
-/// <param name="World">The resulting world; unchanged for non-accepted outcomes.</param>
+/// <param name="World">The resulting world. A failed command leaves its input world unchanged; a failed v6 cascade retains facts accepted before the failure.</param>
 public abstract record SemanticExecutionResult(SemanticExecutionOutcomeKind Kind, SemanticWorld World);
 
 /// <summary>

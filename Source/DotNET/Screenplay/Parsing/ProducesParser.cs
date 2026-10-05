@@ -22,9 +22,45 @@ internal static partial class ProducesParser
     /// </summary>
     /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
     /// <param name="line">The consumed <see cref="SourceLine"/> holding the <c>produces</c> keyword.</param>
+    /// <param name="inCommand">Whether the production belongs to a command.</param>
+    /// <param name="propertyNameComparer">The inline property-name comparer, defaulting to ordinal comparison.</param>
     /// <returns>The parsed <see cref="ProducesSyntax"/>, or <c>null</c> when the declaration is malformed.</returns>
-    public static ProducesSyntax? Parse(ParserContext context, SourceLine line)
+    public static ProducesSyntax? Parse(ParserContext context, SourceLine line, bool inCommand = false, IEqualityComparer<string>? propertyNameComparer = null)
     {
+        if (InlineOperationPrefixRegex().IsMatch(line.Content))
+        {
+            if (!inCommand)
+            {
+                context.Error(DiagnosticCodes.OperationOutsideCommand, "Operations can only be produced by commands.", line.Location);
+                context.SkipBlock(line.Indent);
+                return null;
+            }
+
+            var parsed = OperationParser.Parse(context, line, inline: true);
+            return new(parsed.Operation.Name, null, parsed.Mappings, line.Location)
+            {
+                InlineOperation = parsed.Operation,
+                TargetLocation = line.Location with { Column = line.Location.Column + InlineOperationTargetRegex().Match(line.Content).Length }
+            };
+        }
+
+        if (InlineHeaderRegex().Match(line.Content) is { Success: true } inline)
+        {
+            if (!inCommand)
+            {
+                context.Error(DiagnosticCodes.InlineEventOutsideCommand, "Inline events can only be declared inside commands", line.Location);
+                context.SkipBlock(line.Indent);
+                return null;
+            }
+
+            if (inline.Groups[2].Success)
+            {
+                context.Error(DiagnosticCodes.InlineEventGeneration, "Inline events are generation 1 - extract the event before declaring generations", line.Location);
+            }
+
+            return ParseInline(context, line, inline.Groups[1].Value, inline.Groups[1].Index, propertyNameComparer);
+        }
+
         var conditional = ProducesWhenRegex().Match(line.Content);
         if (conditional.Success)
         {
@@ -41,6 +77,7 @@ internal static partial class ProducesParser
             context.SkipBlock(line.Indent);
             return new ProducesSyntax(eventLine.Content, condition, body.Mappings, line.Location, body.Tags, body.For)
             {
+                TargetLocation = eventLine.Location,
                 DirectiveLocations = new Dictionary<string, SourceLocation> { ["event"] = eventLine.Location }
             };
         }
@@ -54,7 +91,10 @@ internal static partial class ProducesParser
         }
 
         var unconditionalBody = ParseBody(context, line);
-        return new(unconditional.Groups[1].Value, null, unconditionalBody.Mappings, line.Location, unconditionalBody.Tags, unconditionalBody.For);
+        return new(unconditional.Groups[1].Value, null, unconditionalBody.Mappings, line.Location, unconditionalBody.Tags, unconditionalBody.For)
+        {
+            TargetLocation = line.Location with { Column = line.Location.Column + unconditional.Groups[1].Index }
+        };
     }
 
     /// <summary>
@@ -78,6 +118,11 @@ internal static partial class ProducesParser
         while (context.TryPeekChild(parent.Indent, out var child))
         {
             context.Reader.TakeSignificant();
+            if (RejectReserved(context, child))
+            {
+                continue;
+            }
+
             if (LineText.FirstWord(child.Content) == "tag")
             {
                 if (TagParser.Parse(context, child) is { } tag)
@@ -116,13 +161,115 @@ internal static partial class ProducesParser
         return (mappings, tags, target);
     }
 
+    static ProducesSyntax ParseInline(ParserContext context, SourceLine header, string name, int nameColumn, IEqualityComparer<string>? propertyNameComparer)
+    {
+        var metadata = new EventMetadataParser(name);
+        var properties = new List<PropertySyntax>();
+        var propertyNames = new HashSet<string>(propertyNameComparer ?? StringComparer.Ordinal);
+        var mappings = new List<PropertyMappingSyntax>();
+        var tags = new List<TagSyntax>();
+        ExpressionSyntax? target = null;
+        while (context.TryPeekChild(header.Indent, out var line))
+        {
+            context.Reader.TakeSignificant();
+            var keyword = LineText.FirstWord(line.Content);
+            if (RejectReserved(context, line))
+            {
+                continue;
+            }
+
+            if (keyword == "generation" || keyword == "origin")
+            {
+                context.Error(
+                    keyword == "generation" ? DiagnosticCodes.InlineEventGeneration : DiagnosticCodes.ReservedProductionMetadata,
+                    keyword == "generation" ? "Inline events are generation 1 - extract the event before declaring generations" : "An inline event is local to its command and cannot declare origin",
+                    line.Location);
+                context.SkipBlock(line.Indent);
+                continue;
+            }
+
+            if (keyword == "tag")
+            {
+                if (TagParser.Parse(context, line) is { } tag) tags.Add(tag);
+                continue;
+            }
+
+            if (ForRegex().Match(line.Content) is { Success: true } forMatch)
+            {
+                if (target is not null)
+                {
+                    context.Error(DiagnosticCodes.DuplicateProducesTarget, $"'{header.Content}' already declares where it lands - an event is appended to one event source", line.Location);
+                }
+                else
+                {
+                    target = ExpressionParser.ParseMappingSource(context, forMatch.Groups[1].Value, line.Location);
+                }
+
+                continue;
+            }
+
+            var match = TypedMappingRegex().Match(line.Content);
+            if (match.Success && PropertyLineParser.Parse(context, line with { Content = match.Groups[1].Value.TrimEnd() }) is { } property)
+            {
+                if (property.IsIdentifier)
+                {
+                    context.Error(DiagnosticCodes.IdentifierOnEventProperty, $"Property '{property.Name}' of event '{name}' cannot be marked identifier - an event never carries its event source id", line.Location);
+                    property = property with { IsIdentifier = false };
+                }
+
+                if (!propertyNames.Add(property.Name))
+                {
+                    context.Error(DiagnosticCodes.DuplicateDeclaration, $"Event '{name}' already declares property '{property.Name}'", line.Location);
+                }
+
+                properties.Add(property);
+                mappings.Add(ExpressionParser.ParseMapping(context, property.Name, match.Groups[2], line));
+            }
+            else if (!metadata.TryParse(context, line))
+            {
+                context.Error(DiagnosticCodes.InvalidPropertyMapping, $"Invalid inline property mapping '{line.Content}' - expected '<property> <Type> = <source>'", line.Location);
+            }
+        }
+
+        return new(name, null, mappings, header.Location, [], target)
+        {
+            TargetLocation = header.Location with { Column = header.Location.Column + nameColumn },
+            InlineEvent = metadata.Apply(new(name, properties, header.Location, tags))
+        };
+    }
+
+    static bool RejectReserved(ParserContext context, SourceLine line)
+    {
+        var keyword = LineText.FirstWord(line.Content);
+        if (keyword is not ("namespace" or "sequence" or "correlation" or "causation" or "causedBy" or "occurred"))
+        {
+            return false;
+        }
+
+        context.Error(DiagnosticCodes.ReservedProductionMetadata, $"'{keyword}' is system-assigned production metadata and cannot be supplied here", line.Location);
+        context.SkipBlock(line.Indent);
+        return true;
+    }
+
+    [GeneratedRegex(@"^produces\s+operation(?:\s+|$)", RegexOptions.None, 1000)]
+    private static partial Regex InlineOperationTargetRegex();
+
+    [GeneratedRegex(@"^produces\s+operation(?:\s|$)", RegexOptions.None, 1000)]
+    private static partial Regex InlineOperationPrefixRegex();
+
+    [GeneratedRegex(@"^produces\s+event\s+([A-Za-z_]\w*)(?:\s+(generation)(?:\s+.*)?)?$", RegexOptions.None, 1000)]
+    private static partial Regex InlineHeaderRegex();
+
+    [GeneratedRegex(@"^(.+?)\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
+    private static partial Regex TypedMappingRegex();
+
     [GeneratedRegex(@"^produces\s+when\s+(.+)$", RegexOptions.None, 1000)]
     private static partial Regex ProducesWhenRegex();
 
-    [GeneratedRegex(@"^produces\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^produces\s+([A-Z]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]
     private static partial Regex ProducesRegex();
 
-    [GeneratedRegex(@"^([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([A-Z]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]
     private static partial Regex EventNameRegex();
 
     [GeneratedRegex(@"^for\s+(\S.*)$", RegexOptions.None, 1000)]

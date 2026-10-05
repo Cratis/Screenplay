@@ -4,10 +4,17 @@
 import { Diagnostic } from './Diagnostics/Diagnostic';
 import { documentPlacement, PlayPlacement } from './Files/PlayPlacement';
 import { DiscoveredImport, discoverImports as discoverImportsIn } from './Parsing/ImportDiscovery';
+import { InputUse } from './Parsing/InputUses';
+import { validateResponses } from './Parsing/ResponseValidator';
 import { LineReader } from './Parsing/LineReader';
+import { validateInlineEvents } from './Parsing/InlineEventValidator';
+import { validateOperations } from './Parsing/OperationValidator';
 import { ParserContext } from './Parsing/ParserContext';
+import { CommandStreamCandidates } from './Parsing/CommandStreamCandidates';
+import { validateEventSources } from './Parsing/EventSourceValidator';
 import { parseApplication } from './Parsing/ScreenplayParser';
 import { splitLines } from './Parsing/SourceLineSplitter';
+import { PropertySyntax } from './Syntax/Declarations';
 import { ApplicationSyntax } from './Syntax/Structure';
 import { ApplicationSyntaxVisitor } from './Syntax/Visitors';
 
@@ -25,12 +32,29 @@ export interface CompilationResult<T> {
 // feature an import placed it in: that module and feature are in the tree, marked as placements, holding what
 // the document declares at its top level.
 export function parse(source: string, path?: string, placement: PlayPlacement = documentPlacement): CompilationResult<ApplicationSyntax> {
+    const { value, diagnostics, success } = parseForAuthoring(source, path, placement);
+    return { value, diagnostics, success };
+}
+
+// Additive authoring view: do not widen TypeRefSyntax or the cross-compiler SyntaxJson projection.
+export function parseForAuthoring(source: string, path?: string, placement: PlayPlacement = documentPlacement, validateResponseContracts = true, streamCandidates?: CommandStreamCandidates): CompilationResult<ApplicationSyntax> & { readonly triggerData: readonly PropertySyntax[]; readonly inputUses: readonly InputUse[] } {
     const lines = splitLines(source, false, path);
     const context = new ParserContext(new LineReader(lines), path);
+    context.scope = placement;
+    context.streamCandidates = streamCandidates ?? CommandStreamCandidates.capture([lines], placement);
     const value = parseApplication(context, lines, placement);
+    // Folder assembly validates declaration-dependent contracts once against the merged inventory.
+    if (validateResponseContracts) {
+        validateInlineEvents(value, context);
+        validateOperations(value, context);
+        validateResponses(value, context);
+        validateEventSources(value, context);
+    }
     return {
         value,
         diagnostics: context.diagnostics,
+        triggerData: context.triggerData,
+        inputUses: context.inputUses,
         success: !context.diagnostics.some(diagnostic => diagnostic.severity === 'error'),
     };
 }

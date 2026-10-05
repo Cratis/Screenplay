@@ -116,7 +116,7 @@ static class McpJson
         var text = structured.GetRawText();
         if (enforceBudget && Encoding.UTF8.GetByteCount(text) > MaximumStructuredResponseBytes)
         {
-            throw new McpFailure("ResponseTooLarge: use narrower scope, smaller pages, or chunked document/workspace retrieval. No result was truncated.");
+            throw new McpFailure("ResponseTooLarge: use narrower scope, smaller pages, or chunked document/workspace retrieval. No result was truncated.") { FailureKind = "LimitExceeded" };
         }
 
         return new

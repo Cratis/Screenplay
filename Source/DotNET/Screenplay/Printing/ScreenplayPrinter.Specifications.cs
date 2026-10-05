@@ -66,6 +66,8 @@ public partial class ScreenplayPrinter
                 writer.Line($"given clock {StringLiteral.Quote(clock.Instant)}", clock);
             }
 
+            foreach (var failure in specification.GivenOperationFailures) writer.Line($"given operation {failure.Operation} fails", failure);
+
             foreach (var given in specification.Given)
             {
                 WriteSpecificationEvent(writer, "given", given);
@@ -87,6 +89,11 @@ public partial class ScreenplayPrinter
                 using (writer.Indent())
                 {
                     WriteSpecificationEventSource(writer, specification.When.For);
+                    foreach (var fixture in specification.When.GeneratedValues)
+                    {
+                        writer.Line($"generated {fixture.Property} = {ScreenplaySyntaxText.ResponseValue(fixture.Source)}", fixture);
+                    }
+
                     WriteSpecificationValues(writer, specification.When.Values);
                 }
             }
@@ -115,6 +122,11 @@ public partial class ScreenplayPrinter
             {
                 WriteSpecificationBlock(writer, $"when query {performed.Query}", performed, performed.Arguments);
             }
+
+            foreach (var operation in specification.ThenOperations) WriteSpecificationBlock(writer, $"then operation {operation.Operation}", operation, operation.Values);
+            foreach (var compensation in specification.ThenCompensated) writer.Line($"then compensated {compensation.Operation}", compensation);
+
+            WriteSpecificationReturn(writer, specification.ThenReturns);
 
             if (specification.ThenEventsInAnyOrder) writer.DirectiveLine("then events in any order", specification, "then events in any order");
 

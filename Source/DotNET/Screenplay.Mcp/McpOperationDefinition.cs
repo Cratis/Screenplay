@@ -3,4 +3,7 @@
 
 namespace Cratis.Screenplay.Mcp;
 
-sealed record McpOperationDefinition(string Name, string[] Fields);
+sealed record McpOperationDefinition(string Name, string[] Fields, string[]? OptionalFields = null)
+{
+    internal string[] Optional => OptionalFields ?? [];
+}

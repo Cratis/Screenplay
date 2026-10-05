@@ -5,23 +5,35 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { CommandSyntax, ValidateSyntax, ValidationRuleKind, ValidationRuleSyntax, ValidationSeverity } from '../Syntax/Commands';
 import { PropertySyntax } from '../Syntax/Declarations';
+import { CommandStreamSyntax } from '../Syntax/EventSources';
+import { parseCommandStream } from './EventSourceParser';
 import { ExpressionSyntax } from '../Syntax/Expressions';
+import { ProducesSyntax } from '../Syntax/Reactions';
+import { CommandResponseSyntax } from '../Syntax/Responses';
 import { pattern } from '../Text/patterns';
+import { sourceStreamPattern } from '../Text/SourceStreamNames';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
+import { parseCommandResponse, scalarResponsePattern } from './CommandResponseParser';
 import { parseDescription } from './DescriptionParser';
+import { parseHandler } from './ImplementationParser';
+import { HandlerSyntax } from '../Syntax/Implementations';
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
-import { tryParseProperty } from './PropertyLineParser';
+import { commandReadSources } from './CommandReadSources';
+import { parseProduces } from './ProducesParser';
+import { reportInvalidModifierOrder, reportLegacyOptionalSuffix, tryParseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
 
 const header = pattern('^command\\s+([A-Za-z_]\\w*)$');
+const routeHeader = sourceStreamPattern('^stream\\s+[A-Za-z_]\\w*\\.[A-Za-z_]\\w*$');
 const severityPattern = pattern('\\bseverity\\s+(\\S+)$');
 const messagePattern = pattern(`\\bmessage\\s+(?:"(${stringBodyPattern})"|(\\$strings\\.\\S*))$`);
 const rulePattern = pattern('^([\\w.]+)\\s+(.+)$');
 const operandPattern = pattern('^(not empty|length ==|all >=|all >|matches|max|min|rule|>=|<=|==|!=|>|<)\\s*(.*)$');
 const ruleNamePattern = pattern('^[A-Za-z_]\\w*$');
+const optionalReads = pattern('^reads\\s+[A-Z]\\w*\\s+optional(?:\\s|$)');
 
 // Every operand the pattern matches has a kind, so an operand never goes unrecognized here.
 const operandKinds: Record<string, ValidationRuleKind> = {
@@ -42,27 +54,69 @@ const operandKinds: Record<string, ValidationRuleKind> = {
 const severities: Record<string, ValidationSeverity> = { information: 'Information', warning: 'Warning', error: 'Error' };
 
 // Command directives this compiler does not model. They are skipped whole.
-const opaqueDirectives = new Set(['produces', 'reads', 'handler', 'concurrency']);
+const opaqueDirectives = new Set(['reads', 'concurrency']);
 
 // The bare directives cannot take a type reference, so a line with property shape is a property whatever
 // keyword it starts with - 'description String' declares a property called description.
 const propertyShapedDirectives = new Set(['description', 'handler', 'concurrency']);
 
 export function parseCommand(context: ParserContext, line: SourceLine): CommandSyntax {
+    // Properties are leaves, not indentation owners. Resolve ambiguous returns spelling
+    // before the committed pass decides whether its deeper lines belong to a response.
+    const names = new Set<string>();
+    const discovery = new ParserContext(context.reader.fork(), context.path);
+    discovery.streamCandidates = context.streamCandidates;
+    parseCommandBody(discovery, line, undefined, names);
+    return parseCommandBody(context, line, names);
+}
+
+function parseCommandBody(context: ParserContext, line: SourceLine, responseNames?: ReadonlySet<string>, discoveredNames?: Set<string>): CommandSyntax {
     const name = header.exec(line.content)?.[1] ?? '';
     if (name === '') {
         context.error(DiagnosticCodes.InvalidCommandDeclaration, `Invalid command declaration '${line.content}' - expected 'command <Name>'`, locationOf(line));
     }
     const properties: PropertySyntax[] = [];
+    const responses: { line: SourceLine; candidate: PropertySyntax | null; response: CommandResponseSyntax | null }[] = [];
+    let identifier: PropertySyntax | undefined;
     const validations: ValidateSyntax[] = [];
+    const produces: ProducesSyntax[] = [];
+    const reads: { readModel: string; alias: string | null }[] = [];
     let description: string | null = null;
     let authorize: AuthorizeSyntax | null = null;
+    let handler: HandlerSyntax | null = null;
+    let stream: CommandStreamSyntax | null = null;
+    const streamCandidates: CommandStreamSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const keyword = firstWord(child.content);
         const asProperty = tryParseProperty(child);
         if (asProperty !== undefined && (propertyShapedDirectives.has(keyword) || (keyword === 'validate' && child.content !== 'validate csharp'))) {
-            addProperty(context, properties, asProperty, name);
+            identifier = addProperty(context, properties, asProperty, name, child, identifier);
+        } else if (keyword === 'returns') {
+            const scalar = scalarResponsePattern.exec(child.content);
+            if (scalar !== null && !scalar[1].startsWith('@') && asProperty !== undefined) {
+                if (responseNames === undefined) {
+                    properties.push(asProperty);
+                    responses.push({ line: child, candidate: asProperty, response: null });
+                } else if (responseNames.has(asProperty.type.name)) {
+                    responses.push({ line: child, candidate: null, response: parseCommandResponse(context, child) });
+                } else {
+                    identifier = addProperty(context, properties, asProperty, name, child, identifier);
+                }
+            } else if (asProperty !== undefined) {
+                identifier = addProperty(context, properties, asProperty, name, child, identifier);
+            } else if (reportInvalidModifierOrder(context, child)) {
+                context.skipBlock(child.indent);
+            } else {
+                responses.push({ line: child, candidate: null, response: parseCommandResponse(context, child) });
+            }
+        } else if (keyword === 'stream' && routeHeader.test(child.content) && asProperty !== undefined && context.streamCandidates?.hasSource(asProperty.type.name.split('.')[0]) === true) {
+            const [source, streamName] = asProperty.type.name.split('.');
+            const ambiguous = context.streamCandidates.hasPropertyType(asProperty.type.name) && context.streamCandidates.hasUniqueStream(source, streamName);
+            const route = parseCommandStream(context, child, asProperty, ambiguous);
+            if (stream !== null || streamCandidates.length > 0) context.error(DiagnosticCodes.InvalidCommandStream, 'A command declares at most one stream route.', locationOf(child));
+            if (ambiguous || stream !== null) streamCandidates.push(route);
+            else stream = route;
         } else if (keyword === 'description') {
             description = parseDescription(context, child, description, `Command '${name}'`);
         } else if (keyword === 'authorize') {
@@ -72,25 +126,62 @@ export function parseCommand(context: ParserContext, line: SourceLine): CommandS
             if (validate !== undefined) {
                 validations.push(validate);
             }
+        } else if (keyword === 'produces') {
+            const production = parseProduces(context, child, true);
+            if (production !== undefined) produces.push(production);
+        } else if (keyword === 'handler') {
+            handler = parseHandler(context, child);
         } else if (opaqueDirectives.has(keyword)) {
+            const read = /^reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?$/.exec(child.content);
+            if (read !== null) reads.push({ readModel: read[1], alias: read[2] ?? null });
+            if (optionalReads.test(child.content)) {
+                context.error(DiagnosticCodes.OptionalReadsNotSupported, 'Optional reads are not yet supported (see #308).', locationOf(child));
+            }
             context.skipOpaqueBlock(child.indent);
         } else if (asProperty !== undefined) {
-            addProperty(context, properties, asProperty, name);
+            identifier = addProperty(context, properties, asProperty, name, child, identifier);
         } else {
+            reportInvalidModifierOrder(context, child);
             context.error(DiagnosticCodes.UnknownCommandDirective, `Unexpected '${child.content}' in command body`, locationOf(child));
             context.skipBlock(child.indent);
         }
     }
-    return { kind: 'CommandSyntax', name, description, authorize, properties, validations, location: locationOf(line) };
+    const candidates = new Set(responses.flatMap(entry => entry.candidate === null ? [] : [entry.candidate]));
+    const names = new Set(properties.filter(property => !candidates.has(property)).map(property => property.name));
+    if (responses.some(entry => entry.candidate !== null && !names.has(entry.candidate.type.name) && entry.candidate.type.name !== 'returns')) names.add('returns');
+    for (const name of names) discoveredNames?.add(name);
+    let response: CommandResponseSyntax | null = null;
+    const removed = new Set<PropertySyntax>();
+    for (const entry of responses) {
+        let parsed = entry.response;
+        if (entry.candidate !== null) {
+            if (!names.has(entry.candidate.type.name)) continue;
+            removed.add(entry.candidate);
+            parsed = { kind: 'ScalarCommandResponseSyntax', source: { kind: 'PropertyResponseSourceSyntax', property: entry.candidate.type.name, location: entry.candidate.type.location }, location: locationOf(entry.line) };
+        }
+        if (parsed === null) continue;
+        if (response !== null) {
+            context.error(DiagnosticCodes.InvalidCommandResponse, 'A command declares at most one unconditional response.', locationOf(entry.line));
+        } else {
+            response = parsed;
+        }
+    }
+    if (handler !== null && produces.length > 0) {
+        context.error(DiagnosticCodes.CommandWithProducesAndHandler, `Command '${name}' cannot declare both 'produces' and 'handler'`, locationOf(line));
+    }
+    const syntax: CommandSyntax = { kind: 'CommandSyntax', name, description, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, handler, response, stream, streamCandidates, location: locationOf(line) };
+    commandReadSources.set(syntax, reads);
+    return syntax;
 }
 
-function addProperty(context: ParserContext, properties: PropertySyntax[], property: PropertySyntax, commandName: string): void {
-    const identifier = properties.find(existing => existing.isIdentifier);
+function addProperty(context: ParserContext, properties: PropertySyntax[], property: PropertySyntax, commandName: string, line: SourceLine, identifier: PropertySyntax | undefined): PropertySyntax | undefined {
+    reportLegacyOptionalSuffix(context, property.type, line);
     if (property.isIdentifier && identifier !== undefined) {
         context.error(DiagnosticCodes.DuplicateCommandIdentifier, `Command '${commandName}' already marks '${identifier.name}' as identifier - only one property can be the identifier`, property.location);
         property = { ...property, isIdentifier: false };
     }
     properties.push(property);
+    return identifier ?? (property.isIdentifier ? property : undefined);
 }
 
 // Reads a 'validate' block: declarative rules, or code - which is recognized but not modeled.

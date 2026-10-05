@@ -12,15 +12,15 @@ slice StateView ShipmentQueue
     orderId        OrderId
     amountPaid     Money
     status         ShipmentStatus
-    carrier        Carrier?
-    trackingNumber TrackingNumber?
+    carrier        Carrier optional
+    trackingNumber TrackingNumber optional
 
   query ShipmentsToDispatch => observable PendingShipment[]
     description "Paid orders not yet handed to a carrier, oldest first"
-    filter status ShipmentStatus?
+    filter status ShipmentStatus optional
     authorize IsWarehouseClerk
 
-  query ShipmentForOrder => PendingShipment?
+  query ShipmentForOrder => PendingShipment optional
     description "The shipment of one order"
     by orderId OrderId
     authorize IsWarehouseClerk

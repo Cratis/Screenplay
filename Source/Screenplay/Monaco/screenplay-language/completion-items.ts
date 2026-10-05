@@ -3,6 +3,10 @@
 
 import { eventContextPaths } from './event-context';
 
+export const optionalTypeItems: CompletionEntry[] = [
+    { label: 'optional', insertText: 'optional', documentation: 'Allows the complete value, including a collection, to be absent.' },
+];
+
 export interface CompletionEntry {
     label: string;
     insertText: string;
@@ -12,6 +16,8 @@ export interface CompletionEntry {
 const fenced = (tag: string) => `\`\`\`${tag}\n\${1}\n\`\`\``;
 
 export const topLevelItems: CompletionEntry[] = [
+    { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams; authoring only until ESM v10 (PLAY0268).' },
+    { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system; syntax-only until ESM v9.' },
     { label: 'import', insertText: 'import ${1:Module}.${2:Type}', documentation: 'Imports a type from another module by its qualified name.' },
     { label: 'import "…"', insertText: 'import "${1:**/*.play}"', documentation: 'Imports other `.play` files by path or glob, relative to this file\'s folder, as whole documents of the application.' },
     { label: 'concept', insertText: 'concept ${1:Name} : ${2|Uuid,String,Int,Decimal,Bool,Date,DateTime|}', documentation: 'Declares a formalized value type wrapping a primitive.' },
@@ -20,6 +26,26 @@ export const topLevelItems: CompletionEntry[] = [
     { label: 'type', insertText: 'type ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares a composite value type — a named shape built from several properties.' },
     { label: 'policy', insertText: 'policy ${1:Name}\n    require ${2:authenticated}', documentation: 'Declares a named authorization rule for commands and queries.' },
     { label: 'module', insertText: 'module ${1:Name}\n    ', documentation: 'Declares the top-level namespace — maps to a bounded context.' },
+];
+
+export const operationItems: CompletionEntry[] = [
+    { label: 'uses', insertText: 'uses ${1:System}', documentation: 'Exactly one application-scoped external system.' },
+    { label: 'description', insertText: 'description "${1:intent}"', documentation: 'Describes operation intent, without requiring code.' },
+    { label: 'input', insertText: '${1:input} ${2:Type}', documentation: 'Typed operation input; no identifier or generated modifier.' },
+    { label: 'execute', insertText: 'execute\n    description "${1:effect}"', documentation: 'Optional execution intent; syntax-only until ESM v9.' },
+    { label: 'compensate', insertText: 'compensate\n    description "${1:undo intent}"', documentation: 'Optional compensation intent; syntax-only until ESM v9.' },
+];
+
+export const operationImplementationItems: CompletionEntry[] = [
+    { label: 'hint', insertText: 'hint "${1:implementation guidance}"', documentation: 'Ordered authoring guidance; not an executable implementation role.' },
+    { label: 'file', insertText: 'file ${1:Path}', documentation: 'Selects the phase’s sole source attachment.' },
+    ...['csharp', 'typescript', 'react', 'html', 'sql'].map(language => ({ label: language, insertText: fenced(language), documentation: 'Selects the phase’s sole inline source; execution unavailable until ESM v9.' })),
+];
+
+export const operationPhaseItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:phase intent}"', documentation: 'A description-only phase is valid, pending intent.' },
+    { label: 'implementation', insertText: 'implementation\n    hint "${1:guidance}"', documentation: 'Hints with optional source; phase owns File/Code, wrapper owns hints only.' },
+    ...operationImplementationItems.filter(item => item.label !== 'hint'),
 ];
 
 export const conceptItems: CompletionEntry[] = [
@@ -51,6 +77,7 @@ export const featureItems: CompletionEntry[] = [
 ];
 
 export const sliceItems: CompletionEntry[] = [
+    { label: 'operation', insertText: 'operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type}', documentation: 'Reusable slice-owned operation intent; syntax-only until ESM v9.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
     { label: 'event', insertText: 'event ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares an event type — an immutable, past-tense fact.' },
     { label: 'event generation', insertText: 'event ${1:Name} generation ${2:2}\n    ${3:property} ${4:Type}', documentation: 'Declares a complete numbered event generation; start at 1 and do not skip a number.' },
@@ -65,6 +92,10 @@ export const sliceItems: CompletionEntry[] = [
 ];
 
 export const commandItems: CompletionEntry[] = [
+    { label: 'produces operation', insertText: 'produces operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type} = ${5:source}', documentation: 'Declares ordered operation intent; execution unavailable until ESM v9 (PLAY0268).' },
+    { label: 'returns property', insertText: 'returns @${1:property}', documentation: 'Syntax-only scalar response from a direct command property; execution unavailable until ESM v8 (PLAY0268).' },
+    { label: 'returns block', insertText: 'returns\n    ${1:field} = ${2:property}', documentation: 'Syntax-only unnamed record response with inferred or explicit field types; execution unavailable until ESM v8 (PLAY0268). No response type is emitted.' },
+    { label: 'produces event', insertText: 'produces event ${1:Name}\n    ${2:property} ${3:Type} = ${4:source}', documentation: 'Declares a slice-owned generation-1 event and maps its properties. An omitted for uses the command identifier.' },
     { label: 'identifier property', insertText: '${1:property} ${2:Type} identifier', documentation: 'Marks the property a runtime resolves the event source id from. At most one per command.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'References the policies that must pass for the command to execute.' },
     { label: 'reads', insertText: 'reads ${1:View} by ${2:property}', documentation: 'Declares a view the command consults. Executable binding is not yet supported.' },
@@ -76,11 +107,31 @@ export const commandItems: CompletionEntry[] = [
     { label: 'handler', insertText: 'handler\n    ', documentation: 'Fully imperative command implementation — file reference or inline C#, instead of produces.' },
 ];
 
+export const eventItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:what happened}"', documentation: 'Authoring metadata, as one line or a text/markdown fence.' },
+    { label: 'documentation', insertText: 'documentation\n    ```markdown\n    ${1:Details}\n    ```', documentation: 'Authoring-only Markdown documentation.' },
+    { label: 'id', insertText: 'id "${1:OldName}"', documentation: 'Preserves a previous persisted event name after a rename. Leave absent for new events.' },
+    { label: 'tag', insertText: 'tag ${1:audit}', documentation: 'An event-type tag stamped on every occurrence.' },
+];
+
+export const inlineEventItems: CompletionEntry[] = [
+    ...eventItems,
+    { label: 'for', insertText: 'for ${1:identifier}', documentation: 'Explicitly names the command identifier used as the event source.' },
+    { label: 'property mapping', insertText: '${1:property} ${2:Type} = ${3:source}', documentation: 'Declares and maps an event property on one line.' },
+];
+
 export const producesItems: CompletionEntry[] = [
     { label: 'when', insertText: 'when ${1:condition}', documentation: 'Guards the produced event with a condition.' },
 ];
 
+export const implementationItems: CompletionEntry[] = [
+    { label: 'hint', insertText: 'hint "${1:implementation guidance}"', documentation: 'Ordered nonblank guidance for a handler implementation. Not an execution guarantee.' },
+    { label: 'file', insertText: 'file ${1:Path}', documentation: 'Selects one existing model-relative attachment.' },
+    ...['csharp', 'typescript', 'react', 'html', 'sql'].map(language => ({ label: language, insertText: fenced(language), documentation: 'Selects one inline payload. Handler execution remains unsupported.' })),
+];
+
 export const handlerItems: CompletionEntry[] = [
+    { label: 'implementation', insertText: 'implementation\n    hint "${1:implementation guidance}"', documentation: 'Handler-only implementation intent with optional file or tagged fence. With no payload it is pending.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Delegates the command implementation to an external C# file.' },
     { label: 'csharp', insertText: fenced('csharp'), documentation: 'Inline C# returning the events to append.' },
 ];
@@ -88,7 +139,7 @@ export const handlerItems: CompletionEntry[] = [
 export const queryItems: CompletionEntry[] = [
     { label: 'description', insertText: 'description "${1:what this query is trying to accomplish}"', documentation: 'What the query is for, in prose — what a generator or reviewer works from.' },
     { label: 'by', insertText: 'by ${1:param} ${2:Type}', documentation: 'Declares the identifying parameter of the query.' },
-    { label: 'filter', insertText: 'filter ${1:param} ${2:Type}?', documentation: 'Declares an optional filter parameter supplied by the caller.' },
+    { label: 'filter', insertText: 'filter ${1:param} ${2:Type} optional', documentation: 'Declares an optional filter parameter supplied by the caller.' },
     { label: 'filter from context', insertText: 'filter ${1:param} ${2:Type} from $context.${3|tenant,causedBy.subject,occurred|}', documentation: 'Declares a parameter filled from the query context instead of the caller.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'References the policies that must pass for the query to execute.' },
     { label: 'performer', insertText: 'performer\n    ', documentation: 'The code that performs the query — a file reference or an inline csharp/sql block.' },
@@ -130,6 +181,9 @@ export const triggerItems: CompletionEntry[] = [
 ];
 
 export const specificationItems: CompletionEntry[] = [
+    { label: 'given operation fails', insertText: 'given operation ${1:Name} fails', documentation: 'Failure fixture leaf; syntax-only until ESM v9 (PLAY0268).' },
+    { label: 'then operation', insertText: 'then operation ${1:Name}\n    ${2:input} = ${3:value}', documentation: 'Partial requested-operation assertion; execution unavailable until ESM v9 (PLAY0268).' },
+    { label: 'then compensated', insertText: 'then compensated ${1:Name}', documentation: 'Compensation assertion leaf; execution unavailable until ESM v9 (PLAY0268).' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
     { label: 'given', insertText: 'given ${1:EventType}\n    ${2:property} = ${3:value}', documentation: 'Establishes prior state by replaying an event before the command runs.' },
     { label: 'given readmodel', insertText: 'given readmodel ${1:ReadModelType}\n    ${2:property} = ${3:value}', documentation: 'Establishes prior read model state directly.' },
@@ -153,6 +207,7 @@ export const specificationItems: CompletionEntry[] = [
 // What follows a 'given', 'when' or 'then' already typed in a specification.
 export const specificationStepItems: Record<'given' | 'when' | 'then', CompletionEntry[]> = {
     given: [
+        { label: 'operation', insertText: 'operation ${1:Name} fails', documentation: 'Syntax-only failure fixture; no children.' },
         { label: 'clock', insertText: 'clock "${1:2026-10-05T08:00:00Z}"', documentation: 'The instant the scenario happens at - the occurrence time of everything it does.' },
         { label: 'capture', insertText: 'capture ${1:Capture}\n    ${2:field} = ${3:value}', documentation: 'A record the capture\'s source held before. Repeat it for several records.' },
         { label: 'readmodel', insertText: 'readmodel ${1:ReadModelType}\n    ${2:property} = ${3:value}', documentation: 'Establishes prior read model state directly.' },
@@ -166,6 +221,10 @@ export const specificationStepItems: Record<'given' | 'when' | 'then', Completio
         { label: 'append', insertText: 'append ${1:EventType}\n    ${2:property} = ${3:value}', documentation: 'An event occurs, instead of a command being executed.' },
     ],
     then: [
+        { label: 'operation', insertText: 'operation ${1:Name}\n    ${2:input} = ${3:value}', documentation: 'Syntax-only partial operation assertion; ESM v9 unavailable.' },
+        { label: 'compensated', insertText: 'compensated ${1:Name}', documentation: 'Syntax-only compensation assertion; no children.' },
+        { label: 'returns value', insertText: 'returns ${1:value}', documentation: 'Syntax-only scalar response expectation. Execution unavailable until ESM v8 (PLAY0268).' },
+        { label: 'returns block', insertText: 'returns\n    ${1:field} = ${2:value}', documentation: 'Syntax-only nonempty subset of response fields. Execution unavailable until ESM v8 (PLAY0268).' },
         { label: 'result', insertText: 'result\n    ${1:property} = ${2:value}', documentation: 'One result the query performed by `when query` returns, in order.' },
         { label: 'result exactly', insertText: 'result exactly\n    ${1:property} = ${2:value}', documentation: 'One result, with every property asserted.' },
         { label: 'no result', insertText: 'no result', documentation: 'The query performed by `when query` returns nothing.' },

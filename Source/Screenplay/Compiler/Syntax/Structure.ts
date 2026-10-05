@@ -7,6 +7,8 @@ import { CommandSyntax } from './Commands';
 import { ConstraintSyntax } from './Constraints';
 import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, ReadModelSyntax, TypeSyntax } from './Declarations';
 import { ProjectionSyntax } from './Projections';
+import { EventSourceSyntax } from './EventSources';
+import { OperationSyntax, SystemSyntax } from './Operations';
 import { QuerySyntax } from './Queries';
 import { ReactionSyntax } from './Reactions';
 import { ScreenSyntax } from './Screens';
@@ -24,6 +26,7 @@ export interface SliceSyntax extends SyntaxNode {
     readonly name: string;
     readonly description: string | null;
     readonly events: readonly EventSyntax[];
+    readonly operations?: readonly OperationSyntax[];
     readonly commands: readonly CommandSyntax[];
     readonly queries: readonly QuerySyntax[];
     readonly projections: readonly ProjectionSyntax[];
@@ -73,6 +76,8 @@ export interface ModuleSyntax extends SyntaxNode {
 export interface ApplicationSyntax extends SyntaxNode {
     readonly kind: 'ApplicationSyntax';
     readonly domain: DomainSyntax | null;
+    readonly systems?: readonly SystemSyntax[];
+    readonly eventSources?: readonly EventSourceSyntax[];
     readonly imports: readonly ImportSyntax[];
     readonly concepts: readonly ConceptSyntax[];
     readonly types: readonly TypeSyntax[];

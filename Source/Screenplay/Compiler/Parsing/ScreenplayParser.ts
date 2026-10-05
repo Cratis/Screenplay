@@ -7,6 +7,7 @@ import { describePlacement, documentPlacement, isDocumentPlacement, PlayPlacemen
 import { PersonaSyntax } from '../Syntax/Authorization';
 import { ConceptAttributeSyntax, ConceptSyntax, DomainSyntax, ImportSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { ApplicationSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax } from '../Syntax/Structure';
+import { parseTriggerDeclaration } from './TriggerDataParser';
 import { pattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { parseType } from './DeclarationParsers';
@@ -14,9 +15,14 @@ import { parseDescription } from './DescriptionParser';
 import { FeatureBody, featureBodyExpected } from './FeatureBody';
 import { isFileImport, parseFileImport } from './FileImportParser';
 import { isFileDirective } from './FileReferences';
+import { collectInputUses } from './InputUses';
 import { firstWord, unescapeIdentifier } from './LineText';
 import { ModuleBody, moduleBodyExpected, modulePattern, parseModule } from './ModuleBody';
 import { ParserContext } from './ParserContext';
+import { parseSystem } from './OperationParser';
+import { SystemSyntax } from '../Syntax/Operations';
+import { EventSourceSyntax } from '../Syntax/EventSources';
+import { parseEventSource } from './EventSourceParser';
 import { locationOf, SourceLine, startOf } from './SourceLine';
 
 const domainPattern = pattern('^domain\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)$');
@@ -48,6 +54,8 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     const fileImports: FileImportSyntax[] = [];
     const concepts: ConceptSyntax[] = [];
     const types: TypeSyntax[] = [];
+    const systems: SystemSyntax[] = [];
+    const eventSources: EventSourceSyntax[] = [];
     const modules: ModuleSyntax[] = [];
     const personas: PersonaSyntax[] = [];
     let sawOtherConstruct = false;
@@ -76,6 +84,10 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             } else {
                 imports.push({ kind: 'ImportSyntax', qualifiedName: match[1], location: locationOf(line) });
             }
+        } else if (keyword === 'eventsource') {
+            eventSources.push(parseEventSource(context, line));
+        } else if (keyword === 'system') {
+            systems.push(parseSystem(context, line));
         } else if (keyword === 'concept') {
             concepts.push(parseConcept(context, line));
         } else if (keyword === 'type') {
@@ -86,8 +98,11 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             modules.push(parseModule(context, line));
         } else if (keyword === 'persona') {
             personas.push(parsePersona(context, line));
+        } else if (keyword === 'trigger') {
+            parseTriggerDeclaration(context, line);
         } else if (opaqueTopLevel.has(keyword)) {
-            context.skipOpaqueBlock(line.indent);
+            if (keyword === 'behavior' || keyword === 'layout') collectInputUses(context, line);
+            else context.skipOpaqueBlock(line.indent);
         } else if (placedBody?.tryParse(context, line) !== true) {
             reportUnexpectedTopLevel(context, line, placement);
         }
@@ -97,7 +112,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    return { kind: 'ApplicationSyntax', domain, imports, concepts, types, modules, personas, fileImports, location: context.start };
+    return { kind: 'ApplicationSyntax', domain, imports, concepts, types, systems, eventSources, modules, personas, fileImports, location: context.start };
 }
 
 function declaresConstruct(keyword: string, line: SourceLine, placement: PlayPlacement): boolean {
@@ -107,7 +122,7 @@ function declaresConstruct(keyword: string, line: SourceLine, placement: PlayPla
     if (keyword === 'module') {
         return isDocumentPlacement(placement);
     }
-    return keyword === 'concept' || keyword === 'type' || keyword === 'persona' || opaqueTopLevel.has(keyword);
+    return keyword === 'eventsource' || keyword === 'system' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || opaqueTopLevel.has(keyword);
 }
 
 function parseModuleInPlacedFile(context: ParserContext, line: SourceLine, placement: PlayPlacement, moduleBody: ModuleBody | undefined): void {
@@ -195,6 +210,10 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
     if (type !== 'Enum' && !primitiveTypes.includes(type)) {
         context.error(DiagnosticCodes.UnknownPrimitiveType, `Unknown primitive type '${type}' - expected ${primitiveTypes.join(', ')} or Enum`, locationOf(line));
     }
+    const attributeIndices = new Map<string, number>();
+    attributes.forEach((attribute, index) => {
+        if (!attributeIndices.has(attribute.name)) attributeIndices.set(attribute.name, index);
+    });
     const values: string[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
@@ -210,7 +229,7 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
             // Concept validations are not modeled; the block is skipped whole.
             context.skipOpaqueBlock(child.indent);
         } else if (reason !== null) {
-            applyAttributeReason(context, child, name, attributes, reason[1], unescapeString(reason[2]));
+            applyAttributeReason(context, child, name, attributes, attributeIndices, reason[1], unescapeString(reason[2]));
         } else if (type === 'Enum' && enumValuePattern.test(child.content)) {
             values.push(unescapeIdentifier(child.content));
         } else if (type === 'Enum') {
@@ -223,9 +242,9 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
     return { kind: 'ConceptSyntax', name, type, attributes, values, location: locationOf(line) };
 }
 
-function applyAttributeReason(context: ParserContext, line: SourceLine, concept: string, attributes: ConceptAttributeSyntax[], attribute: string, reason: string): void {
-    const index = attributes.findIndex(candidate => candidate.name === attribute);
-    if (index < 0) {
+function applyAttributeReason(context: ParserContext, line: SourceLine, concept: string, attributes: ConceptAttributeSyntax[], indices: ReadonlyMap<string, number>, attribute: string, reason: string): void {
+    const index = indices.get(attribute);
+    if (index === undefined) {
         context.error(DiagnosticCodes.AttributeReasonWithoutAttribute,
             `Concept '${concept}' declares a reason for '${attribute}' without the attribute - write 'concept ${concept} : <Type> @${attribute}'`, locationOf(line));
     } else if (attributes[index].reason !== null) {

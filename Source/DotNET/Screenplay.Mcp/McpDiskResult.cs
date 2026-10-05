@@ -3,4 +3,7 @@
 
 namespace Cratis.Screenplay.Mcp;
 
-sealed record McpDiskResult(bool Success, string Status, IReadOnlyList<string> Recovery, int PlannedChanges, int InstalledDocuments);
+sealed record McpDiskResult(bool Success, string Status, IReadOnlyList<string> Recovery, int PlannedChanges, int InstalledDocuments)
+{
+    internal string? FailureKind { get; init; }
+}

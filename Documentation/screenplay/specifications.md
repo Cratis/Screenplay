@@ -1,5 +1,14 @@
 # Specifications
 
+## Operation specifications (syntax-only)
+
+> Operation fixtures and assertions are experimental authoring syntax. The current reference runner cannot execute them; binding refuses them with `PLAY0268` until ESM v9 admission.
+
+For a command producing declared [operations](operations.md), `given operation NotifyAccounting fails` requests a failure fixture, `then operation SendWelcomeEmail` asserts a requested operation with optional **partial** input values, and `then compensated SendWelcomeEmail` asserts declared compensation. Failure and compensation lines are leaves: they cannot have children. Requested-operation fields must be unique and have compatible concrete values, including quoted enum values. All references must resolve to the operation kind, not an event with the same spelling, and require a command action. Static checks do not prove reachability, rollback success or repeated-invocation matching.
+
+The [complete source fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/operations.play) shows success and compensation intent with their declarations and command inputs. These assertions express desired future behavior, not passing execution today.
+
+
 Specifications express Given/When/Then scenarios against a slice's behavior, or read-only Given/Then scenarios against established state — executable documentation for the behavior a slice implements. A `specification` block lives inside a `slice`, alongside its `command`, `event`, `projection` and other constructs, and is compiled by the Screenplay compiler like every other sub-language.
 
 ## Syntax
@@ -71,7 +80,7 @@ Property values (`<property> = <value>`) accept literals (including `null`), sin
 
 Executable specification values must be concrete: literals, inline objects and lists. The ESM binds object members to the declared composite properties and list items to the element type, preserving authored list order. An empty list `[]` is valid for any collection property. Objects must supply every required member; optional members may be omitted. `null` is valid only for an optional read-model property (including nested properties). `null` in command or event values, even nested ones, is rejected (`PLAY0350`): in Chronicle, an optional fact is a separate event. Non-literal mapping expressions other than typed objects and lists are not portable specification values in ESM v1.
 
-For example, if `OrderView` declares `lines Line[]`, `tags String[]`, and `note String?`, and `Line` declares `sku String`, you can seed `lines = [{"sku":"A-1"}]`, `tags = []`, and `note = null` in a `given readmodel` block. A `then readmodel` may assert just the identifier and `lines`; the list must match in order.
+For example, if `OrderView` declares `lines Line[]`, `tags String[]`, and `note String optional`, and `Line` declares `sku String`, you can seed `lines = [{"sku":"A-1"}]`, `tags = []`, and `note = null` in a `given readmodel` block. A `then readmodel` may assert just the identifier and `lines`; the list must match in order.
 
 ## Rejections
 
@@ -187,7 +196,7 @@ When a scenario is really about derived state rather than events, `given readmod
 
 `given readmodel` seeds a complete instance and must include the identifier property. `then readmodel` also must include the identifier to select the instance, but asserts only its stated properties. The identifier is inferred from the read model's keyed query (see [Read models](readmodels.md)); omitting it produces `PLAY0351` at that block. Additional properties in actual state do not fail a subset assertion. A missing asserted property is different from a present property with a `null` value.
 
-A projection can remove one instance while another remains. For example, with `InvoiceView` keyed by `invoiceId` through a query `InvoiceById => InvoiceView?` whose body declares `by invoiceId InvoiceId`, and a projection declaring `remove with InvoiceRemoved key invoiceId`:
+A projection can remove one instance while another remains. For example, with `InvoiceView` keyed by `invoiceId` through a query `InvoiceById => InvoiceView optional` whose body declares `by invoiceId InvoiceId`, and a projection declaring `remove with InvoiceRemoved key invoiceId`:
 
 ```screenplay
 specification RemovingOneOfTwoInvoices
@@ -220,7 +229,7 @@ specification LookingUpAnExistingInvoice
       status = "draft"
 ```
 
-The reference runner establishes `given` events, projects them, applies complete `given readmodel` states, then queries and compares. A when-less specification may also assert `then readmodel` or `then no readmodel`, but not events or errors. With a `when`, event, read-model and query assertions can be combined as needed. An appended event can also be rejected by an append-time constraint using `then error`. Reactions triggered by the appended event are **not** executed: reactions are not part of the ESM.
+The reference runner establishes `given` events, projects them, applies complete `given readmodel` states, then queries and compares. A when-less specification may also assert `then readmodel` or `then no readmodel`, but not events or errors. With a `when`, event, read-model and query assertions can be combined as needed. An appended event can also be rejected by an append-time constraint using `then error`. Before ESM v6, `then` events after `when append` equal the appended fact and nothing reacts to it; since ESM v6, the reactions it sets off run - see [Clocks, triggers and captures](#clocks-triggers-and-captures).
 
 ## Performing a query
 
@@ -267,11 +276,21 @@ specification ChasingAnOverdueInvoiceEveryMorning
 
 An instant is ISO 8601 with an explicit offset or `Z`, such as `2026-10-05T08:00:00Z` (`PLAY0461` otherwise), so the same text means the same moment wherever the specification runs.
 
-:::caution[Parsed, not yet executable]
-The executable semantic model does not admit clocks, application triggers or capture records yet - nor automation and translate slices, whose reactions and captures they drive. A specification using one compiles, prints and is checked against the document, but binding it reports `PLAY0268` naming the proposed ESM v6 in [decision 0022](https://github.com/Cratis/Screenplay/blob/main/decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md). `when query` is the exception: it binds today.
+These forms, and the automation and translate slices whose reactions and captures they drive, bind to ESM v6 ([decision 0022](https://github.com/Cratis/Screenplay/blob/main/decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md)), and the reference runner executes them:
 
-Under that proposal, the events a reaction appends join the facts every action produces. A `then` after `when append`, `when clock`, `when trigger` or `when capture` then asserts what the reactions did, not only the appended or captured fact - which is how the samples already write their automation and translate specifications.
-:::
+- **Every action sets reactions off.** After a command, an append, a clock tick, a trigger or a capture record, each new fact runs the reactions to its event, and what those append or the commands they invoke run more, until nothing is left to react to. `then` events compare every new fact, the action's and the reactions'.
+- **An appended event is the action itself.** After `when append`, `then` events are what followed it - what reactions appended - the way a command's `then` events are what it produced.
+- **`given clock` fixes when the scenario happens.** Every command, append and reaction occurs at that instant; an occurrence a clock tick sets off occurs at the instant it fell due. A specification with `when clock` states `given clock` too, the instant the clock moves from. The clock states a time, not a caller, so a mapping from `$context.causedBy` is unsupported in a scenario that states one.
+- **The clock is UTC and exact.** Each `every` or `at` occurrence due after `given clock` and at or before `when clock` fires exactly once, in time order. An interval counts from the Unix epoch; a schedule's time of day is UTC.
+- **Captures compare records.** `given capture` is the record a capture last saw for a key, and `when capture` the record it sees now. Numeric and text keys remain distinct. Nested objects and lists of objects in a record are a capture's `nested` record and `children`. Child identities must be present and unique in each collection; reordering does not create additions or removals.
+
+Reached reactions with a code body (`file` or an inline block) and reactions that never settle return `SemanticUnsupported` rather than a guessed outcome. Unrelated reactions and bodies excluded by `where` do not run. A later reaction failure retains earlier accepted facts; each invoked command remains atomic. The reference permits at most 1,000 new facts per scenario and 10,000 due occurrences per clock advance, failing closed at either limit. Clock occurrences are not fake input events, and capture sources are never contacted. A command a reaction invokes runs through its full pipeline with no caller, so a command that needs one rejects it, and that rejection ends the scenario. A model using any of these forms selects language and semantics `6.0` (canonical `schemaVersion: 6`); models without them keep their bytes and revisions.
+
+The compiler's command-outcome check follows declared event reactions and invoked commands. It defers an event's values to execution when that reachable chain may produce the event, including another occurrence of a type the initiating command produces. Unreachable reactions do not suppress a provable contradiction. This check does not prove reaction guards or termination; reached opaque effects also defer proof to execution.
+
+In v6, projection arithmetic outside the reference numeric range returns `SemanticUnsupported`, not a contract rejection. The overflowing append contributes no fact or partial projection state, earlier accepted facts remain, and an overflowing command contributes none of its transaction. An unsupported result never satisfies `then error`.
+
+Default `Startup` and `Shutdown` signals carry no values. If a host registration overrides either with values or an unknown shape, semantic binding rejects its use until a typed trigger declaration supplies an admitted shape; a matching name alone does not make it an empty built-in.
 
 ## Reference execution
 
@@ -305,7 +324,7 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `given readmodel <ReadModelType>` | Prior read model state, established directly. |
 | `given caller` | Explicit identity, roles, and repeated claims. |
 | `when <CommandType>` | The command under test, with its property values. |
-| `when append <EventType>` | Append an event occurrence, enforce constraints and project it; no reactions run. |
+| `when append <EventType>` | Append an event occurrence, enforce constraints and project it; in v6, run its reaction consequences. |
 | `given clock "<instant>"` | The instant the scenario happens at. |
 | `given capture <Capture>` | An earlier record of a capture's source. |
 | `when clock "<instant>"` | The clock reaches an instant; scheduled reactions that are due run. |
@@ -325,6 +344,24 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `then error` | A validation or constraint rejection without a named reason. |
 | `then denied` | A typed authorization denial (`Unauthorized`). |
 | `<property> = <value>` | A property value, using the same expression grammar as `produces`/`capture` mappings. |
+
+## Generated fixtures and return expectations (syntax-only)
+
+These additions describe [generated values and responses](commands.md#generated-values-and-responses-syntax-only); **they do not execute**. Binding reports `PLAY0268` with no semantic model until ESM v8. See the [complete authoring fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/generated-responses.play).
+
+```screenplay
+specification RegisteringReturnsIdentifiers
+  when RegisterProject
+    for "11111111-1111-1111-1111-111111111111"
+    generated receiptId = "22222222-2222-2222-2222-222222222222"
+    name = "Apollo"
+  then returns
+    receiptId = "22222222-2222-2222-2222-222222222222"
+```
+
+`for` supplies the generated identifier. An indented `generated <name> = <value>` supplies a nonidentifier generated command property, separately from request mappings. Do not put either on the `when` header. Ordinary `generated = <value>` remains an input mapping for a property named `generated`.
+
+A scalar response uses `then returns <value>`; a record uses `then returns` with a nonempty subset of its named fields. The expectation must match the response shape and types. Values must be concrete literals or structured values, with no raw-expression fallback or trailing tokens. Duplicate, unknown, nongenerated or identifier fixture targets are rejected. A return expectation requires a command action, occurs at most once and cannot accompany `then error` or `then denied`; successful event/state assertions may coexist. Mandatory allocation-fixture completeness and relational runtime assertions are deferred, not silently executed.
 
 ## Compiling specifications
 

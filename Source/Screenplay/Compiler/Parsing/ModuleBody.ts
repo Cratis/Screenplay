@@ -10,6 +10,7 @@ import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseDescription } from './DescriptionParser';
 import { parseFeature } from './FeatureBody';
 import { parseFileImport } from './FileImportParser';
+import { collectInputUses } from './InputUses';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
@@ -51,7 +52,7 @@ export class ModuleBody {
                 return true;
             default:
                 if (opaqueModuleMembers.has(keyword)) {
-                    context.skipOpaqueBlock(line.indent);
+                    collectInputUses(context, line);
                     return true;
                 }
                 return false;
@@ -91,6 +92,9 @@ export function parseModule(context: ParserContext, line: SourceLine): ModuleSyn
         context.error(DiagnosticCodes.InvalidModuleDeclaration, `Invalid module declaration '${line.content}' - expected 'module <Name>'`, locationOf(line));
     }
     const body = new ModuleBody(name);
+    const previous = context.scope;
+    context.scope = [name];
     body.parseChildren(context, line);
+    context.scope = previous;
     return body.build(locationOf(line));
 }

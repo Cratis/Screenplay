@@ -7,6 +7,14 @@ A [folder of `.play` files](folders.md) is already one application. That solves 
 
 `import "<path or glob>"` fixes both. A file names the files that belong to it. Where the import is written decides where they belong, so a file that tells one part of the story can hold just that part.
 
+## Source and stream declarations across files
+
+[Event sources](event-sources.md) stay application-owned, including in module/feature-placed files. Streams belong to their physical source, not to the importing module or the file path. Files compiled together share declarations independently of file order; a quoted import includes files, while an unquoted contract import does not supply an unknown source or stream shape. Only exact `Source.Stream` references resolve. Duplicate physical parents make every child ambiguous, and conflicting/cyclic placement must be repaired before selecting a navigable owner.
+
+## Operation declarations across files
+
+[Systems](operations.md) stay application-scoped even in placed files; operations belong to their declared slice. Files compiled together share explicit operation declarations. `produces Register.NotifyAccounting` can select that operation from another slice in the same assembled model. Use enough owning scope to make the reference unique; ambiguous event/operation candidates are not guessed. Newly qualified productions must resolve to an explicit operation, not an event. An unquoted contract import does not invent an operation shape or kind. These constructs remain syntax-only until ESM v9 admission (`PLAY0268`).
+
 ## Import files
 
 At the top level of a document, `import` with a quoted path brings in whole documents:

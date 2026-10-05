@@ -22,6 +22,30 @@ its board. For other places to open the same board, see
 *Extension 4.48.1 in code-server, showing Commerce. Newer versions focus the board
 on the open file's slices; open `application.play` for the whole application.*
 
+## Generated values and responses (syntax-only)
+
+The editor recognizes [generated command values and response contracts](commands.md#generated-values-and-responses-syntax-only), including fixture and assertion fields, inferred response types and generated-not-input hints. Completion uses the current source, including unsaved edits. Compiler diagnostics validate the syntax; acceptance does not enable execution. These constructs remain unavailable until ESM v8, and binding reports `PLAY0268` without a semantic model.
+
+The board leaves generated values out of command request schemas and lists generated values and returns in command details. It does not create response events or emit official response types. TextMate highlighting treats ambiguous two-token `returns` lines conservatively; `returns @name` makes response intent explicit.
+
+## Event source and stream authoring (syntax-only)
+
+Monaco and VS Code use typed source declarations and command routes from the complete input, including current unsaved buffers. They offer exact `Source.Stream` references and proven compatible command sources for `streamId`, with nominal types preserved. Source/stream hover describes authored identifier/key types; contextual tokens do not globally reserve property names. Navigation requires a unique physical source and stream plus authoritative placement, and points to the actual identifier in its original document. Duplicate parents, competing value-type interpretations, comments and fences do not become guessed links.
+
+Routing remains unavailable until ESM v10 (`PLAY0268`). Existing command details show the authored stream and readable key expression, never inferred effective destinations, new event cards or successful execution states. No source/stream automatic rename, routing quick fix or inferred-routing inlay is provided. See [the source/stream support matrix](event-sources.md#tooling-support).
+
+## Operation and system intent (syntax-only)
+
+Both Monaco and VS Code recognize [systems and operations](operations.md), inline/standalone declarations and operation specification steps. Assistance resolves explicit declaration kinds over the assembled application and uses the current typed source for command inputs, including unsaved and import-placed files. Input/source suggestions retain concept, composite, optional and collection shapes; ambiguous references are not linked to an arbitrary declaration. Phase hover distinguishes pending, file and inline sources and ordered hints. Existing attachment navigation applies to phase files.
+
+Operations remain unavailable until ESM v9 (`PLAY0268`). Board command details describe system/operation intent and authored production order; there are no operation event cards, fabricated event identities or passing operation assertion states. Unknown or ambiguous production context receives no guessed destination hint. Keyword-named inputs, comments and fenced source remain their original content.
+
+## Handler implementation intent
+
+Both Monaco and VS Code offer `implementation` beneath a command handler, then ordered `hint` lines, `file` or existing tagged fences within its wrapper. Completion and hover describe pending intent and unavailable handler execution. New words stay ordinary property names outside those contexts. Parser diagnostics `PLAY0492`–`PLAY0494` retain original source locations; fenced code is isolated from DSL analysis and completion.
+
+The board does not show handler execution outputs or confirmation status. This authoring feature adds no AI, lock or confirmation command. See [supported owners](commands.md#implementation-intent-handlers-only).
+
 ## Screens
 
 Each slice that declares [screens](screens.md) gets a prototype in the board's **User** row. The prototype is a sketch of what the screen holds, laid out top to bottom:
@@ -89,11 +113,56 @@ The editor validates a workspace folder's `.play` files as one application, not 
 
 Inside the quotes of an `import`, completion offers the `.play` paths of the workspace folder.
 
+## Inline events in the text editor
+
+Completion offers `produces event` inside commands and `for`, typed mappings, tags, `description`, `documentation`, and rename-only `id` inside its body. Inline events appear in event-name completion, hover, Go to Definition, and the board just like standalone events. Extracting one into the same slice keeps its board identity.
+
+Inlay hints show `for <identifier>` on an inline production that omits its destination. A legacy plain omission shows `for <new event source>` only when no production in the command resolves a destination. An explicit sibling can supply a legacy command-level default, so the editor suppresses the hint rather than guessing. Hints also disappear when destinations conflict or an inline identifier cannot be determined. VS Code's standard inlay-hint settings control their visibility. The Monaco language service uses the same destination analysis.
+
+The editor reports mixed-source omissions, declaration collisions, forbidden inline generations and origins, reserved system metadata, malformed documentation and identity pins. Redundant pins are information diagnostics, not warnings. Keep `id` absent for new events. Highlighting and hover treat `id` and `documentation` as directives only at the start of an event-body line with directive syntax; properties named `id` and projection keys such as `key id` remain names. Trailing comments and fenced prose do not change destination analysis.
+
+## Optional values and quick fixes
+
+Write `optional` after the type, as in `note String optional` or
+`lines InvoiceLine[] optional`. Completion suggests this spelling and hover explains
+that it allows the whole value to be absent. A property or type named `optional`
+remains a name, not a keyword.
+
+The [compatibility spelling](types.md#compatibility-note) receives information
+diagnostic `PLAY0479`, marked deprecated rather than a warning. Use the lightbulb
+to migrate one occurrence, or the document action to migrate all occurrences.
+The fixes change only the spelling, retaining comments and spacing. They reparse
+the current buffer and verify that its meaning is unchanged before offering edits.
+Nothing is saved automatically. Stale buffer versions are refused. Monaco provides
+the same verified fixes; neither editor needs a .NET process.
+
+## Event quick fixes
+
+The lightbulb in VS Code and Monaco also offers this occurrence-only action:
+
+| Diagnostic | Action |
+| --- | --- |
+| `PLAY0471` | **Remove the redundant event id** deletes the complete `id` line, including its indentation and line ending, for inline or standalone events. A trailing comment prevents the action; move the comment to its own line first. |
+
+Redundant id removal works in placed and multi-document applications.
+It reparses the edited buffer and verifies that only the intended syntax changes
+and the diagnostic disappears. Analysis is cached for the current document version;
+range requests return every eligible intersecting occurrence, verifying the
+independent recipes together rather than reparsing per marker. Stale edits are refused.
+
 ## When the model has errors
 
 The board draws everything that could be read, so a typo in one slice does not empty it. The errors are listed above the board. Select one to open the file at its line.
 
 The board is drawn by the extension's own [TypeScript compiler](typescript-compiler.md), which parses but does not run the C# compiler's semantic checks. A model the board draws can still be one the [compiler](tool.md) rejects. The diagnostics in the text editor and the CLI remain the authority on whether a model is valid.
+
+The text editor also reports `PLAY0478` as information when a plain production
+omits `for` and its command has an identifier. This is advice, not a new routing
+default. Monaco and VS Code offer no quick fix for `PLAY0478`, because stating `for`
+can change where events land and the editors do not host the C# workspace repair
+transaction. Use the [MCP repair workflow](mcp/authoring-tools.md#fix-a-diagnostic)
+to preview an explicit `for` (or to declare a missing produced event), then review
+and apply the typed proposal.
 
 ## Theme
 

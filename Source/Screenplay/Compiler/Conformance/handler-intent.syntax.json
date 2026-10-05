@@ -1,0 +1,247 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "F",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": {
+                    "kind": "HandlerSyntax",
+                    "code": null,
+                    "file": null,
+                    "implementation": {
+                      "kind": "ImplementationSyntax",
+                      "hints": []
+                    }
+                  },
+                  "name": "Pending",
+                  "produces": [],
+                  "properties": [],
+                  "response": null,
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": {
+                    "kind": "HandlerSyntax",
+                    "code": null,
+                    "file": null,
+                    "implementation": {
+                      "kind": "ImplementationSyntax",
+                      "hints": [
+                        {
+                          "kind": "ImplementationHintSyntax",
+                          "text": " Preserve whitespace "
+                        },
+                        {
+                          "kind": "ImplementationHintSyntax",
+                          "text": "Keep \"quotes\" and // text"
+                        }
+                      ]
+                    }
+                  },
+                  "name": "Hinted",
+                  "produces": [],
+                  "properties": [],
+                  "response": null,
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": {
+                    "kind": "HandlerSyntax",
+                    "code": null,
+                    "file": {
+                      "kind": "FileReferenceSyntax",
+                      "path": "Handlers/Direct.cs"
+                    },
+                    "implementation": null
+                  },
+                  "name": "DirectFile",
+                  "produces": [],
+                  "properties": [],
+                  "response": null,
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": {
+                    "kind": "HandlerSyntax",
+                    "code": null,
+                    "file": {
+                      "kind": "FileReferenceSyntax",
+                      "path": "Handlers/Wrapped.cs"
+                    },
+                    "implementation": {
+                      "kind": "ImplementationSyntax",
+                      "hints": [
+                        {
+                          "kind": "ImplementationHintSyntax",
+                          "text": "Keep the cutoff"
+                        }
+                      ]
+                    }
+                  },
+                  "name": "WrappedFile",
+                  "produces": [],
+                  "properties": [],
+                  "response": null,
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": {
+                    "kind": "HandlerSyntax",
+                    "code": {
+                      "kind": "CodeBlockSyntax",
+                      "code": "return null;",
+                      "language": "csharp"
+                    },
+                    "file": null,
+                    "implementation": null
+                  },
+                  "name": "DirectCode",
+                  "produces": [],
+                  "properties": [],
+                  "response": null,
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": {
+                    "kind": "HandlerSyntax",
+                    "code": {
+                      "kind": "CodeBlockSyntax",
+                      "code": "hint file implementation",
+                      "language": "typescript"
+                    },
+                    "file": null,
+                    "implementation": {
+                      "kind": "ImplementationSyntax",
+                      "hints": []
+                    }
+                  },
+                  "name": "WrappedCode",
+                  "produces": [],
+                  "properties": [],
+                  "response": null,
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "OrdinaryNames",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "handler",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "implementation",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "hint",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "file",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "Intent",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "M"
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

@@ -10,4 +10,10 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// <param name="Subject">The identity subject.</param>
 /// <param name="Name">The identity name.</param>
 /// <param name="UserName">The identity user name.</param>
-public sealed record SemanticCommandOccurrence(DateTimeOffset Occurred, string Subject, string Name, string UserName);
+public sealed record SemanticCommandOccurrence(DateTimeOffset Occurred, string Subject, string Name, string UserName)
+{
+    /// <summary>
+    /// Gets whether this occurrence supplies time only, without a caller audit identity.
+    /// </summary>
+    public bool IsTimeOnly { get; init; }
+}

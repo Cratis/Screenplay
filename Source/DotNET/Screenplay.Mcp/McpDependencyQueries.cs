@@ -24,8 +24,10 @@ static class McpDependencyQueries
             page.TotalCount,
             page.Offset,
             page.NextOffset,
-            references = page.Items.Where(edge => edge.Targets.Length == 1).Select(edge => edge.Reference).ToArray(),
-            ambiguous = page.Items.Where(edge => edge.Targets.Length > 1).Select(edge => new { reference = edge.Reference, candidates = edge.Targets.Select(McpReadResults.Summary).ToArray() }).ToArray(),
+            references = page.Items.Where(edge => edge.Resolution == "resolved").Select(edge => edge.Reference).ToArray(),
+            ambiguous = page.Items.Where(edge => edge.Resolution == "ambiguous").Select(edge => new { reference = edge.Reference, candidates = edge.Targets.Select(McpReadResults.Summary).ToArray() }).ToArray(),
+            incomplete = page.Items.Where(edge => edge.Resolution == "incomplete").Select(edge => new { reference = edge.Reference, candidates = edge.Targets.Select(McpReadResults.Summary).ToArray() }).ToArray(),
+            wrongKind = page.Items.Where(edge => edge.Resolution == "wrongKind").Select(edge => new { reference = edge.Reference, targets = edge.Targets.Select(McpReadResults.Summary).ToArray() }).ToArray(),
             coverage = McpReferenceKinds.Coverage
         };
     }
@@ -77,7 +79,7 @@ static class McpDependencyQueries
                 edge => new
                 {
                     reference = edge.Reference,
-                    resolution = edge.Targets.Length switch { 0 => "unresolved", 1 => "resolved", _ => "ambiguous" },
+                    resolution = edge.Resolution,
                     targets = edge.Targets.Select(McpReadResults.Summary).ToArray()
                 },
                 arguments,

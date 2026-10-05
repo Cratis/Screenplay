@@ -1,12 +1,13 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { CommandSyntax, ConstraintSyntax, QueryParameterSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
+import { eventDeclarations, CommandSyntax, QueryParameterSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
 import {
     CommandItemDocument, EventItemDocument, QueryItemDocument, QueryParameterType, ReadModelItemDocument, SliceDocument, SliceStatus, SliceType,
 } from '../Document/EventModelDocument';
 import { toUserExperience } from '../Prototypes/toUserExperience';
 import { consumedEvents } from './consumedEvents';
+import { EventConstraint } from './EventConstraint';
 import { EventOwners } from './EventOwners';
 import { producedEvents } from './producedEvents';
 import { readModelSchemaFromProjection } from './readModelSchemaFromProjection';
@@ -67,16 +68,24 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
 }
 
 function eventsOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): EventItemDocument[] {
-    const declared = slice.events.filter(event => event.name.trim().length > 0).map(event => withConstraints({
+    const constraintsByEvent = new Map<string, EventConstraint[]>();
+    for (const constraint of slice.constraints.flatMap(rule => [rule, ...rule.additionalRules])) {
+        if (constraint.kind === 'FileConstraintSyntax') continue;
+        const name = constraint.event.toLowerCase();
+        const rules = constraintsByEvent.get(name) ?? [];
+        rules.push(constraint);
+        constraintsByEvent.set(name, rules);
+    }
+    const declared = eventDeclarations(slice).filter(event => event.name.trim().length > 0).map(event => withConstraints({
         id: owners.idFor(event.name) ?? scope.idOf('event', event.name),
         name: event.name,
         schema: owners.schemas.forProperties(event.properties),
-    }, slice.constraints));
+    }, constraintsByEvent.get(event.name.toLowerCase()) ?? []));
     if (slice.type === 'StateChange') {
         return declared;
     }
     const declaredNames = new Set(declared.map(event => event.name.toLowerCase()));
-    const produced = producedEvents(slice).filter(name => !declaredNames.has(name.toLowerCase())).map(name => {
+    const produced = producedEvents(slice, owners.productions).filter(name => !declaredNames.has(name.toLowerCase())).map(name => {
         declaredNames.add(name.toLowerCase());
         return { id: scope.idOf('produces', name), name, schema: owners.schemaFor(name) } satisfies EventItemDocument;
     });
@@ -92,7 +101,7 @@ function eventsOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): E
 // its declaration when the model has one.
 function commandOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): CommandItemDocument | undefined {
     if (slice.commands.length > 0) {
-        return toCommand(slice.commands[0], scope, owners.schemas);
+        return toCommand(slice.commands[0], scope, owners.schemas, owners);
     }
     const invoked = slice.reactions.flatMap(reaction => reaction.triggers).flatMap(trigger => trigger.invokes)[0];
     if (invoked === undefined) {
@@ -101,14 +110,11 @@ function commandOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): 
     const declared: CommandSyntax | undefined = owners.commandNamed(invoked.command);
     return declared === undefined
         ? { id: scope.idOf('command', invoked.command), name: invoked.command, schema: {}, stateSchema: {}, logicDescription: '', rules: [] }
-        : toCommand(declared, scope, owners.schemas);
+        : toCommand(declared, scope, owners.schemas, owners);
 }
 
-function withConstraints(event: EventItemDocument, constraints: readonly ConstraintSyntax[]): EventItemDocument {
-    for (const constraint of constraints.flatMap(rule => [rule, ...rule.additionalRules])) {
-        if (constraint.kind === 'FileConstraintSyntax' || constraint.event.toLowerCase() !== event.name.toLowerCase()) {
-            continue;
-        }
+function withConstraints(event: EventItemDocument, constraints: readonly EventConstraint[]): EventItemDocument {
+    for (const constraint of constraints) {
         const described = { name: constraint.name, message: constraint.message ?? '' };
         event = constraint.kind === 'UniqueEventConstraintSyntax'
             ? { ...event, constraints: { ...event.constraints, uniqueEventType: described } }

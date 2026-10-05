@@ -18,6 +18,12 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         ApplicationSyntax syntax,
         SemanticDocumentSet documents)
     {
+        var admission = CommandProductionAdmission(syntax);
+        if (admission.Count > 0)
+        {
+            return CompilationResult<SemanticCompilation>.Failed(admission);
+        }
+
         var context = new BindingContext(applicationName, syntax, documents);
         try
         {
@@ -30,7 +36,12 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
             var languageVersion = LanguageVersion.V1;
             var semanticVersion = SemanticVersion.V1;
-            if (context.UsesV5)
+            if (context.UsesV6)
+            {
+                languageVersion = LanguageVersion.V6;
+                semanticVersion = SemanticVersion.V6;
+            }
+            else if (context.UsesV5)
             {
                 languageVersion = LanguageVersion.V5;
                 semanticVersion = SemanticVersion.V5;
@@ -127,21 +138,23 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var applicationId = Resolve(applicationAddress, syntax.Location);
 
             RegisterTypeDeclarations();
+            var triggers = RegisterTriggerDeclarations();
             RegisterEventDeclarations();
             RegisterReadModelDeclarations();
             RegisterQueryDeclarations();
             var concepts = syntax.Concepts.Select(BindConcept).ToImmutableArray();
             var types = (syntax.Types ?? []).Select(BindType).ToImmutableArray();
-            var modules = syntax.Modules.Select(BindModule).ToImmutableArray();
+            var modules = AttachAutomation([.. syntax.Modules.Select(BindModule)]);
             var policies = BindPolicies();
             return new(
                 applicationId,
                 applicationName,
                 concepts,
                 types,
-                UsesV2 || UsesV3 || UsesV4 || UsesV5 ? [.. modules.Select(PromoteV2Destinations)] : modules)
+                UsesV2 || UsesV3 || UsesV4 || UsesV5 || UsesV6 ? [.. modules.Select(PromoteV2Destinations)] : modules)
             {
-                Policies = policies
+                Policies = policies,
+                Triggers = triggers
             };
         }
 
@@ -203,11 +216,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, "Event seeding is operational metadata and is not part of ESM v1 behavior.", seed.Location);
             }
 
-            foreach (var trigger in syntax.Triggers ?? [])
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Trigger '{trigger.Name}' is deferred until portable occurrence semantics are admitted.", trigger.Location);
-            }
-
             foreach (var profile in syntax.UiProfiles ?? [])
             {
                 Information(DiagnosticCodes.DeferredSemanticSyntax, $"UI profile '{profile.Name}' is explicitly deferred from the backend ESM v1 profile.", profile.Location);
@@ -251,7 +259,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             foreach (var (module, featurePath, slice) in AllSlices())
             {
                 var sliceAddress = SemanticAddress.ForSlice(_applicationIdentity, module, featurePath, slice.Name);
-                foreach (var group in slice.Events.GroupBy(@event => @event.Name, StringComparer.Ordinal))
+                foreach (var group in EventDeclarations.In(slice).GroupBy(@event => @event.Name, StringComparer.Ordinal))
                 {
                     var declarations = group.OrderBy(@event => @event.Generation).ToArray();
                     var bound = BindEvent(sliceAddress, declarations);

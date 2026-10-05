@@ -26,7 +26,7 @@ public class when_merging_repeated_construct_authorization : when_compiling_a_fo
                     authorize Finance
                   readmodel Report
                     id Uuid
-                  query ReportById => Report?
+                  query ReportById => Report optional
                     by id Uuid
                     authorize Staff
                     authorize Finance

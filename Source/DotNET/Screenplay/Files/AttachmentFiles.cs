@@ -28,6 +28,21 @@ public static partial class AttachmentFiles
     /// <returns>Contents and warnings; a refused reference is omitted from contents.</returns>
     public static AttachmentFileResult Load(string root, ImmutableArray<SemanticSourceDocument> documents) => Load(root, documents, IsRegularFile);
 
+    /// <summary>Lists every model-selected implementation reference, including missing or refused files.</summary>
+    /// <param name="documents">The exact source documents to inspect.</param>
+    /// <returns>The same reference manifest used by the attachment loader, before filesystem inspection.</returns>
+    public static ImmutableArray<FileReferenceSyntax> References(ImmutableArray<SemanticSourceDocument> documents)
+    {
+        var references = new ImplementationReferences();
+        foreach (var document in documents)
+        {
+            var parsed = new ScreenplayCompiler().Parse(document.Text, document.DisplayPath);
+            if (parsed.Value is not null) references.VisitApplication(parsed.Value);
+        }
+
+        return [.. references.Files];
+    }
+
     /// <summary>Normalizes an authored path for host keys and binder lookup, without accessing the file system.</summary>
     /// <param name="path">The authored file path.</param>
     /// <param name="normalized">The normalized repository-relative key, if valid.</param>
@@ -93,15 +108,7 @@ public static partial class AttachmentFiles
         var total = 0L;
         foreach (var document in documents)
         {
-            var parsed = new ScreenplayCompiler().Parse(document.Text, document.DisplayPath);
-            if (parsed.Value is null)
-            {
-                continue;
-            }
-
-            var references = new ImplementationReferences();
-            references.VisitApplication(parsed.Value);
-            foreach (var reference in references.Files)
+            foreach (var reference in References([document]))
             {
                 if (!TryNormalize(reference.Path, out var key, out var reason))
                 {

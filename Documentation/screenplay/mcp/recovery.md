@@ -39,6 +39,12 @@ Pending operations block normal model reads, opening and editing. Inspect
 
 ## Reviewing the state change
 
+Diagnostic repairs (`PLAY0166` event declaration and `PLAY0478` explicit destination)
+use the same proposal/apply envelope as other typed authoring. Discovery and
+`propose-repair` do not modify source or identity state. Review both before applying;
+if apply is interrupted, use the recovery procedure below rather than proposing the
+repair again against partially installed files. See [Fix a diagnostic](authoring-tools.md#fix-a-diagnostic).
+
 Every proposal includes `stateChange` with before/after state revisions. Source
 and identity state are installed under the same rollback envelope.
 
@@ -84,9 +90,10 @@ or after image; unexpected third-party content is never overwritten. It restores
 and verifies original source bytes, identity state and preserved access settings.
 The marker is removed only after verification and safe cleanup.
 
-On conflict or uncertainty, the result remains `RecoveryRequired`; the marker
-and remaining backups stay in place. Preserve them. Move or restore competing
-external edits deliberately before requesting recovery again. Do not delete the
+On conflict or uncertainty, the result remains `RecoveryRequired` and adds
+`failureKind: "RecoveryRequired"`; the marker and remaining backups stay in place.
+Preserve them. Move or restore competing external edits deliberately before
+requesting recovery again. Do not delete the
 marker merely to unblock the server.
 
 ## Boundaries

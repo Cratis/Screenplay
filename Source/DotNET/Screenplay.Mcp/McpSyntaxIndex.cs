@@ -18,6 +18,10 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     readonly Dictionary<(string Kind, string Name, string Scope), McpDeclaration> _scaffolds = [];
     McpQueryIndex _queries = null!;
 
+    internal EventSourceReadConfidence? SourceConfidence { get; set; }
+
+    internal McpAuthoringReadiness Readiness { get; private set; } = null!;
+
     internal IEnumerable<McpDeclaration> Declarations => _declarations;
     internal IEnumerable<McpReference> References => _references;
 
@@ -30,8 +34,19 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     /// <inheritdoc/>
     public override void VisitApplication(ApplicationSyntax syntax)
     {
+        Readiness ??= new(syntax);
         _ownership.VisitApplication(syntax);
         base.VisitApplication(syntax);
+    }
+
+    /// <inheritdoc/>
+    public override void VisitEventSource(EventSourceSyntax syntax)
+    {
+        _ownership.VisitEventSource(syntax);
+        Declare("EventSource", syntax.Name, syntax, syntax.Description, new { syntaxOnly = true, executionReadiness = Readiness.ExecutionReadiness(syntax) });
+        _scope.Add(syntax.Name);
+        base.VisitEventSource(syntax);
+        _scope.RemoveAt(_scope.Count - 1);
     }
 
     /// <inheritdoc/>
@@ -55,7 +70,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     /// <inheritdoc/>
     public override void VisitSlice(SliceSyntax syntax)
     {
-        Declare("Slice", syntax.Name, syntax, syntax.Description);
+        Declare("Slice", syntax.Name, syntax, syntax.Description, new { syntaxOnly = Readiness.SyntaxOnly(syntax), executionReadiness = Readiness.ExecutionReadiness(syntax) });
         _scope.Add(syntax.Name);
         base.VisitSlice(syntax);
         _scope.RemoveAt(_scope.Count - 1);
@@ -66,9 +81,12 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     {
         switch (node)
         {
-            case CommandSyntax value: Declare("Command", value.Name, value, value.Description, new { produces = value.Produces.Select(produces => produces.Event) }); break;
+            case CommandSyntax value: Declare("Command", value.Name, value, value.Description, new { produces = Readiness.ProducedEvents(value), generatedProperties = value.Properties.Where(property => property.IsGenerated).Select(property => property.Name), response = value.Response, authoredRoute = value.Stream, ambiguousStreamCandidates = value.StreamCandidates, syntaxOnly = Readiness.SyntaxOnly(value), executionReadiness = Readiness.ExecutionReadiness(value, null) }); break;
+            case EventStreamSyntax value: Declare("EventStream", value.Name, value, value.Description, new { syntaxOnly = true, executionReadiness = Readiness.ExecutionReadiness(value) }); break;
+            case SystemSyntax value: Declare("System", value.Name, value, value.Description, new { syntaxOnly = true, executionReadiness = Readiness.ExecutionReadiness(value) }); break;
+            case OperationSyntax value: Declare("Operation", value.Name, value, value.Description, new { syntaxOnly = true, executionReadiness = Readiness.ExecutionReadiness(value) }); break;
             case QuerySyntax value: Declare("Query", value.Name, value); break;
-            case EventSyntax value: Declare("Event", value.Name, value); break;
+            case EventSyntax value: Declare("Event", value.Name, value, value.Description); break;
             case ReadModelSyntax value: Declare("ReadModel", value.Name, value); break;
             case ScreenSyntax value: Declare("Screen", value.Name, value); break;
             case ConceptSyntax value: Declare("Concept", value.Name, value); break;
@@ -91,6 +109,10 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
             case SpecificationSyntax value:
                 Declare("Specification", value.Name, value, details: new
                 {
+                    generatedValues = value.When?.GeneratedValues,
+                    thenReturns = value.ThenReturns,
+                    syntaxOnly = Readiness.SyntaxOnly(value),
+                    executionReadiness = Readiness.ExecutionReadiness(value),
                     given = value.Given.Select(item => item.EventType),
                     when = value.When?.CommandType,
                     whenAppendedEvent = value.WhenAppended?.EventType,
@@ -107,9 +129,15 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         foreach (var reference in McpReferenceKinds.For(node, owningSyntax))
         {
             var role = owner?.Syntax is SpecificationSyntax specification ? McpFixtureOccurrences.Role(specification, node, reference.Role) : reference.Role;
-            _references.Add(new(reference.Name, reference.Kinds, [.. _scope], node.Location, role, owner?.Owner));
+            _references.Add(new(reference.Name, reference.Kinds, [.. _scope], node is CommandStreamSyntax route ? route.ReferenceLocation : node.Location, role, owner?.Owner)
+            {
+                UseProductionCandidates = node is ProducesSyntax or SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax,
+                AmbiguousSourceOwner = node is CommandStreamSyntax { PropertyCandidate: not null }
+            });
         }
     }
+
+    internal void Initialize(ApplicationSyntax application) => Readiness = new(application);
 
     internal void Complete(ApplicationSyntax? application)
     {
@@ -119,12 +147,49 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         }
 
         _declarations.AddRange([.. McpLogicalReadModels.From(_declarations)]);
-        _queries = new(_declarations, _references);
+        var productions = new McpProductionInventory([.. _declarations]);
+        var sources = _declarations.Where(declaration => declaration.Kind == "EventSource" && declaration.Scope.Length == 0)
+            .ToLookup(declaration => declaration.Name, StringComparer.Ordinal);
+        for (var referenceIndex = 0; referenceIndex < _references.Count; referenceIndex++)
+        {
+            var reference = _references[referenceIndex];
+            if (reference.Kinds.Contains("EventSource", StringComparer.Ordinal) || reference.Kinds.Contains("EventStream", StringComparer.Ordinal))
+            {
+                var parts = reference.Name.Split('.');
+                var confidence = SourceConfidence?.Resolve(parts[0], reference.Kinds.Contains("EventStream", StringComparer.Ordinal) ? parts.ElementAtOrDefault(1) ?? string.Empty : null);
+                _references[referenceIndex] = reference with
+                {
+                    AmbiguousSourceOwner = reference.AmbiguousSourceOwner || sources[parts[0]].Count() > 1 || confidence?.State == "ambiguous",
+                    IncompleteSourceOwner = confidence?.State == "incomplete",
+                    SourceConfidenceReasons = confidence?.Reasons ?? []
+                };
+            }
+        }
+        for (var index = 0; index < _references.Count; index++)
+        {
+            var reference = _references[index];
+            if (reference.Role != "produces") continue;
+            var targets = productions.ResolveReference(reference.Name, reference.Scope);
+            _references[index] = reference with { Kinds = targets is [var target] ? [target.Kind] : ["Event", "Operation"] };
+        }
+        _queries = new(_declarations, _references, productions);
     }
 
     internal McpDeclaration[] Resolve(McpReference reference) => _queries.Resolve(reference);
 
+    internal McpReferenceEdge ResolveProduction(string name, string[] scope)
+    {
+        var reference = new McpReference(name, ["Event", "Operation"], scope, new(0, 0, string.Empty), "production", null)
+        {
+            UseProductionCandidates = true
+        };
+
+        return new(reference, Resolve(reference));
+    }
+
     internal McpDeclaration[] Find(string address, string kind) => _queries.Find(address, kind);
+
+    internal bool HasExactOwnershipCollision(string kind, string name, string[] scope) => _queries.HasExactOwnershipCollision(kind, name, scope);
 
     internal IEnumerable<McpQueryIndexResolution> Incoming(McpDeclaration declaration) => _queries.Incoming(declaration);
 

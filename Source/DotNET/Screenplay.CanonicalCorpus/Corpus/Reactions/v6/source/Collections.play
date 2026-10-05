@@ -1,0 +1,122 @@
+// Reactions, the clock, an application trigger and a capture, each specified end to end (decision 0022).
+concept InvoiceId : Uuid
+trigger PaymentFileArrived
+  invoiceId InvoiceId
+  amount Decimal
+module Collections
+  feature Invoices
+    slice StateChange SendInvoice
+      command SendInvoice
+        invoiceId InvoiceId identifier
+        produces InvoiceSent
+          for invoiceId
+          invoiceId = invoiceId
+          sentAt = $context.occurred
+      event InvoiceSent
+        invoiceId InvoiceId
+        sentAt DateTime
+      specification SendingAnInvoice
+        given clock "2026-10-02T09:00:00Z"
+        when SendInvoice
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+        then InvoiceSent
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          sentAt = "2026-10-02T09:00:00Z"
+        then ReminderScheduled
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          scheduledAt = "2026-10-02T09:00:00Z"
+    slice StateChange CloseInvoice
+      command CloseInvoice
+        invoiceId InvoiceId identifier
+        reason String
+        validate
+          reason not empty message "A reason is required"
+        produces InvoiceClosed
+          for invoiceId
+          reason = reason
+      event InvoiceClosed
+        reason String
+      constraint OnlyClosedOnce
+        unique event InvoiceClosed
+      specification RejectingAnEmptyReason
+        when CloseInvoice
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason = ""
+        then error "A reason is required"
+    slice Automation Reminders
+      reaction ReminderScheduler
+        when InvoiceSent
+          invoiceId
+          produces ReminderScheduled
+            scheduledAt = $context.occurred
+      reaction PaymentImporter
+        when PaymentFileArrived
+          invoiceId
+          amount
+          invokes CloseInvoice
+            invoiceId = invoiceId
+            reason = "paid"
+        where amount > 0
+      reaction WeeklyDigest
+        at 07:30 on Monday
+          produces DigestIssued
+            for "weekly"
+            issuedAt = $context.occurred
+      reaction StartupBody
+        when Startup
+          ```csharp
+            return [];
+            ```
+      event ReminderScheduled
+        scheduledAt DateTime
+      event DigestIssued
+        issuedAt DateTime
+      specification ClosingAPaidInvoice
+        when trigger PaymentFileArrived
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount = 120
+        then InvoiceClosed
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason = "paid"
+      specification IssuingTheWeeklyDigest
+        given clock "2026-10-05T07:00:00Z"
+        when clock "2026-10-05T07:30:00Z"
+        then DigestIssued
+          for "weekly"
+          issuedAt = "2026-10-05T07:30:00Z"
+      specification RejectingASecondClose
+        given InvoiceClosed
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reason = "already"
+        when trigger PaymentFileArrived
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount = 120
+        then error "Constraint 'OnlyClosedOnce' is violated: the event source already has the constrained event."
+      specification UnsupportedStartup
+        when trigger Startup
+        then DigestIssued
+          issuedAt = "2026-10-05T07:30:00Z"
+    slice Translate LegacySync
+      capture LegacyInvoiceCapture
+        key id
+        map
+          status = status translate
+            "sendt"  => sent
+            "betalt" => paid
+        append LegacyInvoicePaid
+          when status from "sent" to "paid"
+            paidAt = $context.occurred
+      event LegacyInvoicePaid
+        paidAt DateTime
+      specification SeeingALegacyPayment
+        given clock "2026-10-02T12:00:00Z"
+        given capture LegacyInvoiceCapture
+          id     = "inv-42"
+          status = "sendt"
+        when capture LegacyInvoiceCapture
+          id     = "inv-42"
+          status = "betalt"
+        then LegacyInvoicePaid
+          for "inv-42"
+          paidAt = "2026-10-02T12:00:00Z"

@@ -132,7 +132,7 @@ static class WorkspaceAbsenceKeyValidation
     {
         if (policy == WorkspaceAuthoringReferencePolicy.Safe)
         {
-            throw new InvalidWorkspaceAuthoring($"New unresolved absence key '{obligation.Text}' at '{location}': {obligation.Reason}. Use Draft to retain deliberate reference debt.");
+            throw new InvalidWorkspaceAuthoring($"New unresolved absence key '{obligation.Text}' at '{location}': {obligation.Reason}. Resolve it in the same proposal, or use the Draft reference policy to retain it as deliberate reference debt.");
         }
     }
 

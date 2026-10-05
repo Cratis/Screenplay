@@ -4,19 +4,21 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { EventSyntax, PropertySyntax, ReadModelSyntax, TagSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { pattern } from '../Text/patterns';
+import { eventBodyReservedWords } from '../Text/ReservedWords';
 import { parseDescription } from './DescriptionParser';
+import { EventMetadataParser } from './EventMetadataParser';
 import { parseMappingSource } from './ExpressionParser';
 import { isFileDirectiveAmongProperties } from './FileReferences';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
-import { tryParseProperty } from './PropertyLineParser';
+import { parseProperty, tryParseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
 
 const typeHeader = pattern('^type\\s+([A-Za-z_]\\w*)$');
 const eventHeader = pattern('^event\\s+([A-Za-z_]\\w*)(?:\\s+generation\\s+([0-9]+))?$');
 const readModelHeader = pattern('^readmodel\\s+([A-Za-z_]\\w*)$');
 const maximumGeneration = 4294967295;
-const typeShapedPattern = pattern('^[A-Z]\\w*(?:\\[\\])?\\??$');
+const typeShapedPattern = pattern('^[A-Z]\\w*(?:\\[\\])?(?:\\?|\\s+optional)?$');
 const tagIdentifierPattern = pattern('^[A-Za-z_]\\w*$');
 
 // 'description' takes no type reference, so a line with property shape is a property named description.
@@ -46,7 +48,7 @@ export function parseType(context: ParserContext, header: SourceLine): TypeSynta
         if (isFileDirectiveAmongProperties(line)) {
             continue;
         }
-        const property = tryParseProperty(line);
+        const property = parseProperty(context, line);
         if (property === undefined) {
             context.error(DiagnosticCodes.InvalidPropertyDeclaration, `Invalid property '${line.content}' - expected '<name> <Type>'`, locationOf(line));
             continue;
@@ -78,34 +80,37 @@ export function parseEvent(context: ParserContext, header: SourceLine): EventSyn
     }
     const properties: PropertySyntax[] = [];
     const tags: TagSyntax[] = [];
+    const metadata = new EventMetadataParser(name);
     for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
         if (isFileDirectiveAmongProperties(line)) {
             continue;
         }
-        if (firstWord(line.content) === 'tag') {
+        if (eventBodyReservedWords.includes(firstWord(line.content))) {
             const tag = parseTag(context, line);
             if (tag !== undefined) {
                 tags.push(tag);
             }
             continue;
         }
-        const property = tryParseProperty(line);
+        const property = parseProperty(context, line);
         if (property === undefined) {
-            context.error(DiagnosticCodes.InvalidPropertyDeclaration, `Invalid property '${line.content}' - expected '<name> <Type>'`, locationOf(line));
+            if (!metadata.tryParse(context, line)) {
+                context.error(DiagnosticCodes.InvalidPropertyDeclaration, `Invalid property '${line.content}' - expected '<name> <Type>'`, locationOf(line));
+            }
             continue;
         }
         properties.push(withoutIdentifier(context, property, line, DiagnosticCodes.IdentifierOnEventProperty,
             `Property '${property.name}' of event '${name}' cannot be marked identifier - an event never carries its event source id`));
     }
-    return { kind: 'EventSyntax', name, properties, tags, generation, hasGenerationMarker, location: locationOf(header) };
+    return { kind: 'EventSyntax', name, properties, tags, generation, hasGenerationMarker, ...metadata.value, location: locationOf(header) };
 }
 
 // 'tag <value>' - the port of the C# TagParser, with the warning the C# EventParser gives for a tag whose
 // value looks like a type, which is almost always a property named tag written without its '@'.
-function parseTag(context: ParserContext, line: SourceLine): TagSyntax | undefined {
+export function parseTag(context: ParserContext, line: SourceLine, eventDeclaration = true): TagSyntax | undefined {
     const value = line.content.substring('tag'.length).trim();
-    if (typeShapedPattern.test(value)) {
+    if (eventDeclaration && typeShapedPattern.test(value)) {
         context.warning(DiagnosticCodes.TagPropertyReadAsTag,
             `'${line.content}' declares a static tag with the value '${value}', not a property named 'tag' - write 'tag "${value}"' for the tag, or '@${line.content}' for the property`,
             locationOf(line));
@@ -139,7 +144,7 @@ export function parseReadModel(context: ParserContext, header: SourceLine): Read
         } else if (isFileDirectiveAmongProperties(line)) {
             continue;
         } else {
-            const property = tryParseProperty(line);
+            const property = parseProperty(context, line);
             if (property === undefined) {
                 context.error(DiagnosticCodes.InvalidPropertyDeclaration, `Invalid property '${line.content}' - expected '<name> <Type>'`, locationOf(line));
                 continue;

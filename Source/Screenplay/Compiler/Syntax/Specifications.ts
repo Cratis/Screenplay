@@ -2,7 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { ExpressionSyntax, PropertyMappingSyntax } from './Expressions';
+import { SpecificationDeniedSyntax, SpecificationReturnSyntax } from './Responses';
 import { SyntaxNode } from './SyntaxNode';
+import { SpecificationOperationFailureSyntax } from './SpecificationOperationFailureSyntax';
+import { SpecificationOperationSyntax } from './SpecificationOperationSyntax';
+import { SpecificationCompensatedSyntax } from './SpecificationCompensatedSyntax';
+
+export type { SpecificationOperationFailureSyntax } from './SpecificationOperationFailureSyntax';
+export type { SpecificationOperationSyntax } from './SpecificationOperationSyntax';
+export type { SpecificationCompensatedSyntax } from './SpecificationCompensatedSyntax';
 
 // 'given <Event>', 'then <Event>' or 'when append <Event>', with the values it states.
 export interface SpecificationEventSyntax extends SyntaxNode {
@@ -16,6 +24,7 @@ export interface SpecificationEventSyntax extends SyntaxNode {
 export interface SpecificationCommandSyntax extends SyntaxNode {
     readonly kind: 'SpecificationCommandSyntax';
     readonly commandType: string;
+    readonly generatedValues?: readonly PropertyMappingSyntax[];
     readonly values: readonly PropertyMappingSyntax[];
     readonly for: ExpressionSyntax | null;
 }
@@ -94,4 +103,9 @@ export interface SpecificationSyntax extends SyntaxNode {
     readonly whenQuery: SpecificationWhenQuerySyntax | null;
     readonly thenResults: readonly SpecificationQueryResultSyntax[];
     readonly thenNoResult: SpecificationNoResultSyntax | null;
+    readonly thenDenied?: SpecificationDeniedSyntax | null;
+    readonly thenReturns?: SpecificationReturnSyntax | null;
+    readonly givenOperationFailures?: readonly SpecificationOperationFailureSyntax[];
+    readonly thenOperations?: readonly SpecificationOperationSyntax[];
+    readonly thenCompensated?: readonly SpecificationCompensatedSyntax[];
 }

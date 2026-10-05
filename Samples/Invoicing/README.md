@@ -57,10 +57,11 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | `form` with `populate via query`, `populate from item`, `field … label/from/compose using`, `on submit navigate`, `on change` | `module Invoicing` |
 | feature `authorize`, `uses` with arguments, `on <ApplicationTrigger>`, nested features, feature `contribute to` | InvoiceManagement, Adjustments, Payments, Integrations |
 | slice `description`, `file` | RegisterInvoice |
+| inline `produces event`, typed mappings, event `description` and Markdown `documentation`, implicit identifier destination | TagInvoice |
 | command `description`, `identifier`, multi-line `authorize`, every validation rule, `severity`, `require`, inline `validate` block, `$strings` messages | RegisterInvoice, CancelInvoice, TagInvoice, ProcessInvoiceBatch, ApplyDiscount |
 | `produces` with `for`, `tag`, every mapping source (`$context.*`, `$env`, `$strings`, literals, Booleans, lists, expressions); `produces when` with `and`/`or`/parentheses, `contains`, `starts with` | RegisterInvoice, ApplyDiscount, RecordPayment, NotifyCustomerOnInvoiceRegistered |
 | `reads … as … by` and `require` over read state | RecordPayment |
-| `handler` inline and `file`; `concurrency` | ProcessInvoiceBatch, ArchiveOldInvoices, RegisterInvoice |
+| `handler` inline and `implementation` with a hint and existing `file`; `concurrency` | ProcessInvoiceBatch, ArchiveOldInvoices, RegisterInvoice |
 | `event` with `generation 2`, `file`, `tag` (name, string, `$env`, `$context`), an `@tag` escaped property | RegisterInvoice, TagInvoice |
 | `constraint` with `unique … on`, a composite `unique a, b on`, `unique event`, `released by`, `ignore casing`, `message` | RegisterInvoice, RecordPayment |
 | `readmodel` with `description` and `file`; `query` with `observable`, `by`/`filter … from`, `scoped to identity`/`global`, `performer` in ```` ```sql ````, ```` ```csharp ```` and `file` | InvoiceList, InvoiceLineReport, ExchangeRates, MyInvoices, CreditStatus |
@@ -87,11 +88,15 @@ Automation and translate slices are driven by time, by application triggers and 
 ## Parsed is not executable
 
 This document is a showcase of the language, not of what runs today. It compiles with no diagnostics, but much
-of it is outside what the executable semantic model admits: automation and translate slices, captures,
-reactions, clocks and triggers in specifications, reducers, performers, list queries, handlers, `reads`, `@pii`
-concepts and code policies among them. Admitting clocks, triggers, captures and reactions is proposed as ESM v6 in
-[decision 0022](../../decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md).
-The reference specification runner can therefore not execute most of these specifications. For a model whose
+of it is outside what the executable semantic model admits: imported events, reducers, performers, list
+queries, handlers, command `reads`, `@pii` concepts and code policies among them. Clocks, triggers, captures and
+reactions are admitted as ESM v6 by
+[decision 0022](../../decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md), but
+because the document as a whole does not bind, the reference specification runner can not execute most of
+these specifications here. Direct-producing reactions with `reads` also refuse binding rather than
+silently discarding unprotected decisions. Focused executable clock, reaction, trigger and capture
+vectors live in `ReactionsCorpus.V6`; full-sample syntax compilation is not reference-execution admission.
+For a model whose
 core specifications do run, see [Library](../Library).
 
 ## Verify

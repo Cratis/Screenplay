@@ -31,6 +31,21 @@ monaco.editor.create(element, {
 - **Hover** — keyword documentation, concept definitions (primitive + attributes), policy require expressions, and event property lists.
 - **Diagnostics** — unknown slice types, unknown primitive types, references to undeclared policies and events, tab indentation, and unclosed code fences. Every one of them carries the compiler's own `PLAY` code (`diagnosticCodes`), so a squiggle and a CLI diagnostic for the same condition are the same code.
 
+## Quick fixes
+
+The registered code-action provider offers verified edits against the current buffer:
+
+- `PLAY0479`: replace one legacy `?` suffix with `optional`, or migrate the document.
+- `PLAY0471`: remove a redundant event `id` line. Trailing comments prevent removal.
+
+Redundant id removal works in placed and multi-document applications.
+Actions respect the requested diagnostic and kind, cache analysis per model version,
+and pin edits to that version. Range requests return every eligible intersecting occurrence, without duplicate
+actions. Independent recipes are verified together once per version to check the intended
+syntax changes and diagnostic removal without reparsing per marker; no .NET process is
+required. See [editor quick fixes](../../../../Documentation/screenplay/vscode.md#event-quick-fixes)
+for the redundant id removal behavior.
+
 ## Extending with new sub-languages
 
 ```typescript

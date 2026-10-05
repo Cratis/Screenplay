@@ -3,8 +3,9 @@
 
 import type { languages } from 'monaco-editor';
 import { hoverContent } from './hover-content';
+import { CompletionOptions } from './completions';
 
-export function createHoverProvider(): languages.HoverProvider {
+export function createHoverProvider(options: CompletionOptions = {}): languages.HoverProvider {
     return {
         provideHover(model, position) {
             const word = model.getWordAtPosition(position);
@@ -16,6 +17,7 @@ export function createHoverProvider(): languages.HoverProvider {
                 word.word,
                 word.startColumn,
                 word.endColumn,
+                options.application?.(model),
             );
             return content ? { contents: [{ value: content }] } : null;
         },

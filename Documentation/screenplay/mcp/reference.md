@@ -11,7 +11,9 @@ and [Edit a model](edit.md) for prompts.
 ## Installation and scope
 
 The server is included in the `cratis/screenplay` Docker image and in the
-`Cratis.Screenplay.Tool` .NET tool. It runs as `screenplay mcp <root>`:
+`Cratis.Screenplay.Tool` .NET tool. It runs as `screenplay mcp <root>`, or as `screenplay mcp` alone, which picks the model
+folder per workspace from `open-workspace`'s `path`, the client's roots or the working
+directory ([choose where the model lives](install.md#choose-where-the-model-lives)):
 
 ```bash
 docker run -i --rm -v "$PWD/specifications:/model" cratis/screenplay mcp /model
@@ -27,8 +29,33 @@ See [installation and client configuration](install.md). One physical root
 is one application, whether it has one source file or hundreds of nested files.
 Symbolic links are rejected. An empty root can be opened to create its first model.
 
+A root supplied at startup is fixed for that connection. `open-workspace.path`
+may name that same physical directory, but another root returns `RootChangeRefused`.
+Start a separately authorized connection to switch applications. Dynamic servers
+retain the root selection described above.
+
 Only `apply` and `recover-workspace` mutate files. Keep client approval enabled
 for both. Source queries, schemas, proposals and status checks are read-only.
+
+## Generated values and responses (syntax-only)
+
+`declaration-details` exposes `isGenerated` on property pages and a command `response` view with typed scalar/block syntax, source property names, declared and inferred field types, and explicit syntax-only execution readiness. Generated values are not request/form inputs. Specification details and `find-fixtures` distinguish `generatedValues` and `thenReturns` from ordinary `whenCommand` values. These are syntax facts, not evaluated results.
+
+Discover `CommandSyntax.response`, `RecordCommandResponseSyntax.fields`, `ScalarCommandResponseSyntax.source`, `ResponseFieldSyntax` and `PropertyResponseSourceSyntax` with `syntax-schema`. Use the existing `read-ast` handles and typed Add/Replace/Remove operations under `propose-ast`, with `validation: "Authoring"`. Add a response to the command's `response` member, replace or remove its node to change or clear it, and add/replace/remove record fields through `fields`. Field types are nullable for inference. Source locations remain server-owned; response fields have no ESM identities.
+
+Workspace and catalog revisions, expected nodes, preview and explicit acceptance still apply. Inspect `read-proposal` before `apply`; discovery and preview never write. Executable validation refuses every generated/response construct with `PLAY0268` and no semantic model. Execution, form response scopes and an official renderer response type remain unavailable until ESM v8. The inline-event extraction tool refuses response-bearing commands because it cannot prove its canonical executable-byte invariant without a semantic model; use explicit typed authoring edits instead. Rename with `PreserveTrivia` to retain response comments; canonical rename can refuse a proposal that would drop comments. See the [syntax-only contract](../commands.md#generated-values-and-responses-syntax-only).
+
+## Event source and stream inventories (syntax-only)
+
+`read-workspace` offers `event-sources`, `event-streams`, `event-source-details`, `event-stream-details` `command-routes` and the paged `event-source-diagnostics` evidence view. Supply `expectedRevision`; continuation pages also pin `expectedCatalogRevision`. Detail views require the exact `authoringKey` from the matching kind's inventory. Keys include application, kind, full owner path and name; physical handles remain separate. Duplicate sources make every child owner ambiguous, even if one duplicate alone declares that child. Detail requests return typed refusal rather than selecting a survivor. The physical inventory retains partial declarations and route candidates from errorful files without granting write eligibility. `inventoryComplete` and authoring diagnostics disclose incomplete parsed extent; otherwise noncolliding ownership is `incomplete`, not falsely `unique`, and confident details refuse with `IncompleteSource`. Parser/import and whole-assembly diagnostics are retained. Unresolved import placement is reported without an authoritative owner or key.
+
+Detail pages use `detailShape: "compact-header-v1"`. The first `declaration` item is a compact header, not a full `syntax` subtree. Sources include `streamCount`; subsequent `stream` items page children in their physical parent's authored order. Use `fullSyntax` to request full content separately through `read-ast`. `metadata` reports UTF-8 `idBytes` and `descriptionBytes`; values above 4096 bytes are omitted explicitly, not shortened. Follow `originalSource` to `read-document` byte pages for those exact values. Source inventory pages are bounded by both item count and serialized bytes, so `nextOffset` can advance by fewer than `limit` items. An oversized single identity item refuses with an actionable byte-read alternative; reducing the item count cannot shrink that item.
+
+Generic source details, source dependencies and editor navigation use the same source-only physical confidence as the inventories. Unresolved placement candidates are not discarded before checking duplicate parents. Unknown root extent refuses confident selection even when one surviving declaration is readable; nonrouting event and operation resolution keeps its existing rules. `confidenceReasons` explains source inventory ownership, and reference edges expose `sourceConfidenceReasons`.
+
+`declaration-details` adds source `streams` and command `route` views. The route view retains `authoredRoute` and every `ambiguousStreamCandidates` node; it does not claim effective routing. Dependencies include `commandEventSource`, `commandStream` and nominal identifier/key type links. Source references are application-exact; stream references are exactly `Source.Stream`, without suffix guessing.
+
+All new inventories disclose syntax-only ESM v10 readiness and `executionAvailable: false`, without source/stream semantic or requirement IDs. Old syntax JSON omissions retain additive defaults. Use [typed authoring edits](authoring-tools.md#event-source-and-stream-authoring), not automatic source/stream renames or routing repairs. Strict malformed draft syntax content or merged syntax export refuses with `InvalidSyntaxJson`; a compact `read-ast` query can still expose replacement handles. `export-workspace` preserves exact original bytes, including invalid-but-editable drafts, rather than converting them to typed syntax.
 
 ## Embedding API
 
@@ -60,6 +87,19 @@ process exit codes and any diagnostics outside the protocol stream.
 Syntax queries work independently of executable backend support. Inspect
 `success`, diagnostic counts and coverage. Invalid source can produce a partial
 index; it is never silently presented as a valid complete model.
+
+`describe-application` summary reports model-wide `syntaxOnly` and
+`executionReadiness`, including source declarations without routed commands.
+Declaration details report the member's constructs and referenced command actions,
+not unrelated global declarations. A plain command can therefore have
+`syntaxOnly: false` while its application is syntax-only; neither that field nor a
+null member readiness message proves the whole model executable.
+Event sources, streams and command routes require ESM v10 (`PLAY0268`), which is
+not supported for execution. `EventSource` declarations have application addresses;
+`EventStream` addresses include their physical source owner (for example,
+`Account.Transactions`). Command, specification and slice readiness uses the
+highest required version when routes, operations (v9) and responses (v8) coexist.
+Ambiguous route/property syntax remains blocking; readiness never selects a route.
 
 | Tool | Selection | Result |
 | --- | --- | --- |
@@ -130,26 +170,28 @@ is canonicalized.
 
 | Tool | Required arguments | Optional arguments |
 | --- | --- | --- |
-| `open-workspace` | None | `applicationName`, `workspaceJson`, `includeContent` |
+| `repair-capabilities` | None | None |
+| `open-workspace` | None | `applicationName`, `path`, `workspaceJson`, `includeContent` |
 | `read-workspace` | `expectedRevision` | view (`source-map` for compiler source locations; `repairs` for typed diagnostic repairs; `implementation-requirements` for code attachment requirements; `executable-model` for canonical ESM bytes), offset, limit, `expectedModelRevision`, `expectedAttachmentManifestRevision` |
 | `read-ast` | `expectedRevision` | documentId, path, kind, name, semanticId, view, includeContent, offset, limit |
 | `propose` | Expected workspace/catalog revisions, operations | Explicit migrations/retirements, includeContent; legacy single-operation form supported |
 | `propose-ast` | Expected revisions, formatting | operations, documents, validation, referencePolicy, migrations/retirements, includeContent |
-| `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | includeContent; only `CanonicalizeTouchedDocuments` is admitted |
-| `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent |
+| `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | `pinRepairEvidence`, `expectedRepairEvidenceRevision`, includeContent; use the discovered `requiredFormatting`. `PLAY0479` supports `PreserveTrivia` or explicit `CanonicalizeTouchedDocuments`; other repairs require `CanonicalizeTouchedDocuments` |
+| `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent, `eventNeverPersisted` (boolean, default false) |
+| `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
 | `expand-layout` | Expected revisions | layout, validation, formatting, referencePolicy, includeContent |
-| `read-proposal` | proposalId | view (`implementation-requirements` for proposed attachments), documentId, offset, limit |
+| `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`implementation-requirements` for proposed attachments), documentId, offset, limit |
 | `export-workspace` | expectedRevision | proposalId, offset, limit |
 | `workspace-state` | None | view, proposalId, expectedStateRevision, offset, limit |
 | `discard-proposal` | proposalId | None |
-| `apply` | proposalId, expectedRevision, expectedCatalogRevision | includeContent |
+| `apply` | proposalId, expectedRevision, expectedCatalogRevision | includeContent, `expectedRepairEvidenceRevision` |
 | `recover-workspace` | operationId | None |
 
 `tools/list` supplies nested argument schemas. Revisions, IDs and handles come
 from the server; do not infer them from names or line numbers.
 
 `read-workspace` views: documents, semantics, eventContracts, diagnostics,
-executable-diagnostics, source-map, repairs, implementation-requirements, typed-contexts and executable-model. The `source-map`
+executable-diagnostics, source-map, repairs, implementation-requirements, handler-intents, handler-intent-details, typed-contexts and executable-model. The `source-map`
 view pages the compiler's semantic entries ordered by semantic ID: `semanticId`,
 `role` (Declaration or Description), identity `origin`, `documentId`, `path`,
 and exact `span` (zero-based UTF-16 start/length and one-based start/end
@@ -184,6 +226,14 @@ attachments without admitting an executable model. Document results contain root
 original occurrences, names, child counts and existing identities. Its `children`
 view selects a parent document/path. Typed content is opt-in.
 
+## Handler intent inventory
+
+Call `read-workspace` with the current `expectedRevision` and `view: "handler-intents"`. Coverage is **CommandHandler** only, independent of ESM readiness. Paged entries expose owner address/ID, requirement ID, identity origin and explicit provisional status, hint count, file/language, derived pending/file/inline state, and the handler AST handle. `executableReady` remains false. The inventory selects links from syntax; it does not read implementation files or report confirmation/freshness.
+
+For ordered hints, use `view: "handler-intent-details"` with `requirementId`, `offset` and `limit`. Both views require the returned catalog revision as `expectedCatalogRevision` on continuation, as well as `expectedRevision`. Stale workspace/catalog revisions refuse rather than mixing snapshots. No attachment-manifest pin is needed for these model-only views.
+
+Discover `HandlerSyntax`, `ImplementationSyntax` and `ImplementationHintSyntax` with `syntax-schema`. Existing `propose-ast` operations edit hints, wrapper and payload under `validation: "Authoring"`; preview with `read-proposal`, then explicitly apply. Unwrapping retains an attachment, while unwrapping pending metadata is refused. No tool confirms code or invokes AI. Other owners' wrappers and the lock/drift lifecycle remain deferred. See [AST edits](../ast-authoring.md#handler-intent-edits).
+
 ## Canonical executable model export
 
 Call `read-workspace` with `view: "executable-model"` and the current
@@ -211,11 +261,110 @@ equivalence proof under [decision 0013](https://github.com/Cratis/Screenplay/blo
 bodies are absent. The view is read-only, not a way to edit the ESM; use typed
 workspace proposals for changes.
 
+## Repair contract v1 and pinned evidence
+
+`repair-capabilities` is read-only and takes an empty argument object. It needs
+no open workspace. Its `structuredContent` identifies
+`schema: "cratis.screenplay.mcp.repair-capabilities"`, `schemaVersion: 1`,
+`repairContractVersion: 1` and the same assembly `serverVersion` as `initialize`.
+The [narrow response schema](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/mcp/repair-capabilities-v1.schema.json) covers capabilities,
+evidence metadata and the failure discriminator, not every MCP feature.
+
+The initial contract advertises `PLAY0166` and `PLAY0478` through `propose-repair`,
+with `CanonicalizeTouchedDocuments` and optional evidence pinning v1. Existing
+repairs outside this contract remain available to legacy clients. Feature support
+comes from negotiation, not a CLI version or an ESM version. Initialize with MCP
+`2025-06-18`, send `notifications/initialized`, check `tools/list`, then read the
+capabilities. Consumers validate the fields they use, tolerate additive response
+fields and refuse unsupported contract majors or malformed responses.
+
+To opt in for either action:
+
+1. Read `diagnostics` and `repairs` from `read-workspace`. Both return
+   `repairEvidenceRevision`. Supply it as optional `expectedRepairEvidenceRevision`
+   on further workspace reads so attachment drift refuses a page.
+2. Send one selected `propose-repair` request with `pinRepairEvidence: true` and
+   `expectedRepairEvidenceRevision`, alongside the existing revisions, subject and
+   formatting consent. Both evidence fields are required together in this mode.
+3. The retained response includes `repairEvidence: { beforeRevision,
+   candidateRevision }`. These opaque, bounded `re1:` revisions cover source and
+   catalog revisions plus the authoritative attachment loader's text inputs and
+   loading/refusal diagnostics, including missing and unreadable states. They
+   include inputs even when an unsuccessful or unsupported binding omits a compiled
+   requirement. Unreferenced files and implementation locks are not evidence.
+4. Preview every changed document and identity-state byte page, then explicitly
+   apply. `read-proposal` returns the same evidence metadata. You may echo
+   `beforeRevision` as `expectedRepairEvidenceRevision` on preview or apply;
+   the server enforces the retained pin even when that optional field is omitted.
+
+Pinned candidates never refresh readiness silently. Validation loads attachments
+from the final candidate sources under the approved root, retaining those exact
+inputs and loading diagnostics separately from the base snapshot. Unchanged missing,
+unreadable, refused or oversized attachment warnings do not themselves invalidate
+a pin; existing repair eligibility still applies. Fresh base and candidate loads
+must match their validated evidence; otherwise retention returns
+`RepairEvidenceDrift`, without creating a proposal or repeating the selected repair
+transaction. Changed resolution or loading diagnostics are refused, not re-proven
+by a refresh.
+
+A pin also requires disjoint attachment inputs and planned writes. The server checks
+all model-selected base and candidate references, including absent or unreadable
+files, against source and parent-directory writes, identity state, the recovery
+journal and the server-selected operation's staging, backup and rollback paths.
+Rollback paths include every original document index, even unchanged documents;
+the original sources also belong to recovery because rollback restores their
+access settings. Overlap returns `RepairEvidenceWriteConflict`
+before any accepted preview is retained. Existing hard links and filesystem-resolved
+case aliases count as overlap; uncertain missing-path aliases fail closed with the
+same kind. On Windows, plausible DOS 8.3 tilde aliases also fail closed when a
+planned long-file creation or replacement, or parent-directory creation, could
+generate the missing name and filesystem metadata cannot prove separation. This
+can conservatively refuse a name that the volume would not actually generate; unrelated missing
+names remain eligible. The server does not impose Windows short-name rules on
+Unix filesystems. This is not a ban on `.play` attachments: a file outside the
+recovery-owned source set remains eligible if otherwise disjoint. No attachment,
+implementation lock or directory is written to establish disjointness.
+Capabilities advertise `evidence.plannedWriteOverlap` and
+`evidence.plannedWriteOverlapFailureKind` for this opt-in refusal.
+
+All proposal-backed previews recheck both snapshots under the approved root, as
+does the final pre-install check after staging, including write-overlap admission.
+Pinned installation keeps the validated candidate; it does not refresh proof after
+writing. Drift requires rediscovery and a
+fresh selected proposal. You can discard a stale proposal without reading it.
+Workspace/catalog revisions, exact `.play` set/bytes and identity-state preimages
+remain independently authoritative. Workspace and ESM serialization are unchanged.
+Legacy requests without either evidence field retain attachment refresh behavior.
+
+Tool failures add `failureKind` while preserving `success`, `error`, `message`,
+conflicts and recovery fields where already present. JSON-RPC errors preserve
+`code` and `message` and add `error.data.failureKind`. Admission kinds include
+`InvalidJson`, `InvalidRequest`, `UnknownMethod`, `InvalidArguments`,
+`FormattingConsentRequired`, `UnknownRepair`, `UnsupportedRepair`, `UnknownProposal`,
+`RootChangeRefused`, `StaleRevision`, `DiskDrift`, `IdentityStateDrift`,
+`RepairEvidenceDrift`, `RepairEvidenceWriteConflict` and `LimitExceeded`. `ProposalRejected` retains its detailed
+conflicts; `PendingOperation` requires workspace-state inspection. Apply failures
+report `ApplyRolledBack`, a specific refusal kind, or `RecoveryRequired` as
+appropriate. A failed explicit `recover-workspace` also returns
+`failureKind: "RecoveryRequired"` with its existing status, conflict and retained
+recovery instructions. `RequestFailed` and an unfamiliar kind must not be
+interpreted as proof that an apply made no changes. Never parse message prefixes.
+
+Cancellation notifications are ignored (`cancellation.supported: false`). EOF,
+process failure or `ApplyOutcomeUnknown` after dispatch leaves the outcome unknown;
+never retry apply automatically. Reconnect, inspect `workspace-state` and require
+separate approval for recovery. Journaled apply assumes an exclusively owned root;
+the pre-install evidence check is not a kernel-atomic lock across files or a
+crash-atomic multi-file guarantee. Nondestructive tool annotations do not authorize
+writes or substitute for user-approved roots and explicit Apply.
+
 ## Diagnostic repair workflow
 
 Page `read-workspace` with `view: "repairs"` and the current `expectedRevision`.
 Each item includes `diagnosticCode`, diagnostic `location`, a revision-bound
-`subject` handle and a typed operation summary. Supply the code and subject to
+`subject` handle, a typed operation summary, `requiredFormatting`, optional `title`,
+`canFixAll` and `retiredSemanticAddresses`. A contract-changing `PLAY0469` repair
+has `canFixAll: false` and lists the payload property's retirement. Supply the code and subject to
 `propose-repair` with both current revisions and explicit
 `formatting: "CanonicalizeTouchedDocuments"`. The server regenerates the repair
 from the current compiler diagnostics, never from a message string or supplied
@@ -229,9 +378,16 @@ Unknown, ambiguous and unsupported repairs fail closed; stale workspace/catalog
 revisions return typed conflicts. A successful response retains the same proposal
 as `propose-ast`: use `read-proposal` to inspect exact before/after bytes,
 then call `apply` explicitly. Neither discovery nor
-proposal writes. Only the deterministic `PLAY0397` `validate csharp` migration
-is currently offered. Other diagnostics, including repairs requiring a choice,
-have no compiler-authored repair.
+proposal writes. Available repairs are `PLAY0166` (infer an undeclared produced
+event), `PLAY0478` (change routing from an allocated destination to the command's
+identifier, with an explicit routing-change title and `canFixAll: false`), `PLAY0469`
+(remove an inline identifier payload copy), `PLAY0471` (remove a redundant event
+pin), and `PLAY0397` (`validate csharp` migration). See the
+[repair conditions](authoring-tools.md#fix-a-diagnostic) before choosing one.
+Discovery verifies acceptance and comment preservation for the first four, with
+their routing, consumer or model-preservation checks. `PLAY0397` discovery identifies
+the recipe only; its proposal may still be refused. `PLAY0470` remains deferred,
+and repairs requiring a choice are not offered.
 
 ## Editing and validation
 
@@ -243,6 +399,14 @@ whole-document replacement can repair parser-invalid source without node handles
 references and assigned identities. It preserves trivia by default. Ambiguity,
 name capture, opaque text naming the old or new name, unsupported spans or resolver
 disagreement refuse automation. It is not global text replacement or automatic property-schema evolution.
+Event renames retain an existing `id` pin or insert the previous name by default.
+`eventNeverPersisted: true` omits a new pin and removes a redundant pin equal to the current name; a pin naming an earlier identity is kept. A rename
+that inserts a pin also refuses comment loss or duplication.
+
+`propose-extract-inline-event` moves a declaration into its owning slice and makes
+an implicit destination explicit. It requires canonical formatting consent,
+byte-identical canonical ESM, unchanged catalog assignments and every comment
+preserved exactly once.
 
 Two independent choices control AST authoring:
 
@@ -258,11 +422,13 @@ Explicit valid reference edits differ from an untouched reference changing meani
 
 Formatting policies are `PreserveExactSource`, `PreserveTrivia`, and
 `CanonicalizeTouchedDocuments`. Verified trivia patches cover identifiers, literal
-values and whole property mappings, and must reparse to the intended AST;
-unsupported patches reject rather than silently canonicalizing. Explicit
-canonicalization removes comments in touched files and normalizes member order;
-each proposal reports its `droppedCommentCount`. Untouched bytes and BOM
-policy are retained. Printer omissions reject the proposal.
+values, whole property mappings and event-pin insertion/removal, and must reparse
+to the intended AST; unsupported patches reject rather than silently canonicalizing.
+Canonicalization retains attached comments and parsed member order, normalizes
+whitespace, and reports any unplaceable comments in `droppedCommentCount`.
+Repairs, extraction and pin-inserting event renames refuse comment loss or
+duplication; other explicitly canonicalized edits may disclose dropped comments.
+Untouched bytes and BOM policy are retained. Printer omissions reject the proposal.
 
 See [the AST API](../ast-authoring.md) and [authoring procedure](authoring-tools.md).
 

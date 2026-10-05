@@ -13,10 +13,31 @@ namespace Cratis.Screenplay.Parsing;
 /// <param name="slices">The slices and their declaration scopes.</param>
 internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IReadOnlyList<(SliceSyntax Slice, DeclarationScope Scope)> slices)
 {
+    readonly ILookup<string, (EventSyntax Node, Declaration Declaration)> _eventsByName = slices.SelectMany(entry =>
+        EventDeclarations.In(entry.Slice).GroupBy(@event => @event.Name, StringComparer.Ordinal)
+            .Select(group => (Node: group.OrderByDescending(@event => @event.Generation).First(), Declaration: new Declaration(group.Key, entry.Scope))))
+        .ToLookup(entry => entry.Declaration.Name, StringComparer.Ordinal);
+    readonly ILookup<string, ImportSyntax> _importsByName = application.Imports.ToLookup(import => import.Name, StringComparer.Ordinal);
+    readonly HashSet<string> _declaredNames = slices.SelectMany(entry => EventDeclarations.In(entry.Slice).Select(@event => @event.Name)
+        .Concat(entry.Slice.Commands.Select(command => command.Name)).Concat(ViewNames(entry.Slice)))
+        .Concat(application.Concepts.Select(concept => concept.Name)).Concat((application.Types ?? []).Select(type => type.Name))
+        .ToHashSet(StringComparer.Ordinal);
+    readonly Dictionary<(string Name, DeclarationScope Scope), EventSyntax?> _resolvedEvents = [];
+    readonly ILookup<string, TypeSyntax> _typesByName = (application.Types ?? []).ToLookup(type => type.Name, StringComparer.Ordinal);
+    readonly HashSet<string> _knownTypes = ConceptSyntax.PrimitiveTypes.Concat(application.Concepts.Select(concept => concept.Name))
+        .Concat((application.Types ?? []).Select(type => type.Name)).ToHashSet(StringComparer.Ordinal);
+    readonly HashSet<string> _scalarTypes = ConceptSyntax.PrimitiveTypes.Concat(application.Concepts.Select(concept => concept.Name)
+        .Except((application.Types ?? []).Select(type => type.Name), StringComparer.Ordinal)).ToHashSet(StringComparer.Ordinal);
+    readonly ILookup<string, (ReadModelSyntax Node, Declaration Declaration)> _viewsByName = slices.SelectMany(entry => (entry.Slice.ReadModels ?? [])
+        .Select(node => (Node: node, Declaration: new Declaration(node.Name, entry.Scope)))).ToLookup(entry => entry.Node.Name, StringComparer.Ordinal);
+    readonly Dictionary<(string Name, DeclarationScope Scope), IEnumerable<PropertySyntax>?> _resolvedViewProperties = [];
+
     /// <summary>
     /// Gets the scoped slices.
     /// </summary>
     public IReadOnlyList<(SliceSyntax Slice, DeclarationScope Scope)> Slices => slices;
+
+    internal AuthoringProductionResolver Productions { get; } = new(application);
 
     /// <summary>
     /// Resolves one declaration without guessing between ambiguous candidates.
@@ -46,12 +67,30 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
     /// <param name="name">The event name.</param>
     /// <param name="scope">The referring scope.</param>
     /// <returns>The declared event, or null for an unknown or ambiguous shape.</returns>
-    public EventSyntax? Event(string name, DeclarationScope scope) => Resolve(
-        name,
-        scope,
-        slice => slice.Events.GroupBy(@event => @event.Name, StringComparer.Ordinal)
-            .Select(group => group.OrderByDescending(@event => @event.Generation).First()),
-        node => node.Name)?.Node;
+    public EventSyntax? Event(string name, DeclarationScope scope)
+    {
+        if (_resolvedEvents.TryGetValue((name, scope), out var cached))
+        {
+            return cached;
+        }
+
+        var entries = EventCandidates(name);
+        var resolution = ReferenceResolver.Resolve(name, scope, [.. entries.Select(entry => entry.Declaration)]);
+        if (resolution.IsUnresolved)
+        {
+            var imports = _importsByName[name].ToArray();
+            if (imports.Length == 1)
+            {
+                entries = EventCandidates(imports[0].QualifiedName);
+                resolution = ReferenceResolver.Resolve(imports[0].QualifiedName, scope, [.. entries.Select(entry => entry.Declaration)]);
+            }
+        }
+
+        var result = resolution.Resolved is { } resolved ? entries.First(entry => entry.Declaration == resolved).Node : null;
+        _resolvedEvents[(name, scope)] = result;
+
+        return result;
+    }
 
     /// <summary>
     /// Resolves a view identity, including projection aliases and variant names.
@@ -72,12 +111,7 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
     /// </summary>
     /// <param name="name">The short name.</param>
     /// <returns>Whether any such declaration carries the name.</returns>
-    public bool Declares(string name) =>
-        slices.Any(entry => entry.Slice.Events.Any(@event => @event.Name == name) ||
-            entry.Slice.Commands.Any(command => command.Name == name) ||
-            ViewNames(entry.Slice).Contains(name, StringComparer.Ordinal)) ||
-        application.Concepts.Any(concept => concept.Name == name) ||
-        (application.Types ?? []).Any(type => type.Name == name);
+    public bool Declares(string name) => _declaredNames.Contains(name);
 
     /// <summary>
     /// Resolves the explicitly declared shape of a read model.
@@ -85,8 +119,21 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
     /// <param name="name">The read model name.</param>
     /// <param name="scope">The referring scope.</param>
     /// <returns>The properties, or null when the shape is unknown.</returns>
-    public IEnumerable<PropertySyntax>? ViewProperties(string name, DeclarationScope scope) =>
-        Resolve(name, scope, slice => slice.ReadModels ?? [], node => node.Name)?.Node.Properties;
+    public IEnumerable<PropertySyntax>? ViewProperties(string name, DeclarationScope scope)
+    {
+        if (_resolvedViewProperties.TryGetValue((name, scope), out var cached)) return cached;
+        var entries = _viewsByName[name.Split('.').LastOrDefault() ?? string.Empty].ToArray();
+        var resolution = ReferenceResolver.Resolve(name, scope, [.. entries.Select(entry => entry.Declaration)]);
+        if (resolution.IsUnresolved && _importsByName[name].ToArray() is [var imported])
+        {
+            entries = [.. _viewsByName[imported.QualifiedName.Split('.').LastOrDefault() ?? string.Empty]];
+            resolution = ReferenceResolver.Resolve(imported.QualifiedName, scope, [.. entries.Select(entry => entry.Declaration)]);
+        }
+        var properties = resolution.Resolved is { } resolved ? entries.First(entry => ReferenceEquals(entry.Declaration, resolved)).Node.Properties : null;
+        _resolvedViewProperties[(name, scope)] = properties;
+
+        return properties;
+    }
 
     /// <summary>
     /// Resolves a composite type's properties.
@@ -95,8 +142,7 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
     /// <returns>The properties, or null for an unknown or ambiguous type.</returns>
     public IEnumerable<PropertySyntax>? TypeProperties(string name)
     {
-        var matches = (application.Types ?? []).Where(type => type.Name == name).ToList();
-        return matches.Count == 1 ? matches[0].Properties : null;
+        return _typesByName[name].ToArray() is [var type] ? type.Properties : null;
     }
 
     /// <summary>
@@ -167,9 +213,7 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
     /// <returns>Compatibility, or null when either type is unknown.</returns>
     public bool? Compatible(TypeRefSyntax source, TypeRefSyntax target)
     {
-        var known = ConceptSyntax.PrimitiveTypes.Concat(application.Concepts.Select(concept => concept.Name))
-            .Concat((application.Types ?? []).Select(type => type.Name)).ToHashSet(StringComparer.Ordinal);
-        if (!known.Contains(source.Name) || !known.Contains(target.Name))
+        if (!_knownTypes.Contains(source.Name) || !_knownTypes.Contains(target.Name))
         {
             return null;
         }
@@ -184,11 +228,12 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
                 ? projection.Blocks.OfType<ProjectionVariantSyntax>().Select(variant => variant.Name)
                 : [projection.ReadModel ?? projection.Name]));
 
+    (EventSyntax Node, Declaration Declaration)[] EventCandidates(string reference) =>
+        [.. _eventsByName[reference.Split('.', StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? string.Empty]];
+
     // A concept wraps exactly one primitive, so nothing sits below a primitive, a concept or an enum. A name that
     // is also a composite type is ambiguous and stays unknown.
-    bool IsScalar(string type) =>
-        ConceptSyntax.PrimitiveTypes.Contains(type, StringComparer.Ordinal) ||
-        (application.Concepts.Any(concept => concept.Name == type) && !(application.Types ?? []).Any(composite => composite.Name == type));
+    bool IsScalar(string type) => _scalarTypes.Contains(type);
 
     ReferenceResolver.Resolution ResolveDeclaration(string name, DeclarationScope scope, IReadOnlyList<Declaration> declarations)
     {

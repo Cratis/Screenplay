@@ -26,8 +26,10 @@ public sealed partial class ScreenplayPrinter :
     ICaptureSyntaxVisitor<string>
 {
     /// <inheritdoc/>
+    /// <exception cref="Syntax.Serialization.InvalidSyntaxJson">A command contains ambiguous or duplicate stream headers, or an invalid stream candidate structure.</exception>
     public string Print(ApplicationSyntax application)
     {
+        ValidateEventSourceExport(application);
         var writer = new ScreenplayWriter();
         WriteApplication(writer, application);
         return PrintComments(application, writer);
@@ -84,6 +86,18 @@ public sealed partial class ScreenplayPrinter :
         }
 
         WriteFileImports(writer, application.FileImports);
+
+        foreach (var system in application.Systems)
+        {
+            writer.Blank();
+            WriteSystem(writer, system);
+        }
+
+        foreach (var source in application.EventSources)
+        {
+            writer.Blank();
+            WriteEventSource(writer, source);
+        }
 
         foreach (var concept in application.Concepts)
         {
@@ -798,6 +812,7 @@ public sealed partial class ScreenplayPrinter :
             var members = new List<PrintableMember>();
             AddSeparatedMembers(members, writer, slice.Commands, 0, WriteCommand);
             AddSeparatedMembers(members, writer, slice.Events, 1, WriteEvent);
+            AddSeparatedMembers(members, writer, slice.Operations, 1, WriteOperation);
             AddSeparatedMembers(members, writer, slice.Constraints, 2, WriteConstraint);
             AddSeparatedMembers(members, writer, slice.Queries, 3, WriteQuery);
 

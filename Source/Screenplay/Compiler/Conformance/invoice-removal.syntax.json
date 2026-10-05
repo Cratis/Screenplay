@@ -28,12 +28,16 @@
               "events": [
                 {
                   "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
                   "generation": 1,
                   "hasGenerationMarker": false,
+                  "id": null,
                   "name": "InvoiceRemoved",
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -48,6 +52,7 @@
                 }
               ],
               "name": "InvoiceLookup",
+              "operations": [],
               "projections": [
                 {
                   "kind": "ProjectionSyntax",
@@ -99,6 +104,7 @@
                   "properties": [
                     {
                       "kind": "PropertySyntax",
+                      "isGenerated": false,
                       "isIdentifier": false,
                       "name": "invoiceId",
                       "type": {
@@ -118,6 +124,7 @@
                   "given": [],
                   "givenCaptures": [],
                   "givenClock": null,
+                  "givenOperationFailures": [],
                   "givenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -151,10 +158,13 @@
                     }
                   ],
                   "name": "RemovingOneOfTwoInvoices",
+                  "thenCompensated": [],
+                  "thenDenied": null,
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
+                  "thenOperations": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -173,6 +183,7 @@
                     }
                   ],
                   "thenResults": [],
+                  "thenReturns": null,
                   "when": null,
                   "whenAppended": {
                     "kind": "SpecificationEventSyntax",
@@ -206,5 +217,6 @@
     }
   ],
   "personas": [],
+  "systems": [],
   "types": []
 }

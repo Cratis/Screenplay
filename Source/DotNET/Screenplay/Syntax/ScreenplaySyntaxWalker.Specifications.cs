@@ -30,6 +30,10 @@ public abstract partial class ScreenplaySyntaxWalker
         if (syntax.GivenCaller is not null) VisitSpecificationCaller(syntax.GivenCaller);
         if (syntax.GivenClock is not null) VisitSpecificationClock(syntax.GivenClock);
 
+        foreach (var failure in syntax.GivenOperationFailures) VisitSpecificationOperationFailure(failure);
+        foreach (var operation in syntax.ThenOperations) VisitSpecificationOperation(operation);
+        foreach (var compensation in syntax.ThenCompensated) VisitSpecificationCompensated(compensation);
+
         foreach (var @event in syntax.Given)
         {
             VisitSpecificationEvent(@event);
@@ -87,6 +91,7 @@ public abstract partial class ScreenplaySyntaxWalker
 
         if (syntax.ThenNoResult is not null) VisitSpecificationNoResult(syntax.ThenNoResult);
         if (syntax.ThenDenied is not null) VisitSpecificationDenied(syntax.ThenDenied);
+        if (syntax.ThenReturns is not null) VisitSpecificationReturn(syntax.ThenReturns);
 
         foreach (var error in syntax.ThenErrors)
         {
@@ -136,6 +141,11 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitSpecificationCommand(SpecificationCommandSyntax syntax)
     {
         VisitNode(syntax);
+
+        foreach (var fixture in syntax.GeneratedValues)
+        {
+            VisitPropertyMapping(fixture);
+        }
 
         if (syntax.For is not null)
         {

@@ -1,0 +1,35 @@
+// Syntax-only authoring example. Execution is unavailable until ESM v8 (PLAY0268).
+concept ProjectId : Uuid
+concept ReceiptId : Uuid
+concept ProjectName : String
+module Projects
+  feature Registration
+    slice StateChange Register
+      command RegisterProject
+        projectId ProjectId generated identifier
+        receiptId ReceiptId generated
+        name ProjectName
+        produces event ProjectRegistered
+          name ProjectName = name
+        returns
+          projectId = projectId
+          receiptId ReceiptId = receiptId
+      specification RegisteringReturnsIdentifiers
+        when RegisterProject
+          for "11111111-1111-1111-1111-111111111111"
+          generated receiptId = "22222222-2222-2222-2222-222222222222"
+          name = "Apollo"
+        then returns
+          receiptId = "22222222-2222-2222-2222-222222222222"
+    slice StateChange Rename
+      command RenameProject
+        projectId ProjectId identifier
+        name ProjectName
+        produces event ProjectRenamed
+          name ProjectName = name
+        returns projectId
+      specification RenamingReturnsIdentifier
+        when RenameProject
+          projectId = "11111111-1111-1111-1111-111111111111"
+          name = "Apollo"
+        then returns "11111111-1111-1111-1111-111111111111"

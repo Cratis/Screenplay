@@ -129,6 +129,22 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
 
     static bool Identifier(string? value) => !string.IsNullOrEmpty(value) && (char.IsLetter(value[0]) || value[0] == '_') && value.All(character => char.IsLetterOrDigit(character) || character == '_');
 
+    static string? PlannedEventId(EventSyntax declaration, WorkspaceRenameRequest request)
+    {
+        if (request.NewName == request.ExpectedName)
+        {
+            return declaration.Id;
+        }
+
+        var pin = declaration.Id ?? (request.EventNeverPersisted ? null : declaration.Name);
+        if (request.EventNeverPersisted && pin == declaration.Name)
+        {
+            pin = null;
+        }
+
+        return pin == request.NewName ? null : pin;
+    }
+
     static WorkspaceAuthoringResult Failure(WorkspaceConflictKind kind, string message) => new()
     {
         Conflicts = [new WorkspaceConflict { Kind = kind, Message = message }]
@@ -170,11 +186,31 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             throw new InvalidWorkspaceAuthoring($"Cannot prove a rename while absence key '{debt.Text}' at '{Position(workspace.Documents, debt.Occurrence)}' is unresolved ({debt.Reason}). Repair the absence key with a typed edit first.");
         }
 
+        var generations = index.Entries.Where(entry => target.Address.Equals(entry.Address)).Select(entry => entry.Node).OfType<EventSyntax>().ToArray();
+        if (generations.Select(declaration => declaration.Id ?? declaration.Name).Distinct(StringComparer.Ordinal).Skip(1).Any())
+        {
+            throw new InvalidWorkspaceAuthoring("Event generations have contradictory effective identity pins. Resolve them before renaming.");
+        }
+
+        var plannedEventIds = generations.ToDictionary(declaration => declaration, declaration => PlannedEventId(declaration, request));
+        if (plannedEventIds.Values.Select(id => id ?? request.NewName).Distinct(StringComparer.Ordinal).Skip(1).Any())
+        {
+            throw new InvalidWorkspaceAuthoring("Rename would give event generations contradictory effective identity pins. Resolve them before renaming.");
+        }
+
         var roots = index.Entries.Where(entry => entry.Parent is null).ToDictionary(entry => entry.Handle.Document, entry => WorkspaceSyntaxMutation.Json(entry.Node));
         var touched = new HashSet<DocumentId>();
+        var insertsEventPin = false;
         foreach (var entry in index.Entries.Where(entry => target.Address.Equals(entry.Address)).ToArray())
         {
             WorkspaceSyntaxMutation.Set(roots[entry.Handle.Document], $"{entry.Handle.Path}/name", request.NewName);
+            if (entry.Node is EventSyntax declaration && request.NewName != request.ExpectedName)
+            {
+                var id = plannedEventIds[declaration];
+                insertsEventPin |= declaration.Id is null && id is not null;
+                WorkspaceSyntaxMutation.Set(roots[entry.Handle.Document], $"{entry.Handle.Path}/id", id);
+            }
+
             touched.Add(entry.Handle.Document);
         }
 
@@ -251,6 +287,15 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         if (!result.Accepted)
         {
             return result;
+        }
+
+        if (insertsEventPin)
+        {
+            result = WorkspaceRepairVerification.RequireComments(result);
+            if (!result.Accepted)
+            {
+                return result;
+            }
         }
 
         var candidateIndex = WorkspaceSyntaxIndex.Create(result.Workspace!);

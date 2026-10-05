@@ -150,7 +150,23 @@ public record CommandSyntax(
     SourceLocation Location,
     ConcurrencySyntax? Concurrency = null,
     string? Description = null,
-    IEnumerable<ReadsSyntax>? Reads = null) : SyntaxNode(Location);
+    IEnumerable<ReadsSyntax>? Reads = null) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the unconditional syntax-only response contract, if declared.
+    /// </summary>
+    public CommandResponseSyntax? Response { get; init; }
+
+    /// <summary>Gets the syntax-only authored stream route; it does not supply a destination.</summary>
+    public CommandStreamSyntax? Stream { get; init; }
+
+    /// <summary>
+    /// Gets every ambiguous or duplicate stream header in authored order. These candidates never
+    /// select a route; their property interpretations are owned here, not in Properties.
+    /// Invalid drafts are transportable as syntax JSON but cannot be exported as .play text.
+    /// </summary>
+    public IEnumerable<CommandStreamSyntax> StreamCandidates { get; init; } = [];
+}
 
 /// <summary>
 /// Represents a <c>reads &lt;ReadModel&gt; [as &lt;alias&gt;] [by &lt;property&gt;]</c> declaration on a command.
@@ -321,7 +337,23 @@ public record ProducesSyntax(
     IEnumerable<PropertyMappingSyntax> Mappings,
     SourceLocation Location,
     IEnumerable<TagSyntax>? Tags = null,
-    ExpressionSyntax? For = null) : SyntaxNode(Location);
+    ExpressionSyntax? For = null) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the event declared by this production, owned by the containing slice.
+    /// </summary>
+    public EventSyntax? InlineEvent { get; init; }
+
+    /// <summary>
+    /// Gets the operation declared by this production, owned by the containing slice.
+    /// </summary>
+    public OperationSyntax? InlineOperation { get; init; }
+
+    /// <summary>
+    /// Gets the parser-owned start of the target identifier, distinct from the production header.
+    /// </summary>
+    public SourceLocation TargetLocation { get; init; } = Location;
+}
 
 /// <summary>
 /// Represents a mapping of a target property to a source expression, such as <c>status = "draft"</c>.
@@ -349,7 +381,13 @@ public record PropertyMappingSyntax(string Property, ExpressionSyntax Source, So
 /// <param name="File">The <see cref="FileReferenceSyntax"/> when the handler lives in an external file.</param>
 /// <param name="Code">The <see cref="CodeBlockSyntax"/> when the handler is declared inline.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record HandlerSyntax(FileReferenceSyntax? File, CodeBlockSyntax? Code, SourceLocation Location) : SyntaxNode(Location);
+public record HandlerSyntax(FileReferenceSyntax? File, CodeBlockSyntax? Code, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the optional implementation intent. The payload remains on this handler.
+    /// </summary>
+    public ImplementationSyntax? Implementation { get; init; }
+}
 
 /// <summary>
 /// Represents the base of a <c>produces when</c> condition.

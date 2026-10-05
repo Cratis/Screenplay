@@ -11,7 +11,7 @@ slice StateView TimesheetTotals
     billableHours WeeklyHours
     overtimeDays  Int
 
-  query TimesheetById => TimesheetSummary?
+  query TimesheetById => TimesheetSummary optional
     description "One week's totals - for the consultant recording it and the manager approving it"
     by timesheetId TimesheetId
     authorize IsConsultant or IsEngagementManager

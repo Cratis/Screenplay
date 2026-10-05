@@ -15,7 +15,7 @@ slice StateView MyTimesheets
     scoped to identity
     authorize IsConsultant
 
-  query ConsultantTimesheetById => ConsultantTimesheet?
+  query ConsultantTimesheetById => ConsultantTimesheet optional
     by timesheetId TimesheetId
     authorize IsConsultant
 

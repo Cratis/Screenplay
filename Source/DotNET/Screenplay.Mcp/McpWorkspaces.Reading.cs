@@ -16,6 +16,7 @@ internal sealed partial class McpWorkspaces
     internal object ReadWorkspace(JsonElement arguments)
     {
         var workspace = CheckedCurrent(arguments);
+        McpRepairEvidence.Check(McpRepairEvidence.Expected(arguments), workspace);
         var view = McpJson.OptionalString(arguments, "view") ?? "documents";
         if (view == "executable-model")
         {
@@ -56,6 +57,164 @@ internal sealed partial class McpWorkspaces
                 attachmentManifestRevision = manifestRevision,
                 totalBytes = bytes.Length,
                 page = McpPaging.Bytes(bytes, arguments, workspace.Revision.ToString())
+            });
+        }
+
+        if (new[] { "event-sources", "event-streams", "event-source-details", "event-stream-details", "command-routes", "event-source-diagnostics" }.Contains(view, StringComparer.Ordinal))
+        {
+            CheckContinuation(arguments, "expectedCatalogRevision", workspace.IdentityCatalog.Revision.ToString());
+            var analysis = McpWorkspaceAnalysis.For(workspace);
+            var inventory = analysis.EventSources;
+            IEnumerable<object> values;
+            if (view == "event-source-diagnostics")
+            {
+                values = inventory.View.Diagnostics.Cast<object>();
+            }
+            else if (view == "command-routes")
+            {
+                values = inventory.Routes();
+            }
+            else
+            {
+                var streams = view.StartsWith("event-stream", StringComparison.Ordinal);
+                var entries = inventory.Entries.Where(entry => streams ? entry.Node is EventStreamSyntax : entry.Node is EventSourceSyntax).ToArray();
+                if (view.EndsWith("details", StringComparison.Ordinal))
+                {
+                    var key = McpJson.RequiredString(arguments, "authoringKey");
+                    var matches = entries.Where(entry => inventory.Key(entry) == key).Take(2).ToArray();
+                    if (matches.Length > 1 || (matches.Length == 1 && inventory.AmbiguousOwner(matches[0])))
+                    {
+                        throw new McpFailure("AmbiguousDeclaration: source or stream has multiple physical owners; select read-ast handles after repairing the collision.") { FailureKind = "AmbiguousDeclaration" };
+                    }
+                    if (matches.Length == 0)
+                    {
+                        throw new McpFailure(analysis.Syntax.UnresolvedPlacementDocuments.IsEmpty
+                            ? "UnknownDeclaration: no declaration has that exact kind and authoring key."
+                            : "UnresolvedPlacement: repair conflicting or cyclic imports before selecting an owner.")
+                        {
+                            FailureKind = analysis.Syntax.UnresolvedPlacementDocuments.IsEmpty ? "UnknownDeclaration" : "UnresolvedPlacement"
+                        };
+                    }
+                    if (!inventory.View.IsComplete)
+                    {
+                        throw new McpFailure("IncompleteSource: source extent or placement is unresolved; repair source diagnostics before selecting a confident authoring owner.") { FailureKind = "IncompleteSource" };
+                    }
+                    values = inventory.Details(matches[0]);
+                }
+                else
+                {
+                    values = entries.Select(inventory.Summary);
+                }
+            }
+            if (view != "event-source-diagnostics")
+            {
+                values = values.Concat(inventory.View.UnresolvedPlacementDocuments.Select(document => (object)new
+                {
+                    kind = "unresolved-placement", documentId = document.Id.ToString(), path = document.Path.Value,
+                    executionAvailable = false, action = "Repair conflicting or cyclic imports before selecting an authoring owner."
+                }));
+            }
+
+            return McpJson.ToolResult(new
+            {
+                workspace = McpWorkspaceTransport.Describe(workspace), view, syntaxOnly = true,
+                executionAvailable = false, executionReadiness = "Unavailable until ESM v10 (PLAY0268).",
+                inventoryComplete = inventory.View.IsComplete,
+                authoringDiagnosticsCount = inventory.View.Diagnostics.Length,
+                authoringDiagnosticsView = "event-source-diagnostics",
+                unresolvedPlacementCount = inventory.View.UnresolvedPlacementDocuments.Length,
+                detailShape = view.EndsWith("details", StringComparison.Ordinal) ? "compact-header-v1" : null,
+                page = McpPaging.BoundedSourcePage(values, arguments, workspace.Revision.ToString())
+            });
+        }
+
+        if (new[] { "operation-intents", "system-intents", "operation-intent-details", "system-intent-details", "ordered-productions" }.Contains(view, StringComparer.Ordinal))
+        {
+            var analysis = McpWorkspaceAnalysis.For(workspace);
+            var inventory = analysis.OperationIntents;
+            IEnumerable<object> values;
+            if (view == "ordered-productions")
+            {
+                values = inventory.Productions();
+            }
+            else
+            {
+                var systems = view.StartsWith("system", StringComparison.Ordinal);
+                var entries = inventory.Entries.Where(entry => systems ? entry.Node is SystemSyntax : entry.Node is OperationSyntax).ToArray();
+                if (view.EndsWith("details", StringComparison.Ordinal))
+                {
+                    var key = McpJson.RequiredString(arguments, "authoringKey");
+                    var matches = entries.Where(entry => inventory.Key(entry) == key).Take(2).ToArray();
+                    if (matches.Length > 1) throw new McpFailure("AmbiguousDeclaration: authoring key has multiple source occurrences. Select read-ast handles after repairing the collision.");
+                    if (matches.Length == 0)
+                    {
+                        throw new McpFailure(analysis.Syntax.UnresolvedPlacementDocuments.IsEmpty
+                            ? "UnknownDeclaration: no uniquely indexed declaration has that kind and authoring key."
+                            : "UnresolvedPlacement: repair conflicting or cyclic imports before requesting declaration details.");
+                    }
+                    if (inventory.AmbiguousOwner(matches[0])) throw new McpFailure("AmbiguousDeclaration: authoring declaration has a colliding physical owner. Select read-ast handles after repairing the collision.");
+                    values = inventory.Details(matches[0]);
+                }
+                else
+                {
+                    values = entries.Select(inventory.Summary).Concat(analysis.Syntax.UnresolvedPlacementDocuments.Select(document => (object)new
+                    {
+                        kind = "unresolved-placement", documentId = document.Id.ToString(), path = document.Path.Value,
+                        executionAvailable = false, action = "Repair conflicting or cyclic imports before selecting an authoring owner."
+                    }));
+                }
+            }
+
+            return McpJson.ToolResult(new
+            {
+                workspace = McpWorkspaceTransport.Describe(workspace), view,
+                executionAvailable = false, executionReadiness = "Unavailable until ESM v9 (PLAY0268).",
+                authoringDiagnosticsCount = analysis.Syntax.Diagnostics.Length,
+                unresolvedPlacementCount = analysis.Syntax.UnresolvedPlacementDocuments.Length,
+                page = McpPaging.Page(values, arguments, workspace.Revision.ToString())
+            });
+        }
+
+        if (view == "handler-intents" || view == "handler-intent-details")
+        {
+            CheckContinuation(arguments, "expectedCatalogRevision", workspace.IdentityCatalog.Revision.ToString());
+            var inventory = McpWorkspaceAnalysis.For(workspace).HandlerIntents;
+            if (view == "handler-intent-details")
+            {
+                var id = McpJson.RequiredString(arguments, "requirementId");
+                var matches = inventory.Entries.Where(value => value.RequirementId == id).Take(2).ToArray();
+                if (matches.Length > 1)
+                {
+                    throw new McpFailure("AmbiguousRequirement: multiple handler occurrences share that identity. Read handler-intents for their occurrence handles and repair duplicate declarations before requesting details.");
+                }
+
+                var entry = matches.SingleOrDefault()
+                    ?? throw new McpFailure(inventory.UnresolvedPlacementDocuments.IsEmpty
+                        ? "UnknownRequirement: no handler intent has that identity."
+                        : "UnresolvedPlacement: no uniquely placed handler has that identity. Read handler-intents for unresolved documents and repair conflicting or cyclic imports before requesting details.");
+                return McpJson.ToolResult(new
+                {
+                    workspace = McpWorkspaceTransport.Describe(workspace), view,
+                    coverage = WorkspaceImplementationInventory.Coverage,
+                    handler = DescribeHandlerIntent(entry),
+                    page = McpPaging.Page(entry.Hints, arguments, workspace.Revision.ToString())
+                });
+            }
+
+            var unresolved = inventory.UnresolvedPlacementDocuments.Select(document => (object)new
+            {
+                placementStatus = "unresolved",
+                conflictKind = "UnresolvedPlacement",
+                documentId = document.Id.ToString(),
+                path = document.Path.Value,
+                action = "Repair conflicting or cyclic imports before selecting a handler owner or requirement identity."
+            });
+            return McpJson.ToolResult(new
+            {
+                workspace = McpWorkspaceTransport.Describe(workspace), view,
+                coverage = WorkspaceImplementationInventory.Coverage,
+                unresolvedPlacementCount = inventory.UnresolvedPlacementDocuments.Length,
+                page = McpPaging.Page(inventory.Entries.Select(DescribeHandlerIntent).Concat(unresolved), arguments, workspace.Revision.ToString())
             });
         }
 
@@ -137,14 +296,22 @@ internal sealed partial class McpWorkspaces
                 assignment.Origin
             }),
             "diagnostics" => McpWorkspaceAnalysis.For(workspace).Source.Compilation.Diagnostics,
-            "repairs" => syntax!.Diagnostics.SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(syntax, workspace.Revision, diagnostic)
-                .Select(repair => (object)new
+            "repairs" => syntax!.RepairableDiagnostics.SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(syntax, workspace.Revision, diagnostic)
+                    .Select(repair => (Repair: repair, diagnostic.Location)))
+                .Concat(syntax.Entries.Where(entry => entry.Node is ApplicationSyntax).SelectMany(entry => WorkspaceDiagnosticRepairs.FindDocumentOptionality(syntax, entry.Handle)
+                    .Select(repair => (Repair: repair, entry.Location))))
+                .Select(item => (object)new
                 {
-                    repair.DiagnosticCode,
-                    diagnostic.Location,
-                    subject = McpAstHandles.Describe(repair.Subject),
-                    operations = repair.Operations.Select(McpAstOperations.Describe)
-                })),
+                    item.Repair.DiagnosticCode,
+                    item.Repair.RequiredFormatting,
+                    item.Repair.Title,
+                    item.Repair.CanFixAll,
+                    retiredSemanticAddresses = item.Repair.RetiredSemanticAddresses.Select(McpSemanticAddresses.Describe),
+                    item.Location,
+                    scope = item.Repair.Subject.Path.Length == 0 ? "document" : "occurrence",
+                    subject = McpAstHandles.Describe(item.Repair.Subject),
+                    operations = item.Repair.Operations.Select(McpAstOperations.Describe)
+                }),
             "executable-diagnostics" => workspace.Compilation.Diagnostics,
             _ => throw new McpFailure("Unknown workspace view.", -32602)
         };
@@ -152,6 +319,7 @@ internal sealed partial class McpWorkspaces
         {
             workspace = McpWorkspaceTransport.Describe(workspace),
             view,
+            repairEvidenceRevision = McpRepairEvidence.Revision(workspace),
             page = McpPaging.Page(items, arguments, workspace.Revision.ToString())
         });
     }
@@ -248,7 +416,7 @@ internal sealed partial class McpWorkspaces
             "before" or "after" => ProposalBytes(proposal, arguments, view),
             _ => throw new McpFailure("Unknown proposal view.", -32602)
         };
-        return McpJson.ToolResult(new { proposal.Validation, before = McpWorkspaceTransport.Describe(proposal.Before), after = McpWorkspaceTransport.Describe(proposal.Workspace), view, result });
+        return McpJson.ToolResult(new { proposal.Validation, repairEvidence = _repairEvidence.TryGetValue(proposal, out var evidence) ? evidence : null, before = McpWorkspaceTransport.Describe(proposal.Before), after = McpWorkspaceTransport.Describe(proposal.Workspace), view, result });
     }
 
     internal object ExportWorkspace(JsonElement arguments)
@@ -264,10 +432,27 @@ internal sealed partial class McpWorkspaces
 
     internal object DiscardProposal(JsonElement arguments)
     {
-        _ = Proposal(arguments);
-        _proposals.Remove(McpJson.RequiredString(arguments, "proposalId"));
+        var id = McpJson.RequiredString(arguments, "proposalId");
+        if (!_proposals.Remove(id)) throw new McpFailure("UnknownProposal: only an outstanding proposal from this connection can be used.") { FailureKind = "UnknownProposal" };
         return McpJson.ToolResult(new { discarded = true, remainingCount = _proposals.Count });
     }
+
+    static object DescribeHandlerIntent(WorkspaceImplementationEntry entry) => new
+    {
+        placementStatus = "resolved",
+        handle = McpAstHandles.Describe(entry.Handle),
+        owner = McpSemanticAddresses.Describe(entry.Owner),
+        ownerId = entry.OwnerId.ToString(),
+        requirementId = entry.RequirementId,
+        identityOrigin = entry.IdentityOrigin.ToString(),
+        provisional = entry.IsProvisional,
+        ambiguous = entry.IsAmbiguous,
+        hintCount = entry.Hints.Length,
+        file = entry.File,
+        language = entry.Language,
+        state = entry.State,
+        executableReady = false
+    };
 
     static void CheckContinuation(JsonElement arguments, string name, string revision, bool requireOnContinuation = true)
     {

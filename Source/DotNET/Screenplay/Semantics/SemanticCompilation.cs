@@ -127,6 +127,13 @@ sealed class SemanticCompilationIndex
             index.RegisterProperties(typeAddress, type.Properties);
         }
 
+        foreach (var trigger in application.Triggers)
+        {
+            var triggerAddress = SemanticAddress.ForTrigger(applicationIdentity, trigger.Name);
+            index.Register(triggerAddress, trigger.Id);
+            index.RegisterProperties(triggerAddress, trigger.Properties);
+        }
+
         foreach (var module in application.Modules)
         {
             index.RegisterModule(module);
@@ -221,6 +228,16 @@ sealed class SemanticCompilationIndex
         foreach (var specification in slice.Specifications)
         {
             Register(SemanticAddress.ForSpecification(sliceAddress, specification.Name), specification.Id);
+        }
+
+        foreach (var reaction in slice.Reactions)
+        {
+            Register(SemanticAddress.ForReaction(sliceAddress, reaction.Name), reaction.Id);
+        }
+
+        foreach (var capture in slice.Captures)
+        {
+            Register(SemanticAddress.ForCapture(sliceAddress, capture.Name), capture.Id);
         }
     }
 

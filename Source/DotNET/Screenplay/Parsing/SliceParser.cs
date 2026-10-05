@@ -46,6 +46,7 @@ internal static partial class SliceParser
         int? descriptionRawLength = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
         var events = new List<EventSyntax>();
+        var operations = new List<OperationSyntax>();
         var commands = new List<CommandSyntax>();
         var queries = new List<QuerySyntax>();
         var projections = new List<ProjectionSyntax>();
@@ -83,6 +84,9 @@ internal static partial class SliceParser
                         descriptionRawLength = span.RawLength;
                     }
 
+                    break;
+                case "operation":
+                    operations.Add(OperationParser.Parse(context, line).Operation);
                     break;
                 case "event":
                     events.Add(EventParser.Parse(context, line));
@@ -126,6 +130,7 @@ internal static partial class SliceParser
 
         return new(type, name, events, commands, queries, projections, captures, reactions, screens, constraints, specifications, header.Location, description, readModels, reducers)
         {
+            Operations = operations,
             File = file,
             DescriptionLocation = descriptionLocation,
             DescriptionRawLength = descriptionRawLength,

@@ -1,0 +1,51 @@
+// Authoring-only conformance fixture. Event sources and streams are not executable ESM contracts.
+concept AccountId : Uuid
+concept Month : String
+concept Partition : Int
+
+eventsource Account
+  description "A customer's account"
+  id "OldAccount"
+  identifier AccountId
+  stream Transactions
+    description
+      ```markdown
+      Money in and out, partitioned by month.
+      ```
+    id "OldTransactions"
+    streamId Month
+  stream Onboarding
+  stream Partitioned
+    streamId Partition
+
+eventsource Ledger
+  stream Transactions
+    streamId Uuid
+
+module Banking
+  feature Accounts
+    slice StateChange Deposit
+      command Deposit
+        accountId AccountId identifier
+        month Month
+        amount Decimal
+        stream Account.Transactions
+          streamId = month
+        produces event Deposited
+          amount Decimal = amount
+      command Import
+        month Month
+        stream Account.Transactions
+          streamId = month
+        handler
+          file Commands/Import.cs
+      command Begin
+        stream Account.Onboarding
+      command LegacyNames
+        stream String
+          deeper String
+        identifier String
+        eventsource String
+        streamId String
+        from String
+        @stream Account.Transactions optional

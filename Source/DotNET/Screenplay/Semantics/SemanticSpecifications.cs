@@ -129,4 +129,49 @@ public sealed record SemanticSpecification(
 
     /// <summary>Gets the keyed read-model instances expected not to exist.</summary>
     public ImmutableArray<SemanticSpecificationAbsentReadModel> ThenAbsentReadModels { get; init; } = [];
+
+    /// <summary>
+    /// Gets the instant the scenario happens at, in round-trip UTC form; every occurrence in it takes this time.
+    /// </summary>
+    public string? GivenClock { get; init; }
+
+    /// <summary>
+    /// Gets the records each capture saw last, per key, before the action.
+    /// </summary>
+    public ImmutableArray<SemanticSpecificationCapture> GivenCaptures { get; init; } = [];
+
+    /// <summary>
+    /// Gets the instant the clock advances to, in round-trip UTC form, firing every clock trigger due on the way.
+    /// </summary>
+    public string? WhenClock { get; init; }
+
+    /// <summary>
+    /// Gets the trigger the specification fires.
+    /// </summary>
+    public SemanticSpecificationTrigger? WhenTrigger { get; init; }
+
+    /// <summary>
+    /// Gets the record the specification presents to a capture.
+    /// </summary>
+    public SemanticSpecificationCapture? WhenCapture { get; init; }
 }
+
+/// <summary>
+/// Represents a trigger a specification fires.
+/// </summary>
+/// <param name="Kind">An application trigger, or the built-in startup or shutdown.</param>
+/// <param name="Values">The values the occurrence carries.</param>
+public sealed record SemanticSpecificationTrigger(SemanticReactionTriggerKind Kind, ImmutableArray<SemanticPropertyValue> Values)
+{
+    /// <summary>
+    /// Gets the application trigger; unset for a built-in trigger.
+    /// </summary>
+    public SemanticId Trigger { get; init; }
+}
+
+/// <summary>
+/// Represents a record presented to a capture in a specification.
+/// </summary>
+/// <param name="Capture">The capture semantic identity.</param>
+/// <param name="Record">The source record.</param>
+public sealed record SemanticSpecificationCapture(SemanticId Capture, SemanticCaptureRecord Record);

@@ -16,7 +16,13 @@ type <Name>
 
 The optional `file` line names the repository relative file this declaration is realized by, so a document can be navigated back to the code it describes. It is additive - it never stands in for any part of the declaration. See [File references](file-references.md).
 
-A type declares at least one property. The property line is the same one events and commands use — a name, a type reference, and the optional `[]` and `?` suffixes — so everything you know about one applies to the other.
+A type declares at least one property. Events, commands and read models use the same property order: name, type, then `optional` when the value may be absent. Write a collection as `InvoiceLine[] optional` when the collection itself may be absent; this does not make its items optional.
+
+`optional` is case-sensitive and only acts as a modifier after a type. You can still name a property `optional` (`optional String`), name a type `optional` (`value optional`), or refer to that type optionally (`value optional optional`). A command identifier must remain required and scalar. Screen data bindings, behavior parameters and concept bases do not accept optionality. Optional reads are reserved for future support; they do not yet describe absence behavior.
+
+### Compatibility note
+
+The earlier `String?` and `InvoiceLine[]?` spellings remain valid with Information diagnostic `PLAY0479`; they do not fail `--warnaserror`. Write `String optional` and `InvoiceLine[] optional` in new models. [Editor quick fixes](vscode.md#optional-values-and-quick-fixes) and [workspace repairs](mcp/authoring-tools.md#fix-a-diagnostic) migrate the spelling without changing meaning, comments or alignment. Canonical printing writes `optional` except for [`query Q => observable?`](queries.md#observable-queries). That one spelling has no equivalent keyword form, so it stays unchanged, produces no `PLAY0479`, and is excluded from repairs and document migrations.
 
 ## Example
 
@@ -32,7 +38,7 @@ type InvoiceLine
   productName ProductName
   quantity    Quantity
   unitPrice   Money
-  discount    DiscountPercentage?
+  discount    DiscountPercentage optional
 ```
 
 The type is then referenced by name from anywhere a type reference is allowed — an event property, a command property, or another type:

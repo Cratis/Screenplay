@@ -18,8 +18,8 @@
         "url": "git+https://github.com/Cratis/Screenplay.git"
     },
     "type": "module",
-    "main": "./dist/index.js",
-    "module": "./dist/index.js",
+    "main": "./dist/bundles/index.js",
+    "module": "./dist/bundles/index.js",
     "types": "./dist/index.d.ts",
     "publishConfig": {
         "access": "public"
@@ -27,23 +27,25 @@
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
+            "import": "./dist/bundles/index.js"
         },
         "./capture": {
             "types": "./dist/sub-languages/capture/index.d.ts",
-            "import": "./dist/sub-languages/capture/index.js"
+            "import": "./dist/bundles/sub-languages/capture/index.js"
         },
         "./projection": {
             "types": "./dist/sub-languages/projection/index.d.ts",
-            "import": "./dist/sub-languages/projection/index.js"
+            "import": "./dist/bundles/sub-languages/projection/index.js"
         }
     },
     "files": [
-        "dist",
-        "**/*.ts"
+        "dist/bundles",
+        "dist/**/*.d.ts",
+        "dist/**/*.d.ts.map"
     ],
     "scripts": {
-        "build": "tsc -p tsconfig.build.json",
+        "build": "node build.mjs",
+        "test:pack": "node check-package.mjs",
         "compile": "tsc --noEmit -p tsconfig.json",
         "lint": "yarn g:lint",
         "lint:ci": "yarn g:lint:ci",
@@ -53,10 +55,12 @@
         "monaco-editor": ">=0.44.0"
     },
     "devDependencies": {
+        "@cratis/screenplay-compiler": "workspace:*",
         "@types/chai": "^5.2.3",
-        "chai": "^6.2.2",
+        "chai": "^6.3.0",
+        "esbuild": "^0.28.2",
         "monaco-editor": "^0.55.1",
         "typescript": "6.0.3",
-        "vitest": "^4.1.11"
+        "vitest": "^5.0.3"
     }
 }

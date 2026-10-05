@@ -2,8 +2,12 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import type { editor, languages } from 'monaco-editor';
+import { typeReferenceSymbol, typeReferenceText } from './TypeReferenceSymbol';
 import { Monaco, primitiveTypes } from './language';
-import { knownEventNames, knownTriggerNames, scanDocument } from './symbols';
+import { DocumentSymbols, knownEventNames, knownTriggerNames, symbolsForBuffer } from './symbols';
+import { responseCompletions } from './response-completions';
+import { operationCompletions } from './operation-authoring';
+import { eventSourceCompletions } from './event-source-authoring';
 import { planCompletions } from './completion-planner';
 import { contextVariableItems, producesItems, CompletionEntry } from './completion-items';
 
@@ -12,6 +16,9 @@ export interface CompletionOptions {
     // The paths a file import written in the model can name, relative to the model's folder - typically
     // importablePaths over the host's .play files. Without it, an import path is not completed.
     playFiles?: (model: editor.ITextModel) => readonly string[];
+    application?: (model: editor.ITextModel) => DocumentSymbols;
+    // Notify after changing application documents or placement, even when this buffer is unchanged.
+    onDidChangeApplication?: (listener: () => void) => { dispose(): void };
 }
 
 export function createCompletionProvider(monaco: Monaco, options: CompletionOptions = {}): languages.CompletionItemProvider {
@@ -23,10 +30,12 @@ export function createCompletionProvider(monaco: Monaco, options: CompletionOpti
             const lineIndex = position.lineNumber - 1;
             const currentLine = lines[lineIndex] ?? '';
             const textBefore = currentLine.substring(0, position.column - 1);
-            const plan = planCompletions(lines, lineIndex, textBefore);
+            const application = options.application?.(model);
+            const symbols = symbolsForBuffer(lines, application);
+            const responseEntries = eventSourceCompletions(lines, lineIndex, textBefore, symbols) ?? operationCompletions(lines, lineIndex, textBefore, symbols) ?? responseCompletions(lines, lineIndex, textBefore, symbols);
+            const plan = responseEntries === null ? planCompletions(lines, lineIndex, textBefore) : { kind: 'entries' as const, entries: responseEntries };
             if (plan.kind === 'none') return { suggestions: [] };
 
-            const symbols = scanDocument(lines);
             const word = model.getWordUntilPosition(position);
             const range = new monaco.Range(
                 position.lineNumber,
@@ -56,8 +65,10 @@ export function createCompletionProvider(monaco: Monaco, options: CompletionOpti
                 detail,
                 range,
             });
-            const eventNames = () =>
-                [...new Set(knownEventNames(symbols))].map((name) => symbolItem(name, kinds.Event, 'event'));
+            const eventNames = () => {
+                const inlineNames = new Set(symbols.events.filter(event => event.inline).map(event => event.name));
+                return [...new Set(knownEventNames(symbols))].map((name) => symbolItem(name, kinds.Event, inlineNames.has(name) ? 'inline event' : 'event'));
+            };
 
             switch (plan.kind) {
                 case 'playFiles': {
@@ -121,7 +132,7 @@ export function createCompletionProvider(monaco: Monaco, options: CompletionOpti
                 case 'queries':
                     return {
                         suggestions: symbols.queries.map((query) =>
-                            symbolItem(query.name, kinds.Function, `query => ${query.returnType}`),
+                            symbolItem(query.name, kinds.Function, `query => ${typeReferenceText(query.returnTypeReference ?? typeReferenceSymbol(query.returnType))}`),
                         ),
                     };
                 case 'types':

@@ -1,0 +1,30 @@
+type optional
+  optional String
+  value optional optional
+  tags String[] optional
+
+trigger Notified
+  note String optional
+
+module Notes
+  feature Recording
+    slice StateChange Record
+      command Record
+        id Uuid identifier
+        optional String optional
+        description String optional
+        produces event Recorded
+          note String optional = optional
+          tags String[] optional = optional
+      event Imported
+        @tag String optional
+        file String optional
+      readmodel Note
+        note String optional
+      query NoteById => observable Note optional
+        by id Uuid optional
+        filter note String optional from note
+      query NamedOptional => observable optional
+      reaction React
+        when Notified
+          note String optional

@@ -1,0 +1,35 @@
+module M
+  feature F
+    slice StateChange Intent
+      command Pending
+        handler
+          implementation
+      command Hinted
+        handler
+          implementation
+            hint " Preserve whitespace "
+            hint "Keep \"quotes\" and // text"
+      command DirectFile
+        handler
+          file Handlers/Direct.cs
+      command WrappedFile
+        handler
+          implementation
+            hint "Keep the cutoff"
+            file Handlers/Wrapped.cs
+      command DirectCode
+        handler
+          ```csharp
+          return null;
+          ```
+      command WrappedCode
+        handler
+          implementation
+            ```typescript
+            hint file implementation
+            ```
+      command OrdinaryNames
+        handler String
+        implementation String
+        hint String
+        file String
