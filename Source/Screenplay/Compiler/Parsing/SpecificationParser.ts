@@ -52,6 +52,7 @@ const capturePattern = pattern('^(?:given|when)\\s+capture\\s+([A-Za-z_]\\w*)$')
 const whenQueryPattern = pattern('^when\\s+query\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
 const thenResultPattern = pattern('^then\\s+result(\\s+exactly)?$');
 const thenAbsentReadModelPattern = nativePattern('^then\\s+no\\s+readmodel\\s+([A-Z]\\w*)\\s+for\\s+(.+)$');
+const absentKeyStringPattern = nativePattern(`^(?:"${stringBodyPattern}"|'(?:[^'\\\\]|\\\\.)*')$`);
 const thenQueryPattern = nativePattern('^then\\s+query\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)(\\s+exactly)?$');
 
 interface SpecificationBody {
@@ -266,6 +267,12 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
         return;
     }
     if (thenNoPrefix.test(line.content)) {
+        // Legacy documents keep skipping these assertions silently; Exact mirrors the native diagnostics.
+        if (context.sourceOptions.numericMode === 'exact') {
+            const absent = parseAbsentReadModel(context, line);
+            if (absent !== null) body.thenAbsentReadModels.push(absent);
+            return;
+        }
         const match = thenAbsentReadModelPattern.exec(line.content);
         if (match !== null && !match[2].endsWith(' exactly')) {
             const key = parseMappingSource(match[2].trim(), locationOf(line), context.valueContext);
@@ -275,8 +282,15 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
         return;
     }
     if (thenQueryPrefix.test(line.content)) {
+        const exact = context.sourceOptions.numericMode === 'exact';
         const match = thenQueryPattern.exec(line.content);
-        if (match === null) { context.skipOpaqueBlock(line.indent); return; }
+        if (match === null) {
+            if (exact) {
+                context.error(DiagnosticCodes.InvalidSpecificationQuery, `Invalid 'then query' declaration '${line.content}' - expected 'then query <Query> [exactly]'`, locationOf(line));
+                context.skipBlock(line.indent);
+            } else context.skipOpaqueBlock(line.indent);
+            return;
+        }
         const args: PropertyMappingSyntax[] = [];
         const results: SpecificationQueryResultSyntax[] = [];
         let hasArguments = false;
@@ -284,10 +298,16 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
             context.reader.takeSignificant();
             if (child.content === 'arguments') {
                 if (!hasArguments) args.push(...parseValues(context.valueContext, child, true));
-                else context.skipOpaqueBlock(child.indent);
+                else if (exact) {
+                    context.error(DiagnosticCodes.DuplicateSpecificationQueryArguments, `Query assertion '${match[1]}' already declares arguments`, locationOf(child));
+                    context.skipBlock(child.indent);
+                } else context.skipOpaqueBlock(child.indent);
                 hasArguments = true;
             } else if (child.content === 'result') results.push({ kind: 'SpecificationQueryResultSyntax', properties: parseValues(context.valueContext, child, true), exactly: false, location: locationOf(child) });
-            else context.skipOpaqueBlock(child.indent);
+            else if (exact) {
+                context.error(DiagnosticCodes.UnknownSpecificationQueryDirective, `Unexpected '${firstWord(child.content)}' in 'then query' body - expected arguments or result`, locationOf(child));
+                context.skipBlock(child.indent);
+            } else context.skipOpaqueBlock(child.indent);
         }
         body.thenQueries.push({ kind: 'SpecificationQuerySyntax', query: match[1], arguments: args, results, exactly: match[2] !== undefined, location: locationOf(line) });
         return;
@@ -303,6 +323,28 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
     if (event !== undefined) {
         body.thenEvents.push(event);
     }
+}
+
+// The Exact port of C# ParseAbsentReadModel: every malformed part is reported rather than dropped.
+function parseAbsentReadModel(context: ParserContext, line: SourceLine): SpecificationAbsentReadModelSyntax | null {
+    const match = thenAbsentReadModelPattern.exec(line.content);
+    if (match === null || match[2].endsWith(' exactly')) {
+        context.error(DiagnosticCodes.InvalidAbsentReadModelStep, `Invalid absence assertion '${line.content}' - expected 'then no readmodel <ReadModelType> for <key>'`, locationOf(line));
+        context.skipBlock(line.indent);
+        return null;
+    }
+    const keyText = match[2].trim();
+    const validString = !(keyText.startsWith('"') || keyText.startsWith("'")) || absentKeyStringPattern.test(keyText);
+    const key = validString ? parseMappingSource(keyText, locationOf(line), context.valueContext) : null;
+    const concrete = key !== null && (key.kind === 'LiteralExpressionSyntax' || key.kind === 'ObjectExpressionSyntax');
+    if (!concrete) context.error(DiagnosticCodes.InvalidAbsentReadModelStep, `Invalid absence key '${keyText}' - expected exactly one concrete value.`, locationOf(line));
+    let hasChildren = false;
+    for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
+        context.reader.takeSignificant();
+        context.error(DiagnosticCodes.InvalidAbsentReadModelStep, 'An absent read model assertion cannot have child mappings.', locationOf(child));
+        hasChildren = true;
+    }
+    return hasChildren || !concrete ? null : { kind: 'SpecificationAbsentReadModelSyntax', name: match[1], key, location: locationOf(line) } as SpecificationAbsentReadModelSyntax;
 }
 
 function parseClock(context: ParserContext, line: SourceLine, keyword: string): SpecificationClockSyntax | null {
