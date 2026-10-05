@@ -105,7 +105,15 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
             var inserted = ToJson(edit.Value!);
             if (edit.Target is not null)
             {
-                CarrySourceLocations(edit.Original!, inserted, ruleLineage: true);
+                if (JsonNode.DeepEquals(edit.Original, inserted))
+                {
+                    CarryExactCorrespondence(edit.Original!, inserted);
+                }
+                else
+                {
+                    CarrySourceLocations(edit.Original!, inserted, ruleLineage: true);
+                }
+
                 if (edit.Target.Handle.Document != edit.Destination!.Parent.Handle.Document || !LocationAgreesWithInsertion(edit.Destination, inserted))
                 {
                     // Keep subtree order and comment/directive anchors, but do not let the old root

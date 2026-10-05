@@ -32,33 +32,7 @@ internal sealed partial class WorkspaceAstEdits
     /// </summary>
     void CarrySourceLocations(JsonNode original, JsonNode replacement, bool ruleLineage = false)
     {
-        // Container matching carries printer metadata, not rule-occurrence proof. Descendant
-        // obligations are compared together once per final command owner for the whole transaction.
-        if (ruleLineage && _ruleOrigins.TryGetValue(original, out var origin))
-        {
-            _ruleOrigins[replacement] = origin;
-        }
-
-        if (_sourceLocations.TryGetValue(original, out var location))
-        {
-            _sourceLocations[replacement] = location;
-        }
-
-        if (_sourceComments.TryGetValue(original, out var comments))
-        {
-            _sourceComments[replacement] = comments;
-        }
-
-        if (_directiveLocations.TryGetValue(original, out var directives))
-        {
-            _directiveLocations[replacement] = directives;
-        }
-
-        if (_parsedAutoMapModes.TryGetValue(original, out var mode))
-        {
-            _parsedAutoMapModes[replacement] = mode;
-        }
-
+        CarryNodeMetadata(original, replacement, ruleLineage);
         if (original is JsonObject oldObject && replacement is JsonObject newObject)
         {
             foreach (var (name, child) in newObject)
@@ -104,6 +78,63 @@ internal sealed partial class WorkspaceAstEdits
                     }
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Carries metadata across a validated unchanged subtree by exact position. A move keeps its whole subtree
+    /// unchanged, so each descendant corresponds to the descendant at the same path; this is not ambiguous
+    /// replacement matching, which cannot tell structurally identical siblings apart.
+    /// </summary>
+    void CarryExactCorrespondence(JsonNode original, JsonNode moved)
+    {
+        CarryNodeMetadata(original, moved, ruleLineage: true);
+        if (original is JsonObject oldObject && moved is JsonObject newObject)
+        {
+            foreach (var (name, child) in newObject.Where(pair => pair.Value is not null && oldObject[pair.Key] is not null).ToArray())
+            {
+                CarryExactCorrespondence(oldObject[name]!, child!);
+            }
+        }
+        else if (original is JsonArray oldArray && moved is JsonArray newArray && oldArray.Count == newArray.Count)
+        {
+            for (var position = 0; position < newArray.Count; position++)
+            {
+                if (oldArray[position] is { } previous && newArray[position] is { } current)
+                {
+                    CarryExactCorrespondence(previous, current);
+                }
+            }
+        }
+    }
+
+    void CarryNodeMetadata(JsonNode original, JsonNode replacement, bool ruleLineage)
+    {
+        // Container matching carries printer metadata, not rule-occurrence proof. Descendant
+        // obligations are compared together once per final command owner for the whole transaction.
+        if (ruleLineage && _ruleOrigins.TryGetValue(original, out var origin))
+        {
+            _ruleOrigins[replacement] = origin;
+        }
+
+        if (_sourceLocations.TryGetValue(original, out var location))
+        {
+            _sourceLocations[replacement] = location;
+        }
+
+        if (_sourceComments.TryGetValue(original, out var comments))
+        {
+            _sourceComments[replacement] = comments;
+        }
+
+        if (_directiveLocations.TryGetValue(original, out var directives))
+        {
+            _directiveLocations[replacement] = directives;
+        }
+
+        if (_parsedAutoMapModes.TryGetValue(original, out var mode))
+        {
+            _parsedAutoMapModes[replacement] = mode;
         }
     }
 
