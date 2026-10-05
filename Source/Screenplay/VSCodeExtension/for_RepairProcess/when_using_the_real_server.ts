@@ -103,14 +103,33 @@ describe.skipIf(!serverAvailable)('real C# tool subprocess (not a transport stub
         session.invalidate();
         await expect(session.apply(preview.token)).rejects.toMatchObject({ kind: 'UnauthorizedApply' });
     });
-    it('retains an uncertain apply and never retries even a typed evidence refusal after dispatch', async () => {
+    // Safety does not depend on any file-watcher notification: no watcher is attached here, so the
+    // pinned server-side Apply validation alone must refuse every external change after review.
+    const unnotifiedDrift: { name: string; kind: string; change: () => void }[] = [
+        { name: 'attachment evidence', kind: 'RepairEvidenceDrift', change: () => fs.writeFileSync(path.join(root, 'Handler.cs'), 'changed') },
+        { name: 'source bytes', kind: 'DiskDrift', change: () => fs.appendFileSync(path.join(root, 'application.play'), '// externally edited\n') },
+        { name: 'source set', kind: 'DiskDrift', change: () => fs.writeFileSync(path.join(root, 'sibling.play'), 'concept Additional : String\n') },
+        { name: 'identity state', kind: 'IdentityStateDrift', change: () => { fs.mkdirSync(path.join(root, '.screenplay'), { mode: 0o700 }); fs.writeFileSync(path.join(root, '.screenplay', 'identities.json'), 'external-state'); } }
+    ];
+    for (const drift of unnotifiedDrift) it(`retains an uncertain apply and never retries an unnotified ${drift.name} change (${drift.kind})`, async () => {
         const { choices } = await session.discover();
         const preview = await session.preview(choices[0].token);
-        fs.writeFileSync(path.join(root, 'Handler.cs'), 'changed');
-        await expect(session.apply(preview.token)).rejects.toMatchObject({ kind: 'ApplyOutcomeUnknown' });
+        drift.change();
+        const snapshot = new Map(fs.readdirSync(root, { recursive: true, withFileTypes: true }).filter(entry => entry.isFile()).map(entry => {
+            const file = path.join(entry.parentPath, entry.name);
+            return [file, fs.readFileSync(file)] as const;
+        }));
+        const failure = await session.apply(preview.token).then(() => undefined, (error: unknown) => error);
+        expect(failure).toMatchObject({ kind: 'ApplyOutcomeUnknown', details: { kind: drift.kind } });
         expect(session.recoveryRequired).toBe(true);
+        const after = new Map(fs.readdirSync(root, { recursive: true, withFileTypes: true }).filter(entry => entry.isFile()).map(entry => {
+            const file = path.join(entry.parentPath, entry.name);
+            return [file, fs.readFileSync(file)] as const;
+        }));
+        expect([...after.keys()].sort()).toEqual([...snapshot.keys()].sort());
+        for (const [file, bytes] of snapshot) expect(after.get(file)).toEqual(bytes);
         await expect(session.apply(preview.token)).rejects.toMatchObject({ kind: 'UnauthorizedApply' });
-        expect((await session.inspectState()).exists).toBe(false);
+        expect((await session.inspectState()).exists).toBe(drift.kind === 'IdentityStateDrift'); // Read-only recovery inspection still works.
     });
     it('rejects a stale catalog using the structured server failure, not message prefixes', async () => {
         const client = new RepairClient({ executable: serverExecutable, arguments: ['mcp'], root });
