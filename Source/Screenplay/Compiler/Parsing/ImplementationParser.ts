@@ -9,12 +9,11 @@ import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 
-const languages = new Set(['csharp', 'typescript', 'react', 'html', 'sql']);
 // Match ImplementationHintText's White_Space set, not ECMAScript \s. A hint stays on one CR/LF-delimited source line.
 // eslint-disable-next-line no-control-regex -- The shared whitespace set deliberately includes U+0009 through U+000D.
 const hintPattern = new RegExp('^hint[\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]+"((?:[^"\\\\\\r\\n]|\\\\[^\\r\\n])*)"$');
 const isFile = (line: SourceLine): boolean => firstWord(line.content) === 'file' && line.content.substring(4).trim().length > 0;
-const isCode = (line: SourceLine): boolean => line.content.startsWith('```') || languages.has(line.content);
+const isCode = (context: ParserContext, line: SourceLine): boolean => line.content.startsWith('```') || context.languages.has(line.content);
 
 export function parseFile(context: ParserContext, line: SourceLine): FileReferenceSyntax {
     const path = line.content.substring(4).trim();
@@ -66,7 +65,7 @@ export function parseHandler(context: ParserContext, handler: SourceLine): Handl
     context.reader.takeSignificant();
     if (firstWord(body.content) === 'implementation') return parseImplementation(context, handler, body);
     const file = isFile(body) ? parseFile(context, body) : null;
-    const code = file === null && isCode(body) ? parseCode(context, body) : null;
+    const code = file === null && isCode(context, body) ? parseCode(context, body) : null;
     if (file !== null || code !== null) {
         const extra = context.peekChild(handler.indent);
         if (extra !== undefined && firstWord(extra.content) === 'implementation') {
@@ -86,7 +85,7 @@ function parseImplementation(context: ParserContext, handler: SourceLine, wrappe
         context.reader.takeSignificant();
         context.error(firstWord(extra.content) === 'implementation' ? DiagnosticCodes.InvalidImplementationBlock : DiagnosticCodes.ConflictingImplementationSources,
             'A handler has one implementation wrapper and cannot mix wrapped and direct sources.', locationOf(extra));
-        if (isCode(extra)) parseCode(context, extra);
+        if (isCode(context, extra)) parseCode(context, extra);
         else context.skipBlock(extra.indent);
     }
     return { kind: 'HandlerSyntax', ...source, location: locationOf(handler) };

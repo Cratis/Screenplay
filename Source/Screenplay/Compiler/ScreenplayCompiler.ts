@@ -112,5 +112,9 @@ function parseSourceFamily<T extends SyntaxNode>(source: string, keyword: string
             context.skipOpaqueBlock(line.indent);
         }
     }
+    if (context.sourceOptions.numericMode === 'exact' && value.length === 0 && context.diagnostics.length === 0) {
+        const code = keyword === 'projection' ? DiagnosticCodes.ProjectionDocumentWithoutProjection : keyword === 'capture' ? DiagnosticCodes.CaptureDocumentWithoutCapture : DiagnosticCodes.SpecificationDocumentWithoutSpecification;
+        context.error(code, `Document must contain at least one ${keyword}`, context.start);
+    }
     return { value, diagnostics: context.diagnostics, success: !context.diagnostics.some(diagnostic => diagnostic.severity === 'error') };
 }

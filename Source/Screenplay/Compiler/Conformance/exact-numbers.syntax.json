@@ -58,6 +58,34 @@
                   "appends": [
                     {
                       "kind": "CaptureAppendSyntax",
+                      "event": "Addéd",
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "café",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "0"
+                            }
+                          }
+                        }
+                      ],
+                      "tags": [],
+                      "when": {
+                        "kind": "CaptureWhenSyntax",
+                        "expression": null,
+                        "fromValue": "café",
+                        "properties": [
+                          "café"
+                        ],
+                        "syntaxKind": "ValueTransition",
+                        "toValue": "café"
+                      }
+                    },
+                    {
+                      "kind": "CaptureAppendSyntax",
                       "event": "Added",
                       "mappings": [
                         {
@@ -185,6 +213,41 @@
                         ]
                       },
                       "translations": []
+                    },
+                    {
+                      "kind": "CaptureMapEntrySyntax",
+                      "property": "café",
+                      "source": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "café.part"
+                      },
+                      "translations": []
+                    },
+                    {
+                      "kind": "CaptureMapEntrySyntax",
+                      "property": "translated",
+                      "source": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "café"
+                      },
+                      "translations": [
+                        {
+                          "kind": "CaptureTranslationSyntax",
+                          "from": "𝟙",
+                          "to": "café"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "CaptureSplitSyntax",
+                      "separator": "𐐀",
+                      "source": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "café"
+                      },
+                      "targets": [
+                        "café.part"
+                      ]
                     }
                   ],
                   "name": "ReadExternal",
@@ -419,7 +482,31 @@
                   "response": null,
                   "stream": null,
                   "streamCandidates": [],
-                  "validations": []
+                  "validations": [
+                    {
+                      "kind": "DeclarativeValidateSyntax",
+                      "requirements": [
+                        {
+                          "kind": "RequirementSyntax",
+                          "condition": {
+                            "kind": "ComparisonConditionSyntax",
+                            "left": "café",
+                            "operator": "Equal",
+                            "right": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": {
+                                "literalType": "ExactNumber",
+                                "value": "9007199254740993"
+                              }
+                            }
+                          },
+                          "message": "café",
+                          "severity": "Error"
+                        }
+                      ],
+                      "rules": []
+                    }
+                  ]
                 }
               ],
               "constraints": [],
@@ -522,6 +609,14 @@
                               "literalType": "ExactNumber",
                               "value": "9007199254740993"
                             }
+                          }
+                        },
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "café",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "café.part"
                           }
                         },
                         {

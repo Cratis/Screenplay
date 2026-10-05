@@ -4,9 +4,9 @@
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { ExpressionSyntax, TemplateInterpolationSyntax, TemplateTextSyntax } from '../Syntax/Expressions';
-import { parseLiteral, parseMappingSource } from './ExpressionParser';
+import { parseLiteral, parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
 import { ParserContext } from './ParserContext';
-import { pattern } from '../Text/patterns';
+import { nativePattern as pattern } from '../Text/patterns';
 
 const exactPath = pattern('^@?[A-Za-z_]\\w*(\\.@?[A-Za-z_$]\\w*)*$');
 
@@ -52,7 +52,7 @@ export function parseProjectionExpression(text: string, location: SourceLocation
     if (text.startsWith('$causedBy.')) return { kind: 'CausedByExpressionSyntax', property: text.substring('$causedBy.'.length), location };
     const literal = parseLiteral(text, location, context);
     if (literal !== undefined) return literal;
-    if ((context.sourceOptions.numericMode === 'exact' ? exactPath : /^@?[A-Za-z_]\w*(\.@?[A-Za-z_$]\w*)*$/).test(text)) return { kind: 'PathExpressionSyntax', path: text.replaceAll('@', ''), location };
+    if (exactPath.test(text)) return { kind: 'PathExpressionSyntax', path: text.replaceAll('@', ''), location };
     context.error(DiagnosticCodes.InvalidExpression, `Invalid expression '${text}'`, location);
     return { kind: 'RawExpressionSyntax', text, location };
 }

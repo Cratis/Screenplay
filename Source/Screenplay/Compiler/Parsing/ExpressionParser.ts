@@ -5,12 +5,13 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { ExpressionSyntax, LiteralExpressionSyntax } from '../Syntax/Expressions';
 import { ExactNumber, isExactNumberToken, parseExactNumber } from '../Syntax/ExactNumber';
-import { pattern } from '../Text/patterns';
+import { nativePattern, pattern } from '../Text/patterns';
 import { unescapeString } from '../Text/StringLiteral';
 import { ParserContext } from './ParserContext';
 import { InvalidStructuredValue, StructuredValueParser } from './StructuredValueParser';
 
 const pathPattern = pattern('^@?[A-Za-z_]\\w*(\\.@?[A-Za-z_$]\\w*)*$');
+const nativePathPattern = nativePattern('^@?[A-Za-z_]\\w*(\\.@?[A-Za-z_$]\\w*)*$');
 const numberPattern = pattern('^-?\\d+(\\.\\d+)?$');
 const contextRoots = ['command', 'arguments', 'tenant', 'causedBy', 'causation', 'occurred', 'identity'];
 const causedByProperties = ['subject', 'name', 'userName'];
@@ -19,7 +20,11 @@ const identityProperties = ['id', 'name', 'userName', 'isAuthenticated', 'roles'
 // Reads the right-hand side of a mapping or a rule operand - the port of the C# ExpressionParser's
 // ParseMappingSource. With a context it also reports what the C# compiler reports while reading one: an
 // unknown $context path, and an inline structured value that is not valid JSON.
-export function parseMappingSource(text: string, location: SourceLocation, context?: ParserContext): ExpressionSyntax {
+export function parseModeledMappingSource(text: string, location: SourceLocation, context: ParserContext): ExpressionSyntax {
+    return parseMappingSource(text, location, context, true);
+}
+
+export function parseMappingSource(text: string, location: SourceLocation, context?: ParserContext, nativeIdentifiers = false): ExpressionSyntax {
     text = text.trim();
     if (text.startsWith('$context.')) {
         const path = text.substring('$context.'.length);
@@ -50,7 +55,7 @@ export function parseMappingSource(text: string, location: SourceLocation, conte
     if (literal !== undefined) {
         return literal;
     }
-    if (pathPattern.test(text)) {
+    if ((nativeIdentifiers || context?.sourceOptions.numericMode === 'exact' ? nativePathPattern : pathPattern).test(text)) {
         return { kind: 'PathExpressionSyntax', path: text, location };
     }
     return { kind: 'RawExpressionSyntax', text, location };

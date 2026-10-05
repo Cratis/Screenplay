@@ -9,7 +9,7 @@ import {
     SpecificationWhenQuerySyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax,
 } from '../Syntax/Specifications';
 import { SpecificationDeniedSyntax, SpecificationReturnSyntax } from '../Syntax/Responses';
-import { pattern } from '../Text/patterns';
+import { nativePattern, pattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { parseMappingSource } from './ExpressionParser';
 import { isFileDirective } from './FileReferences';
@@ -34,6 +34,7 @@ const thenReadModelPattern = pattern('^then\\s+readmodel\\s+([A-Z]\\w*)(\\s+exac
 const thenNoPrefix = pattern('^then\\s+no\\b');
 const thenErrorPattern = pattern(`^then\\s+error\\s+"(${stringBodyPattern})"$`);
 const mappingPattern = pattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
+const nativeMappingPattern = nativePattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
 const givenClockPrefix = pattern('^given\\s+clock\\b');
 const givenCapturePrefix = pattern('^given\\s+capture\\b');
 const whenClockPrefix = pattern('^when\\s+clock\\b');
@@ -50,8 +51,8 @@ const whenTriggerPattern = pattern('^when\\s+trigger\\s+([A-Za-z_]\\w*)$');
 const capturePattern = pattern('^(?:given|when)\\s+capture\\s+([A-Za-z_]\\w*)$');
 const whenQueryPattern = pattern('^when\\s+query\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
 const thenResultPattern = pattern('^then\\s+result(\\s+exactly)?$');
-const thenAbsentReadModelPattern = pattern('^then\\s+no\\s+readmodel\\s+([A-Z]\\w*)\\s+for\\s+(.+)$');
-const thenQueryPattern = pattern('^then\\s+query\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)(\\s+exactly)?$');
+const thenAbsentReadModelPattern = nativePattern('^then\\s+no\\s+readmodel\\s+([A-Z]\\w*)\\s+for\\s+(.+)$');
+const thenQueryPattern = nativePattern('^then\\s+query\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)(\\s+exactly)?$');
 
 interface SpecificationBody {
     given: SpecificationEventSyntax[];
@@ -282,10 +283,10 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
         for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
             context.reader.takeSignificant();
             if (child.content === 'arguments') {
-                if (!hasArguments) args.push(...parseValues(context.valueContext, child));
+                if (!hasArguments) args.push(...parseValues(context.valueContext, child, true));
                 else context.skipOpaqueBlock(child.indent);
                 hasArguments = true;
-            } else if (child.content === 'result') results.push({ kind: 'SpecificationQueryResultSyntax', properties: parseValues(context.valueContext, child), exactly: false, location: locationOf(child) });
+            } else if (child.content === 'result') results.push({ kind: 'SpecificationQueryResultSyntax', properties: parseValues(context.valueContext, child, true), exactly: false, location: locationOf(child) });
             else context.skipOpaqueBlock(child.indent);
         }
         body.thenQueries.push({ kind: 'SpecificationQuerySyntax', query: match[1], arguments: args, results, exactly: match[2] !== undefined, location: locationOf(line) });
@@ -398,20 +399,20 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, 
     return { values, for: eventSource };
 }
 
-function parseValues(context: ParserContext, parent: SourceLine): PropertyMappingSyntax[] {
+function parseValues(context: ParserContext, parent: SourceLine, nativeIdentifiers = false): PropertyMappingSyntax[] {
     const values: PropertyMappingSyntax[] = [];
     for (let child = context.peekChild(parent.indent); child !== undefined; child = context.peekChild(parent.indent)) {
         context.reader.takeSignificant();
-        const mapping = mappingPattern.exec(child.content);
+        const mapping = (nativeIdentifiers || context.sourceOptions.numericMode === 'exact' ? nativeMappingPattern : mappingPattern).exec(child.content);
         if (mapping === null) {
             context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child));
             continue;
         }
-        values.push(mappingOf(context, child, mapping));
+        values.push(mappingOf(context, child, mapping, nativeIdentifiers));
     }
     return values;
 }
 
-function mappingOf(context: ParserContext, line: SourceLine, match: RegExpExecArray): PropertyMappingSyntax {
-    return { kind: 'PropertyMappingSyntax', property: match[1], source: parseMappingSource(match[2], locationOf(line), context), location: locationOf(line) };
+function mappingOf(context: ParserContext, line: SourceLine, match: RegExpExecArray, nativeIdentifiers = false): PropertyMappingSyntax {
+    return { kind: 'PropertyMappingSyntax', property: match[1], source: parseMappingSource(match[2], locationOf(line), context, nativeIdentifiers), location: locationOf(line) };
 }

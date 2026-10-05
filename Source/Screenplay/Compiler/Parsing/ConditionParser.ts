@@ -4,8 +4,9 @@
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { ComparisonOperator, ConditionSyntax } from '../Syntax/Conditions';
+import { nativePattern } from '../Text/patterns';
 import { stringBodyPattern } from '../Text/StringLiteral';
-import { parseMappingSource } from './ExpressionParser';
+import { parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
 import { ParserContext } from './ParserContext';
 
 const operators: Record<string, ComparisonOperator> = { '==': 'Equal', '!=': 'NotEqual', '>': 'GreaterThan', '>=': 'GreaterThanOrEqual', '<': 'LessThan', '<=': 'LessThanOrEqual', contains: 'Contains', 'starts with': 'StartsWith' };
@@ -15,8 +16,8 @@ const operators: Record<string, ComparisonOperator> = { '==': 'Equal', '!=': 'No
 export function parseCondition(context: ParserContext, text: string, location: SourceLocation): ConditionSyntax | null {
     context = context.valueContext;
     const numeric = context.sourceOptions.numericMode === 'exact' ? '-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|' : '';
-    const words = context.sourceOptions.numericMode === 'exact' ? '[\\p{L}\\p{Mn}\\p{Nd}\\p{Pc}.$-]+|[^\\s]' : '[\\w.$-]+';
-    const tokens = text.match(new RegExp(`"${stringBodyPattern}"|==|!=|>=|<=|>|<|\\(|\\)|${numeric}${words}`, 'gu')) ?? [];
+    const words = context.sourceOptions.numericMode === 'exact' ? '[\\w.$-]+|[^\\s]' : '[\\w.$-]+';
+    const tokens = text.match(new RegExp(nativePattern(`"${stringBodyPattern}"|==|!=|>=|<=|>|<|\\(|\\)|${numeric}${words}`).source, 'gu')) ?? [];
     let position = 0;
     const group = (): ConditionSyntax | null => {
         if (tokens[position] === '(') {

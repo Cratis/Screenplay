@@ -5,10 +5,10 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { CaptureAppendSyntax, CaptureChildrenSyntax, CaptureMapOperationSyntax, CaptureNestedSyntax, CaptureSourceSettingSyntax, CaptureSourceSyntax, CaptureSyntax, CaptureTranslationSyntax, CaptureWhenSyntax } from '../Syntax/Captures';
 import { TagSyntax } from '../Syntax/Declarations';
 import { PropertyMappingSyntax } from '../Syntax/Expressions';
-import { pattern } from '../Text/patterns';
+import { nativePattern as pattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { parseTag } from './DeclarationParsers';
-import { parseMappingSource } from './ExpressionParser';
+import { parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
 import { firstWord, unescapeIdentifier } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseProjectionExpression } from './ProjectionExpressionParser';
@@ -22,7 +22,8 @@ const mappingPattern = pattern('^(@?[\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
 const mapEntryPattern = pattern('^([a-z_]\\w*)\\s*=\\s*(.+)$');
 const translationPattern = pattern(`^"(${stringBodyPattern})"\\s*=>\\s*(\\w+)$`);
 const splitPattern = pattern(`^split\\s+(\\S+)\\s+by\\s+"(${stringBodyPattern})"$`);
-const whenTokens = new RegExp(`"${stringBodyPattern}"|[\\w.]+`, 'gu');
+const whenTokens = new RegExp(pattern(`"${stringBodyPattern}"|[\\w.]+`).source, 'gu');
+const splitTarget = pattern('^[\\w.]+$');
 
 // A structural port of the existing capture grammar. Transition operands remain authored strings, as
 // C# models them; their numeric semantic interpretation belongs to ESM v7, not source admission.
@@ -86,7 +87,7 @@ function parseMap(context: ParserContext, line: SourceLine): CaptureMapOperation
             const targets: string[] = [];
             for (let target = context.peekChild(child.indent); target !== undefined; target = context.peekChild(child.indent)) {
                 context.reader.takeSignificant();
-                if (/^[\w.]+$/.test(target.content)) targets.push(target.content);
+                if (splitTarget.test(target.content)) targets.push(target.content);
                 else context.error(DiagnosticCodes.InvalidSplitTarget, `Invalid split target '${target.content}' - expected a property path`, locationOf(target));
             }
             if (match !== null) map.push({ kind: 'CaptureSplitSyntax', source: parseProjectionExpression(match[1], location, context), separator: unescapeString(match[2]), targets, location });

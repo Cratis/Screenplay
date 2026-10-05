@@ -43,6 +43,7 @@ module Numbers
                     }
                     parent 9007199254740994
                     amount = 9007199254740993
+                    café = @café.part
                     add amount by 1e-28
                     subtract amount by 9007199254740994
                 children values identified by 9007199254740993
@@ -59,6 +60,14 @@ module Numbers
                 map
                     amount = 9007199254740993
                     summary = `value ${1e-28}`
+                    café = @café.part
+                    translated = café translate
+                        "𝟙" => café
+                    split café by "𐐀"
+                        café.part
+                append Addéd
+                    when café from café to café
+                        café = -0
                 append Added
                     when amount from 9007199254740993 to 9007199254740994
                         amount = 9007199254740993
@@ -118,6 +127,9 @@ module Numbers
                     amount = 9007199254740993
             command Changé
                 café Decimal
+                validate
+                    require café == 9007199254740993
+                        message "café"
                 produces Sénd
                     café = café
             operation Sénd
