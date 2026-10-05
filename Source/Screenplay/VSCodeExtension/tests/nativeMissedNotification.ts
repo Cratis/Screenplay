@@ -60,9 +60,9 @@ export async function runMissedNotification(root: string, controller: NativeTest
         const file = path.join(entry.parentPath, entry.name);
         return [file, fs.readFileSync(file)] as const;
     }));
-    const document = await vscode.workspace.openTextDocument(vscode.Uri.file(source));
-    await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two });
-    const original = fs.readFileSync(source);
+    // The document is opened only AFTER the spawn seam is installed: opening it may connect the product.
+    let document!: vscode.TextDocument;
+    let original!: Buffer;
     api.window.showWarningMessage = (async (message: string, ...items: unknown[]) => {
         if (message.startsWith('This repair canonically formats')) return 'Propose and preview';
         if (message.startsWith('Install exactly the reviewed')) {
@@ -104,6 +104,9 @@ export async function runMissedNotification(root: string, controller: NativeTest
         return child;
     }) as typeof spawn;
     try {
+        document = await vscode.workspace.openTextDocument(vscode.Uri.file(source));
+        await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two });
+        original = fs.readFileSync(source);
         await vscode.commands.executeCommand('screenplay.repair.refresh');
         assert.ok(rootWatcher, 'The actual installed client registered its physical root watcher (notifications suppressed by the seam)');
         const actions = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', document.uri, new vscode.Range(0, 0, document.lineCount - 1, 0));

@@ -100,9 +100,16 @@ export async function userRevertCleanFile(document: vscode.TextDocument, expecte
     // applies only when that list has focus; otherwise it uses the active editor.
     // Hide the sidebar and explicitly focus a plain editor, never a diff/list.
     await vscode.commands.executeCommand('workbench.action.closeSidebar');
+    // Close ONLY the read-only virtual review tabs (the installed review is already cleared); they can
+    // otherwise keep native focus. No user buffer, dirty or not, is closed.
+    const reviewTabs = vscode.window.tabGroups.all.flatMap(group => group.tabs).filter(tab => (tab.input instanceof vscode.TabInputText && tab.input.uri.scheme === 'screenplay-repair') || (tab.input instanceof vscode.TabInputTextDiff && tab.input.modified.scheme === 'screenplay-repair'));
+    if (reviewTabs.length) await vscode.window.tabGroups.close(reviewTabs);
     const editor = await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two, preserveFocus: false });
     await vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
-    assert.equal(vscode.window.activeTextEditor, editor, 'The exact target editor has native focus');
+    // The active-editor change is delivered asynchronously; wait (within the existing 5-second bound) for it.
+    const deadline = Date.now() + 5_000;
+    while (vscode.window.activeTextEditor?.document.uri.toString() !== document.uri.toString() && Date.now() < deadline) await new Promise<void>(resolve => setTimeout(resolve, 50));
+    assert.equal(vscode.window.activeTextEditor?.document.uri.toString(), editor.document.uri.toString(), 'The exact target editor has native focus');
     const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
     assert.ok(tab?.input instanceof vscode.TabInputText, 'Revert targets a plain native text editor, not a diff');
     assert.equal(tab.input.uri.toString(), document.uri.toString(), 'Active native tab is the exact saved target');

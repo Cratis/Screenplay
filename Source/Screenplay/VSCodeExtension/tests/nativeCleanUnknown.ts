@@ -41,9 +41,9 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
         }
         return actual;
     }) as typeof nativeFs.watch;
-    const document = await vscode.workspace.openTextDocument(vscode.Uri.file(source));
-    await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two });
-    const original = fs.readFileSync(source);
+    // The document is opened only AFTER the spawn seam is installed: opening it may connect the product.
+    let document!: vscode.TextDocument;
+    let original!: Buffer;
     api.window.showWarningMessage = (async (message: string, ...items: unknown[]) => {
         if (message.startsWith('This repair canonically formats')) {
             assert.ok(items.includes('Propose and preview'));
@@ -92,6 +92,9 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
         return child;
     }) as typeof spawn;
     try {
+        document = await vscode.workspace.openTextDocument(vscode.Uri.file(source));
+        await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two });
+        original = fs.readFileSync(source);
         await vscode.commands.executeCommand('screenplay.repair.refresh');
         assert.ok(rootWatcher, 'The actual installed client watches the separately approved physical root');
         assert.ok(rpc.includes('repair-capabilities'), 'Same real server permissions/capabilities, no fabricated contract');
