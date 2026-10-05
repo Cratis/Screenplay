@@ -216,7 +216,7 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
             {
                 foreach (var match in matches)
                 {
-                    provenance.Ambiguous(positions[match.Key]);
+                    provenance.Ambiguous(positions[match.Key], (match.Value.Handle.Document, match.Value.Handle.Path));
                 }
             }
         }

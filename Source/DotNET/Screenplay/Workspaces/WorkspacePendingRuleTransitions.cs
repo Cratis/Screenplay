@@ -24,9 +24,14 @@ static class WorkspacePendingRuleTransitions
         var originalRules = before.Entries.Where(entry => entry.Node is ValidationRuleSyntax).ToArray();
         foreach (var original in originalRules.Where(entry => Pending(entry.Node) && !removals.Contains(entry.Handle)))
         {
-            if (sources.Image(original) is { } image && finalPositions.GetValueOrDefault(image) is { } survivor)
+            // Duplicate lineage cannot erase an obligation, even when only its descendants were
+            // edited. Check every known image without selecting one as the occurrence identity.
+            foreach (var image in sources.KnownImages(original))
             {
-                RequireIntent(survivor.Node);
+                if (finalPositions.GetValueOrDefault(image) is { } survivor)
+                {
+                    RequireIntent(survivor.Node);
+                }
             }
         }
 
@@ -38,7 +43,7 @@ static class WorkspacePendingRuleTransitions
         var occurrencesByOwner = after.Entries.Where(entry => entry.Node is ValidationRuleSyntax && sources.Origin(entry) is null)
             .Select(entry => (Entry: entry, Owner: Owner(after, entry))).Where(rule => rule.Owner is not null)
             .GroupBy(rule => rule.Owner!.Handle).ToDictionary(group => group.Key, group => group.Select(rule => rule.Entry).ToArray());
-        var groups = originalRules.Where(entry => Affected(entry) && sources.Image(entry) is null && !removals.Contains(entry.Handle))
+        var groups = originalRules.Where(entry => (Affected(entry) || sources.HasAmbiguousImages(entry)) && sources.Image(entry) is null && !removals.Contains(entry.Handle))
             .Select(entry => (Entry: entry, Owner: Owner(before, entry))).Where(rule => rule.Owner is not null)
             .GroupBy(rule => rule.Owner!.Handle).Where(group => group.Any(rule => Pending(rule.Entry.Node))).ToArray();
         var claimedOwners = new HashSet<WorkspaceNodeHandle>();
@@ -62,6 +67,11 @@ static class WorkspacePendingRuleTransitions
 
             if (finalOwner is null)
             {
+                if (group.Any(rule => Pending(rule.Entry.Node) && sources.HasAmbiguousImages(rule.Entry)))
+                {
+                    throw Ambiguous();
+                }
+
                 continue;
             }
 
