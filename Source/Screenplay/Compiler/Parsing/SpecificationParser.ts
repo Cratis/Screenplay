@@ -225,7 +225,7 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
         } else {
             body.thenEventsInAnyOrder = true;
         }
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return;
     }
     if (thenResultPrefix.test(line.content)) {
@@ -238,7 +238,7 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
         } else {
             body.thenNoResult = { kind: 'SpecificationNoResultSyntax', location: locationOf(line) };
         }
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return;
     }
     if (line.content.startsWith('then denied')) {
@@ -340,9 +340,19 @@ function parseAbsentReadModel(context: ParserContext, line: SourceLine): Specifi
     return hasChildren || !concrete ? null : { kind: 'SpecificationAbsentReadModelSyntax', name: match[1], key, location: locationOf(line) } as SpecificationAbsentReadModelSyntax;
 }
 
+// Skipped bodies are not modeled, but an Exact document must not hide a numeric directive in one.
+function skipBody(context: ParserContext, indent: number): void {
+    if (context.sourceOptions.numericMode !== 'exact') return context.skipBlock(indent);
+    for (let child = context.peekChild(indent); child !== undefined; child = context.peekChild(indent)) {
+        context.reader.takeSignificant();
+        if (/^numbers(?!\s*[=:])(\s|$)/.test(child.content)) context.error(DiagnosticCodes.InvalidNumericDirective, "Expected 'numbers exact' only as the document preamble, not inside a specification body.", locationOf(child));
+        else if (child.content.startsWith('```')) context.skipFencedBody();
+    }
+}
+
 function parseClock(context: ParserContext, line: SourceLine, keyword: string): SpecificationClockSyntax | null {
     const match = clockPattern.exec(line.content);
-    context.skipBlock(line.indent);
+    skipBody(context, line.indent);
     if (match === null || match[1] !== keyword) {
         context.error(DiagnosticCodes.InvalidSpecificationClock,
             `Invalid '${keyword} clock' - expected '${keyword} clock "<ISO 8601 instant>"', such as '${keyword} clock "2026-10-05T08:00:00Z"'`, locationOf(line));

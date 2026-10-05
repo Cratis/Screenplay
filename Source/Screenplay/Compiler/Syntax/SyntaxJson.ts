@@ -50,6 +50,7 @@ function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJ
         return result;
     }
     if (value === undefined) return null;
+    if (typeof value === 'object' && value !== null && (value as { literalType?: unknown }).literalType === 'ExactNumber') return { literalType: 'ExactNumber', value: (value as { value: string }).value };
     return value as SyntaxJsonValue;
 }
 

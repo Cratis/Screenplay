@@ -215,7 +215,7 @@ internal static partial class SpecificationParser
                             eventsInAnyOrder = true;
                             eventsInAnyOrderLocation = line.Location;
                         }
-                        context.SkipBlock(line.Indent);
+                        SkipBody(context, line.Indent);
                     }
                     else if (KeywordRegex("then", "result").IsMatch(line.Content))
                     {
@@ -235,7 +235,7 @@ internal static partial class SpecificationParser
                             thenNoResult = new(line.Location);
                         }
 
-                        context.SkipBlock(line.Indent);
+                        SkipBody(context, line.Indent);
                     }
                     else if (line.Content.StartsWith("then denied", StringComparison.Ordinal))
                     {
@@ -301,10 +301,35 @@ internal static partial class SpecificationParser
         return locations;
     }
 
+    // Skipped bodies are not modeled, but an Exact document must not hide a numeric directive in one.
+    static void SkipBody(ParserContext context, int parentIndent)
+    {
+        if (context.SourceOptions.NumericMode != NumericMode.Exact)
+        {
+            context.SkipBlock(parentIndent);
+            return;
+        }
+
+        while (context.TryPeekChild(parentIndent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            if (NumericDirectiveRegex().IsMatch(child.Content))
+            {
+                context.Error(DiagnosticCodes.InvalidNumericDirective, "Expected 'numbers exact' only as the document preamble, not inside a specification body.", child.Location);
+            }
+            else if (child.Content.StartsWith("```", StringComparison.Ordinal))
+            {
+                while (context.Reader.TakeRaw() is { } raw && !CodeBlockParser.IsClosingFence(raw))
+                {
+                }
+            }
+        }
+    }
+
     static SpecificationClockSyntax? ParseClock(ParserContext context, SourceLine line, string keyword)
     {
         var match = ClockRegex().Match(line.Content);
-        context.SkipBlock(line.Indent);
+        SkipBody(context, line.Indent);
         if (!match.Success || match.Groups[1].Value != keyword)
         {
             context.Error(
@@ -700,6 +725,9 @@ internal static partial class SpecificationParser
 
         return values;
     }
+
+    [GeneratedRegex(@"^numbers(?!\s*[=:])(\s|$)", RegexOptions.None, 1000)]
+    private static partial Regex NumericDirectiveRegex();
 
     [GeneratedRegex("^role\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
     private static partial Regex CallerRoleRegex();
