@@ -81,7 +81,8 @@ cratis screenplay mcp uninstall --clients chatgpt
 ```
 
 Omit `--clients` in an interactive terminal to choose detected supported hosts.
-Noninteractive management requires explicit clients. Add `--dry-run` to preview
+Noninteractive install, update and uninstall require explicit clients; status
+can inspect all supported clients. Add `--dry-run` to preview
 without downloading, writing or launching; release metadata may still be checked.
 `--version VERSION` pins a Screenplay release independently of the CLI version.
 Claude needs no model folder: the server picks the folder the host or the

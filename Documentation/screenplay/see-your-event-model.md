@@ -89,10 +89,11 @@ Use the same tool in three ways:
 | A what-if that writes nothing | A `sketch` array of whole documents, each with `path` and `source` | Overlays the scratch documents on disk for this view only; it does not retain or apply them. |
 
 Ask the assistant to pass either `proposalId` or `sketch`, never both. A sketch
-replaces the whole document at each supplied path, not a fragment of it. Start
-with a self-contained, single-file model for what-if sketches: Screenplay 4.48.0
-has known failures with multi-file sketch paths. Keep the original files intact.
-The [MCP board guide](mcp/view.md) shows the argument shapes.
+replaces the whole document at each supplied path, not a fragment of it. Paths
+are relative to the model root. For multi-file sketches, use Screenplay 4.59.1 or
+later, or a CLI that bundles it; older versions such as 4.48.0 have sketch-path
+failures. Keep the original files intact. The [MCP board guide](mcp/view.md) shows
+the argument shapes.
 
 ![The Screenplay MCP App shows a proposed Notifications module beside Commerce's fulfillment flows. Its SendOrderConfirmation command produces OrderConfirmationSent; the surrounding frame identifies the local capture harness.](images/mcp-app-what-if-harness.png)
 

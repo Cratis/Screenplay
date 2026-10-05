@@ -97,10 +97,11 @@ Without changing anything, sketch what a Reservations feature could look like ne
 to the existing Lending module, and show it on the board. Do not propose it yet.
 ```
 
-The assistant passes whole `.play` documents as a `sketch`. Screenplay 4.48.0
-has known failures with multi-file sketch paths; start with a self-contained
-single-file model. For a model whose complete source is `application.play`, this
-example replaces that document for the view only:
+The assistant passes whole `.play` documents as a `sketch`, with paths relative
+to the model root. Multi-file sketches require Screenplay 4.59.1 or later, or a
+CLI that bundles it; older versions such as 4.48.0 have sketch-path failures.
+For a model whose complete source is `application.play`, this example replaces
+that document for the view only:
 
 ```json
 {
@@ -125,7 +126,7 @@ draws a new board, from the model as it is at that moment.
 | | MCP board | VS Code extension |
 | --- | --- | --- |
 | Opens from | A prompt in the conversation | A `.play` file |
-| Follows your edits | Draws again on request | Redraws as you type |
+| Follows your edits | Polls disk when the host allows server calls; otherwise redraws on request | Redraws as you type |
 | Shows a proposal or sketch | Yes | No |
 | Needs the MCP server | Yes | No |
 

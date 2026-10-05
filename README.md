@@ -122,7 +122,7 @@ Three ideas keep the script both readable and complete:
   closed so the compiler never silently discards an unknown behavior.
 
 The full construct reference and the complete EBNF grammar live in
-[`Documentation/screenplay`](Documentation/screenplay/index).
+[`Documentation/screenplay`](Documentation/screenplay/index.mdx).
 
 ## 🎥 One script, two performances
 
@@ -150,7 +150,7 @@ files pleasant:
 
 | Piece | What it is | Where |
 | --- | --- | --- |
-| **Language & grammar** | The language reference for every construct and the full EBNF grammar | [`Documentation/screenplay`](Documentation/screenplay/index) |
+| **Language & grammar** | The language reference for every construct and the full EBNF grammar | [`Documentation/screenplay`](Documentation/screenplay/index.mdx) |
 | **Samples** | Hand-written applications, from a one-file starter to multi-module folders — every construct in use, all verified by the specs | [`Samples`](Samples) |
 | **`Cratis.Screenplay`** | The .NET compiler — parsing, the shared syntax tree, [visitors and tree traversal](Documentation/screenplay/visitors.md), diagnostics, file/folder compilation, and the versioned executable semantic model foundation | [`Source/DotNET/Screenplay`](Source/DotNET/Screenplay) |
 | **`Cratis.Screenplay.Tool`** | The `screenplay` CLI (a dotnet tool) — verifies `.play` files and exposes syntax and workspace tools over MCP | [`Source/DotNET/Tool`](Source/DotNET/Tool) |
@@ -191,7 +191,7 @@ readiness remain separate verdicts.
 ```shell
 yarn install
 yarn build
-yarn dev      # opens the standalone editor on http://localhost:9200
+yarn dev      # serves the standalone editor on http://localhost:9200
 ```
 
 Prefer to write in your own editor? Press **F5** in VS Code — it builds the language service and the extension
@@ -200,7 +200,7 @@ and launches an Extension Development Host with full `.play` support, ready to t
 
 ## 🗺️ Start here (for contributors)
 
-- [`Documentation/screenplay`](Documentation/screenplay/index) — the language overview, design principles, and top-level structure. **Start here to learn the language.**
+- [`Documentation/screenplay`](Documentation/screenplay/index.mdx) — the language overview, design principles, and top-level structure. **Start here to learn the language.**
 - [`Documentation/screenplay/slices.md`](Documentation/screenplay/slices.md) — modules, features, and the four slice types.
 - [`Documentation/screenplay/grammar.md`](Documentation/screenplay/grammar.md) — the complete EBNF grammar.
 - [`Samples`](Samples) — complete applications written in Screenplay. [`Samples/Invoicing`](Samples/Invoicing) uses every construct the language has.

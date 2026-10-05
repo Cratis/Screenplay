@@ -42,10 +42,10 @@ ordinary tools but not `visualize-model`.
 - Pass `proposalId` to compare an outstanding proposal with the disk model.
 - Pass whole documents in `sketch` to see a what-if without retaining or writing it.
 
-For what-if sketches, start with a self-contained single-file model; version
-4.48.0 has known multi-file sketch-path failures. Never pass both `proposalId`
-and `sketch`. Viewing does not apply a proposal. Keep approval enabled for
-`apply` and `recover-workspace`.
+Sketch paths are relative to the model root. Multi-file sketches require tool
+4.59.1 or later; older versions such as 4.48.0 have sketch-path failures. Never
+pass both `proposalId` and `sketch`. Viewing does not apply a proposal. Keep
+approval enabled for `apply` and `recover-workspace`.
 
 The board parses and draws; it does not execute commands or specifications.
 Run the compiler to check validity, and read diagnostics rather than treating a
