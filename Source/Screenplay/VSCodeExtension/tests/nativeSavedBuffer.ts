@@ -93,6 +93,16 @@ export async function userSaveDirtyFile(document: vscode.TextDocument, expected:
     } finally { listener.dispose(); changes.dispose(); }
 }
 
+/**
+ * The document of the native (main-thread) active tab. The extension-host activeTextEditor can lag behind
+ * the native tab state on this host, so harness steps that need "the editor the user sees" read the tab API.
+ */
+export function activeNativeDocument(): vscode.TextDocument | undefined {
+    const input = vscode.window.tabGroups.activeTabGroup.activeTab?.input;
+    const uri = input instanceof vscode.TabInputText ? input.uri : input instanceof vscode.TabInputTextDiff ? input.modified : undefined;
+    return uri ? vscode.workspace.textDocuments.find(document => document.uri.toString() === uri.toString()) : undefined;
+}
+
 /** Revert-and-close a buffer the HARNESS created (and still holds); never a product/user-owned buffer. */
 export async function disposeHarnessBuffer(document: vscode.TextDocument): Promise<void> {
     if (document.isClosed) return;
@@ -114,13 +124,17 @@ export async function userRevertCleanFile(document: vscode.TextDocument, expecte
     // otherwise keep native focus. No user buffer, dirty or not, is closed.
     const reviewTabs = vscode.window.tabGroups.all.flatMap(group => group.tabs).filter(tab => (tab.input instanceof vscode.TabInputText && tab.input.uri.scheme === 'screenplay-repair') || (tab.input instanceof vscode.TabInputTextDiff && tab.input.modified.scheme === 'screenplay-repair'));
     if (reviewTabs.length) await vscode.window.tabGroups.close(reviewTabs);
+    // Earlier harness cases left many CLEAN tabs of other roots open (same label). Close only clean file tabs of
+    // OTHER documents so the exact target tab is unambiguous; dirty buffers and the target are never closed.
+    const clutter = vscode.window.tabGroups.all.flatMap(group => group.tabs).filter(tab => tab.input instanceof vscode.TabInputText && tab.input.uri.scheme === 'file' && !tab.isDirty && tab.input.uri.toString() !== document.uri.toString());
+    if (clutter.length) await vscode.window.tabGroups.close(clutter);
     // Deterministic focus: reveal the exact document in the column where it already lives and await the
     // native active-editor change for that exact URI (same 5-second bound).
     const target = document.uri.toString();
     const column = vscode.window.visibleTextEditors.find(visible => visible.document.uri.toString() === target)?.viewColumn ?? vscode.ViewColumn.Two;
     let focused!: () => void, focusFailed!: (error: Error) => void;
     const activated = new Promise<void>((resolve, reject) => { focused = resolve; focusFailed = reject; });
-    const timer = setTimeout(() => focusFailed(new Error(`Active editor did not become ${target} within 5 seconds; active=${vscode.window.activeTextEditor?.document.uri.toString()}`)), 5_000);
+    const timer = setTimeout(() => focusFailed(new Error(`Active editor did not become ${target} within 5 seconds; active=${activeNativeDocument()?.uri.toString()}`)), 5_000);
     const subscription = vscode.window.onDidChangeActiveTextEditor(changed => { if (changed?.document.uri.toString() === target) focused(); });
     let editor: vscode.TextEditor;
     try {
@@ -130,11 +144,17 @@ export async function userRevertCleanFile(document: vscode.TextDocument, expecte
         const group = groups[(editor.viewColumn ?? column) - 1];
         if (group) await vscode.commands.executeCommand(group);
         await vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
-        if (vscode.window.activeTextEditor?.document.uri.toString() === target) focused();
+        if (activeNativeDocument()?.uri.toString() === target) focused();
         await activated.catch(() => undefined); // The assertion below reports a failure with the same evidence.
     } finally { clearTimeout(timer); subscription.dispose(); }
-    const layout = vscode.window.tabGroups.all.map(group => ({ column: group.viewColumn, active: group.isActive, tabs: group.tabs.map(candidate => `${candidate.isActive ? '*' : ''}${candidate.label}${candidate.isDirty ? '(dirty)' : ''}`) }));
-    assert.equal(vscode.window.activeTextEditor?.document.uri.toString(), editor.document.uri.toString(), `The exact target editor has native focus: ${JSON.stringify({ shownColumn: editor.viewColumn, requestedColumn: column, layout })}`);
+    const layout = vscode.window.tabGroups.all.map(group => ({ column: group.viewColumn, active: group.isActive, tabs: group.tabs.map(candidate => `${candidate.isActive ? '*' : ''}${candidate.input instanceof vscode.TabInputText ? candidate.input.uri.toString().slice(-48) : candidate.label}${candidate.isDirty ? '(dirty)' : ''}`) }));
+    // The command targets the main-thread active tab. The extension-host activeTextEditor can lag behind it (observed:
+    // active group and tab were already the target while activeTextEditor still named another editor), so the native
+    // tab state (active group + active tab) is the authoritative focus signal; any lag is reported.
+    const activeTab = vscode.window.tabGroups.activeTabGroup.activeTab;
+    const nativeActive = activeTab?.input instanceof vscode.TabInputText && activeTab.input.uri.toString() === target && vscode.window.tabGroups.activeTabGroup.viewColumn === editor.viewColumn;
+    if (vscode.window.activeTextEditor?.document.uri.toString() !== target) console.log(`NATIVE FOCUS: extension-host activeTextEditor lags the native active tab: ${JSON.stringify({ activeTextEditor: vscode.window.activeTextEditor?.document.uri.toString(), nativeActive })}`);
+    assert.equal(nativeActive, true, `The exact target editor has native focus: ${JSON.stringify({ shownColumn: editor.viewColumn, requestedColumn: column, layout })}`);
     const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
     assert.ok(tab?.input instanceof vscode.TabInputText, 'Revert targets a plain native text editor, not a diff');
     assert.equal(tab.input.uri.toString(), document.uri.toString(), 'Active native tab is the exact saved target');

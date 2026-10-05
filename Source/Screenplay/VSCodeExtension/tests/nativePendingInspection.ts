@@ -9,7 +9,7 @@ import childProcess from 'node:child_process';
 import { NativeTestController } from './nativeTestController';
 
 /** Hold ONLY a genuine generated read response, then release it after actual native owner disposal. */
-export async function pendingInspectionTeardown(api: typeof vscode, controller: NativeTestController, watcher: fs.FSWatcher, root: string, verify: () => void, applyFrames: () => number): Promise<void> {
+export async function pendingInspectionTeardown(api: typeof vscode, controller: NativeTestController, watcher: fs.FSWatcher, root: string, verify: () => void, applyFrames: () => number, existing: childProcess.ChildProcess[] = []): Promise<void> {
     const evidence = process.env.SCREENPLAY_REPAIR_TEARDOWN_EVIDENCE!;
     assert.ok(evidence && !evidence.startsWith(root + path.sep));
     let sent!: () => void, generated!: () => void;
@@ -23,12 +23,14 @@ export async function pendingInspectionTeardown(api: typeof vscode, controller: 
     const lateUi: string[] = [];
     const buffers = vscode.workspace.textDocuments.map(document => ({ document, text: document.getText(), version: document.version, dirty: document.isDirty }));
     const spawn = childProcess.spawn;
-    let release = () => {};
+    const releases: (() => void)[] = [];
+    const release = () => { for (const each of releases) each(); };
     // Trusted test transport proxy: opaque server bytes, a four-MiB bounded
     // queue, no manufactured reply/capability/schema or exposed Apply token.
-    childProcess.spawn = ((...args: Parameters<typeof spawn>) => {
-        const child = spawn(...args);
-        if (args[0] !== process.env.SCREENPLAY_REPAIR_SERVER || !child.stdin || !child.stdout) return child;
+    // Hook a server child. A live owner child (e.g. after a typed refusal) may serve the inspection, so
+    // children that already exist are hooked too; a freshly spawned inspector child is hooked on spawn.
+    const hook = (child: childProcess.ChildProcess) => {
+        if (!child.stdin || !child.stdout) return;
         const input = child.stdin, output = child.stdout;
         const write = input.write, emit = output.emit;
         let holding = false;
@@ -65,12 +67,17 @@ export async function pendingInspectionTeardown(api: typeof vscode, controller: 
             }
             return true;
         }) as typeof output.emit;
-        release = () => {
+        releases.push(() => {
             holding = false;
             output.emit = emit;
             for (const chunk of chunks) Reflect.apply(emit, output, ['data', chunk]);
             chunks.length = 0;
-        };
+        });
+    };
+    for (const child of existing) if (child.exitCode === null && child.signalCode === null) hook(child);
+    childProcess.spawn = ((...args: Parameters<typeof spawn>) => {
+        const child = spawn(...args);
+        if (args[0] === process.env.SCREENPLAY_REPAIR_SERVER) hook(child);
         return child;
     }) as typeof spawn;
     const originalOpen = api.workspace.openTextDocument, originalShow = api.window.showTextDocument;

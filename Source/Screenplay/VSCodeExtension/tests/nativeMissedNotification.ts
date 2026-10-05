@@ -9,6 +9,7 @@ import * as path from 'node:path';
 import childProcess from 'node:child_process';
 import { createRequire } from 'node:module';
 import { NativeTestController } from './nativeTestController';
+import { activeNativeDocument } from './nativeSavedBuffer';
 import { pendingInspectionTeardown } from './nativePendingInspection';
 import { repairSource } from './repairFixture';
 
@@ -47,6 +48,7 @@ export async function runMissedNotification(root: string, controller: NativeTest
     let suppressed = 0, prompts = 0, applyFrames = 0, applyId: unknown;
     let changedBytes: Map<string, Buffer> | undefined;
     let teardown = false;
+    const children: childProcess.ChildProcess[] = [];
     // TEST SEAM (clearly labelled): the real native watcher is registered but its notifications are NOT forwarded.
     nativeFs.watch = ((file: fs.PathLike, options: fs.WatchOptions, _listener: fs.WatchListener<string | Buffer>) => {
         const actual = watch(file, options, () => { ++suppressed; });
@@ -83,6 +85,7 @@ export async function runMissedNotification(root: string, controller: NativeTest
     childProcess.spawn = ((...args: Parameters<typeof spawn>) => {
         const child = spawn(...args);
         if (args[0] !== process.env.SCREENPLAY_REPAIR_SERVER || !child.stdin || !child.stdout) return child;
+        children.push(child);
         const input = child.stdin, write = input.write;
         let buffered = '';
         child.stdout.on('data', (data: Buffer) => { // Passive observation of genuine responses only.
@@ -113,7 +116,7 @@ export async function runMissedNotification(root: string, controller: NativeTest
         const action = actions.find(action => action.title.startsWith('Change routing:'))?.command;
         assert.ok(action, `Fresh installed preview authority: ${warnings.join('; ')}`);
         await vscode.commands.executeCommand(action.command, ...(action.arguments ?? []));
-        const summary = vscode.window.activeTextEditor!.document;
+        const summary = activeNativeDocument()!;
         assert.equal(summary.uri.scheme, 'screenplay-repair');
         const prefix = `/${summary.uri.path.split('/')[1]}/`;
         const pages = vscode.workspace.textDocuments.filter(page => page.uri.scheme === 'screenplay-repair' && page.uri.path.startsWith(prefix) && /\/(before|after)\//.test(page.uri.path));
@@ -159,7 +162,7 @@ export async function runMissedNotification(root: string, controller: NativeTest
         verify();
         console.log(`NATIVE MISSED NOTIFICATION PROTECTED: ${JSON.stringify({ kind, nestedFailure: expected.failure, applyFrames, suppressedNativeNotifications: suppressed, retries: 0, installed: false })}`);
         teardown = true;
-        await pendingInspectionTeardown(api, controller, rootWatcher, model, verify, () => applyFrames);
+        await pendingInspectionTeardown(api, controller, rootWatcher, model, verify, () => applyFrames, children); // The live owner child (typed refusal, no kill) serves the inspection.
     } finally {
         childProcess.spawn = spawn;
         nativeFs.watch = watch;

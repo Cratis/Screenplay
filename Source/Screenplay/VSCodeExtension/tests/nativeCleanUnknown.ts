@@ -10,7 +10,7 @@ import childProcess from 'node:child_process';
 import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
 import { NativeTestController } from './nativeTestController';
-import { observeSavedReload } from './nativeSavedBuffer';
+import { activeNativeDocument, observeSavedReload } from './nativeSavedBuffer';
 import { pendingInspectionTeardown } from './nativePendingInspection';
 import { repairSource } from './repairFixture';
 import { withholdApplyResponse } from './nativeApplySeam';
@@ -102,7 +102,7 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
         const action = actions.find(action => action.title.startsWith('Change routing:'))?.command;
         assert.ok(action, `Fresh installed preview authority: ${warnings.join('; ')}`);
         await vscode.commands.executeCommand(action.command, ...(action.arguments ?? []));
-        const summary = vscode.window.activeTextEditor!.document;
+        const summary = activeNativeDocument()!;
         assert.equal(summary.uri.scheme, 'screenplay-repair');
         const prefix = `/${summary.uri.path.split('/')[1]}/`;
         const pages = vscode.workspace.textDocuments.filter(page => page.uri.scheme === 'screenplay-repair' && page.uri.path.startsWith(prefix) && /\/(before|after)\//.test(page.uri.path));
@@ -139,7 +139,7 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
         const refused = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', document.uri, new vscode.Range(0, 0, 0, 0));
         assert.deepEqual(refused, []);
         await vscode.commands.executeCommand('screenplay.repair.inspectState');
-        const inspection = JSON.parse(vscode.window.activeTextEditor!.document.getText()) as { uncertainApply: string | null; state: { stateRevision: string; exists: boolean; byteCount: number } };
+        const inspection = JSON.parse(activeNativeDocument()!.getText()) as { uncertainApply: string | null; state: { stateRevision: string; exists: boolean; byteCount: number } };
         assert.equal(inspection.state.exists, true);
         const identity = expected.get('.screenplay/identities.json')!;
         assert.equal(inspection.state.stateRevision, createHash('sha256').update(identity).digest('hex'));

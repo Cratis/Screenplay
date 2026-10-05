@@ -14,7 +14,7 @@ import { classifyRootDocument } from '../RepairDocuments';
 import { associatedUntitledTargets } from './prepareHostFixtures';
 import { repairSource } from './repairFixture';
 import { NativeTestController } from './nativeTestController';
-import { disposeHarnessBuffer, userRevertCleanFile, userSaveDirtyFile } from './nativeSavedBuffer';
+import { activeNativeDocument, disposeHarnessBuffer, userRevertCleanFile, userSaveDirtyFile } from './nativeSavedBuffer';
 import { pendingInspectionTeardown } from './nativePendingInspection';
 import { withholdApplyResponse } from './nativeApplySeam';
 
@@ -303,7 +303,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
             await vscode.commands.executeCommand(action.command, ...(action.arguments ?? []));
         };
         const navigateReview = async () => {
-            const summary = vscode.window.activeTextEditor?.document;
+            const summary = activeNativeDocument();
             assert.ok(summary, `Review did not publish a native editor: ${warnings.join('; ')}`);
             assert.equal(summary.uri.scheme, 'screenplay-repair');
             await vscode.workspace.fs.readFile(summary.uri); // Expired old tabs cannot masquerade as a completed review.
@@ -324,7 +324,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
                 await vscode.commands.executeCommand('vscode.diff', input.original, input.modified, tab.label, { preview: false });
                 await vscode.commands.executeCommand('cursorBottom');
                 await vscode.commands.executeCommand('editorScroll', { to: 'up', by: 'page', value: 1 });
-                assert.equal(vscode.window.activeTextEditor?.document.uri.toString(), input.modified.toString(), 'Actual native diff editor received focus');
+                assert.equal(activeNativeDocument()?.uri.toString(), input.modified.toString(), 'Actual native diff editor received focus');
             }
             await vscode.window.showTextDocument(summary, { preview: false });
             assert.equal(applyPrompts, prompts, 'Tab switching and scrolling never open Apply confirmation');
@@ -470,7 +470,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         live(sameWatch);
 
         const currentAfterPages = () => {
-            const summary = vscode.window.activeTextEditor!.document.uri;
+            const summary = activeNativeDocument()!.uri;
             assert.equal(summary.scheme, 'screenplay-repair');
             assert.ok(summary.path.endsWith('/review.md'));
             const prefix = `/${summary.path.split('/')[1]}/`;
@@ -489,7 +489,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
                     const relative = page.uri.path.split('/after/')[1];
                     expected.set(relative, Buffer.from(await vscode.workspace.fs.readFile(page.uri)));
                 }
-                const summary = vscode.window.activeTextEditor!.document.uri;
+                const summary = activeNativeDocument()!.uri;
                 const prefix = `/${summary.path.split('/')[1]}/`;
                 for (const page of vscode.workspace.textDocuments.filter(page => page.uri.scheme === 'screenplay-repair' && page.uri.path.startsWith(prefix) && page.uri.path.includes('/before/'))) {
                     reviewedBefore.set(page.uri.path.split('/before/')[1], Buffer.from(await vscode.workspace.fs.readFile(page.uri)));
@@ -635,7 +635,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         const typedSource = raceDocument.getText(), typedState = postDispatchUntitled!.getText();
         const typedVersion = raceDocument.version, stateVersion = postDispatchUntitled!.version;
         await vscode.commands.executeCommand('screenplay.repair.inspectState');
-        const inspection = JSON.parse(vscode.window.activeTextEditor!.document.getText()) as { uncertainApply: string | null; state: { exists: boolean; path: string; stateRevision: string; byteCount: number } };
+        const inspection = JSON.parse(activeNativeDocument()!.getText()) as { uncertainApply: string | null; state: { exists: boolean; path: string; stateRevision: string; byteCount: number } };
         const reviewedIdentities = raceExpected.get('.screenplay/identities.json')!;
         assert.equal(inspection.state.exists, true);
         assert.equal(inspection.state.path, '.screenplay/identities.json');
@@ -665,7 +665,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         assert.ok(warnings.some(message => message.startsWith('DirtyBuffer:')));
         assert.equal(rpc.length, conflictReads, 'Expected Save conflict grants no recovery/proposal authority');
         await vscode.commands.executeCommand('screenplay.repair.inspectState');
-        const afterConflict = JSON.parse(vscode.window.activeTextEditor!.document.getText()) as typeof inspection;
+        const afterConflict = JSON.parse(activeNativeDocument()!.getText()) as typeof inspection;
         assert.equal(afterConflict.state.stateRevision, inspection.state.stateRevision);
         assert.equal(afterConflict.uncertainApply, inspection.uncertainApply, 'Inspection STILL works while conflict/typing is unresolved');
         const verifyProtected = () => {
