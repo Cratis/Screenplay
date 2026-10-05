@@ -81,7 +81,8 @@ cratis screenplay mcp uninstall --clients chatgpt
 ```
 
 Omit `--clients` in an interactive terminal to choose detected supported hosts.
-Noninteractive management requires explicit clients. Add `--dry-run` to preview
+Noninteractive install, update and uninstall require explicit clients; status
+can inspect all supported clients. Add `--dry-run` to preview
 without downloading, writing or launching; release metadata may still be checked.
 `--version VERSION` pins a Screenplay release independently of the CLI version.
 Claude needs no model folder: the server picks the folder the host or the
@@ -113,11 +114,24 @@ docker pull cratis/screenplay
 `latest` follows the newest stable release. To stay on a version, use its tag, for
 example `cratis/screenplay:1.2.3`, in every configuration below.
 
-The Cratis CLI also hosts the embeddable `Cratis.Screenplay.Mcp` library with
-`cratis screenplay mcp ROOT`; project-local AI registration and user-level desktop
-installation are separate operations. Installing AI guidance alone does not install
-a desktop extension. `cratis screenplay generate` generates source models, not an
-MCP server.
+Cratis CLI hosting shipped in **CLI 3.11.0**. If you have the CLI installed,
+use its bundled `Cratis.Screenplay.Mcp` library without installing a second tool:
+
+```bash
+cratis screenplay mcp ./specifications
+```
+
+For the MCP App board (`visualize-model`), use **CLI versions that bundle
+Screenplay 4.47.0 or later**, or the standalone **Cratis.Screenplay.Tool 4.47.0
+or later**. CLI hosting and board support are separate requirements. The host
+must also support MCP Apps. See [View a model](view.md).
+
+In a client configuration, use `"command": "cratis"` and
+`"args": ["screenplay", "mcp", "/Users/you/work/shop/specifications"]`.
+Project-local AI registration and user-level desktop installation are separate
+operations. Installing AI guidance alone does not install a desktop extension or
+the server. `cratis screenplay generate` generates source models;
+`cratis screenplay mcp` hosts the MCP server.
 
 Host developers can consult the [embedding API](reference.md#embedding-api).
 
