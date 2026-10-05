@@ -5,7 +5,7 @@ import { SyntaxNode } from './SyntaxNode';
 import { InvalidSyntaxJson } from './InvalidSyntaxJson';
 import { isExactNumberToken, parseExactNumber } from './ExactNumber';
 import { validateSyntaxInvariants } from './SyntaxInvariants';
-import { syntaxCollections } from './SyntaxCollections';
+import { syntaxMemberNames, validateSyntaxMembers } from './SyntaxMemberContracts';
 import { legacySourceOptions, validatedSourceOptions } from './SourceOptions';
 
 export type SyntaxJsonValue = string | number | boolean | null | SyntaxJsonValue[] | { [member: string]: SyntaxJsonValue };
@@ -13,8 +13,6 @@ export type SyntaxJsonValue = string | number | boolean | null | SyntaxJsonValue
 const isNode = (value: unknown): value is SyntaxNode =>
     typeof value === 'object' && value !== null && typeof (value as { kind?: unknown }).kind === 'string';
 const sourceRoots = new Set(['ApplicationSyntax', 'ProjectionSyntax', 'CaptureSyntax', 'SpecificationSyntax']);
-type CollectionContract = readonly [name: string, nullable: boolean, itemKinds: readonly number[]];
-const collections = new Map<string, readonly CollectionContract[]>(syntaxCollections.kinds.map((kind, index) => [kind, syntaxCollections.collections[index]] as const).filter(([kind]) => !kind.startsWith('type:')));
 
 // The canonical JSON form of a syntax tree, the same form the C# SyntaxJson writes: 'kind' first, then the
 // members in ordinal order, with source locations left out. Because a node only carries the members this
@@ -24,20 +22,22 @@ export function toSyntaxJson(node: SyntaxNode): SyntaxJsonValue {
     return write(node);
 }
 
-function write(value: unknown): SyntaxJsonValue {
-    if (Array.isArray(value)) return value.map(write);
+function write(value: unknown, owningMode = 'legacy'): SyntaxJsonValue {
+    if (Array.isArray(value)) return value.map(item => write(item, owningMode));
     if (isNode(value)) {
+        if (sourceRoots.has(value.kind)) owningMode = validatedSourceOptions((value as unknown as { sourceOptions?: unknown }).sourceOptions ?? legacySourceOptions).numericMode;
         validateSyntaxInvariants(value);
         const result: { [member: string]: SyntaxJsonValue } = { kind: value.kind };
         const structural = { ...value } as unknown as Record<string, unknown>;
         if (value.kind === 'ApplicationSyntax' && structural.eventSources === undefined) structural.eventSources = [];
         if (value.kind === 'CommandSyntax' && structural.stream === undefined) structural.stream = null;
         if (value.kind === 'CommandSyntax' && structural.streamCandidates === undefined) structural.streamCandidates = [];
-        const members = Object.keys(structural).filter(member => member !== 'kind' && member !== 'location' && member !== 'targetLocation' && member !== 'referenceLocation' && member !== 'referenceLength' && member !== 'nameWasEscaped' && !(value.kind === 'OperationSyntax' && member === 'usesLocation')).sort(ordinal);
+        const known = owningMode === 'exact' ? syntaxMemberNames(value.kind) : undefined;
+        const members = Object.keys(structural).filter(member => (known === undefined || known.has(member)) && member !== 'kind' && member !== 'location' && member !== 'targetLocation' && member !== 'referenceLocation' && member !== 'referenceLength' && member !== 'nameWasEscaped' && !(value.kind === 'OperationSyntax' && member === 'usesLocation')).sort(ordinal);
         for (const member of members) {
             const memberValue = structural[member];
             if (member === 'sourceOptions' && (memberValue as { numericMode?: string } | undefined)?.numericMode === 'legacy') continue;
-            result[member] = write(memberValue);
+            result[member] = write(memberValue, owningMode);
         }
         return result;
     }
@@ -56,9 +56,10 @@ function validateNumbers(value: unknown, owningMode: string, depth: number): voi
         if (depth > 0 && owningMode !== options.numericMode) throw new InvalidSyntaxJson('Conflicting source numeric options.');
         owningMode = options.numericMode;
     }
-    if (owningMode === 'exact' && isNode(node)) validateCollections(node);
+    if (depth === 0 && owningMode === 'exact' && !sourceRoots.has(node.kind as string)) throw new InvalidSyntaxJson('Exact syntax requires a complete source root.');
+    if (owningMode === 'exact' && isNode(node)) validateSyntaxMembers(node);
     if (node.kind === 'RawExpressionSyntax' && owningMode === 'exact' && typeof node.text === 'string' && isExactNumberToken(node.text)) throw new InvalidSyntaxJson('An exact numeric operand must be an explicit ExactNumber, not opaque numeric text.');
-    if (node.kind === 'LiteralExpressionSyntax') {
+    if (node.kind === 'LiteralExpressionSyntax' && Object.hasOwn(node, 'value')) {
         if (owningMode === 'exact' && (typeof node.value === 'number' || (node.value !== null && !['string', 'boolean', 'object'].includes(typeof node.value)))) throw new InvalidSyntaxJson('Exact source requires supported primitive values or an explicit ExactNumber literal.');
         if (typeof node.value === 'object' && node.value !== null) {
             const literal = node.value as { literalType?: unknown; value?: unknown };
@@ -67,25 +68,8 @@ function validateNumbers(value: unknown, owningMode: string, depth: number): voi
             } else if (owningMode === 'exact') throw new InvalidSyntaxJson('Exact source refuses old or plain object literal insertion.');
         }
     }
-    for (const [name, member] of Object.entries(node)) if (name !== 'location' && name !== 'targetLocation' && name !== 'usesLocation') validateNumbers(member, owningMode, depth + 1);
-}
-
-// The compact table is generated and held to the same native schema as the strict reader. Keeping
-// only collection contracts here avoids shipping the full transport reader in the Monaco runtime.
-function validateCollections(node: SyntaxNode): void {
-    const contracts = collections.get(node.kind);
-    if (contracts === undefined) throw new InvalidSyntaxJson(`Unknown syntax kind '${node.kind}'.`);
-    const members = node as unknown as Record<string, unknown>;
-    for (const [name, nullable, itemKinds] of contracts) {
-        if (!Object.hasOwn(members, name)) continue;
-        const value = members[name];
-        if (value == null && nullable) continue;
-        if (!Array.isArray(value)) throw new InvalidSyntaxJson(`'${node.kind}.${name}' requires a nonnull collection.`);
-        for (const item of value) {
-            const discriminator = isNode(item) ? item.kind : `type:${typeof item}`;
-            if (item === null || !itemKinds.some(index => syntaxCollections.kinds[index] === discriminator)) throw new InvalidSyntaxJson(`Invalid item in '${node.kind}.${name}'.`);
-        }
-    }
+    const known = owningMode === 'exact' && isNode(node) ? syntaxMemberNames(node.kind) : undefined;
+    for (const [name, member] of Object.entries(node)) if ((known === undefined || known.has(name) || (isNode(member) && sourceRoots.has(member.kind))) && name !== 'location' && name !== 'targetLocation' && name !== 'usesLocation') validateNumbers(member, owningMode, depth + 1);
 }
 
 function ordinal(left: string, right: string): number {

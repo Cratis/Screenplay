@@ -4,6 +4,7 @@
 import { sourceLocation } from '../Diagnostics/SourceLocation';
 import { isExactNumberToken, parseExactNumber } from './ExactNumber';
 import { validateSyntaxInvariants } from './SyntaxInvariants';
+import { validateSyntaxMembers } from './SyntaxMemberContracts';
 import { syntaxDefinitions } from './SyntaxDefinitions';
 import { SyntaxNode } from './SyntaxNode';
 import { validatedSourceOptions } from './SourceOptions';
@@ -100,6 +101,7 @@ function restore(value: Value, schema: Schema, path: string, depth: number): Val
             if (roots.has(result.kind)) result.sourceOptions = validatedSourceOptions(result.sourceOptions) as unknown as Value;
             // Source positions are server-owned. No raw spans or authored token lengths are invented.
             (result as unknown as { location: ReturnType<typeof sourceLocation> }).location = sourceLocation(1, 1);
+            validateSyntaxMembers(result as unknown as SyntaxNode);
             validateSyntaxInvariants(result as unknown as SyntaxNode);
         }
         return result;
