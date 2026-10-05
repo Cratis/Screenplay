@@ -99,7 +99,7 @@ internal static class SourceNumericModes
 
         if (node is LiteralExpressionSyntax literal &&
             ((mode == NumericMode.Legacy && literal.Value is ExactNumber) ||
-             (mode == NumericMode.Exact && literal.Value is double or float or int or long or decimal)))
+             (mode == NumericMode.Exact && literal.Value is not (null or string or bool or ExactNumber))))
         {
             errors.Add(Diagnostic.Error(DiagnosticCodes.IncompatibleNumericSource, "Numeric literal provenance disagrees with its source mode; construct an explicit ExactNumber for exact authoring.", literal.RawLocation ?? literal.Location));
         }

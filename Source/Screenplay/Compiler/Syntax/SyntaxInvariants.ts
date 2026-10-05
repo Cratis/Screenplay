@@ -14,7 +14,9 @@ import { isSourceStreamName, isSourceStreamTypeName } from '../Text/SourceStream
 const hasKind = (value: unknown, kind: string): boolean => typeof value === 'object' && value !== null && (value as SyntaxNode).kind === kind;
 const refuse = (message: string): never => { throw new InvalidSyntaxJson(message); };
 const collection = (value: unknown, kind: string, message: string): void => {
-    if (!Array.isArray(value) || [...value].some(element => !hasKind(element, kind))) refuse(message);
+    if (!Array.isArray(value)) return refuse(message);
+    // Indexed, so no caller-overridable iteration method or iterator is consulted.
+    for (let position = 0; position < value.length; position++) if (!hasKind(value[position], kind)) refuse(message);
 };
 
 // The native ImplementationInvariants / OperationInvariants / EventSourceInvariants contracts.
@@ -28,7 +30,8 @@ export function validateSyntaxInvariants(node: SyntaxNode): void {
             if (production.when != null || production.event !== operation.name || production.for != null || (production.tags ?? []).length > 0) refuse('An inline operation requires a matching unconditional target without event metadata.');
             collection(operation.inputs, 'PropertySyntax', 'Operation inputs must be a collection of properties.');
             collection(production.mappings, 'PropertyMappingSyntax', 'Production mappings must be a collection of mappings.');
-            if (operation.inputs.length !== production.mappings.length || operation.inputs.some((input, index) => input.name !== production.mappings[index].property)) refuse('Inline operation inputs and mappings must correspond in order.');
+            if (operation.inputs.length !== production.mappings.length) refuse('Inline operation inputs and mappings must correspond in order.');
+            for (let position = 0; position < operation.inputs.length; position++) if (operation.inputs[position].name !== production.mappings[position].property) refuse('Inline operation inputs and mappings must correspond in order.');
         }
     }
     if (node.kind === 'OperationPhaseSyntax') {
@@ -44,7 +47,7 @@ export function validateSyntaxInvariants(node: SyntaxNode): void {
     if (node.kind === 'ImplementationSyntax') {
         const implementation = node as ImplementationSyntax;
         collection(implementation.hints, 'ImplementationHintSyntax', 'Implementation hints must be a collection of nonblank hints.');
-        implementation.hints.forEach(validateSyntaxInvariants);
+        for (let position = 0; position < implementation.hints.length; position++) validateSyntaxInvariants(implementation.hints[position]);
     }
     if (node.kind === 'ImplementationHintSyntax' && isBlankImplementationHint((node as ImplementationHintSyntax).text)) refuse('An implementation hint must be nonblank.');
     validateSourceStream(node);
@@ -71,10 +74,12 @@ function validateSourceStream(node: SyntaxNode): void {
         if (command.stream?.propertyCandidate != null) refuse('The authoritative command stream cannot contain an ambiguous property candidate.');
         if (command.stream != null && !hasKind(command.stream, 'CommandStreamSyntax')) refuse('The authoritative command stream must be a command stream node.');
         if (command.streamCandidates !== undefined) collection(command.streamCandidates, 'CommandStreamSyntax', 'Command stream candidates must be a collection without null elements.');
-        for (const rejected of command.streamCandidates ?? []) {
+        const candidates = command.streamCandidates ?? [];
+        for (let position = 0; position < candidates.length; position++) {
+            const rejected = candidates[position];
             validateSourceStream(rejected);
             if (rejected.propertyCandidate === null && command.stream == null) refuse('A duplicate route candidate requires an authoritative route.');
-            if (rejected.propertyCandidate !== null && command.properties.some(property => property === rejected.propertyCandidate)) refuse('An ambiguous property is owned only by its stream candidate.');
+            if (rejected.propertyCandidate !== null) for (let index = 0; index < command.properties.length; index++) if (command.properties[index] === rejected.propertyCandidate) refuse('An ambiguous property is owned only by its stream candidate.');
         }
     }
     if (node.kind === 'CommandStreamSyntax') {

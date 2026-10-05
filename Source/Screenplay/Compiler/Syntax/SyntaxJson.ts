@@ -67,7 +67,7 @@ function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJ
 
 function validateNumbers(value: unknown, owningMode: string, depth: number): void {
     if (depth > 96 && owningMode === 'exact') throw new InvalidSyntaxJson('Syntax nesting exceeds the supported depth of 96.');
-    if (Array.isArray(value)) { value.forEach(item => validateNumbers(item, owningMode, depth + 1)); return; }
+    if (Array.isArray(value)) { for (let index = 0; index < value.length; index++) validateNumbers(value[index], owningMode, depth + 1); return; }
     if (typeof value !== 'object' || value === null) return;
     const node = value as Record<string, unknown>;
     if (sourceRoots.has(node.kind as string) || Object.hasOwn(node, 'sourceOptions')) {

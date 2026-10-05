@@ -15,6 +15,7 @@ namespace Cratis.Screenplay.Syntax.for_SourceOptions;
 public class when_protecting_phase_a_boundaries
 {
     readonly ScreenplayCompiler _compiler = new();
+    readonly ScreenplayPrinter _printer = new();
 
     [Theory]
     [InlineData("```embedded")]
@@ -180,6 +181,20 @@ public class when_protecting_phase_a_boundaries
         Catch.Exception(() => SyntaxJson.Serialize(handler)).ShouldBeOfExactType<InvalidSyntaxJson>();
         using var conflicting = JsonDocument.Parse("{\"kind\":\"HandlerSyntax\",\"file\":{\"kind\":\"FileReferenceSyntax\",\"path\":\"send.cs\"},\"code\":{\"kind\":\"CodeBlockSyntax\",\"language\":\"csharp\",\"code\":\"Send();\"},\"implementation\":{\"kind\":\"ImplementationSyntax\"}}");
         Catch.Exception(() => SyntaxJson.Deserialize(conflicting.RootElement)).ShouldBeOfExactType<InvalidSyntaxJson>();
+    }
+
+    [Fact]
+    void should_admit_only_null_string_bool_and_exact_number_literals_in_exact_documents()
+    {
+        var parsed = _compiler.Parse("numbers exact\n" + Model("produces Added\n          amount = 9007199254740993"));
+        parsed.Success.ShouldBeTrue();
+        var mapping = Command(parsed.Value!).Produces.Single().Mappings.Single();
+        var literal = (LiteralExpressionSyntax)mapping.Source;
+        foreach (var value in new object?[] { (byte)1, (short)2, (ushort)3, 4u, 5UL, (sbyte)6, (Half)1.5, new System.Numerics.BigInteger(7), 8.5m, 9.5f, 10.5d, 11, 12L, 'c', DateTime.UnixEpoch })
+        {
+            var invalid = parsed.Value! with { Modules = [parsed.Value!.Modules.Single() with { Features = [parsed.Value!.Modules.Single().Features.Single() with { Slices = [parsed.Value!.Modules.Single().Features.Single().Slices.Single() with { Commands = [Command(parsed.Value!) with { Produces = [Command(parsed.Value!).Produces.Single() with { Mappings = [mapping with { Source = literal with { Value = value } }] }] }] }] }] }] };
+            Catch.Exception(() => _printer.Print(invalid)).ShouldBeOfExactType<InvalidSyntaxJson>();
+        }
     }
 
     [Fact]

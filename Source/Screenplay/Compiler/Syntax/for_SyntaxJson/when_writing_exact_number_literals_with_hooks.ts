@@ -75,4 +75,36 @@ describe('when writing exact number literals carrying serialization hooks', () =
         });
         json.should.contain('{"literalType":"ExactNumber","value":"9007199254740993"}');
     });
+
+    // Replaces the ExactNumber literal with a plain JS number and hooks every node array, expecting a refusal.
+    const refusedWithHookedArrays = (hook: (items: unknown[]) => unknown[]): void => {
+        const tree = structuredClone(parseSpecificationSource('numbers exact\nspecification S\n  when C\n    n = 9007199254740993\n').value![0]);
+        const [parent, key] = findSlot(tree);
+        parent[key] = 9007199254740992;
+        const visit = (value: unknown): void => {
+            if (typeof value !== 'object' || value === null) return;
+            for (const [name, member] of Object.entries(value)) {
+                visit(member);
+                if (Array.isArray(member) && member.length > 0) (value as Record<string, unknown>)[name] = hook(member);
+            }
+        };
+        visit(tree);
+        (() => toSyntaxJson(tree as never)).should.throw();
+    };
+
+    it('should refuse a rounded number when forEach is overridden on the arrays', () => {
+        refusedWithHookedArrays(items => Object.defineProperty(items, 'forEach', { value: () => {} }));
+    });
+
+    it('should refuse a rounded number when an Array subclass overrides the iteration methods', () => {
+        class Hooked extends Array<unknown> {
+            override forEach(): void {}
+            override every(): boolean { return true; }
+            override some(): boolean { return false; }
+            override map(): never[] { return []; }
+            override entries(): never { throw new Error('hooked'); }
+            override [Symbol.iterator](): never { throw new Error('hooked'); }
+        }
+        refusedWithHookedArrays(items => Hooked.from(items));
+    });
 });
