@@ -30,6 +30,9 @@ sealed class McpConnection(McpTools tools, McpAppResources apps)
     {
     }
 
+    // Where a failure that has no request to answer is reported; MCP hosts capture the server's stderr in their logs.
+    internal TextWriter Log { get; set; } = Console.Error;
+
     internal void Run(TextReader input, TextWriter output)
     {
         while (ReadLine(input) is { } line)
@@ -46,6 +49,7 @@ sealed class McpConnection(McpTools tools, McpAppResources apps)
     internal string? Handle(string line, TextReader? input = null, TextWriter? output = null)
     {
         object? id = null;
+        var notification = false;
         try
         {
             using var document = JsonDocument.Parse(line, new JsonDocumentOptions { MaxDepth = 256 });
@@ -77,6 +81,7 @@ sealed class McpConnection(McpTools tools, McpAppResources apps)
             var name = method.GetString()!;
             if (!hasId)
             {
+                notification = true;
                 if (name == "notifications/initialized" && _initialized)
                 {
                     _ready = true;
@@ -105,9 +110,17 @@ sealed class McpConnection(McpTools tools, McpAppResources apps)
         {
             return Error(null, -32700, "Invalid JSON.", "InvalidJson");
         }
+        catch (McpFailure failure) when (notification)
+        {
+            return Unanswered(failure.Message);
+        }
         catch (McpFailure failure)
         {
             return Error(id, failure.Code == 0 ? -32603 : failure.Code, failure.Message, failure.FailureKind);
+        }
+        catch (Exception exception) when (notification)
+        {
+            return Unanswered(exception.Message);
         }
         catch (Exception exception)
         {
@@ -201,6 +214,15 @@ sealed class McpConnection(McpTools tools, McpAppResources apps)
         };
     }
 
+    // A notification has no id to answer, and an error with a null id makes MCP hosts drop the connection,
+    // so a failed notification is reported to the log and the session continues.
+    string? Unanswered(string message)
+    {
+        Log.WriteLine($"Screenplay MCP: a notification failed and was not answered: {message}");
+        Log.Flush();
+        return null;
+    }
+
     // Asks a host that advertises the roots capability which roots it offers, so a dynamic server can pick
     // one at open-workspace time. Runs once after initialization and again whenever the host reports change.
     void FetchClientRoots(TextReader? input, TextWriter? output)
@@ -256,9 +278,9 @@ sealed class McpConnection(McpTools tools, McpAppResources apps)
                 }
 
                 var result = response.GetProperty("result");
-                if (!result.TryGetProperty("rootInfos", out var infos) || infos.ValueKind != JsonValueKind.Array)
+                if (!result.TryGetProperty("roots", out var infos) || infos.ValueKind != JsonValueKind.Array)
                 {
-                    throw new McpFailure("The client answered roots/list without a rootInfos array.");
+                    throw new McpFailure("The client answered roots/list without a roots array.");
                 }
 
                 foreach (var info in infos.EnumerateArray())
