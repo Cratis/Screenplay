@@ -75,8 +75,14 @@ export async function userSaveDirtyFile(document: vscode.TextDocument, expected:
         // The host may leave this promise pending behind its conflict notification.
         // Record the ACTUAL promise separately; a timeout alone is never evidence.
         void Promise.resolve(document.save()).then(success => { outcome = { settled: true, success }; }, error => { outcome = { settled: true, error }; });
+        // The renderer log is written asynchronously; allow up to 30 seconds for this exact conflict record.
+        const logDeadline = Date.now() + 30_000;
         await new Promise<void>(resolve => setTimeout(resolve, 5_000));
-        const errors = readErrors().filter(line => !previousErrors.has(line));
+        let errors = readErrors().filter(line => !previousErrors.has(line));
+        while (errors.length === 0 && Date.now() < logDeadline) {
+            await new Promise<void>(resolve => setTimeout(resolve, Math.min(500, logDeadline - Date.now())));
+            errors = readErrors().filter(line => !previousErrors.has(line));
+        }
         assert.ok(errors.length > 0, 'Expected native FileModifiedSince branch for this exact Save attempt; pending alone is NOT a valid conflict');
         assert.notEqual(outcome.success, true, 'A conflicting Save must not report success');
         if (outcome.error !== undefined) assert.match(String(outcome.error), /File Modified Since|textVersionMismatch/, 'Do not mask an unrelated native save rejection');
@@ -89,7 +95,7 @@ export async function userSaveDirtyFile(document: vscode.TextDocument, expected:
             assert.equal(other.document.version, other.version);
             assert.equal(other.document.isDirty, other.dirty);
         }
-        console.log(`NATIVE EXPECTED SAVE CONFLICT: ${JSON.stringify({ uri: target.toString(), actualPromise: outcome.settled ? 'refused' : 'pending at five seconds', nativeErrorSource: 'renderer text file model handleSaveError', nativeError: errors.at(-1), unsavedTextAndVersionPreserved: true, diskUnchanged: true, retry: false, overwrite: false })}`);
+        console.log(`NATIVE EXPECTED SAVE CONFLICT: ${JSON.stringify({ uri: target.toString(), actualPromise: outcome.settled ? 'refused' : 'pending at conflict observation', nativeErrorSource: 'renderer text file model handleSaveError', nativeError: errors.at(-1), unsavedTextAndVersionPreserved: true, diskUnchanged: true, retry: false, overwrite: false })}`);
     } finally { listener.dispose(); changes.dispose(); }
 }
 

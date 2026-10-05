@@ -40,7 +40,8 @@ export async function checkPackage() {
         if (!packed?.filename) throw new Error('npm pack did not report a package filename');
         const installed = join(consumer, 'node_modules/@cratis/screenplay-language');
         await mkdir(installed, { recursive: true });
-        execFileSync('tar', ['-xzf', join(consumer, packed.filename), '-C', installed, '--strip-components=1']);
+        // Relative paths from the consumer directory: a drive-letter path (C:\...) makes GNU tar treat it as a remote host.
+        execFileSync('tar', ['-xzf', packed.filename, '-C', 'node_modules/@cratis/screenplay-language', '--strip-components=1'], { cwd: consumer });
         const manifest = JSON.parse(await readFile(join(installed, 'package.json'), 'utf8'));
         const peers = new Set(Object.keys(manifest.peerDependencies ?? {}));
         const entries = Object.entries(manifest.exports);
