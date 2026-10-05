@@ -13,7 +13,8 @@ let callback: (event: string, filename?: string | null) => void;
 let changed = vi.fn<() => void>(), invalidated = vi.fn<(failure: unknown, cause: string) => void>();
 let root: string;
 beforeEach(() => {
-    root = fs.realpathSync.native(fs.mkdtempSync(path.resolve('../../../.ai-work', 'watch-root-')));
+    const tasks = path.resolve('../../../.ai-work'); fs.mkdirSync(tasks, { recursive: true });
+    root = fs.realpathSync.native(fs.mkdtempSync(path.join(tasks, 'watch-root-')));
     native = Object.assign(new EventEmitter(), { close: vi.fn() });
     changed = vi.fn(); invalidated = vi.fn();
     vi.mocked(fs.watch).mockReset().mockImplementation(((_root: string, options: fs.WatchOptions, listener: typeof callback) => {
