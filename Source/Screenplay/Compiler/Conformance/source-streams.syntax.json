@@ -6,7 +6,6 @@
       "attributes": [],
       "name": "AccountId",
       "type": "Uuid",
-      "validations": [],
       "values": []
     },
     {
@@ -14,7 +13,6 @@
       "attributes": [],
       "name": "Month",
       "type": "String",
-      "validations": [],
       "values": []
     },
     {
@@ -22,7 +20,6 @@
       "attributes": [],
       "name": "Partition",
       "type": "Int",
-      "validations": [],
       "values": []
     }
   ],
@@ -162,8 +159,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": null
+                      "tags": []
                     }
                   ],
                   "properties": [
@@ -409,8 +405,6 @@
     }
   ],
   "personas": [],
-  "policies": [],
-  "seeds": [],
   "systems": [],
   "types": []
 }

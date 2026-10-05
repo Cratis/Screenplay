@@ -6,7 +6,6 @@
       "attributes": [],
       "name": "Recipient",
       "type": "String",
-      "validations": [],
       "values": []
     },
     {
@@ -14,7 +13,6 @@
       "attributes": [],
       "name": "Channel",
       "type": "Enum",
-      "validations": [],
       "values": [
         "email",
         "sms"
@@ -89,8 +87,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": null
+                      "tags": []
                     },
                     {
                       "kind": "ProducesSyntax",
@@ -116,8 +113,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": null
+                      "tags": []
                     },
                     {
                       "kind": "ProducesSyntax",
@@ -200,8 +196,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": null
+                      "tags": []
                     }
                   ],
                   "properties": [
@@ -485,7 +480,6 @@
                   ],
                   "givenReadModels": [],
                   "name": "RequestsNotifications",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [
                     {
                       "kind": "SpecificationCompensatedSyntax",
@@ -543,7 +537,6 @@
                       ]
                     }
                   ],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -598,8 +591,6 @@
     }
   ],
   "personas": [],
-  "policies": [],
-  "seeds": [],
   "systems": [
     {
       "kind": "SystemSyntax",

@@ -6,7 +6,6 @@
       "attributes": [],
       "name": "BookId",
       "type": "Uuid",
-      "validations": [],
       "values": []
     },
     {
@@ -14,7 +13,6 @@
       "attributes": [],
       "name": "MemberId",
       "type": "Uuid",
-      "validations": [],
       "values": []
     },
     {
@@ -22,7 +20,6 @@
       "attributes": [],
       "name": "Isbn",
       "type": "String",
-      "validations": [],
       "values": []
     },
     {
@@ -30,7 +27,6 @@
       "attributes": [],
       "name": "BookTitle",
       "type": "String",
-      "validations": [],
       "values": []
     },
     {
@@ -38,7 +34,6 @@
       "attributes": [],
       "name": "AuthorName",
       "type": "String",
-      "validations": [],
       "values": []
     },
     {
@@ -52,7 +47,6 @@
       ],
       "name": "MemberName",
       "type": "String",
-      "validations": [],
       "values": []
     },
     {
@@ -60,7 +54,6 @@
       "attributes": [],
       "name": "LoanStatus",
       "type": "Enum",
-      "validations": [],
       "values": [
         "onLoan",
         "returned"
@@ -137,8 +130,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": null
+                      "tags": []
                     }
                   ],
                   "properties": [
@@ -195,7 +187,6 @@
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
-                      "requirements": [],
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
@@ -336,7 +327,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "AddingABook",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -379,7 +369,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -437,7 +426,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAMalformedIsbn",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
@@ -450,7 +438,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -508,7 +495,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RefusingAMemberAddingBooks",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": {
                     "kind": "SpecificationDeniedSyntax"
@@ -518,7 +504,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -590,92 +575,59 @@
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "BookAdded",
-                          "key": null
+                          "event": "BookAdded"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "bookId",
-                          "source": {
-                            "kind": "EventSourceIdExpressionSyntax"
-                          }
+                          "property": "bookId"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "title",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "title"
-                          }
+                          "property": "title"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "author",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "author"
-                          }
+                          "property": "author"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "available",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": true
-                          }
+                          "property": "available"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "BookBorrowed",
-                          "key": null
+                          "event": "BookBorrowed"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "available",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": false
-                          }
+                          "property": "available"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "BookReturned",
-                          "key": null
+                          "event": "BookReturned"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "available",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": true
-                          }
+                          "property": "available"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     }
                   ],
-                  "key": null,
                   "name": "BookCatalog",
                   "readModel": "CatalogEntry",
                   "sequence": null
@@ -702,7 +654,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "bookId",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -912,7 +863,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "BorrowingTakesABookOffTheShelf",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -920,47 +870,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [
-                    {
-                      "kind": "SpecificationQuerySyntax",
-                      "arguments": [
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "bookId",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "0f8fad5b-d9cb-469f-a165-70867728950e"
-                          }
-                        }
-                      ],
-                      "exactly": false,
-                      "query": "BookById",
-                      "results": [
-                        {
-                          "kind": "SpecificationQueryResultSyntax",
-                          "exactly": false,
-                          "properties": [
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "title",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "Introduction to Algorithms"
-                              }
-                            },
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "available",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": false
-                              }
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -1054,7 +963,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "day",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -1237,7 +1145,6 @@
                     }
                   ],
                   "name": "ShowingTodaysOpeningHours",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -1245,7 +1152,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [
                     {
@@ -1342,8 +1248,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": null
+                      "tags": []
                     }
                   ],
                   "properties": [
@@ -1376,7 +1281,6 @@
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
-                      "requirements": [],
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
@@ -1470,7 +1374,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringAMember",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -1497,7 +1400,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -1539,7 +1441,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAMemberWithNoName",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
@@ -1552,7 +1453,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -1652,8 +1552,7 @@
                               }
                             }
                           ],
-                          "tags": [],
-                          "when": null
+                          "tags": []
                         }
                       ],
                       "source": {
@@ -1661,8 +1560,7 @@
                         "name": "MemberRegistered"
                       }
                     }
-                  ],
-                  "where": null
+                  ]
                 }
               ],
               "readModels": [],
@@ -1695,7 +1593,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "WelcomingANewMember",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -1719,7 +1616,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -1805,8 +1701,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": null
+                      "tags": []
                     }
                   ],
                   "properties": [
@@ -1851,22 +1746,6 @@
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
-                      "requirements": [
-                        {
-                          "kind": "RequirementSyntax",
-                          "condition": {
-                            "kind": "ComparisonConditionSyntax",
-                            "left": "book.available",
-                            "operator": "Equal",
-                            "right": {
-                              "kind": "LiteralExpressionSyntax",
-                              "value": true
-                            }
-                          },
-                          "message": "That book is already on loan",
-                          "severity": "Error"
-                        }
-                      ],
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
@@ -2019,7 +1898,6 @@
                     }
                   ],
                   "name": "BorrowingAnAvailableBook",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -2054,7 +1932,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -2144,7 +2021,6 @@
                     }
                   ],
                   "name": "RefusingABookThatIsOnLoan",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
@@ -2157,7 +2033,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -2238,8 +2113,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": null
+                      "tags": []
                     }
                   ],
                   "properties": [
@@ -2412,7 +2286,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ReturningABook",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -2439,7 +2312,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -2495,70 +2367,44 @@
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "BookBorrowed",
-                          "key": null
+                          "event": "BookBorrowed"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "bookId",
-                          "source": {
-                            "kind": "EventSourceIdExpressionSyntax"
-                          }
+                          "property": "bookId"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "memberId",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "memberId"
-                          }
+                          "property": "memberId"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "dueDate",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "dueDate"
-                          }
+                          "property": "dueDate"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "status",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "onLoan"
-                          }
+                          "property": "status"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "BookReturned",
-                          "key": null
+                          "event": "BookReturned"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "status",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "returned"
-                          }
+                          "property": "status"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     }
                   ],
-                  "key": null,
                   "name": "Loans",
                   "readModel": "Loan",
                   "sequence": null
@@ -2577,7 +2423,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "bookId",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -2612,10 +2457,6 @@
                     {
                       "kind": "QueryParameterSyntax",
                       "name": "memberId",
-                      "source": {
-                        "kind": "ContextExpressionSyntax",
-                        "path": "identity.id"
-                      },
                       "type": {
                         "kind": "TypeRefSyntax",
                         "isCollection": false,
@@ -2814,7 +2655,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "SeeingAReturnedLoan",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -2822,7 +2662,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -2903,29 +2742,6 @@
       ]
     }
   ],
-  "policies": [
-    {
-      "kind": "PolicySyntax",
-      "code": null,
-      "condition": {
-        "kind": "RoleConditionSyntax",
-        "role": "Librarian"
-      },
-      "file": null,
-      "name": "IsLibrarian"
-    },
-    {
-      "kind": "PolicySyntax",
-      "code": null,
-      "condition": {
-        "kind": "RoleConditionSyntax",
-        "role": "Member"
-      },
-      "file": null,
-      "name": "IsMember"
-    }
-  ],
-  "seeds": [],
   "systems": [],
   "types": []
 }

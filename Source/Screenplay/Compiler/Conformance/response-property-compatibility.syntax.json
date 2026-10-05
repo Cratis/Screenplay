@@ -6,7 +6,6 @@
       "attributes": [],
       "name": "lowerCaseConcept",
       "type": "String",
-      "validations": [],
       "values": []
     },
     {
@@ -14,7 +13,6 @@
       "attributes": [],
       "name": "slug",
       "type": "String",
-      "validations": [],
       "values": []
     }
   ],
@@ -291,8 +289,6 @@
     }
   ],
   "personas": [],
-  "policies": [],
-  "seeds": [],
   "systems": [],
   "types": []
 }

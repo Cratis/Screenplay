@@ -6,7 +6,6 @@
       "attributes": [],
       "name": "CustomerId",
       "type": "Uuid",
-      "validations": [],
       "values": []
     },
     {
@@ -20,7 +19,6 @@
       ],
       "name": "Email",
       "type": "String",
-      "validations": [],
       "values": []
     },
     {
@@ -28,7 +26,6 @@
       "attributes": [],
       "name": "Priority",
       "type": "Enum",
-      "validations": [],
       "values": [
         "low",
         "high",
@@ -251,8 +248,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": null
+                      "tags": []
                     }
                   ],
                   "properties": [
@@ -321,7 +317,6 @@
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
-                      "requirements": [],
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
@@ -411,12 +406,7 @@
                       ]
                     },
                     {
-                      "kind": "CodeValidateSyntax",
-                      "code": {
-                        "kind": "CodeBlockSyntax",
-                        "code": "return ValidationResult.Success;",
-                        "language": "csharp"
-                      }
+                      "kind": "CodeValidateSyntax"
                     }
                   ]
                 }
@@ -562,7 +552,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringACustomer",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -589,24 +578,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [
-                    {
-                      "kind": "SpecificationQuerySyntax",
-                      "arguments": [
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "customerId",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                          }
-                        }
-                      ],
-                      "exactly": false,
-                      "query": "CustomerById",
-                      "results": []
-                    }
-                  ],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -760,7 +731,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAMinor",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
@@ -777,7 +747,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -843,7 +812,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ArchivingWhenTheClockStrikes",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -867,7 +835,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -889,7 +856,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ArchivingWhenTriggered",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -904,7 +870,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -936,7 +901,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringFromACapture",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -951,7 +915,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -991,7 +954,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "LookingUpACustomer",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -999,7 +961,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [
                     {
@@ -1060,7 +1021,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "LookingUpNobody",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -1070,7 +1030,6 @@
                     "kind": "SpecificationNoResultSyntax"
                   },
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -1118,47 +1077,23 @@
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "CustomerRegistered",
-                          "key": null
+                          "event": "CustomerRegistered"
                         },
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "DraftSaved",
-                          "key": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "customerId"
-                          }
+                          "event": "DraftSaved"
                         }
                       ],
-                      "key": {
-                        "kind": "CompositeKeySyntax",
-                        "parts": [
-                          {
-                            "kind": "KeyPartSyntax",
-                            "expression": {
-                              "kind": "PathExpressionSyntax",
-                              "path": "customerId"
-                            },
-                            "property": "customerId"
-                          }
-                        ],
-                        "type": "Composite"
-                      },
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "name",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "name"
-                          }
+                          "property": "name"
                         },
                         {
                           "kind": "CountMappingSyntax",
                           "property": "registrations"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "EverySyntax",
@@ -1167,11 +1102,7 @@
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "lastSeen",
-                          "source": {
-                            "kind": "EventContextExpressionSyntax",
-                            "path": "occurred"
-                          }
+                          "property": "lastSeen"
                         }
                       ]
                     },
@@ -1181,11 +1112,7 @@
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "visits",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": 0
-                          }
+                          "property": "visits"
                         },
                         {
                           "kind": "IncrementMappingSyntax",
@@ -1203,11 +1130,7 @@
                           "mappings": [
                             {
                               "kind": "SetMappingSyntax",
-                              "property": "companyName",
-                              "source": {
-                                "kind": "PathExpressionSyntax",
-                                "path": "name"
-                              }
+                              "property": "companyName"
                             }
                           ]
                         }
@@ -1224,36 +1147,23 @@
                           "events": [
                             {
                               "kind": "EventSpecSyntax",
-                              "event": "AddressAdded",
-                              "key": null
+                              "event": "AddressAdded"
                             }
                           ],
-                          "key": null,
                           "mappings": [
                             {
                               "kind": "AddMappingSyntax",
-                              "property": "total",
-                              "value": {
-                                "kind": "PathExpressionSyntax",
-                                "path": "amount"
-                              }
+                              "property": "total"
                             },
                             {
                               "kind": "SetMappingSyntax",
-                              "property": "street",
-                              "source": {
-                                "kind": "PathExpressionSyntax",
-                                "path": "street"
-                              }
+                              "property": "street"
                             }
-                          ],
-                          "parentKey": null
+                          ]
                         },
                         {
                           "kind": "RemoveWithSyntax",
-                          "event": "AddressRemoved",
-                          "key": null,
-                          "parentKey": null
+                          "event": "AddressRemoved"
                         },
                         {
                           "kind": "NestedSyntax",
@@ -1264,13 +1174,10 @@
                               "events": [
                                 {
                                   "kind": "EventSpecSyntax",
-                                  "event": "PrimaryAddressSet",
-                                  "key": null
+                                  "event": "PrimaryAddressSet"
                                 }
                               ],
-                              "key": null,
-                              "mappings": [],
-                              "parentKey": null
+                              "mappings": []
                             },
                             {
                               "kind": "ClearWithSyntax",
@@ -1280,25 +1187,17 @@
                           "property": "primary"
                         }
                       ],
-                      "identifiedBy": {
-                        "kind": "PathExpressionSyntax",
-                        "path": "addressId"
-                      },
                       "property": "addresses"
                     },
                     {
                       "kind": "RemoveViaJoinSyntax",
-                      "event": "CompanyRemoved",
-                      "key": null
+                      "event": "CompanyRemoved"
                     },
                     {
                       "kind": "RemoveWithSyntax",
-                      "event": "CustomerArchived",
-                      "key": null,
-                      "parentKey": null
+                      "event": "CustomerArchived"
                     }
                   ],
-                  "key": null,
                   "name": "CustomerSummaryProjection",
                   "readModel": "CustomerSummary",
                   "sequence": "customers"
@@ -1315,35 +1214,26 @@
                           "events": [
                             {
                               "kind": "EventSpecSyntax",
-                              "event": "CustomerArchived",
-                              "key": null
+                              "event": "CustomerArchived"
                             }
                           ],
-                          "key": null,
                           "mappings": [
                             {
                               "kind": "SetMappingSyntax",
-                              "property": "reason",
-                              "source": {
-                                "kind": "PathExpressionSyntax",
-                                "path": "reason"
-                              }
+                              "property": "reason"
                             }
-                          ],
-                          "parentKey": null
+                          ]
                         }
                       ],
                       "entersOn": [
                         {
                           "kind": "ProjectionEntersOnSyntax",
-                          "event": "CustomerArchived",
-                          "key": null
+                          "event": "CustomerArchived"
                         }
                       ],
                       "name": "Archived"
                     }
                   ],
-                  "key": null,
                   "name": "ArchiveProjection",
                   "readModel": "ArchivedCustomer",
                   "sequence": null
@@ -1370,7 +1260,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "customerId",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -1399,7 +1288,6 @@
                     {
                       "kind": "QueryParameterSyntax",
                       "name": "name",
-                      "source": null,
                       "type": {
                         "kind": "TypeRefSyntax",
                         "isCollection": false,
@@ -1650,17 +1538,7 @@
                       "invokes": [
                         {
                           "kind": "InvokesSyntax",
-                          "command": "SendWelcome",
-                          "mappings": [
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "customerId",
-                              "source": {
-                                "kind": "PathExpressionSyntax",
-                                "path": "customerId"
-                              }
-                            }
-                          ]
+                          "command": "SendWelcome"
                         }
                       ],
                       "produces": [],
@@ -1704,8 +1582,7 @@
                         "time": "08:00:00.0000000"
                       }
                     }
-                  ],
-                  "where": null
+                  ]
                 }
               ],
               "readModels": [],
@@ -1751,8 +1628,7 @@
                               }
                             }
                           ],
-                          "tags": [],
-                          "when": null
+                          "tags": []
                         }
                       ],
                       "source": {
@@ -1760,8 +1636,7 @@
                         "name": "CustomerRegistered"
                       }
                     }
-                  ],
-                  "where": null
+                  ]
                 }
               ],
               "readModels": [],
@@ -1813,18 +1688,6 @@
       "policies": []
     }
   ],
-  "policies": [
-    {
-      "kind": "PolicySyntax",
-      "code": null,
-      "condition": {
-        "kind": "AuthenticatedConditionSyntax"
-      },
-      "file": null,
-      "name": "Staff"
-    }
-  ],
-  "seeds": [],
   "systems": [],
   "types": [
     {

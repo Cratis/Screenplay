@@ -6,7 +6,6 @@
       "attributes": [],
       "name": "ProjectId",
       "type": "Uuid",
-      "validations": [],
       "values": []
     },
     {
@@ -14,7 +13,6 @@
       "attributes": [],
       "name": "ProjectName",
       "type": "String",
-      "validations": [],
       "values": []
     }
   ],
@@ -66,8 +64,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": null
+                      "tags": []
                     }
                   ],
                   "properties": [
@@ -100,7 +97,6 @@
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
-                      "requirements": [],
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
@@ -195,7 +191,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringAProject",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -222,47 +217,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [
-                    {
-                      "kind": "SpecificationQuerySyntax",
-                      "arguments": [
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "projectId",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                          }
-                        }
-                      ],
-                      "exactly": false,
-                      "query": "ProjectById",
-                      "results": [
-                        {
-                          "kind": "SpecificationQueryResultSyntax",
-                          "exactly": false,
-                          "properties": [
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "projectId",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                              }
-                            },
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "name",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "Screenplay"
-                              }
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -328,7 +282,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAnEmptyProjectName",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
@@ -341,7 +294,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -397,25 +349,17 @@
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "ProjectRegistered",
-                          "key": null
+                          "event": "ProjectRegistered"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "name",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "name"
-                          }
+                          "property": "name"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     }
                   ],
-                  "key": null,
                   "name": "ProjectSummaryProjection",
                   "readModel": "ProjectSummary",
                   "sequence": null
@@ -428,7 +372,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "projectId",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -496,8 +439,6 @@
     }
   ],
   "personas": [],
-  "policies": [],
-  "seeds": [],
   "systems": [],
   "types": []
 }

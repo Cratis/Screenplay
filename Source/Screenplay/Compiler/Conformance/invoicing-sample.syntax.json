@@ -6,7 +6,6 @@
       "attributes": [],
       "name": "InvoiceId",
       "type": "Uuid",
-      "validations": [],
       "values": []
     },
     {
@@ -14,7 +13,6 @@
       "attributes": [],
       "name": "CustomerId",
       "type": "Uuid",
-      "validations": [],
       "values": []
     },
     {
@@ -22,7 +20,6 @@
       "attributes": [],
       "name": "PaymentId",
       "type": "Uuid",
-      "validations": [],
       "values": []
     },
     {
@@ -30,7 +27,6 @@
       "attributes": [],
       "name": "BatchId",
       "type": "Uuid",
-      "validations": [],
       "values": []
     },
     {
@@ -38,7 +34,6 @@
       "attributes": [],
       "name": "TenantId",
       "type": "Uuid",
-      "validations": [],
       "values": []
     },
     {
@@ -46,7 +41,6 @@
       "attributes": [],
       "name": "InvoiceNumber",
       "type": "String",
-      "validations": [],
       "values": []
     },
     {
@@ -54,7 +48,6 @@
       "attributes": [],
       "name": "CurrencyCode",
       "type": "String",
-      "validations": [],
       "values": []
     },
     {
@@ -62,7 +55,6 @@
       "attributes": [],
       "name": "ProductName",
       "type": "String",
-      "validations": [],
       "values": []
     },
     {
@@ -70,7 +62,6 @@
       "attributes": [],
       "name": "InvoiceTag",
       "type": "String",
-      "validations": [],
       "values": []
     },
     {
@@ -78,7 +69,6 @@
       "attributes": [],
       "name": "Money",
       "type": "Decimal",
-      "validations": [],
       "values": []
     },
     {
@@ -86,7 +76,6 @@
       "attributes": [],
       "name": "ExchangeRate",
       "type": "Decimal",
-      "validations": [],
       "values": []
     },
     {
@@ -94,7 +83,6 @@
       "attributes": [],
       "name": "Quantity",
       "type": "Int",
-      "validations": [],
       "values": []
     },
     {
@@ -102,7 +90,6 @@
       "attributes": [],
       "name": "DaysOverdue",
       "type": "Int",
-      "validations": [],
       "values": []
     },
     {
@@ -110,7 +97,6 @@
       "attributes": [],
       "name": "IsProForma",
       "type": "Bool",
-      "validations": [],
       "values": []
     },
     {
@@ -118,7 +104,6 @@
       "attributes": [],
       "name": "InvoiceDate",
       "type": "Date",
-      "validations": [],
       "values": []
     },
     {
@@ -126,7 +111,6 @@
       "attributes": [],
       "name": "OccurredAt",
       "type": "DateTime",
-      "validations": [],
       "values": []
     },
     {
@@ -140,7 +124,6 @@
       ],
       "name": "PersonName",
       "type": "String",
-      "validations": [],
       "values": []
     },
     {
@@ -159,25 +142,6 @@
       ],
       "name": "BankAccount",
       "type": "String",
-      "validations": [
-        {
-          "kind": "DeclarativeValidateSyntax",
-          "requirements": [],
-          "rules": [
-            {
-              "kind": "ValidationRuleSyntax",
-              "message": "$strings.validation.bankAccount.invalid",
-              "property": "value",
-              "rule": "Rule",
-              "severity": "Error",
-              "value": {
-                "kind": "PathExpressionSyntax",
-                "path": "BeAValidIban"
-              }
-            }
-          ]
-        }
-      ],
       "values": []
     },
     {
@@ -191,44 +155,6 @@
       ],
       "name": "EmailAddress",
       "type": "String",
-      "validations": [
-        {
-          "kind": "DeclarativeValidateSyntax",
-          "requirements": [],
-          "rules": [
-            {
-              "kind": "ValidationRuleSyntax",
-              "message": "Email is required",
-              "property": "value",
-              "rule": "NotEmpty",
-              "severity": "Error",
-              "value": null
-            },
-            {
-              "kind": "ValidationRuleSyntax",
-              "message": "Must be a valid email address",
-              "property": "value",
-              "rule": "Matches",
-              "severity": "Error",
-              "value": {
-                "kind": "PathExpressionSyntax",
-                "path": "email"
-              }
-            },
-            {
-              "kind": "ValidationRuleSyntax",
-              "message": "Email domain is not allowed",
-              "property": "value",
-              "rule": "Rule",
-              "severity": "Warning",
-              "value": {
-                "kind": "PathExpressionSyntax",
-                "path": "BeFromAnAllowedDomain"
-              }
-            }
-          ]
-        }
-      ],
       "values": []
     },
     {
@@ -236,36 +162,6 @@
       "attributes": [],
       "name": "DiscountPercentage",
       "type": "Decimal",
-      "validations": [
-        {
-          "kind": "DeclarativeValidateSyntax",
-          "requirements": [],
-          "rules": [
-            {
-              "kind": "ValidationRuleSyntax",
-              "message": "A discount cannot be negative",
-              "property": "value",
-              "rule": "GreaterThanOrEqual",
-              "severity": "Error",
-              "value": {
-                "kind": "LiteralExpressionSyntax",
-                "value": 0
-              }
-            },
-            {
-              "kind": "ValidationRuleSyntax",
-              "message": "A discount cannot exceed 100 percent",
-              "property": "value",
-              "rule": "LessThanOrEqual",
-              "severity": "Error",
-              "value": {
-                "kind": "LiteralExpressionSyntax",
-                "value": 100
-              }
-            }
-          ]
-        }
-      ],
       "values": []
     },
     {
@@ -273,7 +169,6 @@
       "attributes": [],
       "name": "InvoiceStatus",
       "type": "Enum",
-      "validations": [],
       "values": [
         "draft",
         "sent",
@@ -287,7 +182,6 @@
       "attributes": [],
       "name": "PaymentTerms",
       "type": "Enum",
-      "validations": [],
       "values": [
         "net30",
         "net60",
@@ -299,7 +193,6 @@
       "attributes": [],
       "name": "PaymentMethod",
       "type": "Enum",
-      "validations": [],
       "values": [
         "card",
         "transfer",
@@ -311,7 +204,6 @@
       "attributes": [],
       "name": "AgingBucket",
       "type": "Enum",
-      "validations": [],
       "values": [
         "current",
         "late",
@@ -436,8 +328,7 @@
                               }
                             }
                           ],
-                          "tags": [],
-                          "when": null
+                          "tags": []
                         },
                         {
                           "kind": "ProducesSyntax",
@@ -458,29 +349,7 @@
                               }
                             }
                           ],
-                          "tags": [],
-                          "when": {
-                            "kind": "LogicalConditionSyntax",
-                            "left": {
-                              "kind": "ComparisonConditionSyntax",
-                              "left": "percentage",
-                              "operator": "GreaterThanOrEqual",
-                              "right": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": 50
-                              }
-                            },
-                            "operator": "Or",
-                            "right": {
-                              "kind": "ComparisonConditionSyntax",
-                              "left": "requiresReview",
-                              "operator": "Equal",
-                              "right": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": true
-                              }
-                            }
-                          }
+                          "tags": []
                         },
                         {
                           "kind": "ProducesSyntax",
@@ -492,29 +361,7 @@
                           "inlineEvent": null,
                           "inlineOperation": null,
                           "mappings": [],
-                          "tags": [],
-                          "when": {
-                            "kind": "LogicalConditionSyntax",
-                            "left": {
-                              "kind": "ComparisonConditionSyntax",
-                              "left": "percentage",
-                              "operator": "LessThan",
-                              "right": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": 10
-                              }
-                            },
-                            "operator": "And",
-                            "right": {
-                              "kind": "ComparisonConditionSyntax",
-                              "left": "reason",
-                              "operator": "Contains",
-                              "right": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "loyalty"
-                              }
-                            }
-                          }
+                          "tags": []
                         }
                       ],
                       "properties": [
@@ -571,35 +418,6 @@
                       "validations": [
                         {
                           "kind": "DeclarativeValidateSyntax",
-                          "requirements": [
-                            {
-                              "kind": "RequirementSyntax",
-                              "condition": {
-                                "kind": "LogicalConditionSyntax",
-                                "left": {
-                                  "kind": "ComparisonConditionSyntax",
-                                  "left": "reason",
-                                  "operator": "StartsWith",
-                                  "right": {
-                                    "kind": "LiteralExpressionSyntax",
-                                    "value": "Agreed"
-                                  }
-                                },
-                                "operator": "Or",
-                                "right": {
-                                  "kind": "ComparisonConditionSyntax",
-                                  "left": "requiresReview",
-                                  "operator": "Equal",
-                                  "right": {
-                                    "kind": "LiteralExpressionSyntax",
-                                    "value": true
-                                  }
-                                }
-                              },
-                              "message": "Undocumented discounts must be reviewed",
-                              "severity": "Warning"
-                            }
-                          ],
                           "rules": [
                             {
                               "kind": "ValidationRuleSyntax",
@@ -755,7 +573,6 @@
                       "givenOperationFailures": [],
                       "givenReadModels": [],
                       "name": "ApplyingASmallLoyaltyDiscount",
-                      "thenAbsentReadModels": [],
                       "thenCompensated": [],
                       "thenDenied": null,
                       "thenErrors": [],
@@ -791,7 +608,6 @@
                       "thenEventsInAnyOrder": false,
                       "thenNoResult": null,
                       "thenOperations": [],
-                      "thenQueries": [],
                       "thenReadModels": [],
                       "thenResults": [],
                       "thenReturns": null,
@@ -849,7 +665,6 @@
                       "givenOperationFailures": [],
                       "givenReadModels": [],
                       "name": "RequestingReviewOfALargeDiscount",
-                      "thenAbsentReadModels": [],
                       "thenCompensated": [],
                       "thenDenied": null,
                       "thenErrors": [],
@@ -894,7 +709,6 @@
                       "thenEventsInAnyOrder": false,
                       "thenNoResult": null,
                       "thenOperations": [],
-                      "thenQueries": [],
                       "thenReadModels": [],
                       "thenResults": [],
                       "thenReturns": null,
@@ -952,7 +766,6 @@
                       "givenOperationFailures": [],
                       "givenReadModels": [],
                       "name": "RejectingANegativeDiscount",
-                      "thenAbsentReadModels": [],
                       "thenCompensated": [],
                       "thenDenied": null,
                       "thenErrors": [
@@ -965,7 +778,6 @@
                       "thenEventsInAnyOrder": false,
                       "thenNoResult": null,
                       "thenOperations": [],
-                      "thenQueries": [],
                       "thenReadModels": [],
                       "thenResults": [],
                       "thenReturns": null,
@@ -1062,8 +874,7 @@
                               }
                             }
                           ],
-                          "tags": [],
-                          "when": null
+                          "tags": []
                         },
                         {
                           "kind": "ProducesSyntax",
@@ -1084,16 +895,7 @@
                               }
                             }
                           ],
-                          "tags": [],
-                          "when": {
-                            "kind": "ComparisonConditionSyntax",
-                            "left": "amount",
-                            "operator": "GreaterThan",
-                            "right": {
-                              "kind": "LiteralExpressionSyntax",
-                              "value": 10000
-                            }
-                          }
+                          "tags": []
                         },
                         {
                           "kind": "ProducesSyntax",
@@ -1105,16 +907,7 @@
                           "inlineEvent": null,
                           "inlineOperation": null,
                           "mappings": [],
-                          "tags": [],
-                          "when": {
-                            "kind": "ComparisonConditionSyntax",
-                            "left": "amount",
-                            "operator": "LessThanOrEqual",
-                            "right": {
-                              "kind": "LiteralExpressionSyntax",
-                              "value": 100
-                            }
-                          }
+                          "tags": []
                         }
                       ],
                       "properties": [
@@ -1171,7 +964,6 @@
                       "validations": [
                         {
                           "kind": "DeclarativeValidateSyntax",
-                          "requirements": [],
                           "rules": [
                             {
                               "kind": "ValidationRuleSyntax",
@@ -1348,7 +1140,6 @@
                       "givenOperationFailures": [],
                       "givenReadModels": [],
                       "name": "WritingOffALargeAmount",
-                      "thenAbsentReadModels": [],
                       "thenCompensated": [],
                       "thenDenied": null,
                       "thenErrors": [],
@@ -1393,7 +1184,6 @@
                       "thenEventsInAnyOrder": false,
                       "thenNoResult": null,
                       "thenOperations": [],
-                      "thenQueries": [],
                       "thenReadModels": [],
                       "thenResults": [],
                       "thenReturns": null,
@@ -1451,7 +1241,6 @@
                       "givenOperationFailures": [],
                       "givenReadModels": [],
                       "name": "RejectingAnUnconfirmedWriteOff",
-                      "thenAbsentReadModels": [],
                       "thenCompensated": [],
                       "thenDenied": null,
                       "thenErrors": [
@@ -1464,7 +1253,6 @@
                       "thenEventsInAnyOrder": false,
                       "thenNoResult": null,
                       "thenOperations": [],
-                      "thenQueries": [],
                       "thenReadModels": [],
                       "thenResults": [],
                       "thenReturns": null,
@@ -1522,7 +1310,6 @@
                       "givenOperationFailures": [],
                       "givenReadModels": [],
                       "name": "RefusingAWriteOffByAJuniorAccountant",
-                      "thenAbsentReadModels": [],
                       "thenCompensated": [],
                       "thenDenied": {
                         "kind": "SpecificationDeniedSyntax"
@@ -1532,7 +1319,6 @@
                       "thenEventsInAnyOrder": false,
                       "thenNoResult": null,
                       "thenOperations": [],
-                      "thenQueries": [],
                       "thenReadModels": [],
                       "thenResults": [],
                       "thenReturns": null,
@@ -1740,8 +1526,7 @@
                             "value": "audit"
                           }
                         }
-                      ],
-                      "when": null
+                      ]
                     },
                     {
                       "kind": "ProducesSyntax",
@@ -1762,16 +1547,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": {
-                        "kind": "ComparisonConditionSyntax",
-                        "left": "isProForma",
-                        "operator": "Equal",
-                        "right": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": true
-                        }
-                      }
+                      "tags": []
                     },
                     {
                       "kind": "ProducesSyntax",
@@ -1792,29 +1568,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": {
-                        "kind": "LogicalConditionSyntax",
-                        "left": {
-                          "kind": "ComparisonConditionSyntax",
-                          "left": "currency",
-                          "operator": "NotEqual",
-                          "right": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "NOK"
-                          }
-                        },
-                        "operator": "And",
-                        "right": {
-                          "kind": "ComparisonConditionSyntax",
-                          "left": "currency",
-                          "operator": "NotEqual",
-                          "right": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "EUR"
-                          }
-                        }
-                      }
+                      "tags": []
                     },
                     {
                       "kind": "ProducesSyntax",
@@ -1835,16 +1589,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": {
-                        "kind": "ComparisonConditionSyntax",
-                        "left": "paymentTerms",
-                        "operator": "Equal",
-                        "right": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "immediate"
-                        }
-                      }
+                      "tags": []
                     },
                     {
                       "kind": "ProducesSyntax",
@@ -1873,42 +1618,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": {
-                        "kind": "LogicalConditionSyntax",
-                        "left": {
-                          "kind": "LogicalConditionSyntax",
-                          "left": {
-                            "kind": "ComparisonConditionSyntax",
-                            "left": "paymentTerms",
-                            "operator": "Equal",
-                            "right": {
-                              "kind": "LiteralExpressionSyntax",
-                              "value": "net30"
-                            }
-                          },
-                          "operator": "Or",
-                          "right": {
-                            "kind": "ComparisonConditionSyntax",
-                            "left": "paymentTerms",
-                            "operator": "Equal",
-                            "right": {
-                              "kind": "LiteralExpressionSyntax",
-                              "value": "net60"
-                            }
-                          }
-                        },
-                        "operator": "And",
-                        "right": {
-                          "kind": "ComparisonConditionSyntax",
-                          "left": "isProForma",
-                          "operator": "Equal",
-                          "right": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": false
-                          }
-                        }
-                      }
+                      "tags": []
                     }
                   ],
                   "properties": [
@@ -2025,7 +1735,6 @@
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
-                      "requirements": [],
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
@@ -2123,12 +1832,7 @@
                       ]
                     },
                     {
-                      "kind": "CodeValidateSyntax",
-                      "code": {
-                        "kind": "CodeBlockSyntax",
-                        "code": "if (context.Artifact.PaymentTerms == \"immediate\" && context.Artifact.Lines.Count > 100)\n{\n    yield return \"Invoices with more than 100 lines cannot require immediate payment\";\n}",
-                        "language": "csharp"
-                      }
+                      "kind": "CodeValidateSyntax"
                     }
                   ]
                 }
@@ -2631,7 +2335,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringADraftInvoice",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -2708,7 +2411,6 @@
                   "thenEventsInAnyOrder": true,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -2861,7 +2563,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegisteringAProFormaInvoiceInForeignCurrency",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -2933,7 +2634,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -3086,7 +2786,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAnInvoiceWithNoLines",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
@@ -3099,7 +2798,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -3168,7 +2866,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingASecondRegistrationOfTheSameInvoice",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
@@ -3181,7 +2878,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -3226,7 +2922,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAnAuditorRegisteringAnInvoice",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": {
                     "kind": "SpecificationDeniedSyntax"
@@ -3236,7 +2931,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -3333,8 +3027,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": null
+                      "tags": []
                     },
                     {
                       "kind": "ProducesSyntax",
@@ -3363,16 +3056,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": {
-                        "kind": "ComparisonConditionSyntax",
-                        "left": "refund",
-                        "operator": "Equal",
-                        "right": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": true
-                        }
-                      }
+                      "tags": []
                     }
                   ],
                   "properties": [
@@ -3429,35 +3113,6 @@
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
-                      "requirements": [
-                        {
-                          "kind": "RequirementSyntax",
-                          "condition": {
-                            "kind": "LogicalConditionSyntax",
-                            "left": {
-                              "kind": "ComparisonConditionSyntax",
-                              "left": "refund",
-                              "operator": "Equal",
-                              "right": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": false
-                              }
-                            },
-                            "operator": "Or",
-                            "right": {
-                              "kind": "ComparisonConditionSyntax",
-                              "left": "refundAccount",
-                              "operator": "NotEqual",
-                              "right": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": ""
-                              }
-                            }
-                          },
-                          "message": "A refund needs an account to pay it to",
-                          "severity": "Error"
-                        }
-                      ],
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
@@ -3670,7 +3325,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "CancellingAnInvoiceWithARefund",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -3731,7 +3385,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -3789,7 +3442,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingACancellationWithoutAReason",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
@@ -3802,7 +3454,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -3923,8 +3574,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": null
+                      "tags": []
                     }
                   ],
                   "properties": [
@@ -3957,7 +3607,6 @@
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
-                      "requirements": [],
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
@@ -4048,7 +3697,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "TaggingAnInvoice",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -4075,7 +3723,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -4117,7 +3764,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAnEmptyTag",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
@@ -4130,7 +3776,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -4211,16 +3856,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": {
-                        "kind": "ComparisonConditionSyntax",
-                        "left": "status",
-                        "operator": "Equal",
-                        "right": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "sent"
-                        }
-                      }
+                      "tags": []
                     },
                     {
                       "kind": "ProducesSyntax",
@@ -4249,16 +3885,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": {
-                        "kind": "ComparisonConditionSyntax",
-                        "left": "status",
-                        "operator": "Equal",
-                        "right": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "paid"
-                        }
-                      }
+                      "tags": []
                     },
                     {
                       "kind": "ProducesSyntax",
@@ -4279,16 +3906,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": {
-                        "kind": "ComparisonConditionSyntax",
-                        "left": "status",
-                        "operator": "Equal",
-                        "right": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "overdue"
-                        }
-                      }
+                      "tags": []
                     },
                     {
                       "kind": "ProducesSyntax",
@@ -4317,16 +3935,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": {
-                        "kind": "ComparisonConditionSyntax",
-                        "left": "status",
-                        "operator": "Equal",
-                        "right": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "draft"
-                        }
-                      }
+                      "tags": []
                     }
                   ],
                   "properties": [
@@ -4371,7 +3980,6 @@
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
-                      "requirements": [],
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
@@ -4611,7 +4219,6 @@
                     }
                   ],
                   "name": "SendingADraftInvoice",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -4638,7 +4245,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -4712,7 +4318,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RefusingToCancelThroughAStatusChange",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
@@ -4725,7 +4330,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -4767,7 +4371,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RefusingAStatusChangeByAnInvoiceManager",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": {
                     "kind": "SpecificationDeniedSyntax"
@@ -4777,7 +4380,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -4882,35 +4484,6 @@
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
-                      "requirements": [
-                        {
-                          "kind": "RequirementSyntax",
-                          "condition": {
-                            "kind": "LogicalConditionSyntax",
-                            "left": {
-                              "kind": "ComparisonConditionSyntax",
-                              "left": "action",
-                              "operator": "Equal",
-                              "right": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "send"
-                              }
-                            },
-                            "operator": "Or",
-                            "right": {
-                              "kind": "ComparisonConditionSyntax",
-                              "left": "action",
-                              "operator": "Equal",
-                              "right": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "cancel"
-                              }
-                            }
-                          },
-                          "message": "Action must be send or cancel",
-                          "severity": "Error"
-                        }
-                      ],
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
@@ -5093,7 +4666,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ProcessingABatch",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -5147,7 +4719,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -5202,7 +4773,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAnUnknownBatchAction",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
@@ -5215,7 +4785,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -5316,7 +4885,6 @@
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
-                      "requirements": [],
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
@@ -5448,7 +5016,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ArchivingInvoicesOlderThanAYear",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -5480,7 +5047,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -5514,7 +5080,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAnArchiveDateInTheFuture",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
@@ -5527,7 +5092,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -5592,8 +5156,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": null
+                      "tags": []
                     }
                   ],
                   "properties": [
@@ -5626,7 +5189,6 @@
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
-                      "requirements": [],
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
@@ -5742,7 +5304,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "UpdatingTheBillingContact",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -5769,7 +5330,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -5828,7 +5388,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingAMalformedEmail",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
@@ -5841,7 +5400,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -5916,11 +5474,7 @@
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "lastActivityAt",
-                          "source": {
-                            "kind": "EventContextExpressionSyntax",
-                            "path": "occurred"
-                          }
+                          "property": "lastActivityAt"
                         }
                       ]
                     },
@@ -5929,217 +5483,136 @@
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceRegistered",
-                          "key": null
+                          "event": "InvoiceRegistered"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "invoiceId",
-                          "source": {
-                            "kind": "EventSourceIdExpressionSyntax"
-                          }
+                          "property": "invoiceId"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "customerId",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "customerId"
-                          }
+                          "property": "customerId"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "invoiceNumber",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "invoiceNumber"
-                          }
+                          "property": "invoiceNumber"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "currency",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "currency"
-                          }
+                          "property": "currency"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "status",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "draft"
-                          }
+                          "property": "status"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "lineCount",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": 0
-                          }
+                          "property": "lineCount"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "dueDate",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "dueDate"
-                          }
+                          "property": "dueDate"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "channel",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "portal"
-                          }
+                          "property": "channel"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceTagged",
-                          "key": null
+                          "event": "InvoiceTagged"
                         },
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "BillingContactUpdated",
-                          "key": null
+                          "event": "BillingContactUpdated"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "touched",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": true
-                          }
+                          "property": "touched"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceSent",
-                          "key": null
+                          "event": "InvoiceSent"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "status",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "sent"
-                          }
+                          "property": "status"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "touched",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": true
-                          }
+                          "property": "touched"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoicePaid",
-                          "key": null
+                          "event": "InvoicePaid"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "status",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "paid"
-                          }
+                          "property": "status"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "touched",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": true
-                          }
+                          "property": "touched"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceMarkedOverdue",
-                          "key": null
+                          "event": "InvoiceMarkedOverdue"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "status",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "overdue"
-                          }
+                          "property": "status"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceStatusChanged",
-                          "key": null
+                          "event": "InvoiceStatusChanged"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "status",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "status"
-                          }
+                          "property": "status"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "RemoveWithSyntax",
-                      "event": "InvoiceCancelled",
-                      "key": null,
-                      "parentKey": null
+                      "event": "InvoiceCancelled"
                     }
                   ],
-                  "key": null,
                   "name": "InvoiceList",
                   "readModel": "InvoiceListReadModel",
                   "sequence": null
@@ -6158,7 +5631,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "invoiceId",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -6193,7 +5665,6 @@
                     {
                       "kind": "QueryParameterSyntax",
                       "name": "status",
-                      "source": null,
                       "type": {
                         "kind": "TypeRefSyntax",
                         "isCollection": false,
@@ -6204,7 +5675,6 @@
                     {
                       "kind": "QueryParameterSyntax",
                       "name": "customerId",
-                      "source": null,
                       "type": {
                         "kind": "TypeRefSyntax",
                         "isCollection": false,
@@ -6215,10 +5685,6 @@
                     {
                       "kind": "QueryParameterSyntax",
                       "name": "tenantId",
-                      "source": {
-                        "kind": "ContextExpressionSyntax",
-                        "path": "tenant"
-                      },
                       "type": {
                         "kind": "TypeRefSyntax",
                         "isCollection": false,
@@ -6544,7 +6010,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ListingARegisteredInvoice",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -6552,101 +6017,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [
-                    {
-                      "kind": "SpecificationQuerySyntax",
-                      "arguments": [
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "customerId",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                          }
-                        }
-                      ],
-                      "exactly": false,
-                      "query": "ListInvoices",
-                      "results": [
-                        {
-                          "kind": "SpecificationQueryResultSyntax",
-                          "exactly": false,
-                          "properties": [
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "invoiceId",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
-                              }
-                            },
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "invoiceNumber",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "INV-000124"
-                              }
-                            },
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "currency",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "USD"
-                              }
-                            },
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "dueDate",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "2026-11-30"
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "kind": "SpecificationQueryResultSyntax",
-                          "exactly": false,
-                          "properties": [
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "invoiceId",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
-                              }
-                            },
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "invoiceNumber",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "INV-000123"
-                              }
-                            },
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "currency",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "NOK"
-                              }
-                            },
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "dueDate",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "2026-12-31"
-                              }
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -6765,16 +6135,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "DroppingACancelledInvoiceFromTheList",
-                  "thenAbsentReadModels": [
-                    {
-                      "kind": "SpecificationAbsentReadModelSyntax",
-                      "key": {
-                        "kind": "LiteralExpressionSyntax",
-                        "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
-                      },
-                      "name": "InvoiceListReadModel"
-                    }
-                  ],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -6782,7 +6142,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -6834,11 +6193,7 @@
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "lastUpdatedAt",
-                          "source": {
-                            "kind": "EventContextExpressionSyntax",
-                            "path": "occurred"
-                          }
+                          "property": "lastUpdatedAt"
                         }
                       ]
                     },
@@ -6847,250 +6202,135 @@
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceRegistered",
-                          "key": {
-                            "kind": "EventSourceIdExpressionSyntax"
-                          }
+                          "event": "InvoiceRegistered"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "invoiceId",
-                          "source": {
-                            "kind": "EventSourceIdExpressionSyntax"
-                          }
+                          "property": "invoiceId"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "customerId",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "customerId"
-                          }
+                          "property": "customerId"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "invoiceNumber",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "invoiceNumber"
-                          }
+                          "property": "invoiceNumber"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "currency",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "currency"
-                          }
+                          "property": "currency"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "paymentTerms",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "paymentTerms"
-                          }
+                          "property": "paymentTerms"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "status",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "draft"
-                          }
+                          "property": "status"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "dueDate",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "dueDate"
-                          }
+                          "property": "dueDate"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "registeredAt",
-                          "source": {
-                            "kind": "EventContextExpressionSyntax",
-                            "path": "occurred"
-                          }
+                          "property": "registeredAt"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "registeredBy",
-                          "source": {
-                            "kind": "CausedByExpressionSyntax",
-                            "property": "name"
-                          }
+                          "property": "registeredBy"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "registeredByUser",
-                          "source": {
-                            "kind": "CausedByExpressionSyntax",
-                            "property": "userName"
-                          }
+                          "property": "registeredByUser"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "registeredForSubject",
-                          "source": {
-                            "kind": "CausedByExpressionSyntax",
-                            "property": "subject"
-                          }
+                          "property": "registeredForSubject"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "displayLabel",
-                          "source": {
-                            "kind": "TemplateExpressionSyntax",
-                            "parts": [
-                              {
-                                "kind": "TemplateInterpolationSyntax",
-                                "expression": {
-                                  "kind": "PathExpressionSyntax",
-                                  "path": "invoiceNumber"
-                                }
-                              },
-                              {
-                                "kind": "TemplateTextSyntax",
-                                "text": " ("
-                              },
-                              {
-                                "kind": "TemplateInterpolationSyntax",
-                                "expression": {
-                                  "kind": "PathExpressionSyntax",
-                                  "path": "currency"
-                                }
-                              },
-                              {
-                                "kind": "TemplateTextSyntax",
-                                "text": ")"
-                              }
-                            ]
-                          }
+                          "property": "displayLabel"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceSent",
-                          "key": null
+                          "event": "InvoiceSent"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "status",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "sent"
-                          }
+                          "property": "status"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "sentAt",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "sentAt"
-                          }
+                          "property": "sentAt"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoicePaid",
-                          "key": null
+                          "event": "InvoicePaid"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "status",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "paid"
-                          }
+                          "property": "status"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "paidAt",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "paidAt"
-                          }
+                          "property": "paidAt"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceMarkedOverdue",
-                          "key": null
+                          "event": "InvoiceMarkedOverdue"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "status",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "overdue"
-                          }
+                          "property": "status"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "overdueAt",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "overdueAt"
-                          }
+                          "property": "overdueAt"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceStatusChanged",
-                          "key": null
+                          "event": "InvoiceStatusChanged"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "status",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "status"
-                          }
+                          "property": "status"
                         },
                         {
                           "kind": "ClearMappingSyntax",
                           "property": "overdueAt"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "JoinSyntax",
@@ -7102,11 +6342,7 @@
                           "mappings": [
                             {
                               "kind": "SetMappingSyntax",
-                              "property": "customerName",
-                              "source": {
-                                "kind": "PathExpressionSyntax",
-                                "path": "name"
-                              }
+                              "property": "customerName"
                             }
                           ]
                         }
@@ -7123,64 +6359,33 @@
                           "events": [
                             {
                               "kind": "EventSpecSyntax",
-                              "event": "InvoiceLineItemAdded",
-                              "key": {
-                                "kind": "PathExpressionSyntax",
-                                "path": "lineNumber"
-                              }
+                              "event": "InvoiceLineItemAdded"
                             }
                           ],
-                          "key": null,
                           "mappings": [
                             {
                               "kind": "SetMappingSyntax",
-                              "property": "quantity",
-                              "source": {
-                                "kind": "PathExpressionSyntax",
-                                "path": "quantity"
-                              }
+                              "property": "quantity"
                             },
                             {
                               "kind": "SetMappingSyntax",
-                              "property": "unitPrice",
-                              "source": {
-                                "kind": "PathExpressionSyntax",
-                                "path": "unitPrice"
-                              }
+                              "property": "unitPrice"
                             },
                             {
                               "kind": "AddMappingSyntax",
-                              "property": "subtotal",
-                              "value": {
-                                "kind": "PathExpressionSyntax",
-                                "path": "unitPrice"
-                              }
+                              "property": "subtotal"
                             },
                             {
                               "kind": "CountMappingSyntax",
                               "property": "itemCount"
                             }
-                          ],
-                          "parentKey": {
-                            "kind": "EventSourceIdExpressionSyntax"
-                          }
+                          ]
                         },
                         {
                           "kind": "RemoveWithSyntax",
-                          "event": "InvoiceLineItemRemoved",
-                          "key": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "lineNumber"
-                          },
-                          "parentKey": {
-                            "kind": "EventSourceIdExpressionSyntax"
-                          }
+                          "event": "InvoiceLineItemRemoved"
                         }
                       ],
-                      "identifiedBy": {
-                        "kind": "PathExpressionSyntax",
-                        "path": "lineNumber"
-                      },
                       "property": "lineItems"
                     },
                     {
@@ -7192,22 +6397,15 @@
                           "events": [
                             {
                               "kind": "EventSpecSyntax",
-                              "event": "InvoiceShipped",
-                              "key": null
+                              "event": "InvoiceShipped"
                             }
                           ],
-                          "key": null,
                           "mappings": [
                             {
                               "kind": "SetMappingSyntax",
-                              "property": "carrier",
-                              "source": {
-                                "kind": "PathExpressionSyntax",
-                                "path": "carrier"
-                              }
+                              "property": "carrier"
                             }
-                          ],
-                          "parentKey": null
+                          ]
                         },
                         {
                           "kind": "ClearWithSyntax",
@@ -7218,11 +6416,9 @@
                     },
                     {
                       "kind": "RemoveViaJoinSyntax",
-                      "event": "CustomerAccountClosed",
-                      "key": null
+                      "event": "CustomerAccountClosed"
                     }
                   ],
-                  "key": null,
                   "name": "InvoiceDetails",
                   "readModel": "InvoiceDetailsReadModel",
                   "sequence": "invoicing"
@@ -7241,7 +6437,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "invoiceId",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -7771,7 +6966,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ShowingASentInvoiceWithItsCustomer",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -7779,39 +6973,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [
-                    {
-                      "kind": "SpecificationQuerySyntax",
-                      "arguments": [
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "invoiceId",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
-                          }
-                        }
-                      ],
-                      "exactly": false,
-                      "query": "GetInvoice",
-                      "results": [
-                        {
-                          "kind": "SpecificationQueryResultSyntax",
-                          "exactly": false,
-                          "properties": [
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "status",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "sent"
-                              }
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -7917,53 +7078,21 @@
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceLineItemAdded",
-                          "key": null
+                          "event": "InvoiceLineItemAdded"
                         }
                       ],
-                      "key": {
-                        "kind": "CompositeKeySyntax",
-                        "parts": [
-                          {
-                            "kind": "KeyPartSyntax",
-                            "expression": {
-                              "kind": "EventSourceIdExpressionSyntax"
-                            },
-                            "property": "invoiceId"
-                          },
-                          {
-                            "kind": "KeyPartSyntax",
-                            "expression": {
-                              "kind": "PathExpressionSyntax",
-                              "path": "lineNumber"
-                            },
-                            "property": "lineNumber"
-                          }
-                        ],
-                        "type": "InvoiceLineKey"
-                      },
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "quantity",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "quantity"
-                          }
+                          "property": "quantity"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "unitPrice",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "unitPrice"
-                          }
+                          "property": "unitPrice"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     }
                   ],
-                  "key": null,
                   "name": "InvoiceLineReport",
                   "readModel": "InvoiceLineReportReadModel",
                   "sequence": null
@@ -7982,7 +7111,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "invoiceId",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -8017,10 +7145,6 @@
                     {
                       "kind": "QueryParameterSyntax",
                       "name": "tenantId",
-                      "source": {
-                        "kind": "ContextExpressionSyntax",
-                        "path": "tenant"
-                      },
                       "type": {
                         "kind": "TypeRefSyntax",
                         "isCollection": false,
@@ -8133,7 +7257,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ReportingAnAddedLine",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -8141,7 +7264,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -8247,25 +7369,13 @@
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceRegistered",
-                          "key": null
+                          "event": "InvoiceRegistered"
                         }
                       ],
-                      "key": {
-                        "kind": "ExpressionKeySyntax",
-                        "expression": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "global"
-                        }
-                      },
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "summaryId",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "global"
-                          }
+                          "property": "summaryId"
                         },
                         {
                           "kind": "IncrementMappingSyntax",
@@ -8279,22 +7389,16 @@
                           "kind": "CountMappingSyntax",
                           "property": "touches"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceSent",
-                          "key": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "global"
-                          }
+                          "event": "InvoiceSent"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "DecrementMappingSyntax",
@@ -8304,22 +7408,16 @@
                           "kind": "IncrementMappingSyntax",
                           "property": "sentCount"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoicePaid",
-                          "key": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "global"
-                          }
+                          "event": "InvoicePaid"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "DecrementMappingSyntax",
@@ -8329,86 +7427,58 @@
                           "kind": "IncrementMappingSyntax",
                           "property": "paidCount"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceMarkedOverdue",
-                          "key": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "global"
-                          }
+                          "event": "InvoiceMarkedOverdue"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "IncrementMappingSyntax",
                           "property": "overdueCount"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceWrittenOff",
-                          "key": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "global"
-                          }
+                          "event": "InvoiceWrittenOff"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "AddMappingSyntax",
-                          "property": "writeOffTotal",
-                          "value": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "amount"
-                          }
+                          "property": "writeOffTotal"
                         },
                         {
                           "kind": "SubtractMappingSyntax",
-                          "property": "outstandingTotal",
-                          "value": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "amount"
-                          }
+                          "property": "outstandingTotal"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceCancelled",
-                          "key": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "global"
-                          }
+                          "event": "InvoiceCancelled"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "DecrementMappingSyntax",
                           "property": "totalCount"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     }
                   ],
-                  "key": null,
                   "name": "InvoiceSummary",
                   "readModel": "InvoiceSummaryReadModel",
                   "sequence": null
@@ -8427,7 +7497,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "summaryId",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -8843,7 +7912,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "CountingInvoicesAsTheyMove",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -8851,7 +7919,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -8983,7 +8050,6 @@
                     }
                   ],
                   "name": "ListingOverdueInvoices",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -8991,30 +8057,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [
-                    {
-                      "kind": "SpecificationQuerySyntax",
-                      "arguments": [],
-                      "exactly": false,
-                      "query": "GetOverdueInvoices",
-                      "results": [
-                        {
-                          "kind": "SpecificationQueryResultSyntax",
-                          "exactly": false,
-                          "properties": [
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "invoiceNumber",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "INV-000123"
-                              }
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -9105,8 +8147,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": null
+                      "tags": []
                     },
                     {
                       "kind": "ProducesSyntax",
@@ -9135,16 +8176,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": {
-                        "kind": "ComparisonConditionSyntax",
-                        "left": "method",
-                        "operator": "Equal",
-                        "right": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "cash"
-                        }
-                      }
+                      "tags": []
                     }
                   ],
                   "properties": [
@@ -9201,22 +8233,6 @@
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
-                      "requirements": [
-                        {
-                          "kind": "RequirementSyntax",
-                          "condition": {
-                            "kind": "ComparisonConditionSyntax",
-                            "left": "amount",
-                            "operator": "LessThanOrEqual",
-                            "right": {
-                              "kind": "PathExpressionSyntax",
-                              "path": "balance.outstanding"
-                            }
-                          },
-                          "message": "A payment cannot exceed what is outstanding",
-                          "severity": "Error"
-                        }
-                      ],
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
@@ -9478,7 +8494,6 @@
                     }
                   ],
                   "name": "RecordingACardPayment",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -9521,7 +8536,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -9619,7 +8633,6 @@
                     }
                   ],
                   "name": "RejectingAnOverpayment",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
@@ -9632,7 +8645,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -9765,7 +8777,6 @@
                     }
                   ],
                   "name": "RejectingTheSamePaymentTwice",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
@@ -9778,7 +8789,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -9850,103 +8860,63 @@
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceRegistered",
-                          "key": null
+                          "event": "InvoiceRegistered"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "invoiceId",
-                          "source": {
-                            "kind": "EventSourceIdExpressionSyntax"
-                          }
+                          "property": "invoiceId"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "total",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "total"
-                          }
+                          "property": "total"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "paid",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": 0
-                          }
+                          "property": "paid"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "outstanding",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "total"
-                          }
+                          "property": "outstanding"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "PaymentRecorded",
-                          "key": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "invoiceId"
-                          }
+                          "event": "PaymentRecorded"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "AddMappingSyntax",
-                          "property": "paid",
-                          "value": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "amount"
-                          }
+                          "property": "paid"
                         },
                         {
                           "kind": "SubtractMappingSyntax",
-                          "property": "outstanding",
-                          "value": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "amount"
-                          }
+                          "property": "outstanding"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceWrittenOff",
-                          "key": null
+                          "event": "InvoiceWrittenOff"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SubtractMappingSyntax",
-                          "property": "outstanding",
-                          "value": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "amount"
-                          }
+                          "property": "outstanding"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     }
                   ],
-                  "key": null,
                   "name": "InvoiceBalance",
                   "readModel": "InvoiceBalanceReadModel",
                   "sequence": null
@@ -9965,7 +8935,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "invoiceId",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -10128,7 +9097,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ReducingTheBalanceByAPayment",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -10136,7 +9104,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -10246,7 +9213,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "invoiceId",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -10388,7 +9354,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "AgingAnOverdueInvoice",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -10396,7 +9361,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -10478,18 +9442,15 @@
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceReminderSent",
-                          "key": null
+                          "event": "InvoiceReminderSent"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "IncrementMappingSyntax",
                           "property": "reminders"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "ProjectionVariantSyntax",
@@ -10499,44 +9460,29 @@
                           "events": [
                             {
                               "kind": "EventSpecSyntax",
-                              "event": "InvoiceSent",
-                              "key": null
+                              "event": "InvoiceSent"
                             }
                           ],
-                          "key": null,
                           "mappings": [
                             {
                               "kind": "SetMappingSyntax",
-                              "property": "invoiceId",
-                              "source": {
-                                "kind": "EventSourceIdExpressionSyntax"
-                              }
+                              "property": "invoiceId"
                             },
                             {
                               "kind": "SetMappingSyntax",
-                              "property": "sentAt",
-                              "source": {
-                                "kind": "PathExpressionSyntax",
-                                "path": "sentAt"
-                              }
+                              "property": "sentAt"
                             },
                             {
                               "kind": "SetMappingSyntax",
-                              "property": "reminders",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": 0
-                              }
+                              "property": "reminders"
                             }
-                          ],
-                          "parentKey": null
+                          ]
                         }
                       ],
                       "entersOn": [
                         {
                           "kind": "ProjectionEntersOnSyntax",
-                          "event": "InvoiceSent",
-                          "key": null
+                          "event": "InvoiceSent"
                         }
                       ],
                       "name": "DueInvoice"
@@ -10549,36 +9495,25 @@
                           "events": [
                             {
                               "kind": "EventSpecSyntax",
-                              "event": "InvoiceMarkedOverdue",
-                              "key": null
+                              "event": "InvoiceMarkedOverdue"
                             }
                           ],
-                          "key": null,
                           "mappings": [
                             {
                               "kind": "SetMappingSyntax",
-                              "property": "invoiceId",
-                              "source": {
-                                "kind": "EventSourceIdExpressionSyntax"
-                              }
+                              "property": "invoiceId"
                             },
                             {
                               "kind": "SetMappingSyntax",
-                              "property": "overdueAt",
-                              "source": {
-                                "kind": "PathExpressionSyntax",
-                                "path": "overdueAt"
-                              }
+                              "property": "overdueAt"
                             }
-                          ],
-                          "parentKey": null
+                          ]
                         }
                       ],
                       "entersOn": [
                         {
                           "kind": "ProjectionEntersOnSyntax",
-                          "event": "InvoiceMarkedOverdue",
-                          "key": null
+                          "event": "InvoiceMarkedOverdue"
                         }
                       ],
                       "name": "OverdueInvoice"
@@ -10591,42 +9526,30 @@
                           "events": [
                             {
                               "kind": "EventSpecSyntax",
-                              "event": "InvoicePaid",
-                              "key": null
+                              "event": "InvoicePaid"
                             }
                           ],
-                          "key": null,
                           "mappings": [
                             {
                               "kind": "SetMappingSyntax",
-                              "property": "invoiceId",
-                              "source": {
-                                "kind": "EventSourceIdExpressionSyntax"
-                              }
+                              "property": "invoiceId"
                             },
                             {
                               "kind": "SetMappingSyntax",
-                              "property": "paidAt",
-                              "source": {
-                                "kind": "PathExpressionSyntax",
-                                "path": "paidAt"
-                              }
+                              "property": "paidAt"
                             }
-                          ],
-                          "parentKey": null
+                          ]
                         }
                       ],
                       "entersOn": [
                         {
                           "kind": "ProjectionEntersOnSyntax",
-                          "event": "InvoicePaid",
-                          "key": null
+                          "event": "InvoicePaid"
                         }
                       ],
                       "name": "SettledInvoice"
                     }
                   ],
-                  "key": null,
                   "name": "Collections",
                   "readModel": null,
                   "sequence": null
@@ -10645,7 +9568,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "invoiceId",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -10677,7 +9599,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "invoiceId",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -10709,7 +9630,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "invoiceId",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -11103,16 +10023,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "MovingAnInvoiceFromDueToOverdue",
-                  "thenAbsentReadModels": [
-                    {
-                      "kind": "SpecificationAbsentReadModelSyntax",
-                      "key": {
-                        "kind": "LiteralExpressionSyntax",
-                        "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
-                      },
-                      "name": "DueInvoice"
-                    }
-                  ],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -11120,7 +10030,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -11198,7 +10107,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "currency",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -11373,7 +10281,6 @@
                     }
                   ],
                   "name": "LookingUpTheEuroRate",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -11381,7 +10288,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [
                     {
@@ -11476,7 +10382,6 @@
                     }
                   ],
                   "name": "NotFindingAnUnpublishedCurrency",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -11486,7 +10391,6 @@
                     "kind": "SpecificationNoResultSyntax"
                   },
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -11578,8 +10482,7 @@
                               }
                             }
                           ],
-                          "tags": [],
-                          "when": null
+                          "tags": []
                         }
                       ],
                       "source": {
@@ -11587,8 +10490,7 @@
                         "name": "PaymentSettled"
                       }
                     }
-                  ],
-                  "where": null
+                  ]
                 }
               ],
               "readModels": [],
@@ -11621,7 +10523,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RecordingASettledCardPayment",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -11661,7 +10562,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -11731,25 +10631,7 @@
                       "invokes": [
                         {
                           "kind": "InvokesSyntax",
-                          "command": "ChangeInvoiceStatus",
-                          "mappings": [
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "invoiceId",
-                              "source": {
-                                "kind": "PathExpressionSyntax",
-                                "path": "invoiceId"
-                              }
-                            },
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "status",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "paid"
-                              }
-                            }
-                          ]
+                          "command": "ChangeInvoiceStatus"
                         }
                       ],
                       "produces": [],
@@ -11758,16 +10640,7 @@
                         "name": "PaymentRecorded"
                       }
                     }
-                  ],
-                  "where": {
-                    "kind": "ComparisonConditionSyntax",
-                    "left": "amount",
-                    "operator": "GreaterThan",
-                    "right": {
-                      "kind": "LiteralExpressionSyntax",
-                      "value": 0
-                    }
-                  }
+                  ]
                 }
               ],
               "readModels": [],
@@ -11800,7 +10673,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ClosingOutAFullyPaidInvoice",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -11815,7 +10687,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -11969,8 +10840,7 @@
                               }
                             }
                           ],
-                          "tags": [],
-                          "when": null
+                          "tags": []
                         }
                       ],
                       "source": {
@@ -11990,8 +10860,7 @@
                         "time": "08:00:00.0000000"
                       }
                     }
-                  ],
-                  "where": null
+                  ]
                 },
                 {
                   "kind": "ReactionSyntax",
@@ -12019,8 +10888,7 @@
                               }
                             }
                           ],
-                          "tags": [],
-                          "when": null
+                          "tags": []
                         }
                       ],
                       "source": {
@@ -12030,8 +10898,7 @@
                         "time": "07:30:00.0000000"
                       }
                     }
-                  ],
-                  "where": null
+                  ]
                 },
                 {
                   "kind": "ReactionSyntax",
@@ -12050,8 +10917,7 @@
                         "time": "06:00:00.0000000"
                       }
                     }
-                  ],
-                  "where": null
+                  ]
                 }
               ],
               "readModels": [],
@@ -12084,7 +10950,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RemindingAsSoonAsAnInvoiceIsOverdue",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -12108,7 +10973,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -12166,7 +11030,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "IssuingTheWeeklyDigestOnMondayMorning",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -12190,7 +11053,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -12243,106 +11105,67 @@
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceRegistered",
-                          "key": null
+                          "event": "InvoiceRegistered"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "invoiceId",
-                          "source": {
-                            "kind": "EventSourceIdExpressionSyntax"
-                          }
+                          "property": "invoiceId"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "customerId",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "customerId"
-                          }
+                          "property": "customerId"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "invoiceNumber",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "invoiceNumber"
-                          }
+                          "property": "invoiceNumber"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "dueDate",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "dueDate"
-                          }
+                          "property": "dueDate"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "status",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "draft"
-                          }
+                          "property": "status"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceSent",
-                          "key": null
+                          "event": "InvoiceSent"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "status",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "sent"
-                          }
+                          "property": "status"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "FromSyntax",
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoicePaid",
-                          "key": null
+                          "event": "InvoicePaid"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "status",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "paid"
-                          }
+                          "property": "status"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     },
                     {
                       "kind": "RemoveWithSyntax",
-                      "event": "InvoiceCancelled",
-                      "key": null,
-                      "parentKey": null
+                      "event": "InvoiceCancelled"
                     }
                   ],
-                  "key": null,
                   "name": "CustomerInvoices",
                   "readModel": "CustomerInvoiceReadModel",
                   "sequence": null
@@ -12361,7 +11184,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "invoiceId",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -12396,10 +11218,6 @@
                     {
                       "kind": "QueryParameterSyntax",
                       "name": "customerId",
-                      "source": {
-                        "kind": "ContextExpressionSyntax",
-                        "path": "identity.claims.customerId"
-                      },
                       "type": {
                         "kind": "TypeRefSyntax",
                         "isCollection": false,
@@ -12591,7 +11409,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "SeeingMyOwnInvoice",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -12599,47 +11416,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [
-                    {
-                      "kind": "SpecificationQuerySyntax",
-                      "arguments": [
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "customerId",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                          }
-                        }
-                      ],
-                      "exactly": false,
-                      "query": "ListMyInvoices",
-                      "results": [
-                        {
-                          "kind": "SpecificationQueryResultSyntax",
-                          "exactly": false,
-                          "properties": [
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "invoiceNumber",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "INV-000123"
-                              }
-                            },
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "status",
-                              "source": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "sent"
-                              }
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -12762,8 +11538,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": null
+                      "tags": []
                     }
                   ],
                   "properties": [
@@ -12796,7 +11571,6 @@
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
-                      "requirements": [],
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
@@ -12932,7 +11706,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RequestingAThreeInstallmentPlan",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -12967,7 +11740,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -13026,7 +11798,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RejectingASingleInstallment",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [
@@ -13039,7 +11810,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -13116,10 +11886,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "customerId",
-                    "source": {
-                      "kind": "ContextExpressionSyntax",
-                      "path": "identity.claims.customerId"
-                    },
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -13282,7 +12048,6 @@
                     }
                   ],
                   "name": "SeeingMyCreditStatus",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -13290,7 +12055,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [
                     {
@@ -13376,24 +12140,17 @@
                       "events": [
                         {
                           "kind": "EventSpecSyntax",
-                          "event": "InvoiceCancelled",
-                          "key": null
+                          "event": "InvoiceCancelled"
                         }
                       ],
-                      "key": null,
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "invoiceId",
-                          "source": {
-                            "kind": "EventSourceIdExpressionSyntax"
-                          }
+                          "property": "invoiceId"
                         }
-                      ],
-                      "parentKey": null
+                      ]
                     }
                   ],
-                  "key": null,
                   "name": "CancelledInvoices",
                   "readModel": "CancelledInvoiceReadModel",
                   "sequence": null
@@ -13412,7 +12169,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "invoiceId",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -13598,7 +12354,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ArchivingACancelledInvoice",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -13606,7 +12361,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -13714,7 +12468,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RefusingANonAuditor",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": {
                     "kind": "SpecificationDeniedSyntax"
@@ -13724,7 +12477,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -13771,18 +12523,11 @@
                       "mappings": [
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "sourceId",
-                          "source": {
-                            "kind": "EventSourceIdExpressionSyntax"
-                          }
+                          "property": "sourceId"
                         },
                         {
                           "kind": "SetMappingSyntax",
-                          "property": "lastOccurred",
-                          "source": {
-                            "kind": "EventContextExpressionSyntax",
-                            "path": "occurred"
-                          }
+                          "property": "lastOccurred"
                         },
                         {
                           "kind": "CountMappingSyntax",
@@ -13791,7 +12536,6 @@
                       ]
                     }
                   ],
-                  "key": null,
                   "name": "SystemActivity",
                   "readModel": "SourceActivityReadModel",
                   "sequence": null
@@ -13810,7 +12554,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "sourceId",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -13944,7 +12687,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "CountingEveryEventOnAnInvoice",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -13952,7 +12694,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -14163,8 +12904,7 @@
                                   }
                                 }
                               ],
-                              "tags": [],
-                              "when": null
+                              "tags": []
                             }
                           ],
                           "source": {
@@ -14172,8 +12912,7 @@
                             "name": "InvoiceRegistered"
                           }
                         }
-                      ],
-                      "where": null
+                      ]
                     }
                   ],
                   "readModels": [],
@@ -14206,7 +12945,6 @@
                       "givenOperationFailures": [],
                       "givenReadModels": [],
                       "name": "NotifyingTheBillingContact",
-                      "thenAbsentReadModels": [],
                       "thenCompensated": [],
                       "thenDenied": null,
                       "thenErrors": [],
@@ -14230,7 +12968,6 @@
                       "thenEventsInAnyOrder": false,
                       "thenNoResult": null,
                       "thenOperations": [],
-                      "thenQueries": [],
                       "thenReadModels": [],
                       "thenResults": [],
                       "thenReturns": null,
@@ -14331,8 +13068,7 @@
                         "name": "InvoiceSent"
                       }
                     }
-                  ],
-                  "where": null
+                  ]
                 }
               ],
               "readModels": [],
@@ -14373,7 +13109,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "MarkingALateInvoiceOverdue",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -14388,7 +13123,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -14559,8 +13293,7 @@
                               }
                             }
                           ],
-                          "tags": [],
-                          "when": null
+                          "tags": []
                         }
                       ],
                       "source": {
@@ -14607,8 +13340,7 @@
                               }
                             }
                           ],
-                          "tags": [],
-                          "when": null
+                          "tags": []
                         }
                       ],
                       "source": {
@@ -14616,8 +13348,7 @@
                         "name": "BillingContactUpdated"
                       }
                     }
-                  ],
-                  "where": null
+                  ]
                 }
               ],
               "readModels": [],
@@ -14661,7 +13392,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "SynchronizingWhenSomeoneAsks",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -14693,7 +13423,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -14744,7 +13473,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "PublishingAnUpdatedContact",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -14768,7 +13496,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -14807,144 +13534,23 @@
                   "appends": [
                     {
                       "kind": "CaptureAppendSyntax",
-                      "event": "InvoiceStatusChanged",
-                      "mappings": [
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "status",
-                          "source": {
-                            "kind": "SourceItemExpressionSyntax",
-                            "path": "status"
-                          }
-                        },
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "changedAt",
-                          "source": {
-                            "kind": "ContextExpressionSyntax",
-                            "path": "occurred"
-                          }
-                        }
-                      ],
-                      "tags": [
-                        {
-                          "kind": "TagSyntax",
-                          "value": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "legacy"
-                          }
-                        }
-                      ],
-                      "when": {
-                        "kind": "CaptureWhenSyntax",
-                        "expression": null,
-                        "fromValue": null,
-                        "properties": [
-                          "status"
-                        ],
-                        "syntaxKind": "PropertyChanged",
-                        "toValue": null
-                      }
+                      "event": "InvoiceStatusChanged"
                     },
                     {
                       "kind": "CaptureAppendSyntax",
-                      "event": "InvoicePaidFromSent",
-                      "mappings": [
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "paidAt",
-                          "source": {
-                            "kind": "ContextExpressionSyntax",
-                            "path": "occurred"
-                          }
-                        }
-                      ],
-                      "tags": [],
-                      "when": {
-                        "kind": "CaptureWhenSyntax",
-                        "expression": null,
-                        "fromValue": "sent",
-                        "properties": [
-                          "status"
-                        ],
-                        "syntaxKind": "ValueTransition",
-                        "toValue": "paid"
-                      }
+                      "event": "InvoicePaidFromSent"
                     },
                     {
                       "kind": "CaptureAppendSyntax",
-                      "event": "InvoiceNeedsAttention",
-                      "mappings": [
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "source",
-                          "source": {
-                            "kind": "LiteralExpressionSyntax",
-                            "value": "legacy"
-                          }
-                        }
-                      ],
-                      "tags": [],
-                      "when": {
-                        "kind": "CaptureWhenSyntax",
-                        "expression": null,
-                        "fromValue": null,
-                        "properties": [
-                          "status",
-                          "contactName"
-                        ],
-                        "syntaxKind": "LogicalOr",
-                        "toValue": null
-                      }
+                      "event": "InvoiceNeedsAttention"
                     },
                     {
                       "kind": "CaptureAppendSyntax",
-                      "event": "InvoiceFullyApproved",
-                      "mappings": [
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "approvedAt",
-                          "source": {
-                            "kind": "ContextExpressionSyntax",
-                            "path": "occurred"
-                          }
-                        }
-                      ],
-                      "tags": [],
-                      "when": {
-                        "kind": "CaptureWhenSyntax",
-                        "expression": null,
-                        "fromValue": null,
-                        "properties": [
-                          "approvedByFinance",
-                          "approvedByManager"
-                        ],
-                        "syntaxKind": "LogicalAnd",
-                        "toValue": null
-                      }
+                      "event": "InvoiceFullyApproved"
                     },
                     {
                       "kind": "CaptureAppendSyntax",
-                      "event": "InvoiceFlagged",
-                      "mappings": [
-                        {
-                          "kind": "PropertyMappingSyntax",
-                          "property": "flaggedAt",
-                          "source": {
-                            "kind": "ContextExpressionSyntax",
-                            "path": "occurred"
-                          }
-                        }
-                      ],
-                      "tags": [],
-                      "when": {
-                        "kind": "CaptureWhenSyntax",
-                        "expression": "`status == \"sent\" && overdue == true`",
-                        "fromValue": null,
-                        "properties": [],
-                        "syntaxKind": "Expression",
-                        "toValue": null
-                      }
+                      "event": "InvoiceFlagged"
                     }
                   ],
                   "children": [
@@ -14953,148 +13559,18 @@
                       "appends": [
                         {
                           "kind": "CaptureAppendSyntax",
-                          "event": "InvoiceLineItemAdded",
-                          "mappings": [
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "lineNumber",
-                              "source": {
-                                "kind": "SourceItemExpressionSyntax",
-                                "path": "lineNumber"
-                              }
-                            },
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "quantity",
-                              "source": {
-                                "kind": "SourceItemExpressionSyntax",
-                                "path": "quantity"
-                              }
-                            },
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "unitPrice",
-                              "source": {
-                                "kind": "SourceItemExpressionSyntax",
-                                "path": "unitPrice"
-                              }
-                            }
-                          ],
-                          "tags": [],
-                          "when": {
-                            "kind": "CaptureWhenSyntax",
-                            "expression": null,
-                            "fromValue": null,
-                            "properties": [],
-                            "syntaxKind": "Added",
-                            "toValue": null
-                          }
+                          "event": "InvoiceLineItemAdded"
                         },
                         {
                           "kind": "CaptureAppendSyntax",
-                          "event": "InvoiceLineItemRemoved",
-                          "mappings": [
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "lineNumber",
-                              "source": {
-                                "kind": "SourceItemExpressionSyntax",
-                                "path": "lineNumber"
-                              }
-                            }
-                          ],
-                          "tags": [],
-                          "when": {
-                            "kind": "CaptureWhenSyntax",
-                            "expression": null,
-                            "fromValue": null,
-                            "properties": [],
-                            "syntaxKind": "Removed",
-                            "toValue": null
-                          }
+                          "event": "InvoiceLineItemRemoved"
                         }
                       ],
                       "identifiedBy": "lineNumber",
-                      "map": [
-                        {
-                          "kind": "CaptureMapEntrySyntax",
-                          "property": "productName",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "name"
-                          },
-                          "translations": []
-                        }
-                      ],
                       "property": "lineItems"
                     }
                   ],
                   "key": "id",
-                  "map": [
-                    {
-                      "kind": "CaptureMapEntrySyntax",
-                      "property": "status",
-                      "source": {
-                        "kind": "PathExpressionSyntax",
-                        "path": "status"
-                      },
-                      "translations": [
-                        {
-                          "kind": "CaptureTranslationSyntax",
-                          "from": "utkast",
-                          "to": "draft"
-                        },
-                        {
-                          "kind": "CaptureTranslationSyntax",
-                          "from": "sendt",
-                          "to": "sent"
-                        },
-                        {
-                          "kind": "CaptureTranslationSyntax",
-                          "from": "betalt",
-                          "to": "paid"
-                        },
-                        {
-                          "kind": "CaptureTranslationSyntax",
-                          "from": "kansellert",
-                          "to": "cancelled"
-                        }
-                      ]
-                    },
-                    {
-                      "kind": "CaptureSplitSyntax",
-                      "separator": ",",
-                      "source": {
-                        "kind": "PathExpressionSyntax",
-                        "path": "contactName"
-                      },
-                      "targets": [
-                        "firstName",
-                        "lastName"
-                      ]
-                    },
-                    {
-                      "kind": "CaptureMapEntrySyntax",
-                      "property": "summary",
-                      "source": {
-                        "kind": "TemplateExpressionSyntax",
-                        "parts": [
-                          {
-                            "kind": "TemplateInterpolationSyntax",
-                            "expression": {
-                              "kind": "PathExpressionSyntax",
-                              "path": "status"
-                            }
-                          },
-                          {
-                            "kind": "TemplateTextSyntax",
-                            "text": " invoice"
-                          }
-                        ]
-                      },
-                      "translations": []
-                    }
-                  ],
                   "name": "LegacyInvoiceCapture",
                   "nested": [
                     {
@@ -15102,39 +13578,7 @@
                       "appends": [
                         {
                           "kind": "CaptureAppendSyntax",
-                          "event": "BillingContactUpdated",
-                          "mappings": [
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "email",
-                              "source": {
-                                "kind": "SourceItemExpressionSyntax",
-                                "path": "email"
-                              }
-                            }
-                          ],
-                          "tags": [],
-                          "when": {
-                            "kind": "CaptureWhenSyntax",
-                            "expression": null,
-                            "fromValue": null,
-                            "properties": [
-                              "email"
-                            ],
-                            "syntaxKind": "PropertyChanged",
-                            "toValue": null
-                          }
-                        }
-                      ],
-                      "map": [
-                        {
-                          "kind": "CaptureMapEntrySyntax",
-                          "property": "contactName",
-                          "source": {
-                            "kind": "PathExpressionSyntax",
-                            "path": "name"
-                          },
-                          "translations": []
+                          "event": "BillingContactUpdated"
                         }
                       ],
                       "property": "billingContact"
@@ -15367,8 +13811,7 @@
                               }
                             }
                           ],
-                          "tags": [],
-                          "when": null
+                          "tags": []
                         }
                       ],
                       "source": {
@@ -15376,8 +13819,7 @@
                         "name": "InvoicePaidFromSent"
                       }
                     }
-                  ],
-                  "where": null
+                  ]
                 }
               ],
               "readModels": [],
@@ -15425,7 +13867,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "SeeingAnInvoicePaidInTheLegacySystem",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -15514,7 +13955,6 @@
                   "thenEventsInAnyOrder": true,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -15581,7 +14021,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "TranslatingALegacyPayment",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -15605,7 +14044,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -15697,294 +14135,6 @@
       "policies": [
         "IsAuthenticated",
         "IsAuditor"
-      ]
-    }
-  ],
-  "policies": [
-    {
-      "kind": "PolicySyntax",
-      "code": null,
-      "condition": {
-        "kind": "AuthenticatedConditionSyntax"
-      },
-      "file": null,
-      "name": "IsAuthenticated"
-    },
-    {
-      "kind": "PolicySyntax",
-      "code": null,
-      "condition": {
-        "kind": "LogicalPolicyConditionSyntax",
-        "left": {
-          "kind": "LogicalPolicyConditionSyntax",
-          "left": {
-            "kind": "RoleConditionSyntax",
-            "role": "InvoiceManager"
-          },
-          "operator": "Or",
-          "right": {
-            "kind": "RoleConditionSyntax",
-            "role": "Accountant"
-          }
-        },
-        "operator": "Or",
-        "right": {
-          "kind": "RoleConditionSyntax",
-          "role": "FinanceController"
-        }
-      },
-      "file": null,
-      "name": "IsInvoicingStaff"
-    },
-    {
-      "kind": "PolicySyntax",
-      "code": null,
-      "condition": {
-        "kind": "LogicalPolicyConditionSyntax",
-        "left": {
-          "kind": "RoleConditionSyntax",
-          "role": "InvoiceManager"
-        },
-        "operator": "Or",
-        "right": {
-          "kind": "RoleConditionSyntax",
-          "role": "Accountant"
-        }
-      },
-      "file": null,
-      "name": "CanManageInvoice"
-    },
-    {
-      "kind": "PolicySyntax",
-      "code": null,
-      "condition": {
-        "kind": "RoleConditionSyntax",
-        "role": "Accountant"
-      },
-      "file": null,
-      "name": "IsAccountant"
-    },
-    {
-      "kind": "PolicySyntax",
-      "code": null,
-      "condition": {
-        "kind": "ClaimConditionSyntax",
-        "claim": "department",
-        "matches": {
-          "kind": "LiteralExpressionSyntax",
-          "value": "Finance"
-        },
-        "matchesSubject": false
-      },
-      "file": null,
-      "name": "IsFinanceDepartment"
-    },
-    {
-      "kind": "PolicySyntax",
-      "code": null,
-      "condition": {
-        "kind": "LogicalPolicyConditionSyntax",
-        "left": {
-          "kind": "LogicalPolicyConditionSyntax",
-          "left": {
-            "kind": "RoleConditionSyntax",
-            "role": "FinanceController"
-          },
-          "operator": "Or",
-          "right": {
-            "kind": "LogicalPolicyConditionSyntax",
-            "left": {
-              "kind": "RoleConditionSyntax",
-              "role": "Accountant"
-            },
-            "operator": "And",
-            "right": {
-              "kind": "ClaimConditionSyntax",
-              "claim": "seniority",
-              "matches": {
-                "kind": "LiteralExpressionSyntax",
-                "value": "senior"
-              },
-              "matchesSubject": false
-            }
-          }
-        },
-        "operator": "And",
-        "right": {
-          "kind": "AuthenticatedConditionSyntax"
-        }
-      },
-      "file": null,
-      "name": "CanWriteOff"
-    },
-    {
-      "kind": "PolicySyntax",
-      "code": null,
-      "condition": {
-        "kind": "RoleConditionSyntax",
-        "role": "Customer"
-      },
-      "file": null,
-      "name": "IsCustomer"
-    },
-    {
-      "kind": "PolicySyntax",
-      "code": null,
-      "condition": {
-        "kind": "ClaimConditionSyntax",
-        "claim": "customerId",
-        "matches": null,
-        "matchesSubject": true
-      },
-      "file": null,
-      "name": "OwnsInvoice"
-    },
-    {
-      "kind": "PolicySyntax",
-      "code": null,
-      "condition": {
-        "kind": "LogicalPolicyConditionSyntax",
-        "left": {
-          "kind": "RoleConditionSyntax",
-          "role": "Auditor"
-        },
-        "operator": "And",
-        "right": {
-          "kind": "ClaimConditionSyntax",
-          "claim": "tenant",
-          "matches": {
-            "kind": "ContextExpressionSyntax",
-            "path": "tenant"
-          },
-          "matchesSubject": false
-        }
-      },
-      "file": null,
-      "name": "IsAuditor"
-    },
-    {
-      "kind": "PolicySyntax",
-      "code": {
-        "kind": "CodeBlockSyntax",
-        "code": "var dateOfBirth = context.Identity.ClaimValue(\"dateOfBirth\");\nreturn dateOfBirth is not null && DateTime.TryParse(dateOfBirth, System.Globalization.CultureInfo.InvariantCulture,\n  System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,\n  out var born) && born <= context.Occurred.UtcDateTime.AddYears(-18);",
-        "language": "csharp"
-      },
-      "condition": null,
-      "file": null,
-      "name": "IsAdultCustomer"
-    },
-    {
-      "kind": "PolicySyntax",
-      "code": null,
-      "condition": null,
-      "file": {
-        "kind": "FileReferenceSyntax",
-        "path": "Policies/IsWithinCreditLimit.cs"
-      },
-      "name": "IsWithinCreditLimit"
-    }
-  ],
-  "seeds": [
-    {
-      "kind": "SeedSyntax",
-      "groups": [
-        {
-          "kind": "SeedGroupSyntax",
-          "eventSourceId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-          "events": [
-            {
-              "kind": "SeedEventSyntax",
-              "event": "CustomerRegistered",
-              "properties": [
-                {
-                  "kind": "PropertyMappingSyntax",
-                  "property": "customerId",
-                  "source": {
-                    "kind": "LiteralExpressionSyntax",
-                    "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                  }
-                },
-                {
-                  "kind": "PropertyMappingSyntax",
-                  "property": "name",
-                  "source": {
-                    "kind": "LiteralExpressionSyntax",
-                    "value": "Acme Corp"
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "kind": "SeedGroupSyntax",
-          "eventSourceId": "9c858901-8a57-4791-81fe-4c455b099bc9",
-          "events": [
-            {
-              "kind": "SeedEventSyntax",
-              "event": "InvoiceRegistered",
-              "properties": [
-                {
-                  "kind": "PropertyMappingSyntax",
-                  "property": "customerId",
-                  "source": {
-                    "kind": "LiteralExpressionSyntax",
-                    "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                  }
-                },
-                {
-                  "kind": "PropertyMappingSyntax",
-                  "property": "invoiceNumber",
-                  "source": {
-                    "kind": "LiteralExpressionSyntax",
-                    "value": "INV-000042"
-                  }
-                },
-                {
-                  "kind": "PropertyMappingSyntax",
-                  "property": "currency",
-                  "source": {
-                    "kind": "LiteralExpressionSyntax",
-                    "value": "NOK"
-                  }
-                },
-                {
-                  "kind": "PropertyMappingSyntax",
-                  "property": "status",
-                  "source": {
-                    "kind": "LiteralExpressionSyntax",
-                    "value": "draft"
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "kind": "SeedSyntax",
-      "groups": [
-        {
-          "kind": "SeedGroupSyntax",
-          "eventSourceId": "7d1e5f3a-2b4c-4e6f-8a9b-0c1d2e3f4a5b",
-          "events": [
-            {
-              "kind": "SeedEventSyntax",
-              "event": "CustomerRegistered",
-              "properties": [
-                {
-                  "kind": "PropertyMappingSyntax",
-                  "property": "name",
-                  "source": {
-                    "kind": "LiteralExpressionSyntax",
-                    "value": "Globex"
-                  }
-                }
-              ]
-            }
-          ]
-        }
       ]
     }
   ],

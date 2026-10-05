@@ -6,7 +6,6 @@
       "attributes": [],
       "name": "ProjectId",
       "type": "Uuid",
-      "validations": [],
       "values": []
     },
     {
@@ -14,7 +13,6 @@
       "attributes": [],
       "name": "ReceiptId",
       "type": "Uuid",
-      "validations": [],
       "values": []
     },
     {
@@ -22,7 +20,6 @@
       "attributes": [],
       "name": "lowerCaseConcept",
       "type": "String",
-      "validations": [],
       "values": []
     },
     {
@@ -30,7 +27,6 @@
       "attributes": [],
       "name": "slug",
       "type": "String",
-      "validations": [],
       "values": []
     }
   ],
@@ -102,8 +98,7 @@
                           }
                         }
                       ],
-                      "tags": [],
-                      "when": null
+                      "tags": []
                     }
                   ],
                   "properties": [
@@ -518,7 +513,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "RegistersProject",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -526,7 +520,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": {
@@ -578,7 +571,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ReturnsReceipt",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -586,7 +578,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": {
@@ -640,7 +631,6 @@
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ReturnsConcreteDetails",
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -648,7 +638,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": {
@@ -750,8 +739,6 @@
     }
   ],
   "personas": [],
-  "policies": [],
-  "seeds": [],
   "systems": [],
   "types": [
     {

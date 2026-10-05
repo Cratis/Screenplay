@@ -60,15 +60,9 @@
                   "blocks": [
                     {
                       "kind": "RemoveWithSyntax",
-                      "event": "InvoiceRemoved",
-                      "key": {
-                        "kind": "PathExpressionSyntax",
-                        "path": "invoiceId"
-                      },
-                      "parentKey": null
+                      "event": "InvoiceRemoved"
                     }
                   ],
-                  "key": null,
                   "name": "Invoices",
                   "readModel": "InvoiceView",
                   "sequence": null
@@ -81,7 +75,6 @@
                   "by": {
                     "kind": "QueryParameterSyntax",
                     "name": "invoiceId",
-                    "source": null,
                     "type": {
                       "kind": "TypeRefSyntax",
                       "isCollection": false,
@@ -165,16 +158,6 @@
                     }
                   ],
                   "name": "RemovingOneOfTwoInvoices",
-                  "thenAbsentReadModels": [
-                    {
-                      "kind": "SpecificationAbsentReadModelSyntax",
-                      "key": {
-                        "kind": "LiteralExpressionSyntax",
-                        "value": "first"
-                      },
-                      "name": "InvoiceView"
-                    }
-                  ],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -182,7 +165,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [
                     {
                       "kind": "SpecificationReadModelSyntax",
@@ -235,8 +217,6 @@
     }
   ],
   "personas": [],
-  "policies": [],
-  "seeds": [],
   "systems": [],
   "types": []
 }
