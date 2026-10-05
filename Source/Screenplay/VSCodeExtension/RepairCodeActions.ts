@@ -300,7 +300,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
                     if (!contains(owner.session.launch.root, document.uri.fsPath)) return [];
                     const discovered = await owner.session.discover(abort.signal);
                     publish(owner, discovered.diagnostics);
-                    return discovered.choices.filter(choice => path.join(owner.session.launch.root, choice.location.path!) === document.uri.fsPath && range.intersection(new vscode.Range(choice.location.line - 1, choice.location.column - 1, choice.location.line - 1, Math.max(choice.location.column, document.lineAt(choice.location.line - 1).text.length)))).map(choice => {
+                    return discovered.choices.filter(choice => path.relative(path.join(owner.session.launch.root, choice.location.path!), document.uri.fsPath) === '' && range.intersection(new vscode.Range(choice.location.line - 1, choice.location.column - 1, choice.location.line - 1, Math.max(choice.location.column, document.lineAt(choice.location.line - 1).text.length)))).map(choice => {
                         const action = new vscode.CodeAction(`${choice.title} — preview C# repair…`, vscode.CodeActionKind.QuickFix);
                         action.isPreferred = false;
                         action.command = { command: previewCommand, title: action.title, arguments: [choice.token] };

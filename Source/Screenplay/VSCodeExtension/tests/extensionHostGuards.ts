@@ -184,7 +184,7 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
             const classification = classifyRootDocument(model, document.uri);
             assert.equal(classification.scope, 'root', 'The exact native filesystem destination is inside the approved root');
             assert.ok('physical' in classification);
-            assert.equal(classification.physical, document.uri.with({ scheme: 'file' }).fsPath);
+            assert.equal(vscode.Uri.file(classification.physical).fsPath, document.uri.with({ scheme: 'file' }).fsPath);
             console.log(`NATIVE EXACT DIRTY BUFFER: ${JSON.stringify({ uri: document.uri.toString(), scheme: document.uri.scheme, classification, version: document.version, events })}`);
         } finally { finish(); subscription.dispose(); }
     };
@@ -391,7 +391,8 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
                 await configuration.update('modelRoot', model, vscode.ConfigurationTarget.Global);
                 document = await vscode.workspace.openTextDocument(vscode.Uri.file(source));
                 if (timing === 'after-review') { await review(); await navigateReview(); }
-                const target = path.join(model, relative);
+                // Compare exact native URI paths, including VS Code's normalized Windows drive casing.
+                const target = vscode.Uri.file(path.join(model, relative)).fsPath;
                 assert.equal(fs.existsSync(target), false, 'Associated untitled destination must NOT exist');
                 assert.ok(fs.statSync(path.dirname(target)).isDirectory(), 'Launcher prepared the destination parent before host watching');
                 const record = timing === 'after-review' ? productWatch(model) : undefined;

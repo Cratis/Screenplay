@@ -31,6 +31,7 @@ const host = vi.hoisted(() => ({
     documentListeners: new Set<(event: vscode.TextDocumentChangeEvent) => void>(),
     rootFsChanged: undefined as undefined | ((uri: vscode.Uri) => void), createRootFsWatcher: vi.fn(), replaced: new Set<string>(), inspected: [] as string[],
 }));
+vi.mock('node:path', async importOriginal => ({ ...await importOriginal<typeof import('node:path')>() }));
 vi.mock('vscode', () => ({
     workspace: {
         openTextDocument: async (value: { content: string }) => { host.inspected.push(value.content); return {}; },
@@ -57,6 +58,8 @@ vi.mock('vscode', () => ({
     languages: { createDiagnosticCollection: () => ({ clear: () => { if (host.diagnosticsDisposed) throw new Error('diagnostics already disposed'); host.clear(); }, dispose() { host.diagnosticsDisposed = true; } }), registerCodeActionsProvider: (_selector: unknown, provider: vscode.CodeActionProvider) => { host.provider = provider; return { dispose() {} }; } },
     commands: { executeCommand: vi.fn(), registerCommand: (name: string, callback: (...args: unknown[]) => unknown) => { host.commands.set(name, callback); return { dispose() {} }; } },
     CodeActionKind: { QuickFix: {} },
+    Range: class {},
+    CodeAction: class { constructor(readonly title: string, readonly kind: unknown) {} },
 }));
 vi.mock('../RepairPreviewProvider', () => ({ RepairPreviewProvider: class {
     static scheme = 'screenplay-repair'; get token() { return host.token; }
@@ -94,7 +97,7 @@ beforeEach(() => {
     subscriptions = [];
     registerRepairCodeActions({ subscriptions } as unknown as vscode.ExtensionContext, { load: vi.fn(async () => {}) } as unknown as ApplicationIndex);
 });
-afterEach(() => { subscriptions.forEach(resource => resource.dispose()); vi.useRealTimers(); });
+afterEach(() => { subscriptions.forEach(resource => resource.dispose()); vi.restoreAllMocks(); vi.useRealTimers(); });
 it('registers one watcher before discovery and retains it through review; late disposed callbacks cannot clear a new review', async () => {
     await invoke('refresh'); const old = host.sessions[0], watch = host.watches[0];
     host.warnings.mockResolvedValue('Propose and preview'); await invoke('preview', 'choice');
@@ -173,6 +176,30 @@ it('routes overlapping registered provider/manual reads to the SAME owner and ep
     expect(host.sessions).toHaveLength(1); expect(host.watches).toHaveLength(1); expect(session.epoch).toBe(epoch);
     gate.resolve({ choices: [], diagnostics: [] });
     await manual; await provider;
+    expect(host.warnings).not.toHaveBeenCalled();
+});
+it.each([
+    ['Windows', path.win32.relative, 1],
+    ['POSIX', path.posix.relative, 0],
+] as const)('matches registered repairs using %s path casing rules, never another file', async (_platform, relative, expected) => {
+    await invoke('refresh');
+    host.sessions[0].discover.mockResolvedValue({ choices: [
+        { title: 'Change routing: same file', token: 'same-file', location: { path: 'application.play', line: 1, column: 1 } },
+        { title: 'Change routing: other file', token: 'other-file', location: { path: 'other.play', line: 1, column: 1 } },
+        { title: 'Change routing: sibling directory', token: 'sibling', location: { path: '../sibling/application.play', line: 1, column: 1 } },
+    ], diagnostics: [] });
+    // Exercise the actual registered provider on every host with native path semantics.
+    // Windows accepts casing differences; POSIX must keep differently cased files distinct.
+    vi.spyOn(path, 'relative').mockImplementation(relative);
+    const target = path.join(host.root, 'APPLICATION.play');
+    const actions = await host.provider!.provideCodeActions({
+        uri: { fsPath: target }, lineAt: () => ({ text: 'module M' }),
+    } as unknown as vscode.TextDocument, {
+        intersection: () => ({}),
+    } as unknown as vscode.Range, {} as vscode.CodeActionContext, {
+        onCancellationRequested: () => ({ dispose() {} }),
+    } as unknown as vscode.CancellationToken) as vscode.CodeAction[];
+    expect(actions.map(action => action.command?.arguments)).toEqual(expected ? [['same-file']] : []);
     expect(host.warnings).not.toHaveBeenCalled();
 });
 it('reports failure of the deliberately selected reconnect generation', async () => {
