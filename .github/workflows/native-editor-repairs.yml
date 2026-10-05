@@ -101,3 +101,5 @@ jobs:
           path: |
             .ai-work/native-host-*/
           if-no-files-found: warn
+          # The deliberately scoped synthetic native evidence lives beneath hidden .ai-work.
+          include-hidden-files: true

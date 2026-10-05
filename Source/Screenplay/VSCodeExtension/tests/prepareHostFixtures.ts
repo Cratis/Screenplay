@@ -4,6 +4,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { repairSource, refusedEventSource } from './repairFixture';
+import { privateMetadataDirectory } from './privateMetadataDirectory';
 
 /** Launcher-only: all baseline writes complete BEFORE the native host is started. */
 export const associatedUntitledTargets = ['sibling.play', 'pending-handler.cs', '.screenplay/pending-identities.json'] as const;
@@ -29,8 +30,7 @@ export function prepareHostFixtures(root: string): void {
             // that do not exist. Prepare their parent BEFORE the product watches;
             // never remove the real attachment or identity/review preimages.
             // The server requires identity metadata private to its owner (MetadataPermissions).
-            fs.mkdirSync(path.join(model, '.screenplay'), { mode: 0o700 });
-            fs.chmodSync(path.join(model, '.screenplay'), 0o700);
+            privateMetadataDirectory(path.join(model, '.screenplay'));
             for (const relative of associatedUntitledTargets) {
                 if (fs.existsSync(path.join(model, relative))) throw new Error(`Associated untitled target already exists: ${relative}`);
             }

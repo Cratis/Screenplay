@@ -6,6 +6,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { RepairSession } from '../RepairSession';
 import { RepairClient } from '../RepairClient';
+import { privateMetadataDirectory } from '../tests/privateMetadataDirectory';
 import { serverExecutable, serverAvailable, repairSource, missingEventSource, refusedEventSource } from '../tests/repairFixture';
 
 // The JS-only CI lane has no C# tool. The explicit process gate requires its native artifact.
@@ -109,7 +110,7 @@ describe.skipIf(!serverAvailable)('real C# tool subprocess (not a transport stub
         { name: 'attachment evidence', kind: 'RepairEvidenceDrift', change: () => fs.writeFileSync(path.join(root, 'Handler.cs'), 'changed') },
         { name: 'source bytes', kind: 'DiskDrift', change: () => fs.appendFileSync(path.join(root, 'application.play'), '// externally edited\n') },
         { name: 'source set', kind: 'DiskDrift', change: () => fs.writeFileSync(path.join(root, 'sibling.play'), 'concept Additional : String\n') },
-        { name: 'identity state', kind: 'IdentityStateDrift', change: () => { fs.mkdirSync(path.join(root, '.screenplay'), { mode: 0o700 }); fs.writeFileSync(path.join(root, '.screenplay', 'identities.json'), 'external-state'); } }
+        { name: 'identity state', kind: 'IdentityStateDrift', change: () => { privateMetadataDirectory(path.join(root, '.screenplay')); fs.writeFileSync(path.join(root, '.screenplay', 'identities.json'), 'external-state'); } }
     ];
     for (const drift of unnotifiedDrift) it(`retains an uncertain apply and never retries an unnotified ${drift.name} change (${drift.kind})`, async () => {
         const { choices } = await session.discover();

@@ -13,6 +13,7 @@ import { NativeTestController } from './nativeTestController';
 import { activeNativeDocument } from './nativeSavedBuffer';
 import { pendingInspectionTeardown } from './nativePendingInspection';
 import { repairSource } from './repairFixture';
+import { privateMetadataDirectory } from './privateMetadataDirectory';
 
 type MissedKind = 'source' | 'state' | 'attachment';
 
@@ -22,7 +23,7 @@ const expectations: Record<MissedKind, { failure: string; change: (model: string
     // Unopened admitted .play appears after review: a changed source set.
     source: { failure: 'DiskDrift', change: model => fs.writeFileSync(path.join(model, 'sibling.play'), 'concept Additional : String\n') },
     // Identity state changes on disk after review.
-    state: { failure: 'IdentityStateDrift', change: model => { fs.mkdirSync(path.join(model, '.screenplay'), { recursive: true, mode: 0o700 }); fs.writeFileSync(path.join(model, '.screenplay', 'identities.json'), 'external-state'); } },
+    state: { failure: 'IdentityStateDrift', change: model => { privateMetadataDirectory(path.join(model, '.screenplay')); fs.writeFileSync(path.join(model, '.screenplay', 'identities.json'), 'external-state'); } },
     // The referenced (unopened) attachment changes on disk after review.
     attachment: { failure: 'RepairEvidenceDrift', change: model => fs.writeFileSync(path.join(model, 'Handler.cs'), '// externally changed attachment\n') }
 };

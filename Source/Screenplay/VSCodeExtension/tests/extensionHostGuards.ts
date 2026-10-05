@@ -125,8 +125,13 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         const input = child.stdin;
         const output = child.stdout;
         input.write = ((chunk: string | Uint8Array, ...rest: unknown[]) => {
-            const accepted = Reflect.apply(write, input, [chunk, ...rest]) as boolean;
             const frame = JSON.parse(chunk.toString()) as { id?: unknown; method?: string; params?: { name?: string } };
+            // TEST SEAM: the dirty/lost-response case queues the genuine accepted
+            // stream write until native typing is confirmed. Otherwise a fast
+            // native reload can update the clean model before typing and there
+            // would be no stale-buffer Save conflict to test.
+            if (frame.method === 'tools/call' && frame.params?.name === 'apply' && loseApplyResponse && onDispatched) input.cork();
+            const accepted = Reflect.apply(write, input, [chunk, ...rest]) as boolean;
             if (frame.method === 'tools/call' && frame.params?.name) {
                 rpc.push({ root: String(args[2]?.cwd), name: frame.params.name, at: Date.now() });
                 console.log(`PRODUCT RPC: ${JSON.stringify(rpc.at(-1))}`);
@@ -139,9 +144,9 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
             if (frame.method === 'tools/call' && frame.params?.name === 'apply') {
                 ++dispatched;
                 if (onDispatched) {
-                    // Bytes were really written to the C# process. The bounded seam withholds
-                    // its genuine generated response during the native edit; the last case
-                    // deliberately loses that response. Never invent replies or timing.
+                    // The real stream accepted the complete frame (the dirty case
+                    // uncorks after native typing). The bounded response seam holds
+                    // the genuine C# reply; never invent an Apply or response.
                     const held = withholdApplyResponse(child, frame.id);
                     race = onDispatched(child, held.generated);
                     void race.finally(() => { if (!loseApplyResponse) held.release(); }).catch(() => {});
@@ -612,15 +617,23 @@ export async function runCommandGuards(root: string, controller: NativeTestContr
         let postDispatchUntitled: vscode.TextDocument | undefined;
         loseApplyResponse = true;
         onDispatched = async (child, generated) => {
-            // The bounded seam holds the genuine server-generated response; its arrival proves
-            // installation finished. Verify exact bytes, then lose that response by killing OUR child.
+            // Native stream corking holds ONLY this accepted real Apply frame.
+            // Confirm typing in the old saved model before the server can install;
+            // that makes the exact Save-conflict precondition deterministic.
+            const before = raceDocument.getText();
+            try {
+                const pendingState = path.join(raceRoot, '.screenplay/pending-identities.json');
+                assert.equal(fs.existsSync(pendingState), false);
+                postDispatchUntitled = await vscode.workspace.openTextDocument(vscode.Uri.file(pendingState).with({ scheme: 'untitled' }));
+                await dirtyEdit(postDispatchUntitled, '// preserve associated identity buffer\n', raceRoot);
+                await dirtyEdit(raceDocument, '// native post-dispatch edit\n', raceRoot);
+                assert.equal(raceDocument.getText(), '// native post-dispatch edit\n' + before);
+                console.log('NATIVE DIRTY APPLY SEAM: real accepted frame released only after exact old-model typing; no fabricated request/response.');
+            } finally { child.stdin!.uncork(); }
+            // The genuine server-generated response proves byte-exact installation.
+            // Then lose that response by killing only OUR child.
             await generated;
             for (const [relative, bytes] of raceExpected) assert.deepEqual(fs.readFileSync(path.join(raceRoot, relative)), bytes);
-            const pendingState = path.join(raceRoot, '.screenplay/pending-identities.json');
-            assert.equal(fs.existsSync(pendingState), false);
-            postDispatchUntitled = await vscode.workspace.openTextDocument(vscode.Uri.file(pendingState).with({ scheme: 'untitled' }));
-            await dirtyEdit(postDispatchUntitled, '// preserve associated identity buffer\n', raceRoot);
-            await dirtyEdit(raceDocument, '// native post-dispatch edit\n', raceRoot);
             assert.equal(child.kill('SIGKILL'), true, 'Only the actual dispatched test-owned server is stopped; no reply is synthesized');
         };
         await preview(raceDocument);
