@@ -6,7 +6,7 @@ import { InvalidSyntaxJson } from './InvalidSyntaxJson';
 import { isExactNumberToken, parseExactNumber } from './ExactNumber';
 import { validateSyntaxInvariants } from './SyntaxInvariants';
 import { syntaxMemberNames, validateSyntaxMembers } from './SyntaxMemberContracts';
-import { isExactOnlyMember } from './LegacyWireProjection';
+import { isLegacyOmittedMember } from './LegacyWireProjection';
 import { legacySourceOptions, validatedSourceOptions } from './SourceOptions';
 
 export type SyntaxJsonValue = string | number | boolean | null | SyntaxJsonValue[] | { [member: string]: SyntaxJsonValue };
@@ -47,7 +47,7 @@ function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJ
         if (value.kind === 'CommandSyntax' && structural.stream === undefined) structural.stream = null;
         if (value.kind === 'CommandSyntax' && structural.streamCandidates === undefined) structural.streamCandidates = [];
         const known = owningMode === 'exact' ? syntaxMemberNames(value.kind) : undefined;
-        const members = Object.keys(structural).filter(member => (known === undefined || known.has(member)) && !(owningMode === 'legacy' && !complete && isExactOnlyMember(value.kind, member)) && !omitted.has(member) && !(value.kind === 'OperationSyntax' && member === 'usesLocation')).sort(ordinal);
+        const members = Object.keys(structural).filter(member => (known === undefined || known.has(member)) && !(owningMode === 'legacy' && !complete && isLegacyOmittedMember(value, member)) && !omitted.has(member) && !(value.kind === 'OperationSyntax' && member === 'usesLocation')).sort(ordinal);
         for (const member of members) {
             const memberValue = structural[member];
             if (member === 'sourceOptions' && (memberValue as { numericMode?: string } | undefined)?.numericMode === 'legacy') continue;

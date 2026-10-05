@@ -104,12 +104,6 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
-                          "code": null,
-                          "file": {
-                            "kind": "FileReferenceSyntax",
-                            "path": "Rules/Hint.cs"
-                          },
-                          "implementation": null,
                           "message": null,
                           "property": "hint",
                           "rule": "Rule",
@@ -169,9 +163,6 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
-                          "code": null,
-                          "file": null,
-                          "implementation": null,
                           "message": null,
                           "property": "label",
                           "rule": "NotEmpty",
@@ -185,13 +176,6 @@
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
-                          "code": {
-                            "kind": "CodeBlockSyntax",
-                            "code": "const rule = 'implementation';\nreturn context.value !== rule;",
-                            "language": "typescript"
-                          },
-                          "file": null,
-                          "implementation": null,
                           "message": null,
                           "property": "label",
                           "rule": "Rule",

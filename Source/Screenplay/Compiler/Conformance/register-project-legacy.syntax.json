@@ -108,9 +108,6 @@
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
-                          "code": null,
-                          "file": null,
-                          "implementation": null,
                           "message": "Project name is required",
                           "property": "name",
                           "rule": "NotEmpty",

@@ -320,9 +320,6 @@
                       "rules": [
                         {
                           "kind": "ValidationRuleSyntax",
-                          "code": null,
-                          "file": null,
-                          "implementation": null,
                           "message": "A name is required",
                           "property": "name",
                           "rule": "NotEmpty",
@@ -331,9 +328,6 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
-                          "code": null,
-                          "file": null,
-                          "implementation": null,
                           "message": null,
                           "property": "name",
                           "rule": "Max",
@@ -345,9 +339,6 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
-                          "code": null,
-                          "file": null,
-                          "implementation": null,
                           "message": null,
                           "property": "age",
                           "rule": "GreaterThanOrEqual",
@@ -359,9 +350,6 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
-                          "code": null,
-                          "file": null,
-                          "implementation": null,
                           "message": "$strings.customers.tooOld",
                           "property": "age",
                           "rule": "LessThan",
@@ -373,9 +361,6 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
-                          "code": null,
-                          "file": null,
-                          "implementation": null,
                           "message": null,
                           "property": "email",
                           "rule": "Matches",
@@ -387,9 +372,6 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
-                          "code": null,
-                          "file": null,
-                          "implementation": null,
                           "message": null,
                           "property": "tags",
                           "rule": "AllGreaterThan",
@@ -401,9 +383,6 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
-                          "code": null,
-                          "file": null,
-                          "implementation": null,
                           "message": null,
                           "property": "name",
                           "rule": "Length",
@@ -415,12 +394,6 @@
                         },
                         {
                           "kind": "ValidationRuleSyntax",
-                          "code": null,
-                          "file": {
-                            "kind": "FileReferenceSyntax",
-                            "path": "Rules/KnownDomain.cs"
-                          },
-                          "implementation": null,
                           "message": null,
                           "property": "email",
                           "rule": "Rule",

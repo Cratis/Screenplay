@@ -1,6 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { ValidationRuleSyntax } from './Commands';
+import { SyntaxNode } from './SyntaxNode';
+
 // The members the syntax tree gained with exact numeric source. The internal tree keeps them for every
 // document, but an unmarked (Legacy) document writes the wire form it always had, so these are left out of it.
 // Exact documents write the complete expanded form.
@@ -16,4 +19,9 @@ const mappingKind = /^(?:Set|Clear|Increment|Decrement|Count|Add|Subtract)Mappin
 
 export function isExactOnlyMember(kind: string, member: string): boolean {
     return additions[kind]?.has(member) === true || (mappingKind.test(kind) && (member === 'source' || member === 'value'));
+}
+
+export function isLegacyOmittedMember(node: SyntaxNode, member: string): boolean {
+    // Legacy never modeled unwrapped rule payloads. Only an explicit wrapper opts into rule intent on wire.
+    return isExactOnlyMember(node.kind, member) || (node.kind === 'ValidationRuleSyntax' && (node as ValidationRuleSyntax).implementation == null && (member === 'code' || member === 'file' || member === 'implementation'));
 }
