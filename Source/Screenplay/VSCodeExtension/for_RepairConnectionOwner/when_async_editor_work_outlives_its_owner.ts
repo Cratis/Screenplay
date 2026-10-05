@@ -83,7 +83,8 @@ async function tick() { await new Promise<void>(resolve => setImmediate(resolve)
 function switchRoot() { host.changedConfiguration!({ affectsConfiguration: () => true }); }
 beforeEach(() => {
     vi.clearAllMocks(); host.commands.clear(); host.sessions = []; host.watches = []; host.token = undefined; host.initializeFailure = undefined;
-    host.root = fs.realpathSync.native(fs.mkdtempSync(path.resolve('../../../.ai-work', 'editor-owner-')));
+    const tasks = path.resolve('../../../.ai-work'); fs.mkdirSync(tasks, { recursive: true });
+    host.root = fs.realpathSync.native(fs.mkdtempSync(path.join(tasks, 'editor-owner-')));
     host.documents = []; host.files = []; host.documentListeners.clear(); host.diagnosticsDisposed = false; host.rootFsChanged = undefined;
     host.warnings.mockResolvedValue(undefined); host.show.mockResolvedValue(undefined);
     subscriptions = [];
