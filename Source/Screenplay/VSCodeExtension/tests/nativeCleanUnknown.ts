@@ -96,6 +96,7 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
         document = await vscode.workspace.openTextDocument(vscode.Uri.file(source));
         await vscode.window.showTextDocument(document, { preview: false, viewColumn: vscode.ViewColumn.Two });
         original = fs.readFileSync(source);
+        const discoveryStart = controller.readObservation().at(-1)?.seq ?? 0;
         await vscode.commands.executeCommand('screenplay.repair.refresh');
         if (zeroVolumeIdentityWindowsHost(model)) {
             assert.ok(warnings.some(message => /WatchUnavailable/.test(message)), 'Actual installed client refuses ambiguous zero-volume identity');
@@ -106,8 +107,30 @@ export async function runCleanUnknown(root: string, controller: NativeTestContro
         }
         assert.ok(rootWatcher, 'The actual installed client watches the separately approved physical root');
         assert.ok(rpc.includes('repair-capabilities'), 'Same real server permissions/capabilities, no fabricated contract');
-        const actions = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', document.uri, new vscode.Range(0, 0, document.lineCount - 1, 0));
-        const action = actions.find(action => action.title.startsWith('Change routing:'))?.command;
+        let action: vscode.Command | undefined;
+        let observationStart = discoveryStart;
+        for (let attempt = 0; attempt < 3; ++attempt) {
+            const actions = await vscode.commands.executeCommand<vscode.CodeAction[]>('vscode.executeCodeActionProvider', document.uri, new vscode.Range(0, 0, document.lineCount - 1, 0));
+            action = actions.find(action => action.title.startsWith('Change routing:'))?.command;
+            if (action) break;
+            const observations = controller.readObservation().filter(entry => entry.seq > observationStart);
+            const stale = observations.find(entry => entry.source === 'guard:epoch');
+            const invalidations = observations.filter(entry => entry.source.startsWith('invalidate:') && entry.source.endsWith(':after'));
+            // Native fixture notifications can arrive after discovery begins. Only
+            // that observed cause allows rediscovery; buffer/startup/configuration
+            // races and every other refusal still fail this independent lifetime.
+            assert.ok(stale && invalidations.length > 0 && invalidations.every(entry => entry.source === 'invalidate:native-root:after'), `Fresh installed preview authority: ${warnings.join('; ')}; ${JSON.stringify(observations)}`);
+            assert.equal(applyFrames, 0, 'Stale discovery never dispatches Apply');
+            assert.equal(rpc.includes('propose-repair'), false, 'Stale discovery never grants proposal authority');
+            assert.deepEqual(fs.readFileSync(source), original, 'Rediscovery preserves exact source bytes');
+            assert.equal(document.isDirty, false);
+            assert.equal(fs.existsSync(path.join(model, '.screenplay/identities.json')), false);
+            assert.ok(attempt < 2, 'Native startup notifications must settle within two rediscoveries');
+            console.log(`NATIVE CLEAN DISCOVERY RETRY: ${JSON.stringify({ attempt: attempt + 1, cause: 'observed native-root invalidation', observations, applyFrames })}`);
+            await new Promise(resolve => setTimeout(resolve, 250));
+            observationStart = controller.readObservation().at(-1)?.seq ?? 0;
+            await vscode.commands.executeCommand('screenplay.repair.refresh');
+        }
         assert.ok(action, `Fresh installed preview authority: ${warnings.join('; ')}`);
         await vscode.commands.executeCommand(action.command, ...(action.arguments ?? []));
         const summary = activeNativeDocument()!;

@@ -62,7 +62,7 @@ try { await runTests({
     vscodeExecutablePath: executable,
     extensionDevelopmentPath: development, extensionTestsPath: path.resolve('out/tests/extensionHost.cjs'),
     launchArgs: [model, '--user-data-dir', userData, '--extensions-dir', extensions, '--disable-workspace-trust', '--skip-welcome', '--skip-release-notes', '--disable-gpu', '--disable-extension', 'github.copilot', '--disable-extension', 'github.copilot-chat', '--log', 'info'],
-    extensionTestsEnv: { SCREENPLAY_REPAIR_SERVER: server, SCREENPLAY_REPAIR_HOST_ROOT: model, SCREENPLAY_REPAIR_INSTALLED_EXTENSIONS: vsix ? extensions : '', SCREENPLAY_REPAIR_OBSERVE_SYNTHETIC_ROOT: process.env.SCREENPLAY_REPAIR_OBSERVE === '1' ? path.join(model, 'command-guards') : '', SCREENPLAY_REPAIR_TEARDOWN_EVIDENCE: teardownEvidence, SCREENPLAY_REPAIR_NATIVE_LOGS: path.join(userData, 'logs'), SCREENPLAY_REPAIR_HOST_CASE: caseName },
+    extensionTestsEnv: { SCREENPLAY_REPAIR_SERVER: server, SCREENPLAY_REPAIR_HOST_ROOT: model, SCREENPLAY_REPAIR_INSTALLED_EXTENSIONS: vsix ? extensions : '', SCREENPLAY_REPAIR_OBSERVE_SYNTHETIC_ROOT: caseName === 'clean' ? path.join(model, 'clean-unknown') : process.env.SCREENPLAY_REPAIR_OBSERVE === '1' ? path.join(model, caseName.startsWith('missed-') ? caseName : 'command-guards') : '', SCREENPLAY_REPAIR_TEARDOWN_EVIDENCE: teardownEvidence, SCREENPLAY_REPAIR_NATIVE_LOGS: path.join(userData, 'logs'), SCREENPLAY_REPAIR_HOST_CASE: caseName },
 }); suitesPassed = true; } finally {
     const logs = path.join(userData, 'logs');
     if (fs.existsSync(logs)) {

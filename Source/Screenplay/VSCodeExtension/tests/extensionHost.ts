@@ -45,7 +45,10 @@ async function runSuites(): Promise<void> {
         return;
     }
     if (hostCase === 'clean') {
-        try { await runCleanUnknown(root, controller); } finally { controller.dispose(); }
+        try { await runCleanUnknown(root, controller); } finally {
+            if (process.env.SCREENPLAY_REPAIR_OBSERVE_SYNTHETIC_ROOT) for (const entry of controller.readObservation()) console.log(`REPAIR METADATA: ${JSON.stringify(entry)}`);
+            controller.dispose();
+        }
         return;
     }
     const document = await vscode.workspace.openTextDocument(vscode.Uri.file(source));
