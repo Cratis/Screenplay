@@ -15,7 +15,9 @@ internal static class SyntaxJsonWriter
         var result = new Dictionary<string, object?>(StringComparer.Ordinal) { ["kind"] = descriptor.Type.Name };
         foreach (var member in descriptor.Members)
         {
-            result.Add(member.Name, WriteMember(member, member.Property.GetValue(node), $"{path}.{member.Name}", depth + 1));
+            var value = member.Property.GetValue(node);
+            if (member.Type == typeof(SourceOptions) && Equals(value, SourceOptions.Legacy)) continue;
+            result.Add(member.Name, WriteMember(member, value, $"{path}.{member.Name}", depth + 1));
         }
 
         return result;

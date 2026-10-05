@@ -1,0 +1,166 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "F",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Submit",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "label",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Decimal"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": [
+                    {
+                      "kind": "DeclarativeValidateSyntax",
+                      "requirements": [],
+                      "rules": [
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": {
+                            "kind": "ImplementationSyntax",
+                            "hints": [
+                              {
+                                "kind": "ImplementationHintSyntax",
+                                "text": "Needs team-owned criteria"
+                              }
+                            ]
+                          },
+                          "message": null,
+                          "property": "label",
+                          "rule": "Rule",
+                          "severity": "Error",
+                          "value": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "Pending"
+                          }
+                        },
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": {
+                            "kind": "FileReferenceSyntax",
+                            "path": "Rules/Attached.cs"
+                          },
+                          "implementation": {
+                            "kind": "ImplementationSyntax",
+                            "hints": [
+                              {
+                                "kind": "ImplementationHintSyntax",
+                                "text": "Preserve attached criteria"
+                              }
+                            ]
+                          },
+                          "message": "Invalid label",
+                          "property": "label",
+                          "rule": "Rule",
+                          "severity": "Warning",
+                          "value": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "Attached"
+                          }
+                        },
+                        {
+                          "kind": "ValidationRuleSyntax",
+                          "code": null,
+                          "file": null,
+                          "implementation": null,
+                          "message": null,
+                          "property": "amount",
+                          "rule": "Min",
+                          "severity": "Error",
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9007199254740993"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "S",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "M"
+    }
+  ],
+  "personas": [],
+  "policies": [],
+  "seeds": [],
+  "sourceOptions": {
+    "numericMode": "exact"
+  },
+  "systems": [],
+  "types": []
+}

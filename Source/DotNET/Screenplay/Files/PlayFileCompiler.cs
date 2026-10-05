@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Languages;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Files;
@@ -18,6 +19,20 @@ namespace Cratis.Screenplay.Files;
 /// </remarks>
 public class PlayFileCompiler(IPlayFiles playFiles, IScreenplayCompiler compiler) : IPlayFileCompiler
 {
+    readonly IScreenplayLanguageRegistry _languages = (compiler as ILanguageRegistryOwner)?.Languages ?? ScreenplayLanguageRegistry.Default;
+
+    /// <summary>
+    /// Initializes a file compiler with an explicit registry shared by discovery and the supplied parser.
+    /// </summary>
+    /// <param name="playFiles">The source used to discover and read files.</param>
+    /// <param name="compiler">The compiler configured with <paramref name="languages"/>.</param>
+    /// <param name="languages">The caller's inline language registry.</param>
+    public PlayFileCompiler(IPlayFiles playFiles, IScreenplayCompiler compiler, IScreenplayLanguageRegistry languages)
+        : this(playFiles, compiler)
+    {
+        _languages = languages;
+    }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="PlayFileCompiler"/> class with default collaborators.
     /// </summary>
@@ -76,7 +91,7 @@ public class PlayFileCompiler(IPlayFiles playFiles, IScreenplayCompiler compiler
 
     ApplicationCompilation<ApplicationSyntax> Assemble(DiskPlayDocumentSource source, IEnumerable<string> roots)
     {
-        var (documents, result) = PlayApplicationAssembly.Compile(compiler, roots, source);
+        var (documents, result) = PlayApplicationAssembly.Compile(compiler, roots, source, _languages);
         return new([.. documents.Select(document => new PlayFileSource(source.File(document.Path), document.Source))], result);
     }
 

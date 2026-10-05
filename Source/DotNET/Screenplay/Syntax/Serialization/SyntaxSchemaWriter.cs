@@ -63,6 +63,18 @@ internal static class SyntaxSchemaWriter
             };
         }
 
+        if (type == typeof(SourceOptions))
+        {
+            return new Dictionary<string, object?>
+            {
+                ["type"] = "object", ["additionalProperties"] = false, ["required"] = new[] { "numericMode" },
+                ["properties"] = new Dictionary<string, object?>
+                {
+                    ["numericMode"] = new Dictionary<string, object?> { ["type"] = "string", ["enum"] = new[] { "legacy", "exact" } }
+                }
+            };
+        }
+
         if (type.IsEnum)
         {
             return new Dictionary<string, object?> { ["type"] = "string", ["enum"] = Enum.GetNames(type) };

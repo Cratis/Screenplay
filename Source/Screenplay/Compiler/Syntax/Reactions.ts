@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { EventSyntax, TagSyntax } from './Declarations';
+import { ConditionSyntax } from './Conditions';
 import { ExpressionSyntax, PropertyMappingSyntax } from './Expressions';
 import { SyntaxNode } from './SyntaxNode';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
@@ -40,6 +41,7 @@ export type TriggerSourceSyntax = NamedTriggerSourceSyntax | IntervalTriggerSour
 export interface ProducesSyntax extends SyntaxNode {
     readonly kind: 'ProducesSyntax';
     readonly event: string;
+    readonly when?: ConditionSyntax | null;
     // Parser-owned identifier span, separate from a conditional production's header.
     readonly targetLocation?: SourceLocation;
     readonly inlineEvent: EventSyntax | null;
@@ -53,6 +55,7 @@ export interface ProducesSyntax extends SyntaxNode {
 export interface InvokesSyntax extends SyntaxNode {
     readonly kind: 'InvokesSyntax';
     readonly command: string;
+    readonly mappings?: readonly PropertyMappingSyntax[];
 }
 
 // One trigger of a reaction: what sets it off, and the events it produces and commands it invokes. Its code,
@@ -68,6 +71,7 @@ export interface ReactionTriggerSyntax extends SyntaxNode {
 export interface ReactionSyntax extends SyntaxNode {
     readonly kind: 'ReactionSyntax';
     readonly name: string;
+    readonly where?: ConditionSyntax | null;
     readonly description: string | null;
     readonly triggers: readonly ReactionTriggerSyntax[];
 }

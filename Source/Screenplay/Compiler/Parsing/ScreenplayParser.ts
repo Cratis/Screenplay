@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { recordAuthoredDocument } from '../Syntax/SourceOptions';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { describePlacement, documentPlacement, isDocumentPlacement, PlayPlacement } from '../Files/PlayPlacement';
 import { PersonaSyntax } from '../Syntax/Authorization';
@@ -11,15 +12,20 @@ import { parseTriggerDeclaration } from './TriggerDataParser';
 import { pattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { parseType } from './DeclarationParsers';
+import { ValidateSyntax } from '../Syntax/Commands';
+import { parseValidate } from './CommandParser';
 import { parseDescription } from './DescriptionParser';
 import { FeatureBody, featureBodyExpected } from './FeatureBody';
 import { isFileImport, parseFileImport } from './FileImportParser';
 import { isFileDirective } from './FileReferences';
-import { isCode, parseCode } from './ImplementationParser';
 import { collectInputUses } from './InputUses';
 import { firstWord, unescapeIdentifier } from './LineText';
 import { ModuleBody, moduleBodyExpected, modulePattern, parseModule } from './ModuleBody';
 import { ParserContext } from './ParserContext';
+import { PolicySyntax } from '../Syntax/Policies';
+import { parsePolicy } from './PolicyParser';
+import { SeedSyntax } from '../Syntax/Seeds';
+import { parseSeed } from './SeedParser';
 import { parseSystem } from './OperationParser';
 import { SystemSyntax } from '../Syntax/Operations';
 import { EventSourceSyntax } from '../Syntax/EventSources';
@@ -59,17 +65,21 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     const eventSources: EventSourceSyntax[] = [];
     const modules: ModuleSyntax[] = [];
     const personas: PersonaSyntax[] = [];
+    const policies: PolicySyntax[] = [];
+    const seeds: SeedSyntax[] = [];
     let sawOtherConstruct = false;
     for (let line = context.reader.peekSignificant(); line !== undefined; line = context.reader.peekSignificant()) {
         context.reader.takeSignificant();
         const keyword = firstWord(line.content);
         if (keyword === 'domain') {
+            context.authoredDeclarations = true;
             domain = parseDomain(context, line, domain, sawOtherConstruct);
             continue;
         }
         // The C# parser asks whether anything was declared before the domain, so an import it rejected,
         // a file import and an unknown construct do not count.
         sawOtherConstruct ||= declaresConstruct(keyword, line, placement);
+        context.authoredDeclarations ||= keyword !== 'import' && declaresConstruct(keyword, line, placement);
         if (keyword === 'import' && isFileImport(line.content)) {
             // A top level import belongs to whatever the document's top level is - the application, or the
             // module or feature the document was itself imported into.
@@ -99,6 +109,11 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             modules.push(parseModule(context, line));
         } else if (keyword === 'persona') {
             personas.push(parsePersona(context, line));
+        } else if (keyword === 'seed') {
+            seeds.push(parseSeed(context.valueContext, line));
+        } else if (keyword === 'policy') {
+            // Legacy policies were opaque: enrich their structure without adding diagnostics.
+            policies.push(parsePolicy(context.valueContext, line));
         } else if (keyword === 'trigger') {
             parseTriggerDeclaration(context, line);
         } else if (opaqueTopLevel.has(keyword)) {
@@ -113,7 +128,9 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    return { kind: 'ApplicationSyntax', domain, imports, concepts, types, systems, eventSources, modules, personas, fileImports, location: context.start };
+    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, modules, personas, policies, seeds, fileImports, location: context.start };
+    if (context.authoredDeclarations) recordAuthoredDocument(root);
+    return root;
 }
 
 function declaresConstruct(keyword: string, line: SourceLine, placement: PlayPlacement): boolean {
@@ -131,6 +148,7 @@ function parseModuleInPlacedFile(context: ParserContext, line: SourceLine, place
 
     // Restating the module a file is placed in says nothing new, so its body simply joins the placement.
     if (moduleBody !== undefined && name === placement[0]) {
+        context.authoredDeclarations = true;
         moduleBody.parseChildren(context, line);
         return;
     }
@@ -216,6 +234,7 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
         if (!attributeIndices.has(attribute.name)) attributeIndices.set(attribute.name, index);
     });
     const values: string[] = [];
+    const validations: ValidateSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const reason = attributeReasonPattern.exec(child.content);
@@ -227,9 +246,8 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
                     `'validate' in enumeration concept '${name}' declares an empty validate block, not a value named 'validate' - write '@validate' for the value`,
                     locationOf(child));
             }
-            // Concept validations are not modeled; the block is skipped whole, but an implementation
-            // wrapper is a command-only form and is rejected the way the C# parser rejects it.
-            skipConceptValidation(context, child);
+            const parsed = parseValidate(context, child, 'concept');
+            if (parsed !== undefined) validations.push(parsed);
         } else if (reason !== null) {
             applyAttributeReason(context, child, name, attributes, attributeIndices, reason[1], unescapeString(reason[2]));
         } else if (type === 'Enum' && enumValuePattern.test(child.content)) {
@@ -241,43 +259,7 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
             context.skipBlock(child.indent);
         }
     }
-    return { kind: 'ConceptSyntax', name, type, attributes, values, location: locationOf(line) };
-}
-
-const namedRuleLine = pattern('^rule(?:\\s|$)');
-
-// Concept validations are not modeled, but the C# parser still reads each line as a rule. An implementation
-// wrapper is a command-only form, so it is rejected wherever it appears: directly under a named rule as an
-// unknown rule implementation, anywhere else (after a builtin rule, after a file payload) as an invalid rule,
-// together with the payload nested under it.
-function skipConceptValidation(context: ParserContext, validate: SourceLine): void {
-    let wrapperIndent: number | undefined;
-    for (let child = context.peekChild(validate.indent); child !== undefined; child = context.peekChild(validate.indent)) {
-        context.reader.takeSignificant();
-        if (child.content.startsWith('```')) {
-            context.skipFencedBody();
-            continue;
-        }
-
-        if (wrapperIndent !== undefined && child.indent <= wrapperIndent) wrapperIndent = undefined;
-        if (wrapperIndent !== undefined || firstWord(child.content) === 'implementation') {
-            context.error(DiagnosticCodes.InvalidValidationRule, `Invalid validation rule '${child.content}'`, locationOf(child));
-            wrapperIndent ??= child.indent;
-        } else if (namedRuleLine.test(child.content)) {
-            const body = context.peekChild(child.indent);
-            if (body === undefined) continue;
-            context.reader.takeSignificant();
-            if (isFileDirective(body)) continue;
-            if (body.content.startsWith('```')) {
-                context.skipFencedBody();
-            } else if (isCode(body)) {
-                parseCode(context, body);
-            } else {
-                context.error(DiagnosticCodes.UnknownRuleImplementationDirective, `Unexpected '${body.content}' in rule implementation - expected 'file <path>' or an inline code block`, locationOf(body));
-                context.skipBlock(body.indent);
-            }
-        }
-    }
+    return { kind: 'ConceptSyntax', name, type, attributes, values, validations, location: locationOf(line) };
 }
 
 function applyAttributeReason(context: ParserContext, line: SourceLine, concept: string, attributes: ConceptAttributeSyntax[], indices: ReadonlyMap<string, number>, attribute: string, reason: string): void {

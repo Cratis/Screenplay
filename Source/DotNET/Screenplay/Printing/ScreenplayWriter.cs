@@ -26,6 +26,8 @@ internal sealed class ScreenplayWriter
     int _depth;
     int _line;
 
+    internal NumericMode NumericMode { get; init; }
+
     /// <summary>Gets the lines written for each syntax owner, keyed by reference identity.</summary>
     internal IReadOnlyDictionary<SyntaxNode, (int First, int Last)> Anchors => _anchors;
 
@@ -34,6 +36,13 @@ internal sealed class ScreenplayWriter
 
     /// <summary>Gets printed lines by original line number for scalar directives of each owner.</summary>
     internal IReadOnlyDictionary<SyntaxNode, Dictionary<int, int>> DirectiveAnchors => _directiveAnchors;
+
+    /// <summary>
+    /// Prints a fragment in the owning document's numeric mode, without a preamble.
+    /// </summary>
+    /// <param name="expression">The expression to print.</param>
+    /// <returns>The mode-checked fragment text.</returns>
+    public string Expression(ExpressionSyntax expression) => ScreenplaySyntaxText.Expression(expression, NumericMode);
 
     /// <summary>
     /// Writes a line of text at the current indentation depth.

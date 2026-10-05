@@ -224,7 +224,7 @@ sealed class WorkspaceAuthoringTransaction(
         var compiler = new ScreenplayCompiler();
         var draftAuthoring = request.Validation == WorkspaceAuthoringValidation.Authoring && request.ReferencePolicy == WorkspaceAuthoringReferencePolicy.Draft;
         var texts = ordered.OrderBy(document => document.Path.Value, StringComparer.Ordinal).ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal);
-        var (placed, placementDiagnostics) = PlayImports.Resolve(texts.Keys, new InMemoryPlayDocumentSource(texts));
+        var (placed, placementDiagnostics) = PlayImports.Resolve(texts.Keys, new InMemoryPlayDocumentSource(texts), compiler.Languages);
         if (placed.Any(document => !document.IsPlacementResolved))
         {
             _diagnostics.AddRange(placementDiagnostics);

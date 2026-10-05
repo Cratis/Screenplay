@@ -2,121 +2,94 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { SyntaxNode } from './SyntaxNode';
-import { CommandSyntax, ValidationRuleSyntax } from './Commands';
-import { OperationPhaseSyntax } from './Operations';
-import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax } from './EventSources';
-import { ProducesSyntax } from './Reactions';
-import { isBlankImplementationHint } from '../Text/ImplementationHintText';
-import { isSourceStreamName, isSourceStreamTypeName, sourceStreamPattern } from '../Text/SourceStreamNames';
-
-// .NET \w is evaluated per UTF-16 code unit, so a supplementary-plane letter is not a name character.
-const ruleNamePattern = sourceStreamPattern('^[A-Za-z_]\\w*$');
+import { InvalidSyntaxJson } from './InvalidSyntaxJson';
+import { isExactNumberToken, parseExactNumber } from './ExactNumber';
+import { validateSyntaxInvariants } from './SyntaxInvariants';
+import { syntaxMemberNames, validateSyntaxMembers } from './SyntaxMemberContracts';
+import { isExactOnlyMember } from './LegacyWireProjection';
+import { legacySourceOptions, validatedSourceOptions } from './SourceOptions';
 
 export type SyntaxJsonValue = string | number | boolean | null | SyntaxJsonValue[] | { [member: string]: SyntaxJsonValue };
 
 const isNode = (value: unknown): value is SyntaxNode =>
     typeof value === 'object' && value !== null && typeof (value as { kind?: unknown }).kind === 'string';
+const omitted = new Set(['kind', 'location', 'targetLocation', 'referenceLocation', 'referenceLength', 'nameWasEscaped']);
+const sourceRoots = new Set(['ApplicationSyntax', 'ProjectionSyntax', 'CaptureSyntax', 'SpecificationSyntax']);
 
 // The canonical JSON form of a syntax tree, the same form the C# SyntaxJson writes: 'kind' first, then the
 // members in ordinal order, with source locations left out. Because a node only carries the members this
 // compiler models, the result is the C# form narrowed to those members.
 export function toSyntaxJson(node: SyntaxNode): SyntaxJsonValue {
+    validateNumbers(node, 'legacy', 0);
     return write(node);
 }
 
-function write(value: unknown): SyntaxJsonValue {
+// The enriched internal tree written completely, Legacy members included. Not a wire form: it exists so the
+// walker and other tree consumers can be held to every node the parser builds.
+export function toCompleteSyntaxJson(node: SyntaxNode): SyntaxJsonValue {
+    validateNumbers(node, 'legacy', 0);
+    return write(node, 'legacy', true);
+}
+
+function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJsonValue {
     if (Array.isArray(value)) {
-        return value.map(write);
+        // A fresh plain array: never map (Symbol.species) or serialize through a caller-supplied hook.
+        const items: SyntaxJsonValue[] = [];
+        for (let index = 0; index < value.length; index++) items.push(write(value[index], owningMode, complete));
+        return items;
     }
     if (isNode(value)) {
-        validateSyntax(value);
-        validateSourceStream(value);
+        if (sourceRoots.has(value.kind)) owningMode = validatedSourceOptions((value as unknown as { sourceOptions?: unknown }).sourceOptions ?? legacySourceOptions).numericMode;
+        validateSyntaxInvariants(value);
         const result: { [member: string]: SyntaxJsonValue } = { kind: value.kind };
         const structural = { ...value } as unknown as Record<string, unknown>;
         if (value.kind === 'ApplicationSyntax' && structural.eventSources === undefined) structural.eventSources = [];
         if (value.kind === 'CommandSyntax' && structural.stream === undefined) structural.stream = null;
         if (value.kind === 'CommandSyntax' && structural.streamCandidates === undefined) structural.streamCandidates = [];
-        const members = Object.keys(structural).filter(member => member !== 'kind' && member !== 'location' && member !== 'targetLocation' && member !== 'referenceLocation' && member !== 'referenceLength' && member !== 'nameWasEscaped' && !(value.kind === 'OperationSyntax' && member === 'usesLocation')).sort(ordinal);
+        const known = owningMode === 'exact' ? syntaxMemberNames(value.kind) : undefined;
+        const members = Object.keys(structural).filter(member => (known === undefined || known.has(member)) && !(owningMode === 'legacy' && !complete && isExactOnlyMember(value.kind, member)) && !omitted.has(member) && !(value.kind === 'OperationSyntax' && member === 'usesLocation')).sort(ordinal);
         for (const member of members) {
-            result[member] = write(structural[member]);
+            const memberValue = structural[member];
+            if (member === 'sourceOptions' && (memberValue as { numericMode?: string } | undefined)?.numericMode === 'legacy') continue;
+            result[member] = write(memberValue, owningMode, complete);
         }
         return result;
     }
-    if (value === undefined) {
-        return null;
-    }
-    return value as SyntaxJsonValue;
+    if (value === undefined) return null;
+    if (typeof value !== 'object' || value === null) return value as SyntaxJsonValue;
+    const record = value as Record<string, unknown>;
+    // The ordered ExactNumber form, whatever the input key order; other objects are copied without any toJSON hook.
+    if (record.literalType === 'ExactNumber') return { literalType: 'ExactNumber', value: record.value as string };
+    const copy: { [member: string]: SyntaxJsonValue } = {};
+    for (const name of Object.keys(record)) if (name !== 'toJSON' && record[name] !== undefined) copy[name] = write(record[name], owningMode, complete);
+    return copy;
 }
 
-function validateSyntax(node: SyntaxNode): void {
-    if (node.kind === 'ValidationRuleSyntax') {
-        const rule = node as ValidationRuleSyntax;
-        if (rule.implementation != null) {
-            if (rule.rule !== 'Rule' || rule.value?.kind !== 'PathExpressionSyntax' || ruleNamePattern.exec(rule.value.path)?.[0] !== rule.value.path) throw new Error('An implementation wrapper requires a valid named rule.');
-            if (rule.file !== null && rule.code !== null) throw new Error('A named rule has at most one file or inline payload.');
-            if (!Array.isArray(rule.implementation.hints) || rule.implementation.hints.some(hint => hint == null || isBlankImplementationHint(hint.text))) throw new Error('Implementation hints must be a collection of nonblank hints.');
+function validateNumbers(value: unknown, owningMode: string, depth: number): void {
+    if (depth > 96 && owningMode === 'exact') throw new InvalidSyntaxJson('Syntax nesting exceeds the supported depth of 96.');
+    if (Array.isArray(value)) { for (let index = 0; index < value.length; index++) validateNumbers(value[index], owningMode, depth + 1); return; }
+    if (typeof value !== 'object' || value === null) return;
+    const node = value as Record<string, unknown>;
+    if (sourceRoots.has(node.kind as string) || Object.hasOwn(node, 'sourceOptions')) {
+        // Omission is Legacy on every complete source root, never inheritance from its container.
+        const options = Object.hasOwn(node, 'sourceOptions') ? validatedSourceOptions(node.sourceOptions) : legacySourceOptions;
+        if (depth > 0 && owningMode !== options.numericMode) throw new InvalidSyntaxJson('Conflicting source numeric options.');
+        owningMode = options.numericMode;
+    }
+    if (depth === 0 && owningMode === 'exact' && !sourceRoots.has(node.kind as string)) throw new InvalidSyntaxJson('Exact syntax requires a complete source root.');
+    if (owningMode === 'exact' && isNode(node)) validateSyntaxMembers(node);
+    if (node.kind === 'RawExpressionSyntax' && owningMode === 'exact' && typeof node.text === 'string' && isExactNumberToken(node.text)) throw new InvalidSyntaxJson('An exact numeric operand must be an explicit ExactNumber, not opaque numeric text.');
+    if (node.kind === 'LiteralExpressionSyntax' && Object.hasOwn(node, 'value')) {
+        if (owningMode === 'exact' && (typeof node.value === 'number' || (node.value !== null && !['string', 'boolean', 'object'].includes(typeof node.value)))) throw new InvalidSyntaxJson('Exact source requires supported primitive values or an explicit ExactNumber literal.');
+        if (typeof node.value === 'object' && node.value !== null) {
+            const literal = node.value as { literalType?: unknown; value?: unknown };
+            if (literal.literalType === 'ExactNumber') {
+                if (owningMode !== 'exact' || typeof literal.value !== 'string' || parseExactNumber(literal.value)?.value !== literal.value || Object.keys(literal).length !== 2) throw new InvalidSyntaxJson('Malformed or incompatible ExactNumber literal.');
+            } else if (owningMode === 'exact') throw new InvalidSyntaxJson('Exact source refuses old or plain object literal insertion.');
         }
     }
-    if (node.kind === 'ProducesSyntax') {
-        const production = node as ProducesSyntax;
-        const operation = production.inlineOperation;
-        if (operation != null) {
-            if (production.inlineEvent !== null) throw new Error('A production cannot declare both an event and an operation.');
-            if (production.event !== operation.name || production.for !== null || production.tags.length > 0) throw new Error('An inline operation requires a matching target without event metadata.');
-            if (operation.inputs.length !== production.mappings.length || operation.inputs.some((input, index) => input.name !== production.mappings[index].property)) throw new Error('Inline operation inputs and mappings must correspond in order.');
-        }
-    }
-    if (node.kind === 'OperationPhaseSyntax') {
-        const phase = node as OperationPhaseSyntax;
-        if (phase.file !== null && phase.code !== null) throw new Error('An operation phase has at most one file or inline payload.');
-        if (phase.implementation !== null && (!Array.isArray(phase.implementation.hints) || phase.implementation.hints.some(hint => hint == null || isBlankImplementationHint(hint.text)))) throw new Error('Implementation hints must be a collection of nonblank hints.');
-    }
-}
-
-function validateSourceStream(node: SyntaxNode): void {
-    const name = (value: string) => { if (!isSourceStreamName(value)) throw new Error('Event source and stream names must be identifiers.'); };
-    const hasKind = (value: unknown, kind: string): boolean => isNode(value) && value.kind === kind;
-    const collection = (value: unknown, kind: string, message: string) => {
-        if (!Array.isArray(value) || [...value].some(element => !hasKind(element, kind))) throw new Error(message);
-    };
-    if (node.kind === 'ApplicationSyntax') {
-        const sources = (node as unknown as { eventSources?: unknown }).eventSources;
-        if (sources !== undefined) collection(sources, 'EventSourceSyntax', 'Event sources must be a collection of event source nodes without null elements.');
-    }
-    if (node.kind === 'EventSourceSyntax' || node.kind === 'EventStreamSyntax') {
-        const declaration = node as EventSourceSyntax | EventStreamSyntax;
-        name(declaration.name);
-        if (declaration.id !== null && (typeof declaration.id !== 'string' || declaration.id.trim() === '')) throw new Error('A rename pin must be nonempty.');
-        const type = declaration.kind === 'EventSourceSyntax' ? declaration.identifier : declaration.streamId;
-        if (type !== null && !hasKind(type, 'TypeRefSyntax')) throw new Error('Source identifiers and stream ids require type reference nodes.');
-        if (type !== null && (type.isCollection || type.isOptional)) throw new Error('Source identifiers and stream ids require nonoptional scalar type references.');
-        if (type !== null && !isSourceStreamTypeName(type.name)) throw new Error('Source identifiers and stream ids require an exact type reference name.');
-        if (declaration.kind === 'EventSourceSyntax') {
-            if (!Array.isArray(declaration.streams) || [...declaration.streams].some(stream => stream == null)) throw new Error('Event streams must be a collection without null elements.');
-            collection(declaration.streams, 'EventStreamSyntax', 'Event streams must contain event stream nodes.');
-        }
-    }
-    if (node.kind === 'CommandSyntax') {
-        const command = node as CommandSyntax;
-        if (command.stream?.propertyCandidate != null) throw new Error('The authoritative command stream cannot contain an ambiguous property candidate.');
-        if (command.stream != null && !hasKind(command.stream, 'CommandStreamSyntax')) throw new Error('The authoritative command stream must be a command stream node.');
-        if (command.streamCandidates !== undefined && !Array.isArray(command.streamCandidates)) throw new Error('Command stream candidates must be a collection.');
-        for (const rejected of command.streamCandidates ?? []) {
-            if (rejected == null) throw new Error('Command stream candidates cannot contain null.');
-            if (!hasKind(rejected, 'CommandStreamSyntax')) throw new Error('Command stream candidates must contain command stream nodes.');
-            validateSourceStream(rejected);
-            if (rejected.propertyCandidate === null && command.stream == null) throw new Error('A duplicate route candidate requires an authoritative route.');
-            if (rejected.propertyCandidate !== null && command.properties.some(property => property === rejected.propertyCandidate)) throw new Error('An ambiguous property is owned only by its stream candidate.');
-        }
-    }
-    if (node.kind === 'CommandStreamSyntax') {
-        const route = node as CommandStreamSyntax;
-        name(route.eventSource);
-        name(route.stream);
-        if (route.streamId !== null && route.streamId.property !== 'streamId') throw new Error('A command stream maps only streamId.');
-        const candidate = route.propertyCandidate;
-        if (candidate !== null && (candidate.name !== 'stream' || candidate.type.name !== `${route.eventSource}.${route.stream}` || candidate.type.isCollection || candidate.type.isOptional || candidate.isGenerated || candidate.isIdentifier || route.streamId !== null)) throw new Error('An ambiguous route must retain its exact unmodified property candidate, without selecting nested routing.');
-    }
+    const known = owningMode === 'exact' && isNode(node) ? syntaxMemberNames(node.kind) : undefined;
+    for (const [name, member] of Object.entries(node)) if ((known === undefined || known.has(name) || (isNode(member) && sourceRoots.has(member.kind))) && name !== 'location' && name !== 'targetLocation' && name !== 'usesLocation') validateNumbers(member, owningMode, depth + 1);
 }
 
 function ordinal(left: string, right: string): number {

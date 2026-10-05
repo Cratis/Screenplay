@@ -23,7 +23,12 @@ internal sealed record SourceLine(int Number, string Raw, int Indent, string Con
     /// <summary>
     /// Gets the <see cref="SourceLocation"/> of the first significant character on the line.
     /// </summary>
-    public SourceLocation Location => new(Number, Indent + 1, Path);
+    public SourceLocation Location => new(Number, Indent + ContentOffset + 1, Path);
+
+    /// <summary>
+    /// Gets the source prefix length excluded from indentation, such as an initial BOM.
+    /// </summary>
+    public int ContentOffset { get; init; }
 
     /// <summary>
     /// Gets the <see cref="SourceLocation"/> of the very start of the line, before any indentation.
@@ -38,5 +43,5 @@ internal sealed record SourceLine(int Number, string Raw, int Indent, string Con
     /// </summary>
     /// <param name="offset">The 0-based offset into the content.</param>
     /// <returns>The <see cref="SourceLocation"/> at the offset.</returns>
-    public SourceLocation LocationAt(int offset) => new(Number, Indent + offset + 1, Path);
+    public SourceLocation LocationAt(int offset) => new(Number, Indent + ContentOffset + offset + 1, Path);
 }

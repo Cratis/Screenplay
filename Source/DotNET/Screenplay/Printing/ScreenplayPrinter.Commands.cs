@@ -441,7 +441,7 @@ public partial class ScreenplayPrinter
                 foreach (var (property, mapping) in inline.Properties.Zip(produces.Mappings))
                 {
                     using var propertyAnchor = writer.Anchor(property);
-                    writer.Line($"{ReservedWords.Escape(property.Name, ReservedWords.InlineEventBody)} {ScreenplaySyntaxText.TypeRef(property.Type)} = {ScreenplaySyntaxText.Expression(mapping.Source)}", mapping);
+                    writer.Line($"{ReservedWords.Escape(property.Name, ReservedWords.InlineEventBody)} {ScreenplaySyntaxText.TypeRef(property.Type)} = {writer.Expression(mapping.Source)}", mapping);
                 }
             }
 
@@ -499,7 +499,7 @@ public partial class ScreenplayPrinter
     {
         if (target is not null)
         {
-            writer.Line($"for {ScreenplaySyntaxText.Expression(target)}", target);
+            writer.Line($"for {writer.Expression(target)}", target);
         }
     }
 
@@ -549,7 +549,7 @@ public partial class ScreenplayPrinter
     {
         foreach (var mapping in mappings)
         {
-            writer.Line($"{ReservedWords.Escape(mapping.Property, reserved)} = {ScreenplaySyntaxText.Expression(mapping.Source)}", mapping);
+            writer.Line($"{ReservedWords.Escape(mapping.Property, reserved)} = {writer.Expression(mapping.Source)}", mapping);
         }
     }
 

@@ -1,0 +1,156 @@
+numbers exact
+system Remote
+policy Limit
+    require claim "limit" matches 9007199254740993e0
+concept Whole : Int
+    validate
+        min 9223372036854775808
+policy Café
+    require claim "café" matches 9007199254740993
+seed
+    for "global"
+        Addéd
+            café = {"literalType":"ExactNumber","value":[9007199254740993,1e-28]}
+        Added
+            amount = {"literalType":"ExactNumber","value":9007199254740993,"items":[0e999999999999999999999,1e-28,"1e999999"]}
+module Numbers
+    feature Values
+        slice StateChange Change
+            command Change
+                amount Decimal
+                numbers exact
+                validate
+                    amount min 1e-28
+                    require amount > 9007199254740993e0 and amount < 9007199254740994e0
+                        message "Exact operands"
+                produces when amount >= 9007199254740993e0
+                    Added
+                        amount = 9007199254740993
+                        for 9223372036854775808
+                returns amount
+            event Added
+                amount Decimal
+            readmodel View
+                amount Decimal
+            query ViewByAmount => View
+                by amount Decimal from 1e-28
+                filter minimum Decimal from 9007199254740993
+            projection Build => View
+                key 9007199254740993
+                from Added key 9007199254740993
+                    key Composite {
+                        part = 1e-28
+                    }
+                    parent 9007199254740994
+                    amount = 9007199254740993
+                    café = @café.part
+                    add amount by 1e-28
+                    subtract amount by 9007199254740994
+                children values identified by 9007199254740993
+                    from Added
+                        amount = literal {"nested":[9007199254740993,1e-28]}
+                variant Current
+                    enters on Added key 9223372036854775808
+                    from Added
+                        amount = `value ${9007199254740993}`
+                remove with Added key 9007199254740993
+                    parent 9007199254740994
+                remove via join on Added key 9223372036854775808
+            capture ReadExternal
+                map
+                    amount = 9007199254740993
+                    summary = `value ${1e-28}`
+                    café = @café.part
+                    translated = café translate
+                        "𝟙" => café
+                    split café by "𐐀"
+                        café.part
+                append Addéd
+                    when café from café to café
+                        café = -0
+                append Added
+                    when amount from 9007199254740993 to 9007199254740994
+                        amount = 9007199254740993
+                children values identified by id
+                    map
+                        amount = 9223372036854775808
+                    append Added
+                        amount = {"nested":[9007199254740993,1e-28]}
+                nested detail
+                    map
+                        amount = 9007199254740993
+                    append Added
+                        amount = 1e-28
+            reaction React
+                where amount > 9007199254740993e0
+                when Added
+                    invokes Change
+                        amount = 9007199254740993
+                    produces Added
+                        amount = 1e-28
+            specification Values
+                given Added
+                    amount = 9007199254740993
+                    for 9007199254740994
+                given readmodel View
+                    amount = 1e-28
+                when Change
+                    amount = 9007199254740993
+                    for 9007199254740994
+                then Added
+                    amount = 9007199254740993
+                then readmodel View exactly
+                    amount = 1e-28
+                then no readmodel View for {"id":9007199254740993}
+                then query ViewByAmount exactly
+                    arguments
+                        amount = 9007199254740993
+                    result
+                        amount = 1e-28
+                then returns 9007199254740993
+            specification CaptureValues
+                given capture ReadExternal
+                    amount = 9007199254740993
+                when capture ReadExternal
+                    amount = {"nested":[9007199254740993,1e-28]}
+                then Added
+                    amount = 1e-28
+            specification QueryValues
+                when query ViewByAmount
+                    amount = 9007199254740993
+                then result exactly
+                    amount = 1e-28
+            specification TriggerValues
+                when trigger Tick
+                    amount = 9007199254740993
+                then Added
+                    amount = 9007199254740993
+            command Changé
+                café Decimal
+                validate
+                    require café == 9007199254740993
+                        message "café"
+                produces Sénd
+                    café = café
+            operation Sénd
+                uses Remote
+                café Decimal
+            reaction Réact
+                when Addéd
+                    invokes Changé
+                        @café = {"literalType":"ExactNumber","value":[9007199254740993,1e-28]}
+            specification Unicodé
+                given Addéd
+                    café = 9007199254740993
+                when Changé
+                    café = {"nested":[9007199254740993,1e-28]}
+                then Addéd
+                    café = 1e-28
+                then no readmodel Viéw for {"café":9007199254740993}
+                then query ViéwBy exactly
+                    arguments
+                        café = 9007199254740993
+                    result
+                        café = 1e-28
+                then operation Sénd
+                    café = 9007199254740993

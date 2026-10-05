@@ -4,12 +4,14 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { ExpressionSyntax, LiteralExpressionSyntax } from '../Syntax/Expressions';
-import { pattern } from '../Text/patterns';
+import { ExactNumber, isExactNumberToken, parseExactNumber } from '../Syntax/ExactNumber';
+import { nativePattern, pattern } from '../Text/patterns';
 import { unescapeString } from '../Text/StringLiteral';
 import { ParserContext } from './ParserContext';
 import { InvalidStructuredValue, StructuredValueParser } from './StructuredValueParser';
 
 const pathPattern = pattern('^@?[A-Za-z_]\\w*(\\.@?[A-Za-z_$]\\w*)*$');
+const nativePathPattern = nativePattern('^@?[A-Za-z_]\\w*(\\.@?[A-Za-z_$]\\w*)*$');
 const numberPattern = pattern('^-?\\d+(\\.\\d+)?$');
 const contextRoots = ['command', 'arguments', 'tenant', 'causedBy', 'causation', 'occurred', 'identity'];
 const causedByProperties = ['subject', 'name', 'userName'];
@@ -18,7 +20,11 @@ const identityProperties = ['id', 'name', 'userName', 'isAuthenticated', 'roles'
 // Reads the right-hand side of a mapping or a rule operand - the port of the C# ExpressionParser's
 // ParseMappingSource. With a context it also reports what the C# compiler reports while reading one: an
 // unknown $context path, and an inline structured value that is not valid JSON.
-export function parseMappingSource(text: string, location: SourceLocation, context?: ParserContext): ExpressionSyntax {
+export function parseModeledMappingSource(text: string, location: SourceLocation, context: ParserContext): ExpressionSyntax {
+    return parseMappingSource(text, location, context, true);
+}
+
+export function parseMappingSource(text: string, location: SourceLocation, context?: ParserContext, nativeIdentifiers = false): ExpressionSyntax {
     text = text.trim();
     if (text.startsWith('$context.')) {
         const path = text.substring('$context.'.length);
@@ -45,11 +51,11 @@ export function parseMappingSource(text: string, location: SourceLocation, conte
             return { kind: 'RawExpressionSyntax', text, location };
         }
     }
-    const literal = parseLiteral(text, location);
+    const literal = context === undefined ? parseLiteral(text, location) : parseLiteral(text, location, context);
     if (literal !== undefined) {
         return literal;
     }
-    if (pathPattern.test(text)) {
+    if ((nativeIdentifiers || context?.sourceOptions.numericMode === 'exact' ? nativePathPattern : pathPattern).test(text)) {
         return { kind: 'PathExpressionSyntax', path: text, location };
     }
     return { kind: 'RawExpressionSyntax', text, location };
@@ -68,8 +74,10 @@ function warnOnUnknownContextPath(path: string, location: SourceLocation, contex
     }
 }
 
-export function parseLiteral(text: string, location: SourceLocation): LiteralExpressionSyntax | undefined {
-    const literal = (value: string | number | boolean | null): LiteralExpressionSyntax => ({ kind: 'LiteralExpressionSyntax', value, location });
+export function parseLiteral(text: string, location: SourceLocation): LiteralExpressionSyntax | undefined;
+export function parseLiteral(text: string, location: SourceLocation, context: ParserContext): ExpressionSyntax | undefined;
+export function parseLiteral(text: string, location: SourceLocation, context?: ParserContext): ExpressionSyntax | undefined {
+    const literal = (value: string | number | boolean | null | ExactNumber): LiteralExpressionSyntax => ({ kind: 'LiteralExpressionSyntax', value, location });
     switch (text) {
         case 'true':
             return literal(true);
@@ -81,6 +89,13 @@ export function parseLiteral(text: string, location: SourceLocation): LiteralExp
     const quoted = text.length >= 2 && ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith('\'') && text.endsWith('\'')));
     if (quoted) {
         return literal(unescapeString(text.substring(1, text.length - 1)));
+    }
+    if (context?.sourceOptions.numericMode === 'exact') {
+        if (!isExactNumberToken(text)) return undefined;
+        const number = parseExactNumber(text);
+        if (number !== undefined) return literal(number);
+        context.error(DiagnosticCodes.InexactNumericLiteral, 'Numeric literal is not exactly representable in the bounded Decimal domain.', location);
+        return { kind: 'RawExpressionSyntax', text, location };
     }
     // .NET also parses digits from other scripts; JavaScript's Number does not, so such a number is left to
     // be read as raw text - a divergence no real document is expected to meet.

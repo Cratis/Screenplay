@@ -32,15 +32,12 @@ const column = pattern(`^column\\s+([\\w.]+)(?:\\s+label\\s+${operand})?$`);
 const rowClick = pattern('^on\\s+row-click\\s+(navigate\\s+to\\s+.+)$');
 const field = pattern(`^field\\s+([\\w.]+)\\s+label\\s+${operand}$`);
 
-// The languages the C# compiler recognizes without anything being registered.
-const inlineLanguages = new Set(['csharp', 'typescript', 'react', 'html', 'sql']);
-
 const operandText = (match: RegExpExecArray, quotedGroup: number): string =>
     match[quotedGroup] !== undefined ? unescapeString(match[quotedGroup]) : match[quotedGroup + 1];
 
 const isInteraction = (line: SourceLine): boolean => ['on', 'uses'].includes(firstWord(line.content));
 
-const isCodeLine = (line: SourceLine): boolean => line.content.startsWith('```') || inlineLanguages.has(line.content);
+const isCodeLine = (context: ParserContext, line: SourceLine): boolean => line.content.startsWith('```') || context.languages.has(line.content);
 
 export function parseScreen(context: ParserContext, line: SourceLine): ScreenSyntax {
     const match = header.exec(line.content);
@@ -98,7 +95,7 @@ function parseDirective(context: ParserContext, line: SourceLine): ScreenDirecti
             context.skipOpaqueBlock(line.indent);
             return { kind: 'ScreenUsesBehaviorSyntax', location: locationOf(line) };
         default:
-            if (isCodeLine(line)) {
+            if (isCodeLine(context, line)) {
                 return parseCode(context, line);
             }
             context.error(DiagnosticCodes.UnknownScreenDirective, `Unexpected '${line.content}' in screen body`, locationOf(line));
@@ -218,7 +215,7 @@ function parseSummary(context: ParserContext, line: SourceLine): ScreenSummarySy
 
 function parseCode(context: ParserContext, line: SourceLine): ScreenCodeSyntax | undefined {
     const language = line.content.startsWith('```') ? line.content.substring(3) : line.content;
-    if (!inlineLanguages.has(language)) {
+    if (!context.languages.has(language)) {
         context.error(DiagnosticCodes.ExpectedCodeFence, `Expected a registered language on the opening fence, not '${line.content}'`, locationOf(line));
         return undefined;
     }

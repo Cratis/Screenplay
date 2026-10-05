@@ -27,6 +27,8 @@ internal static class ScreenplayValidator
     /// <param name="allowUnresolvedPersonaPolicies">Whether draft authoring may retain unresolved persona references as warnings.</param>
     public static void Validate(ApplicationSyntax application, ParserContext context, bool allowUnresolvedPersonaPolicies = false)
     {
+        foreach (var error in SourceNumericModes.Errors(application)) context.Add(error);
+
         var slices = application.Modules
             .SelectMany(module => module.Features.SelectMany(AllFeatures))
             .SelectMany(feature => feature.Slices)

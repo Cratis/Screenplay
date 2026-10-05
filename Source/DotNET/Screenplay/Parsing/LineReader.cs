@@ -12,6 +12,11 @@ internal sealed class LineReader(IReadOnlyList<SourceLine> lines)
     int _index;
 
     /// <summary>
+    /// Gets a value indicating whether only blank lines remain.
+    /// </summary>
+    public bool AtEnd => Enumerable.Range(_index, Math.Max(0, lines.Count - _index)).All(index => lines[index].IsBlank);
+
+    /// <summary>
     /// Creates an independent reader at the current position for parser lookahead.
     /// </summary>
     /// <returns>The independent reader.</returns>

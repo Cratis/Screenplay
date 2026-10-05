@@ -9,7 +9,7 @@ import {
     SpecificationWhenQuerySyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax,
 } from '../Syntax/Specifications';
 import { SpecificationDeniedSyntax, SpecificationReturnSyntax } from '../Syntax/Responses';
-import { pattern } from '../Text/patterns';
+import { nativePattern, pattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { parseMappingSource } from './ExpressionParser';
 import { isFileDirective } from './FileReferences';
@@ -18,6 +18,7 @@ import { ParserContext } from './ParserContext';
 import { rejectOperationChildren } from './OperationParser';
 import { generatedFixturePattern, generatedFixturePrefix, parseConcreteMapping, parseReturn, thenReturnsPrefix } from './SpecificationResponseParser';
 import { locationOf, SourceLine } from './SourceLine';
+import { SpecificationAbsentReadModelSyntax, SpecificationQuerySyntax } from '../Syntax/Specifications';
 
 const operationStepPrefix = pattern('^(?:given\\s+operation|then\\s+(?:operation|compensated))(?:\\s|$)');
 const operationStep = pattern('^(given operation|then operation|then compensated)\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)(\\s+fails)?$');
@@ -33,6 +34,7 @@ const thenReadModelPattern = pattern('^then\\s+readmodel\\s+([A-Z]\\w*)(\\s+exac
 const thenNoPrefix = pattern('^then\\s+no\\b');
 const thenErrorPattern = pattern(`^then\\s+error\\s+"(${stringBodyPattern})"$`);
 const mappingPattern = pattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
+const nativeMappingPattern = nativePattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
 const givenClockPrefix = pattern('^given\\s+clock\\b');
 const givenCapturePrefix = pattern('^given\\s+capture\\b');
 const whenClockPrefix = pattern('^when\\s+clock\\b');
@@ -49,6 +51,9 @@ const whenTriggerPattern = pattern('^when\\s+trigger\\s+([A-Za-z_]\\w*)$');
 const capturePattern = pattern('^(?:given|when)\\s+capture\\s+([A-Za-z_]\\w*)$');
 const whenQueryPattern = pattern('^when\\s+query\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
 const thenResultPattern = pattern('^then\\s+result(\\s+exactly)?$');
+const thenAbsentReadModelPattern = nativePattern('^then\\s+no\\s+readmodel\\s+([A-Z]\\w*)\\s+for\\s+(.+)$');
+const absentKeyStringPattern = nativePattern(`^(?:"${stringBodyPattern}"|'(?:[^'\\\\]|\\\\.)*')$`);
+const thenQueryPattern = nativePattern('^then\\s+query\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)(\\s+exactly)?$');
 
 interface SpecificationBody {
     given: SpecificationEventSyntax[];
@@ -60,6 +65,8 @@ interface SpecificationBody {
     thenEventsInAnyOrder: boolean;
     thenReadModels: SpecificationReadModelSyntax[];
     thenErrors: SpecificationErrorSyntax[];
+    thenAbsentReadModels: SpecificationAbsentReadModelSyntax[];
+    thenQueries: SpecificationQuerySyntax[];
     givenClock: SpecificationClockSyntax | null;
     givenCaptures: SpecificationCaptureSyntax[];
     whenClock: SpecificationClockSyntax | null;
@@ -81,7 +88,7 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
         context.error(DiagnosticCodes.InvalidSpecificationDeclaration, `Invalid specification declaration '${line.content}' - expected 'specification <Name>'`, locationOf(line));
     }
     const body: SpecificationBody = {
-        givenOperationFailures: [], thenOperations: [], thenCompensated: [],
+        givenOperationFailures: [], thenOperations: [], thenCompensated: [], thenAbsentReadModels: [], thenQueries: [],
         given: [], givenReadModels: [], when: null, whenAppended: null, whenDeclared: false,
         thenEvents: [], thenEventsInAnyOrder: false, thenReadModels: [], thenErrors: [],
         givenClock: null, givenCaptures: [], whenClock: null, whenTrigger: null, whenCapture: null, whenQuery: null, thenResults: [], thenNoResult: null, thenDenied: null, thenReturns: null,
@@ -106,7 +113,7 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
         }
     }
     const { whenDeclared: _, ...members } = body;
-    return { kind: 'SpecificationSyntax', name, ...members, location: locationOf(line) };
+    return { kind: 'SpecificationSyntax', sourceOptions: context.sourceOptions, name, ...members, location: locationOf(line) };
 }
 
 function parseOperationStep(context: ParserContext, line: SourceLine, body: SpecificationBody): boolean {
@@ -114,7 +121,7 @@ function parseOperationStep(context: ParserContext, line: SourceLine, body: Spec
     const match = operationStep.exec(line.content);
     if (match === null || (match[1] === 'given operation') !== (match[3] !== undefined)) {
         context.error(DiagnosticCodes.InvalidOperationSpecification, "Expected 'given operation <Name> fails', 'then operation <Name>' or 'then compensated <Name>'.", locationOf(line));
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
     } else if (match[1] === 'then operation') {
         const values: PropertyMappingSyntax[] = [];
         for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
@@ -135,7 +142,7 @@ function parseGiven(context: ParserContext, line: SourceLine, body: Specificatio
     if (givenClockPrefix.test(line.content)) {
         if (body.givenClock !== null) {
             context.error(DiagnosticCodes.InvalidSpecificationClock, 'A specification states its clock at most once.', locationOf(line));
-            context.skipBlock(line.indent);
+            skipBody(context, line.indent);
         } else {
             body.givenClock = parseClock(context, line, 'given');
         }
@@ -165,7 +172,7 @@ function parseWhen(context: ParserContext, line: SourceLine, body: Specification
     if (body.whenDeclared) {
         const code = body.whenAppended !== null || appends ? DiagnosticCodes.ConflictingSpecificationActions : DiagnosticCodes.DuplicateSpecificationWhen;
         context.error(code, `Specification '${name}' already declares a 'when' - a specification can have at most one`, locationOf(line));
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return;
     }
     body.whenDeclared = true;
@@ -194,7 +201,7 @@ function parseWhen(context: ParserContext, line: SourceLine, body: Specification
     const match = whenPattern.exec(line.content);
     if (match === null) {
         context.error(DiagnosticCodes.InvalidSpecificationWhen, `Invalid 'when' declaration '${line.content}' - expected 'when <CommandType>' or 'when append <EventType>'`, locationOf(line));
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return;
     }
     const generatedValues: PropertyMappingSyntax[] = [];
@@ -218,7 +225,7 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
         } else {
             body.thenEventsInAnyOrder = true;
         }
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return;
     }
     if (thenResultPrefix.test(line.content)) {
@@ -231,13 +238,13 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
         } else {
             body.thenNoResult = { kind: 'SpecificationNoResultSyntax', location: locationOf(line) };
         }
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return;
     }
     if (line.content.startsWith('then denied')) {
         if (line.content !== 'then denied') {
             context.error(DiagnosticCodes.InvalidSpecificationDenied, 'Expected exactly \'then denied\'.', locationOf(line));
-            context.skipBlock(line.indent);
+            skipBody(context, line.indent);
         } else if (body.thenDenied !== null) {
             context.error(DiagnosticCodes.DuplicateSpecificationCallerOrDenied, "A specification has at most one 'then denied' outcome.", locationOf(line));
         } else {
@@ -256,12 +263,46 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
     }
     if (firstWord(line.content.substring('then'.length).trim()) === 'error') {
         context.error(DiagnosticCodes.InvalidThenError, `Invalid 'then error' declaration '${line.content}' - expected 'then error' or 'then error "<reason>"'`, locationOf(line));
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return;
     }
-    if (thenNoPrefix.test(line.content) || thenQueryPrefix.test(line.content)) {
-        // Absence and query assertions are not modeled.
+    if (thenNoPrefix.test(line.content)) {
+        // Legacy documents keep skipping these assertions silently; Exact mirrors the native diagnostics.
+        if (context.sourceOptions.numericMode === 'exact') {
+            const absent = parseAbsentReadModel(context, line);
+            if (absent !== null) body.thenAbsentReadModels.push(absent);
+            return;
+        }
+        const match = thenAbsentReadModelPattern.exec(line.content);
+        if (match !== null && !match[2].endsWith(' exactly')) {
+            const key = parseMappingSource(match[2].trim(), locationOf(line), context.valueContext);
+            if (key.kind === 'LiteralExpressionSyntax' || key.kind === 'ObjectExpressionSyntax') body.thenAbsentReadModels.push({ kind: 'SpecificationAbsentReadModelSyntax', name: match[1], key, location: locationOf(line) });
+        }
         context.skipOpaqueBlock(line.indent);
+        return;
+    }
+    if (thenQueryPrefix.test(line.content)) {
+        // Legacy documents keep skipping malformed query bodies silently; Exact reports what the native parser reports.
+        const exact = context.sourceOptions.numericMode === 'exact';
+        const reject = (code: string, message: string, at: SourceLine): void => {
+            if (!exact) return context.skipOpaqueBlock(at.indent);
+            context.error(code, message, locationOf(at));
+            context.skipBlock(at.indent);
+        };
+        const match = thenQueryPattern.exec(line.content);
+        if (match === null) return reject(DiagnosticCodes.InvalidSpecificationQuery, `Invalid 'then query' declaration '${line.content}' - expected 'then query <Query> [exactly]'`, line);
+        const args: PropertyMappingSyntax[] = [];
+        const results: SpecificationQueryResultSyntax[] = [];
+        let hasArguments = false;
+        for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
+            context.reader.takeSignificant();
+            if (child.content === 'arguments' && !hasArguments) args.push(...parseValues(context.valueContext, child, true));
+            else if (child.content === 'arguments') reject(DiagnosticCodes.DuplicateSpecificationQueryArguments, `Query assertion '${match[1]}' already declares arguments`, child);
+            else if (child.content === 'result') results.push({ kind: 'SpecificationQueryResultSyntax', properties: parseValues(context.valueContext, child, true), exactly: false, location: locationOf(child) });
+            else reject(DiagnosticCodes.UnknownSpecificationQueryDirective, `Unexpected '${firstWord(child.content)}' in 'then query' body - expected arguments or result`, child);
+            hasArguments ||= child.content === 'arguments';
+        }
+        body.thenQueries.push({ kind: 'SpecificationQuerySyntax', query: match[1], arguments: args, results, exactly: match[2] !== undefined, location: locationOf(line) });
         return;
     }
     if (readModelPrefix.test(line.content)) {
@@ -277,9 +318,36 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
     }
 }
 
+// The Exact port of C# ParseAbsentReadModel: every malformed part is reported rather than dropped.
+function parseAbsentReadModel(context: ParserContext, line: SourceLine): SpecificationAbsentReadModelSyntax | null {
+    const match = thenAbsentReadModelPattern.exec(line.content);
+    if (match === null || match[2].endsWith(' exactly')) {
+        context.error(DiagnosticCodes.InvalidAbsentReadModelStep, `Invalid absence assertion '${line.content}' - expected 'then no readmodel <ReadModelType> for <key>'`, locationOf(line));
+        skipBody(context, line.indent);
+        return null;
+    }
+    const keyText = match[2].trim();
+    const validString = !(keyText.startsWith('"') || keyText.startsWith("'")) || absentKeyStringPattern.test(keyText);
+    const key = validString ? parseMappingSource(keyText, locationOf(line), context.valueContext) : null;
+    const concrete = key !== null && (key.kind === 'LiteralExpressionSyntax' || key.kind === 'ObjectExpressionSyntax');
+    if (!concrete) context.error(DiagnosticCodes.InvalidAbsentReadModelStep, `Invalid absence key '${keyText}' - expected exactly one concrete value.`, locationOf(line));
+    let hasChildren = false;
+    for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
+        context.reader.takeSignificant();
+        context.error(DiagnosticCodes.InvalidAbsentReadModelStep, 'An absent read model assertion cannot have child mappings.', locationOf(child));
+        hasChildren = true;
+    }
+    return hasChildren || !concrete ? null : { kind: 'SpecificationAbsentReadModelSyntax', name: match[1], key, location: locationOf(line) } as SpecificationAbsentReadModelSyntax;
+}
+
+function skipBody(context: ParserContext, indent: number): void {
+    if (context.sourceOptions.numericMode !== 'exact') return context.skipBlock(indent);
+    context.skipOpaqueBlock(indent);
+}
+
 function parseClock(context: ParserContext, line: SourceLine, keyword: string): SpecificationClockSyntax | null {
     const match = clockPattern.exec(line.content);
-    context.skipBlock(line.indent);
+    skipBody(context, line.indent);
     if (match === null || match[1] !== keyword) {
         context.error(DiagnosticCodes.InvalidSpecificationClock,
             `Invalid '${keyword} clock' - expected '${keyword} clock "<ISO 8601 instant>"', such as '${keyword} clock "2026-10-05T08:00:00Z"'`, locationOf(line));
@@ -300,7 +368,7 @@ function parseNamedStep<T>(
     const match = regex.exec(line.content);
     if (match === null) {
         context.error(code, `Invalid '${keyword}' declaration '${line.content}' - expected '${expected}'`, locationOf(line));
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return null;
     }
     return create(match[1], parseValues(context, line));
@@ -310,7 +378,7 @@ function parseResult(context: ParserContext, line: SourceLine, body: Specificati
     const match = thenResultPattern.exec(line.content);
     if (match === null) {
         context.error(DiagnosticCodes.InvalidSpecificationQueryAction, `Invalid 'then result' declaration '${line.content}' - expected 'then result [exactly]'`, locationOf(line));
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return;
     }
     body.thenResults.push({ kind: 'SpecificationQueryResultSyntax', properties: parseValues(context, line), exactly: match[1] !== undefined, location: locationOf(line) });
@@ -320,7 +388,7 @@ function parseReadModelStep(context: ParserContext, line: SourceLine, regex: Reg
     const match = regex.exec(line.content);
     if (match === null) {
         context.error(DiagnosticCodes.InvalidReadModelStep, `Invalid '${keyword} readmodel' declaration '${line.content}' - expected '${keyword} readmodel <ReadModelType>'`, locationOf(line));
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return undefined;
     }
     return {
@@ -336,7 +404,7 @@ function parseEventStep(context: ParserContext, line: SourceLine, regex: RegExp,
     const match = regex.exec(line.content);
     if (match === null) {
         context.error(DiagnosticCodes.InvalidEventStep, `Invalid '${keyword}' declaration '${line.content}' - expected '${keyword} <EventType>'`, locationOf(line));
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return undefined;
     }
     return { kind: 'SpecificationEventSyntax', eventType: match[1], ...parseValuesWithEventSource(context, line), location: locationOf(line) };
@@ -371,20 +439,20 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, 
     return { values, for: eventSource };
 }
 
-function parseValues(context: ParserContext, parent: SourceLine): PropertyMappingSyntax[] {
+function parseValues(context: ParserContext, parent: SourceLine, nativeIdentifiers = false): PropertyMappingSyntax[] {
     const values: PropertyMappingSyntax[] = [];
     for (let child = context.peekChild(parent.indent); child !== undefined; child = context.peekChild(parent.indent)) {
         context.reader.takeSignificant();
-        const mapping = mappingPattern.exec(child.content);
+        const mapping = (nativeIdentifiers || context.sourceOptions.numericMode === 'exact' ? nativeMappingPattern : mappingPattern).exec(child.content);
         if (mapping === null) {
             context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child));
             continue;
         }
-        values.push(mappingOf(context, child, mapping));
+        values.push(mappingOf(context, child, mapping, nativeIdentifiers));
     }
     return values;
 }
 
-function mappingOf(context: ParserContext, line: SourceLine, match: RegExpExecArray): PropertyMappingSyntax {
-    return { kind: 'PropertyMappingSyntax', property: match[1], source: parseMappingSource(match[2], locationOf(line), context), location: locationOf(line) };
+function mappingOf(context: ParserContext, line: SourceLine, match: RegExpExecArray, nativeIdentifiers = false): PropertyMappingSyntax {
+    return { kind: 'PropertyMappingSyntax', property: match[1], source: parseMappingSource(match[2], locationOf(line), context, nativeIdentifiers), location: locationOf(line) };
 }

@@ -7,6 +7,7 @@ import { QueryParameterSyntax, QuerySyntax } from '../Syntax/Queries';
 import { pattern } from '../Text/patterns';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseDescription } from './DescriptionParser';
+import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseTypeRef, reportLegacyOptionalSuffix } from './PropertyLineParser';
@@ -93,7 +94,7 @@ function parseParameter(context: ParserContext, line: SourceLine, keyword: strin
     const nameOffset = line.content.indexOf(match[1], keyword.length);
     const type = parseTypeRef(match[2], { ...locationOf(line), column: line.indent + 1 + line.content.indexOf(match[2], nameOffset + match[1].length) });
     reportLegacyOptionalSuffix(context, type, line);
-    return { kind: 'QueryParameterSyntax', name: match[1], type, location: locationOf(line) };
+    return { kind: 'QueryParameterSyntax', name: match[1], type, source: match[3] === undefined ? null : parseMappingSource(match[3], locationOf(line), context.valueContext), location: locationOf(line) };
 }
 
 function parseScope(context: ParserContext, line: SourceLine, existing: string | null, queryName: string): string | undefined {

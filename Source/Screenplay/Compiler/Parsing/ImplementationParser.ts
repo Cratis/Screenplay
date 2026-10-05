@@ -9,12 +9,11 @@ import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 
-const languages = new Set(['csharp', 'typescript', 'react', 'html', 'sql']);
 // Match ImplementationHintText's White_Space set, not ECMAScript \s. A hint stays on one CR/LF-delimited source line.
 // eslint-disable-next-line no-control-regex -- The shared whitespace set deliberately includes U+0009 through U+000D.
 const hintPattern = new RegExp('^hint[\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]+"((?:[^"\\\\\\r\\n]|\\\\[^\\r\\n])*)"$');
 export const isFile = (line: SourceLine): boolean => firstWord(line.content) === 'file' && line.content.substring(4).trim().length > 0;
-export const isCode = (line: SourceLine): boolean => line.content.startsWith('```') || languages.has(line.content);
+export const isCode = (context: ParserContext, line: SourceLine): boolean => line.content.startsWith('```') || context.languages.has(line.content);
 
 export function parseFile(context: ParserContext, line: SourceLine): FileReferenceSyntax {
     const path = line.content.substring(4).trim();
@@ -24,9 +23,11 @@ export function parseFile(context: ParserContext, line: SourceLine): FileReferen
     return { kind: 'FileReferenceSyntax', path, location: locationOf(line) };
 }
 
+export const isClosingCodeFence = (line: SourceLine): boolean => line.raw.trim() === '```';
+
 export function parseCode(context: ParserContext, tag: SourceLine): CodeBlockSyntax | null {
     const language = tag.content.startsWith('```') ? tag.content.substring(3) : tag.content;
-    if (!languages.has(language)) {
+    if (!context.languages.has(language)) {
         context.error(DiagnosticCodes.ExpectedCodeFence, `Expected a registered language on the opening fence, not '${tag.content}'`, locationOf(tag));
         return null;
     }
@@ -47,7 +48,7 @@ export function parseCode(context: ParserContext, tag: SourceLine): CodeBlockSyn
             context.error(DiagnosticCodes.UnclosedCodeBlock, 'Unclosed inline code block - expected a closing ``` line', locationOf(open));
             break;
         }
-        if (line.raw.trim() === '```') break;
+        if (isClosingCodeFence(line)) break;
         let strip = 0;
         while (strip < open.indent && line.raw[strip] === ' ') strip++;
         lines.push(line.raw.substring(strip));
@@ -64,7 +65,7 @@ export function parseHandler(context: ParserContext, handler: SourceLine): Handl
     context.reader.takeSignificant();
     if (firstWord(body.content) === 'implementation') return parseImplementation(context, handler, body);
     const file = isFile(body) ? parseFile(context, body) : null;
-    const code = file === null && isCode(body) ? parseCode(context, body) : null;
+    const code = file === null && isCode(context, body) ? parseCode(context, body) : null;
     if (file !== null || code !== null) {
         const extra = context.peekChild(handler.indent);
         if (extra !== undefined && firstWord(extra.content) === 'implementation') {
@@ -84,7 +85,7 @@ function parseImplementation(context: ParserContext, handler: SourceLine, wrappe
         context.reader.takeSignificant();
         context.error(firstWord(extra.content) === 'implementation' ? DiagnosticCodes.InvalidImplementationBlock : DiagnosticCodes.ConflictingImplementationSources,
             'A handler has one implementation wrapper and cannot mix wrapped and direct sources.', locationOf(extra));
-        if (isCode(extra)) parseCode(context, extra);
+        if (isCode(context, extra)) parseCode(context, extra);
         else context.skipBlock(extra.indent);
     }
     return { kind: 'HandlerSyntax', ...source, location: locationOf(handler) };

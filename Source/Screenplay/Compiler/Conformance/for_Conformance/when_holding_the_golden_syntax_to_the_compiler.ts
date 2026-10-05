@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, beforeAll, it } from 'vitest';
 import { parse } from '../../ScreenplayCompiler';
@@ -41,10 +41,12 @@ describe('when holding the golden syntax to the compiler', () => {
         for (const document of documents) {
             const golden = join(conformance, `${document.name}.syntax.json`);
             const rendered = `${JSON.stringify(toSyntaxJson(parse(readFileSync(join(repository, document.path), 'utf8')).value), null, 2)}\n`;
-            if (process.env[variable] === '1') {
-                writeFileSync(golden, rendered);
-            } else if ((document.name.startsWith('source-stream') ? readFileSync(golden, 'utf8').replaceAll('\r\n', '\n') : `${JSON.stringify(withSourceStreamDefaults(JSON.parse(readFileSync(golden, 'utf8'))), null, 2)}\n`) !== rendered) {
-                mismatched.push(document.name);
+            const existing = !existsSync(golden) ? undefined : document.name.startsWith('source-stream')
+                ? readFileSync(golden, 'utf8').replaceAll('\r\n', '\n')
+                : `${JSON.stringify(withSourceStreamDefaults(JSON.parse(readFileSync(golden, 'utf8'))), null, 2)}\n`;
+            if (existing !== rendered) {
+                if (process.env[variable] === '1') writeFileSync(golden, rendered);
+                else mismatched.push(document.name);
             }
         }
     });

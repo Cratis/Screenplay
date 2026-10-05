@@ -2249,6 +2249,36 @@ public static class DiagnosticCodes
     /// </summary>
     public const string InvalidOperationSpecification = "PLAY0502";
 
+    /// <summary>
+    /// A numeric mode directive has an unknown or malformed spelling.
+    /// </summary>
+    public const string InvalidNumericDirective = "PLAY0508";
+
+    /// <summary>
+    /// A document repeats its numeric preamble.
+    /// </summary>
+    public const string DuplicateNumericDirective = "PLAY0509";
+
+    /// <summary>
+    /// A numeric preamble follows domain, imports or declarations.
+    /// </summary>
+    public const string LateNumericDirective = "PLAY0510";
+
+    /// <summary>
+    /// A complete numeric literal is outside the exact Decimal domain.
+    /// </summary>
+    public const string InexactNumericLiteral = "PLAY0511";
+
+    /// <summary>
+    /// Physical documents disagree on their numeric interpretation.
+    /// </summary>
+    public const string MixedNumericModes = "PLAY0512";
+
+    /// <summary>
+    /// Syntax options or inserted numeric values disagree with the owning mode.
+    /// </summary>
+    public const string IncompatibleNumericSource = "PLAY0513";
+
     /// <summary>An event source or stream declaration is invalid or ambiguous.</summary>
     public const string InvalidEventSourceDeclaration = "PLAY0503";
 

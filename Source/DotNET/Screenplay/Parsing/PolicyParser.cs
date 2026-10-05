@@ -107,7 +107,7 @@ internal static partial class PolicyParser
     static PolicyConditionSyntax? ParseCondition(ParserContext context, string text, SourceLocation location) =>
         LogicalConditionParser.Parse<PolicyConditionSyntax>(
             context,
-            Tokenize(text),
+            Tokenize(text, context.SourceOptions.NumericMode),
             location,
             ParseOperand,
             static (left, @operator, right, location) => new LogicalPolicyConditionSyntax(left, @operator, right, location),
@@ -174,8 +174,11 @@ internal static partial class PolicyParser
 
     static string Unquote(string token) => StringLiteral.Unescape(token[1..^1]);
 
-    static List<string> Tokenize(string text) =>
-        [.. TokenRegex().Matches(text).Select(_ => _.Value)];
+    static List<string> Tokenize(string text, NumericMode mode) =>
+        [.. (mode == NumericMode.Exact ? ExactTokenRegex() : TokenRegex()).Matches(text).Select(_ => _.Value)];
+
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|\\(|\\)|-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|[\\w.$-]+|[^\\s]", RegexOptions.None, 1000)]
+    private static partial Regex ExactTokenRegex();
 
     [GeneratedRegex(@"^policy\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
