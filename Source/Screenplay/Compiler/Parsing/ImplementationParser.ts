@@ -12,8 +12,8 @@ import { locationOf, SourceLine } from './SourceLine';
 // Match ImplementationHintText's White_Space set, not ECMAScript \s. A hint stays on one CR/LF-delimited source line.
 // eslint-disable-next-line no-control-regex -- The shared whitespace set deliberately includes U+0009 through U+000D.
 const hintPattern = new RegExp('^hint[\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]+"((?:[^"\\\\\\r\\n]|\\\\[^\\r\\n])*)"$');
-const isFile = (line: SourceLine): boolean => firstWord(line.content) === 'file' && line.content.substring(4).trim().length > 0;
-const isCode = (context: ParserContext, line: SourceLine): boolean => line.content.startsWith('```') || context.languages.has(line.content);
+export const isFile = (line: SourceLine): boolean => firstWord(line.content) === 'file' && line.content.substring(4).trim().length > 0;
+export const isCode = (context: ParserContext, line: SourceLine): boolean => line.content.startsWith('```') || context.languages.has(line.content);
 
 export function parseFile(context: ParserContext, line: SourceLine): FileReferenceSyntax {
     const path = line.content.substring(4).trim();
@@ -99,7 +99,7 @@ export function parseImplementationWrapper(context: ParserContext, wrapper: Sour
     if (wrapper.content !== 'implementation') context.error(DiagnosticCodes.InvalidImplementationBlock, "Expected 'implementation' with no operand.", locationOf(wrapper));
     for (let child = context.peekChild(wrapper.indent); child !== undefined; child = context.peekChild(wrapper.indent)) {
         context.reader.takeSignificant();
-        if (firstWord(child.content) === 'hint') {
+        if (firstWord(child.content) === 'hint' || hintPattern.test(child.content)) {
             const match = hintPattern.exec(child.content);
             const text = match === null ? null : unescapeString(match[1]);
             if (isBlankImplementationHint(text)) context.error(DiagnosticCodes.InvalidImplementationHint, "Expected 'hint' followed by one nonblank quoted string.", locationOf(child));

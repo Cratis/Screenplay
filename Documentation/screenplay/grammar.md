@@ -611,7 +611,16 @@ RuleOp         = "not empty"
 (* RuleImplementation is only meaningful after "rule", Ident - the other RuleOp
    forms are already fully declarative and take no implementation body. *)
 RuleImplementation = FileDirective
-                    | InlineBlock ;
+                    | InlineBlock
+                    | CommandRuleImplementation ;
+CommandRuleImplementation = "implementation", NL,
+                    [ INDENT, { ImplementationHint | FileDirective | InlineBlock }, DEDENT ] ;
+(* CommandRuleImplementation is accepted only on command property named predicates.
+   Hints are ordered, nonblank quoted strings. Zero or one source: file OR tagged fence.
+   Duplicate wrappers and wrapped/direct mixtures are errors. Pending is authoring-valid
+   but fails executable binding with PLAY0268; attached wrappers keep the existing
+   RulePredicate contract and do not change canonical ESM bytes. Concept predicates,
+   builtins and whole-command validation do not accept the wrapper. *)
 
 (* A RuleImplementation and a "validate" InlineBlock both compile against
    RuleContext. The rule implementation answers with a bool; the "validate csharp"
@@ -752,7 +761,8 @@ ImplementationHint = "hint", StringLiteral, NL ;
 (* The handler wrapper retains its existing contract: hints are ordered, nonblank quoted strings.
    At most one payload (file OR tagged fence); direct and wrapped sources cannot mix.
    A bare or hints-only implementation is pending, not executable.
-   Operation phases also support a wrapper; forms on other owners are deferred. *)
+   Operation phases and command property named rules also support a wrapper;
+   forms on other owners are deferred. *)
 
 (* -------------------------------------------------------------- *)
 (* Queries                                                         *)

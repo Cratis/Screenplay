@@ -462,7 +462,7 @@ internal static partial class ScreenplayParser
                         child.Location);
                 }
 
-                if (ValidateParser.Parse(context, child, impliedSubject: true) is { } validate)
+                if (ValidateParser.Parse(context, child, ValidationOwnerKind.Concept) is { } validate)
                 {
                     validations.Add(validate);
                 }

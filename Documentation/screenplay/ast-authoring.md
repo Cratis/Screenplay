@@ -38,6 +38,14 @@ Use ordinary typed add/replace/remove operations with **Authoring** validation t
 
 Old handler JSON without `implementation` reads as null. New metadata needs a capable syntax reader: strict older readers reject unknown kinds/members. Schema discovery includes both new kinds; no ESM version or canonical bytes change.
 
+## Command named-rule intent edits
+
+`ValidationRuleSyntax.Implementation` is nullable and init-only. Its seven positional constructor parameters, defaults and deconstruction remain unchanged; old JSON without `implementation` defaults to null. `ImplementationSyntax` stores ordered hints only. File/Code remain on the rule, including their existing structural slots and file-reference links. Walkers visit each hint and payload once.
+
+Use typed proposals to add/replace hints, change the sole source atomically or remove attached metadata. Removing attached metadata unwraps without discarding the source. Removing a pending wrapper alone is refused: attach a predicate source or explicitly remove the rule. Existing bare legacy rules keep their authoring behavior, not executable meaning. Use expected workspace/catalog revisions and expected nodes, preview the candidate, then explicitly accept; no raw-text repair is introduced.
+
+Transport, authoring and public binding reject concept-owned wrappers, non-named rules, malformed names, conflicting payloads and invalid hint collections. Wrapped pending command rules pass Authoring validation but fail Executable validation with `PLAY0268`. Hint-only edits leave the bound predicate contract unchanged; acceptance never proves execution or confirmation. Canonical and trivia-preserving proposals retain source/comment anchors or refuse an unsafe edit.
+
 ## Operation intent edits (syntax-only)
 
 Systems, standalone/inline operations, typed inputs, phase attachments and hints are discoverable through `WorkspaceSyntaxIndex` without an executable model. Original document occurrences retain source and placement; unsupported operation/system kinds have no `SemanticId`, semantic address or `RequirementId`. MCP logical keys include declaration kind and full owning scope and are authoring-only, not persistent identity. Existing catalog assignments remain unchanged when editing this intent.

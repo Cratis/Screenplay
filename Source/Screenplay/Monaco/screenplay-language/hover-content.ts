@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { namedRuleContext } from './named-rule-context';
 import { eventSourceHover } from './event-source-authoring';
 import { operationHover } from './operation-authoring';
 import { DocumentSymbols } from './symbols';
@@ -74,6 +75,11 @@ export function hoverContent(
 
     if (word === 'implementation' || word === 'hint') {
         const chain = enclosingChain(lines, fences, lineIndex, indentOf(line));
+        const ruleContext = namedRuleContext(lines, lineIndex, indentOf(line));
+        if ((word === 'implementation' && ruleContext === 'rule' && /^\s*implementation\s*$/.test(withoutComment(line))) ||
+            (word === 'hint' && ruleContext === 'implementation' && /^\s*hint\s+"/.test(line))) {
+            return `**${word}** — Command named-rule guidance with at most one file or tagged fence. No payload means pending and fails binding (PLAY0268). Attached predicates keep their existing pure RuleContext contract; reference execution is unsupported, never confirmation.`;
+        }
         if (word === 'implementation' && chain[0] === 'handler' && /^\s*implementation\s*$/.test(withoutComment(line))) {
             return `**implementation** — ${handlerIntentDocs.implementation}`;
         }

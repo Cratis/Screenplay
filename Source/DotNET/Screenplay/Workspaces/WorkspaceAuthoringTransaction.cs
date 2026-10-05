@@ -140,7 +140,7 @@ sealed class WorkspaceAuthoringTransaction(
 
             if (operation is ReplaceWorkspaceSyntaxDocument replace)
             {
-                if (!candidates.ContainsKey(replace.Document) || !targeted.Add(replace.Document) || edits.Touched.Contains(replace.Document))
+                if (!candidates.ContainsKey(replace.Document) || !targeted.Add(replace.Document) || (edits.Touched.Contains(replace.Document) && !edits.OnlyPendingRuleRemovals(replace.Document)))
                 {
                     throw new InvalidWorkspaceAuthoring("A typed replacement requires an existing document not targeted by another document operation or node edit.");
                 }
@@ -185,6 +185,11 @@ sealed class WorkspaceAuthoringTransaction(
         // Every handle, expectation, typed slot, overlap and original anchor has now been validated.
         foreach (var (id, syntax) in edits.Apply())
         {
+            if (replacements.Exists(replacement => replacement.Document == id))
+            {
+                continue;
+            }
+
             var document = candidates[id];
             intendedDocuments[id] = syntax;
             candidates[id] = WorkspaceAuthoringPrinter.Print(id, document.StableKey, document.Path, document.Encoding, syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == id)), validatePlacement: false, candidates: index.StreamCandidates);
@@ -265,7 +270,7 @@ sealed class WorkspaceAuthoringTransaction(
         var candidate = ScreenplayWorkspace.CreateValidated(workspace.ApplicationName, ordered, catalog, compilation, attachments.Contents, attachments.Diagnostics);
         var migrations = IdentifierMigrations(index, edits, referenceRenames);
         WorkspaceAuthoringReferences.Validate(workspace, candidate, request, _diagnostics, migrations);
-        ValidateAbsenceKeys(request, index, candidate, edits, replacements, migrations);
+        ValidateSourceTransitions(request, index, candidate, edits, replacements, migrations);
         return new()
         {
             Workspace = candidate,
@@ -283,9 +288,9 @@ sealed class WorkspaceAuthoringTransaction(
         };
     }
 
-    // Keyed absence obligations are validated beside, not through, the generic reference engine. Correspondence
-    // comes only from this transaction's operations; see WorkspaceEditProvenance.
-    void ValidateAbsenceKeys(
+    // Source transition obligations are validated beside, not through, the generic reference engine.
+    // Correspondence comes only from this transaction's operations; see WorkspaceEditProvenance.
+    void ValidateSourceTransitions(
         WorkspaceAuthoringRequest request,
         WorkspaceSyntaxIndex before,
         ScreenplayWorkspace candidate,
@@ -294,11 +299,6 @@ sealed class WorkspaceAuthoringTransaction(
         IReadOnlyDictionary<SemanticAddress, SemanticAddress>? renames)
     {
         var after = WorkspaceSyntaxIndex.Create(candidate);
-        if (!WorkspaceAbsenceKeyBindings.Present(before) && !WorkspaceAbsenceKeyBindings.Present(after))
-        {
-            return;
-        }
-
         var provenance = new WorkspaceEditProvenance();
         var replaced = replacements.Select(replacement => replacement.Document).ToHashSet();
         var survivors = candidate.Documents.Select(document => document.Id).ToHashSet();
@@ -307,7 +307,8 @@ sealed class WorkspaceAuthoringTransaction(
             provenance.Subtree(before, (document.Id, string.Empty), (document.Id, string.Empty));
         }
 
-        foreach (var document in replaced.Where(document => shapePreservingReplacements?.Contains(document) == true))
+        var generatedReplacements = replaced.Where(document => shapePreservingReplacements?.Contains(document) == true).ToArray();
+        foreach (var document in generatedReplacements)
         {
             RequireShape(before, after, document);
             provenance.Subtree(before, (document, string.Empty), (document, string.Empty));
@@ -325,7 +326,25 @@ sealed class WorkspaceAuthoringTransaction(
             migrations[rename.PreviousAddress] = rename.CurrentAddress;
         }
 
-        WorkspaceAbsenceKeyValidation.Validate(before, after, WorkspaceReferenceLayout.Equivalent(workspace, candidate), provenance, request.ReferencePolicy, migrations, _diagnostics);
+        var ruleSources = new WorkspaceEditProvenance();
+        edits.RecordPendingRuleSources(ruleSources, replacements);
+
+        // Only the trusted generated rewrites that passed RequireShape above carry positional
+        // lineage. Ordinary document replacements must still prove pending-rule correspondence.
+        foreach (var document in generatedReplacements)
+        {
+            ruleSources.Subtree(before, (document, string.Empty), (document, string.Empty));
+        }
+
+        var removals = edits.PendingRuleRemovals.Select(entry => entry.Handle).ToHashSet();
+        var ruleRegions = edits.Replacements.Select(replacement => replacement.Target.Handle)
+            .Concat(replaced.Select(document => new WorkspaceNodeHandle(workspace.Revision, document, string.Empty))).ToHashSet();
+        WorkspacePendingRuleTransitions.Validate(before, after, ruleSources, provenance, migrations, removals, ruleRegions);
+
+        if (WorkspaceAbsenceKeyBindings.Present(before) || WorkspaceAbsenceKeyBindings.Present(after))
+        {
+            WorkspaceAbsenceKeyValidation.Validate(before, after, WorkspaceReferenceLayout.Equivalent(workspace, candidate), provenance, request.ReferencePolicy, migrations, _diagnostics);
+        }
     }
 
     WorkspaceAuthoringResult Failure(WorkspaceConflictKind kind, string message) => new()

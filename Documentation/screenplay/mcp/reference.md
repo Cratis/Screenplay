@@ -191,7 +191,7 @@ is canonicalized.
 from the server; do not infer them from names or line numbers.
 
 `read-workspace` views: documents, semantics, eventContracts, diagnostics,
-executable-diagnostics, source-map, repairs, implementation-requirements, handler-intents, handler-intent-details, typed-contexts and executable-model. The `source-map`
+executable-diagnostics, source-map, repairs, implementation-requirements, handler-intents, handler-intent-details, named-rule-intents, named-rule-intent-details, typed-contexts and executable-model. The `source-map`
 view pages the compiler's semantic entries ordered by semantic ID: `semanticId`,
 `role` (Declaration or Description), identity `origin`, `documentId`, `path`,
 and exact `span` (zero-based UTF-16 start/length and one-based start/end
@@ -227,6 +227,14 @@ original occurrences, names, child counts and existing identities. Its `children
 view selects a parent document/path. Typed content is opt-in.
 
 ## Handler intent inventory
+
+### Command named-rule intent views
+
+Use `read-workspace` with the current `expectedRevision` and `view: "named-rule-intents"`. Coverage is **CommandNamedRule** only. It works without successful ESM binding and pages occurrence handles, owner identity/origin, member, hint count and selected source. Pending entries have no requirement ID; provisional owner IDs are not authoritative. Equal attached rules retain their existing distinct `#n` allocation. Colliding physical owners claim no attachment identity, and unresolved placement appears as separate refusals.
+
+`named-rule-intent-details` accepts either `subject` (a revision-local occurrence handle, including pending) or an attached `requirementId`, not both, and pages ordered hints. Continuations require `expectedCatalogRevision`; stale workspace/catalog revisions refuse. Selection is not execution evidence. Existing `implementation-requirements` and `typed-contexts` views expose the bound attached predicate contract without treating hints as code. Edit through `propose-ast`, preview and explicit `apply`; no inventory call reads code files, realizes intent or confirms it.
+
+### Handler intent views
 
 Call `read-workspace` with the current `expectedRevision` and `view: "handler-intents"`. Coverage is **CommandHandler** only, independent of ESM readiness. Paged entries expose owner address/ID, requirement ID, identity origin and explicit provisional status, hint count, file/language, derived pending/file/inline state, and the handler AST handle. `executableReady` remains false. The inventory selects links from syntax; it does not read implementation files or report confirmation/freshness.
 

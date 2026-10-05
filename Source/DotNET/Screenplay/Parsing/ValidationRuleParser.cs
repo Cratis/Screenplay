@@ -19,7 +19,7 @@ internal static partial class ValidationRuleParser
     /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
     /// <param name="line">The <see cref="SourceLine"/> holding the rule.</param>
     /// <returns>The parsed <see cref="ValidationRuleSyntax"/>, or <c>null</c> when the rule is malformed.</returns>
-    public static ValidationRuleSyntax? Parse(ParserContext context, SourceLine line)
+    public static ValidationRuleSyntax? Parse(ParserContext context, SourceLine line, ValidationOwnerKind owner)
     {
         var (withSeverity, message) = SplitMessage(line.Content);
         if (!TrySplitSeverity(context, line, withSeverity, out var content, out var severity))
@@ -42,8 +42,8 @@ internal static partial class ValidationRuleParser
             return null;
         }
 
-        var (file, code) = kind == ValidationRuleKind.Rule ? ParseImplementation(context, line) : (null, null);
-        return new(property, kind.Value, value, message, line.Location, file, code) { Severity = severity };
+        var (file, code, implementation) = kind == ValidationRuleKind.Rule ? ParseImplementation(context, line, owner == ValidationOwnerKind.Command) : (null, null, null);
+        return new(property, kind.Value, value, message, line.Location, file, code) { Severity = severity, Implementation = implementation };
     }
 
     /// <summary>
@@ -67,7 +67,7 @@ internal static partial class ValidationRuleParser
             return null;
         }
 
-        var (file, code) = kind == ValidationRuleKind.Rule ? ParseImplementation(context, line) : (null, null);
+        var (file, code, _) = kind == ValidationRuleKind.Rule ? ParseImplementation(context, line, false) : (null, null, null);
         return new(ValidationRuleSyntax.ConceptValue, kind.Value, value, message, line.Location, file, code) { Severity = severity };
     }
 
@@ -187,27 +187,38 @@ internal static partial class ValidationRuleParser
     /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
     /// <param name="ruleLine">The consumed <see cref="SourceLine"/> holding the rule.</param>
     /// <returns>The <see cref="FileReferenceSyntax"/> or <see cref="CodeBlockSyntax"/> found, or both <c>null</c> when the rule stays a bare name.</returns>
-    static (FileReferenceSyntax? File, CodeBlockSyntax? Code) ParseImplementation(ParserContext context, SourceLine ruleLine)
+    static (FileReferenceSyntax? File, CodeBlockSyntax? Code, ImplementationSyntax? Implementation) ParseImplementation(ParserContext context, SourceLine ruleLine, bool commandOwner)
     {
         if (!context.TryPeekChild(ruleLine.Indent, out var body))
         {
-            return (null, null);
+            return (null, null, null);
         }
 
         context.Reader.TakeSignificant();
-        if (FileReferenceParser.IsDirective(body))
+        var wrapped = commandOwner && LineText.FirstWord(body.Content) == "implementation";
+        (FileReferenceSyntax? File, CodeBlockSyntax? Code, ImplementationSyntax? Implementation) source = (null, null, null);
+        if (wrapped) source = ImplementationParser.ParseWrapper(context, body);
+        else if (FileReferenceParser.IsDirective(body)) source.File = FileReferenceParser.Parse(context, body);
+        else if (CodeBlockParser.IsCodeLine(context, body)) source.Code = CodeBlockParser.Parse(context, body);
+        if (!wrapped && source.File is null && source.Code is null)
         {
-            return (FileReferenceParser.Parse(context, body), null);
+            context.Error(DiagnosticCodes.UnknownRuleImplementationDirective, $"Unexpected '{body.Content}' in rule implementation - expected 'file <path>' or an inline code block", body.Location);
+            context.SkipBlock(body.Indent);
         }
 
-        if (CodeBlockParser.IsCodeLine(context, body))
+        // Only new wrapped forms change recovery. Legacy direct forms retain their existing behavior.
+        while (context.TryPeekChild(ruleLine.Indent, out var extra) && (wrapped || (commandOwner && LineText.FirstWord(extra.Content) == "implementation")))
         {
-            return (null, CodeBlockParser.Parse(context, body));
+            context.Reader.TakeSignificant();
+            context.Error(
+                wrapped && LineText.FirstWord(extra.Content) == "implementation" ? DiagnosticCodes.InvalidImplementationBlock : DiagnosticCodes.ConflictingImplementationSources,
+                "A named rule has one implementation wrapper and cannot mix wrapped and direct sources.",
+                extra.Location);
+            if (CodeBlockParser.IsCodeLine(context, extra)) CodeBlockParser.Parse(context, extra);
+            else context.SkipBlock(extra.Indent);
         }
 
-        context.Error(DiagnosticCodes.UnknownRuleImplementationDirective, $"Unexpected '{body.Content}' in rule implementation - expected 'file <path>' or an inline code block", body.Location);
-        context.SkipBlock(body.Indent);
-        return (null, null);
+        return source;
     }
 
     [GeneratedRegex(@"\bseverity\s+(\S+)$", RegexOptions.None, 1000)]

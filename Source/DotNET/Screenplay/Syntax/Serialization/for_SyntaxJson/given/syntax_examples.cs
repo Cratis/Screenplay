@@ -33,6 +33,7 @@ internal static class syntax_examples
         // while still independently populating every other structural member.
         return node switch
         {
+            ValidationRuleSyntax rule => rule with { Rule = ValidationRuleKind.Rule, Value = new PathExpressionSyntax("ExamplePredicate", rule.Location), Code = null },
             EventSourceSyntax source => source with { Identifier = source.Identifier is null ? null : source.Identifier with { IsCollection = false, IsOptional = false } },
             EventStreamSyntax stream => stream with { StreamId = stream.StreamId is null ? null : stream.StreamId with { IsCollection = false, IsOptional = false } },
             CommandStreamSyntax route => route with { PropertyCandidate = null, StreamId = route.StreamId is null ? null : route.StreamId with { Property = "streamId" } },

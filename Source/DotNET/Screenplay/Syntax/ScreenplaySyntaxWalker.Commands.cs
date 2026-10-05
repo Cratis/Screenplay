@@ -190,6 +190,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitValidationRule(ValidationRuleSyntax syntax)
     {
         VisitNode(syntax);
+        if (syntax.Implementation is not null) VisitImplementation(syntax.Implementation);
 
         if (syntax.Value is not null)
         {

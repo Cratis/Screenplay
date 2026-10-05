@@ -246,7 +246,7 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
                     `'validate' in enumeration concept '${name}' declares an empty validate block, not a value named 'validate' - write '@validate' for the value`,
                     locationOf(child));
             }
-            const parsed = parseValidate(context.valueContext, child, true);
+            const parsed = parseValidate(context, child, 'concept');
             if (parsed !== undefined) validations.push(parsed);
         } else if (reason !== null) {
             applyAttributeReason(context, child, name, attributes, attributeIndices, reason[1], unescapeString(reason[2]));

@@ -20,6 +20,7 @@ sealed class WorkspaceEditProvenance
     readonly Dictionary<(DocumentId Document, string Path), (DocumentId Document, string Path)> _origins = [];
     readonly Dictionary<(DocumentId Document, string Path), (DocumentId Document, string Path)> _images = [];
     readonly HashSet<(DocumentId Document, string Path)> _ambiguous = [];
+    readonly Dictionary<(DocumentId Document, string Path), HashSet<(DocumentId Document, string Path)>> _ambiguousImages = [];
 
     internal (DocumentId Document, string Path)? Origin(WorkspaceSyntaxEntry entry) =>
         _origins.TryGetValue((entry.Handle.Document, entry.Handle.Path), out var origin) ? origin : null;
@@ -28,6 +29,29 @@ sealed class WorkspaceEditProvenance
         _images.TryGetValue((original.Handle.Document, original.Handle.Path), out var image) ? image : null;
 
     internal bool IsAmbiguous(WorkspaceSyntaxEntry entry) => _ambiguous.Contains((entry.Handle.Document, entry.Handle.Path));
+
+    internal bool HasAmbiguousImages(WorkspaceSyntaxEntry original) => _ambiguousImages.ContainsKey((original.Handle.Document, original.Handle.Path));
+
+    internal IEnumerable<(DocumentId Document, string Path)> KnownImages(WorkspaceSyntaxEntry original)
+    {
+        if (_ambiguousImages.TryGetValue((original.Handle.Document, original.Handle.Path), out var images))
+        {
+            return images;
+        }
+
+        return Image(original) is { } image ? [image] : [];
+    }
+
+    internal void Ambiguous((DocumentId Document, string Path) position, (DocumentId Document, string Path) original)
+    {
+        _ambiguous.Add(position);
+        if (!_ambiguousImages.TryGetValue(original, out var images))
+        {
+            _ambiguousImages[original] = images = [];
+        }
+
+        images.Add(position);
+    }
 
     internal void Map((DocumentId Document, string Path) candidate, (DocumentId Document, string Path) original)
     {

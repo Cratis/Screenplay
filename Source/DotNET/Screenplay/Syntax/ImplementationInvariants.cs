@@ -1,12 +1,13 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Text.RegularExpressions;
 using Cratis.Screenplay.Syntax.Serialization;
 using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Syntax;
 
-internal static class ImplementationInvariants
+internal static partial class ImplementationInvariants
 {
     internal static void Validate(SyntaxNode node)
     {
@@ -18,6 +19,16 @@ internal static class ImplementationInvariants
         if (node is HandlerSyntax { Implementation: not null } handler)
         {
             ValidateHandler(handler);
+        }
+
+        if (node is ValidationRuleSyntax rule && NamedRuleError(rule, true) is { } ruleError)
+        {
+            throw new InvalidSyntaxJson(ruleError);
+        }
+
+        if (node is ConceptSyntax concept && (concept.Validations ?? []).OfType<DeclarativeValidateSyntax>().SelectMany(block => block.Rules).Any(rule => rule.Implementation is not null))
+        {
+            throw new InvalidSyntaxJson("Implementation wrappers on named rules are supported only on commands.");
         }
 
         if (node is ImplementationSyntax { Hints: null })
@@ -32,6 +43,28 @@ internal static class ImplementationInvariants
     }
 
     internal static void ValidateAuthoring(ApplicationSyntax application) => new AuthoringWalker().VisitApplication(application);
+
+    // Also used by the public binder, which does not run authoring validation.
+    internal static string? NamedRuleError(ValidationRuleSyntax rule, bool commandOwner)
+    {
+        if (rule.Implementation is not { } implementation) return null;
+        if (!commandOwner) return "Implementation wrappers on named rules are supported only on commands.";
+        if (rule.Rule != ValidationRuleKind.Rule || rule.Value is not PathExpressionSyntax name || string.IsNullOrEmpty(name.Path) || !NameRegex().IsMatch(name.Path))
+        {
+            return "An implementation wrapper requires a named rule with a valid predicate name.";
+        }
+
+        if (rule.File is not null && rule.Code is not null) return "A named rule has at most one file or inline payload.";
+        if (implementation.Hints?.Any(hint => hint is null || ImplementationHintText.IsBlank(hint.Text)) != false)
+        {
+            return "Implementation hints must be a collection of nonblank hints.";
+        }
+
+        return null;
+    }
+
+    [GeneratedRegex(@"^[A-Za-z_]\w*\z", RegexOptions.None, 1000)]
+    private static partial Regex NameRegex();
 
     static void ValidateHandler(HandlerSyntax handler)
     {

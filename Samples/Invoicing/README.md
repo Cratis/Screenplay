@@ -58,7 +58,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | feature `authorize`, `uses` with arguments, `on <ApplicationTrigger>`, nested features, feature `contribute to` | InvoiceManagement, Adjustments, Payments, Integrations |
 | slice `description`, `file` | RegisterInvoice |
 | inline `produces event`, typed mappings, event `description` and Markdown `documentation`, implicit identifier destination | TagInvoice |
-| command `description`, `identifier`, multi-line `authorize`, every validation rule, `severity`, `require`, inline `validate` block, `$strings` messages | RegisterInvoice, CancelInvoice, TagInvoice, ProcessInvoiceBatch, ApplyDiscount |
+| command `description`, `identifier`, multi-line `authorize`, every validation rule, named-rule `implementation` hints with the existing file link, `severity`, `require`, inline `validate` block, `$strings` messages | RegisterInvoice, CancelInvoice, TagInvoice, ProcessInvoiceBatch, ApplyDiscount |
 | `produces` with `for`, `tag`, every mapping source (`$context.*`, `$env`, `$strings`, literals, Booleans, lists, expressions); `produces when` with `and`/`or`/parentheses, `contains`, `starts with` | RegisterInvoice, ApplyDiscount, RecordPayment, NotifyCustomerOnInvoiceRegistered |
 | `reads … as … by` and `require` over read state | RecordPayment |
 | `handler` inline and `implementation` with a hint and existing `file`; `concurrency` | ProcessInvoiceBatch, ArchiveOldInvoices, RegisterInvoice |
@@ -84,6 +84,17 @@ Automation and translate slices are driven by time, by application triggers and 
 - `SeeingAnInvoicePaidInTheLegacySystem` hands the legacy capture the record as it was (`given capture`) and as it is now (`when capture`).
 - `given clock` fixes when a scenario happens, so `CancellingAnInvoiceWithARefund` can assert the `cancelledAt` mapped from `$context.occurred`.
 - `ExchangeRates`, `CreditStatus` and the auditor denial perform their query with `when query` and assert `then result`, `then no result` or `then denied`.
+
+`RegisterInvoice` retains the existing `BeUnusedInvoiceNumber` file selection inside an `implementation` wrapper:
+
+```screenplay
+invoiceNumber rule BeUnusedInvoiceNumber message "Invoice number is already in use"
+  implementation
+    hint "Preserve the existing invoice-number acceptance criteria"
+    file Validations/BeUnusedInvoiceNumber.cs
+```
+
+This excerpt belongs inside the command's `validate` block. Its hint records guidance without changing the predicate contract or claiming that the selected code ran. The referenced implementation files are not included in this syntax showcase.
 
 ## Parsed is not executable
 

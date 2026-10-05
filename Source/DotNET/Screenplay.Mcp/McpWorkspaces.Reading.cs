@@ -218,6 +218,45 @@ internal sealed partial class McpWorkspaces
             });
         }
 
+        if (view == "named-rule-intents" || view == "named-rule-intent-details")
+        {
+            CheckContinuation(arguments, "expectedCatalogRevision", workspace.IdentityCatalog.Revision.ToString());
+            var inventory = McpWorkspaceAnalysis.For(workspace).NamedRuleIntents;
+            if (view == "named-rule-intent-details")
+            {
+                var hasSubject = arguments.TryGetProperty("subject", out var subject);
+                if (hasSubject == arguments.TryGetProperty("requirementId", out _)) throw new McpFailure("Select exactly one subject occurrence handle or attached requirementId.", -32602);
+                var selected = hasSubject ? McpAstHandles.Read(subject) : null;
+                if (selected is not null && selected.Revision != workspace.Revision) throw new McpFailure("StaleRevision: the subject handle belongs to a different workspace snapshot.");
+                WorkspaceNamedRuleIntentEntry[] matches = selected is not null
+                    ? [.. inventory.Entries.Where(entry => Equals(entry.Handle, selected)).Take(2)]
+                    : [.. inventory.Entries.Where(entry => entry.RequirementId == McpJson.RequiredString(arguments, "requirementId")).Take(2)];
+                if (matches.Length > 1) throw new McpFailure("AmbiguousRequirement: select a revision-local named-rule occurrence handle.");
+                var entry = matches.SingleOrDefault() ?? throw new McpFailure("UnknownRequirement: no uniquely placed command named-rule occurrence matches. Read named-rule-intents for handles and unresolved placement.");
+                return McpJson.ToolResult(new
+                {
+                    workspace = McpWorkspaceTransport.Describe(workspace), view,
+                    coverage = WorkspaceNamedRuleIntentInventory.Coverage,
+                    rule = DescribeNamedRuleIntent(entry),
+                    page = McpPaging.Page(entry.Hints, arguments, workspace.Revision.ToString())
+                });
+            }
+
+            var unresolved = inventory.UnresolvedPlacementDocuments.Select(document => (object)new
+            {
+                placementStatus = "unresolved", conflictKind = "UnresolvedPlacement",
+                documentId = document.Id.ToString(), path = document.Path.Value,
+                action = "Repair conflicting or cyclic imports before selecting a command named-rule owner."
+            });
+            return McpJson.ToolResult(new
+            {
+                workspace = McpWorkspaceTransport.Describe(workspace), view,
+                coverage = WorkspaceNamedRuleIntentInventory.Coverage,
+                unresolvedPlacementCount = inventory.UnresolvedPlacementDocuments.Length,
+                page = McpPaging.Page(inventory.Entries.Select(DescribeNamedRuleIntent).Concat(unresolved), arguments, workspace.Revision.ToString())
+            });
+        }
+
         if (view == "implementation-requirements")
         {
             var manifestRevision = McpAttachmentManifest.Revision(workspace.Compilation.ImplementationRequirements);
@@ -436,6 +475,17 @@ internal sealed partial class McpWorkspaces
         if (!_proposals.Remove(id)) throw new McpFailure("UnknownProposal: only an outstanding proposal from this connection can be used.") { FailureKind = "UnknownProposal" };
         return McpJson.ToolResult(new { discarded = true, remainingCount = _proposals.Count });
     }
+
+    static object DescribeNamedRuleIntent(WorkspaceNamedRuleIntentEntry entry) => new
+    {
+        handle = McpAstHandles.Describe(entry.Handle),
+        owner = McpSemanticAddresses.Describe(entry.Owner), ownerName = entry.Owner.Name,
+        ownerId = entry.OwnerId.ToString(), identityOrigin = entry.IdentityOrigin.ToString(),
+        entry.IsProvisional, entry.IsAmbiguous, member = entry.Member,
+        requirementId = entry.RequirementId, state = entry.State, file = entry.File, language = entry.Language,
+        hintCount = entry.Hints.Length, executionEvidence = false,
+        executionReadiness = entry.State == "pending" ? "Unsupported: no predicate attachment (PLAY0268)." : "Opaque predicate; execution requires an admitting target, not the reference runner."
+    };
 
     static object DescribeHandlerIntent(WorkspaceImplementationEntry entry) => new
     {
