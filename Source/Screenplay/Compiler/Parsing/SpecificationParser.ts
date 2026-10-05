@@ -121,7 +121,7 @@ function parseOperationStep(context: ParserContext, line: SourceLine, body: Spec
     const match = operationStep.exec(line.content);
     if (match === null || (match[1] === 'given operation') !== (match[3] !== undefined)) {
         context.error(DiagnosticCodes.InvalidOperationSpecification, "Expected 'given operation <Name> fails', 'then operation <Name>' or 'then compensated <Name>'.", locationOf(line));
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
     } else if (match[1] === 'then operation') {
         const values: PropertyMappingSyntax[] = [];
         for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
@@ -142,7 +142,7 @@ function parseGiven(context: ParserContext, line: SourceLine, body: Specificatio
     if (givenClockPrefix.test(line.content)) {
         if (body.givenClock !== null) {
             context.error(DiagnosticCodes.InvalidSpecificationClock, 'A specification states its clock at most once.', locationOf(line));
-            context.skipBlock(line.indent);
+            skipBody(context, line.indent);
         } else {
             body.givenClock = parseClock(context, line, 'given');
         }
@@ -172,7 +172,7 @@ function parseWhen(context: ParserContext, line: SourceLine, body: Specification
     if (body.whenDeclared) {
         const code = body.whenAppended !== null || appends ? DiagnosticCodes.ConflictingSpecificationActions : DiagnosticCodes.DuplicateSpecificationWhen;
         context.error(code, `Specification '${name}' already declares a 'when' - a specification can have at most one`, locationOf(line));
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return;
     }
     body.whenDeclared = true;
@@ -201,7 +201,7 @@ function parseWhen(context: ParserContext, line: SourceLine, body: Specification
     const match = whenPattern.exec(line.content);
     if (match === null) {
         context.error(DiagnosticCodes.InvalidSpecificationWhen, `Invalid 'when' declaration '${line.content}' - expected 'when <CommandType>' or 'when append <EventType>'`, locationOf(line));
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return;
     }
     const generatedValues: PropertyMappingSyntax[] = [];
@@ -244,7 +244,7 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
     if (line.content.startsWith('then denied')) {
         if (line.content !== 'then denied') {
             context.error(DiagnosticCodes.InvalidSpecificationDenied, 'Expected exactly \'then denied\'.', locationOf(line));
-            context.skipBlock(line.indent);
+            skipBody(context, line.indent);
         } else if (body.thenDenied !== null) {
             context.error(DiagnosticCodes.DuplicateSpecificationCallerOrDenied, "A specification has at most one 'then denied' outcome.", locationOf(line));
         } else {
@@ -263,7 +263,7 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
     }
     if (firstWord(line.content.substring('then'.length).trim()) === 'error') {
         context.error(DiagnosticCodes.InvalidThenError, `Invalid 'then error' declaration '${line.content}' - expected 'then error' or 'then error "<reason>"'`, locationOf(line));
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return;
     }
     if (thenNoPrefix.test(line.content)) {
@@ -323,7 +323,7 @@ function parseAbsentReadModel(context: ParserContext, line: SourceLine): Specifi
     const match = thenAbsentReadModelPattern.exec(line.content);
     if (match === null || match[2].endsWith(' exactly')) {
         context.error(DiagnosticCodes.InvalidAbsentReadModelStep, `Invalid absence assertion '${line.content}' - expected 'then no readmodel <ReadModelType> for <key>'`, locationOf(line));
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return null;
     }
     const keyText = match[2].trim();
@@ -342,7 +342,7 @@ function parseAbsentReadModel(context: ParserContext, line: SourceLine): Specifi
 
 function skipBody(context: ParserContext, indent: number): void {
     if (context.sourceOptions.numericMode !== 'exact') return context.skipBlock(indent);
-    context.skipOpaqueBlock(indent, child => /^numbers(?!\s*[=:])(\s|$)/.test(child.content) && context.error(DiagnosticCodes.InvalidNumericDirective, "Unexpected 'numbers'", locationOf(child)));
+    context.skipOpaqueBlock(indent);
 }
 
 function parseClock(context: ParserContext, line: SourceLine, keyword: string): SpecificationClockSyntax | null {
@@ -368,7 +368,7 @@ function parseNamedStep<T>(
     const match = regex.exec(line.content);
     if (match === null) {
         context.error(code, `Invalid '${keyword}' declaration '${line.content}' - expected '${expected}'`, locationOf(line));
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return null;
     }
     return create(match[1], parseValues(context, line));
@@ -378,7 +378,7 @@ function parseResult(context: ParserContext, line: SourceLine, body: Specificati
     const match = thenResultPattern.exec(line.content);
     if (match === null) {
         context.error(DiagnosticCodes.InvalidSpecificationQueryAction, `Invalid 'then result' declaration '${line.content}' - expected 'then result [exactly]'`, locationOf(line));
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return;
     }
     body.thenResults.push({ kind: 'SpecificationQueryResultSyntax', properties: parseValues(context, line), exactly: match[1] !== undefined, location: locationOf(line) });
@@ -388,7 +388,7 @@ function parseReadModelStep(context: ParserContext, line: SourceLine, regex: Reg
     const match = regex.exec(line.content);
     if (match === null) {
         context.error(DiagnosticCodes.InvalidReadModelStep, `Invalid '${keyword} readmodel' declaration '${line.content}' - expected '${keyword} readmodel <ReadModelType>'`, locationOf(line));
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return undefined;
     }
     return {
@@ -404,7 +404,7 @@ function parseEventStep(context: ParserContext, line: SourceLine, regex: RegExp,
     const match = regex.exec(line.content);
     if (match === null) {
         context.error(DiagnosticCodes.InvalidEventStep, `Invalid '${keyword}' declaration '${line.content}' - expected '${keyword} <EventType>'`, locationOf(line));
-        context.skipBlock(line.indent);
+        skipBody(context, line.indent);
         return undefined;
     }
     return { kind: 'SpecificationEventSyntax', eventType: match[1], ...parseValuesWithEventSource(context, line), location: locationOf(line) };

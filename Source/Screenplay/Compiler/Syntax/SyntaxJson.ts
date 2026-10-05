@@ -32,7 +32,12 @@ export function toCompleteSyntaxJson(node: SyntaxNode): SyntaxJsonValue {
 }
 
 function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJsonValue {
-    if (Array.isArray(value)) return value.map(item => write(item, owningMode, complete));
+    if (Array.isArray(value)) {
+        // A fresh plain array: never map (Symbol.species) or serialize through a caller-supplied hook.
+        const items: SyntaxJsonValue[] = [];
+        for (let index = 0; index < value.length; index++) items.push(write(value[index], owningMode, complete));
+        return items;
+    }
     if (isNode(value)) {
         if (sourceRoots.has(value.kind)) owningMode = validatedSourceOptions((value as unknown as { sourceOptions?: unknown }).sourceOptions ?? legacySourceOptions).numericMode;
         validateSyntaxInvariants(value);
@@ -51,8 +56,13 @@ function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJ
         return result;
     }
     if (value === undefined) return null;
-    // A fresh copy drops any inherited or non-enumerable toJSON hook that could round a number.
-    return (typeof value === 'object' && value !== null ? { ...value } : value) as SyntaxJsonValue;
+    if (typeof value !== 'object' || value === null) return value as SyntaxJsonValue;
+    const record = value as Record<string, unknown>;
+    // The ordered ExactNumber form, whatever the input key order; other objects are copied without any toJSON hook.
+    if (record.literalType === 'ExactNumber') return { literalType: 'ExactNumber', value: record.value as string };
+    const copy: { [member: string]: SyntaxJsonValue } = {};
+    for (const name of Object.keys(record)) if (name !== 'toJSON' && record[name] !== undefined) copy[name] = write(record[name], owningMode, complete);
+    return copy;
 }
 
 function validateNumbers(value: unknown, owningMode: string, depth: number): void {

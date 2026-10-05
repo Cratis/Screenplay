@@ -5,7 +5,7 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { CaptureAppendSyntax, CaptureChildrenSyntax, CaptureMapOperationSyntax, CaptureNestedSyntax, CaptureSourceSettingSyntax, CaptureSourceSyntax, CaptureSyntax, CaptureTranslationSyntax, CaptureWhenSyntax } from '../Syntax/Captures';
 import { TagSyntax } from '../Syntax/Declarations';
 import { PropertyMappingSyntax } from '../Syntax/Expressions';
-import { nativePattern as pattern } from '../Text/patterns';
+import { nativePattern as pattern, pattern as legacyPattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { parseTag } from './DeclarationParsers';
 import { parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
@@ -14,10 +14,13 @@ import { ParserContext } from './ParserContext';
 import { parseProjectionExpression } from './ProjectionExpressionParser';
 import { locationOf, SourceLine } from './SourceLine';
 
-const header = pattern('^capture\\s+([A-Za-z_]\\w*)$');
-const appendPattern = pattern('^append\\s+([A-Z]\\w*)$');
-const childrenPattern = pattern('^children\\s+([a-z_]\\w*)\\s+identified\\s+by\\s+([\\w.]+)$');
-const nestedPattern = pattern('^nested\\s+([\\w.]+)$');
+// The grammar Legacy already modeled keeps its original patterns; native patterns apply to Exact documents.
+const grammar = (source: string): { legacy: RegExp; native: RegExp } => ({ legacy: legacyPattern(source), native: pattern(source) });
+const headerRules = grammar('^capture\\s+([A-Za-z_]\\w*)$');
+const appendRules = grammar('^append\\s+([A-Z]\\w*)$');
+const childrenRules = grammar('^children\\s+([a-z_]\\w*)\\s+identified\\s+by\\s+([\\w.]+)$');
+const nestedRules = grammar('^nested\\s+([\\w.]+)$');
+const select = (context: ParserContext, rules: { legacy: RegExp; native: RegExp }): RegExp => context.sourceOptions.numericMode === 'exact' ? rules.native : rules.legacy;
 const mappingPattern = pattern('^(@?[\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
 const mapEntryPattern = pattern('^([a-z_]\\w*)\\s*=\\s*(.+)$');
 const translationPattern = pattern(`^"(${stringBodyPattern})"\\s*=>\\s*(\\w+)$`);
@@ -29,7 +32,7 @@ const splitTarget = pattern('^[\\w.]+$');
 // C# models them; their numeric semantic interpretation belongs to ESM v7, not source admission.
 export function parseCapture(context: ParserContext, line: SourceLine): CaptureSyntax {
     context = context.valueContext;
-    const name = header.exec(line.content)?.[1] ?? '';
+    const name = select(context, headerRules).exec(line.content)?.[1] ?? '';
     if (name === '' && context.sourceOptions.numericMode === 'exact') context.error(DiagnosticCodes.InvalidCaptureDeclaration, `Invalid capture declaration '${line.content}' - expected 'capture <Name>'`, locationOf(line));
     let source: CaptureSourceSyntax | null = null;
     let key: string | null = null;
@@ -45,14 +48,14 @@ export function parseCapture(context: ParserContext, line: SourceLine): CaptureS
             case 'map': map.push(...parseMap(context, child)); break;
             case 'append': pushAppend(context, child, appends); break;
             case 'children': {
-                const match = childrenPattern.exec(child.content);
+                const match = select(context, childrenRules).exec(child.content);
                 if (match === null) { context.error(DiagnosticCodes.InvalidChildrenDeclaration, `Invalid children declaration '${child.content}' - expected 'children <collection> identified by <key>'`, locationOf(child)); context.skipOpaqueBlock(child.indent); break; }
                 const body = mapAndAppends(context, child);
                 if (match !== null) children.push({ kind: 'CaptureChildrenSyntax', property: match[1], identifiedBy: match[2], ...body, location: locationOf(child) });
                 break;
             }
             case 'nested': {
-                const match = nestedPattern.exec(child.content);
+                const match = select(context, nestedRules).exec(child.content);
                 if (match === null) { context.error(DiagnosticCodes.InvalidNestedDeclaration, `Invalid nested declaration '${child.content}' - expected 'nested <Property>'`, locationOf(child)); context.skipOpaqueBlock(child.indent); break; }
                 const body = mapAndAppends(context, child);
                 if (match !== null) nested.push({ kind: 'CaptureNestedSyntax', property: match[1], ...body, location: locationOf(child) });
@@ -129,7 +132,7 @@ function mapAndAppends(context: ParserContext, line: SourceLine): { map: Capture
 }
 
 function pushAppend(context: ParserContext, line: SourceLine, appends: CaptureAppendSyntax[]): void {
-    const match = appendPattern.exec(line.content);
+    const match = select(context, appendRules).exec(line.content);
     if (match === null) { context.error(DiagnosticCodes.InvalidAppendDeclaration, `Invalid append declaration '${line.content}' - expected 'append <EventType>'`, locationOf(line)); context.skipOpaqueBlock(line.indent); return; }
     const mappings: PropertyMappingSyntax[] = [];
     const tags: TagSyntax[] = [];

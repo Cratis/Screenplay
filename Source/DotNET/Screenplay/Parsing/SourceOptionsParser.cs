@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Languages;
 using Cratis.Screenplay.Syntax;
@@ -9,7 +10,7 @@ using Cratis.Screenplay.Text;
 namespace Cratis.Screenplay.Parsing;
 
 /// <summary>Establishes physical-document options before any value-bearing grammar is entered.</summary>
-internal static class SourceOptionsParser
+internal static partial class SourceOptionsParser
 {
     internal static ParserContext Create(IReadOnlyList<SourceLine> lines, string? path = null, IScreenplayLanguageRegistry? languages = null, bool hashComments = false, CommandStreamCandidates? streamCandidates = null)
     {
@@ -19,6 +20,7 @@ internal static class SourceOptionsParser
         var seen = false;
         var contentSeen = false;
         var inFence = false;
+        var nested = new List<Diagnostic>();
         foreach (var original in lines)
         {
             var line = original;
@@ -71,6 +73,12 @@ internal static class SourceOptionsParser
                 continue;
             }
 
+            // A directive-shaped line below the top level is never a valid option, whichever construct owns the block.
+            if (!inFence && line.Indent > 0 && NestedDirectiveRegex().IsMatch(line.Content))
+            {
+                nested.Add(Diagnostic.Error(DiagnosticCodes.InvalidNumericDirective, "Expected 'numbers exact' only as the document preamble, not inside a body.", line.Location));
+            }
+
             contentSeen |= !line.IsBlank;
             prepared.Add(line);
         }
@@ -78,6 +86,14 @@ internal static class SourceOptionsParser
         // Do not reinterpret an unmarked document's BOM or other legacy source handling.
         var context = new ParserContext(new(seen ? prepared : lines), path, languages) { SourceOptions = options, StreamCandidates = streamCandidates };
         foreach (var diagnostic in diagnostics) context.Add(diagnostic);
+        if (seen)
+        {
+            foreach (var diagnostic in nested) context.Add(diagnostic);
+        }
+
         return context;
     }
+
+    [GeneratedRegex(@"^numbers(\s+(exact|legacy))?$", RegexOptions.None, 1000)]
+    private static partial Regex NestedDirectiveRegex();
 }

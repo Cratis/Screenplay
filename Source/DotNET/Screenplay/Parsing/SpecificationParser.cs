@@ -33,7 +33,7 @@ internal static partial class SpecificationParser
             {
                 context.Error(DiagnosticCodes.ExpectedSpecification, $"Expected 'specification', got '{LineText.FirstWord(line.Content)}'", line.Location);
                 context.Reader.TakeSignificant();
-                context.SkipBlock(line.Indent);
+                SkipBody(context, line.Indent);
             }
         }
 
@@ -114,7 +114,7 @@ internal static partial class SpecificationParser
                         if (givenClock is not null)
                         {
                             context.Error(DiagnosticCodes.InvalidSpecificationClock, "A specification states its clock at most once.", line.Location);
-                            context.SkipBlock(line.Indent);
+                            SkipBody(context, line.Indent);
                         }
                         else
                         {
@@ -133,7 +133,7 @@ internal static partial class SpecificationParser
                         if (caller is not null)
                         {
                             context.Error(DiagnosticCodes.DuplicateSpecificationCallerOrDenied, "A specification has at most one 'given caller' block.", line.Location);
-                            context.SkipBlock(line.Indent);
+                            SkipBody(context, line.Indent);
                         }
                         else
                         {
@@ -161,7 +161,7 @@ internal static partial class SpecificationParser
                                 ? DiagnosticCodes.ConflictingSpecificationActions : DiagnosticCodes.DuplicateSpecificationWhen,
                             $"Specification '{name}' already declares a 'when' - a specification can have at most one",
                             line.Location);
-                        context.SkipBlock(line.Indent);
+                        SkipBody(context, line.Indent);
                         break;
                     }
 
@@ -242,7 +242,7 @@ internal static partial class SpecificationParser
                         if (line.Content != "then denied")
                         {
                             context.Error(DiagnosticCodes.InvalidSpecificationDenied, "Expected exactly 'then denied'.", line.Location);
-                            context.SkipBlock(line.Indent);
+                            SkipBody(context, line.Indent);
                         }
                         else if (denied is not null)
                         {
@@ -260,7 +260,7 @@ internal static partial class SpecificationParser
                     break;
                 default:
                     context.Error(DiagnosticCodes.UnknownSpecificationDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in specification body", line.Location);
-                    context.SkipBlock(line.Indent);
+                    SkipBody(context, line.Indent);
                     break;
             }
         }
@@ -301,7 +301,7 @@ internal static partial class SpecificationParser
         return locations;
     }
 
-    // Skipped bodies are not modeled, but an Exact document must not hide a numeric directive in one.
+    // Skipped bodies are not modeled; an Exact document steps over fenced code whole.
     static void SkipBody(ParserContext context, int parentIndent)
     {
         if (context.SourceOptions.NumericMode != NumericMode.Exact)
@@ -313,11 +313,7 @@ internal static partial class SpecificationParser
         while (context.TryPeekChild(parentIndent, out var child))
         {
             context.Reader.TakeSignificant();
-            if (NumericDirectiveRegex().IsMatch(child.Content))
-            {
-                context.Error(DiagnosticCodes.InvalidNumericDirective, "Expected 'numbers exact' only as the document preamble, not inside a specification body.", child.Location);
-            }
-            else if (child.Content.StartsWith("```", StringComparison.Ordinal))
+            if (child.Content.StartsWith("```", StringComparison.Ordinal))
             {
                 while (context.Reader.TakeRaw() is { } raw && !CodeBlockParser.IsClosingFence(raw))
                 {
@@ -348,7 +344,7 @@ internal static partial class SpecificationParser
         if (!match.Success)
         {
             context.Error(DiagnosticCodes.InvalidSpecificationTrigger, $"Invalid 'when trigger' declaration '{line.Content}' - expected 'when trigger <Trigger>'", line.Location);
-            context.SkipBlock(line.Indent);
+            SkipBody(context, line.Indent);
             return null;
         }
 
@@ -361,7 +357,7 @@ internal static partial class SpecificationParser
         if (!match.Success)
         {
             context.Error(DiagnosticCodes.InvalidSpecificationCapture, $"Invalid '{keyword} capture' declaration '{line.Content}' - expected '{keyword} capture <Capture>'", line.Location);
-            context.SkipBlock(line.Indent);
+            SkipBody(context, line.Indent);
             return null;
         }
 
@@ -374,7 +370,7 @@ internal static partial class SpecificationParser
         if (!match.Success)
         {
             context.Error(DiagnosticCodes.InvalidSpecificationQueryAction, $"Invalid 'when query' declaration '{line.Content}' - expected 'when query <Query>'", line.Location);
-            context.SkipBlock(line.Indent);
+            SkipBody(context, line.Indent);
             return null;
         }
 
@@ -387,7 +383,7 @@ internal static partial class SpecificationParser
         if (!match.Success)
         {
             context.Error(DiagnosticCodes.InvalidSpecificationQueryAction, $"Invalid 'then result' declaration '{line.Content}' - expected 'then result [exactly]'", line.Location);
-            context.SkipBlock(line.Indent);
+            SkipBody(context, line.Indent);
             return null;
         }
 
@@ -412,7 +408,7 @@ internal static partial class SpecificationParser
         if (line.Content != "given caller")
         {
             context.Error(DiagnosticCodes.InvalidSpecificationCaller, "Expected exactly 'given caller'.", line.Location);
-            context.SkipBlock(line.Indent);
+            SkipBody(context, line.Indent);
             return null;
         }
 
@@ -458,7 +454,7 @@ internal static partial class SpecificationParser
         if (!match.Success)
         {
             context.Error(DiagnosticCodes.InvalidSpecificationWhen, $"Invalid 'when' declaration '{line.Content}' - expected 'when <CommandType>' or 'when append <EventType>'", line.Location);
-            context.SkipBlock(line.Indent);
+            SkipBody(context, line.Indent);
             return null;
         }
 
@@ -498,7 +494,7 @@ internal static partial class SpecificationParser
         if (LineText.FirstWord(line.Content["then".Length..].Trim()) == "error")
         {
             context.Error(DiagnosticCodes.InvalidThenError, $"Invalid 'then error' declaration '{line.Content}' - expected 'then error' or 'then error \"<reason>\"'", line.Location);
-            context.SkipBlock(line.Indent);
+            SkipBody(context, line.Indent);
             return;
         }
 
@@ -544,7 +540,7 @@ internal static partial class SpecificationParser
         if (!match.Success || match.Groups[2].Value.EndsWith(" exactly", StringComparison.Ordinal))
         {
             context.Error(DiagnosticCodes.InvalidAbsentReadModelStep, $"Invalid absence assertion '{line.Content}' - expected 'then no readmodel <ReadModelType> for <key>'", line.Location);
-            context.SkipBlock(line.Indent);
+            SkipBody(context, line.Indent);
             return null;
         }
 
@@ -580,7 +576,7 @@ internal static partial class SpecificationParser
         if (!match.Success)
         {
             context.Error(DiagnosticCodes.InvalidSpecificationQuery, $"Invalid 'then query' declaration '{line.Content}' - expected 'then query <Query> [exactly]'", line.Location);
-            context.SkipBlock(line.Indent);
+            SkipBody(context, line.Indent);
             return null;
         }
 
@@ -631,7 +627,7 @@ internal static partial class SpecificationParser
         if (!match.Success)
         {
             context.Error(DiagnosticCodes.InvalidReadModelStep, $"Invalid '{keyword} readmodel' declaration '{line.Content}' - expected '{keyword} readmodel <ReadModelType>'", line.Location);
-            context.SkipBlock(line.Indent);
+            SkipBody(context, line.Indent);
             return null;
         }
 
@@ -644,7 +640,7 @@ internal static partial class SpecificationParser
         if (!match.Success)
         {
             context.Error(DiagnosticCodes.InvalidEventStep, $"Invalid '{keyword}' declaration '{line.Content}' - expected '{keyword} <EventType>'", line.Location);
-            context.SkipBlock(line.Indent);
+            SkipBody(context, line.Indent);
             return null;
         }
 
@@ -725,9 +721,6 @@ internal static partial class SpecificationParser
 
         return values;
     }
-
-    [GeneratedRegex(@"^numbers(?!\s*[=:])(\s|$)", RegexOptions.None, 1000)]
-    private static partial Regex NumericDirectiveRegex();
 
     [GeneratedRegex("^role\\s+\"(" + StringLiteral.BodyPattern + ")\"$", RegexOptions.None, 1000)]
     private static partial Regex CallerRoleRegex();
