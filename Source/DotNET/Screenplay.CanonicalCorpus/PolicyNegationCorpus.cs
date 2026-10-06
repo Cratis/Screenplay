@@ -16,6 +16,8 @@ public static class PolicyNegationCorpus
 {
     const string Prefix = "Cratis.Screenplay.CanonicalCorpus.Corpus.PolicyNegation";
 
+    static readonly string[] _specificationNames = ["PersonAllowed", "ServiceRoleDenied", "ServiceClaimDenied", "UnauthenticatedDenied"];
+
     /// <summary>
     /// Gets equivalent single, split, reordered and relocated source forms.
     /// </summary>
@@ -58,7 +60,7 @@ public static class PolicyNegationCorpus
         var application = ApplicationIdentity.Create("PolicyNegation");
         var catalog = SemanticIdentityCatalog.Empty(application);
         var slice = SemanticAddress.ForSlice(application, "Portal", "Reports", "FileReport");
-        return [.. new[] { "PersonAllowed", "ServiceRoleDenied", "ServiceClaimDenied", "UnauthenticatedDenied" }.Select(name => new CanonicalCorpusSpecificationExpectation
+        return [.. _specificationNames.Select(name => new CanonicalCorpusSpecificationExpectation
         {
             Specification = catalog.ResolveSemantic(SemanticAddress.ForSpecification(slice, name)),
             Name = name,
