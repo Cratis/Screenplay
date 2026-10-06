@@ -3,6 +3,7 @@
 
 using System.Text;
 using System.Text.Json;
+using Cratis.Screenplay.Semantics;
 
 namespace Cratis.Screenplay.Mcp.for_McpConnection.when_showing_views;
 
@@ -13,23 +14,30 @@ public class a_proposal_that_renames_a_reaction : given.a_host_that_renders_view
 
     void Establish()
     {
-        var source = Source + "\n" + """
+        const string source = Source + "\n" + """
             slice Automation NotifyProject
               reaction ProjectNotifier
                 when ProjectRegistered
                   produces ProjectNotificationSent
+                    for projectId
               event ProjectNotificationSent
         """;
         File.WriteAllText(Path.Combine(RootPath, "application.play"), source);
         var opened = Call("open-workspace", new { applicationName = "Projects" }).GetProperty("result").GetProperty("structuredContent");
-        _proposalId = Call("propose", new
+        var slice = SemanticAddress.ForSlice(Workspace().IdentityCatalog.Application, "Projects", ["Registration"], "NotifyProject");
+        var previousAddress = JsonSerializer.SerializeToElement(McpSemanticAddresses.Describe(SemanticAddress.ForReaction(slice, "ProjectNotifier")), McpJson.Options);
+        var currentAddress = JsonSerializer.SerializeToElement(McpSemanticAddresses.Describe(SemanticAddress.ForReaction(slice, "RegistrationNotifier")), McpJson.Options);
+        var proposal = Call("propose", new
         {
             expectedRevision = opened.GetProperty("revision").GetString(),
             expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
             operation = "replace-document",
             documentId = Workspace().Documents[0].Id.ToString(),
-            bytesBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(source.Replace("ProjectNotifier", "RegistrationNotifier", StringComparison.Ordinal)))
-        }).GetProperty("result").GetProperty("structuredContent").GetProperty("proposalId").GetString()!;
+            bytesBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(source.Replace("ProjectNotifier", "RegistrationNotifier", StringComparison.Ordinal))),
+            semanticRenames = new[] { new { previousAddress, currentAddress } }
+        }).GetProperty("result");
+        Assert.False(proposal.GetProperty("isError").GetBoolean(), proposal.GetRawText());
+        _proposalId = proposal.GetProperty("structuredContent").GetProperty("proposalId").GetString()!;
     }
 
     void Because() => _result = Call("visualize-model", new { proposalId = _proposalId }).GetProperty("result");
