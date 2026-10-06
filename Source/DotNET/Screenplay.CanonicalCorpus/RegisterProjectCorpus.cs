@@ -10,7 +10,7 @@ namespace Cratis.Screenplay.CanonicalCorpus;
 /// <summary>
 /// Provides the canonical RegisterProject conformance corpus.
 /// </summary>
-public static class RegisterProjectCorpus
+public static partial class RegisterProjectCorpus
 {
     const string ResourcePrefix = "Cratis.Screenplay.CanonicalCorpus.Corpus.RegisterProject.v1_legacy";
 
@@ -23,6 +23,11 @@ public static class RegisterProjectCorpus
     /// Gets the RegisterProject corpus with typed state-change destination and an explicit specification event source.
     /// </summary>
     public static CanonicalCorpusVector V2 { get; } = LoadV2();
+
+    /// <summary>
+    /// Gets the RegisterProject corpus with generated command values, response assertions and typed allocation failure.
+    /// </summary>
+    public static CanonicalCorpusVector V7 { get; } = LoadV7();
 
     /// <summary>
     /// Gets a source that parses but cannot be bound to portable ESM, with no publishable artifacts.
