@@ -2,7 +2,7 @@
 id: 0027
 title: Admit policy negation as a byte-preserving ESM v7 extension
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-10-06
 decider: Sindre Alstad Wilting
 class: contract

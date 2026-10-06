@@ -9,7 +9,7 @@ policy <Name>
   require <condition>
 ```
 
-Write one `require` line. Its `<condition>` can be `authenticated`, `role "<role>"`, `claim "<claim>" matches <subject|"value"|expression>`, or a combination such as `role "<role>" or (role "<role>" and claim "<claim>" matches "<value>")`. Continue a condition at deeper indentation rather than starting another `require` line; a second line reports `PLAY0441`.
+Write one `require` line. Its `<condition>` can be `authenticated`, `role "<role>"`, `claim "<claim>" matches <subject|"value"|expression>`, `not <condition>`, or a combination such as `role "<role>" or (role "<role>" and claim "<claim>" matches "<value>")`. Continue a condition at deeper indentation rather than starting another `require` line; a second line reports `PLAY0441`.
 
 Alternatively, implement the policy in an inline block:
 
@@ -55,6 +55,7 @@ The source compiler resolves policy names at all four positions and warns about 
 | Condition | Meaning |
 | --- | --- |
 | `authenticated` | The caller must be authenticated. |
+| `not <condition>` | The operand must be false; parentheses can group its operand. |
 | `role "<role>"` | The caller must have the role. |
 | `claim "<claim>" matches subject` | The claim must match the subject of the current event source. |
 | `claim "<claim>" matches "<value>"` | The claim must equal that literal value. |
@@ -64,9 +65,18 @@ A quoted target is the value itself; anything unquoted - a path such as `invoice
 
 Conditions combine with `or` and `and`, and parentheses group them. A condition may continue on the next line at deeper indentation.
 
-`and` binds tighter than `or`, and both are left associative - the rule a general purpose language follows, so `a or b and c` means `a or (b and c)` and `a or b or c` means `(a or b) or c`. Parentheses override that. This is the one condition grammar the language has: a `produces when` condition combines by exactly the same rules, over comparisons instead of roles and claims.
+`not` binds tighter than `and`, which binds tighter than `or`; `and` and `or` are left associative - the rule a general purpose language follows, so `a or b and c` means `a or (b and c)` and `a or b or c` means `(a or b) or c`. Parentheses override that. This is the one condition grammar the language has: a `produces when` condition combines by exactly the same rules, over comparisons instead of roles and claims.
 
 Printing writes the parentheses back wherever the grouping is not the one those rules produce, so a printed policy always compiles to the condition it came from. It also writes them where mixing `or` and `and` would otherwise leave a reader to work the precedence out - the text says which grouping it means rather than assuming you know.
+
+To allow signed-in people but exclude service identities, negate their role and claim match:
+
+```screenplay
+policy PersonOnly
+  require authenticated and not role "Service" and not claim "actorKind" matches "service"
+```
+
+A caller with either the `Service` role or an `actorKind` value of `service` is denied. A missing claim has no match, so its negation is true. `not role "Service"` alone does **not** require authentication; keep `authenticated` when you need a signed-in caller. `not (role "Service" or claim "actorKind" matches "service")` negates the whole group, while `not not authenticated` restores the original condition. `not` belongs to policy conditions, not named-policy expressions in `authorize`, and cannot negate an inline or file implementation.
 
 ## Examples
 
@@ -96,9 +106,9 @@ policy CanManageInvoice
 
 ## Portable evaluation
 
-Declarative policies execute in the portable ESM v1 reference evaluator. Inline `csharp` and `file` policy predicates bind to ESM v3 with a stable requirement id, context/result contract version 1, and the required capability `pure`. The compilation result's implementation requirement carries the inline body's exact source span and dedented line map, or a resolved file's whole-file span; canonical ESM JSON still carries only the requirement id. The reference evaluator cannot execute their bodies. An authorization that depends on one returns `SemanticUnsupported` with the Authorization capability and the policy name; it never guesses allow or deny. A specification asserting `then denied` does not pass on this unsupported outcome. A provider must admit and evaluate the implementation before it can decide authorization.
+Positive declarative policies execute in the portable ESM v1 reference evaluator. Policy-condition negation selects ESM v7 as a byte-preserving extension ([decision 0027](https://github.com/Cratis/Screenplay/blob/main/decisions/0027-policy-negation-joins-esm-v7.md)); models without it keep their existing versions, bytes and revisions. Pre-extension v7 strict readers reject the new `not` variant. A consumer must explicitly support negation before reading, executing or rendering a model that uses it. Inline `csharp` and `file` policy predicates bind to ESM v3 with a stable requirement id, context/result contract version 1, and the required capability `pure`. The compilation result's implementation requirement carries the inline body's exact source span and dedented line map, or a resolved file's whole-file span; canonical ESM JSON still carries only the requirement id. The reference evaluator cannot execute their bodies. An authorization that depends on one returns `SemanticUnsupported` with the Authorization capability and the policy name; it never guesses allow or deny. A specification asserting `then denied` does not pass on this unsupported outcome. A provider must admit and evaluate the implementation before it can decide authorization.
 
-For a mixed gate, evaluation follows authored order: a portable denial on the left of `and` denies without evaluating the right, and a portable allowance on the left of `or` allows without evaluating the right. If an opaque operand is reached first, the reference evaluator returns unsupported; a later portable operand cannot decide the result. Enclosing gates combine in module → feature → construct order. This matches Stage's generated C# `&&`/`||` expression (`SemanticPolicyArtifactRenderer.Authorization`) and Arc's ordered, short-circuiting policy loops (`ArcAuthorizationPolicyRuntime.IsAuthorized` and `AspNetAuthorizationPolicyRuntime.IsAuthorized`), following the runtime-authority boundary in [decision 0001](https://github.com/Cratis/Screenplay/blob/main/decisions/0001-chronicle-runtime-semantic-authority.md). An absent caller still denies authorization. The execution request must supply a caller explicitly when an authorized command or query runs. A missing caller cannot satisfy authorization. An authenticated condition checks the caller's authentication flag; a role compares the caller's roles by ordinal, case-sensitive text. Claim **types** compare ordinal-ignore-case, while claim **values** compare ordinal, case-sensitively. If a caller carries several values for the same claim type, **any** matching value satisfies that condition. Missing claims, a null artifact value, and an unresolved subject deny; `and` and `or` short-circuit according to the parsed grouping.
+For a mixed gate, evaluation follows authored order: a portable denial on the left of `and` denies without evaluating the right, and a portable allowance on the left of `or` allows without evaluating the right. If an opaque operand is reached first, the reference evaluator returns unsupported; a later portable operand cannot decide the result. Enclosing gates combine in module → feature → construct order. This matches Stage's generated C# `&&`/`||` expression (`SemanticPolicyArtifactRenderer.Authorization`) and Arc's ordered, short-circuiting policy loops (`ArcAuthorizationPolicyRuntime.IsAuthorized` and `AspNetAuthorizationPolicyRuntime.IsAuthorized`), following the runtime-authority boundary in [decision 0001](https://github.com/Cratis/Screenplay/blob/main/decisions/0001-chronicle-runtime-semantic-authority.md). An absent caller still denies authorization. The execution request must supply a caller explicitly when an authorized command or query runs. A missing caller cannot satisfy authorization. An authenticated condition checks the caller's authentication flag; a role compares the caller's roles by ordinal, case-sensitive text. Claim **types** compare ordinal-ignore-case, while claim **values** compare ordinal, case-sensitively. If a caller carries several values for the same claim type, **any** matching value satisfies that condition. Missing claims, a null artifact value, and an unresolved subject make the claim condition false; `not` turns that result into true, but does not override the absent-caller refusal. Opaque predicates cannot be nested under negation: unsupported execution is never converted to false or permission. Without negation, these claim failures deny; `and` and `or` short-circuit according to the parsed grouping.
 
 In the portable ESM v1 profile, an artifact path must resolve from a command property (including declared composite members) or the keyed query argument. An absent or null nested value denies. `$`-rooted expressions remain valid authoring syntax but do not bind to this portable profile. A `subject` comes from a command's identifier property or a keyed query's argument; if no identifier is available, it cannot match. A failed effective authorization yields `Unauthorized` before command validation or query lookup and never changes the world. For the caller fixture and denial assertion, see [Specifications](specifications.md#rejections).
 
