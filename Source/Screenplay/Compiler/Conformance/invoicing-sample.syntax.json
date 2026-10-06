@@ -578,6 +578,20 @@
                     {
                       "kind": "SpecificationSyntax",
                       "given": [],
+                      "givenCaller": {
+                        "kind": "SpecificationCallerSyntax",
+                        "authenticated": true,
+                        "claims": [
+                          {
+                            "kind": "SpecificationCallerClaimSyntax",
+                            "type": "department",
+                            "value": "Finance"
+                          }
+                        ],
+                        "roles": [
+                          "Accountant"
+                        ]
+                      },
                       "givenCaptures": [],
                       "givenClock": null,
                       "givenOperationFailures": [],
@@ -670,6 +684,20 @@
                     {
                       "kind": "SpecificationSyntax",
                       "given": [],
+                      "givenCaller": {
+                        "kind": "SpecificationCallerSyntax",
+                        "authenticated": true,
+                        "claims": [
+                          {
+                            "kind": "SpecificationCallerClaimSyntax",
+                            "type": "department",
+                            "value": "Finance"
+                          }
+                        ],
+                        "roles": [
+                          "Accountant"
+                        ]
+                      },
                       "givenCaptures": [],
                       "givenClock": null,
                       "givenOperationFailures": [],
@@ -771,6 +799,20 @@
                     {
                       "kind": "SpecificationSyntax",
                       "given": [],
+                      "givenCaller": {
+                        "kind": "SpecificationCallerSyntax",
+                        "authenticated": true,
+                        "claims": [
+                          {
+                            "kind": "SpecificationCallerClaimSyntax",
+                            "type": "department",
+                            "value": "Finance"
+                          }
+                        ],
+                        "roles": [
+                          "Accountant"
+                        ]
+                      },
                       "givenCaptures": [],
                       "givenClock": null,
                       "givenOperationFailures": [],
@@ -1147,6 +1189,20 @@
                     {
                       "kind": "SpecificationSyntax",
                       "given": [],
+                      "givenCaller": {
+                        "kind": "SpecificationCallerSyntax",
+                        "authenticated": true,
+                        "claims": [
+                          {
+                            "kind": "SpecificationCallerClaimSyntax",
+                            "type": "department",
+                            "value": "Finance"
+                          }
+                        ],
+                        "roles": [
+                          "FinanceController"
+                        ]
+                      },
                       "givenCaptures": [],
                       "givenClock": null,
                       "givenOperationFailures": [],
@@ -1248,6 +1304,20 @@
                     {
                       "kind": "SpecificationSyntax",
                       "given": [],
+                      "givenCaller": {
+                        "kind": "SpecificationCallerSyntax",
+                        "authenticated": true,
+                        "claims": [
+                          {
+                            "kind": "SpecificationCallerClaimSyntax",
+                            "type": "department",
+                            "value": "Finance"
+                          }
+                        ],
+                        "roles": [
+                          "FinanceController"
+                        ]
+                      },
                       "givenCaptures": [],
                       "givenClock": null,
                       "givenOperationFailures": [],
@@ -1317,6 +1387,25 @@
                     {
                       "kind": "SpecificationSyntax",
                       "given": [],
+                      "givenCaller": {
+                        "kind": "SpecificationCallerSyntax",
+                        "authenticated": true,
+                        "claims": [
+                          {
+                            "kind": "SpecificationCallerClaimSyntax",
+                            "type": "department",
+                            "value": "Finance"
+                          },
+                          {
+                            "kind": "SpecificationCallerClaimSyntax",
+                            "type": "seniority",
+                            "value": "junior"
+                          }
+                        ],
+                        "roles": [
+                          "Accountant"
+                        ]
+                      },
                       "givenCaptures": [],
                       "givenClock": null,
                       "givenOperationFailures": [],
@@ -1567,6 +1656,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -2634,6 +2731,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -2862,6 +2967,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -3085,6 +3198,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -3165,6 +3286,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -3221,6 +3350,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Auditor"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -3629,6 +3766,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": {
                     "kind": "SpecificationClockSyntax",
@@ -3755,6 +3900,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -4012,6 +4165,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -4079,6 +4240,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -4512,6 +4681,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -4635,6 +4812,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -4688,6 +4873,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -4985,6 +5178,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -5092,6 +5293,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -5337,6 +5546,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -5401,6 +5618,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -5627,6 +5852,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -5711,6 +5944,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -6333,6 +6574,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -6458,6 +6707,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -7289,6 +7546,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -7580,6 +7845,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -8235,6 +8508,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -8325,6 +8606,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -8779,6 +9068,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -8918,6 +9215,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -9062,6 +9367,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -9422,6 +9735,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -9679,6 +10000,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -10348,6 +10677,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -10574,6 +10911,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -10675,6 +11020,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -10848,6 +11201,7 @@
                       ]
                     }
                   ],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -10998,6 +11352,7 @@
                       ]
                     }
                   ],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -11275,6 +11630,7 @@
                       ]
                     }
                   ],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -11352,6 +11708,7 @@
                       ]
                     }
                   ],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": {
                     "kind": "SpecificationClockSyntax",
@@ -11734,6 +12091,20 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "customerId",
+                        "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      }
+                    ],
+                    "roles": [
+                      "Customer"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -12033,6 +12404,25 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "customerId",
+                        "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      },
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "dateOfBirth",
+                        "value": "1980-01-01"
+                      }
+                    ],
+                    "roles": [
+                      "Customer"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -12125,6 +12515,25 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "customerId",
+                        "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      },
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "dateOfBirth",
+                        "value": "1980-01-01"
+                      }
+                    ],
+                    "roles": [
+                      "Customer"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -12335,6 +12744,20 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "customerId",
+                        "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      }
+                    ],
+                    "roles": [
+                      "Customer"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -12681,6 +13104,20 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "tenant",
+                        "value": "00000000-0000-0000-0000-000000000000"
+                      }
+                    ],
+                    "roles": [
+                      "Auditor"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -12795,6 +13232,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -13014,6 +13459,20 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "tenant",
+                        "value": "00000000-0000-0000-0000-000000000000"
+                      }
+                    ],
+                    "roles": [
+                      "Auditor"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -13272,6 +13731,7 @@
                           ]
                         }
                       ],
+                      "givenCaller": null,
                       "givenCaptures": [],
                       "givenClock": null,
                       "givenOperationFailures": [],
@@ -13436,6 +13896,7 @@
                       ]
                     }
                   ],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -13716,6 +14177,7 @@
                       ]
                     }
                   ],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": {
                     "kind": "SpecificationClockSyntax",
@@ -13800,6 +14262,7 @@
                       ]
                     }
                   ],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -14160,6 +14623,7 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": null,
                   "givenCaptures": [
                     {
                       "kind": "SpecificationCaptureSyntax",
@@ -14348,6 +14812,7 @@
                       ]
                     }
                   ],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],

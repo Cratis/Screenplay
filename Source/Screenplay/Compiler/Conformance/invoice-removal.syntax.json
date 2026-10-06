@@ -2,6 +2,7 @@
   "kind": "ApplicationSyntax",
   "concepts": [],
   "domain": null,
+  "eventSources": [],
   "fileImports": [],
   "imports": [],
   "modules": [
@@ -122,6 +123,7 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],

@@ -37,6 +37,7 @@
     "kind": "DomainSyntax",
     "name": "Cratis.Conformance"
   },
+  "eventSources": [],
   "fileImports": [
     {
       "kind": "FileImportSyntax",
@@ -127,6 +128,8 @@
                         }
                       ],
                       "response": null,
+                      "stream": null,
+                      "streamCandidates": [],
                       "validations": []
                     }
                   ],
@@ -314,6 +317,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -547,6 +552,12 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": []
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -726,6 +737,7 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -775,6 +787,7 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": null,
                   "givenCaptures": [
                     {
                       "kind": "SpecificationCaptureSyntax",
@@ -851,6 +864,7 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -896,6 +910,7 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -949,6 +964,7 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -1016,6 +1032,7 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],

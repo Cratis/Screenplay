@@ -1060,6 +1060,7 @@
                       ]
                     }
                   ],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -1239,6 +1240,7 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": null,
                   "givenCaptures": [
                     {
                       "kind": "SpecificationCaptureSyntax",
@@ -1343,6 +1345,7 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -1407,6 +1410,7 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -1491,6 +1495,7 @@
                       ]
                     }
                   ],
+                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],

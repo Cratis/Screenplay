@@ -1,20 +1,20 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { PropertyMappingSyntax, SpecificationEventSyntax, SpecificationSyntax } from '@cratis/screenplay-compiler';
+import { PropertyMappingSyntax, SpecificationCallerSyntax, SpecificationEventSyntax, SpecificationSyntax } from '@cratis/screenplay-compiler';
 import { emptyGuid } from '../Document/identity';
-import { SliceSpecificationDocument, SpecificationStepDocument } from '../Document/EventModelDocument';
+import { SliceSpecificationDocument, SpecificationCallerDocument, SpecificationStepDocument } from '../Document/EventModelDocument';
+import { expressionText } from './expressionText';
 import { EventOwners } from './EventOwners';
 import { SliceScope } from './SliceScope';
 
 // A slice's specifications as the board shows them - the port of Studio's SpecificationSyntaxVisitor. A
-// step's event points at its producer when the model declares one. Only literal values are carried: a path
-// or a context expression names something resolved while the application runs. The board draws a State Change
-// slice's own command under When by itself, so a step that sets off that command carries its values and the
-// command it points at but no name of its own - a name would draw the same command a second time.
+// step's event points at its producer when the model declares one. A literal value is carried as it is; a path
+// or a context expression names something resolved while the application runs, so it is carried as written.
+// A State Change slice's own command is drawn once by the board: a specification's When that names it - by
+// name, or by the id it points at - is that same card, with the values the specification sets on it.
 export function toSpecifications(
-    specifications: readonly SpecificationSyntax[], scope: SliceScope, owners: EventOwners, commandId: string | undefined,
-    sliceDrawsItsCommand = false): SliceSpecificationDocument[] {
+    specifications: readonly SpecificationSyntax[], scope: SliceScope, owners: EventOwners, commandId: string | undefined): SliceSpecificationDocument[] {
     return specifications.map(specification => {
         const at = (kind: string, index: number) => scope.idOf(`specification:${specification.name}:${kind}`, String(index));
         const step = (event: SpecificationEventSyntax, kind: string, index: number): SpecificationStepDocument => ({
@@ -28,14 +28,17 @@ export function toSpecifications(
             name: specification.name,
             given: specification.given.map((event, index) => step(event, 'given', index)),
             thenEvents: specification.thenEvents.map((event, index) => step(event, 'then', index)),
-            thenErrors: specification.thenErrors
-                .filter(error => error.name !== null && error.name.trim().length > 0)
-                .map((error, index) => ({ id: at('error', index), name: error.name! })),
+            thenErrors: [
+                ...specification.thenErrors.map((error, index) => error.name !== null && error.name.trim().length > 0
+                    ? { id: at('error', index), name: 'error', message: error.name }
+                    : { id: at('error', index), name: 'error' }),
+                ...(specification.thenDenied == null ? [] : [{ id: at('denied', 0), name: 'denied' }]),
+            ],
             collapsed: false,
         };
+        if (specification.givenCaller != null) document.caller = callerOf(specification.givenCaller);
         if (specification.when !== null) {
-            const drawnBySlice = sliceDrawsItsCommand && commandId !== undefined;
-            const when = { id: at('when', 0), name: drawnBySlice ? '' : specification.when.commandType, values: valuesOf(specification.when.values) };
+            const when = { id: at('when', 0), name: specification.when.commandType, values: valuesOf(specification.when.values) };
             document.when = commandId === undefined ? when : { ...when, commandId };
         } else {
             const action = actionOf(specification);
@@ -57,8 +60,13 @@ function actionOf(specification: SpecificationSyntax): { name: string; values: R
     return undefined;
 }
 
+function callerOf(caller: SpecificationCallerSyntax): SpecificationCallerDocument {
+    const claims: Record<string, string> = {};
+    caller.claims.forEach(claim => { claims[claim.type] = claim.type in claims ? `${claims[claim.type]}, ${claim.value}` : claim.value; });
+    return { authenticated: caller.authenticated, roles: [...caller.roles], claims };
+}
+
 function valuesOf(values: readonly PropertyMappingSyntax[]): Record<string, unknown> {
-    return Object.fromEntries(values
-        .filter(value => value.source.kind === 'LiteralExpressionSyntax')
-        .map(value => [value.property, value.source.kind === 'LiteralExpressionSyntax' ? value.source.value : null]));
+    return Object.fromEntries(values.map(value => [value.property,
+        value.source.kind === 'LiteralExpressionSyntax' ? value.source.value : expressionText(value.source)]));
 }
