@@ -17,6 +17,7 @@ public class when_parsing_policy_negation : Specification
     [Fact] void should_refuse_a_missing_operand() => _compiler.Parse("policy Access\n  require not").Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0116").ShouldBeTrue();
     [Fact] void should_refuse_negated_policy_names() => _compiler.Parse("policy Access\n  require not OpaquePolicy").Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0115").ShouldBeTrue();
     [Fact] void should_refuse_an_unclosed_negated_group() => _compiler.Parse("policy Access\n  require not (authenticated").Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0117").ShouldBeTrue();
+    [Fact] void should_refuse_negation_in_authorize() => _compiler.Parse("policy Access\n  require authenticated\nmodule Portal\n  authorize not Access").Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0123").ShouldBeTrue();
 
     [Fact]
     void should_preserve_negation_and_grouping_through_printing()

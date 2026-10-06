@@ -8,7 +8,9 @@ import { PolicyConditionSyntax } from '../../Syntax/Policies';
 function condition(text: string): PolicyConditionSyntax {
     const result = parse(`policy Access\n  require ${text}`);
     result.diagnostics.should.deep.equal([]);
-    return result.value!.policies[0].condition!;
+    const policyCondition = result.value?.policies?.[0]?.condition;
+    if (policyCondition === undefined || policyCondition === null) throw new Error('Expected a parsed policy condition');
+    return policyCondition;
 }
 
 function describeCondition(node: PolicyConditionSyntax): string {
@@ -36,5 +38,8 @@ describe('when parsing policy negation', () => {
     });
     it('should refuse negated policy references', () => {
         parse('policy Access\n  require not OpaquePolicy').diagnostics.some(diagnostic => diagnostic.code === 'PLAY0115').should.equal(true);
+    });
+    it('should refuse negation in authorize', () => {
+        parse('policy Access\n  require authenticated\nmodule Portal\n  authorize not Access').diagnostics.some(diagnostic => diagnostic.code === 'PLAY0123').should.equal(true);
     });
 });
