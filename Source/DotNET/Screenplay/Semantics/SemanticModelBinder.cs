@@ -24,7 +24,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         {
             return CompilationResult<SemanticCompilation>.Failed([Diagnostic.Error(
                 DiagnosticCodes.UnsupportedSemanticSyntax,
-                "Exact numeric source mode requires ESM v7 semantic admission; this source/syntax implementation does not execute exact documents.",
+                "Exact numeric source mode is not admitted by any supported executable model (ESM) version yet (#285); this source/syntax implementation does not execute exact documents.",
                 syntax.Location)]);
         }
 

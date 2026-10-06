@@ -49,7 +49,7 @@ sealed class McpOperationInventory
         execute = Phase((entry.Node as OperationSyntax)?.Execute),
         compensate = Phase((entry.Node as OperationSyntax)?.Compensate),
         executionAvailable = false,
-        executionReadiness = "Unavailable until ESM v9 (PLAY0268). Authoring intent is not an executable implementation role."
+        executionReadiness = "Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#301). Authoring intent is not an executable implementation role."
     };
 
     internal bool AmbiguousOwner(WorkspaceSyntaxEntry entry) => entry.Node is OperationSyntax operation &&

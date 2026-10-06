@@ -63,7 +63,7 @@ A handler's [`implementation` hints](commands.md#implementation-intent-handlers-
 | --- | --- | --- |
 | Command property named rule | Hints with zero or one file/tagged fence | Attached source keeps the existing pure `RulePredicate` context/result version 1; pending fails `PLAY0268`. The reference runner cannot execute the opaque predicate. |
 | Command handler | Hints with zero or one source | Authoring only; handler binding remains unsupported. |
-| Operation execute/compensate phase | Hints with zero or one source | Authoring only; execution is unavailable until ESM v9. |
+| Operation execute/compensate phase | Hints with zero or one source | Authoring only; not admitted by any supported executable model (ESM) version yet. |
 | Concept rule, builtin rule, whole-command validation, other owners | No new wrapper support | Existing direct forms retain their existing contracts and limits. |
 
 Command named-rule hints add no `RuleContext` members. Direct-to-wrapped source and hint edits preserve requirement IDs, typed-context descriptors and canonical ESM bytes. A file selection is not proof of resolution or execution. See [named-rule intent](commands.md#named-rule-implementation-intent-commands-only) and [revision-checked edits](ast-authoring.md#command-named-rule-intent-edits).

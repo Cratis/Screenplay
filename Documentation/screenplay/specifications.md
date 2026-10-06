@@ -2,7 +2,7 @@
 
 ## Operation specifications (syntax-only)
 
-> Operation fixtures and assertions are experimental authoring syntax. The current reference runner cannot execute them; binding refuses them with `PLAY0268` until ESM v9 admission.
+> Operation fixtures and assertions are experimental authoring syntax. The current reference runner cannot execute them; binding refuses them with `PLAY0268` because they are not admitted by any supported executable model (ESM) version yet.
 
 For a command producing declared [operations](operations.md), `given operation NotifyAccounting fails` requests a failure fixture, `then operation SendWelcomeEmail` asserts a requested operation with optional **partial** input values, and `then compensated SendWelcomeEmail` asserts declared compensation. Failure and compensation lines are leaves: they cannot have children. Requested-operation fields must be unique and have compatible concrete values, including quoted enum values. All references must resolve to the operation kind, not an event with the same spelling, and require a command action. Static checks do not prove reachability, rollback success or repeated-invocation matching.
 
@@ -347,7 +347,7 @@ Tags are append metadata: `then` event assertions compare payload properties and
 
 ## Generated fixtures and return expectations (syntax-only)
 
-These additions describe [generated values and responses](commands.md#generated-values-and-responses-syntax-only); **they do not execute**. Binding reports `PLAY0268` with no semantic model until ESM v8. See the [complete authoring fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/generated-responses.play).
+These additions describe [generated values and responses](commands.md#generated-values-and-responses-syntax-only); **they do not execute**. These constructs are not admitted by any supported executable model (ESM) version yet; binding reports `PLAY0268` with no semantic model. See the [complete authoring fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/generated-responses.play).
 
 ```screenplay
 specification RegisteringReturnsIdentifiers

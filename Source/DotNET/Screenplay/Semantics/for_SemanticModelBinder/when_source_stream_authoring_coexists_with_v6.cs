@@ -21,7 +21,7 @@ public class when_source_stream_authoring_coexists_with_v6 : given.a_semantic_bi
         var result = Bind("eventsource Account\n  stream Transactions\n" + Automation);
         result.Success.ShouldBeFalse();
         result.Value.ShouldBeNull();
-        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("v10", StringComparison.Ordinal)).ShouldBeTrue();
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("not admitted by any supported executable model (ESM) version yet (#302)", StringComparison.Ordinal)).ShouldBeTrue();
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public class when_source_stream_authoring_coexists_with_v6 : given.a_semantic_bi
         var result = Bind(source);
         result.Success.ShouldBeFalse();
         result.Value.ShouldBeNull();
-        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("v10", StringComparison.Ordinal)).ShouldBeTrue();
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("not admitted by any supported executable model (ESM) version yet (#302)", StringComparison.Ordinal)).ShouldBeTrue();
     }
 
     [Fact]
@@ -46,6 +46,6 @@ public class when_source_stream_authoring_coexists_with_v6 : given.a_semantic_bi
         var result = Bind(source);
         result.Success.ShouldBeFalse();
         result.Value.ShouldBeNull();
-        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("v10", StringComparison.Ordinal)).ShouldBeTrue();
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("not admitted by any supported executable model (ESM) version yet (#302)", StringComparison.Ordinal)).ShouldBeTrue();
     }
 }

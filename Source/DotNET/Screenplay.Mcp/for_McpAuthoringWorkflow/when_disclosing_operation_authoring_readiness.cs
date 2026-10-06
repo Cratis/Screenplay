@@ -10,22 +10,29 @@ public class when_disclosing_operation_authoring_readiness : given.an_authoring_
     const string OperationSource = "system Mailer\nmodule Projects\n  feature F\n    slice StateChange S\n      operation Send\n        uses Mailer\n      command C\n        produces event Recorded\n        produces Send\n      specification T\n        when C\n        then operation Send\n";
 
     [Fact]
-    void should_disclose_v9_for_operation_only_commands_specifications_slices_and_systems()
+    void should_disclose_unadmitted_operations_for_commands_specifications_slices_and_systems()
     {
         Start(OperationSource);
+        var revision = Open().GetProperty("revision").GetString();
+        foreach (var view in new[] { "system-intents", "operation-intents" })
+        {
+            var inventory = Result("read-workspace", new { expectedRevision = revision, view });
+            inventory.GetProperty("executionReadiness").GetString().ShouldContain("(#301)");
+            inventory.GetProperty("page").GetProperty("items")[0].GetProperty("executionReadiness").GetString().ShouldContain("(#301)");
+        }
         foreach (var (address, kind) in new[] { ("Projects.F.S.C", "Command"), ("Projects.F.S.T", "Specification"), ("Projects.F.S", "Slice"), ("Mailer", "System"), ("Projects.F.S.Send", "Operation") })
         {
             var details = Result("declaration-details", new { address, kind, view = "summary" }).GetProperty("details");
             details.GetProperty("syntaxOnly").GetBoolean().ShouldBeTrue();
-            details.GetProperty("executionReadiness").GetString().ShouldContain("ESM v9");
+            details.GetProperty("executionReadiness").GetString().ShouldContain("operations and systems (#301)");
         }
         var commands = Result("declaration-details", new { address = "Projects.F.S", kind = "Slice", view = "commands" }).GetProperty("details").GetProperty("items");
         commands[0].GetProperty("producedEvents").EnumerateArray().Select(item => item.GetString()).ShouldEqual("Recorded");
-        commands[0].GetProperty("executionReadiness").GetString().ShouldContain("ESM v9");
+        commands[0].GetProperty("executionReadiness").GetString().ShouldContain("operations and systems (#301)");
         var specifications = Result("declaration-details", new { address = "Projects.F.S", kind = "Slice", view = "specifications" }).GetProperty("details").GetProperty("items");
         specifications[0].GetProperty("syntaxOnly").GetBoolean().ShouldBeTrue();
         var indexed = Result("find-declaration", new { name = "C", kind = "Command", includeContent = true }).GetRawText();
-        indexed.ShouldContain("ESM v9");
+        indexed.ShouldContain("operations and systems (#301)");
         indexed.ShouldContain("\"produces\":[\"Recorded\"]");
     }
 
@@ -35,16 +42,17 @@ public class when_disclosing_operation_authoring_readiness : given.an_authoring_
         Start(OperationSource.Replace("        then operation Send\n", "        then Recorded\n", StringComparison.Ordinal));
         var details = Result("declaration-details", new { address = "Projects.F.S.T", kind = "Specification", view = "summary" }).GetProperty("details");
         details.GetProperty("syntaxOnly").GetBoolean().ShouldBeTrue();
-        details.GetProperty("executionReadiness").GetString().ShouldContain("ESM v9");
+        details.GetProperty("executionReadiness").GetString().ShouldContain("operations and systems (#301)");
     }
 
     [Fact]
-    void should_prioritize_v9_for_responses_with_operations_but_keep_response_only_v8()
+    void should_list_both_operations_and_responses_but_keep_response_only_readiness_scoped()
     {
         Start(OperationSource.Replace("        produces Send\n", "        produces Send\n        name String\n        returns name\n", StringComparison.Ordinal));
-        Response().GetProperty("executionReadiness").GetString().ShouldContain("ESM v9");
+        Response().GetProperty("executionReadiness").GetString().ShouldContain("operations and systems (#301)");
+        Response().GetProperty("executionReadiness").GetString().ShouldContain("generated values, responses and return expectations (#300/#303)");
         Start("module Projects\n  feature F\n    slice StateChange S\n      command C\n        name String\n        returns name\n");
-        Response().GetProperty("executionReadiness").GetString().ShouldEqual("Unavailable until ESM v8 (PLAY0268); no response type is emitted.");
+        Response().GetProperty("executionReadiness").GetString().ShouldEqual("Not admitted by any supported executable model (ESM) version yet (PLAY0268): generated values, responses and return expectations (#300/#303); no response type is emitted.");
     }
 
     void Start(string source)

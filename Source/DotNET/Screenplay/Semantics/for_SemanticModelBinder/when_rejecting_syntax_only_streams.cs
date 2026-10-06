@@ -19,7 +19,7 @@ public class when_rejecting_syntax_only_streams : given.a_semantic_binder
         result.Value.ShouldBeNull();
         result.Success.ShouldBeFalse();
         result.Diagnostics.ShouldNotBeEmpty();
-        result.Diagnostics.All(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("ESM v10", StringComparison.Ordinal)).ShouldBeTrue();
+        result.Diagnostics.All(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("not admitted by any supported executable model (ESM) version yet (#302)", StringComparison.Ordinal)).ShouldBeTrue();
         result.ImplementationRequirements.ShouldBeEmpty();
     }
 
@@ -46,7 +46,7 @@ public class when_rejecting_syntax_only_streams : given.a_semantic_binder
         var result = _binder.Bind("Projects", syntax, SemanticDocumentSet.Create([document], catalog));
         result.Value.ShouldBeNull();
         result.Diagnostics.Count().ShouldEqual(declaration ? 2 : 1);
-        result.Diagnostics.All(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Location == location && diagnostic.Message.Contains("ESM v10", StringComparison.Ordinal)).ShouldBeTrue();
+        result.Diagnostics.All(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Location == location && diagnostic.Message.Contains("not admitted by any supported executable model (ESM) version yet (#302)", StringComparison.Ordinal)).ShouldBeTrue();
         result.ImplementationRequirements.ShouldBeEmpty();
     }
 }

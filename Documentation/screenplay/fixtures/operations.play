@@ -1,4 +1,4 @@
-// Syntax-only: execution is unavailable until ESM v9 (PLAY0268).
+// Syntax-only: these constructs are not admitted by any supported executable model (ESM) version yet (PLAY0268).
 // This is a documentation fixture, not an executable Samples application.
 system Mailer
   description "Sends email outside this application"

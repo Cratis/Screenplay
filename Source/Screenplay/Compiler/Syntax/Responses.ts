@@ -5,7 +5,7 @@ import { TypeRefSyntax } from './Declarations';
 import { ExpressionSyntax, PropertyMappingSyntax } from './Expressions';
 import { SyntaxNode } from './SyntaxNode';
 
-// Syntax contracts only. Decision 0023 allocates executable responses to ESM v8.
+// Syntax contracts only. Responses are not admitted by any supported executable model (ESM) version yet (#300/#303).
 export interface PropertyResponseSourceSyntax extends SyntaxNode {
     readonly kind: 'PropertyResponseSourceSyntax';
     readonly property: string;

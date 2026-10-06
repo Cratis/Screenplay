@@ -8,7 +8,7 @@ import { responseAnalysis } from './response-analysis';
 import { OperationAnalysis, OperationDeclaration, OperationPhase } from './OperationAnalysis';
 import { TypeReferenceSymbol, typeReferenceText } from './TypeReferenceSymbol';
 
-export const operationAvailability = 'Syntax-only; execution unavailable until ESM v9 (PLAY0268). No semantic or requirement identity is assigned.';
+export const operationAvailability = 'Syntax-only; not admitted by any supported executable model (ESM) version yet (PLAY0268) (#301). No semantic or requirement identity is assigned.';
 
 export function analyzeOperations(lines: string[], symbols?: DocumentSymbols) {
     return responseAnalysis(lines, symbols?.authoringDocuments ?? symbols?.authoringSources?.filter(source => source !== lines.join('\n')) ?? [],

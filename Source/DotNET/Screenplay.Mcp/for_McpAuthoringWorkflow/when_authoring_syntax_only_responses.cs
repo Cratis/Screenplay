@@ -17,7 +17,7 @@ public class when_authoring_syntax_only_responses : given.an_authoring_connectio
         var opened = Start(ResponseSource);
         var details = Result("declaration-details", new { address = "Projects.Registration.Register.RegisterProject", kind = "Command", view = "response" }).GetProperty("details");
         details.GetProperty("syntaxOnly").GetBoolean().ShouldBeTrue();
-        details.GetProperty("executionReadiness").GetString().ShouldContain("Unavailable");
+        details.GetProperty("executionReadiness").GetString().ShouldContain("Not admitted by any supported executable model (ESM) version yet");
         details.GetProperty("fields")[0].GetProperty("source").GetString().ShouldEqual("receiptId");
         details.GetProperty("fields")[0].GetProperty("inferredType").GetProperty("name").GetString().ShouldEqual("ProjectId");
         var propertyPage = Result("declaration-details", new { address = "Projects.Registration.Register.RegisterProject", kind = "Command", view = "properties" });
