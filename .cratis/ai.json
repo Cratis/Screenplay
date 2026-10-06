@@ -10,7 +10,8 @@
   ],
   "profiles": [
     "cratis/documentation",
-    "cratis/engineering/csharp"
+    "cratis/engineering/csharp",
+    "cratis/screenplay"
   ],
   "languages": [
     "csharp",

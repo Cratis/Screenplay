@@ -7,7 +7,17 @@
 				"mcp",
 				"start"
 			]
-		}
-	},
+		},
+  "screenplay": {
+  "type": "stdio",
+  "command": "cratis",
+  "args": [
+    "screenplay",
+    "mcp",
+    "--project-root",
+    "${workspaceFolder}"
+  ]
+}
+},
 	"inputs": []
 }
