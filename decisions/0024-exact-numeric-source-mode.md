@@ -1,6 +1,6 @@
 ---
 id: 0024
-title: Exact numeric source mode and ESM v7
+title: Exact numeric source mode and its ESM admission
 status: proposed
 stage: none
 class: contract
@@ -25,11 +25,11 @@ applies-to:
 
 [#285](https://github.com/Cratis/Screenplay/issues/285) concerns numeric precision lost during source parsing. The retained, unpublished experiment changed previously accepted models: `100000000000000020` and `100000000000000016` compare equal after Double rounding but differ mathematically; small fractions can round to integers. Replacing Double everywhere would change acceptance, execution and persisted projection definitions.
 
-Accepted [0023](0023-command-production-model.md) allocates exact numbers to cumulative ESM v7 and requires explicit numeric mode independently of feature version. It preserves legacy behavior and requires declaration-bearing files to agree. That allocation does not settle this proposal's spelling, exact range or transport representation. Accepted [0004](0004-admission-and-governance-of-portable-executable-semantics.md) governs semantic admission. This record is proposed on October 4, 2026; it records no new acceptance by Einar Ingebrigtsen or Sindre Alstad Wilting.
+Accepted [0023](0023-command-production-model.md) requires explicit numeric mode independently of feature version. It preserves legacy behavior and requires declaration-bearing files to agree. Proposed [0025](0025-allocate-esm-v7-to-responses-and-number-later-versions-at-admission.md) proposes reallocating ESM numbering: exact numbers leave the fixed sequence and take the next version number at a serialized release-ready admission checkpoint, once this record is accepted and Phase B is ready. That version is called the "admitting version" below. This record's numbering text depends on 0025's acceptance. Neither 0023's current allocation nor 0025 settles this proposal's spelling, exact range or transport representation. Accepted [0004](0004-admission-and-governance-of-portable-executable-semantics.md) governs semantic admission. This record is proposed on October 4, 2026; it records no new acceptance by Einar Ingebrigtsen or Sindre Alstad Wilting.
 
 ## Decision
 
-The proposed contract selects exact numeric literal ingestion, representation and comparison with a single top-level `numbers exact` preamble, before domain, imports and declarations. Absence retains Legacy behavior, independently of cumulative language/ESM version. Exact literals use the normalized mathematical Decimal domain, immutable lossless syntax values, canonical fixed-point text and an explicit typed SyntaxJSON envelope. No arithmetic, coercion or persisted definition is silently migrated. Phase A shipped in [#381](https://github.com/Cratis/Screenplay/pull/381): opt-in exact source parsing, syntax transport, C# printing and workspace authoring are available. Exact documents remain semantically unsupported and fail binding with PLAY0268 until this record is accepted and ESM v7 is admitted under 0004. The earlier unversioned replacement experiment remains unpublished.
+The proposed contract selects exact numeric literal ingestion, representation and comparison with a single top-level `numbers exact` preamble, before domain, imports and declarations. Absence retains Legacy behavior, independently of cumulative language/ESM version. Exact literals use the normalized mathematical Decimal domain, immutable lossless syntax values, canonical fixed-point text and an explicit typed SyntaxJSON envelope. No arithmetic, coercion or persisted definition is silently migrated. Phase A shipped in [#381](https://github.com/Cratis/Screenplay/pull/381): opt-in exact source parsing, syntax transport, C# printing and workspace authoring are available. Exact documents remain semantically unsupported and fail binding with PLAY0268 until this record is accepted and an ESM version admits exact mode under 0004. The earlier unversioned replacement experiment remains unpublished.
 
 ### Source and physical documents
 
@@ -57,9 +57,9 @@ Source-bearing Application, Projection, Capture and Specification nodes carry `s
 
 ### Later semantic admission
 
-Phase A adds no ESM numeric-mode field, ESM version or semantic numeric variant (it does add the SyntaxJSON `sourceOptions` field). All Exact roots, including declaration-only programmatic roots, fail binding with a specific unsupported diagnostic. Existing v6 runtime behavior and unsupported constructs remain unchanged.
+Phase A adds no ESM numeric-mode field, ESM version or semantic numeric variant (it does add the SyntaxJSON `sourceOptions` field). All Exact roots, including declaration-only programmatic roots, fail binding with a specific unsupported diagnostic. Existing runtime behavior of released versions and unsupported constructs remain unchanged.
 
-Phase B records mode independently of version: v1–v6 omit `numericMode` and reject its presence; v7+ require exactly one canonical `legacy` or `exact` root field, participating in revision computation. An Exact document selects at least v7 even without numeric literals. Unchanged Legacy documents retain their existing version, bytes and revision. Later features select their allocated version without selecting Exact mode. The existing Decimal semantic-number value remains sufficient. Strict readers, mode-aware binding/reference behavior and canonical/source-backed vectors precede admission.
+Phase B records mode independently of version: versions before the admitting version omit `numericMode` and their strict readers reject its presence; the admitting version and later require exactly one canonical `legacy` or `exact` root field, participating in revision computation. An Exact document selects at least the admitting version even without numeric literals. The admitting version's admission adds exact-mode vectors for every feature version admitted before it. Unchanged Legacy documents retain their existing version, bytes and revision. Later features select their own version without selecting Exact mode. The existing Decimal semantic-number value remains sufficient. Strict readers, mode-aware binding/reference behavior and canonical/source-backed vectors precede admission.
 
 Exact literals do not promise arbitrary-precision arithmetic. Existing projection arithmetic, coercion and rounding rules remain under 0023. Exact capture guards reuse their restricted grammar with bounded complete-operand numeric parsing; their Legacy path remains unchanged. That exact parsing replaces the current `decimal.TryParse` in `SemanticCaptureExpression.cs` and is Phase B work. Unsupported computations do not become raw replacements that report success.
 
@@ -79,7 +79,7 @@ Legacy remains the default. Existing source, programmatic numbers, SyntaxJSON, E
 
 ## Timeline and scope
 
-The proposal applies to #285 after merged ESM v6 and through explicit v7 delivery, until superseded. Detailed acceptance is required before Phase B semantic admission; the shipped Phase A support does not claim acceptance or complete #285.
+The proposal applies to #285 through delivery of the admitting version, until superseded. Detailed acceptance is required before Phase B semantic admission; the shipped Phase A support does not claim acceptance or complete #285.
 
 In scope: source preamble/options, bounded literal codecs, mathematical facts, all parser entry points, recursive structured values, typed syntax transport, mode provenance, physical-file consensus, canonical source printing, diagnostics and conformance proofs.
 
@@ -87,18 +87,18 @@ Phase A includes shared-compiler support and initial preamble highlighting. Phas
 
 Until a versioned recursive lossless fixture-value contract is delivered, MCP fixture queries encountering ExactNumber values, including nested values, fail explicitly (`ExactNumberFixtureTransportUnsupported`). The new contract must distinguish exact numeric leaves from business objects, preserve canonical strings recursively, and retain Legacy-client compatibility.
 
-Out of scope for Phase A: ESM v7 fields/readers/revisions/runtime admission and the lossless MCP value-tree DTO. These remain release obligations, together with explicit Stage, CLI, Studio, Generation, Arc and Chronicle admission/tracking under 0004. Consumer tracking with explicit rejection satisfies the release obligation until each consumer admits v7; 0004 rejects lockstep releases. Dependency bumps do not prove admission. BigDecimal, general arithmetic, #319 flags and automatic persisted-projection migration are out of scope for this proposal.
+Out of scope for Phase A: ESM numeric-mode fields/readers/revisions/runtime admission and the lossless MCP value-tree DTO. These remain release obligations, together with explicit Stage, CLI, Studio, Generation, Arc and Chronicle admission/tracking under 0004. Consumer tracking with explicit rejection satisfies the release obligation until each consumer admits the admitting version; 0004 rejects lockstep releases. Dependency bumps do not prove admission. BigDecimal, general arithmetic, #319 flags and automatic persisted-projection migration are out of scope for this proposal.
 
 ## Open questions for the decider
 
 - MCP lossless fixture DTO shape and compatibility strategy. Proposed default: delegated to implementation under review, versioned and additive.
-- Whether lossless MCP and editor delivery gate the v7 release. Proposed default: they do not gate v7 semantic admission; both keep explicit refusal/unsupported behavior until delivered and are tracked under #285.
+- Whether lossless MCP and editor delivery gate the admitting version's release. Proposed default: they do not gate its semantic admission; both keep explicit refusal/unsupported behavior until delivered and are tracked under #285.
 
 ## Verification
 
-**Done when:** Exact source, recursive syntax transport, printing and reparsing preserve canonical mathematical values in file and folder forms; all entry points and programmatic boundaries preserve and validate mode; complete unrepresentable numbers are refused; Exact binding is specifically unsupported before v7 admission; admitted v7 records mode independently of feature version with strict readers, canonical revisions and source-backed outcomes; all Legacy behavior and bytes remain unchanged, and consumers explicitly admit or reject the version.
+**Done when:** Exact source, recursive syntax transport, printing and reparsing preserve canonical mathematical values in file and folder forms; all entry points and programmatic boundaries preserve and validate mode; complete unrepresentable numbers are refused; Exact binding is specifically unsupported before the admitting version; the admitting version records mode independently of feature version with strict readers, canonical revisions and source-backed outcomes; all Legacy behavior and bytes remain unchanged, and consumers explicitly admit or reject the version.
 
-**Verify by:** Shared C#/TypeScript boundary and huge-exponent vectors; scalar, structured, condition/policy and culture tests; source → SyntaxJSON → decode → print → reparse comparisons of canonical strings; import/placement/barrel/folder consensus and expansion tests; incompatible-value and malformed-mode rejection tests; retained differential Legacy cases and old AST/ESM goldens; v7 strict-reader/version-mode/revision/golden/corpus tests; recursive MCP/editor and explicit consumer-admission evidence; native Debug/Release, supported-runtime, package API and frontend gates. Unsupported or unexecuted behavior never counts as passing.
+**Verify by:** Shared C#/TypeScript boundary and huge-exponent vectors; scalar, structured, condition/policy and culture tests; source → SyntaxJSON → decode → print → reparse comparisons of canonical strings; import/placement/barrel/folder consensus and expansion tests; incompatible-value and malformed-mode rejection tests; retained differential Legacy cases and old AST/ESM goldens; admitting-version strict-reader/version-mode/revision/golden/corpus tests; recursive MCP/editor and explicit consumer-admission evidence; native Debug/Release, supported-runtime, package API and frontend gates. Unsupported or unexecuted behavior never counts as passing.
 
 ## Consequences
 
