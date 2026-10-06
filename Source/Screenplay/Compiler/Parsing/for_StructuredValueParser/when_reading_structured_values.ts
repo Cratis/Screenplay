@@ -15,20 +15,20 @@ describe('when reading structured values', () => {
     });
 
     it('should read every kind of JSON value', () => {
-        read('[ "a\\u00e9\\n", -1.5e2, 0, true, false, null ]').should.deep.equal({
+        [read('[ "a\\u00e9\\n", -1.5e2, 0, true, false, null ]')].should.deep.equal([{
             kind: 'ListExpressionSyntax',
             items: [literal('aé\n'), literal(-150), literal(0), literal(true), literal(false), literal(null)],
-        });
+        }]);
     });
 
     it('should read nested objects with their members in order', () => {
-        read('{"b": {"c": [1]}, "a": 2}').should.deep.equal({
+        [read('{"b": {"c": [1]}, "a": 2}')].should.deep.equal([{
             kind: 'ObjectExpressionSyntax',
             members: [
                 { kind: 'ObjectMemberSyntax', name: 'b', value: { kind: 'ObjectExpressionSyntax', members: [{ kind: 'ObjectMemberSyntax', name: 'c', value: { kind: 'ListExpressionSyntax', items: [literal(1)] } }] } },
                 { kind: 'ObjectMemberSyntax', name: 'a', value: literal(2) },
             ],
-        });
+        }]);
     });
 
     it('should place a member at its name', () => {

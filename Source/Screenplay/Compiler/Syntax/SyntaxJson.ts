@@ -10,6 +10,7 @@ import { ValidationRuleSyntax } from './Commands';
 import { isLegacyOmittedMember } from './LegacyWireProjection';
 import { legacySourceOptions, validatedSourceOptions } from './SourceOptions';
 
+// Returned record objects have null prototypes.
 export type SyntaxJsonValue = string | number | boolean | null | SyntaxJsonValue[] | { [member: string]: SyntaxJsonValue };
 
 const isNode = (value: unknown): value is SyntaxNode =>
@@ -21,21 +22,74 @@ const sourceRoots = new Set(['ApplicationSyntax', 'ProjectionSyntax', 'CaptureSy
 // members in ordinal order, with source locations left out. Because a node only carries the members this
 // compiler models, the result is the C# form narrowed to those members.
 export function toSyntaxJson(node: SyntaxNode): SyntaxJsonValue {
-    validateNumbers(node, 'legacy', 0);
-    return write(node);
+    const detached = snapshot(node);
+    validateNumbers(detached, 'legacy', 0);
+    return write(detached);
 }
 
 // The enriched internal tree written completely, Legacy members included. Not a wire form: it exists so the
 // walker and other tree consumers can be held to every node the parser builds.
 export function toCompleteSyntaxJson(node: SyntaxNode): SyntaxJsonValue {
-    validateNumbers(node, 'legacy', 0);
-    return write(node, 'legacy', true);
+    const detached = snapshot(node);
+    validateNumbers(detached, 'legacy', 0);
+    return write(detached, 'legacy', true);
+}
+
+// Read caller-owned properties only once, before validation. Both validation and projection see the same
+// detached data; accessors, proxies and shared references cannot change it between passes.
+function snapshot(value: unknown): unknown {
+    const copies = new WeakMap<object, unknown>();
+    const pending: (() => void)[] = [];
+    // Schedule depth-first reads without consuming the call stack, including for ignored metadata.
+    function detach(value: unknown): unknown {
+        if (typeof value !== 'object' || value === null) return value;
+        if (copies.has(value)) return copies.get(value);
+        if (Array.isArray(value)) {
+            const items = dataArray<unknown>();
+            copies.set(value, items);
+            const length = value.length;
+            for (let index = length - 1; index >= 0; index--) pending.push(() => {
+                items[index] = detach(Object.hasOwn(value, index) ? value[index] : undefined);
+            });
+            return items;
+        }
+        const copy = Object.create(null) as Record<string, unknown>;
+        copies.set(value, copy);
+        const names = Object.keys(value);
+        // Node identity also accepts inherited, hidden and class-getter kinds; read it just once.
+        if (!names.includes('kind') && 'kind' in value) names.unshift('kind');
+        for (let index = names.length - 1; index >= 0; index--) pending.push(() => {
+            const name = names[index];
+            const member = (value as Record<string, unknown>)[name];
+            if (name === 'sourceOptions') pending.push(() => {
+                // Source option contracts also reject exotic prototypes and hidden/symbol members. Preserve
+                // that rejected shape as data rather than sanitizing it into an apparently valid option record.
+                if (typeof member === 'object' && member !== null &&
+                    ((Object.getPrototypeOf(member) !== Object.prototype && Object.getPrototypeOf(member) !== null) || Reflect.ownKeys(member).length !== Object.keys(member).length)) {
+                    copy[name] = Object.assign(Object.create(null), { numericMode: 'invalid' });
+                }
+            });
+            copy[name] = detach(member);
+        });
+        return copy;
+    }
+    const detached = detach(value);
+    while (pending.length > 0) pending.pop()!();
+    return detached;
+}
+
+function dataArray<T>(): T[] {
+    const items: T[] = [];
+    // JSON.stringify consults inherited toJSON even on plain arrays. Shadow that hook without changing
+    // their indexed JSON bytes or normal Array prototype (including for existing tree consumers).
+    Object.defineProperty(items, 'toJSON', { value: undefined });
+    return items;
 }
 
 function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJsonValue {
     if (Array.isArray(value)) {
         // A fresh plain array: never map (Symbol.species) or serialize through a caller-supplied hook.
-        const items: SyntaxJsonValue[] = [];
+        const items = dataArray<SyntaxJsonValue>();
         for (let index = 0; index < value.length; index++) items.push(write(value[index], owningMode, complete));
         return items;
     }
@@ -51,7 +105,8 @@ function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJ
                 if (rule.code != null) validateClosedSyntaxMembers(rule.code, omitted);
             }
         }
-        const result: { [member: string]: SyntaxJsonValue } = { kind: value.kind };
+        const result = Object.create(null) as { [member: string]: SyntaxJsonValue };
+        result.kind = value.kind;
         const structural = { ...value } as unknown as Record<string, unknown>;
         if (value.kind === 'ApplicationSyntax' && structural.eventSources === undefined) structural.eventSources = [];
         if (value.kind === 'CommandSyntax' && structural.stream === undefined) structural.stream = null;
@@ -69,8 +124,12 @@ function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJ
     if (typeof value !== 'object' || value === null) return value as SyntaxJsonValue;
     const record = value as Record<string, unknown>;
     // The ordered ExactNumber form, whatever the input key order; other objects are copied without any toJSON hook.
-    if (record.literalType === 'ExactNumber') return { literalType: 'ExactNumber', value: record.value as string };
-    const copy: { [member: string]: SyntaxJsonValue } = {};
+    const copy = Object.create(null) as { [member: string]: SyntaxJsonValue };
+    if (record.literalType === 'ExactNumber') {
+        copy.literalType = 'ExactNumber';
+        copy.value = record.value as string;
+        return copy;
+    }
     for (const name of Object.keys(record)) if (name !== 'toJSON' && record[name] !== undefined) copy[name] = write(record[name], owningMode, complete);
     return copy;
 }

@@ -48,7 +48,22 @@ if (vsix) {
     if (!path.isAbsolute(vsix) || !fs.existsSync(vsix)) throw new Error('SCREENPLAY_REPAIR_VSIX must identify the packaged VSIX.');
     const [cli, ...args] = resolveCliArgsFromVSCodeExecutablePath(executable, { reuseMachineInstall: true });
     const installed = spawnSync(cli, [...args, '--install-extension', vsix, '--extensions-dir', extensions, '--user-data-dir', userData, '--force'], { stdio: 'inherit', timeout: 60_000, shell: process.platform === 'win32' });
-    if (installed.error || installed.status !== 0) throw installed.error ?? new Error(`VSIX installation failed: ${installed.status}`);
+    // CI packages this workspace manifest into the VSIX. An install can finish
+    // before the CLI crashes, so verify the exact version in the same host dirs.
+    const manifest = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+    const expected = `${manifest.publisher}.${manifest.name}@${manifest.version}`;
+    let listed;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        listed = spawnSync(cli, [...args, '--list-extensions', '--show-versions', '--extensions-dir', extensions, '--user-data-dir', userData], { encoding: 'utf8', timeout: 60_000, shell: process.platform === 'win32' });
+        const output = `${listed.stdout ?? ''}\n${listed.stderr ?? ''}`;
+        if (listed.status === 0 || !output.includes('FATAL ERROR: v8::ToLocalChecked Empty MaybeLocal') || attempt === 2) break;
+        console.warn(`Extension listing crashed with exit ${listed.status}; retrying verification (${attempt + 1}/2).`);
+    }
+    const listing = `${listed.stdout ?? ''}\n${listed.stderr ?? ''}`;
+    if (installed.error || listed.error || listed.status !== 0 || !(listed.stdout ?? '').split(/\r?\n/).some(line => line.trim() === expected)) {
+        throw new Error(`VSIX installation failed: ${installed.status}; expected ${expected}; verification exit: ${listed.status}; install error: ${installed.error?.message ?? 'none'}; verification error: ${listed.error?.message ?? 'none'}; extension listing:\n${listing}`);
+    }
+    if (installed.status !== 0) console.warn(`VSIX installation CLI exited ${installed.status}, but verified ${expected} is installed.`);
     // Only a tiny test driver is developed. cratis.screenplay MUST resolve from
     // the installed VSIX, not a development-path override of production sources.
     development = path.join(testRoot, 'driver');
@@ -58,11 +73,12 @@ if (vsix) {
 let shutdownFailure;
 let suitesPassed = false;
 const teardownEvidence = path.join(evidence, 'pending-inspection-teardown.json');
+const { nativeObservationRoot } = createRequire(import.meta.url)('../out/tests/nativeObservationRoot.cjs');
 try { await runTests({
     vscodeExecutablePath: executable,
     extensionDevelopmentPath: development, extensionTestsPath: path.resolve('out/tests/extensionHost.cjs'),
     launchArgs: [model, '--user-data-dir', userData, '--extensions-dir', extensions, '--disable-workspace-trust', '--skip-welcome', '--skip-release-notes', '--disable-gpu', '--disable-extension', 'github.copilot', '--disable-extension', 'github.copilot-chat', '--log', 'trace'],
-    extensionTestsEnv: { SCREENPLAY_REPAIR_SERVER: server, SCREENPLAY_REPAIR_HOST_ROOT: model, SCREENPLAY_REPAIR_INSTALLED_EXTENSIONS: vsix ? extensions : '', SCREENPLAY_REPAIR_OBSERVE_SYNTHETIC_ROOT: caseName === 'clean' ? path.join(model, 'clean-unknown') : process.env.SCREENPLAY_REPAIR_OBSERVE === '1' ? path.join(model, caseName.startsWith('missed-') ? caseName : 'command-guards') : '', SCREENPLAY_REPAIR_TEARDOWN_EVIDENCE: teardownEvidence, SCREENPLAY_REPAIR_NATIVE_LOGS: path.join(userData, 'logs'), SCREENPLAY_REPAIR_HOST_CASE: caseName },
+    extensionTestsEnv: { SCREENPLAY_REPAIR_SERVER: server, SCREENPLAY_REPAIR_HOST_ROOT: model, SCREENPLAY_REPAIR_INSTALLED_EXTENSIONS: vsix ? extensions : '', SCREENPLAY_REPAIR_OBSERVE_SYNTHETIC_ROOT: nativeObservationRoot(model, caseName, process.env.SCREENPLAY_REPAIR_OBSERVE === '1'), SCREENPLAY_REPAIR_TEARDOWN_EVIDENCE: teardownEvidence, SCREENPLAY_REPAIR_NATIVE_LOGS: path.join(userData, 'logs'), SCREENPLAY_REPAIR_HOST_CASE: caseName },
 }); suitesPassed = true; } finally {
     const logs = path.join(userData, 'logs');
     if (!fs.existsSync(logs)) {

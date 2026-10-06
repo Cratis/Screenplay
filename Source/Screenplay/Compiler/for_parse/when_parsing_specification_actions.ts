@@ -53,11 +53,11 @@ describe('when parsing specification actions', () => {
     });
 
     it('should read the trigger with its values', () => {
-        (toSyntaxJson(specification(1).whenTrigger!) as object).should.deep.equal({
+        [toSyntaxJson(specification(1).whenTrigger!)].should.deep.equal([{
             kind: 'SpecificationTriggerSyntax',
             trigger: 'NightlySync',
             values: [{ kind: 'PropertyMappingSyntax', property: 'batch', source: toSyntaxJson(specification(1).whenTrigger!.values[0].source) }],
-        });
+        }]);
     });
 
     it('should read the capture record', () => {

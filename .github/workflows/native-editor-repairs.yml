@@ -9,6 +9,7 @@ on:
       - 'Source/DotNET/Screenplay/Workspaces/Workspace*Repair*.cs'
       - 'Source/DotNET/Tool/**'
       - 'package.json'
+      - '.yarnrc.yml'
       - '*.props'
       - 'global.json'
       - '.github/workflows/native-editor-repairs.yml'
