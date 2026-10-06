@@ -9,9 +9,12 @@ import { SliceScope } from './SliceScope';
 
 // A slice's specifications as the board shows them - the port of Studio's SpecificationSyntaxVisitor. A
 // step's event points at its producer when the model declares one. Only literal values are carried: a path
-// or a context expression names something resolved while the application runs.
+// or a context expression names something resolved while the application runs. The board draws a State Change
+// slice's own command under When by itself, so a step that sets off that command carries its values and the
+// command it points at but no name of its own - a name would draw the same command a second time.
 export function toSpecifications(
-    specifications: readonly SpecificationSyntax[], scope: SliceScope, owners: EventOwners, commandId: string | undefined): SliceSpecificationDocument[] {
+    specifications: readonly SpecificationSyntax[], scope: SliceScope, owners: EventOwners, commandId: string | undefined,
+    sliceDrawsItsCommand = false): SliceSpecificationDocument[] {
     return specifications.map(specification => {
         const at = (kind: string, index: number) => scope.idOf(`specification:${specification.name}:${kind}`, String(index));
         const step = (event: SpecificationEventSyntax, kind: string, index: number): SpecificationStepDocument => ({
@@ -31,7 +34,8 @@ export function toSpecifications(
             collapsed: false,
         };
         if (specification.when !== null) {
-            const when = { id: at('when', 0), name: specification.when.commandType, values: valuesOf(specification.when.values) };
+            const drawnBySlice = sliceDrawsItsCommand && commandId !== undefined;
+            const when = { id: at('when', 0), name: drawnBySlice ? '' : specification.when.commandType, values: valuesOf(specification.when.values) };
             document.when = commandId === undefined ? when : { ...when, commandId };
         } else {
             const action = actionOf(specification);
