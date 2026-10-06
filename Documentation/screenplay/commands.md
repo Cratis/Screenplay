@@ -112,7 +112,7 @@ command RegisterProject
     receiptId ReceiptId = receiptId
 ```
 
-This fragment assumes `ProjectId` and `ReceiptId` are concepts backed by `Uuid`, and `ProjectName` is a concept backed by `String`. The [complete example](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/generated-responses.play) includes their declarations and specification fixtures. [Invoicing](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play) shows scalar and record responses in its wider language showcase.
+This fragment assumes `ProjectId` and `ReceiptId` are concepts backed by `Uuid`, and `ProjectName` is a concept backed by `String`. The [complete example](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/generated-responses.play) includes their declarations and passing specifications asserting both emitted events and responses. [Invoicing](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play) shows scalar and record responses in its wider language showcase.
 
 - `generated` is command-only and requires a required, scalar concept backed by `Uuid`; bare `Uuid`, optional values and collections are invalid. Generated values are not request inputs, form fields, invocation arguments or ordinary specification inputs.
 - Modifier order is `Type optional generated identifier`. This order does not permit an optional generated value or optional identifier. `generated String` still declares a property named `generated`.
