@@ -185,8 +185,11 @@ first time it needs one:
 1. A `path` the assistant passes to `open-workspace`, which also switches to another
    folder in the same session.
 2. The folder your MCP client offers through its workspace roots, when the client
-   offers exactly one. When it offers several, the assistant is told to choose with
-   `path`. When the client changes its roots, a folder bound from them is let go.
+   offers exactly one. That folder is the project, not necessarily the model: the
+   server serves the folder already holding the project's `.play` files, else its
+   `Source` or `src` folder, else a new `Screenplay` folder in the project. When the
+   client offers several, the assistant is told to choose with `path`. When the client
+   changes its roots, a folder bound from them is let go.
 3. The folder the server was launched from, when it already holds `.play` files or a
    `.screenplay` folder. This is what a terminal client such as Claude Code or Pi
    gives you: start it in the project and the model is the project.
@@ -195,10 +198,10 @@ first time it needs one:
 screenplay mcp
 ```
 
-If none of these applies, the server says so and asks for a path instead of guessing
-at your home folder. In Claude and ChatGPT desktop the host manages the files, so
-the model lives wherever the host puts them, and `open-workspace` with
-`workspaceJson` carries a model between sessions.
+If none of these applies, the server works in `Documents/Screenplay` in your home
+folder, creating it when needed. That is where a chat in Claude or ChatGPT desktop
+puts the `.play` files, so you can open, commit or move them like any other files.
+Pass `path` to `open-workspace` to work somewhere else.
 
 Pass a root, as below, when you want one fixed folder for every session. A fixed-root
 connection refuses `open-workspace.path` naming a different physical directory

@@ -10,6 +10,7 @@ public class a_dynamic_connection : Specification
 {
     internal string ModelPath = null!;
     internal string EmptyPath = null!;
+    internal string DocumentsPath = null!;
     internal McpTools Tools = null!;
     internal McpConnection Connection = null!;
 
@@ -28,7 +29,9 @@ public class a_dynamic_connection : Specification
         Directory.CreateDirectory(ModelPath);
         Directory.CreateDirectory(EmptyPath);
         File.WriteAllText(Path.Combine(ModelPath, "application.play"), a_connection.Source, new UTF8Encoding(false));
-        Tools = new McpTools { CurrentDirectoryHint = EmptyPath };
+        DocumentsPath = Path.Combine(parent, "documents");
+        Directory.CreateDirectory(DocumentsPath);
+        Tools = new McpTools { CurrentDirectoryHint = EmptyPath, DocumentsDirectoryHint = DocumentsPath };
         Connection = new(Tools);
     }
 

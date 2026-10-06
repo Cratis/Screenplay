@@ -13,6 +13,6 @@ public class when_opening_without_a_model_in_the_working_directory : given.a_dyn
 
     void Because() => _response = Call("open-workspace");
 
-    [Fact] void should_fail() => Failed(_response).ShouldBeTrue();
-    [Fact] void should_tell_the_caller_to_pass_a_path() => Text(_response).ShouldContain("Pass open-workspace with a path");
+    [Fact] void should_work_in_the_users_screenplay_folder() => Failed(_response).ShouldBeFalse();
+    [Fact] void should_create_the_folder() => Directory.Exists(Path.Combine(DocumentsPath, "Screenplay")).ShouldBeTrue();
 }
