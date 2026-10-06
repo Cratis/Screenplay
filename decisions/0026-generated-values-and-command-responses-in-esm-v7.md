@@ -1,8 +1,10 @@
 ---
 id: 0026
 title: Admit generated values and command responses as ESM v7
-status: proposed
+status: accepted
 stage: none
+decided: 2026-10-06
+decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
 applies-to:

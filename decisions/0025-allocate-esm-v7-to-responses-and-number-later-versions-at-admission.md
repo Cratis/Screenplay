@@ -1,8 +1,10 @@
 ---
 id: 0025
 title: Allocate ESM v7 to generated values and responses, and number later versions at admission
-status: proposed
+status: accepted
 stage: none
+decided: 2026-10-06
+decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
 applies-to:
