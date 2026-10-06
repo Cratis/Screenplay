@@ -79,6 +79,8 @@ describe('when authoring ESM v7 responses', () => {
         const source = ['concept Id : Uuid', 'command C', '  id Id generated identifier', '  receipt Id generated', '  name String'];
         expect(labels(source, '  returns ')).toEqual(['id', 'receipt', 'name']);
         expect(labels(source, '  other Id ')).toContain('generated');
+        const modifiers = responseCompletions([...source, '  other Id '], source.length, '  other Id ', scanDocument(source));
+        expect(modifiers?.find(entry => entry.label === 'generated')?.documentation).toContain('no validation rules');
         expect(labels(source, '  other Uuid ')).not.toContain('generated');
         expect(labels([...source, '  returns'], '    ')).toEqual(['id', 'receipt', 'name']);
         expect(labels([...source, '  returns'], '    result = ')).toEqual(['id', 'receipt', 'name']);

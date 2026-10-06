@@ -190,6 +190,22 @@ public class when_disclosing_source_stream_readiness
         }
     }
 
+    [Theory]
+    [InlineData("not empty")]
+    [InlineData("rule Check\n      file Check.cs")]
+    [InlineData("```csharp\n    return true;\n    ```")]
+    void should_disclose_generated_concepts_with_validation_rules_as_unadmitted(string rule)
+    {
+        var snapshot = new McpSnapshot([Document("model.play", "concept Id : Uuid\n  validate\n    " + rule + "\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        id Id generated identifier\n        returns id\n      specification T\n        when C\n          for \"11111111-1111-1111-1111-111111111111\"\n        then returns \"11111111-1111-1111-1111-111111111111\"\n")]);
+        snapshot.Compilation.Success.ShouldBeTrue();
+        foreach (var (address, kind) in new[] { ("M.F.S.C", "Command"), ("M.F.S.T", "Specification"), ("M.F.S", "Slice") })
+        {
+            var details = Details(snapshot, address, kind, "summary");
+            details.GetProperty("syntaxOnly").GetBoolean().ShouldBeTrue();
+            details.GetProperty("executionReadiness").GetString().ShouldContain("generated properties on concepts with validation rules");
+        }
+    }
+
     static JsonElement Details(McpSnapshot snapshot, string address, string kind, string view) => Json(McpDeclarationDetails.Read(snapshot, Json(new { address, kind, view }))).GetProperty("details");
 
     static JsonElement Json(object value) => JsonSerializer.SerializeToElement(value, McpJson.Options);

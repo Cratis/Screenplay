@@ -72,6 +72,12 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
 
     static IEnumerable<string> Feature(bool present, string feature) => present ? [feature] : [];
 
+    bool GeneratedConceptRules(CommandSyntax command) => command.Properties
+        .Where(property => property.IsGenerated)
+        .SelectMany(property => application.Concepts.Where(concept => concept.Name == property.Type.Name))
+        .Any(concept => (concept.Validations ?? []).Any(validation => validation is CodeValidateSyntax ||
+            (validation is DeclarativeValidateSyntax declarative && (declarative.Rules.Any() || (declarative.Requirements ?? []).Any()))));
+
     string[] UnadmittedFeatures(SyntaxNode node)
     {
         const string streams = "event sources, streams and routes (#302)";
@@ -80,7 +86,8 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
             EventSourceSyntax or EventStreamSyntax or CommandStreamSyntax => [streams],
             CommandSyntax command =>
                 Feature(command.Stream is not null || command.StreamCandidates.Any(), streams)
-                .Concat(Feature(command.Handler is not null, "command handlers")),
+                .Concat(Feature(command.Handler is not null, "command handlers"))
+                .Concat(Feature(GeneratedConceptRules(command), "generated properties on concepts with validation rules")),
             SpecificationSyntax specification =>
                 ActionCommands(specification).SelectMany(entry => UnadmittedFeatures(entry.Command)),
             SliceSyntax slice => slice.Commands.Cast<SyntaxNode>().Concat(slice.Specifications).SelectMany(UnadmittedFeatures),
