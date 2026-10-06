@@ -345,9 +345,9 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `then denied` | A typed authorization denial (`Unauthorized`). |
 | `<property> = <value>` | A property value, using the same expression grammar as `produces`/`capture` mappings. |
 
-## Generated fixtures and return expectations (syntax-only)
+## Generated fixtures and return expectations
 
-These additions describe [generated values and responses](commands.md#generated-values-and-responses-syntax-only); **they do not execute**. These constructs are not admitted by any supported executable model (ESM) version yet; binding reports `PLAY0268` with no semantic model. See the [complete authoring fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/generated-responses.play).
+Generated fixtures and `then returns` select **ESM v7** and execute in the reference runner. They pin [generated values and responses](commands.md#generated-values-and-responses) separately from request inputs and emitted events. See the [complete fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/generated-responses.play).
 
 ```screenplay
 specification RegisteringReturnsIdentifiers
@@ -361,7 +361,11 @@ specification RegisteringReturnsIdentifiers
 
 `for` supplies the generated identifier. An indented `generated <name> = <value>` supplies a nonidentifier generated command property, separately from request mappings. Do not put either on the `when` header. Ordinary `generated = <value>` remains an input mapping for a property named `generated`.
 
-A scalar response uses `then returns <value>`; a record uses `then returns` with a nonempty subset of its named fields. The expectation must match the response shape and types. Values must be concrete literals or structured values, with no raw-expression fallback or trailing tokens. Duplicate, unknown, nongenerated or identifier fixture targets are rejected. A return expectation requires a command action, occurs at most once and cannot accompany `then error` or `then denied`; successful event/state assertions may coexist. Mandatory allocation-fixture completeness and relational runtime assertions are deferred, not silently executed.
+A scalar response uses `then returns <value>`; a record uses `then returns` with a nonempty subset of its named fields. The expectation must match the response shape and types. Values must be concrete literals or structured values, with no raw-expression fallback or trailing tokens. Duplicate, unknown, nongenerated or identifier fixture targets are rejected. A return expectation requires a command action, occurs at most once and cannot accompany `then error` or `then denied`; successful event/state assertions may coexist. The reference runner compares scalar values by semantic equality and records by the asserted subset, reporting differences in response field order. Optional absent sources yield `Null`; composites compare by property identity and arrays in order. `then returns` counts as a success outcome, but it does not relax event comparison: a command specification with no expected events still asserts that no facts were produced.
+
+Missing fixtures are bindable. If execution reaches generation without every generated value supplied, it returns `Unsupported(IdentityAllocation)` and the specification never passes; it does not invent random values. Authorization denial and validation failure happen before generation and keep their own outcomes. A reaction-invoked response-only command runs and discards its response; a reached invocation needing generation has no fixture channel and returns `Unsupported(IdentityAllocation)`.
+
+For a generated identifier, `for` travels in the generated-value channel, not the legacy event-source allocation channel. It does not assert that explicitly routed productions use that identifier; expected events assert their own destinations. For commands without generated identifiers, `when … for` keeps its existing destination assertion. A generated identifier with a reached plain legacy allocated production needs two separate channels, which source specifications cannot supply together, so that combination is `Unsupported(IdentityAllocation)`. Source fixtures and return expectations on generated UUID-backed values normalize accepted UUID spellings to lowercase hyphenated form; existing non-generated values are unchanged. Relational assertions without concrete fixtures remain deferred.
 
 ## Compiling specifications
 

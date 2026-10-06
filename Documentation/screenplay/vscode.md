@@ -31,9 +31,9 @@ ignores workspace overrides for `screenplay.sourceRoot` and the repair settings
 until you trust the workspace. A source-root override can point outside the
 workspace, so review it before granting trust.
 
-## Generated values and responses (syntax-only)
+## Generated values and responses
 
-The editor recognizes [generated command values and response contracts](commands.md#generated-values-and-responses-syntax-only), including fixture and assertion fields, inferred response types and generated-not-input hints. Completion uses the current source, including unsaved edits. Compiler diagnostics validate the syntax; acceptance does not enable execution. These constructs are not admitted by any supported executable model (ESM) version yet, and binding reports `PLAY0268` without a semantic model.
+The editor recognizes [generated command values and response contracts](commands.md#generated-values-and-responses), including fixture and assertion fields, inferred response types and generated-not-input hints. Completion uses the current source, including unsaved edits. Hover and completion identify these constructs as executable in ESM v7; the editor no longer reports syntax-only response information markers. Compiler diagnostics validate syntax, not semantic binding or execution: pre-generation references and generated-concept rules are checked by the C# semantic binder. Missing reference-execution fixtures and other unadmitted constructs still prevent successful execution.
 
 The board leaves generated values out of command request schemas and lists generated values and returns in command details. It does not create response events or emit official response types. TextMate highlighting treats ambiguous two-token `returns` lines conservatively; `returns @name` makes response intent explicit.
 

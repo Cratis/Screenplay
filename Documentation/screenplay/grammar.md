@@ -474,7 +474,8 @@ Path           = Ident, { ".", Ident } ;
 PropertyLine   = [ "@" ], Ident, TypeRef, [ "generated" ], [ "identifier" ], NL ;
 
 (* "generated" is command-only and requires a required scalar Uuid-backed concept.
-   Generated values and responses are syntax-only: binding reports PLAY0268. *)
+   Generated values and responses select ESM v7. Pre-generation references report
+   PLAY0273; generated concepts with validation rules report PLAY0268. *)
 
 (* "identifier" is only accepted on a command property, and on at most one of
    them - it marks the property a runtime resolves the event source id from.  *)
@@ -665,7 +666,9 @@ ForDecl        = "for", MappingSource, NL ;
    An inline omission means the command identifier only when no production names
    another source and no plain production omits for. Otherwise every destination
    must be explicit. Typed payload property names must be unique (PLAY0168).
-   Plain omission retains legacy allocation semantics. Cross-source execution is not admitted.
+   Plain omission retains legacy allocation semantics. ESM v7 commands with a generated
+   identifier may route explicitly to another required scalar command property;
+   named event sources and streams remain unadmitted.
    Unescaped namespace, sequence, correlation, causation, causedBy and occurred
    are reserved system-assigned metadata in both production forms. *)
 
@@ -868,7 +871,8 @@ ReturnExpectation = "then", "returns", ConcreteValue, NL
                   | "then", "returns", NL, INDENT, ReturnField, { ReturnField }, DEDENT ;
 ReturnField    = LowerIdent, "=", ConcreteValue, NL ;
 ConcreteValue  = ? a completely consumed literal, list or object, without raw expressions ? ;
-(* Fixtures and return expectations are syntax-only, not admitted by any supported ESM version yet.
+(* Generated fixtures and return expectations select ESM v7.
+   Reached generation without a fixture is Unsupported(IdentityAllocation).
    Generated identifiers use SpecificationEventSource, not GeneratedFixture.
    Return expectations require a command and cannot accompany errors or denial. *)
 
