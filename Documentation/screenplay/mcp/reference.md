@@ -29,10 +29,29 @@ See [installation and client configuration](install.md). One physical root
 is one application, whether it has one source file or hundreds of nested files.
 Symbolic links are rejected. An empty root can be opened to create its first model.
 
-A root supplied at startup is fixed for that connection. `open-workspace.path`
-may name that same physical directory, but another root returns `RootChangeRefused`.
-Start a separately authorized connection to switch applications. Dynamic servers
-retain the root selection described above.
+A root supplied at startup restricts the connection to that model and the same
+relative model folder in registered Git worktrees of its repository.
+`open-workspace.path` accepts either a worktree checkout directory (resolving
+that relative model folder) or its exact model directory. Git's shared directory
+and registration back-pointer must agree by physical identity. Unrelated roots,
+unregistered pointers and different model folders return `RootChangeRefused`;
+missing or malformed metadata also refuses switching. A valid worktree without
+the corresponding model directory reports the missing relative folder.
+Submodules and `--separate-git-dir` checkouts cannot switch roots because they
+lack linked-worktree `commondir` metadata; serve their model through a separate
+connection instead. Symlinks remain forbidden. Start a separately authorized
+connection to switch applications. Dynamic servers retain
+the root selection described above.
+
+Only one workspace is active. Switching roots clears the workspace, cached
+identity state and retained proposals; reopening also clears proposals. A proposal
+from root A cannot be applied in root B, even if their revisions are identical
+(`UnknownProposal`). Reads and writes use the currently opened root, including
+its own `.screenplay` identity state and recovery journal, unless `workspaceJson`
+is explicitly supplied to import identities into a root without persisted state.
+A pending journal blocks only its own root. After an opened worktree is removed,
+an explicit path can return to the configured root without restarting. No named
+simultaneous workspaces are exposed. See [worktree setup](install.md#work-on-another-branch-in-a-worktree).
 
 Only `apply` and `recover-workspace` mutate files. Keep client approval enabled
 for both. Source queries, schemas, proposals and status checks are read-only.
