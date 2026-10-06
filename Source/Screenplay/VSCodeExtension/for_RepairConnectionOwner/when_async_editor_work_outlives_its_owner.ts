@@ -18,6 +18,7 @@ interface SessionMock {
     discover: ReturnType<typeof vi.fn<() => Promise<Discovery>>>;
     preview: ReturnType<typeof vi.fn<() => Promise<{ token: string; files: object[] }>>>;
     apply: ReturnType<typeof vi.fn<() => Promise<void>>>;
+    inspectState: ReturnType<typeof vi.fn<() => Promise<Record<string, unknown>>>>;
     trace: ReturnType<typeof vi.fn>;
 }
 interface WatchMock { changed: () => void; failed: (failure: RepairFailure) => void; dispose: ReturnType<typeof vi.fn<() => void>>; }
@@ -266,7 +267,7 @@ for (const unknown of [false, true]) it(`blocks replacement until retiring dispa
 
 async function unknownApply(): Promise<SessionMock> {
     await invoke('refresh'); host.warnings.mockResolvedValue('Propose and preview'); await invoke('preview', 'choice');
-    const old = host.sessions[0];
+    const old = host.sessions.at(-1)!;
     old.apply.mockImplementation(async () => { old.applyDispatched = true; old.recoveryRequired = true; throw new RepairFailure('ApplyOutcomeUnknown', 'unknown'); });
     host.warnings.mockResolvedValue('Apply'); await invoke('apply');
     return old;
@@ -342,6 +343,33 @@ it('consented resume disposes retained authority, connects fresh on the next act
     await invoke('apply', 'private-review'); // Even a direct old review token grants no authority on the new connection.
     expect(fresh.apply).not.toHaveBeenCalled(); expect(old.apply).toHaveBeenCalledTimes(1);
     expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('UnauthorizedApply'))).toBe(true);
+});
+it('requires a new inspection after resumed repairs produce a second uncertain Apply', async () => {
+    const first = await unknownApply(); await invoke('inspectState');
+    host.warnings.mockResolvedValue('Resume repairs'); await invoke('resume');
+    const second = await unknownApply();
+    expect(second).not.toBe(first); expect(first.dispose).toHaveBeenCalledTimes(1);
+    host.warnings.mockClear(); host.warnings.mockResolvedValue('Resume repairs'); await invoke('resume');
+    expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('InspectionRequired'))).toBe(true);
+    expect(second.dispose).not.toHaveBeenCalled();
+    await invoke('inspectState'); await invoke('resume');
+    expect(second.dispose).toHaveBeenCalledTimes(1);
+    expect(first.apply).toHaveBeenCalledTimes(1); expect(second.apply).toHaveBeenCalledTimes(1);
+});
+it('does not transfer a still-running inspection to a replacement recovery', async () => {
+    const first = await unknownApply(); await invoke('inspectState');
+    const gate = deferred<Record<string, unknown>>(); first.inspectState.mockReturnValueOnce(gate.promise);
+    const pending = invoke('inspectState'); await tick();
+    expect(first.inspectState).toHaveBeenCalledTimes(2);
+    host.warnings.mockResolvedValue('Resume repairs'); await invoke('resume');
+    const second = await unknownApply();
+    gate.resolve({ recovery: { old: true } }); await pending;
+    expect(host.inspected).toHaveLength(1); // The obsolete result is not even shown for recovery 2.
+    host.warnings.mockClear(); host.warnings.mockResolvedValue('Resume repairs'); await invoke('resume');
+    expect(host.warnings.mock.calls.some(call => String(call[0]).startsWith('InspectionRequired'))).toBe(true);
+    expect(second.dispose).not.toHaveBeenCalled(); expect(second.inspectState).not.toHaveBeenCalled();
+    await invoke('inspectState'); await invoke('resume');
+    expect(second.dispose).toHaveBeenCalledTimes(1);
 });
 it('refuses resume when the retained physical root was replaced, even after an earlier successful inspection', async () => {
     const old = await unknownApply(); await invoke('inspectState'); host.replaced.add(host.root);
