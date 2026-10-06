@@ -145,7 +145,17 @@ internal sealed partial class McpWorkspaces
                 case ReplaceWorkspaceDocument replace:
                     var entry = index.Entries.Single(item => item.Handle.Document == replace.Document && item.Handle.Path.Length == 0);
                     var original = workspace.Documents.Single(document => document.Id == replace.Document);
-                    nodes.Add(new ReplaceWorkspaceNode(entry.Handle, entry.Node, Parse(WorkspaceDocument.Create(original.Id, original.StableKey, original.Path, replace.Bytes.AsSpan()), placements[original.Path.Value])));
+                    var syntax = Parse(WorkspaceDocument.Create(original.Id, original.StableKey, original.Path, replace.Bytes.AsSpan()), placements[original.Path.Value]);
+                    if (original.Path.Value == PlayFileWriter.RootFileName)
+                    {
+                        // The root's imported declarations and comments have been redistributed across
+                        // documents. Do not restore its old import comments onto generated imports as well.
+                        documents.Add(new ReplaceWorkspaceSyntaxDocument(original.Id, syntax));
+                    }
+                    else
+                    {
+                        nodes.Add(new ReplaceWorkspaceNode(entry.Handle, entry.Node, syntax));
+                    }
                     break;
                 case AddWorkspaceDocument add:
                     var document = WorkspaceDocument.Create(add.StableKey, add.Path, add.Bytes.AsSpan());
