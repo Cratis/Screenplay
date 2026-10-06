@@ -212,7 +212,9 @@ internal static partial class SemanticModelRead
         return new(eventContract, requirementId!);
     }
 
-    internal static SemanticProperty Property(ref Utf8JsonReader reader)
+    internal static SemanticProperty Property(ref Utf8JsonReader reader) => Property(ref reader, 0);
+
+    internal static SemanticProperty Property(ref Utf8JsonReader reader, uint commandSchemaVersion)
     {
         Object(ref reader, "property");
         var seen = NewSeen();
@@ -220,6 +222,7 @@ internal static partial class SemanticModelRead
         string? name = null;
         SemanticTypeReference? type = null;
         bool? identifier = null;
+        var generated = false;
         while (NextProperty(ref reader, seen, "property") is { } property)
         {
             switch (property)
@@ -228,12 +231,16 @@ internal static partial class SemanticModelRead
                 case "name": name = String(ref reader, property); break;
                 case "type": RequiredToken(ref reader, JsonTokenType.StartObject, property); type = TypeReference(ref reader); break;
                 case "identifier": identifier = Boolean(ref reader, property); break;
+                case "generated" when commandSchemaVersion >= 7:
+                    generated = Boolean(ref reader, property);
+                    if (!generated) throw Malformed("property", "generated may only be true when present");
+                    break;
                 default: throw Unknown(property, "property");
             }
         }
 
         Required(id.IsSet && name is not null && type is not null && identifier is not null, "property");
-        return new(id, name!, type!, identifier!.Value);
+        return new(id, name!, type!, identifier!.Value) { IsGenerated = generated };
     }
 
     internal static SemanticTypeReference TypeReference(ref Utf8JsonReader reader)
@@ -382,25 +389,27 @@ internal static partial class SemanticModelRead
         ImmutableArray<SemanticRequirement> requirements = [];
         SemanticStateChangeDestination? destination = null;
         SemanticAuthorization? authorization = null;
+        SemanticCommandResponse? response = null;
         while (NextProperty(ref reader, seen, "command") is { } property)
         {
             switch (property)
             {
                 case "id": id = SemanticId.Parse(String(ref reader, property)); break;
                 case "name": name = String(ref reader, property); break;
-                case "properties": properties = Array(ref reader, Property, property); break;
+                case "properties": properties = Array(ref reader, (ref Utf8JsonReader item) => Property(ref item, schemaVersion), property); break;
                 case "validations": validations = Array(ref reader, Validation, property); break;
                 case "codeValidations": codeValidations = Array(ref reader, CodeValidation, property); break;
                 case "produces": produces = Array(ref reader, (ref Utf8JsonReader item) => ProducedEvent(ref item, schemaVersion, false), property); break;
                 case "requirements": requirements = Array(ref reader, Requirement, property); break;
                 case "authorization": RequiredToken(ref reader, JsonTokenType.StartObject, property); authorization = Authorization(ref reader); break;
                 case "destination": RequiredToken(ref reader, JsonTokenType.StartObject, property); destination = StateChangeDestination(ref reader); break;
+                case "response" when schemaVersion >= 7: RequiredToken(ref reader, JsonTokenType.StartObject, property); response = Response(ref reader); break;
                 default: throw Unknown(property, "command");
             }
         }
 
         Required(id.IsSet && name is not null && !properties.IsDefault && !validations.IsDefault && !produces.IsDefault, "command");
-        return new(id, name!, properties, validations, produces) { CodeValidations = codeValidations, Requirements = requirements, Destination = destination, Authorization = authorization };
+        return new(id, name!, properties, validations, produces) { CodeValidations = codeValidations, Requirements = requirements, Destination = destination, Authorization = authorization, Response = response };
     }
 
     internal static SemanticCodeValidation CodeValidation(ref Utf8JsonReader reader)
@@ -620,6 +629,7 @@ internal static partial class SemanticModelRead
         ImmutableArray<SemanticSpecificationError> thenErrors = default;
         SemanticCaller? caller = null;
         var thenDenied = false;
+        SemanticSpecificationResponse? thenReturns = null;
         var automation = new AutomationSpecification();
         while (NextProperty(ref reader, seen, "specification") is { } property)
         {
@@ -630,7 +640,7 @@ internal static partial class SemanticModelRead
                 case "givenEvents": givenEvents = Array(ref reader, SpecificationEvent, property); break;
                 case "givenReadModels": givenReadModels = Array(ref reader, SpecificationReadModel, property); break;
                 case "givenCaller": RequiredToken(ref reader, JsonTokenType.StartObject, property); caller = Caller(ref reader); break;
-                case "when": RequiredToken(ref reader, JsonTokenType.StartObject, property); when = SpecificationCommand(ref reader); break;
+                case "when": RequiredToken(ref reader, JsonTokenType.StartObject, property); when = SpecificationCommand(ref reader, schemaVersion); break;
                 case "whenAppended": RequiredToken(ref reader, JsonTokenType.StartObject, property); whenAppended = SpecificationAppend(ref reader); break;
                 case "thenEventsInAnyOrder": thenEventsInAnyOrder = Boolean(ref reader, property); if (!thenEventsInAnyOrder) throw Malformed("specification", "thenEventsInAnyOrder may only be true when present"); break;
                 case "thenEvents": thenEvents = Array(ref reader, SpecificationEvent, property); break;
@@ -639,6 +649,7 @@ internal static partial class SemanticModelRead
                 case "thenQueries": thenQueries = Array(ref reader, SpecificationQuery, property); break;
                 case "thenErrors": thenErrors = Array(ref reader, SpecificationError, property); break;
                 case "thenDenied": thenDenied = Boolean(ref reader, property); if (!thenDenied) throw Malformed("specification", "thenDenied may only be true when present"); break;
+                case "thenReturns" when schemaVersion >= 7: RequiredToken(ref reader, JsonTokenType.StartObject, property); thenReturns = ThenReturns(ref reader); break;
                 case "givenClock" or "givenCaptures" or "whenClock" or "whenTrigger" or "whenCapture" when schemaVersion >= 6: automation.Read(ref reader, property); break;
                 default: throw Unknown(property, "specification");
             }
@@ -652,6 +663,7 @@ internal static partial class SemanticModelRead
         {
             GivenCaller = caller,
             ThenDenied = thenDenied,
+            ThenReturns = thenReturns,
             WhenAppended = whenAppended,
             ThenEventsInAnyOrder = thenEventsInAnyOrder,
             ThenAbsentReadModels = schemaVersion >= 5 ? thenAbsentReadModels : [],
@@ -691,11 +703,12 @@ internal static partial class SemanticModelRead
         return new(eventContract, values) { EventSource = eventSource };
     }
 
-    internal static SemanticSpecificationCommand SpecificationCommand(ref Utf8JsonReader reader)
+    internal static SemanticSpecificationCommand SpecificationCommand(ref Utf8JsonReader reader, uint schemaVersion)
     {
         var seen = NewSeen();
         SemanticId command = default;
         ImmutableArray<SemanticPropertyValue> values = default;
+        ImmutableArray<SemanticPropertyValue> generatedValues = [];
         SemanticEventSourceIdentity? eventSource = null;
         while (NextProperty(ref reader, seen, "specification command") is { } property)
         {
@@ -704,12 +717,16 @@ internal static partial class SemanticModelRead
                 case "command": command = SemanticId.Parse(String(ref reader, property)); break;
                 case "values": values = Array(ref reader, PropertyValue, property); break;
                 case "eventSource": RequiredToken(ref reader, JsonTokenType.StartObject, property); eventSource = EventSource(ref reader); break;
+                case "generatedValues" when schemaVersion >= 7:
+                    generatedValues = Array(ref reader, PropertyValue, property);
+                    Required(!generatedValues.IsEmpty, "generated values");
+                    break;
                 default: throw Unknown(property, "specification command");
             }
         }
 
         Required(command.IsSet && !values.IsDefault, "specification command");
-        return new(command, values) { EventSource = eventSource };
+        return new(command, values) { EventSource = eventSource, GeneratedValues = generatedValues };
     }
 
     internal static SemanticSpecificationReadModel SpecificationReadModel(ref Utf8JsonReader reader)

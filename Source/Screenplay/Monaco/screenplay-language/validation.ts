@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes, legacyOptionalTypeLength } from '@cratis/screenplay-compiler';
-import { AnalysisDiagnostic, responseAnalysis, responseAvailability } from './response-analysis';
+import { AnalysisDiagnostic, responseAnalysis } from './response-analysis';
 import { validateInlineEvents } from './inline-event-validation';
 import { causedByProperties, contextRoots, identityProperties, primitiveTypes, sliceTypes } from './language';
 import { DiagnosticCode, diagnosticCodes } from './diagnostic-codes';
@@ -167,17 +167,6 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
         const line = diagnostic.location.line - 1;
         const length = legacyOptionalTypeLength(lines[line], diagnostic) || lines[line].length - diagnostic.location.column + 1;
         issues.push(issue(diagnostic.severity, line, diagnostic.location.column, length, diagnostic.message, diagnostic.code as DiagnosticCode));
-    }
-
-    for (const command of analysis.commands.values()) {
-        for (const property of command.properties.filter(property => property.isGenerated)) {
-            issues.push(issue('information', property.location.line - 1, property.location.column, property.name.length, `Generated value '${property.name}' is not a request or form input. ${responseAvailability}`, diagnosticCodes.unavailableResponseExecution));
-        }
-        if (command.response) issues.push(issue('information', command.response.location.line - 1, command.response.location.column, 7, responseAvailability, diagnosticCodes.unavailableResponseExecution));
-    }
-    for (const specification of analysis.specifications.values()) {
-        for (const fixture of specification.when?.generatedValues ?? []) issues.push(issue('information', fixture.location.line - 1, fixture.location.column, 9, responseAvailability, diagnosticCodes.unavailableResponseExecution));
-        if (specification.thenReturns) issues.push(issue('information', specification.thenReturns.location.line - 1, specification.thenReturns.location.column, 12, responseAvailability, diagnosticCodes.unavailableResponseExecution));
     }
 
     const checkEvent = (line: number, text: string, name: string) => {

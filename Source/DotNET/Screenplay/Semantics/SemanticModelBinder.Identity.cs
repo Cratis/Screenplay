@@ -10,8 +10,13 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
-        SemanticProperty BindProperty(SemanticAddress owner, PropertySyntax property, bool isIdentifier)
+        SemanticProperty BindProperty(SemanticAddress owner, PropertySyntax property, bool isIdentifier, bool commandProperty = false)
         {
+            if (property.IsGenerated && !commandProperty)
+            {
+                Error(DiagnosticCodes.GeneratedPropertyOutsideCommand, "Generated properties can only be declared on commands.", property.Location);
+            }
+
             var address = SemanticAddress.ForProperty(owner, property.Name);
             var id = Resolve(address, property.Location);
             return new(id, property.Name, BindTypeReference(property.Type), isIdentifier);
@@ -19,6 +24,11 @@ public sealed partial class SemanticModelBinder
 
         SemanticProperty BindEventProperty(SemanticAddress owner, EventContractRevision revision, PropertySyntax property)
         {
+            if (property.IsGenerated)
+            {
+                Error(DiagnosticCodes.GeneratedPropertyOutsideCommand, "Generated properties can only be declared on commands.", property.Location);
+            }
+
             var address = SemanticAddress.ForEventProperty(owner, revision, property.Name);
             return new(Resolve(address, property.Location), property.Name, BindTypeReference(property.Type), false);
         }

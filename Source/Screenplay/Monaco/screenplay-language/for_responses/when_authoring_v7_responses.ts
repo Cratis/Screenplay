@@ -21,7 +21,7 @@ const labels = (source: string[], before: string) => {
     return plan.kind === 'entries' ? plan.entries.map(entry => entry.label) : [];
 };
 
-describe('when authoring syntax-only responses', () => {
+describe('when authoring ESM v7 responses', () => {
     it('should parse the complete documentation fixture without syntax errors', () => expect(parse(fixture).diagnostics).toEqual([]));
     it('should index generated properties but not response fields as request properties', () => {
         const command = scanDocument(lines).commands[0];
@@ -58,16 +58,14 @@ describe('when authoring syntax-only responses', () => {
         const source = ['concept Id : Uuid', 'command C', '  id Id generated identifier', '  name String', 'form F for C'];
         expect(labels(source, '  field ')).toEqual(['name']);
     });
-    it('should disclose unavailable execution without treating valid syntax as invalid', () => {
-        const issues = validateLines(lines);
-        expect(issues.every(issue => issue.severity === 'information' && issue.code === 'PLAY0268')).toBe(true);
-        expect(issues.length).toBeGreaterThan(4);
+    it('should not report unadmitted execution for ESM v7 responses and generated values', () => {
+        expect(validateLines(lines)).toEqual([]);
     });
     it('should show inferred response types and generated-not-input status', () => {
         const line = lines.findIndex(line => line.trim() === 'projectId = projectId');
         expect(hoverContent(lines, line, 'projectId', 11, 20)).toContain('ProjectId (inferred)');
         expect(hoverContent(lines, line, 'projectId', 11, 20)).toContain('not request input');
-        expect(hoverContent(lines, line, 'projectId', 11, 20)).toContain('not admitted by any supported executable model (ESM) version yet (PLAY0268) (#300/#303)');
+        expect(hoverContent(lines, line, 'projectId', 11, 20)).toContain('Executable as ESM v7');
     });
     it('should preserve local returns ambiguity and escaped names in reordered declarations', () => {
         const source = ['concept lower : String', 'command C', '  returns lower', '  generated String', '  @returns String', '  lower lower'];
@@ -81,6 +79,8 @@ describe('when authoring syntax-only responses', () => {
         const source = ['concept Id : Uuid', 'command C', '  id Id generated identifier', '  receipt Id generated', '  name String'];
         expect(labels(source, '  returns ')).toEqual(['id', 'receipt', 'name']);
         expect(labels(source, '  other Id ')).toContain('generated');
+        const modifiers = responseCompletions([...source, '  other Id '], source.length, '  other Id ', scanDocument(source));
+        expect(modifiers?.find(entry => entry.label === 'generated')?.documentation).toContain('no validation rules');
         expect(labels(source, '  other Uuid ')).not.toContain('generated');
         expect(labels([...source, '  returns'], '    ')).toEqual(['id', 'receipt', 'name']);
         expect(labels([...source, '  returns'], '    result = ')).toEqual(['id', 'receipt', 'name']);
@@ -216,7 +216,7 @@ describe('when authoring syntax-only responses', () => {
         for (const explicit of [false, true]) {
             const source = ['command C', `  value ${declared}`, '  returns', `    result ${explicit ? `${declared} ` : ''}= value`, 'specification S', '  when C', '  then returns', '    '];
             const completion = responseCompletions(source, 7, source[7], scanDocument(source));
-            expect(completion?.[0].documentation).toBe(`${rendered}. Syntax-only; not admitted by any supported executable model (ESM) version yet (PLAY0268) (#300/#303). No response type is emitted.`);
+            expect(completion?.[0].documentation).toBe(`${rendered}. Executable as ESM v7. Generated values require fixtures in reference execution; other unadmitted constructs still prevent binding.`);
             expect(hoverContent(source, 3, 'result', 5, 11)).toContain(`${rendered} (${explicit ? 'explicit' : 'inferred'})`);
         }
     });

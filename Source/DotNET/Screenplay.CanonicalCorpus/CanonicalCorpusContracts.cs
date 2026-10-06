@@ -101,6 +101,12 @@ public sealed record CanonicalCorpusSpecificationExpectation
     /// Gets the expected resulting fact-world size, when specified.
     /// </summary>
     public int? WorldFactCount { get; init; }
+
+    /// <summary>
+    /// Gets the expected response as canonical JSON text, or <see langword="null"/> when no response exists.
+    /// Record fields retain response contract order; values use the canonical semantic value encoding.
+    /// </summary>
+    public string? Response { get; init; }
 }
 
 /// <summary>

@@ -208,6 +208,12 @@ public sealed record SemanticExecutionRequest(
     ImmutableDictionary<SemanticId, SemanticValue> AllocatedIdentities)
 {
     /// <summary>
+    /// Gets deterministic fixtures for generated command properties, validated only when generation is reached.
+    /// Default or empty means that no fixtures were supplied.
+    /// </summary>
+    public ImmutableArray<SemanticPropertyValue> GeneratedValues { get; init; } = [];
+
+    /// <summary>
     /// Gets a value indicating that the request runs queries without a command.
     /// </summary>
     public bool IsReadOnly { get; init; }
@@ -271,7 +277,14 @@ public abstract record SemanticExecutionResult(SemanticExecutionOutcomeKind Kind
 public sealed record SemanticAccepted(
     SemanticWorld World,
     ImmutableArray<SemanticFact> Facts,
-    ImmutableArray<SemanticQueryResult> Queries) : SemanticExecutionResult(SemanticExecutionOutcomeKind.Accepted, World);
+    ImmutableArray<SemanticQueryResult> Queries) : SemanticExecutionResult(SemanticExecutionOutcomeKind.Accepted, World)
+{
+    /// <summary>
+    /// Gets the initiating command's response; null means no response, not a semantic null response.
+    /// World establishment and read-only execution have no command response.
+    /// </summary>
+    public SemanticExecutionResponse? Response { get; init; }
+}
 
 /// <summary>
 /// Describes one failed validation rule or requirement, including its presentation severity.

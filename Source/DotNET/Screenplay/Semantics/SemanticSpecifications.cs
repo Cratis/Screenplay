@@ -41,6 +41,11 @@ public sealed record SemanticSpecificationCommand(
     ImmutableArray<SemanticPropertyValue> Values)
 {
     /// <summary>
+    /// Gets generation fixtures, separate from request inputs; missing fixtures are permitted.
+    /// </summary>
+    public ImmutableArray<SemanticPropertyValue> GeneratedValues { get; init; } = [];
+
+    /// <summary>
     /// Gets the exact typed state-change destination asserted for this command occurrence; <see langword="null"/> means no modeled default is applicable under legacy semantic-v1 behavior.
     /// </summary>
     public SemanticEventSourceIdentity? EventSource { get; init; }
@@ -117,6 +122,11 @@ public sealed record SemanticSpecification(
 {
     /// <summary>Gets the explicit caller fixture, or null when no identity context was given.</summary>
     public SemanticCaller? GivenCaller { get; init; }
+
+    /// <summary>
+    /// Gets the response expectation, or null when no return assertion was authored.
+    /// </summary>
+    public SemanticSpecificationResponse? ThenReturns { get; init; }
 
     /// <summary>Gets whether an authorization denial, rather than a validation error, is asserted.</summary>
     public bool ThenDenied { get; init; }

@@ -77,7 +77,7 @@ function routeDetails(command: CommandSyntax): string {
 function detailsOf(command: CommandSyntax): string {
     const generated = command.properties.filter(property => property.isGenerated);
     if (generated.length === 0 && command.response == null) return command.description ?? '';
-    const sections = [command.description ?? '', 'Syntax-only: not admitted by any supported executable model (ESM) version yet (PLAY0268) (#300/#303).'];
+    const sections = [command.description ?? '', 'Generated values and responses: executable as ESM v7. Generated values require fixtures in reference execution; other unadmitted constructs still prevent binding.'];
     if (generated.length > 0) sections.push(`Generated values (not request inputs)\n${generated.map(property => `${property.name}: ${property.type.name}${property.isIdentifier ? ' (identifier)' : ''}`).join('\n')}`);
     const response = command.response;
     if (response?.kind === 'ScalarCommandResponseSyntax') sections.push(`Returns\n${response.source.property}`);

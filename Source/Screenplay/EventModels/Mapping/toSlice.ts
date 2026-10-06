@@ -48,7 +48,7 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
             parameters: [query.by, ...query.filters].filter(parameter => parameter !== null).map(parameter => parameterOf(parameter, owners)),
         }) satisfies QueryItemDocument),
         actors: toUserExperience(slice.screens, scope.path, audience),
-        specifications: toSpecifications(slice.specifications, scope, owners, command?.id, slice.type === 'StateChange'),
+        specifications: toSpecifications(slice.specifications, scope, owners, command?.id),
         commentCount: 0,
     };
     if (command !== undefined) {

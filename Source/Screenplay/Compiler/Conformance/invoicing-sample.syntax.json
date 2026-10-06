@@ -11,6 +11,13 @@
     {
       "kind": "ConceptSyntax",
       "attributes": [],
+      "name": "InvoiceReceiptId",
+      "type": "Uuid",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
       "name": "CustomerId",
       "type": "Uuid",
       "values": []
@@ -215,6 +222,7 @@
     "kind": "DomainSyntax",
     "name": "Acme.Invoicing"
   },
+  "eventSources": [],
   "fileImports": [],
   "imports": [
     {
@@ -415,6 +423,8 @@
                         }
                       ],
                       "response": null,
+                      "stream": null,
+                      "streamCandidates": [],
                       "validations": [
                         {
                           "kind": "DeclarativeValidateSyntax",
@@ -568,6 +578,20 @@
                     {
                       "kind": "SpecificationSyntax",
                       "given": [],
+                      "givenCaller": {
+                        "kind": "SpecificationCallerSyntax",
+                        "authenticated": true,
+                        "claims": [
+                          {
+                            "kind": "SpecificationCallerClaimSyntax",
+                            "type": "department",
+                            "value": "Finance"
+                          }
+                        ],
+                        "roles": [
+                          "Accountant"
+                        ]
+                      },
                       "givenCaptures": [],
                       "givenClock": null,
                       "givenOperationFailures": [],
@@ -660,6 +684,20 @@
                     {
                       "kind": "SpecificationSyntax",
                       "given": [],
+                      "givenCaller": {
+                        "kind": "SpecificationCallerSyntax",
+                        "authenticated": true,
+                        "claims": [
+                          {
+                            "kind": "SpecificationCallerClaimSyntax",
+                            "type": "department",
+                            "value": "Finance"
+                          }
+                        ],
+                        "roles": [
+                          "Accountant"
+                        ]
+                      },
                       "givenCaptures": [],
                       "givenClock": null,
                       "givenOperationFailures": [],
@@ -761,6 +799,20 @@
                     {
                       "kind": "SpecificationSyntax",
                       "given": [],
+                      "givenCaller": {
+                        "kind": "SpecificationCallerSyntax",
+                        "authenticated": true,
+                        "claims": [
+                          {
+                            "kind": "SpecificationCallerClaimSyntax",
+                            "type": "department",
+                            "value": "Finance"
+                          }
+                        ],
+                        "roles": [
+                          "Accountant"
+                        ]
+                      },
                       "givenCaptures": [],
                       "givenClock": null,
                       "givenOperationFailures": [],
@@ -961,6 +1013,8 @@
                         }
                       ],
                       "response": null,
+                      "stream": null,
+                      "streamCandidates": [],
                       "validations": [
                         {
                           "kind": "DeclarativeValidateSyntax",
@@ -1135,6 +1189,20 @@
                     {
                       "kind": "SpecificationSyntax",
                       "given": [],
+                      "givenCaller": {
+                        "kind": "SpecificationCallerSyntax",
+                        "authenticated": true,
+                        "claims": [
+                          {
+                            "kind": "SpecificationCallerClaimSyntax",
+                            "type": "department",
+                            "value": "Finance"
+                          }
+                        ],
+                        "roles": [
+                          "FinanceController"
+                        ]
+                      },
                       "givenCaptures": [],
                       "givenClock": null,
                       "givenOperationFailures": [],
@@ -1236,6 +1304,20 @@
                     {
                       "kind": "SpecificationSyntax",
                       "given": [],
+                      "givenCaller": {
+                        "kind": "SpecificationCallerSyntax",
+                        "authenticated": true,
+                        "claims": [
+                          {
+                            "kind": "SpecificationCallerClaimSyntax",
+                            "type": "department",
+                            "value": "Finance"
+                          }
+                        ],
+                        "roles": [
+                          "FinanceController"
+                        ]
+                      },
                       "givenCaptures": [],
                       "givenClock": null,
                       "givenOperationFailures": [],
@@ -1305,6 +1387,25 @@
                     {
                       "kind": "SpecificationSyntax",
                       "given": [],
+                      "givenCaller": {
+                        "kind": "SpecificationCallerSyntax",
+                        "authenticated": true,
+                        "claims": [
+                          {
+                            "kind": "SpecificationCallerClaimSyntax",
+                            "type": "department",
+                            "value": "Finance"
+                          },
+                          {
+                            "kind": "SpecificationCallerClaimSyntax",
+                            "type": "seniority",
+                            "value": "junior"
+                          }
+                        ],
+                        "roles": [
+                          "Accountant"
+                        ]
+                      },
                       "givenCaptures": [],
                       "givenClock": null,
                       "givenOperationFailures": [],
@@ -1378,6 +1479,290 @@
           "isPlacement": false,
           "name": "InvoiceManagement",
           "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "CanManageInvoice"
+                    }
+                  },
+                  "description": null,
+                  "handler": null,
+                  "name": "StartInvoiceDraft",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "InvoiceDraftStarted",
+                      "for": null,
+                      "inlineEvent": {
+                        "kind": "EventSyntax",
+                        "description": null,
+                        "documentation": null,
+                        "generation": 1,
+                        "hasGenerationMarker": false,
+                        "id": null,
+                        "name": "InvoiceDraftStarted",
+                        "properties": [
+                          {
+                            "kind": "PropertySyntax",
+                            "isGenerated": false,
+                            "isIdentifier": false,
+                            "name": "customerId",
+                            "type": {
+                              "kind": "TypeRefSyntax",
+                              "isCollection": false,
+                              "isOptional": false,
+                              "name": "CustomerId"
+                            }
+                          },
+                          {
+                            "kind": "PropertySyntax",
+                            "isGenerated": false,
+                            "isIdentifier": false,
+                            "name": "receiptId",
+                            "type": {
+                              "kind": "TypeRefSyntax",
+                              "isCollection": false,
+                              "isOptional": false,
+                              "name": "InvoiceReceiptId"
+                            }
+                          }
+                        ],
+                        "tags": []
+                      },
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "customerId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "customerId"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "receiptId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "receiptId"
+                          }
+                        }
+                      ],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": true,
+                      "isIdentifier": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": true,
+                      "isIdentifier": false,
+                      "name": "receiptId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceReceiptId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "customerId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "CustomerId"
+                      }
+                    }
+                  ],
+                  "response": {
+                    "kind": "RecordCommandResponseSyntax",
+                    "fields": [
+                      {
+                        "kind": "ResponseFieldSyntax",
+                        "name": "invoiceId",
+                        "source": {
+                          "kind": "PropertyResponseSourceSyntax",
+                          "property": "invoiceId"
+                        },
+                        "type": null
+                      },
+                      {
+                        "kind": "ResponseFieldSyntax",
+                        "name": "receiptId",
+                        "source": {
+                          "kind": "PropertyResponseSourceSyntax",
+                          "property": "receiptId"
+                        },
+                        "type": {
+                          "kind": "TypeRefSyntax",
+                          "isCollection": false,
+                          "isOptional": false,
+                          "name": "InvoiceReceiptId"
+                        }
+                      }
+                    ]
+                  },
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "StartInvoiceDraft",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenActionSyntax",
+                      "command": "StartInvoiceDraft",
+                      "label": "Start invoice draft",
+                      "navigate": null
+                    }
+                  ],
+                  "name": "StartInvoiceDraftScreen"
+                }
+              ],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "StartingAnInvoiceDraft",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "InvoiceDraftStarted",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "11111111-1111-1111-1111-111111111111"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "customerId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "33333333-3333-3333-3333-333333333333"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "receiptId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "22222222-2222-2222-2222-222222222222"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": {
+                    "kind": "RecordSpecificationReturnSyntax",
+                    "fields": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "11111111-1111-1111-1111-111111111111"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "receiptId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "22222222-2222-2222-2222-222222222222"
+                        }
+                      }
+                    ]
+                  },
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "StartInvoiceDraft",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "11111111-1111-1111-1111-111111111111"
+                    },
+                    "generatedValues": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "receiptId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "22222222-2222-2222-2222-222222222222"
+                        }
+                      }
+                    ],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "customerId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "33333333-3333-3333-3333-333333333333"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            },
             {
               "kind": "SliceSyntax",
               "captures": [],
@@ -1732,6 +2117,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -2344,6 +2731,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -2572,6 +2967,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -2795,6 +3198,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -2875,6 +3286,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -2931,6 +3350,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Auditor"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -3123,7 +3550,15 @@
                       }
                     }
                   ],
-                  "response": null,
+                  "response": {
+                    "kind": "ScalarCommandResponseSyntax",
+                    "source": {
+                      "kind": "PropertyResponseSourceSyntax",
+                      "property": "invoiceId"
+                    }
+                  },
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -3331,6 +3766,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": {
                     "kind": "SpecificationClockSyntax",
@@ -3401,7 +3844,13 @@
                   "thenOperations": [],
                   "thenReadModels": [],
                   "thenResults": [],
-                  "thenReturns": null,
+                  "thenReturns": {
+                    "kind": "ScalarSpecificationReturnSyntax",
+                    "value": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                    }
+                  },
                   "when": {
                     "kind": "SpecificationCommandSyntax",
                     "commandType": "CancelInvoice",
@@ -3451,6 +3900,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -3618,6 +4075,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -3706,6 +4165,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -3773,6 +4240,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -3991,6 +4466,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -4204,6 +4681,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -4327,6 +4812,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -4380,6 +4873,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -4495,6 +4996,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -4675,6 +5178,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -4782,6 +5293,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -4896,6 +5415,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -5025,6 +5546,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -5089,6 +5618,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -5200,6 +5737,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -5313,6 +5852,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -5397,6 +5944,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -6019,6 +6574,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -6144,6 +6707,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -6975,6 +7546,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -7266,6 +7845,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -7921,6 +8508,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -8011,6 +8606,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -8244,6 +8847,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -8463,6 +9068,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -8602,6 +9215,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -8746,6 +9367,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -9106,6 +9735,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -9363,6 +10000,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -10032,6 +10677,14 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -10258,6 +10911,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -10359,6 +11020,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -11418,6 +12087,20 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "customerId",
+                        "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      }
+                    ],
+                    "roles": [
+                      "Customer"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -11582,6 +12265,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -11715,6 +12400,25 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "customerId",
+                        "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      },
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "dateOfBirth",
+                        "value": "1980-01-01"
+                      }
+                    ],
+                    "roles": [
+                      "Customer"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -11807,6 +12511,25 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "customerId",
+                        "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      },
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "dateOfBirth",
+                        "value": "1980-01-01"
+                      }
+                    ],
+                    "roles": [
+                      "Customer"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -12017,6 +12740,20 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "customerId",
+                        "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      }
+                    ],
+                    "roles": [
+                      "Customer"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -12363,6 +13100,20 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "tenant",
+                        "value": "00000000-0000-0000-0000-000000000000"
+                      }
+                    ],
+                    "roles": [
+                      "Auditor"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -12477,6 +13228,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -12696,6 +13455,20 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "tenant",
+                        "value": "00000000-0000-0000-0000-000000000000"
+                      }
+                    ],
+                    "roles": [
+                      "Auditor"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],

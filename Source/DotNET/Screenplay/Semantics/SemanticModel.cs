@@ -43,7 +43,13 @@ public enum SemanticSliceKind
 /// <param name="Name">The display name.</param>
 /// <param name="Type">The resolved type.</param>
 /// <param name="IsIdentifier">Whether the property supplies a modeled runtime identity.</param>
-public sealed record SemanticProperty(SemanticId Id, string Name, SemanticTypeReference Type, bool IsIdentifier);
+public sealed record SemanticProperty(SemanticId Id, string Name, SemanticTypeReference Type, bool IsIdentifier)
+{
+    /// <summary>
+    /// Gets whether this command property is generated after request validation.
+    /// </summary>
+    public bool IsGenerated { get; init; }
+}
 
 /// <summary>
 /// Represents a strongly typed primitive concept.

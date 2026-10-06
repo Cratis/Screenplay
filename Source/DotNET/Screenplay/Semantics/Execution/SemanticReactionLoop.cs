@@ -250,6 +250,7 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
         var command = plan.Commands[invocation.Command];
         var mappings = invocation.Mappings.ToDictionary(mapping => mapping.TargetProperty);
         var commandValues = command.Properties
+            .Where(property => !property.IsGenerated)
             .Select(property => new SemanticPropertyValue(
                 property.Id,
                 mappings.TryGetValue(property.Id, out var mapping) ? SemanticEvaluator.Evaluate(mapping.Source, root, values, occurrence) : SemanticValue.Null))
@@ -266,6 +267,8 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
             return result;
         }
 
+        // An invoked response is computed by the evaluator, but is not the initiating command's response.
+        // Invocation has no generation fixture channel; reached generation reports IdentityAllocation.
         return AcceptCommand(accepted, occurrence?.Occurred);
     }
 

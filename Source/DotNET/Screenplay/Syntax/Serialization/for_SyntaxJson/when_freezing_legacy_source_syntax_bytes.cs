@@ -28,7 +28,10 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
-            var json = SyntaxJson.Serialize(parsed);
+            // Invoicing is a living sample. Its intentional v7 additions have full shared conformance
+            // vectors; remove only those additions here so the pre-v7 native bytes stay frozen.
+            var legacy = name == "invoicing-sample" || name == "invoicing-editor-sample" ? WithoutV7SampleAdditions(parsed) : parsed;
+            var json = SyntaxJson.Serialize(legacy);
             var text = WithoutRuleIntent(json, json.GetRawText())
                 .Replace(",\"eventSources\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"stream\":null", string.Empty, StringComparison.Ordinal)
@@ -48,6 +51,22 @@ public class when_freezing_legacy_source_syntax_bytes
         count.ShouldEqual(16);
         Assert.False(initializing, "Review the new protected bytes and rerun without SCREENPLAY_INITIALIZE_LEGACY_SYNTAX_BYTES. Existing baselines are never overwritten.");
     }
+
+    static ApplicationSyntax WithoutV7SampleAdditions(ApplicationSyntax application) => application with
+    {
+        Concepts = application.Concepts.Where(concept => concept.Name != "InvoiceReceiptId"),
+        Modules = application.Modules.Select(module => module with
+        {
+            Features = module.Features.Select(feature => feature.Name == "InvoiceManagement" ? feature with
+            {
+                Slices = feature.Slices.Where(slice => slice.Name != "StartInvoiceDraft").Select(slice => slice.Name == "CancelInvoice" ? slice with
+                {
+                    Commands = slice.Commands.Select(command => command.Name == "CancelInvoice" ? command with { Response = null } : command),
+                    Specifications = slice.Specifications.Select(specification => specification.Name == "CancellingAnInvoiceWithARefund" ? specification with { ThenReturns = null } : specification)
+                } : slice)
+            } : feature)
+        })
+    };
 
     // The additive rule wrapper is protected by the named-rule corpus. Project it out only for these
     // pre-intent baselines, using raw slices so every numeric token and preexisting member stays untouched.

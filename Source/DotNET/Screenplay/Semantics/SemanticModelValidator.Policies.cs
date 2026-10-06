@@ -16,6 +16,13 @@ internal static partial class SemanticModelValidator
             _ => []
         };
 
+        static bool UsesSubject(SemanticPolicyCondition condition) => condition switch
+        {
+            SemanticClaimCondition { TargetKind: SemanticClaimTargetKind.Subject } => true,
+            SemanticLogicalPolicyCondition logical => UsesSubject(logical.Left) || UsesSubject(logical.Right),
+            _ => false
+        };
+
         static void ValidatePolicyCondition(SemanticPolicyCondition? condition, bool allowOpaque = true)
         {
             switch (condition)
@@ -41,6 +48,10 @@ internal static partial class SemanticModelValidator
                 case SemanticPolicyReference reference:
                     var policy = policies.SingleOrDefault(value => value.Name == reference.Name) ??
                         throw new InvalidSemanticContract($"Authorization policy '{reference.Name}' is unresolved.");
+                    if (properties.Any(property => property.IsGenerated && property.IsIdentifier) && UsesSubject(policy.Condition))
+                    {
+                        throw new InvalidSemanticContract($"Policy '{policy.Name}' cannot reference the subject of a generated identifier before generation.");
+                    }
                     foreach (var path in ArtifactPaths(policy.Condition))
                     {
                         if (!ResolvesPolicyPath(path, properties)) throw new InvalidSemanticContract($"Policy '{policy.Name}' artifact path '{path}' is unresolved.");
@@ -60,7 +71,7 @@ internal static partial class SemanticModelValidator
             var parts = path.Split('.');
             if (parts.Any(part => part.Length == 0)) return false;
             var property = properties.SingleOrDefault(value => value.Name == parts[0]);
-            if (property is null) return false;
+            if (property?.IsGenerated != false) return false;
             foreach (var name in parts.Skip(1))
             {
                 if (property.Type.Kind != SemanticTypeReferenceKind.CompositeType || property.Type.IsCollection ||

@@ -37,7 +37,7 @@ export function responseCompletions(lines: string[], line: number, before: strin
                 const concept = symbols.concepts.find(concept => concept.name === modifier[1]);
                 if (concept?.primitive === 'Uuid') return [
                     ...('optional'.startsWith(modifier[2]) ? optionalTypeItems : []),
-                    { label: 'generated', insertText: 'generated', documentation: `Required scalar Uuid concept; not a request/form input. ${responseAvailability}` },
+                    { label: 'generated', insertText: 'generated', documentation: `Required scalar Uuid concept with no validation rules; not a request/form input. ${responseAvailability}` },
                     { label: 'generated identifier', insertText: 'generated identifier', documentation: `Specification fixture uses an indented for value. ${responseAvailability}` },
                     { label: 'identifier', insertText: 'identifier', documentation: 'Names the event source identifier.' },
                 ];

@@ -157,6 +157,7 @@ export const DiagnosticCodes = {
     LegacyOptionalSuffix: 'PLAY0479',
     InvalidOptionalModifierOrder: 'PLAY0480',
     OptionalReadsNotSupported: 'PLAY0481',
+    InvalidSpecificationCaller: 'PLAY0386',
     DuplicateSpecificationCallerOrDenied: 'PLAY0387',
     GeneratedPropertyOutsideCommand: 'PLAY0482',
     InvalidGeneratedType: 'PLAY0483',

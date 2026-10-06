@@ -30,13 +30,6 @@ module Reporting
           impact = "reassess"
 `;
 
-// The board draws a State Change slice's own command under When, and draws a specification's When on top of it
-// whenever the step has a name - so a step that names the slice's command is a second card for the same command.
-function names_the_board_draws_under_when(slice: SliceDocument): string[] {
-    const specification = slice.specifications[0];
-    return [slice.command?.name, specification.when?.name].filter((name): name is string => name !== undefined && name !== '');
-}
-
 describe('when mapping a state change specification', () => {
     let document: EventModelDocument;
     let slice: SliceDocument;
@@ -46,15 +39,19 @@ describe('when mapping a state change specification', () => {
         slice = slice_named(document, 'AssessChange');
     });
 
-    it('should show the command once under when', () => {
-        names_the_board_draws_under_when(slice).should.deep.equal(['AssessChange']);
+    it('should carry the name of the command under when so the board draws it once', () => {
+        [slice.specifications[0].when!.name, slice.command!.name].should.deep.equal(['AssessChange', 'AssessChange']);
     });
 
-    it('should still carry the literal values and the command it sets off', () => {
+    it('should carry the values and the command it sets off', () => {
         [slice.specifications[0].when!.values, slice.specifications[0].when!.commandId].should.deep.equal([
             { changeId: '3fa85f64-5717-4562-b3fc-2c963f66afa6', impact: 'reassess' },
             slice.command!.id,
         ]);
+    });
+
+    it('should carry the caller', () => {
+        slice.specifications[0].caller!.should.deep.equal({ authenticated: true, roles: [], claims: {} });
     });
 
     it('should list each given and then step once', () => {
