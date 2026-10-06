@@ -29,11 +29,11 @@ Accepted [0023](0023-command-production-model.md) allocates exact numbers to cum
 
 ## Decision
 
-The proposed contract selects exact numeric literal ingestion, representation and comparison with a single top-level `numbers exact` preamble, before domain, imports and declarations. Absence retains Legacy behavior, independently of cumulative language/ESM version. Exact literals use the normalized mathematical Decimal domain, immutable lossless syntax values, canonical fixed-point text and an explicit typed SyntaxJSON envelope. No arithmetic, coercion or persisted definition is silently migrated. An unreleased source/syntax implementation refuses semantic binding until v7 is explicitly admitted under 0004 and this detailed record is accepted.
+The proposed contract selects exact numeric literal ingestion, representation and comparison with a single top-level `numbers exact` preamble, before domain, imports and declarations. Absence retains Legacy behavior, independently of cumulative language/ESM version. Exact literals use the normalized mathematical Decimal domain, immutable lossless syntax values, canonical fixed-point text and an explicit typed SyntaxJSON envelope. No arithmetic, coercion or persisted definition is silently migrated. Phase A shipped in [#381](https://github.com/Cratis/Screenplay/pull/381): opt-in exact source parsing, syntax transport, C# printing and workspace authoring are available. Exact documents remain semantically unsupported and fail binding with PLAY0268 until this record is accepted and ESM v7 is admitted under 0004. The earlier unversioned replacement experiment remains unpublished.
 
 ### Source and physical documents
 
-Leading blank lines, comments and an initial BOM may precede the preamble. Duplicate, unknown, late and nested numeric directives are errors. A property named `numbers` remains a property in its actual owning grammar. There is no `numbers legacy` or language-version preamble.
+Leading blank lines, comments and an initial BOM may precede the preamble. Duplicate, unknown and late numeric directives are errors. Only `numbers exact` is a numeric-mode preamble; there is no explicit Legacy preamble (`numbers legacy` is an error) and no language-version preamble. In Exact documents, nested standalone `numbers`, `numbers exact` and `numbers legacy` lines are errors unless claimed as fields by their owning grammar; a property named `numbers` remains a property in its owning grammar. Recognized fenced bodies are not directives. Legacy nested-line handling remains unchanged.
 
 All application, projection, specification, capture, placement and import-discovery entry points establish immutable source options before reading numbers. Options survive typed edits, restoration, extraction, complete printing and folder expansion. Fragment printing takes the owning mode and never inserts a preamble inside a declaration.
 
@@ -41,7 +41,7 @@ Each declaration-bearing physical document independently selects a consistent mo
 
 ### Exact literal domain
 
-Scalar tokens follow the complete ASCII grammar `-?[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?`. Structured literals keep strict JSON grammar. No leading plus, hex, separators, suffixes or special values are admitted. Conditions and policies consume exponents only as complete operands; `1e20foo` and `1e3-4` remain opaque under their existing grammars.
+Scalar tokens follow the complete ASCII grammar `-?[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?`. Structured literals keep strict JSON grammar. No leading plus, hex, separators, suffixes or special values are admitted as numeric literals; owning grammars may keep such spellings as opaque operands. Conditions and policies consume exponents only as complete operands; `1e20foo` and `1e3-4` remain opaque under their existing grammars.
 
 After removing insignificant zeros, the unsigned coefficient is at most `79228162514264337593543950335` and scale is 0–28. Int64 may be a storage optimization, never a separate identity or whole-number language limit. `9007199254740993`, integers above Int64 maximum, `1e-28` and representable trailing-zero/exponent forms are admitted. `1e-29`, `1e29`, `1e308`, maximum-plus-one and unrepresentable fractions are refused. Successful `Decimal.TryParse` is not proof of exactness. A recognized complete number never falls back to Double or successful opaque syntax after refusal.
 
@@ -51,17 +51,17 @@ Scanning is bounded by input length. Normalize digit counts and exponents before
 
 `LiteralExpressionSyntax.Value` remains an object. New exact values carry an immutable `ExactNumber` tag and canonical text; TypeScript represents them as a discriminated canonical-string value, never `Number`. Source structured values are read recursively from original numeric tokens before floating-point conversion. Objects merely containing `literalType` and `value` remain business payloads.
 
-A typed literal slot encodes an exact value as `{"literalType":"ExactNumber","value":"9007199254740993"}`. The decoder requires canonical, bounded text. Ordinary SyntaxJSON numeric tokens remain Double everywhere, including Exact roots; inserting them into Exact source is refused rather than silently cast. Existing programmatic Int32/Int64/Decimal/Single envelopes retain their Legacy contracts and require deliberate exact conversion for Exact authoring. Exact tags do not implicitly opt Legacy roots in.
+A typed literal slot encodes an exact value as `{"literalType":"ExactNumber","value":"9007199254740993"}`. The decoder requires canonical, bounded text. Ordinary JSON numbers in literal-value slots retain Double interpretation and are refused in Exact source trees rather than silently cast. Structural numeric members retain their declared integer contracts. Existing programmatic Int32/Int64/Decimal/Single envelopes retain their Legacy contracts and require deliberate exact conversion for Exact authoring. Exact tags do not implicitly opt Legacy roots in.
 
-Root source options have explicit missing/default and omission rules, freezing old SyntaxJSON bytes. Unknown or malformed mode tags and incompatible programmatic values are refused at restoration, printing, editing and binding boundaries. Existing public constructors and method signatures remain; new capabilities use init properties or additive overloads.
+Source-bearing Application, Projection, Capture and Specification nodes carry `sourceOptions`. Missing options default independently to Legacy, including nested source roots; they never inherit during restoration. Writers omit Legacy options, freezing old SyntaxJSON bytes, and emit `{"numericMode":"exact"}` for Exact. Explicit null, unknown modes, additional option members and conflicting nested modes are refused, as are incompatible programmatic values at restoration, printing, editing and binding boundaries. The TypeScript strict reader accepts complete Exact source roots only; it is not a general-purpose Legacy decoder. Existing public constructors and method signatures remain; new capabilities use init properties or additive overloads.
 
 ### Later semantic admission
 
-Phase A adds no ESM version, numeric mode field or semantic numeric variant. All Exact roots, including declaration-only programmatic roots, fail binding with a specific unsupported diagnostic. Existing v6 runtime behavior and unsupported constructs remain unchanged.
+Phase A adds no ESM numeric-mode field, ESM version or semantic numeric variant (it does add the SyntaxJSON `sourceOptions` field). All Exact roots, including declaration-only programmatic roots, fail binding with a specific unsupported diagnostic. Existing v6 runtime behavior and unsupported constructs remain unchanged.
 
-Phase B records mode independently of version: v1–v6 omit `numericMode` and reject its presence; v7+ require exactly one canonical `legacy` or `exact` root field, participating in revision computation. Exact requires at least v7; later feature activation never implies exactness. The existing Decimal semantic-number value remains sufficient. Strict readers, mode-aware binding/reference behavior and canonical/source-backed vectors precede admission.
+Phase B records mode independently of version: v1–v6 omit `numericMode` and reject its presence; v7+ require exactly one canonical `legacy` or `exact` root field, participating in revision computation. An Exact document selects at least v7 even without numeric literals. Unchanged Legacy documents retain their existing version, bytes and revision. Later features select their allocated version without selecting Exact mode. The existing Decimal semantic-number value remains sufficient. Strict readers, mode-aware binding/reference behavior and canonical/source-backed vectors precede admission.
 
-Exact literals do not promise arbitrary-precision arithmetic. Existing projection arithmetic, coercion and rounding rules remain under 0023. Exact capture guards reuse their restricted grammar with bounded complete-operand numeric parsing; their Legacy path remains unchanged. Unsupported computations do not become raw replacements that report success.
+Exact literals do not promise arbitrary-precision arithmetic. Existing projection arithmetic, coercion and rounding rules remain under 0023. Exact capture guards reuse their restricted grammar with bounded complete-operand numeric parsing; their Legacy path remains unchanged. That exact parsing replaces the current `decimal.TryParse` in `SemanticCaptureExpression.cs` and is Phase B work. Unsupported computations do not become raw replacements that report success.
 
 ## Options considered
 
@@ -75,15 +75,24 @@ Exact literals do not promise arbitrary-precision arithmetic. Existing projectio
 
 ## Default if unanswered
 
-Legacy remains the default. Existing source, programmatic numbers, SyntaxJSON, ESM bytes, revisions, arithmetic and persisted projection definitions retain their behavior. Exact source/syntax experiments remain unreleased and semantically unsupported. The cost is delayed lossless executable models, not automatic migration or silent rounding of opted-in literals.
+Legacy remains the default. Existing source, programmatic numbers, SyntaxJSON, ESM bytes, revisions, arithmetic and persisted projection definitions retain their behavior. The shipped source/syntax support remains available; executable exact-number models remain blocked. The cost is delayed lossless executable models, not automatic migration or silent rounding of opted-in literals.
 
 ## Timeline and scope
 
-The proposal applies to #285 after merged ESM v6 and through explicit v7 delivery, until superseded. Detailed acceptance is required before Phase B semantic admission; source/syntax experimentation does not claim acceptance or complete #285.
+The proposal applies to #285 after merged ESM v6 and through explicit v7 delivery, until superseded. Detailed acceptance is required before Phase B semantic admission; the shipped Phase A support does not claim acceptance or complete #285.
 
 In scope: source preamble/options, bounded literal codecs, mathematical facts, all parser entry points, recursive structured values, typed syntax transport, mode provenance, physical-file consensus, canonical source printing, diagnostics and conformance proofs.
 
-Out of scope for Phase A: ESM v7 fields/readers/revisions/runtime admission, recursive lossless MCP value-tree DTOs and editor delivery. These remain release obligations, together with explicit Stage, CLI, Studio, Generation, Arc and Chronicle admission/tracking under 0004. Dependency bumps do not prove admission. BigDecimal, general arithmetic, #319 flags and automatic persisted-projection migration are out of scope for this proposal.
+Phase A includes shared-compiler support and initial preamble highlighting. Phase B must deliver numeric-mode completion/hover, exponent highlighting, and numeric diagnostics (PLAY0508–0513) in the Monaco and VS Code editors across composite, standalone and placed documents.
+
+Until a versioned recursive lossless fixture-value contract is delivered, MCP fixture queries encountering ExactNumber values, including nested values, fail explicitly (`ExactNumberFixtureTransportUnsupported`). The new contract must distinguish exact numeric leaves from business objects, preserve canonical strings recursively, and retain Legacy-client compatibility.
+
+Out of scope for Phase A: ESM v7 fields/readers/revisions/runtime admission and the lossless MCP value-tree DTO. These remain release obligations, together with explicit Stage, CLI, Studio, Generation, Arc and Chronicle admission/tracking under 0004. Consumer tracking with explicit rejection satisfies the release obligation until each consumer admits v7; 0004 rejects lockstep releases. Dependency bumps do not prove admission. BigDecimal, general arithmetic, #319 flags and automatic persisted-projection migration are out of scope for this proposal.
+
+## Open questions for the decider
+
+- MCP lossless fixture DTO shape and compatibility strategy. Proposed default: delegated to implementation under review, versioned and additive.
+- Whether lossless MCP and editor delivery gate the v7 release. Proposed default: they do not gate v7 semantic admission; both keep explicit refusal/unsupported behavior until delivered and are tracked under #285.
 
 ## Verification
 
