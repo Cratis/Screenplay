@@ -57,7 +57,15 @@ The partition applies in every layer together. The request shape is the command'
 
 ### Phase order
 
-**Precedence is identical for every version.** v1–v6 and v7 share one order. Nothing is version-gated, so a model's outcome never depends on the admitting version beyond the constructs it uses. The order keeps the existing precedence of [`SemanticEvaluator.cs:39-75`](../Source/DotNET/Screenplay/Semantics/Execution/SemanticEvaluator.cs) and adds generation after validation and before productions:
+The common command phases retain their existing order. This decision does not change request-envelope checks, existing version-gated destination or occurrence checks, or their precedence. Generation is inserted after successful command validation and before productions.
+
+Preserved as they are today ([`SemanticEvaluator.cs`](../Source/DotNET/Screenplay/Semantics/Execution/SemanticEvaluator.cs)):
+
+- Request-envelope checks that run before authorization (`:19-37`): a read-only request carrying command values, an unknown command (`Unsupported`) and a default `Queries` collection (`Rejected(Contract)`).
+- The pre-v6 occurrence check (`:98-102`), which rejects a missing occurrence for any `$context` mapping before production conditions are tested, and the v6 and later production-time check (`:112-116`), which applies only to a production that is reached.
+- The allocated-destination checks (`:75-80`, `:136-140`), version-gated as today.
+
+For the command phases the order is, with generation added after validation and before productions:
 
 1. Authorization (`:39-58`). The artifact and `subject` are built from whatever request values were supplied, as today.
 2. Opaque-validation admission (`:60-68`): a command with an opaque validation predicate reports `Unsupported`.
@@ -68,7 +76,7 @@ The partition applies in every layer together. The request shape is the command'
 7. Response computed from complete values, after productions.
 8. Constraint and projection evaluation.
 
-Existing outcomes therefore stay as they are. A malformed request from an unauthorized caller stays `Unauthorized`. Malformed input on a command with opaque validation stays `Unsupported`. A malformed request on an authorized, admitted command is `Rejected(Contract)` before declarative validation. A request value that targets a generated property is malformed in the same sense and takes the same position.
+Existing outcomes therefore stay as they are. Here "malformed" means malformed command input values on an otherwise valid request envelope. Malformed input values from an unauthorized caller stay `Unauthorized`. Malformed input values on a command with opaque validation stay `Unsupported`. Malformed input values on an authorized, admitted command are `Rejected(Contract)` before declarative validation. A request value that targets a generated property is malformed in the same sense and takes the same position. An invalid envelope, such as a default `Queries` collection, is still refused first, even for an unauthorized caller.
 
 Nothing before step 5 may observe a generated value. A denial, an `Unsupported` admission, a contract rejection or a validation failure in steps 1 to 4 reports its own outcome and never reaches allocation.
 
@@ -94,7 +102,7 @@ A generated property, including a generated identifier, is unavailable to anythi
 - Opaque context contracts. Typed contexts for pre-generation roles publish **input-only** command shapes, mark a generated identifier subject `Unavailable` (the catalog already has that source kind, `SemanticTypedContextCatalog.cs:139-143`) and list no generated properties. A contract whose references cannot be inspected keeps the opaque `Unsupported` behavior it has today.
 - Programmatic and strict ESM validation, as above.
 
-**Diagnostics.** No new code is added. A pre-generation reference in source is `PLAY0273` (`InvalidSemanticBinding`) with an actionable message, for example: "Generated property 'Id' of command 'CreateOrder' cannot be used by authorization policy 'P'; generated values exist only after validation. Reference an input property or remove 'generated'." A deliberately unadmitted combination (for example a generated property on a concept with rules, or a cascade that would need generation) is `PLAY0268` (`UnsupportedSemanticSyntax`). `PLAY0485` (`GeneratedPropertySuppliedAsInput`) is used only when a generated property is supplied as request or form input, never for a policy or rule reference. The ESM validator and strict reader refuse a pre-generation reference in a programmatic or deserialized model through the existing malformed-contract failure (`InvalidSemanticContract`), not a source diagnostic.
+**Diagnostics.** No new code is added. A pre-generation reference in source is `PLAY0273` (`InvalidSemanticBinding`) with an actionable message, for example: "Generated property 'Id' of command 'CreateOrder' cannot be used by authorization policy 'P'; generated values exist only after validation. Reference an input property or remove 'generated'." A deliberately unadmitted combination (for example a generated property on a concept with rules, is `PLAY0268` (`UnsupportedSemanticSyntax`). Reaction invocation of a command with generated properties is admitted. Only execution that reaches generation without supplied values returns `Unsupported(IdentityAllocation)`; it is not a bind-time `PLAY0268` refusal. `PLAY0485` (`GeneratedPropertySuppliedAsInput`) is used only when a generated property is supplied as request or form input, never for a policy or rule reference. The ESM validator and strict reader refuse a pre-generation reference in a programmatic or deserialized model through the existing malformed-contract failure (`InvalidSemanticContract`), not a source diagnostic.
 
 **Positive vectors** prove the refusals are narrow: an unrelated policy on a command that has a generated property, an input-only rule or requirement on the same command, and a generated identifier on a concept without rules each bind and execute.
 
@@ -110,7 +118,7 @@ A generated property, including a generated identifier, is unavailable to anythi
 
 ### Generated identifiers
 
-A generated identifier serves as the command's destination, as a payload source and as a response source. Inline productions with an implicit destination lower to the identifier as before. A plain `produces` with no `for` keeps 0023's legacy exception and uses an allocated identity, never silently retargeted to the generated identifier; the evaluator still reads it from the allocated-identity channel ([`SemanticEvaluator.cs:123-133`](../Source/DotNET/Screenplay/Semantics/Execution/SemanticEvaluator.cs)). A command cannot combine an inline implicit destination with a plain legacy production: the existing check refuses it ([`SemanticModelBinder.Commands.cs:59-65`](../Source/DotNET/Screenplay/Semantics/SemanticModelBinder.Commands.cs), `ExplicitProducesTargetsRequired`). Authors use separate commands, and the combined form is a refusal vector. A generated property without a generated identifier is allowed. A command with a response and no productions is valid and records no facts.
+A generated identifier serves as the command's destination, as a payload source and as a response source. Inline productions with an implicit destination lower to the identifier as before. A plain `produces` with no `for` keeps 0023's legacy exception and uses an allocated identity, never silently retargeted to the generated identifier; the evaluator still reads it from the allocated-identity channel ([`SemanticEvaluator.cs:123-133`](../Source/DotNET/Screenplay/Semantics/Execution/SemanticEvaluator.cs)). A command cannot combine an inline implicit destination with a plain legacy production: the existing check refuses it ([`SemanticModelBinder.Commands.cs:59-65`](../Source/DotNET/Screenplay/Semantics/SemanticModelBinder.Commands.cs), `ExplicitProducesTargetsRequired`). Authors use separate commands, and the combined form is a refusal vector. **Acknowledged limitation.** A source specification that combines a generated identifier with a reached plain legacy allocated production cannot supply both channels (`when … for` feeds only `GeneratedValues`), so it reaches `Unsupported(IdentityAllocation)`. A direct evaluator request can supply both. No previously executable model regresses. A generated property without a generated identifier is allowed. A command with a response and no productions is valid and records no facts.
 
 **`when … for` on a command with a generated identifier.** Today `when … for` is typed from the command's destination (`SemanticModelBinder.Specifications.cs:92`, `ExecutableSemanticModel.cs:853-859`) and asserts that every fact the initiating command produced has that destination (`SemanticSpecificationRunner.cs:219-222`). For a command that has a generated identifier v7 changes this, and only for such commands:
 
@@ -134,7 +142,7 @@ A fixture's shape and its absence are separate questions. Shape (a compatible ty
 ### Reactions
 
 - A reaction-invoked command that only returns a response runs, and its response is computed and discarded.
-- A reaction-invoked command that reaches an allocation returns `Unsupported(IdentityAllocation)`. An invocation request has no fixture channel. A branch that is not reached is unaffected.
+- Reaction invocation of a command with generated properties is admitted. A reaction-invoked command that reaches generation or allocation returns `Unsupported(IdentityAllocation)`. An invocation request has no fixture channel. A branch that is not reached is unaffected.
 - Unmapped optional properties still get `Null`, as in v6. Generated properties are left out of the invocation's request values.
 - A cascade failure retains the facts accepted before the failure, as v6 does ([`SemanticExecutionContracts.cs:262`](../Source/DotNET/Screenplay/Semantics/Execution/SemanticExecutionContracts.cs); 0022). Clearing a response never implies rolling back facts. A later reaction failure after the initiating command was accepted yields a failure result with those facts and no response.
 - A reaction cascade that binds is not thereby executable. A cascade with reached generation is `Unsupported`.
@@ -157,14 +165,18 @@ All additions appear only when present. Every example below is a fragment of the
 
 **Command property: `generated`.** The command property writer (a command-specific variant of `WriteProperty`, `SemanticModelCanonicalJson.cs:178-187`) writes `generated` after `identifier`, only when true. Properties stay ordered by id. Type, event and read-model properties never write it. It is never written as `false`.
 
+A generated property is a required, non-collection reference to a declared UUID-backed concept. The binder, the programmatic model validator and the strict reader all enforce this, matching the existing source rule ([`CommandResponseValidator.cs:26-31`](../Source/DotNET/Screenplay/Parsing/CommandResponseValidator.cs), 0023). A primitive `uuid`, an optional or collection type, or a concept not backed by UUID is refused. `target` below is the concept's `sem1:` catalog address, as in the existing goldens (for example `Corpus/Reactions/v6/expected/esm-v6.json`).
+
 ```json
-{ "id": "…", "name": "Id", "type": { "kind": "primitive", "primitive": "uuid", "target": null, "collection": false, "optional": false }, "identifier": true, "generated": true }
+{ "id": "…", "name": "Id", "type": { "kind": "concept", "primitive": null, "target": "sem1:…", "collection": false, "optional": false }, "identifier": true, "generated": true }
 ```
 
 **Command: `response`.** The last member of the command object, after `destination`. Omitted when the command has no response; never `null`. `kind` is `"scalar"` or `"record"`. `type` is the existing type reference and must equal the source property's type, including collection shape and optionality. `source` is a property id of the same command.
 
+For a scalar response sourced from the generated property above, `type` is the same concept reference:
+
 ```json
-"response": { "kind": "scalar", "source": "…", "type": { "kind": "primitive", "primitive": "uuid", "target": null, "collection": false, "optional": false } }
+"response": { "kind": "scalar", "source": "…", "type": { "kind": "concept", "primitive": null, "target": "sem1:…", "collection": false, "optional": false } }
 ```
 
 ```json
@@ -230,9 +242,9 @@ Out of scope: UI continuations (D6); collections and whole-read-model responses;
 
 - *Identity.* A generated identifier as destination, payload source and response source. A generated nonidentifier without a generated identifier. A response-only command with no facts. An inline implicit destination combined with a plain legacy production in one command, as a refusal vector, and the same two forms in separate commands as acceptance vectors. A command that returns its generated identifier while a production explicitly targets another identity: `when … for` supplies the identifier fixture, the returned value equals it, the production's own expected-event destination is asserted, and no destination mismatch is reported. The same specification shape on a command without a generated identifier keeps the v6 destination assertion.
 - *Fixtures.* Fixture and type disagreement. Malformed and foreign fixture targets. UUID normalization and refusal.
-- *Phase order.* Malformed input combined with an authorization denial (stays `Unauthorized`), with an opaque validation rule (stays `Unsupported`) and on an authorized admitted command (`Rejected(Contract)`), run at v6 and v7 with identical outcomes. Authorization denial and validation failure before allocation is reached, with no `Unsupported`. Missing reached fixture giving `Unsupported(IdentityAllocation)` only after preconditions. Constraint rejection after generation with the world unchanged and no response. A scenario-query failure after acceptance keeping the accepted facts with no response, and a direct evaluator request query failure inside the atomic boundary. Projection inability reporting `Unsupported(Projection)`.
+- *Phase order.* Malformed input combined with an authorization denial (stays `Unauthorized`), with an opaque validation rule (stays `Unsupported`) and on an authorized admitted command (`Rejected(Contract)`), run at v6 and v7 with identical outcomes on a valid request envelope. A default `Queries` collection with an unauthorized caller stays `Rejected(Contract)` at every version. An unreached context-dependent production with no occurrence stays `Rejected(Contract)` before v6 and succeeds at v6 and later, unchanged by this decision. Authorization denial and validation failure before allocation is reached, with no `Unsupported`. Missing reached fixture giving `Unsupported(IdentityAllocation)` only after preconditions. Constraint rejection after generation with the world unchanged and no response. A scenario-query failure after acceptance keeping the accepted facts with no response, and a direct evaluator request query failure inside the atomic boundary. Projection inability reporting `Unsupported(Projection)`.
 - *Pre-generation references.* An inherited or composed policy, the implicit `subject` on a generated identifier, a declarative requirement, a property rule, a concept rule on a generated concept, the input-only shape in typed contexts, and programmatic and strictly deserialized models. Each is refused with the pinned diagnostic (`PLAY0273`, `PLAY0268` or the malformed-contract failure) and an actionable message. Positive vectors prove an unrelated policy, an input-only rule or requirement and a generated identifier on a rule-free concept remain usable. A generated concept with a declarative, a named and a code validation is refused for each.
-- *Canonical JSON.* The examples above as golden vectors: command property, scalar and record response, `generatedValues` including a generated identifier fixture, and scalar and record `thenReturns`. A null scalar against a record with a null field. Mandatory and omitted members, member order, field and fixture sort order, and reader rejection of every misplaced, duplicate or pre-v7 member.
+- *Canonical JSON.* The examples above as golden vectors, with the generated property and its scalar response using a UUID-backed concept reference, and refusal vectors for a primitive, optional, collection or non-UUID generated type in the binder, programmatic validator and strict reader: command property, scalar and record response, `generatedValues` including a generated identifier fixture, and scalar and record `thenReturns`. A null scalar against a record with a null field. Mandatory and omitted members, member order, field and fixture sort order, and reader rejection of every misplaced, duplicate or pre-v7 member.
 - *Evaluator channel.* `GeneratedValues` supplied malformed, foreign, mistyped or duplicate gives `Rejected(Contract)` when generation is reached and is ignored when it is not. A missing entry gives `Unsupported(IdentityAllocation)`.
 - *Responses.* No response against a null response. Scalar against record. Authored order. Duplicate, unknown and malformed fields. Optional and composite sources. Array-bearing equality. Deterministic mismatch reporting. `then returns` as the only success outcome, keeping the "no expected events" comparison, and invalid with errors or a denial.
 - *Reactions.* Unreached branches. A successful response-only invocation. A reached allocation giving `Unsupported`. Preserved unmapped-optional behavior. Facts retained after a later cascade failure with no response.
@@ -247,7 +259,7 @@ Out of scope: UI continuations (D6); collections and whole-read-model responses;
 
 Authors can write a command that creates something and returns what was created, and Stage and Arc can render and type that response once they admit v7. Specifications can pin both events and what the caller receives.
 
-Costs: v7 touches model, readers, writer, three validators, binder, typed contexts, evaluator, scenario, runner and surfaces together, so it ships as one release and not in parts. Generated values cannot be used in authorization, validation or requirements, and generated concepts cannot carry rules, until a later decision lifts that. Reaction cascades that need generation are `Unsupported`. Field names become a contract that authors must treat as one.
+Costs: v7 touches model, readers, writer, three validators, binder, typed contexts, evaluator, scenario, runner and surfaces together, so it ships as one release and not in parts. Generated values cannot be used in authorization, validation or requirements, and generated concepts cannot carry rules, until a later decision lifts that. Reaction cascades that reach generation without supplied values are `Unsupported`. Field names become a contract that authors must treat as one.
 
 ## Related issues
 

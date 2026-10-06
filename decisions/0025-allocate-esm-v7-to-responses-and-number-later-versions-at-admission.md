@@ -100,7 +100,7 @@ Out of scope: the v7 contract (0026); exact-number semantics (0024, which has be
 **Done when:**
 - `Versions.cs` selects v7 only for models using a generated property, a response, a generated fixture or a return expectation, and a model without them keeps its v1–v6 version, bytes and revision.
 - The released-version table in `interoperability.md` lists every released version with its selecting constructs, record, golden file and corpus vector, and a check fails when `Versions.cs` and the table disagree.
-- No product string, diagnostic text, documentation page, editor message, sample or readiness logic names a version number for a feature that holds no claim. `McpAuthoringReadiness` no longer encodes feature order as numbers.
+- No product string, diagnostic text, documentation page, editor message, sample or readiness logic names a version number for features that are neither released, currently claimed, nor reserved. `McpAuthoringReadiness` no longer encodes feature order as numbers.
 - 0023 carries the banner above, 0024 has been updated to use "the admitting version" and its numbering remains conditional on 0025's acceptance, and the status blocks of #285, #300, #301, #302, #303, #308 and #309 describe numbering at admission.
 
 **Verify by:** Search `Source` and `Documentation` for `ESM v(8|9|10|11)` and confirm only decision history matches. Run the golden and corpus specs for v1–v7. Run the check that compares `Versions.cs` with the interoperability table. Read 0023 after acceptance for the banner, and the listed issue status blocks. Check that the v7 pull request carries `Decision: 0004, 0023, 0025, 0026` trailers.
