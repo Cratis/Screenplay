@@ -68,7 +68,7 @@ public static class PlayImports
 
     sealed class Resolution(IPlayDocumentSource source, IScreenplayLanguageRegistry languages)
     {
-        // Found order is the order documents are returned in: roots as given, then what they import.
+        // Discovery order breaks ties between unimported roots; authored imports determine traversal order.
         readonly List<string> _found = [];
         readonly HashSet<string> _roots = new(StringComparer.Ordinal);
         readonly Dictionary<string, string> _sources = new(StringComparer.Ordinal);
