@@ -8,6 +8,30 @@ namespace Cratis.Screenplay.CanonicalCorpus;
 
 public static partial class RegisterProjectCorpus
 {
+    /// <summary>
+    /// Gets a v7 source that supplies a generated property as specification input, with no publishable artifacts.
+    /// </summary>
+    public static CanonicalCorpusRejectionVector GeneratedPropertySuppliedAsInput { get; } = new()
+    {
+        Name = "register-project/generated-property-supplied-as-input",
+        ApplicationName = "Projects",
+        ApplicationIdentity = ApplicationIdentity.Parse("app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"),
+        SourceForm = new CanonicalCorpusSourceForm
+        {
+            Name = "single",
+            Documents = [Document("register-project-vector", "RegisterProject.play", "Cratis.Screenplay.CanonicalCorpus.Corpus.RegisterProject.v7.rejected.generated-input.play")],
+            IdentityCatalogBytes = Resource("Cratis.Screenplay.CanonicalCorpus.Corpus.RegisterProject.v7.identity.single-catalog-v1.json")
+        },
+        Diagnostics =
+        [
+            new CanonicalCorpusDiagnosticExpectation
+            {
+                Code = "PLAY0485",
+                Message = "Generated property 'projectId' cannot be supplied as request or form input."
+            }
+        ]
+    };
+
     static CanonicalCorpusVector LoadV7()
     {
         const string prefix = "Cratis.Screenplay.CanonicalCorpus.Corpus.RegisterProject.v7";
