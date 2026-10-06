@@ -13,7 +13,7 @@ using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Workspaces;
 
-internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
+internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index, bool relocatesCompositionComments = false)
 {
     static readonly JsonSerializerOptions _jsonOptions = new() { MaxDepth = 256 };
 
@@ -75,7 +75,8 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
             {
                 _ruleOrigins[Resolve(entry.Handle)] = entry;
             }
-            _sourceComments[Resolve(entry.Handle)] = entry.Node.SourceComments;
+            var isComposition = entry.Node is ApplicationSyntax or ModuleSyntax or FeatureSyntax or FileImportSyntax;
+            _sourceComments[Resolve(entry.Handle)] = relocatesCompositionComments && isComposition ? [] : entry.Node.SourceComments;
             _directiveLocations[Resolve(entry.Handle)] = entry.Node.DirectiveLocations;
             if (entry.Node.ParsedAutoMapMode is { } mode)
             {

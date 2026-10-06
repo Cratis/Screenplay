@@ -67,6 +67,7 @@ internal sealed partial class McpWorkspaces
             Validation = McpJson.Enumeration(arguments, "validation", WorkspaceAuthoringValidation.Authoring),
             Formatting = McpJson.Enumeration(arguments, "formatting", WorkspaceAuthoringFormatting.PreserveExactSource),
             ReferencePolicy = McpJson.Enumeration(arguments, "referencePolicy", WorkspaceAuthoringReferencePolicy.Safe),
+            RelocatesCompositionComments = layout,
             AttachmentLoader = documents => McpAttachmentContents.Load(Root, documents)
         };
         if (request.ExpectedRevision != workspace.Revision || request.ExpectedCatalogRevision != workspace.IdentityCatalog.Revision)
