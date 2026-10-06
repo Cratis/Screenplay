@@ -15,11 +15,11 @@ Invoicing/
 
 | Persona | Holds | Sees the screens of |
 | --- | --- | --- |
-| `InvoiceManager` | `IsAuthenticated`, `IsInvoicingStaff`, `CanManageInvoice` | StartInvoiceDraft, RegisterInvoice, CancelInvoice, TagInvoice, UpdateBillingContact, InvoiceList, InvoiceDetails |
+| `InvoiceManager` | `IsAuthenticated`, `IsPerson`, `IsInvoicingStaff`, `CanManageInvoice` | StartInvoiceDraft, RegisterInvoice, CancelInvoice, TagInvoice, UpdateBillingContact, InvoiceList, InvoiceDetails |
 | `Accountant` | the above, plus `IsAccountant`, `IsFinanceDepartment` | everything the invoice manager sees, plus ChangeInvoiceStatus, ProcessInvoiceBatch, ArchiveOldInvoices, InvoiceLineReport, InvoiceDashboard, ApplyDiscount, RecordPayment, InvoiceBalances, InvoiceAging, CollectionsBoard, ExchangeRates |
-| `FinanceController` | `IsAuthenticated`, `IsInvoicingStaff`, `IsFinanceDepartment`, `CanWriteOff` | WriteOffInvoice |
-| `Customer` | `IsAuthenticated`, `IsCustomer`, `OwnsInvoice`, `IsAdultCustomer`, `IsWithinCreditLimit` | MyInvoices, RequestPaymentPlan, CreditStatus |
-| `Auditor` | `IsAuthenticated`, `IsAuditor` | CancelledInvoices, SystemActivity |
+| `FinanceController` | `IsAuthenticated`, `IsPerson`, `IsInvoicingStaff`, `IsFinanceDepartment`, `CanWriteOff` | WriteOffInvoice |
+| `Customer` | `IsAuthenticated`, `IsPerson`, `IsCustomer`, `OwnsInvoice`, `IsAdultCustomer`, `IsWithinCreditLimit` | MyInvoices, RequestPaymentPlan, CreditStatus |
+| `Auditor` | `IsAuthenticated`, `IsPerson`, `IsAuditor` | CancelledInvoices, SystemActivity |
 
 The event model board draws a slice's screens in the row of every persona whose policies satisfy what gates the
 slice: the module's `authorize`, each enclosing feature's, and the slice's command or query.
@@ -76,7 +76,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | `specification` with `file`, `given caller`, `given clock`, `given <Event> for`, `given readmodel`, `given capture`, `when <Command> for`, `when append`, `when clock`, `when trigger`, `when capture`, `when query`, `then events in any order`, `then <Event> for`, `then readmodel exactly`, `then no readmodel`, `then query` with `arguments`/`result`, `then result exactly`, `then no result`, `then error` with and without a message, `then denied` | throughout |
 | `seed` - two blocks | bottom of the file |
 
-`IsAuthenticated` also excludes the `Service` role and an `actorKind` claim matching `service`. `RejectingAServiceRegisteringAnInvoice` demonstrates a denial even when that service holds the `InvoiceManager` role.
+`IsAuthenticated` requires only authentication. The module's `IsPerson` policy also excludes the `Service` role and an `actorKind` claim matching `service`. `RejectingAServiceRegisteringAnInvoice` demonstrates a denial even when that service holds the `InvoiceManager` role.
 
 ## Specifying what is not a command
 

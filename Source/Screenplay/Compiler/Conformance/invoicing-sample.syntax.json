@@ -253,7 +253,7 @@
         "kind": "AuthorizeSyntax",
         "requirement": {
           "kind": "PolicyReferenceSyntax",
-          "name": "IsAuthenticated"
+          "name": "IsPerson"
         }
       },
       "description": "Everything related to invoicing customers.\nRegistration, lifecycle, payment tracking and collection of invoices,\nplus the self-service portal customers use to see and pay them.",
@@ -14935,6 +14935,7 @@
       "name": "InvoiceManager",
       "policies": [
         "IsAuthenticated",
+        "IsPerson",
         "IsInvoicingStaff",
         "CanManageInvoice"
       ]
@@ -14945,6 +14946,7 @@
       "name": "Accountant",
       "policies": [
         "IsAuthenticated",
+        "IsPerson",
         "IsInvoicingStaff",
         "CanManageInvoice",
         "IsAccountant",
@@ -14957,6 +14959,7 @@
       "name": "FinanceController",
       "policies": [
         "IsAuthenticated",
+        "IsPerson",
         "IsInvoicingStaff",
         "IsFinanceDepartment",
         "CanWriteOff"
@@ -14968,6 +14971,7 @@
       "name": "Customer",
       "policies": [
         "IsAuthenticated",
+        "IsPerson",
         "IsCustomer",
         "OwnsInvoice",
         "IsAdultCustomer",
@@ -14980,6 +14984,7 @@
       "name": "Auditor",
       "policies": [
         "IsAuthenticated",
+        "IsPerson",
         "IsAuditor"
       ]
     }

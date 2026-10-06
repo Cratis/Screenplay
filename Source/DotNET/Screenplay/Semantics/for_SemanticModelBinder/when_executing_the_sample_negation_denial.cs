@@ -15,7 +15,7 @@ public class when_executing_the_sample_negation_denial : given.a_semantic_binder
     void Because()
     {
         var lines = File.ReadAllLines(Path.Combine(Root(), "Samples/Invoicing/invoicing.play"));
-        var policy = string.Join('\n', lines.SkipWhile(line => line != "policy IsAuthenticated").Take(2));
+        var policy = string.Join('\n', lines.SkipWhile(line => line != "policy IsPerson").Take(2));
         var scenario = string.Join('\n', lines.SkipWhile(line => line.Trim() != "specification RejectingAServiceRegisteringAnInvoice").TakeWhile(line => line.Length > 0));
         (scenario.Length > 0).ShouldBeTrue();
         var source = $"""
@@ -26,7 +26,7 @@ public class when_executing_the_sample_negation_denial : given.a_semantic_binder
                   command RegisterInvoice
                     invoiceId Uuid identifier
                     invoiceNumber String
-                    authorize IsAuthenticated
+                    authorize IsPerson
             {scenario}
             """;
         var bound = Bind(source);
