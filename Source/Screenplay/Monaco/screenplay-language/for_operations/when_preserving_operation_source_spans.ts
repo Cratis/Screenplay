@@ -57,7 +57,7 @@ describe('when preserving operation source spans', () => {
             const symbols = { ...scanDocument(lines), authoringDocuments: [intent], authoringPath: 'current.slice.play', authoringPlacement: ['M', 'F'] };
             const entries = operationCompletions(lines, lines.length - 1, before, symbols);
             expect(entries?.map(entry => entry.label), `${target}: ${conditional}: ${mapping.text}`).toEqual(mapping.labels);
-            expect(entries?.some(entry => entry.documentation?.includes('not admitted by any supported executable model (ESM) version yet (PLAY0268)'))).toBe(true);
+            expect(entries?.some(entry => entry.documentation?.includes('not admitted by any supported executable model (ESM) version yet (PLAY0268) (#301)'))).toBe(true);
             expect(entries?.some(entry => entry.documentation?.includes('event'))).toBe(false);
             const reference = responseAnalysis(lines, [intent], ['M', 'F'], 'current.slice.play').operations.references[0];
             expect(reference.declaration?.location.path).toBe('intent.slice.play');

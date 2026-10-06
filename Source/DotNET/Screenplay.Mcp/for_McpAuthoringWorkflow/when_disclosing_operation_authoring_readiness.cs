@@ -13,6 +13,13 @@ public class when_disclosing_operation_authoring_readiness : given.an_authoring_
     void should_disclose_unadmitted_operations_for_commands_specifications_slices_and_systems()
     {
         Start(OperationSource);
+        var revision = Open().GetProperty("revision").GetString();
+        foreach (var view in new[] { "system-intents", "operation-intents" })
+        {
+            var inventory = Result("read-workspace", new { expectedRevision = revision, view });
+            inventory.GetProperty("executionReadiness").GetString().ShouldContain("(#301)");
+            inventory.GetProperty("page").GetProperty("items")[0].GetProperty("executionReadiness").GetString().ShouldContain("(#301)");
+        }
         foreach (var (address, kind) in new[] { ("Projects.F.S.C", "Command"), ("Projects.F.S.T", "Specification"), ("Projects.F.S", "Slice"), ("Mailer", "System"), ("Projects.F.S.Send", "Operation") })
         {
             var details = Result("declaration-details", new { address, kind, view = "summary" }).GetProperty("details");

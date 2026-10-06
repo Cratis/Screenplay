@@ -118,7 +118,7 @@ internal sealed partial class McpWorkspaces
             return McpJson.ToolResult(new
             {
                 workspace = McpWorkspaceTransport.Describe(workspace), view, syntaxOnly = true,
-                executionAvailable = false, executionReadiness = "Not admitted by any supported executable model (ESM) version yet (PLAY0268).",
+                executionAvailable = false, executionReadiness = "Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302).",
                 inventoryComplete = inventory.View.IsComplete,
                 authoringDiagnosticsCount = inventory.View.Diagnostics.Length,
                 authoringDiagnosticsView = "event-source-diagnostics",
@@ -168,7 +168,7 @@ internal sealed partial class McpWorkspaces
             return McpJson.ToolResult(new
             {
                 workspace = McpWorkspaceTransport.Describe(workspace), view,
-                executionAvailable = false, executionReadiness = "Not admitted by any supported executable model (ESM) version yet (PLAY0268).",
+                executionAvailable = false, executionReadiness = "Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#301).",
                 authoringDiagnosticsCount = analysis.Syntax.Diagnostics.Length,
                 unresolvedPlacementCount = analysis.Syntax.UnresolvedPlacementDocuments.Length,
                 page = McpPaging.Page(values, arguments, workspace.Revision.ToString())

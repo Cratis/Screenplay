@@ -59,7 +59,7 @@ SystemDecl     = "system", Ident, NL,
 (* Systems are application-scoped, including in placed files. They name external
    systems without provider types or abilities. Systems, operations and their
    specification steps are authoring-only: binding rejects them with PLAY0268;
-   these constructs are not admitted by any supported executable model (ESM) version yet. *)
+   these constructs are not admitted by any supported ESM version yet. *)
 
 (* -------------------------------------------------------------- *)
 (* Event sources and streams — syntax-only                         *)
@@ -747,7 +747,7 @@ OperationImplementation = "implementation", NL,
    New words are contextual, not globally reserved property names. Within an
    operation, @uses escapes an input named uses; event metadata input names
    also use @. Typed inputs named execute or compensate are not phase headers.
-   Execution, failure fixtures and compensation are not admitted by any supported executable model (ESM) version yet. *)
+   Execution, failure fixtures and compensation are not admitted by any supported ESM version yet. *)
 
 (* -------------------------------------------------------------- *)
 (* Handler                                                         *)
@@ -868,7 +868,7 @@ ReturnExpectation = "then", "returns", ConcreteValue, NL
                   | "then", "returns", NL, INDENT, ReturnField, { ReturnField }, DEDENT ;
 ReturnField    = LowerIdent, "=", ConcreteValue, NL ;
 ConcreteValue  = ? a completely consumed literal, list or object, without raw expressions ? ;
-(* Fixtures and return expectations are syntax-only, not admitted by any supported executable model (ESM) version yet.
+(* Fixtures and return expectations are syntax-only, not admitted by any supported ESM version yet.
    Generated identifiers use SpecificationEventSource, not GeneratedFixture.
    Return expectations require a command and cannot accompany errors or denial. *)
 
@@ -880,7 +880,7 @@ CompensationExpectation = "then", "compensated", QualifiedName, NL ;
 (* Failure and compensation lines are leaves. Operation assertions may be partial
    but require compatible concrete values. All three require an operation-kind
    reference and a command action; compensation must be declared. These forms
-   are syntax-only, not admitted by any supported executable model (ESM) version yet. *)
+   are syntax-only, not admitted by any supported ESM version yet. *)
 
 SpecificationThen = ReturnExpectation
                | OperationExpectation

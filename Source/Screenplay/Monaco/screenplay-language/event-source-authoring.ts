@@ -10,7 +10,7 @@ import { DocumentSymbols, symbolsForBuffer } from './symbols';
 import { responseAnalysis } from './response-analysis';
 import { typeReferenceText } from './TypeReferenceSymbol';
 
-export const eventSourceAvailability = 'Syntax-only; not admitted by any supported executable model (ESM) version yet (PLAY0268). Authored classification does not supply an identity destination. No semantic IDs or automatic identity refactors.';
+export const eventSourceAvailability = 'Syntax-only; not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302). Authored classification does not supply an identity destination. No semantic IDs or automatic identity refactors.';
 
 const routePrefix = sourceStreamPattern('^\\s*stream\\s+(?:[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)?\\.?)?$');
 const keyPrefix = sourceStreamPattern('^\\s*streamId\\s*=\\s*([\\w.]*)$');

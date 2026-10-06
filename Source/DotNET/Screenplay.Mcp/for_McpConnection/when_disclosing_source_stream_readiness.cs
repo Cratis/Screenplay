@@ -105,6 +105,25 @@ public class when_disclosing_source_stream_readiness
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
+    void should_order_unadmitted_features_independently_of_declaration_order(bool reverse)
+    {
+        var commands = new[]
+        {
+            "      command Routed\n        stream Account.Onboarding\n",
+            "      command Response\n        name String\n        returns name\n",
+            "      command Operation\n        produces Send\n"
+        };
+        var source = "system Mailer\n" + Sources + "module M\n  feature F\n    slice StateChange S\n      operation Send\n        uses Mailer\n" + string.Concat(reverse ? commands.Reverse() : commands);
+        var snapshot = new McpSnapshot([Document("model.play", source)]);
+        snapshot.Compilation.Success.ShouldBeTrue();
+        const string expected = "Not admitted by any supported executable model (ESM) version yet (PLAY0268): generated values, responses and return expectations (#300/#303), operations and systems (#301), event sources, streams and routes (#302); use Authoring validation.";
+        snapshot.Index.Readiness.ModelExecutionReadiness.ShouldEqual(expected);
+        Details(snapshot, "M.F.S", "Slice", "summary").GetProperty("executionReadiness").GetString().ShouldEqual(expected);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
     void should_preserve_imported_physical_scope_and_block_ambiguous_routing(bool reverse)
     {
         var documents = new[]
@@ -150,7 +169,7 @@ public class when_disclosing_source_stream_readiness
         {
             var details = Details(snapshot, address, kind, "summary");
             details.GetProperty("syntaxOnly").GetBoolean().ShouldBeTrue();
-            details.GetProperty("executionReadiness").GetString().ShouldEqual("Not admitted by any supported executable model (ESM) version yet (PLAY0268): event sources, streams and routes (#302), operations and systems (#301); use Authoring validation.");
+            details.GetProperty("executionReadiness").GetString().ShouldEqual("Not admitted by any supported executable model (ESM) version yet (PLAY0268): operations and systems (#301), event sources, streams and routes (#302); use Authoring validation.");
         }
     }
 

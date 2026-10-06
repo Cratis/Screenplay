@@ -21,7 +21,7 @@ describe('when mapping operation intent', () => {
         expect(slice.specifications[0].given).toEqual([]);
         expect(slice.specifications[0].thenEvents).toEqual([]);
         expect(slice.description).toBe('');
-        expect(slice.command?.logicDescription).toContain('not admitted by any supported executable model (ESM) version yet');
+        expect(slice.command?.logicDescription).toContain('not admitted by any supported executable model (ESM) version yet (PLAY0268) (#301)');
         expect(slice.command?.logicDescription).toContain('Send');
         expect(slice.command?.logicDescription).toContain('recipient');
         expect(slice.command?.logicDescription).toContain('Ada');

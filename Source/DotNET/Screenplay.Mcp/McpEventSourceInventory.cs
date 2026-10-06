@@ -47,7 +47,7 @@ sealed class McpEventSourceInventory
         id = Inline(Pin(entry)),
         description = Inline(Description(entry)),
         metadata = Metadata(entry),
-        syntaxOnly = true, executionAvailable = false, executionReadiness = "Not admitted by any supported executable model (ESM) version yet (PLAY0268). Pins are rename-only authored metadata, not semantic identities."
+        syntaxOnly = true, executionAvailable = false, executionReadiness = "Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302). Pins are rename-only authored metadata, not semantic identities."
     };
 
     internal IEnumerable<object> Details(WorkspaceSyntaxEntry entry)
@@ -77,7 +77,7 @@ sealed class McpEventSourceInventory
                 kind = "command-route", command = command.Name, scope = Scope(entry), handle = McpAstHandles.Describe(entry.Handle),
                 authoredRoute = command.Stream, ambiguousStreamCandidates = command.StreamCandidates,
                 placementResolved = View.HasResolvedPlacement(entry), inventoryComplete = View.IsComplete,
-                syntaxOnly = true, executionAvailable = false, executionReadiness = "Not admitted by any supported executable model (ESM) version yet (PLAY0268). Authored routing does not infer identity destinations."
+                syntaxOnly = true, executionAvailable = false, executionReadiness = "Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302). Authored routing does not infer identity destinations."
             };
         }
     }

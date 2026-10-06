@@ -33,6 +33,7 @@ public class when_querying_slices_without_assertions : given.a_connection
         _second = JsonSerializer.SerializeToElement(McpFixtureQueries.AssertionGaps(snapshot, 1, 1), McpJson.Options);
     }
 
+    [Fact] void should_disclose_response_assertions_as_unadmitted_with_their_tracking_issues() => _first.GetProperty("coverage").GetString().ShouldContain("version yet (#300/#303)");
     [Fact] void should_count_every_slice() => _first.GetProperty("page").GetProperty("total").GetInt32().ShouldEqual(3);
     [Fact] void should_count_only_slices_without_assertions() => _first.GetProperty("page").GetProperty("matched").GetInt32().ShouldEqual(2);
     [Fact] void should_report_more_results() => _first.GetProperty("page").GetProperty("truncated").GetBoolean().ShouldBeTrue();

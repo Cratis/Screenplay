@@ -91,7 +91,16 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
             _ => []
         };
 
-        return [.. LocalFeatures().Concat(Feature(Operations(node), "operations and systems (#301)")).Distinct(StringComparer.Ordinal)];
+        return [.. LocalFeatures().Concat(Feature(Operations(node), "operations and systems (#301)"))
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(feature => feature switch
+            {
+                "exact numbers (#285)" => 0,
+                responses => 1,
+                "operations and systems (#301)" => 2,
+                streams => 3,
+                _ => 4
+            })];
     }
 
     (CommandSyntax Command, string[] Scope)[] ActionCommands(SpecificationSyntax specification)

@@ -98,11 +98,9 @@ Event sources, streams and command routes are not admitted by any supported
 executable model (ESM) version yet (`PLAY0268`). `EventSource` declarations have application addresses;
 `EventStream` addresses include their physical source owner (for example,
 `Account.Transactions`). Command, specification and slice readiness lists every unadmitted feature when
-routes (#302), operations (#301) and generated values/responses (#300/#303) coexist,
-including dependencies on referenced commands. The JSON shape is unchanged:
-`syntaxOnly` remains a boolean and `executionReadiness` remains a nullable string.
-The readiness string now lists unadmitted features and their issue references,
-not a numeric minimum or future allocation.
+routes ([#302](https://github.com/Cratis/Screenplay/issues/302)), operations ([#301](https://github.com/Cratis/Screenplay/issues/301)) and generated values/responses ([#300](https://github.com/Cratis/Screenplay/issues/300)/[#303](https://github.com/Cratis/Screenplay/issues/303)) coexist,
+including dependencies on referenced commands. `syntaxOnly` is a boolean;
+`executionReadiness` is a nullable string that names each unadmitted feature and its tracking issue.
 Ambiguous route/property syntax remains blocking; readiness never selects a route.
 
 | Tool | Selection | Result |
@@ -224,7 +222,7 @@ occupies two offsets but one line break. Pagination remains by requirement, with
 the usual response-size limit rather than a truncated body map.
 The `typed-contexts` view pages descriptors in requirement and use-site order. Failed compilations expose only resolved command-handler shapes, explicitly `isWrapperReady: false`, with `available: false`; do not generate a wrapper from these. Each item carries requirement ID, role, context version, matching model revision (null for failed compilations), operation ID, ordered members, a transitive `types` table of concept/composite definitions, portable type (including shaped payload properties), nullability, derived status and semantic source identity/path (including literal `constantValue` and current `eventRevision` where applicable). The `implementation-requirements` view embeds only a small `typedContext: { count, operationIds }` reference, including count zero or multiple use sites; get members from `typed-contexts`. Unused policies have no wrapper-ready descriptor. Workspace and proposal views return `descriptorContractRevision: 1` and `available`; continuation requires `expectedDescriptorContractRevision: "1"` in addition to the usual workspace revision. An unknown contract revision refuses continuation. This revision is independent of `attachmentManifestRevision`, whose content-hash semantics are unchanged. Neither view exports descriptor bytes into the canonical ESM. A host must pair the sidecar and ESM from the same compilation and check provenance before rendering.
 
-The MCP server loads implementation attachments from its trusted physical root for content hashing (#244), with warnings for refused files (`PLAY0430`–`PLAY0434`). It refreshes contents on each workspace operation, including when only the attachment changes; neither attachment text nor diagnostics enter persisted identity state or workspace revisions. For a file attachment whose contents could not be supplied, the content hash is empty;
+The MCP server loads implementation attachments from its trusted physical root for content hashing ([#244](https://github.com/Cratis/Screenplay/issues/244)), with warnings for refused files (`PLAY0430`–`PLAY0434`). It refreshes contents on each workspace operation, including when only the attachment changes; neither attachment text nor diagnostics enter persisted identity state or workspace revisions. For a file attachment whose contents could not be supplied, the content hash is empty;
 bodied reducers no longer block binding. The `implementation-requirements` response includes `attachmentManifestRevision`, a deterministic hash of all requirement IDs, content hashes and resolution states. Legacy continuations (`offset > 0`) without `expectedAttachmentManifestRevision` remain valid but unpinned to attachment content. Clients can pin continuations by passing the response's revision as `expectedAttachmentManifestRevision`; when supplied, a changed manifest refuses the page with `StaleRevision`, even when `expectedRevision` is unchanged. Start again at offset zero after any refusal. Rejected compilations still expose
 attachments without admitting an executable model. Document results contain root handles. `read-ast` returns
 original occurrences, names, child counts and existing identities. Its `children`
