@@ -19,6 +19,7 @@ public static class canonical_serialization_golden_bytes
     public static byte[] SemanticModelV4 => Read(SemanticModelV4Resource);
     public static byte[] SemanticModelV5 => Read(SemanticModelV5Resource);
     public static byte[] SemanticModelV6 => Read(SemanticModelV6Resource);
+    public static byte[] SemanticModelV7 => Read("Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v7.json");
     public static byte[] IdentityCatalog => Read(IdentityCatalogResource);
 
     static byte[] Read(string name)

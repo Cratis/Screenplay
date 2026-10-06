@@ -1,8 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { parseFolder, type PlayFileSource } from '@cratis/screenplay-compiler';
-import { toEventModelDocument } from '@cratis/screenplay-event-models';
+import { type PlayFileSource } from '@cratis/screenplay-compiler';
+import { compileEventModelApplication, toEventModelDocument } from '@cratis/screenplay-event-models';
 import { applyChanges } from './applyChanges';
 import type { CompiledBoard } from './CompiledBoard';
 import type { CompiledBoards } from './CompiledBoards';
@@ -20,7 +20,7 @@ export function compileBoards(model: VisualizedModel): CompiledBoards {
 }
 
 function compile(sources: readonly PlayFileSource[], application: string): CompiledBoard {
-    const compilation = parseFolder(sources);
+    const compilation = compileEventModelApplication(sources);
     return {
         document: toEventModelDocument(compilation.value, application),
         errors: compilation.diagnostics.filter(diagnostic => diagnostic.severity === 'error').length,

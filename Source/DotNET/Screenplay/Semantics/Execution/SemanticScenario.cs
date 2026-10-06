@@ -41,6 +41,7 @@ internal static class SemanticScenario
 
         var loop = new SemanticReactionLoop(evaluator, plan, world);
         SemanticExecutionResult? failure;
+        SemanticExecutionResponse? response = null;
         try
         {
             switch (expected)
@@ -52,6 +53,7 @@ internal static class SemanticScenario
                         return executed;
                     }
 
+                    response = accepted.Response;
                     actionFacts = accepted.Facts.Length;
                     failure = loop.AcceptCommand(accepted, clock);
                     break;
@@ -86,7 +88,13 @@ internal static class SemanticScenario
         }
 
         failure ??= loop.Settle();
-        return failure ?? SemanticEvaluator.ExecuteQueries(plan, loop.World, loop.World, loop.Facts, queries, expected.GivenCaller);
+        if (failure is not null)
+        {
+            return failure;
+        }
+
+        var execution = SemanticEvaluator.ExecuteQueries(plan, loop.World, loop.World, loop.Facts, queries, expected.GivenCaller);
+        return execution is SemanticAccepted acceptedScenario ? acceptedScenario with { Response = response } : execution;
     }
 
     static SemanticExecutionRequest CommandRequest(SemanticSpecificationCommand when) =>
@@ -95,7 +103,8 @@ internal static class SemanticScenario
             AllocatedIdentities = when.EventSource is null
                 ? ImmutableDictionary.Create<SemanticId, SemanticValue>()
                 : ImmutableDictionary<SemanticId, SemanticValue>.Empty.Add(when.Command, when.EventSource.Value),
-            AllocatedEventSourceType = when.EventSource?.Type
+            AllocatedEventSourceType = when.EventSource?.Type,
+            GeneratedValues = when.GeneratedValues
         };
 
     static SemanticExecutionResult? Advance(SemanticExecutionPlan plan, SemanticReactionLoop loop, DateTimeOffset from, DateTimeOffset to)

@@ -211,6 +211,11 @@ so a specification can assert what a reaction does. In the reference evaluator:
   constraints - with no caller. A command that requires one rejects the reaction, and the rejection ends
   the scenario. Previously accepted facts remain in the world; a failing invoked command appends none of
   its own facts. There is no transaction around the entire cascade.
+- In ESM v7, an invoked command that only returns a response runs; the evaluator computes its response
+  and discards it. The response does not become the initiating command's response.
+- Invocation of a command with generated properties binds in ESM v7, but an invocation that reaches
+  generation returns `Unsupported(IdentityAllocation)`, because invocation has no generation fixture
+  channel. A branch excluded by `where` does not reach generation.
 - Invocation does not turn the command identifier into an allocated destination. Legacy plain `produces`
   without `for` still requires an explicitly supplied allocation, which this invocation profile does not
   provide; it returns typed `IdentityAllocation` unsupported instead of guessing.

@@ -96,6 +96,9 @@ describe('when validating a document with a problem of every coded kind', () => 
 
     it('should report each condition with the code the compiler reports it with', () => {
         const reported = new Set(issues.map((issue) => issue.code));
-        [...Object.values(diagnosticCodes)].forEach((code) => reported.has(code).should.be.true);
+        // Keep the old constant in the exported API, but admitted v7 responses no longer emit it.
+        Object.values(diagnosticCodes).filter(code => code !== diagnosticCodes.unavailableResponseExecution)
+            .forEach((code) => reported.has(code).should.be.true);
+        reported.has(diagnosticCodes.unavailableResponseExecution).should.be.false;
     });
 });

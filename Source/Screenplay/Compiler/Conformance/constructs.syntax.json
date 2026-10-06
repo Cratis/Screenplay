@@ -547,6 +547,12 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": []
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],

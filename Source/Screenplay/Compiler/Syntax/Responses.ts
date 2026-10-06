@@ -5,7 +5,7 @@ import { TypeRefSyntax } from './Declarations';
 import { ExpressionSyntax, PropertyMappingSyntax } from './Expressions';
 import { SyntaxNode } from './SyntaxNode';
 
-// Syntax contracts only. Responses are not admitted by any supported executable model (ESM) version yet (#300/#303).
+// Syntax contracts only; the C# semantic binder admits responses as ESM v7 (#300/#303).
 export interface PropertyResponseSourceSyntax extends SyntaxNode {
     readonly kind: 'PropertyResponseSourceSyntax';
     readonly property: string;

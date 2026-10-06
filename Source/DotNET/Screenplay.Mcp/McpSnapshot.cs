@@ -99,7 +99,8 @@ sealed class McpSnapshot : IPlayFiles
             Diagnostics.SourceLocation.Start)
         {
             Systems = applications.SelectMany(application => application.Systems),
-            EventSources = physical.SelectMany(document => document.Result.Value?.EventSources ?? [])
+            EventSources = physical.SelectMany(document => document.Result.Value?.EventSources ?? []),
+            SourceOptions = applications.Any(application => application.SourceOptions.NumericMode == NumericMode.Exact) ? SourceOptions.Exact : SourceOptions.Legacy
         });
         foreach (var application in applications) index.VisitApplication(application with { EventSources = [] });
         foreach (var source in physical.SelectMany(document => document.Result.Value?.EventSources ?? [])) index.VisitEventSource(source);

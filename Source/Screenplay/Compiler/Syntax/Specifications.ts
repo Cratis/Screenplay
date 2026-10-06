@@ -97,7 +97,22 @@ export interface SpecificationQuerySyntax extends SyntaxNode {
     readonly exactly: boolean;
 }
 
-// A specification of a slice. Caller fixtures are not modeled.
+// 'given caller' - who the caller is: authenticated or not, the roles it holds and the claims it carries.
+export interface SpecificationCallerSyntax extends SyntaxNode {
+    readonly kind: 'SpecificationCallerSyntax';
+    readonly authenticated: boolean;
+    readonly roles: readonly string[];
+    readonly claims: readonly SpecificationCallerClaimSyntax[];
+}
+
+// One 'claim "<type>" = "<value>"' line of a caller.
+export interface SpecificationCallerClaimSyntax extends SyntaxNode {
+    readonly kind: 'SpecificationCallerClaimSyntax';
+    readonly type: string;
+    readonly value: string;
+}
+
+// A specification of a slice.
 export interface SpecificationSyntax extends SyntaxNode {
     readonly kind: 'SpecificationSyntax';
     readonly sourceOptions?: SourceOptions;
@@ -105,6 +120,7 @@ export interface SpecificationSyntax extends SyntaxNode {
     readonly thenAbsentReadModels?: readonly SpecificationAbsentReadModelSyntax[];
     readonly thenQueries?: readonly SpecificationQuerySyntax[];
     readonly given: readonly SpecificationEventSyntax[];
+    readonly givenCaller?: SpecificationCallerSyntax | null;
     readonly givenReadModels: readonly SpecificationReadModelSyntax[];
     readonly when: SpecificationCommandSyntax | null;
     readonly whenAppended: SpecificationEventSyntax | null;

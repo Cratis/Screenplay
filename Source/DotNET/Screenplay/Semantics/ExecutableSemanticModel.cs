@@ -78,7 +78,7 @@ public sealed record ExecutableSemanticModel
         SemanticVersion semanticVersion,
         SemanticApplication application)
     {
-        EsmSchemaV6Support.EnsureSupported(languageVersion, semanticVersion);
+        EsmSchemaV7Support.EnsureSupported(languageVersion, semanticVersion);
         SemanticModelValidator.Validate(application, semanticVersion);
         var withoutRevision = SemanticModelCanonicalJson.SerializeWithoutRevision(languageVersion, semanticVersion, application);
         var revision = SemanticRevision.Compute(withoutRevision);
@@ -138,6 +138,7 @@ internal static partial class SemanticModelValidator
         }
 
         ValidateAutomationVersion(application, semanticVersion);
+        ValidateResponseVersion(application, semanticVersion);
         if (semanticVersion == SemanticVersion.V3 && !application.Policies.Any(policy => policy.Condition is SemanticOpaquePolicyCondition) &&
             !application.Concepts.Any(concept => concept.Validations.Any(validation => validation.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation)) &&
             application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices).All(slice => slice.Reducers.IsEmpty &&
@@ -168,6 +169,12 @@ internal static partial class SemanticModelValidator
         return producerTypes[0];
     }
 
+    internal static SemanticTypeReference? ProducedEventSourceType(SemanticCommand command, SemanticProducedEvent produced) =>
+        command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) &&
+        produced.Destination is SemanticResolvedExpression { Source: SemanticExpressionSourceKind.Property } route
+            ? command.Properties.SingleOrDefault(property => property.Id == route.Target)?.Type
+            : command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type;
+
     static List<SemanticTypeReference> ProducerTypes(
         SemanticCommand[] commands,
         SemanticReaction[] reactions,
@@ -177,7 +184,7 @@ internal static partial class SemanticModelValidator
     {
         var types = commands.SelectMany(command => command.Produces
             .Where(produced => produced.EventContract == eventContract)
-            .Select(_ => command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type))
+            .Select(produced => ProducedEventSourceType(command, produced)))
             .OfType<SemanticTypeReference>().ToList();
         visited.Add(eventContract);
         foreach (var trigger in reactions.SelectMany(reaction => reaction.Triggers))
@@ -532,8 +539,9 @@ internal static partial class SemanticModelValidator
                 }
             }
 
-            ValidateProperties(command.Properties);
-            var properties = Properties(command.Properties);
+            ValidateProperties(command.Properties, true);
+            ValidateResponse(command);
+            var properties = Properties([.. command.Properties.Where(property => !property.IsGenerated)]);
             if (command.Requirements.IsDefault) throw new InvalidSemanticContract("Command requirements cannot be default.");
             foreach (var requirement in command.Requirements)
             {
@@ -568,11 +576,18 @@ internal static partial class SemanticModelValidator
             }
         }
 
-        void ValidateProperties(ImmutableArray<SemanticProperty> properties)
+        void ValidateProperties(ImmutableArray<SemanticProperty> properties, bool command = false)
         {
             foreach (var property in properties)
             {
                 ValidateTypeReference(property.Type);
+                if (property.IsGenerated && (!command || !_semanticVersion.IsAtLeast(SemanticVersion.V7) ||
+                    property.Type is not { Kind: SemanticTypeReferenceKind.Concept, IsCollection: false, IsOptional: false } ||
+                    !_concepts.TryGetValue(property.Type.Target, out var concept) || concept.Primitive != SemanticPrimitiveType.Uuid ||
+                    !concept.Validations.IsEmpty))
+                {
+                    throw new InvalidSemanticContract("A generated property requires an ESM v7 command and a required scalar UUID-backed concept without validation rules.");
+                }
             }
         }
 
@@ -736,7 +751,9 @@ internal static partial class SemanticModelValidator
                 } resolved && sources.TryGetValue(resolved.Target, out var property)
                     ? property
                     : null;
-                if (destinationType?.IsCollection is not false || destinationType.IsOptional || destinationProperty?.IsIdentifier is not true)
+                var generatedIdentifier = _semanticVersion.IsAtLeast(SemanticVersion.V7) && command.Properties.Any(value => value.IsGenerated && value.IsIdentifier);
+                if (destinationType?.IsCollection is not false || destinationType.IsOptional || destinationProperty is null ||
+                    (!destinationProperty.IsIdentifier && !generatedIdentifier))
                 {
                     throw new InvalidSemanticContract("A produced event destination must resolve to one required scalar command identity.");
                 }
@@ -859,7 +876,8 @@ internal static partial class SemanticModelValidator
                         command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type);
                 }
 
-                ValidatePropertyValues(specification.When.Values, command.Properties, true);
+                ValidatePropertyValues(specification.When.Values, [.. command.Properties.Where(property => !property.IsGenerated)], true);
+                ValidateGeneratedValues(specification.When, command);
             }
 
             if (specification.WhenAppended is { } appended)
@@ -884,6 +902,7 @@ internal static partial class SemanticModelValidator
                 }
             }
 
+            ValidateThenReturns(specification, command);
             var producedEvents = command?.Produces.Select(_ => _.EventContract).ToHashSet();
             foreach (var value in specification.GivenEvents)
             {
@@ -955,7 +974,7 @@ internal static partial class SemanticModelValidator
             var deniedQuery = specification.ThenDenied && !acted &&
                 specification.ThenQueries.Length == 1 && specification.ThenQueries[0].Results.IsEmpty;
             var hasRejection = specification.ThenErrors.Length > 0 || specification.ThenDenied;
-            var hasSuccessOutcome = specification.ThenEvents.Length > 0 || specification.ThenReadModels.Length > 0 || specification.ThenAbsentReadModels.Length > 0 ||
+            var hasSuccessOutcome = specification.ThenReturns is not null || specification.ThenEvents.Length > 0 || specification.ThenReadModels.Length > 0 || specification.ThenAbsentReadModels.Length > 0 ||
                 (specification.ThenQueries.Length > 0 && !deniedQuery);
             if (hasRejection && (specification.ThenErrors.Length + (specification.ThenDenied ? 1 : 0) != 1 || hasSuccessOutcome))
             {

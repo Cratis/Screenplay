@@ -6,7 +6,7 @@ jump to the slice that uses it.
 
 ```text
 Invoicing/
-  invoicing.play         the whole application - 30 slices in one module
+  invoicing.play         the whole application - 31 slices in one module
   invoicing.en.strings   English text for every $strings key the document references
   invoicing.nb.strings   the same keys in Norwegian
 ```
@@ -15,7 +15,7 @@ Invoicing/
 
 | Persona | Holds | Sees the screens of |
 | --- | --- | --- |
-| `InvoiceManager` | `IsAuthenticated`, `IsInvoicingStaff`, `CanManageInvoice` | RegisterInvoice, CancelInvoice, TagInvoice, UpdateBillingContact, InvoiceList, InvoiceDetails |
+| `InvoiceManager` | `IsAuthenticated`, `IsInvoicingStaff`, `CanManageInvoice` | StartInvoiceDraft, RegisterInvoice, CancelInvoice, TagInvoice, UpdateBillingContact, InvoiceList, InvoiceDetails |
 | `Accountant` | the above, plus `IsAccountant`, `IsFinanceDepartment` | everything the invoice manager sees, plus ChangeInvoiceStatus, ProcessInvoiceBatch, ArchiveOldInvoices, InvoiceLineReport, InvoiceDashboard, ApplyDiscount, RecordPayment, InvoiceBalances, InvoiceAging, CollectionsBoard, ExchangeRates |
 | `FinanceController` | `IsAuthenticated`, `IsInvoicingStaff`, `IsFinanceDepartment`, `CanWriteOff` | WriteOffInvoice |
 | `Customer` | `IsAuthenticated`, `IsCustomer`, `OwnsInvoice`, `IsAdultCustomer`, `IsWithinCreditLimit` | MyInvoices, RequestPaymentPlan, CreditStatus |
@@ -28,7 +28,7 @@ slice: the module's `authorize`, each enclosing feature's, and the slice's comma
 
 | Feature | State change | State view | Automation | Translate |
 | --- | --- | --- | --- | --- |
-| InvoiceManagement | RegisterInvoice, CancelInvoice, TagInvoice, ChangeInvoiceStatus, ProcessInvoiceBatch, ArchiveOldInvoices, UpdateBillingContact | InvoiceList, InvoiceDetails, InvoiceLineReport, InvoiceDashboard | | |
+| InvoiceManagement | StartInvoiceDraft, RegisterInvoice, CancelInvoice, TagInvoice, ChangeInvoiceStatus, ProcessInvoiceBatch, ArchiveOldInvoices, UpdateBillingContact | InvoiceList, InvoiceDetails, InvoiceLineReport, InvoiceDashboard | | |
 | InvoiceManagement › Adjustments | ApplyDiscount, WriteOffInvoice | | | |
 | Payments | RecordPayment | InvoiceBalances, InvoiceAging, CollectionsBoard, ExchangeRates | ReconcilePayments, ChaseOverdueInvoices | PaymentProviderSync |
 | CustomerPortal | RequestPaymentPlan | MyInvoices, CreditStatus | | |
@@ -57,6 +57,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | `form` with `populate via query`, `populate from item`, `field … label/from/compose using`, `on submit navigate`, `on change` | `module Invoicing` |
 | feature `authorize`, `uses` with arguments, `on <ApplicationTrigger>`, nested features, feature `contribute to` | InvoiceManagement, Adjustments, Payments, Integrations |
 | slice `description`, `file` | RegisterInvoice |
+| `generated identifier`, `generated`, record `returns` with inferred/explicit types, `when … for`, generation fixtures and `then returns`; scalar `returns` and `then returns` | StartInvoiceDraft; CancelInvoice |
 | inline `produces event`, typed mappings, event `description` and Markdown `documentation`, implicit identifier destination | TagInvoice |
 | command `description`, `identifier`, multi-line `authorize`, every validation rule, named-rule `implementation` hints with the existing file link, `severity`, `require`, inline `validate` block, `$strings` messages | RegisterInvoice, CancelInvoice, TagInvoice, ProcessInvoiceBatch, ApplyDiscount |
 | `produces` with `for`, `tag`, every mapping source (`$context.*`, `$env`, `$strings`, literals, Booleans, lists, expressions); `produces when` with `and`/`or`/parentheses, `contains`, `starts with` | RegisterInvoice, ApplyDiscount, RecordPayment, NotifyCustomerOnInvoiceRegistered |
@@ -95,6 +96,8 @@ invoiceNumber rule BeUnusedInvoiceNumber message "Invoice number is already in u
 ```
 
 This excerpt belongs inside the command's `validate` block. Its hint records guidance without changing the predicate contract or claiming that the selected code ran. The referenced implementation files are not included in this syntax showcase.
+
+`StartInvoiceDraft` creates a draft with a generated invoice identity and receipt and returns both only on acceptance. Its specification supplies deterministic UUID fixtures separately from `customerId`, then asserts the fact and response. `CancelInvoice` returns the cancelled invoice identity as a scalar. These constructs select ESM v7; generated values are not request/form inputs and give no retry or idempotency guarantee. Response-name binding in UI continuations remains downstream work.
 
 ## Parsed is not executable
 

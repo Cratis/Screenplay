@@ -84,14 +84,14 @@ internal static class SemanticTypedContextCatalog
                         var whole = command.CodeValidations.Any(value => value.RequirementId == requirement.RequirementId);
                         if (whole)
                         {
-                            matches.Add(Rule(requirement, Shaped("Artifact", command.Id, SemanticContextSourceKinds.Command, command.Properties), Shaped("Value", command.Id, SemanticContextSourceKinds.Command, command.Properties), null, string.Empty));
+                            matches.Add(Rule(requirement, Shaped("Artifact", command.Id, SemanticContextSourceKinds.Command, command.Properties.Where(property => !property.IsGenerated)), Shaped("Value", command.Id, SemanticContextSourceKinds.Command, command.Properties.Where(property => !property.IsGenerated)), null, string.Empty));
                         }
                         foreach (var rule in rules)
                         {
                             var property = command.Properties.SingleOrDefault(value => value.Id == rule.Property);
                             if (property is not null)
                             {
-                                matches.Add(Rule(requirement, Shaped("Artifact", command.Id, SemanticContextSourceKinds.Command, command.Properties), Typed("Value", property.Type, property.Id, property.Name), property.Id, property.Name));
+                                matches.Add(Rule(requirement, Shaped("Artifact", command.Id, SemanticContextSourceKinds.Command, command.Properties.Where(property => !property.IsGenerated)), Typed("Value", property.Type, property.Id, property.Name), property.Id, property.Name));
                             }
                         }
                     }
@@ -137,10 +137,10 @@ internal static class SemanticTypedContextCatalog
                     foreach (var command in commands.Where(value => References(value.Authorization, policyNames)))
                     {
                         var identifier = command.Properties.FirstOrDefault(value => value.IsIdentifier);
-                        var subject = identifier is null
+                        var subject = identifier?.IsGenerated != false
                             ? new SemanticContextSource(SemanticContextSourceKinds.Unavailable, null, string.Empty)
                             : new SemanticContextSource(SemanticContextSourceKinds.CommandIdentifier, identifier.Id, identifier.Name);
-                        matches.Add(Policy(requirement, command.Id, command.Properties, subject));
+                        matches.Add(Policy(requirement, command.Id, command.Properties.Where(property => !property.IsGenerated), subject));
                     }
                     foreach (var query in queries.Where(value => References(value.Authorization, policyNames)))
                     {

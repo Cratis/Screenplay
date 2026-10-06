@@ -91,7 +91,7 @@ The compiler reads what an event model is made of:
 - the domain, imports, concepts and types
 - application-owned event sources, nested streams and command-level stream/key authoring, with complete-input ambiguity checks (syntax-only)
 - systems, operations and their phase/specification intent (syntax-only)
-- generated command values and response contracts (syntax-only)
+- generated command values, response contracts, fixtures and return expectations (syntax shared with C# ESM v7 admission)
 - modules, features (nested too) and slices
 - standalone and inline events with their tags, descriptions, documentation, and rename pins
 - commands with their properties, declarative `validate` rules, and productions (typed mappings and destinations included)
@@ -102,7 +102,7 @@ The compiler reads what an event model is made of:
 - specifications with the values they state, structured values included
 - screens with their data, actions, navigation, titles, tables, summaries, sections, template slots and inline code
 
-The syntax-only constructs are not admitted by any supported executable model (ESM) version yet.
+Systems, operations, event sources and streams remain syntax-only and unadmitted. Generated values and responses are admitted as ESM v7 by the C# binder and reference runner. The TypeScript compiler has no ESM binder or executor; its syntax validation is not proof of semantic admission, fixture completeness or execution. Pre-generation references (`PLAY0273`) and generated concepts with rules (`PLAY0268`) are C# semantic checks, not additional TypeScript syntax rules.
 
 Everything else is recognized and skipped whole, without a diagnostic. That covers:
 
