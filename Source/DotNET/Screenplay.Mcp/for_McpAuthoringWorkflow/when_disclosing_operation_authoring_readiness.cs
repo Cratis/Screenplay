@@ -46,13 +46,14 @@ public class when_disclosing_operation_authoring_readiness : given.an_authoring_
     }
 
     [Fact]
-    void should_list_both_operations_and_responses_but_keep_response_only_readiness_scoped()
+    void should_keep_responses_admitted_without_hiding_unadmitted_operations()
     {
         Start(OperationSource.Replace("        produces Send\n", "        produces Send\n        name String\n        returns name\n", StringComparison.Ordinal));
         Response().GetProperty("executionReadiness").GetString().ShouldContain("operations and systems (#301)");
-        Response().GetProperty("executionReadiness").GetString().ShouldContain("generated values, responses and return expectations (#300/#303)");
+        Response().GetProperty("executionReadiness").GetString().ShouldNotContain("(#300/#303)");
         Start("module Projects\n  feature F\n    slice StateChange S\n      command C\n        name String\n        returns name\n");
-        Response().GetProperty("executionReadiness").GetString().ShouldEqual("Not admitted by any supported executable model (ESM) version yet (PLAY0268): generated values, responses and return expectations (#300/#303); no response type is emitted.");
+        Response().GetProperty("executionReadiness").ValueKind.ShouldEqual(JsonValueKind.Null);
+        Response().GetProperty("syntaxOnly").GetBoolean().ShouldBeFalse();
     }
 
     void Start(string source)

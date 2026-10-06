@@ -96,9 +96,12 @@ static class McpDeclarationDetails
                 new[] { (Name: "execute", Phase: operation.Execute), (Name: "compensate", Phase: operation.Compensate) }.Where(value => value.Phase is not null),
                 value => new
                 {
-                    phase = value.Name, value.Phase!.Description, value.Phase.Location,
+                    phase = value.Name,
+                    value.Phase!.Description,
+                    value.Phase.Location,
                     state = value.Phase switch { { File: not null } => "file", { Code: not null } => "inline", _ => "pending" },
-                    file = value.Phase.File?.Path, language = value.Phase.Code?.Language,
+                    file = value.Phase.File?.Path,
+                    language = value.Phase.Code?.Language,
                     hintCount = value.Phase.Implementation?.Hints.Count() ?? 0,
                     executionAvailable = false
                 },
@@ -163,7 +166,7 @@ static class McpDeclarationDetails
         return new
         {
             syntaxOnly = readiness.SyntaxOnly(command),
-            executionReadiness = readiness.ExecutionReadiness(command, "no response type is emitted."),
+            executionReadiness = readiness.ExecutionReadiness(command),
             syntax = command.Response,
             fields = command.Response is RecordCommandResponseSyntax record ? record.Fields.Select(field => new
             {

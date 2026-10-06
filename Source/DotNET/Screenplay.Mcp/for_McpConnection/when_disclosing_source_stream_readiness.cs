@@ -96,10 +96,11 @@ public class when_disclosing_source_stream_readiness
             var readiness = Details(snapshot, address, kind, "summary").GetProperty("executionReadiness").GetString();
             readiness.ShouldContain("event sources, streams and routes (#302)");
             readiness.ShouldContain("operations and systems (#301)");
-            readiness.ShouldContain("generated values, responses and return expectations (#300/#303)");
+            readiness.ShouldNotContain("(#300/#303)");
         }
         Details(snapshot, "M.F.S.Operation", "Command", "summary").GetProperty("executionReadiness").GetString().ShouldContain("operations and systems (#301)");
-        Details(snapshot, "M.F.S.Response", "Command", "response").GetProperty("executionReadiness").GetString().ShouldEqual("Not admitted by any supported executable model (ESM) version yet (PLAY0268): generated values, responses and return expectations (#300/#303); no response type is emitted.");
+        Details(snapshot, "M.F.S.Response", "Command", "response").GetProperty("executionReadiness").ValueKind.ShouldEqual(JsonValueKind.Null);
+        Details(snapshot, "M.F.S.Response", "Command", "response").GetProperty("syntaxOnly").GetBoolean().ShouldBeFalse();
     }
 
     [Theory]
@@ -116,7 +117,7 @@ public class when_disclosing_source_stream_readiness
         var source = "system Mailer\n" + Sources + "module M\n  feature F\n    slice StateChange S\n      operation Send\n        uses Mailer\n" + string.Concat(reverse ? commands.Reverse() : commands);
         var snapshot = new McpSnapshot([Document("model.play", source)]);
         snapshot.Compilation.Success.ShouldBeTrue();
-        const string expected = "Not admitted by any supported executable model (ESM) version yet (PLAY0268): generated values, responses and return expectations (#300/#303), operations and systems (#301), event sources, streams and routes (#302); use Authoring validation.";
+        const string expected = "Not admitted by any supported executable model (ESM) version yet (PLAY0268): operations and systems (#301), event sources, streams and routes (#302); use Authoring validation.";
         snapshot.Index.Readiness.ModelExecutionReadiness.ShouldEqual(expected);
         Details(snapshot, "M.F.S", "Slice", "summary").GetProperty("executionReadiness").GetString().ShouldEqual(expected);
     }
@@ -170,6 +171,22 @@ public class when_disclosing_source_stream_readiness
             var details = Details(snapshot, address, kind, "summary");
             details.GetProperty("syntaxOnly").GetBoolean().ShouldBeTrue();
             details.GetProperty("executionReadiness").GetString().ShouldEqual("Not admitted by any supported executable model (ESM) version yet (PLAY0268): operations and systems (#301), event sources, streams and routes (#302); use Authoring validation.");
+        }
+    }
+
+    [Theory]
+    [InlineData("", "        handler\n          file C.cs\n", "command handlers")]
+    [InlineData("numbers exact\n", "", "exact numbers (#285)")]
+    void should_not_claim_response_commands_with_handlers_or_exact_mode_are_admitted(string prefix, string handler, string feature)
+    {
+        var snapshot = new McpSnapshot([Document("model.play", prefix + "module M\n  feature F\n    slice StateChange S\n      command C\n        name String\n        returns name\n" + handler + "      specification T\n        when C\n          name = \"value\"\n        then returns \"value\"\n")]);
+        snapshot.Compilation.Success.ShouldBeTrue();
+        foreach (var (address, kind, view) in new[] { ("M.F.S.C", "Command", "response"), ("M.F.S.T", "Specification", "summary"), ("M.F.S", "Slice", "summary") })
+        {
+            var details = Details(snapshot, address, kind, view);
+            details.GetProperty("syntaxOnly").GetBoolean().ShouldBeTrue();
+            details.GetProperty("executionReadiness").GetString().ShouldContain(feature);
+            details.GetProperty("executionReadiness").GetString().ShouldNotContain("(#300/#303)");
         }
     }
 

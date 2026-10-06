@@ -75,16 +75,14 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
     string[] UnadmittedFeatures(SyntaxNode node)
     {
         const string streams = "event sources, streams and routes (#302)";
-        const string responses = "generated values, responses and return expectations (#300/#303)";
         IEnumerable<string> LocalFeatures() => node switch
         {
             EventSourceSyntax or EventStreamSyntax or CommandStreamSyntax => [streams],
             CommandSyntax command =>
                 Feature(command.Stream is not null || command.StreamCandidates.Any(), streams)
-                .Concat(Feature(command.Response is not null || command.Properties.Any(property => property.IsGenerated), responses)),
+                .Concat(Feature(command.Handler is not null, "command handlers")),
             SpecificationSyntax specification =>
-                Feature(specification.ThenReturns is not null || (specification.When?.GeneratedValues.Any() ?? false), responses)
-                .Concat(ActionCommands(specification).SelectMany(entry => UnadmittedFeatures(entry.Command))),
+                ActionCommands(specification).SelectMany(entry => UnadmittedFeatures(entry.Command)),
             SliceSyntax slice => slice.Commands.Cast<SyntaxNode>().Concat(slice.Specifications).SelectMany(UnadmittedFeatures),
             ApplicationSyntax => Feature(application.EventSources.Any(), streams)
                 .Concat(_owners.Keys.OfType<SliceSyntax>().SelectMany(UnadmittedFeatures)),
@@ -92,11 +90,11 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
         };
 
         return [.. LocalFeatures().Concat(Feature(Operations(node), "operations and systems (#301)"))
+            .Concat(Feature(application.SourceOptions.NumericMode == NumericMode.Exact, "exact numbers (#285)"))
             .Distinct(StringComparer.Ordinal)
             .OrderBy(feature => feature switch
             {
                 "exact numbers (#285)" => 0,
-                responses => 1,
                 "operations and systems (#301)" => 2,
                 streams => 3,
                 _ => 4
