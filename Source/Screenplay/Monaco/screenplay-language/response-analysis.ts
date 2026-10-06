@@ -21,7 +21,7 @@ export type { ResponseFieldSymbol } from './ResponseFieldSymbol';
 export type { ResponseSourceSymbol } from './ResponseSourceSymbol';
 export type { ResponseAnalysis } from './ResponseAnalysis';
 
-export const responseAvailability = 'Syntax-only; not admitted by any supported executable model (ESM) version yet (PLAY0268) (#300/#303). No response type is emitted.';
+export const responseAvailability = 'Executable as ESM v7. Generated values require fixtures in reference execution; other unadmitted constructs still prevent binding.';
 
 // A bounded revision cache shared by symbols, validation, completion and hover. Index typed nodes
 // once, not by reparsing the document for each command or response field.
