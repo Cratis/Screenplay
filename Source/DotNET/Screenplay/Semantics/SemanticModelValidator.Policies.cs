@@ -34,6 +34,7 @@ internal static partial class SemanticModelValidator
                 case SemanticNotPolicyCondition not when _semanticVersion.IsAtLeast(SemanticVersion.V7):
                     ValidatePolicyCondition(not.Operand, false);
                     break;
+                case SemanticNotPolicyCondition: throw new InvalidSemanticContract("Policy negation requires ESM v7.");
                 case SemanticRoleCondition { Role: { } }: break;
                 case SemanticClaimCondition { Claim: { }, TargetKind: SemanticClaimTargetKind.Subject, Value: null }: break;
                 case SemanticClaimCondition { Claim: { }, TargetKind: SemanticClaimTargetKind.Literal or SemanticClaimTargetKind.Artifact, Value: { } }: break;
