@@ -162,8 +162,9 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
     // One parser pass covers committed types, including query results and trigger data, without
     // speculative property scans mistaking tags, paths, strings or code for optionality.
     const optionalCodes = new Set<string>([DiagnosticCodes.LegacyOptionalSuffix, DiagnosticCodes.InvalidOptionalModifierOrder, DiagnosticCodes.OptionalReadsNotSupported]);
+    const policyCodes = new Set<string>([DiagnosticCodes.UnexpectedTokenInPolicyCondition, DiagnosticCodes.ExpectedPolicyCondition, DiagnosticCodes.UnclosedPolicyConditionGroup, DiagnosticCodes.ExpectedRoleName, DiagnosticCodes.ExpectedClaimName, DiagnosticCodes.ExpectedClaimMatches, DiagnosticCodes.ExpectedClaimMatchTarget]);
     for (const diagnostic of context.compilerDiagnostics ?? analysis.diagnostics) {
-        if (!optionalCodes.has(diagnostic.code) && diagnostic.code !== DiagnosticCodes.ExpectedPolicyCondition && diagnostic.code !== DiagnosticCodes.UnknownRuleImplementationDirective && diagnostic.code !== DiagnosticCodes.InvalidValidationRule && diagnostic.code !== DiagnosticCodes.RepeatedDeclarationAcrossFiles && !/^PLAY049[0-9]$|^PLAY050[0-7]$|^PLAY048[2-9]$|^PLAY004[56]$/.test(diagnostic.code)) continue;
+        if (!optionalCodes.has(diagnostic.code) && !policyCodes.has(diagnostic.code) && diagnostic.code !== DiagnosticCodes.UnknownRuleImplementationDirective && diagnostic.code !== DiagnosticCodes.InvalidValidationRule && diagnostic.code !== DiagnosticCodes.RepeatedDeclarationAcrossFiles && !/^PLAY049[0-9]$|^PLAY050[0-7]$|^PLAY048[2-9]$|^PLAY004[56]$/.test(diagnostic.code)) continue;
         const line = diagnostic.location.line - 1;
         const length = legacyOptionalTypeLength(lines[line], diagnostic) || lines[line].length - diagnostic.location.column + 1;
         issues.push(issue(diagnostic.severity, line, diagnostic.location.column, length, diagnostic.message, diagnostic.code as DiagnosticCode));

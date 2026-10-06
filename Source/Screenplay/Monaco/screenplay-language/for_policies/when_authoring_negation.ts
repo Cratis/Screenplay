@@ -43,4 +43,20 @@ describe('when authoring policy negation', () => {
     it('should report a missing operand', () => {
         expect(validateLines(['policy PersonOnly', '  require not']).map(issue => issue.code)).toContain('PLAY0116');
     });
+    it('should report a negated opaque policy reference', () => {
+        validateLines(['policy PersonOnly', '  require not OpaquePolicy']).map(issue => issue.code).should.deep.equal(['PLAY0115']);
+    });
+    it('should report an unclosed negated group', () => {
+        validateLines(['policy PersonOnly', '  require not (authenticated']).map(issue => issue.code).should.deep.equal(['PLAY0117']);
+    });
+    it('should report a missing negated role name', () => {
+        validateLines(['policy PersonOnly', '  require not role']).map(issue => issue.code).should.deep.equal(['PLAY0118']);
+    });
+    it('should forward every policy parse diagnostic', () => {
+        const lines = ['policy PersonOnly', '  require not'];
+        for (const code of ['PLAY0115', 'PLAY0116', 'PLAY0117', 'PLAY0118', 'PLAY0119', 'PLAY0120', 'PLAY0121']) {
+            const diagnostics = [{ code, severity: 'error' as const, message: 'Invalid policy condition', location: { line: 2, column: 3 } }];
+            validateLines(lines, { compilerDiagnostics: diagnostics }).map(issue => issue.code).should.deep.equal([code]);
+        }
+    });
 });

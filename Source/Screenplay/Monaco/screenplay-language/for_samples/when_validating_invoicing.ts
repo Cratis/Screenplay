@@ -6,8 +6,8 @@ import { describe, it } from 'vitest';
 import { validateLines } from '../validation';
 
 describe('when validating the bundled invoicing sample', () => {
-    it('should not report a missing policy condition', () => {
+    it('should not report policy parse diagnostics', () => {
         const source = readFileSync(new URL('../../screenplay-editor/samples/invoicing.play', import.meta.url), 'utf8');
-        validateLines(source.split('\n')).filter(issue => issue.code === 'PLAY0116').should.deep.equal([]);
+        validateLines(source.split('\n')).filter(issue => issue.code !== undefined && /^PLAY011[5-9]$|^PLAY012[01]$/.test(issue.code)).should.deep.equal([]);
     });
 });
