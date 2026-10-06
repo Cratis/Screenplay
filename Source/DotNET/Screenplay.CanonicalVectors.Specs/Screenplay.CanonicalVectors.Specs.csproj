@@ -23,6 +23,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <EmbeddedResource Include="../../../Documentation/screenplay/interoperability.md"
+                          Link="Documentation/interoperability.md"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Documentation.interoperability.md" />
         <EmbeddedResource Include="../Screenplay/for_ScreenplayCompiler/invoicing.play"
                           Link="Samples/invoicing.play"
                           WithCulture="false"
