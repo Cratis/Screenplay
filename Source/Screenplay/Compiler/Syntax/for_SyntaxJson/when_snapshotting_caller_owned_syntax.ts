@@ -4,6 +4,8 @@
 import { describe, it } from 'vitest';
 import { parseSpecificationSource } from '../../ScreenplayCompiler';
 import { toCompleteSyntaxJson, toSyntaxJson } from '../SyntaxJson';
+import { InvalidSyntaxJson } from '../InvalidSyntaxJson';
+import { SyntaxNode } from '../SyntaxNode';
 
 function literalSlot(value: unknown): Record<string, unknown> {
     if (typeof value === 'object' && value !== null) {
@@ -21,6 +23,49 @@ function source() {
 }
 
 describe.each([{ name: 'the wire writer', writer: toSyntaxJson }, { name: 'the complete writer', writer: toCompleteSyntaxJson }])('when snapshotting caller-owned syntax with $name', ({ writer }) => {
+    describe.each(['inherited', 'non-enumerable', 'class getter'])('with a %s kind', shape => {
+        function hint(text: string, read: () => string): SyntaxNode {
+            if (shape === 'class getter') return new class {
+                text = text;
+                get kind() { return read(); }
+            }() as unknown as SyntaxNode;
+            const descriptor = { get: read, enumerable: false };
+            return (shape === 'inherited'
+                ? Object.assign(Object.create(Object.defineProperty({}, 'kind', descriptor)), { text })
+                : Object.defineProperty({ text }, 'kind', descriptor)) as SyntaxNode;
+        }
+
+        it('retains the node kind and reads it once', () => {
+            let reads = 0;
+            const node = hint('Keep this hint', () => ++reads === 1 ? 'ImplementationHintSyntax' : 'UnknownSyntax');
+            JSON.stringify(writer(node)).should.equal('{"kind":"ImplementationHintSyntax","text":"Keep this hint"}');
+            reads.should.equal(1);
+        });
+
+        it('still enforces Legacy node invariants after one kind read', () => {
+            let reads = 0;
+            const node = hint('', () => ++reads === 1 ? 'ImplementationHintSyntax' : 'UnknownSyntax');
+            (() => writer(node)).should.throw(InvalidSyntaxJson, 'An implementation hint must be nonblank.');
+            reads.should.equal(1);
+        });
+    });
+
+    it('reports the Exact depth-96 error rather than overflowing while snapshotting', () => {
+        const tree = source();
+        let expression: Record<string, unknown> = { kind: 'LiteralExpressionSyntax', value: true };
+        for (let depth = 0; depth < 20000; depth++) expression = { kind: 'ListExpressionSyntax', items: [expression] };
+        Object.assign(literalSlot(tree), expression);
+        (() => writer(tree)).should.throw(InvalidSyntaxJson, 'Syntax nesting exceeds the supported depth of 96.');
+    });
+
+    it('ignores a deeply nested unknown Exact member without overflowing', () => {
+        const tree = source(), expected = JSON.stringify(writer(tree));
+        let unknown: object = {};
+        for (let depth = 0; depth < 20000; depth++) unknown = { unknown };
+        Object.assign(tree, { unknown });
+        JSON.stringify(writer(tree)).should.equal(expected);
+    });
+
     it('reads an accessor once and validates and writes its detached value', () => {
         const tree = source(), expected = JSON.stringify(writer(tree));
         const literal = literalSlot(tree), value = literal.value;

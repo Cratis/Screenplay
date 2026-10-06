@@ -10,6 +10,7 @@ import { ValidationRuleSyntax } from './Commands';
 import { isLegacyOmittedMember } from './LegacyWireProjection';
 import { legacySourceOptions, validatedSourceOptions } from './SourceOptions';
 
+// Returned record objects have null prototypes.
 export type SyntaxJsonValue = string | number | boolean | null | SyntaxJsonValue[] | { [member: string]: SyntaxJsonValue };
 
 const isNode = (value: unknown): value is SyntaxNode =>
@@ -35,30 +36,46 @@ export function toCompleteSyntaxJson(node: SyntaxNode): SyntaxJsonValue {
 }
 
 // Read caller-owned properties only once, before validation. Both validation and projection see the same
-// detached, own-enumerable data; accessors, proxies and shared references cannot change it between passes.
-function snapshot(value: unknown, copies = new WeakMap<object, unknown>()): unknown {
-    if (typeof value !== 'object' || value === null) return value;
-    if (copies.has(value)) return copies.get(value);
-    if (Array.isArray(value)) {
-        const items = dataArray<unknown>();
-        copies.set(value, items);
-        const length = value.length;
-        for (let index = 0; index < length; index++) items.push(snapshot(Object.hasOwn(value, index) ? value[index] : undefined, copies));
-        return items;
-    }
-    const copy = Object.create(null) as Record<string, unknown>;
-    copies.set(value, copy);
-    for (const name of Object.keys(value)) {
-        const member = (value as Record<string, unknown>)[name];
-        copy[name] = snapshot(member, copies);
-        // Source option contracts also reject exotic prototypes and hidden/symbol members. Preserve
-        // that rejected shape as data rather than sanitizing it into an apparently valid option record.
-        if (name === 'sourceOptions' && typeof member === 'object' && member !== null &&
-            ((Object.getPrototypeOf(member) !== Object.prototype && Object.getPrototypeOf(member) !== null) || Reflect.ownKeys(member).length !== Object.keys(member).length)) {
-            copy[name] = Object.assign(Object.create(null), { numericMode: 'invalid' });
+// detached data; accessors, proxies and shared references cannot change it between passes.
+function snapshot(value: unknown): unknown {
+    const copies = new WeakMap<object, unknown>();
+    const pending: (() => void)[] = [];
+    // Schedule depth-first reads without consuming the call stack, including for ignored metadata.
+    function detach(value: unknown): unknown {
+        if (typeof value !== 'object' || value === null) return value;
+        if (copies.has(value)) return copies.get(value);
+        if (Array.isArray(value)) {
+            const items = dataArray<unknown>();
+            copies.set(value, items);
+            const length = value.length;
+            for (let index = length - 1; index >= 0; index--) pending.push(() => {
+                items[index] = detach(Object.hasOwn(value, index) ? value[index] : undefined);
+            });
+            return items;
         }
+        const copy = Object.create(null) as Record<string, unknown>;
+        copies.set(value, copy);
+        const names = Object.keys(value);
+        // Node identity also accepts inherited, hidden and class-getter kinds; read it just once.
+        if (!names.includes('kind') && 'kind' in value) names.unshift('kind');
+        for (let index = names.length - 1; index >= 0; index--) pending.push(() => {
+            const name = names[index];
+            const member = (value as Record<string, unknown>)[name];
+            if (name === 'sourceOptions') pending.push(() => {
+                // Source option contracts also reject exotic prototypes and hidden/symbol members. Preserve
+                // that rejected shape as data rather than sanitizing it into an apparently valid option record.
+                if (typeof member === 'object' && member !== null &&
+                    ((Object.getPrototypeOf(member) !== Object.prototype && Object.getPrototypeOf(member) !== null) || Reflect.ownKeys(member).length !== Object.keys(member).length)) {
+                    copy[name] = Object.assign(Object.create(null), { numericMode: 'invalid' });
+                }
+            });
+            copy[name] = detach(member);
+        });
+        return copy;
     }
-    return copy;
+    const detached = detach(value);
+    while (pending.length > 0) pending.pop()!();
+    return detached;
 }
 
 function dataArray<T>(): T[] {
