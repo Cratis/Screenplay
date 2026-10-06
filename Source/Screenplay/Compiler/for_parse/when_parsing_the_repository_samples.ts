@@ -7,6 +7,7 @@ import { describe, beforeAll, it } from 'vitest';
 import { parse } from '../ScreenplayCompiler';
 
 const repository = resolve(__dirname, '../../../..');
+const generatedInputSource = join(repository, 'Source/DotNET/Screenplay.CanonicalCorpus/Corpus/RegisterProject/v7/rejected/generated-input.play');
 
 function playFiles(folder: string): string[] {
     return readdirSync(folder).flatMap(entry => {
@@ -18,8 +19,8 @@ function playFiles(folder: string): string[] {
     });
 }
 
-// Every .play document the repository ships compiles with the C# compiler, so the TypeScript compiler must
-// read each of them without an error too.
+// Semantic rejection vectors such as UnsupportedSequence still parse without errors. The generated-input
+// source is deliberately invalid at the parser boundary, so require its exact diagnostic rather than skip it.
 describe('when parsing the repository samples', () => {
     let files: string[];
     let errors: string[];
@@ -35,7 +36,9 @@ describe('when parsing the repository samples', () => {
         files.length.should.be.greaterThan(20);
     });
 
-    it('should read every sample without an error', () => {
-        errors.should.deep.equal([]);
+    it('should report only the expected generated-input rejection', () => {
+        errors.should.deep.equal([
+            `${generatedInputSource}:10 PLAY0485 Generated property 'projectId' cannot be supplied as request or form input.`
+        ]);
     });
 });
