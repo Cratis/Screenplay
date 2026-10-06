@@ -38,12 +38,14 @@ internal static class ProjectionTargetValidator
 
     static void Walk(IEnumerable<ProjectionBlockSyntax> blocks, IEnumerable<PropertySyntax>? properties, ConsistencyDeclarations declarations, ParserContext context)
     {
+        // An 'every' with no handlers at this level only cascades into the element scopes.
+        var ownsEvents = blocks.Any(block => block is FromSyntax or JoinSyntax or AllSyntax);
         foreach (var block in blocks)
         {
             var mappings = block switch
             {
                 FromSyntax from => from.Mappings,
-                EverySyntax every => every.Mappings,
+                EverySyntax every when ownsEvents => every.Mappings,
                 AllSyntax all => all.Mappings,
                 JoinSyntax join => join.Events.SelectMany(entry => entry.Mappings),
                 _ => []

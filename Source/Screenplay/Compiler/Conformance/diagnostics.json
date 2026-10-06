@@ -2,6 +2,18 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "Every at a handler-free parent only cascades into child scopes",
+            "validate": true,
+            "source": ["type Row", "  audit String", "module M", "  feature F", "    slice StateView S", "      event E", "        audit String", "      readmodel V", "        rows Row[]", "      projection P => V", "        every", "          audit = \"recorded\"", "        children rows identified by audit", "          from E"],
+            "diagnostics": []
+        },
+        {
+            "name": "Every mapping targets are checked where the scope handles events",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      event E", "        value String", "      readmodel V", "        value String", "      projection P => V", "        every", "          missing = \"recorded\"", "        from E", "          value = value"],
+            "diagnostics": ["PLAY0514@10"]
+        },
+        {
             "name": "Projection mappings report absent read-model targets",
             "validate": true,
             "source": ["module M", "  feature F", "    slice StateView S", "      event E", "        value String", "      readmodel V", "        value String", "      projection P => V", "        from E", "          missing = value"],
@@ -26,9 +38,9 @@
             "diagnostics": []
         },
         {
-            "name": "Imported unknown read-model shapes remain undecided",
+            "name": "Inferred read-model shapes remain undecided",
             "validate": true,
-            "source": ["import Contracts.V", "module M", "  feature F", "    slice StateView S", "      event E", "        value String", "      projection P => V", "        from E", "          value = value"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      event E", "        value String", "      projection P => V", "        from E", "          value = value"],
             "diagnostics": []
         },
         {

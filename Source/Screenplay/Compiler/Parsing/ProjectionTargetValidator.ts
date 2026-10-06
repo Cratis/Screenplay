@@ -59,8 +59,10 @@ export function validateProjectionTargets(application: ApplicationSyntax, contex
             if (resolved.missing) context.warning(DiagnosticCodes.UnknownReadModelProperty, `Projection target '${path}' is not a declared read-model property`, location);
             return resolved.value;
         };
+        // An 'every' without local handlers only cascades into the element scopes.
+        const ownsEvents = blocks.some(block => block.kind === 'FromSyntax' || block.kind === 'JoinSyntax' || block.kind === 'AllSyntax');
         for (const block of blocks) {
-            const mappings = 'mappings' in block ? block.mappings : block.kind === 'JoinSyntax' ? block.events.flatMap(event => event.mappings) : [];
+            const mappings = block.kind === 'EverySyntax' && !ownsEvents ? [] : 'mappings' in block ? block.mappings : block.kind === 'JoinSyntax' ? block.events.flatMap(event => event.mappings) : [];
             for (const mapping of mappings) validate(mapping.property, mapping.location);
             if (block.kind === 'ChildrenSyntax' || block.kind === 'NestedSyntax') {
                 const target = validate(block.property, block.location);
