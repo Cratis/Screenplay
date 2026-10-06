@@ -38,10 +38,11 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
 
         var authorizationValues = request.Values.IsDefault ? [] : request.Values.Where(value => value is not null).ToArray();
         var artifact = command.Properties
+            .Where(property => !property.IsGenerated)
             .Select(property => (property, value: authorizationValues.FirstOrDefault(value => value.TargetProperty == property.Id)?.Value))
             .Where(pair => pair.value is not null)
             .ToDictionary(pair => pair.property.Name, pair => pair.value!, StringComparer.Ordinal);
-        var subject = command.Properties.Where(property => property.IsIdentifier)
+        var subject = command.Properties.Where(property => property.IsIdentifier && !property.IsGenerated)
             .Select(property => authorizationValues.FirstOrDefault(value => value.TargetProperty == property.Id)?.Value)
             .FirstOrDefault(value => value is not null);
         var authorization = SemanticPolicyEvaluation.Evaluate(command.Authorization, plan, request.Caller, artifact, subject, command.Properties);
@@ -99,6 +100,11 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             command.Produces.Any(produced => produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression)) && request.Occurrence is null)
         {
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A v2 command using $context needs an occurrence supplied by the execution request.");
+        }
+
+        if (Generate(plan, world, command, request.GeneratedValues, commandValues) is { } generationFailure)
+        {
+            return generationFailure;
         }
 
         var facts = ImmutableArray.CreateBuilder<SemanticFact>();
@@ -174,6 +180,8 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             });
         }
 
+        var response = Response(command.Response, commandValues);
+
         // A violation is an outcome, not a failure: the command is rejected and the world is unchanged.
         if (SemanticConstraintEnforcement.FindViolation(plan, world, facts.ToImmutable()) is { } violated)
         {
@@ -191,7 +199,8 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         }
 
         var tentative = world.Commit(facts.ToImmutable(), readModels);
-        return ExecuteQueries(plan, world, tentative, facts.ToImmutable(), request.Queries, request.Caller);
+        var execution = ExecuteQueries(plan, world, tentative, facts.ToImmutable(), request.Queries, request.Caller);
+        return execution is SemanticAccepted accepted ? accepted with { Response = response } : execution;
     }
 
     /// <summary>
@@ -333,19 +342,19 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         SemanticExpressionRootKind expectedRoot,
         Dictionary<SemanticId, SemanticValue> values,
         SemanticCommandOccurrence? occurrence = null) => expression switch
-    {
-        SemanticEventContextExpression context when occurrence is not null => context.Value switch
         {
-            SemanticEventContextValueKind.Occurred => SemanticValue.Text(occurrence.Occurred.UtcDateTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)),
-            SemanticEventContextValueKind.CausedBySubject => SemanticValue.Text(occurrence.Subject),
-            SemanticEventContextValueKind.CausedByName => SemanticValue.Text(occurrence.Name),
-            SemanticEventContextValueKind.CausedByUserName => SemanticValue.Text(occurrence.UserName),
-            _ => throw new InvalidSemanticContract("An occurrence field is unsupported.")
-        },
-        SemanticValueExpression literal => literal.Value,
-        SemanticResolvedExpression resolved when resolved.Root == expectedRoot && resolved.Source == SemanticExpressionSourceKind.Property && values.TryGetValue(resolved.Target, out var value) => value,
-        _ => throw new InvalidSemanticContract("An execution expression is unresolved in its declared root scope.")
-    };
+            SemanticEventContextExpression context when occurrence is not null => context.Value switch
+            {
+                SemanticEventContextValueKind.Occurred => SemanticValue.Text(occurrence.Occurred.UtcDateTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)),
+                SemanticEventContextValueKind.CausedBySubject => SemanticValue.Text(occurrence.Subject),
+                SemanticEventContextValueKind.CausedByName => SemanticValue.Text(occurrence.Name),
+                SemanticEventContextValueKind.CausedByUserName => SemanticValue.Text(occurrence.UserName),
+                _ => throw new InvalidSemanticContract("An occurrence field is unsupported.")
+            },
+            SemanticValueExpression literal => literal.Value,
+            SemanticResolvedExpression resolved when resolved.Root == expectedRoot && resolved.Source == SemanticExpressionSourceKind.Property && values.TryGetValue(resolved.Target, out var value) => value,
+            _ => throw new InvalidSemanticContract("An execution expression is unresolved in its declared root scope.")
+        };
 
     // Specifications also retain legacy given events without an event source; their null destination must not
     // become a fabricated identity. All supplied identities, payloads, tags and projections use the same core.
@@ -468,12 +477,65 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
     static IEnumerable<SemanticReducer> Reducers(ImmutableArray<SemanticFeature> features) =>
         features.SelectMany(feature => feature.Slices.SelectMany(slice => slice.Reducers).Concat(Reducers(feature.Features)));
 
+    // Validate every supplied entry before checking completeness. An invalid later fixture must not be
+    // hidden by an earlier missing property, and fixtures never feed the legacy allocated-destination channel.
+    static SemanticExecutionResult? Generate(
+        SemanticExecutionPlan plan,
+        SemanticWorld world,
+        SemanticCommand command,
+        ImmutableArray<SemanticPropertyValue> fixtures,
+        Dictionary<SemanticId, SemanticValue> values)
+    {
+        var generated = command.Properties.Where(property => property.IsGenerated).ToDictionary(property => property.Id);
+        if (!fixtures.IsDefaultOrEmpty)
+        {
+            var validator = new SemanticValueValidator(
+                plan.Model.Application.Concepts.ToDictionary(concept => concept.Id),
+                plan.Model.Application.Types.ToDictionary(type => type.Id));
+            var seen = new HashSet<SemanticId>();
+            foreach (var fixture in fixtures)
+            {
+                if (fixture is null || !generated.TryGetValue(fixture.TargetProperty, out var property) || !seen.Add(fixture.TargetProperty))
+                {
+                    return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, $"Command '{command.Name}' generated values do not match its generated property shape.");
+                }
+
+                try
+                {
+                    validator.Validate(fixture.Value, property.Type, $"generated command property '{property.Name}'");
+                }
+                catch (InvalidSemanticContract exception)
+                {
+                    return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, exception.Message);
+                }
+
+                values.Add(fixture.TargetProperty, fixture.Value);
+            }
+        }
+
+        if (generated.Values.FirstOrDefault(property => !values.ContainsKey(property.Id)) is { } missing)
+        {
+            return new SemanticUnsupported(world, SemanticExecutionCapability.IdentityAllocation, $"Command '{command.Name}' requires a deterministic generated value for '{missing.Name}'.");
+        }
+
+        return null;
+    }
+
+    static SemanticExecutionResponse? Response(SemanticCommandResponse? response, Dictionary<SemanticId, SemanticValue> values) => response switch
+    {
+        null => null,
+        SemanticScalarCommandResponse scalar => new SemanticScalarExecutionResponse(values.GetValueOrDefault(scalar.Source, SemanticValue.Null)),
+        SemanticRecordCommandResponse record => new SemanticRecordExecutionResponse([.. record.Fields.Select(field =>
+            new SemanticExecutionResponseField(field.Name, values.GetValueOrDefault(field.Source, SemanticValue.Null)))]),
+        _ => throw new InvalidSemanticContract("A command response variant is unsupported.")
+    };
+
     static string? ValidateRequest(
         SemanticExecutionPlan plan,
         SemanticCommand command,
         ImmutableArray<SemanticPropertyValue> values)
     {
-        if (values.IsDefault || values.Any(_ => _ is null) || values.Length != command.Properties.Length ||
+        if (values.IsDefault || values.Any(_ => _ is null) || values.Length != command.Properties.Count(property => !property.IsGenerated) ||
             values.Select(_ => _.TargetProperty).Distinct().Count() != values.Length)
         {
             return $"Command '{command.Name}' values do not match its exact property shape.";
@@ -483,7 +545,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
         var validator = new SemanticValueValidator(concepts, types);
         var valuesByTarget = values.ToDictionary(_ => _.TargetProperty);
-        foreach (var property in command.Properties)
+        foreach (var property in command.Properties.Where(property => !property.IsGenerated))
         {
             if (!valuesByTarget.TryGetValue(property.Id, out var value))
             {
@@ -518,7 +580,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
 
         var concepts = plan.Model.Application.Concepts.ToDictionary(concept => concept.Id);
         var types = plan.Model.Application.Types.ToDictionary(type => type.Id);
-        foreach (var property in command.Properties)
+        foreach (var property in command.Properties.Where(property => !property.IsGenerated))
         {
             if (PredicateInType(property.Type, concepts, types, []) is { } name)
             {
@@ -577,7 +639,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
 
         var concepts = plan.Model.Application.Concepts.ToDictionary(_ => _.Id);
         var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
-        foreach (var property in command.Properties)
+        foreach (var property in command.Properties.Where(property => !property.IsGenerated))
         {
             ValidateConceptValues(concepts, types, property.Type, valuesByTarget[property.Id], failures);
         }
