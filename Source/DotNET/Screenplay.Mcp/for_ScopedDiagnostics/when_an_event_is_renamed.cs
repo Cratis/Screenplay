@@ -7,6 +7,7 @@ public class when_an_event_is_renamed : Specification
 {
     ScopedDiagnosticResult _result;
     Dictionary<string, string> _sources;
+    McpSnapshot _snapshot;
 
     void Establish() => _sources = new()
     {
@@ -28,9 +29,17 @@ public class when_an_event_is_renamed : Specification
             """
     };
 
-    void Because() => _result = ScopedDiagnostics.Select(_sources, "M.F.Clean")!;
+    void Because()
+    {
+        _snapshot = new(_sources);
+        _result = ScopedDiagnostics.Select(_snapshot, "M.F.Clean")!;
+    }
 
-    [Fact] void should_include_the_broken_consumer() => _result.Diagnostics.Any(diagnostic => diagnostic.Message.Contains("CleanEvent", StringComparison.Ordinal)).ShouldBeTrue();
-    [Fact] void should_report_the_consumer_scope() => _result.AffectedScopes.ShouldContainOnly("Other.F.Use");
-    [Fact] void should_disclose_the_uncertain_former_target() => _result.PossiblyAffectedReferenceCount.ShouldEqual(1);
+    [Fact] void should_not_include_the_broken_consumer_in_scoped_diagnostics() => _result.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_not_claim_a_directly_affected_scope() => _result.AffectedScopes.ShouldBeEmpty();
+    [Fact] void should_not_count_the_consumer_as_a_dependent() => _result.DependentDeclarationCount.ShouldEqual(0);
+    [Fact] void should_report_the_unresolved_event_reference() => _result.UnresolvedEventConsumers.ReferenceCount.ShouldEqual(1);
+    [Fact] void should_report_the_unresolved_consumer_scope() => _result.UnresolvedEventConsumers.Scopes.ShouldContainOnly("Other.F.Use");
+    [Fact] void should_not_count_the_event_consumer_again_as_possibly_affected() => _result.PossiblyAffectedReferenceCount.ShouldEqual(0);
+    [Fact] void should_preserve_the_whole_application_diagnostic() => _snapshot.Compilation.Diagnostics.Any(diagnostic => diagnostic.Message.Contains("CleanEvent", StringComparison.Ordinal)).ShouldBeTrue();
 }

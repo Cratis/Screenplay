@@ -115,6 +115,7 @@ static class McpModelQueries
             selection.DeclarationCount,
             selection.DependentDeclarationCount,
             selection.AffectedScopes,
+            selection.UnresolvedEventConsumers,
             selection.PossiblyAffectedReferenceCount,
             selection.DependencyCoverage,
             summary = DiagnosticSummary(diagnostics),

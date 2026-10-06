@@ -12,5 +12,6 @@ sealed record ScopedDiagnosticResult(
     int DependentDeclarationCount,
     ImmutableArray<Diagnostic> Diagnostics,
     ImmutableArray<string> AffectedScopes,
+    ScopedUnresolvedEventConsumers UnresolvedEventConsumers,
     int PossiblyAffectedReferenceCount,
     string DependencyCoverage);

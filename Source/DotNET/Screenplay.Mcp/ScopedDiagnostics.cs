@@ -34,14 +34,9 @@ static class ScopedDiagnostics
         // Inspect only the original set: inclusion is direct, never a transitive closure.
         var names = selected.Select(declaration => declaration.Name).ToHashSet(StringComparer.Ordinal);
         var unresolved = snapshot.Index.ResolvedReferences.Where(edge => edge.Candidates.Length == 0).ToArray();
-        var possiblyAffected = unresolved.Where(edge => !names.Contains(edge.Reference.Name.Split('.')[^1]) &&
-            !selected.Any(declaration => declaration.Owner == edge.Reference.Owner)).ToArray();
-
-        // A current snapshot cannot prove the former target of a removed or renamed name.
-        // Include unresolved event consumers conservatively, and disclose other uncertainty separately.
         var dependents = snapshot.Index.ResolvedReferences
             .Where(edge => edge.Candidates.Any(selected.Contains) || (edge.Candidates.Length == 0 &&
-                (names.Contains(edge.Reference.Name.Split('.')[^1]) || edge.Reference.Kinds.Contains("Event", StringComparer.Ordinal))))
+                names.Contains(edge.Reference.Name.Split('.')[^1])))
             .Select(edge => edge.Reference.Owner)
             .OfType<McpReadOwner>().ToHashSet();
         var dependentDeclarations = declarations.Where(declaration => dependents.Contains(declaration.Owner) && !selected.Contains(declaration)).ToArray();
@@ -49,6 +44,15 @@ static class ScopedDiagnostics
             .Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray();
         var scopeCount = selected.Count;
         selected.UnionWith(dependentDeclarations);
+
+        // A current snapshot cannot prove the former target of a removed or renamed name.
+        // Unattributable event references are uncertainty, not evidence of direct scope impact.
+        var selectedOwners = selected.Select(declaration => declaration.Owner).ToHashSet();
+        var outside = unresolved.Where(edge => edge.Reference.Owner is null || !selectedOwners.Contains(edge.Reference.Owner)).ToArray();
+        var unresolvedEvents = outside.Where(edge => edge.Reference.Kinds.Contains("Event", StringComparer.Ordinal)).ToArray();
+        var unresolvedEventScopes = unresolvedEvents.Select(edge => string.Join('.', edge.Reference.Scope))
+            .Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToImmutableArray();
+        var possiblyAffected = outside.Except(unresolvedEvents).Count();
 
         var lines = snapshot.Sources.ToDictionary(source => source.Key, source => source.Value.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Split('\n'), StringComparer.Ordinal);
         var ranges = declarations.SelectMany(declaration => declaration.Locations.Select(location => Range(declaration, location, lines)))
@@ -74,7 +78,15 @@ static class ScopedDiagnostics
                     declaration.Kind == "Slice"));
         }).ToImmutableArray();
 
-        return new(scope, scopeCount, dependentDeclarations.Length, diagnostics, [.. affected], possiblyAffected.Length, McpReferenceKinds.Coverage);
+        return new(
+            scope,
+            scopeCount,
+            dependentDeclarations.Length,
+            diagnostics,
+            [.. affected],
+            new(unresolvedEvents.Length, unresolvedEventScopes),
+            possiblyAffected,
+            McpReferenceKinds.Coverage);
     }
 
     static bool Within(IEnumerable<string> segments, string scope) => string.Join('.', segments) is var address &&

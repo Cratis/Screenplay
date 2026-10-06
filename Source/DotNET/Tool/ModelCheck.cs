@@ -80,7 +80,8 @@ static class ModelCheck
             diagnostics = selection.Diagnostics;
             output.WriteLine($"Scope {scope}: {selection.DeclarationCount} declaration(s), {selection.DependentDeclarationCount} direct dependent declaration(s), {selection.Diagnostics.Length} diagnostic(s)");
             output.WriteLine($"Affected scopes: {(selection.AffectedScopes.Length == 0 ? "none" : string.Join(", ", selection.AffectedScopes.Select(affected => affected.Length == 0 ? "<application>" : affected)))}");
-            output.WriteLine($"Possibly affected: {selection.PossiblyAffectedReferenceCount} unresolved reference(s) outside the requested scope");
+            output.WriteLine($"Unresolved event consumers (cannot be attributed to a scope): {selection.UnresolvedEventConsumers.ReferenceCount} reference(s) in {(selection.UnresolvedEventConsumers.Scopes.Length == 0 ? "none" : string.Join(", ", selection.UnresolvedEventConsumers.Scopes.Select(consumerScope => consumerScope.Length == 0 ? "<application>" : consumerScope)))}");
+            output.WriteLine($"Possibly affected: {selection.PossiblyAffectedReferenceCount} other unresolved reference(s) outside the reported declarations");
             output.WriteLine($"Dependency coverage: {selection.DependencyCoverage}");
             var wholeErrors = compilation.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
             var wholeWarnings = compilation.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Warning);

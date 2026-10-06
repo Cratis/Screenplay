@@ -38,6 +38,7 @@ internal sealed partial class McpWorkspaces
                 selection.DeclarationCount,
                 selection.DependentDeclarationCount,
                 selection.AffectedScopes,
+                selection.UnresolvedEventConsumers,
                 selection.PossiblyAffectedReferenceCount,
                 selection.DependencyCoverage,
                 summary = McpModelQueries.DiagnosticSummary(selection.Diagnostics),
