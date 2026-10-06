@@ -31,6 +31,13 @@ sealed class McpTools
         set => _workspaces.CurrentDirectoryHint = value;
     }
 
+    // The Documents directory holding the per-user Screenplay folder; null means the current user's.
+    internal string? DocumentsDirectoryHint
+    {
+        get => _workspaces.DocumentsDirectoryHint;
+        set => _workspaces.DocumentsDirectoryHint = value;
+    }
+
     // The root currently bound from a single client root, when it came from the host rather than a path.
     internal string? ClientDerivedRootPath => _workspaces.ClientDerivedRootPath;
 

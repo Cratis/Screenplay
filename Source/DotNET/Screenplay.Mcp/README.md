@@ -159,12 +159,12 @@ The plugin ZIP has root `plugin.json`, root `mcp.json`, `skills/screenplay/SKILL
 Cratis branding and the same self-contained binary. The stdio command is a single
 **plugin-relative token**, `./server/Cratis.Screenplay.Tool` (with `.exe` on Windows).
 Commands do not interpolate `${PLUGIN_ROOT}`; this follows the portable specification.
-Arguments use `${PLUGIN_DATA}/model`, a host-provided persistent data location.
-The explicit `mcp --create-root` launch creates that initially empty application.
-Normal `screenplay mcp ROOT` startup still requires an existing root. `screenplay mcp` with no
-root starts a dynamic server that binds a root on first use: `open-workspace` `path`, then the
-client's single `roots/list` root (re-read on `notifications/roots/list_changed`), then the
-working directory when it holds `.play` files or `.screenplay`.
+The arguments are just `mcp`. `screenplay mcp ROOT` still requires an existing root, and
+`mcp --create-root DIRECTORY` creates one. `screenplay mcp` with no root starts a dynamic server that binds a
+root on first use: `open-workspace` `path`, then the client's single `roots/list` root (re-read on
+`notifications/roots/list_changed`; the server serves the model inside that project: its `.play` files,
+else `Source`/`src`, else a new `Screenplay` folder), then the working directory when it holds `.play`
+files or `.screenplay`, and finally `Documents/Screenplay` in the user's home folder, created on demand.
 
 For an existing model, the CLI installer supplies `--model-root DIRECTORY` and
 configures the owned package's arguments to launch that directory without creation.
