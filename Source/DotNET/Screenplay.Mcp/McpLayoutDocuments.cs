@@ -29,7 +29,7 @@ static class McpLayoutDocuments
         files.Add(new(PlayFileWriter.RootFileName, printer.Print(application with
         {
             Modules = [],
-            FileImports = modules.Select(module => Import($"{module.Name}/{module.Name}.play", module)),
+            FileImports = [.. modules.Select(module => Import($"{module.Name}/{module.Name}.play", module, application))],
             SourceComments = Comments(application, application.FileImports)
         })));
         foreach (var module in modules)
@@ -38,7 +38,7 @@ static class McpLayoutDocuments
             var projected = module with
             {
                 Features = layout == "module" ? [.. features.Select(WithoutImports)] : [],
-                FileImports = layout == "module" ? [] : features.Select(feature => Import($"{feature.Name}/{feature.Name}.play", feature)),
+                FileImports = layout == "module" ? [] : [.. features.Select(feature => Import($"{feature.Name}/{feature.Name}.play", feature, module))],
                 SourceComments = Comments(module, module.FileImports)
             };
             files.Add(new($"{module.Name}/{module.Name}.play", printer.Print(Document(projected, application.SourceOptions))));
@@ -64,17 +64,17 @@ static class McpLayoutDocuments
             var folder = $"{parent}/{feature.Name}";
             var children = feature.Features.ToArray();
             var slices = feature.Slices.ToArray();
-            var imports = children.Select(child => Import($"{child.Name}/{child.Name}.play", child));
+            List<FileImportSyntax> imports = [.. children.Select(child => Import($"{child.Name}/{child.Name}.play", child, feature))];
             if (layout == "slice")
             {
-                imports = imports.Concat(slices.Select(slice => Import($"{slice.Name}/{slice.Name}.play", slice)));
+                imports.AddRange(slices.Select(slice => Import($"{slice.Name}/{slice.Name}.play", slice, feature)));
             }
 
             var projected = feature with
             {
                 Features = [],
                 Slices = layout == "slice" ? [] : slices,
-                FileImports = imports,
+                FileImports = [.. imports],
                 SourceComments = Comments(feature, feature.FileImports)
             };
             files.Add(new($"{folder}/{feature.Name}.play", printer.Print(Document(PlacedModule([projected]), options))));
@@ -94,7 +94,10 @@ static class McpLayoutDocuments
 
     static ModuleSyntax PlacedModule(IEnumerable<FeatureSyntax> features) => new(string.Empty, [], features, SourceLocation.Start) { IsPlacement = true };
 
-    static FileImportSyntax Import(string path, SyntaxNode declaration) => new(path, declaration.Location);
+    // A child's location in another document cannot order an import among its owner's authored members.
+    static FileImportSyntax Import(string path, SyntaxNode declaration, SyntaxNode owner) => new(
+        path,
+        string.Equals(declaration.Location.Path, owner.Location.Path, StringComparison.Ordinal) ? declaration.Location : SourceLocation.Start);
 
     // Imports are source composition, not model declarations. Their attached comments still belong to the
     // reorganized scope even when their former paths no longer exist.
