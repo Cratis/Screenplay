@@ -25,6 +25,6 @@ public class when_compiling_the_operation_fixture : Specification
     [Fact] void should_compile_the_documented_syntax() => _syntax.Success.ShouldBeTrue();
     [Fact] void should_preserve_the_declared_production_sequence() => _syntax.Value!.Modules.Single().Features.Single().Slices.First().Commands.Single().Produces.Select(production => production.Event).SequenceEqual(["ProjectRegistered", "SendWelcomeEmail", "NotifyAccounting"]).ShouldBeTrue();
     [Fact] void should_reject_executable_admission() => _workspace.Compilation.Success.ShouldBeFalse();
-    [Fact] void should_name_v9_in_the_semantic_refusal() => _workspace.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("v9", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_name_unadmitted_operations_in_the_semantic_refusal() => _workspace.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("not admitted by any supported executable model (ESM) version yet (#301)", StringComparison.Ordinal)).ShouldBeTrue();
     [Fact] void should_not_emit_operation_requirements() => _workspace.Compilation.ImplementationRequirements.ShouldBeEmpty();
 }

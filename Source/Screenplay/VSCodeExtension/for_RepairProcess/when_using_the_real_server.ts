@@ -6,7 +6,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { RepairSession } from '../RepairSession';
 import { RepairClient } from '../RepairClient';
-import { privateMetadataDirectory } from '../tests/privateMetadataDirectory';
+import { privateMetadataDirectory, privateMetadataDirectoryTimeout } from '../tests/privateMetadataDirectory';
 import { serverExecutable, serverAvailable, repairSource, missingEventSource, refusedEventSource } from '../tests/repairFixture';
 
 // The JS-only CI lane has no C# tool. The explicit process gate requires its native artifact.
@@ -112,8 +112,8 @@ describe.skipIf(!serverAvailable)('real C# tool subprocess (not a transport stub
         { name: 'source set', kind: 'DiskDrift', change: () => fs.writeFileSync(path.join(root, 'sibling.play'), 'concept Additional : String\n') },
         { name: 'identity state', kind: 'IdentityStateDrift', change: () => { privateMetadataDirectory(path.join(root, '.screenplay')); fs.writeFileSync(path.join(root, '.screenplay', 'identities.json'), 'external-state'); } }
     ];
-    // Identity fixture setup can spend five seconds in the bounded Windows PowerShell ACL helper,
-    // in addition to real C# round trips. This test budget changes no helper, RPC or product deadline.
+    // Allow the full Windows PowerShell ACL fixture budget plus C# round trips.
+    // Product and RPC deadlines remain unchanged.
     for (const drift of unnotifiedDrift) it(`retains an uncertain apply and never retries an unnotified ${drift.name} change (${drift.kind})`, async () => {
         const { choices } = await session.discover();
         const preview = await session.preview(choices[0].token);
@@ -133,7 +133,7 @@ describe.skipIf(!serverAvailable)('real C# tool subprocess (not a transport stub
         for (const [file, bytes] of snapshot) expect(after.get(file)).toEqual(bytes);
         await expect(session.apply(preview.token)).rejects.toMatchObject({ kind: 'UnauthorizedApply' });
         expect((await session.inspectState()).exists).toBe(drift.kind === 'IdentityStateDrift'); // Read-only recovery inspection still works.
-    }, drift.kind === 'IdentityStateDrift' ? 10_000 : 5_000);
+    }, drift.kind === 'IdentityStateDrift' ? privateMetadataDirectoryTimeout + 10_000 : 5_000);
     it('rejects a stale catalog using the structured server failure, not message prefixes', async () => {
         const client = new RepairClient({ executable: serverExecutable, arguments: ['mcp'], root });
         try {

@@ -26,7 +26,7 @@ public class when_rejecting_syntax_only_responses : given.a_semantic_binder
         var diagnostic = result.Diagnostics.Single();
         diagnostic.Code.ShouldEqual(DiagnosticCodes.UnsupportedSemanticSyntax);
         diagnostic.Location.Line.ShouldEqual(line);
-        diagnostic.Message.ShouldEqual("This construct is not admitted by any supported ESM version; decision 0023 allocates it to ESM v8.");
+        diagnostic.Message.ShouldEqual("Generated values, responses and return expectations are not admitted by any supported executable model (ESM) version yet (#300/#303).");
     }
 
     [Fact]

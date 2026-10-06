@@ -1,4 +1,4 @@
-// Syntax-only operation intent. Execution is unavailable until ESM v9.
+// Syntax-only operation intent. Operations are not admitted by any supported executable model (ESM) version yet.
 concept Recipient : String
 concept Channel : Enum
   email

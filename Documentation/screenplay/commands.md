@@ -92,15 +92,15 @@ The unescaped directives `namespace`, `sequence`, `correlation`, `causation`, `c
 
 Use `stream Source.Stream` to select a declared [event source and stream](event-sources.md). Map a keyed stream with nested `streamId = <value>`. This route never supplies the event's `for` destination and does not change plain-production allocation or inline defaults. Handler commands may author routing without statically declared events; `handler` with `produces` is still prohibited.
 
-Both viable stream/property interpretations remain blocking `PLAY0505` candidates, never a guessed route. Source/stream declarations and routed commands remain unavailable until ESM v10 (`PLAY0268`). Per-production overrides, reaction/reducer filters and new concurrency flags are not supported. The board shows only the authored route and readable key expression in existing command details.
+Both viable stream/property interpretations remain blocking `PLAY0505` candidates, never a guessed route. Source/stream declarations and routed commands are not admitted by any supported executable model (ESM) version yet (`PLAY0268`). Per-production overrides, reaction/reducer filters and new concurrency flags are not supported. The board shows only the authored route and readable key expression in existing command details.
 
 ## Operations and external systems (syntax-only)
 
-A command can describe external effects through inline `produces operation <Name>` declarations or plain references to standalone operations. [Operations and external systems](operations.md) covers typed inputs, `uses`, execution/compensation intent and manual promotion. Event and operation productions stay in one ordered sequence, but operations do not participate in event destinations or payload identity diagnostics. **Execution is unavailable until ESM v9**; binding reports `PLAY0268` without an executable model.
+A command can describe external effects through inline `produces operation <Name>` declarations or plain references to standalone operations. [Operations and external systems](operations.md) covers typed inputs, `uses`, execution/compensation intent and manual promotion. Event and operation productions stay in one ordered sequence, but operations do not participate in event destinations or payload identity diagnostics. **Operations are not admitted by any supported executable model (ESM) version yet**; binding reports `PLAY0268` without an executable model.
 
 ## Generated values and responses (syntax-only)
 
-You can author generated values and a response contract, but **execution is unavailable until ESM v8**. Binding any generated property, response, generated fixture or return expectation reports `PLAY0268` and produces no semantic model. Syntax validation and editor or MCP acceptance are not proof of execution.
+You can author generated values and a response contract, but **these constructs are not admitted by any supported executable model (ESM) version yet**. Binding any generated property, response, generated fixture or return expectation reports `PLAY0268` and produces no semantic model. Syntax validation and editor or MCP acceptance are not proof of execution.
 
 ```screenplay
 command RegisterProject
@@ -120,7 +120,7 @@ This fragment assumes `ProjectId` and `ReceiptId` are concepts backed by `Uuid`,
 - Each record field is `<name> [<Type>] = <property>`. Its type is inferred from a direct command property, or explicitly annotated with exactly the same type identity and optionality. Fields are unique and stay in authored order. Arithmetic, read aliases, collections and whole read-model responses are not supported.
 - A two-token `returns name` is a response when `name` identifies another property of **this command**, regardless of declaration order; otherwise it remains a property named `returns` whose type is `name`. This is a local property lookup, not a type-inventory or capitalization rule. Use `returns @name` to force a source reference, including an unknown source that needs a diagnostic; use `@returns Type` to force a property declaration. Returning a property named `returns` uses `returns @returns`.
 
-Responses also parse beside a handler; they do not add handler-return semantics. Future renderers favor an official `<Command>Response` type, but no such type is emitted here. Form `on submit` and interaction `on success` response-name scopes, failure clearing and response execution remain unavailable until their coordinated v8 implementation.
+Responses also parse beside a handler; they do not add handler-return semantics. Future renderers favor an official `<Command>Response` type, but no such type is emitted here. Form `on submit` and interaction `on success` cannot bind response names or clear responses on failure, and response contracts cannot execute.
 
 The board excludes generated properties from the request schema and shows generated/response details in the existing command description. It creates no response event or response identity. See [syntax-only specification fixtures](specifications.md#generated-fixtures-and-return-expectations-syntax-only).
 
@@ -181,7 +181,7 @@ command TransferFunds
 
 The view name still qualifies a `require` path when only one instance of that view is read. An alias qualifies the path when present; with repeated reads, use the alias instead of the ambiguous view name. With the read model in scope, its properties are also addressable in produces mappings, as above.
 
-The executable semantic model does not yet bind command `reads` or read-model paths in requirements (#129).
+The executable semantic model does not yet bind command `reads` or read-model paths in requirements ([#129](https://github.com/Cratis/Screenplay/issues/129)).
 
 ## Validation rules
 
@@ -401,7 +401,7 @@ Still rejected, and why:
 | --- | --- |
 | any comparison on `Date` or `DateTime`, and `today` | ESM v1 has no runtime date value — a date is text in a fixed format — so it has nothing to compare against. |
 | a named `matches` pattern other than `email` | Only `email` has a portable definition; other names are rejected (`PLAY0366`). Invalid quoted ECMAScript patterns are rejected (`PLAY0367`). |
-| `require` over a read-model path | A consistent decision snapshot of declared reads is not yet available (#129). |
+| `require` over a read-model path | A consistent decision snapshot of declared reads is not yet available ([#129](https://github.com/Cratis/Screenplay/issues/129)). |
 | a bare `rule <Name>` | Its logic lives outside the document, so it has no portable meaning. |
 | a rule on a nested path such as `lines.quantity` | ESM v1 validates command properties; put the rule on the nested value's [concept](concepts.md#validation) instead. |
 
@@ -529,7 +529,7 @@ produces InvoiceRunningTotalUpdated
 
 ### Conditional produces
 
-`produces when <condition>` emits the indented event only when the condition holds. In ESM v1, comparisons use declared command properties and constants with `==`, `!=`, `>`, `>=`, `<`, `<=`, combined with `and`/`or` (`and` binds tighter; parentheses group). Ordering is numeric; equality admits scalar text, enumeration, number and Boolean. `$env` conditions remain syntax-only because environment values vary across realizations. the supported scalar `$context` mappings select v2 (#226), and paths into reads wait on #129:
+`produces when <condition>` emits the indented event only when the condition holds. In ESM v1, comparisons use declared command properties and constants with `==`, `!=`, `>`, `>=`, `<`, `<=`, combined with `and`/`or` (`and` binds tighter; parentheses group). Ordering is numeric; equality admits scalar text, enumeration, number and Boolean. `$env` conditions remain syntax-only because environment values vary across realizations. the supported scalar `$context` mappings select v2 ([#226](https://github.com/Cratis/Screenplay/issues/226)), and paths into reads wait on [#129](https://github.com/Cratis/Screenplay/issues/129):
 
 ```screenplay
 produces when isProForma == true
@@ -598,7 +598,7 @@ This is the handler from [Invoicing](https://github.com/Cratis/Screenplay/blob/m
 | --- | --- |
 | Command handler | Supported; direct file/fence forms remain supported |
 | Query performer, validation rule, reducer rule, policy, reaction trigger | Deferred; existing direct forms only |
-| Operation execute/compensate phases | New syntax-only authoring wrapper; not an admitted ESM implementation role (v9 future) |
+| Operation execute/compensate phases | New syntax-only authoring wrapper; not admitted by any supported executable model (ESM) version yet |
 | Provisioning | Deferred |
 
 `implementation` and `hint` are contextual, not globally reserved property names. Intent authoring does not execute, confirm or regenerate code. Command handlers still fail executable admission with `PLAY0268`, including when attached. There is no lock, drift checker, confirmation or AI action in this slice. See [AST authoring](ast-authoring.md#handler-intent-edits) and [MCP inventory](mcp/reference.md#handler-intent-inventory).

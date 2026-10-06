@@ -22,10 +22,10 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
 
     internal string? ModelExecutionReadiness => ExecutionReadiness(application);
 
-    internal bool SyntaxOnly(SyntaxNode node) => RequiredVersion(node) > 0;
+    internal bool SyntaxOnly(SyntaxNode node) => UnadmittedFeatures(node).Length > 0;
 
     internal string? ExecutionReadiness(SyntaxNode node, string? suffix = "use Authoring validation.") =>
-        RequiredVersion(node) is var version && version > 0 ? $"Unavailable until ESM v{version} (PLAY0268){(suffix is null ? "." : $"; {suffix}")}" : null;
+        UnadmittedFeatures(node) is var features && features.Length > 0 ? $"Not admitted by any supported executable model (ESM) version yet (PLAY0268): {string.Join(", ", features)}{(suffix is null ? "." : $"; {suffix}")}" : null;
 
     internal IEnumerable<string> ProducedEvents(CommandSyntax command) => command.Produces
         .Where(production => _owners.TryGetValue(command, out var slice) && _productions.IsEventProduction(production, slice))
@@ -70,22 +70,37 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
         return scopes;
     }
 
-    int RequiredVersion(SyntaxNode node)
+    static IEnumerable<string> Feature(bool present, string feature) => present ? [feature] : [];
+
+    string[] UnadmittedFeatures(SyntaxNode node)
     {
-        var local = node switch
+        const string streams = "event sources, streams and routes (#302)";
+        const string responses = "generated values, responses and return expectations (#300/#303)";
+        IEnumerable<string> LocalFeatures() => node switch
         {
-            EventSourceSyntax or EventStreamSyntax or CommandStreamSyntax => 10,
-            CommandSyntax command when command.Stream is not null || command.StreamCandidates.Any() => 10,
-            CommandSyntax command when command.Response is not null || command.Properties.Any(property => property.IsGenerated) => 8,
-            SpecificationSyntax specification => Math.Max(
-                specification.ThenReturns is not null || (specification.When?.GeneratedValues.Any() ?? false) ? 8 : 0,
-                ActionCommands(specification).Select(entry => RequiredVersion(entry.Command)).DefaultIfEmpty().Max()),
-            SliceSyntax slice => slice.Commands.Cast<SyntaxNode>().Concat(slice.Specifications).Select(RequiredVersion).DefaultIfEmpty().Max(),
-            ApplicationSyntax => Math.Max(application.EventSources.Any() ? 10 : 0, _owners.Keys.OfType<SliceSyntax>().Select(RequiredVersion).DefaultIfEmpty().Max()),
-            _ => 0
+            EventSourceSyntax or EventStreamSyntax or CommandStreamSyntax => [streams],
+            CommandSyntax command =>
+                Feature(command.Stream is not null || command.StreamCandidates.Any(), streams)
+                .Concat(Feature(command.Response is not null || command.Properties.Any(property => property.IsGenerated), responses)),
+            SpecificationSyntax specification =>
+                Feature(specification.ThenReturns is not null || (specification.When?.GeneratedValues.Any() ?? false), responses)
+                .Concat(ActionCommands(specification).SelectMany(entry => UnadmittedFeatures(entry.Command))),
+            SliceSyntax slice => slice.Commands.Cast<SyntaxNode>().Concat(slice.Specifications).SelectMany(UnadmittedFeatures),
+            ApplicationSyntax => Feature(application.EventSources.Any(), streams)
+                .Concat(_owners.Keys.OfType<SliceSyntax>().SelectMany(UnadmittedFeatures)),
+            _ => []
         };
 
-        return Math.Max(local, Operations(node) ? 9 : 0);
+        return [.. LocalFeatures().Concat(Feature(Operations(node), "operations and systems (#301)"))
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(feature => feature switch
+            {
+                "exact numbers (#285)" => 0,
+                responses => 1,
+                "operations and systems (#301)" => 2,
+                streams => 3,
+                _ => 4
+            })];
     }
 
     (CommandSyntax Command, string[] Scope)[] ActionCommands(SpecificationSyntax specification)

@@ -49,7 +49,7 @@ function operationDetails(command: CommandSyntax, owners?: EventOwners): string 
         ]);
     if (operations.length === 0 && specs.length === 0) return '';
     const phase = (name: string, value: OperationPhaseSyntax | null) => `${name}: ${!value ? 'not declared' : value.file ? `file ${value.file.path}` : value.code ? `inline ${value.code.language}` : 'pending'}${value?.description ? ` — ${value.description}` : ''}${value?.implementation?.hints.map(hint => `\n  hint: ${hint.text}`).join('') ?? ''}`;
-    return ['Syntax-only operation intent: execution unavailable until ESM v9 (PLAY0268).',
+    return ['Syntax-only operation intent: not admitted by any supported executable model (ESM) version yet (PLAY0268) (#301).',
         'Authored productions\n' + productions.map(entry => `${entry.index + 1}. ${entry.resolution.kind[0].toUpperCase() + entry.resolution.kind.slice(1)}: ${entry.production.event}`).join('\n'),
         ...operations.map(entry => {
             const operation = entry.production.inlineOperation ?? (entry.resolution.kind === AuthoringProductionKind.Operation ? entry.resolution.declaration?.node as OperationSyntax : undefined);
@@ -64,20 +64,20 @@ function operationDetails(command: CommandSyntax, owners?: EventOwners): string 
 
 function routeDetails(command: CommandSyntax): string {
     const escape = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    if ((command.streamCandidates ?? []).some(candidate => candidate.propertyCandidate != null)) return 'Ambiguous stream/property authoring: no route selected (PLAY0505). Execution unavailable until ESM v10 (PLAY0268).';
-    if ((command.streamCandidates ?? []).length > 0) return 'Conflicting authored stream routes: no effective route selected. Execution unavailable until ESM v10 (PLAY0268).';
+    if ((command.streamCandidates ?? []).some(candidate => candidate.propertyCandidate != null)) return 'Ambiguous stream/property authoring: no route selected (PLAY0505). Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302).';
+    if ((command.streamCandidates ?? []).length > 0) return 'Conflicting authored stream routes: no effective route selected. Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302).';
     const route = command.stream;
     if (!route) return '';
     return escape([`Authored stream: ${route.eventSource}.${route.stream}`,
         route.streamId ? `Stream id: ${expressionText(route.streamId.source)}` : '',
-        'Syntax-only: execution unavailable until ESM v10 (PLAY0268). This classification does not supply an identity destination.'
+        'Syntax-only: not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302). This classification does not supply an identity destination.'
     ].filter(Boolean).join('\n'));
 }
 
 function detailsOf(command: CommandSyntax): string {
     const generated = command.properties.filter(property => property.isGenerated);
     if (generated.length === 0 && command.response == null) return command.description ?? '';
-    const sections = [command.description ?? '', 'Syntax-only: execution unavailable until ESM v8 (PLAY0268).'];
+    const sections = [command.description ?? '', 'Syntax-only: not admitted by any supported executable model (ESM) version yet (PLAY0268) (#300/#303).'];
     if (generated.length > 0) sections.push(`Generated values (not request inputs)\n${generated.map(property => `${property.name}: ${property.type.name}${property.isIdentifier ? ' (identifier)' : ''}`).join('\n')}`);
     const response = command.response;
     if (response?.kind === 'ScalarCommandResponseSyntax') sections.push(`Returns\n${response.source.property}`);

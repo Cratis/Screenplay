@@ -19,8 +19,11 @@ public class when_exposing_source_stream_authoring : given.an_authoring_connecti
         var revision = opened.GetProperty("revision").GetString();
         foreach (var view in new[] { "event-sources", "event-streams", "command-routes" })
         {
-            var page = Result("read-workspace", new { expectedRevision = revision, view }).GetProperty("page");
+            var result = Result("read-workspace", new { expectedRevision = revision, view });
+            result.GetProperty("executionReadiness").GetString().ShouldContain("(#302)");
+            var page = result.GetProperty("page");
             page.GetProperty("totalCount").GetInt32().ShouldEqual(1);
+            page.GetProperty("items")[0].GetProperty("executionReadiness").GetString().ShouldContain("(#302)");
             page.GetRawText().ShouldNotContain("semanticId");
             page.GetRawText().ShouldNotContain("requirementId");
         }
@@ -29,7 +32,7 @@ public class when_exposing_source_stream_authoring : given.an_authoring_connecti
         stream.GetProperty("scope")[0].GetString().ShouldEqual("Account");
         var details = Result("read-workspace", new { expectedRevision = revision, view = "event-stream-details", authoringKey = stream.GetProperty("authoringKey").GetString() });
         details.GetProperty("executionAvailable").GetBoolean().ShouldBeFalse();
-        details.GetProperty("executionReadiness").GetString().ShouldContain("ESM v10");
+        details.GetProperty("executionReadiness").GetString().ShouldContain("Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302)");
         var source = Node("EventSourceSyntax", revision);
         source.GetProperty("semanticId").ValueKind.ShouldEqual(JsonValueKind.Null);
         source.GetProperty("node").GetProperty("streams")[0].GetProperty("streamId").GetProperty("name").GetString().ShouldEqual("Month");

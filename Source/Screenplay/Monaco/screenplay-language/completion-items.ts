@@ -16,8 +16,8 @@ export interface CompletionEntry {
 const fenced = (tag: string) => `\`\`\`${tag}\n\${1}\n\`\`\``;
 
 export const topLevelItems: CompletionEntry[] = [
-    { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams; authoring only until ESM v10 (PLAY0268).' },
-    { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system; syntax-only until ESM v9.' },
+    { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
+    { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system; not admitted by any supported executable model (ESM) version yet.' },
     { label: 'import', insertText: 'import ${1:Module}.${2:Type}', documentation: 'Imports a type from another module by its qualified name.' },
     { label: 'import "…"', insertText: 'import "${1:**/*.play}"', documentation: 'Imports other `.play` files by path or glob, relative to this file\'s folder, as whole documents of the application.' },
     { label: 'concept', insertText: 'concept ${1:Name} : ${2|Uuid,String,Int,Decimal,Bool,Date,DateTime|}', documentation: 'Declares a formalized value type wrapping a primitive.' },
@@ -32,14 +32,14 @@ export const operationItems: CompletionEntry[] = [
     { label: 'uses', insertText: 'uses ${1:System}', documentation: 'Exactly one application-scoped external system.' },
     { label: 'description', insertText: 'description "${1:intent}"', documentation: 'Describes operation intent, without requiring code.' },
     { label: 'input', insertText: '${1:input} ${2:Type}', documentation: 'Typed operation input; no identifier or generated modifier.' },
-    { label: 'execute', insertText: 'execute\n    description "${1:effect}"', documentation: 'Optional execution intent; syntax-only until ESM v9.' },
-    { label: 'compensate', insertText: 'compensate\n    description "${1:undo intent}"', documentation: 'Optional compensation intent; syntax-only until ESM v9.' },
+    { label: 'execute', insertText: 'execute\n    description "${1:effect}"', documentation: 'Optional execution intent; not admitted by any supported executable model (ESM) version yet.' },
+    { label: 'compensate', insertText: 'compensate\n    description "${1:undo intent}"', documentation: 'Optional compensation intent; not admitted by any supported executable model (ESM) version yet.' },
 ];
 
 export const operationImplementationItems: CompletionEntry[] = [
     { label: 'hint', insertText: 'hint "${1:implementation guidance}"', documentation: 'Ordered authoring guidance; not an executable implementation role.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Selects the phase’s sole source attachment.' },
-    ...['csharp', 'typescript', 'react', 'html', 'sql'].map(language => ({ label: language, insertText: fenced(language), documentation: 'Selects the phase’s sole inline source; execution unavailable until ESM v9.' })),
+    ...['csharp', 'typescript', 'react', 'html', 'sql'].map(language => ({ label: language, insertText: fenced(language), documentation: 'Selects the phase’s sole inline source; not admitted by any supported executable model (ESM) version yet.' })),
 ];
 
 export const operationPhaseItems: CompletionEntry[] = [
@@ -77,7 +77,7 @@ export const featureItems: CompletionEntry[] = [
 ];
 
 export const sliceItems: CompletionEntry[] = [
-    { label: 'operation', insertText: 'operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type}', documentation: 'Reusable slice-owned operation intent; syntax-only until ESM v9.' },
+    { label: 'operation', insertText: 'operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type}', documentation: 'Reusable slice-owned operation intent; not admitted by any supported executable model (ESM) version yet.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
     { label: 'event', insertText: 'event ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares an event type — an immutable, past-tense fact.' },
     { label: 'event generation', insertText: 'event ${1:Name} generation ${2:2}\n    ${3:property} ${4:Type}', documentation: 'Declares a complete numbered event generation; start at 1 and do not skip a number.' },
@@ -92,9 +92,9 @@ export const sliceItems: CompletionEntry[] = [
 ];
 
 export const commandItems: CompletionEntry[] = [
-    { label: 'produces operation', insertText: 'produces operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type} = ${5:source}', documentation: 'Declares ordered operation intent; execution unavailable until ESM v9 (PLAY0268).' },
-    { label: 'returns property', insertText: 'returns @${1:property}', documentation: 'Syntax-only scalar response from a direct command property; execution unavailable until ESM v8 (PLAY0268).' },
-    { label: 'returns block', insertText: 'returns\n    ${1:field} = ${2:property}', documentation: 'Syntax-only unnamed record response with inferred or explicit field types; execution unavailable until ESM v8 (PLAY0268). No response type is emitted.' },
+    { label: 'produces operation', insertText: 'produces operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type} = ${5:source}', documentation: 'Declares ordered operation intent; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
+    { label: 'returns property', insertText: 'returns @${1:property}', documentation: 'Syntax-only scalar response from a direct command property; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
+    { label: 'returns block', insertText: 'returns\n    ${1:field} = ${2:property}', documentation: 'Syntax-only unnamed record response with inferred or explicit field types; not admitted by any supported executable model (ESM) version yet (PLAY0268). No response type is emitted.' },
     { label: 'produces event', insertText: 'produces event ${1:Name}\n    ${2:property} ${3:Type} = ${4:source}', documentation: 'Declares a slice-owned generation-1 event and maps its properties. An omitted for uses the command identifier.' },
     { label: 'identifier property', insertText: '${1:property} ${2:Type} identifier', documentation: 'Marks the property a runtime resolves the event source id from. At most one per command.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'References the policies that must pass for the command to execute.' },
@@ -181,9 +181,9 @@ export const triggerItems: CompletionEntry[] = [
 ];
 
 export const specificationItems: CompletionEntry[] = [
-    { label: 'given operation fails', insertText: 'given operation ${1:Name} fails', documentation: 'Failure fixture leaf; syntax-only until ESM v9 (PLAY0268).' },
-    { label: 'then operation', insertText: 'then operation ${1:Name}\n    ${2:input} = ${3:value}', documentation: 'Partial requested-operation assertion; execution unavailable until ESM v9 (PLAY0268).' },
-    { label: 'then compensated', insertText: 'then compensated ${1:Name}', documentation: 'Compensation assertion leaf; execution unavailable until ESM v9 (PLAY0268).' },
+    { label: 'given operation fails', insertText: 'given operation ${1:Name} fails', documentation: 'Failure fixture leaf; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
+    { label: 'then operation', insertText: 'then operation ${1:Name}\n    ${2:input} = ${3:value}', documentation: 'Partial requested-operation assertion; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
+    { label: 'then compensated', insertText: 'then compensated ${1:Name}', documentation: 'Compensation assertion leaf; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
     { label: 'given', insertText: 'given ${1:EventType}\n    ${2:property} = ${3:value}', documentation: 'Establishes prior state by replaying an event before the command runs.' },
     { label: 'given readmodel', insertText: 'given readmodel ${1:ReadModelType}\n    ${2:property} = ${3:value}', documentation: 'Establishes prior read model state directly.' },
@@ -221,10 +221,10 @@ export const specificationStepItems: Record<'given' | 'when' | 'then', Completio
         { label: 'append', insertText: 'append ${1:EventType}\n    ${2:property} = ${3:value}', documentation: 'An event occurs, instead of a command being executed.' },
     ],
     then: [
-        { label: 'operation', insertText: 'operation ${1:Name}\n    ${2:input} = ${3:value}', documentation: 'Syntax-only partial operation assertion; ESM v9 unavailable.' },
+        { label: 'operation', insertText: 'operation ${1:Name}\n    ${2:input} = ${3:value}', documentation: 'Syntax-only partial operation assertion; not admitted by any supported executable model (ESM) version yet.' },
         { label: 'compensated', insertText: 'compensated ${1:Name}', documentation: 'Syntax-only compensation assertion; no children.' },
-        { label: 'returns value', insertText: 'returns ${1:value}', documentation: 'Syntax-only scalar response expectation. Execution unavailable until ESM v8 (PLAY0268).' },
-        { label: 'returns block', insertText: 'returns\n    ${1:field} = ${2:value}', documentation: 'Syntax-only nonempty subset of response fields. Execution unavailable until ESM v8 (PLAY0268).' },
+        { label: 'returns value', insertText: 'returns ${1:value}', documentation: 'Syntax-only scalar response expectation. Not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
+        { label: 'returns block', insertText: 'returns\n    ${1:field} = ${2:value}', documentation: 'Syntax-only nonempty subset of response fields. Not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
         { label: 'result', insertText: 'result\n    ${1:property} = ${2:value}', documentation: 'One result the query performed by `when query` returns, in order.' },
         { label: 'result exactly', insertText: 'result exactly\n    ${1:property} = ${2:value}', documentation: 'One result, with every property asserted.' },
         { label: 'no result', insertText: 'no result', documentation: 'The query performed by `when query` returns nothing.' },

@@ -27,14 +27,14 @@ public sealed partial class SemanticModelBinder
             {
                 Diagnostics.Add(Diagnostic.Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
-                    "This authoring construct is not admitted by any supported ESM version; decision 0023 allocates event sources and streams to ESM v10.",
+                    "Event sources, streams and routes are not admitted by any supported executable model (ESM) version yet (#302).",
                     node.Location));
             }
             if (node is SystemSyntax or OperationSyntax or OperationPhaseSyntax or SpecificationOperationFailureSyntax or SpecificationOperationSyntax or SpecificationCompensatedSyntax)
             {
                 Diagnostics.Add(Diagnostic.Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
-                    "This authoring construct is not admitted by any supported ESM version; decision 0023 allocates operations and systems to ESM v9.",
+                    "Operations and systems are not admitted by any supported executable model (ESM) version yet (#301).",
                     node.Location));
             }
             if (node is PropertySyntax { IsGenerated: true } or CommandResponseSyntax or SpecificationReturnSyntax)
@@ -55,7 +55,7 @@ public sealed partial class SemanticModelBinder
 
         void Reject(SourceLocation location) => Diagnostics.Add(Diagnostic.Error(
             DiagnosticCodes.UnsupportedSemanticSyntax,
-            "This construct is not admitted by any supported ESM version; decision 0023 allocates it to ESM v8.",
+            "Generated values, responses and return expectations are not admitted by any supported executable model (ESM) version yet (#300/#303).",
             location));
     }
 }

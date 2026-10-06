@@ -24,7 +24,7 @@ public class when_rejecting_syntax_only_operations : given.a_semantic_binder
         result.Success.ShouldBeFalse();
         result.Value.ShouldBeNull();
         result.Diagnostics.ShouldNotBeEmpty();
-        result.Diagnostics.All(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("ESM v9", StringComparison.Ordinal)).ShouldBeTrue();
+        result.Diagnostics.All(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("not admitted by any supported executable model (ESM) version yet (#301)", StringComparison.Ordinal)).ShouldBeTrue();
     }
 
     [Fact]
@@ -47,6 +47,6 @@ public class when_rejecting_syntax_only_operations : given.a_semantic_binder
         var result = _binder.Bind("Projects", syntax, SemanticDocumentSet.Create([document], catalog));
         result.Value.ShouldBeNull();
         result.Diagnostics.Count().ShouldEqual(3);
-        result.Diagnostics.All(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Location == location && diagnostic.Message.Contains("ESM v9", StringComparison.Ordinal)).ShouldBeTrue();
+        result.Diagnostics.All(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Location == location && diagnostic.Message.Contains("not admitted by any supported executable model (ESM) version yet (#301)", StringComparison.Ordinal)).ShouldBeTrue();
     }
 }
