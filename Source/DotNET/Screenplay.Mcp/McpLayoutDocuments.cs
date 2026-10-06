@@ -1,11 +1,11 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Text;
+using System.Collections.Immutable;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Syntax;
-using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
 
@@ -13,77 +13,110 @@ static class McpLayoutDocuments
 {
     internal static IEnumerable<PlayFileContent> Create(ApplicationSyntax application, string layout)
     {
-        var printer = new ScreenplayPrinter();
-        if (layout == "single")
-        {
-            return [new(PlayFileWriter.RootFileName, printer.Print(application))];
-        }
-
-        var expanded = new PlayFileWriter().Expand(application).ToArray();
-        if (layout == "slice")
-        {
-            return expanded;
-        }
-
-        if (layout is not ("module" or "feature"))
+        if (layout is not ("single" or "module" or "feature" or "slice"))
         {
             throw new McpFailure("Layout must be single, module, feature, or slice.", -32602);
         }
 
-        var destinations = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (var module in application.Modules)
+        var printer = new ScreenplayPrinter();
+        if (layout == "single")
         {
-            GroupFeatures(module.Features, module.Name, destinations);
+            return [new(PlayFileWriter.RootFileName, printer.Print(WithoutImports(application)))];
         }
 
-        return [.. expanded.GroupBy(file => Destination(file.RelativePath, layout, destinations), StringComparer.Ordinal).Select(group => Merge(group.Key, group, printer))];
+        var files = new List<PlayFileContent>();
+        var modules = application.Modules.ToArray();
+        files.Add(new(PlayFileWriter.RootFileName, printer.Print(application with
+        {
+            Modules = [],
+            FileImports = modules.Select(module => Import($"{module.Name}/{module.Name}.play", module)),
+            SourceComments = Comments(application, application.FileImports)
+        })));
+        foreach (var module in modules)
+        {
+            var features = module.Features.ToArray();
+            var projected = module with
+            {
+                Features = layout == "module" ? [.. features.Select(WithoutImports)] : [],
+                FileImports = layout == "module" ? [] : features.Select(feature => Import($"{feature.Name}/{feature.Name}.play", feature)),
+                SourceComments = Comments(module, module.FileImports)
+            };
+            files.Add(new($"{module.Name}/{module.Name}.play", printer.Print(Document(projected, application.SourceOptions))));
+            if (layout != "module")
+            {
+                ExpandFeatures(files, printer, features, module.Name, application.SourceOptions, layout);
+            }
+        }
+
+        var claimed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var file in files)
+        {
+            if (!claimed.Add(file.RelativePath)) throw new AmbiguousPlayFilePath(file.RelativePath);
+        }
+
+        return files;
     }
 
-    static string Destination(string path, string layout, Dictionary<string, string> destinations)
-    {
-        var portable = path.Replace('\\', '/');
-        if (portable == PlayFileWriter.RootFileName)
-        {
-            return portable;
-        }
-
-        if (layout == "module")
-        {
-            var module = portable.Split('/')[0];
-            return $"{module}/{module}.play";
-        }
-
-        return destinations.GetValueOrDefault(portable, portable);
-    }
-
-    static void GroupFeatures(IEnumerable<FeatureSyntax> features, string parent, Dictionary<string, string> destinations)
+    static void ExpandFeatures(List<PlayFileContent> files, ScreenplayPrinter printer, IEnumerable<FeatureSyntax> features, string parent, SourceOptions options, string layout)
     {
         foreach (var feature in features)
         {
-            var path = $"{parent}/{feature.Name}";
-            var destination = $"{path}/{feature.Name}.play";
-            destinations.Add(destination, destination);
-            foreach (var slice in feature.Slices)
+            var folder = $"{parent}/{feature.Name}";
+            var children = feature.Features.ToArray();
+            var slices = feature.Slices.ToArray();
+            var imports = children.Select(child => Import($"{child.Name}/{child.Name}.play", child));
+            if (layout == "slice")
             {
-                destinations.Add($"{path}/{slice.Name}/{slice.Name}.play", destination);
+                imports = imports.Concat(slices.Select(slice => Import($"{slice.Name}/{slice.Name}.play", slice)));
             }
 
-            GroupFeatures(feature.Features, path, destinations);
+            var projected = feature with
+            {
+                Features = [],
+                Slices = layout == "slice" ? [] : slices,
+                FileImports = imports,
+                SourceComments = Comments(feature, feature.FileImports)
+            };
+            files.Add(new($"{folder}/{feature.Name}.play", printer.Print(Document(PlacedModule([projected]), options))));
+            ExpandFeatures(files, printer, children, folder, options, layout);
+            if (layout == "slice")
+            {
+                foreach (var slice in slices)
+                {
+                    var placement = new FeatureSyntax(string.Empty, [], [slice], SourceLocation.Start) { IsPlacement = true };
+                    files.Add(new($"{folder}/{slice.Name}/{slice.Name}.play", printer.Print(Document(PlacedModule([placement]), options))));
+                }
+            }
         }
     }
 
-    static PlayFileContent Merge(string path, IEnumerable<PlayFileContent> parts, ScreenplayPrinter printer)
+    static ApplicationSyntax Document(ModuleSyntax module, SourceOptions options) => new([], [], [], [module], SourceLocation.Start) { SourceOptions = options };
+
+    static ModuleSyntax PlacedModule(IEnumerable<FeatureSyntax> features) => new(string.Empty, [], features, SourceLocation.Start) { IsPlacement = true };
+
+    static FileImportSyntax Import(string path, SyntaxNode declaration) => new(path, declaration.Location);
+
+    // Imports are source composition, not model declarations. Their attached comments still belong to the
+    // reorganized scope even when their former paths no longer exist.
+    static ImmutableArray<SourceComment> Comments(SyntaxNode owner, IEnumerable<FileImportSyntax> imports) =>
+        [.. owner.SourceComments.Concat(imports.SelectMany(import => import.SourceComments).Select(comment => comment with { Placement = SourceCommentPlacement.End }))];
+
+    static ApplicationSyntax WithoutImports(ApplicationSyntax application) => application with
     {
-        var documents = parts.Select(part => WorkspaceDocument.Create(
-            McpDocumentKeys.For(part.RelativePath),
-            PortablePlayPath.Parse(part.RelativePath.Replace('\\', '/')),
-            Encoding.UTF8.GetBytes(part.Content))).ToArray();
-        var compilation = new McpSnapshot([.. documents]).Compilation;
-        if (!compilation.Success)
+        FileImports = [],
+        SourceComments = Comments(application, application.FileImports),
+        Modules = [.. application.Modules.Select(module => module with
         {
-            throw new McpFailure($"Cannot construct layout document '{path}' without compilation errors.");
-        }
+            FileImports = [],
+            SourceComments = Comments(module, module.FileImports),
+            Features = [.. module.Features.Select(WithoutImports)]
+        })]
+    };
 
-        return new(path, printer.Print(compilation.Value!));
-    }
+    static FeatureSyntax WithoutImports(FeatureSyntax feature) => feature with
+    {
+        FileImports = [],
+        SourceComments = Comments(feature, feature.FileImports),
+        Features = [.. feature.Features.Select(WithoutImports)]
+    };
 }

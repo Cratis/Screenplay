@@ -44,11 +44,13 @@ static class McpLayout
 
     static ApplicationSyntax Normalize(ApplicationSyntax application) => application with
     {
-        Modules = application.Modules.OrderBy(module => module.Name, StringComparer.Ordinal).Select(module => module with { Features = NormalizeFeatures(module.Features) })
+        FileImports = [],
+        Modules = application.Modules.OrderBy(module => module.Name, StringComparer.Ordinal).Select(module => module with { FileImports = [], Features = NormalizeFeatures(module.Features) })
     };
 
     static IEnumerable<FeatureSyntax> NormalizeFeatures(IEnumerable<FeatureSyntax> features) => features.OrderBy(feature => feature.Name, StringComparer.Ordinal).Select(feature => feature with
     {
+        FileImports = [],
         Features = NormalizeFeatures(feature.Features),
         Slices = feature.Slices.OrderBy(slice => slice.Name, StringComparer.Ordinal)
     });
