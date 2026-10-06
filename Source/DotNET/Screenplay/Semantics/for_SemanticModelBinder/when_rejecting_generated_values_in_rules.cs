@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
+
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder;
 
 public class when_rejecting_generated_values_in_rules : given.a_semantic_binder
@@ -10,6 +12,7 @@ public class when_rejecting_generated_values_in_rules : given.a_semantic_binder
     [Theory]
     [InlineData("id not empty")]
     [InlineData("id.value not empty")]
+    [InlineData("name == id")]
     [InlineData("id rule Check\n            file Rules/Check.cs")]
     [InlineData("require id == \"11111111-1111-1111-1111-111111111111\"\n            message \"No\"")]
     [InlineData("require name == id\n            message \"No\"")]
@@ -77,6 +80,35 @@ public class when_rejecting_generated_values_in_rules : given.a_semantic_binder
     {
         var result = Bind("policy Access\n  require authenticated and claim \"name\" matches name\n" + Prefix + "        authorize Access\n        validate\n          name not empty\n          require name != \"\"\n            message \"Name needed\"");
         result.Success.ShouldBeTrue();
+    }
+
+    [Theory]
+    [InlineData("email", "address String", "address matches email", "")]
+    [InlineData("check", "name String", "name rule check\n            ```csharp\n            return true;\n            ```", "")]
+    [InlineData("active", "status Status", "status == active", "concept Status : Enum\n  active\n  inactive\n")]
+    void should_resolve_named_rule_pattern_and_enum_operands_before_generated_property_names(string generated, string input, string rule, string declarations)
+    {
+        var result = Bind("concept Id : Uuid\n" + declarations + "module M\n  feature F\n    slice StateChange S\n      command C\n        " + generated + " Id generated\n        " + input + "\n        validate\n          " + rule + "\n        returns @" + generated);
+        string.Join('\n', result.Diagnostics.Where(diagnostic => diagnostic.Severity == Diagnostics.DiagnosticSeverity.Error).Select(diagnostic => diagnostic.Message)).ShouldEqual(string.Empty);
+        result.Success.ShouldBeTrue();
+        var plan = Execution.SemanticExecutionPlan.Compile(result.Value!.Model).Plan!;
+        var command = plan.Commands.Values.Single();
+        var inputValue = generated switch { "email" => "test@example.com", "active" => "active", _ => "test" };
+        var inputs = command.Properties.Where(property => !property.IsGenerated)
+            .Select(property => new SemanticPropertyValue(property.Id, SemanticValue.Text(inputValue))).ToImmutableArray();
+        var request = Execution.SemanticExecutionRequest.Create(command.Id, inputs, []) with
+        {
+            GeneratedValues = [new(command.Properties.Single(property => property.IsGenerated).Id, SemanticValue.Text("11111111-1111-1111-1111-111111111111"))]
+        };
+        var execution = new Execution.SemanticEvaluator().Execute(plan, Execution.SemanticWorld.Empty, request);
+        if (generated == "check")
+        {
+            ((Execution.SemanticUnsupported)execution).Capability.ShouldEqual(Execution.SemanticExecutionCapability.Command);
+        }
+        else
+        {
+            execution.ShouldBeOfExactType<Execution.SemanticAccepted>();
+        }
     }
 
     [Fact]

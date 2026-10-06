@@ -40,7 +40,6 @@ public class when_validating_v7_responses : a_v7_contract
             Array.Empty<SemanticCommandResponseField>(),
             [new("id", IdentityType, GeneratedId), new("id", IdentityType, GeneratedId)],
             [new("", IdentityType, GeneratedId)],
-            [new(" ", IdentityType, GeneratedId)],
             [null!],
             [new("id", null!, GeneratedId)]
         })
@@ -48,6 +47,16 @@ public class when_validating_v7_responses : a_v7_contract
             Refuse(Application(Command with { Response = new SemanticRecordCommandResponse([.. fields]) }, RecordScenario));
         }
     }
+    [Theory]
+    [InlineData(" ")]
+    [InlineData("\t")]
+    [InlineData("\r\n")]
+    void should_refuse_whitespace_only_response_names_without_an_unrelated_expectation_failure(string name)
+    {
+        var fields = ((SemanticRecordCommandResponse)RecordCommand.Response!).Fields;
+        Refuse(Application(RecordCommand with { Response = new SemanticRecordCommandResponse(fields.SetItem(0, fields[0] with { Name = name })) }, RecordScenario));
+    }
+
     [Fact]
     void should_refuse_empty_unknown_duplicate_mistyped_and_null_expectation_fields()
     {

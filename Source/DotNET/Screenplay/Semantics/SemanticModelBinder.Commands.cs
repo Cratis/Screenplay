@@ -92,7 +92,8 @@ public sealed partial class SemanticModelBinder
                 events.TryGetValue(value.Event, out var @event) && !@event.Properties.ContainsKey(source.Path));
             if (typedDestination) UsesV2 = true;
             var routed = produced.Select(value => value.Destination).OfType<SemanticResolvedExpression>().FirstOrDefault();
-            var defaultDestination = routed is not null && (typedDestination || UsesV2 || UsesV7)
+            var allocatedProduction = properties.Any(property => property.IsGenerated && property.IsIdentifier) && produced.Any(value => value.Destination is null);
+            var defaultDestination = !allocatedProduction && routed is not null && (typedDestination || UsesV2 || UsesV7)
                 ? properties.FirstOrDefault(property => property.IsGenerated && property.IsIdentifier) ??
                     properties.Single(property => property.Id == routed.Target)
                 : null;
@@ -161,13 +162,16 @@ public sealed partial class SemanticModelBinder
                         continue;
                     }
 
-                    if (rule.Value is PathExpressionSyntax path && properties.GetValueOrDefault(path.Path.Split('.')[0]) is { IsGenerated: true } operand)
+                    var subject = CommandValidationSubject(rule.Property, property.Type);
+                    if (rule.Rule is not (ValidationRuleKind.Rule or ValidationRuleKind.Matches) &&
+                        rule.Value is PathExpressionSyntax path && !subject.Values.Contains(path.Path, StringComparer.Ordinal) &&
+                        properties.GetValueOrDefault(path.Path.Split('.')[0]) is { IsGenerated: true } operand)
                     {
                         GeneratedReference(command.Name, operand.Name, "property validation rule", path.Location);
                         continue;
                     }
 
-                    if (BindValidationRule(rule, property.Id, CommandValidationSubject(rule.Property, property.Type), requirement?.RequirementId) is { } bound)
+                    if (BindValidationRule(rule, property.Id, subject, requirement?.RequirementId) is { } bound)
                     {
                         validations.Add(bound);
                     }

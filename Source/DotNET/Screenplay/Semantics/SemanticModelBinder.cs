@@ -190,7 +190,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 {
                     var source = command.Produces.Select(produced => produced.Destination)
                         .OfType<SemanticResolvedExpression>().FirstOrDefault();
-                    if (command.Destination is not null || source is null) return command;
+                    if (command.Destination is not null || source is null ||
+                        (command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) && command.Produces.Any(produced => produced.Destination is null)))
+                    {
+                        return command;
+                    }
                     var property = command.Properties.Single(value => value.Id == source.Target);
                     return command with { Destination = new(property.Type, source) };
                 })]

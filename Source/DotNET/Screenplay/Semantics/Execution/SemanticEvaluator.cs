@@ -73,7 +73,10 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, contractRejection);
         }
 
-        if (plan.Model.SemanticVersion != SemanticVersion.V1 && command.Destination is null &&
+        // A generated identifier is never a fallback for a destination-less plain production.
+        var generatedAllocation = command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) && command.Produces.Any(produced => produced.Destination is null);
+        var defaultDestination = generatedAllocation ? null : command.Destination;
+        if (plan.Model.SemanticVersion != SemanticVersion.V1 && defaultDestination is null &&
             request.AllocatedEventSourceType is { } suppliedType &&
             command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type is { } identityType && suppliedType != identityType)
         {
@@ -127,7 +130,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                 return new SemanticUnsupported(world, SemanticExecutionCapability.Command, "The occurrence supplies time only; $context.causedBy needs a caller audit identity the reference does not model.");
             }
 
-            var destinationExpression = produced.Destination ?? command.Destination?.Value;
+            var destinationExpression = produced.Destination ?? defaultDestination?.Value;
             var destination = destinationExpression is null
                 ? request.AllocatedIdentities.GetValueOrDefault(command.Id)
                 : Evaluate(destinationExpression, SemanticExpressionRootKind.Command, commandValues);
@@ -140,7 +143,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             }
 
             if (plan.Model.SemanticVersion != SemanticVersion.V1 && destinationExpression is null &&
-                command.Destination is null && request.AllocatedEventSourceType is null)
+                defaultDestination is null && request.AllocatedEventSourceType is null)
             {
                 return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A v2 allocated event source requires its declared scalar identity type.");
             }
@@ -823,6 +826,6 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
     static SemanticTypeReference DestinationType(SemanticCommand command, SemanticExpression? expression, SemanticTypeReference? allocatedType) =>
         expression is SemanticResolvedExpression resolved
             ? command.Properties.Single(property => property.Id == resolved.Target).Type
-            : command.Destination?.Type ?? allocatedType ??
+            : (command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) ? allocatedType : command.Destination?.Type ?? allocatedType) ??
                 throw new InvalidSemanticContract("A v2 fact requires a typed state-change destination.");
 }

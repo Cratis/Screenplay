@@ -34,6 +34,7 @@ internal static partial class SemanticModelValidator
                 case SemanticRecordCommandResponse record:
                     RequireObjects(record.Fields, nameof(record.Fields), "response field");
                     if (record.Fields.IsEmpty) throw new InvalidSemanticContract("A response record must contain fields.");
+                    if (record.Fields.Any(field => string.IsNullOrWhiteSpace(field.Name))) throw new InvalidSemanticContract("A response field name cannot be empty or whitespace.");
                     RejectDuplicateNames(record.Fields.Select(field => field.Name), "response field");
                     foreach (var field in record.Fields)
                     {
