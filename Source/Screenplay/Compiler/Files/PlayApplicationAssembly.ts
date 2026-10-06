@@ -18,6 +18,7 @@ import { mergeDocuments } from './PlayFolderMerge';
 import { inMemoryDocumentSource, PlacedPlayDocument, PlayDocumentSource } from './PlayDocumentSource';
 import { normalizePlayPath } from './PlayGlob';
 import { resolveImports } from './PlayImports';
+import { recordAuthoredOrder } from './AuthoredOrder';
 
 // One .play document of a folder: its path relative to the folder, and its text.
 export interface PlayFileSource {
@@ -34,8 +35,10 @@ export interface ApplicationCompilation extends CompilationResult<ApplicationSyn
 // Assembles one application from documents - following their imports from the roots, parsing each where it is
 // placed, and merging the lot. The port of the C# PlayApplicationAssembly.Compile.
 export function assembleApplication(roots: Iterable<string>, source: PlayDocumentSource, languages?: ReadonlySet<string>): ApplicationCompilation {
-    const { documents, diagnostics } = resolveImports(roots, source, languages);
+    const rootPaths = [...roots];
+    const { documents, diagnostics } = resolveImports(rootPaths, source, languages);
     const merged = parsePlacedDocuments(documents, languages);
+    if (rootPaths.length === 1) recordAuthoredOrder(merged.value, rootPaths, documents, languages);
     const all = [...diagnostics, ...merged.diagnostics];
     return { ...merged, documents, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error') };
 }

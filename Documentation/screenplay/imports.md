@@ -78,6 +78,16 @@ A root file can import `**/*.play` while each module file imports its own folder
 
 Two placements where neither lies inside the other - one import puts a file in `module Ordering`, another in `module Billing` - are a conflict, reported where the second import is written. A file belongs in one place.
 
+## Order on the event model board
+
+The MCP App and VS Code boards follow `application.play` when it exists, or the single importing root when it has another name. Only that root and the files it imports are drawn. With no unambiguous importing root, the board compiles the folder in alphabetical file-path order.
+
+Within that application, modules, features and slices are drawn in **authored order**: the board walks the root's text from top to bottom, following each import depth-first where it is written, before continuing with the next declaration. A file matched by several imports is drawn once, at the first encountered import that gives it its final, deepest placement. Placement scaffolding does not take the position of a module or feature declared elsewhere.
+
+Glob matches stay alphabetical. To control their order, replace a glob with explicit imports in the sequence you want. Commerce's root lists Catalog, Ordering, then Fulfillment; its Products feature uses `*.play`, so its slices remain DiscontinueProduct, ProductList, then RegisterProduct. TimeTracking's root uses `**/*.play`, so its modules remain Engagements, Payroll, then Timesheets, while the features declared in Timesheets are Recording, Approval, then Reporting.
+
+This is presentation only: it does not reorder the compiler's documents or change duplicate-declaration diagnostics, executable model bytes, revisions or identities. A single-file model keeps declaration order. A feature's own slices and its nested features remain separate groups on the board.
+
 ## Patterns
 
 A path is relative to the folder of the file that writes the import.

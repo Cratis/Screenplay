@@ -12,6 +12,12 @@ flowchart LR
 
 A folder says nothing about *what* the application is made of, and every slice file in it restates the module and feature it belongs to. [Imports](imports.md) let a root file name the files of the application, and let a module or feature file place the files it imports - so a focused file holds only its own part of the story.
 
+## Order on the board
+
+The MCP App and VS Code boards use an application root's [import order](imports.md#order-on-the-event-model-board), rather than the order files happen to appear in a folder. The root is `application.play`, or a single importing document with another name. Imports expand depth-first where they are written; declarations within a file keep text order, and glob matches stay alphabetical. Without an unambiguous root, the board falls back to alphabetical file-path order.
+
+Use explicit imports in a composite file when the story needs a particular sequence. A folder layout without imports still uses path order; expanding a file into folders does not by itself preserve its board order. Ordering affects presentation, not executable model bytes or identities.
+
 ## Compile a folder as one application
 
 `CompileFolder` discovers every `.play` file beneath a folder, merges them into the one application they describe, and resolves the whole:

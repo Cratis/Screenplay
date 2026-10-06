@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { AuthoringProductionResolver, ApplicationSyntax, ApplicationSyntaxVisitor, FeatureSyntax, ModuleSyntax } from '@cratis/screenplay-compiler';
+import { authoredOrderKey, authoredOrderOf, AuthoringProductionResolver, ApplicationSyntax, ApplicationSyntaxVisitor, FeatureSyntax, ModuleSyntax } from '@cratis/screenplay-compiler';
 import { EventModelDocument, FeatureDocument, ModuleDocument } from '../Document/EventModelDocument';
 import { guidFor } from '../Document/identity';
 import { SchemaSynthesizer } from '../Schemas/SchemaSynthesizer';
@@ -24,7 +24,8 @@ export class EventModelDocumentVisitor implements ApplicationSyntaxVisitor<Event
     visit(syntax: ApplicationSyntax): EventModelDocument {
         const owners = new EventOwners(syntax.modules, new SchemaSynthesizer(syntax), new AuthoringProductionResolver(syntax), syntax.systems ?? []);
         const audience = Audience.of(syntax.personas);
-        const modules = syntax.modules.map((module, index) => toModule(module, index, owners, audience));
+        const order = authoredOrderOf(syntax);
+        const modules = ordered(syntax.modules, [], order).map((module, index) => toModule(module, index, owners, audience, order));
         return {
             id: guidFor(`event-model:${this.name}`),
             name: this.name,
@@ -45,6 +46,12 @@ export function toEventModelDocument(application: ApplicationSyntax, name: strin
     return new EventModelDocumentVisitor(name).visit(application);
 }
 
+// Unranked declarations keep their existing order, including standalone syntax and rootless folders.
+function ordered<T extends { readonly name: string }>(items: readonly T[], path: readonly string[], order: ReadonlyMap<string, number>): T[] {
+    return [...items].sort((left, right) => (order.get(authoredOrderKey([...path, left.name])) ?? Number.MAX_SAFE_INTEGER)
+        - (order.get(authoredOrderKey([...path, right.name])) ?? Number.MAX_SAFE_INTEGER));
+}
+
 // The system acts in automations and translations; without one there is no row for it.
 function hasSystemSlices(modules: readonly ModuleSyntax[]): boolean {
     const inFeature = (feature: FeatureSyntax): boolean =>
@@ -52,26 +59,26 @@ function hasSystemSlices(modules: readonly ModuleSyntax[]): boolean {
     return modules.some(module => module.features.some(inFeature));
 }
 
-function toModule(module: ModuleSyntax, sortOrder: number, owners: EventOwners, audience: Audience): ModuleDocument {
+function toModule(module: ModuleSyntax, sortOrder: number, owners: EventOwners, audience: Audience, order: ReadonlyMap<string, number>): ModuleDocument {
     const scope = SliceScope.module(module.name);
     const within = audience.within(module.authorize);
     return {
         id: scope.id,
         name: module.name,
-        features: module.features.map(feature => toFeature(feature, scope.feature(feature.name), owners, within)),
+        features: ordered(module.features, [module.name], order).map(feature => toFeature(feature, scope.feature(feature.name), owners, within, [module.name, feature.name], order)),
         collapsed: false,
         sortOrder,
         commentCount: 0,
     };
 }
 
-function toFeature(feature: FeatureSyntax, scope: SliceScope, owners: EventOwners, audience: Audience): FeatureDocument {
+function toFeature(feature: FeatureSyntax, scope: SliceScope, owners: EventOwners, audience: Audience, path: readonly string[], order: ReadonlyMap<string, number>): FeatureDocument {
     const within = audience.within(feature.authorize);
     return {
         id: scope.id,
         name: feature.name,
-        subFeatures: feature.features.map(child => toFeature(child, scope.feature(child.name), owners, within)),
-        slices: feature.slices.map((slice, index) => toSlice(slice, scope.slice(slice.name), index, owners, within.actorsFor(slice))),
+        subFeatures: ordered(feature.features, path, order).map(child => toFeature(child, scope.feature(child.name), owners, within, [...path, child.name], order)),
+        slices: ordered(feature.slices, path, order).map((slice, index) => toSlice(slice, scope.slice(slice.name), index, owners, within.actorsFor(slice))),
         collapsed: false,
         rowCollapsed: false,
         enabled: true,
