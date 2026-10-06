@@ -9,7 +9,7 @@ namespace Cratis.Screenplay.Mcp;
 /// <summary>
 /// Selects source diagnostics using the same physical declaration and dependency index as MCP navigation.
 /// </summary>
-public static class ScopedDiagnostics
+static class ScopedDiagnostics
 {
     /// <summary>
     /// Compiles the complete source set and selects a named scope and its direct dependent declarations.
@@ -17,10 +17,10 @@ public static class ScopedDiagnostics
     /// <param name="sources">All source documents, keyed by application-relative path.</param>
     /// <param name="scope">A case-sensitive dotted module, feature or slice address.</param>
     /// <returns>The selection, or null when the scope does not exist.</returns>
-    public static ScopedDiagnosticResult? Select(IReadOnlyDictionary<string, string> sources, string scope) =>
-        Select(new McpSnapshot(sources), sources, scope);
+    internal static ScopedDiagnosticResult? Select(IReadOnlyDictionary<string, string> sources, string scope) =>
+        Select(new McpSnapshot(sources), scope);
 
-    internal static ScopedDiagnosticResult? Select(McpSnapshot snapshot, IReadOnlyDictionary<string, string> sources, string scope)
+    internal static ScopedDiagnosticResult? Select(McpSnapshot snapshot, string scope)
     {
         var declarations = snapshot.Index.Declarations.ToArray();
         if (string.IsNullOrWhiteSpace(scope) || !declarations.Any(declaration =>
@@ -32,8 +32,16 @@ public static class ScopedDiagnostics
         var selected = declarations.Where(declaration => declaration.Address == scope || Within(declaration.Scope, scope)).ToHashSet();
 
         // Inspect only the original set: inclusion is direct, never a transitive closure.
+        var names = selected.Select(declaration => declaration.Name).ToHashSet(StringComparer.Ordinal);
+        var unresolved = snapshot.Index.ResolvedReferences.Where(edge => edge.Candidates.Length == 0).ToArray();
+        var possiblyAffected = unresolved.Where(edge => !names.Contains(edge.Reference.Name.Split('.')[^1]) &&
+            !selected.Any(declaration => declaration.Owner == edge.Reference.Owner)).ToArray();
+
+        // A current snapshot cannot prove the former target of a removed or renamed name.
+        // Include unresolved event consumers conservatively, and disclose other uncertainty separately.
         var dependents = snapshot.Index.ResolvedReferences
-            .Where(edge => edge.Candidates.Any(selected.Contains))
+            .Where(edge => edge.Candidates.Any(selected.Contains) || (edge.Candidates.Length == 0 &&
+                (names.Contains(edge.Reference.Name.Split('.')[^1]) || edge.Reference.Kinds.Contains("Event", StringComparer.Ordinal))))
             .Select(edge => edge.Reference.Owner)
             .OfType<McpReadOwner>().ToHashSet();
         var dependentDeclarations = declarations.Where(declaration => dependents.Contains(declaration.Owner) && !selected.Contains(declaration)).ToArray();
@@ -42,27 +50,56 @@ public static class ScopedDiagnostics
         var scopeCount = selected.Count;
         selected.UnionWith(dependentDeclarations);
 
-        var lines = sources.ToDictionary(source => source.Key, source => source.Value.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Split('\n'), StringComparer.Ordinal);
+        var lines = snapshot.Sources.ToDictionary(source => source.Key, source => source.Value.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Split('\n'), StringComparer.Ordinal);
         var ranges = declarations.SelectMany(declaration => declaration.Locations.Select(location => Range(declaration, location, lines)))
             .Where(range => range is not null).OfType<DeclarationRange>().ToArray();
         var diagnostics = snapshot.Compilation.Diagnostics.Where(diagnostic =>
         {
             var owner = ranges.Where(range => range.Contains(diagnostic.Location))
                 .OrderByDescending(range => range.Start.Line).ThenByDescending(range => range.Start.Column).FirstOrDefault();
-            return owner is not null && selected.Contains(owner.Declaration);
+            if (owner is not null)
+            {
+                return selected.Contains(owner.Declaration);
+            }
+
+            // Unlocated application diagnostics cannot safely be excluded from any scope.
+            if (diagnostic.Location.Path is null || diagnostic.Location.Line < 1)
+            {
+                return true;
+            }
+
+            var placement = snapshot.Placements.FirstOrDefault(document => document.Path == diagnostic.Location.Path && document.IsPlacementResolved);
+            return placement is not null && (Within(placement.Placement.Scope, scope) ||
+                selected.Any(declaration => declaration.Locations.Any(location => location.Path == placement.Path) &&
+                    declaration.Kind == "Slice"));
         }).ToImmutableArray();
 
-        return new(scope, scopeCount, dependentDeclarations.Length, diagnostics, [.. affected], McpReferenceKinds.Coverage);
+        return new(scope, scopeCount, dependentDeclarations.Length, diagnostics, [.. affected], possiblyAffected.Length, McpReferenceKinds.Coverage);
     }
 
-    static bool Within(string[] segments, string scope) => string.Join('.', segments) is var address &&
+    static bool Within(IEnumerable<string> segments, string scope) => string.Join('.', segments) is var address &&
         (address == scope || address.StartsWith(scope + ".", StringComparison.Ordinal));
 
     static DeclarationRange? Range(McpDeclaration declaration, SourceLocation location, Dictionary<string, string[]> sources)
     {
-        if (location.Path is null || !sources.TryGetValue(location.Path, out var lines)) return null;
-        if (location.Line < 1 || location.Line > lines.Length) return null;
-        var indent = lines[location.Line - 1].TakeWhile(char.IsWhiteSpace).Count();
+        if (location.Path is null || !sources.TryGetValue(location.Path, out var lines))
+        {
+            return null;
+        }
+        if (location.Line < 1 || location.Line > lines.Length)
+        {
+            return null;
+        }
+        var header = lines[location.Line - 1];
+
+        // Import scaffolds have synthetic header locations, not physical declaration ranges.
+        if ((declaration.Kind == "Module" || declaration.Kind == "Feature") &&
+            !header.TrimStart().StartsWith(declaration.Kind.ToLowerInvariant() + " ", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var indent = header.TakeWhile(char.IsWhiteSpace).Count();
         var end = location.Line;
         while (end < lines.Length)
         {
@@ -83,20 +120,3 @@ public static class ScopedDiagnostics
         internal bool Contains(SourceLocation location) => location.Path == Start.Path && location.Line >= Start.Line && location.Line <= EndLine;
     }
 }
-
-/// <summary>
-/// Reports the non-vacuity counts and direct impact of a scoped source check, not executable readiness.
-/// </summary>
-/// <param name="Scope">The requested scope.</param>
-/// <param name="DeclarationCount">Declarations in the requested scope, including its header.</param>
-/// <param name="DependentDeclarationCount">Additional directly dependent declarations.</param>
-/// <param name="Diagnostics">Diagnostics belonging to selected declarations.</param>
-/// <param name="AffectedScopes">Other scopes containing direct dependents; an empty address means application-level.</param>
-/// <param name="DependencyCoverage">Limits of the explicit source reference index.</param>
-public sealed record ScopedDiagnosticResult(
-    string Scope,
-    int DeclarationCount,
-    int DependentDeclarationCount,
-    ImmutableArray<Diagnostic> Diagnostics,
-    ImmutableArray<string> AffectedScopes,
-    string DependencyCoverage);

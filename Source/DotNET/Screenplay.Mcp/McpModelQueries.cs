@@ -84,7 +84,7 @@ static class McpModelQueries
     internal static object Diagnostics(McpSnapshot snapshot, int fileCount, JsonElement arguments)
     {
         var scope = McpJson.OptionalString(arguments, "scope");
-        var selection = scope is null ? null : ScopedDiagnostics.Select(snapshot, snapshot.Sources, scope)
+        var selection = scope is null ? null : ScopedDiagnostics.Select(snapshot, scope)
             ?? throw new McpFailure($"Unknown scope '{scope}'. Expected a module, feature or slice address.", -32602);
         var diagnostics = selection?.Diagnostics.AsEnumerable() ?? snapshot.Compilation.Diagnostics;
         if (McpJson.OptionalString(arguments, "document") is { } document)
@@ -92,18 +92,32 @@ static class McpModelQueries
             diagnostics = diagnostics.Where(diagnostic => diagnostic.Location.Path == document);
         }
 
+        if (selection is null)
+        {
+            return new
+            {
+                snapshot.Compilation.Success,
+                wholeApplicationSuccess = snapshot.Compilation.Success,
+                snapshot.SourceRevision,
+                fileCount,
+                summary = DiagnosticSummary(snapshot),
+                page = McpPaging.Page(diagnostics, arguments, snapshot.SourceRevision)
+            };
+        }
+
         return new
         {
-            success = selection is null ? snapshot.Compilation.Success : !diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error),
+            success = !diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error),
             wholeApplicationSuccess = snapshot.Compilation.Success,
             snapshot.SourceRevision,
             fileCount,
             scope,
-            declarationCount = selection?.DeclarationCount,
-            dependentDeclarationCount = selection?.DependentDeclarationCount,
-            affectedScopes = selection?.AffectedScopes,
-            dependencyCoverage = selection?.DependencyCoverage,
-            summary = selection is null ? DiagnosticSummary(snapshot) : DiagnosticSummary(diagnostics),
+            selection.DeclarationCount,
+            selection.DependentDeclarationCount,
+            selection.AffectedScopes,
+            selection.PossiblyAffectedReferenceCount,
+            selection.DependencyCoverage,
+            summary = DiagnosticSummary(diagnostics),
             page = McpPaging.Page(diagnostics, arguments, snapshot.SourceRevision)
         };
     }

@@ -26,7 +26,7 @@ internal sealed partial class McpWorkspaces
             }
 
             var source = McpWorkspaceAnalysis.For(workspace).Source;
-            var selection = ScopedDiagnostics.Select(source, source.Sources, scope)
+            var selection = ScopedDiagnostics.Select(source, scope)
                 ?? throw new McpFailure($"Unknown scope '{scope}'. Expected a module, feature or slice address.", -32602);
             return McpJson.ToolResult(new
             {
@@ -38,6 +38,7 @@ internal sealed partial class McpWorkspaces
                 selection.DeclarationCount,
                 selection.DependentDeclarationCount,
                 selection.AffectedScopes,
+                selection.PossiblyAffectedReferenceCount,
                 selection.DependencyCoverage,
                 summary = McpModelQueries.DiagnosticSummary(selection.Diagnostics),
                 repairEvidenceRevision = McpRepairEvidence.Revision(workspace),

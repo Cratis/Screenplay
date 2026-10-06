@@ -14,6 +14,7 @@ sealed class McpSnapshot : IPlayFiles
     readonly McpAnalysisCompiler _compiler;
     readonly Lazy<CompilationResult<ApplicationSyntax>> _compilation;
     readonly Lazy<McpSyntaxIndex> _index;
+    readonly Lazy<IReadOnlyList<PlacedPlayDocument>> _placements;
 
     internal McpSnapshot(ImmutableArray<WorkspaceDocument> documents)
         : this(documents, ScreenplayLanguageRegistry.Default)
@@ -31,14 +32,23 @@ sealed class McpSnapshot : IPlayFiles
     {
     }
 
-    McpSnapshot(IReadOnlyDictionary<string, string> sources, string revision, IScreenplayLanguageRegistry languages)
+    internal McpSnapshot(
+        IReadOnlyDictionary<string, string> sources,
+        string revision,
+        IScreenplayLanguageRegistry languages,
+        McpAnalysisCompiler? compiler = null,
+        CompilationResult<ApplicationSyntax>? compilation = null,
+        IEnumerable<string>? roots = null)
     {
-        _compiler = new(languages);
+        _compiler = compiler ?? new(languages);
         Sources = sources;
         SourceRevision = revision;
-        _compilation = new(() => new PlayFileCompiler(this, _compiler).CompileFolder(".").Result);
+        _compilation = new(() => compilation ?? new PlayFileCompiler(this, _compiler).CompileFolder(".").Result);
+        _placements = new(() => PlayImports.Resolve(roots ?? Sources.Keys, new InMemoryPlayDocumentSource(Sources), languages).Documents);
         _index = new(CreateIndex);
     }
+
+    internal IReadOnlyList<PlacedPlayDocument> Placements => _placements.Value;
 
     internal CompilationResult<ApplicationSyntax> Compilation => _compilation.Value;
 
@@ -73,6 +83,16 @@ sealed class McpSnapshot : IPlayFiles
     /// <inheritdoc/>
     public string ReadContent(PlayFile file) => Sources[file.RelativePath];
 
+    internal static McpSnapshot Compile(string target, bool isFile)
+    {
+        var compiler = new McpAnalysisCompiler();
+        var files = new PlayFileCompiler(new PlayFiles(), compiler);
+        var compilation = isFile ? files.CompileApplication(target) : files.CompileFolder(target);
+        var sources = compilation.Sources.ToDictionary(source => source.File.RelativePath, source => source.Source, StringComparer.Ordinal);
+
+        return new(sources, string.Empty, compiler.Languages, compiler, compilation.Result, isFile ? [Path.GetFileName(target)] : sources.Keys);
+    }
+
     McpSyntaxIndex CreateIndex()
     {
         var compilation = Compilation;
@@ -80,10 +100,7 @@ sealed class McpSnapshot : IPlayFiles
 
         // Compilation retains provisional trees for diagnostics. Physical authoring candidates
         // require an authoritative placement, including descendants of conflicting barrels.
-        var (placements, _) = PlayImports.Resolve(
-            Sources.Keys,
-            new InMemoryPlayDocumentSource(Sources),
-            _compiler.Languages);
+        var placements = Placements;
         var resolvedPaths = placements.Where(document => document.IsPlacementResolved).Select(document => document.Path).ToHashSet(StringComparer.Ordinal);
         var physical = _compiler.Documents.Select(document =>
         {
