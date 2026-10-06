@@ -83,7 +83,10 @@ static class McpModelQueries
 
     internal static object Diagnostics(McpSnapshot snapshot, int fileCount, JsonElement arguments)
     {
-        var diagnostics = snapshot.Compilation.Diagnostics;
+        var scope = McpJson.OptionalString(arguments, "scope");
+        var selection = scope is null ? null : ScopedDiagnostics.Select(snapshot, snapshot.Sources, scope)
+            ?? throw new McpFailure($"Unknown scope '{scope}'. Expected a module, feature or slice address.", -32602);
+        var diagnostics = selection?.Diagnostics.AsEnumerable() ?? snapshot.Compilation.Diagnostics;
         if (McpJson.OptionalString(arguments, "document") is { } document)
         {
             diagnostics = diagnostics.Where(diagnostic => diagnostic.Location.Path == document);
@@ -91,17 +94,25 @@ static class McpModelQueries
 
         return new
         {
-            snapshot.Compilation.Success,
+            success = selection is null ? snapshot.Compilation.Success : !diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error),
+            wholeApplicationSuccess = snapshot.Compilation.Success,
             snapshot.SourceRevision,
             fileCount,
-            summary = DiagnosticSummary(snapshot),
+            scope,
+            declarationCount = selection?.DeclarationCount,
+            dependentDeclarationCount = selection?.DependentDeclarationCount,
+            affectedScopes = selection?.AffectedScopes,
+            dependencyCoverage = selection?.DependencyCoverage,
+            summary = selection is null ? DiagnosticSummary(snapshot) : DiagnosticSummary(diagnostics),
             page = McpPaging.Page(diagnostics, arguments, snapshot.SourceRevision)
         };
     }
 
-    internal static object DiagnosticSummary(McpSnapshot snapshot)
+    internal static object DiagnosticSummary(McpSnapshot snapshot) => DiagnosticSummary(snapshot.Compilation.Diagnostics);
+
+    internal static object DiagnosticSummary(IEnumerable<Diagnostic> selected)
     {
-        var diagnostics = snapshot.Compilation.Diagnostics.ToArray();
+        var diagnostics = selected.ToArray();
         return new
         {
             total = diagnostics.Length,
