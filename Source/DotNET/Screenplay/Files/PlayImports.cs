@@ -39,7 +39,7 @@ public static class PlayImports
     /// </summary>
     /// <param name="roots">The portable paths of the root documents, each a whole document.</param>
     /// <param name="source">The <see cref="IPlayDocumentSource"/> to find and read documents through.</param>
-    /// <returns>Every document - the roots in the order given, then what they import - with the diagnostics resolving them produced.</returns>
+    /// <returns>Every document in import traversal order, with unimported roots in the order given, and the diagnostics resolving them produced.</returns>
     public static (IReadOnlyList<PlacedPlayDocument> Documents, IReadOnlyList<Diagnostic> Diagnostics) Resolve(
         IEnumerable<string> roots,
         IPlayDocumentSource source) => Resolve(roots, source, ScreenplayLanguageRegistry.Default);
@@ -113,10 +113,32 @@ public static class PlayImports
         }
 
         public IReadOnlyList<PlacedPlayDocument> Documents() =>
-            [.. _found.Select(path => new PlacedPlayDocument(path, _sources[path], Placement(path) ?? PlayPlacement.Document)
+            [.. OrderedPaths().Select(path => new PlacedPlayDocument(path, _sources[path], Placement(path) ?? PlayPlacement.Document)
             {
                 IsPlacementResolved = !_unresolved.Contains(path)
             })];
+
+        IEnumerable<string> OrderedPaths()
+        {
+            // A folder also discovers imported files as roots. Do not let their physical path order
+            // override the authored order of the barrel's imports. Unimported documents keep found order.
+            var imported = _imports.Values.SelectMany(imports => imports.SelectMany(import => import.Targets)).ToHashSet(StringComparer.Ordinal);
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var root in _found.Where(path => !imported.Contains(path)).Concat(_found))
+            {
+                var pending = new Stack<string>();
+                pending.Push(root);
+                while (pending.TryPop(out var path))
+                {
+                    if (!seen.Add(path)) continue;
+                    yield return path;
+                    foreach (var target in _imports[path].SelectMany(import => import.Targets).Reverse())
+                    {
+                        pending.Push(target);
+                    }
+                }
+            }
+        }
 
         void Find(string file)
         {

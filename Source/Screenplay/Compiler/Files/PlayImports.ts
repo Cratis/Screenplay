@@ -28,7 +28,7 @@ export interface ResolvedImports {
 // neither lies inside the other are a conflict, and placements that keep deepening are an import cycle. A file's
 // placement depends on the placements of the files importing it, so it is recomputed from every importer's
 // current placement until nothing changes - the order files are found in never decides where one belongs. The
-// roots keep the order they were given in, and what they import follows in the order it was found.
+// unimported roots keep the order they were given in; their imports follow in authored traversal order.
 export function resolveImports(roots: Iterable<string>, source: PlayDocumentSource, languages?: ReadonlySet<string>): ResolvedImports {
     const resolution = new Resolution(source, languages);
     for (const root of new Set([...roots].map(normalizePlayPath))) {
@@ -83,7 +83,24 @@ class Resolution {
     }
 
     documents(): PlacedPlayDocument[] {
-        return this.#found.map(path => ({ path, source: this.#sources.get(path) as string, placement: this.#placement(path) ?? documentPlacement, isPlacementResolved: !this.#unresolved.has(path) }));
+        return this.#orderedPaths().map(path => ({ path, source: this.#sources.get(path) as string, placement: this.#placement(path) ?? documentPlacement, isPlacementResolved: !this.#unresolved.has(path) }));
+    }
+
+    #orderedPaths(): string[] {
+        // Folder discovery also includes imported documents as roots. Barrel order wins over path order.
+        const imported = new Set([...this.#imports.values()].flatMap(imports => imports.flatMap(imported => imported.targets)));
+        const seen = new Set<string>();
+        const ordered: string[] = [];
+        for (const root of [...this.#found.filter(path => !imported.has(path)), ...this.#found]) {
+            const pending = [root];
+            for (let path = pending.pop(); path !== undefined; path = pending.pop()) {
+                if (seen.has(path)) continue;
+                seen.add(path);
+                ordered.push(path);
+                pending.push(...(this.#imports.get(path) ?? []).flatMap(imported => imported.targets).reverse());
+            }
+        }
+        return ordered;
     }
 
     #find(file: string): void {

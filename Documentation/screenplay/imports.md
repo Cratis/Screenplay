@@ -118,6 +118,11 @@ screenplay .                    # every file in the folder - imports still place
 
 From code, `IPlayFileCompiler.CompileApplication(path)` follows the imports from a root file, and `CompileFolder(root)` treats every file in the folder as a root. Workspaces and the executable semantic model resolve imports against their own documents, so a document set behaves the same way in a build, in an editor and over MCP. `PlayImports.Resolve` exposes the resolution itself - which documents make up the application and where each one is placed - for tools that want it.
 
+Explicit imports are traversed in authored order, including when folder discovery
+also finds the imported documents as roots. Wildcard matches remain ordered by path.
+Use explicit child imports when the order of modules, features or slices matters to
+how the model reads; filesystem discovery order does not replace barrel order.
+
 ## See also
 
 - [Folders](folders.md) - how the documents of a folder merge into one application.
