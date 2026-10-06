@@ -1,12 +1,12 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Cratis.Screenplay.Mcp.for_McpConnection.UnixLinks;
+namespace Cratis.Screenplay.Mcp.for_McpConnection.given;
 
 // Platform-dependent link facts are skipped at discovery, not counted as successful no-ops.
-internal sealed class FactAttribute : Xunit.FactAttribute
+internal sealed class UnixLinkFactAttribute : FactAttribute
 {
-    public FactAttribute()
+    public UnixLinkFactAttribute()
     {
         if (OperatingSystem.IsWindows())
         {

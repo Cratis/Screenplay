@@ -50,8 +50,10 @@ from root A cannot be applied in root B, even if their revisions are identical
 its own `.screenplay` identity state and recovery journal, unless `workspaceJson`
 is explicitly supplied to import identities into a root without persisted state.
 A pending journal blocks only its own root. After an opened worktree is removed,
-an explicit path can return to the configured root without restarting. No named
-simultaneous workspaces are exposed. See [worktree setup](install.md#work-on-another-branch-in-a-worktree).
+an explicit path can return to the configured root without restarting. If the
+startup root itself is removed, start a new connection: switching is refused
+because worktree membership is proven from the startup root's Git metadata. No
+named simultaneous workspaces are exposed. See [worktree setup](install.md#work-on-another-branch-in-a-worktree).
 
 Only `apply` and `recover-workspace` mutate files. Keep client approval enabled
 for both. Source queries, schemas, proposals and status checks are read-only.

@@ -9,6 +9,7 @@ namespace Cratis.Screenplay.Mcp;
 internal static class McpWorktreeRoots
 {
     const int MaximumMetadataBytes = 8192;
+    static readonly UTF8Encoding _strictUtf8 = new(false, true);
 
     internal static McpRoot Resolve(McpRoot configured, McpRoot requested)
     {
@@ -123,7 +124,7 @@ internal static class McpWorktreeRoots
         }
 
         McpRoot.CheckAncestors(path);
-        var value = new UTF8Encoding(false, true).GetString(bytes).TrimEnd('\r', '\n');
+        var value = _strictUtf8.GetString(bytes).TrimEnd('\r', '\n');
         if (string.IsNullOrWhiteSpace(value) || value.Contains('\n') || value.Contains('\r') || value.Contains('\0'))
         {
             throw Refused();

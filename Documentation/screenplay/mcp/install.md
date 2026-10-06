@@ -229,15 +229,18 @@ proposals, even when both roots have identical source and revisions. Read the
 new workspace's revisions and create a fresh proposal before applying. Source
 writes, identity state and recovery journals stay inside the opened model root;
 state from another checkout is not reused unless you explicitly pass
-`workspaceJson` to import a workspace. A pending recovery journal in one root
-does not block opening another root, but still blocks reopening its own root. Commit `.screenplay/identities.json`
-with each model, as usual.
+`workspaceJson` to import a workspace. That import adds identities only to a
+root that has no `.screenplay` state yet; otherwise `open-workspace` returns
+`IdentityImportConflict`. A pending recovery journal in one root does not block
+opening another root, but still blocks reopening its own root. Commit
+`.screenplay/identities.json` with each model, as usual.
 
 The embedded MCP library does not read `.cratis/ai.json` itself: a model root
 selected through `mcpServers.screenplay.root` by the hosting CLI is a supplied
-startup root and follows the same worktree rules. With Docker, both the worktree and its shared Git
-metadata must be visible at the paths Git records. Otherwise use a native
-server or a separate connection rooted directly at that worktree's model.
+startup root and follows the same worktree rules. With Docker, both the
+worktree and its shared Git metadata must be visible at the paths Git records.
+Otherwise use a native server or a separate connection rooted directly at that
+worktree's model.
 
 ## Choose one application root
 

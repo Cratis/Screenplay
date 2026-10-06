@@ -3,7 +3,7 @@
 
 using System.Text.Json;
 
-using FactAttribute = Cratis.Screenplay.Mcp.for_McpConnection.UnixLinks.FactAttribute;
+using Cratis.Screenplay.Mcp.for_McpConnection.given;
 
 namespace Cratis.Screenplay.Mcp.for_McpConnection;
 
@@ -17,6 +17,6 @@ public class when_opening_with_a_linked_git_marker : given.a_worktree_connection
         File.CreateSymbolicLink(marker, marker + "-original");
     }
     void Because() => _refused = Call("open-workspace", new { path = WorktreePath }).GetProperty("result");
-    [FactAttribute] void should_report_root_change_refusal_for_a_linked_marker() => _refused.GetProperty("structuredContent").GetProperty("failureKind").GetString().ShouldEqual("RootChangeRefused");
-    [FactAttribute] void should_explain_the_link_refusal() => _refused.GetProperty("structuredContent").GetProperty("message").GetString()!.ShouldContain("Symbolic links and reparse points are not admitted");
+    [UnixLinkFact] void should_report_root_change_refusal_for_a_linked_marker() => _refused.GetProperty("structuredContent").GetProperty("failureKind").GetString().ShouldEqual("RootChangeRefused");
+    [UnixLinkFact] void should_explain_the_link_refusal() => _refused.GetProperty("structuredContent").GetProperty("message").GetString()!.ShouldContain("Symbolic links and reparse points are not admitted");
 }
