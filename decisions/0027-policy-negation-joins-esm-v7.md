@@ -64,3 +64,5 @@ Authors can state exclusions directly without extra claims. Pre-extension v7 str
 ## Status notes
 
 **2026-10-06 — accepted.** Sindre Alstad Wilting explicitly selected the byte-preserving v7 extension and unary precedence in the implementation request. Implementation and verification remain pending.
+
+**2026-10-07 — implemented.** Implemented in #431; Done-when (Tier 1 and golden diff review) pending.
