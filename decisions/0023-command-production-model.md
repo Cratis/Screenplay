@@ -25,6 +25,8 @@ applies-to:
   - Samples/**
 ---
 
+> **2026-10-06 — ESM allocation superseded in part by [decision 0025](0025-allocate-esm-v7-to-responses-and-number-later-versions-at-admission.md).** 0025 replaces the v7–v11 rows of the *ESM allocation* table and the allocation-dependent sentences in *ESM allocation*, *Default if unanswered*, *Timeline and scope* and *Verification*. ESM v7 is allocated to generated values and responses; admission remains subject to accepted 0026 and 0004's gates. Later versions, including exact numbers, are numbered at a serialized release-ready admission checkpoint instead of in a fixed order. The v6 row, numeric-mode independence, cumulative contracts as redefined in 0025 and every other section of this record remain in force.
+
 ## Context
 
 A command needs to describe what it records, returns, reads and asks other systems to do. [0021](0021-commands-produce-events-operations-and-responses.md) established that scope, but its named responses, `append` block and interface-based operations no longer match the approved model. [#309](https://github.com/Cratis/Screenplay/issues/309) brings the revised proposals together. This record replaces 0021. It records Einar Ingebrigtsen's idea approvals and Sindre Alstad Wilting's subsequent allocation, compatibility and conservative-default decisions, all made on October 2, 2026. Each section names its decider. Sindre Alstad Wilting's defaults are binding until revisited through an accepted follow-up, except the proposed read-absence rule, which requires an accepted 0017 amendment. Acceptance does not mean implementation.
