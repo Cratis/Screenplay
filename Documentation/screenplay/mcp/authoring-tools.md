@@ -356,14 +356,16 @@ The existing layout values also select how finely to split the model:
 | `feature` | Module files import feature barrels; each feature file holds its slices and imports its nested features. |
 | `slice` | Feature barrels additionally import `<Slice>/<Slice>.play`; each slice file contains only its slice, with no `module` or `feature` restatement. |
 
-Split layouts now use quoted imports instead of the older merge-only scope
+Split layouts use quoted imports instead of the older merge-only scope
 restatements. Parameters and destination paths are unchanged: use `layout: "slice"`
 for one file per slice, not a separate flag. Each parent imports its children
 explicitly in declaration order rather than relying on alphabetical glob expansion.
-The Commerce sample demonstrates this barrel structure; TimeTracking demonstrates
-inline feature barrels in module files. Validate the whole folder or the generated
-`application.play`, not a slice fragment in isolation. There is no CLI
-`expand-layout` command; expansion is a reviewable MCP proposal.
+The Commerce sample shows the same barrel idea with flat slice files. The generated
+layout puts slices in `<Feature>/<Slice>/<Slice>.play` and inlines shared imports into
+`application.play`. TimeTracking demonstrates inline feature barrels in module files.
+Validate the whole folder or the generated `application.play`, not a slice fragment
+in isolation. There is no CLI `expand-layout` command; expansion is a reviewable MCP
+proposal.
 
 Review and apply the resulting proposal exactly like a node edit. Reorganization
 normalizes source formatting and checks structural equivalence; it keeps annotations
