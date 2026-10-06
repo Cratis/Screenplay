@@ -74,6 +74,7 @@ internal static class SemanticPolicyEvaluation
         IEnumerable<SemanticProperty> properties) => condition switch
     {
         SemanticAuthenticatedCondition => caller.Authenticated,
+        SemanticNotPolicyCondition not => !EvaluateCondition(not.Operand, plan, caller, artifact, subject, properties),
         SemanticRoleCondition role => caller.Roles.Contains(role.Role, StringComparer.Ordinal),
         SemanticClaimCondition claim => MatchClaim(claim, plan, caller, artifact, subject, properties),
         SemanticLogicalPolicyCondition { Operator: SemanticLogicalOperator.And } logical =>

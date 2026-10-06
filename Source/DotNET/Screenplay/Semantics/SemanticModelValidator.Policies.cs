@@ -13,6 +13,7 @@ internal static partial class SemanticModelValidator
         {
             SemanticClaimCondition { TargetKind: SemanticClaimTargetKind.Artifact, Value: { } path } => [path],
             SemanticLogicalPolicyCondition logical => ArtifactPaths(logical.Left).Concat(ArtifactPaths(logical.Right)),
+            SemanticNotPolicyCondition not => ArtifactPaths(not.Operand),
             _ => []
         };
 
@@ -20,15 +21,19 @@ internal static partial class SemanticModelValidator
         {
             SemanticClaimCondition { TargetKind: SemanticClaimTargetKind.Subject } => true,
             SemanticLogicalPolicyCondition logical => UsesSubject(logical.Left) || UsesSubject(logical.Right),
+            SemanticNotPolicyCondition not => UsesSubject(not.Operand),
             _ => false
         };
 
-        static void ValidatePolicyCondition(SemanticPolicyCondition? condition, bool allowOpaque = true)
+        void ValidatePolicyCondition(SemanticPolicyCondition? condition, bool allowOpaque = true)
         {
             switch (condition)
             {
                 case SemanticOpaquePolicyCondition when allowOpaque: break;
                 case SemanticAuthenticatedCondition: break;
+                case SemanticNotPolicyCondition not when _semanticVersion.IsAtLeast(SemanticVersion.V7):
+                    ValidatePolicyCondition(not.Operand, false);
+                    break;
                 case SemanticRoleCondition { Role: { } }: break;
                 case SemanticClaimCondition { Claim: { }, TargetKind: SemanticClaimTargetKind.Subject, Value: null }: break;
                 case SemanticClaimCondition { Claim: { }, TargetKind: SemanticClaimTargetKind.Literal or SemanticClaimTargetKind.Artifact, Value: { } }: break;

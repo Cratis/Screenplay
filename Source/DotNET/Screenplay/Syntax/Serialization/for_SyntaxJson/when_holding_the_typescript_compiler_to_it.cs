@@ -139,7 +139,7 @@ public class when_holding_the_typescript_compiler_to_it : Specification
                         "EventSourceIdExpressionSyntax" or "EventContextExpressionSyntax" or "CausedByExpressionSyntax" or
                         "CaptureMapEntrySyntax" or "CaptureTranslationSyntax" or "CaptureSplitSyntax" or "CaptureWhenSyntax" or
                         "PolicySyntax" or "AuthenticatedConditionSyntax" or "RoleConditionSyntax" or "ClaimConditionSyntax" or
-                        "LogicalPolicyConditionSyntax" or "SpecificationAbsentReadModelSyntax" or "SpecificationQuerySyntax" or "SeedSyntax" or "SeedGroupSyntax" or "SeedEventSyntax" or "RequirementSyntax" or
+                        "LogicalPolicyConditionSyntax" or "NotPolicyConditionSyntax" or "SpecificationAbsentReadModelSyntax" or "SpecificationQuerySyntax" or "SeedSyntax" or "SeedGroupSyntax" or "SeedEventSyntax" or "RequirementSyntax" or
                         "ComparisonConditionSyntax" or "LogicalConditionSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "SystemSyntax" or "OperationSyntax" or "OperationPhaseSyntax" or "SpecificationOperationFailureSyntax" or "SpecificationOperationSyntax" or "SpecificationCompensatedSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "PropertySyntax" => ["isGenerated"],
