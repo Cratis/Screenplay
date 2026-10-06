@@ -175,7 +175,9 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    static void WriteProperty(Utf8JsonWriter writer, SemanticProperty property)
+    static void WriteProperty(Utf8JsonWriter writer, SemanticProperty property) => WriteProperty(writer, property, false);
+
+    static void WriteProperty(Utf8JsonWriter writer, SemanticProperty property, bool command)
     {
         writer.WriteStartObject();
         WriteId(writer, property.Id);
@@ -183,6 +185,7 @@ public static partial class SemanticModelCanonicalJson
         writer.WritePropertyName("type");
         WriteTypeReference(writer, property.Type);
         writer.WriteBoolean("identifier", property.IsIdentifier);
+        if (command && property.IsGenerated) writer.WriteBoolean("generated", true);
         writer.WriteEndObject();
     }
 
@@ -253,7 +256,7 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteStartObject();
         WriteId(writer, command.Id);
         CanonicalJson.WriteString(writer, "name", command.Name);
-        WriteArray(writer, "properties", command.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProperty);
+        WriteArray(writer, "properties", command.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, property) => WriteProperty(output, property, version.IsAtLeast(SemanticVersion.V7)));
         WriteArray(writer, "validations", command.Validations, WriteValidation);
         if (!command.CodeValidations.IsEmpty)
         {
@@ -279,6 +282,11 @@ public static partial class SemanticModelCanonicalJson
             WriteTypeReference(writer, command.Destination.Type);
             WriteOptionalExpression(writer, "value", command.Destination.Value);
             writer.WriteEndObject();
+        }
+        if (command.Response is not null)
+        {
+            writer.WritePropertyName("response");
+            WriteResponse(writer, command.Response);
         }
         writer.WriteEndObject();
     }
@@ -407,6 +415,11 @@ public static partial class SemanticModelCanonicalJson
         WriteArray(writer, "thenQueries", specification.ThenQueries, WriteSpecificationQuery);
         WriteArray(writer, "thenErrors", specification.ThenErrors, WriteSpecificationError);
         if (specification.ThenDenied) writer.WriteBoolean("thenDenied", true);
+        if (specification.ThenReturns is not null)
+        {
+            writer.WritePropertyName("thenReturns");
+            WriteThenReturns(writer, specification.ThenReturns);
+        }
         WriteAutomationSpecification(writer, specification);
         writer.WriteEndObject();
     }
@@ -445,6 +458,10 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteStartObject();
         writer.WriteString("command", value.Command.ToString());
         WriteArray(writer, "values", value.Values.OrderBy(_ => _.TargetProperty.ToString(), StringComparer.Ordinal), WritePropertyValue);
+        if (!value.GeneratedValues.IsDefaultOrEmpty)
+        {
+            WriteArray(writer, "generatedValues", value.GeneratedValues.OrderBy(_ => _.TargetProperty.ToString(), StringComparer.Ordinal), WritePropertyValue);
+        }
         if (value.EventSource is not null) WriteEventSource(writer, value.EventSource);
         writer.WriteEndObject();
     }
