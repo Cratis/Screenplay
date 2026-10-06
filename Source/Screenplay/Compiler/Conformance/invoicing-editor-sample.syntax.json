@@ -11201,7 +11201,6 @@
                       ]
                     }
                   ],
-                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -11352,7 +11351,6 @@
                       ]
                     }
                   ],
-                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -11630,7 +11628,6 @@
                       ]
                     }
                   ],
-                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -11708,7 +11705,6 @@
                       ]
                     }
                   ],
-                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": {
                     "kind": "SpecificationClockSyntax",
@@ -13731,7 +13727,6 @@
                           ]
                         }
                       ],
-                      "givenCaller": null,
                       "givenCaptures": [],
                       "givenClock": null,
                       "givenOperationFailures": [],
@@ -13896,7 +13891,6 @@
                       ]
                     }
                   ],
-                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -14177,7 +14171,6 @@
                       ]
                     }
                   ],
-                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": {
                     "kind": "SpecificationClockSyntax",
@@ -14262,7 +14255,6 @@
                       ]
                     }
                   ],
-                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -14623,7 +14615,6 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
-                  "givenCaller": null,
                   "givenCaptures": [
                     {
                       "kind": "SpecificationCaptureSyntax",
@@ -14812,7 +14803,6 @@
                       ]
                     }
                   ],
-                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],

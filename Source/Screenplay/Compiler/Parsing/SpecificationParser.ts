@@ -9,7 +9,7 @@ import {
     SpecificationWhenQuerySyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax,
 } from '../Syntax/Specifications';
 import { SpecificationDeniedSyntax, SpecificationReturnSyntax } from '../Syntax/Responses';
-import { nativePattern, pattern } from '../Text/patterns';
+import { dotNetWhitespace, nativePattern, pattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { parseMappingSource } from './ExpressionParser';
 import { isFileDirective } from './FileReferences';
@@ -172,8 +172,8 @@ function parseGiven(context: ParserContext, line: SourceLine, body: Specificatio
     }
 }
 
-const callerRolePattern = pattern(`^role\\s+"(${stringBodyPattern})"$`);
-const callerClaimPattern = pattern(`^claim\\s+"(${stringBodyPattern})"\\s*=\\s*"(${stringBodyPattern})"$`);
+const callerRolePattern = pattern(`^role${dotNetWhitespace}+"(${stringBodyPattern})"$`);
+const callerClaimPattern = pattern(`^claim${dotNetWhitespace}+"(${stringBodyPattern})"${dotNetWhitespace}*=${dotNetWhitespace}*"(${stringBodyPattern})"$`);
 
 // 'given caller' and the authenticated, role and claim lines under it.
 function parseCaller(context: ParserContext, line: SourceLine): SpecificationCallerSyntax | null {

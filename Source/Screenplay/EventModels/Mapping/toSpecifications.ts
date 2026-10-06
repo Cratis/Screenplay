@@ -61,9 +61,10 @@ function actionOf(specification: SpecificationSyntax): { name: string; values: R
 }
 
 function callerOf(caller: SpecificationCallerSyntax): SpecificationCallerDocument {
-    const claims: Record<string, string> = {};
-    caller.claims.forEach(claim => { claims[claim.type] = claim.type in claims ? `${claims[claim.type]}, ${claim.value}` : claim.value; });
-    return { authenticated: caller.authenticated, roles: [...caller.roles], claims };
+    // A Map keeps claim types such as '__proto__' and 'toString' as the data they are.
+    const claims = new Map<string, string>();
+    caller.claims.forEach(claim => claims.set(claim.type, claims.has(claim.type) ? `${claims.get(claim.type)}, ${claim.value}` : claim.value));
+    return { authenticated: caller.authenticated, roles: [...caller.roles], claims: Object.fromEntries(claims) };
 }
 
 function valuesOf(values: readonly PropertyMappingSyntax[]): Record<string, unknown> {

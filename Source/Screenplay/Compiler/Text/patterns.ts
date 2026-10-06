@@ -3,6 +3,10 @@
 
 const wordCharacters = '\\p{L}\\p{Mn}\\p{Nd}\\p{Pc}';
 
+// The characters .NET '\s' matches. JavaScript '\s' differs: it also accepts U+FEFF and not U+0085. Interpolate this
+// into newly modeled grammar that must agree with the C# parser.
+export const dotNetWhitespace = '[\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]';
+
 // .NET Regex classifies UTF-16 code units: supplementary letters are not \w. Use this
 // scoped helper only in newly modeled grammar, without changing established Legacy parsers.
 export function nativePattern(source: string): RegExp {

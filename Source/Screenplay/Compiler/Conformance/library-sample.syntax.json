@@ -61,7 +61,6 @@
     }
   ],
   "domain": null,
-  "eventSources": [],
   "fileImports": [],
   "imports": [],
   "modules": [
@@ -185,8 +184,6 @@
                     }
                   ],
                   "response": null,
-                  "stream": null,
-                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -1321,8 +1318,6 @@
                     }
                   ],
                   "response": null,
-                  "stream": null,
-                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -1649,7 +1644,6 @@
                       ]
                     }
                   ],
-                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -1805,8 +1799,6 @@
                     }
                   ],
                   "response": null,
-                  "stream": null,
-                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -2223,8 +2215,6 @@
                     }
                   ],
                   "response": null,
-                  "stream": null,
-                  "streamCandidates": [],
                   "validations": []
                 }
               ],

@@ -2602,6 +2602,166 @@
                 "          label rule Checké"
             ],
             "diagnostics": []
+        },
+        {
+            "name": "a caller states authentication, roles and repeated claims",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      specification T",
+                "        given caller",
+                "          authenticated",
+                "          role \"Reviewer\"",
+                "          claim \"department\" = \"risk\"",
+                "          claim \"department\" = \"audit\"",
+                "        when C"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "an anonymous caller states nothing",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      specification T",
+                "        given caller",
+                "        when C"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "a caller role must be quoted",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      specification T",
+                "        given caller",
+                "          role Reviewer",
+                "        when C"
+            ],
+            "diagnostics": [
+                "PLAY0386@6"
+            ]
+        },
+        {
+            "name": "a caller claim needs a value",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      specification T",
+                "        given caller",
+                "          claim \"department\"",
+                "        when C"
+            ],
+            "diagnostics": [
+                "PLAY0386@6"
+            ]
+        },
+        {
+            "name": "a caller cannot state authenticated twice",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      specification T",
+                "        given caller",
+                "          authenticated",
+                "          authenticated",
+                "        when C"
+            ],
+            "diagnostics": [
+                "PLAY0386@7"
+            ]
+        },
+        {
+            "name": "a caller admits only authenticated, role and claim lines",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      specification T",
+                "        given caller",
+                "          group \"Staff\"",
+                "        when C"
+            ],
+            "diagnostics": [
+                "PLAY0386@6"
+            ]
+        },
+        {
+            "name": "a caller block is introduced by exactly given caller",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      specification T",
+                "        given caller extra",
+                "          authenticated",
+                "        when C"
+            ],
+            "diagnostics": [
+                "PLAY0386@5"
+            ]
+        },
+        {
+            "name": "a caller role accepts the next line character as whitespace",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      specification T",
+                "        given caller",
+                "          role\u0085\"Reviewer\"",
+                "        when C"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "a caller claim accepts the next line character around its equals sign",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      specification T",
+                "        given caller",
+                "          claim\u0085\"department\"\u0085=\u0085\"risk\"",
+                "        when C"
+            ],
+            "diagnostics": []
+        },
+        {
+            "name": "a caller role rejects the byte order mark as whitespace",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      specification T",
+                "        given caller",
+                "          role\ufeff\"Reviewer\"",
+                "        when C"
+            ],
+            "diagnostics": [
+                "PLAY0386@6"
+            ]
+        },
+        {
+            "name": "a caller claim rejects the byte order mark around its equals sign",
+            "source": [
+                "module M",
+                "  feature F",
+                "    slice StateChange S",
+                "      specification T",
+                "        given caller",
+                "          claim \"department\"\ufeff=\ufeff\"risk\"",
+                "        when C"
+            ],
+            "diagnostics": [
+                "PLAY0386@6"
+            ]
         }
     ]
 }

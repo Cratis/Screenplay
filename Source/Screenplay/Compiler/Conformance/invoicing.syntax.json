@@ -137,7 +137,6 @@
     "kind": "DomainSyntax",
     "name": "Sales"
   },
-  "eventSources": [],
   "fileImports": [],
   "imports": [
     {
@@ -324,8 +323,6 @@
                         }
                       ],
                       "response": null,
-                      "stream": null,
-                      "streamCandidates": [],
                       "validations": [
                         {
                           "kind": "DeclarativeValidateSyntax",
@@ -617,8 +614,6 @@
                         }
                       ],
                       "response": null,
-                      "stream": null,
-                      "streamCandidates": [],
                       "validations": [
                         {
                           "kind": "DeclarativeValidateSyntax",
@@ -1165,8 +1160,6 @@
                     }
                   ],
                   "response": null,
-                  "stream": null,
-                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -2092,8 +2085,6 @@
                     }
                   ],
                   "response": null,
-                  "stream": null,
-                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -2452,8 +2443,6 @@
                     }
                   ],
                   "response": null,
-                  "stream": null,
-                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -2856,8 +2845,6 @@
                     }
                   ],
                   "response": null,
-                  "stream": null,
-                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -3033,8 +3020,6 @@
                     }
                   ],
                   "response": null,
-                  "stream": null,
-                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
