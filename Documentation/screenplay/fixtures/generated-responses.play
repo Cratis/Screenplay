@@ -1,4 +1,4 @@
-// Syntax-only authoring example. Execution is unavailable until ESM v8 (PLAY0268).
+// Syntax-only authoring example. These constructs are not admitted by any supported executable model (ESM) version yet (PLAY0268).
 concept ProjectId : Uuid
 concept ReceiptId : Uuid
 concept ProjectName : String

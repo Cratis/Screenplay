@@ -29,7 +29,7 @@ public class when_exposing_source_stream_authoring : given.an_authoring_connecti
         stream.GetProperty("scope")[0].GetString().ShouldEqual("Account");
         var details = Result("read-workspace", new { expectedRevision = revision, view = "event-stream-details", authoringKey = stream.GetProperty("authoringKey").GetString() });
         details.GetProperty("executionAvailable").GetBoolean().ShouldBeFalse();
-        details.GetProperty("executionReadiness").GetString().ShouldContain("ESM v10");
+        details.GetProperty("executionReadiness").GetString().ShouldContain("Not admitted by any supported executable model (ESM) version yet");
         var source = Node("EventSourceSyntax", revision);
         source.GetProperty("semanticId").ValueKind.ShouldEqual(JsonValueKind.Null);
         source.GetProperty("node").GetProperty("streams")[0].GetProperty("streamId").GetProperty("name").GetString().ShouldEqual("Month");

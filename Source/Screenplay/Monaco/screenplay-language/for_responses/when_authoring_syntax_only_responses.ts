@@ -67,7 +67,7 @@ describe('when authoring syntax-only responses', () => {
         const line = lines.findIndex(line => line.trim() === 'projectId = projectId');
         expect(hoverContent(lines, line, 'projectId', 11, 20)).toContain('ProjectId (inferred)');
         expect(hoverContent(lines, line, 'projectId', 11, 20)).toContain('not request input');
-        expect(hoverContent(lines, line, 'projectId', 11, 20)).toContain('unavailable');
+        expect(hoverContent(lines, line, 'projectId', 11, 20)).toContain('not admitted by any supported executable model (ESM) version yet');
     });
     it('should preserve local returns ambiguity and escaped names in reordered declarations', () => {
         const source = ['concept lower : String', 'command C', '  returns lower', '  generated String', '  @returns String', '  lower lower'];
@@ -216,7 +216,7 @@ describe('when authoring syntax-only responses', () => {
         for (const explicit of [false, true]) {
             const source = ['command C', `  value ${declared}`, '  returns', `    result ${explicit ? `${declared} ` : ''}= value`, 'specification S', '  when C', '  then returns', '    '];
             const completion = responseCompletions(source, 7, source[7], scanDocument(source));
-            expect(completion?.[0].documentation).toBe(`${rendered}. Syntax-only; execution unavailable until ESM v8 (PLAY0268). No response type is emitted.`);
+            expect(completion?.[0].documentation).toBe(`${rendered}. Syntax-only; not admitted by any supported executable model (ESM) version yet (PLAY0268). No response type is emitted.`);
             expect(hoverContent(source, 3, 'result', 5, 11)).toContain(`${rendered} (${explicit ? 'explicit' : 'inferred'})`);
         }
     });

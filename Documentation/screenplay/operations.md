@@ -2,7 +2,7 @@
 
 Describe the work a command asks another system to do without hiding it in a handler. An operation states its inputs, the external system it uses, and optional execution and compensation intent.
 
-> **Experimental, syntax-only authoring.** Systems, operations and their specification steps cannot execute today. Binding reports `PLAY0268` and returns no executable model. ESM v9 admission and provider support are future work; the current reference runner cannot run these specifications, even when code is attached.
+> **Experimental, syntax-only authoring.** Systems, operations and their specification steps cannot execute today. Binding reports `PLAY0268` and returns no executable model. These constructs are not admitted by any supported executable model (ESM) version yet; provider support is future work, and the current reference runner cannot run these specifications, even when code is attached.
 
 ## Declare intent
 
@@ -33,7 +33,7 @@ module Projects
           projectId = projectId
 ````
 
-The [complete source fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/operations.play) includes inline and standalone declarations, composite input sources, optional collections, failure and compensation specifications, and a cross-slice reference. It is intentionally outside executable `Samples/`: those samples remain runnable until v9 admission. This is the syntax-only exception to the samples policy, not an executable integration example.
+The [complete source fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/operations.play) includes inline and standalone declarations, composite input sources, optional collections, failure and compensation specifications, and a cross-slice reference. It is intentionally outside executable `Samples/`: those samples remain runnable, while operations are not admitted by any supported executable model (ESM) version yet. This is the syntax-only exception to the samples policy, not an executable integration example.
 
 ## Declare inline or reference a declaration
 
@@ -51,7 +51,7 @@ A standalone operation can be referenced from another slice in the assembled app
 
 Move the inline declaration body to `operation <Name>` in its owning slice. Remove each mapping RHS from the declaration inputs, and replace the old inline block with `produces <Name>` plus its existing untyped mappings **at the same sequence position**. Retain descriptions, phases, comments and attachments. If you move files, check relative attachment paths and every reference against the new layout. Validate the complete application before accepting the edit.
 
-No automatic operation extraction is available. Event extraction's executable-byte proof cannot establish operation equivalence before v9 admission.
+No automatic operation extraction is available. Event extraction's executable-byte proof cannot establish operation equivalence while operations are not admitted by any supported executable model (ESM) version yet.
 
 ## Attach phase intent or source
 

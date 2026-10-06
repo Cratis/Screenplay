@@ -31,7 +31,7 @@ static class McpFixtureQueries
         snapshot.Compilation.Success,
         snapshot.SourceRevision,
         snapshot.Compilation.Diagnostics,
-        coverage = "Authored assertions only: then returns (syntax-only, unavailable execution until ESM v8), denied, events, errors, read models or queries. A gap is not proof of missing runtime test coverage.",
+        coverage = "Authored assertions only: then returns (syntax-only, not admitted by any supported executable model (ESM) version yet), denied, events, errors, read models or queries. A gap is not proof of missing runtime test coverage.",
         page = McpReadPage<McpFixtureAssertionGap>.Create(
             snapshot.Index.Declarations
             .Where(declaration => declaration.Syntax is SliceSyntax)

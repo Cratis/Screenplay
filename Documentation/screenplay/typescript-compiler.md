@@ -89,9 +89,9 @@ The ids in that document are derived from where each element sits in the model. 
 The compiler reads what an event model is made of:
 
 - the domain, imports, concepts and types
-- application-owned event sources, nested streams and command-level stream/key authoring, with complete-input ambiguity checks (syntax-only until ESM v10)
-- systems, operations and their phase/specification intent (syntax-only until ESM v9)
-- generated command values and response contracts (syntax-only until ESM v8)
+- application-owned event sources, nested streams and command-level stream/key authoring, with complete-input ambiguity checks (syntax-only, not admitted by any supported executable model (ESM) version yet)
+- systems, operations and their phase/specification intent (syntax-only, not admitted by any supported executable model (ESM) version yet)
+- generated command values and response contracts (syntax-only, not admitted by any supported executable model (ESM) version yet)
 - modules, features (nested too) and slices
 - standalone and inline events with their tags, descriptions, documentation, and rename pins
 - commands with their properties, declarative `validate` rules, and productions (typed mappings and destinations included)

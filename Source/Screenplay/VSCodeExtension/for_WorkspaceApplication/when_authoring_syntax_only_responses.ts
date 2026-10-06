@@ -26,7 +26,7 @@ describe('when authoring syntax-only responses across files', () => {
             compilerDiagnostics: diagnostics,
         });
         expect(issues.filter(issue => issue.code === 'PLAY0483')).toHaveLength(1);
-        expect(issues.some(issue => issue.message.includes('execution unavailable'))).toBe(true);
+        expect(issues.some(issue => issue.message.includes('not admitted by any supported executable model (ESM) version yet'))).toBe(true);
     });
     it.each([0, 1])('should complete only current unsaved sources despite foreign command offset %s', offset => {
         const application = new WorkspaceApplication();

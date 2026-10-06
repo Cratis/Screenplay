@@ -26,5 +26,5 @@ public class when_requesting_executable_responses_in_a_workspace : Workspaces.fo
     [Fact] void should_refuse_executable_admission() => _executable.Accepted.ShouldBeFalse();
     [Fact] void should_return_no_executable_candidate() => _executable.Workspace.ShouldBeNull();
     [Fact] void should_return_no_executable_write_plan() => _executable.WritePlan.ShouldBeNull();
-    [Fact] void should_explain_the_esm_boundary() => _executable.ExecutableDiagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("ESM v8", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_explain_the_esm_boundary() => _executable.ExecutableDiagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("not admitted by any supported executable model (ESM) version yet (#300/#303)", StringComparison.Ordinal)).ShouldBeTrue();
 }

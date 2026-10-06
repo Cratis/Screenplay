@@ -15,7 +15,7 @@ describe('when mapping authored stream details', () => {
         const slice = board(fixture);
         expect(slice.command?.logicDescription).toContain('Authored stream: Account.Transactions');
         expect(slice.command?.logicDescription).toContain('Stream id: month');
-        expect(slice.command?.logicDescription).toContain('ESM v10 (PLAY0268)');
+        expect(slice.command?.logicDescription).toContain('not admitted by any supported executable model (ESM) version yet (PLAY0268)');
         expect(slice.command?.logicDescription).not.toContain('PathExpressionSyntax');
         expect(slice.events.map(event => event.name)).toEqual(['Deposited']);
         expect(slice.specifications).toEqual([]);

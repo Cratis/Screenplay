@@ -59,7 +59,7 @@ public class when_resolving_operation_specification_dependencies
             row.TryGetProperty("semanticId", out _).ShouldBeFalse();
         }
         var specification = snapshot.Index.Find("M.F.C.T", "Specification").Single();
-        snapshot.Index.Readiness.ExecutionReadiness(specification.Syntax).ShouldContain("ESM v9 (PLAY0268)");
+        snapshot.Index.Readiness.ExecutionReadiness(specification.Syntax).ShouldContain("operations and systems (#301)");
     }
 
     [Theory]

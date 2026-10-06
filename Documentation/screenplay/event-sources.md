@@ -1,6 +1,6 @@
 # Event sources and streams
 
-Name the business classification of an event source and its streams, then reference a stream from a command. This is **authoring-only**: executable binding refuses these constructs with `PLAY0268`, naming allocated ESM v10. No stream routing, identity conversion or provider execution takes place.
+Name the business classification of an event source and its streams, then reference a stream from a command. This is **authoring-only**: these constructs are not admitted by any supported executable model (ESM) version yet; executable binding refuses them with `PLAY0268`. No stream routing, identity conversion or provider execution takes place.
 
 ## Declare a source and its streams
 
@@ -59,7 +59,7 @@ Properties named `stream`, `eventsource`, `from`, `streamId` and `identifier` re
 
 | Surface | Supported in this increment | Not available |
 | --- | --- | --- |
-| C# and TypeScript syntax | Declarations, command routes, key mappings, strict typed JSON, full-input ambiguity validation | Executable ESM v10 |
+| C# and TypeScript syntax | Declarations, command routes, key mappings, strict typed JSON, full-input ambiguity validation | Not admitted by any supported executable model (ESM) version yet |
 | Monaco and VS Code | Typed symbols, contextual tokens, reference/key completion, hover and exact source navigation where the host has authoritative source | Guessed effective routing, automatic source/stream rename, routing quick fixes |
 | MCP | Paged source/stream inventories, exact owner keys, physical AST handles, type and route links, Authoring add/replace/remove | Source/stream semantic or requirement IDs, execution or identity refactors |
 | Board | Authored stream and readable key expression in existing command details | Stream event cards, inferred facts or successful routed specification states |

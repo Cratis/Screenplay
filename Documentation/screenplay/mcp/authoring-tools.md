@@ -45,7 +45,7 @@ After opening the workspace, use these paged `read-workspace` views with `expect
 | `command-routes` | Authored routes and all retained ambiguity candidates, never inferred effective routing |
 | `event-source-diagnostics` | Paged physical parser/import and whole-assembly diagnostics, including errorful and unresolved files |
 
-Continuation also requires `expectedCatalogRevision`. The immutable physical inventory retains partial declarations, duplicate routes and route/property candidates from all parsed files, independently of editable AST eligibility. `inventoryComplete`, `authoringDiagnosticsView` and `authoringDiagnosticsCount` disclose parser/import and whole-assembly evidence. Unknown extent reports `ownership: "incomplete"`; details refuse with `IncompleteSource`. Duplicate physical parents make every child ambiguous, including parents in errorful files. Unresolved-placement entries name refused documents, and retained nodes in those files have a null `authoringKey` rather than a fabricated owner. Keys include application, declaration kind, full owner path and name; they are not persistent semantic identities. All these entries disclose ESM v10 execution unavailability. A command/specification/slice readiness message describes that member's constructs and command dependencies; model readiness also includes unrelated source declarations.
+Continuation also requires `expectedCatalogRevision`. The immutable physical inventory retains partial declarations, duplicate routes and route/property candidates from all parsed files, independently of editable AST eligibility. `inventoryComplete`, `authoringDiagnosticsView` and `authoringDiagnosticsCount` disclose parser/import and whole-assembly evidence. Unknown extent reports `ownership: "incomplete"`; details refuse with `IncompleteSource`. Duplicate physical parents make every child ambiguous, including parents in errorful files. Unresolved-placement entries name refused documents, and retained nodes in those files have a null `authoringKey` rather than a fabricated owner. Keys include application, declaration kind, full owner path and name; they are not persistent semantic identities. All these entries disclose that these constructs are not admitted by any supported executable model (ESM) version yet. A command/specification/slice readiness message describes that member's constructs and command dependencies; model readiness also includes unrelated source declarations.
 
 The detail boundary is `compact-header-v1`, not full typed syntax. No header embeds all child stream subtrees. Child items follow the actual physical parent's authored order. Pages honor item and serialized-byte budgets; continue from `nextOffset`, not `offset + limit`. Pins and descriptions above 4096 UTF-8 bytes are explicitly omitted with exact sizes and a `read-document` byte-page pointer. Use a separate `read-ast` content request for the full node when it fits; a single oversized identity cannot be narrowed by reducing the item count.
 
@@ -57,7 +57,7 @@ For edits, read the actual `read-ast` handles and `syntax-schema` kinds, then us
 
 ## Operation and system intent
 
-Systems and operations are **syntax-only**, with execution unavailable until ESM v9 (`PLAY0268`). After `open-workspace`, call `read-workspace` with the current `expectedRevision`:
+Systems and operations are **syntax-only**, not admitted by any supported executable model (ESM) version yet (`PLAY0268`). After `open-workspace`, call `read-workspace` with the current `expectedRevision`:
 
 | View | Contents |
 | --- | --- |

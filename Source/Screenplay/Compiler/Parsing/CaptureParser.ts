@@ -29,7 +29,7 @@ const whenTokens = new RegExp(pattern(`"${stringBodyPattern}"|[\\w.]+`).source, 
 const splitTarget = pattern('^[\\w.]+$');
 
 // A structural port of the existing capture grammar. Transition operands remain authored strings, as
-// C# models them; their numeric semantic interpretation belongs to ESM v7, not source admission.
+// C# models them; exact numeric mode is not admitted by any supported executable model (ESM) version yet (#285).
 export function parseCapture(context: ParserContext, line: SourceLine): CaptureSyntax {
     context = context.valueContext;
     const name = select(context, headerRules).exec(line.content)?.[1] ?? '';
