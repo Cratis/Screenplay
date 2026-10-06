@@ -32,7 +32,7 @@ it('protects Windows metadata with only the current-user inheritable DACL and a 
     expect(arguments_[3]).toContain('[IO.Directory]::SetAccessControl($directory, $access)');
     expect(arguments_[3]).not.toContain(directory);
     expect(options.env.SCREENPLAY_TEST_METADATA_DIRECTORY).toBe(directory);
-    expect(options.timeout).toBe(5_000);
+    expect(options.timeout).toBe(60_000);
     expect(host.chmod).not.toHaveBeenCalled();
 });
 
@@ -40,4 +40,12 @@ for (const result of [{ status: 1, stderr: 'ACL refused' }, { status: null, erro
     vi.stubGlobal('process', { ...process, platform: 'win32' });
     host.spawn.mockReturnValue(result);
     expect(() => privateMetadataDirectory('C:\\synthetic\\.screenplay')).toThrow('Cannot protect test metadata directory');
+    expect(host.spawn).toHaveBeenCalledTimes(1);
+});
+
+it('names the PowerShell timeout budget and fails without retrying permission setup', () => {
+    vi.stubGlobal('process', { ...process, platform: 'win32' });
+    host.spawn.mockReturnValue({ status: null, error: Object.assign(new Error('spawnSync powershell.exe ETIMEDOUT'), { code: 'ETIMEDOUT' }) });
+    expect(() => privateMetadataDirectory('C:\\synthetic\\.screenplay')).toThrow('Cannot protect test metadata directory: powershell.exe timed out after 60000 ms');
+    expect(host.spawn).toHaveBeenCalledTimes(1);
 });
