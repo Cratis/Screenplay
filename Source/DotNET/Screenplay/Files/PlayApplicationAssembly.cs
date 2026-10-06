@@ -35,7 +35,8 @@ internal static class PlayApplicationAssembly
         IScreenplayLanguageRegistry languages,
         bool allowUnresolvedPersonaPolicies = false)
     {
-        var (documents, diagnostics) = PlayImports.Resolve(roots, source, languages);
+        var rootPaths = roots.ToArray();
+        var (documents, diagnostics) = PlayImports.Resolve(rootPaths, source, languages);
         var candidates = (compiler as ICommandStreamCandidateParser)?.CaptureCandidates(documents.Where(document => document.IsPlacementResolved)
             .Select(document => (SourceLineSplitter.Split(document.Source, path: document.Path), document.Placement)));
         var parsed = documents.Select(document =>
@@ -49,6 +50,11 @@ internal static class PlayApplicationAssembly
                 : result;
         });
         var merged = PlayFolderMerge.Merge([.. parsed], allowUnresolvedPersonaPolicies);
-        return (documents, merged with { Diagnostics = [.. diagnostics, .. merged.Diagnostics] });
+        var orderingRoot = OrderingRoot.Select(rootPaths, documents, languages);
+        var timeline = orderingRoot is not null && merged.Value is { } application
+            ? TimelineOrder.In(application, AuthoredOrder.Record([orderingRoot], documents, languages))
+            : [];
+
+        return (documents, merged with { Diagnostics = [.. diagnostics, .. merged.Diagnostics, .. timeline] });
     }
 }

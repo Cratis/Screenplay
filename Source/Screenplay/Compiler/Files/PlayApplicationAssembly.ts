@@ -18,6 +18,9 @@ import { mergeDocuments } from './PlayFolderMerge';
 import { inMemoryDocumentSource, PlacedPlayDocument, PlayDocumentSource } from './PlayDocumentSource';
 import { normalizePlayPath } from './PlayGlob';
 import { resolveImports } from './PlayImports';
+import { recordAuthoredOrder } from './AuthoredOrder';
+import { selectOrderingRoot } from './OrderingRoot';
+import { timelineOrderDiagnostics } from './TimelineOrder';
 
 // One .play document of a folder: its path relative to the folder, and its text.
 export interface PlayFileSource {
@@ -33,10 +36,14 @@ export interface ApplicationCompilation extends CompilationResult<ApplicationSyn
 
 // Assembles one application from documents - following their imports from the roots, parsing each where it is
 // placed, and merging the lot. The port of the C# PlayApplicationAssembly.Compile.
-export function assembleApplication(roots: Iterable<string>, source: PlayDocumentSource, languages?: ReadonlySet<string>): ApplicationCompilation {
-    const { documents, diagnostics } = resolveImports(roots, source, languages);
+export function assembleApplication(roots: Iterable<string>, source: PlayDocumentSource, languages?: ReadonlySet<string>, presentationRoot?: string | null): ApplicationCompilation {
+    const rootPaths = [...roots];
+    const { documents, diagnostics } = resolveImports(rootPaths, source, languages);
     const merged = parsePlacedDocuments(documents, languages);
-    const all = [...diagnostics, ...merged.diagnostics];
+    const orderingRoot = presentationRoot === null ? undefined : selectOrderingRoot(presentationRoot === undefined ? rootPaths : [presentationRoot], documents, languages);
+    if (orderingRoot !== undefined) recordAuthoredOrder(merged.value, [orderingRoot], documents, languages);
+    const timeline = orderingRoot === undefined ? [] : timelineOrderDiagnostics(merged.value);
+    const all = [...diagnostics, ...merged.diagnostics, ...timeline];
     return { ...merged, documents, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error') };
 }
 
@@ -73,9 +80,9 @@ function diagnosticKey(diagnostic: Diagnostic): string {
 // import places in a module or feature is placed there. With roots, only those documents and what they import
 // make up the application - a single file compiled with its imports followed. The default sort compares
 // UTF-16 code units, which is the C# ordinal order.
-export function compileApplication(documents: ReadonlyMap<string, string>, roots?: readonly string[], languages?: ReadonlySet<string>): ApplicationCompilation {
+export function compileApplication(documents: ReadonlyMap<string, string>, roots?: readonly string[], languages?: ReadonlySet<string>, presentationRoot?: string | null): ApplicationCompilation {
     const normalized = new Map([...documents].map(([path, source]) => [normalizePlayPath(path), source]));
-    return assembleApplication(roots ?? [...normalized.keys()].sort(), inMemoryDocumentSource(normalized), languages);
+    return assembleApplication(roots ?? [...normalized.keys()].sort(), inMemoryDocumentSource(normalized), languages, presentationRoot);
 }
 
 // Compiles the documents of a folder as one application - the counterpart of the C# CompileFolder. Every

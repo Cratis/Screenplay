@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { describe, it } from 'vitest';
-import { DiagnosticCodes, parseFolder, toSyntaxJson } from '@cratis/screenplay-compiler';
+import { DiagnosticCodes, parseFolder, parsePlacedDocuments, toSyntaxJson } from '@cratis/screenplay-compiler';
 import { compileEventModelApplication } from '../compileEventModelApplication';
 import { toEventModelDocument } from '../EventModelDocumentVisitor';
 
@@ -94,7 +94,7 @@ describe('when selecting the board root', () => {
             { path: 'z.play', source: 'module Z' },
         ];
         const compilation = compileEventModelApplication(files, 'application.play');
-        toEventModelDocument(compilation.value, 'Board').should.deep.equal(toEventModelDocument(parseFolder(files).value, 'Board'));
+        toEventModelDocument(compilation.value, 'Board').should.deep.equal(toEventModelDocument(parsePlacedDocuments(compilation.documents).value, 'Board'));
         names(files).should.deep.equal(['Z', 'A']);
     });
 

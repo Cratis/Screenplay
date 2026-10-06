@@ -231,6 +231,8 @@ export const DiagnosticCodes = {
     InexactNumericLiteral: 'PLAY0511',
     MixedNumericModes: 'PLAY0512',
     IncompatibleNumericSource: 'PLAY0513',
+    EventFromLaterSlice: 'PLAY0516',
+    TimelineCycleGroup: 'PLAY0517',
     InvalidEventSourceDeclaration: 'PLAY0503',
     InvalidCommandStream: 'PLAY0504',
     AmbiguousCommandStream: 'PLAY0505',

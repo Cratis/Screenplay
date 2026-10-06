@@ -9,12 +9,12 @@ import { compileApplication, parsePlacedDocuments } from '../PlayApplicationAsse
 const rank = (application: ReturnType<typeof parse>['value'], ...scope: string[]) => authoredOrderOf(application).get(authoredOrderKey(scope));
 
 describe('when recording presentation order', () => {
-    it('should not compute presentation ranks for ordinary application compilation', () => {
+    it('should compute presentation ranks separately for ordinary application compilation', () => {
         const compilation = compileApplication(new Map([
             ['application.play', 'import "other.play"'],
             ['other.play', 'module M\n  feature F'],
         ]), ['application.play']);
-        authoredOrderOf(compilation.value).size.should.equal(0);
+        [...authoredOrderOf(compilation.value).keys()].should.deep.equal([['M'], ['M', 'F']].map(authoredOrderKey));
     });
 
     it('should leave merged syntax bytes, document order and duplicate diagnostics unchanged', () => {
