@@ -5,3 +5,4 @@ export * from './Document/EventModelDocument';
 export * from './Document/identity';
 export * from './Schemas/SchemaSynthesizer';
 export * from './Mapping/EventModelDocumentVisitor';
+export * from './Mapping/compileEventModelApplication';
