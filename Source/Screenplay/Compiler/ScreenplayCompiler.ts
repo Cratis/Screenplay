@@ -11,6 +11,8 @@ import { validateInlineEvents } from './Parsing/InlineEventValidator';
 import { validateOperations } from './Parsing/OperationValidator';
 import { CommandStreamCandidates } from './Parsing/CommandStreamCandidates';
 import { validateEventSources } from './Parsing/EventSourceValidator';
+import { validateProjectionTargets } from './Parsing/ProjectionTargetValidator';
+import { validateIdentifierCompliance } from './Parsing/IdentifierComplianceValidator';
 import { parseApplication } from './Parsing/ScreenplayParser';
 import { splitLines } from './Parsing/SourceLineSplitter';
 import { PropertySyntax } from './Syntax/Declarations';
@@ -58,6 +60,8 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateOperations(value, context);
         validateResponses(value, context);
         validateEventSources(value, context);
+        validateProjectionTargets(value, context);
+        validateIdentifierCompliance(value, context);
     }
     return {
         value,

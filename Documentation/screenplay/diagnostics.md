@@ -393,8 +393,10 @@ remove duplicate route headers before export.
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0165` | Warning | A property names a type nothing in the document or its imports declares. |
-| `PLAY0166` | Warning | An event is referred to that nothing in the document or its imports declares. |
+| `PLAY0166` | Warning | An event is referred to that nothing in the document or its imports declares, including projection `remove with`, `remove via join on`, and capture `append`. |
 | `PLAY0167` | Warning or error | A policy is referred to that nothing in the document declares. A persona's unknown policy is an error during compilation, Safe authoring, and executable binding. Draft authoring retains it as a warning with explicit unresolved-reference debt; other unresolved policy references are warnings. |
+| `PLAY0514` | Warning | A projection mapping, `children`, or `nested` target is absent from the declared read-model or element shape. Unknown or imported shapes are not guessed. |
+| `PLAY0515` | Error | A concept marked `@pii` is used as a command identifier, an explicit `for` destination, or an event source identifier. Use a surrogate `Uuid` identifier and keep personal data as a property. |
 | `PLAY0168` | Error | A concept and a type, or two of either, are declared under one name; also reused when an inline event repeats a typed payload property name. |
 | `PLAY0169` | Error | An authentication block declares two providers under one name. |
 | `PLAY0170` | Error | A seed block seeds nothing. |

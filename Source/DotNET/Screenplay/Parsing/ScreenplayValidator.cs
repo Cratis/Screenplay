@@ -122,6 +122,16 @@ internal static class ScreenplayValidator
             ValidateSlice(slice, knownEvents, knownPolicies, knownTypes, knownReadModels, context, productionResolver);
             ValidateReactionConsequences(slice, knownEvents, knownCommands, context, productionResolver);
             ValidateReactionTriggers(slice, knownEvents, knownReadModels, declaredTriggers, eventsByName, context);
+            new RemovalEventValidator(knownEvents, context).VisitSlice(slice);
+            foreach (var append in slice.Captures.SelectMany(capture => capture.Appends
+                .Concat(capture.Children.SelectMany(children => children.Appends))
+                .Concat(capture.Nested.SelectMany(nested => nested.Appends))))
+            {
+                if (!knownEvents.Contains(append.Event))
+                {
+                    context.Warning(DiagnosticCodes.UnknownEvent, $"Unknown event '{append.Event}' - declare it with 'event {append.Event}'", append.Location);
+                }
+            }
         }
 
         var scopedSlices = ScopedSlices(application).ToList();
@@ -135,6 +145,8 @@ internal static class ScreenplayValidator
         EventFieldConsistencyValidator.Validate(declarations, context);
         ProjectionCompletenessValidator.Validate(declarations, context);
         ProjectionVariantValidator.Validate(declarations, context);
+        ProjectionTargetValidator.Validate(declarations, context);
+        IdentifierComplianceValidator.Validate(application, declarations, context);
         SpecificationValueConsistencyValidator.Validate(declarations, context);
         SpecificationOutcomeConsistencyValidator.Validate(declarations, context);
         SpecificationActionValidator.Validate(application, declarations, context);
@@ -1483,6 +1495,21 @@ internal static class ScreenplayValidator
             if (@event?.Length > 0 && !knownEvents.Contains(@event))
             {
                 context.Warning(DiagnosticCodes.UnknownEvent, $"Unknown event '{@event}' - declare it with 'event {@event}'", constraint.Location);
+            }
+        }
+    }
+
+    sealed class RemovalEventValidator(HashSet<string> knownEvents, ParserContext context) : ScreenplaySyntaxWalker
+    {
+        public override void VisitRemoveWith(RemoveWithSyntax syntax) => Validate(syntax.Event, syntax.Location);
+
+        public override void VisitRemoveViaJoin(RemoveViaJoinSyntax syntax) => Validate(syntax.Event, syntax.Location);
+
+        void Validate(string name, SourceLocation location)
+        {
+            if (!knownEvents.Contains(name))
+            {
+                context.Warning(DiagnosticCodes.UnknownEvent, $"Unknown event '{name}' - declare it with 'event {name}'", location);
             }
         }
     }
