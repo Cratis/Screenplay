@@ -36,5 +36,15 @@ export function validateIdentifierCompliance(application: ApplicationSyntax, con
                 if (entry !== null && !entry.isIdentifier) validate(entry.type, production.for.location);
             }
         }
+        for (const trigger of slice.reactions.flatMap(reaction => reaction.triggers)) {
+            const resolution = trigger.source.kind === 'NamedTriggerSourceSyntax' ? resolver.resolve(trigger.source.name, slice) : null;
+            const event = resolution?.declaration?.node;
+            const properties = event?.kind === 'EventSyntax' ? event.properties : [];
+            for (const production of trigger.produces.filter(production => resolver.isEventProduction(production, slice))) {
+                if (production.for?.kind !== 'PathExpressionSyntax') continue;
+                const entry = property(properties, production.for.path);
+                if (entry !== null) validate(entry.type, production.for.location);
+            }
+        }
     }
 }

@@ -3,16 +3,18 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
-import { AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
+import { AuthoringProductionKind, AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
 import { PropertySyntax } from '../Syntax/Declarations';
 import { eventDeclarations } from '../Syntax/EventDeclarations';
 import { ProjectionBlockSyntax } from '../Syntax/Projections';
-import { ApplicationSyntax } from '../Syntax/Structure';
+import { ApplicationSyntax, SliceSyntax } from '../Syntax/Structure';
 import { ParserContext } from './ParserContext';
 import { uniqueByName } from './ResponseValidator';
 
 export function validateProjectionTargets(application: ApplicationSyntax, context: ParserContext): void {
-    const slices = new AuthoringProductionResolver(application).slices;
+    const resolver = new AuthoringProductionResolver(application);
+    const slices = resolver.slices;
+    const imported = new Set(application.imports.map(entry => entry.qualifiedName));
     const events = new Set([...slices.flatMap(({ slice }) => eventDeclarations(slice).map(event => event.name)), ...application.imports.map(entry => entry.qualifiedName.split('.').at(-1)!)]);
     const types = uniqueByName(application.types);
     const scalar = new Set(['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime', ...application.concepts.map(concept => concept.name)].filter(name => !types.has(name)));
@@ -44,13 +46,15 @@ export function validateProjectionTargets(application: ApplicationSyntax, contex
         if (matches.length === 0 && imports.length === 1) matches = candidates(imports[0].qualifiedName);
         return matches.length === 1 ? matches[0].node.properties : null;
     };
-    const unknownEvent = (name: string, location: SourceLocation): void => {
-        if (!events.has(name)) context.warning(DiagnosticCodes.UnknownEvent, `Unknown event '${name}' - declare it with 'event ${name}'`, location);
+    const unknownEvent = (name: string, location: SourceLocation, slice: SliceSyntax): void => {
+        const resolution = resolver.resolve(name, slice);
+        const declared = events.has(name) || imported.has(name) || resolution.declaration?.kind === AuthoringProductionKind.Event || resolution.candidates.some(candidate => candidate.kind === AuthoringProductionKind.Event);
+        if (!declared) context.warning(DiagnosticCodes.UnknownEvent, `Unknown event '${name}' - declare it with 'event ${name}'`, location);
     };
-    const removals = (blocks: readonly ProjectionBlockSyntax[]): void => {
+    const removals = (blocks: readonly ProjectionBlockSyntax[], slice: SliceSyntax): void => {
         for (const block of blocks) {
-            if (block.kind === 'RemoveWithSyntax' || block.kind === 'RemoveViaJoinSyntax') unknownEvent(block.event, block.location);
-            if ('blocks' in block) removals(block.blocks);
+            if (block.kind === 'RemoveWithSyntax' || block.kind === 'RemoveViaJoinSyntax') unknownEvent(block.event, block.location, slice);
+            if ('blocks' in block) removals(block.blocks, slice);
         }
     };
     const walk = (blocks: readonly ProjectionBlockSyntax[], properties: readonly PropertySyntax[] | null): void => {
@@ -71,9 +75,9 @@ export function validateProjectionTargets(application: ApplicationSyntax, contex
         }
     };
     for (const { slice } of slices) {
-        for (const projection of slice.projections) removals(projection.blocks);
+        for (const projection of slice.projections) removals(projection.blocks, slice);
         for (const capture of slice.captures) {
-            for (const append of [...capture.appends, ...capture.children.flatMap(child => child.appends), ...capture.nested.flatMap(child => child.appends)]) unknownEvent(append.event, append.location);
+            for (const append of [...capture.appends, ...capture.children.flatMap(child => child.appends), ...capture.nested.flatMap(child => child.appends)]) unknownEvent(append.event, append.location, slice);
         }
     }
     for (const { slice, scope } of slices) {

@@ -11,7 +11,7 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static class IdentifierComplianceValidator
 {
-    /// <summary>Validates command identifiers, explicit destinations and event source declarations.</summary>
+    /// <summary>Validates command identifiers, command/reaction destinations and event source declarations.</summary>
     public static void Validate(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context)
     {
         var personal = application.Concepts.Where(concept => concept.AttributeNames.Contains(ConceptAttributeSyntax.Pii))
@@ -21,7 +21,7 @@ internal static class IdentifierComplianceValidator
             if (source.Identifier is { } identifier) ValidateType(identifier, identifier.Location);
         }
 
-        foreach (var (slice, _) in declarations.Slices)
+        foreach (var (slice, scope) in declarations.Slices)
         {
             foreach (var command in slice.Commands)
             {
@@ -33,6 +33,18 @@ internal static class IdentifierComplianceValidator
                 foreach (var production in command.Produces.Where(production => declarations.Productions.IsEventProduction(production, slice)))
                 {
                     if (production.For is PathExpressionSyntax path && declarations.Property(command.Properties, path.Path, out _) is { IsIdentifier: false } property)
+                    {
+                        ValidateType(property.Type, path.Location);
+                    }
+                }
+            }
+
+            foreach (var trigger in slice.Reactions.SelectMany(reaction => reaction.Triggers))
+            {
+                var properties = trigger.Source is NamedTriggerSourceSyntax named ? declarations.Event(named.Name, scope)?.Properties : null;
+                foreach (var production in (trigger.Produces ?? []).Where(production => declarations.Productions.IsEventProduction(production, slice)))
+                {
+                    if (production.For is PathExpressionSyntax path && declarations.Property(properties, path.Path, out _) is { } property)
                     {
                         ValidateType(property.Type, path.Location);
                     }

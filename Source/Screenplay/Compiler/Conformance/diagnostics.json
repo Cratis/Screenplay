@@ -2,6 +2,24 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "Personal event values cannot supply a reaction's explicit destination",
+            "validate": true,
+            "source": ["concept PatientId : Uuid @pii", "module M", "  feature F", "    slice Automation S", "      event E", "        patient PatientId", "      event Recorded", "      reaction R", "        when E", "          patient", "          produces Recorded", "            for patient"],
+            "diagnostics": ["PLAY0515@12"]
+        },
+        {
+            "name": "Qualified declared events remain valid in removals and capture appends",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange Producer", "      event E", "    slice Translate Consumer", "      projection P", "        remove with Producer.E", "        remove via join on Producer.E", "      capture C", "        source api", "          api LegacyApi", "        key id", "        append Producer.E", "          when added"],
+            "diagnostics": []
+        },
+        {
+            "name": "A wrong event qualifier is not satisfied by an unrelated short name",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange Producer", "      event E", "    slice StateView Consumer", "      projection P", "        remove with Missing.E"],
+            "diagnostics": ["PLAY0166@7"]
+        },
+        {
             "name": "Every at a handler-free parent only cascades into child scopes",
             "validate": true,
             "source": ["type Row", "  audit String", "module M", "  feature F", "    slice StateView S", "      event E", "        audit String", "      readmodel V", "        rows Row[]", "      projection P => V", "        every", "          audit = \"recorded\"", "        children rows identified by audit", "          from E"],
