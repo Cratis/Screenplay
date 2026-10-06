@@ -113,7 +113,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             seeds.push(parseSeed(context.valueContext, line));
         } else if (keyword === 'policy') {
             // Legacy policies were opaque: enrich their structure without adding diagnostics.
-            policies.push(parsePolicy(context.valueContext, line));
+            policies.push(parsePolicy(context, line));
         } else if (keyword === 'trigger') {
             parseTriggerDeclaration(context, line);
         } else if (opaqueTopLevel.has(keyword)) {
