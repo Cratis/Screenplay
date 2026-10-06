@@ -7,7 +7,7 @@ using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow;
 
-public class when_authoring_syntax_only_responses : given.an_authoring_connection
+public class when_authoring_responses : given.an_authoring_connection
 {
     const string ResponseSource = "concept ProjectId : Uuid\nmodule Projects\n  feature Registration\n    slice StateChange Register\n      command RegisterProject\n        projectId ProjectId generated identifier // keep identity\n        receiptId ProjectId generated\n        name String\n        produces event ProjectRegistered // keep event\n          name String = name\n        returns // keep response\n          result = receiptId // keep field\n      specification Registered\n        when RegisterProject\n          for \"11111111-1111-1111-1111-111111111111\"\n          generated receiptId = \"22222222-2222-2222-2222-222222222222\"\n          name = \"Apollo\"\n        then returns\n          result = \"22222222-2222-2222-2222-222222222222\"\n";
 
@@ -42,7 +42,7 @@ public class when_authoring_syntax_only_responses : given.an_authoring_connectio
         var proposal = Propose(opened, new { operation = "add", parent = command.GetProperty("handle"), member = "response", node = response });
         proposal.GetProperty("success").GetBoolean().ShouldBeTrue();
         File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldEqual(source);
-        Candidate(proposal).Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268").ShouldBeTrue();
+        Candidate(proposal).Compilation.Success.ShouldBeTrue();
         opened = Apply(opened, proposal).GetProperty("workspace");
         var field = Node("ResponseFieldSyntax", opened.GetProperty("revision").GetString()!);
         proposal = Propose(opened, new { operation = "replace", target = field.GetProperty("handle"), node = Field("label", "name") });
@@ -64,14 +64,13 @@ public class when_authoring_syntax_only_responses : given.an_authoring_connectio
     }
 
     [Fact]
-    void should_refuse_executable_validation_and_stale_response_handles_without_writes()
+    void should_admit_executable_validation_but_refuse_stale_response_handles_without_writes()
     {
         var opened = Start(ResponseSource);
         var field = Node("ResponseFieldSyntax", opened.GetProperty("revision").GetString()!);
         var operation = new { operation = "replace", target = field.GetProperty("handle"), node = Field("result", "projectId") };
-        var refused = Call("propose-ast", Arguments(opened, operation, "Executable"));
-        refused.GetProperty("result").GetProperty("isError").GetBoolean().ShouldBeTrue();
-        refused.GetRawText().ShouldContain("PLAY0268");
+        var admitted = Call("propose-ast", Arguments(opened, operation, "Executable"));
+        admitted.GetProperty("result").GetProperty("isError").GetBoolean().ShouldBeFalse();
         File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldEqual(ResponseSource);
         var proposal = Propose(opened, operation);
         opened = Apply(opened, proposal).GetProperty("workspace");
@@ -82,7 +81,7 @@ public class when_authoring_syntax_only_responses : given.an_authoring_connectio
     }
 
     [Fact]
-    void should_refuse_unverifiable_extraction_and_preserve_contract_during_rename()
+    void should_verify_extraction_and_preserve_contract_during_rename()
     {
         var opened = Start(ResponseSource);
         var @event = Node("EventSyntax", opened.GetProperty("revision").GetString()!);
@@ -94,15 +93,17 @@ public class when_authoring_syntax_only_responses : given.an_authoring_connectio
             formatting = "CanonicalizeTouchedDocuments",
             validation = "Authoring"
         });
-        extraction.GetProperty("result").GetProperty("isError").GetBoolean().ShouldBeTrue();
-        extraction.GetRawText().ShouldContain("canonical executable bytes");
+        extraction.GetProperty("result").GetProperty("isError").GetBoolean().ShouldBeFalse();
         File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldEqual(ResponseSource);
         var rename = Result("propose-rename", new
         {
             expectedRevision = opened.GetProperty("revision").GetString(),
             expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
-            target = @event.GetProperty("handle"), expectedName = "ProjectRegistered", newName = "ProjectCreated",
-            formatting = "PreserveTrivia", validation = "Authoring"
+            target = @event.GetProperty("handle"),
+            expectedName = "ProjectRegistered",
+            newName = "ProjectCreated",
+            formatting = "PreserveTrivia",
+            validation = "Authoring"
         });
         var candidate = Candidate(rename);
         candidate.Documents.Single().Text.ShouldContain("// keep response");
@@ -116,7 +117,7 @@ public class when_authoring_syntax_only_responses : given.an_authoring_connectio
     }
 
     [Fact]
-    void should_validate_the_documentation_fixture_as_syntax_but_refuse_execution()
+    void should_bind_the_documentation_fixture_without_executable_diagnostics()
     {
         var repository = new DirectoryInfo(Directory.GetCurrentDirectory());
         while (repository is not null && !File.Exists(Path.Combine(repository.FullName, "AGENTS.md")))
@@ -127,8 +128,8 @@ public class when_authoring_syntax_only_responses : given.an_authoring_connectio
         var source = File.ReadAllText(Path.Combine(repository!.FullName, "Documentation", "screenplay", "fixtures", "generated-responses.play"));
         new ScreenplayCompiler().Compile(source).Success.ShouldBeTrue();
         var opened = Start(source);
-        var diagnostics = Page("executable-diagnostics", opened.GetProperty("revision").GetString()!).GetRawText();
-        diagnostics.ShouldContain("PLAY0268");
+        var diagnostics = Page("executable-diagnostics", opened.GetProperty("revision").GetString()!);
+        diagnostics.GetArrayLength().ShouldEqual(0);
     }
 
     JsonElement Start(string source)
@@ -144,7 +145,9 @@ public class when_authoring_syntax_only_responses : given.an_authoring_connectio
     {
         expectedRevision = opened.GetProperty("revision").GetString(),
         expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
-        formatting = "CanonicalizeTouchedDocuments", validation, operations = new[] { operation }
+        formatting = "CanonicalizeTouchedDocuments",
+        validation,
+        operations = new[] { operation }
     };
 
     static object Field(string name, string source) => new { kind = "ResponseFieldSyntax", name, type = (object?)null, source = new { kind = "PropertyResponseSourceSyntax", property = source } };
