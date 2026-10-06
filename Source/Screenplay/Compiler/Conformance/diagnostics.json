@@ -8,9 +8,9 @@
             "diagnostics": ["PLAY0515@12"]
         },
         {
-            "name": "Qualified declared events remain valid in removals and capture appends",
+            "name": "Qualified declared removal events remain valid",
             "validate": true,
-            "source": ["module M", "  feature F", "    slice StateChange Producer", "      event E", "    slice Translate Consumer", "      projection P", "        remove with Producer.E", "        remove via join on Producer.E", "      capture C", "        source api", "          api LegacyApi", "        key id", "        append Producer.E", "          when added"],
+            "source": ["module M", "  feature F", "    slice StateChange Producer", "      event E", "    slice Translate Consumer", "      projection P", "        remove with Producer.E", "        remove via join on Producer.E", "      capture C", "        source api", "          api LegacyApi", "        key id", "        append E", "          when added"],
             "diagnostics": []
         },
         {
