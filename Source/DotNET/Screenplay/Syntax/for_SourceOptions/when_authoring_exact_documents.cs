@@ -223,7 +223,7 @@ public class when_authoring_exact_documents : Specification
             var result = new SemanticModelBinder().Bind("Numbers", syntax, SemanticDocumentSet.Create([document], catalog));
             result.Success.ShouldBeFalse();
             result.Diagnostics.Single().Code.ShouldEqual("PLAY0268");
-            result.Diagnostics.Single().Message.ShouldContain("ESM v7");
+            result.Diagnostics.Single().Message.ShouldContain("not admitted by any supported executable model (ESM) version yet (#285)");
         }
     }
 

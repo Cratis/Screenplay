@@ -37,6 +37,9 @@ internal sealed partial class McpWorkspaces
     // The working directory a dynamic server falls back to when it binds no root itself; specs replace it.
     internal string? CurrentDirectoryHint { get; set; }
 
+    // The Documents directory holding the per-user Screenplay folder; null means the current user's; specs replace it.
+    internal string? DocumentsDirectoryHint { get; set; }
+
     // Whether the server was started without a fixed root and chooses one per workspace.
     internal bool DynamicRoot => !_staticRoot;
 
@@ -189,7 +192,7 @@ internal sealed partial class McpWorkspaces
     // path the caller chose survives.
     internal void UnbindClientRoot(string directoryPath)
     {
-        if (_staticRoot || _root is null || !string.Equals(_root.DirectoryPath, directoryPath, StringComparison.OrdinalIgnoreCase))
+        if (_staticRoot || _root is null || ClientDerivedRootPath is null || !string.Equals(ClientDerivedRootPath, directoryPath, StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
@@ -209,6 +212,16 @@ internal sealed partial class McpWorkspaces
         }
 
         return new McpRoot(Uri.UnescapeDataString(parsed.AbsolutePath));
+    }
+
+    // The directory a host root names, which is where the host's binding came from, not where the model was found.
+    static string OfferedPath(string uri) => RootFromClientUri(uri).DirectoryPath;
+
+    // A host root is the project the user works in, not necessarily the folder holding the model.
+    static McpRoot ProjectRootFromClientUri(string uri)
+    {
+        var project = RootFromClientUri(uri);
+        return new McpRoot(McpModelLocation.Project(project.DirectoryPath));
     }
 
     // A shallow, bounded check: .play files at the top or one level down, or an existing identity-state folder.
@@ -314,7 +327,7 @@ internal sealed partial class McpWorkspaces
     McpRoot BindDefaultRoot()
     {
         var resolved = ResolveDefaultRoot();
-        ClientDerivedRootPath = ClientRoots.Length == 1 ? resolved.DirectoryPath : null;
+        ClientDerivedRootPath = ClientRoots.Length == 1 ? OfferedPath(ClientRoots[0]) : null;
         BindRoot(resolved);
         return resolved;
     }
@@ -323,7 +336,7 @@ internal sealed partial class McpWorkspaces
     {
         if (ClientRoots.Length == 1)
         {
-            return RootFromClientUri(ClientRoots[0]);
+            return ProjectRootFromClientUri(ClientRoots[0]);
         }
 
         if (ClientRoots.Length > 1)
@@ -338,8 +351,8 @@ internal sealed partial class McpWorkspaces
             return new McpRoot(directory);
         }
 
-        throw new McpFailure(
-            "No Screenplay root was given and the current directory holds no .play files. Pass open-workspace with a path to the folder holding the model.");
+        // No project and no model here: work in the user's own Screenplay folder, so a chat host with no workspace still works.
+        return new McpRoot(McpModelLocation.User(DocumentsDirectoryHint));
     }
 
     IMcpProposal Proposal(JsonElement arguments)

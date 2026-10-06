@@ -64,7 +64,7 @@ def prepare(publish, output, version, rid):
     write_json(output / "plugin" / "mcp.json", {
         "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
         "mcpServers": {"screenplay": {"type": "stdio", "command": f"./server/{executable}",
-            "args": ["mcp", "--create-root", "${PLUGIN_DATA}/model"]}}})
+            "args": ["mcp"]}}})
     skill = output / "plugin" / "skills" / "screenplay"
     skill.mkdir(parents=True)
     shutil.copy2(HERE / "SKILL.md", skill / "SKILL.md")

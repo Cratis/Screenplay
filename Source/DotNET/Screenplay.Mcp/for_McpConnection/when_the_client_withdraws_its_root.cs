@@ -24,6 +24,6 @@ public class when_the_client_withdraws_its_root : given.a_dynamic_connection
         _response = Call("diagnostics");
     }
 
-    [Fact] void should_unbind_the_workspace() => Failed(_response).ShouldBeTrue();
-    [Fact] void should_ask_for_a_root() => Text(_response).ShouldContain("No Screenplay root was given");
+    [Fact] void should_unbind_the_workspace() => Tools.ClientDerivedRootPath.ShouldBeNull();
+    [Fact] void should_fall_back_to_the_users_screenplay_folder() => Directory.Exists(Path.Combine(DocumentsPath, "Screenplay")).ShouldBeTrue();
 }

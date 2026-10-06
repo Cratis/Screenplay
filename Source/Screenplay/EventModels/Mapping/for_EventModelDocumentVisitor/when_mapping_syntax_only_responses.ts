@@ -17,7 +17,7 @@ describe('when mapping syntax-only responses', () => {
         expect(slice.command!.schema.required).toEqual(['name']);
         expect(slice.command!.logicDescription).toContain('Generated values (not request inputs)');
         expect(slice.command!.logicDescription).toContain('receiptId: ReceiptId = receiptId');
-        expect(slice.command!.logicDescription).toContain('execution unavailable');
+        expect(slice.command!.logicDescription).toContain('not admitted by any supported executable model (ESM) version yet (PLAY0268) (#300/#303)');
         expect(slice.command!.stateSchema).toEqual({});
         expect(slice.events.map(event => event.name)).toEqual(['ProjectRegistered']);
     });

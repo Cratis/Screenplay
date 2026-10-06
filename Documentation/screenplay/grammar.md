@@ -1,8 +1,8 @@
 # Grammar
 
-> Systems, operations, operation phases and their specification forms below are syntax-only authoring. Execution is unavailable until ESM v9 (`PLAY0268`); see [Operations and external systems](operations.md). A phase source or wrapper is not an admitted executable implementation role.
+> Systems, operations, operation phases and their specification forms below are syntax-only authoring. These constructs are not admitted by any supported executable model (ESM) version yet (`PLAY0268`); see [Operations and external systems](operations.md). A phase source or wrapper is not an admitted executable implementation role.
 
-> [Event sources, source-owned streams and command stream routes](event-sources.md) are authoring-only. Binding reports `PLAY0268`, naming their allocated ESM v10. Per-event overrides, observer filters, new concurrency flags, occurrence time and constraint scopes are not part of this increment.
+> [Event sources, source-owned streams and command stream routes](event-sources.md) are authoring-only. These constructs are not admitted by any supported executable model (ESM) version yet; binding reports `PLAY0268`. Per-event overrides, observer filters, new concurrency flags, occurrence time and constraint scopes are not part of this increment.
 
 The Screenplay syntax reference in EBNF. `INDENT`/`DEDENT` represent indented bodies: parsers read lines at greater indentation until the body ends. PDL and CDL have their own [sub-grammars](sub-languages.md). The C# compiler validates the full language; the TypeScript compiler models a subset and recognizes the remaining shipped constructs as opaque bodies.
 
@@ -59,7 +59,7 @@ SystemDecl     = "system", Ident, NL,
 (* Systems are application-scoped, including in placed files. They name external
    systems without provider types or abilities. Systems, operations and their
    specification steps are authoring-only: binding rejects them with PLAY0268;
-   executable admission is allocated to ESM v9, not available today. *)
+   these constructs are not admitted by any supported ESM version yet. *)
 
 (* -------------------------------------------------------------- *)
 (* Event sources and streams — syntax-only                         *)
@@ -747,7 +747,7 @@ OperationImplementation = "implementation", NL,
    New words are contextual, not globally reserved property names. Within an
    operation, @uses escapes an input named uses; event metadata input names
    also use @. Typed inputs named execute or compensate are not phase headers.
-   Execution, failure fixtures and compensation remain unavailable until ESM v9. *)
+   Execution, failure fixtures and compensation are not admitted by any supported ESM version yet. *)
 
 (* -------------------------------------------------------------- *)
 (* Handler                                                         *)
@@ -868,7 +868,7 @@ ReturnExpectation = "then", "returns", ConcreteValue, NL
                   | "then", "returns", NL, INDENT, ReturnField, { ReturnField }, DEDENT ;
 ReturnField    = LowerIdent, "=", ConcreteValue, NL ;
 ConcreteValue  = ? a completely consumed literal, list or object, without raw expressions ? ;
-(* Fixtures and return expectations are syntax-only, unavailable until ESM v8.
+(* Fixtures and return expectations are syntax-only, not admitted by any supported ESM version yet.
    Generated identifiers use SpecificationEventSource, not GeneratedFixture.
    Return expectations require a command and cannot accompany errors or denial. *)
 
@@ -880,7 +880,7 @@ CompensationExpectation = "then", "compensated", QualifiedName, NL ;
 (* Failure and compensation lines are leaves. Operation assertions may be partial
    but require compatible concrete values. All three require an operation-kind
    reference and a command action; compensation must be declared. These forms
-   are syntax-only and rejected by executable binding until ESM v9 admission. *)
+   are syntax-only, not admitted by any supported ESM version yet. *)
 
 SpecificationThen = ReturnExpectation
                | OperationExpectation

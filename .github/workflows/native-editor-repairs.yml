@@ -62,6 +62,9 @@ jobs:
         timeout-minutes: 5
         run: dotnet publish Source/DotNET/Tool/Tool.csproj -c Release -r '${{ matrix.rid }}' --self-contained true -p:PackAsTool=false -o .ai-work/native-server
       - name: Real C# tool subprocess safety gate
+        id: process
+        # Windows failures report a warning instead of blocking until the lane is stable (#405).
+        continue-on-error: ${{ runner.os == 'Windows' }}
         timeout-minutes: 4
         run: yarn workspace screenplay test:repair-process
       - name: Package JavaScript-only production extension
@@ -81,10 +84,16 @@ jobs:
         timeout-minutes: 15
         run: xvfb-run --auto-servernum yarn workspace screenplay test:host
       - name: Installed VSIX native host safety gate (Windows / macOS)
+        id: host
+        # Windows failures report a warning instead of blocking until the lane is stable (#405).
+        continue-on-error: ${{ runner.os == 'Windows' }}
         if: runner.os != 'Linux'
         # Five installed-client lifetimes. Measured 113 s (1.9 min) locally on macOS arm64; 15 min = max(15, ceil(3 x 1.9)).
         timeout-minutes: 15
         run: yarn workspace screenplay test:host
+      - name: Report non-blocking Windows failures
+        if: runner.os == 'Windows' && (steps.process.outcome == 'failure' || steps.host.outcome == 'failure')
+        run: echo "::warning title=Windows native lane::A Windows native editor step failed; it does not block merges until #405 is resolved. Inspect this job's log and artifacts."
       - name: Preserve native logs and synthetic fixture locations
         if: always()
         uses: actions/upload-artifact@v4

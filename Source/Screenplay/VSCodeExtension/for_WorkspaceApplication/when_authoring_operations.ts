@@ -40,7 +40,7 @@ describe('when authoring operations across workspace files', () => {
             const symbols = { ...scanDocument(lines), ...application.symbolsExcept('current.slice.play') };
             const entries = operationCompletions(lines, lines.length - 1, before, symbols);
             expect(entries?.map(entry => entry.label)).toEqual(mapping.labels);
-            expect(entries?.some(entry => entry.documentation?.includes('ESM v9 (PLAY0268)'))).toBe(true);
+            expect(entries?.some(entry => entry.documentation?.includes('not admitted by any supported executable model (ESM) version yet (PLAY0268)'))).toBe(true);
             expect(destinationHints(lines, symbols)).toEqual([]);
         }
     });

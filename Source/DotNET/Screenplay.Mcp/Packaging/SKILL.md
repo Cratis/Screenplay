@@ -4,9 +4,9 @@ description: Explore and author a local Screenplay business model using the Scre
 ---
 
 Use the Screenplay MCP server to discover tools and inspect the application before editing it.
-One model root is one application. The downloadable plugin starts with an empty model in
-`${PLUGIN_DATA}/model`; use the Cratis CLI desktop installer with `--model-root` to select
-an existing physical directory without editing JSON. If the root has no `.play`
+One model root is one application. Without a project the server works in `Documents/Screenplay` in the user's home folder;
+pass `path` to `open-workspace`, or use the Cratis CLI desktop installer with `--model-root`,
+to work in another existing directory. If the root has no `.play`
 files, application-read tools can report that no model exists yet; open the
 workspace and use syntax schemas to propose its first documents instead.
 

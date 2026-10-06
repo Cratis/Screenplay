@@ -89,7 +89,7 @@ conditions are reported without a code until the compiler checks them too.
 ### Event sources and command streams
 
 Event-source declarations and command stream routes are authoring-only. Binding any of them reports
-`PLAY0268`: decision 0023 allocates their executable contract to ESM v10, which is not admitted yet.
+`PLAY0268`: these constructs are not admitted by any supported executable model (ESM) version yet.
 A stream reference selects a classification, never the identity destination supplied by `for`.
 Handler commands may author routes without declaring their returned events.
 
@@ -603,7 +603,7 @@ itself what an unresolvable one means.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0268` | Error | Source syntax carries portable behavior ESM v1 cannot represent, including unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` or production conditions over read-model paths (#129), date/`today` conditions, non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
+| `PLAY0268` | Error | Source syntax carries portable behavior ESM v1 cannot represent, including unsupported scalar `$context` produces paths (tenant is not event namespace; claims and roles are not portable scalar values), an unsupported validation rule, concept `require`, command `require` or production conditions over read-model paths ([#129](https://github.com/Cratis/Screenplay/issues/129)), date/`today` conditions, non-deterministic `$env` conditions, `$context` tag values, and a bare named rule with no implementation body (see [Commands](commands.md#what-the-executable-model-admits)). Bodied named rules, command/concept code validation, and inline/file policy predicates bind as opaque ESM v3 attachments rather than reporting this diagnostic. |
 | `PLAY0269` | Information | Source syntax is explicitly deferred from the current backend semantic profile. |
 | `PLAY0270` | Information | Source syntax, including a valid persona, is realization or authoring/operational metadata rather than portable behavior. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly. |
@@ -914,7 +914,7 @@ the executable model does not yet admit.
 |---|---|---|
 | `PLAY0479` | Information | A type uses the [legacy optional suffix](types.md#compatibility-note). Write `optional` after the type. This does not fail `--warnaserror`. |
 | `PLAY0480` | Error | `optional` follows `identifier`. Write the modifiers in the order `Type optional identifier`; command identifiers must still be required and scalar. |
-| `PLAY0481` | Error | A read uses `optional`. Optional reads are not yet supported; their absence behavior is reserved for #308. |
+| `PLAY0481` | Error | A read uses `optional`. Optional reads are not yet supported; their absence behavior is reserved for [#308](https://github.com/Cratis/Screenplay/issues/308). |
 
 `query Q => observable?` is the sole exception: its `?` is the only spelling that preserves a one-shot query returning an optional scalar type named `observable`. It produces no `PLAY0479` and is excluded from occurrence repairs and document migrations. See [Queries](queries.md#observable-queries).
 
@@ -930,7 +930,7 @@ for one occurrence or the entire document, without requiring .NET.
 
 ### Generated values and command responses
 
-Generated properties, command responses, generated fixtures and return expectations are syntax-only. Binding any one reports `PLAY0268` and produces no semantic model until ESM v8 admits these constructs. Editors surface this unavailability alongside compiler syntax diagnostics; MCP `Authoring` acceptance does not establish executable readiness. See [commands](commands.md#generated-values-and-responses-syntax-only) and [fixtures](specifications.md#generated-fixtures-and-return-expectations-syntax-only).
+Generated properties, command responses, generated fixtures and return expectations are syntax-only. These constructs are not admitted by any supported executable model (ESM) version yet. Binding any one reports `PLAY0268` and produces no semantic model. Editors surface this unavailability alongside compiler syntax diagnostics; MCP `Authoring` acceptance does not establish executable readiness. See [commands](commands.md#generated-values-and-responses-syntax-only) and [fixtures](specifications.md#generated-fixtures-and-return-expectations-syntax-only).
 
 For response and generated-fixture compatibility checks only, `Date` values must be quoted `yyyy-MM-dd` calendar dates. `DateTime` values must be quoted `yyyy-MM-ddTHH:mm:ss`, optionally followed by a decimal fraction of 1–7 digits, and always end in uppercase `Z` or an explicit `+HH:mm` / `-HH:mm` offset. Years range from 0001 to 9999; calendar days must exist, hours range from 00 to 23, and minutes and seconds from 00 to 59. Offsets range from `-14:00` to `+14:00`; at 14 hours the minutes must be 00. These checks do not change general literal parsing. Imported or unresolved value shapes remain unknown rather than being inferred from their names.
 
@@ -976,9 +976,9 @@ These wrapper diagnostics also apply to operation phases. Pending or attached in
 | `PLAY0512` | Error | Declaration-bearing physical documents or marked import barrels disagree on numeric mode. |
 | `PLAY0513` | Error | Source options or inserted numeric values disagree with their owning mode. |
 
-The numeric rows are syntax diagnostics. A valid `numbers exact` document still cannot bind: `PLAY0268` names unavailable ESM v7 admission, and unmarked documents keep their existing numeric behavior.
+The numeric rows are syntax diagnostics. A valid `numbers exact` document still cannot bind: `PLAY0268` reports that exact numeric mode is not admitted by any supported executable model (ESM) version yet, and unmarked documents keep their existing numeric behavior.
 
-These are syntax diagnostics. A valid system, operation or operation specification still cannot bind: `PLAY0268` names unavailable ESM v9 admission. [Operations](operations.md) do not trigger event destination or payload-identity diagnostics. A valid pending or attached handler remains unsupported independently. Diagnostic repairs for `PLAY0471` and `PLAY0479` are unchanged.
+These are syntax diagnostics. A valid system, operation or operation specification still cannot bind: `PLAY0268` reports that these constructs are not admitted by any supported executable model (ESM) version yet. [Operations](operations.md) do not trigger event destination or payload-identity diagnostics. A valid pending or attached handler remains unsupported independently. Diagnostic repairs for `PLAY0471` and `PLAY0479` are unchanged.
 
 ### Event sources and command streams
 
@@ -990,7 +990,7 @@ These are syntax diagnostics. A valid system, operation or operation specificati
 | `PLAY0506` | Known stream-id type needs an unsupported portable formatter; bare `Int` is not supported |
 | `PLAY0507` | Redundant rename-only stored-name pin |
 
-Valid [source/stream authoring](event-sources.md) still refuses executable binding with `PLAY0268` for ESM v10. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
+Valid [source/stream authoring](event-sources.md) is not admitted by any supported executable model (ESM) version yet; executable binding refuses it with `PLAY0268`. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
 
 ## Retired codes
 

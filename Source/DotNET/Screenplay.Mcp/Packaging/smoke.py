@@ -27,9 +27,11 @@ def smoke(artifact):
         else:
             manifest = json.loads((root / "mcp.json").read_text())
             command = root / manifest["mcpServers"]["screenplay"]["command"]
-            arguments = [value.replace("${PLUGIN_DATA}", str(root / "data")) for value in manifest["mcpServers"]["screenplay"]["args"]]
-            model = Path(arguments[-1])
-            working_directory = None
+            arguments = manifest["mcpServers"]["screenplay"]["args"]
+            assert arguments == ["mcp"], "The plugin must not pin a model root; the server binds its workspace dynamically"
+            model = root / "model"
+            model.mkdir()
+            working_directory = model
         if os.name != "nt":
             command.chmod(0o755)
         messages = [
@@ -40,10 +42,6 @@ def smoke(artifact):
             {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "describe-application", "arguments": {}}},
             {"jsonrpc": "2.0", "id": 5, "method": "resources/read", "params": {"uri": "ui://screenplay/event-model-board.html"}}
         ]
-        if artifact.suffix != ".mcpb":
-            initial = subprocess.run([str(command), *arguments], input=json.dumps(messages[0]) + "\n", text=True, capture_output=True, timeout=60)
-            assert initial.returncode == 0, initial.stderr
-            assert model.is_dir(), "Plugin did not create its default persistent model directory"
         (model / "desktop.play").write_text('module DesktopSmoke\n  description "A packaged desktop model"\n', encoding="utf-8")
         result = subprocess.run([str(command), *arguments], input="".join(json.dumps(m) + "\n" for m in messages), text=True, capture_output=True, timeout=60, cwd=working_directory)
         assert result.returncode == 0, result.stderr
