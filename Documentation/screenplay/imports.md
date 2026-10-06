@@ -78,6 +78,20 @@ A root file can import `**/*.play` while each module file imports its own folder
 
 Two placements where neither lies inside the other - one import puts a file in `module Ordering`, another in `module Billing` - are a conflict, reported where the second import is written. A file belongs in one place.
 
+## Order on the event model board
+
+Both boards compile every `.play` file in the folder in alphabetical file-path order, including unimported files and proposed new files. A root supplies **presentation order only**; it never changes which files are compiled or drawn. An `application.play` with no file imports, including a layout written by `IPlayFileWriter.Expand`, keeps the existing path order.
+
+VS Code recognizes `application.play` as the folder application root. The MCP App also recognizes a differently named importing document when it is the only importer not itself imported. A root supplies ranks only when it contains file imports. In VS Code, opening another importing document outside an `application.play` folder follows that document's imports as a standalone application; it does not discover a differently named folder root from a sibling file.
+
+For ranked modules, features and slices, the board walks the root's text from top to bottom, following each import depth-first where it is written, before continuing with the next declaration. A file matched by several imports contributes ranks once, at the first encountered import that gives it its final, deepest placement. Declarations outside that walk stay visible after ranked siblings, stably in their previous path order. Placement scaffolding does not take the position of a module or feature declared elsewhere.
+
+Explicit container declarations in the root, or in an enclosing container's own named file, take precedence over globbed files that restate those containers. For example, `T/T.play` declaring Recording then Approval determines their feature order even when slice files under Approval sort first. The outer named composite takes precedence over a more narrowly named file; equally enclosing named files use the shallower path, then first occurrence. Without such a file, the first explicit occurrence in the import walk determines container order. This does not reorder glob matches or slice declarations.
+
+Glob matches stay alphabetical. To control their order, replace a glob with explicit imports in the sequence you want. Commerce's root lists Catalog, Ordering, then Fulfillment; its Products feature uses `*.play`, so its slices remain DiscontinueProduct, ProductList, then RegisterProduct. TimeTracking's root uses `**/*.play`, so its modules remain Engagements, Payroll, then Timesheets, while the features declared in Timesheets are Recording, Approval, then Reporting.
+
+This is presentation only: it does not reorder the compiler's documents or change duplicate-declaration diagnostics, executable model bytes, revisions or identities. A single-file model keeps declaration order. A feature's own slices and its nested features remain separate groups on the board.
+
 ## Patterns
 
 A path is relative to the folder of the file that writes the import.
