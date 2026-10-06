@@ -37,25 +37,10 @@ public sealed partial class SemanticModelBinder
                     "This authoring construct is not admitted by any supported ESM version; decision 0023 allocates operations and systems to ESM v9.",
                     node.Location));
             }
-            if (node is PropertySyntax { IsGenerated: true } or CommandResponseSyntax or SpecificationReturnSyntax)
-            {
-                Reject(node.Location);
-            }
         }
 
         // Intent has no production feature gates. Do not dereference malformed hint collections here;
         // named-rule binding reports their typed diagnostics while retaining partial attachments.
         public override void VisitImplementation(ImplementationSyntax syntax) => VisitNode(syntax);
-
-        public override void VisitSpecificationCommand(SpecificationCommandSyntax syntax)
-        {
-            foreach (var fixture in syntax.GeneratedValues) Reject(fixture.Location);
-            base.VisitSpecificationCommand(syntax);
-        }
-
-        void Reject(SourceLocation location) => Diagnostics.Add(Diagnostic.Error(
-            DiagnosticCodes.UnsupportedSemanticSyntax,
-            "This construct is not admitted by any supported ESM version; decision 0023 allocates it to ESM v8.",
-            location));
     }
 }

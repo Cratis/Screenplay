@@ -45,12 +45,14 @@ public sealed partial class SemanticModelBinder
 
             var address = SemanticAddress.ForCommand(slice, command.Name);
             var id = Resolve(address, command.Location);
-            var properties = command.Properties.Select(property => BindProperty(address, property, property.IsIdentifier)).ToImmutableArray();
+            var properties = command.Properties.Select(property => BindProperty(address, property, property.IsIdentifier, commandProperty: true) with { IsGenerated = property.IsGenerated }).ToImmutableArray();
             var propertiesByName = properties.ToDictionary(_ => _.Name, StringComparer.Ordinal);
+            if (properties.Any(property => property.IsGenerated) || command.Response is not null) UsesV7 = true;
+            if (properties.Any(property => property.IsGenerated)) ValidateGeneratedProperties(command, propertiesByName);
             var validations = BindValidations(address, command, propertiesByName, out var codeValidations);
             var requirements = command.Validations.OfType<DeclarativeValidateSyntax>()
                 .SelectMany(_ => _.Requirements ?? [])
-                .Select(requirement => (requirement, condition: BindCondition(requirement.Condition, propertiesByName), validMessage: ValidateStringKey(requirement.Message, requirement.Location)))
+                .Select(requirement => (requirement, condition: BindPreGenerationCondition(command, requirement.Condition, propertiesByName), validMessage: ValidateStringKey(requirement.Message, requirement.Location)))
                 .Where(_ => _.condition is not null)
                 .Select(_ => new SemanticRequirement(_.condition!, _.requirement.Message) { Severity = Severity(_.requirement.Severity) })
                 .ToImmutableArray();
@@ -69,9 +71,12 @@ public sealed partial class SemanticModelBinder
                 ? command.Properties.SingleOrDefault(property => property.IsIdentifier)
                 : null;
             var productions = command.Produces.Select(value => value.InlineEvent is not null && value.For is null
-                ? value with { For = identifier is not null
+                ? value with
+                {
+                    For = identifier is not null
                     ? new PathExpressionSyntax(identifier.Name, value.Location)
-                    : null }
+                    : null
+                }
                 : value).ToArray();
             foreach (var production in productions.Where(value => value.InlineEvent is not null && value.For is null))
             {
@@ -86,12 +91,14 @@ public sealed partial class SemanticModelBinder
             var typedDestination = productions.Any(value => value.For is PathExpressionSyntax source &&
                 events.TryGetValue(value.Event, out var @event) && !@event.Properties.ContainsKey(source.Path));
             if (typedDestination) UsesV2 = true;
-            var defaultDestination = typedDestination || UsesV2
-                ? produced.Select(value => value.Destination).OfType<SemanticResolvedExpression>()
-                    .Select(value => properties.Single(property => property.Id == value.Target)).FirstOrDefault()
+            var routed = produced.Select(value => value.Destination).OfType<SemanticResolvedExpression>().FirstOrDefault();
+            var defaultDestination = routed is not null && (typedDestination || UsesV2 || UsesV7)
+                ? properties.FirstOrDefault(property => property.IsGenerated && property.IsIdentifier) ??
+                    properties.Single(property => property.Id == routed.Target)
                 : null;
             return new(id, command.Name, properties, validations, produced)
             {
+                Response = BindResponse(command, propertiesByName),
                 CodeValidations = codeValidations,
                 Requirements = requirements,
                 Destination = defaultDestination is null ? null : new(defaultDestination.Type, SemanticExpression.Property(SemanticExpressionRootKind.Command, defaultDestination.Id))
@@ -136,6 +143,12 @@ public sealed partial class SemanticModelBinder
                         ? RequireImplementation(SemanticImplementationRole.RulePredicate, address, rule.File, rule.Code, $"{rule.Property}/{(rule.Value as PathExpressionSyntax)?.Path}")
                         : null;
 
+                    if (properties.GetValueOrDefault(rule.Property.Split('.')[0]) is { IsGenerated: true } generated)
+                    {
+                        GeneratedReference(command.Name, generated.Name, "property validation rule", rule.Location);
+                        continue;
+                    }
+
                     if (rule.Property.Contains('.', StringComparison.Ordinal))
                     {
                         Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Validation rule on '{rule.Property}' is not admitted: ESM v1 validates command properties, not nested paths - declare the rule on the nested value's concept instead.", rule.Location);
@@ -145,6 +158,12 @@ public sealed partial class SemanticModelBinder
                     if (!properties.TryGetValue(rule.Property, out var property))
                     {
                         Error(DiagnosticCodes.InvalidSemanticBinding, $"Validation rule property '{rule.Property}' is unresolved on command '{command.Name}'.", rule.Location);
+                        continue;
+                    }
+
+                    if (rule.Value is PathExpressionSyntax path && properties.GetValueOrDefault(path.Path.Split('.')[0]) is { IsGenerated: true } operand)
+                    {
+                        GeneratedReference(command.Name, operand.Name, "property validation rule", path.Location);
                         continue;
                     }
 
@@ -175,7 +194,7 @@ public sealed partial class SemanticModelBinder
             var tags = BindTags(produced.Tags);
 
             if (produced.For is PathExpressionSyntax path && commandProperties.TryGetValue(path.Path, out var targetProperty) &&
-                (!targetProperty.IsIdentifier || targetProperty.Type.IsCollection || targetProperty.Type.IsOptional))
+                ((!targetProperty.IsIdentifier && !commandProperties.Values.Any(property => property.IsGenerated && property.IsIdentifier)) || targetProperty.Type.IsCollection || targetProperty.Type.IsOptional))
             {
                 Error(DiagnosticCodes.InvalidSemanticBinding, $"Produced event destination '{path.Path}' must be the command's required scalar identifier; fan-out to another source is not admitted.", produced.For.Location);
             }

@@ -169,6 +169,12 @@ internal static partial class SemanticModelValidator
         return producerTypes[0];
     }
 
+    internal static SemanticTypeReference? ProducedEventSourceType(SemanticCommand command, SemanticProducedEvent produced) =>
+        command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) &&
+        produced.Destination is SemanticResolvedExpression { Source: SemanticExpressionSourceKind.Property } route
+            ? command.Properties.SingleOrDefault(property => property.Id == route.Target)?.Type
+            : command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type;
+
     static List<SemanticTypeReference> ProducerTypes(
         SemanticCommand[] commands,
         SemanticReaction[] reactions,
@@ -178,7 +184,7 @@ internal static partial class SemanticModelValidator
     {
         var types = commands.SelectMany(command => command.Produces
             .Where(produced => produced.EventContract == eventContract)
-            .Select(_ => command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type))
+            .Select(produced => ProducedEventSourceType(command, produced)))
             .OfType<SemanticTypeReference>().ToList();
         visited.Add(eventContract);
         foreach (var trigger in reactions.SelectMany(reaction => reaction.Triggers))
@@ -745,7 +751,9 @@ internal static partial class SemanticModelValidator
                 } resolved && sources.TryGetValue(resolved.Target, out var property)
                     ? property
                     : null;
-                if (destinationType?.IsCollection is not false || destinationType.IsOptional || destinationProperty?.IsIdentifier is not true)
+                var generatedIdentifier = _semanticVersion.IsAtLeast(SemanticVersion.V7) && command.Properties.Any(value => value.IsGenerated && value.IsIdentifier);
+                if (destinationType?.IsCollection is not false || destinationType.IsOptional || destinationProperty is null ||
+                    (!destinationProperty.IsIdentifier && !generatedIdentifier))
                 {
                     throw new InvalidSemanticContract("A produced event destination must resolve to one required scalar command identity.");
                 }

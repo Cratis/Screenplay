@@ -46,7 +46,12 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
             var languageVersion = LanguageVersion.V1;
             var semanticVersion = SemanticVersion.V1;
-            if (context.UsesV6)
+            if (context.UsesV7)
+            {
+                languageVersion = LanguageVersion.V7;
+                semanticVersion = SemanticVersion.V7;
+            }
+            else if (context.UsesV6)
             {
                 languageVersion = LanguageVersion.V6;
                 semanticVersion = SemanticVersion.V6;
@@ -139,6 +144,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
         internal bool UsesV5 { get; set; }
 
+        internal bool UsesV7 { get; set; }
+
         internal ImmutableArray<SemanticSourceMapEntry> SourceMapEntries => [.. _sourceMapEntries];
 
         internal SemanticApplication BindApplication()
@@ -161,7 +168,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 applicationName,
                 concepts,
                 types,
-                UsesV2 || UsesV3 || UsesV4 || UsesV5 || UsesV6 ? [.. modules.Select(PromoteV2Destinations)] : modules)
+                UsesV2 || UsesV3 || UsesV4 || UsesV5 || UsesV6 || UsesV7 ? [.. modules.Select(PromoteV2Destinations)] : modules)
             {
                 Policies = policies,
                 Triggers = triggers

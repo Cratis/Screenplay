@@ -85,12 +85,7 @@ public sealed partial class SemanticModelBinder
                 .Where(_ => _ is not null)
                 .Select(_ => _!)
                 .ToImmutableArray();
-            var when = specification.When is null ? null : new SemanticSpecificationCommand(
-                command!.Id,
-                BindPropertyValues(specification.When.Values, command.Properties.ToDictionary(_ => _.Name, StringComparer.Ordinal), "specification command"))
-            {
-                EventSource = specification.When.For is null ? null : BindEventSource(specification.When.For, command.Destination?.Type ?? command.Properties.SingleOrDefault(_ => _.IsIdentifier)?.Type)
-            };
+            var when = specification.When is null ? null : BindSpecificationCommand(specification.When, command!);
             var thenEvents = specification.ThenEvents.Select(value => BindSpecificationEvent(value, commands)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             var thenReadModels = (specification.ThenReadModels ?? [])
                 .Select(value => BindReadModelState(value.Name, value.Properties, value.Location, value.Exactly))
@@ -126,6 +121,7 @@ public sealed partial class SemanticModelBinder
                     [.. specification.GivenCaller.Roles],
                     [.. specification.GivenCaller.Claims.Select(claim => new SemanticCallerClaim(claim.Type, claim.Value))]),
                 ThenDenied = specification.ThenDenied is not null,
+                ThenReturns = BindThenReturns(specification.ThenReturns, command),
                 WhenAppended = specification.WhenAppended is null ? null : BindSpecificationAppend(specification.WhenAppended, commands),
                 ThenEventsInAnyOrder = specification.ThenEventsInAnyOrder,
                 ThenAbsentReadModels = thenAbsentReadModels,
@@ -167,7 +163,7 @@ public sealed partial class SemanticModelBinder
 
             var types = commands.Values.SelectMany(command => command.Produces
                 .Where(produced => produced.EventContract == @event.Contract.Id)
-                .Select(_ => command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type))
+                .Select(produced => SemanticModelValidator.ProducedEventSourceType(command, produced)))
                 .OfType<SemanticTypeReference>().Distinct().ToArray();
 
             // A StateView slice may specify an append for an event produced by a command in another slice.
@@ -175,14 +171,7 @@ public sealed partial class SemanticModelBinder
             var type = types.Length == 1 ? types[0] : null;
             if (type is null && value.For is not null)
             {
-                var producerTypes = syntax.Modules.SelectMany(module => module.Features.SelectMany(AllSlices))
-                    .SelectMany(slice => slice.Commands)
-                    .Where(command => command.Produces.Any(produced => ShortName(produced.Event) == ShortName(value.EventType)))
-                    .Select(command => command.Properties.SingleOrDefault(property => property.IsIdentifier))
-                    .Where(property => property is not null)
-                    .Select(property => BindTypeReference(property!.Type))
-                    .Distinct()
-                    .ToArray();
+                var producerTypes = CommandEventSourceTypes(ShortName(value.EventType));
                 type = producerTypes.Length == 1 ? producerTypes[0] : null;
             }
 

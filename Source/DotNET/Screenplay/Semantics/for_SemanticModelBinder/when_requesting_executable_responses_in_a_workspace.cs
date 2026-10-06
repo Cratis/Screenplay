@@ -1,7 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
 
@@ -23,8 +22,8 @@ public class when_requesting_executable_responses_in_a_workspace : Workspaces.fo
     }
 
     [Fact] void should_accept_the_syntax_contract_for_authoring() => _authoring.Accepted.ShouldBeTrue();
-    [Fact] void should_refuse_executable_admission() => _executable.Accepted.ShouldBeFalse();
-    [Fact] void should_return_no_executable_candidate() => _executable.Workspace.ShouldBeNull();
-    [Fact] void should_return_no_executable_write_plan() => _executable.WritePlan.ShouldBeNull();
-    [Fact] void should_explain_the_esm_boundary() => _executable.ExecutableDiagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("ESM v8", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_accept_executable_admission() => _executable.Accepted.ShouldBeTrue();
+    [Fact] void should_return_an_executable_candidate() => _executable.Workspace.ShouldNotBeNull();
+    [Fact] void should_return_an_executable_write_plan() => _executable.WritePlan.ShouldNotBeNull();
+    [Fact] void should_not_report_unsupported_responses() => _executable.ExecutableDiagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268").ShouldBeFalse();
 }
