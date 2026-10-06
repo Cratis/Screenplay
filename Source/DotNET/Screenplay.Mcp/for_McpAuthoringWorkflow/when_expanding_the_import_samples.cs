@@ -69,7 +69,7 @@ public class when_expanding_the_import_samples : given.an_authoring_connection
                     });
                     if (proposal.GetProperty("droppedCommentCount").GetInt32() != 0) _commentFailures.Add($"{context}: proposal dropped comments");
                     var candidate = SampleCandidate(proposal, context);
-                    if (candidate is null) return;
+                    if (candidate is null) break;
                     if (!seed.IdentityCatalog.Semantics.All(assignment => candidate.IdentityCatalog.Semantics.Any(current => current.Address.Equals(assignment.Address) && current.Id == assignment.Id)) ||
                         !seed.IdentityCatalog.EventContracts.All(assignment => candidate.IdentityCatalog.EventContracts.Any(current => current.Address.Equals(assignment.Address) && current.Id == assignment.Id)))
                     {
@@ -105,7 +105,7 @@ public class when_expanding_the_import_samples : given.an_authoring_connection
                 catch (McpFailure failure)
                 {
                     _workflowFailures.Add($"{context}: {failure.Message}");
-                    return;
+                    break;
                 }
             }
         }
