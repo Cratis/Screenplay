@@ -8,7 +8,7 @@ export * from './ScreenplayCompiler';
 export { eventBodyReservedWords } from './Text/ReservedWords';
 export { pattern } from './Text/patterns';
 export { isSourceStreamName, isSourceStreamTypeName, sourceStreamPattern } from './Text/SourceStreamNames';
-export { authoredOrderOf, authoredOrderKey, copyAuthoredOrder } from './Files/AuthoredOrder';
+export { authoredOrderOf, authoredOrderKey, copyAuthoredOrder, recordAuthoredOrder } from './Files/AuthoredOrder';
 export * from './Files/PlayFolderMerge';
 export * from './Files/PlayApplicationAssembly';
 export * from './Files/PlayDocumentSource';

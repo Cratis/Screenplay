@@ -35,6 +35,12 @@ describe('when sketching an imported multifile application', () => {
         slices(boards.proposed!).map(slice => slice.sortOrder).should.deep.equal([0, 1]);
     });
 
+    it('should draw a proposed new file even when no root imports it', () => {
+        const boards = compileBoards({ application: 'Projects', documents, changes: [{ path: 'New.play', source: 'module New\n  feature New\n    slice StateChange Added' }] });
+        slices(boards.current).map(slice => slice.name).should.deep.equal(['Register', 'Intent']);
+        slices(boards.proposed!).map(slice => slice.name).should.deep.equal(['Register', 'Intent', 'Added']);
+    });
+
     it('should use shared event and operation declarations without inventing operation event cards', () => {
         const boards = compileBoards({ application: 'Projects', documents });
         const register = slices(boards.current).find(slice => slice.name === 'Register')!;

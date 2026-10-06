@@ -29,22 +29,45 @@ function declarations(application: ApplicationSyntax): AuthoredDeclaration[] {
     const found: AuthoredDeclaration[] = [];
     const feature = (syntax: FeatureSyntax, outer: readonly string[]) => {
         const scope = [...outer, syntax.name];
-        found.push({ scope, ...syntax.location, implicit: syntax.isPlacement });
+        found.push({ scope, ...syntax.location, implicit: syntax.isPlacement, isContainer: true });
         syntax.features.forEach(child => feature(child, scope));
-        syntax.slices.forEach(slice => found.push({ scope: [...scope, slice.name], ...slice.location, implicit: false }));
+        syntax.slices.forEach(slice => found.push({ scope: [...scope, slice.name], ...slice.location, implicit: false, isContainer: false }));
     };
     application.modules.forEach(module => {
-        found.push({ scope: [module.name], ...module.location, implicit: module.isPlacement });
+        found.push({ scope: [module.name], ...module.location, implicit: module.isPlacement, isContainer: true });
         module.features.forEach(child => feature(child, [module.name]));
     });
     return found;
+}
+
+// A root's explicit declarations, or those in an enclosing container's own named file, define container
+// order before globbed slice files that merely restate the same containers. Prefer the outer named
+// composite, then the shallower path; absent one, the text walk keeps the first explicit occurrence.
+function containerOwners(own: ReadonlyMap<string, readonly AuthoredDeclaration[]>, roots: ReadonlySet<string>): ReadonlyMap<string, string> {
+    const owners = new Map<string, { path: string; priority: number; depth: number }>();
+    for (const [path, declarations] of own) {
+        const segments = path.split('/');
+        const name = segments[segments.length - 1].slice(0, -5);
+        for (const declaration of declarations.filter(declaration => declaration.isContainer && !declaration.implicit)) {
+            const ancestor = declaration.scope.indexOf(name);
+            if (!roots.has(path) && ancestor === -1) continue;
+            const priority = roots.has(path) ? 0 : ancestor + 1;
+            const key = authoredOrderKey(declaration.scope);
+            const current = owners.get(key);
+            if (current === undefined || priority < current.priority || (priority === current.priority && segments.length < current.depth)) {
+                owners.set(key, { path, priority, depth: segments.length });
+            }
+        }
+    }
+    return new Map([...owners].map(([key, owner]) => [key, owner.path]));
 }
 
 // Walk text, not the merged tree: placement stubs must not claim the position of a declaration that is
 // written elsewhere. Expand an import only if it contributes the file's settled (deepest) placement.
 export function recordAuthoredOrder(application: ApplicationSyntax, roots: readonly string[], documents: readonly PlacedPlayDocument[], languages?: ReadonlySet<string>): void {
     const files = new Map(documents.map(document => [document.path, document]));
-    const own = new Map(documents.map(document => [document.path, declarations(parseForAuthoring(document.source, document.path, document.placement, false, undefined, languages).value)]));
+    const own = new Map(documents.filter(document => document.isPlacementResolved !== false).map(document => [document.path, declarations(parseForAuthoring(document.source, document.path, document.placement, false, undefined, languages).value)]));
+    const owners = containerOwners(own, new Set(roots.map(normalizePlayPath)));
     const explicit = new Set([...own.values()].flat().filter(declaration => !declaration.implicit).map(declaration => authoredOrderKey(declaration.scope)));
     const order = new Map<string, number>();
     const visited = new Set<string>();
@@ -53,7 +76,10 @@ export function recordAuthoredOrder(application: ApplicationSyntax, roots: reado
         if (document === undefined || document.isPlacementResolved === false || visited.has(path)) return;
         visited.add(path);
         const entries = [
-            ...(own.get(path) ?? []).filter(declaration => !declaration.implicit || !explicit.has(authoredOrderKey(declaration.scope)))
+            ...(own.get(path) ?? []).filter(declaration => {
+                const key = authoredOrderKey(declaration.scope);
+                return (!declaration.implicit || !explicit.has(key)) && (!declaration.isContainer || !owners.has(key) || owners.get(key) === path);
+            })
                 .map(declaration => ({ line: declaration.line, column: declaration.column, run: () => {
                     const key = authoredOrderKey(declaration.scope);
                     if (!order.has(key)) order.set(key, order.size);

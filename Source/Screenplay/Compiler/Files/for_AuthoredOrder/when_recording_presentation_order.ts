@@ -9,6 +9,14 @@ import { compileApplication, parsePlacedDocuments } from '../PlayApplicationAsse
 const rank = (application: ReturnType<typeof parse>['value'], ...scope: string[]) => authoredOrderOf(application).get(authoredOrderKey(scope));
 
 describe('when recording presentation order', () => {
+    it('should not compute presentation ranks for ordinary application compilation', () => {
+        const compilation = compileApplication(new Map([
+            ['application.play', 'import "other.play"'],
+            ['other.play', 'module M\n  feature F'],
+        ]), ['application.play']);
+        authoredOrderOf(compilation.value).size.should.equal(0);
+    });
+
     it('should leave merged syntax bytes, document order and duplicate diagnostics unchanged', () => {
         const compilation = compileApplication(new Map([
             ['application.play', 'import "z.play"\nimport "a.play"'],
@@ -16,6 +24,7 @@ describe('when recording presentation order', () => {
             ['a.play', 'concept Shared : Uuid\nmodule A\n  feature F\n    slice StateChange S\n      event E'],
         ]), ['application.play']);
         const baseline = parsePlacedDocuments(compilation.documents);
+        recordAuthoredOrder(compilation.value, ['application.play'], compilation.documents);
         JSON.stringify(toSyntaxJson(compilation.value)).should.equal(JSON.stringify(toSyntaxJson(baseline.value)));
         compilation.diagnostics.should.deep.equal(baseline.diagnostics);
         compilation.diagnostics.some(diagnostic => diagnostic.code === DiagnosticCodes.RepeatedDeclarationAcrossFiles).should.be.true;
@@ -29,6 +38,7 @@ describe('when recording presentation order', () => {
             ['steps/z.play', 'slice StateChange Z'],
             ['steps/a.play', 'slice StateChange A'],
         ]), ['application.play']);
+        recordAuthoredOrder(compilation.value, ['application.play'], compilation.documents);
         const order = authoredOrderOf(compilation.value);
         [...order.keys()].should.deep.equal([['M'], ['M', 'F'], ['M', 'F', 'First'], ['M', 'F', 'A'], ['M', 'F', 'Z'], ['M', 'F', 'Last']].map(authoredOrderKey));
         compilation.documents.map(document => document.path).should.deep.equal(['application.play', 'steps/a.play', 'steps/z.play']);
@@ -62,7 +72,10 @@ describe('when recording presentation order', () => {
     });
 
     it('should copy metadata to a narrowed tree but never serialize it', () => {
-        const original = compileApplication(new Map([['root.play', 'module M\n  feature F']]), ['root.play']).value;
+        const compilation = compileApplication(new Map([['root.play', 'module M\n  feature F']]), ['root.play']);
+        const original = compilation.value;
+        recordAuthoredOrder(original, ['root.play'], compilation.documents);
+        authoredOrderOf(original).size.should.be.greaterThan(0);
         const narrowed = copyAuthoredOrder(original, { ...original });
         authoredOrderOf(narrowed).should.equal(authoredOrderOf(original));
         JSON.stringify(narrowed).should.equal(JSON.stringify(original));

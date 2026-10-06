@@ -3,7 +3,7 @@
 
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { ApplicationSyntax, CompilationResult, compileApplication, parse, PlayFileSource } from '@cratis/screenplay-compiler';
+import { ApplicationSyntax, CompilationResult, compileApplication, parse, PlayFileSource, recordAuthoredOrder } from '@cratis/screenplay-compiler';
 import { fileImports } from '@cratis/screenplay-language';
 import { compileEventModelApplication } from '@cratis/screenplay-event-models';
 import { applicationFileName, findApplicationRoot } from './ApplicationRoot';
@@ -17,7 +17,7 @@ export interface BoardCompilation {
 }
 
 // Compiles the application a document belongs to and draws the document's share of it. Inside a folder
-// application that is its root and imported files, compiled together so every slice is drawn against what the
+// application that is every .play file of the folder, compiled together so every slice is drawn against what the
 // whole application declares - but the board shows what the document stands for: its own slices, the slices of
 // the files it imports, and for a module or feature file the slices placed in what it declares. The folder's
 // application.play stands for the whole application, and so does a file with no slice to show, such as one that
@@ -39,11 +39,14 @@ export async function compileForBoard(document: vscode.TextDocument): Promise<Bo
         const folder = vscode.Uri.file(path.dirname(document.uri.fsPath));
         const documents = new Map((await sourcesBeneath(workspaceFolder ?? folder, folder)).map(source => [source.path, source.source]));
         documents.set(path.basename(document.uri.fsPath), document.getText());
-        return { name, result: compileApplication(documents, [path.basename(document.uri.fsPath)]) };
+        const rootFile = path.basename(document.uri.fsPath);
+        const result = compileApplication(documents, [rootFile]);
+        recordAuthoredOrder(result.value, [rootFile], result.documents);
+        return { name, result };
     }
     const rootUri = vscode.Uri.file(root);
     const sources = await sourcesBeneath(rootUri, rootUri);
-    const application = compileEventModelApplication(sources);
+    const application = compileEventModelApplication(sources, applicationFileName);
     const whole = { name: path.basename(root), root: rootUri, result: application };
     const documentPath = path.relative(root, document.uri.fsPath).split(path.sep).join('/');
     if (documentPath === applicationFileName) {

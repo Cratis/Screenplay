@@ -14,9 +14,11 @@ A folder says nothing about *what* the application is made of, and every slice f
 
 ## Order on the board
 
-The MCP App and VS Code boards use an application root's [import order](imports.md#order-on-the-event-model-board), rather than the order files happen to appear in a folder. The root is `application.play`, or a single importing document with another name. Imports expand depth-first where they are written; declarations within a file keep text order, and glob matches stay alphabetical. Without an unambiguous root, the board falls back to alphabetical file-path order.
+Both boards still compile **every** `.play` file in the folder in alphabetical file-path order. An application root's [import order](imports.md#order-on-the-event-model-board) supplies presentation ranks only. Unimported files remain visible after ranked siblings, in their previous relative order; merge diagnostics and event ownership do not change.
 
-Use explicit imports in a composite file when the story needs a particular sequence. A folder layout without imports still uses path order; expanding a file into folders does not by itself preserve its board order. Ordering affects presentation, not executable model bytes or identities.
+VS Code recognizes `application.play` as the folder root; the MCP App can also find a single importing root with another name. Imports expand depth-first where they are written; declarations within a file keep text order, and glob matches stay alphabetical. Explicit container declarations in the root or an enclosing container's own named file take precedence over restating slice files. With no importing root—including an import-less `application.play` written by `IPlayFileWriter.Expand`—the board keeps path order.
+
+Use explicit imports in a composite file when the story needs a particular sequence. Expanding a file into folders does not by itself preserve its board order. Ordering affects presentation, not executable model bytes or identities.
 
 ## Compile a folder as one application
 

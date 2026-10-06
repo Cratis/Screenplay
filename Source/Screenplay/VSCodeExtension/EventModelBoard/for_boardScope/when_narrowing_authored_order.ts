@@ -3,9 +3,22 @@
 
 import { describe, it } from 'vitest';
 import { compileEventModelApplication, toEventModelDocument } from '@cratis/screenplay-event-models';
-import { narrowTo } from '../boardScope';
+import { narrowTo, scopeOf } from '../boardScope';
 
 describe('when narrowing an authored-order board', () => {
+    it('should still narrow to a file the application root does not import', () => {
+        const files = [
+            { path: 'application.play', source: 'import "known.play"' },
+            { path: 'known.play', source: 'module Known\n  feature F\n    slice StateChange Known' },
+            { path: 'scratch.play', source: 'module Scratch\n  feature F\n    slice StateChange Scratch' },
+        ];
+        const compilation = compileEventModelApplication(files);
+        const scope = scopeOf('scratch.play', new Map(files.map(file => [file.path, file.source])), compilation);
+        const narrowed = narrowTo(compilation.value, scope);
+        (narrowed !== undefined).should.be.true;
+        toEventModelDocument(narrowed!, 'Board').collections[0].modules[0].features[0].slices.map(slice => slice.name).should.deep.equal(['Scratch']);
+    });
+
     it('should retain import order for the visible subset without changing identities', () => {
         const compilation = compileEventModelApplication([
             { path: 'application.play', source: 'module M\n  feature F\n    import "z.play"\n    import "hidden.play"\n    import "a.play"' },

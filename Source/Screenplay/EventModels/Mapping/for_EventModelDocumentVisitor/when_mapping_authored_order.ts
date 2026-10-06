@@ -6,6 +6,7 @@ import { join, relative, resolve } from 'node:path';
 import { describe, it } from 'vitest';
 import { compileApplication, parse, parsePlacedDocuments, toSyntaxJson } from '@cratis/screenplay-compiler';
 import { toEventModelDocument } from '../EventModelDocumentVisitor';
+import { compileEventModelApplication } from '../compileEventModelApplication';
 
 const samples = resolve(__dirname, '../../../../../Samples');
 function filesIn(folder: string): string[] {
@@ -14,10 +15,10 @@ function filesIn(folder: string): string[] {
         return statSync(path).isDirectory() ? filesIn(path) : path.endsWith('.play') ? [path] : [];
     });
 }
-function sample(name: string, root: string) {
+function sample(name: string) {
     const folder = join(samples, name);
     const files = new Map(filesIn(folder).map(file => [relative(folder, file), readFileSync(file, 'utf8')]));
-    const compilation = compileApplication(files, [root]);
+    const compilation = compileEventModelApplication([...files].map(([path, source]) => ({ path, source })));
     const baseline = parsePlacedDocuments(compilation.documents);
     JSON.stringify(toSyntaxJson(compilation.value)).should.equal(JSON.stringify(toSyntaxJson(baseline.value)));
     compilation.diagnostics.should.deep.equal(baseline.diagnostics);
@@ -26,7 +27,7 @@ function sample(name: string, root: string) {
 
 describe('when mapping authored order', () => {
     it('should draw Commerce modules in the order of its root imports', () => {
-        const modules = sample('Commerce', 'application.play');
+        const modules = sample('Commerce');
         modules.map(module => module.name).should.deep.equal(['Catalog', 'Ordering', 'Fulfillment']);
         modules.map(module => module.sortOrder).should.deep.equal([0, 1, 2]);
         // Products imports *.play, so its slices intentionally remain alphabetical.
@@ -35,7 +36,7 @@ describe('when mapping authored order', () => {
     });
 
     it('should not let TimeTracking placement stubs precede the declared features', () => {
-        const modules = sample('TimeTracking', 'timetracking.play');
+        const modules = sample('TimeTracking');
         // The root itself is **/*.play: modules, as well as slice glob matches, stay alphabetical.
         modules.map(module => module.name).should.deep.equal(['Engagements', 'Payroll', 'Timesheets']);
         modules[2].features.map(feature => feature.name).should.deep.equal(['Recording', 'Approval', 'Reporting']);
@@ -47,7 +48,7 @@ describe('when mapping authored order', () => {
             ['application.play', 'module Story\n  feature Steps\n    slice StateChange First\n    import "middle.play"\n    slice StateChange Last'],
             ['middle.play', 'slice StateChange Middle'],
         ]);
-        const compilation = compileApplication(files, ['application.play']);
+        const compilation = compileEventModelApplication([...files].map(([path, source]) => ({ path, source })));
         const bytes = JSON.stringify(toSyntaxJson(compilation.value));
         const document = toEventModelDocument(compilation.value, 'Story');
         document.collections[0].modules[0].features[0].slices.map(slice => slice.name).should.deep.equal(['First', 'Middle', 'Last']);

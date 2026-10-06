@@ -7,4 +7,5 @@ export interface AuthoredDeclaration {
     readonly line: number;
     readonly column: number;
     readonly implicit: boolean;
+    readonly isContainer: boolean;
 }
