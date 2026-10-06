@@ -1,0 +1,2 @@
+concept ProjectId : Uuid
+concept ProjectReceipt : Uuid

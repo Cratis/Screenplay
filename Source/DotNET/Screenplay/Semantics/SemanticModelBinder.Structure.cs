@@ -99,14 +99,17 @@ public sealed partial class SemanticModelBinder
             var commands = slice.Commands.Select(value =>
             {
                 var bound = BindCommand(address, value, _events);
-                return bound with { Authorization = EffectiveAuthorization(value.Authorize, bound.Properties, module, featurePath) };
+                return bound with { Authorization = EffectiveAuthorization(value.Authorize, bound.Properties, module, featurePath, value.Name) };
             }).ToImmutableArray();
             var readModels = (slice.ReadModels ?? []).Select(value => _readModelDeclarations[value].Model).ToImmutableArray();
             var projections = slice.Projections.SelectMany(value => BindProjections(address, value)).ToImmutableArray();
             var reducers = BindReducers(address, slice);
             var queries = slice.Queries.Select(value => _queryDeclarations.GetValueOrDefault(value) is { } query
-                ? query with { Authorization = EffectiveAuthorization(
-                    value.Authorize, [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)], module, featurePath) }
+                ? query with
+                {
+                    Authorization = EffectiveAuthorization(
+                    value.Authorize, [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)], module, featurePath)
+                }
                 : null).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             foreach (var query in queries) _queries[query.Name] = query;
             var commandsByName = commands.ToDictionary(_ => _.Name, StringComparer.Ordinal);

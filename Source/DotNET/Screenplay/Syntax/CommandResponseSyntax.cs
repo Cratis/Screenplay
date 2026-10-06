@@ -6,7 +6,7 @@ using Cratis.Screenplay.Diagnostics;
 namespace Cratis.Screenplay.Syntax;
 
 /// <summary>
-/// Represents a syntax-only command response, not admitted by any supported executable model (ESM) version yet (#300/#303).
+/// Represents a command response admitted by the executable semantic model (ESM) as v7 (#300/#303).
 /// </summary>
 /// <param name="Location">The response declaration location.</param>
 public abstract record CommandResponseSyntax(SourceLocation Location) : SyntaxNode(Location);

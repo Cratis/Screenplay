@@ -186,8 +186,10 @@ public sealed partial class SemanticModelBinder
 
         SemanticTypeReference[] CommandEventSourceTypes(string eventName) =>
             [.. AllSlices().SelectMany(entry => entry.Slice.Commands)
-                .Where(command => command.Produces.Any(produced => ShortName(produced.Event) == eventName))
-                .Select(command => command.Properties.SingleOrDefault(property => property.IsIdentifier))
+                .SelectMany(command => command.Produces.Where(produced => ShortName(produced.Event) == eventName)
+                    .Select(produced => command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) && produced.For is PathExpressionSyntax route
+                        ? command.Properties.SingleOrDefault(property => property.Name == route.Path)
+                        : command.Properties.SingleOrDefault(property => property.IsIdentifier)))
                 .Where(property => property is not null)
                 .Select(property => BindTypeReference(property!.Type))
                 .Distinct()];

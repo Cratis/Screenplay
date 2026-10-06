@@ -21,6 +21,13 @@ public sealed partial class SemanticModelBinder
             _ => []
         };
 
+        static bool PolicyUsesSubject(PolicyConditionSyntax? condition) => condition switch
+        {
+            ClaimConditionSyntax { MatchesSubject: true } => true,
+            LogicalPolicyConditionSyntax logical => PolicyUsesSubject(logical.Left) || PolicyUsesSubject(logical.Right),
+            _ => false
+        };
+
         ImmutableArray<SemanticPolicy> BindPolicies() => [.. syntax.Policies.Select(policy =>
         {
             if (policy.Condition is not null && (policy.Code is not null || policy.File is not null))
@@ -70,7 +77,7 @@ public sealed partial class SemanticModelBinder
             return null;
         }
 
-        SemanticAuthorization? EffectiveAuthorization(AuthorizeSyntax? own, IEnumerable<SemanticProperty> artifactProperties, string moduleName, ImmutableArray<string> featurePath)
+        SemanticAuthorization? EffectiveAuthorization(AuthorizeSyntax? own, IEnumerable<SemanticProperty> artifactProperties, string moduleName, ImmutableArray<string> featurePath, string? commandName = null)
         {
             var module = syntax.Modules.Single(value => value.Name == moduleName);
             var scopes = new List<AuthorizeSyntax?> { module.Authorize };
@@ -86,7 +93,7 @@ public sealed partial class SemanticModelBinder
             SemanticAuthorization? result = null;
             foreach (var scope in scopes)
             {
-                var bound = BindAuthorization(scope, artifactProperties);
+                var bound = BindAuthorization(scope, artifactProperties, commandName);
                 if (bound is not null)
                 {
                     result = result is null ? bound : new SemanticLogicalAuthorization(result, SemanticLogicalOperator.And, bound);
@@ -96,19 +103,19 @@ public sealed partial class SemanticModelBinder
             return result;
         }
 
-        SemanticAuthorization? BindAuthorization(AuthorizeSyntax? authorize, IEnumerable<SemanticProperty> artifactProperties)
+        SemanticAuthorization? BindAuthorization(AuthorizeSyntax? authorize, IEnumerable<SemanticProperty> artifactProperties, string? commandName)
         {
             if (authorize is null) return null;
             var properties = artifactProperties.ToDictionary(property => property.Name, StringComparer.Ordinal);
-            return BindAuthorizationNode(authorize.Requirement, properties);
+            return BindAuthorizationNode(authorize.Requirement, properties, commandName);
         }
 
-        SemanticAuthorization? BindAuthorizationNode(PolicyRequirementSyntax requirement, Dictionary<string, SemanticProperty> properties)
+        SemanticAuthorization? BindAuthorizationNode(PolicyRequirementSyntax requirement, Dictionary<string, SemanticProperty> properties, string? commandName)
         {
             if (requirement is LogicalPolicyRequirementSyntax logical)
             {
-                var left = BindAuthorizationNode(logical.Left, properties);
-                var right = BindAuthorizationNode(logical.Right, properties);
+                var left = BindAuthorizationNode(logical.Left, properties, commandName);
+                var right = BindAuthorizationNode(logical.Right, properties, commandName);
                 return left is null || right is null ? null :
                     new SemanticLogicalAuthorization(left, PolicyOperator(logical.Operator), right);
             }
@@ -121,9 +128,18 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
+            if (PolicyUsesSubject(policy.Condition) && properties.Values.FirstOrDefault(property => property.IsGenerated && property.IsIdentifier) is { } identifier)
+            {
+                GeneratedReference(commandName!, identifier.Name, $"authorization policy '{policy.Name}' (implicit subject)", reference.Location);
+            }
+
             foreach (var path in PolicyPaths(policy.Condition))
             {
-                if (!ResolvesPolicyPath(path, properties))
+                if (properties.GetValueOrDefault(path.Split('.')[0]) is { IsGenerated: true } generated)
+                {
+                    GeneratedReference(commandName!, generated.Name, $"authorization policy '{policy.Name}'", reference.Location);
+                }
+                else if (!ResolvesPolicyPath(path, properties))
                 {
                     Error(DiagnosticCodes.InvalidSemanticBinding, $"Policy '{policy.Name}' artifact path '{path}' does not resolve against the authorized command properties or query arguments.", reference.Location);
                 }

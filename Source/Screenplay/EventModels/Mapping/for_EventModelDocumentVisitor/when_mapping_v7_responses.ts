@@ -9,7 +9,7 @@ import { slice_named } from './given/the_constructs_document';
 
 const fixture = readFileSync(new URL('../../../../../Documentation/screenplay/fixtures/generated-responses.play', import.meta.url), 'utf8');
 
-describe('when mapping syntax-only responses', () => {
+describe('when mapping ESM v7 responses', () => {
     it('should exclude generated values from request schemas and disclose response details', () => {
         const document = toEventModelDocument(parse(fixture).value, 'Projects');
         const slice = slice_named(document, 'Register');
@@ -17,7 +17,7 @@ describe('when mapping syntax-only responses', () => {
         expect(slice.command!.schema.required).toEqual(['name']);
         expect(slice.command!.logicDescription).toContain('Generated values (not request inputs)');
         expect(slice.command!.logicDescription).toContain('receiptId: ReceiptId = receiptId');
-        expect(slice.command!.logicDescription).toContain('not admitted by any supported executable model (ESM) version yet (PLAY0268) (#300/#303)');
+        expect(slice.command!.logicDescription).toContain('executable as ESM v7');
         expect(slice.command!.stateSchema).toEqual({});
         expect(slice.events.map(event => event.name)).toEqual(['ProjectRegistered']);
     });

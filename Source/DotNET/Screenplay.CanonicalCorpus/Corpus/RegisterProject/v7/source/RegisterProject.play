@@ -1,0 +1,49 @@
+concept ProjectId : Uuid
+concept ProjectReceipt : Uuid
+module Projects
+  feature Registration
+    slice StateChange RegisterProject
+      command RegisterProject
+        projectId ProjectId generated identifier
+        receipt ProjectReceipt generated
+        name String
+        produces event ProjectRegistered
+          receipt ProjectReceipt = receipt
+          name String = name
+        returns
+          projectId = projectId
+          receipt = receipt
+          name = name
+      specification RegisteringAProject
+        when RegisterProject
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          name = "Screenplay"
+          generated receipt = "222222222222222222222222222222AA"
+        then ProjectRegistered
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          receipt = "22222222-2222-2222-2222-2222222222aa"
+          name = "Screenplay"
+        then returns
+          projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          receipt = "222222222222222222222222222222AA"
+          name = "Screenplay"
+      specification MissingAllocation
+        when RegisterProject
+          name = "Screenplay"
+        then ProjectRegistered
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          receipt = "22222222-2222-2222-2222-2222222222aa"
+          name = "Screenplay"
+        then returns
+          projectId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+      specification MismatchedReturn
+        when RegisterProject
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          name = "Screenplay"
+          generated receipt = "22222222-2222-2222-2222-2222222222aa"
+        then ProjectRegistered
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          receipt = "22222222-2222-2222-2222-2222222222aa"
+          name = "Screenplay"
+        then returns
+          receipt = "33333333-3333-3333-3333-333333333333"

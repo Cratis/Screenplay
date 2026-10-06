@@ -99,7 +99,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         if (plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V6) && acts)
         {
             var performed = SemanticScenario.Perform(evaluator, plan, world, expected, queries, out var actionFacts);
-            var compared = Compare(expected, performed, actionFacts);
+            var compared = Compare(plan, expected, performed, actionFacts);
             return new(specification, compared.IsEmpty, performed, compared);
         }
 
@@ -110,7 +110,8 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
                 AllocatedIdentities = expected.When.EventSource is null
                     ? ImmutableDictionary.Create<SemanticId, SemanticValue>()
                     : ImmutableDictionary<SemanticId, SemanticValue>.Empty.Add(expected.When.Command, expected.When.EventSource.Value),
-                AllocatedEventSourceType = expected.When.EventSource?.Type
+                AllocatedEventSourceType = expected.When.EventSource?.Type,
+                GeneratedValues = expected.When.GeneratedValues
             };
 
         // An append is an occurrence, not a command: enforce append constraints, project, then query.
@@ -123,13 +124,13 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
                 appended.EventContract,
                 appended.EventSource?.Value ?? SemanticValue.Null,
                 appended.Values)
-            {
-                Context = appended.EventSource is null ? null : new(appended.EventSource)
-            },
+                {
+                    Context = appended.EventSource is null ? null : new(appended.EventSource)
+                },
                 queries,
                 expected.GivenCaller)
             : evaluator.Execute(plan, world, request with { Caller = expected.GivenCaller });
-        var failures = Compare(expected, execution);
+        var failures = Compare(plan, expected, execution);
         return new(specification, failures.IsEmpty, execution, failures);
     }
 
@@ -181,6 +182,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
 
     // actionFacts is how many leading facts the action itself appended, in ESM v6; before v6 it is -1 and every fact is the action's.
     static ImmutableArray<string> Compare(
+        SemanticExecutionPlan plan,
         SemanticSpecification expected,
         SemanticExecutionResult execution,
         int actionFacts = -1)
@@ -216,7 +218,8 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         }
 
         var commandFacts = actionFacts >= 0 ? accepted.Facts[..actionFacts] : accepted.Facts;
-        if (expected.When?.EventSource is { } commandSource && commandFacts.Any(fact => !SemanticValueRules.AreEqual(fact.Destination, commandSource.Value)))
+        var generatedIdentifier = expected.When is { } when && plan.Commands[when.Command].Properties.Any(property => property.IsIdentifier && property.IsGenerated);
+        if (!generatedIdentifier && expected.When?.EventSource is { } commandSource && commandFacts.Any(fact => !SemanticValueRules.AreEqual(fact.Destination, commandSource.Value)))
         {
             failures.Add("Produced fact destination does not match the specification command event source.");
         }
@@ -230,7 +233,49 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             }
         }
         CompareQueries(expected.ThenQueries, accepted.Queries, failures);
+        CompareResponse(expected.ThenReturns, accepted.Response, expected.When is { } action ? plan.Commands[action.Command].Response : null, failures);
         return failures.ToImmutable();
+    }
+
+    static void CompareResponse(
+        SemanticSpecificationResponse? expected,
+        SemanticExecutionResponse? actual,
+        SemanticCommandResponse? contract,
+        ImmutableArray<string>.Builder failures)
+    {
+        switch (expected)
+        {
+            case null:
+                return;
+            case SemanticScalarSpecificationResponse scalar:
+                if (actual is not SemanticScalarExecutionResponse response || !SemanticValueRules.AreEqual(scalar.Value, response.Value))
+                {
+                    failures.Add("Scalar response does not match the expected value.");
+                }
+
+                break;
+            case SemanticRecordSpecificationResponse record:
+                if (actual is not SemanticRecordExecutionResponse returned)
+                {
+                    failures.Add("Expected a record response.");
+                    break;
+                }
+
+                var assertions = record.Fields.ToDictionary(field => field.Name, StringComparer.Ordinal);
+                var fields = returned.Fields.ToDictionary(field => field.Name, StringComparer.Ordinal);
+                foreach (var field in ((SemanticRecordCommandResponse)contract!).Fields)
+                {
+                    if (assertions.TryGetValue(field.Name, out var assertion) &&
+                        (!fields.TryGetValue(field.Name, out var value) || !SemanticValueRules.AreEqual(assertion.Value, value.Value)))
+                    {
+                        failures.Add($"Response field '{field.Name}' does not match the expected value.");
+                    }
+                }
+
+                break;
+            default:
+                throw new InvalidSemanticContract("A specification response variant is unsupported.");
+        }
     }
 
     static void CompareRejection(

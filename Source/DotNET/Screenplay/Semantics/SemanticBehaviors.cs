@@ -329,6 +329,11 @@ public sealed record SemanticCommand(
     ImmutableArray<SemanticValidationRule> Validations,
     ImmutableArray<SemanticProducedEvent> Produces)
 {
+    /// <summary>
+    /// Gets the transient response contract, or null when the command has no response.
+    /// </summary>
+    public SemanticCommandResponse? Response { get; init; }
+
     /// <summary>Opaque whole-command code validation attachments in authored order; each yields zero or more rejection messages.</summary>
     public ImmutableArray<SemanticCodeValidation> CodeValidations { get; init; } = [];
 

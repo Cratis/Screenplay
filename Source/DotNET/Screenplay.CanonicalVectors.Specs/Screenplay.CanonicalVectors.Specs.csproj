@@ -23,6 +23,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <EmbeddedResource Include="../../../Documentation/screenplay/interoperability.md"
+                          Link="Documentation/interoperability.md"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Documentation.interoperability.md" />
         <EmbeddedResource Include="../Screenplay/for_ScreenplayCompiler/invoicing.play"
                           Link="Samples/invoicing.play"
                           WithCulture="false"
@@ -51,6 +55,10 @@
                           Link="Golden/full-esm-v6.json"
                           WithCulture="false"
                           LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v6.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v7.json"
+                          Link="Golden/full-esm-v7.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v7.json" />
         <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-identity-catalog-v1.json"
                           Link="Golden/full-identity-catalog-v1.json"
                           WithCulture="false"

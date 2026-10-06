@@ -9,7 +9,7 @@ import { WorkspaceApplication } from '../WorkspaceApplication';
 const grammar = JSON.parse(readFileSync(new URL('../syntaxes/screenplay.tmLanguage.json', import.meta.url), 'utf8'));
 const patterns = grammar.repository.keywords.patterns as { match: string; comment?: string }[];
 
-describe('when authoring syntax-only responses across files', () => {
+describe('when authoring ESM v7 responses across files', () => {
     it('should surface compiler diagnostics from imported and unsaved declarations without duplicate rules', () => {
         const application = new WorkspaceApplication();
         application.set('application.play', 'import "types.play"\nmodule M\n  feature F\n    import "slice.play"');
@@ -26,7 +26,7 @@ describe('when authoring syntax-only responses across files', () => {
             compilerDiagnostics: diagnostics,
         });
         expect(issues.filter(issue => issue.code === 'PLAY0483')).toHaveLength(1);
-        expect(issues.some(issue => issue.message.includes('not admitted by any supported executable model (ESM) version yet'))).toBe(true);
+        expect(issues.map(issue => issue.code)).not.toContain('PLAY0268');
     });
     it.each([0, 1])('should complete only current unsaved sources despite foreign command offset %s', offset => {
         const application = new WorkspaceApplication();
@@ -49,7 +49,7 @@ describe('when authoring syntax-only responses across files', () => {
         const issues = validateLines(lines, context);
         expect(issues.filter(issue => issue.code === 'PLAY0487')).toHaveLength(1);
         expect(issues.filter(issue => issue.code === 'PLAY0483')).toHaveLength(0);
-        expect(issues.filter(issue => issue.code === 'PLAY0268')).toHaveLength(2);
+        expect(issues.map(issue => issue.code)).not.toContain('PLAY0268');
         expect(validateLines(lines.map(line => line.replace('@missing', '@id')), context).filter(issue => issue.severity !== 'information')).toEqual([]);
     });
     it('should share precise hover tokens and full explicit type rendering', () => {
@@ -144,7 +144,7 @@ describe('when authoring syntax-only responses across files', () => {
     it.each(['String optional', 'String[] optional'])('should share full explicit and inferred response type wording for %s', type => {
         for (const explicit of [false, true]) {
             const lines = ['command C', `  value ${type}`, '  returns', `    result ${explicit ? `${type} ` : ''}= value`, 'specification S', '  when C', '  then returns', '    '];
-            expect(responseCompletions(lines, 7, lines[7], scanDocument(lines))?.[0].documentation).toContain(`${type}. Syntax-only`);
+            expect(responseCompletions(lines, 7, lines[7], scanDocument(lines))?.[0].documentation).toContain(`${type}. Executable as ESM v7`);
             expect(hoverContent(lines, 3, 'result', 5, 11)).toContain(`${type} (${explicit ? 'explicit' : 'inferred'})`);
         }
     });
