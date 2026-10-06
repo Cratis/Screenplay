@@ -3355,6 +3355,65 @@
                     "authenticated": true,
                     "claims": [],
                     "roles": [
+                      "InvoiceManager",
+                      "Service"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RejectingAServiceRegisteringAnInvoice",
+                  "thenCompensated": [],
+                  "thenDenied": {
+                    "kind": "SpecificationDeniedSyntax"
+                  },
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterInvoice",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceNumber",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "INV-000123"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
                       "Auditor"
                     ]
                   },

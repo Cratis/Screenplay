@@ -150,7 +150,7 @@ type InstallmentPlan
 // ------------------------------------------------------------
 
 policy IsAuthenticated
-  require authenticated
+  require authenticated and not role "Service" and not claim "actorKind" matches "service"
 
 policy IsInvoicingStaff
   require role "InvoiceManager" or role "Accountant" or role "FinanceController"
@@ -733,6 +733,16 @@ module Invoicing
           invoiceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
           invoiceNumber = "INV-000123"
         then error
+
+      specification RejectingAServiceRegisteringAnInvoice
+        given caller
+          authenticated
+          role "InvoiceManager"
+          role "Service"
+        when RegisterInvoice
+          invoiceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceNumber = "INV-000123"
+        then denied
 
       specification RejectingAnAuditorRegisteringAnInvoice
         given caller
