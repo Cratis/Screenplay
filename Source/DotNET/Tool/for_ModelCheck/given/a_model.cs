@@ -17,7 +17,8 @@ public class a_model : Specification
             repository = repository.Parent;
         }
 
-        Root = Path.Combine(repository!.FullName, ".ai-work", "scope-specs", Guid.NewGuid().ToString("N"));
+        var output = Environment.GetEnvironmentVariable("AI_WORK_OUTPUT") ?? Path.Combine(repository?.FullName ?? Directory.GetCurrentDirectory(), ".ai-work", "scope-specs");
+        Root = Path.Combine(output, Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(Root);
         File.WriteAllText(Path.Combine(Root, "application.play"), """
             module M

@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
-using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Mcp;
 
 namespace Cratis.Screenplay.Tool;
@@ -65,13 +64,13 @@ static class ModelCheck
 
     static int Check(string target, bool isFile, string? scope, bool warnAsError, TextWriter output, TextWriter error, bool useColors)
     {
-        var compiler = new PlayFileCompiler();
-        var compilation = isFile ? compiler.CompileApplication(target) : compiler.CompileFolder(target);
-        var sources = compilation.Sources.ToDictionary(source => source.File.RelativePath, source => source.Source, StringComparer.Ordinal);
-        var diagnostics = compilation.Result.Diagnostics;
+        var snapshot = McpSnapshot.Compile(target, isFile);
+        var sources = snapshot.Sources;
+        var compilation = snapshot.Compilation;
+        var diagnostics = compilation.Diagnostics;
         if (scope is not null)
         {
-            var selection = ScopedDiagnostics.Select(sources, scope);
+            var selection = ScopedDiagnostics.Select(snapshot, scope);
             if (selection is null)
             {
                 error.WriteLine($"Unknown scope '{scope}'. Expected a module, feature or slice address.");
@@ -81,7 +80,13 @@ static class ModelCheck
             diagnostics = selection.Diagnostics;
             output.WriteLine($"Scope {scope}: {selection.DeclarationCount} declaration(s), {selection.DependentDeclarationCount} direct dependent declaration(s), {selection.Diagnostics.Length} diagnostic(s)");
             output.WriteLine($"Affected scopes: {(selection.AffectedScopes.Length == 0 ? "none" : string.Join(", ", selection.AffectedScopes.Select(affected => affected.Length == 0 ? "<application>" : affected)))}");
+            output.WriteLine($"Possibly affected: {selection.PossiblyAffectedReferenceCount} unresolved reference(s) outside the requested scope");
             output.WriteLine($"Dependency coverage: {selection.DependencyCoverage}");
+            var wholeErrors = compilation.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+            var wholeWarnings = compilation.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Warning);
+            var wholeSummary = $"Whole application: {wholeErrors} error(s), {wholeWarnings} warning(s) ({compilation.Diagnostics.Count() - diagnostics.Count()} outside the reported set)";
+            var wholeFailed = !compilation.Success || (warnAsError && wholeWarnings > 0);
+            output.WriteLine(useColors && wholeFailed ? $"\e[31m{wholeSummary}\e[0m" : wholeSummary);
         }
 
         if (sources.Count == 0)
@@ -101,17 +106,24 @@ static class ModelCheck
         {
             switch (diagnostic.Severity)
             {
-                case DiagnosticSeverity.Error: errors++; break;
-                case DiagnosticSeverity.Warning: warnings++; break;
+                case DiagnosticSeverity.Error:
+                    errors++;
+                    break;
+                case DiagnosticSeverity.Warning:
+                    warnings++;
+                    break;
             }
 
             var file = diagnostic.Location.Path ?? fallbackFile;
-            output.WriteLine(formatter.Format(file, diagnostic, sources.GetValueOrDefault(file, string.Empty), useColors));
+            output.WriteLine(formatter.Format(file, diagnostic, sources.TryGetValue(file, out var source) ? source : string.Empty, useColors));
         }
 
-        if (errors + warnings > 0) output.WriteLine();
+        if (errors + warnings > 0)
+        {
+            output.WriteLine();
+        }
         var failed = errors > 0 || (warnAsError && warnings > 0);
-        var summary = $"{sources.Count} file(s) compiled - {errors} error(s), {warnings} warning(s)";
+        var summary = $"{sources.Count} file(s) compiled - {errors} error(s), {warnings} warning(s){(scope is null ? string.Empty : " in scope")}";
         if (useColors)
         {
             var color = (failed, warnings > 0) switch

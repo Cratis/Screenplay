@@ -18,6 +18,7 @@ static class CommandLineInformation
 
         A folder of .play files describes one application.
         --scope reports the named scope and its direct dependent declarations after whole-application binding.
+        Scoped exit codes follow the reported set; a separate line shows whole-application defects.
         Exit codes: 0 clean, 1 defects (including warnings with --warnaserror), 2 could not run.
         The MCP server uses stdio and requires an existing physical directory.
         Open an empty model folder through MCP to create its first typed document.
