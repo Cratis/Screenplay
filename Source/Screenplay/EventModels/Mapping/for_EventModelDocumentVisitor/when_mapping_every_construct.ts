@@ -88,15 +88,20 @@ describe('when mapping every construct', () => {
         [trigger.description, trigger.eventId].should.deep.equal(['Right after registering', slice_named(document, 'Register').events[0].id]);
     });
 
-    it('should carry the specifications with their literal values', () => {
+    it('should carry the specifications with their values, written out when they are not literals', () => {
         const specification = slice_named(document, 'Register').specifications[0];
         [specification.when!.values, specification.when!.commandId].should.deep.equal([
-            { customerId: '3fa85f64-5717-4562-b3fc-2c963f66afa6', name: 'Ada', age: 36 },
+            {
+                customerId: '3fa85f64-5717-4562-b3fc-2c963f66afa6', name: 'Ada', age: 36,
+                email: '$context.identity.name',
+                tags: '["vip", "early", 3, true, null]',
+                address: '{ "street": "Main 1", "lines": [1.5, -2000], "nested": { "empty": {  } } }',
+            },
             slice_named(document, 'Register').command!.id,
         ]);
     });
 
-    it('should carry only the named errors a specification expects', () => {
-        slice_named(document, 'Register').specifications[1].thenErrors.map(error => error.name).should.deep.equal(['Too young']);
+    it('should carry the error messages a specification expects, and an error without one', () => {
+        slice_named(document, 'Register').specifications[1].thenErrors.map(error => error.message).should.deep.equal(['Too young', undefined]);
     });
 });

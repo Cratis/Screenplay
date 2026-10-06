@@ -1672,6 +1672,20 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "dateOfBirth",
+                        "value": "1980-01-01"
+                      }
+                    ],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -1776,6 +1790,20 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "dateOfBirth",
+                        "value": "1980-01-01"
+                      }
+                    ],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -1837,6 +1865,20 @@
                       ]
                     }
                   ],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "dateOfBirth",
+                        "value": "1980-01-01"
+                      }
+                    ],
+                    "roles": [
+                      "InvoiceManager"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
@@ -2626,6 +2668,14 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],

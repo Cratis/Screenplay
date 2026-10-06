@@ -9,7 +9,7 @@ import {
     SpecificationWhenQuerySyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax,
 } from '../Syntax/Specifications';
 import { SpecificationDeniedSyntax, SpecificationReturnSyntax } from '../Syntax/Responses';
-import { nativePattern, pattern } from '../Text/patterns';
+import { dotNetWhitespace, nativePattern, pattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { parseMappingSource } from './ExpressionParser';
 import { isFileDirective } from './FileReferences';
@@ -18,7 +18,7 @@ import { ParserContext } from './ParserContext';
 import { rejectOperationChildren } from './OperationParser';
 import { generatedFixturePattern, generatedFixturePrefix, parseConcreteMapping, parseReturn, thenReturnsPrefix } from './SpecificationResponseParser';
 import { locationOf, SourceLine } from './SourceLine';
-import { SpecificationAbsentReadModelSyntax, SpecificationQuerySyntax } from '../Syntax/Specifications';
+import { SpecificationAbsentReadModelSyntax, SpecificationCallerClaimSyntax, SpecificationCallerSyntax, SpecificationQuerySyntax } from '../Syntax/Specifications';
 
 const operationStepPrefix = pattern('^(?:given\\s+operation|then\\s+(?:operation|compensated))(?:\\s|$)');
 const operationStep = pattern('^(given operation|then operation|then compensated)\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)(\\s+fails)?$');
@@ -76,6 +76,7 @@ interface SpecificationBody {
     thenResults: SpecificationQueryResultSyntax[];
     thenNoResult: SpecificationNoResultSyntax | null;
     thenDenied: SpecificationDeniedSyntax | null;
+    givenCaller: SpecificationCallerSyntax | null;
     thenReturns: SpecificationReturnSyntax | null;
     givenOperationFailures: SpecificationOperationFailureSyntax[];
     thenOperations: SpecificationOperationSyntax[];
@@ -91,7 +92,7 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
         givenOperationFailures: [], thenOperations: [], thenCompensated: [], thenAbsentReadModels: [], thenQueries: [],
         given: [], givenReadModels: [], when: null, whenAppended: null, whenDeclared: false,
         thenEvents: [], thenEventsInAnyOrder: false, thenReadModels: [], thenErrors: [],
-        givenClock: null, givenCaptures: [], whenClock: null, whenTrigger: null, whenCapture: null, whenQuery: null, thenResults: [], thenNoResult: null, thenDenied: null, thenReturns: null,
+        givenClock: null, givenCaptures: [], whenClock: null, whenTrigger: null, whenCapture: null, whenQuery: null, thenResults: [], thenNoResult: null, thenDenied: null, givenCaller: null, thenReturns: null,
     };
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
@@ -152,8 +153,12 @@ function parseGiven(context: ParserContext, line: SourceLine, body: Specificatio
             body.givenCaptures.push(capture);
         }
     } else if (line.content.startsWith('given caller')) {
-        // The caller fixture is not modeled.
-        context.skipOpaqueBlock(line.indent);
+        if (body.givenCaller !== null) {
+            context.error(DiagnosticCodes.DuplicateSpecificationCallerOrDenied, "A specification has at most one 'given caller' block.", locationOf(line));
+            context.skipBlock(line.indent);
+        } else {
+            body.givenCaller = parseCaller(context, line);
+        }
     } else if (readModelPrefix.test(line.content)) {
         const readModel = parseReadModelStep(context, line, givenReadModelPattern, 'given');
         if (readModel !== undefined) {
@@ -165,6 +170,36 @@ function parseGiven(context: ParserContext, line: SourceLine, body: Specificatio
             body.given.push(event);
         }
     }
+}
+
+const callerRolePattern = pattern(`^role${dotNetWhitespace}+"(${stringBodyPattern})"$`);
+const callerClaimPattern = pattern(`^claim${dotNetWhitespace}+"(${stringBodyPattern})"${dotNetWhitespace}*=${dotNetWhitespace}*"(${stringBodyPattern})"$`);
+
+// 'given caller' and the authenticated, role and claim lines under it.
+function parseCaller(context: ParserContext, line: SourceLine): SpecificationCallerSyntax | null {
+    if (line.content !== 'given caller') {
+        context.error(DiagnosticCodes.InvalidSpecificationCaller, "Expected exactly 'given caller'.", locationOf(line));
+        context.skipBlock(line.indent);
+        return null;
+    }
+    let authenticated = false;
+    const roles: string[] = [];
+    const claims: SpecificationCallerClaimSyntax[] = [];
+    for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
+        context.reader.takeSignificant();
+        const role = callerRolePattern.exec(child.content);
+        const claim = callerClaimPattern.exec(child.content);
+        if (child.content === 'authenticated' && !authenticated) {
+            authenticated = true;
+        } else if (role !== null) {
+            roles.push(unescapeString(role[1]));
+        } else if (claim !== null) {
+            claims.push({ kind: 'SpecificationCallerClaimSyntax', type: unescapeString(claim[1]), value: unescapeString(claim[2]), location: locationOf(child) });
+        } else {
+            context.error(DiagnosticCodes.InvalidSpecificationCaller, `Invalid caller fixture '${child.content}' - expected authenticated, role "...", or claim "..." = "...".`, locationOf(child));
+        }
+    }
+    return { kind: 'SpecificationCallerSyntax', authenticated, roles, claims, location: locationOf(line) };
 }
 
 function parseWhen(context: ParserContext, line: SourceLine, body: SpecificationBody, name: string): void {

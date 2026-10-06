@@ -172,12 +172,19 @@ export interface SpecificationStepDocument {
     values: Record<string, unknown>;
 }
 
+export interface SpecificationCallerDocument {
+    authenticated: boolean;
+    roles: string[];
+    claims: Record<string, string>;
+}
+
 export interface SliceSpecificationDocument {
     id: string;
     name: string;
     given: SpecificationStepDocument[];
     when?: { id: string; commandId?: string; name: string; values: Record<string, unknown> };
+    caller?: SpecificationCallerDocument;
     thenEvents: SpecificationStepDocument[];
-    thenErrors: { id: string; name: string }[];
+    thenErrors: { id: string; name: string; message?: string }[];
     collapsed: boolean;
 }

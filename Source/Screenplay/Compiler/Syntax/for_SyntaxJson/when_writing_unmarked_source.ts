@@ -31,4 +31,16 @@ describe('when writing unmarked source', () => {
         collect(toSyntaxJson(parse(source).value));
         for (const member of ['policies', 'seeds', 'validations', 'requirements', 'sourceOptions']) members.has(member).should.equal(false, member);
     });
+
+    it('should keep the wire bytes of a specification without a caller', () => {
+        const source = 'module M\n  feature F\n    slice StateChange S\n      specification T\n        when C\n';
+        wire(source).should.equal('{"kind":"ApplicationSyntax","concepts":[],"domain":null,"eventSources":[],"fileImports":[],"imports":[],"modules":[{"kind":"ModuleSyntax","authorize":null,"description":null,"features":[{"kind":"FeatureSyntax","authorize":null,"description":null,"features":[],"fileImports":[],"isPlacement":false,"name":"F","slices":[{"kind":"SliceSyntax","captures":[],"commands":[],"constraints":[],"description":null,"events":[],"name":"S","operations":[],"projections":[],"queries":[],"reactions":[],"readModels":[],"screens":[],"specifications":[{"kind":"SpecificationSyntax","given":[],"givenCaptures":[],"givenClock":null,"givenOperationFailures":[],"givenReadModels":[],"name":"T","thenCompensated":[],"thenDenied":null,"thenErrors":[],"thenEvents":[],"thenEventsInAnyOrder":false,"thenNoResult":null,"thenOperations":[],"thenReadModels":[],"thenResults":[],"thenReturns":null,"when":{"kind":"SpecificationCommandSyntax","commandType":"C","for":null,"generatedValues":[],"values":[]},"whenAppended":null,"whenCapture":null,"whenClock":null,"whenQuery":null,"whenTrigger":null}],"type":"StateChange"}]}],"fileImports":[],"isPlacement":false,"name":"M"}],"personas":[],"systems":[],"types":[]}');
+    });
+
+    it('should leave out an absent caller but keep a stated one', () => {
+        const source = 'module M\n  feature F\n    slice StateChange S\n      specification A\n        when C\n      specification B\n        given caller\n          authenticated\n        when C\n';
+        const text = wire(source);
+        text.split('"givenCaller"').length.should.equal(2);
+        text.should.contain('"givenCaller":{"kind":"SpecificationCallerSyntax"');
+    });
 });

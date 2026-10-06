@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { ValidationRuleSyntax } from './Commands';
+import { SpecificationSyntax } from './Specifications';
 import { SyntaxNode } from './SyntaxNode';
 
 // The members the syntax tree gained with exact numeric source. The internal tree keeps them for every
@@ -23,5 +24,7 @@ export function isExactOnlyMember(kind: string, member: string): boolean {
 
 export function isLegacyOmittedMember(node: SyntaxNode, member: string): boolean {
     // Legacy never modeled unwrapped rule payloads. Only an explicit wrapper opts into rule intent on wire.
+    // A caller is only written when the specification states one; Legacy never wrote the member when it was absent.
+    if (node.kind === 'SpecificationSyntax' && member === 'givenCaller') return (node as SpecificationSyntax).givenCaller == null;
     return isExactOnlyMember(node.kind, member) || (node.kind === 'ValidationRuleSyntax' && (node as ValidationRuleSyntax).implementation == null && (member === 'code' || member === 'file' || member === 'implementation'));
 }
