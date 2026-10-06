@@ -15,10 +15,9 @@ public class when_comparing_the_interoperability_version_table : Specification
         using var reader = new StreamReader(stream);
         var text = reader.ReadToEnd();
         var released = Rows(text, "#### Released versions");
-        var claimed = Rows(text, "#### Claimed, unreleased version");
-        released.Length.ShouldEqual(6);
+        var claimed = text.Contains("#### Claimed, unreleased version", StringComparison.Ordinal) ? Rows(text, "#### Claimed, unreleased version") : [];
+        released.Length.ShouldEqual(7);
         (claimed.Length <= 1).ShouldBeTrue();
-        claimed.Single()[0].ShouldEqual("7.0");
         var rows = released.Concat(claimed).ToArray();
         var languageVersions = rows.Select(row => LanguageVersion.Parse(row[0])).ToArray();
         var semanticVersions = rows.Select(row => SemanticVersion.Parse(row[0])).ToArray();
