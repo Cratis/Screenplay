@@ -31,6 +31,25 @@ internal static partial class McpDirectoryIdentity
         return same;
     }
 
+    internal static bool IsRegularFile(string path)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            var attributes = File.GetAttributes(path);
+
+            return !attributes.HasFlag(FileAttributes.Directory) && !attributes.HasFlag(FileAttributes.Device) && !attributes.HasFlag(FileAttributes.ReparsePoint);
+        }
+
+        var status = ReadUnixStatus(path);
+
+        // Darwin: mode_t at byte 4 (16 bits). Linux: mode_t at byte 24 on x64, byte 16 on arm64 (32 bits).
+        var mode = OperatingSystem.IsMacOS()
+            ? BinaryPrimitives.ReadUInt16LittleEndian(status.AsSpan(4))
+            : BinaryPrimitives.ReadUInt32LittleEndian(status.AsSpan(RuntimeInformation.ProcessArchitecture == Architecture.X64 ? 24 : 16));
+
+        return (mode & 0xf000) == 0x8000; // S_IFMT / S_IFREG: lstat never follows a final symbolic link.
+    }
+
     static Identity Read(string path)
     {
         try
@@ -51,14 +70,31 @@ internal static partial class McpDirectoryIdentity
                     BinaryPrimitives.ReadUInt64LittleEndian(information.AsSpan(16)));
             }
 
-            var architecture = RuntimeInformation.ProcessArchitecture;
-            if ((!OperatingSystem.IsMacOS() && !OperatingSystem.IsLinux()) || architecture is not (Architecture.X64 or Architecture.Arm64))
-            {
-                throw Unavailable(path, "unsupported directory-identity ABI");
-            }
-
             // Darwin's 64-bit-inode stat starts with dev_t (32 bits), mode/nlink, then ino_t (64 bits).
-            // Linux x64/arm64 stat starts with dev_t and ino_t (both 64 bits). No guessed offsets on other ABIs.
+            // Linux x64/arm64 stat starts with dev_t and ino_t (both 64 bits).
+            var status = ReadUnixStatus(path);
+
+            return new(
+                OperatingSystem.IsMacOS() ? BinaryPrimitives.ReadUInt32LittleEndian(status) : BinaryPrimitives.ReadUInt64LittleEndian(status),
+                BinaryPrimitives.ReadUInt64LittleEndian(status.AsSpan(8)),
+                0);
+        }
+        catch (Exception exception) when (exception is DllNotFoundException or EntryPointNotFoundException or BadImageFormatException)
+        {
+            throw Unavailable(path, exception.Message);
+        }
+    }
+
+    static byte[] ReadUnixStatus(string path)
+    {
+        var architecture = RuntimeInformation.ProcessArchitecture;
+        if ((!OperatingSystem.IsMacOS() && !OperatingSystem.IsLinux()) || architecture is not (Architecture.X64 or Architecture.Arm64))
+        {
+            throw Unavailable(path, "unsupported directory-identity ABI");
+        }
+
+        try
+        {
             var status = new byte[512];
             var result = OperatingSystem.IsMacOS() && architecture == Architecture.X64 ? LStatMacX64(path, status) : LStat(path, status);
             if (result != 0)
@@ -66,10 +102,7 @@ internal static partial class McpDirectoryIdentity
                 throw Unavailable(path, Marshal.GetLastPInvokeError().ToString(System.Globalization.CultureInfo.InvariantCulture));
             }
 
-            return new(
-                OperatingSystem.IsMacOS() ? BinaryPrimitives.ReadUInt32LittleEndian(status) : BinaryPrimitives.ReadUInt64LittleEndian(status),
-                BinaryPrimitives.ReadUInt64LittleEndian(status.AsSpan(8)),
-                0);
+            return status;
         }
         catch (Exception exception) when (exception is DllNotFoundException or EntryPointNotFoundException or BadImageFormatException)
         {
