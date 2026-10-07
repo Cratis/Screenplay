@@ -190,6 +190,8 @@ internal static class SyntaxKinds
         typeof(SpecificationErrorSyntax),
         typeof(SpecificationEventSyntax),
         typeof(SpecificationNoResultSyntax),
+        typeof(SpecificationStreamSyntax),
+        typeof(SpecificationNoStreamSyntax),
         typeof(SpecificationQueryResultSyntax),
         typeof(SpecificationQuerySyntax),
         typeof(SpecificationReadModelSyntax),
@@ -211,6 +213,7 @@ internal static class SyntaxKinds
         typeof(UiProfileSyntax),
         typeof(UniqueEventConstraintSyntax),
         typeof(UniquePropertyConstraintSyntax),
+        typeof(DependsOnSyntax),
         typeof(UsesBehaviorSyntax),
         typeof(ValidationRuleSyntax),
         typeof(VariantSyntax)

@@ -80,7 +80,7 @@ specification <Name>
 - `file <path>` — zero or one. The repository relative file the specification is realized by. See [File references](file-references.md).
 - `for <event-source-value>` — zero or one inside an event `given`, the command `when`, an event `then`, or an event `when append`. It identifies occurrence context rather than an event payload property.
 
-A `for` assertion selects ESM v2 (language and semantics `2.0`, canonical JSON `schemaVersion: 2`). `given` establishes a fact on that event source; `then` checks both the event payload and its event source. `when for` asserts the command's destination and supplies a deterministic identity when allocation is needed; `when append` with `for` supplies the occurrence source and selects v2 under the same rule. The value must be a concrete scalar of the event's producer command's unambiguous destination type (or the command under test for `when for`). A `StateView` slice can use `when append … for` to specify an event declared in a different slice when its producer supplies that type. This lets a constraint specification establish a claim on one source and attempt the same value on another. A consumer pinned to ESM v1 must explicitly opt in to v2 before accepting such a model.
+Without a routing line, a `for` assertion selects ESM v2 (language and semantics `2.0`, canonical JSON `schemaVersion: 2`). `given` establishes a fact on that event source; `then` checks both the event payload and its event source. `when for` asserts the command's destination and supplies a deterministic identity when allocation is needed; `when append` with `for` supplies the occurrence source and selects v2 under the same rule. The value must be a concrete scalar of the event's producer command's unambiguous destination type (or the command under test for `when for`). A `StateView` slice can use `when append … for` to specify an event declared in a different slice when its producer supplies that type. This lets a constraint specification establish a claim on one source and attempt the same value on another. A consumer pinned to ESM v1 must explicitly opt in to v2 before accepting such a model.
 
 Property values (`<property> = <value>`) accept literals (including `null`), single-line JSON-shaped objects and lists with quoted keys, and the same mapping expressions as `produces` and `capture`. For example, `lines = [{"sku":"A-1","quantity":2}]` and `tags = []` are typed values, not opaque expressions. Keys must name properties of the target's declared composite `type`; list items are checked against the element type. Unknown or imported shapes remain undecided. A value with the wrong object/list shape is an error.
 
@@ -132,6 +132,49 @@ Source-bound reference execution uses `SemanticSpecificationRunner.Run(compilati
 Examples cannot supply callers, clocks or whole scenarios, and cannot be used in query results, `then result`, `then returns`, trigger or capture fixtures. Composite-value examples, inheritance, named setups and scenario outlines are not supported; structured values inside an event, command or read-model example are supported. There are no implicit defaults or unused/shadowing warnings.
 
 Assign a property only once within each fixture or step. An inline assignment repeated in the indented body reports `PLAY0519`; a malformed example header reports `PLAY0518`. A declaration does not supply implicit defaults or change the step's matching mode. Unlike `seed`, an example declares specification data, not events to append when the application starts.
+
+## Event routes (syntax-only)
+
+> Specification event routes are authoring syntax. Binding refuses `stream` and `no stream` with `PLAY0268`: they are not admitted by any supported executable model (ESM) version yet. They do not select an executable version or change reference-runner behavior today.
+
+An event occurrence in `given`, `when append` or `then` can name a source-owned stream:
+
+```screenplay
+domain Banking
+eventsource Account
+  identifier String
+  stream Transactions
+    streamId String
+  stream Profile
+module Accounts
+  feature History
+    slice StateView Recording
+      event Recorded
+        amount Decimal
+      specification ReadingAnotherPartition
+        given Recorded
+          for "other"
+          stream Account.Transactions
+            streamId = "p-1:2026-10"
+          amount = 100
+        when append Recorded
+          for "other"
+          amount = 40
+        then Recorded
+          no stream
+          amount = 40
+```
+
+The example states route intent, not a passing executable scenario. `Account` declares an `identifier String`, a keyed `Transactions` stream with `streamId String`, and an unkeyed `Profile` stream. `Source.Stream` resolves by exact names against the complete compilation input; ambiguity is refused rather than guessed.
+
+- Put `stream`, `for` and payload lines in any order. An occurrence takes at most one `stream` or `no stream`, once. The printer places the route after `for` and before payload.
+- A keyed stream requires exactly one nested `streamId = <literal>` of its declared scalar type; an unkeyed stream refuses it. Empty text is refused. Text such as `"p-1:2026-10"` is one opaque value, not a composite key. Composite stream ids are not supported.
+- Routed `given` and `when append` require a concrete `for` literal of the named source's `identifier` type. A routed `then` may omit `for`. A source with no identifier needs exactly one known destination type across all event producers; otherwise declare an identifier on the source. The prebinding check conservatively refuses fallback when a reaction, capture or other producer's destination cannot be determined from syntax.
+- Routes belong to occurrences, not event types. Another producer with a different destination does not invalidate history on a source with its own identifier. An expected route or `for` type is refused only if it contradicts the command under test and that command is the event's only producer in the whole model; other producers defer the comparison.
+- Only `then` accepts `no stream`, asserting an unrouted occurrence. A `then` without either routing line leaves the route unspecified. `given` and `when append` without a route remain unrouted. `when <Command>` refuses both lines: its route belongs to the command declaration. Read-model and query steps do not take routes.
+- `stream = 5` and `streamId = 6` remain payload mappings at event level. Only the nested stream-id mapping is route metadata. Source-only routes have no spelling yet.
+
+See [event sources](event-sources.md) for source and stream declarations and [diagnostics](diagnostics.md) for `PLAY0547`–`PLAY0551`. Specifications without these new lines keep their existing diagnostics and executable semantics. Renaming an event preserves its occurrence routing metadata. Renaming event-source or stream declarations is not supported yet; route references are typed in preparation for [#467](https://github.com/Cratis/Screenplay/issues/467).
 
 ## Rejections
 

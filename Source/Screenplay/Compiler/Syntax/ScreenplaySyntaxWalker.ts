@@ -18,14 +18,15 @@ import { SpecificationRedeliverySyntax } from './SpecificationRedeliverySyntax';
 import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
 import { InteractionArgumentSyntax, ScreenActionAlternativeSyntax, ScreenActionOtherwiseSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenSyntax } from './Screens';
 import {
-    SpecificationExampleSyntax, SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax,
+    SpecificationExampleSyntax, SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
     SpecificationReadModelSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationSyntax, SpecificationTriggerSyntax, SpecificationWhenQuerySyntax,
 } from './Specifications';
-import { ApplicationSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax, SliceSyntax } from './Structure';
+import { ApplicationSyntax, DependsOnSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax, SliceSyntax } from './Structure';
 import { CommandResponseSyntax, PropertyResponseSourceSyntax, RecordCommandResponseSyntax, RecordSpecificationReturnSyntax, ResponseFieldSyntax, ScalarCommandResponseSyntax, ScalarSpecificationReturnSyntax, SpecificationReturnSyntax } from './Responses';
 import { SyntaxNode } from './SyntaxNode';
 import { OperationSyntax, OperationPhaseSyntax, SystemSyntax } from './Operations';
 import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSyntax, ImplementationHintSyntax } from './Implementations';
+import { ReadsSyntax, ConcurrencySyntax, ReducerSyntax, ReducerRuleSyntax, FormSyntax, TriggerDataSyntax } from './DependencySources';
 
 // Walks a whole syntax tree, depth first, in the order the C# ScreenplaySyntaxWalker does. Every visit
 // method calls visitNode and then walks the node's children, so an emitter overrides only the nodes it
@@ -111,9 +112,12 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.properties.forEach(node => this.visitProperty(node));
     }
 
+    visitDependsOn(syntax: DependsOnSyntax): void { this.visitNode(syntax); }
+
     visitModule(syntax: ModuleSyntax): void {
         this.visitNode(syntax);
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
+        syntax.dependsOn?.forEach(node => this.visitDependsOn(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.features.forEach(node => this.visitFeature(node));
@@ -122,6 +126,7 @@ export abstract class ScreenplaySyntaxWalker {
     visitFeature(syntax: FeatureSyntax): void {
         this.visitNode(syntax);
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
+        syntax.dependsOn?.forEach(node => this.visitDependsOn(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.features.forEach(node => this.visitFeature(node));
@@ -142,6 +147,30 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.reactions.forEach(node => this.visitReaction(node));
         syntax.screens.forEach(node => this.visitScreen(node));
         syntax.specifications.forEach(node => this.visitSpecification(node));
+    }
+
+    // Explicit reference-only entry points. Default tree traversal remains the narrowed wire traversal;
+    // dependency consumers opt into parser-owned side-table payloads rather than changing board visitors.
+    visitTriggerData(syntax: TriggerDataSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.type !== null) this.visitTypeRef(syntax.type);
+    }
+    visitReads(syntax: ReadsSyntax): void { this.visitNode(syntax); }
+    visitConcurrency(syntax: ConcurrencySyntax): void { this.visitNode(syntax); }
+    visitReducer(syntax: ReducerSyntax): void {
+        this.visitNode(syntax);
+        syntax.rules.forEach(node => this.visitReducerRule(node));
+    }
+    visitReducerRule(syntax: ReducerRuleSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.file !== null) this.visitFileReference(syntax.file);
+        if (syntax.code !== null) this.visitCodeBlock(syntax.code);
+    }
+    visitForm(syntax: FormSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.populate !== null) this.visitNode(syntax.populate);
+        syntax.fields.forEach(node => this.visitNode(node));
+        if (syntax.onSubmit !== null) this.visitScreenDirective(syntax.onSubmit);
     }
 
     visitCommand(syntax: CommandSyntax): void {
@@ -581,9 +610,18 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitSpecificationEvent(syntax: SpecificationEventSyntax): void {
         this.visitNode(syntax);
+        if (syntax.stream != null) this.visitSpecificationStream(syntax.stream);
+        if (syntax.noStream != null) this.visitSpecificationNoStream(syntax.noStream);
         syntax.values.forEach(node => this.visitPropertyMapping(node));
         if (syntax.for !== null) this.visitExpression(syntax.for);
     }
+
+    visitSpecificationStream(syntax: SpecificationStreamSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.streamId !== null) this.visitPropertyMapping(syntax.streamId);
+    }
+
+    visitSpecificationNoStream(syntax: SpecificationNoStreamSyntax): void { this.visitNode(syntax); }
 
     visitSpecificationCommand(syntax: SpecificationCommandSyntax): void {
         this.visitNode(syntax);

@@ -250,6 +250,360 @@
             "diagnostics": ["PLAY0545@7"]
         },
         {
+            "name": "Source identifier fallback refuses an unresolved command destination path",
+            "validate": true,
+            "source": ["type Detail", "  id String", "eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        detail Detail", "        produces E", "          for detail.missing", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          detail = {\"id\":\"other\"}"],
+            "diagnostics": ["PLAY0550@16"]
+        },
+        {
+            "name": "Operation productions do not interfere with source identifier fallback",
+            "validate": true,
+            "source": ["system Mailer", "eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      operation Send", "        uses Mailer", "      command C", "        id String identifier", "        produces Send", "        produces E", "          for id", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          id = \"other\""],
+            "diagnostics": []
+        },
+        {
+            "name": "Imported event productions cannot supply a local event's source identifier fallback",
+            "validate": true,
+            "source": ["import External.Missing", "eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        produces Missing", "          for id", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          id = \"other\""],
+            "diagnostics": ["PLAY0550@15"]
+        },
+        {
+            "name": "Capture child producers prevent command-only source identifier fallback",
+            "validate": true,
+            "source": ["eventsource Account", "  stream Profile", "module M", "  feature F", "    slice Translate S", "      event E", "      command C", "        id String identifier", "        produces E", "          for id", "      capture Legacy", "        source webhook", "          path /events", "        key id", "        children items identified by id", "          append E", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          id = \"other\""],
+            "diagnostics": ["PLAY0550@20"]
+        },
+        {
+            "name": "Capture nested producers prevent command-only source identifier fallback",
+            "validate": true,
+            "source": ["eventsource Account", "  stream Profile", "module M", "  feature F", "    slice Translate S", "      event E", "      command C", "        id String identifier", "        produces E", "          for id", "      capture Legacy", "        source webhook", "          path /events", "        key id", "        nested detail", "          append E", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          id = \"other\""],
+            "diagnostics": ["PLAY0550@20"]
+        },
+        {
+            "name": "Unknown imported stream id type defers literal contradiction",
+            "validate": true,
+            "source": ["import External.Key", "eventsource Account", "  identifier String", "  stream Profile", "    streamId Key", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = \"first\"", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = \"second\""],
+            "diagnostics": []
+        },
+        {
+            "name": "Different portable UUID stream identities contradict",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "    streamId Uuid", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = \"3FA85F64-5717-4562-B3FC-2C963F66AFA6\"", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = \"3fa85f64-5717-4562-b3fc-2c963f66afa7\""],
+            "diagnostics": ["PLAY0551@19"]
+        },
+        {
+            "name": "Exclusive command literal stream id contradicts expected literal",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "    streamId String", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = \"first\"", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = \"second\""],
+            "diagnostics": ["PLAY0551@19"]
+        },
+        {
+            "name": "UUID stream id spellings compare by portable formatting",
+            "validate": true,
+            "source": ["concept Key : Uuid", "eventsource Account", "  identifier String", "  stream Profile", "    streamId Key", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = \"{3FA85F64-5717-4562-B3FC-2C963F66AFA6}\"", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = \"3fa85f6457174562b3fc2c963f66afa6\""],
+            "diagnostics": []
+        },
+        {
+            "name": "Integer concept stream ids compare by portable formatting in exact mode",
+            "validate": true,
+            "source": ["numbers exact", "concept Month : Int", "eventsource Account", "  identifier String", "  stream Profile", "    streamId Month", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = 202610.0", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = 202610"],
+            "diagnostics": []
+        },
+        {
+            "name": "Legacy integer stream ids normalize negative zero",
+            "validate": true,
+            "source": ["concept Key : Int", "eventsource Account", "  identifier String", "  stream Profile", "    streamId Key", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = -0", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = 0"],
+            "diagnostics": []
+        },
+        {
+            "name": "Legacy integer stream ids retain all integral digits",
+            "validate": true,
+            "source": ["concept Key : Int", "eventsource Account", "  identifier String", "  stream Profile", "    streamId Key", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = 10000000000000000", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = 10000000000000002"],
+            "diagnostics": ["PLAY0551@20"]
+        },
+        {
+            "name": "Integer concept stream ids refuse different literals",
+            "validate": true,
+            "source": ["concept Month : Int", "eventsource Account", "  identifier String", "  stream Profile", "    streamId Month", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = 202609", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = 202610"],
+            "diagnostics": ["PLAY0551@20"]
+        },
+        {
+            "name": "Command path stream id defers expected literal comparison",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "    streamId String", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        key String", "        stream Account.Profile", "          streamId = key", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "          key = \"first\"", "        then E", "          stream Account.Profile", "            streamId = \"second\""],
+            "diagnostics": []
+        },
+        {
+            "name": "Exclusive destination and source identifier concepts differ nominally",
+            "validate": true,
+            "source": ["concept SourceId : Uuid", "concept CommandId : Uuid", "eventsource Account", "  identifier SourceId", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id CommandId identifier", "        stream Account.Profile", "        produces E", "          for id", "      specification X", "        when C", "          id = \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"", "        then E", "          for \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"", "          stream Account.Profile"],
+            "diagnostics": ["PLAY0504@11", "PLAY0551@20"]
+        },
+        {
+            "name": "Unknown destination type defers nominal contradiction",
+            "validate": true,
+            "source": ["import External.CommandId", "concept SourceId : Uuid", "eventsource Account", "  identifier SourceId", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id CommandId identifier", "        stream Account.Profile", "        produces E", "          for id", "      specification X", "        when C", "          id = \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"", "        then E", "          for \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"", "          stream Account.Profile"],
+            "diagnostics": []
+        },
+        {
+            "name": "Malformed first directive does not consume the route slot",
+            "source": ["module M", "  feature F", "    slice StateView S", "      specification X", "        then E", "          stream Account", "          no stream"],
+            "diagnostics": ["PLAY0547@6"]
+        },
+        {
+            "name": "Misplaced no stream does not consume the given route slot",
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "module M", "  feature F", "    slice StateView S", "      specification X", "        given E", "          no stream", "          stream Account.Profile", "          for \"other\""],
+            "diagnostics": ["PLAY0547@9"]
+        },
+        {
+            "name": "One command can produce the expected event with either destination type",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        external Uuid", "        stream Account.Profile", "        produces E", "          for id", "        produces E", "          for external", "      specification X", "        when C", "          id = \"other\"", "          external = \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"", "        then E", "          for \"other\"", "          stream Account.Profile"],
+            "diagnostics": []
+        },
+        {
+            "name": "Source identifier fallback follows composite command destination paths",
+            "validate": true,
+            "source": ["type Detail", "  id String", "eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        detail Detail", "        produces E", "          for detail.id", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          detail = {\"id\":\"other\"}"],
+            "diagnostics": []
+        },
+        {
+            "name": "Source identifier fallback retains optional composite parents",
+            "validate": true,
+            "source": ["type Detail", "  id String", "eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        detail Detail optional", "        produces E", "          for detail.id", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          detail = {\"id\":\"other\"}"],
+            "diagnostics": ["PLAY0550@15"]
+        },
+        {
+            "name": "Capture producers cannot supply a guessed source identifier fallback",
+            "validate": true,
+            "source": ["eventsource Account", "  stream Profile", "module M", "  feature F", "    slice Translate S", "      event E", "      capture Legacy", "        source webhook", "          path /events", "        key id", "        append E", "      specification X", "        when append E", "          for \"other\"", "          stream Account.Profile"],
+            "diagnostics": ["PLAY0550@15"]
+        },
+        {
+            "name": "Source identifier fallback accepts agreeing producer destination types",
+            "validate": true,
+            "source": ["eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        produces E", "          for id", "      command D", "        id String identifier", "        produces E", "          for id", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          id = \"other\""],
+            "diagnostics": []
+        },
+        {
+            "name": "Exclusive command destination contradicts routed expectation identity",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id Int identifier", "        stream Account.Profile", "        produces E", "          for id", "      specification X", "        when C", "          id = 4", "        then E", "          for \"other\"", "          stream Account.Profile"],
+            "diagnostics": ["PLAY0504@9", "PLAY0551@18"]
+        },
+        {
+            "name": "Malformed specification route is refused",
+            "source": ["module M", "  feature F", "    slice StateView S", "      specification X", "        then E", "          stream Account"],
+            "diagnostics": ["PLAY0547@6"]
+        },
+        {
+            "name": "Duplicate specification stream ids are refused",
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "    streamId String", "module M", "  feature F", "    slice StateView S", "      specification X", "        then E", "          stream Account.Profile", "            streamId = \"key\"", "            streamId = \"other\""],
+            "diagnostics": ["PLAY0547@12"]
+        },
+        {
+            "name": "Unkeyed specification routes refuse stream ids",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        when append E", "          for \"other\"", "          stream Account.Profile", "            streamId = \"key\""],
+            "diagnostics": ["PLAY0549@11"]
+        },
+        {
+            "name": "Specification stream id must match declared type",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "    streamId Uuid", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        when append E", "          for \"other\"", "          stream Account.Profile", "            streamId = \"not-a-uuid\""],
+            "diagnostics": ["PLAY0549@13"]
+        },
+        {
+            "name": "Duplicate physical streams are ambiguous for occurrences",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "  stream Profile", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        when append E", "          for \"other\"", "          stream Account.Profile"],
+            "diagnostics": ["PLAY0503@4", "PLAY0549@12"]
+        },
+        {
+            "name": "Routed append requires source identity",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        when append E", "          stream Account.Profile"],
+            "diagnostics": ["PLAY0550@10"]
+        },
+        {
+            "name": "Source identifier fallback refuses any unknown producer destination",
+            "validate": true,
+            "source": ["eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      command C", "        id String identifier", "        produces event E", "      reaction R", "        when E", "          produces E", "            for \"other\"", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          id = \"other\""],
+            "diagnostics": ["PLAY0550@16"]
+        },
+        {
+            "name": "Routed command contradicts no stream expectation",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      command C", "        id String identifier", "        stream Account.Profile", "        produces event E", "      specification X", "        when C", "          id = \"other\"", "        then E", "          no stream"],
+            "diagnostics": ["PLAY0551@15"]
+        },
+        {
+            "name": "Specification command occurrences cannot route",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      specification X", "        when C", "          stream Account.Profile", "            streamId = 4"],
+            "diagnostics": ["PLAY0548@6"]
+        },
+        {
+            "name": "Specification event routes cannot conflict",
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "module M", "  feature F", "    slice StateView S", "      specification X", "        then E", "          stream Account.Profile", "          no stream"],
+            "diagnostics": ["PLAY0547@10"]
+        },
+        {
+            "name": "Given cannot assert no stream",
+            "source": ["module M", "  feature F", "    slice StateView S", "      specification X", "        given E", "          no stream"],
+            "diagnostics": ["PLAY0547@6"]
+        },
+        {
+            "name": "Append cannot assert no stream",
+            "source": ["module M", "  feature F", "    slice StateView S", "      specification X", "        when append E", "          no stream"],
+            "diagnostics": ["PLAY0547@6"]
+        },
+        {
+            "name": "Specification stream ids are leaves",
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "    streamId String", "module M", "  feature F", "    slice StateView S", "      specification X", "        then E", "          stream Account.Profile", "            streamId = \"key\"", "              nested = 5"],
+            "diagnostics": ["PLAY0547@12"]
+        },
+        {
+            "name": "Specification routes resolve exactly",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        when append E", "          for \"other\"", "          stream Missing.Profile"],
+            "diagnostics": ["PLAY0549@8"]
+        },
+        {
+            "name": "Keyed specification routes require stream id",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "    streamId String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        when append E", "          for \"other\"", "          stream Account.Profile"],
+            "diagnostics": ["PLAY0549@12"]
+        },
+        {
+            "name": "Empty specification text stream id is refused",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "    streamId String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        when append E", "          for \"other\"", "          stream Account.Profile", "            streamId = \"\""],
+            "diagnostics": ["PLAY0549@13"]
+        },
+        {
+            "name": "Specification stream id must be a literal",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "    streamId String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        when append E", "          for \"other\"", "          stream Account.Profile", "            streamId = month"],
+            "diagnostics": ["PLAY0549@13"]
+        },
+        {
+            "name": "Routed given requires source identity",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        given E", "          stream Account.Profile", "        when append E"],
+            "diagnostics": ["PLAY0550@10"]
+        },
+        {
+            "name": "Routed identity uses the named source type without a producer",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier Uuid", "  stream Profile", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        when append E", "          for \"other\"", "          stream Account.Profile"],
+            "diagnostics": ["PLAY0550@10"]
+        },
+        {
+            "name": "Source without identifier and producer is refused",
+            "validate": true,
+            "source": ["eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        when append E", "          for \"other\"", "          stream Account.Profile"],
+            "diagnostics": ["PLAY0550@10"]
+        },
+        {
+            "name": "A then route can omit identity without a producer",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        when append E", "        then E", "          stream Account.Profile"],
+            "diagnostics": []
+        },
+        {
+            "name": "Exclusive command producer contradicts expected route",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      command C", "        id String identifier", "        produces event E", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile"],
+            "diagnostics": ["PLAY0551@14"]
+        },
+        {
+            "name": "Another reaction producer defers route contradiction",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      command C", "        id String identifier", "        produces event E", "      reaction R", "        when E", "          produces E", "            for \"other\"", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile"],
+            "diagnostics": []
+        },
+        {
+            "name": "Source identifier fallback accepts one known command destination",
+            "validate": true,
+            "source": ["eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      command C", "        id String identifier", "        produces event E", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          id = \"other\""],
+            "diagnostics": []
+        },
+        {
+            "name": "Source identifier fallback refuses disagreeing producers",
+            "validate": true,
+            "source": ["eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        produces E", "          for id", "      command D", "        id Int identifier", "        produces E", "          for id", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          id = \"other\""],
+            "diagnostics": ["PLAY0550@18"]
+        },
+        {
+            "name": "An occurrence ignores another producer destination with a source identifier",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id Int identifier", "        produces E", "          for id", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          id = 4"],
+            "diagnostics": []
+        },
+        {
+            "name": "Declared dependencies accept native next-line whitespace",
+            "validate": true,
+            "source": ["module Consumer", "  depends on\u0085Target", "module Target"],
+            "diagnostics": []
+        },
+        {
+            "name": "Declared dependencies reject byte-order-mark whitespace",
+            "source": ["module Consumer", "  depends on\uFEFFTarget"],
+            "diagnostics": ["PLAY0022@2"]
+        },
+        {
+            "name": "Declared dependencies reject supplementary word characters",
+            "source": ["module Consumer", "  depends on A\ud801\udc00"],
+            "diagnostics": ["PLAY0022@2"]
+        },
+        {
+            "name": "Restated modules and features are one dependency target per address",
+            "validate": true,
+            "source": ["module Consumer", "  depends on A", "  depends on A.Shared", "module A", "  feature Shared", "  feature Shared", "module A", "  feature Shared"],
+            "diagnostics": []
+        },
+        {
+            "name": "Declared dependency invalid targets are warnings",
+            "validate": true,
+            "source": ["module Payroll", "  depends on Payroll.Runs", "  feature Handover", "    depends on Handover", "    depends on Payroll", "    depends on Nowhere", "  feature Runs"],
+            "diagnostics": ["PLAY0554@2", "PLAY0554@4", "PLAY0554@5", "PLAY0554@6"]
+        },
+        {
+            "name": "Declared dependencies keep identical resolved aliases once",
+            "validate": true,
+            "source": ["module Payroll", "  feature Handover", "    depends on Runs", "    depends on Payroll.Runs", "    depends on Runs", "  feature Runs"],
+            "diagnostics": ["PLAY0555@5", "PLAY0555@4"]
+        },
+        {
+            "name": "Declared dependencies warn on unresolved text repeats once per repeat",
+            "validate": true,
+            "source": ["module Payroll", "  depends on Nowhere", "  depends on Nowhere", "  depends on Nowhere"],
+            "diagnostics": ["PLAY0555@3", "PLAY0555@4", "PLAY0554@2"]
+        },
+        {
+            "name": "Declared dependencies reject equally near suffix matches",
+            "validate": true,
+            "source": ["module Consumer", "  depends on Group.Shared", "module A", "  feature Group", "    feature Shared", "module B", "  feature Group", "    feature Shared"],
+            "diagnostics": ["PLAY0198@2"]
+        },
+        {
+            "name": "Bare dependency targets never resolve features in another module or cousins",
+            "validate": true,
+            "source": ["module Payroll", "  feature Handover", "    feature Nested", "      depends on Approval", "      depends on Cousin", "  feature Runs", "    feature Cousin", "module Timesheets", "  feature Approval"],
+            "diagnostics": ["PLAY0554@4", "PLAY0554@5"]
+        },
+        {
+            "name": "Declared dependency targets follow sibling shadowing and ancestor siblings",
+            "validate": true,
+            "source": ["module Payroll", "  feature Handover", "    feature Nested", "      depends on Runs", "      depends on Timesheets.Approval", "  feature Runs", "module Runs", "module Timesheets", "  feature Approval"],
+            "diagnostics": []
+        },
+        {
+            "name": "Depends requires on and exactly one dotted identifier",
+            "source": ["module M", "  depends on", "  depends M", "  depends on M N", "  feature F", "    depends on M.", "    depends on \"M\""],
+            "diagnostics": ["PLAY0022@2", "PLAY0022@3", "PLAY0022@4", "PLAY0024@6", "PLAY0024@7"]
+        },
+        {
             "name": "Personal declared trigger data cannot supply reaction destinations",
             "validate": true,
             "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],

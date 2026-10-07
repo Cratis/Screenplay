@@ -230,6 +230,7 @@ Module         = "module", Ident, NL,
                  INDENT,
                    { DescriptionDecl
                    | AuthorizeDecl
+                   | DependsOnDecl
                    | FileImport
                    | ScreenTemplateDecl
                    | DialogTemplateDecl
@@ -240,6 +241,11 @@ Module         = "module", Ident, NL,
                    | ExampleDecl
                    | Feature },
                  DEDENT ;
+
+DependsOnDecl  = "depends", "on", QualifiedName, NL ;
+
+(* Declared dependencies are authoring metadata naming modules or features.
+   One target per line; self, ancestor and descendant targets raise warning PLAY0554. *)
 
 (* A module or feature may attach an inline interaction with "on" or a
    named behavior with "uses". These bindings reach its descendant screens. *)
@@ -393,6 +399,7 @@ Feature        = "feature", Ident, NL,
                  INDENT,
                    { DescriptionDecl
                    | AuthorizeDecl
+                   | DependsOnDecl
                    | FileImport
                    | Feature
                    | SliceDecl
@@ -855,7 +862,7 @@ SpecificationGiven = OperationFailureFixture
                | "given", "capture", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "given", QualifiedName, [ InlineFixtureAssignment ], NL,
-                 [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ] ;
+                 [ INDENT, { SpecificationEventSource | SpecificationStream | PropertyMapping }, DEDENT ] ;
 
 (* "given clock" states the ISO 8601 instant the scenario happens at - the
    occurrence time of everything it does. "given capture" states an earlier record
@@ -864,7 +871,7 @@ SpecificationGiven = OperationFailureFixture
 SpecificationWhen = "when", QualifiedName, [ InlineFixtureAssignment ], NL,
                  [ INDENT, { SpecificationEventSource | PropertyMapping | GeneratedFixture }, DEDENT ]
                | "when", "append", QualifiedName, [ InlineFixtureAssignment ], NL,
-                 [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ]
+                 [ INDENT, { SpecificationEventSource | SpecificationStream | PropertyMapping }, DEDENT ]
                | "when", "redelivered", QualifiedName, "to", QualifiedName, NL,
                  [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ]
                | "when", "clock", StringLiteral, NL
@@ -917,9 +924,17 @@ SpecificationThen = ReturnExpectation
                | "then", "denied", NL
                | "then", "events", "in", "any", "order", NL
                | "then", QualifiedName, [ InlineFixtureAssignment ], NL,
-                 [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ] ;
+                 [ INDENT, { SpecificationEventSource | SpecificationStream | SpecificationNoStream | PropertyMapping }, DEDENT ] ;
 
 SpecificationEventSource = "for", Expression, NL ;
+SpecificationStream = "stream", Ident, ".", Ident, NL,
+                 [ INDENT, "streamId", "=", ConcreteValue, NL, DEDENT ] ;
+SpecificationNoStream = "no", "stream", NL ;
+(* A route occurs at most once. Only then accepts no stream. Routed given and
+   when append require for; then may omit it. streamId is required exactly for
+   keyed streams, is a concrete compatible scalar and cannot be empty text.
+   Routing lines under when Command are refused. All routes are syntax-only:
+   binding reports PLAY0268 until an executable model version admits them. *)
 
 SpecificationQueryDirective = "arguments", NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]

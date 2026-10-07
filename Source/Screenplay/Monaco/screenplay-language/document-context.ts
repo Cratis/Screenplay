@@ -91,3 +91,25 @@ export function nearestEnclosingLine(
     }
     return undefined;
 }
+
+// Like enclosingChain, but keeps each opener whole - 'slice StateView Name' rather than 'slice' - innermost first.
+export function enclosingHeaders(
+    lines: string[],
+    fences: boolean[],
+    lineIndex: number,
+    indent: number,
+): string[] {
+    const headers: string[] = [];
+    let currentIndent = indent;
+    for (let index = lineIndex - 1; index >= 0 && currentIndent > 0; index--) {
+        if (fences[index]) continue;
+        const line = withoutComment(lines[index]);
+        if (line.trim().length === 0) continue;
+        const lineIndent = indentOf(line);
+        if (lineIndent < currentIndent) {
+            headers.push(line.trim());
+            currentIndent = lineIndent;
+        }
+    }
+    return headers;
+}

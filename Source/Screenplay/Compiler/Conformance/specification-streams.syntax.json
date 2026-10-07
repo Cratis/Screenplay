@@ -1,0 +1,318 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "Partition",
+      "type": "Int",
+      "validations": [],
+      "values": []
+    }
+  ],
+  "domain": null,
+  "eventSources": [
+    {
+      "kind": "EventSourceSyntax",
+      "description": null,
+      "id": null,
+      "identifier": {
+        "kind": "TypeRefSyntax",
+        "isCollection": false,
+        "isOptional": false,
+        "name": "String"
+      },
+      "name": "Account",
+      "streams": [
+        {
+          "kind": "EventStreamSyntax",
+          "description": null,
+          "id": null,
+          "name": "Transactions",
+          "streamId": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "String"
+          }
+        },
+        {
+          "kind": "EventStreamSyntax",
+          "description": null,
+          "id": null,
+          "name": "Profile",
+          "streamId": null
+        },
+        {
+          "kind": "EventStreamSyntax",
+          "description": null,
+          "id": null,
+          "name": "Partitioned",
+          "streamId": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "Partition"
+          }
+        }
+      ]
+    }
+  ],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Accounts",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "Recorded",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "stream",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "streamId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "History",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Recorded",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "other"
+                      },
+                      "stream": {
+                        "kind": "SpecificationStreamSyntax",
+                        "eventSource": "Account",
+                        "stream": "Transactions",
+                        "streamId": {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "streamId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "p-1:2026-10"
+                          }
+                        }
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "stream",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "5"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": null,
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "ReadingHistory",
+                  "sourceOptions": {
+                    "numericMode": "exact"
+                  },
+                  "thenAbsentReadModels": [],
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Recorded",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "other"
+                      },
+                      "stream": {
+                        "kind": "SpecificationStreamSyntax",
+                        "eventSource": "Account",
+                        "stream": "Partitioned",
+                        "streamId": {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "streamId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "202610"
+                            }
+                          }
+                        }
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "stream",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "7"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Recorded",
+                      "for": null,
+                      "noStream": {
+                        "kind": "SpecificationNoStreamSyntax"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "streamId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "8"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Recorded",
+                      "for": null,
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "stream",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "9"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenQueries": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": {
+                    "kind": "SpecificationEventSyntax",
+                    "eventType": "Recorded",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "other"
+                    },
+                    "stream": {
+                      "kind": "SpecificationStreamSyntax",
+                      "eventSource": "Account",
+                      "stream": "Profile",
+                      "streamId": null
+                    },
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "streamId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": {
+                            "literalType": "ExactNumber",
+                            "value": "6"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Banking"
+    }
+  ],
+  "personas": [],
+  "policies": [],
+  "seeds": [],
+  "sourceOptions": {
+    "numericMode": "exact"
+  },
+  "systems": [],
+  "types": []
+}

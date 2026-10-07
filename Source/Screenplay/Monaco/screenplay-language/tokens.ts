@@ -71,7 +71,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
                 ['white', 'keyword', 'white', 'type.identifier']],
             [new RegExp(`^(\\s*)(command)(\\s+)([A-Za-z_][${bmpWordCharacters}]*)(?=\\s*(?://.*)?$)`), ['white', 'keyword', 'white', { token: 'type.identifier', next: '@commandBody.$1' }]],
             [/^(\s*)(handler)(?=\s*(?:\/\/.*)?$)/, ['white', { token: 'keyword', next: '@handlerBody.$1' }]],
-            [/^(\s*@?[a-z_]\w*\s+)([\w.]+(?:\[\])?(?:\?|\s+optional)?)(\s+)(generated)(\s+identifier)?(?=\s*(?:\/\/.*)?$)/,
+            [/^(\s*@?[a-z_]\w*\s+)([\w.]+(?:\[\])?(?:\?|\s+optional)?)(\s+)(generated)(\s+identifier|)(?=\s*(?:\/\/.*)?$)/,
                 ['identifier', 'type.identifier', 'white', 'keyword', 'keyword']],
             [/^(\s*)(generated)(\s+)([a-z_]\w*)(\s*=(?!=|>))/, ['white', 'keyword', 'white', 'identifier', 'operator']],
             [/^(\s*)(then)(\s+)(returns)\b/, ['white', 'keyword', 'white', 'keyword']],

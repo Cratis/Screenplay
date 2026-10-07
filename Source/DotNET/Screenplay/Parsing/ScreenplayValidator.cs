@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Dependencies;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
@@ -26,9 +27,11 @@ internal static class ScreenplayValidator
     /// <param name="application">The <see cref="ApplicationSyntax"/> to validate.</param>
     /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
     /// <param name="allowUnresolvedPersonaPolicies">Whether draft authoring may retain unresolved persona references as warnings.</param>
-    public static void Validate(ApplicationSyntax application, ParserContext context, bool allowUnresolvedPersonaPolicies = false)
+    /// <returns>The application with repeated dependency targets kept once.</returns>
+    public static ApplicationSyntax Validate(ApplicationSyntax application, ParserContext context, bool allowUnresolvedPersonaPolicies = false)
     {
         foreach (var error in SourceNumericModes.Errors(application)) context.Add(error);
+        var authored = application;
         var expansion = SpecificationExamples.Expand(application);
         if (!expansion.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)) application = expansion.Application;
 
@@ -131,6 +134,7 @@ internal static class ScreenplayValidator
         var declarations = new ConsistencyDeclarations(application, scopedSlices);
         ValidateAdditionalEventReferences(application, declarations, knownEvents, context);
         EventSourceValidator.Validate(application, declarations, context);
+        SpecificationStreamValidator.Validate(application, declarations, context);
         OperationValidator.Validate(application, declarations, context);
         ImportValidator.Validate(application, declarations, context);
         CommandConsistencyValidator.Validate(declarations, context);
@@ -181,6 +185,8 @@ internal static class ScreenplayValidator
         ValidateProfileLayouts(application, context);
         ValidateArrangements(application, context);
         foreach (var diagnostic in expansion.Diagnostics.Where(diagnostic => !context.Diagnostics.Contains(diagnostic))) context.Add(diagnostic);
+
+        return DeclaredDependencyTargets.Validate(authored, context);
     }
 
     /// <summary>

@@ -476,6 +476,7 @@ public sealed partial class ScreenplayPrinter :
     void WriteModuleBody(ScreenplayWriter writer, ModuleSyntax module)
     {
         WriteDescription(writer, module.Description, module);
+        foreach (var dependency in module.DependsOn) writer.Line($"depends on {dependency.Target}", dependency);
         var members = new List<PrintableMember>();
         AddMembers(members, module.FileImports, -1, import => WriteFileImports(writer, [import]));
         if (module.Authorize is not null)
@@ -806,6 +807,7 @@ public sealed partial class ScreenplayPrinter :
     void WriteFeatureBody(ScreenplayWriter writer, FeatureSyntax feature)
     {
         WriteDescription(writer, feature.Description, feature);
+        foreach (var dependency in feature.DependsOn) writer.Line($"depends on {dependency.Target}", dependency);
         var members = new List<PrintableMember>();
         AddMembers(members, feature.FileImports, -1, import => WriteFileImports(writer, [import]));
         if (feature.Authorize is not null)

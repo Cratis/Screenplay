@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import type { DependencyMap } from '@cratis/screenplay-event-models';
+
 // What the extension tells the board webview, and what the webview tells it back. Both sides import this,
 // so a message cannot be renamed on one side only.
 
@@ -17,6 +19,7 @@ export interface BoardProblem {
 export interface ShowBoardMessage {
     readonly type: 'show';
     readonly document: unknown;
+    readonly dependencies: DependencyMap;
     readonly problems: readonly BoardProblem[];
 }
 

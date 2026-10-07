@@ -34,7 +34,7 @@ export function createCompletionProvider(monaco: Monaco, options: CompletionOpti
             const application = options.application?.(model);
             const symbols = symbolsForBuffer(lines, application);
             const responseEntries = exampleCompletions(lines, lineIndex, textBefore, symbols) ?? eventSourceCompletions(lines, lineIndex, textBefore, symbols) ?? operationCompletions(lines, lineIndex, textBefore, symbols) ?? responseCompletions(lines, lineIndex, textBefore, symbols);
-            const plan = responseEntries === null ? planCompletions(lines, lineIndex, textBefore) : { kind: 'entries' as const, entries: responseEntries };
+            const plan = responseEntries === null ? planCompletions(lines, lineIndex, textBefore, symbols) : { kind: 'entries' as const, entries: responseEntries };
             if (plan.kind === 'none') return { suggestions: [] };
 
             const word = model.getWordUntilPosition(position);

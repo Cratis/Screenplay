@@ -1,14 +1,16 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { enclosingChain, fenceMap, indentOf, nearestEnclosingLine, withoutComment } from './document-context';
+import { enclosingChain, enclosingHeaders, fenceMap, indentOf, nearestEnclosingLine, withoutComment } from './document-context';
 import { refusalContext } from './refusal-context';
 import { namedRuleContext } from './named-rule-context';
 import { responseCompletions } from './response-completions';
 import { exampleCompletions } from './example-authoring';
-import { scanDocument } from './symbols';
+import { DocumentSymbols, scanDocument } from './symbols';
+import { structureCompletion } from './structure-completions';
 import { getSubLanguage } from './sub-language-registry';
 import * as items from './completion-items';
+import * as scope from './scope-items';
 import { CompletionEntry } from './completion-items';
 
 // Matches a validation rule line ending in "rule <Name>" (optionally followed by a
@@ -32,18 +34,43 @@ export type CompletionPlan =
     | { kind: 'queries' }
     | { kind: 'types' };
 
-export function completionEntriesFor(chain: string[]): CompletionEntry[] {
+// What the position sits inside, beyond the keyword chain: the whole header of each enclosing block, so a
+// slice's type and a template's kind are known, and the document's own lines, so a declaration that may
+// appear once is not offered again.
+export interface CompletionScope {
+    headers: readonly string[];
+    document: readonly string[];
+}
+
+const declaredIn = (document: readonly string[], keyword: string) => document.some(line => new RegExp(`^${keyword}\\b`).test(line));
+
+function topLevelEntries(document: readonly string[]): CompletionEntry[] {
+    return items.topLevelItems.filter(item => !(item.label === 'domain' && declaredIn(document, 'domain')) && !(item.label === 'authentication' && declaredIn(document, 'authentication')));
+}
+
+const isTemplate = (header: string | undefined) => /^(?:screen|dialog)\s+template\b/.test(header ?? '');
+
+// A whole block as one completion entry. Continuation lines are indented relative to the line it is inserted on,
+// which is how the editors indent a multi-line snippet.
+function expansionEntry(text: string, indent: number): CompletionEntry {
+    const relative = text.split('\n').map((line, index) => (index === 0 ? line : line.slice(Math.min(indent, indentOf(line))))).join('\n');
+    const label = text.split('\n')[0].trim();
+    return { label, insertText: relative.replace(/[$}\\]/g, '\\$&'), documentation: 'Expands the whole block from what the command and its events declare.' };
+}
+
+export function completionEntriesFor(chain: string[], where: CompletionScope = { headers: [], document: [] }): CompletionEntry[] {
     const construct = chain[0];
-    if (construct === undefined) return items.topLevelItems;
+    if (construct === undefined || construct === 'domain') return topLevelEntries(where.document);
     const subLanguage = getSubLanguage(construct);
     if (subLanguage) return subLanguage.completions ?? [];
+    const header = where.headers[0];
     switch (construct) {
         case 'module':
             return items.moduleItems;
         case 'feature':
             return items.featureItems;
         case 'slice':
-            return items.sliceItems;
+            return items.sliceItemsFor(header?.split(/\s+/)[1]);
         case 'concept':
             return items.conceptItems;
         case 'type':
@@ -52,6 +79,33 @@ export function completionEntriesFor(chain: string[]): CompletionEntry[] {
             return items.commandItems;
         case 'event':
             return items.eventItems;
+        case 'readmodel':
+            return scope.readModelItems;
+        case 'reducer':
+            return scope.reducerItems;
+        case 'form':
+            return scope.formItems;
+        case 'contribute':
+            return scope.contributeItems;
+        case 'behavior':
+            return scope.behaviorItems;
+        case 'persona':
+            return scope.personaItems;
+        case 'authentication':
+            return scope.authenticationItems;
+        case 'seed':
+            return scope.seedItems;
+        case 'theme':
+            return scope.themeItems;
+        case 'ui':
+            return scope.uiProfileItems;
+        case 'on':
+        case 'success':
+        case 'failure':
+        case 'confirm':
+            return scope.outcomeItems;
+        case 'layout':
+            return scope.layoutItems;
         case 'system':
             return items.operationItems.filter(item => item.label === 'description');
         case 'operation':
@@ -92,11 +146,14 @@ export function completionEntriesFor(chain: string[]): CompletionEntry[] {
         case 'table':
         case 'summary':
             return items.tableItems;
+        case 'screen':
+            return isTemplate(header) ? scope.templateItems : items.screenItems;
+        case 'dialog':
+            return scope.templateItems;
         default:
-            // Layout slots and sections inside a screen expose the screen vocabulary.
-            if (chain.includes('screen') || construct === 'section' || construct === 'layout') {
-                return items.screenItems;
-            }
+            if (isTemplate(where.headers.find(candidate => isTemplate(candidate)))) return scope.templateItems;
+            // Sections inside a screen expose the screen vocabulary.
+            if (chain.includes('screen') || construct === 'section') return items.screenItems;
             if (chain.includes('produces')) return items.producesItems;
             return [];
     }
@@ -108,6 +165,7 @@ export function planCompletions(
     lines: string[],
     lineIndex: number,
     textBefore: string,
+    symbols: DocumentSymbols = scanDocument(lines),
 ): CompletionPlan {
     const fences = fenceMap(lines);
     if (fences[lineIndex] || withoutComment(textBefore).length < textBefore.length) return { kind: 'none' };
@@ -222,5 +280,9 @@ export function planCompletions(
         return { kind: 'entries', entries: items.ruleItems };
     }
 
-    return { kind: 'entries', entries: completionEntriesFor(chain) };
+    const headers = enclosingHeaders(lines, fences, lineIndex, effectiveIndent);
+    if (chain[0] === 'for' && chain.includes('seed')) return { kind: 'events' };
+    const entries = completionEntriesFor(chain, { headers, document: lines });
+    const expansion = chain[0] === 'command' ? structureCompletion(lines, lineIndex, ' '.repeat(effectiveIndent), '', symbols) : null;
+    return { kind: 'entries', entries: expansion ? [expansionEntry(expansion.text, effectiveIndent), ...entries] : entries };
 }

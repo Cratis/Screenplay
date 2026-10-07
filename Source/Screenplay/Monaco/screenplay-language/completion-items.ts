@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { eventContextPaths } from './event-context';
+import { exampleDeclarationItems } from './example-declaration-items';
 
 export const optionalTypeItems: CompletionEntry[] = [
     { label: 'optional', insertText: 'optional', documentation: 'Allows the complete value, including a collection, to be absent.' },
@@ -15,9 +16,7 @@ export interface CompletionEntry {
 
 const fenced = (tag: string) => `\`\`\`${tag}\n\${1}\n\`\`\``;
 
-export const exampleDeclarationItems: CompletionEntry[] = [
-    { label: 'example', insertText: 'example ${1:Name} : ${2:Type}\n    ${3:property} = ${4:value}', documentation: 'One possibly partial event, command or read-model fixture. Step assignments override its values; no implicit defaults.' },
-];
+export { exampleDeclarationItems } from './example-declaration-items';
 
 export const topLevelItems: CompletionEntry[] = [
     ...exampleDeclarationItems,
@@ -31,6 +30,15 @@ export const topLevelItems: CompletionEntry[] = [
     { label: 'type', insertText: 'type ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares a composite value type — a named shape built from several properties.' },
     { label: 'policy', insertText: 'policy ${1:Name}\n    require ${2:authenticated}', documentation: 'Declares a named authorization rule for commands and queries.' },
     { label: 'module', insertText: 'module ${1:Name}\n    ', documentation: 'Declares the top-level namespace — maps to a bounded context.' },
+    { label: 'domain', insertText: 'domain ${1:Name}', documentation: 'The domain the file belongs to — optional, at most one per file, before everything else.' },
+    { label: 'persona', insertText: 'persona ${1:Name}\n    description "${2:who they are}"', documentation: 'A named role interacting with the application, with the policies it holds.' },
+    { label: 'authentication', insertText: 'authentication\n    provider ${1:Name}\n        ${2:setting} ${3:value}', documentation: 'Declares the identity providers of the application — at most one block per file.' },
+    { label: 'seed', insertText: 'seed\n    for ${1:EventSourceId}\n        ${2:EventType}', documentation: 'Declares events to seed into the event store per event source id.' },
+    { label: 'layout', insertText: 'layout ${1:Name}\n    ${2:slot}', documentation: 'Declares the application shell with named slots.' },
+    { label: 'theme', insertText: 'theme ${1:Name}\n    compatible with ${2:Package}', documentation: 'Declares a theme and the component packages it is compatible with.' },
+    { label: 'ui profile', insertText: 'ui profile ${1:Name}\n    target platform ${2:web}\n    layout ${3:Layout}\n    theme ${4:Theme}', documentation: 'Binds a target platform and size to a layout, theme and component packages.' },
+    { label: 'behavior', insertText: 'behavior ${1:Name}\n    on ${2:click}\n        ${3:execute command}', documentation: 'A named interaction wiring, attached to a screen, form or dialog with `uses`.' },
+    { label: 'trigger', insertText: 'trigger ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares an integration signal a reaction can run on.' },
 ];
 
 export const operationItems: CompletionEntry[] = [
@@ -66,23 +74,6 @@ export const typeItems: CompletionEntry[] = [
     { label: 'property', insertText: '${1:property} ${2:Type}', documentation: 'A property of the type — a name and a type reference.' },
 ];
 
-export const moduleItems: CompletionEntry[] = [
-    ...exampleDeclarationItems,
-    { label: 'import "…"', insertText: 'import "${1:*/*.play}"', documentation: 'Imports `.play` files into this module — their top level is the module\'s body, so they hold features and module members without restating the module.' },
-    { label: 'layout', insertText: 'layout ${1:Name}\n    template\n        ${2:slot}', documentation: 'Declares a reusable screen template with named slots.' },
-    { label: 'feature', insertText: 'feature ${1:Name}\n    ', documentation: 'Groups related slices into a vertical feature.' },
-];
-
-export const featureItems: CompletionEntry[] = [
-    ...exampleDeclarationItems,
-    { label: 'import "…"', insertText: 'import "${1:*.play}"', documentation: 'Imports `.play` files into this feature — their top level is the feature\'s body, so they hold slices and nested features without restating where they belong.' },
-    { label: 'feature', insertText: 'feature ${1:Name}\n    ', documentation: 'Declares a nested sub-feature.' },
-    { label: 'slice StateChange', insertText: 'slice StateChange ${1:Name}\n    ', documentation: 'A command → events flow; something that changes the system.' },
-    { label: 'slice StateView', insertText: 'slice StateView ${1:Name}\n    ', documentation: 'A query + projection + screen; something that reads the system.' },
-    { label: 'slice Automation', insertText: 'slice Automation ${1:Name}\n    ', documentation: 'A reaction or reducer; something that runs when something happens.' },
-    { label: 'slice Translate', insertText: 'slice Translate ${1:Name}\n    ', documentation: 'A capture; converts external data into events.' },
-];
-
 export const sliceItems: CompletionEntry[] = [
     ...exampleDeclarationItems,
     { label: 'operation', insertText: 'operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type}', documentation: 'Reusable slice-owned operation intent; not admitted by any supported executable model (ESM) version yet.' },
@@ -92,6 +83,9 @@ export const sliceItems: CompletionEntry[] = [
     { label: 'command', insertText: 'command ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares a command — an imperative intent that produces events.' },
     { label: 'query', insertText: 'query ${1:Name} => ${2:ReadModel}', documentation: 'Declares a read-side entry point mapping to a return type.' },
     { label: 'query observable', insertText: 'query ${1:Name} => observable ${2:ReadModel}', documentation: 'Declares a live read — the query keeps pushing as the read model changes, instead of answering once.' },
+    { label: 'readmodel', insertText: 'readmodel ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares the shape of a read model — its properties — that a projection, reducer or query fills and returns.' },
+    { label: 'reducer', insertText: 'reducer ${1:Name} => ${2:ReadModel}\n    on ${3:EventType}\n        ```csharp\n        ${4}\n        ```', documentation: 'Declares a reducer building a read model from events with imperative code, for what a projection cannot express.' },
+    { label: 'specification', insertText: 'specification ${1:Name}\n    given ${2:EventType}\n    when ${3:Command}\n    then ${4:EventType}', documentation: 'Given/when/then acceptance criteria for the slice.' },
     { label: 'projection', insertText: 'projection ${1:Name} => ${2:ReadModel}\n    from ${3:EventType}', documentation: 'Declares how events project into a read model (PDL).' },
     { label: 'capture', insertText: 'capture ${1:Name}\n    source ${2:api}', documentation: 'Declares a change data capture converting external data into events (CDL).' },
     { label: 'reaction', insertText: 'reaction ${1:Name}\n    when ${2:Trigger}', documentation: 'Declares behavior that runs when something happens.' },
@@ -100,6 +94,7 @@ export const sliceItems: CompletionEntry[] = [
 ];
 
 export const commandItems: CompletionEntry[] = [
+    { label: 'property', insertText: '${1:property} ${2:Type}', documentation: 'An input of the command — a name and a type reference.' },
     { label: 'produces operation', insertText: 'produces operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type} = ${5:source}', documentation: 'Declares ordered operation intent; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
     { label: 'returns property', insertText: 'returns @${1:property}', documentation: 'Scalar response from a direct command property, only on acceptance. Executable as ESM v7.' },
     { label: 'returns block', insertText: 'returns\n    ${1:field} = ${2:property}', documentation: 'Unnamed record response with inferred or explicit field types, only on acceptance. Executable as ESM v7.' },
@@ -112,10 +107,13 @@ export const commandItems: CompletionEntry[] = [
     { label: 'validate csharp', insertText: `validate\n    ${fenced('csharp')}`, documentation: 'Imperative validation in C#, yielding the message of every rule the artifact breaks.' },
     { label: 'produces', insertText: 'produces ${1:EventType}\n    ${2:property} = ${3:source}', documentation: 'Declares the event the command emits, with property mappings.' },
     { label: 'produces when', insertText: 'produces when ${1:condition}\n    ${2:EventType}\n        ${3:property} = ${4:source}', documentation: 'Conditionally emits an event when the condition holds.' },
+    { label: 'description', insertText: 'description "${1:what the command asks for}"', documentation: 'A human-readable description.' },
+    { label: 'concurrency', insertText: 'concurrency\n    ${1|eventSource,sourceType,streamType,streamId,events|}', documentation: 'The scope of the concurrency check made when the command appends events.' },
     { label: 'handler', insertText: 'handler\n    ', documentation: 'Fully imperative command implementation — file reference or inline C#, instead of produces.' },
 ];
 
 export const eventItems: CompletionEntry[] = [
+    { label: 'property', insertText: '${1:property} ${2:Type}', documentation: 'A property of the event — a name and a type reference.' },
     { label: 'description', insertText: 'description "${1:what happened}"', documentation: 'Authoring metadata, as one line or a text/markdown fence.' },
     { label: 'documentation', insertText: 'documentation\n    ```markdown\n    ${1:Details}\n    ```', documentation: 'Authoring-only Markdown documentation.' },
     { label: 'id', insertText: 'id "${1:OldName}"', documentation: 'Preserves a previous persisted event name after a rename. Leave absent for new events.' },
@@ -355,3 +353,18 @@ export const contextVariableItems: CompletionEntry[] = [
         .filter((path) => path.name !== 'value')
         .map((path) => ({ label: `$eventContext.${path.path}`, insertText: `$eventContext.${path.path}`, documentation: `${path.description} (PDL)` })),
 ];
+
+export { moduleScopeItems as moduleItems, featureScopeItems as featureItems } from './scope-items';
+
+// What a slice of each type can hold. A slice of an unknown type keeps everything.
+const sliceMembers: Record<string, readonly string[]> = {
+    StateChange: ['operation', 'file', 'description', 'event', 'event generation', 'command', 'constraint', 'screen', 'specification'],
+    StateView: ['file', 'description', 'readmodel', 'query', 'query observable', 'projection', 'reducer', 'screen', 'specification', 'event', 'event generation'],
+    Automation: ['operation', 'file', 'description', 'reaction', 'reducer', 'command', 'event', 'event generation', 'readmodel', 'specification'],
+    Translate: ['file', 'description', 'capture', 'event', 'event generation', 'specification'],
+};
+
+export function sliceItemsFor(sliceType: string | undefined): CompletionEntry[] {
+    const members = sliceType ? sliceMembers[sliceType] : undefined;
+    return members ? sliceItems.filter(item => members.includes(item.label)) : sliceItems;
+}

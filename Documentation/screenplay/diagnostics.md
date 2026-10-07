@@ -100,6 +100,11 @@ Handler commands may author routes without declaring their returned events.
 | `PLAY0505` | Error | An exact `stream Source.Stream` header resolves both to one source-owned stream and to a viable imported value type. Both candidates remain visible; neither is selected automatically. |
 | `PLAY0506` | Error | A known stream-id type falls outside text and UUID values and their nominal concepts, plus integer-backed concepts. Bare Int is rejected. Other types need a future portable formatting contract. Unavailable imported shapes remain unresolved. |
 | `PLAY0507` | Information | A source or stream's rename-only `id` pin repeats its current name. New declarations omit the pin. |
+| `PLAY0547` | Error | A specification routing directive is malformed, repeated, conflicting, has invalid children, or uses `no stream` outside a `then` event. |
+| `PLAY0548` | Error | A `when <Command>` occurrence declares `stream` or `no stream`; the route belongs to the command declaration. |
+| `PLAY0549` | Error | A specification stream reference is missing or ambiguous, its key mapping is missing or superfluous, or the stream id is nonliteral, empty text or incompatible. |
+| `PLAY0550` | Error | A routed `given` or `when append` lacks `for`, a routed identity is not a compatible concrete literal, or a source without `identifier` has no unambiguous known producer destination type. |
+| `PLAY0551` | Error | A `then` route or destination type contradicts the command under test, which is the event's only producer in the whole model. Other producers defer the comparison. |
 
 Command headers are classified against the complete immutable compilation input, including resolved file
 imports. `@stream Qualified.Type`, `stream String` and modified property forms remain properties;
@@ -482,7 +487,7 @@ remove duplicate route headers before export.
 |---|---|---|
 | `PLAY0196` | Warning | A screen binds data to a query nothing in scope declares. |
 | `PLAY0197` | Warning | A screen navigates to a screen nothing in scope declares. |
-| `PLAY0198` | Warning | A bare name matches more than one declaration at the same depth, so which one it means is undecided. |
+| `PLAY0198` | Warning | A bare name matches more than one declaration at the same depth, or a qualified name matches more than one trailing container path, so which one it means is undecided. See [declared dependency targets](#declared-dependency-targets). |
 
 ### What a query's results are narrowed to
 
@@ -1039,6 +1044,15 @@ These are syntax diagnostics. A valid system, operation or operation specificati
 
 See [Timeline diagnostics](imports.md#timeline-diagnostics) for the ordering root, grouping rules, checked references and C#/MCP repair conditions. `PLAY0516` offers verified typed moves or explicit pins before a retained glob where safe; `PLAY0517` and own-sub-feature findings have no repair. These findings and repairs do not change executable behavior.
 
+### Declared dependency targets
+
+| Code | Severity | Reported when |
+| --- | --- | --- |
+| `PLAY0554` | Warning | A `depends on` target is self, an ancestor, a descendant, or does not resolve to a module or feature. |
+| `PLAY0555` | Warning | The same target is declared again on a container, in one file or across files. Resolved aliases count as repeats; unresolved targets compare by text. The first is kept. |
+
+An ambiguous target uses `PLAY0198`, naming the equally near candidates. See [Declared dependencies](slices.md#declared-dependencies) for the sibling and qualified-name rules. Malformed statements are parse errors (`PLAY0022` in a module, `PLAY0024` in a feature).
+
 ### Event sources and command streams
 
 | Code | Condition |
@@ -1048,6 +1062,11 @@ See [Timeline diagnostics](imports.md#timeline-diagnostics) for the ordering roo
 | `PLAY0505` | Both the route and qualified value-property interpretations are viable; neither is selected |
 | `PLAY0506` | Known stream-id type needs an unsupported portable formatter; bare `Int` is not supported |
 | `PLAY0507` | Redundant rename-only stored-name pin |
+| `PLAY0547` | Invalid, duplicated, conflicting or misplaced specification routing directive |
+| `PLAY0548` | Specification command occurrence declares routing metadata |
+| `PLAY0549` | Unresolved specification route or missing, superfluous, nonliteral, empty or incompatible stream id |
+| `PLAY0550` | Missing or incompatible routed source identity, or ambiguous producer fallback without a source identifier |
+| `PLAY0551` | Expected route contradicts its sole producer, the command under test |
 
 Valid [source/stream authoring](event-sources.md) is not admitted by any supported executable model (ESM) version yet; executable binding refuses it with `PLAY0268`. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
 

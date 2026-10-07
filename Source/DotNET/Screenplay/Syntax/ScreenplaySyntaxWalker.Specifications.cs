@@ -147,6 +147,8 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitSpecificationEvent(SpecificationEventSyntax syntax)
     {
         VisitNode(syntax);
+        if (syntax.Stream is { } stream) VisitSpecificationStream(stream);
+        if (syntax.NoStream is { } noStream) VisitSpecificationNoStream(noStream);
 
         if (syntax.For is not null)
         {
@@ -158,6 +160,22 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitPropertyMapping(value);
         }
     }
+
+    /// <summary>
+    /// Visits a specification route and its literal stream id.
+    /// </summary>
+    /// <param name="syntax">The route.</param>
+    public virtual void VisitSpecificationStream(SpecificationStreamSyntax syntax)
+    {
+        VisitNode(syntax);
+        if (syntax.StreamId is { } streamId) VisitPropertyMapping(streamId);
+    }
+
+    /// <summary>
+    /// Visits an unrouted expectation.
+    /// </summary>
+    /// <param name="syntax">The expectation.</param>
+    public virtual void VisitSpecificationNoStream(SpecificationNoStreamSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="SpecificationCommandSyntax"/> node and its children.

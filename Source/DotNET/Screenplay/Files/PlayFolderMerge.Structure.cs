@@ -40,6 +40,7 @@ internal static partial class PlayFolderMerge
             Examples = [.. parts.SelectMany(part => part.Examples)],
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"module '{group.Key}'", context),
             Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"module '{group.Key}'", context),
+            DependsOn = [.. group.OrderBy(part => part.Location.Path, StringComparer.Ordinal).SelectMany(part => part.DependsOn)],
             ScreenTemplates = DeclaredInOneFile(
                 parts.SelectMany(part => part.ScreenTemplates),
                 template => template.Name,
@@ -89,6 +90,7 @@ internal static partial class PlayFolderMerge
             Examples = [.. parts.SelectMany(part => part.Examples)],
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"feature '{group.Key}'", context),
             Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"feature '{group.Key}'", context),
+            DependsOn = [.. group.OrderBy(part => part.Location.Path, StringComparer.Ordinal).SelectMany(part => part.DependsOn)],
             Contributions = [.. parts.SelectMany(part => part.Contributions ?? [])],
             Behaviors = InlineBehaviorsOnce(parts.SelectMany(part => part.Behaviors), $"feature '{group.Key}'", context),
             UsedBehaviors = UsedBehaviorsOnce(parts.SelectMany(part => part.UsedBehaviors), $"feature '{group.Key}'", context),
@@ -141,7 +143,9 @@ internal static partial class PlayFolderMerge
             requirement = new LogicalPolicyRequirementSyntax(requirement, LogicalOperator.And, next.Requirement, requirement.Location);
         }
 
-        return new AuthorizeSyntax(requirement, kept[0].Location);
+        // Keep source metadata on the merged gate: layout collapse may remove every document
+        // that could otherwise restore its authorization comments during an authoring edit.
+        return kept[0] with { Requirement = requirement, SourceComments = [.. kept.SelectMany(authorization => authorization.SourceComments)] };
     }
 
     /// <summary>

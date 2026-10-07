@@ -39,6 +39,13 @@ public sealed partial class SemanticModelBinder
                     specification.DirectiveLocations.GetValueOrDefault("then no events", specification.Location)));
             }
 
+            if (node is SpecificationStreamSyntax or SpecificationNoStreamSyntax)
+            {
+                Diagnostics.Add(Diagnostic.Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    "Specification event routes are not admitted by any supported executable model (ESM) version yet (#457).",
+                    node.Location));
+            }
             if (node is EventSourceSyntax or EventStreamSyntax or CommandStreamSyntax)
             {
                 Diagnostics.Add(Diagnostic.Error(

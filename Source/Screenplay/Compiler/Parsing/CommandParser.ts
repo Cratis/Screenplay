@@ -24,6 +24,8 @@ import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { commandReadSources } from './CommandReadSources';
+import { dependencySources, ReadsSyntax, ConcurrencySyntax } from '../Syntax/DependencySources';
+import { captureReads, captureConcurrency } from './DependencySourceParser';
 import { parseProduces } from './ProducesParser';
 import { reportInvalidModifierOrder, reportLegacyOptionalSuffix, tryParseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
@@ -84,6 +86,8 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
     const validations: ValidateSyntax[] = [];
     const produces: ProducesSyntax[] = [];
     const reads: { readModel: string; alias: string | null }[] = [];
+    const referenceReads: ReadsSyntax[] = [];
+    let concurrency: ConcurrencySyntax | undefined;
     let description: string | null = null;
     let authorize: AuthorizeSyntax | null = null;
     let handler: HandlerSyntax | null = null;
@@ -135,6 +139,9 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
         } else if (keyword === 'handler') {
             handler = parseHandler(context, child);
         } else if (opaqueDirectives.has(keyword)) {
+            const reference = captureReads(child);
+            if (reference !== undefined) referenceReads.push(reference);
+            if (keyword === 'concurrency' && concurrency === undefined) concurrency = captureConcurrency(context, child);
             const read = /^reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?$/.exec(child.content);
             if (read !== null) reads.push({ readModel: read[1], alias: read[2] ?? null });
             if (optionalReads.test(child.content)) {
@@ -174,6 +181,7 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
     }
     const syntax: CommandSyntax = { kind: 'CommandSyntax', name, description, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, handler, response, stream, streamCandidates, location: locationOf(line) };
     commandReadSources.set(syntax, reads);
+    dependencySources.set(syntax, { reads: referenceReads, concurrency });
     return syntax;
 }
 

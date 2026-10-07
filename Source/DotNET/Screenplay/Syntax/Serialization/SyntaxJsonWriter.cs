@@ -22,6 +22,7 @@ internal static class SyntaxJsonWriter
             if (node is Specifications.SpecificationSyntax && member.Name == "thenNoEvents" && Equals(value, false)) continue;
             if (node is InvokesSyntax invocation && member.Name == "onRefused" && !invocation.OnRefused.Any()) continue;
             if (node is Specifications.SpecificationSyntax && member.Name == "whenRedelivered" && value is null) continue;
+            if (member.Name == "dependsOn" && member.ElementType == typeof(DependsOnSyntax) && value is IEnumerable<DependsOnSyntax> dependencies && !dependencies.Any()) continue;
             result.Add(member.Name, WriteMember(member, value, $"{path}.{member.Name}", depth + 1));
         }
 

@@ -246,7 +246,7 @@
                     }
                 },
                 {
-                    "match": "^\\s*(domain|import|concept|type|policy|persona|authentication|module|layout|feature|slice|event|command|query|reaction|trigger|screen|constraint|specification|example|seed)\\b",
+                    "match": "^\\s*(domain|import|concept|type|policy|persona|authentication|module|layout|theme|ui|feature|slice|event|system|eventsource|operation|command|query|projection|capture|reaction|reducer|readmodel|trigger|screen|dialog|form|contribute|constraint|specification|example|seed|behavior)\\b",
                     "captures": {
                         "1": { "name": "keyword.control.screenplay" }
                     }

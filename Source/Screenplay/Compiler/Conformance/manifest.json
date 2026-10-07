@@ -6,6 +6,8 @@
         { "name": "reaction-refusals-redelivery", "path": "Source/Screenplay/Compiler/Conformance/reaction-refusals-redelivery.play" },
         { "name": "no-events", "path": "Source/Screenplay/Compiler/Conformance/no-events.play" },
         { "name": "policy-negation", "path": "Source/Screenplay/Compiler/Conformance/policy-negation.play" },
+        { "name": "declared-dependencies", "path": "Source/Screenplay/Compiler/Conformance/declared-dependencies.play" },
+        { "name": "specification-streams", "path": "Source/Screenplay/Compiler/Conformance/specification-streams.play" },
         { "name": "exact-numbers", "path": "Source/Screenplay/Compiler/Conformance/exact-numbers.play" },
         { "name": "exact-named-rule-intent", "path": "Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play" },
         { "name": "source-stream-candidates", "path": "Source/Screenplay/Compiler/Conformance/source-stream-candidates.case" },

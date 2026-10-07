@@ -14,6 +14,8 @@ import { collectInputUses } from './InputUses';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseTriggerData } from './TriggerDataParser';
+import { dependencySources, ReadsSyntax, TriggerDataSyntax } from '../Syntax/DependencySources';
+import { captureReads } from './DependencySourceParser';
 import { parseProduces } from './ProducesParser';
 import { locationOf, SourceLine } from './SourceLine';
 
@@ -89,6 +91,8 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
     let description: string | null = null;
     const produces: ProducesSyntax[] = [];
     const invokes: InvokesSyntax[] = [];
+    const reads: ReadsSyntax[] = [];
+    const data: TriggerDataSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const keyword = firstWord(child.content);
@@ -129,6 +133,8 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
             context.error(DiagnosticCodes.InvalidRefusalBranch, "A refusal branch belongs inside 'invokes <Command>'.", locationOf(child));
             context.skipBlock(child.indent);
         } else if (keyword === 'reads' || keyword === 'file' || child.content === 'csharp' || child.content.startsWith('```')) {
+            const read = captureReads(child);
+            if (read !== undefined) reads.push(read);
             if (optionalReads.test(child.content)) {
                 context.error(DiagnosticCodes.OptionalReadsNotSupported, 'Optional reads are not yet supported (see #308).', locationOf(child));
             }
@@ -137,10 +143,14 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
             }
             context.skipOpaqueBlock(child.indent);
         } else {
+            const start = context.triggerData.length;
             parseTriggerData(context, child);
+            for (const property of context.triggerData.slice(start)) data.push({ kind: 'TriggerDataSyntax', name: property.name, type: property.type, location: property.location });
         }
     }
-    return { kind: 'ReactionTriggerSyntax', source, description, produces, invokes, location: locationOf(line) };
+    const syntax: ReactionTriggerSyntax = { kind: 'ReactionTriggerSyntax', source, description, produces, invokes, location: locationOf(line) };
+    dependencySources.set(syntax, { reads, data });
+    return syntax;
 }
 
 function parseRefusal(context: ParserContext, line: SourceLine): InvocationRefusalSyntax | undefined {

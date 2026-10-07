@@ -5,10 +5,11 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
 import { SpecificationExampleSyntax } from '../Syntax/Specifications';
-import { FeatureSyntax, FileImportSyntax, ModuleSyntax } from '../Syntax/Structure';
+import { DependsOnSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax } from '../Syntax/Structure';
 import { pattern } from '../Text/patterns';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseDescription } from './DescriptionParser';
+import { parseDependsOn } from './DependsOnParser';
 import { parseFeature } from './FeatureBody';
 import { parseFileImport } from './FileImportParser';
 import { collectInputUses } from './InputUses';
@@ -31,6 +32,7 @@ export class ModuleBody {
     readonly #features: FeatureSyntax[] = [];
     readonly #examples: SpecificationExampleSyntax[] = [];
     readonly #fileImports: FileImportSyntax[] = [];
+    readonly #dependsOn: DependsOnSyntax[] = [];
     #description: string | null = null;
     #authorize: AuthorizeSyntax | null = null;
 
@@ -43,6 +45,9 @@ export class ModuleBody {
         switch (keyword) {
             case 'description':
                 this.#description = parseDescription(context, line, this.#description, `Module '${this.name}'`);
+                return true;
+            case 'depends':
+                parseDependsOn(context, line, this.#dependsOn, DiagnosticCodes.UnknownModuleDirective);
                 return true;
             case 'authorize':
                 this.#authorize = combineAuthorize(this.#authorize, parseAuthorize(context, line));
@@ -83,6 +88,7 @@ export class ModuleBody {
             name: this.name,
             description: this.#description,
             authorize: this.#authorize,
+            dependsOn: this.#dependsOn,
             features: this.#features,
             examples: this.#examples,
             fileImports: this.#fileImports,

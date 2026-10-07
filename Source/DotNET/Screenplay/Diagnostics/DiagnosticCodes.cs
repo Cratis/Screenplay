@@ -2369,6 +2369,31 @@ public static class DiagnosticCodes
     /// </summary>
     public const string UnadmittedSpecificationExampleValue = "PLAY0525";
 
+    /// <summary>
+    /// A specification routing directive is malformed, duplicated or misplaced.
+    /// </summary>
+    public const string InvalidSpecificationStream = "PLAY0547";
+
+    /// <summary>
+    /// A command occurrence cannot declare its own route.
+    /// </summary>
+    public const string SpecificationStreamOnCommand = "PLAY0548";
+
+    /// <summary>
+    /// A specification route or stream id cannot resolve or is incompatible.
+    /// </summary>
+    public const string InvalidSpecificationStreamRoute = "PLAY0549";
+
+    /// <summary>
+    /// A routed occurrence lacks a concrete compatible source identity.
+    /// </summary>
+    public const string InvalidSpecificationStreamEventSource = "PLAY0550";
+
+    /// <summary>
+    /// An exclusive producer contradicts its expected occurrence route.
+    /// </summary>
+    public const string SpecificationStreamContradictsCommand = "PLAY0551";
+
     /// <summary>An event source or stream declaration is invalid or ambiguous.</summary>
     public const string InvalidEventSourceDeclaration = "PLAY0503";
 
@@ -2474,4 +2499,14 @@ public static class DiagnosticCodes
     /// A screen is unreachable from contributions or attached shell-level behaviors.
     /// </summary>
     public const string UnreachableScreen = "PLAY0537";
+
+    /// <summary>
+    /// A declared dependency target is unresolved, self, an ancestor, or a descendant.
+    /// </summary>
+    public const string InvalidDependencyTarget = "PLAY0554";
+
+    /// <summary>
+    /// A dependency is declared more than once on the same container.
+    /// </summary>
+    public const string RepeatedDependencyDeclaration = "PLAY0555";
 }

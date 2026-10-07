@@ -36,7 +36,7 @@ internal static partial class PlayFolderMerge
         var context = ParserContext.ForDiagnostics();
         var application = MergeApplications([.. documents.Select(document => document.Value).OfType<ApplicationSyntax>()], context);
         var validation = new ParserContext(new([]), languages: new ScreenplayLanguageRegistry(triggers: application.RegisteredTriggers?.Values)) { SourceOptions = application.SourceOptions };
-        ScreenplayValidator.Validate(application, validation, allowUnresolvedPersonaPolicies);
+        application = ScreenplayValidator.Validate(application, validation, allowUnresolvedPersonaPolicies);
 
         return new(application, [.. documents.SelectMany(document => document.Diagnostics), .. context.Diagnostics, .. validation.Diagnostics, .. ProductionDestinationDiagnostics.In(application)]);
     }

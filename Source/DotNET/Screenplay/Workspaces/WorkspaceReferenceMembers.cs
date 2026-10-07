@@ -26,7 +26,8 @@ enum WorkspaceReferenceDomain
     EventStream,
     Fixture,
     Reaction,
-    Constraint
+    Constraint,
+    Container
 }
 
 sealed record WorkspaceReferenceMember(WorkspaceSyntaxEntry Entry, string Member, int? Index, string Text, WorkspaceReferenceDomain Domain, string? Owner = null)
@@ -51,6 +52,7 @@ static class WorkspaceReferenceMembers
                     {
                         WorkspaceReferenceDomain.Property => WorkspaceStructuredReferences.Owner(entry, index),
                         WorkspaceReferenceDomain.EventStream when entry.Node is CommandStreamSyntax route => route.EventSource,
+                        WorkspaceReferenceDomain.EventStream when entry.Node is SpecificationStreamSyntax route => route.EventSource,
                         _ => null
                     };
                     if (domain != WorkspaceReferenceDomain.Property || owner is not null)
@@ -104,6 +106,8 @@ static class WorkspaceReferenceMembers
 
     static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> OtherMembers(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index) => entry.Node switch
     {
+        DependsOnSyntax => [("target", WorkspaceReferenceDomain.Container)],
+        SpecificationStreamSyntax => [("eventSource", WorkspaceReferenceDomain.EventSource), ("stream", WorkspaceReferenceDomain.EventStream)],
         CommandStreamSyntax { PropertyCandidate: null } => [("eventSource", WorkspaceReferenceDomain.EventSource), ("stream", WorkspaceReferenceDomain.EventStream)],
         OperationSyntax => [("uses", WorkspaceReferenceDomain.System)],
         InvocationRefusalSyntax => [("constraint", WorkspaceReferenceDomain.Constraint)],

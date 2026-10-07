@@ -3,6 +3,7 @@
 
 export * from './Authoring/QuickFixes';
 export * from './Diagnostics';
+export * from './Dependencies';
 export * from './Syntax';
 export * from './ScreenplayCompiler';
 export { eventBodyReservedWords } from './Text/ReservedWords';
