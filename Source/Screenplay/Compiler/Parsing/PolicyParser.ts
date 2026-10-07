@@ -16,6 +16,7 @@ import { locationOf, SourceLine } from './SourceLine';
 const headerPattern = pattern('^policy\\s+([A-Za-z_]\\w*)$');
 
 export function parsePolicy(context: ParserContext, header: SourceLine): PolicySyntax {
+    const diagnosticContext = context;
     context = context.valueContext;
     const name = headerPattern.exec(header.content)?.[1] ?? '';
     if (name === '') context.error(DiagnosticCodes.InvalidPolicyDeclaration, `Invalid policy declaration '${header.content}' - expected 'policy <Name>'`, locationOf(header));
@@ -31,7 +32,10 @@ export function parsePolicy(context: ParserContext, header: SourceLine): PolicyS
                 context.reader.takeSignificant();
                 text += ` ${continuation.content}`;
             }
-            const parsed = parsePolicyCondition(context, text, locationOf(line));
+            const tokens = tokenizePolicyCondition(context, text);
+            // Negation is newly admitted syntax, not diagnostic-free enrichment of legacy fields.
+            if (tokens.includes('not')) context = diagnosticContext;
+            const parsed = parsePolicyCondition(context, tokens, locationOf(line));
             if (hasRequire) context.error(DiagnosticCodes.RepeatedPolicyRequirement, `Policy '${name}' has more than one require line; combine the conditions with and/or in one require`, locationOf(line));
             else condition = parsed;
             hasRequire = true;
@@ -53,18 +57,27 @@ export function parsePolicy(context: ParserContext, header: SourceLine): PolicyS
     return { kind: 'PolicySyntax', name, condition, code, file, location: locationOf(header) };
 }
 
-function parsePolicyCondition(context: ParserContext, text: string, location: SourceLocation): PolicyConditionSyntax | null {
+function tokenizePolicyCondition(context: ParserContext, text: string): string[] {
     const numeric = context.sourceOptions.numericMode === 'exact' ? '-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|[\\w.$-]+|[^\\s]' : '[\\w.$]+';
-    const tokens: string[] = [...(text.match(new RegExp(pattern(`"${stringBodyPattern}"|\\(|\\)|${numeric}`).source, 'gu')) ?? [])];
+    return [...(text.match(new RegExp(pattern(`"${stringBodyPattern}"|\\(|\\)|${numeric}`).source, 'gu')) ?? [])];
+}
+
+function parsePolicyCondition(context: ParserContext, tokens: string[], location: SourceLocation): PolicyConditionSyntax | null {
+    const reportDiagnostics = context.sourceOptions.numericMode === 'exact' || tokens.includes('not');
     let position = 0;
     const quoted = (token: string | undefined): token is string => token !== undefined && token.startsWith('"') && token.endsWith('"');
     const unquote = (token: string): string => unescapeString(token.substring(1, token.length - 1));
     const group = (): PolicyConditionSyntax | null => {
+        if (tokens[position] === 'not') {
+            position++;
+            const operand = group();
+            return operand === null ? null : { kind: 'NotPolicyConditionSyntax', operand, location };
+        }
         if (tokens[position] === '(') {
             position++;
             const result = or();
             if (tokens[position] === ')') position++;
-            else if (context.sourceOptions.numericMode === 'exact') context.error(DiagnosticCodes.UnclosedPolicyConditionGroup, "Expected ')' in policy condition", location);
+            else if (reportDiagnostics) context.error(DiagnosticCodes.UnclosedPolicyConditionGroup, "Expected ')' in policy condition", location);
             return result;
         }
         const token = tokens[position++];
@@ -101,7 +114,7 @@ function parsePolicyCondition(context: ParserContext, text: string, location: So
         return left;
     };
     const condition = or();
-    if (context.sourceOptions.numericMode === 'exact') {
+    if (reportDiagnostics) {
         if (condition !== null && position < tokens.length) context.error(DiagnosticCodes.UnexpectedTokenInPolicyCondition, `Unexpected '${tokens[position]}' in policy condition`, location);
     }
     return condition;

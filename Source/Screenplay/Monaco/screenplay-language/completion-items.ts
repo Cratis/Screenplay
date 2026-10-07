@@ -253,6 +253,8 @@ export const ruleItems: CompletionEntry[] = [
 export const policyItems: CompletionEntry[] = [
     { label: 'require authenticated', insertText: 'require authenticated', documentation: 'Requires an authenticated caller.' },
     { label: 'require role', insertText: 'require role "${1:role}"', documentation: 'Requires the caller to have a role.' },
+    { label: 'require not role', insertText: 'require not role "${1:role}"', documentation: 'Excludes callers with a role. Add authenticated to require a signed-in caller.' },
+    { label: 'require not claim', insertText: 'require not claim "${1:claim}" matches ${2:subject}', documentation: 'Requires that no claim value matches the subject or a value.' },
     { label: 'require claim', insertText: 'require claim "${1:claim}" matches ${2:subject}', documentation: 'Requires a claim to match the subject or a value.' },
     { label: 'csharp', insertText: fenced('csharp'), documentation: 'Fully custom policy logic in C#, returning a bool.' },
 ];

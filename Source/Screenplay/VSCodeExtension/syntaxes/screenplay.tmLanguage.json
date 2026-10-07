@@ -228,6 +228,10 @@
                     "name": "keyword.other.screenplay"
                 },
                 {
+                    "match": "\\bnot\\b(?=\\s+(?:role\\b|claim\\b|authenticated\\b|not\\b|\\())",
+                    "name": "keyword.operator.logical.screenplay"
+                },
+                {
                     "match": "\\b(authorize|validate|produces|reads|as|handler|performer|observable|identifier|reason|from|require|when|given|then|arguments|result|error|template|data|action|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|released|ignore|casing|file|rule|message|severity|information|warning|matches|all|max|min|length|today|not|no|empty|and|or|authenticated|role|claim|subject|event|query|layout|translate|key|description|concurrency|eventSource|sourceType|streamType|streamId|tag|for|readmodel|provider|nested|exclude|literal|automap)\\b",
                     "name": "keyword.other.screenplay"
                 }
