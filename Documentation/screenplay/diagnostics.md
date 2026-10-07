@@ -640,6 +640,7 @@ These structural warnings run only when selected, after error-free whole-applica
 | `PLAY0531` | Warning (opt-in: `--check data-bindings`) | A screen binding's resolved read model or cardinality differs from its query's return. Optional and observable qualifiers are ignored; unresolved or ambiguous names are skipped. |
 | `PLAY0532` | Warning (opt-in: `--check input-surfaces`) | An action has no command-bound form, own-slice screen, or navigation to a screen for its command. Commands with only generated properties (including no properties) require no typed input. |
 | `PLAY0533` | Warning (opt-in: `--check input-surfaces`) | A StateChange command has no resolving action, form or behavior execute, and no reaction invokes it. Automation and Translate commands are exempt. |
+| `PLAY0534` | Warning (opt-in: `--check field-origins`) | A declared read model has no builder or performer, or a top-level field lacks an identity, mapping, compatible AutoMap source, child or nested target. Variants are checked independently; opaque builders and unknown coverage are skipped. |
 
 ### Model consistency
 

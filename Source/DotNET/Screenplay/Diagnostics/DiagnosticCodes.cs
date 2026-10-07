@@ -2334,4 +2334,9 @@ public static class DiagnosticCodes
     /// A StateChange command has no UI issuer and is not reaction-invoked.
     /// </summary>
     public const string CommandWithoutInputSurface = "PLAY0533";
+
+    /// <summary>
+    /// A read model has no builder or a declared field has no projection origin.
+    /// </summary>
+    public const string ReadModelFieldWithoutOrigin = "PLAY0534";
 }
