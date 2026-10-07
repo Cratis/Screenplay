@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace Cratis.Screenplay.Mcp.for_McpConnection.when_reading_the_dependency_graph;
 
-public class when_paging_the_tool : given.a_connection
+public class and_the_tool_requires_revision_pinning : for_McpConnection.given.a_connection
 {
     JsonElement _first;
     JsonElement _next;

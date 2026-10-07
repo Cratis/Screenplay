@@ -16,4 +16,4 @@ namespace Cratis.Screenplay.Dependencies;
 /// <param name="Evidence">The bounded ordered evidence.</param>
 /// <param name="EvidenceCount">The full evidence count before capping.</param>
 /// <param name="EvidenceTruncated">Whether evidence was capped.</param>
-public sealed record ImpliedDependency(DependencyNode Source, DependencyNode Target, int SliceEdges, int References, IReadOnlyDictionary<string, int> ByKind, IReadOnlyList<DependencyNode> Consumers, IReadOnlyList<DependencyNode> Producers, IReadOnlyList<DependencyEvidence> Evidence, int EvidenceCount, bool EvidenceTruncated);
+internal sealed record ImpliedDependency(DependencyNode Source, DependencyNode Target, int SliceEdges, int References, IReadOnlyDictionary<string, int> ByKind, IReadOnlyList<DependencyNode> Consumers, IReadOnlyList<DependencyNode> Producers, IReadOnlyList<DependencyEvidence> Evidence, int EvidenceCount, bool EvidenceTruncated);

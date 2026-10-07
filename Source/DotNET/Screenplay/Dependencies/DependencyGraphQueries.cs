@@ -6,7 +6,7 @@ namespace Cratis.Screenplay.Dependencies;
 /// <summary>
 /// Dependency aggregation, cycle analysis and presentation-order suggestions.
 /// </summary>
-public sealed partial class DependencyGraph
+internal sealed partial class DependencyGraph
 {
     /// <summary>
     /// Aggregates edges at any pair of levels, excluding equal or overlapping containers.
@@ -160,7 +160,6 @@ public sealed partial class DependencyGraph
         return DistinctNodes(nodes);
     }
 
-    static bool Prefix(IReadOnlyList<string> left, IReadOnlyList<string> right) => left.Count <= right.Count && left.Select((name, index) => name == right[index]).All(same => same);
     static IReadOnlyList<DependencyNode> DistinctNodes(IEnumerable<DependencyNode> nodes) => [.. nodes.DistinctBy(node => node.Key).OrderBy(node => node.Rank).ThenBy(node => node.Key, StringComparer.Ordinal)];
     static IEnumerable<string> OrderingKinds(IEnumerable<string>? kinds) => SelectedKinds(kinds ?? _orderingKinds).Where(kind => _orderingKinds.Contains(kind, StringComparer.Ordinal));
 
@@ -187,9 +186,7 @@ public sealed partial class DependencyGraph
         return [.. StronglyConnectedGroups.In(graph).Where(group => group.Count > 1).Select(group => new DependencyGroup(container, DistinctNodes(group.Select(key => byKey[key])))).OrderBy(group => group.Members[0].Rank)];
     }
 
-    static bool Disjoint(DependencyNode left, DependencyNode right) => left.Kind == "context" || right.Kind == "context"
-        ? left.Key != right.Key
-        : left.Key != right.Key && !(left.Scope.Count < right.Scope.Count && Prefix(left.Scope, right.Scope)) && !(right.Scope.Count < left.Scope.Count && Prefix(right.Scope, left.Scope));
+    bool Disjoint(DependencyNode left, DependencyNode right) => left.Key != right.Key && !Ancestors(left).Contains(right) && !Ancestors(right).Contains(left);
 
     IEnumerable<DependencyEvidence> Evidence(IEnumerable<string>? kinds, bool includeTestOnly)
     {
@@ -198,8 +195,7 @@ public sealed partial class DependencyGraph
         return Edges.SelectMany(edge => edge.Evidence).Where(item => selected.Contains(item.Kind) && (includeTestOnly || !item.TestOnly));
     }
 
-    IEnumerable<DependencyNode> At(DependencyNode slice, string level) => _nodes.Where(node => node.Kind == level &&
-        (node == slice || (node.Kind != "context" && slice.Kind != "context" && node.Scope.Count < slice.Scope.Count && Prefix(node.Scope, slice.Scope))));
+    IEnumerable<DependencyNode> At(DependencyNode slice, string level) => Ancestors(slice).Prepend(slice).Where(node => node.Kind == level);
 
     IEnumerable<DependencyNode> Containers() => new[] { _root }.Concat(_nodes.Where(node => node.Kind == "module" || node.Kind == "feature"));
 
@@ -219,8 +215,16 @@ public sealed partial class DependencyGraph
         return result;
     }
 
-    IReadOnlyList<DependencyNode> Path(DependencyNode slice) => [.. _nodes.Where(node => node.Kind != "context" &&
-        (node == slice || (node.Kind != "slice" && node.Scope.Count < slice.Scope.Count && Prefix(node.Scope, slice.Scope)))).OrderBy(node => node.Scope.Count)];
+    IReadOnlyList<DependencyNode> Path(DependencyNode slice) => [.. Ancestors(slice).Reverse().Append(slice).Where(node => node != _root)];
+
+    IEnumerable<DependencyNode> Ancestors(DependencyNode node)
+    {
+        while (_parents.TryGetValue(node.Key, out var parent))
+        {
+            yield return parent;
+            node = parent;
+        }
+    }
 
     sealed record SiblingEdge(DependencyNode Container, DependencyNode Source, DependencyNode Target);
 }

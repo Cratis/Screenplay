@@ -10,7 +10,7 @@ namespace Cratis.Screenplay.Dependencies;
 /// <param name="Address">The declaration address or prefixed outside-context address.</param>
 /// <param name="Scope">The full hierarchy segments including this node.</param>
 /// <param name="Rank">The authored traversal index, or deterministic syntax-order fallback.</param>
-public sealed record DependencyNode(string Kind, string Address, IReadOnlyList<string> Scope, int Rank)
+internal sealed record DependencyNode(string Kind, string Address, IReadOnlyList<string> Scope, int Rank)
 {
     internal string Key => Kind + ":" + Address;
 }

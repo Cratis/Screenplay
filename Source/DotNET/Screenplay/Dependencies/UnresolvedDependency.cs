@@ -13,4 +13,4 @@ namespace Cratis.Screenplay.Dependencies;
 /// <param name="Role">The explicit syntax role.</param>
 /// <param name="Name">The unresolved name.</param>
 /// <param name="Location">The reference location.</param>
-public sealed record UnresolvedDependency(DependencyNode Consumer, string Kind, string Role, string Name, SourceLocation Location);
+internal sealed record UnresolvedDependency(DependencyNode Consumer, string Kind, string Role, string Name, SourceLocation Location);

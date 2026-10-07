@@ -8,4 +8,4 @@ namespace Cratis.Screenplay.Dependencies;
 /// </summary>
 /// <param name="Container">The parent for a sibling group; null for a level-wide group.</param>
 /// <param name="Members">Members in authored order.</param>
-public sealed record DependencyGroup(DependencyNode? Container, IReadOnlyList<DependencyNode> Members);
+internal sealed record DependencyGroup(DependencyNode? Container, IReadOnlyList<DependencyNode> Members);

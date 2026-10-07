@@ -16,7 +16,7 @@ namespace Cratis.Screenplay.Dependencies;
 /// <param name="Ambiguous">Whether another slice qualifies.</param>
 /// <param name="Alternatives">Other qualifying slices, in authored order.</param>
 /// <param name="Location">The explicit reference's source location.</param>
-public sealed record DependencyEvidence(DependencyNode Consumer, DependencyNode Producer, string Kind, string Role, string Name, bool Ambiguous, IReadOnlyList<DependencyNode> Alternatives, SourceLocation Location)
+internal sealed record DependencyEvidence(DependencyNode Consumer, DependencyNode Producer, string Kind, string Role, string Name, bool Ambiguous, IReadOnlyList<DependencyNode> Alternatives, SourceLocation Location)
 {
     /// <summary>
     /// Gets whether this reference occurs only in a specification, including imported facts.

@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Diagnostics.CodeAnalysis;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
@@ -10,13 +11,16 @@ namespace Cratis.Screenplay.Dependencies;
 /// <summary>
 /// Infers presentation dependencies from explicit syntax, independently of executable binding and identity.
 /// </summary>
-public sealed partial class DependencyGraph
+[SuppressMessage("Usage", "MA0182", Justification = "Consumed by the friend MCP assembly through InternalsVisibleTo; the graph is not yet a public contract.")]
+internal sealed partial class DependencyGraph
 {
     internal static readonly string[] Kinds = ["usesFactsFrom", "reactsTo", "decidesFrom", "asks", "shows", "verifiedWith", "outsideTheModel"];
     static readonly string[] _orderingKinds = ["usesFactsFrom", "reactsTo", "decidesFrom"];
     readonly List<DependencyNode> _nodes = [];
     readonly List<(DependencyNode Node, SliceSyntax Syntax)> _slices = [];
     readonly Dictionary<string, List<DependencyNode>> _children = new(StringComparer.Ordinal);
+    readonly Dictionary<string, DependencyNode> _byKey = new(StringComparer.Ordinal);
+    readonly Dictionary<string, DependencyNode> _parents = new(StringComparer.Ordinal);
     readonly DependencyNode _root = new("application", string.Empty, [], -1);
 
     DependencyGraph(ApplicationSyntax application, IReadOnlyDictionary<string, int>? ranks)
@@ -91,18 +95,23 @@ public sealed partial class DependencyGraph
                     ExcludedReferences++;
                     continue;
                 }
-                var imported = reference.TargetKind == "Event" ? imports.FirstOrDefault(import => string.Equals(import.Name, reference.Name, StringComparison.OrdinalIgnoreCase)) : null;
-                if (imported is not null)
+                var imported = reference.TargetKind == "Event" ? imports.Where(import => string.Equals(import.Name, reference.Name, StringComparison.OrdinalIgnoreCase)).ToArray() : [];
+                if (imported.Length > 0)
                 {
-                    usedImports.Add(imported.QualifiedName);
-                    var address = "context:" + imported.QualifiedName[..imported.QualifiedName.LastIndexOf('.')];
-                    if (!contexts.TryGetValue(address, out var context))
+                    var matches = new List<DependencyNode>();
+                    foreach (var contract in imported)
                     {
-                        context = new("context", address, [address[8..]], _nodes.Count);
-                        _nodes.Add(context);
-                        contexts[address] = context;
+                        usedImports.Add(contract.QualifiedName);
+                        var address = "context:" + contract.QualifiedName[..contract.QualifiedName.LastIndexOf('.')];
+                        if (!contexts.TryGetValue(address, out var context))
+                        {
+                            context = new("context", address, [address[8..]], _nodes.Count);
+                            _nodes.Add(context);
+                            contexts[address] = context;
+                        }
+                        if (!matches.Contains(context)) matches.Add(context);
                     }
-                    evidence.Add(new(node, context, "outsideTheModel", reference.Role, reference.Name, false, [], reference.Location) { TestOnly = reference.Kind == "verifiedWith" });
+                    evidence.Add(new(node, matches[0], "outsideTheModel", reference.Role, reference.Name, matches.Count > 1, [.. matches.Skip(1)], reference.Location) { TestOnly = reference.Kind == "verifiedWith" });
                     continue;
                 }
                 unresolved.Add(new(node, reference.Kind, reference.Role, reference.Name, reference.Location));
@@ -174,8 +183,15 @@ public sealed partial class DependencyGraph
     DependencyNode Add(string kind, string name, DependencyNode parent)
     {
         string[] scope = [.. parent.Scope, name];
+        var key = kind + ":" + string.Join('.', scope);
+
+        // Invalid source may retain duplicate declarations. Merge their presentation nodes,
+        // preserving the earliest rank and all declarations and children from each occurrence.
+        if (_byKey.TryGetValue(key, out var existing)) return existing;
         var node = new DependencyNode(kind, string.Join('.', scope), scope, _nodes.Count);
         _nodes.Add(node);
+        _byKey[key] = node;
+        _parents[key] = parent;
         _children[parent.Key].Add(node);
         if (kind != "slice") _children[node.Key] = [];
 

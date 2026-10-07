@@ -31,6 +31,10 @@ internal sealed class SliceReferences : ScreenplaySyntaxWalker
     SpecificationSyntax? _specification;
     bool _projection;
 
+    // Stable ties preserve the timeline diagnostic's original reference order.
+    // Graph evidence applies its own complete deterministic ordering after resolution.
+    internal IReadOnlyList<SliceReference> References => [.. _references.OrderBy(reference => reference.Location.Line).ThenBy(reference => reference.Location.Column)];
+
     /// <inheritdoc/>
     public override void VisitProjection(ProjectionSyntax syntax)
     {
@@ -90,9 +94,7 @@ internal sealed class SliceReferences : ScreenplaySyntaxWalker
         collector.VisitSlice(slice);
         shared = collector._shared;
 
-        // Stable ties preserve the timeline diagnostic's original reference order.
-        // Graph evidence applies its own complete deterministic ordering after resolution.
-        return [.. collector._references.OrderBy(reference => reference.Location.Line).ThenBy(reference => reference.Location.Column)];
+        return collector.References;
     }
 
     string EventRole(SyntaxNode node)

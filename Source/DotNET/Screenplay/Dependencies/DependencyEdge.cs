@@ -10,4 +10,4 @@ namespace Cratis.Screenplay.Dependencies;
 /// <param name="Producer">The producing slice or outside context.</param>
 /// <param name="Kind">The dependency kind.</param>
 /// <param name="Evidence">Ordered references behind this edge.</param>
-public sealed record DependencyEdge(DependencyNode Consumer, DependencyNode Producer, string Kind, IReadOnlyList<DependencyEvidence> Evidence);
+internal sealed record DependencyEdge(DependencyNode Consumer, DependencyNode Producer, string Kind, IReadOnlyList<DependencyEvidence> Evidence);
