@@ -122,7 +122,7 @@ export function eventSourceCompletions(lines: string[], line: number, before: st
         if (context.route && indent > indentOf(lines[context.route.location.line - 1])) {
             const target = analysis.resolve(context.route.eventSource, context.route.stream).stream?.streamId;
             if (!target || context.route.streamId && context.route.streamId.location.line !== line + 1) return [];
-            const typed = responseAnalysis(lines, symbols.authoringDocuments ?? [], symbols.authoringPlacement, symbols.authoringPath);
+            const typed = responseAnalysis(lines, symbols.authoringDocuments ?? symbols.authoringSources?.filter(source => source !== lines.join('\n')) ?? [], symbols.authoringPlacement, symbols.authoringPath, symbols.authoringPlacementResolved);
             const primitive = typed.operations.concepts.find(concept => concept.name === target.name)?.type ?? target.name;
             const literal = primitive === 'Int' ? '0' : primitive === 'Uuid' ? '"00000000-0000-0000-0000-000000000000"' : '"${1:value}"';
             if (/^\s*(?:streamId\s*=\s*)?$/.test(before) || 'streamId'.startsWith(before.trim()))

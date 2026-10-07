@@ -36,6 +36,12 @@ describe('when authoring specification routes', () => {
         complete(current)!.map(entry => entry.label).should.deep.equal(['streamId']);
         complete(current)![0].insertText.should.contain('streamId =');
     });
+    it.each([['Partition', 'Int', '0'], ['AccountId', 'Uuid', '"00000000-0000-0000-0000-000000000000"']])('should resolve imported %s literals through authoringSources', (name, primitive, literal) => {
+        const current = ['specification History', '  given Recorded', '    stream Account.Transactions', '      streamId = '];
+        const imported = `concept ${name} : ${primitive}\neventsource Account\n  identifier String\n  stream Transactions\n    streamId ${name}`;
+        const symbols = { ...scanDocument(current), authoringSources: [current.join('\n'), imported] };
+        eventSourceCompletions(current, 3, current[3], symbols)![0].insertText.should.equal(literal);
+    });
     it('should not offer stream ids below unkeyed routes or duplicate route statements', () => {
         const current = (declarations + 'specification History\n  then Recorded\n    stream Account.Profile\n      ').split('\n');
         complete(current)!.should.deep.equal([]);

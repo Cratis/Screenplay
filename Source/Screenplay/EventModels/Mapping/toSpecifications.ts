@@ -25,7 +25,7 @@ export function toSpecifications(
         });
         const document: SliceSpecificationDocument = {
             id: scope.idOf('specification', specification.name),
-            name: specification.name,
+            name: specificationName(specification),
             given: specification.given.map((event, index) => step(event, 'given', index)),
             thenEvents: specification.thenEvents.map((event, index) => step(event, 'then', index)),
             thenErrors: [
@@ -60,16 +60,33 @@ function actionOf(specification: SpecificationSyntax): { name: string; values: R
     return undefined;
 }
 
-// @cratis/event-models 0.118.2 has no route fields on specification facts. Keep the authored
-// route visible in the step's display name, never in its payload or as a fabricated board field.
+// @cratis/event-models 0.118.2 reads and renders the specification name in its header. Linked
+// event cards can override step names, so carry every explicit route there as well, labeled by
+// role and occurrence. Keep links and payloads intact; this is display-only, not executable routing.
+function specificationName(specification: SpecificationSyntax): string {
+    const routes = [
+        ...specification.given.map((event, index) => ({ event, role: `given ${index + 1}` })),
+        ...(specification.whenAppended ? [{ event: specification.whenAppended, role: 'when append' }] : []),
+        ...specification.thenEvents.map((event, index) => ({ event, role: `then ${index + 1}` })),
+    ].filter(({ event }) => event.stream || event.noStream);
+    if (routes.length === 0) return specification.name;
+    return `${specification.name} — ${routes.map(({ event, role }) => `${role}: ${event.eventType} — ${routeDetails(event)}`).join(' | ')} | ${routeAvailability}`;
+}
+
+// Card names are plain text, not HTML. The header also carries these details because an owned
+// event's current name takes precedence over the step name on the board.
+const routeAvailability = 'Syntax-only (PLAY0268) (#457); the board displays routing intent, not an executable route assertion.';
+
 function factName(event: SpecificationEventSyntax): string {
     if (!event.stream && !event.noStream) return event.eventType;
+    return `${event.eventType} — ${routeDetails(event)}; ${routeAvailability}`;
+}
+
+function routeDetails(event: SpecificationEventSyntax): string {
     const route = event.stream;
-    const details = [event.for ? `for ${expressionText(event.for)}` : '',
+    return [event.for ? `for ${expressionText(event.for)}` : '',
         route ? `stream ${route.eventSource}.${route.stream}` : 'no stream',
-        route?.streamId ? `streamId = ${expressionText(route.streamId.source)}` : '',
-        'Syntax-only (PLAY0268) (#457); the board displays routing intent, not an executable route assertion.'];
-    return `${event.eventType} — ${details.filter(Boolean).join('; ')}`.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        route?.streamId ? `streamId = ${expressionText(route.streamId.source)}` : ''].filter(Boolean).join('; ');
 }
 
 function callerOf(caller: SpecificationCallerSyntax): SpecificationCallerDocument {
