@@ -51,3 +51,9 @@ To produce a `.vsix` package:
 ```shell
 yarn workspace screenplay package
 ```
+
+## Structure completion
+
+On an empty line inside a block that has no content yet, the extension suggests the structure the block most obviously needs as ghost text: the `produces` of a `command`, the `given`/`when`/`then` skeleton of a `specification`, and a `field` per command property in a `form`. Press Tab to accept.
+
+The extension turns GitHub Copilot's inline suggestions off for `.play` files, so they do not compete with the language service, and registers the language's keywords with the Code Spell Checker extension when it is installed. Re-enable Copilot with `"github.copilot.enable": { "screenplay": true }`.
