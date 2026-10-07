@@ -72,7 +72,9 @@ screen PlanDetails
 
 Conditions compare `item.<field>[.<field>…]` with a literal: a string, number, Boolean or `null`. They do not read route parameters, screen state, `$context` or `$env`, and cannot compare two item paths. Use `==`, `!=`, numeric `>`, `>=`, `<`, `<=`, or string `contains` and `starts with`. Combine comparisons with `and`, `or` and parentheses; `and` binds more tightly. Collection-valued fields are not supported in conditions. Unsupported punctuation, such as brackets around a literal, is rejected with `PLAY0344` rather than discarded.
 
-The renderer contract treats an absent path value as `null`; `null` equals only `null`. Enum names compare case-sensitively. Ordering requires numbers and text comparisons require strings; null or incompatible values make those comparisons false.
+A comparison over a missing or null `item.` field is false, including `!=` against a non-null literal. The exception is `== null`, which matches an explicitly null value, not a missing field. Missing and null are not interchangeable. Enum names compare case-sensitively. Ordering requires numbers and text comparisons require strings; null or incompatible values make those comparisons false. `and` and `or` combine these comparison results normally.
+
+Neither the C# nor TypeScript compiler evaluates screen conditions: they preserve and validate this syntax. Downstream renderers own runtime evaluation and must distinguish a missing field from a present field whose value is null.
 
 ### Selection, inputs and execution
 
@@ -85,7 +87,7 @@ Each alternative and execute fallback may bind inputs with `with <property> from
 3. The command's declared [form](forms.md).
 4. Renderer input.
 
-The guard controls what the user is offered, not what the system accepts. The selected command still enforces its authorization, validation and constraints. Authorization denial never falls through to another command. A click runs the choice shown to the user; if a click-time check changes that choice, the renderer must refresh instead of executing the new one. A single optional `navigate to` runs after whichever command succeeds, never to open that command's own input screen. If input needs a separate screen or dialog, open it first with a click or row-click carrying the item's identity; place the guarded action on that input screen.
+The guard controls what the user is offered, not what the system accepts. The selected command still enforces its authorization, validation and constraints. If the selected command is unavailable to the caller, present the action as unavailable, as [#335](https://github.com/Cratis/Screenplay/issues/335) defines once admitted. Authorization denial never falls through to another command. A click runs the choice shown to the user; if a click-time check changes that choice, the renderer must refresh instead of executing the new one. A single optional `navigate to` runs after whichever command succeeds, never to open that command's own input screen. If input needs a separate screen or dialog, open it first with a click or row-click carrying the item's identity; place the guarded action on that input screen.
 
 Guarded actions are preserved by the compilers and shown as one labeled prototype button on the event model board. Screens do not enter the executable semantic model. Runtime selection requires downstream renderer support; an older renderer must reject the new kind rather than silently render an empty plain action. See [interactions](interactions.md) for the separate, unchanged `on` bindings.
 
