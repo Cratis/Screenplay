@@ -61,6 +61,8 @@ const surfacedCodes = new Set<string>([
     DiagnosticCodes.ImportCycle,
     DiagnosticCodes.ModuleInPlacedFile,
     DiagnosticCodes.UnexpectedInPlacedFile,
+    DiagnosticCodes.EventFromLaterSlice,
+    DiagnosticCodes.TimelineCycleGroup,
 ]);
 
 // The .play files of one workspace folder as one application, keyed by portable path relative to the folder.

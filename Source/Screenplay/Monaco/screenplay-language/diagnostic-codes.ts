@@ -15,6 +15,8 @@ export const diagnosticCodes = {
     ambiguousCommandStream: 'PLAY0505',
     unsupportedStreamIdType: 'PLAY0506',
     redundantSourceStreamId: 'PLAY0507',
+    eventFromLaterSlice: 'PLAY0516',
+    timelineCycleGroup: 'PLAY0517',
     invalidImplementationBlock: 'PLAY0492',
     invalidImplementationHint: 'PLAY0493',
     conflictingImplementationSources: 'PLAY0494',
