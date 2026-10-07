@@ -4,6 +4,8 @@
 import * as vscode from 'vscode';
 import { ensureBuiltInSubLanguages } from '@cratis/screenplay-language';
 import { registerCompletions } from './Completions';
+import { registerInlineCompletions } from './InlineCompletions';
+import { registerSpellCheckerWords } from './SpellChecker';
 import { registerResponseTokens } from './ResponseTokens';
 import { registerHover } from './Hover';
 import { registerInlayHints } from './InlayHints';
@@ -24,6 +26,7 @@ export function activate(context: vscode.ExtensionContext): { readonly repairObs
     const index = new ApplicationIndex();
     context.subscriptions.push(index);
     registerCompletions(context, index);
+    registerInlineCompletions(context, index);
     registerHover(context, index);
     registerResponseTokens(context, index);
     registerInlayHints(context, index);
@@ -34,6 +37,7 @@ export function activate(context: vscode.ExtensionContext): { readonly repairObs
     registerFileLinks(context);
     registerEventModelBoard(context);
     void index.load();
+    void registerSpellCheckerWords(context);
     return Object.freeze({ repairObservation: Object.freeze({ read: readRepairObservation }) });
 }
 

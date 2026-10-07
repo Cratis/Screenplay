@@ -43,6 +43,7 @@ function registered(source: string, context: DocumentSymbols) {
     Object.assign(setup.monaco.languages, {
         register() {}, setLanguageConfiguration() {}, setMonarchTokensProvider() {},
         registerCompletionItemProvider: (_language: string, value: languages.CompletionItemProvider) => { provider = value; },
+        registerInlineCompletionsProvider: () => undefined,
         registerHoverProvider() {}, registerDefinitionProvider() {}, registerDocumentSemanticTokensProvider() {},
         registerInlayHintsProvider() {}, registerCodeActionProvider() {},
     });
