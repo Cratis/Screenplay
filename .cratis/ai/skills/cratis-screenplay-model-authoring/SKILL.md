@@ -20,15 +20,16 @@ the executable profile and a complete compiled model.
 
 | Package | Version | Purpose |
 | --- | --- | --- |
-| `Cratis.Screenplay` / `Cratis.Screenplay.Tool` | `4.64.0` (`7e16162`) | Current compiler, MCP (29/30 tools), roots fix; examples compiled with `--warnaserror` |
+| `Cratis.Screenplay` / `Cratis.Screenplay.Tool` | `4.68.0` (`79801bf`) | Current compiler; admits ESM v7 (generated values and responses, decision 0026); examples compiled with `--warnaserror` and their specifications run |
+| `Cratis.Screenplay` / `Cratis.Screenplay.Tool` | `4.66.0` (`c89198b`) | MCP (29/30 tools), roots fix; the MCP behaviour below was probed on it |
 | `Cratis.Screenplay` | main `fd18129` | Inline events, repairs, rename/extraction and `optional` |
 | `Cratis.Screenplay` | `4.31.0` | Original compiler, ESM and workspace evidence |
-| `cratis` CLI | `3.27.1` | Bundles Screenplay 4.60.1 (ESM v5 at most, roots bug) |
+| `cratis` CLI | `3.28.3` | Bundles Screenplay 4.66.0 (no ESM v7) and Stage 4.24.2 (3.28.2 bundled 4.24.1; before 3.28.2: 4.60.1, ESM v5 at most, roots bug) |
 
 Facts about the MCP connection, source-map, `whenAppendedEvent`, identity
-persistence and the syntax-only constructs were read at tag `v4.64.0`
+persistence and the syntax-only constructs were read at tag `v4.66.0`
 (`Documentation/screenplay/mcp/{reference,install,edit}.md`,
-`Source/DotNET/Screenplay.Mcp/`) and probed against the 4.64.0 tool (persona,
+`Source/DotNET/Screenplay.Mcp/`) and probed against the 4.66.0 tool (persona,
 trigger, `@pii`, generated values, operations, streams, automation binding).
 Repair and refactoring guidance follows main `fd18129` (`commands.md`,
 `events.md`, `types.md`, `diagnostics.md`, `mcp/authoring-tools.md`, `vscode.md`,
@@ -43,27 +44,30 @@ Never ask the user which folder to use before trying. Call `open-workspace` with
 arguments first: a server started without a fixed root binds the folder the host or
 launch directory offers (the client's single workspace root, else the working
 directory when it holds `.play` files). Only when it answers that no root was given,
-or that several roots are offered, pass `path`: `.cratis/screenplay` in a repository
-that has one, otherwise the folder the user names. In Claude or ChatGPT desktop the
-host manages the files, so do not invent a location; work in what the host provides
-and carry a model between sessions with `workspaceJson`. A root fixed at launch
+or that several roots are offered, pass `path`: the folder holding the project's `.play` files, otherwise the
+folder the user names. Without a project, the server works in `Documents/Screenplay`
+in the user's home folder, so do not invent a location. A root fixed at launch
 cannot be switched: another `path` returns `RootChangeRefused`.
 
-**Prefer a fixed root.** Screenplay up to 4.63.1 (so Cratis CLI 3.27.1) fails a
+**Prefer a fixed root.** Screenplay up to 4.63.1 (so Cratis CLI before 3.28.2; fixed in
+4.63.2, so not in CLI 3.28.2 or later, probed) fails a
 dynamic-root server right after `notifications/initialized` when the client
 advertises roots; real hosts then drop the connection, and `open-workspace.path`
 cannot prevent it. Start `screenplay mcp <model-folder>` or `cratis screenplay mcp`
-in a project with `.cratis/ai.json` (fixed root `.cratis/screenplay`).
+in a project (it locates the model: the project's `.play` files, else `Source/` or `src/`, else `Screenplay/`).
 Send `initialize` and `notifications/initialized` before any tool call;
 `tools/list` returns 29 tools (30 on MCP-Apps hosts). Details:
 [MCP loop](references/mcp-loop.md).
 
 
-Look first in `.cratis/screenplay/` at the repository root. This is the
+Look first for the project's existing `.play` files: the folder holding them is the
+model. A new model goes under the repository's `Source/` or `src/` folder, else in a
+`Screenplay/` folder at the repository root; never under `.cratis/`, which holds
+configuration and the shared AI corpus only. This is the
 conventional home for consumer-owned `.play` source. The source is the single flow model;
 keep explanatory Markdown in the owning repository's documentation.
 
-`cratis ai install` manages `.cratis/ai/`, not `.cratis/screenplay/`. Select the
+`cratis ai install` manages `.cratis/ai/`, never model files. Select the
 `cratis/screenplay` profile in the project's AI configuration. The corpus-owned
 `mcp-servers.json` declares the Screenplay server; supported client registration
 is owned by the Cratis CLI, which preserves other servers and user configuration.
@@ -71,7 +75,7 @@ is owned by the Cratis CLI, which preserves other servers and user configuration
 The CLI entry point is:
 
 ```shell
-cratis screenplay mcp .cratis/screenplay
+cratis screenplay mcp <model-folder>
 ```
 
 It runs the bundled server. Do not ask the user to install a second global .NET
@@ -197,7 +201,7 @@ imports afterwards. See the
 [language reference](references/language-reference.md) for placement rules.
 
 Parent scaffolding carries no duplicated module forms or contributions. Compile
-and validate the whole `.cratis/screenplay/` folder, or its root file, not just
+and validate the whole model folder, or its root file, not just
 the edited fragment.
 
 ## Preserve state and recover explicitly
@@ -243,9 +247,10 @@ that the code compiles or behaves. Path resolution and `PLAY0430`-`PLAY0434`:
   defines them and maps them onto V1 to V5. `screenplay --warnaserror` checks
   syntax plus the consistency rules (`PLAY0282`-`PLAY0294`) but never binds, so a
   clean run is not a bound or executable result.
-- Personas are report-only and `generated`/`returns`, operations and event
-  sources/streams are authorable but not executable: neither is a reason to drop or
-  stub the construct.
+- Personas are report-only, operations and event sources/streams are authorable but
+  not executable (not admitted by any supported ESM version), and `generated`/`returns`
+  bind only from standalone 4.68.0 (ESM v7; not on the cratis 3.28.x bundle, not rendered by
+  Stage 4.24.2): none is a reason to drop or stub the construct.
 - Distinguish authoring acceptance from `executableReady`; unsupported backend
   capabilities are not a reason to drop source constructs or invent stubs.
 - If execution is intended, validate with the owning downstream runtime as well.
@@ -255,7 +260,7 @@ that the code compiles or behaves. Path resolution and `PLAY0430`-`PLAY0434`:
 The ordinary CLI remains useful for whole-folder validation:
 
 ```shell
-cratis screenplay validate .cratis/screenplay --warnings-as-errors
+cratis screenplay validate <model-folder> --warnings-as-errors
 ```
 
 Repair and refactoring guidance follows Screenplay main `fd18129`. The Cratis
