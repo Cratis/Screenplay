@@ -135,19 +135,7 @@ static class NavigationCompleteness
         public override void VisitScreenAction(ScreenActionSyntax syntax)
         {
             base.VisitScreenAction(syntax);
-            var command = declarations.Resolve(syntax.Command, _scope, slice => slice.Commands, command => command.Name)?.Node;
-            if (command is null) return;
-            foreach (var (form, scope) in _forms.Where(entry => ReferenceEquals(command, declarations.Resolve(entry.Form.For, entry.Scope, slice => slice.Commands, command => command.Name)?.Node)))
-            {
-                if (!_activeForms.Add(form)) continue;
-                var previous = _scope;
-                _scope = scope;
-                _visitingForm = true;
-                VisitForm(form);
-                _visitingForm = false;
-                _scope = previous;
-                _activeForms.Remove(form);
-            }
+            DiscoverForms(syntax.Command, _scope);
         }
 
         /// <inheritdoc/>
@@ -184,6 +172,7 @@ static class NavigationCompleteness
         {
             var target = syntax switch
             {
+                ExecuteCommandActionSyntax execute => execute.Command,
                 NavigateActionSyntax navigate => navigate.Screen,
                 OpenDialogActionSyntax dialog => dialog.DialogTemplate,
                 _ => null
@@ -196,6 +185,7 @@ static class NavigationCompleteness
             }
             if (target is not null)
             {
+                if (syntax is ExecuteCommandActionSyntax && _screen is not null) DiscoverForms(target, scope);
                 if (syntax is NavigateActionSyntax) Navigate(target, scope);
                 if (syntax is OpenDialogActionSyntax) OpenDialog(target, scope);
             }
@@ -215,6 +205,24 @@ static class NavigationCompleteness
             }
 
             return reached;
+        }
+
+        void DiscoverForms(string name, DeclarationScope commandScope)
+        {
+            var command = declarations.Resolve(name, commandScope, slice => slice.Commands, command => command.Name)?.Node;
+            if (command is null) return;
+            foreach (var (form, scope) in _forms.Where(entry => ReferenceEquals(command, declarations.Resolve(entry.Form.For, entry.Scope, slice => slice.Commands, command => command.Name)?.Node)))
+            {
+                if (!_activeForms.Add(form)) continue;
+                var previous = _scope;
+                var previousVisitingForm = _visitingForm;
+                _scope = scope;
+                _visitingForm = true;
+                VisitForm(form);
+                _visitingForm = previousVisitingForm;
+                _scope = previous;
+                _activeForms.Remove(form);
+            }
         }
 
         void Navigate(string target, DeclarationScope scope)
