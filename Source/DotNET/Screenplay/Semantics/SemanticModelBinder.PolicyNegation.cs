@@ -46,7 +46,7 @@ public sealed partial class SemanticModelBinder
         {
             var subject = commandName is null ? properties.Values.SingleOrDefault() : properties.Values.SingleOrDefault(property => property.IsIdentifier);
 
-            return subject is null ? "is subject, but the command has no identifier" : NegatedTypeRisk(subject.Type, subject.Type.IsOptional);
+            return subject is null ? "is unavailable because the command has no identifier" : NegatedTypeRisk(subject.Type, subject.Type.IsOptional);
         }
 
         string? NegatedPathRisk(string path, Dictionary<string, SemanticProperty> properties)

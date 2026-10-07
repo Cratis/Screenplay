@@ -13,7 +13,7 @@ public class when_warning_about_negated_claim_targets : given.a_semantic_binder
     [Fact] void should_warn_about_a_numeric_path() => Warns("not claim \"owner\" matches owner", "Int");
     [Fact] void should_warn_about_a_boolean_path() => Warns("not claim \"owner\" matches owner", "Bool");
     [Fact] void should_warn_about_a_collection_path() => Warns("not claim \"owner\" matches owner", "String[]");
-    [Fact] void should_warn_about_an_absent_subject() => Warns("not claim \"owner\" matches subject", "String");
+    [Fact] void should_warn_about_an_absent_subject() => Warns("not claim \"owner\" matches subject", "String").Message.ShouldContain("target 'subject' is unavailable because the command has no identifier");
     [Fact] void should_not_warn_about_a_required_string() => Quiet("not claim \"owner\" matches owner", "String");
     [Fact] void should_not_warn_about_a_literal() => Quiet("not claim \"owner\" matches \"person\"", "String optional");
     [Fact] void should_not_warn_about_a_positive_optional_target() => Quiet("claim \"owner\" matches owner", "String optional");
@@ -26,6 +26,7 @@ public class when_warning_about_negated_claim_targets : given.a_semantic_binder
     [Fact] void should_not_warn_about_a_date_concept_target() => Quiet("not claim \"owner\" matches owner", "Owner", declarations: "concept Owner : Date");
     [Fact] void should_not_warn_about_a_datetime_concept_target() => Quiet("not claim \"owner\" matches owner", "Owner", declarations: "concept Owner : DateTime");
     [Fact] void should_not_warn_about_a_string_concept() => Quiet("not claim \"owner\" matches owner", "Owner", declarations: "concept Owner : String");
+    [Fact] void should_not_warn_about_an_enum_concept_target() => Quiet("not claim \"owner\" matches owner", "Owner", declarations: "concept Owner : Enum\n  person\n  service");
     [Fact] void should_warn_about_a_numeric_concept() => Warns("not claim \"owner\" matches owner", "Owner", declarations: "concept Owner : Int");
     [Fact] void should_warn_about_an_optional_parent() => Warns("not claim \"owner\" matches owner.name", "Owner optional", declarations: "type Owner\n  name String");
     [Fact] void should_warn_about_an_optional_member() => Warns("not claim \"owner\" matches owner.name", "Owner", declarations: "type Owner\n  name String optional");
@@ -73,13 +74,38 @@ public class when_warning_about_negated_claim_targets : given.a_semantic_binder
         warning.Message.ShouldContain("target 'owner' can be absent or null");
     }
 
-    void Warns(string condition, string type, string identifier = "", string declarations = "")
+    [Fact]
+    void should_warn_once_for_each_separate_reference_to_a_policy()
+    {
+        var result = Bind("""
+            policy Access
+              require not claim "owner" matches owner
+            module Portal
+              feature Reports
+                slice StateChange FileReport
+                  command FileReport
+                    owner String optional
+                    authorize Access
+                  command ReviseReport
+                    owner String optional
+                    authorize Access
+            """);
+        Assert.True(result.Success, string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
+        result.Diagnostics
+            .Where(diagnostic => diagnostic.Code == DiagnosticCodes.IndeterminateNegatedClaimTarget)
+            .Select(diagnostic => diagnostic.Location.Line)
+            .ShouldContainOnly(8, 11);
+    }
+
+    Diagnostic Warns(string condition, string type, string identifier = "", string declarations = "")
     {
         var result = Binding(condition, type, identifier, declarations);
         var warning = result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.IndeterminateNegatedClaimTarget);
         warning.Severity.ShouldEqual(DiagnosticSeverity.Warning);
         warning.Location.Line.ShouldEqual(declarations.Split('\n').Length + 9);
         warning.Message.ShouldContain("unknown");
+
+        return warning;
     }
 
     void Quiet(string condition, string type, string identifier = "", string declarations = "") =>
