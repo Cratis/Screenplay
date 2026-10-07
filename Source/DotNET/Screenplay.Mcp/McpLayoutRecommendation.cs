@@ -43,7 +43,7 @@ static class McpLayoutRecommendation
             snapshot.Compilation.Success,
             snapshot.SourceRevision,
             recommendedLayout = recommended?.Layout,
-            basis = "Heuristic among size-admissible layouts only. The proposal still validates identities, structure and destination ownership.",
+            basis = "Heuristic among size-admissible layouts only. Split layouts use import barrels; slice writes one file per slice without scope restatements. The proposal still validates identities, structure and destination ownership.",
             fileCount = documents.Length,
             lineCount,
             moduleCount,

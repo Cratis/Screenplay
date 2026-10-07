@@ -83,25 +83,54 @@ static class McpModelQueries
 
     internal static object Diagnostics(McpSnapshot snapshot, int fileCount, JsonElement arguments)
     {
-        var diagnostics = snapshot.Compilation.Diagnostics;
+        var scope = McpJson.OptionalString(arguments, "scope");
+        ScopedDiagnosticResult? selection = null;
+        if (scope is not null)
+        {
+            selection = ScopedDiagnostics.Select(snapshot, scope, out var scopeError)
+                ?? throw new McpFailure(scopeError!, -32602);
+        }
+        var diagnostics = selection?.Diagnostics.AsEnumerable() ?? snapshot.Compilation.Diagnostics;
         if (McpJson.OptionalString(arguments, "document") is { } document)
         {
             diagnostics = diagnostics.Where(diagnostic => diagnostic.Location.Path == document);
         }
 
+        if (selection is null)
+        {
+            return new
+            {
+                snapshot.Compilation.Success,
+                snapshot.SourceRevision,
+                fileCount,
+                summary = DiagnosticSummary(snapshot),
+                page = McpPaging.Page(diagnostics, arguments, snapshot.SourceRevision)
+            };
+        }
+
         return new
         {
-            snapshot.Compilation.Success,
+            success = !selection.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error),
+            wholeApplicationSuccess = snapshot.Compilation.Success,
             snapshot.SourceRevision,
             fileCount,
-            summary = DiagnosticSummary(snapshot),
+            scope,
+            selection.DeclarationCount,
+            selection.DependentDeclarationCount,
+            selection.AffectedScopes,
+            selection.UnresolvedEventConsumers,
+            selection.PossiblyAffectedReferenceCount,
+            selection.DependencyCoverage,
+            summary = DiagnosticSummary(selection.Diagnostics),
             page = McpPaging.Page(diagnostics, arguments, snapshot.SourceRevision)
         };
     }
 
-    internal static object DiagnosticSummary(McpSnapshot snapshot)
+    internal static object DiagnosticSummary(McpSnapshot snapshot) => DiagnosticSummary(snapshot.Compilation.Diagnostics);
+
+    internal static object DiagnosticSummary(IEnumerable<Diagnostic> selected)
     {
-        var diagnostics = snapshot.Compilation.Diagnostics.ToArray();
+        var diagnostics = selected.ToArray();
         return new
         {
             total = diagnostics.Length,

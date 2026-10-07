@@ -56,7 +56,7 @@ nested/broken.play(3,5): error PLAY0028: Unknown slice type 'Wat' - expected Sta
 
 The code is the part that never changes - match on it rather than on the message, which gets reworded. Every code is listed in [Diagnostics](diagnostics.md).
 
-The exit code is `0` when everything compiles without errors and `1` otherwise, so the command slots straight into CI pipelines.
+The exit code is `0` when the check is clean, `1` for model defects, and `2` when the check could not run (for example, an invalid path, argument or unknown scope).
 
 Warnings do not fail the run by default. When a pipeline demands a spotless document - a generated one, say - add `--warnaserror` and a single warning is enough to exit `1`:
 
@@ -66,10 +66,27 @@ screenplay path/to/invoicing.play --warnaserror
 
 | Option | Effect |
 |---|---|
-| `--warnaserror` | Warnings fail the run - exit code `1` even with zero errors |
+| `--scope <Module>[.<Feature>[.<Slice>]]` | Report the named scope and declarations that directly reference it |
+| `--warnaserror` | Warnings in the reported set fail the run - exit code `1` even with zero errors |
 | `--no-color` | Never colorize output |
 
 Colors are enabled automatically on interactive terminals; disable them with `--no-color` or by setting the `NO_COLOR` environment variable.
+
+## Check one part of the application
+
+Keep the application root as the input and name the part you changed:
+
+```bash
+screenplay path/to/screenplays --scope Billing.Invoices.SendInvoice --warnaserror
+```
+
+`--scope` uses case-sensitive, dotted module, feature and slice addresses, as MCP navigation does. Descendants are included; a partial name does not match another module. Nested features use their full dotted address. An unknown or ambiguous scope is a usage error, not an empty successful check. Selection follows the module, feature and slice hierarchy; same-named types, concepts and event sources are not descendants.
+
+The compiler still resolves references across the whole application. Only diagnostics located in the selected declarations, plus declarations that directly reference them, are reported. A dependent declaration is included in full, not its whole slice; dependents of dependents are not included. The exit code and `--warnaserror` apply only to that reported set. The final summary labels its counts as **in scope**; a separate **Whole application** line always shows the full error and warning counts and how many diagnostics are outside the reported set. That line is red when the whole check fails, even if the scoped exit code is `0`.
+
+Output includes the scope's declaration count, the additional direct-dependent declaration count, the diagnostic count, and **affected scopes** containing those dependents. `<application>` means an application-level declaration. Check the listed scopes or the whole root when you need wider assurance.
+
+Impact uses the same explicit source-reference index as MCP `dependencies`. It does not inspect inline code, property paths, imports or expression identifiers, and ambiguous candidates are included conservatively. Unresolved references matching a name in scope are included conservatively as direct dependents. **Unresolved event consumers (cannot be attributed to a scope)** separately reports the count and scopes of unresolved event references outside the reported declarations. Their former targets cannot be proved after a rename or removal, so they do not change **affected scopes**, scoped diagnostic counts or the scoped exit code; their errors remain visible in the **Whole application** line. **Possibly affected** counts only the remaining unresolved references outside the reported declarations, excluding both direct dependents and the unresolved-event category. Diagnostics outside declaration ranges fall back to the file's import placement or its selected slice; diagnostics without a path or valid line are application-wide and included in every scoped result. A clean scoped check is not proof that the whole application is valid or executable. No watch or incremental cache is provided by this option.
 
 ## Use the compiler as a library
 

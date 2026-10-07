@@ -24,17 +24,21 @@ static class WorkspaceReferenceLayout
     }
 
     // Folder layouts order these named containers by path. Their sibling ordering is not a binding
-    // dimension; all other collection order and every structural member remain part of this proof.
+    // dimension. File imports are composition edges already resolved by full-source compilation, not
+    // semantic references. All other collection order and every structural member remain part of this proof.
     static ApplicationSyntax Normalize(ApplicationSyntax application) => application with
     {
+        FileImports = [],
         Modules = [.. application.Modules.OrderBy(module => module.Name, StringComparer.Ordinal).Select(module => module with
         {
+            FileImports = [],
             Features = [.. module.Features.OrderBy(feature => feature.Name, StringComparer.Ordinal).Select(Normalize)]
         })]
     };
 
     static FeatureSyntax Normalize(FeatureSyntax feature) => feature with
     {
+        FileImports = [],
         Features = [.. feature.Features.OrderBy(child => child.Name, StringComparer.Ordinal).Select(Normalize)],
         Slices = [.. feature.Slices.OrderBy(slice => slice.Name, StringComparer.Ordinal)]
     };

@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using System.Text.Json;
+using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
@@ -66,6 +67,7 @@ internal sealed partial class McpWorkspaces
             Validation = McpJson.Enumeration(arguments, "validation", WorkspaceAuthoringValidation.Authoring),
             Formatting = McpJson.Enumeration(arguments, "formatting", WorkspaceAuthoringFormatting.PreserveExactSource),
             ReferencePolicy = McpJson.Enumeration(arguments, "referencePolicy", WorkspaceAuthoringReferencePolicy.Safe),
+            RelocatesCompositionComments = layout,
             AttachmentLoader = documents => McpAttachmentContents.Load(Root, documents)
         };
         if (request.ExpectedRevision != workspace.Revision || request.ExpectedCatalogRevision != workspace.IdentityCatalog.Revision)
@@ -115,18 +117,50 @@ internal sealed partial class McpWorkspaces
     {
         var nodes = ImmutableArray.CreateBuilder<WorkspaceAstOperation>();
         var documents = ImmutableArray.CreateBuilder<WorkspaceOperation>();
-        foreach (var operation in McpLayout.Expand(workspace, layout))
+        var operations = McpLayout.Expand(workspace, layout);
+        var sources = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var operation in operations)
+        {
+            if (operation is ReplaceWorkspaceDocument replace)
+            {
+                var original = workspace.Documents.Single(document => document.Id == replace.Document);
+                sources.Add(original.Path.Value, WorkspaceDocument.Create(original.Id, original.StableKey, original.Path, replace.Bytes.AsSpan()).Text);
+            }
+            else if (operation is AddWorkspaceDocument add)
+            {
+                sources.Add(add.Path.Value, WorkspaceDocument.Create(add.StableKey, add.Path, add.Bytes.AsSpan()).Text);
+            }
+        }
+
+        var (placed, diagnostics) = PlayImports.Resolve(sources.Keys, new InMemoryPlayDocumentSource(sources));
+        if (diagnostics.Any(diagnostic => diagnostic.Severity == Diagnostics.DiagnosticSeverity.Error))
+        {
+            throw new McpFailure("Generated layout imports could not be resolved.");
+        }
+
+        var placements = placed.ToDictionary(document => document.Path, document => document.Placement, StringComparer.Ordinal);
+        foreach (var operation in operations)
         {
             switch (operation)
             {
                 case ReplaceWorkspaceDocument replace:
                     var entry = index.Entries.Single(item => item.Handle.Document == replace.Document && item.Handle.Path.Length == 0);
                     var original = workspace.Documents.Single(document => document.Id == replace.Document);
-                    nodes.Add(new ReplaceWorkspaceNode(entry.Handle, entry.Node, Parse(WorkspaceDocument.Create(original.Id, original.StableKey, original.Path, replace.Bytes.AsSpan()))));
+                    var syntax = Parse(WorkspaceDocument.Create(original.Id, original.StableKey, original.Path, replace.Bytes.AsSpan()), placements[original.Path.Value]);
+                    if (original.Path.Value == PlayFileWriter.RootFileName)
+                    {
+                        // The root's imported declarations and comments have been redistributed across
+                        // documents. Do not restore its old import comments onto generated imports as well.
+                        documents.Add(new ReplaceWorkspaceSyntaxDocument(original.Id, syntax));
+                    }
+                    else
+                    {
+                        nodes.Add(new ReplaceWorkspaceNode(entry.Handle, entry.Node, syntax));
+                    }
                     break;
                 case AddWorkspaceDocument add:
                     var document = WorkspaceDocument.Create(add.StableKey, add.Path, add.Bytes.AsSpan());
-                    documents.Add(new CreateWorkspaceSyntaxDocument(add.StableKey, add.Path, Parse(document), document.Encoding));
+                    documents.Add(new CreateWorkspaceSyntaxDocument(add.StableKey, add.Path, Parse(document, placements[document.Path.Value]), document.Encoding));
                     break;
                 default:
                     documents.Add(operation);
@@ -137,9 +171,9 @@ internal sealed partial class McpWorkspaces
         return (nodes.ToImmutable(), documents.ToImmutable());
     }
 
-    static ApplicationSyntax Parse(WorkspaceDocument document)
+    static ApplicationSyntax Parse(WorkspaceDocument document, PlayPlacement placement)
     {
-        var parsed = new ScreenplayCompiler().Parse(document.Text, document.Path.Value);
+        var parsed = new ScreenplayCompiler().Parse(document.Text, document.Path.Value, placement);
         return parsed.Success ? parsed.Value! : throw new McpFailure($"Generated layout document '{document.Path}' could not be parsed.");
     }
 }
