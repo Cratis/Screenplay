@@ -35,6 +35,7 @@ public class when_freezing_legacy_source_syntax_bytes
             var text = WithoutRuleIntent(json, json.GetRawText())
                 .Replace(",\"eventSources\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"stream\":null", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"noStream\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"streamCandidates\":[]", string.Empty, StringComparison.Ordinal);
             var actual = Encoding.UTF8.GetBytes(text);
             var path = Path.Combine(folder, "LegacySyntax", document.GetProperty("name").GetString() + ".json");

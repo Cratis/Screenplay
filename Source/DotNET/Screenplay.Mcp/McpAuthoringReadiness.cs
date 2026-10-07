@@ -84,6 +84,7 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
         IEnumerable<string> LocalFeatures() => node switch
         {
             EventSourceSyntax or EventStreamSyntax or CommandStreamSyntax => [streams],
+            SpecificationStreamSyntax or SpecificationNoStreamSyntax => ["specification event routes (#457)"],
             CommandSyntax command =>
                 Feature(command.Stream is not null || command.StreamCandidates.Any(), streams)
                 .Concat(Feature(command.Handler is not null, "command handlers"))

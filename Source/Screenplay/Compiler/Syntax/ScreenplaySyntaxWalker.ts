@@ -16,7 +16,7 @@ import { QueryParameterSyntax, QuerySyntax } from './Queries';
 import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
 import { ScreenDirectiveSyntax, ScreenSyntax } from './Screens';
 import {
-    SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax,
+    SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
     SpecificationReadModelSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationSyntax, SpecificationTriggerSyntax, SpecificationWhenQuerySyntax,
 } from './Specifications';
 import { ApplicationSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax, SliceSyntax } from './Structure';
@@ -529,9 +529,18 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitSpecificationEvent(syntax: SpecificationEventSyntax): void {
         this.visitNode(syntax);
+        if (syntax.stream !== undefined) this.visitSpecificationStream(syntax.stream);
+        if (syntax.noStream !== undefined) this.visitSpecificationNoStream(syntax.noStream);
         syntax.values.forEach(node => this.visitPropertyMapping(node));
         if (syntax.for !== null) this.visitExpression(syntax.for);
     }
+
+    visitSpecificationStream(syntax: SpecificationStreamSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.streamId !== null) this.visitPropertyMapping(syntax.streamId);
+    }
+
+    visitSpecificationNoStream(syntax: SpecificationNoStreamSyntax): void { this.visitNode(syntax); }
 
     visitSpecificationCommand(syntax: SpecificationCommandSyntax): void {
         this.visitNode(syntax);

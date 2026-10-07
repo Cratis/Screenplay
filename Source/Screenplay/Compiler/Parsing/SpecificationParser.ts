@@ -4,12 +4,13 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
 import {
-    SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationErrorSyntax, SpecificationEventSyntax,
+    SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationErrorSyntax, SpecificationEventSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
     SpecificationNoResultSyntax, SpecificationQueryResultSyntax, SpecificationReadModelSyntax, SpecificationSyntax, SpecificationTriggerSyntax,
     SpecificationWhenQuerySyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax,
 } from '../Syntax/Specifications';
 import { SpecificationDeniedSyntax, SpecificationReturnSyntax } from '../Syntax/Responses';
 import { dotNetWhitespace, nativePattern, pattern } from '../Text/patterns';
+import { sourceStreamPattern } from '../Text/SourceStreamNames';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { parseMappingSource } from './ExpressionParser';
 import { isFileDirective } from './FileReferences';
@@ -442,12 +443,18 @@ function parseEventStep(context: ParserContext, line: SourceLine, regex: RegExp,
         skipBody(context, line.indent);
         return undefined;
     }
-    return { kind: 'SpecificationEventSyntax', eventType: match[1], ...parseValuesWithEventSource(context, line), location: locationOf(line) };
+    return { kind: 'SpecificationEventSyntax', eventType: match[1], ...parseValuesWithEventSource(context, line, undefined, keyword), location: locationOf(line) };
 }
 
-function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, generated?: PropertyMappingSyntax[]): { values: PropertyMappingSyntax[]; for: ExpressionSyntax | null } {
+const specificationStream = sourceStreamPattern('^stream\\s+([A-Za-z_]\\w*)\\.([A-Za-z_]\\w*)$');
+const specificationStreamId = pattern('^streamId\\s*=(?!=|>)\\s*(.+)$');
+
+function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, generated?: PropertyMappingSyntax[], eventKeyword?: string): { values: PropertyMappingSyntax[]; for: ExpressionSyntax | null; stream?: SpecificationStreamSyntax; noStream?: SpecificationNoStreamSyntax } {
     const values: PropertyMappingSyntax[] = [];
     let eventSource: ExpressionSyntax | null = null;
+    let stream: SpecificationStreamSyntax | undefined;
+    let noStream: SpecificationNoStreamSyntax | undefined;
+    let hasRoute = false;
     for (let child = context.peekChild(parent.indent); child !== undefined; child = context.peekChild(parent.indent)) {
         context.reader.takeSignificant();
         if (generated !== undefined && generatedFixturePrefix.test(child.content)) {
@@ -458,6 +465,28 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, 
         const mapping = mappingPattern.exec(child.content);
         if (mapping !== null) {
             values.push(mappingOf(context, child, mapping));
+        } else if (firstWord(child.content) === 'stream' || child.content.startsWith('no stream')) {
+            if (eventKeyword === undefined) {
+                context.error(DiagnosticCodes.SpecificationStreamOnCommand, 'A command occurrence cannot declare a route; assert it on a then event.', locationOf(child));
+                context.skipBlock(child.indent);
+                continue;
+            }
+            if (hasRoute) {
+                context.error(DiagnosticCodes.InvalidSpecificationStream, 'An event occurrence declares at most one stream or no stream directive.', locationOf(child));
+                context.skipBlock(child.indent);
+                continue;
+            }
+            hasRoute = true;
+            const route = specificationStream.exec(child.content);
+            if (child.content === 'no stream' && eventKeyword === 'then') {
+                noStream = { kind: 'SpecificationNoStreamSyntax', location: locationOf(child) };
+                rejectSpecificationRouteChildren(context, child);
+            } else if (route !== null) {
+                stream = parseSpecificationStream(context, child, route);
+            } else {
+                context.error(DiagnosticCodes.InvalidSpecificationStream, "Expected 'stream Source.Stream', or 'no stream' on a then event.", locationOf(child));
+                context.skipBlock(child.indent);
+            }
         } else if (firstWord(child.content) === 'for') {
             const source = child.content.substring('for'.length).trim();
             if (source.length === 0) {
@@ -471,7 +500,34 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, 
             context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child));
         }
     }
-    return { values, for: eventSource };
+    return { values, for: eventSource, ...(stream === undefined ? {} : { stream }), ...(noStream === undefined ? {} : { noStream }) };
+}
+
+function parseSpecificationStream(context: ParserContext, header: SourceLine, route: RegExpExecArray): SpecificationStreamSyntax {
+    let streamId: PropertyMappingSyntax | null = null;
+    for (let child = context.peekChild(header.indent); child !== undefined; child = context.peekChild(header.indent)) {
+        context.reader.takeSignificant();
+        const mapping = specificationStreamId.exec(child.content);
+        if (mapping === null || streamId !== null) {
+            context.error(DiagnosticCodes.InvalidSpecificationStream, "A specification stream accepts at most one 'streamId = <literal>' mapping.", locationOf(child));
+            context.skipBlock(child.indent);
+            continue;
+        }
+        const location = { ...locationOf(child), column: child.indent + 1 + child.content.indexOf(mapping[1], child.content.indexOf('=') + 1) };
+        streamId = { kind: 'PropertyMappingSyntax', property: 'streamId', source: parseMappingSource(mapping[1], location, context), location: locationOf(child) };
+        rejectSpecificationRouteChildren(context, child);
+    }
+    return { kind: 'SpecificationStreamSyntax', eventSource: route[1], stream: route[2], streamId,
+        referenceLocation: { ...locationOf(header), column: header.indent + 1 + header.content.indexOf(route[1], 'stream'.length) },
+        referenceLength: route[1].length + 1 + route[2].length, location: locationOf(header) };
+}
+
+function rejectSpecificationRouteChildren(context: ParserContext, line: SourceLine): void {
+    const child = context.peekChild(line.indent);
+    if (child !== undefined) {
+        context.error(DiagnosticCodes.InvalidSpecificationStream, 'This directive cannot have children.', locationOf(child));
+        context.skipBlock(line.indent);
+    }
 }
 
 function parseValues(context: ParserContext, parent: SourceLine, nativeIdentifiers = false): PropertyMappingSyntax[] {

@@ -644,20 +644,26 @@ internal static partial class SpecificationParser
             return null;
         }
 
-        var body = ParseValuesWithEventSource(context, line);
+        var body = ParseValuesWithEventSource(context, line, eventKeyword: keyword);
         return new SpecificationEventSyntax(match.Groups[1].Value, body.Values, line.Location)
         {
-            For = body.For
+            For = body.For,
+            Stream = body.Stream,
+            NoStream = body.NoStream
         };
     }
 
-    static (List<PropertyMappingSyntax> Values, ExpressionSyntax? For) ParseValuesWithEventSource(
+    static (List<PropertyMappingSyntax> Values, ExpressionSyntax? For, SpecificationStreamSyntax? Stream, SpecificationNoStreamSyntax? NoStream) ParseValuesWithEventSource(
         ParserContext context,
         SourceLine parent,
-        List<PropertyMappingSyntax>? generated = null)
+        List<PropertyMappingSyntax>? generated = null,
+        string? eventKeyword = null)
     {
         var values = new List<PropertyMappingSyntax>();
         ExpressionSyntax? eventSource = null;
+        SpecificationStreamSyntax? stream = null;
+        SpecificationNoStreamSyntax? noStream = null;
+        var hasRoute = false;
         while (context.TryPeekChild(parent.Indent, out var child))
         {
             context.Reader.TakeSignificant();
@@ -675,6 +681,38 @@ internal static partial class SpecificationParser
             if (mapping.Success)
             {
                 values.Add(ExpressionParser.ParseMapping(context, mapping.Groups[1].Value, mapping.Groups[2], child));
+                continue;
+            }
+
+            if (LineText.FirstWord(child.Content) == "stream" || child.Content.StartsWith("no stream", StringComparison.Ordinal))
+            {
+                if (eventKeyword is null)
+                {
+                    context.Error(DiagnosticCodes.SpecificationStreamOnCommand, "A command occurrence cannot declare a route; assert it on a then event.", child.Location);
+                    context.SkipBlock(child.Indent);
+                    continue;
+                }
+                if (hasRoute)
+                {
+                    context.Error(DiagnosticCodes.InvalidSpecificationStream, "An event occurrence declares at most one stream or no stream directive.", child.Location);
+                    context.SkipBlock(child.Indent);
+                    continue;
+                }
+                hasRoute = true;
+                if (child.Content == "no stream" && eventKeyword == "then")
+                {
+                    noStream = new(child.Location);
+                    RejectSpecificationRouteChildren(context, child);
+                }
+                else if (SpecificationStreamRegex().Match(child.Content) is { Success: true } route)
+                {
+                    stream = ParseSpecificationStream(context, child, route);
+                }
+                else
+                {
+                    context.Error(DiagnosticCodes.InvalidSpecificationStream, "Expected 'stream Source.Stream', or 'no stream' on a then event.", child.Location);
+                    context.SkipBlock(child.Indent);
+                }
                 continue;
             }
 
@@ -700,8 +738,48 @@ internal static partial class SpecificationParser
             context.Error(DiagnosticCodes.InvalidSpecificationValue, $"Invalid property mapping '{child.Content}' - expected '<property> = <value>'", child.Location);
         }
 
-        return (values, eventSource);
+        return (values, eventSource, stream, noStream);
     }
+
+    static SpecificationStreamSyntax ParseSpecificationStream(ParserContext context, SourceLine header, Match route)
+    {
+        PropertyMappingSyntax? streamId = null;
+        while (context.TryPeekChild(header.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            var mapping = SpecificationStreamIdRegex().Match(child.Content);
+            if (!mapping.Success || streamId is not null)
+            {
+                context.Error(DiagnosticCodes.InvalidSpecificationStream, "A specification stream accepts at most one 'streamId = <literal>' mapping.", child.Location);
+                context.SkipBlock(child.Indent);
+                continue;
+            }
+            streamId = ExpressionParser.ParseMapping(context, "streamId", mapping.Groups[1], child);
+            RejectSpecificationRouteChildren(context, child);
+        }
+
+        return new(route.Groups[1].Value, route.Groups[2].Value, header.Location)
+        {
+            StreamId = streamId,
+            ReferenceLocation = header.LocationAt(route.Groups[1].Index),
+            ReferenceLength = route.Groups[1].Length + 1 + route.Groups[2].Length
+        };
+    }
+
+    static void RejectSpecificationRouteChildren(ParserContext context, SourceLine line)
+    {
+        if (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Error(DiagnosticCodes.InvalidSpecificationStream, "This directive cannot have children.", child.Location);
+            context.SkipBlock(line.Indent);
+        }
+    }
+
+    [GeneratedRegex(@"^stream\s+([A-Za-z_]\w*)\.([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex SpecificationStreamRegex();
+
+    [GeneratedRegex(@"^streamId\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
+    private static partial Regex SpecificationStreamIdRegex();
 
     static List<PropertyMappingSyntax> ParseValues(ParserContext context, SourceLine parent)
     {

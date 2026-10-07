@@ -1,0 +1,36 @@
+// Specification routes are authoring-only until an ESM version admits them.
+numbers exact
+concept Partition : Int
+eventsource Account
+  identifier String
+  stream Transactions
+    streamId String
+  stream Profile
+  stream Partitioned
+    streamId Partition
+module Banking
+  feature Accounts
+    slice StateView History
+      event Recorded
+        stream Int
+        streamId Int
+      specification ReadingHistory
+        given Recorded
+          stream Account.Transactions
+            streamId = "p-1:2026-10"
+          for "other"
+          stream = 5
+        when append Recorded
+          for "other"
+          stream Account.Profile
+          streamId = 6
+        then Recorded
+          for "other"
+          stream Account.Partitioned
+            streamId = 202610
+          stream = 7
+        then Recorded
+          no stream
+          streamId = 8
+        then Recorded
+          stream = 9

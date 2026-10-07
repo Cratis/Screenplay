@@ -842,7 +842,7 @@ SpecificationGiven = OperationFailureFixture
                | "given", "capture", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "given", Ident, NL,
-                 [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ] ;
+                 [ INDENT, { SpecificationEventSource | SpecificationStream | PropertyMapping }, DEDENT ] ;
 
 (* "given clock" states the ISO 8601 instant the scenario happens at - the
    occurrence time of everything it does. "given capture" states an earlier record
@@ -851,7 +851,7 @@ SpecificationGiven = OperationFailureFixture
 SpecificationWhen = "when", Ident, NL,
                  [ INDENT, { SpecificationEventSource | PropertyMapping | GeneratedFixture }, DEDENT ]
                | "when", "append", Ident, NL,
-                 [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ]
+                 [ INDENT, { SpecificationEventSource | SpecificationStream | PropertyMapping }, DEDENT ]
                | "when", "clock", StringLiteral, NL
                | "when", "trigger", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
@@ -901,9 +901,17 @@ SpecificationThen = ReturnExpectation
                | "then", "denied", NL
                | "then", "events", "in", "any", "order", NL
                | "then", Ident, NL,
-                 [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ] ;
+                 [ INDENT, { SpecificationEventSource | SpecificationStream | SpecificationNoStream | PropertyMapping }, DEDENT ] ;
 
 SpecificationEventSource = "for", Expression, NL ;
+SpecificationStream = "stream", Ident, ".", Ident, NL,
+                 [ INDENT, "streamId", "=", ConcreteValue, NL, DEDENT ] ;
+SpecificationNoStream = "no", "stream", NL ;
+(* A route occurs at most once. Only then accepts no stream. Routed given and
+   when append require for; then may omit it. streamId is required exactly for
+   keyed streams, is a concrete compatible scalar and cannot be empty text.
+   Routing lines under when Command are refused. All routes are syntax-only:
+   binding reports PLAY0268 until an executable model version admits them. *)
 
 SpecificationQueryDirective = "arguments", NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]

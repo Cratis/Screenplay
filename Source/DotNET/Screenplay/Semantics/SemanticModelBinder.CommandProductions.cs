@@ -23,6 +23,13 @@ public sealed partial class SemanticModelBinder
 
         public override void VisitNode(SyntaxNode node)
         {
+            if (node is SpecificationStreamSyntax or SpecificationNoStreamSyntax)
+            {
+                Diagnostics.Add(Diagnostic.Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    "Specification event routes are not admitted by any supported executable model (ESM) version yet (#457).",
+                    node.Location));
+            }
             if (node is EventSourceSyntax or EventStreamSyntax or CommandStreamSyntax)
             {
                 Diagnostics.Add(Diagnostic.Error(

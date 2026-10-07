@@ -48,6 +48,7 @@ static class WorkspaceReferenceMembers
                     {
                         WorkspaceReferenceDomain.Property => WorkspaceStructuredReferences.Owner(entry, index),
                         WorkspaceReferenceDomain.EventStream when entry.Node is CommandStreamSyntax route => route.EventSource,
+                        WorkspaceReferenceDomain.EventStream when entry.Node is SpecificationStreamSyntax route => route.EventSource,
                         _ => null
                     };
                     if (domain != WorkspaceReferenceDomain.Property || owner is not null)
@@ -99,6 +100,7 @@ static class WorkspaceReferenceMembers
 
     static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> OtherMembers(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index) => entry.Node switch
     {
+        SpecificationStreamSyntax => [("eventSource", WorkspaceReferenceDomain.EventSource), ("stream", WorkspaceReferenceDomain.EventStream)],
         CommandStreamSyntax { PropertyCandidate: null } => [("eventSource", WorkspaceReferenceDomain.EventSource), ("stream", WorkspaceReferenceDomain.EventStream)],
         OperationSyntax => [("uses", WorkspaceReferenceDomain.System)],
         SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax => [("operation", WorkspaceReferenceDomain.Operation)],

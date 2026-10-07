@@ -19,6 +19,21 @@ export interface SpecificationEventSyntax extends SyntaxNode {
     readonly eventType: string;
     readonly values: readonly PropertyMappingSyntax[];
     readonly for: ExpressionSyntax | null;
+    readonly stream?: SpecificationStreamSyntax;
+    readonly noStream?: SpecificationNoStreamSyntax;
+}
+
+export interface SpecificationStreamSyntax extends SyntaxNode {
+    readonly kind: 'SpecificationStreamSyntax';
+    readonly eventSource: string;
+    readonly stream: string;
+    readonly streamId: PropertyMappingSyntax | null;
+    readonly referenceLocation: SyntaxNode['location'];
+    readonly referenceLength: number;
+}
+
+export interface SpecificationNoStreamSyntax extends SyntaxNode {
+    readonly kind: 'SpecificationNoStreamSyntax';
 }
 
 // 'when <Command>', with the values it is executed with.

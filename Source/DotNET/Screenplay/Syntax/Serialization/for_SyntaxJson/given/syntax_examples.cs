@@ -3,6 +3,7 @@
 
 using System.Collections;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson.given;
 
@@ -36,6 +37,8 @@ internal static class syntax_examples
             ValidationRuleSyntax rule => rule with { Rule = ValidationRuleKind.Rule, Value = new PathExpressionSyntax("ExamplePredicate", rule.Location), Code = null },
             EventSourceSyntax source => source with { Identifier = source.Identifier is null ? null : source.Identifier with { IsCollection = false, IsOptional = false } },
             EventStreamSyntax stream => stream with { StreamId = stream.StreamId is null ? null : stream.StreamId with { IsCollection = false, IsOptional = false } },
+            SpecificationEventSyntax occurrence => occurrence with { NoStream = null },
+            SpecificationStreamSyntax route => route with { StreamId = route.StreamId is null ? null : route.StreamId with { Property = "streamId" } },
             CommandStreamSyntax route => route with { PropertyCandidate = null, StreamId = route.StreamId is null ? null : route.StreamId with { Property = "streamId" } },
             HandlerSyntax handler => handler with { Code = null },
             OperationPhaseSyntax phase => phase with { Code = null },

@@ -183,6 +183,8 @@ internal static class SyntaxKinds
         typeof(SpecificationErrorSyntax),
         typeof(SpecificationEventSyntax),
         typeof(SpecificationNoResultSyntax),
+        typeof(SpecificationStreamSyntax),
+        typeof(SpecificationNoStreamSyntax),
         typeof(SpecificationQueryResultSyntax),
         typeof(SpecificationQuerySyntax),
         typeof(SpecificationReadModelSyntax),
