@@ -3,6 +3,7 @@
 
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Syntax.Serialization;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Syntax;
 
@@ -41,6 +42,14 @@ internal static partial class EventSourceInvariants
                 Name(stream.Name);
                 Pin(stream.Id);
                 Scalar(stream.StreamId);
+                break;
+            case SpecificationEventSyntax occurrence:
+                if (occurrence.Stream is not null && occurrence.NoStream is not null) throw new InvalidSyntaxJson("An event occurrence cannot declare both stream and no stream.");
+                break;
+            case SpecificationStreamSyntax specificationRoute:
+                Name(specificationRoute.EventSource);
+                Name(specificationRoute.Stream);
+                if (specificationRoute.StreamId is { Property: not "streamId" }) throw new InvalidSyntaxJson("A specification stream maps only streamId.");
                 break;
             case CommandStreamSyntax route:
                 Name(route.EventSource);
