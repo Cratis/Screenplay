@@ -71,6 +71,7 @@ export const typeItems: CompletionEntry[] = [
 ];
 
 export const moduleItems: CompletionEntry[] = [
+    { label: 'depends on', insertText: 'depends on ${1:Name}', documentation: 'Declares an allowed module or feature dependency. Opts this container into independent explicit-reference checks.' },
     { label: 'import "…"', insertText: 'import "${1:*/*.play}"', documentation: 'Imports `.play` files into this module — their top level is the module\'s body, so they hold features and module members without restating the module.' },
     { label: 'layout', insertText: 'layout ${1:Name}\n    template\n        ${2:slot}', documentation: 'Declares a reusable screen template with named slots.' },
     { label: 'feature', insertText: 'feature ${1:Name}\n    ', documentation: 'Groups related slices into a vertical feature.' },
@@ -83,6 +84,7 @@ export const moduleItems: CompletionEntry[] = [
 ];
 
 export const featureItems: CompletionEntry[] = [
+    { label: 'depends on', insertText: 'depends on ${1:Name}', documentation: 'Declares an allowed module or feature dependency. Sibling feature names resolve before module names.' },
     { label: 'import "…"', insertText: 'import "${1:*.play}"', documentation: 'Imports `.play` files into this feature — their top level is the feature\'s body, so they hold slices and nested features without restating where they belong.' },
     { label: 'feature', insertText: 'feature ${1:Name}\n    ', documentation: 'Declares a nested sub-feature.' },
     { label: 'contribute', insertText: 'contribute to ${1:Navigation}\n    navigate to ${2:Screen}\n    label "${3:Label}"', documentation: 'Contributes an entry to a named slot of the shell, such as navigation.' },

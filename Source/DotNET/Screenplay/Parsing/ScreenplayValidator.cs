@@ -177,7 +177,10 @@ internal static class ScreenplayValidator
         ValidateProfileLayouts(application, context);
         ValidateArrangements(application, context);
 
-        return DeclaredDependencyTargets.Validate(application, context);
+        application = DeclaredDependencyTargets.Validate(application, context);
+        DeclaredDependencies.Validate(application, context);
+
+        return application;
     }
 
     static void ValidateAdditionalEventReferences(ApplicationSyntax application, ConsistencyDeclarations declarations, HashSet<string> knownEvents, ParserContext context)

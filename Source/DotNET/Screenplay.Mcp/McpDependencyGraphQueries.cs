@@ -36,6 +36,21 @@ static class McpDependencyGraphQueries
                     alternatives = item.Alternatives.Select(Node).ToArray(), item.TestOnly, item.Location
                 }).ToArray(), edge.EvidenceCount, edge.EvidenceTruncated
             }),
+            "declarations" => DeclaredDependencies.For(snapshot.Compilation.Value!).Containers.Where(item => InScope(item.Container)).Select(item => (object)new
+            {
+                container = Node(item.Container), item.Location,
+                declarations = item.Declarations.Select(declaration => new
+                {
+                    declaration.Syntax.Target, declaration.Resolved, declaration.Status, declaration.Syntax.Location
+                }).ToArray(),
+                edges = item.Edges.Select(edge => new
+                {
+                    consumer = Node(edge.Evidence.Consumer), producer = Node(edge.Evidence.Producer), edge.Evidence.Kind,
+                    edge.Evidence.Role, edge.Evidence.Name, edge.Status, edge.Evidence.Ambiguous,
+                    alternatives = edge.Evidence.Alternatives.Select(Node).ToArray(), edge.Evidence.Location,
+                    coveringDeclarations = edge.CoveringDeclarations.Select(declaration => new { declaration.Target, declaration.Location }).ToArray()
+                }).ToArray()
+            }),
             "cycles" => (from == to ? graph.Cycles(from, kinds) : []).Where(group => group.Members.Any(InScope)).Select(group => (object)new { members = group.Members.Select(Node).ToArray() }),
             "order" => graph.SuggestedOrder(kinds).Containers.Where(order => InScope(order.Container)).Select(order => (object)new
             {
@@ -53,7 +68,7 @@ static class McpDependencyGraphQueries
             graph.OrderSource,
             coverage = new
             {
-                description = "Explicit slice references only; not code, expressions or transitive runtime impact. Earliest authored producer wins, ignoring case; ambiguity retains alternatives. Order and cycles use usesFactsFrom, reactsTo and decidesFrom only; suggestions never edit source.",
+                description = "Explicit slice references only; not code, expressions or transitive runtime impact. Earliest authored producer wins, ignoring case; ambiguity retains alternatives. Order and cycles use usesFactsFrom, reactsTo and decidesFrom only; suggestions never edit source. Declarations check each opted-in container independently using usesFactsFrom, reactsTo, decidesFrom, asks and shows; test-only and outside-context evidence is excluded. Ambiguous ownership is provisional and never raises an undeclared warning.",
                 graph.ExcludedReferences, unresolvedCount = graph.Unresolved.Count, graph.UnusedImports
             },
             diagnostics = McpModelQueries.DiagnosticSummary(snapshot),

@@ -58,6 +58,7 @@ export const constructKeywords = [
 export const typeModifierKeywords = ['optional'];
 
 export const clauseKeywords = [
+    'depends',
     'description',
     'template',
     'profile',

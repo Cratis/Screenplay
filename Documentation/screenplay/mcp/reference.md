@@ -138,10 +138,10 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `describe-application` | `view`: summary, children or declarations; optional `parent`, scope/kind/document filters | Compact counts or paged logical navigation |
 | `find-declaration` | Required exact `name`; optional kind/scope/document | Paged matches; typed syntax only with `includeContent: true` |
 | `search-declarations` | Optional `name`, `match`: exact/prefix/contains, kind/scope/document | Compact scoped search |
-| `declaration-details` | `address`, `kind`; optional `view` | Summary or paged properties, occurrences, commands, specifications, produces, enum values; explicit syntax view |
+| `declaration-details` | `address`, `kind`; optional `view` | Summary or paged properties, occurrences, commands, specifications, produces, enum values, module/feature dependencies; explicit syntax view |
 | `find-references` | `address`, `kind` | Paged resolved incoming references and ambiguities, with owners/roles |
 | `dependencies` | `address`, `kind`, direction incoming/outgoing; optional descendants/document | Direct indexed dependencies and resolution candidates |
-| `dependency-graph` | Optional view, from/to levels, scope, direction, kinds, includeTestOnly, evidenceLimit | Inferred slice/container/context edges, ordering cycles, story-order suggestions or unresolved references |
+| `dependency-graph` | Optional view, from/to levels, scope, direction, kinds, includeTestOnly, evidenceLimit | Inferred slice/container/context edges, ordering cycles, story-order suggestions, unresolved references or checked dependency declarations |
 | `find-fixtures` | Specification address, role, property, value, scope/document | Paged assignments with type, value and location, including `when append` event payloads (`whenAppendedEvent`) and `for` destinations (`whenAppendedEventDestination`) |
 | `find-assertion-gaps` | Optional scope/document | Slices without specifications declaring a `then` assertion, including `then denied` |
 | `diagnostics` | Optional document | Paged diagnostics and total severity counts |
@@ -182,7 +182,7 @@ Use `dependencies` for a declaration's scoped indexed references instead.
 
 | Argument | Type | Default | Values / limits |
 | --- | --- | --- | --- |
-| `view` | String | `edges` | `edges`, `cycles`, `order`, `unresolved` |
+| `view` | String | `edges` | `edges`, `cycles`, `order`, `unresolved`, `declarations` |
 | `from` | String | `module` | `slice`, `feature`, `module` |
 | `to` | String | `module` | `slice`, `feature`, `module`, `context` |
 | `scope` | String | Whole application | Exact module, feature, slice or context address; includes descendants |
@@ -201,6 +201,10 @@ lists), `reactsTo` (named event triggers), `decidesFrom` (read-model reads), `as
 (imported event contracts without a local producer). References to shared
 application types, concepts, policies and triggers are excluded and counted.
 Unresolved graph references never become edges.
+
+`view: "declarations"` pages opted-in containers in syntax order. Each item has a `container`, header `location`, `declarations` (target text, resolved address, location and status `used`, `provisional`, `unused` or `invalid`) and counted per-reference `edges`. An edge is `declared`, `provisional` or `undeclared`, with its evidence and `coveringDeclarations`. Ambiguous ownership is always provisional, even when no declaration covers a candidate; it never raises an undeclared warning. A declaration used by certain evidence remains `used` even if other evidence is ambiguous.
+
+This view checks each container against its own declarations, including descendant consumers. It always counts `usesFactsFrom`, `reactsTo`, `decidesFrom`, `asks` and `shows`; `kinds`, `includeTestOnly`, `direction`, level selectors and `evidenceLimit` apply to the inferred views, not to this inventory check. Internal edges and producers in a proper ancestor's own slices are excluded. `scope` selects checked containers, including descendants. Use `declaration-details` with `view: "dependencies"` and kind `Module` or `Feature` to page authored dependency syntax, or [declared dependencies](../slices.md#declared-dependencies) for diagnostic rules.
 
 Event names resolve to the earliest slice declaring the event, including inline
 events and generations. Other names resolve to the earliest declaring slice;

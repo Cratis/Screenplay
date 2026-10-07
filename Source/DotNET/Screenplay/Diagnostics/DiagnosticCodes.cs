@@ -2319,4 +2319,19 @@ public static class DiagnosticCodes
     /// A dependency is declared more than once on the same container.
     /// </summary>
     public const string RepeatedDependencyDeclaration = "PLAY0555";
+
+    /// <summary>
+    /// An opted-in container uses a producer it did not declare.
+    /// </summary>
+    public const string UndeclaredDependency = "PLAY0552";
+
+    /// <summary>
+    /// No counted explicit reference uses a declared dependency.
+    /// </summary>
+    public const string UnusedDependencyDeclaration = "PLAY0553";
+
+    /// <summary>
+    /// Two containers declare each other as dependencies.
+    /// </summary>
+    public const string MutualDependencyDeclarations = "PLAY0556";
 }
