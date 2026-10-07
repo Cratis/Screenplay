@@ -2299,6 +2299,26 @@ public static class DiagnosticCodes
     /// </summary>
     public const string DuplicateSpecificationAssignment = "PLAY0519";
 
+    /// <summary>
+    /// A specification example type or reference is unknown, ambiguous, or unsupported.
+    /// </summary>
+    public const string UnresolvedSpecificationExampleType = "PLAY0520";
+
+    /// <summary>
+    /// A specification example name collides with a type or another example in its scope.
+    /// </summary>
+    public const string SpecificationExampleNameCollision = "PLAY0521";
+
+    /// <summary>
+    /// A specification step uses an example of another kind.
+    /// </summary>
+    public const string SpecificationExampleKindMismatch = "PLAY0522";
+
+    /// <summary>
+    /// A specification example supplies a value not allowed by its current type.
+    /// </summary>
+    public const string InvalidSpecificationExampleValue = "PLAY0523";
+
     /// <summary>An event source or stream declaration is invalid or ambiguous.</summary>
     public const string InvalidEventSourceDeclaration = "PLAY0503";
 

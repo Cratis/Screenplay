@@ -271,6 +271,10 @@ remove duplicate route headers before export.
 | `PLAY0453` | Error | A `then no readmodel` line lacks a view or key, uses `exactly`, or has child mappings. |
 | `PLAY0518` | Error | An example declaration is not `example <Name> : <EventOrCommandOrReadModel>`. |
 | `PLAY0519` | Error | A fixture assigns the same property more than once, including across a step's inline assignment and indented body. Assign it once; overriding a value from an example is a separate operation. |
+| `PLAY0520` | Error | An example's type or reference is unknown, ambiguous, or not an event, command, or read model. Qualify the declaration; example inheritance is not supported. |
+| `PLAY0521` | Error | An example name collides with a type name or repeats in the same scope. Choose a distinct example name. |
+| `PLAY0522` | Error | A step references an example of another kind. Use the corrected step spelling suggested by the diagnostic. |
+| `PLAY0523` | Error | An example supplies an undeclared current-generation property, an invalid generated fixture, or `for` on a read model. Use only the current type's allowed fixture lines. |
 
 ### Screens
 
