@@ -100,6 +100,11 @@ Mutually dependent sibling groups report one `PLAY0517` instead of individual `P
 
 A single document uses text order. For application or folder compilation, the ordering root is the sole root when there is one; otherwise it is the folder-root `application.play` if that file imports others, or the unique importing document not itself imported. With no such root, the compiler assigns no presentation ranks and skips the timeline check. When a folder has an `application.play` without imports, the compiler takes its order from the only importing document while the boards keep path order, so the check can describe an order the board does not draw. It checks the merged application once, not each physical file separately. This does not change merge order, syntax JSON, executable model bytes, revisions or identities.
 
+For dependencies beyond projection and trigger event flow, use the read-only
+[MCP dependency graph](mcp/reference.md#dependency-graph). Its cycles and story-order
+suggestions also include read-model decisions; they do not change these diagnostics
+or apply a reorder.
+
 ### Repair a backward event reference
 
 C# workspaces and MCP offer typed `PLAY0516` proposals for safe sibling declaration
