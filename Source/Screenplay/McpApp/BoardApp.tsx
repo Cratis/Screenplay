@@ -20,6 +20,7 @@ export const BoardApp = () => {
     const [shown, setShown] = useState(ShownModel.Proposed);
     const [view, setView] = useState(DependencyView.Board);
     const [attempt, setAttempt] = useState(0);
+    const [mapAttempt, setMapAttempt] = useState(0);
     const boardHost = useRef<HTMLDivElement>(null);
     const focusAfterSwitch = useRef(false);
     const changeView = (next: DependencyView) => {
@@ -63,10 +64,11 @@ export const BoardApp = () => {
     }, [board]);
 
     const style = { height: boardHeight(host.container) };
-    if (boards instanceof Error || model instanceof Error) {
-        return <div className='screenplay-mcp-board__message' style={style}>The board could not be drawn: {(boards instanceof Error ? boards : model as Error).message}</div>;
+    if (boards === undefined) {
+        return <div className='screenplay-mcp-board__message' style={style}>Reading the model…</div>;
     }
-    if (board === undefined || model === undefined) {
+    const boardProblem = boards instanceof Error ? boards : model instanceof Error ? model : undefined;
+    if (!(boards instanceof Error) && (board === undefined || model === undefined)) {
         return <div className='screenplay-mcp-board__message' style={style}>Reading the model…</div>;
     }
 
@@ -83,17 +85,26 @@ export const BoardApp = () => {
     return (
         <div ref={boardHost} className='screenplay-mcp-board' style={style}>
             <MenuDropdownOpenProvider>
-                <BoardErrorBoundary resetWhenChanged={board} onReset={() => setAttempt(attempt + 1)}>
-                    <div className={`screenplay-board-view${view !== DependencyView.Board ? ' is-hidden' : ''}`} aria-hidden={view !== DependencyView.Board} inert={view !== DependencyView.Board}>
-                        <EventModelBoard key={attempt} document={model} readOnly showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
-                    </div>
-                    <div className='screenplay-dependency-map-host' hidden={view !== DependencyView.Map} style={{ display: view !== DependencyView.Map ? 'none' : undefined }}>
+                <div className={`screenplay-board-view${view !== DependencyView.Board ? ' is-hidden' : ''}`} aria-hidden={view !== DependencyView.Board} inert={view !== DependencyView.Board}>
+                    {boardProblem !== undefined || model === undefined || model instanceof Error ? <>
                         <div className='screenplay-dependency-map-toolbar' role='toolbar' aria-label='Model and view'>{tools}</div>
-                        <DependencyMapView map={board.dependencies} />
-                    </div>
-                </BoardErrorBoundary>
+                        <div className='screenplay-mcp-board__message'>The board could not be drawn: {boardProblem?.message}</div>
+                    </> : (
+                        <BoardErrorBoundary resetWhenChanged={board} onReset={() => setAttempt(attempt + 1)} tools={tools}>
+                            <EventModelBoard key={attempt} document={model} readOnly showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
+                        </BoardErrorBoundary>
+                    )}
+                </div>
+                <div className='screenplay-dependency-map-host' hidden={view !== DependencyView.Map} style={{ display: view !== DependencyView.Map ? 'none' : undefined }}>
+                    <div className='screenplay-dependency-map-toolbar' role='toolbar' aria-label='Model and view'>{tools}</div>
+                    {board === undefined
+                        ? <div className='screenplay-mcp-board__message'>The dependency map is unavailable: {(boards as Error).message}</div>
+                        : <BoardErrorBoundary resetWhenChanged={board} onReset={() => setMapAttempt(mapAttempt + 1)} subject='dependency map'>
+                            <DependencyMapView key={mapAttempt} map={board.dependencies} />
+                        </BoardErrorBoundary>}
+                </div>
             </MenuDropdownOpenProvider>
-            {board.errors > 0 && (
+            {board !== undefined && board.errors > 0 && (
                 <div className='screenplay-mcp-board__problems' role='status'>
                     {board.errors === 1 ? '1 error' : `${board.errors} errors`} - the board shows what could be read.
                 </div>
