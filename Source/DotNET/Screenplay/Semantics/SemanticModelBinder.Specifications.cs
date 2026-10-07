@@ -20,6 +20,14 @@ public sealed partial class SemanticModelBinder
         static IEnumerable<SliceSyntax> AllSlices(FeatureSyntax feature) =>
             feature.Slices.Concat(feature.Features.SelectMany(AllSlices));
 
+        static bool CommandBelongsToSlice(string reference, SemanticAddress slice)
+        {
+            var qualifiers = reference.Split('.')[..^1];
+            var scope = slice.Parts.Where(part => part.Kind is SemanticAddressPartKind.Module or SemanticAddressPartKind.Feature or SemanticAddressPartKind.Slice).Select(part => part.Key).ToArray();
+
+            return qualifiers.Length <= scope.Length && qualifiers.SequenceEqual(scope.TakeLast(qualifiers.Length));
+        }
+
         SemanticSpecification? BindSpecification(
             SemanticAddress slice,
             SpecificationSyntax specification,
@@ -59,9 +67,14 @@ public sealed partial class SemanticModelBinder
             }
 
             SemanticCommand? command = null;
-            if (specification.When is not null && !commands.TryGetValue(ShortName(specification.When.CommandType), out command))
+            if (specification.When is not null &&
+                (!commands.TryGetValue(ShortName(specification.When.CommandType), out command) ||
+                !CommandBelongsToSlice(specification.When.CommandType, slice)))
             {
-                Error(DiagnosticCodes.InvalidSemanticBinding, $"Specification '{specification.Name}' command is unresolved in its slice.", specification.When.Location);
+                var message = specification.When.CommandType.Contains('.', StringComparison.Ordinal)
+                    ? $"Specification '{specification.Name}' command '{specification.When.CommandType}' is unresolved in its slice."
+                    : $"Specification '{specification.Name}' command is unresolved in its slice.";
+                Error(DiagnosticCodes.InvalidSemanticBinding, message, specification.When.Location);
                 return null;
             }
 
@@ -92,7 +105,7 @@ public sealed partial class SemanticModelBinder
 
             var address = SemanticAddress.ForSpecification(slice, specification.Name);
             var id = Resolve(address, specification.Location);
-            if (origin is not null) _specificationOrigins.Add(id, origin);
+            if (origin?.Steps.Any(step => step.Example is not null) == true) _specificationOrigins.TryAdd(id, origin);
             var givenEvents = specification.Given.Select(value => BindSpecificationEvent(value, commands, historicalFact: true)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             var givenReadModels = (specification.GivenReadModels ?? [])
                 .Select(value => BindReadModelState(value.Name, value.Properties, value.Location, value.Exactly))

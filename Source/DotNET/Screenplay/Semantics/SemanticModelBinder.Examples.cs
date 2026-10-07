@@ -12,8 +12,7 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
-        static IEnumerable<SemanticSlice> ExampleSlices(IEnumerable<SemanticFeature> features) =>
-            features.SelectMany(feature => feature.Slices.Concat(ExampleSlices(feature.Features)));
+        readonly Dictionary<CommandSyntax, SemanticCommand> _exampleCommands = new(ReferenceEqualityComparer.Instance);
 
         void ValidateExampleAdmission(ImmutableArray<SemanticConcept> concepts, ImmutableArray<SemanticCompositeType> types, ImmutableArray<SemanticModule> modules)
         {
@@ -22,7 +21,7 @@ public sealed partial class SemanticModelBinder
             // Admission is independent of use: an override must not conceal a malformed example value.
             // Validate only stated properties; top-level partial examples are not complete instances.
             var validator = new SemanticValueValidator(concepts.ToDictionary(concept => concept.Id), types.ToDictionary(type => type.Id));
-            var commands = modules.SelectMany(module => ExampleSlices(module.Features)).SelectMany(slice => slice.Commands).ToArray();
+            var slices = syntax.Modules.SelectMany(module => module.Features).SelectMany(AllSlices).ToArray();
             foreach (var resolved in expansion.ResolvedExamples)
             {
                 var example = resolved.Example;
@@ -37,15 +36,22 @@ public sealed partial class SemanticModelBinder
                 var generatedDestination = false;
                 if (resolved.Type is CommandSyntax command)
                 {
-                    var candidates = commands.Where(item => item.Name == command.Name).ToArray();
-                    var bound = candidates.Length == 1 ? candidates[0] : null;
+                    var bound = _exampleCommands.GetValueOrDefault(command);
                     var identifier = bound?.Properties.SingleOrDefault(property => property.IsIdentifier);
                     destinationType = bound?.Destination?.Type ?? identifier?.Type;
                     generatedDestination = identifier?.IsGenerated == true;
                 }
                 else
                 {
-                    var producerTypes = ProducerEventSourceTypes(((EventSyntax)resolved.Type).Name, []);
+                    var eventName = ((EventSyntax)resolved.Type).Name;
+                    var useSlices = slices.Where(slice => slice.Specifications.Any(specification => expansion.Specifications.Any(origin =>
+                        ReferenceEquals(origin.Effective, specification) && origin.Steps.Any(step => ReferenceEquals(step.Example, example))))).ToArray();
+                    if (useSlices.Length == 0) useSlices = [.. slices.Where(slice => EventDeclarations.In(slice).Any(node => ReferenceEquals(node, resolved.Type)))];
+                    var localTypes = useSlices.SelectMany(slice => slice.Commands).Select(command => _exampleCommands.GetValueOrDefault(command))
+                        .OfType<SemanticCommand>().SelectMany(command => command.Produces.Where(produced => _events.TryGetValue(eventName, out var declaration) && produced.EventContract == declaration.Contract.Id)
+                            .Select(produced => SemanticModelValidator.ProducedEventSourceType(command, produced))).OfType<SemanticTypeReference>().Distinct().ToArray();
+                    var producerTypes = localTypes.Length == 1 ? localTypes : CommandEventSourceTypes(eventName);
+                    if (producerTypes.Length != 1) producerTypes = ProducerEventSourceTypes(eventName, []);
                     destinationType = producerTypes.Length == 1 ? producerTypes[0] : null;
                 }
 
