@@ -128,6 +128,26 @@ export function planCompletions(
     const effectiveIndent =
         textBefore.trim().length === 0 ? textBefore.length : indentOf(currentLine);
     const chain = enclosingChain(lines, fences, lineIndex, effectiveIndent);
+    if (chain.includes('screen')) {
+        let parentIndent = effectiveIndent;
+        let guarded = false;
+        for (let index = lineIndex - 1; index >= 0; index--) {
+            if (fences[index]) continue;
+            const parent = withoutComment(lines[index]);
+            if (parent.trim().length === 0 || indentOf(parent) >= parentIndent) continue;
+            parentIndent = indentOf(parent);
+            if (/^\s*action\s+(?:"|\$strings\.)/.test(parent)) { guarded = true; break; }
+            if (/^\s*screen\b/.test(parent)) break;
+        }
+        if (guarded) {
+            if (/^\s*(?:when\b.*|otherwise)\s+execute\s+[\w.]*$/.test(textBefore)) return { kind: 'commands' };
+            if (chain[0] === 'action') return { kind: 'entries', entries: items.guardedActionItems };
+            if (['when', 'otherwise'].includes(chain[0])) {
+                const parent = nearestEnclosingLine(lines, fences, lineIndex, effectiveIndent) ?? '';
+                return { kind: 'entries', entries: /\bexecute\s+[\w.]+$/.test(parent) ? items.actionArgumentItems : [] };
+            }
+        }
+    }
     const ruleContext = namedRuleContext(lines, lineIndex, effectiveIndent);
     if (ruleContext === 'implementation') return { kind: 'entries', entries: items.namedRuleImplementationItems };
     if (ruleContext === 'rule') return { kind: 'entries', entries: items.commandRuleItems };

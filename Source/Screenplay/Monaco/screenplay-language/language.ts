@@ -103,6 +103,8 @@ export const clauseKeywords = [
     'data',
     'via',
     'action',
+    'otherwise',
+    'hidden',
     'navigate',
     'to',
     'label',
@@ -211,7 +213,7 @@ export const languageConfiguration: languages.LanguageConfiguration = {
     },
     indentationRules: {
         increaseIndentPattern:
-            /^\s*(module|feature|slice|policy|persona|authentication|provider|event|command|query|type|screen|projection|capture|reaction|trigger|constraint|specification|layout|template|validate|produces|handler|implementation(?=\s*$)|performer|rule|section|concurrency|seed|for|when|then|arguments|result|every|at)\b.*$/,
+            /^\s*(module|feature|slice|policy|persona|authentication|provider|event|command|query|type|screen|projection|capture|reaction|trigger|constraint|specification|layout|template|validate|produces|handler|implementation(?=\s*$)|performer|rule|section|action|otherwise(?=\s+execute\b)|concurrency|seed|for|when|then|arguments|result|every|at)\b.*$/,
         // Dedents are always explicit in an offside language — never auto-dedent.
         decreaseIndentPattern: /(?!)/,
     },
