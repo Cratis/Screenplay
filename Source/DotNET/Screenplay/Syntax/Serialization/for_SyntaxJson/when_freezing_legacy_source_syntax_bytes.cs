@@ -24,15 +24,15 @@ public class when_freezing_legacy_source_syntax_bytes
             var name = document.GetProperty("name").GetString()!;
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "named-rule-intent" || name == "no-events") continue;
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "named-rule-intent" || name == "guarded-actions" || name == "no-events") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
-            // Invoicing is a living sample. Its intentional v7 and policy-negation additions have full
-            // shared conformance vectors; remove only those additions so the legacy bytes stay frozen.
+            // Invoicing is a living sample. Its v7, policy-negation, pre-input navigation and guarded
+            // actions have full shared vectors; project only those additions out of frozen legacy bytes.
             var legacy = name switch
             {
-                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleAdditions(parsed),
+                "invoicing-sample" or "invoicing-editor-sample" => WithoutGuardedSampleAction(WithoutSampleAdditions(parsed)),
                 "library-sample" => WithoutLibraryForms(parsed),
                 _ => parsed
             };
@@ -140,6 +140,34 @@ public class when_freezing_legacy_source_syntax_bytes
             Forms = module.Forms?.Where(form => form.Name is not ("AddBookInput" or "BorrowBookInput" or "ReturnBookInput"))
         })
     };
+
+    static ApplicationSyntax WithoutGuardedSampleAction(ApplicationSyntax application) => application with
+    {
+        Modules = application.Modules.Select(module => module with
+        {
+            Features = module.Features.Select(feature => feature.Name == "InvoiceManagement" ? feature with
+            {
+                Slices = feature.Slices.Select(slice => slice.Name == "CancelInvoice" ? slice with
+                {
+                    Screens = slice.Screens.Select(screen => screen.Name == "CancelInvoiceScreen" ? screen with
+                    {
+                        Directives = RestorePlainSampleAction(screen.Directives.Where(directive => directive is not ScreenDataSyntax))
+                    } : screen)
+                } : slice)
+            } : feature)
+        })
+    };
+
+    static IEnumerable<ScreenDirectiveSyntax> RestorePlainSampleAction(IEnumerable<ScreenDirectiveSyntax> directives) => directives.Select(directive => directive switch
+    {
+        ScreenGuardedActionSyntax { Label: "$strings.invoices.actions.cancel" } guarded => new ScreenActionSyntax("CancelInvoice", guarded.Label, guarded.Navigate, guarded.Location),
+        ScreenSectionSyntax section => section with { Directives = RestorePlainSampleAction(section.Directives) },
+        ScreenTemplateReferenceSyntax template => template with
+        {
+            Slots = template.Slots.Select(slot => slot with { Directives = RestorePlainSampleAction(slot.Directives) })
+        },
+        _ => directive
+    });
 
     // The additive rule wrapper is protected by the named-rule corpus. Project it out only for these
     // pre-intent baselines, using raw slices so every numeric token and preexisting member stays untouched.

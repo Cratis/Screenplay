@@ -751,6 +751,14 @@ A behavior is *deferred* from the backend ESM v1 profile in the same way every o
 | `PLAY0338` | Error | A `uses` site leaves a behavior parameter without an argument. |
 | `PLAY0339` | Warning | Actions follow an unconditional navigation, so they could never run. |
 | `PLAY0340` | Warning | Another file of a folder repeats an attachment of the same `module` or `feature` - a `uses` of the same behavior with the same arguments, or an inline `on` block identical to one already attached. Only the first, in file-path order, is kept; the repeat is ignored and the warning names the file that attached it first. Folders written by earlier versions restate a module's or feature's attachments in every descendant file, and report this once per copy. |
+| `PLAY0341` | Error | A guarded action child is not `when <condition> execute <Command>`, `otherwise hidden`, `otherwise execute <Command>` or `navigate to …`; navigation is repeated, or `otherwise hidden` has command arguments. |
+| `PLAY0342` | Error | A label-headed guarded action declares no `when` alternatives. |
+| `PLAY0343` | Error | A guarded action repeats `otherwise`, or declares a `when` alternative after it. |
+| `PLAY0344` | Error | A guarded action condition does not compare an `item.<field>` path with a literal. Ordering operators require a number; `contains` and `starts with` require a string. |
+| `PLAY0345` | Warning | An item path in a guarded action condition or input binding names no subject field, continues past a scalar, or crosses a collection-valued field. |
+| `PLAY0346` | Warning | A guarded action has no nearest `data` subject, or multiple data directives tie in its nearest container. Field checks are skipped until the subject resolves. |
+| `PLAY0347` | Warning | Earlier alternatives provably shadow an alternative. Guards use first-match order; proof uses DNF comparison-set inclusion with a 64-disjunct expansion cap. Overlap alone is not reported. |
+| `PLAY0348` | Warning | A guarded alternative or `otherwise execute` supplies a `with` argument the chosen command does not declare, or binds a subject field whose collection cardinality differs from the command input. |
 
 An inline `on` block is an anonymous behavior, so it has no name to report against. Diagnostics inside one cite the position and the trigger instead.
 

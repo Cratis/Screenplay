@@ -808,12 +808,16 @@ module Invoicing
       // A destructive command asks before it runs - the named behavior carries the
       // whole confirm-execute-notify chain.
       screen CancelInvoiceScreen
+        data InvoiceDetailsReadModel via query GetInvoice by invoiceId
         template CommandDialog
           body
             title "Cancel invoice"
           actions
-            action CancelInvoice
-              label $strings.invoices.actions.cancel
+            // Cancellation is offered for a draft; the command still validates its inputs.
+            action $strings.invoices.actions.cancel
+              when item.status == "draft" execute CancelInvoice
+                with invoiceId from item.invoiceId
+              otherwise hidden
         uses ConfirmThenExecute
           command CancelInvoice
           message $strings.invoices.confirm.cancel
@@ -1446,8 +1450,9 @@ module Invoicing
                   navigate to ChangeInvoiceStatusScreen
               section cancelInvoiceInput
                 title $strings.invoices.actions.cancel
-                on click
-                  navigate to CancelInvoiceScreen
+                table InvoiceDetailsReadModel
+                  column invoiceNumber label $strings.invoices.fields.number
+                  on row-click navigate to CancelInvoiceScreen by invoiceId
               section tagInvoiceInput
                 title "Tag invoice"
                 on click

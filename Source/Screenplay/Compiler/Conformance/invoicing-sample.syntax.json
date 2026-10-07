@@ -3768,6 +3768,17 @@
                   "kind": "ScreenSyntax",
                   "directives": [
                     {
+                      "kind": "ScreenDataSyntax",
+                      "by": "invoiceId",
+                      "query": "GetInvoice",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceDetailsReadModel"
+                      }
+                    },
+                    {
                       "kind": "ScreenTemplateReferenceSyntax",
                       "name": "CommandDialog",
                       "slots": [
@@ -3785,10 +3796,37 @@
                           "kind": "ScreenSlotSyntax",
                           "directives": [
                             {
-                              "kind": "ScreenActionSyntax",
-                              "command": "CancelInvoice",
+                              "kind": "ScreenGuardedActionSyntax",
+                              "alternatives": [
+                                {
+                                  "kind": "ScreenActionAlternativeSyntax",
+                                  "arguments": [
+                                    {
+                                      "kind": "InteractionArgumentSyntax",
+                                      "binding": "item.invoiceId",
+                                      "name": "invoiceId"
+                                    }
+                                  ],
+                                  "command": "CancelInvoice",
+                                  "condition": {
+                                    "kind": "ComparisonConditionSyntax",
+                                    "left": "item.status",
+                                    "operator": "Equal",
+                                    "right": {
+                                      "kind": "LiteralExpressionSyntax",
+                                      "value": "draft"
+                                    }
+                                  }
+                                }
+                              ],
                               "label": "$strings.invoices.actions.cancel",
-                              "navigate": null
+                              "navigate": null,
+                              "otherwise": {
+                                "kind": "ScreenActionOtherwiseSyntax",
+                                "arguments": [],
+                                "command": null,
+                                "outcome": "Hidden"
+                              }
                             }
                           ],
                           "name": "actions"
@@ -7466,7 +7504,20 @@
                                       "text": "$strings.invoices.actions.cancel"
                                     },
                                     {
-                                      "kind": "ScreenBehaviorSyntax"
+                                      "kind": "ScreenTableSyntax",
+                                      "columns": [
+                                        {
+                                          "kind": "ScreenColumnSyntax",
+                                          "label": "$strings.invoices.fields.number",
+                                          "property": "invoiceNumber"
+                                        }
+                                      ],
+                                      "rowClick": {
+                                        "kind": "ScreenNavigateSyntax",
+                                        "by": "invoiceId",
+                                        "screen": "CancelInvoiceScreen"
+                                      },
+                                      "target": "InvoiceDetailsReadModel"
                                     }
                                   ],
                                   "name": "cancelInvoiceInput"

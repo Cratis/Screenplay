@@ -1,6 +1,7 @@
 {
     "description": "The .play documents whose syntax the TypeScript and C# compilers must agree on. Paths are relative to the repository root. Each document's golden syntax is written by the TypeScript compiler beside this manifest as <name>.syntax.json; the C# compiler is held to it by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_it.",
     "documents": [
+        { "name": "guarded-actions", "path": "Source/Screenplay/Compiler/Conformance/guarded-actions.play" },
         { "name": "reaction-refusals-redelivery", "path": "Source/Screenplay/Compiler/Conformance/reaction-refusals-redelivery.play" },
         { "name": "no-events", "path": "Source/Screenplay/Compiler/Conformance/no-events.play" },
         { "name": "policy-negation", "path": "Source/Screenplay/Compiler/Conformance/policy-negation.play" },

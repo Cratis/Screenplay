@@ -36,6 +36,8 @@ static class McpReferenceKinds
         ScreenDataSyntax value => [(value.Query, ["Query"], "dataQuery")],
         ContributionSyntax value => [(value.ContributionPoint, ["ContributionPoint"], "contributes")],
         ScreenActionSyntax value => [(value.Command, ["Command"], "action")],
+        ScreenActionAlternativeSyntax value => [(value.Command, ["Command"], "actionAlternative")],
+        ScreenActionOtherwiseSyntax { Command: { } command } => [(command, ["Command"], "actionOtherwise")],
         ScreenNavigateSyntax value => [(value.Screen, ["Screen"], "navigate")],
         ScreenTemplateReferenceSyntax value => [(value.Name, ["ScreenTemplate", "DialogTemplate"], "template")],
         FormSyntax value => [(value.For, ["Command"], "formCommand")],
