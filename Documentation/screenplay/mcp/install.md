@@ -237,7 +237,10 @@ worktree registration's back-pointer, not a common path prefix. The main
 checkout is also available when the server starts in a linked worktree.
 Submodules and checkouts created with `--separate-git-dir` cannot switch roots:
 their `.git` pointers lack the linked-worktree `commondir` proof. Start a separate
-connection directly at their model root instead.
+connection directly at their model root instead. Root switching also refuses
+repositories with enabled or unverifiable `extensions.worktreeConfig`, or any
+`config.worktree` entry in the checkout's `.git` directory: per-worktree
+configuration can override whether Git treats that checkout as bare.
 
 One workspace is active at a time. Switching or reopening clears outstanding
 proposals, even when both roots have identical source and revisions. Read the

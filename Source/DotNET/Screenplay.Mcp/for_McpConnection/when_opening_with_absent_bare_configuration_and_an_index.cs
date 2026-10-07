@@ -8,6 +8,8 @@ public class when_opening_with_absent_bare_configuration_and_an_index : given.a_
     [Theory]
     [InlineData("[core]\nrepositoryformatversion = 0\nfilemode = true\n")]
     [InlineData("[branch \"main\"]\nremote = origin\n")]
+    [InlineData("[branch\t\"main\"]\nremote = origin\n")]
+    [InlineData("[extensions \"x\"]\nworktreeConfig = true\n")]
     [InlineData("[core \"x\"]\nbare = true\n")]
     [InlineData("[core \"x]y\"]\nbare = true\n")]
     [InlineData("[core \"x\\\"]y\"]\nbare = true\n")]

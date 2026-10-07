@@ -136,14 +136,16 @@ internal static class McpWorktreeRoots
     static bool ReadBareStatus(string checkout)
     {
         var gitDirectory = Path.Combine(checkout, ".git");
+        RequireNoWorktreeConfiguration(gitDirectory);
         var core = false;
+        var extensions = false;
         var seenCore = false;
         var seenSection = false;
         var firstLine = true;
         bool? bare = null;
         foreach (var rawLine in ReadConfigurationLines(Path.Combine(gitDirectory, "config")))
         {
-            var line = firstLine && rawLine.StartsWith('\uFEFF') ? rawLine[1..].Trim() : rawLine.Trim();
+            var line = TrimConfigurationWhitespace(firstLine && rawLine.StartsWith('\uFEFF') ? rawLine[1..] : rawLine);
             firstLine = false;
             if (line.Length == 0 || line[0] is '#' or ';')
             {
@@ -166,6 +168,7 @@ internal static class McpWorktreeRoots
                 }
 
                 core = section.Equals("core", StringComparison.OrdinalIgnoreCase);
+                extensions = section.Equals("extensions", StringComparison.OrdinalIgnoreCase);
                 if (core && seenCore)
                 {
                     throw Refused("The [core] section is declared more than once.");
@@ -180,7 +183,7 @@ internal static class McpWorktreeRoots
                 throw Refused("A configuration entry has no section.");
             }
 
-            if (!core)
+            if (!core && !extensions)
             {
                 continue;
             }
@@ -188,17 +191,29 @@ internal static class McpWorktreeRoots
             var separator = line.IndexOf('=');
             if (separator < 0)
             {
-                throw Refused("A [core] entry has no explicit value.");
+                throw Refused($"A [{(core ? "core" : "extensions")}] entry has no explicit value.");
             }
 
-            if (line[..separator].Trim().Equals("bare", StringComparison.OrdinalIgnoreCase))
+            var key = TrimConfigurationWhitespace(line[..separator]);
+            if (key.Length == 0 || !char.IsAsciiLetter(key[0]) || key.Any(character => !char.IsAsciiLetterOrDigit(character) && character != '-'))
+            {
+                throw Refused("A configuration entry name is malformed.");
+            }
+
+            var value = TrimConfigurationWhitespace(line[(separator + 1)..]).ToLowerInvariant();
+            if (extensions && key.Equals("worktreeConfig", StringComparison.OrdinalIgnoreCase) && value is not ("false" or "no" or "off" or "0" or ""))
+            {
+                throw Refused("Per-worktree configuration is not supported.");
+            }
+
+            if (core && key.Equals("bare", StringComparison.OrdinalIgnoreCase))
             {
                 if (bare is not null)
                 {
                     throw Refused("core.bare is declared more than once.");
                 }
 
-                bare = line[(separator + 1)..].Trim().ToLowerInvariant() switch
+                bare = value switch
                 {
                     "false" => false,
                     "true" => true,
@@ -228,48 +243,70 @@ internal static class McpWorktreeRoots
         return false;
     }
 
+    static void RequireNoWorktreeConfiguration(string gitDirectory)
+    {
+        try
+        {
+            _ = File.GetAttributes(Path.Combine(gitDirectory, "config.worktree"));
+        }
+        catch (FileNotFoundException)
+        {
+            // Only a missing entry proves that this additional configuration cannot override core.bare.
+            return;
+        }
+
+        throw Refused("Per-worktree configuration is not supported.");
+    }
+
+    static string TrimConfigurationWhitespace(string value) => value.Trim(' ', '\t', '\r', '\v', '\f');
+
     static string ReadConfigurationSection(string line)
     {
-        var quoted = false;
-        for (var index = 1; index < line.Length; index++)
+        var index = 1;
+        while (index < line.Length && (char.IsAsciiLetterOrDigit(line[index]) || line[index] is '.' or '-'))
         {
-            var character = line[index];
-            if (quoted && character == '\\')
+            index++;
+        }
+
+        if (index == 1)
+        {
+            throw Refused("A configuration section is malformed.");
+        }
+
+        if (index < line.Length && line[index] is ' ' or '\t')
+        {
+            if (++index == line.Length || line[index++] != '"')
             {
-                if (++index == line.Length || line[index] is not ('"' or '\\'))
+                throw Refused("A configuration section is malformed.");
+            }
+
+            while (index < line.Length && line[index] != '"')
+            {
+                if (line[index] == '\\' && (++index == line.Length || line[index] is not ('"' or '\\')))
                 {
                     throw Refused("A configuration subsection escape is malformed.");
                 }
-                continue;
+                index++;
             }
-
-            if (character == '"')
+            if (index == line.Length)
             {
-                quoted = !quoted;
-                continue;
+                throw Refused("A configuration section is malformed.");
             }
-
-            if (character != ']' || quoted)
-            {
-                continue;
-            }
-
-            var remainder = line[(index + 1)..].Trim();
-            if (remainder.Length > 0 && remainder[0] is not ('#' or ';'))
-            {
-                throw Refused("A configuration section header must be followed only by a comment or whitespace.");
-            }
-
-            var section = line[1..index].Trim();
-            if (section.Length == 0)
-            {
-                throw Refused("A configuration section is empty.");
-            }
-
-            return section;
+            index++;
         }
 
-        throw Refused("A configuration section is malformed.");
+        if (index == line.Length || line[index] != ']')
+        {
+            throw Refused("A configuration section is malformed.");
+        }
+
+        var remainder = TrimConfigurationWhitespace(line[(index + 1)..]);
+        if (remainder.Length > 0 && remainder[0] is not ('#' or ';'))
+        {
+            throw Refused("A configuration section header must be followed only by a comment or whitespace.");
+        }
+
+        return line[1..index];
     }
 
     static IEnumerable<string> ReadConfigurationLines(string path)

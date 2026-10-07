@@ -21,6 +21,16 @@ public class when_opening_with_unverifiable_git_configuration : given.a_worktree
     [InlineData("[include] ;]\npath = x\n")]
     [InlineData("[includeIf \"gitdir:work\"] # ]\npath = x\n")]
     [InlineData("[core \"unterminated]\nbare = false\n")]
+    [InlineData("[ core ]\nbare = false\n")]
+    [InlineData("[core ]\nbare = false\n")]
+    [InlineData("[core \"x\" ]\nbare = false\n")]
+    [InlineData("[core  \"x\"]\nbare = false\n")]
+    [InlineData("[core\u00A0\"x\"]\nbare = false\n")]
+    [InlineData("[co_re]\nbare = false\n")]
+    [InlineData("[core]\n\u00A0bare = false\n")]
+    [InlineData("[core]\nbare\u00A0= false\n")]
+    [InlineData("[core]\nbare =\u00A0false\n")]
+    [InlineData("[core]\nbare = false\u00A0\n")]
     public void should_refuse_ambiguous_or_unreadable_bare_status(string config)
     {
         File.WriteAllText(Path.Combine(RepositoryPath, ".git", "config"), config);
@@ -85,6 +95,7 @@ public class when_opening_with_unverifiable_git_configuration : given.a_worktree
     [InlineData("[core]\nbare = false\n")]
     [InlineData("[include]\npath = other-config\n")]
     [InlineData("[includeIf \"gitdir:work\"]\npath = other-config\n")]
+    [InlineData("[extensions]\nworktreeConfig = true\n")]
     public void should_check_the_end_of_the_configuration(string suffix)
     {
         var config = "[core]\nbare = false\n#" + new string('x', 9000) + "\n" + suffix;
