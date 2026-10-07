@@ -227,7 +227,8 @@ Use `dependencies` for a declaration's scoped indexed references instead.
 
 Kinds are `usesFactsFrom` (projections, reducers, constraints and concurrency event
 lists), `reactsTo` (named event triggers), `decidesFrom` (read-model reads), `asks`
-(command invocations and actions), `shows` (queries and screen navigation),
+(command invocations and actions, including guarded alternatives and execute
+fallbacks), `shows` (queries and screen navigation),
 `verifiedWith` (specification events and commands), and `outsideTheModel`
 (imported event contracts without a local producer). References to shared
 application types, concepts, policies and triggers are excluded and counted.
