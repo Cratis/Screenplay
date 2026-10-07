@@ -2344,4 +2344,9 @@ public static class DiagnosticCodes
     /// A query parameter cannot be held by its view's structurally known identity or fields.
     /// </summary>
     public const string QueryParameterNotHeldByView = "PLAY0535";
+
+    /// <summary>
+    /// A locally declared event has no declared application consumer.
+    /// </summary>
+    public const string UnconsumedEvent = "PLAY0536";
 }

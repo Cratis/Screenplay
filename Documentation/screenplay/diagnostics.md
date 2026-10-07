@@ -642,6 +642,7 @@ These structural warnings run only when selected, after error-free whole-applica
 | `PLAY0533` | Warning (opt-in: `--check input-surfaces`) | A StateChange command has no resolving action, form or behavior execute, and no reaction invokes it. Automation and Translate commands are exempt. |
 | `PLAY0534` | Warning (opt-in: `--check field-origins`) | A declared read model has no builder or performer, or a top-level field lacks an identity, mapping, compatible AutoMap source, child or nested target. Variants are checked independently; opaque builders and unknown coverage are skipped. |
 | `PLAY0535` | Warning (opt-in: `--check query-keys`) | A query parameter cannot be held by its view's known identity or fields. Identity comes from the owning slice's unambiguous keyed-query property or structurally resolved projection keys. Performer-served views, tenant-context parameters and unknown identity types are skipped. |
+| `PLAY0536` | Warning (opt-in: `--check event-consumers`) | The newest generation of a local event has no declared projection, reducer, reaction, constraint or interaction consumer. Specifications and production do not count. Imported external contracts are exempt; legitimate terminal facts may still be reported. |
 
 ### Model consistency
 
