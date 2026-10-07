@@ -74,6 +74,7 @@ describe('when validating a document with a problem of every coded kind', () => 
     beforeEach(() => {
         issues = validateLines(document);
         const responses = [
+            ['example Fixture : Happened', '  no stream'],
             ['command C', '  handler', '    implementation', '      hint " "', '      unknown', '      file C.cs', '      file D.cs'],
             ['type Outside', '  id Uuid generated'],
             ['concept Id : Uuid', 'command C', '  id Id generated', '  generated String', '  value String generated', '  other Id identifier generated', '  returns', '    id String = id', '    id = unknown'],

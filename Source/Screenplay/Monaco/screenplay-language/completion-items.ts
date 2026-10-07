@@ -366,5 +366,5 @@ const sliceMembers: Record<string, readonly string[]> = {
 
 export function sliceItemsFor(sliceType: string | undefined): CompletionEntry[] {
     const members = sliceType ? sliceMembers[sliceType] : undefined;
-    return members ? sliceItems.filter(item => members.includes(item.label)) : sliceItems;
+    return members ? sliceItems.filter(item => item.label === 'example' || members.includes(item.label)) : sliceItems;
 }
