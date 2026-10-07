@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { enclosingChain, fenceMap, indentOf, nearestEnclosingLine, withoutComment } from './document-context';
+import { refusalContext } from './refusal-context';
 import { namedRuleContext } from './named-rule-context';
 import { responseCompletions } from './response-completions';
 import { exampleCompletions } from './example-authoring';
@@ -72,6 +73,8 @@ export function completionEntriesFor(chain: string[]): CompletionEntry[] {
             return items.constraintItems;
         case 'reaction':
             return items.reactionItems;
+        case 'invokes':
+            return chain.includes('reaction') ? items.invocationItems : [];
         case 'trigger':
             return items.triggerItems;
         case 'when':
@@ -120,6 +123,10 @@ export function planCompletions(
     // A quote or a slash only asks for a completion inside an import path.
     if (/["/]$/.test(textBefore)) return { kind: 'none' };
 
+    const refusal = refusalContext(lines, lineIndex, indentOf(lines[lineIndex] ?? textBefore));
+    if (/\$refusal\.\w*$/.test(textBefore)) {
+        return { kind: 'entries', entries: refusal === undefined ? [] : ['reason', 'message', ...(/^on\s+refused\s+by\s+constraint(?:\s|$)/.test(refusal) ? ['constraint'] : [])].map(member => ({ label: member, insertText: member, documentation: 'String refusal value; syntax-only, not yet executable (PLAY0268).' })) };
+    }
     const contextVariableMatch = textBefore.match(/\$[\w.]*$/);
     if (contextVariableMatch) {
         return { kind: 'contextVariables', replaceLength: contextVariableMatch[0].length };
@@ -129,6 +136,7 @@ export function planCompletions(
     const effectiveIndent =
         textBefore.trim().length === 0 ? textBefore.length : indentOf(currentLine);
     const chain = enclosingChain(lines, fences, lineIndex, effectiveIndent);
+    if (chain[0] === 'on' && refusal !== undefined) return { kind: 'entries', entries: items.refusalItems };
     const ruleContext = namedRuleContext(lines, lineIndex, effectiveIndent);
     if (ruleContext === 'implementation') return { kind: 'entries', entries: items.namedRuleImplementationItems };
     if (ruleContext === 'rule') return { kind: 'entries', entries: items.commandRuleItems };

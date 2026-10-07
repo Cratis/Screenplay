@@ -19,6 +19,9 @@ internal static class SyntaxJsonWriter
             if (member.Type == typeof(SourceOptions) && Equals(value, SourceOptions.Legacy)) continue;
             if (member.Name == "examples" && value is IEnumerable examples && !examples.Cast<object>().Any()) continue;
             if (member.Name == "inlineProperty" && value is null) continue;
+            if (node is Specifications.SpecificationSyntax && member.Name == "thenNoEvents" && Equals(value, false)) continue;
+            if (node is InvokesSyntax invocation && member.Name == "onRefused" && !invocation.OnRefused.Any()) continue;
+            if (node is Specifications.SpecificationSyntax && member.Name == "whenRedelivered" && value is null) continue;
             result.Add(member.Name, WriteMember(member, value, $"{path}.{member.Name}", depth + 1));
         }
 

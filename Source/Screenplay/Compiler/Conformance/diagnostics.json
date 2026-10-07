@@ -27,6 +27,96 @@
             "diagnostics": []
         },
         {
+            "name": "Refusal selectors exclude concurrency",
+            "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by concurrency", "              acknowledge"],
+            "diagnostics": ["PLAY0538@7"]
+        },
+        {
+            "name": "Validation refusal selectors cannot name a constraint",
+            "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by validation Named", "              acknowledge"],
+            "diagnostics": ["PLAY0538@7"]
+        },
+        {
+            "name": "Authorization refusal selectors cannot name a constraint",
+            "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by authorization Named", "              acknowledge"],
+            "diagnostics": ["PLAY0538@7"]
+        },
+        {
+            "name": "A refusal branch belongs inside an invocation",
+            "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        when Approved", "          on refused", "            acknowledge"],
+            "diagnostics": ["PLAY0538@6"]
+        },
+        {
+            "name": "A reaction-level refusal branch is not a trigger",
+            "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        on refused", "          acknowledge"],
+            "diagnostics": ["PLAY0538@5"]
+        },
+        {
+            "name": "A refusal branch cannot be empty",
+            "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        when Approved", "          invokes Claim", "            on refused"],
+            "diagnostics": ["PLAY0539@7"]
+        },
+        {
+            "name": "Acknowledgement cannot be repeated",
+            "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        when Approved", "          invokes Claim", "            on refused", "              acknowledge", "              acknowledge"],
+            "diagnostics": ["PLAY0539@9"]
+        },
+        {
+            "name": "Acknowledgement is a leaf",
+            "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        when Approved", "          invokes Claim", "            on refused", "              acknowledge", "                reason = 1"],
+            "diagnostics": ["PLAY0539@8"]
+        },
+        {
+            "name": "Acknowledgement cannot precede branch production",
+            "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        when Approved", "          invokes Claim", "            on refused", "              acknowledge", "              produces Refused"],
+            "diagnostics": ["PLAY0539@9"]
+        },
+        {
+            "name": "Acknowledgement cannot follow branch production",
+            "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        when Approved", "          invokes Claim", "            on refused", "              produces Refused", "              acknowledge"],
+            "diagnostics": ["PLAY0539@9"]
+        },
+        {
+            "name": "Refusal branches cannot attach implementations",
+            "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        when Approved", "          invokes Claim", "            on refused", "              file Refuse.cs"],
+            "diagnostics": ["PLAY0539@8"]
+        },
+        {
+            "name": "Refusal branches cannot produce inline events",
+            "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        when Approved", "          invokes Claim", "            on refused", "              produces event Refused", "                reason String"],
+            "diagnostics": ["PLAY0474@8"]
+        },
+        {
+            "name": "Refusal branches cannot produce operations",
+            "source": ["module M", "  feature F", "    slice Automation S", "      reaction R", "        when Approved", "          invokes Claim", "            on refused", "              produces operation Refund"],
+            "diagnostics": ["PLAY0499@8"]
+        },
+        {
+            "name": "Redelivery requires a named reaction",
+            "source": ["module M", "  feature F", "    slice Automation S", "      specification Recovery", "        when redelivered Approved"],
+            "diagnostics": ["PLAY0543@5"]
+        },
+        {
+            "name": "Redelivery participates in the single action rule",
+            "source": ["module M", "  feature F", "    slice Automation S", "      specification Recovery", "        when redelivered Approved to Claimer", "        when Claim"],
+            "diagnostics": ["PLAY0097@6"]
+        },
+        {
+            "name": "An append action cannot assert no events",
+            "source": ["module M", "  feature F", "    slice Automation S", "      specification Empty", "        when append Happened", "        then no events"],
+            "diagnostics": ["PLAY0545@6"]
+        },
+        {
+            "name": "No events conflicts with an event outcome regardless of order",
+            "source": ["module M", "  feature F", "    slice Automation S", "      specification Empty", "        when Act", "        then Happened", "        then no events"],
+            "diagnostics": ["PLAY0545@7"]
+        },
+        {
+            "name": "No events is a leaf",
+            "source": ["module M", "  feature F", "    slice Automation S", "      specification Empty", "        when Act", "        then no events", "          value = 1"],
+            "diagnostics": ["PLAY0545@7"]
+        },
+        {
             "name": "Personal declared trigger data cannot supply reaction destinations",
             "validate": true,
             "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],

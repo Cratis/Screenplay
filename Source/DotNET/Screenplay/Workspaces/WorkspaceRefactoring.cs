@@ -156,10 +156,15 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         var index = WorkspaceSyntaxIndex.Create(workspace);
         var target = request.Target is null ? null : index.Find(request.Target);
         var compositeProperty = target?.Node is PropertySyntax && target.Parent is { } parent && index.Find(parent)?.Node is TypeSyntax;
-        if (target is null || (target.Address is null && target.Node is not SpecificationExampleSyntax) ||
-            (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or SpecificationExampleSyntax or SpecificationSyntax)))
+        if (target?.Node is ConstraintSyntax)
         {
-            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property, command, event, read model, query, module, feature, slice, example, or specification declaration handle.");
+            throw new InvalidWorkspaceAuthoring("Constraint names are executable identity: renaming starts an empty constraint index and changes default rejection messages. Safe rename cannot preserve this contract; use explicit coordinated typed edits.");
+        }
+
+        if (target is null || (target.Address is null && target.Node is not SpecificationExampleSyntax) ||
+            (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or SpecificationExampleSyntax or SpecificationSyntax or ReactionSyntax)))
+        {
+            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property, command, event, read model, query, module, feature, slice, example, specification, or reaction declaration handle.");
         }
 
         if (WorkspaceReferenceBindings.Name(target.Node) != request.ExpectedName || !Identifier(request.NewName))
@@ -178,6 +183,15 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             throw new InvalidWorkspaceAuthoring($"Composite type '{owner.Name}' already declares property '{request.NewName}'.");
         }
 
+        if (target.Node is ReactionSyntax && index.Entries.Any(entry =>
+            entry.Handle != target.Handle && entry.Parent == target.Parent &&
+            entry.Node is ReactionSyntax && WorkspaceReferenceBindings.Name(entry.Node) == request.NewName))
+        {
+            throw new InvalidWorkspaceAuthoring($"The owning slice already declares {target.Kind} '{request.NewName}'.");
+        }
+
+        bool IsTarget(WorkspaceSyntaxEntry entry) => target.Address is { } address ? address.Equals(entry.Address) : target.Handle == entry.Handle;
+
         RejectHierarchyCollision(index, target, request.NewName);
         RejectOpaque(workspace.Documents, index, target, request);
         var bindings = new WorkspaceReferenceBindings(index);
@@ -187,8 +201,6 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         {
             throw new InvalidWorkspaceAuthoring($"Cannot prove a rename while absence key '{debt.Text}' at '{Position(workspace.Documents, debt.Occurrence)}' is unresolved ({debt.Reason}). Repair the absence key with a typed edit first.");
         }
-
-        bool IsTarget(WorkspaceSyntaxEntry entry) => target.Address is { } address ? address.Equals(entry.Address) : target.Handle == entry.Handle;
 
         var generations = index.Entries.Where(IsTarget).Select(entry => entry.Node).OfType<EventSyntax>().ToArray();
         if (generations.Select(declaration => declaration.Id ?? declaration.Name).Distinct(StringComparer.Ordinal).Skip(1).Any())
@@ -307,6 +319,7 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         candidateBindings.RequireNoCollisions();
         WorkspaceReferenceSafety.RequireRenameContinuity(bindings, candidateBindings);
         RequireAbsenceContinuity(absence, new WorkspaceAbsenceKeyBindings(candidateIndex, candidateBindings), referenceRenames, target.Address, request.NewName);
+
         return result;
     }
 }

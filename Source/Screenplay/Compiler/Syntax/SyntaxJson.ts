@@ -118,6 +118,9 @@ function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJ
             if (member === 'sourceOptions' && (memberValue as { numericMode?: string } | undefined)?.numericMode === 'legacy') continue;
             if (member === 'examples' && Array.isArray(memberValue) && memberValue.length === 0) continue;
             if (member === 'inlineProperty' && memberValue == null) continue;
+            if (value.kind === 'SpecificationSyntax' && member === 'thenNoEvents' && memberValue === false) continue;
+            if (value.kind === 'SpecificationSyntax' && member === 'whenRedelivered' && memberValue == null) continue;
+            if (value.kind === 'InvokesSyntax' && member === 'onRefused' && Array.isArray(memberValue) && memberValue.length === 0) continue;
             result[member] = write(memberValue, owningMode, complete);
         }
         return result;

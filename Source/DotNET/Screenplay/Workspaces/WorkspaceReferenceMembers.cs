@@ -24,7 +24,9 @@ enum WorkspaceReferenceDomain
     System,
     EventSource,
     EventStream,
-    Fixture
+    Fixture,
+    Reaction,
+    Constraint
 }
 
 sealed record WorkspaceReferenceMember(WorkspaceSyntaxEntry Entry, string Member, int? Index, string Text, WorkspaceReferenceDomain Domain, string? Owner = null)
@@ -75,7 +77,8 @@ static class WorkspaceReferenceMembers
 
     internal static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> Members(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index)
     {
-        if (entry.Node is ProducesSyntax production && index.OwningSlice(entry) is { } slice && !index.Productions.IsEventProduction(production, slice))
+        var parent = entry.Parent is { } handle ? index.Find(handle) : null;
+        if (entry.Node is ProducesSyntax production && parent?.Node is not InvocationRefusalSyntax && index.OwningSlice(entry) is { } slice && !index.Productions.IsEventProduction(production, slice))
             return [("event", WorkspaceReferenceDomain.Operation)];
 
         return EventMembers(entry.Node).Concat(OtherMembers(entry, index));
@@ -92,6 +95,7 @@ static class WorkspaceReferenceMembers
         ProducesSyntax or SeedEventSyntax or EventSpecSyntax or JoinEventSyntax or ClearWithSyntax or RemoveWithSyntax or
             RemoveViaJoinSyntax or ProjectionEntersOnSyntax or CaptureAppendSyntax or ReducerRuleSyntax => [("event", WorkspaceReferenceDomain.Event)],
         SpecificationEventSyntax => [("eventType", WorkspaceReferenceDomain.Fixture)],
+        SpecificationRedeliverySyntax => [("eventType", WorkspaceReferenceDomain.Event)],
         EventInteractionTriggerSyntax => [("eventName", WorkspaceReferenceDomain.Event)],
         ConcurrencySyntax => [("eventTypes", WorkspaceReferenceDomain.Event)],
         NamedTriggerSourceSyntax => [("name", WorkspaceReferenceDomain.Trigger)],
@@ -102,6 +106,8 @@ static class WorkspaceReferenceMembers
     {
         CommandStreamSyntax { PropertyCandidate: null } => [("eventSource", WorkspaceReferenceDomain.EventSource), ("stream", WorkspaceReferenceDomain.EventStream)],
         OperationSyntax => [("uses", WorkspaceReferenceDomain.System)],
+        InvocationRefusalSyntax => [("constraint", WorkspaceReferenceDomain.Constraint)],
+        SpecificationRedeliverySyntax => [("reaction", WorkspaceReferenceDomain.Reaction)],
         SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax => [("operation", WorkspaceReferenceDomain.Operation)],
         ObjectMemberSyntax => [("name", WorkspaceReferenceDomain.Property)],
         TypeRefSyntax => [("name", entry.Parent is { } parent && index.Find(parent)?.Node is QuerySyntax or ScreenDataSyntax

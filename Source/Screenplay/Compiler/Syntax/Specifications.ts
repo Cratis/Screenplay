@@ -9,6 +9,8 @@ import { SpecificationOperationFailureSyntax } from './SpecificationOperationFai
 import { SpecificationOperationSyntax } from './SpecificationOperationSyntax';
 import { SpecificationCompensatedSyntax } from './SpecificationCompensatedSyntax';
 import { SpecificationExampleSyntax } from './SpecificationExampleSyntax';
+import { SpecificationRedeliverySyntax } from './SpecificationRedeliverySyntax';
+export type { SpecificationRedeliverySyntax } from './SpecificationRedeliverySyntax';
 
 export type { SpecificationOperationFailureSyntax } from './SpecificationOperationFailureSyntax';
 export type { SpecificationOperationSyntax } from './SpecificationOperationSyntax';
@@ -130,8 +132,10 @@ export interface SpecificationSyntax extends SyntaxNode {
     readonly givenReadModels: readonly SpecificationReadModelSyntax[];
     readonly when: SpecificationCommandSyntax | null;
     readonly whenAppended: SpecificationEventSyntax | null;
+    readonly whenRedelivered?: SpecificationRedeliverySyntax | null;
     readonly thenEvents: readonly SpecificationEventSyntax[];
     readonly thenEventsInAnyOrder: boolean;
+    readonly thenNoEvents?: boolean;
     readonly thenReadModels: readonly SpecificationReadModelSyntax[];
     readonly thenErrors: readonly SpecificationErrorSyntax[];
     readonly givenClock: SpecificationClockSyntax | null;

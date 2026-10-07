@@ -144,6 +144,8 @@ internal static class ScreenplayValidator
         SpecificationValueConsistencyValidator.Validate(declarations, context);
         SpecificationOutcomeConsistencyValidator.Validate(declarations, context);
         SpecificationActionValidator.Validate(application, declarations, context);
+        ReactionRefusalValidator.Validate(application, declarations, context);
+        SpecificationRedeliveryValidator.Validate(declarations, context);
         var knownQueries = scopedSlices.SelectMany(entry => entry.Slice.Queries.Select(query => new Declaration(query.Name, entry.Scope))).ToList();
         var knownScreenDeclarations = scopedSlices.SelectMany(entry => entry.Slice.Screens.Select(screen => new Declaration(screen.Name, entry.Scope))).ToList();
         ValidateSpecificationQueries(scopedSlices, knownQueries, context);
@@ -832,7 +834,7 @@ internal static class ScreenplayValidator
     {
         foreach (var trigger in slice.Reactions.SelectMany(reaction => reaction.Triggers))
         {
-            foreach (var produces in (trigger.Produces ?? []).Where(produces => productionResolver.IsEventProduction(produces, slice) && !produces.Event.Contains('.', StringComparison.Ordinal) && !knownEvents.Contains(produces.Event)))
+            foreach (var produces in ReactionProductions.In(trigger).Where(produces => productionResolver.IsEventProduction(produces, slice) && !produces.Event.Contains('.', StringComparison.Ordinal) && !knownEvents.Contains(produces.Event)))
             {
                 context.Warning(
                     DiagnosticCodes.UnknownEvent,

@@ -270,6 +270,17 @@ public partial class ScreenplayPrinter
                 using (writer.Indent())
                 {
                     WriteMappings(writer, invokes.Mappings, ReservedWords.MappingBlock);
+                    foreach (var refusal in invokes.OnRefused)
+                    {
+                        var selector = refusal.Selector == "any" ? string.Empty : $" by {refusal.Selector}";
+                        var constraint = refusal.Constraint is null ? string.Empty : $" {refusal.Constraint}";
+                        writer.Line($"on refused{selector}{constraint}", refusal);
+                        using (writer.Indent())
+                        {
+                            if (refusal.Acknowledge) writer.DirectiveLine("acknowledge", refusal, "acknowledge");
+                            foreach (var produced in refusal.Produces) WriteProduces(writer, produced);
+                        }
+                    }
                 }
             }
 

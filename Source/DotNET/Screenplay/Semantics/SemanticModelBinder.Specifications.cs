@@ -31,6 +31,16 @@ public sealed partial class SemanticModelBinder
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Specification '{specification.Name}' file reference is realization provenance.", specification.File.Location);
             }
 
+            if (specification.ThenNoEvents && (specification.WhenAppended is not null || specification.ThenEvents.Any() ||
+                specification.ThenEventsInAnyOrder || specification.ThenErrors.Any() || specification.ThenDenied is not null))
+            {
+                Error(
+                    DiagnosticCodes.InvalidNoEventsExpectation,
+                    "'then no events' cannot follow 'when append' or accompany event, event-order, error or denial expectations.",
+                    specification.DirectiveLocations.GetValueOrDefault("then no events", specification.Location));
+                return null;
+            }
+
             // Performing a query and asserting its results says what 'then query' says, so it binds to exactly the
             // same model - its bytes are those of the 'then query' spelling.
             if (specification.WhenQuery is { } performed)

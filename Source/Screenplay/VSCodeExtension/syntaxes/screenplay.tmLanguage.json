@@ -117,6 +117,20 @@
         "keywords": {
             "patterns": [
                 {
+                    "comment": "Ordered invocation refusal selectors are syntax-only.",
+                    "match": "^\\s*(on)\\s+(refused)(?:\\s+(by)\\s+(validation|constraint|authorization)(?:\\s+([\\w.]+))?)?(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "4": { "name": "keyword.other.screenplay" }, "5": { "name": "entity.name.type.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(acknowledge)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "comment": "Redelivery selects an existing given occurrence and one reaction; syntax-only.",
+                    "match": "^\\s*(when)\\s+(redelivered)\\s+([\\w.]+)\\s+(to)\\s+([\\w.]+)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "entity.name.type.screenplay" }, "4": { "name": "keyword.other.screenplay" }, "5": { "name": "entity.name.type.screenplay" } }
+                },
+                {
                     "match": "^(system|eventsource)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
                     "captures": { "1": { "name": "keyword.control.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
                 },
@@ -198,6 +212,15 @@
                     }
                 },
                 {
+                    "comment": "A specification explicitly expects no new events.",
+                    "match": "^\\s*(then)\\s+(no)\\s+(events)\\b",
+                    "captures": {
+                        "1": { "name": "keyword.other.screenplay" },
+                        "2": { "name": "keyword.other.screenplay" },
+                        "3": { "name": "keyword.other.screenplay" }
+                    }
+                },
+                {
                     "comment": "What the query a specification performs returns.",
                     "match": "^\\s*(then)\\s+(?:(no)\\s+)?(result)\\b(?:\\s+(exactly)\\b)?",
                     "captures": {
@@ -255,7 +278,7 @@
                     "name": "entity.other.attribute-name.screenplay"
                 },
                 {
-                    "match": "\\$(?:context|eventContext|eventSourceId|causedBy)(?:\\.\\w+)*|\\$(?:env|secrets|strings)\\.[\\w.]+|\\$\\.[\\w.]*",
+                    "match": "\\$(?:context|eventContext|eventSourceId|causedBy|refusal)(?:\\.\\w+)*|\\$(?:env|secrets|strings)\\.[\\w.]+|\\$\\.[\\w.]*",
                     "name": "variable.language.screenplay"
                 },
                 {

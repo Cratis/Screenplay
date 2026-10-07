@@ -72,8 +72,18 @@ public record SpecificationSyntax(
     /// <summary>Gets the event occurrence appended instead of executing a command.</summary>
     public SpecificationEventSyntax? WhenAppended { get; init; }
 
+    /// <summary>
+    /// Gets the given event occurrence redelivered to a named reaction.
+    /// </summary>
+    public SpecificationRedeliverySyntax? WhenRedelivered { get; init; }
+
     /// <summary>Gets whether the expected events can occur in any order; the default is authored order.</summary>
     public bool ThenEventsInAnyOrder { get; init; }
+
+    /// <summary>
+    /// Gets whether the scenario explicitly expects no new events.
+    /// </summary>
+    public bool ThenNoEvents { get; init; }
 
     /// <summary>
     /// Gets the instant the scenario happens at - the occurrence time of everything it does - or <c>null</c>

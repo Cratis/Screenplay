@@ -60,6 +60,7 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitSpecificationEvent(syntax.WhenAppended);
         }
 
+        if (syntax.WhenRedelivered is not null) VisitSpecificationRedelivery(syntax.WhenRedelivered);
         if (syntax.WhenClock is not null) VisitSpecificationClock(syntax.WhenClock);
         if (syntax.WhenTrigger is not null) VisitSpecificationTrigger(syntax.WhenTrigger);
         if (syntax.WhenCapture is not null) VisitSpecificationCapture(syntax.WhenCapture);
@@ -110,6 +111,17 @@ public abstract partial class ScreenplaySyntaxWalker
         if (syntax.For is not null) VisitExpression(syntax.For);
         foreach (var value in syntax.Values) VisitPropertyMapping(value);
         foreach (var value in syntax.GeneratedValues) VisitPropertyMapping(value);
+    }
+
+    /// <summary>
+    /// Visits a redelivery action and its given-occurrence locator.
+    /// </summary>
+    /// <param name="syntax">The redelivery action.</param>
+    public virtual void VisitSpecificationRedelivery(SpecificationRedeliverySyntax syntax)
+    {
+        VisitNode(syntax);
+        if (syntax.For is not null) VisitExpression(syntax.For);
+        foreach (var value in syntax.Values) VisitPropertyMapping(value);
     }
 
     /// <summary>Visits a caller fixture and its claims.</summary>

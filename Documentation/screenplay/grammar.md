@@ -865,6 +865,8 @@ SpecificationWhen = "when", QualifiedName, [ InlineFixtureAssignment ], NL,
                  [ INDENT, { SpecificationEventSource | PropertyMapping | GeneratedFixture }, DEDENT ]
                | "when", "append", QualifiedName, [ InlineFixtureAssignment ], NL,
                  [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ]
+               | "when", "redelivered", QualifiedName, "to", QualifiedName, NL,
+                 [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ]
                | "when", "clock", StringLiteral, NL
                | "when", "trigger", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
@@ -910,6 +912,7 @@ SpecificationThen = ReturnExpectation
                | "then", "result", [ "exactly" ], NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "then", "no", "result", NL
+               | "then", "no", "events", NL
                | "then", "error", [ StringLiteral ], NL
                | "then", "denied", NL
                | "then", "events", "in", "any", "order", NL
@@ -1039,7 +1042,21 @@ TriggerDecl    = "trigger", Ident, NL,
                  INDENT, { DescriptionDecl | FileDirective | TriggerValue }, DEDENT ;
 
 InvokesDecl    = "invokes", Ident, NL,
-                 [ INDENT, { PropertyMapping }, DEDENT ] ;
+                 [ INDENT, { PropertyMapping | RefusalBranch }, DEDENT ] ;
+RefusalBranch  = "on", "refused",
+                 [ "by", ( "validation" | "authorization" | "constraint", [ QualifiedName ] ) ], NL,
+                 INDENT, ( "acknowledge", NL | ProducesDecl, { ProducesDecl } ), DEDENT ;
+RefusalValue   = "$refusal.", ( "reason" | "constraint" | "message" ) ;
+
+(* Refusal branches and values, "when redelivered" and "then no events" are syntax-only:
+   binding refuses them with PLAY0268. No executable admission is claimed.
+   Branches are ordered; bare refusal excludes authorization. RefusalValue is
+   a String source only in branch event mappings; constraint requires a
+   "by constraint" selector. Branches cannot produce operations or inline events.
+   Redelivery names one compatible event-trigger reaction and locates exactly
+   one given event by optional "for" and all stated values, without appending it.
+   "then no events" is a leaf for non-append actions awaiting admission; it cannot
+   accompany events, event-order, error or denial expectations. *)
 
 (* What the reaction sets off. Plain "produces" has the same form as on a command;
    InlineEventProduction is not allowed inside reactions.

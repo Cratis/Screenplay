@@ -103,6 +103,16 @@ public partial class ScreenplayPrinter
                 WriteSpecificationEvent(writer, "when append", appended);
             }
 
+            if (specification.WhenRedelivered is { } redelivered)
+            {
+                writer.Line($"when redelivered {redelivered.EventType} to {redelivered.Reaction}", redelivered);
+                using (writer.Indent())
+                {
+                    WriteSpecificationEventSource(writer, redelivered.For);
+                    WriteSpecificationValues(writer, redelivered.Values);
+                }
+            }
+
             if (specification.WhenClock is { } tick)
             {
                 writer.Line($"when clock {StringLiteral.Quote(tick.Instant)}", tick);
@@ -129,6 +139,7 @@ public partial class ScreenplayPrinter
             WriteSpecificationReturn(writer, specification.ThenReturns);
 
             if (specification.ThenEventsInAnyOrder) writer.DirectiveLine("then events in any order", specification, "then events in any order");
+            if (specification.ThenNoEvents) writer.DirectiveLine("then no events", specification, "then no events");
 
             if (specification.ThenAbsentReadModels.Any())
             {
