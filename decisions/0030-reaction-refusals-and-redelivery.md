@@ -72,13 +72,13 @@ The reference establishes givens without reactions, fires only the named reactio
 
 ### No-event assertion
 
-`then no events` explicitly asserts no new events. It conflicts with event expectations, `then events in any order`, error expectations and denial. It is rejected after `when append` in this increment. For other actions it binds to exactly the same canonical bytes as omitting event expectations and needs no new ESM member or admission.
+`then no events` explicitly asserts no new events. It conflicts with event expectations, `then events in any order`, error expectations and denial. It is rejected after `when append` in this increment. It remains syntax-only until it is admitted together with refusal handling and redelivery. Every existing ESM version and its strict reader reject successful action specifications without a success outcome; omitting event expectations alone is not an admitted no-event assertion. Its canonical representation and reference execution are established at that shared admission checkpoint, not by relaxing existing versions' contracts.
 
 ### Admission and reference execution
 
-Reaction refusal handling and redelivery require a **new executable model version admitted together**. No number is assigned here. The number is assigned only at the serialized release-ready admission checkpoint under 0025, after all 0004 gate-2 evidence exists.
+Reaction refusal handling, redelivery and explicit no-event assertions require a **new executable model version admitted together**. No number is assigned here. The number is assigned only at the serialized release-ready admission checkpoint under 0025, after all 0004 gate-2 evidence exists.
 
-Before that checkpoint syntax, printing, syntax JSON, validation and authoring readiness may land. Binding rejects refusal branches, refusal expressions and redelivery with PLAY0268 naming “reaction refusal handling and redelivery … not admitted by any supported executable model (ESM) version yet (#433)”. MCP readiness names the feature as unadmitted. Existing ESM versions, canonical bytes, revisions and outcomes are unchanged.
+Before that checkpoint syntax, printing, syntax JSON, validation and authoring readiness may land. Binding rejects refusal branches, refusal expressions and redelivery with PLAY0268 naming “reaction refusal handling and redelivery … not admitted by any supported executable model (ESM) version yet (#433)”. Binding also rejects `then no events` with PLAY0268 naming explicit no-event assertions, and MCP readiness names each feature as unadmitted. Existing ESM versions, canonical bytes, revisions and outcomes are unchanged.
 
 Reference-runner implementation before admission is allowed only behind that gate, with specifications exercising an internal semantic model without claiming a version. If that cannot be isolated from public ESM admission, runner work remains at the admission checkpoint. No new serialized semantic members, numbered goldens or version claims are introduced by syntax-only delivery.
 
@@ -95,7 +95,7 @@ At admission the canonical design adds ordered `onRefused` branches to invocatio
 
 ## Default if unanswered
 
-The accepted design applies, while binding stays closed until admission. Existing models retain their outcomes. Authors can state intent but cannot execute new refusal or redelivery behavior yet; execution targets cannot silently ignore it.
+The accepted design applies, while binding stays closed until admission. Existing models retain their outcomes. Authors can state intent but cannot execute new refusal, redelivery or explicit no-event behavior yet; execution targets cannot silently ignore it.
 
 ## Timeline and scope
 
@@ -103,9 +103,9 @@ This design governs #433 from acceptance through its eventual admission. In scop
 
 ## Verification
 
-**Done when:** both compilers parse and print the forms with matching syntax JSON; validation identifies malformed, unreachable and invalid branches and nonunique redelivery locators; binding and MCP readiness fail closed by feature name; `then no events` binds byte-identically to omitted event expectations and rejects append actions. At admission the reference executes first-match, explicit authorization, stop-after-handled and one-observer redelivery semantics, with unchanged prior-version bytes and complete 0004 evidence.
+**Done when:** both compilers parse and print the forms with matching syntax JSON; validation identifies malformed, unreachable and invalid branches and nonunique redelivery locators; binding and MCP readiness fail closed by feature name; binding refuses `then no events` until admission and validation rejects append actions. At admission the reference executes first-match, explicit authorization, stop-after-handled, one-observer redelivery and explicit no-event assertions, with unchanged prior-version bytes and complete 0004 evidence.
 
-**Verify by:** parser/printer and conformance specifications; focused validation, binder and MCP readiness specifications; byte comparisons of omitted and explicit no-event assertions; reference refusal/redelivery specifications at admission; prior golden and corpus comparisons; strict-reader rejection and consumer tracking review. A build alone does not advance this record's stage.
+**Verify by:** parser/printer and conformance specifications; focused validation, binder and MCP readiness specifications; no-event binding refusal and strict-reader rejection of outcome-less actions; reference refusal/redelivery/no-event specifications at admission; prior golden and corpus comparisons; strict-reader rejection and consumer tracking review. A build alone does not advance this record's stage.
 
 ## Consequences
 
