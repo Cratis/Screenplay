@@ -304,7 +304,8 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index)
         {
             if (siblings[position] is not { } sibling || !_sourceLocations.TryGetValue(sibling, out var other) || other is not { Line: > 1, Column: > 0 })
             {
-                // The printer places unlocated siblings after all located members of their kind.
+                // The printer inserts unlocated features and slices before their next located sibling;
+                // other collections still go after the last located member of their kind.
                 if (position < boundary) return false;
                 continue;
             }

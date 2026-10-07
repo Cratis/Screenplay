@@ -126,6 +126,7 @@ internal static class ScreenplayValidator
 
         var scopedSlices = ScopedSlices(application).ToList();
         var declarations = new ConsistencyDeclarations(application, scopedSlices);
+        ValidateAdditionalEventReferences(application, declarations, knownEvents, context);
         EventSourceValidator.Validate(application, declarations, context);
         OperationValidator.Validate(application, declarations, context);
         ImportValidator.Validate(application, declarations, context);
@@ -135,6 +136,8 @@ internal static class ScreenplayValidator
         EventFieldConsistencyValidator.Validate(declarations, context);
         ProjectionCompletenessValidator.Validate(declarations, context);
         ProjectionVariantValidator.Validate(declarations, context);
+        ProjectionTargetValidator.Validate(declarations, context);
+        IdentifierComplianceValidator.Validate(application, declarations, context);
         SpecificationValueConsistencyValidator.Validate(declarations, context);
         SpecificationOutcomeConsistencyValidator.Validate(declarations, context);
         SpecificationActionValidator.Validate(application, declarations, context);
@@ -171,6 +174,28 @@ internal static class ScreenplayValidator
         ValidateThemes(application, context);
         ValidateProfileLayouts(application, context);
         ValidateArrangements(application, context);
+    }
+
+    static void ValidateAdditionalEventReferences(ApplicationSyntax application, ConsistencyDeclarations declarations, HashSet<string> knownEvents, ParserContext context)
+    {
+        var events = declarations.Slices.SelectMany(entry => EventDeclarations.In(entry.Slice)
+            .Select(@event => @event.Name).Distinct(StringComparer.Ordinal)
+            .Select(name => new Declaration(name, entry.Scope))).ToArray();
+        var imported = application.Imports.Select(import => import.QualifiedName).ToHashSet(StringComparer.Ordinal);
+        foreach (var (slice, scope) in declarations.Slices)
+        {
+            bool IsKnown(string name) => knownEvents.Contains(name) || imported.Contains(name) || !ReferenceResolver.Resolve(name, scope, events).IsUnresolved;
+            new RemovalEventValidator(IsKnown, context).VisitSlice(slice);
+            foreach (var append in slice.Captures.SelectMany(capture => capture.Appends
+                .Concat(capture.Children.SelectMany(children => children.Appends))
+                .Concat(capture.Nested.SelectMany(nested => nested.Appends))))
+            {
+                if (!IsKnown(append.Event))
+                {
+                    context.Warning(DiagnosticCodes.UnknownEvent, $"Unknown event '{append.Event}' - declare it with 'event {append.Event}'", append.Location);
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -1483,6 +1508,21 @@ internal static class ScreenplayValidator
             if (@event?.Length > 0 && !knownEvents.Contains(@event))
             {
                 context.Warning(DiagnosticCodes.UnknownEvent, $"Unknown event '{@event}' - declare it with 'event {@event}'", constraint.Location);
+            }
+        }
+    }
+
+    sealed class RemovalEventValidator(Func<string, bool> isKnown, ParserContext context) : ScreenplaySyntaxWalker
+    {
+        public override void VisitRemoveWith(RemoveWithSyntax syntax) => Validate(syntax.Event, syntax.Location);
+
+        public override void VisitRemoveViaJoin(RemoveViaJoinSyntax syntax) => Validate(syntax.Event, syntax.Location);
+
+        void Validate(string name, SourceLocation location)
+        {
+            if (!isKnown(name))
+            {
+                context.Warning(DiagnosticCodes.UnknownEvent, $"Unknown event '{name}' - declare it with 'event {name}'", location);
             }
         }
     }

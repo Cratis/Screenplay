@@ -33,9 +33,19 @@ internal static class PlayApplicationAssembly
         IEnumerable<string> roots,
         IPlayDocumentSource source,
         IScreenplayLanguageRegistry languages,
+        bool allowUnresolvedPersonaPolicies = false) =>
+        Compile(compiler, roots, source, languages, out _, allowUnresolvedPersonaPolicies);
+
+    internal static (IReadOnlyList<PlacedPlayDocument> Documents, CompilationResult<ApplicationSyntax> Result) Compile(
+        IScreenplayCompiler compiler,
+        IEnumerable<string> roots,
+        IPlayDocumentSource source,
+        IScreenplayLanguageRegistry languages,
+        out AuthoredTimeline presentation,
         bool allowUnresolvedPersonaPolicies = false)
     {
-        var (documents, diagnostics) = PlayImports.Resolve(roots, source, languages);
+        var rootPaths = roots.ToArray();
+        var (documents, diagnostics) = PlayImports.Resolve(rootPaths, source, languages);
         var candidates = (compiler as ICommandStreamCandidateParser)?.CaptureCandidates(documents.Where(document => document.IsPlacementResolved)
             .Select(document => (SourceLineSplitter.Split(document.Source, path: document.Path), document.Placement)));
         var parsed = documents.Select(document =>
@@ -47,8 +57,25 @@ internal static class PlayApplicationAssembly
             return !document.IsPlacementResolved && result.Value is { } application
                 ? result with { Value = application with { EventSources = [] } }
                 : result;
-        });
-        var merged = PlayFolderMerge.Merge([.. parsed], allowUnresolvedPersonaPolicies);
-        return (documents, merged with { Diagnostics = [.. diagnostics, .. merged.Diagnostics] });
+        }).ToArray();
+        var merged = PlayFolderMerge.Merge(parsed, allowUnresolvedPersonaPolicies);
+
+        // Resolution owns its import inventory; share one discovery between the presentation passes.
+        var imports = documents.ToDictionary(document => document.Path, document => ScreenplayCompiler.DiscoverImports(document.Source, document.Path, languages), StringComparer.Ordinal);
+
+        // A caller's compiler may fail a document without a tree; authored order then parses that document itself.
+        var syntax = documents.Zip(parsed)
+            .Where(pair => pair.Second.Value is not null)
+            .ToDictionary(pair => pair.First.Path, pair => pair.Second.Value!, StringComparer.Ordinal);
+        var orderingRoot = OrderingRoot.Select(rootPaths, documents, languages, imports);
+        IReadOnlyDictionary<string, IReadOnlyList<AuthoredOrderStep>> origins = new Dictionary<string, IReadOnlyList<AuthoredOrderStep>>();
+        var ranks = orderingRoot is not null
+            ? AuthoredOrder.Record([orderingRoot], documents, languages, out origins, syntax, imports)
+            : new Dictionary<string, int>();
+        var findings = orderingRoot is not null && merged.Value is { } application ? TimelineOrder.Analyze(application, ranks) : [];
+        var sourceValid = merged.Success && diagnostics.All(diagnostic => diagnostic.Severity != Diagnostics.DiagnosticSeverity.Error);
+        presentation = new(orderingRoot, merged.Value, documents, ranks, origins, findings, sourceValid);
+
+        return (documents, merged with { Diagnostics = [.. diagnostics, .. merged.Diagnostics, .. findings.Select(finding => finding.Diagnostic)] });
     }
 }

@@ -3,8 +3,9 @@
 
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { ApplicationSyntax, CompilationResult, compileApplication, parse, parseFolder, PlayFileSource } from '@cratis/screenplay-compiler';
+import { ApplicationSyntax, CompilationResult, compileApplication, parse, PlayFileSource } from '@cratis/screenplay-compiler';
 import { fileImports } from '@cratis/screenplay-language';
+import { compileEventModelApplication } from '@cratis/screenplay-event-models';
 import { applicationFileName, findApplicationRoot } from './ApplicationRoot';
 import { filesOf, narrowTo, scopeOf } from './boardScope';
 
@@ -38,11 +39,13 @@ export async function compileForBoard(document: vscode.TextDocument): Promise<Bo
         const folder = vscode.Uri.file(path.dirname(document.uri.fsPath));
         const documents = new Map((await sourcesBeneath(workspaceFolder ?? folder, folder)).map(source => [source.path, source.source]));
         documents.set(path.basename(document.uri.fsPath), document.getText());
-        return { name, result: compileApplication(documents, [path.basename(document.uri.fsPath)]) };
+        const rootFile = path.basename(document.uri.fsPath);
+        const result = compileApplication(documents, [rootFile]);
+        return { name, result };
     }
     const rootUri = vscode.Uri.file(root);
     const sources = await sourcesBeneath(rootUri, rootUri);
-    const application = parseFolder(sources);
+    const application = compileEventModelApplication(sources, applicationFileName);
     const whole = { name: path.basename(root), root: rootUri, result: application };
     const documentPath = path.relative(root, document.uri.fsPath).split(path.sep).join('/');
     if (documentPath === applicationFileName) {
