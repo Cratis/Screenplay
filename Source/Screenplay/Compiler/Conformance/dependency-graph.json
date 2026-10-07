@@ -81,6 +81,14 @@
             "order": ["M.C.Produce", "M.B.Build", "M.A.Decide"]
         },
         {
+            "name": "reducer rules deeper than a quoted description remain dependencies",
+            "files": {"application.play": "module M\n  feature A\n    slice StateView Build\n      reducer Fold => Built\n        description \"Fold E\"\n          on E\n  feature B\n    slice StateChange Produce\n      event E"},
+            "edges": ["M.A.Build|M.B.Produce|usesFactsFrom|reduces:E"],
+            "implied": ["M.A|M.B|1|1"],
+            "cycles": [],
+            "order": ["M.B.Produce", "M.A.Build"]
+        },
+        {
             "name": "module forms do not acquire a slice owner",
             "files": {"application.play": "module M\n  feature F\n    slice StateChange Producer\n      command C\n      readmodel R\n      query Q => R\n  form Edit for C\n    populate via query Q"},
             "edges": [],

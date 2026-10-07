@@ -3,6 +3,7 @@
 
 import { ConcurrencySyntax, ReadsSyntax, ReducerRuleSyntax, ReducerSyntax } from '../Syntax/DependencySources';
 import { dotNetWhitespace, pattern } from '../Text/patterns';
+import { parseDescription } from './DescriptionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
@@ -60,6 +61,12 @@ export function captureReducer(context: ParserContext, line: SourceLine): Reduce
     const rules: ReducerRuleSyntax[] = [];
     for (let child = body.peekChild(line.indent); child !== undefined; child = body.peekChild(line.indent)) {
         body.reader.takeSignificant();
+        if (firstWord(child.content) === 'description') {
+            // Descriptions consume only their fenced text, never the following descendants. Diagnostics
+            // stay on the fork, so reference capture does not change the committed parser's behavior.
+            parseDescription(body, child, null, 'Reducer');
+            continue;
+        }
         const rule = pattern(`^on${dotNetWhitespace}+([A-Z]\\w*)$`).exec(child.content);
         if (rule !== null) rules.push({ kind: 'ReducerRuleSyntax', event: rule[1], file: null, code: null, description: null, location: locationOf(child) });
         body.skipOpaqueBlock(child.indent);

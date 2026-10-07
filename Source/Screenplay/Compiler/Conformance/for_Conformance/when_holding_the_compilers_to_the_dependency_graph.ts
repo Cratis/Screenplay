@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeEach, describe, it } from 'vitest';
 import { DependencyGraph } from '../../Dependencies/DependencyGraph';
-import { compileApplication } from '../../Files/PlayApplicationAssembly';
+import { ApplicationCompilation, compileApplication } from '../../Files/PlayApplicationAssembly';
 
 interface Vector {
     name: string;
@@ -23,10 +23,22 @@ for (const vector of vectors) {
     describe(`when holding the compilers to the dependency graph: ${vector.name}`, () => {
         let graph: DependencyGraph;
         let reversed: DependencyGraph;
+        let compilation: ApplicationCompilation;
+        let reversedCompilation: ApplicationCompilation;
         beforeEach(() => {
-            graph = DependencyGraph.for(compileApplication(new Map(Object.entries(vector.files))).value);
-            reversed = DependencyGraph.for(compileApplication(new Map(Object.entries(vector.files).reverse())).value);
+            const files = new Map(Object.entries(vector.files));
+            const reversedFiles = new Map([...files].reverse());
+            compilation = compileApplication(files, [...files.keys()]);
+            reversedCompilation = compileApplication(reversedFiles, [...reversedFiles.keys()]);
+            graph = DependencyGraph.for(compilation.value);
+            reversed = DependencyGraph.for(reversedCompilation.value);
         });
+        if (Object.keys(vector.files).length > 1) {
+            it('should actually reverse document arrival order', () => {
+                compilation.documents.map(document => document.path).should.deep.equal(Object.keys(vector.files));
+                reversedCompilation.documents.map(document => document.path).should.deep.equal(Object.keys(vector.files).reverse());
+            });
+        }
         it('should match the slice edges', () => {
             graph.edges.map(edge => `${edge.consumer.address}|${edge.producer.address}|${edge.kind}|${edge.evidence.map(item => `${item.role}:${item.name}`).join(',')}`).should.deep.equal(vector.edges);
         });
