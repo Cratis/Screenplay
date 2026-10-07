@@ -53,12 +53,13 @@ public class when_collapsing_duplicate_authorization_comments : given.an_authori
                 slice StateView List
                   readmodel Items
                     id Uuid
-                  query All => Items[]
+                  query ItemById => Items optional
+                    by id Uuid
             """);
         Initialize();
         _opened = Open();
         _before = ScreenplayWorkspaceSerializer.Deserialize(Result("export-workspace", new { expectedRevision = _opened.GetProperty("revision").GetString() }).GetProperty("bytesBase64").GetBytesFromBase64());
-        _before.Compilation.Success.ShouldBeTrue();
+        Assert.True(_before.Compilation.Success, string.Join('\n', _before.Compilation.Diagnostics));
         _before.IdentityCatalog.Semantics.ShouldNotBeEmpty();
         _before.IdentityCatalog.EventContracts.ShouldNotBeEmpty();
     }
@@ -86,8 +87,8 @@ public class when_collapsing_duplicate_authorization_comments : given.an_authori
     [Fact] void should_keep_both_identical_feature_comment_occurrences() => Comments("feature", "Shared").Count().ShouldEqual(2);
     [Fact] void should_report_no_dropped_comments() => _proposal.GetProperty("droppedCommentCount").GetInt32().ShouldEqual(0);
     [Fact] void should_keep_executable_model_bytes() => SemanticModelSerializer.Serialize(_candidate.Compilation.Value!.Model).ShouldEqual(SemanticModelSerializer.Serialize(_before.Compilation.Value!.Model));
-    [Fact] void should_keep_semantic_identities() => _candidate.IdentityCatalog.Semantics.ShouldEqual(_before.IdentityCatalog.Semantics);
-    [Fact] void should_keep_event_identities() => _candidate.IdentityCatalog.EventContracts.ShouldEqual(_before.IdentityCatalog.EventContracts);
+    [Fact] void should_keep_semantic_identities() => _candidate.IdentityCatalog.Semantics.SequenceEqual(_before.IdentityCatalog.Semantics).ShouldBeTrue();
+    [Fact] void should_keep_event_identities() => _candidate.IdentityCatalog.EventContracts.SequenceEqual(_before.IdentityCatalog.EventContracts).ShouldBeTrue();
     [Fact] void should_keep_exactly_one_gate_per_scope() => _single.Split('\n').Count(line => line.Trim() == "authorize SignedIn").ShouldEqual(2);
 
     IEnumerable<string> Comments(string scope, string explanation) => _single.Split('\n').Where(line => line.Trim() == $"// {explanation} {scope} explanation.");
