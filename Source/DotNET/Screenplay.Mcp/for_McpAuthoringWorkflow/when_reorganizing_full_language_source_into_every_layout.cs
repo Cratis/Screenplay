@@ -87,6 +87,7 @@ public class when_reorganizing_full_language_source_into_every_layout : given.an
     {
         if (node is JsonObject value)
         {
+            value.Remove("fileImports");
             foreach (var property in value.ToArray().Where(property => property.Value is not null))
             {
                 SortHierarchy(property.Value);

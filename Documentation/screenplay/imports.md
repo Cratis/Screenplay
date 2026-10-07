@@ -100,6 +100,11 @@ Mutually dependent sibling groups report one `PLAY0517` instead of individual `P
 
 A single document uses text order. For application or folder compilation, the ordering root is the sole root when there is one; otherwise it is the folder-root `application.play` if that file imports others, or the unique importing document not itself imported. With no such root, the compiler assigns no presentation ranks and skips the timeline check. When a folder has an `application.play` without imports, the compiler takes its order from the only importing document while the boards keep path order, so the check can describe an order the board does not draw. It checks the merged application once, not each physical file separately. This does not change merge order, syntax JSON, executable model bytes, revisions or identities.
 
+For dependencies beyond projection and trigger event flow, use the read-only
+[MCP dependency graph](mcp/reference.md#dependency-graph). Its cycles and story-order
+suggestions also include read-model decisions; they do not change these diagnostics
+or apply a reorder.
+
 ### Repair a backward event reference
 
 C# workspaces and MCP offer typed `PLAY0516` proposals for safe sibling declaration
@@ -166,6 +171,14 @@ screenplay .                    # every file in the folder - imports still place
 ```
 
 From code, `IPlayFileCompiler.CompileApplication(path)` follows the imports from a root file, and `CompileFolder(root)` treats every file in the folder as a root. Workspaces and the executable semantic model resolve imports against their own documents, so a document set behaves the same way in a build, in an editor and over MCP. `PlayImports.Resolve` exposes the resolution itself - which documents make up the application and where each one is placed - for tools that want it.
+
+A single-root compilation traverses imports depth-first in authored order. Folder
+compilation retains alphabetical file-path order for merging; import order supplies
+presentation ranks separately, as described above. Wildcard matches remain ordered
+by path. `expand-layout` uses those presentation ranks when writing child imports,
+so repeated expansion preserves the authored module, feature and slice order without
+changing merge precedence or event ownership. An import-less `application.play`
+keeps path order.
 
 ## See also
 
