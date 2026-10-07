@@ -30,9 +30,7 @@ static class McpLayout
             throw new McpFailure("Layout expansion failed the syntax round-trip check; no proposal was created.");
         }
 
-        var texts = expanded.ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal);
-        PlayApplicationAssembly.Compile(new ScreenplayCompiler(), texts.Keys, new InMemoryPlayDocumentSource(texts), ScreenplayLanguageRegistry.Default, out var timeline);
-        if (!KeepsAuthoredOrder(WorkspaceTimelineRepairs.Timeline(workspace), timeline))
+        if (!KeepsAuthoredOrder(Timeline(workspace.Documents), Timeline(expanded)))
         {
             throw new McpFailure("Layout expansion would change authored module, feature, or slice order; no proposal was created.");
         }
@@ -52,7 +50,17 @@ static class McpLayout
     }
 
     internal static bool KeepsAuthoredOrder(ScreenplayWorkspace before, ScreenplayWorkspace after) =>
-        KeepsAuthoredOrder(WorkspaceTimelineRepairs.Timeline(before), WorkspaceTimelineRepairs.Timeline(after));
+        KeepsAuthoredOrder(Timeline(before.Documents), Timeline(after.Documents));
+
+    static AuthoredTimeline Timeline(ImmutableArray<WorkspaceDocument> documents)
+    {
+        // Unranked siblings must tie-break in the same path order as InPresentationOrder's snapshot.
+        var texts = documents.OrderBy(document => document.Path.Value, StringComparer.Ordinal)
+            .ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal);
+        PlayApplicationAssembly.Compile(new ScreenplayCompiler(), texts.Keys, new InMemoryPlayDocumentSource(texts), ScreenplayLanguageRegistry.Default, out var timeline);
+
+        return timeline;
+    }
 
     static bool KeepsAuthoredOrder(AuthoredTimeline before, AuthoredTimeline after)
     {
@@ -66,7 +74,8 @@ static class McpLayout
     }
 
     // Global ranks can shift when containers move between files. Compare only each collection's
-    // relative sibling order, folding split containers and duplicate names at their first occurrence.
+    // relative sibling order. Split containers rank at their owner file (root or named container file);
+    // repeated sibling names count once.
     static Dictionary<string, string[]> SiblingSequences(AuthoredTimeline timeline)
     {
         var sequences = new Dictionary<string, string[]>(StringComparer.Ordinal);
