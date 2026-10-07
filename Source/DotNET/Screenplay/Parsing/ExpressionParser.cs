@@ -112,6 +112,11 @@ internal static partial class ExpressionParser
     {
         text = text.Trim();
 
+        if (text == "$refusal" || text.StartsWith("$refusal.", StringComparison.Ordinal))
+        {
+            return new RefusalExpressionSyntax(text == "$refusal" ? string.Empty : text["$refusal.".Length..], location);
+        }
+
         if (text.StartsWith("$context.", StringComparison.Ordinal))
         {
             var expression = new ContextExpressionSyntax(text["$context.".Length..], location);

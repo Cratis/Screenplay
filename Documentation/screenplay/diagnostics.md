@@ -837,6 +837,13 @@ See [Imports](imports.md).
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
+| `PLAY0538` | Error | An `on refused` header is malformed, uses an unsupported selector, or appears outside an `invokes` block. Use `on refused [by validation \| by constraint [<Name>] \| by authorization]`. |
+| `PLAY0539` | Error | A refusal branch is empty, repeats or adds children to `acknowledge`, combines acknowledgement with productions, or contains another kind of effect. Use `acknowledge` alone or one or more `produces <Event>` blocks. |
+| `PLAY0540` | Warning | A refusal branch is shadowed by an earlier selector, or its declared constraint targets none of the invoked command's events. Bare refusal covers validation and constraints, not authorization. |
+| `PLAY0541` | Error | A `$refusal` value is outside a branch's event mapping, has an unknown member, uses `constraint` outside a constraint selector, or targets an incompatible property type. The values `reason`, `constraint` and `message` are String values. |
+| `PLAY0542` | Error | A named constraint in a refusal selector does not resolve to a declared constraint. |
+| `PLAY0543` | Error | `when redelivered <Event> to <Reaction>` is malformed, or its values and optional `for` locator identify zero or several given event occurrences. |
+| `PLAY0544` | Error | The redelivery reaction is unknown or ambiguous, or has no event trigger on the stated event. |
 | `PLAY0545` | Error | `then no events` is malformed, repeated, has child mappings, follows `when append`, or accompanies event, event-order, error or denial expectations. Use one leaf assertion after a non-append action; read-model, query and response assertions may accompany it. |
 
 See [Specifications](specifications.md#syntax).

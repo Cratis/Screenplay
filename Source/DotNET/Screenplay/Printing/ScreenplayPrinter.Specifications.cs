@@ -103,6 +103,16 @@ public partial class ScreenplayPrinter
                 WriteSpecificationEvent(writer, "when append", appended);
             }
 
+            if (specification.WhenRedelivered is { } redelivered)
+            {
+                writer.Line($"when redelivered {redelivered.EventType} to {redelivered.Reaction}", redelivered);
+                using (writer.Indent())
+                {
+                    WriteSpecificationEventSource(writer, redelivered.For);
+                    WriteSpecificationValues(writer, redelivered.Values);
+                }
+            }
+
             if (specification.WhenClock is { } tick)
             {
                 writer.Line($"when clock {StringLiteral.Quote(tick.Instant)}", tick);

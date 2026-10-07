@@ -72,6 +72,7 @@ internal static partial class SpecificationParser
         var givenReadModels = new List<SpecificationReadModelSyntax>();
         SpecificationCommandSyntax? when = null;
         SpecificationEventSyntax? whenAppended = null;
+        SpecificationRedeliverySyntax? whenRedelivered = null;
         var whenDeclared = false;
         var eventsInAnyOrder = false;
         var thenNoEvents = false;
@@ -170,6 +171,10 @@ internal static partial class SpecificationParser
                     if (line.Content.StartsWith("when append", StringComparison.Ordinal))
                     {
                         whenAppended = ParseEventReference(context, line, WhenAppendRegex(), "when append");
+                    }
+                    else if (WhenRedeliveredPrefixRegex().IsMatch(line.Content))
+                    {
+                        whenRedelivered = ParseRedelivery(context, line);
                     }
                     else if (KeywordRegex("when", "clock").IsMatch(line.Content))
                     {
@@ -306,6 +311,7 @@ internal static partial class SpecificationParser
             ThenOperations = thenOperations,
             ThenCompensated = thenCompensated,
             WhenAppended = whenAppended,
+            WhenRedelivered = whenRedelivered,
             ThenEventsInAnyOrder = eventsInAnyOrder,
             ThenNoEvents = thenNoEvents,
             GivenClock = givenClock,
@@ -369,6 +375,26 @@ internal static partial class SpecificationParser
 
         return new(match.Groups[2].Value, line.Location);
     }
+
+    static SpecificationRedeliverySyntax? ParseRedelivery(ParserContext context, SourceLine line)
+    {
+        var match = WhenRedeliveredRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.UnmatchedRedeliveredOccurrence, "Expected 'when redelivered <Event> to <Reaction>'.", line.Location);
+            SkipBody(context, line.Indent);
+            return null;
+        }
+
+        var body = ParseValuesWithEventSource(context, line);
+        return new(match.Groups[1].Value, match.Groups[2].Value, body.Values, line.Location) { For = body.For };
+    }
+
+    [GeneratedRegex(@"^when\s+redelivered\b", RegexOptions.None, 1000)]
+    private static partial Regex WhenRedeliveredPrefixRegex();
+
+    [GeneratedRegex(@"^when\s+redelivered\s+([A-Za-z_]\w*(?:\.\w+)*)\s+to\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    private static partial Regex WhenRedeliveredRegex();
 
     static SpecificationTriggerSyntax? ParseTrigger(ParserContext context, SourceLine line)
     {
