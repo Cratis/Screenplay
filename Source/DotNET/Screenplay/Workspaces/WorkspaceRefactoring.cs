@@ -253,7 +253,7 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         }
 
         // Only absence-key members bound to the renamed composite-type property are rewritten.
-        foreach (var obligation in absence.Obligations.Where(obligation => !obligation.IsKey && target.Address is { } address && address.Equals(obligation.Target!.Address)))
+        foreach (var obligation in absence.Obligations.Where(obligation => !obligation.IsKey && target.Address.Equals(obligation.Target!.Address)))
         {
             WorkspaceSyntaxMutation.Set(roots[obligation.Occurrence.Handle.Document], $"{obligation.Occurrence.Handle.Path}/name", request.NewName);
             touched.Add(obligation.Occurrence.Handle.Document);
@@ -316,10 +316,8 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         var candidateBindings = new WorkspaceReferenceBindings(candidateIndex);
         candidateBindings.RequireNoCollisions();
         WorkspaceReferenceSafety.RequireRenameContinuity(bindings, candidateBindings);
-        if (target.Address is { } renamedAddress)
-        {
-            RequireAbsenceContinuity(absence, new WorkspaceAbsenceKeyBindings(candidateIndex, candidateBindings), referenceRenames, renamedAddress, request.NewName);
-        }
+        RequireAbsenceContinuity(absence, new WorkspaceAbsenceKeyBindings(candidateIndex, candidateBindings), referenceRenames, target.Address, request.NewName);
+
         return result;
     }
 }
