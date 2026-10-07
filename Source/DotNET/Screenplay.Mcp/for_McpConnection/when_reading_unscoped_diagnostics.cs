@@ -12,6 +12,6 @@ public class when_reading_unscoped_diagnostics : given.a_connection
     void Establish() => Initialize();
     void Because() => _result = Call("diagnostics").GetProperty("result").GetProperty("structuredContent");
 
-    [Fact] void should_omit_scope_only_fields() => new[] { "scope", "declarationCount", "dependentDeclarationCount", "affectedScopes", "unresolvedEventConsumers", "possiblyAffectedReferenceCount", "dependencyCoverage" }.Any(name => _result.TryGetProperty(name, out _)).ShouldBeFalse();
+    [Fact] void should_preserve_the_response_key_set() => _result.EnumerateObject().Select(property => property.Name).ShouldContainOnly("success", "sourceRevision", "fileCount", "summary", "page");
     [Fact] void should_preserve_the_full_application_verdict() => _result.GetProperty("success").GetBoolean().ShouldBeTrue();
 }

@@ -97,7 +97,6 @@ static class McpModelQueries
             return new
             {
                 snapshot.Compilation.Success,
-                wholeApplicationSuccess = snapshot.Compilation.Success,
                 snapshot.SourceRevision,
                 fileCount,
                 summary = DiagnosticSummary(snapshot),
@@ -107,7 +106,7 @@ static class McpModelQueries
 
         return new
         {
-            success = !diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error),
+            success = !selection.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error),
             wholeApplicationSuccess = snapshot.Compilation.Success,
             snapshot.SourceRevision,
             fileCount,
@@ -118,7 +117,7 @@ static class McpModelQueries
             selection.UnresolvedEventConsumers,
             selection.PossiblyAffectedReferenceCount,
             selection.DependencyCoverage,
-            summary = DiagnosticSummary(diagnostics),
+            summary = DiagnosticSummary(selection.Diagnostics),
             page = McpPaging.Page(diagnostics, arguments, snapshot.SourceRevision)
         };
     }
