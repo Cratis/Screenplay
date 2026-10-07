@@ -1,0 +1,110 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "dependsOn": [
+        {
+          "kind": "DependsOnSyntax",
+          "target": "Timesheets"
+        }
+      ],
+      "description": "Pays people for approved time",
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "dependsOn": [
+            {
+              "kind": "DependsOnSyntax",
+              "target": "Timesheets.Approval"
+            },
+            {
+              "kind": "DependsOnSyntax",
+              "target": "Timesheets.Reporting"
+            },
+            {
+              "kind": "DependsOnSyntax",
+              "target": "Runs"
+            }
+          ],
+          "description": "Transfers approved hours",
+          "features": [
+            {
+              "kind": "FeatureSyntax",
+              "authorize": null,
+              "dependsOn": [
+                {
+                  "kind": "DependsOnSyntax",
+                  "target": "Runs"
+                }
+              ],
+              "description": null,
+              "features": [],
+              "fileImports": [],
+              "isPlacement": false,
+              "name": "Notices",
+              "slices": []
+            }
+          ],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Handover",
+          "slices": []
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Runs",
+          "slices": []
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Payroll"
+    },
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Approval",
+          "slices": []
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Reporting",
+          "slices": []
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Timesheets"
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

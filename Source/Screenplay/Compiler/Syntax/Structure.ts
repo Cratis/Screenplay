@@ -49,7 +49,13 @@ export interface FileImportSyntax extends SyntaxNode {
     readonly pattern: string;
 }
 
+export interface DependsOnSyntax extends SyntaxNode {
+    readonly kind: 'DependsOnSyntax';
+    readonly target: string;
+}
+
 export interface FeatureSyntax extends SyntaxNode {
+    readonly dependsOn?: readonly DependsOnSyntax[];
     readonly kind: 'FeatureSyntax';
     readonly name: string;
     readonly description: string | null;
@@ -64,6 +70,7 @@ export interface FeatureSyntax extends SyntaxNode {
 }
 
 export interface ModuleSyntax extends SyntaxNode {
+    readonly dependsOn?: readonly DependsOnSyntax[];
     readonly kind: 'ModuleSyntax';
     readonly name: string;
     readonly description: string | null;

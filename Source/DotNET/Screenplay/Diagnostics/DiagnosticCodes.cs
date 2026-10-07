@@ -2334,4 +2334,14 @@ public static class DiagnosticCodes
 
     /// <summary>A personally identifiable concept is used as an event source identifier.</summary>
     public const string PiiNotSupportedOnIdentifier = "PLAY0515";
+
+    /// <summary>
+    /// A declared dependency target is unresolved, self, an ancestor, or a descendant.
+    /// </summary>
+    public const string InvalidDependencyTarget = "PLAY0554";
+
+    /// <summary>
+    /// A dependency is declared more than once on the same container.
+    /// </summary>
+    public const string RepeatedDependencyDeclaration = "PLAY0555";
 }

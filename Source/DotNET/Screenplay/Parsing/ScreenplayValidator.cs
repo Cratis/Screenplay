@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Dependencies;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
@@ -25,7 +26,8 @@ internal static class ScreenplayValidator
     /// <param name="application">The <see cref="ApplicationSyntax"/> to validate.</param>
     /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
     /// <param name="allowUnresolvedPersonaPolicies">Whether draft authoring may retain unresolved persona references as warnings.</param>
-    public static void Validate(ApplicationSyntax application, ParserContext context, bool allowUnresolvedPersonaPolicies = false)
+    /// <returns>The application with repeated dependency targets kept once.</returns>
+    public static ApplicationSyntax Validate(ApplicationSyntax application, ParserContext context, bool allowUnresolvedPersonaPolicies = false)
     {
         foreach (var error in SourceNumericModes.Errors(application)) context.Add(error);
 
@@ -175,6 +177,8 @@ internal static class ScreenplayValidator
         ValidateThemes(application, context);
         ValidateProfileLayouts(application, context);
         ValidateArrangements(application, context);
+
+        return DeclaredDependencyTargets.Validate(application, context);
     }
 
     static void ValidateAdditionalEventReferences(ApplicationSyntax application, ConsistencyDeclarations declarations, HashSet<string> knownEvents, ParserContext context)
