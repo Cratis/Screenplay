@@ -152,7 +152,8 @@ static class WorkspaceTriviaPrinter
             throw Unsupported(original, change.Path);
         }
 
-        var spans = WorkspaceIdentifierSpans.Find(token.Text, change.Before!).ToArray();
+        var spans = WorkspaceIdentifierSpans.Find(token.Text, change.Before!)
+            .Where(span => owner is not DependsOnSyntax || span.Offset > token.Text.IndexOf("on", StringComparison.Ordinal) + 1).ToArray();
         if (spans.Length != 1)
         {
             throw Unsupported(original, change.Path);

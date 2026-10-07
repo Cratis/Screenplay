@@ -94,6 +94,8 @@ This is presentation only: it does not reorder the compiler's documents or chang
 
 ## Timeline diagnostics
 
+[Declared dependencies](slices.md#declared-dependencies) state intended module and feature coupling; they are not an import or a timeline ordering rule.
+
 The compiler checks event flow against the same presentation timeline: modules in order, with each feature's own slices before its sub-features. A projection or named reaction trigger using an event declared in a slice to its right reports `PLAY0516` once per consumer slice and event, at the first reference. The earliest declaring slice is the producer; external events and a slice's own events do not create a finding. A producer in the consumer's own sub-feature is reported too, with a note that reordering cannot fix it.
 
 Mutually dependent sibling groups report one `PLAY0517` instead of individual `PLAY0516` findings within that group. The compiler considers event flow in both directions, groups dependencies at their lowest common container, and lists mutually dependent members in timeline order. Other backward edges still report individually. These are information diagnostics and do not fail `--warnaserror`. Command `reads` and reducers are not checked.

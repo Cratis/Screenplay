@@ -2,6 +2,47 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "Declared dependency invalid targets are warnings",
+            "validate": true,
+            "source": ["module Payroll", "  depends on Payroll.Runs", "  feature Handover", "    depends on Handover", "    depends on Payroll", "    depends on Nowhere", "  feature Runs"],
+            "diagnostics": ["PLAY0554@2", "PLAY0554@4", "PLAY0554@5", "PLAY0554@6"]
+        },
+        {
+            "name": "Declared dependencies keep identical resolved aliases once",
+            "validate": true,
+            "source": ["module Payroll", "  feature Handover", "    depends on Runs", "    depends on Payroll.Runs", "    depends on Runs", "  feature Runs"],
+            "diagnostics": ["PLAY0555@5", "PLAY0555@4"]
+        },
+        {
+            "name": "Declared dependencies warn on unresolved text repeats once per repeat",
+            "validate": true,
+            "source": ["module Payroll", "  depends on Nowhere", "  depends on Nowhere", "  depends on Nowhere"],
+            "diagnostics": ["PLAY0555@3", "PLAY0555@4", "PLAY0554@2"]
+        },
+        {
+            "name": "Declared dependencies reject equally near suffix matches",
+            "validate": true,
+            "source": ["module Consumer", "  depends on Group.Shared", "module A", "  feature Group", "    feature Shared", "module B", "  feature Group", "    feature Shared"],
+            "diagnostics": ["PLAY0198@2"]
+        },
+        {
+            "name": "Bare dependency targets never resolve features in another module or cousins",
+            "validate": true,
+            "source": ["module Payroll", "  feature Handover", "    feature Nested", "      depends on Approval", "      depends on Cousin", "  feature Runs", "    feature Cousin", "module Timesheets", "  feature Approval"],
+            "diagnostics": ["PLAY0554@4", "PLAY0554@5"]
+        },
+        {
+            "name": "Declared dependency targets follow sibling shadowing and ancestor siblings",
+            "validate": true,
+            "source": ["module Payroll", "  feature Handover", "    feature Nested", "      depends on Runs", "      depends on Timesheets.Approval", "  feature Runs", "module Runs", "module Timesheets", "  feature Approval"],
+            "diagnostics": []
+        },
+        {
+            "name": "Depends requires on and exactly one dotted identifier",
+            "source": ["module M", "  depends on", "  depends M", "  depends on M N", "  feature F", "    depends on M.", "    depends on \"M\""],
+            "diagnostics": ["PLAY0022@2", "PLAY0022@3", "PLAY0022@4", "PLAY0024@6", "PLAY0024@7"]
+        },
+        {
             "name": "Personal declared trigger data cannot supply reaction destinations",
             "validate": true,
             "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { Diagnostic } from '../Diagnostics/Diagnostic';
+import { validateDependencyDeclarations } from '../Dependencies/DeclaredDependencyTargets';
 import { validateInlineEvents } from '../Parsing/InlineEventValidator';
 import { LineReader } from '../Parsing/LineReader';
 import { CommandStreamCandidates } from '../Parsing/CommandStreamCandidates';
@@ -75,11 +76,12 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     validateResponses(merged.value, context, parsed.flatMap(document => document.inputUses));
     validateProjectionTargets(merged.value, context);
     validateIdentifierCompliance(merged.value, context);
+    const value = validateDependencyDeclarations(merged.value, context);
     const existing = merged.diagnostics;
     const reported = new Set(existing.map(diagnosticKey));
     const all = [...existing, ...context.diagnostics.filter(diagnostic => !reported.has(diagnosticKey(diagnostic)))];
     return {
-        result: { ...merged, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error'), physicalEventSources, sourceInventoryComplete },
+        result: { ...merged, value, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error'), physicalEventSources, sourceInventoryComplete },
         syntax: new Map(parsed.map((result, index) => [documents[index].path, result.value])),
     };
 }

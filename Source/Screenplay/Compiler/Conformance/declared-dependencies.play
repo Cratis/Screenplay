@@ -1,0 +1,14 @@
+module Payroll
+  description "Pays people for approved time"
+  depends on Timesheets
+  feature Handover
+    description "Transfers approved hours"
+    depends on Timesheets.Approval
+    depends on Timesheets.Reporting
+    depends on Runs
+    feature Notices
+      depends on Runs
+  feature Runs
+module Timesheets
+  feature Approval
+  feature Reporting

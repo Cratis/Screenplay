@@ -19,6 +19,7 @@ static class WorkspaceIdentifierSpans
             (TypeSyntax, "name") => keyword == "type",
             (ModuleSyntax, "name") => keyword == "module",
             (FeatureSyntax, "name") => keyword == "feature",
+            (DependsOnSyntax, "target") => keyword == "depends",
             (SliceSyntax, "name") => keyword == "slice",
             (CommandSyntax, "name") => keyword == "command",
             (EventSyntax, "name") => keyword == "event" || (keyword == "produces" && line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).ElementAtOrDefault(1) == "event"),

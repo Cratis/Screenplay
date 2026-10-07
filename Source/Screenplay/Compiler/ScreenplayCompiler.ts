@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { Diagnostic } from './Diagnostics/Diagnostic';
+import { validateDependencyDeclarations } from './Dependencies/DeclaredDependencyTargets';
 import { documentPlacement, PlayPlacement } from './Files/PlayPlacement';
 import { DiscoveredImport, discoverImports as discoverImportsIn } from './Parsing/ImportDiscovery';
 import { InputUse } from './Parsing/InputUses';
@@ -54,7 +55,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
     const context = sourceContext(lines, path, languages);
     context.scope = placement;
     context.streamCandidates = streamCandidates ?? CommandStreamCandidates.capture([lines], placement, languages);
-    const value = parseApplication(context, lines, placement);
+    let value = parseApplication(context, lines, placement);
     // Folder assembly validates declaration-dependent contracts once against the merged inventory.
     if (validateResponseContracts) {
         validateInlineEvents(value, context);
@@ -63,6 +64,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateEventSources(value, context);
         validateProjectionTargets(value, context);
         validateIdentifierCompliance(value, context);
+        value = validateDependencyDeclarations(value, context);
         for (const diagnostic of timelineOrderDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);
     }
     return {

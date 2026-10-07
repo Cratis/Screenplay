@@ -991,6 +991,15 @@ These are syntax diagnostics. A valid system, operation or operation specificati
 
 See [Timeline diagnostics](imports.md#timeline-diagnostics) for the ordering root, grouping rules, checked references and C#/MCP repair conditions. `PLAY0516` offers verified typed moves or explicit pins before a retained glob where safe; `PLAY0517` and own-sub-feature findings have no repair. These findings and repairs do not change executable behavior.
 
+### Declared dependency targets
+
+| Code | Severity | Reported when |
+| --- | --- | --- |
+| `PLAY0554` | Warning | A `depends on` target is self, an ancestor, a descendant, or does not resolve to a module or feature. |
+| `PLAY0555` | Warning | The same target is declared again on a container, in one file or across files. Resolved aliases count as repeats; unresolved targets compare by text. The first is kept. |
+
+An ambiguous target uses `PLAY0198`, naming the equally near candidates. See [Declared dependencies](slices.md#declared-dependencies) for the sibling and qualified-name rules. Malformed statements are parse errors (`PLAY0022` in a module, `PLAY0024` in a feature).
+
 ### Event sources and command streams
 
 | Code | Condition |

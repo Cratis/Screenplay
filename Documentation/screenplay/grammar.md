@@ -230,6 +230,7 @@ Module         = "module", Ident, NL,
                  INDENT,
                    { DescriptionDecl
                    | AuthorizeDecl
+                   | DependsOnDecl
                    | FileImport
                    | ScreenTemplateDecl
                    | DialogTemplateDecl
@@ -239,6 +240,11 @@ Module         = "module", Ident, NL,
                    | UsesBehaviorDecl
                    | Feature },
                  DEDENT ;
+
+DependsOnDecl  = "depends", "on", QualifiedName, NL ;
+
+(* Declared dependencies are authoring metadata naming modules or features.
+   One target per line; targets cannot be self, ancestors or descendants. *)
 
 (* A module or feature may attach an inline interaction with "on" or a
    named behavior with "uses". These bindings reach its descendant screens. *)
@@ -392,6 +398,7 @@ Feature        = "feature", Ident, NL,
                  INDENT,
                    { DescriptionDecl
                    | AuthorizeDecl
+                   | DependsOnDecl
                    | FileImport
                    | Feature
                    | SliceDecl

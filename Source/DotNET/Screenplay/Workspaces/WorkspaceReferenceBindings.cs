@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Dependencies;
 using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
@@ -93,6 +94,7 @@ sealed class WorkspaceReferenceBindings
 
             WorkspaceReferenceDomain? domain = entry.Node switch
             {
+                ModuleSyntax or FeatureSyntax => WorkspaceReferenceDomain.Container,
                 ConceptSyntax or TypeSyntax => WorkspaceReferenceDomain.Type,
                 EventSyntax => WorkspaceReferenceDomain.Event,
                 OperationSyntax => WorkspaceReferenceDomain.Operation,
@@ -153,6 +155,20 @@ sealed class WorkspaceReferenceBindings
     WorkspaceReferenceBinding Bind(WorkspaceReferenceMember reference)
     {
         var domain = reference.Domain;
+        if (domain == WorkspaceReferenceDomain.Container)
+        {
+            var containers = _declarations.Where(declaration => declaration.Domain == domain)
+                .DistinctBy(declaration => (declaration.Name, Scope: string.Join('.', declaration.Scope.Segments))).ToArray();
+            var dependencyResolution = DeclaredDependencyTargets.Resolve(
+                reference.Text,
+                Scope(reference.Entry, _index),
+                [.. containers.Select(declaration => new Declaration(declaration.Name, declaration.Scope))]);
+            var target = dependencyResolution.Resolved is { } container
+                ? containers.Single(declaration => declaration.Name == container.Name && declaration.Scope.Segments.SequenceEqual(container.Scope.Segments)) : null;
+            var outcome = dependencyResolution.IsUnresolved ? "unresolved" : "ambiguous";
+            return new(reference, target, target is not null ? "resolved" : outcome);
+        }
+
         if (domain is WorkspaceReferenceDomain.EventSource or WorkspaceReferenceDomain.EventStream)
         {
             var parents = _byName.GetValueOrDefault((WorkspaceReferenceDomain.EventSource, domain == WorkspaceReferenceDomain.EventSource ? reference.Text : reference.Owner ?? string.Empty)) ?? [];
