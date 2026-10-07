@@ -15,5 +15,5 @@ public class when_an_unresolved_type_shares_the_module_name : given.a_module_wit
     [Fact] void should_count_only_the_real_dependent() => _result.DependentDeclarationCount.ShouldEqual(1);
     [Fact] void should_report_only_the_real_affected_scope() => _result.AffectedScopes.ShouldContainOnly("Reporting.F.Good");
     [Fact] void should_keep_the_scoped_verdict_clean() => _result.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).ShouldBeFalse();
-    [Fact] void should_exercise_an_unresolved_type() => new McpSnapshot(Sources).Compilation.Success.ShouldBeFalse();
+    [Fact] void should_exercise_an_unresolved_type_reference() => new McpSnapshot(Sources).Index.ResolvedReferences.Any(edge => edge.Candidates.Length == 0 && edge.Reference.Name == "Orders").ShouldBeTrue();
 }
