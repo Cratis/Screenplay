@@ -129,6 +129,7 @@ remove duplicate route headers before export.
 | `PLAY0011` | Warning | A value of an enumeration is called `validate`, which the concept body reads as an empty validate block. |
 | `PLAY0012` | Error | A concept gives the reason for an attribute it does not carry. |
 | `PLAY0013` | Error | A concept gives the reason for one attribute more than once. |
+| `PLAY0515` | Error | A concept marked `@pii` is used as a command identifier, an explicit `for` destination, or an event source identifier. Use a surrogate `Uuid` identifier and keep personal data as a property. When a reaction source names both an event and a declared trigger, a personal destination under either shape is rejected. |
 
 ### Types
 
@@ -230,6 +231,7 @@ remove duplicate route headers before export.
 | `PLAY0074` | Error | A composite key declares no parts. |
 | `PLAY0075` | Error | A mapping line in a projection is not one the language can read. |
 | `PLAY0452` | Warning | More than one `automap` or `no automap` appears in the same projection scope. The last setting wins; printing preserves the authored settings and their individual comments. |
+| `PLAY0514` | Warning | A projection mapping, `children`, or `nested` target is absent from the declared read-model or element shape. Unknown or imported shapes are not guessed. |
 
 ### Captures
 
@@ -393,7 +395,7 @@ remove duplicate route headers before export.
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0165` | Warning | A property names a type nothing in the document or its imports declares. |
-| `PLAY0166` | Warning | An event is referred to that nothing in the document or its imports declares. |
+| `PLAY0166` | Warning | An event is referred to that nothing in the document or its imports declares, including projection `remove with`, `remove via join on`, and capture `append`. |
 | `PLAY0167` | Warning or error | A policy is referred to that nothing in the document declares. A persona's unknown policy is an error during compilation, Safe authoring, and executable binding. Draft authoring retains it as a warning with explicit unresolved-reference debt; other unresolved policy references are warnings. |
 | `PLAY0168` | Error | A concept and a type, or two of either, are declared under one name; also reused when an inline event repeats a typed payload property name. |
 | `PLAY0169` | Error | An authentication block declares two providers under one name. |
@@ -979,6 +981,15 @@ These wrapper diagnostics also apply to operation phases. Pending or attached in
 The numeric rows are syntax diagnostics. A valid `numbers exact` document still cannot bind: `PLAY0268` reports that exact numeric mode is not admitted by any supported executable model (ESM) version yet, and unmarked documents keep their existing numeric behavior.
 
 These are syntax diagnostics. A valid system, operation or operation specification still cannot bind: `PLAY0268` reports that these constructs are not admitted by any supported executable model (ESM) version yet. [Operations](operations.md) do not trigger event destination or payload-identity diagnostics. A valid pending or attached handler remains unsupported independently. Diagnostic repairs for `PLAY0471` and `PLAY0479` are unchanged.
+
+### Timeline order
+
+| Code | Severity | Reported when |
+| --- | --- | --- |
+| `PLAY0516` | Information | A projection or named reaction trigger uses an event declared in a slice drawn after its consumer. Reported once per consumer slice and event at its first reference. A producer in the consumer's own sub-feature cannot be fixed by reordering. This does not fail `--warnaserror`. |
+| `PLAY0517` | Information | A sibling group uses each other's events, so reordering cannot make every event flow left to right. Reported once per mutually dependent group, at its earliest backward reference, instead of individual `PLAY0516` findings within that group. This does not fail `--warnaserror`. |
+
+See [Timeline diagnostics](imports.md#timeline-diagnostics) for the ordering root, grouping rules, checked references and C#/MCP repair conditions. `PLAY0516` offers verified typed moves or explicit pins before a retained glob where safe; `PLAY0517` and own-sub-feature findings have no repair. These findings and repairs do not change executable behavior.
 
 ### Event sources and command streams
 

@@ -65,6 +65,7 @@ describe('when skipping what it does not model at every level', () => {
             '      readmodel Customer',
             '        file ReadModels/Customer.cs',
             '        name String',
+            '        addresses Address[]',
             '      query ByName => Customer',
             '        authorize Clerks',
             '        performer',

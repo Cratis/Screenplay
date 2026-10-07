@@ -67,6 +67,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     const personas: PersonaSyntax[] = [];
     const policies: PolicySyntax[] = [];
     const seeds: SeedSyntax[] = [];
+    const declaredTriggers: NonNullable<ApplicationSyntax['declaredTriggers']>[number][] = [];
     let sawOtherConstruct = false;
     for (let line = context.reader.peekSignificant(); line !== undefined; line = context.reader.peekSignificant()) {
         context.reader.takeSignificant();
@@ -115,7 +116,9 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             // Legacy policies were opaque: enrich their structure without adding diagnostics.
             policies.push(parsePolicy(context.valueContext, line));
         } else if (keyword === 'trigger') {
-            parseTriggerDeclaration(context, line);
+            const data = parseTriggerDeclaration(context, line);
+            const name = /^trigger\s+([A-Za-z_]\w*)$/.exec(line.content)?.[1];
+            if (name !== undefined) declaredTriggers.push({ name, data });
         } else if (opaqueTopLevel.has(keyword)) {
             if (keyword === 'behavior' || keyword === 'layout') collectInputUses(context, line);
             else context.skipOpaqueBlock(line.indent);
@@ -128,7 +131,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, modules, personas, policies, seeds, fileImports, location: context.start };
+    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, modules, personas, policies, seeds, declaredTriggers, fileImports, location: context.start };
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }

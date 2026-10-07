@@ -53,5 +53,6 @@ public class when_checking_join_coverage_inside_elements : given.a_compiler
     }
 
     [Fact] void should_cover_fields_by_join_mappings_not_labels() => _result.Success.ShouldBeTrue();
-    [Fact] void should_not_count_a_join_label_as_a_mapped_field() => _labelOnly.Diagnostics.Select(diagnostic => $"{diagnostic.Code}: {diagnostic.Message}").ShouldContainOnly("PLAY0284: Projection block 'rows' never populates field 'joinedName' of element type 'Row'");
+    [Fact] void should_accept_declared_join_targets_without_warnings() => _result.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_not_count_a_join_label_as_a_mapped_field() => _labelOnly.Diagnostics.Select(diagnostic => $"{diagnostic.Code}: {diagnostic.Message}").ShouldContainOnly("PLAY0284: Projection block 'rows' never populates field 'joinedName' of element type 'Row'", "PLAY0514: Projection target 'rowId' is not a declared element property");
 }

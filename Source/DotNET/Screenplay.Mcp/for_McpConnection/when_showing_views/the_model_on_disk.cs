@@ -19,6 +19,6 @@ public class the_model_on_disk : given.a_host_that_renders_views
     [Fact] void should_give_the_view_the_document_path() => Structured.GetProperty("documents")[0].GetProperty("path").GetString().ShouldEqual("application.play");
     [Fact] void should_give_the_view_the_document_source() => Structured.GetProperty("documents")[0].GetProperty("source").GetString().ShouldEqual(Source);
     [Fact] void should_show_no_change() => Structured.GetProperty("changes").ValueKind.ShouldEqual(JsonValueKind.Null);
-    [Fact] void should_count_what_is_drawn() => Text.Contains("1 slice(s), 1 event(s), 0 error(s)", StringComparison.Ordinal).ShouldBeTrue();
+    [Fact] void should_count_what_is_drawn() => Text.Contains("1 slice(s), 1 event(s), 0 reaction(s), 0 error(s)", StringComparison.Ordinal).ShouldBeTrue();
     [Fact] void should_keep_the_source_from_the_model() => Text.Contains("RegisterProject", StringComparison.Ordinal).ShouldBeFalse();
 }

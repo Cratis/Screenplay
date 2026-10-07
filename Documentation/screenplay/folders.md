@@ -12,6 +12,16 @@ flowchart LR
 
 A folder says nothing about *what* the application is made of, and every slice file in it restates the module and feature it belongs to. [Imports](imports.md) let a root file name the files of the application, and let a module or feature file place the files it imports - so a focused file holds only its own part of the story.
 
+## Order on the board
+
+When viewing a folder application, both boards compile **every** `.play` file in the folder in alphabetical file-path order. When VS Code opens an importing document with no `application.play` above it, it instead compiles that document and what it imports. An application root's [import order](imports.md#order-on-the-event-model-board) supplies presentation ranks only. Unimported files remain visible after ranked siblings, in their previous relative order; merge diagnostics and event ownership do not change.
+
+VS Code recognizes `application.play` as the folder root; the MCP App can also find a single importing root with another name when the folder has no `application.play`. Imports expand depth-first where they are written; declarations within a file keep text order, and glob matches stay alphabetical. Explicit container declarations in the root or an enclosing container's own named file take precedence over restating slice files. With no importing root—including an import-less `application.play` written by `IPlayFileWriter.Expand`—the board keeps path order.
+
+Use explicit imports in a composite file when the story needs a particular sequence. Expanding a file into folders does not by itself preserve its board order. Ordering affects presentation, not executable model bytes or identities.
+
+Folder compilation also checks the merged application's [event flow on the timeline](imports.md#timeline-diagnostics). It uses the sole root, an importing folder-root `application.play`, or the unique importing root, in that order; without an ordering root it skips the check. `PLAY0516` identifies a slice using an event declared to its right, and `PLAY0517` identifies a mutually dependent group. Both are information diagnostics and do not fail `--warnaserror`.
+
 ## Compile a folder as one application
 
 `CompileFolder` discovers every `.play` file beneath a folder, merges them into the one application they describe, and resolves the whole:

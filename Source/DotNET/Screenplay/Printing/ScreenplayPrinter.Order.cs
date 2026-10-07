@@ -30,9 +30,12 @@ public sealed partial class ScreenplayPrinter
     /// Source locations suffice for parsed siblings in one document: their lines are unique, and no public
     /// syntax constructor or JSON shape needs to change. A folder merge can combine different paths, whose
     /// line numbers cannot be compared; in that case the existing kind order is the deterministic fallback.
-    /// Start/default locations mark newly authored nodes. Insert those after the last member of their kind,
-    /// or before the first member of a later canonical kind if none exists. Replacing a declaration with a
-    /// default-located node follows the same insertion rule; retaining its location retains its position.
+    /// Start/default locations mark newly authored nodes. Features under modules or features, and slices,
+    /// are inserted before their next located sibling in that collection, enabling mid-list timeline moves.
+    /// If there is no next located sibling, use the existing insertion rule: after the last member of the kind,
+    /// or before the first member of a later canonical kind if none exists. Every other collection keeps that
+    /// existing rule exactly, including structurally identical occurrences with distinct comments.
+    /// Retaining a declaration's location retains its authored position.
     /// </remarks>
     static void WriteMembers(List<PrintableMember> members)
     {
@@ -54,8 +57,15 @@ public sealed partial class ScreenplayPrinter
             .ThenBy(member => member.Node.Location.Column).ToList();
         foreach (var member in members.Except(located))
         {
+            var nextSibling = member.Node is FeatureSyntax or SliceSyntax
+                ? members.Skip(members.IndexOf(member) + 1).FirstOrDefault(existing => existing.Kind == member.Kind && located.Contains(existing))
+                : null;
             var lastOfKind = ordered.FindLastIndex(existing => existing.Kind == member.Kind);
             var position = lastOfKind >= 0 ? lastOfKind + 1 : ordered.FindIndex(existing => existing.Kind > member.Kind);
+            if (nextSibling is not null)
+            {
+                position = ordered.IndexOf(nextSibling);
+            }
             ordered.Insert(position < 0 ? ordered.Count : position, member);
         }
 

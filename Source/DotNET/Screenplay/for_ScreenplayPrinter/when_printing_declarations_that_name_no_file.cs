@@ -44,6 +44,7 @@ public class when_printing_declarations_that_name_no_file : given.a_printer
 
               readmodel Invoice
                 file Attachment
+                invoiceId InvoiceId
 
               projection Invoices => Invoice
                 from InvoiceRegistered
@@ -78,6 +79,7 @@ public class when_printing_declarations_that_name_no_file : given.a_printer
 
               readmodel Invoice
                 file Attachment
+                invoiceId InvoiceId
 
               projection Invoices => Invoice
                 from InvoiceRegistered

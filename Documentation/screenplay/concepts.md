@@ -125,6 +125,17 @@ The executable semantic model enforces portable concept rules on **command input
 
 In the compiled syntax tree the implied subject is represented by the well-known property name `value` — the `ValidationRuleSyntax.ConceptValue` constant — so consumers can treat concept rules and command rules uniformly.
 
+## Identifiers cannot be personal data
+
+An event source identifier cannot be encrypted or erased. A concept marked `@pii` cannot be used as a command `identifier`, as an explicit `for` destination, or as an `eventsource` identifier (`PLAY0515`, mirroring Chronicle `CHR0034`). Use a surrogate `Uuid` concept for identity and keep the personal value in an ordinary property:
+
+```screenplay
+concept PatientId : Uuid
+concept NationalId : String @pii
+```
+
+The meaning and target mapping of `@sensitive` remain under review in [issue #384](https://github.com/Cratis/Screenplay/issues/384); this identifier check does not redefine it.
+
 ## Attribute inheritance
 
 When a concept is used as a property type on a command or event, its attributes are inherited — you never annotate at the property level. Declaring `EmailAddress` as `@pii` once means every event property, command property, and read model field typed as `EmailAddress` is treated as PII automatically.

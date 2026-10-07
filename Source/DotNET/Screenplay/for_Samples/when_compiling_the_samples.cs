@@ -16,6 +16,7 @@ namespace Cratis.Screenplay.for_Samples;
 public partial class when_compiling_the_samples : given.the_samples
 {
     readonly List<string> _playFiles = [];
+    readonly List<string> _timelineFindings = [];
     readonly List<string> _diagnostics = [];
     readonly List<Diagnostic> _legacyOptionality = [];
     readonly List<string> _slicesWithoutScreens = [];
@@ -31,6 +32,8 @@ public partial class when_compiling_the_samples : given.the_samples
         {
             var name = Path.GetFileName(sample);
             var compilation = compiler.CompileFolder(sample);
+            _timelineFindings.AddRange(compilation.Result.Diagnostics.Where(diagnostic => diagnostic.Code == "PLAY0516" || diagnostic.Code == "PLAY0517")
+                .Select(diagnostic => $"{name}: {diagnostic.Code} {TimelineFinding().Match(diagnostic.Message).Value}"));
             _legacyOptionality.AddRange(compilation.Result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix));
             _playFiles.AddRange(compilation.Sources.Select(source => $"{name}/{source.File.RelativePath}"));
             _diagnostics.AddRange(compilation.Result.Diagnostics
@@ -46,6 +49,30 @@ public partial class when_compiling_the_samples : given.the_samples
             CheckRoots(compiler, name, sample, compilation.Sources.Select(source => source.File.RelativePath));
         }
     }
+
+    [Fact]
+    void should_report_the_expected_timeline_findings() => _timelineFindings.Order(StringComparer.Ordinal).ShouldEqual(new[]
+    {
+        "Library: PLAY0516 Slice 'BookCatalog' uses event 'BookBorrowed'",
+        "Library: PLAY0516 Slice 'BookCatalog' uses event 'BookReturned'",
+        "Invoicing: PLAY0517 'InvoiceManagement', 'Integrations'",
+        "Invoicing: PLAY0516 Slice 'InvoiceDashboard' uses event 'InvoiceWrittenOff'",
+        "Invoicing: PLAY0516 Slice 'CollectionsBoard' uses event 'InvoiceReminderSent'",
+        "Commerce: PLAY0516 Slice 'ProductList' uses event 'ProductRegistered'",
+        "Commerce: PLAY0516 Slice 'ProductList' uses event 'ProductPriceChanged'",
+        "Commerce: PLAY0516 Slice 'MyOrders' uses event 'OrderPlaced'",
+        "Commerce: PLAY0516 Slice 'MyOrders' uses event 'OrderPaid'",
+        "Commerce: PLAY0516 Slice 'ShipmentQueue' uses event 'ShipmentRequested'",
+        "Commerce: PLAY0517 'Shipping', 'Tracking'",
+        "Commerce: PLAY0517 'Ordering', 'Fulfillment'",
+        "TimeTracking: PLAY0516 Slice 'PayrollRuns' uses event 'PayrollRunAcknowledged'",
+        "TimeTracking: PLAY0516 Slice 'MyTimesheets' uses event 'TimesheetStarted'",
+        "TimeTracking: PLAY0516 Slice 'MyTimesheets' uses event 'TimesheetSubmitted'",
+        "TimeTracking: PLAY0516 Slice 'MyTimesheets' uses event 'TimesheetApproved'",
+        "TimeTracking: PLAY0516 Slice 'MyTimesheets' uses event 'TimesheetRejected'",
+        "TimeTracking: PLAY0516 Slice 'QueueApprovedTimesheets' uses event 'TimesheetApproved'",
+        "TimeTracking: PLAY0516 Slice 'BookTimeOff' uses event 'AbsenceReported'"
+    }.Order(StringComparer.Ordinal));
 
     [Fact] void should_find_the_samples() => _samples.ShouldNotBeEmpty();
     [Fact] void should_find_play_files_in_every_sample() => _samples.Select(Path.GetFileName).Except(_playFiles.Select(file => file.Split('/')[0])).ShouldBeEmpty();
@@ -119,6 +146,9 @@ public partial class when_compiling_the_samples : given.the_samples
             _missingStrings.AddRange(referenced.Except(defined).Order(StringComparer.Ordinal).Select(key => $"{sample}/{Path.GetFileName(file)}: {key}"));
         }
     }
+
+    [GeneratedRegex(@"Slice '[^']+' uses event '[^']+'|'Ordering', 'Fulfillment'|'Shipping', 'Tracking'|'InvoiceManagement', 'Integrations'", RegexOptions.None, 1000)]
+    private static partial Regex TimelineFinding();
 
     [GeneratedRegex(@"^\s*import\s+""", RegexOptions.Multiline, 1000)]
     private static partial Regex FileImport();
