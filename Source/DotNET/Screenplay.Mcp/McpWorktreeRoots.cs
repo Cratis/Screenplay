@@ -157,12 +157,7 @@ internal static class McpWorktreeRoots
 
             if (line[0] == '[')
             {
-                if (line[^1] != ']')
-                {
-                    throw Refused("A configuration section is malformed.");
-                }
-
-                var section = line[1..^1].Trim();
+                var section = ReadConfigurationSection(line);
 
                 // Includes could override core.bare outside this bounded config; do not guess their outcome.
                 if (section.Equals("include", StringComparison.OrdinalIgnoreCase) || section.StartsWith("includeIf", StringComparison.OrdinalIgnoreCase))
@@ -231,6 +226,50 @@ internal static class McpWorktreeRoots
         }
 
         return false;
+    }
+
+    static string ReadConfigurationSection(string line)
+    {
+        var quoted = false;
+        for (var index = 1; index < line.Length; index++)
+        {
+            var character = line[index];
+            if (quoted && character == '\\')
+            {
+                if (++index == line.Length || line[index] is not ('"' or '\\'))
+                {
+                    throw Refused("A configuration subsection escape is malformed.");
+                }
+                continue;
+            }
+
+            if (character == '"')
+            {
+                quoted = !quoted;
+                continue;
+            }
+
+            if (character != ']' || quoted)
+            {
+                continue;
+            }
+
+            var remainder = line[(index + 1)..].Trim();
+            if (remainder.Length > 0 && remainder[0] is not ('#' or ';'))
+            {
+                throw Refused("A configuration section header must be followed only by a comment or whitespace.");
+            }
+
+            var section = line[1..index].Trim();
+            if (section.Length == 0)
+            {
+                throw Refused("A configuration section is empty.");
+            }
+
+            return section;
+        }
+
+        throw Refused("A configuration section is malformed.");
     }
 
     static IEnumerable<string> ReadConfigurationLines(string path)

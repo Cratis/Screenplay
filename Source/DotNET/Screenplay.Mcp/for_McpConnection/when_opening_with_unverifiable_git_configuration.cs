@@ -16,6 +16,11 @@ public class when_opening_with_unverifiable_git_configuration : given.a_worktree
     [InlineData("[core]\nother = value\\\nbare = false\n")]
     [InlineData("[core\nbare = false\n")]
     [InlineData("[core]\nbare = false\0\n")]
+    [InlineData("[core] bare = true # ]\n")]
+    [InlineData("[include] path = x ;]\n")]
+    [InlineData("[include] ;]\npath = x\n")]
+    [InlineData("[includeIf \"gitdir:work\"] # ]\npath = x\n")]
+    [InlineData("[core \"unterminated]\nbare = false\n")]
     public void should_refuse_ambiguous_or_unreadable_bare_status(string config)
     {
         File.WriteAllText(Path.Combine(RepositoryPath, ".git", "config"), config);
@@ -64,11 +69,14 @@ public class when_opening_with_unverifiable_git_configuration : given.a_worktree
         refused.GetProperty("structuredContent").GetProperty("message").GetString()!.ShouldContain("no working tree index exists");
     }
 
-    [Fact]
-    void should_not_use_the_index_to_override_explicit_bare_status()
+    [Theory]
+    [InlineData("\uFEFF[core]\nbare = true\n")]
+    [InlineData("[CORE]\nBARE = TRUE\n")]
+    [InlineData("[core] ;]\nbare = true\n")]
+    public void should_not_use_the_index_to_override_explicit_bare_status(string config)
     {
         File.Exists(Path.Combine(RepositoryPath, ".git", "index")).ShouldBeTrue();
-        File.WriteAllText(Path.Combine(RepositoryPath, ".git", "config"), "\uFEFF[core]\nbare = true\n");
+        File.WriteAllText(Path.Combine(RepositoryPath, ".git", "config"), config);
         var refused = Call("open-workspace", new { path = WorktreePath }).GetProperty("result");
         refused.GetProperty("structuredContent").GetProperty("failureKind").GetString().ShouldEqual("RootChangeRefused");
     }

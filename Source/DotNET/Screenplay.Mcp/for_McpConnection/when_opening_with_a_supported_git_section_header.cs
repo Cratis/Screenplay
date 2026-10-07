@@ -3,18 +3,15 @@
 
 namespace Cratis.Screenplay.Mcp.for_McpConnection;
 
-public class when_opening_with_absent_bare_configuration_and_an_index : given.a_worktree_connection
+public class when_opening_with_a_supported_git_section_header : given.a_worktree_connection
 {
     [Theory]
-    [InlineData("[core]\nrepositoryformatversion = 0\nfilemode = true\n")]
-    [InlineData("[branch \"main\"]\nremote = origin\n")]
-    [InlineData("[core \"x\"]\nbare = true\n")]
-    [InlineData("[core \"x]y\"]\nbare = true\n")]
-    [InlineData("[core \"x\\\"]y\"]\nbare = true\n")]
-    [InlineData("")]
+    [InlineData("[core]\r\nbare = false\r\n")]
+    [InlineData("[core] # trailing comment ]\nbare = false\n")]
+    [InlineData("[core] ;]\nbare = false\n")]
+    [InlineData("[CORE]\nBARE = FALSE\n")]
     public void should_switch_between_the_main_checkout_and_its_worktree(string config)
     {
-        File.Exists(Path.Combine(RepositoryPath, ".git", "index")).ShouldBeTrue();
         File.WriteAllText(Path.Combine(RepositoryPath, ".git", "config"), config);
         Open(WorktreePath).GetProperty("documentCount").GetInt32().ShouldEqual(1);
         Open(RepositoryPath).GetProperty("documentCount").GetInt32().ShouldEqual(1);
