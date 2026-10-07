@@ -120,6 +120,9 @@ jobs:
       - name: Build language service
         run: yarn workspace @cratis/screenplay-language build
 
+      - name: Build shared views
+        run: yarn workspace @cratis/screenplay-views build
+
       - name: Build extension
         working-directory: ./Source/Screenplay/VSCodeExtension
         run: yarn vscode:prepublish

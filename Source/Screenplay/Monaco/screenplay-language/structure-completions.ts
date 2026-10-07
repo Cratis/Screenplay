@@ -46,9 +46,28 @@ function producesBlock(command: CommandSymbol, symbols: DocumentSymbols, indent:
     const sources = command.properties.filter(property => !property.isIdentifier);
     if (declared) {
         const mappings = declared.properties.filter(property => sources.some(source => source.name === property.name));
-        return [`produces ${eventName}`, ...mappings.map(property => `${inner}${property.name} = ${property.name}`)].join('\n');
+        const identifier = command.properties.find(property => property.isIdentifier);
+        return [`produces ${eventName}`, ...(identifier ? [`${inner}for ${identifier.name}`] : []), ...mappings.map(property => `${inner}${property.name} = ${property.name}`)].join('\n');
     }
     return [`produces event ${eventName}`, ...sources.map(property => `${inner}${property.name} ${property.type} = ${property.name}`)].join('\n');
+}
+
+// What a command that has nothing yet most likely needs: the identity of the thing it acts on when a
+// concept for it is declared, the properties of the event it will most likely produce, and the production.
+function newCommandBlock(command: string, symbols: DocumentSymbols, indent: number, unit: number): string {
+    const noun = upperCamelWords(command).slice(1).join('');
+    const eventName = likelyEventName(command, symbols);
+    const declared = symbols.events.find(event => event.name === eventName);
+    const identity = noun.length > 0 && symbols.concepts.some(concept => concept.name === `${noun}Id`) ? `${noun[0].toLowerCase()}${noun.slice(1)}Id` : undefined;
+    const identityLine = identity ? [`${identity} ${noun}Id identifier`] : [];
+    const inner = ' '.repeat(indent + unit);
+    const properties = (declared?.properties ?? []).filter(property => property.name !== identity);
+    const propertyLines = properties.map(property => `${' '.repeat(indent)}${property.name} ${property.type}`);
+    const outcome = declared
+        ? [`${' '.repeat(indent)}produces ${eventName}`, ...(identity ? [`${inner}for ${identity}`] : []), ...properties.map(property => `${inner}${property.name} = ${property.name}`)]
+        : [`${' '.repeat(indent)}produces event ${eventName}`];
+    const lines = [...identityLine.map((line, index) => (index === 0 ? line : `${' '.repeat(indent)}${line}`)), ...propertyLines, ...outcome];
+    return lines.join('\n').trimStart();
 }
 
 function assignments(properties: PropertySymbol[], symbols: DocumentSymbols, indent: number): string[] {
@@ -101,7 +120,7 @@ export function structureCompletion(lines: string[], lineIndex: number, textBefo
     if (previous < 0 || fences[previous]) return null;
     const unit = indentUnit(lines);
     const previousLine = lines[previous].trim();
-    const opensEmptyBlock = /^(?:specification\s+\w+|form\s+\w+\s+for\s+[\w.]+)\s*$/.test(previousLine);
+    const opensEmptyBlock = /^(?:command\s+\w+|specification\s+\w+|form\s+\w+\s+for\s+[\w.]+)\s*$/.test(previousLine);
     // An empty block's body starts one level in; otherwise the cursor continues the lines above it.
     const indent = opensEmptyBlock ? Math.max(textBefore.length, indentOf(lines[previous]) + unit) : textBefore.length || indentOf(lines[previous]);
     const header = opensEmptyBlock ? previousLine : nearestEnclosingLine(lines, fences, lineIndex, indent);
@@ -116,7 +135,8 @@ export function structureCompletion(lines: string[], lineIndex: number, textBefo
         const headerLine = lastIndexWhere(lines, (line, index) => index < lineIndex && line.trim() === header && indentOf(line) < indent);
         const body = lines.slice(headerLine + 1, lineIndex).filter(line => line.trim().length > 0);
         const hasOutcome = body.some(line => /^\s*(produces|handler)\b/.test(line));
-        if (!symbol || symbol.properties.length === 0 || hasOutcome) return null;
+        if (hasOutcome) return null;
+        if (!symbol || symbol.properties.length === 0) return wrap(newCommandBlock(command[1], symbols, indent, unit));
         return wrap(producesBlock(symbol, symbols, indent, unit));
     }
 

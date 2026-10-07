@@ -57,7 +57,9 @@
                     "comments": false,
                     "strings": true
                 },
-                "editor.suggest.showSnippets": true
+                "editor.suggest.showSnippets": true,
+                "editor.wordBasedSuggestions": "off",
+                "editor.suggest.showWords": false
             }
         },
         "languages": [
@@ -255,7 +257,8 @@
     "dependencies": {
         "@cratis/screenplay-compiler": "workspace:*",
         "@cratis/screenplay-event-models": "workspace:*",
-        "@cratis/screenplay-language": "workspace:*"
+        "@cratis/screenplay-language": "workspace:*",
+        "@cratis/screenplay-views": "workspace:*"
     },
     "devDependencies": {
         "@cratis/arc": "22.50.1",

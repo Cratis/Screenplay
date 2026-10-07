@@ -1,0 +1,41 @@
+{
+    "name": "@cratis/screenplay-views",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Shared Screenplay dependency views for the MCP App and VS Code board",
+    "license": "MIT",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./dependency-map.css": "./dependency-map.css"
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "compile": "tsc --noEmit -p tsconfig.json",
+        "lint": "yarn g:lint",
+        "lint:ci": "yarn g:lint:ci",
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "@cratis/screenplay-compiler": "workspace:*",
+        "@cratis/screenplay-event-models": "workspace:*"
+    },
+    "peerDependencies": {
+        "react": "19.3.0"
+    },
+    "devDependencies": {
+        "@types/chai": "^5.2.3",
+        "@types/react": "19.3.0",
+        "@types/react-dom": "19.3.0",
+        "chai": "^6.3.0",
+        "react": "19.3.0",
+        "react-dom": "19.3.0",
+        "typescript": "6.0.3",
+        "vitest": "^5.0.3"
+    }
+}

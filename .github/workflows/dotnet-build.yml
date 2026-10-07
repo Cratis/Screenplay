@@ -17,6 +17,7 @@ on:
       - "Source/Screenplay/McpApp/**"
       - "Source/Screenplay/Compiler/**"
       - "Source/Screenplay/EventModels/**"
+      - "Source/Screenplay/Views/**"
       - "package.json"
       - "Documentation/**"
       - "*.props"

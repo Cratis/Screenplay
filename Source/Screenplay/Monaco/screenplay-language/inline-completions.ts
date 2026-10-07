@@ -16,7 +16,9 @@ export function createInlineCompletionProvider(options: CompletionOptions): lang
             const symbols = symbolsForBuffer(lines, options.application?.(model));
             const suggestion = structureCompletion(lines, lineIndex, line.substring(0, position.column - 1), line.substring(position.column - 1), symbols);
             if (!suggestion) return { items: [] };
-            return { items: [{ insertText: suggestion.text, range: { startLineNumber: position.lineNumber, startColumn: position.column, endLineNumber: position.lineNumber, endColumn: position.column } }] };
+            // The suggestion replaces the indentation before the cursor, so it starts with indentation of its own -
+            // the editors take Tab as 'indent' rather than 'accept' for a suggestion that does not.
+            return { items: [{ insertText: `${line.substring(0, position.column - 1)}${suggestion.text}`, range: { startLineNumber: position.lineNumber, startColumn: 1, endLineNumber: position.lineNumber, endColumn: position.column } }] };
         },
         disposeInlineCompletions() {},
     };

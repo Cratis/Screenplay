@@ -14,6 +14,7 @@ export interface BoardCompilation {
     readonly name: string;
     readonly root?: vscode.Uri;
     readonly result: CompilationResult<ApplicationSyntax>;
+    readonly wholeApplication?: ApplicationSyntax;
 }
 
 // Compiles the application a document belongs to and draws the document's share of it. Inside a folder
@@ -41,12 +42,12 @@ export async function compileForBoard(document: vscode.TextDocument): Promise<Bo
         documents.set(path.basename(document.uri.fsPath), document.getText());
         const rootFile = path.basename(document.uri.fsPath);
         const result = compileApplication(documents, [rootFile]);
-        return { name, result };
+        return { name, root: folder, result };
     }
     const rootUri = vscode.Uri.file(root);
     const sources = await sourcesBeneath(rootUri, rootUri);
     const application = compileEventModelApplication(sources, applicationFileName);
-    const whole = { name: path.basename(root), root: rootUri, result: application };
+    const whole = { name: path.basename(root), root: rootUri, result: application, wholeApplication: application.value };
     const documentPath = path.relative(root, document.uri.fsPath).split(path.sep).join('/');
     if (documentPath === applicationFileName) {
         return whole;
@@ -61,6 +62,7 @@ export async function compileForBoard(document: vscode.TextDocument): Promise<Bo
     return {
         name: nameOf(document.uri.fsPath),
         root: rootUri,
+        wholeApplication: application.value,
         result: { value: narrowed, diagnostics, success: !diagnostics.some(diagnostic => diagnostic.severity === 'error') },
     };
 }
