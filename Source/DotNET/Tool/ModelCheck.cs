@@ -70,10 +70,10 @@ static class ModelCheck
         var diagnostics = compilation.Diagnostics;
         if (scope is not null)
         {
-            var selection = ScopedDiagnostics.Select(snapshot, scope);
+            var selection = ScopedDiagnostics.Select(snapshot, scope, out var scopeError);
             if (selection is null)
             {
-                error.WriteLine($"Unknown scope '{scope}'. Expected a module, feature or slice address.");
+                error.WriteLine(scopeError);
                 return 2;
             }
 

@@ -80,7 +80,7 @@ Keep the application root as the input and name the part you changed:
 screenplay path/to/screenplays --scope Billing.Invoices.SendInvoice --warnaserror
 ```
 
-`--scope` uses case-sensitive, dotted module, feature and slice addresses, as MCP navigation does. Descendants are included; a partial name does not match another module. Nested features use their full dotted address. An unknown scope is a usage error, not an empty successful check.
+`--scope` uses case-sensitive, dotted module, feature and slice addresses, as MCP navigation does. Descendants are included; a partial name does not match another module. Nested features use their full dotted address. An unknown or ambiguous scope is a usage error, not an empty successful check. Selection follows the module, feature and slice hierarchy; same-named types, concepts and event sources are not descendants.
 
 The compiler still resolves references across the whole application. Only diagnostics located in the selected declarations, plus declarations that directly reference them, are reported. A dependent declaration is included in full, not its whole slice; dependents of dependents are not included. The exit code and `--warnaserror` apply only to that reported set. The final summary labels its counts as **in scope**; a separate **Whole application** line always shows the full error and warning counts and how many diagnostics are outside the reported set. That line is red when the whole check fails, even if the scoped exit code is `0`.
 

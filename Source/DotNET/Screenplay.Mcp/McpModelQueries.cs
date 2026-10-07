@@ -84,8 +84,12 @@ static class McpModelQueries
     internal static object Diagnostics(McpSnapshot snapshot, int fileCount, JsonElement arguments)
     {
         var scope = McpJson.OptionalString(arguments, "scope");
-        var selection = scope is null ? null : ScopedDiagnostics.Select(snapshot, scope)
-            ?? throw new McpFailure($"Unknown scope '{scope}'. Expected a module, feature or slice address.", -32602);
+        ScopedDiagnosticResult? selection = null;
+        if (scope is not null)
+        {
+            selection = ScopedDiagnostics.Select(snapshot, scope, out var scopeError)
+                ?? throw new McpFailure(scopeError!, -32602);
+        }
         var diagnostics = selection?.Diagnostics.AsEnumerable() ?? snapshot.Compilation.Diagnostics;
         if (McpJson.OptionalString(arguments, "document") is { } document)
         {

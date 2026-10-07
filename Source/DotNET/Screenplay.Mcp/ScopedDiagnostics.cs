@@ -18,20 +18,30 @@ static class ScopedDiagnostics
     /// </summary>
     /// <param name="sources">All source documents, keyed by application-relative path.</param>
     /// <param name="scope">A case-sensitive dotted module, feature or slice address.</param>
-    /// <returns>The selection, or null when the scope does not exist.</returns>
+    /// <returns>The selection, or null when the scope does not exist or is ambiguous.</returns>
     internal static ScopedDiagnosticResult? Select(IReadOnlyDictionary<string, string> sources, string scope) =>
         Select(new McpSnapshot(sources), scope);
 
-    internal static ScopedDiagnosticResult? Select(McpSnapshot snapshot, string scope)
+    internal static ScopedDiagnosticResult? Select(McpSnapshot snapshot, string scope) => Select(snapshot, scope, out _);
+
+    internal static ScopedDiagnosticResult? Select(McpSnapshot snapshot, string scope, out string? scopeError)
     {
         var declarations = snapshot.Index.Declarations.ToArray();
-        if (string.IsNullOrWhiteSpace(scope) || !declarations.Any(declaration =>
-            (declaration.Kind == "Module" || declaration.Kind == "Feature" || declaration.Kind == "Slice") && declaration.Address == scope))
+        var matches = declarations.Where(declaration =>
+            (declaration.Kind == "Module" || declaration.Kind == "Feature" || declaration.Kind == "Slice") && declaration.Address == scope).ToArray();
+        scopeError = matches.Length switch
+        {
+            0 => $"Unknown scope '{scope}'. Expected a module, feature or slice address.",
+            > 1 => $"Ambiguous scope '{scope}'. Expected exactly one module, feature or slice.",
+            _ => null
+        };
+        if (string.IsNullOrWhiteSpace(scope) || scopeError is not null)
         {
             return null;
         }
 
-        var selected = declarations.Where(declaration => declaration.Address == scope || Within(declaration.Scope, scope)).ToHashSet();
+        var anchor = matches[0];
+        var selected = declarations.Where(declaration => declaration == anchor || declaration.Hierarchy.Contains(anchor.Owner)).ToHashSet();
 
         // Inspect only the original set: inclusion is direct, never a transitive closure.
         var names = selected.Select(declaration => declaration.Name).ToHashSet(StringComparer.Ordinal);
