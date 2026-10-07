@@ -139,7 +139,9 @@ internal static partial class PlayFolderMerge
             requirement = new LogicalPolicyRequirementSyntax(requirement, LogicalOperator.And, next.Requirement, requirement.Location);
         }
 
-        return new AuthorizeSyntax(requirement, kept[0].Location);
+        // Keep source metadata on the merged gate: layout collapse may remove every document
+        // that could otherwise restore its authorization comments during an authoring edit.
+        return kept[0] with { Requirement = requirement, SourceComments = [.. kept.SelectMany(authorization => authorization.SourceComments)] };
     }
 
     /// <summary>
