@@ -8,6 +8,9 @@ import { analyzeOperations, DocumentSymbols, importablePaths, mergeSymbols, scan
 // imports resolve, and whether it holds what the module or feature it is placed in can. An import with the
 // wrong shape is left out - the editor reports that itself, as it is typed.
 const surfacedCodes = new Set<string>([
+    DiagnosticCodes.UnknownEvent,
+    DiagnosticCodes.UnknownReadModelProperty,
+    DiagnosticCodes.PiiNotSupportedOnIdentifier,
     DiagnosticCodes.InvalidEventSourceDeclaration,
     DiagnosticCodes.InvalidCommandStream,
     DiagnosticCodes.AmbiguousCommandStream,

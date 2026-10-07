@@ -23,7 +23,9 @@ public class when_printing_the_invoicing_sample : given.a_printer
     }
 
     [Fact] void should_reparse_successfully() => _reparsed.Success.ShouldBeTrue();
-    [Fact] void should_reparse_with_only_the_legacy_file_warning() => _reparsed.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.OmittedProductionDestination).Select(_ => _.Code).ShouldContainOnly(DiagnosticCodes.FileConstraintOnlySupportsUniqueness);
+    [Fact] void should_reparse_with_the_legacy_file_warning_and_backward_reference() => _reparsed.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.OmittedProductionDestination).Select(_ => _.Code).ShouldContainOnly(DiagnosticCodes.FileConstraintOnlySupportsUniqueness, DiagnosticCodes.EventFromLaterSlice);
+    [Fact] void should_preserve_exactly_the_backward_dashboard_reference() => _reparsed.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.EventFromLaterSlice).Select(diagnostic => diagnostic.Message).ShouldEqual(_original.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.EventFromLaterSlice).Single().Message);
+    [Fact] void should_report_the_dashboard_reference_as_information() => _reparsed.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.EventFromLaterSlice).Severity.ShouldEqual(DiagnosticSeverity.Information);
     [Fact] void should_print_the_same_text_on_a_second_pass() => _printedAgain.ShouldEqual(_printed);
     [Fact] void should_preserve_the_domain() => _reparsed.Value!.Domain!.Name.ShouldEqual(_original.Value!.Domain!.Name);
     [Fact] void should_preserve_the_imports() => _reparsed.Value!.Imports.Count().ShouldEqual(_original.Value!.Imports.Count());
