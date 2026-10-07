@@ -44,11 +44,14 @@ static class ScopedDiagnostics
         var selected = declarations.Where(declaration => declaration == anchor || declaration.Hierarchy.Contains(anchor.Owner)).ToHashSet();
 
         // Inspect only the original set: inclusion is direct, never a transitive closure.
-        var names = selected.Select(declaration => declaration.Name).ToHashSet(StringComparer.Ordinal);
+        // An unresolved reference counts as a dependent only when a selected declaration of a kind it can
+        // target carries its name; module, feature and slice names are never reference targets.
+        var targets = selected.Where(declaration => declaration.Kind is not ("Module" or "Feature" or "Slice"))
+            .Select(declaration => (declaration.Kind, declaration.Name)).ToHashSet();
         var unresolved = snapshot.Index.ResolvedReferences.Where(edge => edge.Candidates.Length == 0).ToArray();
         var dependents = snapshot.Index.ResolvedReferences
             .Where(edge => edge.Candidates.Any(selected.Contains) || (edge.Candidates.Length == 0 &&
-                names.Contains(edge.Reference.Name.Split('.')[^1])))
+                edge.Reference.Kinds.Any(kind => targets.Contains((kind, edge.Reference.Name.Split('.')[^1])))))
             .Select(edge => edge.Reference.Owner)
             .OfType<McpReadOwner>().ToHashSet();
         var dependentDeclarations = declarations.Where(declaration => dependents.Contains(declaration.Owner) && !selected.Contains(declaration)).ToArray();
