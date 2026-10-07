@@ -88,7 +88,7 @@ public class when_round_tripping_every_sample_through_layouts : given.an_authori
                         }
                     }
 
-                    // Invoicing's exact text equality for interleaved module members is tracked separately (#TBD).
+                    // Invoicing's exact text equality for interleaved module members is tracked separately (#460).
                     // Its sibling order, model/syntax, identities and complete comment multiset remain checked above.
                     if (layout == "single" && sample != "Invoicing")
                     {
