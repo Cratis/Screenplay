@@ -19,7 +19,7 @@ export function toSpecifications(
         const at = (kind: string, index: number) => scope.idOf(`specification:${specification.name}:${kind}`, String(index));
         const step = (event: SpecificationEventSyntax, kind: string, index: number): SpecificationStepDocument => ({
             id: at(kind, index),
-            name: event.eventType,
+            name: factName(event),
             eventId: owners.idFor(event.eventType) ?? emptyGuid,
             values: valuesOf(event.values),
         });
@@ -52,12 +52,24 @@ export function toSpecifications(
 // kind is part of its name - 'clock 2026-10-05T08:00:00Z', 'trigger DirectoryChanged' - and the values travel
 // with it as a command's would.
 function actionOf(specification: SpecificationSyntax): { name: string; values: Record<string, unknown> } | undefined {
-    if (specification.whenAppended !== null) return { name: `append ${specification.whenAppended.eventType}`, values: valuesOf(specification.whenAppended.values) };
+    if (specification.whenAppended !== null) return { name: `append ${factName(specification.whenAppended)}`, values: valuesOf(specification.whenAppended.values) };
     if (specification.whenClock !== null) return { name: `clock ${specification.whenClock.instant}`, values: {} };
     if (specification.whenTrigger !== null) return { name: `trigger ${specification.whenTrigger.trigger}`, values: valuesOf(specification.whenTrigger.values) };
     if (specification.whenCapture !== null) return { name: `capture ${specification.whenCapture.capture}`, values: valuesOf(specification.whenCapture.record) };
     if (specification.whenQuery !== null) return { name: `query ${specification.whenQuery.query}`, values: valuesOf(specification.whenQuery.arguments) };
     return undefined;
+}
+
+// @cratis/event-models 0.118.2 has no route fields on specification facts. Keep the authored
+// route visible in the step's display name, never in its payload or as a fabricated board field.
+function factName(event: SpecificationEventSyntax): string {
+    if (!event.stream && !event.noStream) return event.eventType;
+    const route = event.stream;
+    const details = [event.for ? `for ${expressionText(event.for)}` : '',
+        route ? `stream ${route.eventSource}.${route.stream}` : 'no stream',
+        route?.streamId ? `streamId = ${expressionText(route.streamId.source)}` : '',
+        'Syntax-only (PLAY0268) (#457); the board displays routing intent, not an executable route assertion.'];
+    return `${event.eventType} — ${details.filter(Boolean).join('; ')}`.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function callerOf(caller: SpecificationCallerSyntax): SpecificationCallerDocument {

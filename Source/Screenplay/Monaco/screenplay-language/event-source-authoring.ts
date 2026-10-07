@@ -12,6 +12,8 @@ import { typeReferenceText } from './TypeReferenceSymbol';
 
 export const eventSourceAvailability = 'Syntax-only; not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302). Authored classification does not supply an identity destination. No semantic IDs or automatic identity refactors.';
 
+export const specificationRouteAvailability = 'Specification event routes are syntax-only; not admitted by any supported executable model (ESM) version yet (PLAY0268) (#457).';
+
 const routePrefix = sourceStreamPattern('^\\s*stream\\s+(?:[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)?\\.?)?$');
 const keyPrefix = sourceStreamPattern('^\\s*streamId\\s*=\\s*([\\w.]*)$');
 const identifierTypePrefix = sourceStreamPattern('^\\s*identifier\\s+[\\w.]*$');
@@ -60,9 +62,13 @@ export function eventSourceHover(lines: string[], line: number, start: number, e
     symbols = symbolsForBuffer(lines, symbols);
     const analysis = analyzeEventSources(lines, symbols);
     const reference = eventSourceReferenceAt(lines, line, start, end, symbols);
-    if (reference) return reference.resolution.source && reference.resolution.stream ? eventSourceDetails(reference.resolution.source, reference.resolution.stream)
+    if (reference) return reference.resolution.source && reference.resolution.stream ? eventSourceDetails(reference.resolution.source, reference.resolution.stream) + (analysis.contexts.get(line)?.event ? `\n\n${specificationRouteAvailability}` : '')
         : `Physical stream owner: ${reference.resolution.state}; no route selected. ${'reasons' in reference.resolution ? reference.resolution.reasons.join(' ') : ''} ${eventSourceAvailability}`;
     const context = analysis.contexts.get(line);
+    if (context?.event?.noStream?.location.line === line + 1 && start >= context.event.noStream.location.column && end <= context.event.noStream.location.column + 9)
+        return `Assert an unrouted event; omitting a route on then leaves it unasserted. ${specificationRouteAvailability}`;
+    if (context?.event && context.route?.streamId?.location.line === line + 1 && start === context.route.streamId.location.column && end === start + 8)
+        return `Concrete literal stream id, not a command property mapping. ${specificationRouteAvailability}`;
     const declaration = context?.stream ?? context?.source;
     if (declaration) {
         const name = eventSourceIdentifier(declaration.location, declaration.name, lines.join('\n'));
@@ -112,6 +118,33 @@ export function eventSourceCompletions(lines: string[], line: number, before: st
     const analysis = analyzeEventSources(lines, symbols);
     const context = analysis.contexts.get(line);
     const indent = before.trim() ? indentOf(lines[line]) : before.length;
+    if (context?.event && indent > indentOf(lines[context.event.location.line - 1])) {
+        if (context.route && indent > indentOf(lines[context.route.location.line - 1])) {
+            const target = analysis.resolve(context.route.eventSource, context.route.stream).stream?.streamId;
+            if (!target || context.route.streamId && context.route.streamId.location.line !== line + 1) return [];
+            const typed = responseAnalysis(lines, symbols.authoringDocuments ?? [], symbols.authoringPlacement, symbols.authoringPath);
+            const primitive = typed.operations.concepts.find(concept => concept.name === target.name)?.type ?? target.name;
+            const literal = primitive === 'Int' ? '0' : primitive === 'Uuid' ? '"00000000-0000-0000-0000-000000000000"' : '"${1:value}"';
+            if (/^\s*(?:streamId\s*=\s*)?$/.test(before) || 'streamId'.startsWith(before.trim()))
+                return [{ label: 'streamId', insertText: before.includes('=') ? literal : `streamId = ${literal}`, documentation: `Concrete ${typeReferenceText(target)} literal. ${specificationRouteAvailability}` }];
+            return [];
+        }
+        if (routePrefix.test(before) && (!context.event.stream || context.event.stream.location.line === line + 1) && !context.event.noStream) {
+            const qualified = before.trim().split(/\s+/)[1] ?? '';
+            // Specification payload lines require '=', so imported value types cannot compete
+            // with a route here as they do under a command. Physical ownership still must be unique.
+            const targets = analysis.declarations.flatMap(source => source.streams.filter(stream => analysis.resolve(source.name, stream.name).state === 'unique')
+                .map(stream => ({ name: `${source.name}.${stream.name}`, source, stream })));
+            return targets.filter(target => isSourceStreamName(target.source.name) && isSourceStreamName(target.stream.name) && (!qualified.includes('.') || target.name.startsWith(qualified.slice(0, qualified.lastIndexOf('.') + 1))))
+                .map(target => ({ label: target.name, insertText: qualified.includes('.') ? target.stream.name : target.name, documentation: `${eventSourceDetails(target.source, target.stream)}\n\n${specificationRouteAvailability}` }));
+        }
+        if (context.event.stream || context.event.noStream)
+            return !before.trim() || 'stream'.startsWith(before.trim()) || 'no stream'.startsWith(before.trim()) ? [] : null;
+        const entries = [{ label: 'stream', insertText: 'stream ${1:Source.Stream}', documentation: specificationRouteAvailability },
+            ...(context.expectation ? [{ label: 'no stream', insertText: /^\s*no\s+/.test(before) ? 'stream' : 'no stream', documentation: `Assert an unrouted fact. ${specificationRouteAvailability}` }] : [])];
+        const matching = entries.filter(entry => entry.label.startsWith(before.trim()));
+        return matching.length > 0 ? matching : null;
+    }
     if (context?.command && indent > indentOf(lines[context.command.location.line - 1]) &&
         (!context.route || indent <= indentOf(lines[context.route.location.line - 1])) && routePrefix.test(before)) {
         // A property named stream remains legal. Only offer routes whose complete-input
