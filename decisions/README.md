@@ -26,7 +26,7 @@
 | [0022](0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md) | Admit clocks, application triggers, capture records and reactions into specifications as ESM v6 | accepted | implemented | 2026-10-02 | Einar Ingebrigtsen |
 | [0023](0023-command-production-model.md) | Model command productions and allocate their ESM versions | accepted | none | 2026-10-02 | Sindre Alstad Wilting |
 | [0024](0024-exact-numeric-source-mode.md) | Exact numeric source mode and its ESM admission | proposed | none | — | — |
-| [0025](0025-allocate-esm-v7-to-responses-and-number-later-versions-at-admission.md) | Allocate ESM v7 to generated values and responses, and number later versions at admission | accepted | none | 2026-10-06 | Sindre Alstad Wilting |
+| [0025](0025-allocate-esm-v7-to-responses-and-number-later-versions-at-admission.md) | Allocate ESM v7 to generated values and responses, and number later versions at admission | accepted | none | 2026-10-07 | Sindre Alstad Wilting |
 | [0026](0026-generated-values-and-command-responses-in-esm-v7.md) | Admit generated values and command responses as ESM v7 | accepted | none | 2026-10-06 | Sindre Alstad Wilting |
 | [0027](0027-policy-negation-joins-esm-v7.md) | Admit policy negation as a byte-preserving ESM v7 extension | accepted | implemented | 2026-10-06 | Sindre Alstad Wilting |
 | [0028](0028-declared-module-and-feature-dependencies.md) | Let modules and features declare what they depend on, checked against the inferred graph | accepted | none | 2026-10-07 | Sindre Alstad Wilting |
