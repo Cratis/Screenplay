@@ -5,7 +5,7 @@ import { AuthorizeSyntax, PersonaSyntax } from './Authorization';
 import { CaptureSyntax } from './Captures';
 import { CommandSyntax } from './Commands';
 import { ConstraintSyntax } from './Constraints';
-import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, ReadModelSyntax, TypeSyntax } from './Declarations';
+import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, PropertySyntax, ReadModelSyntax, TypeSyntax } from './Declarations';
 import { ProjectionSyntax } from './Projections';
 import { PolicySyntax } from './Policies';
 import { SeedSyntax } from './Seeds';
@@ -89,6 +89,9 @@ export interface ApplicationSyntax extends SyntaxNode {
     readonly types: readonly TypeSyntax[];
     readonly modules: readonly ModuleSyntax[];
     readonly personas: readonly PersonaSyntax[];
+
+    // Parser-owned typed trigger shapes for consistency checks, not part of the syntax wire projection.
+    readonly declaredTriggers?: readonly { readonly name: string; readonly data: readonly PropertySyntax[] }[];
 
     // The files the document imports at its top level - whole documents, merged into the application.
     readonly fileImports: readonly FileImportSyntax[];
