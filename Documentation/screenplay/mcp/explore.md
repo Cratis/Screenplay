@@ -54,6 +54,36 @@ The server reports resolved references and the places it cannot see into, such a
 code blocks and expressions, so an assistant can say what a rename or removal might
 miss rather than assuming nothing else uses a name.
 
+## See how modules and features depend on each other
+
+```text
+Show the dependency graph between modules, with the slices and source references
+behind each edge. Then show feature cycles and suggest a story order. Do not edit
+anything.
+```
+
+The assistant calls `dependency-graph` with its default module → module view,
+then `view: "cycles", from: "feature", to: "feature"` and `view: "order"`.
+For a narrower question:
+
+```text
+Which features depend on the Lending.Loans feature? Show incoming dependencies
+and their evidence, excluding specifications.
+```
+
+Use feature → feature levels, `scope: "Lending.Loans"` and `direction: "incoming"`.
+You can also compare mixed levels, such as feature → module, or use `to: "context"`
+for imported facts. Follow `nextOffset` with the returned `sourceRevision` as
+`expectedSourceRevision`; raise `evidenceLimit` only for edges you need to inspect.
+
+Cycles and suggested order include read-model decisions, not just event flow.
+Library's Catalog and Loans form a cycle because Catalog uses loan events and
+BorrowBook reads CatalogEntry. This does not add a `PLAY0517` diagnostic. An order
+is a suggestion only; ambiguity and unresolved references remain visible. Set
+`includeTestOnly: true` when you want specification dependencies too. See the
+[dependency-graph reference](reference.md#dependency-graph) for exact options and
+coverage.
+
 ## Check the specifications
 
 ```text
