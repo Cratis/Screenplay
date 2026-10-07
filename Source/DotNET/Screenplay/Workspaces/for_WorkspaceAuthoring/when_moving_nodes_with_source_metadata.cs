@@ -49,6 +49,45 @@ public class when_moving_nodes_with_source_metadata : Specification
         text.IndexOf("event Moved", StringComparison.Ordinal).ShouldBeLessThan(text.IndexOf("command AfterEvents", StringComparison.Ordinal));
     }
 
+    [Fact]
+    void should_move_a_later_feature_before_an_earlier_sibling()
+    {
+        var workspace = Create("module Projects\n  feature First\n  feature Second // moved intent\n  feature Last\n");
+        var result = MoveBeforeFirst(workspace, "features");
+        result.Accepted.ShouldBeTrue();
+        WorkspaceSyntaxIndex.Create(result.Workspace!).Entries.Select(entry => entry.Node).OfType<FeatureSyntax>().Select(feature => feature.Name).ShouldEqual(["Second", "First", "Last"]);
+        Comments(result.Workspace!).ShouldEqual(Comments(workspace));
+    }
+
+    [Fact]
+    void should_move_a_file_import_before_its_sibling()
+    {
+        var workspace = when_repairing_timeline_order.given.a_timeline.Create(
+            ("root.play", "import \"a.play\"\nimport \"b.play\" // moved import\n"),
+            ("a.play", "module First\n"),
+            ("b.play", "module Second\n"));
+        var result = MoveBeforeFirst(workspace, "fileImports");
+        result.Accepted.ShouldBeTrue();
+        WorkspaceSyntaxIndex.Create(result.Workspace!).Entries.Select(entry => entry.Node).OfType<FileImportSyntax>().Select(import => import.Pattern).ShouldEqual(["b.play", "a.play"]);
+        Comments(result.Workspace!).ShouldEqual(Comments(workspace));
+    }
+
+    static WorkspaceAuthoringResult MoveBeforeFirst(ScreenplayWorkspace workspace, string member)
+    {
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var target = index.Entries.Where(entry => entry.Member == member).ElementAt(1);
+        var parent = index.Find(target.Parent!)!;
+
+        return workspace.ProposeAuthoring(new()
+        {
+            ExpectedRevision = workspace.Revision,
+            ExpectedCatalogRevision = workspace.IdentityCatalog.Revision,
+            Formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments,
+            Validation = WorkspaceAuthoringValidation.Authoring,
+            Operations = [new MoveWorkspaceNode(target.Handle, target.Node, parent.Handle, parent.Node, member, 0)]
+        });
+    }
+
     static ScreenplayWorkspace Move(ScreenplayWorkspace workspace, Func<WorkspaceSyntaxEntry, bool> subject, Func<WorkspaceSyntaxEntry, bool> destination, string member, bool keepsLocation)
     {
         var index = WorkspaceSyntaxIndex.Create(workspace);

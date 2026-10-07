@@ -2279,6 +2279,16 @@ public static class DiagnosticCodes
     /// </summary>
     public const string IncompatibleNumericSource = "PLAY0513";
 
+    /// <summary>
+    /// A slice uses an event produced by a slice drawn after it on the timeline.
+    /// </summary>
+    public const string EventFromLaterSlice = "PLAY0516";
+
+    /// <summary>
+    /// A timeline group uses each other's events and cannot be ordered left to right.
+    /// </summary>
+    public const string TimelineCycleGroup = "PLAY0517";
+
     /// <summary>An event source or stream declaration is invalid or ambiguous.</summary>
     public const string InvalidEventSourceDeclaration = "PLAY0503";
 
@@ -2293,4 +2303,10 @@ public static class DiagnosticCodes
 
     /// <summary>A rename pin repeats a source or stream's current name.</summary>
     public const string RedundantSourceStreamId = "PLAY0507";
+
+    /// <summary>A projection maps to a property absent from the declared read-model shape.</summary>
+    public const string UnknownReadModelProperty = "PLAY0514";
+
+    /// <summary>A personally identifiable concept is used as an event source identifier.</summary>
+    public const string PiiNotSupportedOnIdentifier = "PLAY0515";
 }

@@ -18,7 +18,7 @@ static class McpVisualization
     internal const string ToolName = "visualize-model";
 
     // Declarations a reader of an event model sees as boxes and lanes; the rest are details of those.
-    static readonly HashSet<string> _drawnKinds = new(StringComparer.Ordinal) { "Module", "Feature", "Slice", "Command", "Event", "ReadModel", "Screen", "Reactor" };
+    static readonly HashSet<string> _drawnKinds = new(StringComparer.Ordinal) { "Module", "Feature", "Slice", "Command", "Event", "ReadModel", "Screen", "Reaction" };
 
     /// <summary>
     /// The schema of a sketch: whole .play documents laid over the documents on disk.
@@ -95,6 +95,7 @@ static class McpVisualization
         var summary = new Summary(
             declarations.Count(declaration => declaration.StartsWith("Slice ", StringComparison.Ordinal)),
             declarations.Count(declaration => declaration.StartsWith("Event ", StringComparison.Ordinal)),
+            declarations.Count(declaration => declaration.StartsWith("Reaction ", StringComparison.Ordinal)),
             diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
         return new(declarations, summary);
     }
@@ -116,9 +117,9 @@ static class McpVisualization
             .ToString();
     }
 
-    static string Counts(Summary summary) => $"{summary.Slices} slice(s), {summary.Events} event(s), {summary.Errors} error(s)";
+    static string Counts(Summary summary) => $"{summary.Slices} slice(s), {summary.Events} event(s), {summary.Reactions} reaction(s), {summary.Errors} error(s)";
 
-    sealed record Summary(int Slices, int Events, int Errors);
+    sealed record Summary(int Slices, int Events, int Reactions, int Errors);
 
     sealed record Description(HashSet<string> Declarations, Summary Summary);
 }

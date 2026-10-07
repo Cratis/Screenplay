@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.for_ScreenplayCompiler;
@@ -36,7 +37,8 @@ public class when_compiling_a_reaction_without_a_body : given.a_compiler
     }
 
     [Fact] void should_succeed() => _result.Success.ShouldBeTrue();
-    [Fact] void should_have_no_diagnostics() => _result.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_report_both_backward_trigger_references() => _result.Diagnostics.Select(diagnostic => $"{diagnostic.Code}@{diagnostic.Location.Line}").ShouldEqual("PLAY0516@6", "PLAY0516@7");
+    [Fact] void should_report_only_information() => _result.Diagnostics.All(diagnostic => diagnostic.Severity == DiagnosticSeverity.Information).ShouldBeTrue();
     [Fact] void should_have_the_reaction_description() => _reaction.Description.ShouldEqual("Matches settled payments against outstanding invoices");
     [Fact] void should_have_both_triggers() => _reaction.Triggers.Select(_ => ((NamedTriggerSourceSyntax)_.Source).Name).ShouldContainOnly("InvoicePaid", "InvoiceMarkedOverdue");
     [Fact] void should_leave_the_bare_trigger_without_a_file() => _reaction.Triggers.First().File.ShouldBeNull();

@@ -120,6 +120,12 @@ internal static class WorkspaceRepairVerification
             return Refuse(result, WorkspaceConflictKind.InvalidOperation, "Cannot prove that removing the redundant id preserves the executable model and catalog.");
         }
 
+        if (result.Accepted && repair.DiagnosticCode == DiagnosticCodes.EventFromLaterSlice &&
+            !WorkspaceTimelineRepairs.KeepsTimeline(index, repair, result))
+        {
+            return Refuse(result, WorkspaceConflictKind.InvalidOperation, "Cannot prove that the timeline repair preserves the model, catalog, readiness, placements and simulated ranks without introducing findings or problems.");
+        }
+
         return result;
     }
 

@@ -15,7 +15,7 @@ export type SyntaxJsonValue = string | number | boolean | null | SyntaxJsonValue
 
 const isNode = (value: unknown): value is SyntaxNode =>
     typeof value === 'object' && value !== null && typeof (value as { kind?: unknown }).kind === 'string';
-const omitted = new Set(['kind', 'location', 'targetLocation', 'referenceLocation', 'referenceLength', 'nameWasEscaped']);
+const omitted = new Set(['kind', 'location', 'targetLocation', 'referenceLocation', 'referenceLength', 'nameWasEscaped', 'declaredTriggers']);
 const sourceRoots = new Set(['ApplicationSyntax', 'ProjectionSyntax', 'CaptureSyntax', 'SpecificationSyntax']);
 
 // The canonical JSON form of a syntax tree, the same form the C# SyntaxJson writes: 'kind' first, then the

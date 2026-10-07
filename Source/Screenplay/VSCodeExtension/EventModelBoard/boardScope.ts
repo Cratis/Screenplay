@@ -4,6 +4,7 @@
 import {
     ApplicationCompilation,
     ApplicationSyntax,
+    copyAuthoredOrder,
     FeatureSyntax,
     inMemoryDocumentSource,
     isWithinOrSame,
@@ -57,7 +58,7 @@ export function narrowTo(application: ApplicationSyntax, scope: BoardScope): App
     };
 
     const modules = application.modules.map(module).filter(isDefined);
-    return modules.length === 0 ? undefined : { ...application, modules };
+    return modules.length === 0 ? undefined : copyAuthoredOrder(application, { ...application, modules });
 }
 
 // The files the slices of an application were written in.

@@ -66,6 +66,15 @@ reference is refused under the safe policy; this is the `link` criterion in
 [#138](https://github.com/Cratis/Screenplay/issues/138). Shipped in v4.35.0.
 It is not yet `verified`: downstream release and issue acceptance remain open.
 
+**2026-10-07 — timeline repair contract.** `PLAY0516` uses revision-bound typed
+sibling moves or explicit import pins before retained globs over C#/MCP. Models
+that bind retain byte-identical ESM. Source-valid models that do not bind use a
+separate merged-syntax proof limited to timeline permutations and verified pins,
+with unchanged admission diagnostic code/severity counts. Comments, catalog,
+readiness, documents, placements and simulated ranks remain verification gates.
+Discovery and proposals do not apply edits. Pinned-evidence editor actions and
+TypeScript quick fixes remain outside this scope ([#413](https://github.com/Cratis/Screenplay/issues/413)).
+
 ## Related issues
 
 Screenplay: [#138](https://github.com/Cratis/Screenplay/issues/138), [#174](https://github.com/Cratis/Screenplay/issues/174), [#128](https://github.com/Cratis/Screenplay/issues/128).

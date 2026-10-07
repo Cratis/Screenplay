@@ -78,6 +78,55 @@ A root file can import `**/*.play` while each module file imports its own folder
 
 Two placements where neither lies inside the other - one import puts a file in `module Ordering`, another in `module Billing` - are a conflict, reported where the second import is written. A file belongs in one place.
 
+## Order on the event model board
+
+When viewing a folder application, both boards compile every `.play` file in the folder in alphabetical file-path order, including unimported files and proposed new files. In VS Code, opening an importing document with no `application.play` above it instead compiles that document and the files it imports. A root supplies **presentation order only**; it never changes which files are compiled or drawn. An `application.play` with no file imports, including a layout written by `IPlayFileWriter.Expand`, keeps the existing path order.
+
+VS Code recognizes `application.play` as the folder application root. When the folder has no `application.play`, the MCP App also recognizes a differently named importing document when it is the only importer not itself imported. A root supplies ranks only when it contains file imports. In VS Code, opening another importing document outside an `application.play` folder follows that document's imports as a standalone application; it does not discover a differently named folder root from a sibling file.
+
+For ranked modules, features and slices, the board walks the root's text from top to bottom, following each import depth-first where it is written, before continuing with the next declaration. A file matched by several imports contributes ranks once, at the first encountered import that gives it its final, deepest placement. Declarations outside that walk stay visible after ranked siblings, stably in their previous path order. Placement scaffolding does not take the position of a module or feature declared elsewhere.
+
+Explicit container declarations in the root, or in an enclosing container's own named file, take precedence over globbed files that restate those containers. For example, `T/T.play` declaring Recording then Approval determines their feature order even when slice files under Approval sort first. The outer named composite takes precedence over a more narrowly named file; equally enclosing named files use the shallower path, then first occurrence. Without such a file, the first explicit occurrence in the import walk determines container order. This does not reorder glob matches or slice declarations.
+
+Glob matches stay alphabetical. To control their order, replace a glob with explicit imports in the sequence you want. Commerce's root lists Catalog, Ordering, then Fulfillment; its Products feature uses `*.play`, so its slices remain DiscontinueProduct, ProductList, then RegisterProduct. TimeTracking's root uses `**/*.play`, so its modules remain Engagements, Payroll, then Timesheets, while the features declared in Timesheets are Recording, Approval, then Reporting.
+
+This is presentation only: it does not reorder the compiler's documents or change duplicate-declaration diagnostics, executable model bytes, revisions or identities. A single-file model keeps declaration order. A feature's own slices and its nested features remain separate groups on the board.
+
+## Timeline diagnostics
+
+The compiler checks event flow against the same presentation timeline: modules in order, with each feature's own slices before its sub-features. A projection or named reaction trigger using an event declared in a slice to its right reports `PLAY0516` once per consumer slice and event, at the first reference. The earliest declaring slice is the producer; external events and a slice's own events do not create a finding. A producer in the consumer's own sub-feature is reported too, with a note that reordering cannot fix it.
+
+Mutually dependent sibling groups report one `PLAY0517` instead of individual `PLAY0516` findings within that group. The compiler considers event flow in both directions, groups dependencies at their lowest common container, and lists mutually dependent members in timeline order. Other backward edges still report individually. These are information diagnostics and do not fail `--warnaserror`. Command `reads` and reducers are not checked.
+
+A single document uses text order. For application or folder compilation, the ordering root is the sole root when there is one; otherwise it is the folder-root `application.play` if that file imports others, or the unique importing document not itself imported. With no such root, the compiler assigns no presentation ranks and skips the timeline check. When a folder has an `application.play` without imports, the compiler takes its order from the only importing document while the boards keep path order, so the check can describe an order the board does not draw. It checks the merged application once, not each physical file separately. This does not change merge order, syntax JSON, executable model bytes, revisions or identities.
+
+### Repair a backward event reference
+
+C# workspaces and MCP offer typed `PLAY0516` proposals for safe sibling declaration
+or explicit file-import moves. A glob repair pins an already placed file with an
+explicit import immediately before the glob; the glob remains, so new files are
+still discovered. If one pin would introduce a finding, the proposal can pin a
+safe prefix instead. Names containing glob metacharacters have no pin repair.
+A multi-pin proposal is one typed replacement of the import's parent container that keeps every existing node and comment and only inserts the pins before the glob.
+
+The proposal first tries the producer before the consumer, then the consumer
+after the producer. It must remove the selected finding without introducing
+`PLAY0516` or `PLAY0517`. Own-sub-feature findings, cycle groups, unranked members,
+mixed declaration/import boundaries and different parents have no repair.
+
+Verification preserves comments, document placements, catalog revision and
+executable readiness. Executable models require identical ESM bytes. When neither
+side binds, a separate proof compares merged syntax modulo only timeline sibling
+order and verified import pins, and preserves admission diagnostic counts and
+severities. A one-sided change in model availability is refused. Repairs also
+refuse canonical printing that disagrees with the simulated ranks, such as import
+hoisting past declarations.
+
+Use [MCP diagnostic repairs](mcp/authoring-tools.md#fix-a-diagnostic) to discover,
+preview and explicitly apply one proposal, then rediscover against its new source
+revision. These repairs require canonical formatting consent. There is no
+TypeScript quick fix or pinned-evidence editor action for `PLAY0516`.
+
 ## Patterns
 
 A path is relative to the folder of the file that writes the import.
