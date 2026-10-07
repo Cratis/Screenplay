@@ -6,6 +6,7 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { eventDeclarations } from '../Syntax/EventDeclarations';
 import { sliceReferences } from '../Dependencies/SliceReferences';
+import { DependencyGraph } from '../Dependencies/DependencyGraph';
 import { stronglyConnectedGroups } from '../Dependencies/StronglyConnectedGroups';
 import { ApplicationSyntax, FeatureSyntax, SliceSyntax } from '../Syntax/Structure';
 import { authoredOrderKey, authoredOrderOf } from './AuthoredOrder';
@@ -16,7 +17,7 @@ interface Slice {
     identity: readonly string[];
     index: number;
 }
-interface Reference { event: string; location: SourceLocation }
+interface Reference { event: string; location: SourceLocation; readModel: boolean }
 interface Edge extends Reference { consumer: Slice; producer: Slice; left: string; right: string; container: string }
 
 // This pass only observes syntax. Its ranks and graph never enter the persisted model.
@@ -40,17 +41,33 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
             if (!producers.has(event.name.toLowerCase())) producers.set(event.name.toLowerCase(), slice);
         }
     }
+    // Use decidesFrom resolution, including builder preference and declaration fallback.
+    const byScope = new Map<string, Slice>();
+    for (const slice of slices) {
+        const key = authoredOrderKey(slice.scope);
+        if (!byScope.has(key)) byScope.set(key, slice);
+    }
+    const readers = new Map<string, Slice>();
+    for (const decision of DependencyGraph.for(application, order).edges.filter(edge => edge.kind === 'decidesFrom')) {
+        for (const reference of decision.evidence) {
+            const key = authoredOrderKey([...decision.consumer.scope, reference.name.toLowerCase()]);
+            if (!readers.has(key)) readers.set(key, byScope.get(authoredOrderKey(decision.producer.scope))!);
+        }
+    }
     const edges: Edge[] = [];
     for (const consumer of slices) {
         const seen = new Set<string>();
         const references = sliceReferences(consumer.syntax).references.filter(reference => reference.timeline)
-            .map(reference => ({ event: reference.name, location: reference.location }));
+            .map(reference => ({ event: reference.name, location: reference.location, readModel: reference.targetKind === 'ReadModel' }));
         for (const reference of references) {
             const name = reference.event.toLowerCase();
-            if (seen.has(name)) continue;
-            seen.add(name);
-            const producer = producers.get(name);
+            const key = `${reference.readModel ? 'ReadModel' : 'Event'}:${name}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            const producer = reference.readModel ? readers.get(authoredOrderKey([...consumer.scope, name])) : producers.get(name);
             if (producer === undefined || producer === consumer) continue;
+            // Feedback from the reader's own facts must not enter SCC grouping either.
+            if (reference.readModel && sliceReferences(producer.syntax).references.some(value => value.timeline && value.kind === 'usesFactsFrom' && value.targetKind === 'Event' && producers.get(value.name.toLowerCase()) === consumer)) continue;
             let common = 0;
             while (common < consumer.scope.length && common < producer.scope.length && consumer.identity[common] === producer.identity[common]) common++;
             if (common === consumer.scope.length || common === producer.scope.length) continue;
@@ -87,7 +104,8 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
         const parent = edge.consumer.scope.slice(0, -1);
         const ownSubFeature = edge.producer.scope.length > edge.consumer.scope.length && parent.every((name, index) => edge.producer.scope[index] === name);
         const consequence = ownSubFeature ? ' The producer is in the consumer\'s own sub-feature; this cannot be fixed by reordering.' : ' Consider drawing the producer before the consumer.';
-        findings.push({ edge, diagnostic: { severity: 'information', code: DiagnosticCodes.EventFromLaterSlice, message: `Slice '${edge.consumer.syntax.name}' uses event '${edge.event}' produced by slice '${edge.producer.syntax.name}' drawn after it.${consequence}`, location: edge.location } });
+        const use = edge.readModel ? `reads read model '${edge.event}' built by` : `uses event '${edge.event}' produced by`;
+        findings.push({ edge, diagnostic: { severity: 'information', code: DiagnosticCodes.EventFromLaterSlice, message: `Slice '${edge.consumer.syntax.name}' ${use} slice '${edge.producer.syntax.name}' drawn after it.${consequence}`, location: edge.location } });
     }
     return findings.sort((left, right) => compare(left.edge, right.edge)).map(finding => finding.diagnostic);
 }

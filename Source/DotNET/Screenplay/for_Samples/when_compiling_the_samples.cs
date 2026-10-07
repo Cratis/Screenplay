@@ -57,6 +57,7 @@ public partial class when_compiling_the_samples : given.the_samples
         "Library: PLAY0516 Slice 'BookCatalog' uses event 'BookReturned'",
         "Invoicing: PLAY0517 'InvoiceManagement', 'Integrations'",
         "Invoicing: PLAY0516 Slice 'InvoiceDashboard' uses event 'InvoiceWrittenOff'",
+        "Invoicing: PLAY0516 Slice 'InvoiceAging' uses event 'InvoiceReminderSent'",
         "Invoicing: PLAY0516 Slice 'CollectionsBoard' uses event 'InvoiceReminderSent'",
         "Commerce: PLAY0516 Slice 'ProductList' uses event 'ProductRegistered'",
         "Commerce: PLAY0516 Slice 'ProductList' uses event 'ProductPriceChanged'",
@@ -65,7 +66,9 @@ public partial class when_compiling_the_samples : given.the_samples
         "Commerce: PLAY0516 Slice 'ShipmentQueue' uses event 'ShipmentRequested'",
         "Commerce: PLAY0517 'Shipping', 'Tracking'",
         "Commerce: PLAY0517 'Ordering', 'Fulfillment'",
-        "TimeTracking: PLAY0516 Slice 'PayrollRuns' uses event 'PayrollRunAcknowledged'",
+        "TimeTracking: PLAY0517 'Runs', 'Handover'",
+        "TimeTracking: PLAY0517 'Recording', 'Reporting'",
+        "TimeTracking: PLAY0516 Slice 'RemindConsultants' reads read model 'DraftTimesheet'",
         "TimeTracking: PLAY0516 Slice 'MyTimesheets' uses event 'TimesheetStarted'",
         "TimeTracking: PLAY0516 Slice 'MyTimesheets' uses event 'TimesheetSubmitted'",
         "TimeTracking: PLAY0516 Slice 'MyTimesheets' uses event 'TimesheetApproved'",
@@ -147,7 +150,7 @@ public partial class when_compiling_the_samples : given.the_samples
         }
     }
 
-    [GeneratedRegex(@"Slice '[^']+' uses event '[^']+'|'Ordering', 'Fulfillment'|'Shipping', 'Tracking'|'InvoiceManagement', 'Integrations'", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"Slice '[^']+' (?:uses event|reads read model) '[^']+'|'Ordering', 'Fulfillment'|'Shipping', 'Tracking'|'InvoiceManagement', 'Integrations'|'Runs', 'Handover'|'Recording', 'Reporting'", RegexOptions.None, 1000)]
     private static partial Regex TimelineFinding();
 
     [GeneratedRegex(@"^\s*import\s+""", RegexOptions.Multiline, 1000)]
