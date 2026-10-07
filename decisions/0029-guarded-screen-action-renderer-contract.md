@@ -21,6 +21,8 @@ One labeled screen action can offer different commands as an item's state change
 
 ## Decision
 
+> **2026-10-07 — missing values and command availability clarification.** A condition over a missing or null `item.` field does not match: comparisons are false, except `== null`, which matches only null. Missing is not an authored null value. When the selected alternative's command is unavailable to the caller, the action is presented as unavailable, as [#335](https://github.com/Cratis/Screenplay/issues/335) defines once admitted; it is never replaced by a later alternative. Studio's importer currently drops screens ([StudioIssues#522](https://github.com/Cratis/StudioIssues/issues/522)); [StudioIssues#534](https://github.com/Cratis/StudioIssues/issues/534) tracks preserving guarded actions on import.
+
 A label-headed guarded action selects the first matching `when … execute` alternative in authored order, re-evaluated whenever its data changes. Its subject is the nearest enclosing container's single data item or selected collection row. No subject always hides the action. No match hides it unless `otherwise execute` supplies a fallback; `otherwise hidden` and an omitted fallback are equivalent. Authorization never falls through to another alternative, and the chosen command still enforces its own authorization, validation and constraints. Inputs resolve in this order: explicit `with` bindings, same-name subject fields, the command's declared form, renderer input. Navigation follows successful execution. A click executes the choice shown to the user; if a click-time check changes that choice, the renderer refreshes rather than executing the new command.
 
 ## Options considered
@@ -50,4 +52,4 @@ Authors describe one user decision without duplicating buttons. Older renderers 
 
 ## Status notes
 
-**2026-10-07 — accepted.** Sindre Alstad Wilting explicitly delegated the choice to the orchestrator, whose binding #432 decisions accept this contract. Renderer verification remains downstream work; the record therefore stays at `stage: none`.
+**2026-10-07 — accepted.** Accepted by Sindre Alstad Wilting on 2026-10-07 after reviewing the amended text. Renderer verification remains downstream work; the record therefore stays at `stage: none`.
