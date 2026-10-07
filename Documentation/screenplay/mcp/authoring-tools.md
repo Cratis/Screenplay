@@ -387,8 +387,11 @@ there is one, otherwise an importing `application.play`, or the unique importing
 document that is not itself imported. An import-less `application.play` does not
 hide a lone importing barrel beside it. Before proposing a layout, expansion
 checks that each scope keeps its relative module, feature and slice sibling order;
-split containers rank at their owner file (the root, or a file named after the
-container), and repeated sibling names count once. A mismatch fails without
+a container declared in several files ranks where its owner file places it: the
+root if the root declares it, otherwise a file that declares it and is named after
+the container or one of its ancestors, the outermost such name winning. Without such
+a file it ranks at its first declaration in import order. Repeated sibling names
+count once. A mismatch fails without
 creating a proposal. With no ordering root, that guard is skipped and
 the proposal's `review` text says that path order was used. Order is presentation
 metadata, not executable-model bytes or identity.

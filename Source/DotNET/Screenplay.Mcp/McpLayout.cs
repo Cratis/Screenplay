@@ -74,8 +74,9 @@ static class McpLayout
     }
 
     // Global ranks can shift when containers move between files. Compare only each collection's
-    // relative sibling order. Split containers rank at their owner file (root or named container file);
-    // repeated sibling names count once.
+    // relative sibling order. A split container ranks at its owner file: the root if it declares the
+    // container, otherwise a declaring file named after the container or an ancestor (outermost wins),
+    // otherwise its first declaration in import order. Repeated sibling names count once.
     static Dictionary<string, string[]> SiblingSequences(AuthoredTimeline timeline)
     {
         var sequences = new Dictionary<string, string[]>(StringComparer.Ordinal);
