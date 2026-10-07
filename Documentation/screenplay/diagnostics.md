@@ -982,6 +982,15 @@ The numeric rows are syntax diagnostics. A valid `numbers exact` document still 
 
 These are syntax diagnostics. A valid system, operation or operation specification still cannot bind: `PLAY0268` reports that these constructs are not admitted by any supported executable model (ESM) version yet. [Operations](operations.md) do not trigger event destination or payload-identity diagnostics. A valid pending or attached handler remains unsupported independently. Diagnostic repairs for `PLAY0471` and `PLAY0479` are unchanged.
 
+### Timeline order
+
+| Code | Severity | Reported when |
+| --- | --- | --- |
+| `PLAY0516` | Information | A projection or named reaction trigger uses an event declared in a slice drawn after its consumer. Reported once per consumer slice and event at its first reference. A producer in the consumer's own sub-feature cannot be fixed by reordering. This does not fail `--warnaserror`. |
+| `PLAY0517` | Information | A sibling group uses each other's events, so reordering cannot make every event flow left to right. Reported once per mutually dependent group, at its earliest backward reference, instead of individual `PLAY0516` findings within that group. This does not fail `--warnaserror`. |
+
+See [Timeline diagnostics](imports.md#timeline-diagnostics) for the ordering root, grouping rules and checked references. These findings do not change executable behavior.
+
 ### Event sources and command streams
 
 | Code | Condition |

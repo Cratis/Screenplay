@@ -1,0 +1,62 @@
+{
+    "cases": [
+        {
+            "name": "ranked siblings precede unranked siblings in their syntax order",
+            "files": {"application.play": "import \"z.play\"", "a.play": "module View\n  feature F\n    slice StateView View\n      projection P\n        from E", "z.play": "module Write\n  feature F\n    slice StateChange Write\n      event E"},
+            "order": [["Write"], ["Write", "F"], ["Write", "F", "Write"]],
+            "diagnostics": []
+        },
+        {
+            "name": "globs are alphabetical",
+            "root": "root.play",
+            "files": {"root.play": "module M\n  feature F\n    import \"steps/*.play\"", "steps/z.play": "slice StateChange Z", "steps/a.play": "slice StateChange A"},
+            "order": [["M"], ["M", "F"], ["M", "F", "A"], ["M", "F", "Z"]],
+            "diagnostics": []
+        },
+        {
+            "name": "named container owns feature order",
+            "root": "root.play",
+            "files": {"root.play": "import \"M/*.play\"", "M/a.play": "module M\n  feature A\n    slice StateChange A", "M/z.play": "module M\n  feature Z\n    slice StateChange Z", "M/M.play": "module M\n  feature Z\n  feature A"},
+            "order": [["M"], ["M", "Z"], ["M", "A"], ["M", "A", "A"], ["M", "Z", "Z"]],
+            "diagnostics": []
+        },
+        {
+            "name": "deepest placement waits for its own import",
+            "root": "application.play",
+            "files": {"application.play": "import \"**/*.play\"\nmodule M\n  feature F\n    slice StateChange First\n    import \"steps/*.play\"\n    slice StateChange Last", "steps/z.play": "slice StateChange Z", "steps/a.play": "slice StateChange A"},
+            "order": [["M"], ["M", "F"], ["M", "F", "First"], ["M", "F", "A"], ["M", "F", "Z"], ["M", "F", "Last"]],
+            "diagnostics": []
+        },
+        {
+            "name": "without an ordering root there are no ranks or checks",
+            "files": {"a.play": "module M\n  feature F\n    slice StateView View\n      projection P\n        from E\n    slice StateChange Write\n      event E", "z.play": "module Z"},
+            "order": [],
+            "diagnostics": []
+        },
+        {
+            "name": "authored import order overrides physical path order",
+            "root": "application.play",
+            "files": {"application.play": "module M\n  feature F\n    import \"z.play\"\n    import \"a.play\"", "z.play": "slice StateView View\n  projection P\n    from E", "a.play": "slice StateChange Write\n  event E"},
+            "order": [["M"], ["M", "F"], ["M", "F", "View"], ["M", "F", "Write"]],
+            "diagnostics": ["PLAY0516@z.play:3"]
+        },
+        {
+            "name": "folder discovers application root without changing merge order",
+            "files": {"application.play": "module M\n  feature F\n    import \"z.play\"\n    import \"a.play\"", "z.play": "slice StateView View\n  projection P\n    from E", "a.play": "slice StateChange Write\n  event E"},
+            "order": [["M"], ["M", "F"], ["M", "F", "View"], ["M", "F", "Write"]],
+            "diagnostics": ["PLAY0516@z.play:3"]
+        },
+        {
+            "name": "folder discovers a unique importing root",
+            "files": {"root.play": "module M\n  feature F\n    import \"z.play\"\n    import \"a.play\"", "z.play": "slice StateView View\n  projection P\n    from E", "a.play": "slice StateChange Write\n  event E"},
+            "order": [["M"], ["M", "F"], ["M", "F", "View"], ["M", "F", "Write"]],
+            "diagnostics": ["PLAY0516@z.play:3"]
+        },
+        {
+            "name": "multiple importing roots leave the order unknown",
+            "files": {"r1.play": "import \"a.play\"", "r2.play": "import \"z.play\"", "a.play": "module M\n  feature F\n    slice StateView View\n      projection P\n        from E", "z.play": "module M\n  feature F\n    slice StateChange Write\n      event E"},
+            "order": [],
+            "diagnostics": []
+        }
+    ]
+}

@@ -80,9 +80,9 @@ Two placements where neither lies inside the other - one import puts a file in `
 
 ## Order on the event model board
 
-Both boards compile every `.play` file in the folder in alphabetical file-path order, including unimported files and proposed new files. A root supplies **presentation order only**; it never changes which files are compiled or drawn. An `application.play` with no file imports, including a layout written by `IPlayFileWriter.Expand`, keeps the existing path order.
+When viewing a folder application, both boards compile every `.play` file in the folder in alphabetical file-path order, including unimported files and proposed new files. In VS Code, opening an importing document with no `application.play` above it instead compiles that document and the files it imports. A root supplies **presentation order only**; it never changes which files are compiled or drawn. An `application.play` with no file imports, including a layout written by `IPlayFileWriter.Expand`, keeps the existing path order.
 
-VS Code recognizes `application.play` as the folder application root. The MCP App also recognizes a differently named importing document when it is the only importer not itself imported. A root supplies ranks only when it contains file imports. In VS Code, opening another importing document outside an `application.play` folder follows that document's imports as a standalone application; it does not discover a differently named folder root from a sibling file.
+VS Code recognizes `application.play` as the folder application root. When the folder has no `application.play`, the MCP App also recognizes a differently named importing document when it is the only importer not itself imported. A root supplies ranks only when it contains file imports. In VS Code, opening another importing document outside an `application.play` folder follows that document's imports as a standalone application; it does not discover a differently named folder root from a sibling file.
 
 For ranked modules, features and slices, the board walks the root's text from top to bottom, following each import depth-first where it is written, before continuing with the next declaration. A file matched by several imports contributes ranks once, at the first encountered import that gives it its final, deepest placement. Declarations outside that walk stay visible after ranked siblings, stably in their previous path order. Placement scaffolding does not take the position of a module or feature declared elsewhere.
 
@@ -91,6 +91,14 @@ Explicit container declarations in the root, or in an enclosing container's own 
 Glob matches stay alphabetical. To control their order, replace a glob with explicit imports in the sequence you want. Commerce's root lists Catalog, Ordering, then Fulfillment; its Products feature uses `*.play`, so its slices remain DiscontinueProduct, ProductList, then RegisterProduct. TimeTracking's root uses `**/*.play`, so its modules remain Engagements, Payroll, then Timesheets, while the features declared in Timesheets are Recording, Approval, then Reporting.
 
 This is presentation only: it does not reorder the compiler's documents or change duplicate-declaration diagnostics, executable model bytes, revisions or identities. A single-file model keeps declaration order. A feature's own slices and its nested features remain separate groups on the board.
+
+## Timeline diagnostics
+
+The compiler checks event flow against the same presentation timeline: modules in order, with each feature's own slices before its sub-features. A projection or named reaction trigger using an event declared in a slice to its right reports `PLAY0516` once per consumer slice and event, at the first reference. The earliest declaring slice is the producer; external events and a slice's own events do not create a finding. A producer in the consumer's own sub-feature is reported too, with a note that reordering cannot fix it.
+
+Mutually dependent sibling groups report one `PLAY0517` instead of individual `PLAY0516` findings within that group. The compiler considers event flow in both directions, groups dependencies at their lowest common container, and lists mutually dependent members in timeline order. Other backward edges still report individually. These are information diagnostics and do not fail `--warnaserror`. Command `reads` and reducers are not checked.
+
+A single document uses text order. For application or folder compilation, the ordering root is the sole root when there is one; otherwise it is the folder-root `application.play` if that file imports others, or the unique importing document not itself imported. With no such root, the compiler assigns no presentation ranks and skips the timeline check. When a folder has an `application.play` without imports, the compiler takes its order from the only importing document while the boards keep path order, so the check can describe an order the board does not draw. It checks the merged application once, not each physical file separately. This does not change merge order, syntax JSON, executable model bytes, revisions or identities.
 
 ## Patterns
 

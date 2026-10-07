@@ -28,6 +28,7 @@ import { parseCapture } from './Parsing/CaptureParser';
 import { parseSpecification } from './Parsing/SpecificationParser';
 import { SourceLine, locationOf } from './Parsing/SourceLine';
 import { DiagnosticCodes } from './Diagnostics/DiagnosticCodes';
+import { timelineOrderDiagnostics } from './Files/TimelineOrder';
 
 // What compiling produced: the syntax tree, and the diagnostics found on the way. A tree is always
 // produced, so a document with errors still shows everything that could be read.
@@ -62,6 +63,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateEventSources(value, context);
         validateProjectionTargets(value, context);
         validateIdentifierCompliance(value, context);
+        for (const diagnostic of timelineOrderDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);
     }
     return {
         value,
