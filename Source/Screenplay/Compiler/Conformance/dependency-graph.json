@@ -1,0 +1,36 @@
+{
+    "cases": [
+        {
+            "name": "projection and decisions form an ordering cycle",
+            "files": {"application.play": "module M\n  feature A\n    slice StateView View\n      readmodel R\n      projection R\n        from E\n  feature B\n    slice StateChange Write\n      event E\n      command C\n        reads R"},
+            "edges": ["M.A.View|M.B.Write|usesFactsFrom|from:E", "M.B.Write|M.A.View|decidesFrom|reads:R"],
+            "implied": ["M.A|M.B|1|1", "M.B|M.A|1|1"],
+            "cycles": [["M.A", "M.B"]],
+            "order": ["M.A.View", "M.B.Write"]
+        },
+        {
+            "name": "imported facts have prefixed context identity",
+            "files": {"application.play": "import Outside.Recorded\nmodule M\n  feature F\n    slice StateView V\n      projection P\n        from Recorded"},
+            "edges": ["M.F.V|context:Outside|outsideTheModel|from:Recorded"],
+            "implied": [],
+            "cycles": [],
+            "order": ["M.F.V"]
+        },
+        {
+            "name": "authored imports override path order",
+            "files": {"application.play": "module M\n  feature F\n    import \"z.play\"\n    import \"a.play\"", "z.play": "slice StateView View\n  projection P\n    from E", "a.play": "slice StateChange Write\n  event E"},
+            "edges": ["M.F.View|M.F.Write|usesFactsFrom|from:E"],
+            "implied": [],
+            "cycles": [],
+            "order": ["M.F.Write", "M.F.View"]
+        },
+        {
+            "name": "same slice references and unresolved names create no edge",
+            "files": {"application.play": "module M\n  feature F\n    slice StateView V\n      event E\n      projection P\n        from E\n        from Missing"},
+            "edges": [],
+            "implied": [],
+            "cycles": [],
+            "order": ["M.F.V"]
+        }
+    ]
+}

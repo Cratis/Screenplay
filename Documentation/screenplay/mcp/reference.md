@@ -34,8 +34,38 @@ may name that same physical directory, but another root returns `RootChangeRefus
 Start a separately authorized connection to switch applications. Dynamic servers
 retain the root selection described above.
 
+For a single client-offered project, default discovery uses the common ancestor
+of folders holding `.play` files, then `Source`/`src`, then `<project>/Screenplay`.
+Existing `.screenplay/identities.json` or `.screenplay/pending.json` at any
+ancestor-or-self directory between the offered project and that discovered folder
+keeps the workspace bound to that state directory. Both endpoints are included;
+an empty metadata folder or backup artifact alone does not count. Metadata path
+checks reject symbolic links and reparse points before checking state presence.
+With several state directories on that path, the one nearest the offered project
+wins. `open-workspace` and the `workspace-state` status view report
+`rootBindingConflict` with `kind: "WorkspaceRootConflict"`, `boundRoot`, ordered
+`stateRoots` (nearest the offered root first), `pendingRoots` (state roots holding
+`pending.json`, in the same order), and an explanatory `message`. The field is
+omitted when there is no conflict. Failed tool responses also carry the conflict,
+and their error message names the bound root and competing state roots.
+A pending journal at any state root on the discovered path blocks opening, reads
+and writes at the bound root, including visualization and a journal created after
+opening or proposing. `workspace-state` remains available to inspect the conflict.
+For a competing root's recovery, first call `open-workspace` with that root's explicit
+`path` (opening still returns `PendingOperation`), inspect `workspace-state` there,
+then explicitly call `recover-workspace` with its operation ID. A recovery call at
+the outer root cannot recover a nested journal. No identities or recovery journals
+are migrated, and no fallback folder is created when existing state selects a root.
+Inspect competing workspaces using explicit paths before deciding which to keep.
+Explicit paths and roots
+fixed at startup, including `.cratis/ai.json` configuration, are unchanged.
+
 Only `apply` and `recover-workspace` mutate files. Keep client approval enabled
 for both. Source queries, schemas, proposals and status checks are read-only.
+If metadata inspection fails after a verified apply, its response keeps the applied
+outcome and session revision, retains the previous root-conflict snapshot, and
+reports the inspection failure in `metadataProblem`. Repair that metadata before
+continuing; do not retry the completed apply.
 
 ## Generated values and responses
 
@@ -117,6 +147,7 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `declaration-details` | `address`, `kind`; optional `view` | Summary or paged properties, occurrences, commands, specifications, produces, enum values; explicit syntax view |
 | `find-references` | `address`, `kind` | Paged resolved incoming references and ambiguities, with owners/roles |
 | `dependencies` | `address`, `kind`, direction incoming/outgoing; optional descendants/document | Direct indexed dependencies and resolution candidates |
+| `dependency-graph` | Optional view, from/to levels, scope, direction, kinds, includeTestOnly, evidenceLimit | Inferred slice/container/context edges, ordering cycles, story-order suggestions or unresolved references |
 | `find-fixtures` | Specification address, role, property, value, scope/document | Paged effective assignments with type, value, location and authored/example/override origin, including `when append` event payloads (`whenAppendedEvent`) and `for` destinations (`whenAppendedEventDestination`) |
 | `find-assertion-gaps` | Optional scope/document | Slices without specifications declaring a `then` assertion, including `then denied` |
 | `diagnostics` | Optional `scope`, document | Paged diagnostics, severity counts, scoped declaration counts and affected scopes |
@@ -156,6 +187,80 @@ event references and dependencies carry the `whenAppendedEvent` role, not
 `whenCommand`, `givenReadModel`, `thenReadModel`, `queryArguments`, and
 `queryResult`; each role also has a `…Destination` form for explicit `for`
 destinations.
+
+## Dependency graph
+
+`dependency-graph` infers dependencies from explicit references inside slices. Edges
+point from the consumer to the producer: A → B means A depends on B. It does not
+inspect code, expression identifiers, property paths or runtime behavior. References
+outside slices, such as module-owned forms, do not acquire an inferred slice owner.
+Use `dependencies` for a declaration's scoped indexed references instead.
+
+| Argument | Type | Default | Values / limits |
+| --- | --- | --- | --- |
+| `view` | String | `edges` | `edges`, `cycles`, `order`, `unresolved` |
+| `from` | String | `module` | `slice`, `feature`, `module` |
+| `to` | String | `module` | `slice`, `feature`, `module`, `context` |
+| `scope` | String | Whole application | Exact module, feature, slice or context address; includes descendants |
+| `direction` | String | `outgoing` | `outgoing` filters consuming nodes; `incoming` filters producing nodes in the edges view |
+| `kinds` | String array | All kinds except test-only references | Any subset of the kinds below |
+| `includeTestOnly` | Boolean | `false` | Allows specification references, including imported specification facts |
+| `evidenceLimit` | Integer | `3` | `0`–`20` references per edge; counts remain complete |
+| `limit` | Integer | `50` | `1`–`200` items |
+| `offset` | Integer | `0` | Page offset; continuation requires `expectedSourceRevision` |
+| `expectedSourceRevision` | String | None | The exact `sourceRevision` returned by the first page |
+
+Kinds are `usesFactsFrom` (projections, reducers, constraints and concurrency event
+lists), `reactsTo` (named event triggers), `decidesFrom` (read-model reads), `asks`
+(command invocations and actions), `shows` (queries and screen navigation),
+`verifiedWith` (specification events and commands), and `outsideTheModel`
+(imported event contracts without a local producer). References to shared
+application types, concepts, policies and triggers are excluded and counted.
+Unresolved graph references never become edges.
+
+Event names resolve to the earliest slice declaring the event, including inline
+events and generations. Other names resolve to the earliest declaring slice;
+read-model reads prefer projection/reducer builders, including variant outputs,
+then fall back to shape declarations. Resolution ignores case and uses authored
+order, with syntax order as fallback. This differs from the case-sensitive,
+scope-aware resolution of `dependencies`. Multiple qualifying slices retain
+`ambiguous: true` and the alternatives; repeated generations in one slice do not
+create alternative owners. Same-slice references are dropped.
+
+The response includes `success`, `sourceRevision`, `orderSource` (`authored` or
+`syntax`), diagnostic summaries, coverage counts and `page`. Failed compilation
+can leave a partial graph; it is not evidence that all dependencies are known.
+An edges page has `source` and `target` with declaration kinds and dotted addresses,
+`sliceEdges` (distinct consumer/producer pairs, regardless of kind), `references`,
+`byKind` reference counts, distinct `consumers` and `producers`, and ordered
+`evidence`. Each reference includes its consumer, producer, kind, role, name,
+ambiguity, alternatives, test-only flag and source location. `evidenceCount` is
+uncapped; `evidenceTruncated` tells you whether more evidence exists. Context
+addresses use `context:Shipping`, so they cannot collide with a feature named
+Shipping. Contexts are not local declarations; local node addresses and kinds
+can be passed to `declaration-details` or `find-references`.
+
+Container edges exist only between disjoint containers. Equal nodes and
+ancestor/descendant pairs are excluded, including a feature and its own
+sub-feature. Mixed levels work in the edges view; `cycles` returns no groups for
+mixed levels. Same-level cycle items contain ordered `members`. The `order` view
+pages per-container `container`, suggested `children` and `changed`, independently
+of from/to levels. The `unresolved` view pages consumer, kind, role, name and
+location. Scope filters cycle members, order containers or unresolved consumers;
+direction applies only to edges. Coverage also lists unused imports.
+
+Cycles and order use only `usesFactsFrom`, `reactsTo` and `decidesFrom`. After
+removing internal cycle edges, the suggestion puts producers first, with authored
+rank breaking ties and cycle members retaining their relative order. It never
+applies an edit or changes executable bytes, revisions or identities. The core
+story traversal visits each feature's own slices before its sub-features.
+
+The graph can find cycles that [timeline diagnostics](../imports.md#timeline-diagnostics)
+do not report: `PLAY0517` observes projection and named-trigger event flow only.
+For example, Library's Catalog consumes loan events while Loans reads CatalogEntry,
+so the graph finds {Catalog, Loans}; the `decidesFrom` edge is outside `PLAY0517`.
+See [Explore a model](explore.md#see-how-modules-and-features-depend-on-each-other)
+for prompts.
 
 ## Event model board
 

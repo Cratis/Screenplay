@@ -187,9 +187,24 @@ first time it needs one:
 2. The folder your MCP client offers through its workspace roots, when the client
    offers exactly one. That folder is the project, not necessarily the model: the
    server serves the folder already holding the project's `.play` files, else its
-   `Source` or `src` folder, else a new `Screenplay` folder in the project. When the
-   client offers several, the assistant is told to choose with `path`. When the client
-   changes its roots, a folder bound from them is let go.
+   `Source` or `src` folder, else a new `Screenplay` folder in the project. Existing
+   workspaces keep their root: if `.screenplay/identities.json` or
+   `.screenplay/pending.json` exists at the offered folder or along the directory
+   path down to the discovered model folder (including both ends), the server binds
+   the directory holding that state. With state at several directories on that
+   path, it prefers the one nearest the offered folder and reports
+   `rootBindingConflict` in `open-workspace` and `workspace-state`, listing the
+   competing roots even if opening fails. If any state root on that path holds a
+   pending journal, opening and writes are refused and the journal's root is named.
+   To inspect or recover a competing journal, first pass its root explicitly as
+   `open-workspace.path`, then use `workspace-state` and `recover-workspace`.
+   Existing state never causes a fallback `Screenplay` folder to be created.
+   The server never migrates state automatically. Empty `.screenplay`
+   folders and backup artifacts alone do not select a root; symbolic links in
+   metadata paths are refused. This preserves identities and interrupted-write
+   recovery when upgrading from 4.66. When the client offers several, the assistant
+   is told to choose with `path`. When the client changes its roots, a folder bound
+   from them is let go.
 3. The folder the server was launched from, when it already holds `.play` files or a
    `.screenplay` folder. This is what a terminal client such as Claude Code or Pi
    gives you: start it in the project and the model is the project.

@@ -10,6 +10,7 @@ internal sealed partial class McpWorkspaces
     internal object State(JsonElement arguments)
     {
         var view = McpJson.OptionalString(arguments, "view") ?? "status";
+        _ = RefreshRootBindingConflict();
         var files = new McpManagedFiles(Root);
         var persisted = view == "status" || view == "persisted" ? files.Read(McpState.FileName) : null;
         var proposal = McpJson.OptionalString(arguments, "proposalId") is null ? null : Proposal(arguments);
@@ -31,7 +32,7 @@ internal sealed partial class McpWorkspaces
             return McpJson.ToolResult(new { exists = bytes is not null, stateRevision = revision, content = bytes is null ? null : McpPaging.Bytes(bytes, arguments, revision) });
         }
 
-        return McpJson.ToolResult(new
+        return McpJson.ToolResult(WithRootBindingConflict(new
         {
             exists = persisted is not null,
             path = ".screenplay/identities.json",
@@ -40,7 +41,7 @@ internal sealed partial class McpWorkspaces
             identity = IdentityStatus(persisted),
             recovery = RecoveryStatus(),
             stateChange = proposal is null ? null : StatePlan(proposal).Describe()
-        });
+        }));
     }
 
     internal object Recover(JsonElement arguments)
