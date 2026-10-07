@@ -260,6 +260,7 @@ internal static partial class ScreenplaySyntaxText
         ObjectExpressionSyntax obj => $"{{{string.Join(',', obj.Members.Select(member => $"{JsonSerializer.Serialize(member.Name, _structuredValueOptions)}:{StructuredValue(member.Value)}"))}}}",
         PathExpressionSyntax path => path.Path,
         ContextExpressionSyntax context => $"$context.{context.Path}",
+        RefusalExpressionSyntax refusal => $"$refusal.{refusal.Member}",
         EnvironmentExpressionSyntax environment => $"$env.{environment.Name}",
         StringsExpressionSyntax strings => $"$strings.{strings.Key}",
         SourceItemExpressionSyntax sourceItem => $"$.{sourceItem.Path}",

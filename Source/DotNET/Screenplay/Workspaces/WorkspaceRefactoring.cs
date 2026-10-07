@@ -155,9 +155,14 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         var index = WorkspaceSyntaxIndex.Create(workspace);
         var target = request.Target is null ? null : index.Find(request.Target);
         var compositeProperty = target?.Node is PropertySyntax && target.Parent is { } parent && index.Find(parent)?.Node is TypeSyntax;
-        if (target?.Address is null || (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax)))
+        if (target?.Node is ConstraintSyntax)
         {
-            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property, command, event, read model, query, module, feature, or slice declaration handle.");
+            throw new InvalidWorkspaceAuthoring("Constraint names are executable identity: renaming starts an empty constraint index and changes default rejection messages. Safe rename cannot preserve this contract; use explicit coordinated typed edits.");
+        }
+
+        if (target is null || target.Address is null || (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or ReactionSyntax)))
+        {
+            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property, command, event, read model, query, module, feature, slice, or reaction declaration handle.");
         }
 
         if (WorkspaceReferenceBindings.Name(target.Node) != request.ExpectedName || !Identifier(request.NewName))
@@ -176,6 +181,15 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             throw new InvalidWorkspaceAuthoring($"Composite type '{owner.Name}' already declares property '{request.NewName}'.");
         }
 
+        if (target.Node is ReactionSyntax && index.Entries.Any(entry =>
+            entry.Handle != target.Handle && entry.Parent == target.Parent &&
+            entry.Node is ReactionSyntax && WorkspaceReferenceBindings.Name(entry.Node) == request.NewName))
+        {
+            throw new InvalidWorkspaceAuthoring($"The owning slice already declares {target.Kind} '{request.NewName}'.");
+        }
+
+        bool IsTarget(WorkspaceSyntaxEntry entry) => target.Address.Equals(entry.Address);
+
         RejectHierarchyCollision(index, target, request.NewName);
         RejectOpaque(workspace.Documents, index, target, request);
         var bindings = new WorkspaceReferenceBindings(index);
@@ -186,7 +200,7 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             throw new InvalidWorkspaceAuthoring($"Cannot prove a rename while absence key '{debt.Text}' at '{Position(workspace.Documents, debt.Occurrence)}' is unresolved ({debt.Reason}). Repair the absence key with a typed edit first.");
         }
 
-        var generations = index.Entries.Where(entry => target.Address.Equals(entry.Address)).Select(entry => entry.Node).OfType<EventSyntax>().ToArray();
+        var generations = index.Entries.Where(IsTarget).Select(entry => entry.Node).OfType<EventSyntax>().ToArray();
         if (generations.Select(declaration => declaration.Id ?? declaration.Name).Distinct(StringComparer.Ordinal).Skip(1).Any())
         {
             throw new InvalidWorkspaceAuthoring("Event generations have contradictory effective identity pins. Resolve them before renaming.");
@@ -201,7 +215,7 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         var roots = index.Entries.Where(entry => entry.Parent is null).ToDictionary(entry => entry.Handle.Document, entry => WorkspaceSyntaxMutation.Json(entry.Node));
         var touched = new HashSet<DocumentId>();
         var insertsEventPin = false;
-        foreach (var entry in index.Entries.Where(entry => target.Address.Equals(entry.Address)).ToArray())
+        foreach (var entry in index.Entries.Where(IsTarget).ToArray())
         {
             WorkspaceSyntaxMutation.Set(roots[entry.Handle.Document], $"{entry.Handle.Path}/name", request.NewName);
             if (entry.Node is EventSyntax declaration && request.NewName != request.ExpectedName)
@@ -222,13 +236,13 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             var ancestors = Ancestors(entry, index).Where(ancestor => ancestor.Node is ModuleSyntax or FeatureSyntax or SliceSyntax).Reverse().ToArray();
             for (var position = 0; position < ancestors.Length; position++)
             {
-                if (target.Address.Equals(ancestors[position].Address))
+                if (IsTarget(ancestors[position]))
                 {
                     scope[position] = request.NewName;
                 }
             }
 
-            var name = target.Address.Equals(entry.Address) ? request.NewName : declaration.Name;
+            var name = IsTarget(entry) ? request.NewName : declaration.Name;
             var segments = binding.Reference.Text.Split('.');
             var replacement = segments.Length == 1 ? name : string.Join('.', scope.TakeLast(segments.Length - 1).Append(name));
             if (replacement != binding.Reference.Text)
@@ -303,6 +317,7 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         candidateBindings.RequireNoCollisions();
         WorkspaceReferenceSafety.RequireRenameContinuity(bindings, candidateBindings);
         RequireAbsenceContinuity(absence, new WorkspaceAbsenceKeyBindings(candidateIndex, candidateBindings), referenceRenames, target.Address, request.NewName);
+
         return result;
     }
 }

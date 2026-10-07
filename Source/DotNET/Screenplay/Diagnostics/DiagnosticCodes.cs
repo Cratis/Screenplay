@@ -2351,6 +2351,46 @@ public static class DiagnosticCodes
     public const string PiiNotSupportedOnIdentifier = "PLAY0515";
 
     /// <summary>
+    /// A no-event assertion is malformed or conflicts with another outcome or an append action.
+    /// </summary>
+    public const string InvalidNoEventsExpectation = "PLAY0545";
+
+    /// <summary>
+    /// A refusal branch header is malformed or appears outside a command invocation.
+    /// </summary>
+    public const string InvalidRefusalBranch = "PLAY0538";
+
+    /// <summary>
+    /// A refusal branch does not contain either acknowledge alone or event productions.
+    /// </summary>
+    public const string InvalidRefusalBranchBody = "PLAY0539";
+
+    /// <summary>
+    /// A refusal branch is shadowed by an earlier branch or cannot target the invoked command's events.
+    /// </summary>
+    public const string UnreachableRefusalBranch = "PLAY0540";
+
+    /// <summary>
+    /// A refusal value has an invalid member, scope or target type.
+    /// </summary>
+    public const string InvalidRefusalValue = "PLAY0541";
+
+    /// <summary>
+    /// A named refusal constraint is not declared.
+    /// </summary>
+    public const string UnknownRefusalConstraint = "PLAY0542";
+
+    /// <summary>
+    /// A redelivery action is malformed or does not identify exactly one given event occurrence.
+    /// </summary>
+    public const string UnmatchedRedeliveredOccurrence = "PLAY0543";
+
+    /// <summary>
+    /// A redelivery reaction is unknown, ambiguous or does not observe the stated event.
+    /// </summary>
+    public const string UnknownRedeliveryReaction = "PLAY0544";
+
+    /// <summary>
     /// A negated claim comparison uses a target that can be absent, null, or is not a string type.
     /// </summary>
     public const string IndeterminateNegatedClaimTarget = "PLAY0546";

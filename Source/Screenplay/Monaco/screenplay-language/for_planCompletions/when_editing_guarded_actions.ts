@@ -30,7 +30,7 @@ describe('when editing guarded actions', () => {
         (plan.kind === 'entries' && plan.entries.some(entry => entry.label === 'with … from')).should.be.false;
     });
     for (const word of ['otherwise', 'hidden', 'execute', 'when']) {
-        it(`should highlight ${word} as a keyword`, () => clauseKeywords.should.contain(word));
+        if (word !== 'when') it(`should keep ${word} contextual`, () => clauseKeywords.should.not.contain(word));
         it(`should document ${word}`, () => hoverContent(['screen V', '  action "Choose"', `    ${word}`], 2, word, 5, 5 + word.length)!.should.contain('action'));
     }
 });

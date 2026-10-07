@@ -23,8 +23,8 @@ public class when_freezing_legacy_source_syntax_bytes
             var parsed = compiler.Parse(File.ReadAllText(Path.Combine(root, document.GetProperty("path").GetString()!))).Value!;
             var name = document.GetProperty("name").GetString()!;
 
-            // New named-rule and guarded-action vectors have full conformance assertions, not pre-feature baselines.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "named-rule-intent" || name == "guarded-actions") continue;
+            // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "named-rule-intent" || name == "guarded-actions" || name == "no-events") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -37,6 +37,14 @@ public class when_freezing_legacy_source_syntax_bytes
                 .Replace(",\"eventSources\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"stream\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"streamCandidates\":[]", string.Empty, StringComparison.Ordinal);
+
+            // Only the two living samples author the additive no-event assertion. Its own conformance
+            // vector protects it; removing that member here keeps all pre-feature bytes frozen.
+            if (name == "invoicing-sample" || name == "invoicing-editor-sample")
+            {
+                text = text.Replace(",\"thenNoEvents\":true", string.Empty, StringComparison.Ordinal);
+            }
+
             var actual = Encoding.UTF8.GetBytes(text);
             var path = Path.Combine(folder, "LegacySyntax", document.GetProperty("name").GetString() + ".json");
             if (initializing && !File.Exists(path))

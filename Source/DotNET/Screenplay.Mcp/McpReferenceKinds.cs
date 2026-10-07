@@ -24,6 +24,8 @@ static class McpReferenceKinds
         ProducesSyntax { InlineOperation: not null } value => [(value.Event, ["Operation"], "declares"), (value.Event, ["Event", "Operation"], "produces")],
         ProducesSyntax { InlineEvent: not null } value => [(value.Event, ["Event"], "declares"), (value.Event, ["Event", "Operation"], "produces")],
         ProducesSyntax value => [(value.Event, ["Event", "Operation"], "produces")],
+        InvocationRefusalSyntax { Constraint: { } name } => [(name, ["Constraint"], "refusalConstraint")],
+        SpecificationRedeliverySyntax value => [(value.EventType, ["Event"], "whenRedeliveredEvent"), (value.Reaction, ["Reaction"], "redeliveryReaction")],
         InvokesSyntax value => [(value.Command, ["Command"], "invokes")],
         ReadsSyntax value => [(value.ReadModel, ["ReadModel"], "reads")],
         ConcurrencySyntax value => value.EventTypes.Select(name => (name, _eventKinds, "concurrency")),

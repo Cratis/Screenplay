@@ -43,6 +43,10 @@ describe('when highlighting specification steps', () => {
         keywordsOn('        then no result').should.deep.equal(['then', 'no', 'result']);
     });
 
+    it('scopes an empty event outcome', () => {
+        keywordsOn('        then no events').should.deep.equal(['then', 'no', 'events']);
+    });
+
     it('leaves a capture declaration to the capture block', () => {
         keywordsOn('      capture LegacyLoans').should.deep.equal([]);
     });
