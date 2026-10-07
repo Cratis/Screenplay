@@ -42,6 +42,7 @@ export const constructKeywords = [
     'capture',
     'reaction',
     'reducer',
+    'readmodel',
     'trigger',
     'screen',
     'dialog',
