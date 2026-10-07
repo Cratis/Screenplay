@@ -100,7 +100,7 @@ export const BoardApp = () => {
                     {board === undefined
                         ? <div className='screenplay-mcp-board__message'>The dependency map is unavailable: {(boards as Error).message}</div>
                         : <BoardErrorBoundary resetWhenChanged={board} onReset={() => setMapAttempt(mapAttempt + 1)} subject='dependency map'>
-                            <DependencyMapView key={mapAttempt} map={board.dependencies} />
+                            <DependencyMapView key={mapAttempt} map={board.dependencies} modelKey={shown} />
                         </BoardErrorBoundary>}
                 </div>
             </MenuDropdownOpenProvider>

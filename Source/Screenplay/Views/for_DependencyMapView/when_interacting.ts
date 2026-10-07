@@ -10,22 +10,24 @@ import { hooks, invoke } from './given/component_hooks';
 
 vi.mock('react', async importOriginal => ({ ...await importOriginal<typeof import('react')>(), ...(await import('./given/component_hooks')).componentHooks }));
 
-const map = dependencyMapFor(parse(`module Work
+const source = (extraFirst = '', extraSecond = '') => `module Work
   feature First
     slice StateView FirstView
       event FirstRecorded
       readmodel First
       projection First
         from SecondRecorded
-  feature Second
+${extraFirst}  feature Second
     slice StateView SecondView
       event SecondRecorded
       readmodel Second
       projection Second
         from FirstRecorded
-`).value);
+${extraSecond}`;
+const mapOf = (text: string) => dependencyMapFor(parse(text).value);
+const map = mapOf(source());
 
-const render = (model = map) => hooks.render(() => DependencyMapView({ map: model }));
+const render = (model = map, modelKey: unknown = 'current') => hooks.render(() => DependencyMapView({ map: model, modelKey }));
 const buttons = () => render().filter(element => element.props.role === 'button');
 const edges = () => buttons().filter(element => String(element.props.className).includes('__edge'));
 
@@ -65,14 +67,56 @@ describe('when selecting reciprocal edges', () => {
     });
 });
 
+const pressed = (items: ReturnType<typeof render>) => items.filter(element => element.props.role === 'button' && element.props['aria-pressed'] === true);
+const detailsOf = (items: ReturnType<typeof render>) => JSON.stringify(items.find(element => element.type === 'aside')!.props);
+
 describe('when switching the shown model', () => {
     it('should retain the edge level and kind filters but clear the selection', () => {
         invoke(render().find(element => element.type === 'input' && element.props.value === 'asks')!, 'onChange', { target: { checked: true } });
         invoke(edges()[0], 'onKeyDown', { key: 'Enter', preventDefault: vi.fn() });
-        const changed = render(dependencyMapFor(parse('module Other').value));
+        const changed = render(map, 'proposed');
         (changed.find(element => element.type === 'select')!.props.value === DependencyMapLevel.Feature).should.be.true;
         (changed.find(element => element.type === 'input' && element.props.value === 'asks')!.props.checked === true).should.be.true;
-        changed.filter(element => element.props.role === 'button').every(element => !element.props['aria-pressed']).should.be.true;
-        render().filter(element => element.props.role === 'button').every(element => !element.props['aria-pressed']).should.be.true;
+        pressed(changed).length.should.equal(0);
+        pressed(render()).length.should.equal(0);
+    });
+});
+
+describe('when the same model is refreshed', () => {
+    it('should keep a selected edge', () => {
+        invoke(edges()[0], 'onKeyDown', { key: 'Enter', preventDefault: vi.fn() });
+        const key = pressed(render())[0].key;
+        const refreshed = render(mapOf(source()));
+        pressed(refreshed).map(element => element.key).should.deep.equal([key]);
+    });
+    it('should keep a selected node', () => {
+        const node = buttons().find(element => String(element.props.className).includes('__node'))!;
+        invoke(node, 'onKeyDown', { key: 'Enter', preventDefault: vi.fn() });
+        pressed(render(mapOf(source()))).map(element => element.key).should.deep.equal([node.key]);
+    });
+    it('should show the changed evidence of the selected edge', () => {
+        invoke(edges()[0], 'onKeyDown', { key: 'Enter', preventDefault: vi.fn() });
+        const before = detailsOf(render());
+        const key = pressed(render())[0].key;
+        const refreshed = render(mapOf(source(`    slice StateView FirstAgain
+      event FirstAgainRecorded
+      readmodel FirstAgain
+      projection FirstAgain
+        from SecondRecorded
+`, `    slice StateView SecondAgain
+      event SecondAgainRecorded
+      readmodel SecondAgain
+      projection SecondAgain
+        from FirstRecorded
+`)));
+        pressed(refreshed).map(element => element.key).should.deep.equal([key]);
+        (detailsOf(refreshed) !== before).should.be.true;
+    });
+    it('should clear the selection and its details when the selected item is gone', () => {
+        invoke(edges()[0], 'onKeyDown', { key: 'Enter', preventDefault: vi.fn() });
+        const gone = render(mapOf('module Work\n  feature First\n    slice StateView FirstView\n      event FirstRecorded'));
+        pressed(gone).length.should.equal(0);
+        gone.some(element => element.type === 'button' && element.props.children === 'Clear selection').should.be.false;
+        pressed(render(map)).length.should.equal(0);
     });
 });
