@@ -209,7 +209,7 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
                 var couldName = binding.Reference.Text.Split('.').Contains(request.ExpectedName, StringComparer.Ordinal) ||
                     resolution.Ambiguous.Any(candidate => containers.Any(entry => WorkspaceReferenceBindings.Name(entry.Node) == candidate.Name &&
                         WorkspaceReferenceBindings.Scope(entry, index).Segments.SequenceEqual(candidate.Scope.Segments) &&
-                        (target.Address.Equals(entry.Address) || Ancestors(entry, index).Any(ancestor => target.Address.Equals(ancestor.Address)))));
+                        (IsTarget(entry) || Ancestors(entry, index).Any(IsTarget))));
                 if (couldName)
                 {
                     throw new InvalidWorkspaceAuthoring($"Cannot prove a rename while dependency target '{binding.Reference.Text}' is {binding.Outcome}. Repair the declaration with a typed edit first.");
