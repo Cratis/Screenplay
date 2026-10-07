@@ -36,7 +36,7 @@ slice: the module's `authorize`, each enclosing feature's, and the slice's comma
 | Integrations (› Notifications) | | | NotifyCustomerOnInvoiceRegistered, DetectOverdueInvoices, SyncBillingDirectory | LegacyInvoiceSync |
 
 Every slice has Given/When/Then specifications, and every state change and state view slice has a screen.
-Click sections on the lists, details, dashboards and customer portal open the registration, draft, status,
+Click sections and row-click links on the lists, details, dashboards and customer portal open the registration, draft, status,
 batch, archive, cancellation, tagging, billing-contact, payment and payment-plan command screens before input
 is supplied. Each command screen issues its own action; action navigation such as returning to `MyInvoices`
 happens only after success, never to the command's own input screen.
@@ -74,7 +74,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | projection `variant`s with `enters on` and a shared handler | CollectionsBoard |
 | `reducer` with inline and `file` rules | InvoiceAging |
 | `screen` at all three levels: intent (`data`, `action`, `label`, `navigate to`), structure (`template`, slots, `section`, `title`, `table`, `summary`, `on row-click`) and inline ```` ```react ````/```` ```html ````/```` ```typescript ````; a `file` screen | every state change and state view slice |
-| guarded screen action: label header, `when item.status … execute`, explicit `with … from`, `otherwise hidden` and success navigation | InvoiceDetails — cancellation is offered only for a draft |
+| guarded screen action: label header, `when item.status … execute`, explicit `with … from` and `otherwise hidden` | CancelInvoiceScreen — cancellation is offered only for a draft |
 | interactions: `on load`, `enter`, `click`, `double click`, `select`, `submit`, `change`, `leave`, `interval`, `event … where`; `execute`, `navigate to`/`back`, `open dialog … with … from`, `close dialog`, `refresh`, `set`, `notify`, `confirm`, `raise`; `on success`/`failure`/`result` | InvoiceList, InvoiceLineDetail, ChangeInvoiceStatus, CollectionsBoard, behaviors |
 | `reaction` with `when` an event, `Startup`, a declared trigger; `every`; `at`, `at … on Monday`, `at … on day 1`; trigger values, `reads`, `produces`, `invokes`, `where`, inline and `file` bodies | Automation and Translate slices |
 | `capture` with `source`, `key`, `map`/`translate`/`split`/templates, `append` with `tag` and every `when` form, `children`, `nested` | LegacyInvoiceSync |
@@ -106,7 +106,7 @@ This excerpt belongs inside the command's `validate` block. Its hint records gui
 
 `StartInvoiceDraft` creates a draft with a generated invoice identity and receipt and returns both only on acceptance. Its specification supplies deterministic UUID fixtures separately from `customerId`, then asserts the fact and response. `CancelInvoice` returns the cancelled invoice identity as a scalar. These constructs select ESM v7; generated values are not request/form inputs and give no retry or idempotency guarantee. Response-name binding in UI continuations remains downstream work.
 
-The guarded cancellation button in `InvoiceDetails` reads the displayed invoice's status and binds its identity explicitly. The guard offers an action; it does not authorize it or satisfy `CancelInvoice`'s validation. Remaining inputs come from the renderer. Guarded actions are syntax and renderer contracts, not executable-model assertions; downstream renderer support is required.
+The cancellation row-click in `InvoiceDetails` opens `CancelInvoiceScreen` with `invoiceId` before input. That screen's guarded cancellation button reads the invoice's status and binds its identity explicitly, without navigating to its own input screen after execution. The guard offers an action; it does not authorize it or satisfy `CancelInvoice`'s validation. Remaining inputs come from the renderer. Guarded actions are syntax and renderer contracts, not executable-model assertions; downstream renderer support is required.
 
 ## Parsed is not executable
 
