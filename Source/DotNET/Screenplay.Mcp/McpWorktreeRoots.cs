@@ -9,6 +9,8 @@ namespace Cratis.Screenplay.Mcp;
 internal static class McpWorktreeRoots
 {
     const int MaximumMetadataBytes = 8192;
+    const int MaximumConfigurationLineBytes = 64 * 1024;
+    const int MaximumConfigurationBytes = 1024 * 1024;
     static readonly UTF8Encoding _strictUtf8 = new(false, true);
 
     internal static McpRoot Resolve(McpRoot configured, McpRoot requested)
@@ -66,7 +68,7 @@ internal static class McpWorktreeRoots
             var checkout = new McpRoot(directory);
             if (Directory.Exists(marker))
             {
-                RequireNonBare(Path.Combine(marker, "config"));
+                RequireNonBare(directory);
 
                 return new(checkout, new McpRoot(marker));
             }
@@ -109,14 +111,40 @@ internal static class McpWorktreeRoots
     static McpRoot Parent(string path) => Path.GetDirectoryName(path) is { } parent
         ? new McpRoot(parent) : throw Refused("Git registration must name a directory or file beneath a filesystem root.");
 
-    static void RequireNonBare(string path)
+    static void RequireNonBare(string checkout)
     {
+        bool bare;
+        try
+        {
+            bare = ReadBareStatus(checkout);
+        }
+        catch (McpFailure failure)
+        {
+            throw ConfigurationRefused(checkout, failure.Message);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            throw ConfigurationRefused(checkout, exception.Message);
+        }
+
+        if (bare)
+        {
+            throw Refused();
+        }
+    }
+
+    static bool ReadBareStatus(string checkout)
+    {
+        var gitDirectory = Path.Combine(checkout, ".git");
         var core = false;
         var seenCore = false;
-        var seenBare = false;
-        foreach (var rawLine in ReadMetadata(path).Split('\n'))
+        var seenSection = false;
+        var firstLine = true;
+        bool? bare = null;
+        foreach (var rawLine in ReadConfigurationLines(Path.Combine(gitDirectory, "config")))
         {
-            var line = rawLine.Trim();
+            var line = firstLine && rawLine.StartsWith('\uFEFF') ? rawLine[1..].Trim() : rawLine.Trim();
+            firstLine = false;
             if (line.Length == 0 || line[0] is '#' or ';')
             {
                 continue;
@@ -124,14 +152,14 @@ internal static class McpWorktreeRoots
 
             if (line.EndsWith('\\'))
             {
-                throw Refused();
+                throw Refused("Configuration continuations are not supported.");
             }
 
             if (line[0] == '[')
             {
                 if (line[^1] != ']')
                 {
-                    throw Refused();
+                    throw Refused("A configuration section is malformed.");
                 }
 
                 var section = line[1..^1].Trim();
@@ -139,16 +167,22 @@ internal static class McpWorktreeRoots
                 // Includes could override core.bare outside this bounded config; do not guess their outcome.
                 if (section.Equals("include", StringComparison.OrdinalIgnoreCase) || section.StartsWith("includeIf", StringComparison.OrdinalIgnoreCase))
                 {
-                    throw Refused();
+                    throw Refused("Configuration includes are not supported.");
                 }
 
                 core = section.Equals("core", StringComparison.OrdinalIgnoreCase);
                 if (core && seenCore)
                 {
-                    throw Refused();
+                    throw Refused("The [core] section is declared more than once.");
                 }
                 seenCore |= core;
+                seenSection = true;
                 continue;
+            }
+
+            if (!seenSection)
+            {
+                throw Refused("A configuration entry has no section.");
             }
 
             if (!core)
@@ -159,24 +193,103 @@ internal static class McpWorktreeRoots
             var separator = line.IndexOf('=');
             if (separator < 0)
             {
-                throw Refused();
+                throw Refused("A [core] entry has no explicit value.");
             }
 
             if (line[..separator].Trim().Equals("bare", StringComparison.OrdinalIgnoreCase))
             {
-                if (seenBare || !line[(separator + 1)..].Trim().Equals("false", StringComparison.OrdinalIgnoreCase))
+                if (bare is not null)
                 {
-                    throw Refused();
+                    throw Refused("core.bare is declared more than once.");
                 }
-                seenBare = true;
+
+                bare = line[(separator + 1)..].Trim().ToLowerInvariant() switch
+                {
+                    "false" => false,
+                    "true" => true,
+                    _ => throw Refused("core.bare must be explicitly true or false.")
+                };
             }
         }
 
-        if (!seenBare)
+        if (bare is { } declared)
         {
-            throw Refused();
+            return declared;
         }
+
+        // This branch is only reached for the checkout's directory marker, never a linked worktree's common directory.
+        var index = Path.Combine(gitDirectory, "index");
+        if (!Directory.Exists(gitDirectory) || !File.Exists(index))
+        {
+            throw Refused("core.bare is absent and no working tree index exists.");
+        }
+
+        McpRoot.CheckAncestors(index);
+        if (!McpDirectoryIdentity.IsRegularFile(index))
+        {
+            throw Refused("core.bare is absent and the working tree index is not a regular file.");
+        }
+
+        return false;
     }
+
+    static IEnumerable<string> ReadConfigurationLines(string path)
+    {
+        McpRoot.CheckAncestors(path);
+        if (!McpDirectoryIdentity.IsRegularFile(path))
+        {
+            throw Refused("The configuration is not a regular file.");
+        }
+
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        if (stream.Length > MaximumConfigurationBytes)
+        {
+            throw Refused($"Configuration exceeds the {MaximumConfigurationBytes}-byte total limit.");
+        }
+
+        var bytes = new byte[MaximumConfigurationLineBytes];
+        var count = 0;
+        var total = 0;
+        while (true)
+        {
+            var value = stream.ReadByte();
+            if (value == -1)
+            {
+                if (count > 0)
+                {
+                    yield return _strictUtf8.GetString(bytes, 0, count);
+                }
+                break;
+            }
+
+            if (++total > MaximumConfigurationBytes)
+            {
+                throw Refused($"Configuration exceeds the {MaximumConfigurationBytes}-byte total limit.");
+            }
+
+            if (value == 0)
+            {
+                throw Refused("Configuration contains a null byte.");
+            }
+
+            if (value == '\n')
+            {
+                yield return _strictUtf8.GetString(bytes, 0, count);
+                count = 0;
+                continue;
+            }
+
+            if (count == bytes.Length)
+            {
+                throw Refused($"A configuration line exceeds the {MaximumConfigurationLineBytes}-byte limit.");
+            }
+            bytes[count++] = (byte)value;
+        }
+
+        McpRoot.CheckAncestors(path);
+    }
+
+    static McpFailure ConfigurationRefused(string checkout, string reason) => Refused($"Cannot determine whether {checkout} is a bare repository: {reason}");
 
     static string Read(string path)
     {
