@@ -10,9 +10,9 @@ internal static partial class SemanticModelValidator
         var slices = application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices);
         var uses = slices.Any(slice => slice.Commands.Any(command => command.Response is not null || command.Properties.Any(property => property.IsGenerated)) ||
             slice.Specifications.Any(specification => specification.ThenReturns is not null || specification.When is { GeneratedValues.IsDefaultOrEmpty: false }));
-        if (version == SemanticVersion.V7 && !uses)
+        if (version == SemanticVersion.V7 && !uses && !application.Policies.Any(policy => ContainsPolicyNegation(policy.Condition)))
         {
-            throw new InvalidSemanticContract("An ESM v7 model must contain a generated property, response, generation fixture or return expectation.");
+            throw new InvalidSemanticContract("An ESM v7 model must contain a generated property, response, generation fixture, return expectation or policy negation.");
         }
 
         if (!version.IsAtLeast(SemanticVersion.V7) && uses)
@@ -20,6 +20,13 @@ internal static partial class SemanticModelValidator
             throw new InvalidSemanticContract("Generated properties, responses, generation fixtures and return expectations require ESM v7.");
         }
     }
+
+    static bool ContainsPolicyNegation(SemanticPolicyCondition? condition) => condition switch
+    {
+        SemanticNotPolicyCondition => true,
+        SemanticLogicalPolicyCondition logical => ContainsPolicyNegation(logical.Left) || ContainsPolicyNegation(logical.Right),
+        _ => false
+    };
 
     private sealed partial class ValidationContext
     {

@@ -181,6 +181,9 @@ public sealed record WorkspaceAuthoringRequest
     /// </summary>
     public ImmutableArray<SemanticAddress> RetiredEventAddresses { get; init; } = [];
 
+    // Layout expansion relocates scope and import comments explicitly; other declaration comments still carry.
+    internal bool RelocatesCompositionComments { get; init; }
+
     // A physical host can supply final-source inputs before validation. Pure callers keep snapshot text, not old loader warnings.
     // This is not serialized, persisted, or invoked during discovery.
     internal Func<ImmutableArray<WorkspaceDocument>, AttachmentFileResult>? AttachmentLoader { get; init; }
