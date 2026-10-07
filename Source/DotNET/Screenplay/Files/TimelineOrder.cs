@@ -50,16 +50,37 @@ internal static class TimelineOrder
             }
         }
 
+        // Resolve reads through the dependency graph so builder preference, variants,
+        // declaration fallback and authored-order ambiguity selection stay identical.
+        var byScope = slices.GroupBy(slice => AuthoredOrder.Key(slice.Scope), StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+        var readers = new Dictionary<string, Slice>(StringComparer.Ordinal);
+        foreach (var decision in DependencyGraph.For(application, order).Edges.Where(edge => edge.Kind == "decidesFrom"))
+        {
+            foreach (var reference in decision.Evidence)
+            {
+                readers.TryAdd(AuthoredOrder.Key([.. decision.Consumer.Scope, reference.Name.ToUpperInvariant()]), byScope[AuthoredOrder.Key(decision.Producer.Scope)]);
+            }
+        }
+
         var edges = new List<Edge>();
         foreach (var consumer in slices)
         {
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var references = SliceReferences.In(consumer.Syntax).Where(reference => reference.Timeline)
-                .Select(reference => new Reference(reference.Name, reference.Location))
-                .OrderBy(reference => reference.Location.Line).ThenBy(reference => reference.Location.Column);
-            foreach (var reference in references)
+            foreach (var reference in SliceReferences.In(consumer.Syntax).Where(reference => reference.Timeline))
             {
-                if (!seen.Add(reference.Event) || !producers.TryGetValue(reference.Event, out var producer) || producer == consumer)
+                var readModel = reference.TargetKind == "ReadModel";
+                var producer = readModel
+                    ? readers.GetValueOrDefault(AuthoredOrder.Key([.. consumer.Scope, reference.Name.ToUpperInvariant()]))
+                    : producers.GetValueOrDefault(reference.Name);
+                if (!seen.Add(reference.TargetKind + ":" + reference.Name) || producer is null || producer == consumer)
+                {
+                    continue;
+                }
+
+                // A view of this reader's own facts is feedback, not a timeline dependency.
+                // Exclude it before sibling grouping as well as before backward-edge emission.
+                if (readModel && SliceReferences.In(producer.Syntax).Any(value => value.Timeline && value.Kind == "usesFactsFrom" &&
+                    value.TargetKind == "Event" && producers.GetValueOrDefault(value.Name) == consumer))
                 {
                     continue;
                 }
@@ -75,7 +96,7 @@ internal static class TimelineOrder
                     continue;
                 }
 
-                edges.Add(new(consumer, producer, reference.Event, reference.Location, AuthoredOrder.Key(consumer.Identity.Take(common)), consumer.Identity[common], producer.Identity[common]));
+                edges.Add(new(consumer, producer, reference.Name, reference.Location, AuthoredOrder.Key(consumer.Identity.Take(common)), consumer.Identity[common], producer.Identity[common], readModel));
             }
         }
 
@@ -133,10 +154,11 @@ internal static class TimelineOrder
 
             var ownSubFeature = edge.Producer.Scope.Length > edge.Consumer.Scope.Length && edge.Consumer.Scope.SkipLast(1).Select((name, index) => name == edge.Producer.Scope[index]).All(same => same);
             var consequence = ownSubFeature ? " The producer is in the consumer's own sub-feature; this cannot be fixed by reordering." : " Consider drawing the producer before the consumer.";
+            var use = edge.ReadModel ? $"reads read model '{edge.Event}' built by" : $"uses event '{edge.Event}' produced by";
             findings.Add((edge, Finding(edge, ownSubFeature, [], new(
                 DiagnosticSeverity.Information,
                 DiagnosticCodes.EventFromLaterSlice,
-                $"Slice '{edge.Consumer.Syntax.Name}' uses event '{edge.Event}' produced by slice '{edge.Producer.Syntax.Name}' drawn after it.{consequence}",
+                $"Slice '{edge.Consumer.Syntax.Name}' {use} slice '{edge.Producer.Syntax.Name}' drawn after it.{consequence}",
                 edge.Location))));
         }
 
@@ -153,7 +175,7 @@ internal static class TimelineOrder
     }
 
     static TimelineFinding Finding(Edge edge, bool ownSubFeature, string[] members, Diagnostic diagnostic) =>
-        new(diagnostic, edge.Consumer.Scope, edge.Producer.Scope, edge.Event, edge.Container, edge.Left, edge.Right, ownSubFeature, members);
+        new(diagnostic, edge.Consumer.Scope, edge.Producer.Scope, edge.Event, edge.Container, edge.Left, edge.Right, ownSubFeature, members) { ReadModel = edge.ReadModel };
 
     static IEnumerable<T> Ordered<T>(IEnumerable<T> items, string[] outer, Func<T, string> name, IReadOnlyDictionary<string, int> order) =>
         items.Select(item => (Item: item, Rank: order.GetValueOrDefault(AuthoredOrder.Key(outer.Append(name(item))), int.MaxValue))).OrderBy(entry => entry.Rank).Select(entry => entry.Item);
@@ -167,6 +189,5 @@ internal static class TimelineOrder
         // Container children and slice children occupy separate groups even when their names match.
         public string[] Identity { get; } = [.. Scope.SkipLast(1).Select(name => $"container:{name}"), $"slice:{Syntax.Name}"];
     }
-    sealed record Reference(string Event, SourceLocation Location);
-    sealed record Edge(Slice Consumer, Slice Producer, string Event, SourceLocation Location, string Container, string Left, string Right);
+    sealed record Edge(Slice Consumer, Slice Producer, string Event, SourceLocation Location, string Container, string Left, string Right, bool ReadModel);
 }

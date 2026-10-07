@@ -20,8 +20,10 @@ for (const sample of ['Library', 'Invoicing', 'Commerce', 'TimeTracking']) {
             groups = DependencyGraph.for(application).siblingGroups(['usesFactsFrom', 'reactsTo']).map(group => group.members.map(node => node.scope.at(-1)!));
             timelineGroups = timelineOrderDiagnostics(application).filter(finding => finding.code === DiagnosticCodes.TimelineCycleGroup).map(finding => [...finding.message.matchAll(/'([^']+)'/g)].map(match => match[1]));
         });
-        it('should keep sibling groups equal to timeline PLAY0517 groups', () => {
-            groups.should.deep.equal(timelineGroups);
+        it('should include fact groups and non feedback reads in timeline groups', () => {
+            // The full graph includes feedback reads too, unlike timeline grouping.
+            const expected = sample === 'TimeTracking' ? [['Runs', 'Handover'], ['Recording', 'Reporting']] : groups;
+            timelineGroups.should.deep.equal(expected);
         });
     });
 }

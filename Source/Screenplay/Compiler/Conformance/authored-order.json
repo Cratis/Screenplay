@@ -53,6 +53,21 @@
             "diagnostics": ["PLAY0516@z.play:3"]
         },
         {
+            "name": "reads and reducers follow authored import order",
+            "root": "application.play",
+            "files": {"application.play": "module M\n  feature F\n    import \"reader.play\"\n    import \"reducer.play\"\n    import \"writer.play\"", "reader.play": "slice StateChange Read\n  command C\n    reads Items", "reducer.play": "slice StateView Build\n  readmodel Items\n  reducer R => Items\n    on E", "writer.play": "slice StateChange Write\n  event E"},
+            "order": [["M"], ["M", "F"], ["M", "F", "Read"], ["M", "F", "Build"], ["M", "F", "Write"]],
+            "diagnostics": ["PLAY0516@reader.play:3", "PLAY0516@reducer.play:4"],
+            "repairs": [{"path": "reader.play", "line": 3, "subject": "ReadsSyntax"}, {"path": "reducer.play", "line": 4, "subject": "ReducerRuleSyntax"}]
+        },
+        {
+            "name": "producer first import moves remove reads and reducer findings",
+            "root": "application.play",
+            "files": {"application.play": "module M\n  feature F\n    import \"writer.play\"\n    import \"reducer.play\"\n    import \"reader.play\"", "reader.play": "slice StateChange Read\n  command C\n    reads Items", "reducer.play": "slice StateView Build\n  readmodel Items\n  reducer R => Items\n    on E", "writer.play": "slice StateChange Write\n  event E"},
+            "order": [["M"], ["M", "F"], ["M", "F", "Write"], ["M", "F", "Build"], ["M", "F", "Read"]],
+            "diagnostics": []
+        },
+        {
             "name": "multiple importing roots leave the order unknown",
             "files": {"r1.play": "import \"a.play\"", "r2.play": "import \"z.play\"", "a.play": "module M\n  feature F\n    slice StateView View\n      projection P\n        from E", "z.play": "module M\n  feature F\n    slice StateChange Write\n      event E"},
             "order": [],

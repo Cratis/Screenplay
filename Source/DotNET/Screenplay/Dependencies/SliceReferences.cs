@@ -113,7 +113,7 @@ internal sealed class SliceReferences : ScreenplaySyntaxWalker
     }
 
     SliceReference Reference(string name, string targetKind, string role, SyntaxNode node) =>
-        new(name, targetKind, Classifications[role]!, role, node.Location, _projection || role == "trigger");
+        new(name, targetKind, Classifications[role]!, role, node.Location, _projection || role == "trigger" || role == "reads" || role == "reduces");
 }
 
 internal sealed record SliceReference(string Name, string TargetKind, string Kind, string Role, SourceLocation Location, bool Timeline);

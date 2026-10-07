@@ -12,7 +12,7 @@ public class when_matching_timeline_groups : Specification
     [InlineData("Invoicing")]
     [InlineData("Commerce")]
     [InlineData("TimeTracking")]
-    public void should_keep_sibling_groups_equal_to_timeline_groups(string sample)
+    public void should_include_fact_groups_and_non_feedback_reads_in_timeline_groups(string sample)
     {
         var folder = Path.Combine(given.a_conformance_suite.Root(), "Samples", sample);
         var files = Directory.GetFiles(folder, "*.play", SearchOption.AllDirectories).Order(StringComparer.Ordinal)
@@ -21,6 +21,10 @@ public class when_matching_timeline_groups : Specification
         PlayApplicationAssembly.Compile(compiler, files.Keys, new InMemoryPlayDocumentSource(files), compiler.Languages, out var timeline);
         var groups = DependencyGraph.For(timeline).SiblingGroups(["usesFactsFrom", "reactsTo"]);
 
-        groups.Select(group => string.Join('|', group.Members.Select(node => (node.Kind == "slice" ? "slice:" : "container:") + node.Scope[^1]))).ShouldEqual(timeline.Findings.Where(finding => finding.Members.Length > 0).Select(finding => string.Join('|', finding.Members)));
+        // TimeTracking's decisions add cycles that its event-only graph does not have.
+        // The full graph also includes feedback reads, deliberately absent from the timeline.
+        var expected = groups.Select(group => string.Join('|', group.Members.Select(node => (node.Kind == "slice" ? "slice:" : "container:") + node.Scope[^1])));
+        if (sample == "TimeTracking") expected = ["container:Runs|container:Handover", "container:Recording|container:Reporting"];
+        timeline.Findings.Where(finding => finding.Members.Length > 0).Select(finding => string.Join('|', finding.Members)).ShouldEqual(expected);
     }
 }

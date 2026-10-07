@@ -68,6 +68,7 @@ internal static class WorkspaceTimelineRepairs
     static WorkspaceSyntaxEntry? Subject(WorkspaceSyntaxIndex index, TimelineFinding finding)
     {
         var subjects = index.Entries.Where(entry => entry.Location == finding.Diagnostic.Location &&
+            (entry.Node is ReadsSyntax) == finding.ReadModel &&
             string.Equals(ReferencedEvent(entry.Node), finding.Event, StringComparison.OrdinalIgnoreCase)).ToArray();
 
         return subjects.Length == 1 ? subjects[0] : null;
@@ -82,6 +83,8 @@ internal static class WorkspaceTimelineRepairs
         RemoveWithSyntax reference => reference.Event,
         RemoveViaJoinSyntax reference => reference.Event,
         ClearWithSyntax reference => reference.Event,
+        ReducerRuleSyntax reference => reference.Event,
+        ReadsSyntax reference => reference.ReadModel,
         _ => null
     };
 
@@ -132,7 +135,7 @@ internal static class WorkspaceTimelineRepairs
             if (ranks is null || !Safe(timeline, TimelineOrder.Analyze(timeline.Application, ranks), finding.Key)) continue;
             var operation = new MoveWorkspaceNode(moved.Handle, moved.Node, parent.Handle, parent.Node, moved.Member!, anchor.Index!.Value + (after ? 1 : 0));
 
-            return new(new(finding.Diagnostic.Code, subject.Handle, [operation]) { Title = "Draw the event producer before its consumer" }, ranks);
+            return new(new(finding.Diagnostic.Code, subject.Handle, [operation]) { Title = finding.ReadModel ? "Draw the read-model builder before its reader" : "Draw the event producer before its consumer" }, ranks);
         }
 
         return null;

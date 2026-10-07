@@ -70,7 +70,7 @@ export class SliceReferenceCollector extends ScreenplaySyntaxWalker {
     }
     override visitNode(node: SyntaxNode): void {
         const add = (name: string, targetKind: SliceReference['targetKind'], role: string) => {
-            this.references.push({ name, targetKind, role, kind: referenceClassifications[role]!, location: node.location, timeline: this.projection || role === 'trigger' });
+            this.references.push({ name, targetKind, role, kind: referenceClassifications[role]!, location: node.location, timeline: this.projection || ['trigger', 'reads', 'reduces'].includes(role) });
         };
         switch (node.kind) {
             case 'TypeRefSyntax': {
