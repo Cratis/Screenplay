@@ -99,6 +99,11 @@ describe('when validating a document with a problem of every coded kind', () => 
             ['module M', '  feature A', '    slice StateView ViewA', '      event EA', '      projection PA', '        from EB', '  feature B', '    slice StateView ViewB', '      event EB', '      projection PB', '        from EA'],
         ];
         issues.push(...timelines.flatMap(lines => validateLines(lines, { compilerDiagnostics: parse(lines.join('\n')).diagnostics })));
+        const dependencies = [
+            ['module A', '  depends on C', '  depends on C', '  depends on Nowhere', '  feature F', '    slice StateView V', '      projection P', '        from E', 'module B', '  feature G', '    slice StateChange W', '      event E', 'module C', '  depends on A'],
+            ['module A', '  depends on Shared.F', 'module B', '  feature Shared', '    feature F', 'module C', '  feature Shared', '    feature F'],
+        ];
+        issues.push(...dependencies.flatMap(lines => validateLines(lines, { compilerDiagnostics: parse(lines.join('\n')).diagnostics })));
     });
 
     it('should give every issue it reports a code', () => {

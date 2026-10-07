@@ -68,6 +68,12 @@ const surfacedCodes = new Set<string>([
     DiagnosticCodes.UnexpectedInPlacedFile,
     DiagnosticCodes.EventFromLaterSlice,
     DiagnosticCodes.TimelineCycleGroup,
+    DiagnosticCodes.UndeclaredDependency,
+    DiagnosticCodes.UnusedDependencyDeclaration,
+    DiagnosticCodes.InvalidDependencyTarget,
+    DiagnosticCodes.RepeatedDependencyDeclaration,
+    DiagnosticCodes.MutualDependencyDeclarations,
+    DiagnosticCodes.AmbiguousReference,
 ]);
 
 // The .play files of one workspace folder as one application, keyed by portable path relative to the folder.

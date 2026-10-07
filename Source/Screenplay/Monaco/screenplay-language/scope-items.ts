@@ -13,6 +13,7 @@ const interactionItems: CompletionEntry[] = [
 export const moduleScopeItems: CompletionEntry[] = [
     { label: 'description', insertText: 'description "${1:what this module is for}"', documentation: 'A human-readable description.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'Policies that must pass for everything in the module.' },
+    { label: 'depends on', insertText: 'depends on ${1:Name}', documentation: 'Declares an allowed module or feature dependency. Opts this container into independent explicit-reference checks.' },
     { label: 'import "…"', insertText: 'import "${1:*/*.play}"', documentation: 'Imports `.play` files into this module — their top level is the module\'s body.' },
     { label: 'feature', insertText: 'feature ${1:Name}\n    ', documentation: 'Groups related slices into a vertical feature.' },
     { label: 'screen', insertText: 'screen ${1:Name}\n    data ${2:ReadModel} via query ${3:QueryName}', documentation: 'Declares a module-level UI screen.' },
@@ -26,6 +27,7 @@ export const moduleScopeItems: CompletionEntry[] = [
 export const featureScopeItems: CompletionEntry[] = [
     { label: 'description', insertText: 'description "${1:what this feature is for}"', documentation: 'A human-readable description.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'Policies that must pass for everything in the feature.' },
+    { label: 'depends on', insertText: 'depends on ${1:Name}', documentation: 'Declares an allowed module or feature dependency. Sibling feature names resolve before module names.' },
     { label: 'import "…"', insertText: 'import "${1:*.play}"', documentation: 'Imports `.play` files into this feature — their top level is the feature\'s body.' },
     { label: 'feature', insertText: 'feature ${1:Name}\n    ', documentation: 'Declares a nested sub-feature.' },
     { label: 'slice StateChange', insertText: 'slice StateChange ${1:Name}\n    ', documentation: 'A command → events flow; something that changes the system.' },

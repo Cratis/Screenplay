@@ -1,0 +1,200 @@
+{
+  "cases": [
+    {
+      "name": "containers declaring nothing are not checked",
+      "files": {"application.play": "module A\n  feature F\n    slice StateView V\n      projection P\n        from E\nmodule B\n  feature G\n    slice StateChange W\n      event E"},
+      "diagnostics": [], "report": []
+    },
+    {
+      "name": "all edges are declared by module prefix",
+      "files": {"application.play": "module A\n  depends on B\n  feature F\n    slice StateView V\n      projection P\n        from E\nmodule B\n  feature G\n    slice StateChange W\n      event E"},
+      "diagnostics": [], "report": ["A|B|B|used", "A|A.F.V|B.G.W|usesFactsFrom|declared|B"]
+    },
+    {
+      "name": "uncovered edges in one feature name the feature",
+      "files": {"application.play": "module A\n  depends on C\n  feature F\n    slice StateView V\n      projection P\n        from E\nmodule B\n  feature G\n    slice StateChange W\n      event E\nmodule C"},
+      "diagnostics": ["PLAY0552@application.play:1", "PLAY0553@application.play:2"],
+      "report": ["A|C|C|unused", "A|A.F.V|B.G.W|usesFactsFrom|undeclared|"]
+    },
+    {
+      "name": "uncovered edges spanning features aggregate by module",
+      "files": {"application.play": "module A\n  depends on C\n  feature F\n    slice StateView V\n      projection P\n        from E\n        from Other\nmodule B\n  feature G\n    slice StateChange W\n      event E\n  feature H\n    slice StateChange X\n      event Other\nmodule C"},
+      "diagnostics": ["PLAY0552@application.play:1", "PLAY0553@application.play:2"],
+      "report": ["A|C|C|unused", "A|A.F.V|B.G.W|usesFactsFrom|undeclared|", "A|A.F.V|B.H.X|usesFactsFrom|undeclared|"]
+    },
+    {
+      "name": "parent and child inventories are enforced independently",
+      "files": {"application.play": "module A\n  depends on C\n  feature F\n    depends on B\n    slice StateView V\n      projection P\n        from E\nmodule B\n  feature G\n    slice StateChange W\n      event E\nmodule C"},
+      "diagnostics": ["PLAY0552@application.play:1", "PLAY0553@application.play:2"],
+      "report": ["A|C|C|unused", "A|A.F.V|B.G.W|usesFactsFrom|undeclared|", "A.F|B|B|used", "A.F|A.F.V|B.G.W|usesFactsFrom|declared|B"]
+    },
+    {
+      "name": "opting in a child does not opt in its parent",
+      "files": {"application.play": "module A\n  feature F\n    depends on B\n    slice StateView V\n      projection P\n        from E\nmodule B\n  feature G\n    slice StateChange W\n      event E"},
+      "diagnostics": [], "report": ["A.F|B|B|used", "A.F|A.F.V|B.G.W|usesFactsFrom|declared|B"]
+    },
+    {
+      "name": "mutual declarations report information on each line",
+      "files": {"application.play": "module A\n  depends on B\nmodule B\n  depends on A"},
+      "diagnostics": ["PLAY0553@application.play:2", "PLAY0556@application.play:2", "PLAY0553@application.play:4", "PLAY0556@application.play:4"],
+      "report": ["A|B|B|unused", "B|A|A|unused"]
+    },
+    {
+      "name": "ambiguous ownership provisionally satisfies either producer",
+      "files": {"application.play": "module A\n  depends on C\n  feature F\n    slice StateView V\n      projection P\n        from E\nmodule B\n  feature G\n    slice StateChange W\n      event E\nmodule C\n  feature H\n    slice StateChange X\n      event E"},
+      "diagnostics": [], "report": ["A|C|C|provisional", "A|A.F.V|B.G.W|usesFactsFrom|provisional|C"]
+    },
+    {
+      "name": "ambiguous ownership never warns even when uncovered",
+      "files": {"application.play": "module A\n  depends on D\n  feature F\n    slice StateView V\n      projection P\n        from E\nmodule B\n  feature G\n    slice StateChange W\n      event E\nmodule C\n  feature H\n    slice StateChange X\n      event E\nmodule D"},
+      "diagnostics": ["PLAY0553@application.play:2"], "report": ["A|D|D|unused", "A|A.F.V|B.G.W|usesFactsFrom|provisional|"]
+    },
+    {
+      "name": "sibling producer features never suggest their ancestor module",
+      "files": {"application.play": "module Payroll\n  feature Review\n    depends on Timesheets\n    slice StateView V\n      projection P\n        from HoursAdded\n        from WeekQueued\n  feature Runs\n    feature Current\n      slice StateChange W\n        event HoursAdded\n  feature Handover\n    slice StateChange X\n      event WeekQueued\nmodule Timesheets"},
+      "diagnostics": ["PLAY0552@application.play:2", "PLAY0553@application.play:3"],
+      "uncovered": ["Payroll.Runs', 'Payroll.Handover"],
+      "evidence": ["HoursAdded", "WeekQueued"],
+      "report": ["Payroll.Review|Timesheets|Timesheets|unused", "Payroll.Review|Payroll.Review.V|Payroll.Runs.Current.W|usesFactsFrom|undeclared|", "Payroll.Review|Payroll.Review.V|Payroll.Handover.X|usesFactsFrom|undeclared|"]
+    },
+    {
+      "name": "nested sibling producers name their outermost eligible features",
+      "files": {"application.play": "module Payroll\n  feature Processing\n    feature Review\n      depends on Timesheets\n      slice StateView V\n        projection P\n          from HoursAdded\n          from WeekQueued\n    feature Runs\n      feature Current\n        slice StateChange W\n          event HoursAdded\n    feature Handover\n      feature Queue\n        slice StateChange X\n          event WeekQueued\nmodule Timesheets"},
+      "diagnostics": ["PLAY0552@application.play:3", "PLAY0553@application.play:4"],
+      "uncovered": ["Payroll.Processing.Runs', 'Payroll.Processing.Handover"],
+      "report": ["Payroll.Processing.Review|Timesheets|Timesheets|unused", "Payroll.Processing.Review|Payroll.Processing.Review.V|Payroll.Processing.Runs.Current.W|usesFactsFrom|undeclared|", "Payroll.Processing.Review|Payroll.Processing.Review.V|Payroll.Processing.Handover.Queue.X|usesFactsFrom|undeclared|"]
+    },
+    {
+      "name": "a sibling feature shadows a root module",
+      "files": {"application.play": "module Payroll\n  feature Handover\n    depends on Runs\n    slice StateChange C\n      command Start\n        reads R\n  feature Runs\n    slice StateView V\n      readmodel R\nmodule Runs"},
+      "diagnostics": [], "report": ["Payroll.Handover|Runs|Payroll.Runs|used", "Payroll.Handover|Payroll.Handover.C|Payroll.Runs.V|decidesFrom|declared|Runs"]
+    },
+    {
+      "name": "invalid targets provide no satisfaction",
+      "files": {"application.play": "module A\n  depends on A.F\n  feature F\n    depends on F\n    depends on A\n    depends on Nowhere"},
+      "diagnostics": ["PLAY0554@application.play:2", "PLAY0554@application.play:4", "PLAY0554@application.play:5", "PLAY0554@application.play:6"],
+      "report": ["A|A.F|A.F|invalid", "A.F|F|A.F|invalid", "A.F|A|A|invalid", "A.F|Nowhere||invalid"]
+    },
+    {
+      "name": "equally near suffix targets are ambiguous and invalid for coverage",
+      "files": {"application.play": "module A\n  depends on Shared.F\nmodule B\n  feature Shared\n    feature F\nmodule C\n  feature Shared\n    feature F"},
+      "diagnostics": ["PLAY0198@application.play:2"], "report": ["A|Shared.F||invalid"]
+    },
+    {
+      "name": "parent owned slices and internal edges are ignored",
+      "files": {"application.play": "module A\n  feature F\n    slice StateChange W\n      event E\n    feature Child\n      depends on B\n      slice StateView V\n        projection P\n          from E\nmodule B"},
+      "diagnostics": ["PLAY0553@application.play:6"], "report": ["A.F.Child|B|B|unused"]
+    },
+    {
+      "name": "specification and outside edges do not count",
+      "files": {"application.play": "import Outside.Recorded\nmodule A\n  depends on B\n  feature F\n    slice StateView V\n      projection P\n        from Recorded\n      specification T\n        given E\nmodule B\n  feature G\n    slice StateChange W\n      event E"},
+      "diagnostics": ["PLAY0553@application.play:3"], "report": ["A|B|B|unused"]
+    },
+    {
+      "name": "repeated module parts share the owner inventory",
+      "files": {"application.play": "module A\n  depends on B\nmodule A\n  depends on B\nmodule B"},
+      "diagnostics": ["PLAY0555@application.play:4", "PLAY0553@application.play:2"], "report": ["A|B|B|unused"]
+    },
+    {
+      "name": "dependency line trailing FEFF is normalized like dotnet",
+      "files": {"application.play": "module A\n  depends on B\ufeff\nmodule B"},
+      "diagnostics": ["PLAY0022@application.play:2"], "report": []
+    },
+    {
+      "name": "dependency line trailing NEL is normalized like dotnet",
+      "files": {"application.play": "module A\n  depends on B\u0085\nmodule B"},
+      "diagnostics": ["PLAY0553@application.play:2"], "report": ["A|B|B|unused"]
+    },
+    {
+      "name": "all five counted kinds satisfy declarations and specifications do not",
+      "files": {"application.play": "module A\n  depends on B\n  feature F\n    slice Automation V\n      command D\n        reads R\n      projection P\n        from E\n      reaction React\n        when E\n          invokes C\n      screen S\n        data R via query Q\n      specification T\n        given E\nmodule B\n  feature G\n    slice StateChange W\n      event E\n      command C\n      readmodel R\n      query Q => R"},
+      "diagnostics": [],
+      "report": ["A|B|B|used", "A|A.F.V|B.G.W|decidesFrom|declared|B", "A|A.F.V|B.G.W|usesFactsFrom|declared|B", "A|A.F.V|B.G.W|reactsTo|declared|B", "A|A.F.V|B.G.W|asks|declared|B", "A|A.F.V|B.G.W|shows|declared|B"]
+    },
+    {
+      "name": "repeated declarations across files keep the first",
+      "files": {"a.play": "module A\n  depends on B\n  depends on B", "b.play": "module A\n  depends on B\nmodule B"},
+      "diagnostics": ["PLAY0555@a.play:3", "PLAY0555@b.play:2", "PLAY0553@a.play:2"], "report": ["A|B|B|unused"]
+    },
+    {
+      "name": "restated single document owners share seen sets",
+      "document": true,
+      "files": {"application.play": "module A\n  depends on B\n  feature F\n    depends on B\n  feature F\n    depends on B\nmodule A\n  depends on B\nmodule B"},
+      "diagnostics": ["PLAY0555@application.play:6", "PLAY0555@application.play:8", "PLAY0553@application.play:2", "PLAY0553@application.play:4"],
+      "report": ["A|B|B|unused", "A.F|B|B|unused"]
+    },
+    {
+      "name": "TimeTracking Handover declares all three targets",
+      "sample": "TimeTracking", "files": {},
+      "insertions": [{"file": "Payroll/Payroll.play", "header": "  feature Handover", "targets": ["Timesheets.Approval", "Timesheets.Reporting", "Runs"]}],
+      "diagnostics": [], "uncovered": [],
+      "report": ["Payroll.Handover|Timesheets.Approval|Timesheets.Approval|used", "Payroll.Handover|Timesheets.Reporting|Timesheets.Reporting|used", "Payroll.Handover|Runs|Payroll.Runs|used"]
+    },
+    {
+      "name": "TimeTracking removing approval names its trigger evidence",
+      "sample": "TimeTracking", "files": {},
+      "insertions": [{"file": "Payroll/Payroll.play", "header": "  feature Handover", "targets": ["Timesheets.Reporting", "Runs"]}],
+      "diagnostics": ["PLAY0552@Payroll/Payroll.play:29"], "uncovered": ["Timesheets.Approval"],
+      "evidence": ["QueueingApprovedWeeks.play:9", "trigger 'TimesheetApproved'"],
+      "report": ["Payroll.Handover|Timesheets.Reporting|Timesheets.Reporting|used", "Payroll.Handover|Runs|Payroll.Runs|used"]
+    },
+    {
+      "name": "TimeTracking removing reporting names its reads evidence",
+      "sample": "TimeTracking", "files": {},
+      "insertions": [{"file": "Payroll/Payroll.play", "header": "  feature Handover", "targets": ["Timesheets.Approval", "Runs"]}],
+      "diagnostics": ["PLAY0552@Payroll/Payroll.play:29"], "uncovered": ["Timesheets.Reporting"],
+      "evidence": ["RemindingConsultants.play:10", "reads 'DraftTimesheet'"],
+      "report": ["Payroll.Handover|Timesheets.Approval|Timesheets.Approval|used", "Payroll.Handover|Runs|Payroll.Runs|used"]
+    },
+    {
+      "name": "TimeTracking removing both Timesheets declarations aggregates their evidence",
+      "sample": "TimeTracking", "files": {},
+      "insertions": [{"file": "Payroll/Payroll.play", "header": "  feature Handover", "targets": ["Runs"]}],
+      "diagnostics": ["PLAY0552@Payroll/Payroll.play:29"], "uncovered": ["Timesheets"],
+      "evidence": ["trigger 'TimesheetApproved'", "reads 'DraftTimesheet'"],
+      "report": ["Payroll.Handover|Runs|Payroll.Runs|used"]
+    },
+    {
+      "name": "TimeTracking declaring the Timesheets module covers both features",
+      "sample": "TimeTracking", "files": {},
+      "insertions": [{"file": "Payroll/Payroll.play", "header": "  feature Handover", "targets": ["Timesheets", "Runs"]}],
+      "diagnostics": [], "uncovered": [],
+      "report": ["Payroll.Handover|Timesheets|Timesheets|used", "Payroll.Handover|Runs|Payroll.Runs|used"]
+    },
+    {
+      "name": "TimeTracking opting in Payroll alone leaves Handover unchecked",
+      "sample": "TimeTracking", "files": {},
+      "insertions": [{"file": "Payroll/Payroll.play", "header": "module Payroll", "targets": ["Timesheets"]}],
+      "diagnostics": [], "uncovered": [], "report": ["Payroll|Timesheets|Timesheets|used"]
+    },
+    {
+      "name": "TimeTracking Handover declarations do not satisfy Payroll",
+      "sample": "TimeTracking", "files": {},
+      "insertions": [{"file": "Payroll/Payroll.play", "header": "module Payroll", "targets": ["Engagements"]}, {"file": "Payroll/Payroll.play", "header": "  feature Handover", "targets": ["Timesheets.Approval", "Timesheets.Reporting", "Runs"]}],
+      "diagnostics": ["PLAY0552@Payroll/Payroll.play:10", "PLAY0553@Payroll/Payroll.play:11"], "uncovered": ["Timesheets"],
+      "report": ["Payroll|Engagements|Engagements|unused", "Payroll.Handover|Timesheets.Approval|Timesheets.Approval|used", "Payroll.Handover|Timesheets.Reporting|Timesheets.Reporting|used", "Payroll.Handover|Runs|Payroll.Runs|used"]
+    },
+    {
+      "name": "TimeTracking mutual declarations do not opt in Engagements",
+      "sample": "TimeTracking", "files": {},
+      "insertions": [{"file": "Payroll/Payroll.play", "header": "module Payroll", "targets": ["Timesheets"]}, {"file": "Timesheets/Timesheets.play", "header": "module Timesheets", "targets": ["Payroll", "Engagements"]}],
+      "diagnostics": ["PLAY0556@Payroll/Payroll.play:11", "PLAY0553@Timesheets/Timesheets.play:11", "PLAY0556@Timesheets/Timesheets.play:11"], "uncovered": [],
+      "report": ["Payroll|Timesheets|Timesheets|used", "Timesheets|Payroll|Payroll|unused", "Timesheets|Engagements|Engagements|used"]
+    },
+    {
+      "name": "TimeTracking Timesheets declaring only Payroll still needs Engagements",
+      "sample": "TimeTracking", "files": {},
+      "insertions": [{"file": "Payroll/Payroll.play", "header": "module Payroll", "targets": ["Timesheets"]}, {"file": "Timesheets/Timesheets.play", "header": "module Timesheets", "targets": ["Payroll"]}],
+      "diagnostics": ["PLAY0556@Payroll/Payroll.play:11", "PLAY0552@Timesheets/Timesheets.play:10", "PLAY0553@Timesheets/Timesheets.play:11", "PLAY0556@Timesheets/Timesheets.play:11"],
+      "uncovered": ["Engagements.Portfolio"], "evidence": ["reads 'EngagementOverview'", "RecordingHours.play:18"],
+      "report": ["Payroll|Timesheets|Timesheets|used", "Timesheets|Payroll|Payroll|unused"]
+    },
+    {
+      "name": "TimeTracking unused Handover declaration is information on its line",
+      "sample": "TimeTracking", "files": {},
+      "insertions": [{"file": "Payroll/Payroll.play", "header": "  feature Handover", "targets": ["Timesheets", "Runs", "Engagements"]}],
+      "diagnostics": ["PLAY0553@Payroll/Payroll.play:32"], "uncovered": [],
+      "report": ["Payroll.Handover|Timesheets|Timesheets|used", "Payroll.Handover|Runs|Payroll.Runs|used", "Payroll.Handover|Engagements|Engagements|unused"]
+    }
+  ]
+}

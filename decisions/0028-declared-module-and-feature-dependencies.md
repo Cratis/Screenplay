@@ -164,3 +164,9 @@ The decider delegated this verdict to the orchestrating agent on 2026-10-07; the
 7. **How are ambiguous references treated?** They never raise an undeclared warning and only provisionally satisfy a declaration, shown as uncertain in the graph view: no warning is derived from uncertain ownership.
 8. **Do nested declarations satisfy an ancestor?** No. Each opted-in container is checked against its own declarations for every edge leaving it, including edges from its descendant features: what a container states stays what it is held to.
 9. **How are undeclared findings grouped?** One warning per checked container and producer module, at the container's header, naming the feature when all uncovered edges fall in one, otherwise the module, with evidence: one actionable finding per missing declaration rather than one per reference.
+
+## Status notes
+
+**2026-10-07 — verification wording.** The opt-in example above says the warning names `Engagements`. Under the naming rule in Checking it names `Engagements.Portfolio`, because every uncovered edge falls in that one feature. The rule is unchanged; only the example's wording was imprecise ([#416](https://github.com/Cratis/Screenplay/issues/416)).
+
+**2026-10-07 — naming within the container's own module.** When a feature's uncovered edges go to several features of its own module, naming the module would point at the feature's own ancestor, which is an invalid target. In that case the single warning for that module lists the features that can be declared instead. The grouping (one warning per checked container and producer module) is unchanged ([#416](https://github.com/Cratis/Screenplay/issues/416)).
