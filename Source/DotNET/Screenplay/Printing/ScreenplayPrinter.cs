@@ -476,8 +476,8 @@ public sealed partial class ScreenplayPrinter :
     void WriteModuleBody(ScreenplayWriter writer, ModuleSyntax module)
     {
         WriteDescription(writer, module.Description, module);
-        WriteFileImports(writer, module.FileImports);
         var members = new List<PrintableMember>();
+        AddMembers(members, module.FileImports, -1, import => WriteFileImports(writer, [import]));
         if (module.Authorize is not null)
         {
             AddMembers(members, [module.Authorize], 0, authorize => WriteAuthorize(writer, authorize));
@@ -806,8 +806,8 @@ public sealed partial class ScreenplayPrinter :
     void WriteFeatureBody(ScreenplayWriter writer, FeatureSyntax feature)
     {
         WriteDescription(writer, feature.Description, feature);
-        WriteFileImports(writer, feature.FileImports);
         var members = new List<PrintableMember>();
+        AddMembers(members, feature.FileImports, -1, import => WriteFileImports(writer, [import]));
         if (feature.Authorize is not null)
         {
             AddMembers(members, [feature.Authorize], 0, authorize => WriteAuthorize(writer, authorize));

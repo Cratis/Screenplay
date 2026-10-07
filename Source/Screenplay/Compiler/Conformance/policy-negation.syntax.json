@@ -1,0 +1,164 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [],
+  "personas": [],
+  "policies": [
+    {
+      "kind": "PolicySyntax",
+      "code": null,
+      "condition": {
+        "kind": "LogicalPolicyConditionSyntax",
+        "left": {
+          "kind": "LogicalPolicyConditionSyntax",
+          "left": {
+            "kind": "AuthenticatedConditionSyntax"
+          },
+          "operator": "And",
+          "right": {
+            "kind": "NotPolicyConditionSyntax",
+            "operand": {
+              "kind": "RoleConditionSyntax",
+              "role": "Service"
+            }
+          }
+        },
+        "operator": "And",
+        "right": {
+          "kind": "NotPolicyConditionSyntax",
+          "operand": {
+            "kind": "ClaimConditionSyntax",
+            "claim": "actorKind",
+            "matches": {
+              "kind": "LiteralExpressionSyntax",
+              "value": "service"
+            },
+            "matchesSubject": false
+          }
+        }
+      },
+      "file": null,
+      "name": "PersonOnly"
+    },
+    {
+      "kind": "PolicySyntax",
+      "code": null,
+      "condition": {
+        "kind": "LogicalPolicyConditionSyntax",
+        "left": {
+          "kind": "NotPolicyConditionSyntax",
+          "operand": {
+            "kind": "LogicalPolicyConditionSyntax",
+            "left": {
+              "kind": "RoleConditionSyntax",
+              "role": "Service"
+            },
+            "operator": "Or",
+            "right": {
+              "kind": "ClaimConditionSyntax",
+              "claim": "actorKind",
+              "matches": {
+                "kind": "LiteralExpressionSyntax",
+                "value": "service"
+              },
+              "matchesSubject": false
+            }
+          }
+        },
+        "operator": "And",
+        "right": {
+          "kind": "AuthenticatedConditionSyntax"
+        }
+      },
+      "file": null,
+      "name": "Grouped"
+    },
+    {
+      "kind": "PolicySyntax",
+      "code": null,
+      "condition": {
+        "kind": "LogicalPolicyConditionSyntax",
+        "left": {
+          "kind": "LogicalPolicyConditionSyntax",
+          "left": {
+            "kind": "NotPolicyConditionSyntax",
+            "operand": {
+              "kind": "RoleConditionSyntax",
+              "role": "Service"
+            }
+          },
+          "operator": "And",
+          "right": {
+            "kind": "RoleConditionSyntax",
+            "role": "Accountant"
+          }
+        },
+        "operator": "Or",
+        "right": {
+          "kind": "RoleConditionSyntax",
+          "role": "Controller"
+        }
+      },
+      "file": null,
+      "name": "Precedence"
+    },
+    {
+      "kind": "PolicySyntax",
+      "code": null,
+      "condition": {
+        "kind": "NotPolicyConditionSyntax",
+        "operand": {
+          "kind": "NotPolicyConditionSyntax",
+          "operand": {
+            "kind": "AuthenticatedConditionSyntax"
+          }
+        }
+      },
+      "file": null,
+      "name": "DoubleNegative"
+    },
+    {
+      "kind": "PolicySyntax",
+      "code": null,
+      "condition": {
+        "kind": "NotPolicyConditionSyntax",
+        "operand": {
+          "kind": "ClaimConditionSyntax",
+          "claim": "owner",
+          "matches": null,
+          "matchesSubject": true
+        }
+      },
+      "file": null,
+      "name": "NotSubject"
+    },
+    {
+      "kind": "PolicySyntax",
+      "code": null,
+      "condition": {
+        "kind": "NotPolicyConditionSyntax",
+        "operand": {
+          "kind": "ClaimConditionSyntax",
+          "claim": "owner",
+          "matches": {
+            "kind": "PathExpressionSyntax",
+            "path": "owner"
+          },
+          "matchesSubject": false
+        }
+      },
+      "file": null,
+      "name": "NotArtifact"
+    }
+  ],
+  "seeds": [],
+  "sourceOptions": {
+    "numericMode": "exact"
+  },
+  "systems": [],
+  "types": []
+}

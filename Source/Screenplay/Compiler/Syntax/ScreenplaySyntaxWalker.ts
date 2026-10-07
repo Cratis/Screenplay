@@ -57,6 +57,7 @@ export abstract class ScreenplaySyntaxWalker {
     visitPolicyCondition(syntax: PolicyConditionSyntax): void {
         this.visitNode(syntax);
         if (syntax.kind === 'ClaimConditionSyntax' && syntax.matches !== null) this.visitExpression(syntax.matches);
+        if (syntax.kind === 'NotPolicyConditionSyntax') this.visitPolicyCondition(syntax.operand);
         if (syntax.kind === 'LogicalPolicyConditionSyntax') { this.visitPolicyCondition(syntax.left); this.visitPolicyCondition(syntax.right); }
     }
 

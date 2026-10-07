@@ -1010,6 +1010,14 @@ See [Timeline diagnostics](imports.md#timeline-diagnostics) for the ordering roo
 
 Valid [source/stream authoring](event-sources.md) is not admitted by any supported executable model (ESM) version yet; executable binding refuses it with `PLAY0268`. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
 
+### Negated claim targets
+
+| Code | Severity | Reported when |
+| --- | --- | --- |
+| `PLAY0546` | Warning | Semantic binding applies a policy with a claim under `not`, directly or through grouping, whose target is an optional path, a command's `subject` without an identifier, or a non-string type. An undecidable target evaluates to unknown even under negation; a final unknown policy result denies. Reported at the authorization reference against that command's properties or query argument. The TypeScript syntax compiler does not perform this semantic check. |
+
+See [Policies](policies.md#portable-evaluation) for three-valued evaluation and the distinction between a missing caller claim and a missing comparison target.
+
 ## Retired codes
 
 A retired code stays out of use forever.
