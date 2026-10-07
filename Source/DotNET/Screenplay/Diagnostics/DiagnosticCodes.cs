@@ -2289,6 +2289,16 @@ public static class DiagnosticCodes
     /// </summary>
     public const string TimelineCycleGroup = "PLAY0517";
 
+    /// <summary>
+    /// A typed specification example declaration is malformed.
+    /// </summary>
+    public const string InvalidSpecificationExample = "PLAY0518";
+
+    /// <summary>
+    /// A specification fixture assigns the same property more than once.
+    /// </summary>
+    public const string DuplicateSpecificationAssignment = "PLAY0519";
+
     /// <summary>An event source or stream declaration is invalid or ambiguous.</summary>
     public const string InvalidEventSourceDeclaration = "PLAY0503";
 

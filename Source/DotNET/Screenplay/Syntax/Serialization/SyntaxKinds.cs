@@ -87,6 +87,7 @@ internal static class SyntaxKinds
         typeof(SystemSyntax),
         typeof(OperationSyntax),
         typeof(OperationPhaseSyntax),
+        typeof(SpecificationExampleSyntax),
         typeof(SpecificationOperationFailureSyntax),
         typeof(SpecificationOperationSyntax),
         typeof(SpecificationCompensatedSyntax),

@@ -3,6 +3,7 @@
 
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -16,12 +17,13 @@ internal sealed class ModuleBody(string name)
     /// <summary>
     /// What a module body may hold, as it reads in a diagnostic.
     /// </summary>
-    public const string Expected = "description, authorize, import, screen template, dialog template, form, contribute, feature, 'on <trigger>' or 'uses <Behavior>'";
+    public const string Expected = "description, authorize, import, screen template, dialog template, form, contribute, feature, example, 'on <trigger>' or 'uses <Behavior>'";
 
     readonly List<ScreenTemplateSyntax> _screenTemplates = [];
     readonly List<DialogTemplateSyntax> _dialogTemplates = [];
     readonly Dictionary<string, SourceLocation> _directiveLocations = [];
     readonly List<FeatureSyntax> _features = [];
+    readonly List<SpecificationExampleSyntax> _examples = [];
     readonly List<FormSyntax> _forms = [];
     readonly List<ContributionSyntax> _contributions = [];
     readonly List<BehaviorSyntax> _behaviors = [];
@@ -74,6 +76,9 @@ internal sealed class ModuleBody(string name)
             case "contribute":
                 _contributions.Add(ContributionParser.Parse(context, line));
                 return true;
+            case "example":
+                _examples.Add(SpecificationParser.ParseExample(context, line));
+                return true;
             case "feature":
                 _features.Add(ScreenplayParser.ParseFeature(context, line));
                 return true;
@@ -91,6 +96,7 @@ internal sealed class ModuleBody(string name)
     public ModuleSyntax Build(SourceLocation location, bool isPlacement = false) =>
         new(name, _screenTemplates, _features, location, _description, _forms, _contributions, _dialogTemplates)
         {
+            Examples = _examples,
             Behaviors = _behaviors,
             UsedBehaviors = _usedBehaviors,
             Authorize = _authorize,

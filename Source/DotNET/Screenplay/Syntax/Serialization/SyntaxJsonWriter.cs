@@ -17,6 +17,8 @@ internal static class SyntaxJsonWriter
         {
             var value = member.Property.GetValue(node);
             if (member.Type == typeof(SourceOptions) && Equals(value, SourceOptions.Legacy)) continue;
+            if (member.Name == "examples" && value is IEnumerable examples && !examples.Cast<object>().Any()) continue;
+            if (member.Name == "inlineProperty" && value is null) continue;
             result.Add(member.Name, WriteMember(member, value, $"{path}.{member.Name}", depth + 1));
         }
 

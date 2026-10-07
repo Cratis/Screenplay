@@ -64,6 +64,7 @@ internal static class PlayFileDocument
 
     static ModuleSyntax Bare(ModuleSyntax module) => module with
     {
+        Examples = [],
         ScreenTemplates = [],
         DialogTemplates = [],
         Forms = [],
@@ -78,6 +79,7 @@ internal static class PlayFileDocument
 
     static FeatureSyntax Bare(FeatureSyntax feature) => feature with
     {
+        Examples = [],
         Features = [],
         Slices = [],
         Contributions = [],

@@ -22,12 +22,18 @@ internal static partial class SpecificationParser
     public static IReadOnlyList<SpecificationSyntax> ParseDocument(ParserContext context)
     {
         var specifications = new List<SpecificationSyntax>();
+        var examples = new List<SpecificationExampleSyntax>();
         while (context.Reader.PeekSignificant() is { } line)
         {
             if (line.Content.StartsWith("specification", StringComparison.Ordinal))
             {
                 context.Reader.TakeSignificant();
                 specifications.Add(Parse(context, line));
+            }
+            else if (LineText.FirstWord(line.Content) == "example")
+            {
+                context.Reader.TakeSignificant();
+                examples.Add(ParseExample(context, line));
             }
             else
             {
@@ -42,7 +48,7 @@ internal static partial class SpecificationParser
             context.Error(DiagnosticCodes.SpecificationDocumentWithoutSpecification, "Document must contain at least one specification", SourceLocation.Start);
         }
 
-        return specifications;
+        return [.. specifications.Select(specification => specification with { Examples = examples })];
     }
 
     /// <summary>
@@ -459,11 +465,12 @@ internal static partial class SpecificationParser
         }
 
         var generated = new List<PropertyMappingSyntax>();
-        var body = ParseValuesWithEventSource(context, line, generated);
+        var body = ParseValuesWithEventSource(context, line, generated, match);
         return new SpecificationCommandSyntax(match.Groups[1].Value, body.Values, line.Location)
         {
             For = body.For,
-            GeneratedValues = generated
+            GeneratedValues = generated,
+            InlineProperty = match.Groups["property"].Success ? match.Groups["property"].Value : null
         };
     }
 
@@ -631,7 +638,11 @@ internal static partial class SpecificationParser
             return null;
         }
 
-        return new(match.Groups[1].Value, ParseValues(context, line), line.Location) { Exactly = keyword == "then" && match.Groups[2].Success };
+        return new(match.Groups[1].Value, ParseValues(context, line, match), line.Location)
+        {
+            Exactly = keyword == "then" && match.Groups["exactly"].Success,
+            InlineProperty = match.Groups["property"].Success ? match.Groups["property"].Value : null
+        };
     }
 
     static SpecificationEventSyntax? ParseEventReference(ParserContext context, SourceLine line, Regex regex, string keyword)
@@ -644,68 +655,30 @@ internal static partial class SpecificationParser
             return null;
         }
 
-        var body = ParseValuesWithEventSource(context, line);
+        var body = ParseValuesWithEventSource(context, line, inline: match);
         return new SpecificationEventSyntax(match.Groups[1].Value, body.Values, line.Location)
         {
-            For = body.For
+            For = body.For,
+            InlineProperty = match.Groups["property"].Success ? match.Groups["property"].Value : null
         };
     }
 
     static (List<PropertyMappingSyntax> Values, ExpressionSyntax? For) ParseValuesWithEventSource(
         ParserContext context,
         SourceLine parent,
-        List<PropertyMappingSyntax>? generated = null)
+        List<PropertyMappingSyntax>? generated = null,
+        Match? inline = null)
     {
-        var values = new List<PropertyMappingSyntax>();
-        ExpressionSyntax? eventSource = null;
-        while (context.TryPeekChild(parent.Indent, out var child))
-        {
-            context.Reader.TakeSignificant();
-            if (generated is not null && GeneratedFixturePrefixRegex().IsMatch(child.Content))
-            {
-                if (ParseConcreteMapping(context, child, GeneratedFixtureRegex(), DiagnosticCodes.InvalidGeneratedFixture) is { } fixture)
-                {
-                    generated.Add(fixture);
-                }
+        var body = ParseFixtureBody(context, parent, inline, allowGenerated: generated is not null);
+        generated?.AddRange(body.Generated);
 
-                continue;
-            }
-
-            var mapping = MappingRegex().Match(child.Content);
-            if (mapping.Success)
-            {
-                values.Add(ExpressionParser.ParseMapping(context, mapping.Groups[1].Value, mapping.Groups[2], child));
-                continue;
-            }
-
-            if (LineText.FirstWord(child.Content) == "for")
-            {
-                var source = child.Content["for".Length..].Trim();
-                if (source.Length == 0)
-                {
-                    context.Error(DiagnosticCodes.InvalidSpecificationEventSource, "Invalid event-source assertion 'for' - expected 'for <value>'", child.Location);
-                    continue;
-                }
-
-                if (eventSource is not null)
-                {
-                    context.Error(DiagnosticCodes.DuplicateSpecificationEventSource, "A specification step can declare its event-source assertion only once", child.Location);
-                    continue;
-                }
-
-                eventSource = ExpressionParser.ParseMappingSource(context, source, child.Location);
-                continue;
-            }
-
-            context.Error(DiagnosticCodes.InvalidSpecificationValue, $"Invalid property mapping '{child.Content}' - expected '<property> = <value>'", child.Location);
-        }
-
-        return (values, eventSource);
+        return (body.Values, body.For);
     }
 
-    static List<PropertyMappingSyntax> ParseValues(ParserContext context, SourceLine parent)
+    static List<PropertyMappingSyntax> ParseValues(ParserContext context, SourceLine parent, Match? inline = null)
     {
         var values = new List<PropertyMappingSyntax>();
+        AddInlineValue(context, parent, inline, values);
         while (context.TryPeekChild(parent.Indent, out var child))
         {
             context.Reader.TakeSignificant();
@@ -716,7 +689,7 @@ internal static partial class SpecificationParser
                 continue;
             }
 
-            values.Add(ExpressionParser.ParseMapping(context, match.Groups[1].Value, match.Groups[2], child));
+            AddFixtureValue(context, values, ExpressionParser.ParseMapping(context, match.Groups[1].Value, match.Groups[2], child));
         }
 
         return values;
@@ -772,16 +745,16 @@ internal static partial class SpecificationParser
     [GeneratedRegex(@"^specification\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^given\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^given\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
     private static partial Regex GivenRegex();
 
-    [GeneratedRegex(@"^when\s+append\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+append\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
     private static partial Regex WhenAppendRegex();
 
-    [GeneratedRegex(@"^when\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
     private static partial Regex WhenRegex();
 
-    [GeneratedRegex(@"^then\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
     private static partial Regex ThenEventRegex();
 
     [GeneratedRegex(@"^then\s+query\b", RegexOptions.None, 1000)]
@@ -793,10 +766,10 @@ internal static partial class SpecificationParser
     [GeneratedRegex(@"^(?:given|then)\s+readmodel\b", RegexOptions.None, 1000)]
     private static partial Regex ReadModelPrefixRegex();
 
-    [GeneratedRegex(@"^given\s+readmodel\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^given\s+readmodel\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
     private static partial Regex GivenReadModelRegex();
 
-    [GeneratedRegex(@"^then\s+readmodel\s+([A-Z]\w*)(\s+exactly)?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+readmodel\s+([A-Z]\w*(?:\.\w+)*)(?<exactly>\s+exactly)?(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
     private static partial Regex ThenReadModelRegex();
 
     [GeneratedRegex(@"^then\s+no\b", RegexOptions.None, 1000)]
