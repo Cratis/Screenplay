@@ -15,8 +15,9 @@ sealed class McpSnapshot : IPlayFiles
     readonly McpAnalysisCompiler _compiler;
     readonly Lazy<CompilationResult<ApplicationSyntax>> _compilation;
     readonly Lazy<McpSyntaxIndex> _index;
-    readonly Lazy<DependencyGraph> _dependencyGraph;
     readonly Lazy<IReadOnlyList<PlacedPlayDocument>> _placements;
+    readonly Lazy<DependencyGraph> _dependencyGraph;
+    AuthoredTimeline _timeline = null!;
 
     internal McpSnapshot(ImmutableArray<WorkspaceDocument> documents)
         : this(documents, ScreenplayLanguageRegistry.Default)
@@ -39,29 +40,32 @@ sealed class McpSnapshot : IPlayFiles
         string revision,
         IScreenplayLanguageRegistry languages,
         McpAnalysisCompiler? compiler = null,
-        CompilationResult<ApplicationSyntax>? compilation = null,
+        (CompilationResult<ApplicationSyntax> Result, AuthoredTimeline Timeline)? compilation = null,
         IEnumerable<string>? roots = null)
     {
         _compiler = compiler ?? new(languages);
         Sources = sources;
         SourceRevision = revision;
-        _compilation = new(() => compilation ?? new PlayFileCompiler(this, _compiler).CompileFolder(".").Result);
+        _compilation = new(() =>
+        {
+            if (compilation is { } compiled)
+            {
+                _timeline = compiled.Timeline;
+                return compiled.Result;
+            }
+
+            var source = new DiskPlayDocumentSource(this, ".");
+            var (_, result) = PlayApplicationAssembly.Compile(_compiler, roots ?? source.FilesBeneath(string.Empty), source, _compiler.Languages, out _timeline);
+
+            return result;
+        });
         _placements = new(() => PlayImports.Resolve(roots ?? Sources.Keys, new InMemoryPlayDocumentSource(Sources), languages).Documents);
         _index = new(CreateIndex);
         _dependencyGraph = new(() =>
         {
             _ = Compilation;
 
-            var rootPaths = (roots ?? Sources.Keys).ToArray();
-            var imports = Placements.ToDictionary(document => document.Path, document => ScreenplayCompiler.DiscoverImports(document.Source, document.Path, languages), StringComparer.Ordinal);
-            var orderingRoot = OrderingRoot.Select(rootPaths, Placements, languages, imports);
-            var syntax = _compiler.Documents.Where(document => document.Path is not null && document.Result.Value is not null)
-                .ToDictionary(document => document.Path!, document => document.Result.Value!, StringComparer.Ordinal);
-            var ranks = orderingRoot is not null
-                ? AuthoredOrder.Record([orderingRoot], Placements, languages, out _, syntax, imports)
-                : new Dictionary<string, int>();
-
-            return DependencyGraph.For(Compilation.Value ?? new ApplicationSyntax([], [], [], [], Diagnostics.SourceLocation.Start), ranks);
+            return DependencyGraph.For(_timeline);
         });
     }
 
@@ -112,7 +116,7 @@ sealed class McpSnapshot : IPlayFiles
         var compilation = isFile ? files.CompileApplication(target) : files.CompileFolder(target);
         var sources = compilation.Sources.ToDictionary(source => source.File.RelativePath, source => source.Source, StringComparer.Ordinal);
 
-        return new(sources, string.Empty, compiler.Languages, compiler, compilation.Result, isFile ? [Path.GetFileName(target)] : sources.Keys);
+        return new(sources, string.Empty, compiler.Languages, compiler, (compilation.Result, files.Timeline), isFile ? [Path.GetFileName(target)] : sources.Keys);
     }
 
     McpSyntaxIndex CreateIndex()
