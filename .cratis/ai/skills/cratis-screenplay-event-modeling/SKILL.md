@@ -38,7 +38,7 @@ into the work that acts on them. Flag a real trade-off to the user instead of re
 **1. Decide the level (short form; master copy in `cratis-screenplay-modeling-lifecycle`).**
 Check first that the method skills are installed; installing them never opts a
 repository in. The work is **model-first** only in an opted-in repository: the model
-root (default `.cratis/screenplay/`) holds a committed `.play` file (`git ls-tree -r --name-only HEAD -- <root>` lists it), or the project explicitly set
+root (the folder holding the project's `.play` files) holds a committed `.play` file (`git ls-tree -r --name-only HEAD` lists a `.play` file there, narrowed to `-- <root>` when a root is configured), or the project explicitly set
 `mcpServers.screenplay.root` in `.cratis/ai.json`. An empty directory, install output,
 an installed skill, a `.play` file outside the root or an untracked or uncommitted draft is not
 opt-in; staged or untracked files under the root are drafts. A committed file with uncommitted
@@ -88,11 +88,14 @@ keeps the activities, Screenplay output and facilitation questions of each step:
 
 ## Locate the model
 
-Look first in `.cratis/screenplay/` at the repository root. This is the
+Look first for the project's existing `.play` files: the folder holding them is the
+model. A new model goes under the repository's `Source/` or `src/` folder, else in a
+`Screenplay/` folder at the repository root; never under `.cratis/`, which holds
+configuration and the shared AI corpus only. This is the
 conventional home for consumer-owned `.play` source; do not invent another
 location or search the whole repository before checking it.
 
-`cratis ai install` manages `.cratis/ai/`, not `.cratis/screenplay/`. Never
+`cratis ai install` manages `.cratis/ai/`, never model files. Never
 hand-copy Screenplay source between repositories. Keep Markdown that explains,
 questions or navigates the model in the repository's documentation; the `.play`
 source is the single flow model.
@@ -104,7 +107,8 @@ source is the single flow model.
 | `Cratis.Screenplay` | `4.31.0` | Compiler: parser, validator, diagnostics, folder merge, semantic binder |
 | `Cratis.Screenplay.Tool` | `4.31.0` | The `screenplay` dotnet tool |
 | `Cratis.Screenplay` | main `fd18129` | Inline contracts and event context; changed nine-step examples compiled |
-| `Cratis.Screenplay.Tool` | `4.64.0` (`7e16162`) | Current pin: the Step 7 clock example compiles and binds; persona, generated, operation and stream dispositions below were read at this tag |
+| `Cratis.Screenplay.Tool` | `4.68.0` (`79801bf`) | Current pin: the nine-step examples compile and their specifications run in the reference runner; generated values and responses (ESM v7) were read at this tag |
+| `Cratis.Screenplay.Tool` | `4.66.0` (`c89198b`) | Persona, operation and stream dispositions below were read at this tag, and the Step 7 clock example was probed through MCP on it |
 
 The pin set for the whole Screenplay family, and which tool reports what, lives only in
 `cratis-screenplay-toolchain` `references/versions.md`. The `fd18129` update follows
@@ -112,7 +116,7 @@ The pin set for the whole Screenplay family, and which tool reports what, lives 
 compilation does not establish reference execution. The original baseline was checked at
 tag `v4.31.0` (commit `355dffb`): `Documentation/screenplay/{slices,commands,folders,printing,interactions,specifications}.md`,
 `projections/keys.md`, and decisions 0001 to 0014. Changed [nine-step examples](references/nine-steps.md)
-use the newer commit and the 4.64.0 tool; do not attribute them to the old tag.
+use the newer commit and the 4.66.0 and 4.68.0 tools; do not attribute them to the old tag.
 
 > **Method lineage.** The two-phase process, the nine steps, the four patterns and
 > the GWT discipline follow **Event Modeling** (Adam Dymitruk; Martin Dilger,
@@ -233,7 +237,7 @@ The full critic pass (evidence, severity, business-question review) is
 
 ## Choose a file layout
 
-Treat `.cratis/screenplay/` as one application and choose the coarsest layout
+Treat the model folder as one application and choose the coarsest layout
 that keeps both the source and its diffs readable:
 
 - Keep one `application.play` while it stays readable top to bottom.
@@ -324,10 +328,10 @@ order of modules, features or slices.
 ## Verify
 
 ```shell
-screenplay .cratis/screenplay/ --warnaserror
+screenplay <model-folder> --warnaserror
 ```
 
-(The standalone tool; `cratis screenplay validate .cratis/screenplay --warnings-as-errors`
+(The standalone tool; `cratis screenplay validate <model-folder> --warnings-as-errors`
 is the fallback, and neither names the other's verdict. Versions and commands:
 `cratis-screenplay-toolchain`.)
 
@@ -340,8 +344,8 @@ is the fallback, and neither names the other's verdict. Versions and commands:
 - [ ] Personal data is classified on the `concept`, with a reason.
 - [ ] Specifications name the rejections, not only the happy path.
 - [ ] If the model must reach a runtime, check it binds with the tool that will
-      consume it. The standalone 4.64.0 binder admits Automation and Translate slices
-      (ESM v6); Stage 4.24.0 admits ESM v1 to v3 and renders only `StateChange` and
+      consume it. The standalone 4.68.0 binder admits Automation and Translate slices
+      (ESM v6) and generated values and responses (ESM v7); Stage 4.24.0 admits ESM v1 to v3 (4.24.2: v1 to v4, evolved events refused with `STAGE-ESM-026`) and renders only `StateChange` and
       `StateView` slices, so automations and translations are gap-fill there.
 
 ## Parsed is not runnable
@@ -358,17 +362,20 @@ The independent verdicts V1 to V5 that report them are in
 What binds depends on **which tool** you ask, so name the tool and its version:
 
 - `Automation` and `Translate` slices, reactions, captures and triggers: the
-  standalone `screenplay` 4.64.0 binds them (ESM v6). The `cratis` 3.27.1 bundle
-  (Screenplay 4.60.1) reports *Slice '<name>' of type '<type>'
-  is not admitted by ESM v1.* Stage 4.24.0 admits only ESM v1 to v3 and renders none of them.
+  standalone `screenplay` 4.66.0 or later and the `cratis` 3.28.2 bundle (4.66.0) bind them (ESM v6).
+  The `cratis` 3.27.1 bundle (Screenplay 4.60.1) reported *Slice '<name>' of type '<type>'
+  is not admitted by ESM v1.* Stage 4.24.2 admits only ESM v1 to v4 and renders none of them.
 - `reads` and `concurrency` on a command do not bind (`PLAY0271`), so no decision is
   protected against stale state. A reaction trigger's `reads` that only `invokes` is
   report-only intent (`PLAY0270`); one that `produces` directly fails binding (`PLAY0268`).
 - `persona` declarations are report-only and never block; `@pii` and `@sensitive`
   concepts do block binding (`PLAY0268`). Keep them anyway: the classification is
   part of the model. Report the block.
-- Generated values and responses, operations and systems, and event sources and
-  streams are authorable but non-executable (`PLAY0268`); a command `handler` never binds.
+- Generated values and `returns` responses bind and execute from standalone 4.68.0 (ESM v7) but fail binding
+  with `PLAY0268` on the 4.66.0 bundled in `cratis` 3.28.x, and Stage 4.24.2 does not render them
+  (`STAGE-ESM-016`, tracked in Stage#201): gap-fill. Operations and systems, and event sources and
+  streams, are authorable but non-executable (`PLAY0268`; not admitted by any supported ESM version);
+  a command `handler` never binds.
 
 The ESM versions, the full disposition table and the Step 7 clock example's binding
 result are in [references/parsed-not-runnable.md](references/parsed-not-runnable.md)

@@ -9,7 +9,7 @@ defines what each result means and how to report it. Do not copy version facts h
 
 | Result | Evidence | Does NOT prove |
 |---|---|---|
-| V1 authorable | folder-mode validate with warnings as errors. The standalone compiler includes imports in folder and file mode; the pinned `cratis` CLI (v3.27.1) file validation ignores imports, so folder mode is the cross-tool check | semantics, binding, specs |
+| V1 authorable | folder-mode validate with warnings as errors. The standalone compiler includes imports in folder and file mode; the pinned `cratis` CLI (v3.28.2) file validation still ignores imports (cli#244, probed), so folder mode is the cross-tool check | semantics, binding, specs |
 | V2 executable diagnostics | the executable model reports no diagnostics for the scope | that any spec runs or passes |
 | V3 binding-ready | the model binds to the executable semantic model | that any spec runs or passes |
 | V4 reference specs run | the reference execution route only: engine, and per `.play` specification passed / failed / unsupported / cancelled | rendering, generated code, build or target tests |
@@ -150,7 +150,7 @@ LC_ALL=C sort -u "$tmp/manifest" > "$tmp/sorted" || fail "sort failed"
 d=$(shasum -a 256 < "$tmp/sorted") || fail "digest failed"
 echo "$commit+${d:0:12}"
 ```
-Example: `ident.sh .cratis/screenplay .cratis/screenplay/.screenplay/identities.json src/Billing/Rule.cs`
+Example: `ident.sh Source/Screenplay Source/Screenplay/.screenplay/identities.json src/Billing/Rule.cs`
 (the identity catalog sits inside the root, so list it only if it lives elsewhere; duplicates are
 merged). Record the output as the source identity; a changed digest invalidates acceptance. After the P6
 commit, recompute it: the digest must equal the one reviewed at P5 (only the commit part may differ). Add the

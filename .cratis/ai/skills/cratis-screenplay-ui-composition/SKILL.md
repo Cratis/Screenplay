@@ -13,11 +13,14 @@ entries other modules contribute are all declared in the `.play` model.
 
 ## Locate the model
 
-Look first in `.cratis/screenplay/` at the repository root. This is the
+Look first for the project's existing `.play` files: the folder holding them is the
+model. A new model goes under the repository's `Source/` or `src/` folder, else in a
+`Screenplay/` folder at the repository root; never under `.cratis/`, which holds
+configuration and the shared AI corpus only. This is the
 conventional home for consumer-owned `.play` source; do not invent another
 location or search the whole repository before checking it.
 
-`cratis ai install` manages `.cratis/ai/`, not `.cratis/screenplay/`. Never
+`cratis ai install` manages `.cratis/ai/`, never model files. Never
 hand-copy Screenplay source between repositories. Keep Markdown that explains,
 questions or navigates the model in the repository's documentation; the `.play`
 source is the single flow model.
@@ -28,7 +31,7 @@ source is the single flow model.
 | --- | --- | --- |
 | `Cratis.Screenplay` | `4.31.0` | Original UI composition parser evidence |
 | `Cratis.Screenplay` | main `fd18129` | Cancellation routing and `optional`; changed example compiled |
-| `Cratis.Screenplay` | `4.64.0` (`7e16162`) | Statements in this skill re-verified: the nine `Documentation/screenplay/` pages above are unchanged since `v4.31.0` except `file-references.md` (typed-context and `implementation` paragraphs); `PLAY0269` in `Diagnostics/DiagnosticCodes.cs`; the new section compiled with `screenplay` 4.64.0 and `cratis screenplay validate` 3.27.1 |
+| `Cratis.Screenplay` | `4.66.0` (`c89198b`) | Statements in this skill re-verified: the nine `Documentation/screenplay/` pages above are unchanged since `v4.31.0` except `file-references.md` (typed-context and `implementation` paragraphs); `PLAY0269` in `Diagnostics/DiagnosticCodes.cs`; the new section compiled with `screenplay` 4.66.0 and `cratis screenplay validate` 3.28.2 |
 
 The update follows `commands.md`, `events.md`, `queries.md` and decision 0023
 at that main commit (after v4.52.0). It does not verify UI rendering.
@@ -267,9 +270,10 @@ module Invoicing
 ```
 
 The inline event targets `invoiceId` without copying it into payload; the
-projection obtains it from event context. At v4.64.0 a command `returns` clause
-(scalar or record) is authorable but syntax-only: binding reports `PLAY0268` until
-ESM v8 (`commands.md`, "Generated values and responses"). Form `on submit` and
+projection obtains it from event context. A command `returns` clause (scalar or
+record) binds and executes from standalone Screenplay 4.68.0 (ESM v7, `commands.md`,
+"Generated values and responses"); the 4.66.0 bundled in `cratis` 3.28.x reports `PLAY0268`, and
+Stage 4.24.2 does not render ESM v7 (`STAGE-ESM-016`, tracked in Stage#201). Form `on submit` and
 interaction `on success` response-name scopes, failure clearing and response
 execution remain unavailable.
 An existing success continuation does not imply a response contract.
@@ -377,8 +381,8 @@ a trigger value named `file` is written `@file`.
 ## Verify
 
 - [ ] `screenplay <model> --warnaserror` (standalone) reports zero errors and zero
-      warnings; `cratis screenplay validate --warnings-as-errors` says the same for
-      constructs its bundled compiler knows (versions: `cratis-screenplay-toolchain`
+      warnings; `cratis screenplay validate --warnings-as-errors` says the same on
+      cratis 3.28.2 or later, which bundles the same compiler (versions: `cratis-screenplay-toolchain`
       `references/versions.md`).
 - [ ] Every screen in the flow has Level 1 reviewed before any layout, and every
       form field and screen field traces to a command or read-model property.

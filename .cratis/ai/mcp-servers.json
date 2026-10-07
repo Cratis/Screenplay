@@ -12,7 +12,6 @@
         "screenplay",
         "mcp"
       ],
-      "defaultRoot": ".cratis/screenplay",
       "description": "Understand and safely author one Screenplay application through typed AST operations, reviewed proposals, durable identities, and explicit recovery."
     }
   ],

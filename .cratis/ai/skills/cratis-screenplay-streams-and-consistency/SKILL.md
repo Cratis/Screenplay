@@ -17,10 +17,10 @@ lives only in code, or only in a description, is a finding, not a solution.
 
 | Product | Pin | Used for |
 | --- | --- | --- |
-| Screenplay | v4.64.0 (`7e16162`) | `identifier`, `for`, constraints, generations, `id` pins, diagnostics PLAY0019/0135/0268/0271/0273/0391-0393/0446-0449/0469/0471 |
+| Screenplay | v4.68.0 (`79801bf`) | ESM v7 generated values (`generated identifier`, decision 0026) and decision 0025's numbering; the diagnostics below were read at v4.66.0 (`c89198b`): `identifier`, `for`, constraints, generations, `id` pins, diagnostics PLAY0019/0135/0268/0271/0273/0391-0393/0446-0449/0469/0471 |
 | Chronicle | v19.32.0 (`f17a2ff`) | CHR0012, CHR0034; open defects #3744, #4123, #4131 |
 | Arc | v22.50.5 | `[ProtectedDecision]` and `DecisionRead<T>` (since v22.39.0) |
-| Stage | v4.24.0 | rendered apps pin Arc 22.25.0 and Chronicle client 19.8.1 |
+| Stage | v4.24.2 | rendered apps pin Arc 22.25.0 and Chronicle client 19.8.1 (unchanged from 4.24.0); admits ESM v4 but refuses evolved events with `STAGE-ESM-026` (migrations not rendered, Stage#204) |
 
 Full pin table: `references/versions.md` in `cratis-screenplay-toolchain`. Re-check the three
 Chronicle issues before relying on a constraint in a later release.
@@ -68,7 +68,14 @@ option, mark it `ASSUMED` in the slice or module `description` and in the sessio
    each event belongs, and decide retain, split, view instead, or unresolved, by lifecycle and
    invariant consequences, not names or length. For Chronicle keep event-source identity,
    namespace, process-stream routing and concurrency scope apart
-   (`references/chronicle-boundaries.md`).
+   (`references/chronicle-boundaries.md`). Declared `eventsource`/`stream`/`streamId` and
+   command routes can be authored and validated but not bound, run or rendered today
+   (`PLAY0268`, `STAGE-ESM-016`): keep them as intent and hand-write the routing
+   (`cratis-screenplay-toolchain` `references/sources-and-streams.md`); no supported ESM version
+   admits them. A `generated identifier` (ESM v7, standalone 4.68.0; not rendered by Stage yet) is
+   generated fresh on every acceptance: it is not a retry identity, and generated values give no
+   idempotency, retry or deduplication guarantee. When a retry must find the same stream, the caller
+   supplies the identifier before the first attempt.
 2. **Account for every invariant.** One row per rule in the table from
    `references/consistency-and-concurrency.md`: rule, authoritative inputs, all paths that can
    affect it, intended atomic decision point, exact construct, status (`enforced` / `recorded` /
@@ -108,7 +115,7 @@ option, mark it `ASSUMED` in the slice or module `description` and in the sessio
    decisions and capability gaps in `STATE.md`. Then the gate below.
 
 ## Rules
-**Compiler contracts** (diagnostics at Screenplay v4.64.0; capability per tool in `versions.md`)
+**Compiler contracts** (diagnostics at Screenplay v4.66.0 and v4.68.0; capability per tool in `versions.md`)
 - `identifier` on an event property is PLAY0019; the source id is never payload by declaration.
   Copying it as a payload value is PLAY0469 (information, warning for inline events).
 - In the executable model a production's `for` must resolve to the command's scalar identifier:

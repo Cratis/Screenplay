@@ -89,7 +89,7 @@ internal sealed partial class McpWorkspaces
             RetiredEventAddresses = McpIdentityChanges.RetiredEventAddresses(arguments)
         };
         var result = workspace.ProposeAuthoring(request);
-        return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation, request.ReferencePolicy), arguments) : Rejected(result);
+        return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation, request.ReferencePolicy), arguments, layout) : Rejected(result);
     }
 
     static object Rejected(WorkspaceAuthoringResult result)

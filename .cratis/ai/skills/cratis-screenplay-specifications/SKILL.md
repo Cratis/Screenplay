@@ -13,11 +13,14 @@ concrete data.
 
 ## Locate the model
 
-Look first in `.cratis/screenplay/` at the repository root. This is the
+Look first for the project's existing `.play` files: the folder holding them is the
+model. A new model goes under the repository's `Source/` or `src/` folder, else in a
+`Screenplay/` folder at the repository root; never under `.cratis/`, which holds
+configuration and the shared AI corpus only. This is the
 conventional home for consumer-owned `.play` source; do not invent another
 location or search the whole repository before checking it.
 
-`cratis ai install` manages `.cratis/ai/`, not `.cratis/screenplay/`. Never
+`cratis ai install` manages `.cratis/ai/`, never model files. Never
 hand-copy Screenplay source between repositories. Keep Markdown that explains,
 questions or navigates the model in the repository's documentation; the `.play`
 source is the single flow model.
@@ -28,17 +31,18 @@ source is the single flow model.
 | --- | --- | --- |
 | `Cratis.Screenplay` | `4.31.0` | Original parser, binder and reference execution evidence |
 | `Cratis.Screenplay` | main `fd18129` | Inline facts, `optional` and clock spelling; changed examples compiled |
-| `Cratis.Screenplay` | `4.64.0` (`7e16162`) | ESM v6 specification actions and reaction cascades, `then no readmodel`, `$strings` rejections, `invokes` caller rule; probed with the standalone tool and its MCP server |
+| `Cratis.Screenplay` | `4.68.0` (`79801bf`) | ESM v7 generated fixtures and `then returns` (decision 0026, `specifications.md` "Generated fixtures and return expectations"): the excerpt matches the compiled example in `cratis-screenplay-toolchain`, whose specifications run in the reference runner |
+| `Cratis.Screenplay` | `4.66.0` (`c89198b`) | ESM v6 specification actions and reaction cascades, `then no readmodel`, `$strings` rejections, `invokes` caller rule; probed with the standalone tool and its MCP server |
 
 The update follows `commands.md`, `events.md`, `types.md` and
 `specifications.md` at that main commit (after v4.52.0). This pass compiles the
 changed examples; it does not rerun the reference runner.
 
-**Which tool says what.** The standalone `screenplay` tool 4.64.0 admits ESM v1-v6.
-The `cratis` CLI 3.27.1 bundles Screenplay 4.60.1, which admits ESM v1-v5 only and
-reports a false `PLAY0285` on reaction cascades (see "Version skew"). Facts below
-marked **ESM v6** hold for the standalone tool from 4.61.0 and for `cratis` only
-after it bundles a newer compiler. The full table is in `cratis-screenplay-toolchain`
+**Which tool says what.** The standalone `screenplay` tool 4.68.0 admits ESM v1-v7.
+The `cratis` CLI 3.28.2 and 3.28.3 bundle Screenplay 4.66.0 (ESM v1-v6: generated fixtures and `then returns` report `PLAY0268`). Before `cratis` 3.28.2 the
+bundle was Screenplay 4.60.1, which admitted ESM v1-v5 only and reported a false
+`PLAY0285` on reaction cascades (see "Version skew"). Facts below marked **ESM v6**
+hold for Screenplay 4.61.0 and later: the standalone tool and `cratis` 3.28.2 or later. The full table is in `cratis-screenplay-toolchain`
 (`references/versions.md`). Neither tool runs specifications: `screenplay` and
 `cratis screenplay validate` parse and check consistency, the MCP server also binds,
 and spec outcomes come only from the reference runner as a library, Stage's
@@ -72,10 +76,12 @@ decision 0022. They do not exist before v4.48.0.
 | `when clock "<instant>"` | the clock reaches an instant; scheduled reactions that are due run (v4.48.0) |
 | `when trigger <Trigger>` | an application trigger fires with the values beneath it (v4.48.0) |
 | `given capture` / `when capture <Capture>` | an earlier and the current record of a capture's source (v4.48.0) |
+| `generated <name> = <value>` | beneath `when <Command>`: the fixture for a generated property other than the identifier (ESM v7); `for` beneath the `when` supplies the generated identifier |
+| `then returns [<value>]` | the command's response (ESM v7): `then returns "<uuid>"` for a scalar, `then returns` with named `field = value` lines for a subset of a record |
 | `then <EventType>` | an expected new event |
 | `then events in any order` | compare the new events without regard to order |
 | `then readmodel <ReadModelType> [exactly]` | read-model state afterwards — must state the identifier |
-| `then no readmodel <ReadModelType> for <key>` | exactly that keyed instance is absent (v4.64.0); the key is concrete and typed |
+| `then no readmodel <ReadModelType> for <key>` | exactly that keyed instance is absent (v4.66.0); the key is concrete and typed |
 | `then query <Query> [exactly]` | query results for explicit `arguments`; one `result` per row; none means empty |
 | `then error "<message>"` | a validation or constraint rejection, for that reason; a localized rule is pinned by its quoted key, `then error "$strings.<key>"` |
 | `then error` | a validation or constraint rejection, reason unnamed |
@@ -239,6 +245,46 @@ module Invoicing
   exactly what `then query` with `arguments` and `result` would, so on a version
   before v4.48.0 write it that way instead.
 
+## Generated fixtures and return expectations (ESM v7)
+
+Standalone `screenplay` 4.68.0 or later binds and runs these; the cratis CLI 3.28.3 (bundled 4.66.0) does not
+bind them, and Stage does not render ESM v7 yet (`STAGE-ESM-016`, tracked in Stage#201), so they pin the
+contract of a hand-written command. The model and rules are in `cratis-screenplay-command-surface`; the
+complete example is `cratis-screenplay-toolchain` `references/generated-responses-example.md`.
+
+```screenplay excerpt
+specification RegisteringReturnsIdentifiers
+  when RegisterProject
+    for "11111111-1111-1111-1111-111111111111"
+    generated receiptId = "22222222-2222-2222-2222-222222222222"
+    name = "Apollo"
+  then ProjectRegistered
+    for "11111111-1111-1111-1111-111111111111"
+    name = "Apollo"
+  then returns
+    receiptId = "22222222-2222-2222-2222-222222222222"
+```
+
+- `for` beneath `when` supplies the generated identifier and an indented `generated <name> = <value>` supplies any other
+  generated value; neither goes on the `when` header, and neither is a request mapping. Ordinary `generated = <value>`
+  is an input mapping for a property named `generated`.
+- A scalar response is `then returns <value>`; a record uses `then returns` with a non-empty subset of its named
+  fields (unknown, duplicate, nongenerated or identifier fixture targets are rejected). Values are concrete literals or
+  structured values. A return expectation needs a command action, occurs at most once and cannot accompany
+  `then error` or `then denied`; event and state assertions may coexist.
+- The reference runner compares scalar values by semantic equality and records by the asserted subset, reporting
+  differences in response field order. An absent optional source yields `Null`; arrays compare in order.
+- `then returns` counts as a success outcome but does not relax event comparison: a command specification with
+  no expected events still asserts that no facts were produced.
+- If execution reaches generation without every generated value supplied, the run is `Unsupported(IdentityAllocation)` and
+  the specification never passes; nothing is invented. A denial or validation failure happens before generation and
+  keeps its own outcome.
+- For a generated identifier `for` is the generation fixture, not a destination assertion: expected events state their
+  own destinations. For commands without a generated identifier `when ... for` keeps the destination assertion.
+  UUID spellings on generated values normalize to lowercase hyphenated form.
+- A reaction-invoked command that reaches generation is `Unsupported(IdentityAllocation)` (no fixture channel); a
+  response-only command runs and its response is discarded.
+
 ## Actions beyond commands
 
 A slice is not always set off by a command. Name what does:
@@ -255,21 +301,21 @@ assert a value mapped from `$context.occurred`. In a command's `produces`, that
 mapping executes when the scenario has `given clock`. It is not the same as
 `$eventContext.occurred` in a projection, which the execution plan refuses (below).
 
-**Which tools bind these actions** (probed: the standalone `screenplay mcp` 4.64.0
-reports the complete example below `executableReady` with no executable error, in
+**Which tools bind these actions** (probed: `screenplay mcp` 4.66.0 and `cratis screenplay mcp` 3.28.2
+report the complete example below `executableReady` with no executable error, in
 `open-workspace` readiness and `read-workspace` view `executable-diagnostics`;
-`cratis` 3.27.1 bundles 4.60.1 and does not):
+`cratis` before 3.28.2 bundled 4.60.1 and did not):
 
-- **Standalone tool, Screenplay 4.64.0 (ESM v6, from 4.61.0):** the clock, trigger
+- **Screenplay 4.66.0 (ESM v6, from 4.61.0), standalone and `cratis` 3.28.2:** the clock, trigger
   and capture actions, and the `Automation` and `Translate` slices, reactions and
   captures they drive, bind. The reference runner executes them as library code, with
   the semantics in "Reactions and cascades" below.
-- **`cratis` 3.27.1 (Screenplay 4.60.1, ESM v1-v5):**
-  **`when query` executes today. The clock, trigger and capture actions do not.** They parse, print and are
-  checked against the application, but binding reports `PLAY0268` naming the
-  proposed ESM v6 (decision 0022), and an `Automation` or `Translate` slice reports
-  *is not admitted by ESM v1*. Only binding shows this: `cratis screenplay validate`
-  does not bind, so it stays green.
+- **`cratis` before 3.28.2 (Screenplay 4.60.1, ESM v1-v5):**
+  **`when query` executed. The clock, trigger and capture actions did not.** They parsed, printed and were
+  checked against the application, but binding reported `PLAY0268` naming the
+  proposed ESM v6 (decision 0022), and an `Automation` or `Translate` slice reported
+  *is not admitted by ESM v1*. Only binding showed this: `cratis screenplay validate`
+  does not bind, so it stayed green.
 
 Write the actions either way - they state what sets the slice off. Report each as
 bound and not executed, or as parsed only, naming the tool that said so.
@@ -282,7 +328,6 @@ and what those append or invoke runs more, until nothing is left. `then` events
 compare every new fact, the action's and the reactions'.
 
 ```screenplay
-// Needs the standalone screenplay compiler (ESM v6)
 concept InvoiceId : Uuid
 module Collections
   feature Invoices
@@ -331,21 +376,22 @@ module Collections
 - A reached reaction with a code body (`file` or inline) returns unsupported, as
   does a reaction that never settles. The reference stops at 1,000 new facts per
   scenario and 10,000 due occurrences per clock advance.
-- A model that uses these forms selects ESM v6 (`schemaVersion: 6`). Stage 4.24.0
-  admits ESM v1-v3 and renders no `Automation` or `Translate` slice, so the whole
+- A model that uses these forms selects ESM v6 (`schemaVersion: 6`). Stage 4.24.2
+  admits ESM v1-v4 and renders no `Automation` or `Translate` slice, so the whole
   automation is gap-fill against this contract: `cratis-screenplay-render-and-gap-fill`.
 
-### Version skew: cascades and the false `PLAY0285`
+### Version skew: cascades and the false `PLAY0285` (cratis before 3.28.2)
 
 `PLAY0285` (a specification's expected event contradicts every producer of its
 `when` command) runs in the syntax pass, with no binding. Reachability through
 reactions and `invokes` was added after Screenplay 4.60.1. So the example above
-passes `screenplay` 4.64.0 (and is executable-ready over its MCP server) and fails `cratis screenplay
-validate` 3.27.1 with `PLAY0285` "Specification outcome 'ReminderScheduled' cannot be
-produced by 'SendInvoice'", exit 5 (Cratis/cli#242, open). It is a tool skew, not a
+passes `screenplay` 4.68.0 (and is executable-ready over its MCP server) and also passes
+`cratis screenplay validate` 3.28.2 (probed); it failed `cratis screenplay validate` 3.27.1 with
+`PLAY0285` "Specification outcome 'ReminderScheduled' cannot be produced by 'SendInvoice'",
+exit 5 (Cratis/cli#242). If an older bundle still reports it, it is a tool skew, not a
 modeling error: do not delete the `then` line or move the event to make `cratis`
-green. Validate with the standalone tool, record which tool gave which verdict, and
-see `cratis-screenplay-toolchain`.
+green. Validate with the standalone tool or a current `cratis`, record which tool gave which
+verdict, and see `cratis-screenplay-toolchain`.
 
 ## Rejections and denials say different things
 
@@ -472,8 +518,9 @@ target has one normalized behavior to match.
   the ones that never touch the refused construct.
 - Reactions: before ESM v6 they never run, not even after `when append`. From ESM
   v6 (standalone tool from 4.61.0) they run after every action, as in "Reactions and
-  cascades". Under `cratis` 3.27.1 (Screenplay 4.60.1) `when clock`, `when trigger`
-  and `when capture` fail binding with `PLAY0268`, and so do reactions and captures.
+  cascades". Under `cratis` before 3.28.2 (Screenplay 4.60.1) `when clock`, `when trigger`
+  and `when capture` failed binding with `PLAY0268`, and so did reactions and captures; they
+  bind on 4.66.0 and `cratis` 3.28.2.
 - A rejected individual command or append leaves the world unchanged; an accepted
   one commits once, then the read models and queries are compared. There is no
   scenario-wide transaction in v6: when a later effect of a cascade or capture
@@ -515,8 +562,8 @@ For view specifications:
 ## Verify
 
 - [ ] `screenplay <model> --warnaserror` reports zero errors and zero warnings
-      (standalone 4.64.0; under `cratis` 3.27.1 expect the false `PLAY0285` on
-      reaction cascades and record that it is skew).
+      (standalone 4.68.0 or `cratis` 3.28.2 or later, bundling 4.66.0; under `cratis` before 3.28.2 expect the false
+      `PLAY0285` on reaction cascades and record that it is skew).
 - [ ] Executable diagnostics are clean too: `PLAY0350`, `PLAY0352`, `PLAY0388`,
       `PLAY0389` and `PLAY0273` are only reported at binding.
 - [ ] Every slice has at least one boundary specification.

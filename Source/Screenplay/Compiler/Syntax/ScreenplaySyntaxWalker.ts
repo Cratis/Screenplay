@@ -24,6 +24,7 @@ import { CommandResponseSyntax, PropertyResponseSourceSyntax, RecordCommandRespo
 import { SyntaxNode } from './SyntaxNode';
 import { OperationSyntax, OperationPhaseSyntax, SystemSyntax } from './Operations';
 import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSyntax, ImplementationHintSyntax } from './Implementations';
+import { ReadsSyntax, ConcurrencySyntax, ReducerSyntax, ReducerRuleSyntax, FormSyntax, TriggerDataSyntax } from './DependencySources';
 
 // Walks a whole syntax tree, depth first, in the order the C# ScreenplaySyntaxWalker does. Every visit
 // method calls visitNode and then walks the node's children, so an emitter overrides only the nodes it
@@ -135,6 +136,30 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.reactions.forEach(node => this.visitReaction(node));
         syntax.screens.forEach(node => this.visitScreen(node));
         syntax.specifications.forEach(node => this.visitSpecification(node));
+    }
+
+    // Explicit reference-only entry points. Default tree traversal remains the narrowed wire traversal;
+    // dependency consumers opt into parser-owned side-table payloads rather than changing board visitors.
+    visitTriggerData(syntax: TriggerDataSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.type !== null) this.visitTypeRef(syntax.type);
+    }
+    visitReads(syntax: ReadsSyntax): void { this.visitNode(syntax); }
+    visitConcurrency(syntax: ConcurrencySyntax): void { this.visitNode(syntax); }
+    visitReducer(syntax: ReducerSyntax): void {
+        this.visitNode(syntax);
+        syntax.rules.forEach(node => this.visitReducerRule(node));
+    }
+    visitReducerRule(syntax: ReducerRuleSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.file !== null) this.visitFileReference(syntax.file);
+        if (syntax.code !== null) this.visitCodeBlock(syntax.code);
+    }
+    visitForm(syntax: FormSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.populate !== null) this.visitNode(syntax.populate);
+        syntax.fields.forEach(node => this.visitNode(node));
+        if (syntax.onSubmit !== null) this.visitScreenDirective(syntax.onSubmit);
     }
 
     visitCommand(syntax: CommandSyntax): void {

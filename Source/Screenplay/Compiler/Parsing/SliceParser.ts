@@ -15,6 +15,8 @@ import { SliceSyntax, SliceType, sliceTypes } from '../Syntax/Structure';
 import { pattern } from '../Text/patterns';
 import { parseCapture } from './CaptureParser';
 import { parseCommand } from './CommandParser';
+import { dependencySources, ReducerSyntax } from '../Syntax/DependencySources';
+import { captureReducer } from './DependencySourceParser';
 import { parseConstraint } from './ConstraintParser';
 import { parseEvent, parseReadModel } from './DeclarationParsers';
 import { parseDescription } from './DescriptionParser';
@@ -64,6 +66,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     const specifications: SpecificationSyntax[] = [];
     const readModels: ReadModelSyntax[] = [];
     const screens: ScreenSyntax[] = [];
+    const reducers: ReducerSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         if (isFileDirective(child)) {
@@ -95,6 +98,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
         } else if (keyword === 'screen') {
             screens.push(parseScreen(context, child));
         } else if (opaqueMembers.has(keyword)) {
+            reducers.push(captureReducer(context, child));
             context.skipOpaqueBlock(child.indent);
         } else {
             context.warning(DiagnosticCodes.UnknownSliceDirective, `Unknown construct '${keyword}' in slice '${name}'`, locationOf(child));
@@ -102,8 +106,10 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
         }
     }
     context.scope = previous;
-    return {
+    const syntax: SliceSyntax = {
         kind: 'SliceSyntax', type, name, description, events, operations, commands, queries, projections, captures, reactions, constraints, specifications, readModels, screens,
         location: locationOf(line),
     };
+    dependencySources.set(syntax, { reducers });
+    return syntax;
 }
