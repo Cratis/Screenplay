@@ -13,8 +13,8 @@ const operators: Record<string, ComparisonOperator> = { '==': 'Equal', '!=': 'No
 
 // The existing C# condition grammar: comparisons, left-associative and/or, and grouped conditions.
 // Previously omitted Legacy operands gain structure, not new parser diagnostics.
-export function parseCondition(context: ParserContext, text: string, location: SourceLocation): ConditionSyntax | null {
-    context = context.valueContext;
+export function parseCondition(context: ParserContext, text: string, location: SourceLocation, strict = false): ConditionSyntax | null {
+    if (!strict) context = context.valueContext;
     const numeric = context.sourceOptions.numericMode === 'exact' ? '-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|' : '';
     const words = context.sourceOptions.numericMode === 'exact' ? '[\\w.$-]+|[^\\s]' : '[\\w.$-]+';
     const tokens = text.match(new RegExp(nativePattern(`"${stringBodyPattern}"|==|!=|>=|<=|>|<|\\(|\\)|${numeric}${words}`).source, 'gu')) ?? [];
@@ -24,13 +24,25 @@ export function parseCondition(context: ParserContext, text: string, location: S
             position++;
             const condition = or();
             if (tokens[position] === ')') position++;
-            else if (context.sourceOptions.numericMode === 'exact') context.error(DiagnosticCodes.UnclosedConditionGroup, "Expected ')' in condition", location);
+            else if (strict || context.sourceOptions.numericMode === 'exact') context.error(DiagnosticCodes.UnclosedConditionGroup, "Expected ')' in condition", location);
             return condition;
         }
         const left = tokens[position++];
+        if (strict && left === undefined) {
+            context.error(DiagnosticCodes.ExpectedCondition, 'Expected a condition', location);
+            return null;
+        }
         let operator = tokens[position++];
         if (operator === 'starts' && tokens[position] === 'with') { operator += ' with'; position++; }
+        if (strict && operators[operator] === undefined) {
+            context.error(DiagnosticCodes.ExpectedComparisonOperator, `Expected a comparison operator after '${left}'`, location);
+            return null;
+        }
         const right = tokens[position++];
+        if (strict && right === undefined) {
+            context.error(DiagnosticCodes.ExpectedComparisonValue, 'Expected a value to compare against', location);
+            return null;
+        }
         return left === undefined || right === undefined || operators[operator] === undefined ? null : { kind: 'ComparisonConditionSyntax', left, operator: operators[operator], right: parseMappingSource(right, location, context), location };
     };
     const and = (): ConditionSyntax | null => {
@@ -54,9 +66,9 @@ export function parseCondition(context: ParserContext, text: string, location: S
         return left;
     };
     const condition = or();
-    if (context.sourceOptions.numericMode === 'exact') {
-        if (condition === null) context.error(DiagnosticCodes.ExpectedCondition, 'Expected a condition', location);
-        else if (position < tokens.length) context.error(DiagnosticCodes.UnexpectedTokenInCondition, `Unexpected '${tokens[position]}' in condition`, location);
+    if (strict || context.sourceOptions.numericMode === 'exact') {
+        if (condition === null && !strict) context.error(DiagnosticCodes.ExpectedCondition, 'Expected a condition', location);
+        else if (condition !== null && position < tokens.length) context.error(DiagnosticCodes.UnexpectedTokenInCondition, `Unexpected '${tokens[position]}' in condition`, location);
     }
     return condition;
 }

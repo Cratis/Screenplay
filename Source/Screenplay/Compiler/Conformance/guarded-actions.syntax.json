@@ -1,0 +1,203 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "F",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "S",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenGuardedActionSyntax",
+                      "alternatives": [
+                        {
+                          "kind": "ScreenActionAlternativeSyntax",
+                          "arguments": [
+                            {
+                              "kind": "InteractionArgumentSyntax",
+                              "binding": "item.attempt.attemptId",
+                              "name": "attemptId"
+                            }
+                          ],
+                          "command": "ReleaseStaleAttempt",
+                          "condition": {
+                            "kind": "LogicalConditionSyntax",
+                            "left": {
+                              "kind": "ComparisonConditionSyntax",
+                              "left": "item.attempt.status",
+                              "operator": "Equal",
+                              "right": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": "open"
+                              }
+                            },
+                            "operator": "And",
+                            "right": {
+                              "kind": "ComparisonConditionSyntax",
+                              "left": "item.attempt.answeredAt",
+                              "operator": "Equal",
+                              "right": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": null
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "kind": "ScreenActionAlternativeSyntax",
+                          "arguments": [],
+                          "command": "Retry",
+                          "condition": {
+                            "kind": "LogicalConditionSyntax",
+                            "left": {
+                              "kind": "LogicalConditionSyntax",
+                              "left": {
+                                "kind": "ComparisonConditionSyntax",
+                                "left": "item.attempt.status",
+                                "operator": "Equal",
+                                "right": {
+                                  "kind": "LiteralExpressionSyntax",
+                                  "value": "failed"
+                                }
+                              },
+                              "operator": "Or",
+                              "right": {
+                                "kind": "ComparisonConditionSyntax",
+                                "left": "item.note",
+                                "operator": "Contains",
+                                "right": {
+                                  "kind": "LiteralExpressionSyntax",
+                                  "value": "execute Retry"
+                                }
+                              }
+                            },
+                            "operator": "And",
+                            "right": {
+                              "kind": "ComparisonConditionSyntax",
+                              "left": "item.count",
+                              "operator": "GreaterThanOrEqual",
+                              "right": {
+                                "kind": "LiteralExpressionSyntax",
+                                "value": 2
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "label": "Read the \"source\" again",
+                      "navigate": {
+                        "kind": "ScreenNavigateSyntax",
+                        "by": "planId",
+                        "screen": "List"
+                      },
+                      "otherwise": {
+                        "kind": "ScreenActionOtherwiseSyntax",
+                        "arguments": [
+                          {
+                            "kind": "InteractionArgumentSyntax",
+                            "binding": "item.planId",
+                            "name": "planId"
+                          }
+                        ],
+                        "command": "RetryUnclaimedPlan",
+                        "outcome": "Execute"
+                      }
+                    },
+                    {
+                      "kind": "ScreenGuardedActionSyntax",
+                      "alternatives": [
+                        {
+                          "kind": "ScreenActionAlternativeSyntax",
+                          "arguments": [],
+                          "command": "Close",
+                          "condition": {
+                            "kind": "ComparisonConditionSyntax",
+                            "left": "item.status",
+                            "operator": "NotEqual",
+                            "right": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "closed"
+                            }
+                          }
+                        }
+                      ],
+                      "label": "$strings.actions.close",
+                      "navigate": null,
+                      "otherwise": {
+                        "kind": "ScreenActionOtherwiseSyntax",
+                        "arguments": [],
+                        "command": null,
+                        "outcome": "Hidden"
+                      }
+                    },
+                    {
+                      "kind": "ScreenGuardedActionSyntax",
+                      "alternatives": [
+                        {
+                          "kind": "ScreenActionAlternativeSyntax",
+                          "arguments": [],
+                          "command": "Continue",
+                          "condition": {
+                            "kind": "ComparisonConditionSyntax",
+                            "left": "item.ready",
+                            "operator": "Equal",
+                            "right": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": true
+                            }
+                          }
+                        }
+                      ],
+                      "label": "Continue",
+                      "navigate": null,
+                      "otherwise": null
+                    }
+                  ],
+                  "name": "Details"
+                }
+              ],
+              "specifications": [],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "M"
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

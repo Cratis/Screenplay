@@ -14,7 +14,7 @@ import { JoinEventSyntax, KeySyntax, MappingSyntax, ProjectionBlockSyntax, Proje
 import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax } from './EventSources';
 import { QueryParameterSyntax, QuerySyntax } from './Queries';
 import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
-import { ScreenDirectiveSyntax, ScreenSyntax } from './Screens';
+import { InteractionArgumentSyntax, ScreenActionAlternativeSyntax, ScreenActionOtherwiseSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenSyntax } from './Screens';
 import {
     SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax,
     SpecificationReadModelSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationSyntax, SpecificationTriggerSyntax, SpecificationWhenQuerySyntax,
@@ -444,6 +444,9 @@ export abstract class ScreenplaySyntaxWalker {
             case 'ScreenDataSyntax':
                 this.visitTypeRef(syntax.type);
                 break;
+            case 'ScreenGuardedActionSyntax':
+                this.visitScreenGuardedAction(syntax);
+                break;
             case 'ScreenActionSyntax':
                 if (syntax.navigate !== null) this.visitScreenDirective(syntax.navigate);
                 break;
@@ -468,6 +471,25 @@ export abstract class ScreenplaySyntaxWalker {
                 break;
         }
     }
+
+    visitScreenGuardedAction(syntax: ScreenGuardedActionSyntax): void {
+        syntax.alternatives.forEach(node => this.visitScreenActionAlternative(node));
+        if (syntax.otherwise !== null) this.visitScreenActionOtherwise(syntax.otherwise);
+        if (syntax.navigate !== null) this.visitScreenDirective(syntax.navigate);
+    }
+
+    visitScreenActionAlternative(syntax: ScreenActionAlternativeSyntax): void {
+        this.visitNode(syntax);
+        this.visitCondition(syntax.condition);
+        syntax.arguments.forEach(node => this.visitInteractionArgument(node));
+    }
+
+    visitScreenActionOtherwise(syntax: ScreenActionOtherwiseSyntax): void {
+        this.visitNode(syntax);
+        syntax.arguments.forEach(node => this.visitInteractionArgument(node));
+    }
+
+    visitInteractionArgument(syntax: InteractionArgumentSyntax): void { this.visitNode(syntax); }
 
     visitSpecification(syntax: SpecificationSyntax): void {
         this.visitNode(syntax);
