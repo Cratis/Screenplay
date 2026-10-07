@@ -69,7 +69,7 @@ static class McpSemanticDiff
             if (!before.Comparable(id) || !after.Comparable(id)) continue;
             var oldPaths = before.Documents(id);
             var newPaths = after.Documents(id);
-            if (!oldPaths.SequenceEqual(newPaths) && (old.Address.Equals(current.Address) || old.Address.Name != current.Address.Name))
+            if (!oldPaths.SequenceEqual(newPaths) && (old.Address.Equals(current.Address) || old.Address.Name != current.Address.Name || SameDeclarationLocation(old.Address, current.Address)))
             {
                 Add(new("declarations", "moved", id, kind, previous, next, BeforeDocuments: oldPaths, AfterDocuments: newPaths, MoveKind: "document"));
             }
