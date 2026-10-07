@@ -6,7 +6,7 @@ import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
 import {
     SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationErrorSyntax, SpecificationEventSyntax,
     SpecificationNoResultSyntax, SpecificationQueryResultSyntax, SpecificationReadModelSyntax, SpecificationSyntax, SpecificationTriggerSyntax,
-    SpecificationWhenQuerySyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax,
+    SpecificationWhenQuerySyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationRedeliverySyntax,
 } from '../Syntax/Specifications';
 import { SpecificationDeniedSyntax, SpecificationReturnSyntax } from '../Syntax/Responses';
 import { dotNetWhitespace, nativePattern, pattern } from '../Text/patterns';
@@ -43,6 +43,8 @@ const whenCapturePrefix = pattern('^when\\s+capture\\b');
 const whenQueryPrefix = pattern('^when\\s+query\\b');
 const thenResultPrefix = pattern('^then\\s+result\\b');
 const noResultPrefix = pattern('^then\\s+no\\s+result\\b');
+const whenRedeliveredPrefix = nativePattern('^when\\s+redelivered\\b');
+const whenRedeliveredPattern = nativePattern('^when\\s+redelivered\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)\\s+to\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
 const noEventsPrefix = pattern('^then\\s+no\\s+events\\b');
 
 // An instant in ISO 8601 - a date, a time to the minute or finer, and an explicit offset or Z - so the same text
@@ -61,6 +63,7 @@ interface SpecificationBody {
     givenReadModels: SpecificationReadModelSyntax[];
     when: SpecificationCommandSyntax | null;
     whenAppended: SpecificationEventSyntax | null;
+    whenRedelivered: SpecificationRedeliverySyntax | null;
     whenDeclared: boolean;
     thenEvents: SpecificationEventSyntax[];
     thenEventsInAnyOrder: boolean;
@@ -93,7 +96,7 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
     }
     const body: SpecificationBody = {
         givenOperationFailures: [], thenOperations: [], thenCompensated: [], thenAbsentReadModels: [], thenQueries: [],
-        given: [], givenReadModels: [], when: null, whenAppended: null, whenDeclared: false,
+        given: [], givenReadModels: [], when: null, whenAppended: null, whenRedelivered: null, whenDeclared: false,
         thenEvents: [], thenEventsInAnyOrder: false, thenNoEvents: false, thenReadModels: [], thenErrors: [],
         givenClock: null, givenCaptures: [], whenClock: null, whenTrigger: null, whenCapture: null, whenQuery: null, thenResults: [], thenNoResult: null, thenDenied: null, givenCaller: null, thenReturns: null,
     };
@@ -220,6 +223,16 @@ function parseWhen(context: ParserContext, line: SourceLine, body: Specification
     body.whenDeclared = true;
     if (appends) {
         body.whenAppended = parseEventStep(context, line, whenAppendPattern, 'when append') ?? null;
+        return;
+    }
+    if (whenRedeliveredPrefix.test(line.content)) {
+        const match = whenRedeliveredPattern.exec(line.content);
+        if (match === null) {
+            context.error(DiagnosticCodes.UnmatchedRedeliveredOccurrence, "Expected 'when redelivered <Event> to <Reaction>'.", locationOf(line));
+            skipBody(context, line.indent);
+        } else {
+            body.whenRedelivered = { kind: 'SpecificationRedeliverySyntax', eventType: match[1], reaction: match[2], ...parseValuesWithEventSource(context, line), location: locationOf(line) };
+        }
         return;
     }
     if (whenClockPrefix.test(line.content)) {

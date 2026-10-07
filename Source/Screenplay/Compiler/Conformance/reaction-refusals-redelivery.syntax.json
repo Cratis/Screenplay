@@ -1,0 +1,310 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Claims",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "Approved",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "invoice",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": []
+                },
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "Refused",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "reason",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "constraint",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "message",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "Handling",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [
+                {
+                  "kind": "ReactionSyntax",
+                  "description": null,
+                  "name": "Claimer",
+                  "triggers": [
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "invokes": [
+                        {
+                          "kind": "InvokesSyntax",
+                          "command": "Claim",
+                          "mappings": [
+                            {
+                              "kind": "PropertyMappingSyntax",
+                              "property": "invoice",
+                              "source": {
+                                "kind": "PathExpressionSyntax",
+                                "path": "invoice"
+                              }
+                            }
+                          ],
+                          "onRefused": [
+                            {
+                              "kind": "InvocationRefusalSyntax",
+                              "acknowledge": false,
+                              "constraint": "Claims.UniqueClaim",
+                              "produces": [
+                                {
+                                  "kind": "ProducesSyntax",
+                                  "event": "Refused",
+                                  "for": {
+                                    "kind": "PathExpressionSyntax",
+                                    "path": "invoice"
+                                  },
+                                  "inlineEvent": null,
+                                  "inlineOperation": null,
+                                  "mappings": [
+                                    {
+                                      "kind": "PropertyMappingSyntax",
+                                      "property": "reason",
+                                      "source": {
+                                        "kind": "RefusalExpressionSyntax",
+                                        "member": "reason"
+                                      }
+                                    },
+                                    {
+                                      "kind": "PropertyMappingSyntax",
+                                      "property": "constraint",
+                                      "source": {
+                                        "kind": "RefusalExpressionSyntax",
+                                        "member": "constraint"
+                                      }
+                                    },
+                                    {
+                                      "kind": "PropertyMappingSyntax",
+                                      "property": "message",
+                                      "source": {
+                                        "kind": "RefusalExpressionSyntax",
+                                        "member": "message"
+                                      }
+                                    }
+                                  ],
+                                  "tags": [],
+                                  "when": null
+                                }
+                              ],
+                              "selector": "constraint"
+                            },
+                            {
+                              "kind": "InvocationRefusalSyntax",
+                              "acknowledge": true,
+                              "constraint": null,
+                              "produces": [],
+                              "selector": "validation"
+                            },
+                            {
+                              "kind": "InvocationRefusalSyntax",
+                              "acknowledge": true,
+                              "constraint": null,
+                              "produces": [],
+                              "selector": "constraint"
+                            },
+                            {
+                              "kind": "InvocationRefusalSyntax",
+                              "acknowledge": true,
+                              "constraint": null,
+                              "produces": [],
+                              "selector": "authorization"
+                            },
+                            {
+                              "kind": "InvocationRefusalSyntax",
+                              "acknowledge": true,
+                              "constraint": null,
+                              "produces": [],
+                              "selector": "any"
+                            }
+                          ]
+                        }
+                      ],
+                      "produces": [],
+                      "source": {
+                        "kind": "NamedTriggerSourceSyntax",
+                        "name": "Approved"
+                      }
+                    }
+                  ],
+                  "where": null
+                }
+              ],
+              "readModels": [],
+              "screens": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Approved",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "invoice-1"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoice",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "invoice-1"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": null,
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "Recovery",
+                  "sourceOptions": {
+                    "numericMode": "exact"
+                  },
+                  "thenAbsentReadModels": [],
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoEvents": true,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenQueries": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenRedelivered": {
+                    "kind": "SpecificationRedeliverySyntax",
+                    "eventType": "Approved",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "invoice-1"
+                    },
+                    "reaction": "Claimer",
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoice",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "invoice-1"
+                        }
+                      }
+                    ]
+                  },
+                  "whenTrigger": null
+                }
+              ],
+              "type": "Automation"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Billing"
+    }
+  ],
+  "personas": [],
+  "policies": [],
+  "seeds": [],
+  "sourceOptions": {
+    "numericMode": "exact"
+  },
+  "systems": [],
+  "types": []
+}

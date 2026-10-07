@@ -4,6 +4,7 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { ConditionSyntax } from '../Syntax/Conditions';
 import { PropertyMappingSyntax } from '../Syntax/Expressions';
+import { InvocationRefusalSyntax } from '../Syntax/InvocationRefusalSyntax';
 import { parseCondition } from './ConditionParser';
 import { parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
 import { DayOfWeek, IntervalUnit, InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from '../Syntax/Reactions';
@@ -23,6 +24,8 @@ const atPattern = pattern('^at\\s+(\\d{2}:\\d{2})(?:\\s+on\\s+(?:(Monday|Tuesday
 const clauseKeywords = new Set(['when', 'every', 'at']);
 const invokesPattern = pattern('^invokes\\s+([A-Z]\\w*)$');
 const mappingPattern = nativePattern('^(@?[\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
+const refusalPrefix = nativePattern('^on\\s+refused\\b');
+const refusalHeader = nativePattern('^on\\s+refused(?:\\s+by\\s+(validation|constraint|authorization)(?:\\s+([A-Za-z_]\\w*(?:\\.\\w+)*))?)?$');
 const optionalReads = pattern('^reads\\s+[A-Z]\\w*\\s+optional(?:\\s|$)');
 
 export function parseReaction(context: ParserContext, line: SourceLine): ReactionSyntax {
@@ -46,6 +49,12 @@ export function parseReaction(context: ParserContext, line: SourceLine): Reactio
         }
         if (keyword === 'where') {
             where = parseCondition(context, child.content.substring('where'.length).trim(), locationOf(child));
+            continue;
+        }
+        if (refusalPrefix.test(child.content)) {
+            context.error(DiagnosticCodes.InvalidRefusalBranch, "A refusal branch belongs inside 'invokes <Command>'.", locationOf(child));
+            context.skipBlock(child.indent);
+            reported = true;
             continue;
         }
         if (!clauseKeywords.has(keyword)) {
@@ -102,14 +111,23 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
                 collectInputUses(uses, child);
                 context.inputUses.push(...uses.inputUses);
                 const mappings: PropertyMappingSyntax[] = [];
+                const onRefused: InvocationRefusalSyntax[] = [];
                 for (let value = context.peekChild(child.indent); value !== undefined; value = context.peekChild(child.indent)) {
                     context.reader.takeSignificant();
+                    if (firstWord(value.content) === 'on') {
+                        const refusal = parseRefusal(context, value);
+                        if (refusal !== undefined) onRefused.push(refusal);
+                        continue;
+                    }
                     const mapped = mappingPattern.exec(value.content);
                     if (mapped !== null) mappings.push({ kind: 'PropertyMappingSyntax', property: mapped[1].replaceAll('@', ''), source: parseMappingSource(mapped[2], locationOf(value), context.valueContext), location: locationOf(value) });
-                    else context.skipOpaqueBlock(value.indent);
+                    else context.error(DiagnosticCodes.InvalidPropertyMapping, `Invalid property mapping '${value.content}' - expected '<property> = <source>'`, locationOf(value));
                 }
-                invokes.push({ kind: 'InvokesSyntax', command: match[1], mappings, location: locationOf(child) });
+                invokes.push({ kind: 'InvokesSyntax', command: match[1], mappings, onRefused, location: locationOf(child) });
             }
+        } else if (refusalPrefix.test(child.content)) {
+            context.error(DiagnosticCodes.InvalidRefusalBranch, "A refusal branch belongs inside 'invokes <Command>'.", locationOf(child));
+            context.skipBlock(child.indent);
         } else if (keyword === 'reads' || keyword === 'file' || child.content === 'csharp' || child.content.startsWith('```')) {
             if (optionalReads.test(child.content)) {
                 context.error(DiagnosticCodes.OptionalReadsNotSupported, 'Optional reads are not yet supported (see #308).', locationOf(child));
@@ -123,6 +141,45 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
         }
     }
     return { kind: 'ReactionTriggerSyntax', source, description, produces, invokes, location: locationOf(line) };
+}
+
+function parseRefusal(context: ParserContext, line: SourceLine): InvocationRefusalSyntax | undefined {
+    const match = refusalHeader.exec(line.content);
+    if (match === null || (match[2] !== undefined && match[1] !== 'constraint')) {
+        context.error(DiagnosticCodes.InvalidRefusalBranch, "Expected 'on refused [by validation | by constraint [<Name>] | by authorization]'.", locationOf(line));
+        context.skipBlock(line.indent);
+        return undefined;
+    }
+    const produces: ProducesSyntax[] = [];
+    let acknowledge = false;
+    let reported = false;
+    for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
+        context.reader.takeSignificant();
+        if (child.content === 'acknowledge') {
+            if (acknowledge || produces.length > 0 || context.peekChild(child.indent) !== undefined) {
+                context.error(DiagnosticCodes.InvalidRefusalBranchBody, "A refusal branch contains 'acknowledge' alone or one or more 'produces' blocks.", locationOf(child));
+                reported = true;
+            }
+            acknowledge = true;
+            context.skipBlock(child.indent);
+        } else if (firstWord(child.content) === 'produces') {
+            if (acknowledge) {
+                context.error(DiagnosticCodes.InvalidRefusalBranchBody, "A refusal branch cannot combine 'acknowledge' and 'produces'.", locationOf(child));
+                reported = true;
+            }
+            const produced = parseProduces(context, child);
+            if (produced !== undefined) produces.push(produced);
+            else reported = true;
+        } else {
+            context.error(DiagnosticCodes.InvalidRefusalBranchBody, "Expected 'acknowledge' or 'produces <Event>' in a refusal branch.", locationOf(child));
+            context.skipBlock(child.indent);
+            reported = true;
+        }
+    }
+    if (!acknowledge && produces.length === 0 && !reported) {
+        context.error(DiagnosticCodes.InvalidRefusalBranchBody, 'A refusal branch must acknowledge or produce an event.', locationOf(line));
+    }
+    return { kind: 'InvocationRefusalSyntax', selector: match[1] ?? 'any', constraint: match[2] ?? null, acknowledge, produces, location: locationOf(line) };
 }
 
 function sourceKey(source: TriggerSourceSyntax): string {
