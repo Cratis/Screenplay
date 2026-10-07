@@ -77,6 +77,7 @@ public class when_freezing_legacy_source_syntax_bytes
             Authorize = module.Authorize is { Requirement: PolicyReferenceSyntax reference } authorize && reference.Name == "IsPerson"
                 ? authorize with { Requirement = reference with { Name = "IsAuthenticated" } }
                 : module.Authorize,
+            Forms = module.Forms?.Select(form => form.Name == "RecordPaymentForm" ? form with { Populate = new FormPopulateFromItemSyntax(form.Location) } : form),
             Features = module.Features.Select(feature => feature.Name == "InvoiceManagement" ? feature with
             {
                 Slices = feature.Slices.Where(slice => slice.Name != "StartInvoiceDraft").Select(slice => slice.Name switch
@@ -96,7 +97,7 @@ public class when_freezing_legacy_source_syntax_bytes
             {
                 Slices = feature.Slices.Select(slice => slice with
                 {
-                    Screens = slice.Screens.Select(screen => screen with { Directives = WithoutSampleInputNavigation(screen.Directives) })
+                    Screens = slice.Screens.Select(screen => screen with { Directives = WithoutSampleInputNavigation(RestoreCollectionsToolbar(screen)) })
                 })
             })
         })
@@ -105,17 +106,30 @@ public class when_freezing_legacy_source_syntax_bytes
     // Current shared vectors protect the pre-input click paths. Reconstruct only the historical
     // action-navigation directives and omit the new draft entry point for the frozen legacy sample.
     static IEnumerable<ScreenDirectiveSyntax> WithoutSampleInputNavigation(IEnumerable<ScreenDirectiveSyntax> directives) =>
-        directives.Where(directive => directive is not ScreenSectionSyntax { Name: "startInvoiceDraftInput" }).Select(directive => directive switch
+        directives.Where(directive => directive is not ScreenSectionSyntax { Name: "startInvoiceDraftInput" or "recordDuePaymentInput" or "recordOverduePaymentInput" or "invoiceLineDetailInput" }).Select(directive => directive switch
         {
             ScreenSectionSyntax section when LegacyInputCommand(section.Name) is { } command =>
                 new ScreenActionSyntax(command, section.Name == "registerInvoiceDashboardInput" ? "$strings.invoices.actions.newInvoice" : null, new ScreenNavigateSyntax(command + "Screen", null, section.Location), section.Location),
             ScreenSectionSyntax section => section with { Directives = WithoutSampleInputNavigation(section.Directives) },
+            ScreenTableSyntax { Target: "lineItems" } table => table with { RowClick = new ScreenNavigateSyntax("InvoiceLineDetail", "lineNumber", table.Location) },
             ScreenTemplateReferenceSyntax template => template with
             {
                 Slots = template.Slots.Select(slot => slot with { Directives = WithoutSampleInputNavigation(slot.Directives) })
             },
             _ => directive
         });
+
+    // Payments now start from the due/overdue rows. Restore only the former toolbar for the
+    // frozen baseline; the current vectors protect identity-carrying rows and query population.
+    static IEnumerable<ScreenDirectiveSyntax> RestoreCollectionsToolbar(ScreenSyntax screen) => screen.Name == "CollectionsBoard"
+        ? screen.Directives.Select(directive => directive is ScreenTemplateReferenceSyntax template ? template with
+        {
+            Slots = new[]
+            {
+                new ScreenSlotSyntax("toolbar", [new ScreenActionSyntax("RecordPayment", null, new ScreenNavigateSyntax("RecordPaymentScreen", null, template.Location), template.Location)], template.Location)
+            }.Concat(template.Slots)
+        } : directive)
+        : screen.Directives;
 
     static string? LegacyInputCommand(string section) => section switch
     {

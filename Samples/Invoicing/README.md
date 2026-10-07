@@ -39,7 +39,9 @@ Every slice has Given/When/Then specifications, and every state change and state
 Click sections and row-click links on the lists, details, dashboards and customer portal open the registration, draft, status,
 batch, archive, cancellation, tagging, billing-contact, payment and payment-plan command screens before input
 is supplied. Each command screen issues its own action; action navigation such as returning to `MyInvoices`
-happens only after success, never to the command's own input screen.
+happens only after success, never to the command's own input screen. Row clicks carry `invoiceId` to status,
+tagging, billing-contact, cancellation, payment and payment-plan screens. Payments are opened from the
+balance or due/overdue invoice rows; the payment form loads the balance by that identity.
 `ExchangeRates`, `CreditStatus` and the overdue list on `InvoiceDashboard` are views no event builds: their
 queries' performers read the central bank feed, a credit bureau and stored invoices.
 

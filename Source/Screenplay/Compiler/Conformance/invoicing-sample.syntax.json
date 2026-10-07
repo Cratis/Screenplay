@@ -7491,7 +7491,20 @@
                                       "text": "Change invoice status"
                                     },
                                     {
-                                      "kind": "ScreenBehaviorSyntax"
+                                      "kind": "ScreenTableSyntax",
+                                      "columns": [
+                                        {
+                                          "kind": "ScreenColumnSyntax",
+                                          "label": "$strings.invoices.fields.number",
+                                          "property": "invoiceNumber"
+                                        }
+                                      ],
+                                      "rowClick": {
+                                        "kind": "ScreenNavigateSyntax",
+                                        "by": "invoiceId",
+                                        "screen": "ChangeInvoiceStatusScreen"
+                                      },
+                                      "target": "InvoiceDetailsReadModel"
                                     }
                                   ],
                                   "name": "changeInvoiceStatusInput"
@@ -7530,7 +7543,20 @@
                                       "text": "Tag invoice"
                                     },
                                     {
-                                      "kind": "ScreenBehaviorSyntax"
+                                      "kind": "ScreenTableSyntax",
+                                      "columns": [
+                                        {
+                                          "kind": "ScreenColumnSyntax",
+                                          "label": "$strings.invoices.fields.number",
+                                          "property": "invoiceNumber"
+                                        }
+                                      ],
+                                      "rowClick": {
+                                        "kind": "ScreenNavigateSyntax",
+                                        "by": "invoiceId",
+                                        "screen": "TagInvoiceScreen"
+                                      },
+                                      "target": "InvoiceDetailsReadModel"
                                     }
                                   ],
                                   "name": "tagInvoiceInput"
@@ -7543,7 +7569,20 @@
                                       "text": "Billing contact"
                                     },
                                     {
-                                      "kind": "ScreenBehaviorSyntax"
+                                      "kind": "ScreenTableSyntax",
+                                      "columns": [
+                                        {
+                                          "kind": "ScreenColumnSyntax",
+                                          "label": "$strings.invoices.fields.number",
+                                          "property": "invoiceNumber"
+                                        }
+                                      ],
+                                      "rowClick": {
+                                        "kind": "ScreenNavigateSyntax",
+                                        "by": "invoiceId",
+                                        "screen": "UpdateBillingContactScreen"
+                                      },
+                                      "target": "InvoiceDetailsReadModel"
                                     }
                                   ],
                                   "name": "updateBillingContactInput"
@@ -7584,12 +7623,34 @@
                                       "property": "subtotal"
                                     }
                                   ],
-                                  "rowClick": {
-                                    "kind": "ScreenNavigateSyntax",
-                                    "by": "lineNumber",
-                                    "screen": "InvoiceLineDetail"
-                                  },
+                                  "rowClick": null,
                                   "target": "lineItems"
+                                },
+                                {
+                                  "kind": "ScreenSectionSyntax",
+                                  "directives": [
+                                    {
+                                      "kind": "ScreenTitleSyntax",
+                                      "text": "Line item details"
+                                    },
+                                    {
+                                      "kind": "ScreenTableSyntax",
+                                      "columns": [
+                                        {
+                                          "kind": "ScreenColumnSyntax",
+                                          "label": "$strings.invoices.fields.number",
+                                          "property": "invoiceNumber"
+                                        }
+                                      ],
+                                      "rowClick": {
+                                        "kind": "ScreenNavigateSyntax",
+                                        "by": "invoiceId",
+                                        "screen": "InvoiceLineDetail"
+                                      },
+                                      "target": "InvoiceDetailsReadModel"
+                                    }
+                                  ],
+                                  "name": "invoiceLineDetailInput"
                                 }
                               ],
                               "name": "lineItems"
@@ -9850,7 +9911,20 @@
                               "text": "Record payment"
                             },
                             {
-                              "kind": "ScreenBehaviorSyntax"
+                              "kind": "ScreenTableSyntax",
+                              "columns": [
+                                {
+                                  "kind": "ScreenColumnSyntax",
+                                  "label": "Outstanding",
+                                  "property": "outstanding"
+                                }
+                              ],
+                              "rowClick": {
+                                "kind": "ScreenNavigateSyntax",
+                                "by": "invoiceId",
+                                "screen": "RecordPaymentScreen"
+                              },
+                              "target": "InvoiceBalanceReadModel"
                             }
                           ],
                           "name": "recordPaymentInput"
@@ -10673,25 +10747,6 @@
                           "kind": "ScreenSlotSyntax",
                           "directives": [
                             {
-                              "kind": "ScreenSectionSyntax",
-                              "directives": [
-                                {
-                                  "kind": "ScreenTitleSyntax",
-                                  "text": "Record payment"
-                                },
-                                {
-                                  "kind": "ScreenBehaviorSyntax"
-                                }
-                              ],
-                              "name": "recordPaymentInput"
-                            }
-                          ],
-                          "name": "toolbar"
-                        },
-                        {
-                          "kind": "ScreenSlotSyntax",
-                          "directives": [
-                            {
                               "kind": "ScreenDataSyntax",
                               "by": null,
                               "query": "ListDueInvoices",
@@ -10722,6 +10777,32 @@
                                 "screen": "InvoiceDetails"
                               },
                               "target": "DueInvoice"
+                            },
+                            {
+                              "kind": "ScreenSectionSyntax",
+                              "directives": [
+                                {
+                                  "kind": "ScreenTitleSyntax",
+                                  "text": "Record payment"
+                                },
+                                {
+                                  "kind": "ScreenTableSyntax",
+                                  "columns": [
+                                    {
+                                      "kind": "ScreenColumnSyntax",
+                                      "label": "Invoice",
+                                      "property": "invoiceId"
+                                    }
+                                  ],
+                                  "rowClick": {
+                                    "kind": "ScreenNavigateSyntax",
+                                    "by": "invoiceId",
+                                    "screen": "RecordPaymentScreen"
+                                  },
+                                  "target": "DueInvoice"
+                                }
+                              ],
+                              "name": "recordDuePaymentInput"
                             }
                           ],
                           "name": "due"
@@ -10760,6 +10841,32 @@
                                 "screen": "InvoiceDetails"
                               },
                               "target": "OverdueInvoice"
+                            },
+                            {
+                              "kind": "ScreenSectionSyntax",
+                              "directives": [
+                                {
+                                  "kind": "ScreenTitleSyntax",
+                                  "text": "Record payment"
+                                },
+                                {
+                                  "kind": "ScreenTableSyntax",
+                                  "columns": [
+                                    {
+                                      "kind": "ScreenColumnSyntax",
+                                      "label": "Invoice",
+                                      "property": "invoiceId"
+                                    }
+                                  ],
+                                  "rowClick": {
+                                    "kind": "ScreenNavigateSyntax",
+                                    "by": "invoiceId",
+                                    "screen": "RecordPaymentScreen"
+                                  },
+                                  "target": "OverdueInvoice"
+                                }
+                              ],
+                              "name": "recordOverduePaymentInput"
                             }
                           ],
                           "name": "overdue"
@@ -12192,7 +12299,20 @@
                           "text": "Pay in installments"
                         },
                         {
-                          "kind": "ScreenBehaviorSyntax"
+                          "kind": "ScreenTableSyntax",
+                          "columns": [
+                            {
+                              "kind": "ScreenColumnSyntax",
+                              "label": "Invoice",
+                              "property": "invoiceNumber"
+                            }
+                          ],
+                          "rowClick": {
+                            "kind": "ScreenNavigateSyntax",
+                            "by": "invoiceId",
+                            "screen": "RequestPaymentPlanScreen"
+                          },
+                          "target": "CustomerInvoiceReadModel"
                         }
                       ],
                       "name": "requestPaymentPlanInput"

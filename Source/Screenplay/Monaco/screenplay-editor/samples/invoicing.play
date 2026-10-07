@@ -455,7 +455,7 @@ module Invoicing
     field note   label "Note"
 
   form RecordPaymentForm for RecordPayment
-    populate from item
+    populate via query GetInvoiceBalance by invoiceId
     field amount label "Amount received"
     field method label "Payment method"
 
@@ -1446,8 +1446,9 @@ module Invoicing
               title "Actions"
               section changeInvoiceStatusInput
                 title "Change invoice status"
-                on click
-                  navigate to ChangeInvoiceStatusScreen
+                table InvoiceDetailsReadModel
+                  column invoiceNumber label $strings.invoices.fields.number
+                  on row-click navigate to ChangeInvoiceStatusScreen by invoiceId
               section cancelInvoiceInput
                 title $strings.invoices.actions.cancel
                 table InvoiceDetailsReadModel
@@ -1455,12 +1456,14 @@ module Invoicing
                   on row-click navigate to CancelInvoiceScreen by invoiceId
               section tagInvoiceInput
                 title "Tag invoice"
-                on click
-                  navigate to TagInvoiceScreen
+                table InvoiceDetailsReadModel
+                  column invoiceNumber label $strings.invoices.fields.number
+                  on row-click navigate to TagInvoiceScreen by invoiceId
               section updateBillingContactInput
                 title "Billing contact"
-                on click
-                  navigate to UpdateBillingContactScreen
+                table InvoiceDetailsReadModel
+                  column invoiceNumber label $strings.invoices.fields.number
+                  on row-click navigate to UpdateBillingContactScreen by invoiceId
           main
             section lineItems
               table lineItems
@@ -1468,7 +1471,11 @@ module Invoicing
                 column quantity   label "Qty"
                 column unitPrice  label "Unit Price"
                 column subtotal   label "Subtotal"
-                on row-click navigate to InvoiceLineDetail by lineNumber
+              section invoiceLineDetailInput
+                title "Line item details"
+                table InvoiceDetailsReadModel
+                  column invoiceNumber label $strings.invoices.fields.number
+                  on row-click navigate to InvoiceLineDetail by invoiceId
             section help
               ```html
               <p class="hint">Line items become read-only once an invoice is paid.</p>
@@ -2059,8 +2066,9 @@ module Invoicing
             field outstanding label "Outstanding"
           section recordPaymentInput
             title "Record payment"
-            on click
-              navigate to RecordPaymentScreen
+            table InvoiceBalanceReadModel
+              column outstanding label "Outstanding"
+              on row-click navigate to RecordPaymentScreen by invoiceId
 
       specification ReducingTheBalanceByAPayment
         given caller
@@ -2201,23 +2209,28 @@ module Invoicing
       screen CollectionsBoard
         title $strings.collections.title
         template Board
-          toolbar
-            section recordPaymentInput
-              title "Record payment"
-              on click
-                navigate to RecordPaymentScreen
           due
             data DueInvoice[] via query ListDueInvoices
             table DueInvoice
               column invoiceId label "Invoice"
               column sentAt    label "Sent"
               on row-click navigate to InvoiceDetails by invoiceId
+            section recordDuePaymentInput
+              title "Record payment"
+              table DueInvoice
+                column invoiceId label "Invoice"
+                on row-click navigate to RecordPaymentScreen by invoiceId
           overdue
             data OverdueInvoice[] via query ListOverdueInvoices
             table OverdueInvoice
               column invoiceId label "Invoice"
               column reminders label "Reminders"
               on row-click navigate to InvoiceDetails by invoiceId
+            section recordOverduePaymentInput
+              title "Record payment"
+              table OverdueInvoice
+                column invoiceId label "Invoice"
+                on row-click navigate to RecordPaymentScreen by invoiceId
           settled
             data SettledInvoice[] via query ListSettledInvoices
             table SettledInvoice
@@ -2470,8 +2483,9 @@ module Invoicing
           column status        label "Status"
         section requestPaymentPlanInput
           title "Pay in installments"
-          on click
-            navigate to RequestPaymentPlanScreen
+          table CustomerInvoiceReadModel
+            column invoiceNumber label "Invoice"
+            on row-click navigate to RequestPaymentPlanScreen by invoiceId
         on event InvoiceMarkedOverdue
           notify warning $strings.portal.overdueNotice
 
