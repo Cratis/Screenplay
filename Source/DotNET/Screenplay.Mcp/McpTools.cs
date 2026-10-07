@@ -82,13 +82,13 @@ sealed class McpTools
         {
             var unknown = name == "apply" ? "ApplyOutcomeUnknown" : "RequestFailed";
             return McpJson.ToolResult(
-                new
+                _workspaces.WithRootBindingConflict(new
                 {
                     success = false,
                     error = exception.GetType().Name,
                     message = exception.Message,
                     failureKind = exception switch { McpFailure failure => failure.FailureKind, InvalidSyntaxJson => nameof(InvalidSyntaxJson), _ => unknown }
-                },
+                }),
                 true);
         }
     }

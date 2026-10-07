@@ -44,9 +44,20 @@ checks reject symbolic links and reparse points before checking state presence.
 With several state directories on that path, the one nearest the offered project
 wins. `open-workspace` and the `workspace-state` status view report
 `rootBindingConflict` with `kind: "WorkspaceRootConflict"`, `boundRoot`, ordered
-`stateRoots` (nearest the offered root first), and an explanatory `message`.
-No identities or recovery journals are migrated; inspect competing workspaces
-using explicit paths before deciding which to keep. Explicit paths and roots
+`stateRoots` (nearest the offered root first), `pendingRoots` (state roots holding
+`pending.json`, in the same order), and an explanatory `message`. The field is
+omitted when there is no conflict. Failed tool responses also carry the conflict,
+and their error message names the bound root and competing state roots.
+A pending journal at any state root on the discovered path refuses opening,
+proposals and apply at the bound root, including a journal created after opening
+or proposing. `workspace-state` remains available to inspect the conflict. For a
+competing root's recovery, first call `open-workspace` with that root's explicit
+`path` (opening still returns `PendingOperation`), inspect `workspace-state` there,
+then explicitly call `recover-workspace` with its operation ID. A recovery call at
+the outer root cannot recover a nested journal. No identities or recovery journals
+are migrated, and no fallback folder is created when existing state selects a root.
+Inspect competing workspaces using explicit paths before deciding which to keep.
+Explicit paths and roots
 fixed at startup, including `.cratis/ai.json` configuration, are unchanged.
 
 Only `apply` and `recover-workspace` mutate files. Keep client approval enabled
