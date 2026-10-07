@@ -359,13 +359,36 @@ not silently replaced.
 ## Change the layout
 
 Call `recommend-layout` for advice, then `expand-layout` with `layout` set to
-`single`, `module`, `feature` or `slice`. Use the current revisions and explicit
-formatting consent. For full-language models, set `validation: "Authoring"`.
+`single`, `module`, `feature` or `slice` (the default). Use the current revisions and
+explicit formatting consent. For full-language models, set `validation: "Authoring"`.
+
+The existing layout values also select how finely to split the model:
+
+| Layout | Files |
+| --- | --- |
+| `single` | One self-contained `application.play`, with file imports inlined. |
+| `module` | `application.play` imports `<Module>/<Module>.play`; each module file holds its features and slices. |
+| `feature` | Module files import feature barrels; each feature file holds its slices and imports its nested features. |
+| `slice` | Feature barrels additionally import `<Slice>/<Slice>.play`; each slice file contains only its slice, with no `module` or `feature` restatement. |
+
+Split layouts use quoted imports instead of the older merge-only scope
+restatements. Parameters and destination paths are unchanged: use `layout: "slice"`
+for one file per slice, not a separate flag. Each parent imports its children
+explicitly in declaration order rather than relying on alphabetical glob expansion.
+The Commerce sample shows the same barrel idea with flat slice files. The generated
+layout puts slices in `<Feature>/<Slice>/<Slice>.play` and inlines shared imports into
+`application.play`. TimeTracking demonstrates inline feature barrels in module files.
+Validate the whole folder or the generated `application.play`, not a slice fragment
+in isolation. There is no CLI `expand-layout` command; expansion is a reviewable MCP
+proposal.
 
 Review and apply the resulting proposal exactly like a node edit. Reorganization
 normalizes source formatting and checks structural equivalence; it keeps annotations
 such as `// @public` beside the declaration they describe, even when a declaration
-moves to a new document. The `dropped-comments` view compares comments across the
+moves to a new document. Existing file imports are replaced by the new composition;
+comments attached to those old imports are retained in their owning scope. Semantic
+and event identities must pass the same continuity checks as any other proposal.
+The `dropped-comments` view compares comments across the
 whole plan, not just documents changed in place. Expansion does not copy module
 forms or contributions into scaffolding. The read tools continue to see
 one logical application regardless of the chosen layout.

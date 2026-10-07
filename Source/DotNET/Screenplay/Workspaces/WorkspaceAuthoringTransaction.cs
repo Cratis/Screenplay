@@ -110,7 +110,7 @@ sealed class WorkspaceAuthoringTransaction(
     WorkspaceAuthoringResult ProposeCore(WorkspaceAuthoringRequest request)
     {
         var index = WorkspaceSyntaxIndex.Create(workspace);
-        var edits = new WorkspaceAstEdits(index);
+        var edits = new WorkspaceAstEdits(index, request.RelocatesCompositionComments);
         if (request.Operations.OfType<MigrateOptionalTypeSpelling>().Any(operation => operation.Target is null || operation.Expected is null))
         {
             throw new InvalidWorkspaceAuthoring("Optionality migrations require a target and expected type.");
