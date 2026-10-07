@@ -155,6 +155,8 @@ public sealed partial class SemanticModelBinder
                 }
             }
 
+            WarnAboutUnknownNegatedTargets(policy, properties, commandName, reference.Location);
+
             return new SemanticPolicyReference(reference.Name);
         }
 

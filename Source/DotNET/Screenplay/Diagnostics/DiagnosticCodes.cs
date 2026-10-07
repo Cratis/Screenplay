@@ -2309,4 +2309,9 @@ public static class DiagnosticCodes
 
     /// <summary>A personally identifiable concept is used as an event source identifier.</summary>
     public const string PiiNotSupportedOnIdentifier = "PLAY0515";
+
+    /// <summary>
+    /// A negated claim comparison uses a target that can be absent, null, or is not a string type.
+    /// </summary>
+    public const string IndeterminateNegatedClaimTarget = "PLAY0546";
 }
