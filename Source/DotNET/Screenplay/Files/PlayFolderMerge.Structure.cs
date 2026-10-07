@@ -113,8 +113,10 @@ internal static partial class PlayFolderMerge
     static AuthorizeSyntax? CombineAuthorization(IEnumerable<AuthorizeSyntax?> declarations, string owner, ParserContext context)
     {
         var kept = new List<AuthorizeSyntax>();
+        var comments = new List<SourceComment>();
         foreach (var authorization in declarations.OfType<AuthorizeSyntax>())
         {
+            comments.AddRange(authorization.SourceComments);
             var first = kept.Find(earlier =>
                 !string.Equals(earlier.Location.Path, authorization.Location.Path, StringComparison.Ordinal) &&
                 SyntaxJson.StructurallyEqual(earlier, authorization));
@@ -143,7 +145,7 @@ internal static partial class PlayFolderMerge
 
         // Keep source metadata on the merged gate: layout collapse may remove every document
         // that could otherwise restore its authorization comments during an authoring edit.
-        return kept[0] with { Requirement = requirement, SourceComments = [.. kept.SelectMany(authorization => authorization.SourceComments)] };
+        return kept[0] with { Requirement = requirement, SourceComments = [.. comments] };
     }
 
     /// <summary>

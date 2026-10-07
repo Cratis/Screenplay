@@ -96,6 +96,9 @@ a file does:
   lines keep their own lines: directly above the retained line for `file`, `by`, `handler` and
   projection `parent`, and at the start of the declaration body otherwise. They are never merged
   into the declaration's header comment.
+  When modules or features repeat an identical `authorize` gate across files, merging
+  keeps one requirement and the duplicate-gate warning. Printing and collapsing the
+  folder to a single document retain every gate's comments, including repeated text.
   Repeated projection `automap` settings warn (`PLAY0452`):
   the last setting wins, but printing keeps each authored line and its comments until
   a typed edit changes the mode. Then only the edited setting prints: its comment
