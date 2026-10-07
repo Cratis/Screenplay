@@ -72,6 +72,24 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
 
     static IEnumerable<string> Feature(bool present, string feature) => present ? [feature] : [];
 
+    static bool ReactionRefusals(SyntaxNode node)
+    {
+        var walker = new RefusalReadinessWalker();
+        switch (node)
+        {
+            case ApplicationSyntax application: walker.VisitApplication(application); break;
+            case SliceSyntax slice: walker.VisitSlice(slice); break;
+            case ReactionSyntax reaction: walker.VisitReaction(reaction); break;
+            case ReactionTriggerSyntax trigger: walker.VisitReactionTrigger(trigger); break;
+            case InvokesSyntax invocation: walker.VisitInvokes(invocation); break;
+            case CommandSyntax command: walker.VisitCommand(command); break;
+            case SpecificationSyntax specification: walker.VisitSpecification(specification); break;
+            default: walker.VisitNode(node); break;
+        }
+
+        return walker.Unadmitted;
+    }
+
     bool GeneratedConceptRules(CommandSyntax command) => command.Properties
         .Where(property => property.IsGenerated)
         .SelectMany(property => application.Concepts.Where(concept => concept.Name == property.Type.Name))
@@ -96,7 +114,8 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
             _ => []
         };
 
-        return [.. LocalFeatures().Concat(Feature(Operations(node), "operations and systems (#301)"))
+        return [.. LocalFeatures().Concat(Feature(ReactionRefusals(node), "reaction refusal handling and redelivery (#433)"))
+            .Concat(Feature(Operations(node), "operations and systems (#301)"))
             .Concat(Feature(application.SourceOptions.NumericMode == NumericMode.Exact, "exact numbers (#285)"))
             .Distinct(StringComparer.Ordinal)
             .OrderBy(feature => feature switch
@@ -148,5 +167,15 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
         _operations[node] = result;
 
         return result;
+    }
+
+    sealed class RefusalReadinessWalker : ScreenplaySyntaxWalker
+    {
+        internal bool Unadmitted { get; private set; }
+
+        public override void VisitNode(SyntaxNode node)
+        {
+            if (node is InvocationRefusalSyntax or RefusalExpressionSyntax or SpecificationRedeliverySyntax) Unadmitted = true;
+        }
     }
 }
