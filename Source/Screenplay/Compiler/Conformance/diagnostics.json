@@ -296,7 +296,7 @@
             "name": "Declared dependencies accept native next-line whitespace",
             "validate": true,
             "source": ["module Consumer", "  depends on\u0085Target", "module Target"],
-            "diagnostics": []
+            "diagnostics": ["PLAY0553@2"]
         },
         {
             "name": "Declared dependencies reject byte-order-mark whitespace",
@@ -312,7 +312,7 @@
             "name": "Restated modules and features are one dependency target per address",
             "validate": true,
             "source": ["module Consumer", "  depends on A", "  depends on A.Shared", "module A", "  feature Shared", "  feature Shared", "module A", "  feature Shared"],
-            "diagnostics": []
+            "diagnostics": ["PLAY0553@2", "PLAY0553@3"]
         },
         {
             "name": "Declared dependency invalid targets are warnings",
@@ -324,7 +324,7 @@
             "name": "Declared dependencies keep identical resolved aliases once",
             "validate": true,
             "source": ["module Payroll", "  feature Handover", "    depends on Runs", "    depends on Payroll.Runs", "    depends on Runs", "  feature Runs"],
-            "diagnostics": ["PLAY0555@5", "PLAY0555@4"]
+            "diagnostics": ["PLAY0555@5", "PLAY0555@4", "PLAY0553@3"]
         },
         {
             "name": "Declared dependencies warn on unresolved text repeats once per repeat",
@@ -348,7 +348,7 @@
             "name": "Declared dependency targets follow sibling shadowing and ancestor siblings",
             "validate": true,
             "source": ["module Payroll", "  feature Handover", "    feature Nested", "      depends on Runs", "      depends on Timesheets.Approval", "  feature Runs", "module Runs", "module Timesheets", "  feature Approval"],
-            "diagnostics": []
+            "diagnostics": ["PLAY0553@4", "PLAY0553@5"]
         },
         {
             "name": "Depends requires on and exactly one dotted identifier",

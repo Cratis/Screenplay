@@ -479,7 +479,7 @@ remove duplicate route headers before export.
 |---|---|---|
 | `PLAY0196` | Warning | A screen binds data to a query nothing in scope declares. |
 | `PLAY0197` | Warning | A screen navigates to a screen nothing in scope declares. |
-| `PLAY0198` | Warning | A bare name matches more than one declaration at the same depth, or a qualified name matches more than one trailing container path, so which one it means is undecided. See [declared dependency targets](#declared-dependency-targets). |
+| `PLAY0198` | Warning | A bare name matches more than one declaration at the same depth, or a qualified name matches more than one trailing container path, so which one it means is undecided. See [declared dependency targets](#declared-dependencies). |
 
 ### What a query's results are narrowed to
 
@@ -996,10 +996,13 @@ These are syntax diagnostics. A valid system, operation or operation specificati
 
 See [Timeline diagnostics](imports.md#timeline-diagnostics) for the ordering root, grouping rules, checked references and C#/MCP repair conditions. `PLAY0516` offers verified typed moves or explicit pins before a retained glob where safe; `PLAY0517` and own-sub-feature findings have no repair. These findings and repairs do not change executable behavior.
 
-### Declared dependency targets
+### Declared dependencies
 
 | Code | Severity | Reported when |
 | --- | --- | --- |
+| `PLAY0552` | Warning | An opted-in container has uncovered counted references into a producer module. One finding per container and producer module, at the container header, with source evidence. If the producers' shared container is an invalid ancestor target, the finding lists their outermost covering-eligible features instead. |
+| `PLAY0553` | Information | A valid declaration has no counted explicit reference, including provisional ambiguous coverage. Reported at the declaration. |
+| `PLAY0556` | Information | Two containers declare each other. Reported on each declaring line. |
 | `PLAY0554` | Warning | A `depends on` target is self, an ancestor, a descendant, or does not resolve to a module or feature. |
 | `PLAY0555` | Warning | The same target is declared again on a container, in one file or across files. Resolved aliases count as repeats; unresolved targets compare by text. The first is kept. |
 

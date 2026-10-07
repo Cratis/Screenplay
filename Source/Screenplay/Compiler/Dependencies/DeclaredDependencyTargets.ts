@@ -45,10 +45,12 @@ export function validateDependencyDeclarations(application: ApplicationSyntax, c
     if (!hasDependencies) return application;
     containers = [...new Map(containers.map(container => [addressOf(container), container])).values()];
 
+    const seenByOwner = new Map<string, Set<string>>();
     const keep = (dependencies: readonly DependsOnSyntax[], from: readonly string[]): DependsOnSyntax[] => {
-        const seen = new Set<string>();
         const kept: DependsOnSyntax[] = [];
         const owner = from.join('.');
+        if (!seenByOwner.has(owner)) seenByOwner.set(owner, new Set());
+        const seen = seenByOwner.get(owner)!;
         for (const dependency of dependencies) {
             const resolution = DeclaredDependencyTargets.resolve(dependency.target, from, containers);
             const target = resolution.resolved === undefined ? undefined : addressOf(resolution.resolved);

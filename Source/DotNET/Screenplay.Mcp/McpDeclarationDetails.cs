@@ -107,6 +107,8 @@ static class McpDeclarationDetails
                 },
                 arguments,
                 snapshot.SourceRevision),
+            "dependencies" when declaration.Syntax is ModuleSyntax module => McpPaging.Page(module.DependsOn, arguments, snapshot.SourceRevision),
+            "dependencies" when declaration.Syntax is FeatureSyntax feature => McpPaging.Page(feature.DependsOn, arguments, snapshot.SourceRevision),
             "streams" when declaration.Syntax is EventSourceSyntax source => McpPaging.Page(source.Streams, arguments, snapshot.SourceRevision),
             "route" when declaration.Syntax is CommandSyntax routed => new { authoredRoute = routed.Stream, ambiguousStreamCandidates = routed.StreamCandidates, executionAvailable = false, executionReadiness = readiness.ExecutionReadiness(routed) },
             "response" when declaration.Syntax is CommandSyntax responseOwner => Response(responseOwner, readiness),
@@ -150,6 +152,7 @@ static class McpDeclarationDetails
 
     static IEnumerable<string> Views(SyntaxNode node) => node switch
     {
+        ModuleSyntax or FeatureSyntax => ["summary", "dependencies", "occurrences", "syntax"],
         SliceSyntax => ["summary", "occurrences", "commands", "specifications", "syntax"],
         CommandSyntax => ["summary", "properties", "occurrences", "produces", "response", "route", "syntax"],
         EventSourceSyntax => ["summary", "streams", "occurrences", "syntax"],

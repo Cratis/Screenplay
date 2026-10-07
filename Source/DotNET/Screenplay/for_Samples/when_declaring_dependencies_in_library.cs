@@ -25,8 +25,8 @@ public class when_declaring_dependencies_in_library : Specification
         const string path = "Samples/Library/library.play";
         var declaredSource = source.Replace("  feature Loans", "  feature Loans\n    depends on Catalog\n    depends on Members", StringComparison.Ordinal);
         var compiler = new ScreenplayCompiler();
-        var baselineSyntax = compiler.Parse(source, path);
-        var declaredSyntax = compiler.Parse(declaredSource, path);
+        var baselineSyntax = compiler.Compile(source);
+        var declaredSyntax = compiler.Compile(declaredSource);
         var changed = declaredSyntax.Value!;
         _targets = [.. changed.Modules.SelectMany(module => module.Features).Single(feature => feature.Name == "Loans").DependsOn.Select(dependency => dependency.Target)];
         _beforeDiagnostics = baselineSyntax.Diagnostics.Select(diagnostic => (diagnostic.Code, diagnostic.Message));
@@ -37,6 +37,7 @@ public class when_declaring_dependencies_in_library : Specification
         var binder = new SemanticModelBinder();
         var baseline = binder.Bind("Library", baselineSyntax.Value!, baselineDocuments);
         var declared = binder.Bind("Library", changed, declaredDocuments);
+
         // Library does not bind today: preserve its dispositions and compare parsed syntax modulo metadata.
         _baselineBinds = baseline.Success;
         _beforeBindingDiagnostics = baseline.Diagnostics.Select(diagnostic => (diagnostic.Code, diagnostic.Message));
@@ -51,9 +52,10 @@ public class when_declaring_dependencies_in_library : Specification
         };
     }
 
-    [Fact] void should_parse_the_added_declarations() => _targets.ShouldEqual(new[] { "Catalog", "Members" });
+    [Fact] void should_parse_the_added_declarations() => _targets.ShouldEqual(["Catalog", "Members"]);
     [Fact] void should_preserve_sample_syntax_modulo_the_authoring_declarations() => SyntaxJson.StructurallyEqual(_before, _after).ShouldBeTrue();
-    [Fact] void should_add_no_parser_diagnostics_for_valid_sibling_targets() => _afterDiagnostics.ShouldEqual(_beforeDiagnostics);
+    [Fact] void should_preserve_existing_compiled_diagnostics() => _afterDiagnostics.Where(diagnostic => diagnostic.Code != "PLAY0553").ShouldEqual(_beforeDiagnostics);
+    [Fact] void should_report_the_unused_members_declaration() => _afterDiagnostics.Where(diagnostic => diagnostic.Code == "PLAY0553").Select(diagnostic => diagnostic.Message).ShouldContainOnly("Dependency 'Members' on 'Lending.Loans' is not used by any counted explicit reference");
     [Fact] void should_preserve_the_existing_binding_failure() => _baselineBinds.ShouldBeFalse();
     [Fact] void should_preserve_binding_diagnostics() => _afterBindingDiagnostics.ShouldEqual(_beforeBindingDiagnostics);
 

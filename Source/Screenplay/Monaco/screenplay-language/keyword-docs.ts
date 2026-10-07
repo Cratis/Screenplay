@@ -22,6 +22,7 @@ export const keywordDocs: Record<string, string> = {
     authentication: 'Declares the identity providers of the application — at most one block per file.',
     provider: 'A named identity provider within `authentication`, with free-form `name value` settings.',
     description: 'A human-readable description of a module, feature, slice, persona, or command — the first body line, as a quoted single line or a fenced ```text block for multiple lines.',
+    depends: 'Declares `depends on <Name>` on a module or feature. This opts only that container into checking counted explicit references against its own declarations; it does not change executable bytes.',
     module: 'The top-level namespace — maps to a bounded context.',
     layout: 'A reusable screen template with named slots.',
     template: 'Declares the named slots of a layout.',

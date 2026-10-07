@@ -15,8 +15,8 @@ const offered = (text: string): string[] => {
 const scopes: Record<string, [string, string[]]> = {
     'the root': ['', ['authentication', 'behavior', 'concept', 'concept (@pii with reason)', 'concept (enum)', 'domain', 'eventsource', 'import', 'import "…"', 'layout', 'module', 'persona', 'policy', 'seed', 'system', 'theme', 'trigger', 'type', 'ui profile']],
     'a domain': ['domain Catalog\n  ', ['authentication', 'behavior', 'concept', 'concept (@pii with reason)', 'concept (enum)', 'eventsource', 'import', 'import "…"', 'layout', 'module', 'persona', 'policy', 'seed', 'system', 'theme', 'trigger', 'type', 'ui profile']],
-    'a module': ['module M\n  ', ['authorize', 'contribute', 'description', 'dialog template', 'feature', 'form', 'import "…"', 'on', 'screen', 'screen template', 'uses']],
-    'a feature': ['module M\n  feature F\n    ', ['authorize', 'contribute', 'description', 'feature', 'import "…"', 'on', 'slice Automation', 'slice StateChange', 'slice StateView', 'slice Translate', 'uses']],
+    'a module': ['module M\n  ', ['authorize', 'contribute', 'depends on', 'description', 'dialog template', 'feature', 'form', 'import "…"', 'on', 'screen', 'screen template', 'uses']],
+    'a feature': ['module M\n  feature F\n    ', ['authorize', 'contribute', 'depends on', 'description', 'feature', 'import "…"', 'on', 'slice Automation', 'slice StateChange', 'slice StateView', 'slice Translate', 'uses']],
     'a state change slice': ['module M\n  feature F\n    slice StateChange S\n      ', ['command', 'constraint', 'event', 'event generation', 'file', 'operation', 'screen', 'specification']],
     'a state view slice': ['module M\n  feature F\n    slice StateView S\n      ', ['event', 'event generation', 'file', 'projection', 'query', 'query observable', 'readmodel', 'reducer', 'screen', 'specification']],
     'an automation slice': ['module M\n  feature F\n    slice Automation S\n      ', ['command', 'event', 'event generation', 'file', 'operation', 'reaction', 'readmodel', 'reducer', 'specification']],
