@@ -81,6 +81,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | `reaction` with `when` an event, `Startup`, a declared trigger; `every`; `at`, `at … on Monday`, `at … on day 1`; trigger values, `reads`, `produces`, `invokes`, `where`, inline and `file` bodies | Automation and Translate slices |
 | `capture` with `source`, `key`, `map`/`translate`/`split`/templates, `append` with `tag` and every `when` form, `children`, `nested` | LegacyInvoiceSync |
 | `specification` with `file`, `given caller`, `given clock`, `given <Event> for`, `given readmodel`, `given capture`, `when <Command> for`, `when append`, `when clock`, `when trigger`, `when capture`, `when query`, `then events in any order`, `then <Event> for`, `then readmodel exactly`, `then no readmodel`, `then query` with `arguments`/`result`, `then result exactly`, `then no result`, `then error` with and without a message, `then denied` | throughout |
+| `example` with structured values, indented and inline overrides | RegisterInvoice: `AcmeInvoice` supplies repeated command inputs without hiding the caller or outcome |
 | `seed` - two blocks | bottom of the file |
 
 `IsAuthenticated` requires only authentication. The module's `IsPerson` policy also excludes the `Service` role and an `actorKind` claim matching `service`. `RejectingAServiceRegisteringAnInvoice` demonstrates a denial even when that service holds the `InvoiceManager` role.

@@ -4,6 +4,7 @@
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -28,6 +29,8 @@ internal static class ScreenplayValidator
     public static void Validate(ApplicationSyntax application, ParserContext context, bool allowUnresolvedPersonaPolicies = false)
     {
         foreach (var error in SourceNumericModes.Errors(application)) context.Add(error);
+        var expansion = SpecificationExamples.Expand(application);
+        if (!expansion.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)) application = expansion.Application;
 
         var slices = application.Modules
             .SelectMany(module => module.Features.SelectMany(AllFeatures))
@@ -177,6 +180,7 @@ internal static class ScreenplayValidator
         ValidateThemes(application, context);
         ValidateProfileLayouts(application, context);
         ValidateArrangements(application, context);
+        foreach (var diagnostic in expansion.Diagnostics.Where(diagnostic => !context.Diagnostics.Contains(diagnostic))) context.Add(diagnostic);
     }
 
     /// <summary>

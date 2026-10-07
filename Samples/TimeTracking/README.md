@@ -93,6 +93,7 @@ Samples/TimeTracking/
 - Module and feature gates, a claim-based policy, and personas whose policies decide whose row a screen is drawn on in the event-model board.
 - Templates with `flow` and `freeform` arrangements, forms, `contribute to`, `on enter` and `on click` with `on success` and `on failure`, and named behaviors attached with `uses`. Click navigation opens the engagement, start-week and payroll-run dialogs before their commands run. Row clicks carry `engagementId` to the closure dialog and `timesheetId` to the submission and rejection dialogs. The closure dialog's discovered form collects the reason. Issuing actions and confirmation behaviors live on the dialog screens; action navigation back to a list happens only after success, never to the command's own input dialog.
 - An application `trigger`, reactions driven by events, by the clock and by a trigger, a `where` filter, `invokes`, and a change data `capture`.
+- Typed specification examples: `BillableDay` in `RecordingHours.play` supplies repeated `RecordTime` inputs. Scenarios override hours, date or billing details while retaining their own caller and outcome; no setup or implicit defaults are introduced.
 - Specifications on every slice: `then error`, `then denied`, `given clock`, `when query` with `then result` and `then no result`, `when clock`, `when trigger`, and `given capture` with `when capture`.
 
 ## Verify it

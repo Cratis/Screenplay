@@ -4,6 +4,8 @@
 import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, Diagnostic, EventSourceReadConfidence, OperationSyntax, parsePlacedDocuments, SpecificationSyntax } from '@cratis/screenplay-compiler';
 import { fenceMap, indentOf, withoutComment } from './document-context';
 import { ResponseAnalysis } from './ResponseAnalysis';
+import { ExampleAnalysis } from './ExampleAnalysis';
+import { exampleAnalysis } from './example-analysis';
 import { EventSourceAnalysis } from './EventSourceAnalysis';
 import { AuthoredCommandRoute } from './AuthoredCommandRoute';
 import { AuthoringDocument } from './AuthoringDocument';
@@ -48,7 +50,7 @@ function authoringSource(lines: string[], headers: readonly string[]) {
     return { source, locations };
 }
 
-function analyze(lines: string[], otherSources: readonly (string | AuthoringDocument)[], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis } {
+function analyze(lines: string[], otherSources: readonly (string | AuthoringDocument)[], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis; readonly examples: ExampleAnalysis } {
     const others = otherSources.map((document, index) => typeof document === 'string' ? { path: `other-${index}.play`, source: document } : document).filter(document => document.path !== path);
     const documents: AuthoringDocument[] = [{ path, source: lines.join('\n'), placement, isPlacementResolved }, ...others];
     // Modules/features merge, but slices are real declarations: equal slice names discard later
@@ -226,10 +228,10 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
     }
     const ambiguousCandidates = [...commands.values()].flatMap(command => command.streamCandidates ?? []).filter(candidate => candidate.propertyCandidate !== null);
     const eventSources: EventSourceAnalysis = { declarations: sourceDeclarations, routes, ambiguousCandidates, contexts: sourceContexts, targets, resolve };
-    return { commands, specifications, diagnostics, operationProductionLines, operations, eventSources };
+    return { commands, specifications, diagnostics, operationProductionLines, operations, eventSources, examples: exampleAnalysis(parsed.value, path, lines, range, syntheticScopes, parsed.diagnostics) };
 }
 
-export function responseAnalysis(lines: string[], otherSources: readonly (string | AuthoringDocument)[] = [], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis } {
+export function responseAnalysis(lines: string[], otherSources: readonly (string | AuthoringDocument)[] = [], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis; readonly examples: ExampleAnalysis } {
     const key = JSON.stringify([lines, otherSources, placement, path, isPlacementResolved]);
     let analysis = revisions.get(key);
     if (analysis === undefined) {

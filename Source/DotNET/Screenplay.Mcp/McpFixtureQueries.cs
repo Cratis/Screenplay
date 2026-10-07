@@ -14,9 +14,9 @@ static class McpFixtureQueries
         snapshot.Compilation.Success,
         snapshot.SourceRevision,
         snapshot.Compilation.Diagnostics,
-        coverage = "Specification property assignments and explicit destinations only. Values are syntax, not evaluated expressions. Types resolve only direct fields of an unambiguous local declaration; nested paths, imports and implicit view shapes have no inferred type.",
+        coverage = "Effective specification property assignments and explicit destinations, with authored/example/override origins. Values are syntax, not evaluated expressions. Types resolve only direct fields of an unambiguous local declaration; nested paths, imports and implicit view shapes have no inferred type.",
         page = McpReadPage<McpFixtureValue>.Create(
-            McpFixtureOccurrences.All(snapshot.Index).SelectMany(occurrence => Values(snapshot.Index, occurrence)),
+            McpFixtureOccurrences.All(snapshot.Index, snapshot.Compilation.Value).SelectMany(occurrence => Values(snapshot.Index, occurrence)),
             item => (specification is null || item.Specification.Address == specification) &&
                 (role is null || item.Role == role) && (property is null || item.Property == property) &&
                 (value is null || Convert.ToString(item.Value, CultureInfo.InvariantCulture) == value) &&
@@ -68,7 +68,10 @@ static class McpFixtureQueries
                 McpFixtureTypes.For(index, occurrence, mapping.Property),
                 mapping.Source.GetType().Name,
                 Value(mapping.Source),
-                mapping.Location);
+                mapping.Location,
+                Origin(occurrence, mapping.Property)?.Origin.ToString().ToLowerInvariant() ?? "authored",
+                occurrence.Step?.Example?.Name,
+                Origin(occurrence, mapping.Property)?.OverriddenValue is { } replaced ? Value(replaced) : null);
         }
 
         if (occurrence.For is { } destination)
@@ -83,9 +86,15 @@ static class McpFixtureQueries
                 null,
                 destination.GetType().Name,
                 Value(destination),
-                destination.Location);
+                destination.Location,
+                Origin(occurrence, "for")?.Origin.ToString().ToLowerInvariant() ?? "authored",
+                occurrence.Step?.Example?.Name,
+                Origin(occurrence, "for")?.OverriddenValue is { } replaced ? Value(replaced) : null);
         }
     }
+
+    static EffectiveSpecificationValue? Origin(McpFixtureOccurrence occurrence, string property) =>
+        occurrence.Step?.Values.SingleOrDefault(value => value.Property == (occurrence.Role == "generatedValues" ? "generated " + property : property));
 
     static object? Value(ExpressionSyntax expression) => expression switch
     {

@@ -4,6 +4,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 
@@ -24,15 +25,15 @@ public class when_freezing_legacy_source_syntax_bytes
             var name = document.GetProperty("name").GetString()!;
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "named-rule-intent" || name == "guarded-actions" || name == "no-events") continue;
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "named-rule-intent" || name == "specification-examples" || name == "guarded-actions" || name == "no-events") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
-            // Invoicing is a living sample. Its v7, policy-negation, pre-input navigation and guarded
-            // actions have full shared vectors; project only those additions out of frozen legacy bytes.
+            // Invoicing is a living sample. Its v7, policy-negation, examples, pre-input navigation and
+            // guarded actions have full shared vectors; project only those additions out of frozen legacy bytes.
             var legacy = name switch
             {
-                "invoicing-sample" or "invoicing-editor-sample" => WithoutGuardedSampleAction(WithoutSampleAdditions(parsed)),
+                "invoicing-sample" or "invoicing-editor-sample" => WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(parsed))),
                 "library-sample" => WithoutLibraryForms(parsed),
                 _ => parsed
             };
@@ -65,6 +66,35 @@ public class when_freezing_legacy_source_syntax_bytes
 
         count.ShouldEqual(16);
         Assert.False(initializing, "Review the new protected bytes and rerun without SCREENPLAY_INITIALIZE_LEGACY_SYNTAX_BYTES. Existing baselines are never overwritten.");
+    }
+
+    static ApplicationSyntax WithoutSampleExamples(ApplicationSyntax application)
+    {
+        var expanded = SpecificationExamples.Expand(application);
+        expanded.Diagnostics.ShouldBeEmpty();
+
+        return application with
+        {
+            Modules = application.Modules.Select(module => module with
+            {
+                Features = module.Features.Select(feature => feature with
+                {
+                    Slices = feature.Slices.Select(slice => slice.Name == "RegisterInvoice" ? slice with
+                    {
+                        Examples = [],
+                        Specifications = slice.Specifications.Select(specification => specification.When?.CommandType == "AcmeInvoice" ? specification with
+                        {
+                            When = expanded.Specifications.Single(item => ReferenceEquals(item.Authored, specification)).Effective.When! with
+                            {
+                                CommandType = "RegisterInvoice",
+                                InlineProperty = null,
+                                Values = expanded.Specifications.Single(item => ReferenceEquals(item.Authored, specification)).Effective.When!.Values.OrderBy(value => slice.Commands.Single(command => command.Name == "RegisterInvoice").Properties.Select(property => property.Name).ToList().IndexOf(value.Property))
+                            }
+                        } : specification)
+                    } : slice)
+                })
+            })
+        };
     }
 
     static ApplicationSyntax WithoutSampleAdditions(ApplicationSyntax application) => application with

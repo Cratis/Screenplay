@@ -4,6 +4,7 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
+import { SpecificationExampleSyntax } from '../Syntax/Specifications';
 import { FeatureSyntax, FileImportSyntax, SliceSyntax } from '../Syntax/Structure';
 import { pattern } from '../Text/patterns';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
@@ -12,6 +13,7 @@ import { parseFileImport } from './FileImportParser';
 import { collectInputUses } from './InputUses';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
+import { parseExample } from './SpecificationExampleParser';
 import { parseSlice } from './SliceParser';
 import { locationOf, SourceLine } from './SourceLine';
 
@@ -21,13 +23,14 @@ const featurePattern = pattern('^feature\\s+([A-Za-z_]\\w*)$');
 const opaqueFeatureMembers = new Set(['on', 'uses', 'contribute']);
 
 // What a feature body may hold, as it reads in a diagnostic.
-export const featureBodyExpected = 'description, authorize, import, feature, slice, contribute, \'on <trigger>\' or \'uses <Behavior>\'';
+export const featureBodyExpected = 'description, authorize, import, feature, slice, contribute, example, \'on <trigger>\' or \'uses <Behavior>\'';
 
 // Collects the body of a feature - written beneath a 'feature' header, or at the top level of a file imported
 // into the feature. The port of the C# FeatureBody.
 export class FeatureBody {
     readonly #features: FeatureSyntax[] = [];
     readonly #slices: SliceSyntax[] = [];
+    readonly #examples: SpecificationExampleSyntax[] = [];
     readonly #fileImports: FileImportSyntax[] = [];
     #description: string | null = null;
     #authorize: AuthorizeSyntax | null = null;
@@ -51,6 +54,9 @@ export class FeatureBody {
             case 'feature':
                 this.#features.push(parseFeature(context, line));
                 return true;
+            case 'example':
+                this.#examples.push(parseExample(context, line));
+                return true;
             case 'slice':
                 this.#slices.push(parseSlice(context, line));
                 return true;
@@ -72,6 +78,7 @@ export class FeatureBody {
             authorize: this.#authorize,
             features: this.#features,
             slices: this.#slices,
+            examples: this.#examples,
             fileImports: this.#fileImports,
             isPlacement,
             location,

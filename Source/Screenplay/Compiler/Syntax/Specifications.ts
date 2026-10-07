@@ -8,17 +8,20 @@ import { SourceOptions } from './SourceOptions';
 import { SpecificationOperationFailureSyntax } from './SpecificationOperationFailureSyntax';
 import { SpecificationOperationSyntax } from './SpecificationOperationSyntax';
 import { SpecificationCompensatedSyntax } from './SpecificationCompensatedSyntax';
+import { SpecificationExampleSyntax } from './SpecificationExampleSyntax';
 import { SpecificationRedeliverySyntax } from './SpecificationRedeliverySyntax';
 export type { SpecificationRedeliverySyntax } from './SpecificationRedeliverySyntax';
 
 export type { SpecificationOperationFailureSyntax } from './SpecificationOperationFailureSyntax';
 export type { SpecificationOperationSyntax } from './SpecificationOperationSyntax';
 export type { SpecificationCompensatedSyntax } from './SpecificationCompensatedSyntax';
+export type { SpecificationExampleSyntax } from './SpecificationExampleSyntax';
 
 // 'given <Event>', 'then <Event>' or 'when append <Event>', with the values it states.
 export interface SpecificationEventSyntax extends SyntaxNode {
     readonly kind: 'SpecificationEventSyntax';
     readonly eventType: string;
+    readonly inlineProperty?: string | null;
     readonly values: readonly PropertyMappingSyntax[];
     readonly for: ExpressionSyntax | null;
 }
@@ -27,6 +30,7 @@ export interface SpecificationEventSyntax extends SyntaxNode {
 export interface SpecificationCommandSyntax extends SyntaxNode {
     readonly kind: 'SpecificationCommandSyntax';
     readonly commandType: string;
+    readonly inlineProperty?: string | null;
     readonly generatedValues?: readonly PropertyMappingSyntax[];
     readonly values: readonly PropertyMappingSyntax[];
     readonly for: ExpressionSyntax | null;
@@ -35,6 +39,7 @@ export interface SpecificationCommandSyntax extends SyntaxNode {
 // 'given readmodel <ReadModel>' or 'then readmodel <ReadModel> [exactly]'.
 export interface SpecificationReadModelSyntax extends SyntaxNode {
     readonly kind: 'SpecificationReadModelSyntax';
+    readonly inlineProperty?: string | null;
     readonly name: string;
     readonly properties: readonly PropertyMappingSyntax[];
     readonly exactly: boolean;
@@ -117,6 +122,7 @@ export interface SpecificationCallerClaimSyntax extends SyntaxNode {
 // A specification of a slice.
 export interface SpecificationSyntax extends SyntaxNode {
     readonly kind: 'SpecificationSyntax';
+    readonly examples?: readonly SpecificationExampleSyntax[];
     readonly sourceOptions?: SourceOptions;
     readonly name: string;
     readonly thenAbsentReadModels?: readonly SpecificationAbsentReadModelSyntax[];
