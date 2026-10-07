@@ -47,6 +47,19 @@
     "activationEvents": [],
     "main": "./out/extension.js",
     "contributes": {
+        "configurationDefaults": {
+            "github.copilot.enable": {
+                "screenplay": false
+            },
+            "[screenplay]": {
+                "editor.quickSuggestions": {
+                    "other": true,
+                    "comments": false,
+                    "strings": true
+                },
+                "editor.suggest.showSnippets": true
+            }
+        },
         "languages": [
             {
                 "id": "screenplay",
