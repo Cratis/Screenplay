@@ -155,14 +155,14 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         var index = WorkspaceSyntaxIndex.Create(workspace);
         var target = request.Target is null ? null : index.Find(request.Target);
         var compositeProperty = target?.Node is PropertySyntax && target.Parent is { } parent && index.Find(parent)?.Node is TypeSyntax;
-        if (target is null || (target.Address is null && target.Node is not ConstraintSyntax) || (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or ReactionSyntax or ConstraintSyntax)))
-        {
-            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property, command, event, read model, query, module, feature, slice, reaction, or constraint declaration handle.");
-        }
-
-        if (target.Node is ConstraintSyntax)
+        if (target?.Node is ConstraintSyntax)
         {
             throw new InvalidWorkspaceAuthoring("Constraint names are executable identity: renaming starts an empty constraint index and changes default rejection messages. Safe rename cannot preserve this contract; use explicit coordinated typed edits.");
+        }
+
+        if (target is null || target.Address is null || (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or ReactionSyntax)))
+        {
+            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property, command, event, read model, query, module, feature, slice, or reaction declaration handle.");
         }
 
         if (WorkspaceReferenceBindings.Name(target.Node) != request.ExpectedName || !Identifier(request.NewName))
@@ -181,14 +181,14 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             throw new InvalidWorkspaceAuthoring($"Composite type '{owner.Name}' already declares property '{request.NewName}'.");
         }
 
-        if (target.Node is ReactionSyntax or ConstraintSyntax && index.Entries.Any(entry =>
+        if (target.Node is ReactionSyntax && index.Entries.Any(entry =>
             entry.Handle != target.Handle && entry.Parent == target.Parent &&
-            ((target.Node is ReactionSyntax && entry.Node is ReactionSyntax) || (target.Node is ConstraintSyntax && entry.Node is ConstraintSyntax)) && WorkspaceReferenceBindings.Name(entry.Node) == request.NewName))
+            entry.Node is ReactionSyntax && WorkspaceReferenceBindings.Name(entry.Node) == request.NewName))
         {
             throw new InvalidWorkspaceAuthoring($"The owning slice already declares {target.Kind} '{request.NewName}'.");
         }
 
-        bool IsTarget(WorkspaceSyntaxEntry entry) => target.Address is { } address ? address.Equals(entry.Address) : entry.Handle == target.Handle;
+        bool IsTarget(WorkspaceSyntaxEntry entry) => target.Address.Equals(entry.Address);
 
         RejectHierarchyCollision(index, target, request.NewName);
         RejectOpaque(workspace.Documents, index, target, request);
