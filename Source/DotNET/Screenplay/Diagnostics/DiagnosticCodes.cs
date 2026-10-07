@@ -1801,6 +1801,26 @@ public static class DiagnosticCodes
     public const string DuplicateBehaviorAttachment = "PLAY0340";
 
     /// <summary>
+    /// A guarded action child is not an alternative, fallback or navigation.
+    /// </summary>
+    public const string InvalidActionAlternative = "PLAY0341";
+
+    /// <summary>
+    /// A guarded action declares no condition alternatives.
+    /// </summary>
+    public const string GuardedActionWithoutAlternatives = "PLAY0342";
+
+    /// <summary>
+    /// A guarded action repeats its fallback or declares an alternative after it.
+    /// </summary>
+    public const string MisplacedActionOtherwise = "PLAY0343";
+
+    /// <summary>
+    /// A guarded action condition uses an unsupported operand or operator value type.
+    /// </summary>
+    public const string UnsupportedActionConditionOperand = "PLAY0344";
+
+    /// <summary>
     /// A command or event specification value uses null instead of modeling an optional fact as a separate event.
     /// </summary>
     public const string NullSpecificationFact = "PLAY0350";
