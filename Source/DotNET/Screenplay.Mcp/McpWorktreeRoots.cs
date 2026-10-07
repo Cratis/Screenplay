@@ -66,6 +66,8 @@ internal static class McpWorktreeRoots
             var checkout = new McpRoot(directory);
             if (Directory.Exists(marker))
             {
+                RequireNonBare(Path.Combine(marker, "config"));
+
                 return new(checkout, new McpRoot(marker));
             }
 
@@ -107,7 +109,87 @@ internal static class McpWorktreeRoots
     static McpRoot Parent(string path) => Path.GetDirectoryName(path) is { } parent
         ? new McpRoot(parent) : throw Refused("Git registration must name a directory or file beneath a filesystem root.");
 
+    static void RequireNonBare(string path)
+    {
+        var core = false;
+        var seenCore = false;
+        var seenBare = false;
+        foreach (var rawLine in ReadMetadata(path).Split('\n'))
+        {
+            var line = rawLine.Trim();
+            if (line.Length == 0 || line[0] is '#' or ';')
+            {
+                continue;
+            }
+
+            if (line.EndsWith('\\'))
+            {
+                throw Refused();
+            }
+
+            if (line[0] == '[')
+            {
+                if (line[^1] != ']')
+                {
+                    throw Refused();
+                }
+
+                var section = line[1..^1].Trim();
+
+                // Includes could override core.bare outside this bounded config; do not guess their outcome.
+                if (section.Equals("include", StringComparison.OrdinalIgnoreCase) || section.StartsWith("includeIf", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw Refused();
+                }
+
+                core = section.Equals("core", StringComparison.OrdinalIgnoreCase);
+                if (core && seenCore)
+                {
+                    throw Refused();
+                }
+                seenCore |= core;
+                continue;
+            }
+
+            if (!core)
+            {
+                continue;
+            }
+
+            var separator = line.IndexOf('=');
+            if (separator < 0)
+            {
+                throw Refused();
+            }
+
+            if (line[..separator].Trim().Equals("bare", StringComparison.OrdinalIgnoreCase))
+            {
+                if (seenBare || !line[(separator + 1)..].Trim().Equals("false", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw Refused();
+                }
+                seenBare = true;
+            }
+        }
+
+        if (!seenBare)
+        {
+            throw Refused();
+        }
+    }
+
     static string Read(string path)
+    {
+        var value = ReadMetadata(path);
+        if (value.Contains('\n') || value.Contains('\r'))
+        {
+            throw Refused();
+        }
+
+        return value;
+    }
+
+    static string ReadMetadata(string path)
     {
         McpRoot.CheckAncestors(path);
         if (!McpDirectoryIdentity.IsRegularFile(path))
@@ -130,7 +212,7 @@ internal static class McpWorktreeRoots
 
         McpRoot.CheckAncestors(path);
         var value = _strictUtf8.GetString(bytes).TrimEnd('\r', '\n');
-        if (string.IsNullOrWhiteSpace(value) || value.Contains('\n') || value.Contains('\r') || value.Contains('\0'))
+        if (string.IsNullOrWhiteSpace(value) || value.Contains('\0'))
         {
             throw Refused();
         }
