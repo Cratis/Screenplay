@@ -23,6 +23,15 @@ internal static class AuthoredOrder
         IReadOnlyList<PlacedPlayDocument> documents,
         IScreenplayLanguageRegistry languages,
         IReadOnlyDictionary<string, ApplicationSyntax>? parsed = null,
+        IReadOnlyDictionary<string, IReadOnlyList<DiscoveredFileImport>>? imports = null) =>
+        Record(roots, documents, languages, out _, parsed, imports);
+
+    internal static IReadOnlyDictionary<string, int> Record(
+        IReadOnlyList<string> roots,
+        IReadOnlyList<PlacedPlayDocument> documents,
+        IScreenplayLanguageRegistry languages,
+        out IReadOnlyDictionary<string, IReadOnlyList<AuthoredOrderStep>> origins,
+        IReadOnlyDictionary<string, ApplicationSyntax>? parsed = null,
         IReadOnlyDictionary<string, IReadOnlyList<DiscoveredFileImport>>? imports = null)
     {
         var files = documents.ToDictionary(document => document.Path, StringComparer.Ordinal);
@@ -33,8 +42,9 @@ internal static class AuthoredOrder
         var owners = ContainerOwners(own, roots.Select(PlayGlob.Normalize).ToHashSet(StringComparer.Ordinal));
         var explicitDeclarations = own.Values.SelectMany(declarations => declarations).Where(declaration => !declaration.Implicit).Select(declaration => Key(declaration.Scope)).ToHashSet(StringComparer.Ordinal);
         var order = new Dictionary<string, int>(StringComparer.Ordinal);
+        var trace = new Dictionary<string, IReadOnlyList<AuthoredOrderStep>>(StringComparer.Ordinal);
         var visited = new HashSet<string>(StringComparer.Ordinal);
-        void Visit(string path)
+        void Visit(string path, IReadOnlyList<AuthoredOrderStep> outer)
         {
             if (!files.TryGetValue(path, out var document) || !document.IsPlacementResolved || !visited.Add(path))
             {
@@ -50,7 +60,13 @@ internal static class AuthoredOrder
                     continue;
                 }
 
-                entries.Add((declaration.Location, () => order.TryAdd(key, order.Count)));
+                entries.Add((declaration.Location, () =>
+                {
+                    if (order.TryAdd(key, order.Count))
+                    {
+                        trace[key] = [.. outer, .. declaration.Chain.Select(node => new AuthoredOrderStep(path, node, node.Location, null, null))];
+                    }
+                }));
             }
 
             foreach (var import in imports is not null ? imports[path] : ScreenplayCompiler.DiscoverImports(document.Source, path, languages))
@@ -64,11 +80,17 @@ internal static class AuthoredOrder
                     }
 
                     var pattern = PlayGlob.Resolve(path, import.Import.Pattern);
-                    foreach (var target in files.Keys.Where(target => target != path && PlayGlob.IsMatch(pattern, target)).Order(StringComparer.Ordinal))
+                    var ancestors = own[path].Where(declaration => declaration.IsContainer && !declaration.Implicit &&
+                        declaration.Scope.Length <= placement.Scope.Count && declaration.Scope.SequenceEqual(placement.Scope.Take(declaration.Scope.Length)))
+                        .OrderBy(declaration => declaration.Scope.Length).Select(declaration => declaration.Chain[^1]).Distinct().ToArray();
+                    var matches = files.Keys.Where(target => target != path && PlayGlob.IsMatch(pattern, target)).Order(StringComparer.Ordinal).ToArray();
+                    for (var match = 0; match < matches.Length; match++)
                     {
+                        var target = matches[match];
                         if (files[target].Placement.Equals(placement))
                         {
-                            Visit(target);
+                            Visit(target, [.. outer, .. ancestors.Select(node => new AuthoredOrderStep(path, node, node.Location, null, null)),
+                                new(path, import.Import, import.Import.Location, target, match)]);
                         }
                     }
                 }));
@@ -84,10 +106,11 @@ internal static class AuthoredOrder
         {
             if (files.TryGetValue(root, out var document) && document.Placement.IsDocument)
             {
-                Visit(root);
+                Visit(root, []);
             }
         }
 
+        origins = trace;
         return order;
     }
 
@@ -122,28 +145,30 @@ internal static class AuthoredOrder
     {
         foreach (var module in application.Modules)
         {
-            yield return new([module.Name], module.Location, module.IsPlacement, true);
-            foreach (var declaration in module.Features.SelectMany(feature => Declarations(feature, [module.Name])))
+            SyntaxNode[] chain = module.IsPlacement ? [] : [module];
+            yield return new([module.Name], module.Location, module.IsPlacement, true, chain);
+            foreach (var declaration in module.Features.SelectMany(feature => Declarations(feature, [module.Name], chain)))
             {
                 yield return declaration;
             }
         }
     }
 
-    static IEnumerable<Declaration> Declarations(FeatureSyntax feature, string[] outer)
+    static IEnumerable<Declaration> Declarations(FeatureSyntax feature, string[] outer, SyntaxNode[] ancestors)
     {
         string[] scope = [.. outer, feature.Name];
-        yield return new(scope, feature.Location, feature.IsPlacement, true);
-        foreach (var declaration in feature.Features.SelectMany(child => Declarations(child, scope)))
+        var chain = feature.IsPlacement ? ancestors : [.. ancestors, feature];
+        yield return new(scope, feature.Location, feature.IsPlacement, true, chain);
+        foreach (var declaration in feature.Features.SelectMany(child => Declarations(child, scope, chain)))
         {
             yield return declaration;
         }
 
         foreach (var slice in feature.Slices)
         {
-            yield return new([.. scope, slice.Name], slice.Location, false, false);
+            yield return new([.. scope, slice.Name], slice.Location, false, false, [.. chain, slice]);
         }
     }
 
-    sealed record Declaration(string[] Scope, SourceLocation Location, bool Implicit, bool IsContainer);
+    sealed record Declaration(string[] Scope, SourceLocation Location, bool Implicit, bool IsContainer, SyntaxNode[] Chain);
 }

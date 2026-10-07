@@ -100,6 +100,32 @@ Mutually dependent sibling groups report one `PLAY0517` instead of individual `P
 
 A single document uses text order. For application or folder compilation, the ordering root is the sole root when there is one; otherwise it is the folder-root `application.play` if that file imports others, or the unique importing document not itself imported. With no such root, the compiler assigns no presentation ranks and skips the timeline check. When a folder has an `application.play` without imports, the compiler takes its order from the only importing document while the boards keep path order, so the check can describe an order the board does not draw. It checks the merged application once, not each physical file separately. This does not change merge order, syntax JSON, executable model bytes, revisions or identities.
 
+### Repair a backward event reference
+
+C# workspaces and MCP offer typed `PLAY0516` proposals for safe sibling declaration
+or explicit file-import moves. A glob repair pins an already placed file with an
+explicit import immediately before the glob; the glob remains, so new files are
+still discovered. If one pin would introduce a finding, the proposal can pin a
+safe prefix instead. Names containing glob metacharacters have no pin repair.
+
+The proposal first tries the producer before the consumer, then the consumer
+after the producer. It must remove the selected finding without introducing
+`PLAY0516` or `PLAY0517`. Own-sub-feature findings, cycle groups, unranked members,
+mixed declaration/import boundaries and different parents have no repair.
+
+Verification preserves comments, document placements, catalog revision and
+executable readiness. Executable models require identical ESM bytes. When neither
+side binds, a separate proof compares merged syntax modulo only timeline sibling
+order and verified import pins, and preserves admission diagnostic counts and
+severities. A one-sided change in model availability is refused. Repairs also
+refuse canonical printing that disagrees with the simulated ranks, such as import
+hoisting past declarations.
+
+Use [MCP diagnostic repairs](mcp/authoring-tools.md#fix-a-diagnostic) to discover,
+preview and explicitly apply one proposal, then rediscover against its new source
+revision. These repairs require canonical formatting consent. There is no
+TypeScript quick fix or pinned-evidence editor action for `PLAY0516`.
+
 ## Patterns
 
 A path is relative to the folder of the file that writes the import.

@@ -254,14 +254,28 @@ compilation diagnostics belong to the paged diagnostics view. Available typed re
 | `PLAY0471` | Remove a redundant event `id`, inline or standalone, only when the executable model, catalog and comments are preserved. |
 | `PLAY0397` on `validate csharp` | Replace the validation with itself so canonical printing migrates its legacy fence. Other forms of `PLAY0397` have no individual repair. |
 | `PLAY0479` (Information) | Write `optional` after the type. An occurrence repair changes one type; a document repair contains all spelling changes in one transaction. Both preserve syntax structure. |
+| `PLAY0516` (Information) | Move a sibling declaration or explicit file import, or pin an already placed file before a retained glob. The proposal removes the selected backward edge without new timeline findings. Own-sub-feature findings, cycle groups, unranked members and mixed/different-parent boundaries have no repair. |
 
-Discovery verifies listed `PLAY0166`, `PLAY0478`, `PLAY0469`, `PLAY0471` and `PLAY0479` repairs.
+Discovery verifies listed `PLAY0166`, `PLAY0478`, `PLAY0469`, `PLAY0471`, `PLAY0479` and `PLAY0516` repairs.
 It checks authoring acceptance and comment preservation, plus routing safety for
 `PLAY0478`, consumer/routing impact and executable readiness for `PLAY0469`, and
 executable-model/catalog preservation for `PLAY0471`. For example, an inferred
 event that conflicts with a specification's asserted fields is not listed.
 `PLAY0479` verifies all spellings together once per document and snapshot; occurrence
 repairs are offered only when that document migration passes.
+`PLAY0516` preserves catalog revision, executable readiness, documents, placements,
+comments and simulated presentation ranks. When both models bind, their ESM bytes
+must match. When neither binds, merged syntax must match modulo only sibling
+modules/features/slices/import order and approved explicit import pins; admission
+diagnostics must retain the same code/severity multiset. One-sided model availability
+and new errors/warnings are refused. Only already placed files at the same placement
+may be pinned, and the glob remains. A prefix can require several pins; no other
+nodes may be added. Provisional document identities that would change the catalog
+prevent a repair. Rediscover after each applied move or pin instead of combining
+recipes from one snapshot. `canFixAll` is true, but each proposal is still verified.
+The MCP pinned-evidence path remains unsupported for `PLAY0516` (`UnsupportedRepair`);
+there is no TypeScript quick fix or VS Code pinned-evidence action for it.
+
 `PLAY0397` discovery identifies the recipe only; its proposal may still be refused.
 Only acceptance and conflicts for verified repairs are cached per subject
 on the current immutable workspace snapshot for discovery reuse; diagnostics are

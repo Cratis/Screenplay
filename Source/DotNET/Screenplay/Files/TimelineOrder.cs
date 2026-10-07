@@ -12,7 +12,10 @@ namespace Cratis.Screenplay.Files;
 /// </summary>
 internal static class TimelineOrder
 {
-    internal static IReadOnlyList<Diagnostic> In(ApplicationSyntax application, IReadOnlyDictionary<string, int>? order = null)
+    internal static IReadOnlyList<Diagnostic> In(ApplicationSyntax application, IReadOnlyDictionary<string, int>? order = null) =>
+        [.. Analyze(application, order).Select(finding => finding.Diagnostic)];
+
+    internal static IReadOnlyList<TimelineFinding> Analyze(ApplicationSyntax application, IReadOnlyDictionary<string, int>? order = null)
     {
         order ??= new Dictionary<string, int>();
         var slices = new List<Slice>();
@@ -78,7 +81,7 @@ internal static class TimelineOrder
         }
 
         var suppressed = new HashSet<Edge>();
-        var findings = new List<(Edge Edge, Diagnostic Diagnostic)>();
+        var findings = new List<(Edge Edge, TimelineFinding Finding)>();
         foreach (var local in edges.GroupBy(edge => edge.Container, StringComparer.Ordinal))
         {
             var graph = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
@@ -113,12 +116,12 @@ internal static class TimelineOrder
                 {
                     (Name: edge.Left, edge.Consumer.Index),
                     (Name: edge.Right, edge.Producer.Index)
-                }).Where(end => end.Name == member).Min(end => end.Index));
-                findings.Add((first, new(
+                }).Where(end => end.Name == member).Min(end => end.Index)).ToArray();
+                findings.Add((first, Finding(first, false, orderedMembers, new(
                     DiagnosticSeverity.Information,
                     DiagnosticCodes.TimelineCycleGroup,
                     $"Timeline group {string.Join(", ", orderedMembers.Select(member => $"'{member[(member.IndexOf(':') + 1)..]}'"))} uses each other's events; reordering these members cannot make every event flow left to right.",
-                    first.Location)));
+                    first.Location))));
             }
         }
 
@@ -131,15 +134,18 @@ internal static class TimelineOrder
 
             var ownSubFeature = edge.Producer.Scope.Length > edge.Consumer.Scope.Length && edge.Consumer.Scope.SkipLast(1).Select((name, index) => name == edge.Producer.Scope[index]).All(same => same);
             var consequence = ownSubFeature ? " The producer is in the consumer's own sub-feature; this cannot be fixed by reordering." : " Consider drawing the producer before the consumer.";
-            findings.Add((edge, new(
+            findings.Add((edge, Finding(edge, ownSubFeature, [], new(
                 DiagnosticSeverity.Information,
                 DiagnosticCodes.EventFromLaterSlice,
                 $"Slice '{edge.Consumer.Syntax.Name}' uses event '{edge.Event}' produced by slice '{edge.Producer.Syntax.Name}' drawn after it.{consequence}",
-                edge.Location)));
+                edge.Location))));
         }
 
-        return [.. findings.OrderBy(finding => finding.Edge.Consumer.Index).ThenBy(finding => finding.Edge.Location.Line).ThenBy(finding => finding.Edge.Location.Column).Select(finding => finding.Diagnostic)];
+        return [.. findings.OrderBy(finding => finding.Edge.Consumer.Index).ThenBy(finding => finding.Edge.Location.Line).ThenBy(finding => finding.Edge.Location.Column).Select(finding => finding.Finding)];
     }
+
+    static TimelineFinding Finding(Edge edge, bool ownSubFeature, string[] members, Diagnostic diagnostic) =>
+        new(diagnostic, edge.Consumer.Scope, edge.Producer.Scope, edge.Event, edge.Container, edge.Left, edge.Right, ownSubFeature, members);
 
     static IEnumerable<T> Ordered<T>(IEnumerable<T> items, string[] outer, Func<T, string> name, IReadOnlyDictionary<string, int> order) =>
         items.Select(item => (Item: item, Rank: order.GetValueOrDefault(AuthoredOrder.Key(outer.Append(name(item))), int.MaxValue))).OrderBy(entry => entry.Rank).Select(entry => entry.Item);

@@ -33,6 +33,15 @@ internal static class PlayApplicationAssembly
         IEnumerable<string> roots,
         IPlayDocumentSource source,
         IScreenplayLanguageRegistry languages,
+        bool allowUnresolvedPersonaPolicies = false) =>
+        Compile(compiler, roots, source, languages, out _, allowUnresolvedPersonaPolicies);
+
+    internal static (IReadOnlyList<PlacedPlayDocument> Documents, CompilationResult<ApplicationSyntax> Result) Compile(
+        IScreenplayCompiler compiler,
+        IEnumerable<string> roots,
+        IPlayDocumentSource source,
+        IScreenplayLanguageRegistry languages,
+        out AuthoredTimeline presentation,
         bool allowUnresolvedPersonaPolicies = false)
     {
         var rootPaths = roots.ToArray();
@@ -59,10 +68,14 @@ internal static class PlayApplicationAssembly
             .Where(pair => pair.Second.Value is not null)
             .ToDictionary(pair => pair.First.Path, pair => pair.Second.Value!, StringComparer.Ordinal);
         var orderingRoot = OrderingRoot.Select(rootPaths, documents, languages, imports);
-        var timeline = orderingRoot is not null && merged.Value is { } application
-            ? TimelineOrder.In(application, AuthoredOrder.Record([orderingRoot], documents, languages, syntax, imports))
-            : [];
+        IReadOnlyDictionary<string, IReadOnlyList<AuthoredOrderStep>> origins = new Dictionary<string, IReadOnlyList<AuthoredOrderStep>>();
+        var ranks = orderingRoot is not null
+            ? AuthoredOrder.Record([orderingRoot], documents, languages, out origins, syntax, imports)
+            : new Dictionary<string, int>();
+        var findings = orderingRoot is not null && merged.Value is { } application ? TimelineOrder.Analyze(application, ranks) : [];
+        var sourceValid = merged.Success && diagnostics.All(diagnostic => diagnostic.Severity != Diagnostics.DiagnosticSeverity.Error);
+        presentation = new(orderingRoot, merged.Value, documents, ranks, origins, findings, sourceValid);
 
-        return (documents, merged with { Diagnostics = [.. diagnostics, .. merged.Diagnostics, .. timeline] });
+        return (documents, merged with { Diagnostics = [.. diagnostics, .. merged.Diagnostics, .. findings.Select(finding => finding.Diagnostic)] });
     }
 }
