@@ -41,14 +41,19 @@ static class McpDependencyGraphQueries
                 container = Node(item.Container), item.Location,
                 declarations = item.Declarations.Select(declaration => new
                 {
-                    declaration.Syntax.Target, declaration.Resolved, declaration.Status, declaration.Syntax.Location
+                    declaration.Syntax.Target, declaration.Resolved, status = JsonNamingPolicy.CamelCase.ConvertName(declaration.Status.ToString()), declaration.Syntax.Location
                 }).ToArray(),
-                edges = item.Edges.Select(edge => new
+                edges = item.Edges.GroupBy(edge => (edge.Evidence.Consumer, edge.Evidence.Producer, edge.Evidence.Kind, edge.Status,
+                    CoveringTargets: string.Join('\n', edge.CoveringDeclarations.Select(declaration => declaration.Target)))).Select(group => new
                 {
-                    consumer = Node(edge.Evidence.Consumer), producer = Node(edge.Evidence.Producer), edge.Evidence.Kind,
-                    edge.Evidence.Role, edge.Evidence.Name, edge.Status, edge.Evidence.Ambiguous,
-                    alternatives = edge.Evidence.Alternatives.Select(Node).ToArray(), edge.Evidence.Location,
-                    coveringDeclarations = edge.CoveringDeclarations.Select(declaration => new { declaration.Target, declaration.Location }).ToArray()
+                    consumer = Node(group.Key.Consumer), producer = Node(group.Key.Producer), group.Key.Kind, status = JsonNamingPolicy.CamelCase.ConvertName(group.Key.Status.ToString()),
+                    coveringDeclarations = group.First().CoveringDeclarations.Select(declaration => new { declaration.Target, declaration.Location }).ToArray(),
+                    evidence = group.Take(evidenceLimit).Select(edge => new
+                    {
+                        edge.Evidence.Role, edge.Evidence.Name, edge.Evidence.Ambiguous,
+                        alternatives = edge.Evidence.Alternatives.Select(Node).ToArray(), edge.Evidence.Location
+                    }).ToArray(),
+                    evidenceCount = group.Count(), evidenceTruncated = group.Count() > evidenceLimit
                 }).ToArray()
             }),
             "cycles" => (from == to ? graph.Cycles(from, kinds) : []).Where(group => group.Members.Any(InScope)).Select(group => (object)new { members = group.Members.Select(Node).ToArray() }),

@@ -84,8 +84,13 @@ export class DeclaredDependencies {
                 let prefix = evidence[0].producer.scope.slice(0, -1);
                 const mismatch = prefix.findIndex((segment, index) => evidence.some(item => index >= item.producer.scope.length - 1 || item.producer.scope[index] !== segment));
                 if (mismatch >= 0) prefix = prefix.slice(0, mismatch);
+                const target = prefix.join('.');
+                const suggestedTargets = contains(container.address, target) || contains(target, container.address)
+                    ? [...new Set(evidence.map(item => item.producer.scope.slice(0, -1).map((_, index) => item.producer.scope.slice(0, index + 1).join('.'))
+                        .find(candidate => !contains(container.address, candidate) && !contains(candidate, container.address))!))]
+                    : [target];
                 const details = evidence.map(item => `${item.kind} ${item.role} '${item.name}' at ${item.location.path ?? ''}:${item.location.line}:${item.location.column}`).join('; ');
-                finding(DiagnosticCodes.UndeclaredDependency, 'warning', `Container '${container.address}' depends on '${prefix.join('.')}' without declaring it - evidence: ${details}`, owner.location);
+                finding(DiagnosticCodes.UndeclaredDependency, 'warning', `Container '${container.address}' depends on '${suggestedTargets.join("', '")}' without declaring ${suggestedTargets.length === 1 ? 'it' : 'them'} - evidence: ${details}`, owner.location);
             }
             for (const declaration of declarations) {
                 if (declaration.status === 'unused') finding(DiagnosticCodes.UnusedDependencyDeclaration, 'information', `Dependency '${declaration.syntax.target}' on '${container.address}' is not used by any counted explicit reference`, declaration.syntax.location);

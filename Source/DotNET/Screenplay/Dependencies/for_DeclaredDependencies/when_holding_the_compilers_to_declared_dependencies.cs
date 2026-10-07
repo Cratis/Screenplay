@@ -58,8 +58,8 @@ public class when_holding_the_compilers_to_declared_dependencies : Specification
     {
         foreach (var (vector, _, report) in _cases)
         {
-            var actual = report.Containers.SelectMany(item => item.Declarations.Select(declaration => $"{item.Container.Address}|{declaration.Syntax.Target}|{declaration.Resolved ?? string.Empty}|{declaration.Status}")
-                .Concat((vector.TryGetProperty("sample", out _) ? [] : item.Edges).Select(edge => $"{item.Container.Address}|{edge.Evidence.Consumer.Address}|{edge.Evidence.Producer.Address}|{edge.Evidence.Kind}|{edge.Status}|{string.Join(',', edge.CoveringDeclarations.Select(declaration => declaration.Target))}"))).ToArray();
+            var actual = report.Containers.SelectMany(item => item.Declarations.Select(declaration => $"{item.Container.Address}|{declaration.Syntax.Target}|{declaration.Resolved ?? string.Empty}|{JsonNamingPolicy.CamelCase.ConvertName(declaration.Status.ToString())}")
+                .Concat((vector.TryGetProperty("sample", out _) ? [] : item.Edges).Select(edge => $"{item.Container.Address}|{edge.Evidence.Consumer.Address}|{edge.Evidence.Producer.Address}|{edge.Evidence.Kind}|{JsonNamingPolicy.CamelCase.ConvertName(edge.Status.ToString())}|{string.Join(',', edge.CoveringDeclarations.Select(declaration => declaration.Target))}"))).ToArray();
             Assert.True(actual.SequenceEqual(vector.GetProperty("report").EnumerateArray().Select(item => item.GetString())), $"{vector.GetProperty("name").GetString()}: {string.Join(", ", actual)}");
         }
     }

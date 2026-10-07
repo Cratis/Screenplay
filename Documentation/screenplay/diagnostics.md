@@ -1000,7 +1000,7 @@ See [Timeline diagnostics](imports.md#timeline-diagnostics) for the ordering roo
 
 | Code | Severity | Reported when |
 | --- | --- | --- |
-| `PLAY0552` | Warning | An opted-in container has uncovered counted references into a producer module. One finding per container and producer module, at the container header, with source evidence. |
+| `PLAY0552` | Warning | An opted-in container has uncovered counted references into a producer module. One finding per container and producer module, at the container header, with source evidence. If the producers' shared container is an invalid ancestor target, the finding lists their outermost covering-eligible features instead. |
 | `PLAY0553` | Information | A valid declaration has no counted explicit reference, including provisional ambiguous coverage. Reported at the declaration. |
 | `PLAY0556` | Information | Two containers declare each other. Reported on each declaring line. |
 | `PLAY0554` | Warning | A `depends on` target is self, an ancestor, a descendant, or does not resolve to a module or feature. |

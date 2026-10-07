@@ -47,7 +47,7 @@ for (const vector of vectors) {
         if (vector.uncovered !== undefined) {
             it('should name each uncovered producer and retain source evidence', () => {
                 const findings = DeclaredDependencies.for(compilation.value).diagnostics.filter(item => item.code === 'PLAY0552');
-                findings.map(item => item.message.match(/depends on '([^']+)'/)![1]).should.deep.equal(vector.uncovered);
+                findings.map(item => item.message.match(/depends on '(.+)' without declaring/)![1]).should.deep.equal(vector.uncovered);
                 for (const evidence of vector.evidence ?? []) findings.map(item => item.message).join('; ').should.contain(evidence);
             });
         }

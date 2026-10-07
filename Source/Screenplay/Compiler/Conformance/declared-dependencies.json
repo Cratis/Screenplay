@@ -50,6 +50,21 @@
       "diagnostics": ["PLAY0553@application.play:2"], "report": ["A|D|D|unused", "A|A.F.V|B.G.W|usesFactsFrom|provisional|"]
     },
     {
+      "name": "sibling producer features never suggest their ancestor module",
+      "files": {"application.play": "module Payroll\n  feature Review\n    depends on Timesheets\n    slice StateView V\n      projection P\n        from HoursAdded\n        from WeekQueued\n  feature Runs\n    feature Current\n      slice StateChange W\n        event HoursAdded\n  feature Handover\n    slice StateChange X\n      event WeekQueued\nmodule Timesheets"},
+      "diagnostics": ["PLAY0552@application.play:2", "PLAY0553@application.play:3"],
+      "uncovered": ["Payroll.Runs', 'Payroll.Handover"],
+      "evidence": ["HoursAdded", "WeekQueued"],
+      "report": ["Payroll.Review|Timesheets|Timesheets|unused", "Payroll.Review|Payroll.Review.V|Payroll.Runs.Current.W|usesFactsFrom|undeclared|", "Payroll.Review|Payroll.Review.V|Payroll.Handover.X|usesFactsFrom|undeclared|"]
+    },
+    {
+      "name": "nested sibling producers name their outermost eligible features",
+      "files": {"application.play": "module Payroll\n  feature Processing\n    feature Review\n      depends on Timesheets\n      slice StateView V\n        projection P\n          from HoursAdded\n          from WeekQueued\n    feature Runs\n      feature Current\n        slice StateChange W\n          event HoursAdded\n    feature Handover\n      feature Queue\n        slice StateChange X\n          event WeekQueued\nmodule Timesheets"},
+      "diagnostics": ["PLAY0552@application.play:3", "PLAY0553@application.play:4"],
+      "uncovered": ["Payroll.Processing.Runs', 'Payroll.Processing.Handover"],
+      "report": ["Payroll.Processing.Review|Timesheets|Timesheets|unused", "Payroll.Processing.Review|Payroll.Processing.Review.V|Payroll.Processing.Runs.Current.W|usesFactsFrom|undeclared|", "Payroll.Processing.Review|Payroll.Processing.Review.V|Payroll.Processing.Handover.Queue.X|usesFactsFrom|undeclared|"]
+    },
+    {
       "name": "a sibling feature shadows a root module",
       "files": {"application.play": "module Payroll\n  feature Handover\n    depends on Runs\n    slice StateChange C\n      command Start\n        reads R\n  feature Runs\n    slice StateView V\n      readmodel R\nmodule Runs"},
       "diagnostics": [], "report": ["Payroll.Handover|Runs|Payroll.Runs|used", "Payroll.Handover|Payroll.Handover.C|Payroll.Runs.V|decidesFrom|declared|Runs"]
@@ -165,6 +180,14 @@
       "insertions": [{"file": "Payroll/Payroll.play", "header": "module Payroll", "targets": ["Timesheets"]}, {"file": "Timesheets/Timesheets.play", "header": "module Timesheets", "targets": ["Payroll", "Engagements"]}],
       "diagnostics": ["PLAY0556@Payroll/Payroll.play:11", "PLAY0553@Timesheets/Timesheets.play:11", "PLAY0556@Timesheets/Timesheets.play:11"], "uncovered": [],
       "report": ["Payroll|Timesheets|Timesheets|used", "Timesheets|Payroll|Payroll|unused", "Timesheets|Engagements|Engagements|used"]
+    },
+    {
+      "name": "TimeTracking Timesheets declaring only Payroll still needs Engagements",
+      "sample": "TimeTracking", "files": {},
+      "insertions": [{"file": "Payroll/Payroll.play", "header": "module Payroll", "targets": ["Timesheets"]}, {"file": "Timesheets/Timesheets.play", "header": "module Timesheets", "targets": ["Payroll"]}],
+      "diagnostics": ["PLAY0556@Payroll/Payroll.play:11", "PLAY0552@Timesheets/Timesheets.play:10", "PLAY0553@Timesheets/Timesheets.play:11", "PLAY0556@Timesheets/Timesheets.play:11"],
+      "uncovered": ["Engagements.Portfolio"], "evidence": ["reads 'EngagementOverview'", "RecordingHours.play:18"],
+      "report": ["Payroll|Timesheets|Timesheets|used", "Timesheets|Payroll|Payroll|unused"]
     },
     {
       "name": "TimeTracking unused Handover declaration is information on its line",

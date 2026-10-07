@@ -7,8 +7,23 @@ using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Dependencies;
 
-internal sealed record DependencyDeclaration(DependsOnSyntax Syntax, string? Resolved, string Status);
-internal sealed record DeclaredDependencyEdge(DependencyEvidence Evidence, string Status, IReadOnlyList<DependsOnSyntax> CoveringDeclarations);
+internal enum DependencyDeclarationStatus
+{
+    Used,
+    Provisional,
+    Unused,
+    Invalid
+}
+
+internal enum DependencyCoverageStatus
+{
+    Declared,
+    Provisional,
+    Undeclared
+}
+
+internal sealed record DependencyDeclaration(DependsOnSyntax Syntax, string? Resolved, DependencyDeclarationStatus Status);
+internal sealed record DeclaredDependencyEdge(DependencyEvidence Evidence, DependencyCoverageStatus Status, IReadOnlyList<DependsOnSyntax> CoveringDeclarations);
 internal sealed record CheckedDependencyContainer(DependencyNode Container, SourceLocation Location, IReadOnlyList<DependencyDeclaration> Declarations, IReadOnlyList<DeclaredDependencyEdge> Edges);
 internal sealed record DeclaredDependencyReport(IReadOnlyList<CheckedDependencyContainer> Containers, IReadOnlyList<Diagnostic> Diagnostics);
 
@@ -54,7 +69,7 @@ internal static class DeclaredDependencies
                 var resolution = DeclaredDependencyTargets.Resolve(syntax.Target, new(container.Scope), targets);
                 var target = resolution.Resolved is { } resolved ? string.Join('.', resolved.Scope.Segments.Append(resolved.Name)) : null;
                 var valid = target is not null && !Contains(container.Address, target) && !Contains(target, container.Address);
-                return new DependencyDeclaration(syntax, target, valid ? "unused" : "invalid");
+                return new DependencyDeclaration(syntax, target, valid ? DependencyDeclarationStatus.Unused : DependencyDeclarationStatus.Invalid);
             }).ToArray();
             var edges = new List<DeclaredDependencyEdge>();
             foreach (var evidence in Ordered(graph.Edges.SelectMany(edge => edge.Evidence).Where(item => _countedKinds.Contains(item.Kind, StringComparer.Ordinal) && Contains(container.Address, item.Consumer.Address))))
@@ -67,28 +82,32 @@ internal static class DeclaredDependencies
                 }).ToArray();
                 if (candidates.Length == 0) continue;
                 var covering = declarations.Select((declaration, index) => (Declaration: declaration, Index: index))
-                    .Where(item => item.Declaration.Status != "invalid" && candidates.Any(candidate => Contains(item.Declaration.Resolved!, candidate.Address))).ToArray();
+                    .Where(item => item.Declaration.Status != DependencyDeclarationStatus.Invalid && candidates.Any(candidate => Contains(item.Declaration.Resolved!, candidate.Address))).ToArray();
                 foreach (var item in covering)
                 {
-                    var status = evidence.Ambiguous && declarations[item.Index].Status != "used" ? "provisional" : "used";
+                    var status = evidence.Ambiguous && declarations[item.Index].Status != DependencyDeclarationStatus.Used ? DependencyDeclarationStatus.Provisional : DependencyDeclarationStatus.Used;
                     declarations[item.Index] = declarations[item.Index] with { Status = status };
                 }
-                var coverage = covering.Length > 0 ? "declared" : "undeclared";
-                edges.Add(new(evidence, evidence.Ambiguous ? "provisional" : coverage, [.. covering.Select(item => item.Declaration.Syntax)]));
+                var coverage = covering.Length > 0 ? DependencyCoverageStatus.Declared : DependencyCoverageStatus.Undeclared;
+                edges.Add(new(evidence, evidence.Ambiguous ? DependencyCoverageStatus.Provisional : coverage, [.. covering.Select(item => item.Declaration.Syntax)]));
             }
-            foreach (var bucket in edges.Where(edge => edge.Status == "undeclared").GroupBy(edge => edge.Evidence.Producer.Scope[0], StringComparer.Ordinal))
+            foreach (var bucket in edges.Where(edge => edge.Status == DependencyCoverageStatus.Undeclared).GroupBy(edge => edge.Evidence.Producer.Scope[0], StringComparer.Ordinal))
             {
                 var evidence = bucket.Select(edge => edge.Evidence).ToArray();
                 var prefix = evidence[0].Producer.Scope.Take(evidence[0].Producer.Scope.Count - 1).ToArray();
                 foreach (var item in evidence.Skip(1)) prefix = [.. prefix.TakeWhile((segment, index) => index < item.Producer.Scope.Count - 1 && segment == item.Producer.Scope[index])];
                 var target = string.Join('.', prefix);
+                var suggestedTargets = Contains(container.Address, target) || Contains(target, container.Address)
+                    ? evidence.Select(item => Enumerable.Range(1, item.Producer.Scope.Count - 1).Select(length => string.Join('.', item.Producer.Scope.Take(length)))
+                        .First(candidate => !Contains(container.Address, candidate) && !Contains(candidate, container.Address))).Distinct(StringComparer.Ordinal).ToArray()
+                    : [target];
                 var details = string.Join("; ", evidence.Select(item => $"{item.Kind} {item.Role} '{item.Name}' at {item.Location.Path ?? string.Empty}:{item.Location.Line}:{item.Location.Column}"));
-                findings.Add(new(DiagnosticSeverity.Warning, DiagnosticCodes.UndeclaredDependency, $"Container '{container.Address}' depends on '{target}' without declaring it - evidence: {details}", owner.Location));
+                findings.Add(new(DiagnosticSeverity.Warning, DiagnosticCodes.UndeclaredDependency, $"Container '{container.Address}' depends on '{string.Join("', '", suggestedTargets)}' without declaring {(suggestedTargets.Length == 1 ? "it" : "them")} - evidence: {details}", owner.Location));
             }
             foreach (var declaration in declarations)
             {
-                if (declaration.Status == "unused") findings.Add(new(DiagnosticSeverity.Information, DiagnosticCodes.UnusedDependencyDeclaration, $"Dependency '{declaration.Syntax.Target}' on '{container.Address}' is not used by any counted explicit reference", declaration.Syntax.Location));
-                if (declaration.Status == "invalid") continue;
+                if (declaration.Status == DependencyDeclarationStatus.Unused) findings.Add(new(DiagnosticSeverity.Information, DiagnosticCodes.UnusedDependencyDeclaration, $"Dependency '{declaration.Syntax.Target}' on '{container.Address}' is not used by any counted explicit reference", declaration.Syntax.Location));
+                if (declaration.Status == DependencyDeclarationStatus.Invalid) continue;
                 var reciprocal = owners[declaration.Resolved!].Dependencies.Exists(dependency =>
                 {
                     var resolution = DeclaredDependencyTargets.Resolve(dependency.Target, new(declaration.Resolved!.Split('.')), targets);
