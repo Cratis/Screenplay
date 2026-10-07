@@ -98,7 +98,7 @@ internal static class GuardedActionValidator
                 context.Warning(DiagnosticCodes.UnknownActionArgumentProperty, $"Command '{commandName}' has no argument property '{argument.Name}'", argument.Location);
             }
 
-            ValidateItemPath(argument.Binding, argument.Location, subjectProperties, scope, declarations, context);
+            ValidateItemPath(argument.Binding, argument.Location, subjectProperties, scope, declarations, context, allowTerminalCollection: true);
         }
     }
 
@@ -108,14 +108,15 @@ internal static class GuardedActionValidator
         IEnumerable<PropertySyntax>? properties,
         DeclarationScope scope,
         ConsistencyDeclarations declarations,
-        ParserContext context)
+        ParserContext context,
+        bool allowTerminalCollection = false)
     {
         if (!path.StartsWith("item.", StringComparison.Ordinal) || properties is null) return;
         var segments = path["item.".Length..].Split('.');
         for (var index = 0; index < segments.Length; index++)
         {
             var matches = properties.Where(property => property.Name == segments[index]).ToArray();
-            if (matches.Length == 0 || (matches.Length == 1 && matches[0].Type.IsCollection))
+            if (matches.Length == 0 || (matches.Length == 1 && matches[0].Type.IsCollection && (!allowTerminalCollection || index < segments.Length - 1)))
             {
                 context.Warning(DiagnosticCodes.UnknownActionSubjectField, $"Unknown or collection-valued subject field '{path}' - guarded actions require an item field path", location);
                 return;
