@@ -110,6 +110,11 @@ internal static class McpWorktreeRoots
     static string Read(string path)
     {
         McpRoot.CheckAncestors(path);
+        if (!McpDirectoryIdentity.IsRegularFile(path))
+        {
+            throw Refused();
+        }
+
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
         if (stream.Length is 0 or > MaximumMetadataBytes)
         {
