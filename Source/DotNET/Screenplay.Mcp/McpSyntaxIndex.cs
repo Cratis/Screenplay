@@ -18,6 +18,8 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     readonly Dictionary<SyntaxNode, McpDeclaration> _owners = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<(string Kind, string Name, string Scope), McpDeclaration> _scaffolds = [];
     McpQueryIndex _queries = null!;
+    bool _inRefusal;
+    ConstraintSyntax? _constraint;
 
     internal EventSourceReadConfidence? SourceConfidence { get; set; }
 
@@ -84,6 +86,23 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     }
 
     /// <inheritdoc/>
+    public override void VisitConstraint(ConstraintSyntax syntax)
+    {
+        var previous = _constraint;
+        _constraint ??= syntax;
+        base.VisitConstraint(syntax);
+        _constraint = previous;
+    }
+
+    /// <inheritdoc/>
+    public override void VisitInvocationRefusal(InvocationRefusalSyntax syntax)
+    {
+        _inRefusal = true;
+        base.VisitInvocationRefusal(syntax);
+        _inRefusal = false;
+    }
+
+    /// <inheritdoc/>
     public override void VisitNode(SyntaxNode node)
     {
         switch (node)
@@ -112,7 +131,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
             case ProjectionSyntax value: Declare("Projection", value.Name, value); break;
             case ReducerSyntax value: Declare("Reducer", value.Name, value); break;
             case CaptureSyntax value: Declare("Capture", value.Name, value); break;
-            case ConstraintSyntax value: Declare("Constraint", value.Name, value); break;
+            case ConstraintSyntax value when ReferenceEquals(value, _constraint): Declare("Constraint", value.Name, value); break;
             case SpecificationSyntax value:
                 Declare("Specification", value.Name, value, details: new
                 {
@@ -135,10 +154,16 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         var owner = owningSyntax is null ? null : _owners.GetValueOrDefault(owningSyntax);
         foreach (var reference in McpReferenceKinds.For(node, owningSyntax))
         {
-            var role = owner?.Syntax is SpecificationSyntax specification ? McpFixtureOccurrences.Role(specification, node, reference.Role) : reference.Role;
-            _references.Add(new(reference.Name, reference.Kinds, [.. _scope], node is CommandStreamSyntax route ? route.ReferenceLocation : node.Location, role, owner?.Owner)
+            var refusalProduction = _inRefusal && node is ProducesSyntax;
+            var role = (refusalProduction, owner?.Syntax) switch
             {
-                UseProductionCandidates = node is ProducesSyntax or SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax,
+                (true, _) => "refusalProduces",
+                (_, SpecificationSyntax specification) => McpFixtureOccurrences.Role(specification, node, reference.Role),
+                _ => reference.Role
+            };
+            _references.Add(new(reference.Name, refusalProduction ? ["Event"] : reference.Kinds, [.. _scope], node is CommandStreamSyntax route ? route.ReferenceLocation : node.Location, role, owner?.Owner)
+            {
+                UseProductionCandidates = !refusalProduction && (node is ProducesSyntax or SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax),
                 AmbiguousSourceOwner = node is CommandStreamSyntax { PropertyCandidate: not null }
             });
         }

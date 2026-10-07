@@ -54,6 +54,7 @@ internal sealed partial class DependencyGraph
         {
             foreach (var value in EventDeclarations.In(slice)) Declare(declarations, "Event", value.Name, node);
             foreach (var value in slice.Commands) Declare(declarations, "Command", value.Name, node);
+            foreach (var value in slice.Reactions) Declare(declarations, "Reaction", value.Name, node);
             foreach (var value in slice.Queries) Declare(declarations, "Query", value.Name, node);
             foreach (var value in slice.Screens) Declare(declarations, "Screen", value.Name, node);
             foreach (var value in slice.ReadModels ?? []) Declare(declarations, "ReadModel", value.Name, node);
