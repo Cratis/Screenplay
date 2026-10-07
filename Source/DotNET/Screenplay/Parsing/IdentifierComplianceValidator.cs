@@ -17,8 +17,7 @@ internal static class IdentifierComplianceValidator
         var personal = application.Concepts.Where(concept => concept.AttributeNames.Contains(ConceptAttributeSyntax.Pii))
             .Select(concept => concept.Name).ToHashSet(StringComparer.Ordinal);
         var declaredTriggers = (application.Triggers ?? []).ToLookup(trigger => trigger.Name, StringComparer.Ordinal);
-        var knownEvents = declarations.Slices.SelectMany(entry => EventDeclarations.In(entry.Slice).Select(@event => @event.Name))
-            .Concat(application.Imports.Select(import => import.Name)).ToHashSet(StringComparer.Ordinal);
+        var imports = application.Imports.Select(import => import.Name).ToHashSet(StringComparer.Ordinal);
         foreach (var source in application.EventSources)
         {
             if (source.Identifier is { } identifier) ValidateType(identifier, identifier.Location);
@@ -45,8 +44,9 @@ internal static class IdentifierComplianceValidator
             foreach (var trigger in slice.Reactions.SelectMany(reaction => reaction.Triggers))
             {
                 if (trigger.Source is not NamedTriggerSourceSyntax named) continue;
-                var shapes = new List<IEnumerable<PropertySyntax>?> { declarations.Event(named.Name, scope)?.Properties };
-                if (!knownEvents.Contains(named.Name))
+                var resolvedEvent = declarations.Event(named.Name, scope);
+                var shapes = new List<IEnumerable<PropertySyntax>?> { resolvedEvent?.Properties };
+                if (resolvedEvent is null && !imports.Contains(named.Name))
                 {
                     shapes.AddRange(declaredTriggers[named.Name].Select(declared => declared.Data
                         .Select(datum => datum.Type is { } type ? new PropertySyntax(datum.Name, type, datum.Location) : null)

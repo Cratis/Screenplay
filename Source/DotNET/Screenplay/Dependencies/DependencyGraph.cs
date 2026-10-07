@@ -90,11 +90,6 @@ internal sealed partial class DependencyGraph
                     if (producer != node) evidence.Add(new(node, producer, reference.Kind, reference.Role, reference.Name, candidates.Count > 1, [.. candidates.Skip(1)], reference.Location));
                     continue;
                 }
-                if (reference.Role == "trigger" && foundations.Contains(reference.Name))
-                {
-                    ExcludedReferences++;
-                    continue;
-                }
                 var imported = reference.TargetKind == "Event" ? imports.Where(import => string.Equals(import.Name, reference.Name, StringComparison.OrdinalIgnoreCase)).ToArray() : [];
                 if (imported.Length > 0)
                 {
@@ -112,6 +107,11 @@ internal sealed partial class DependencyGraph
                         if (!matches.Contains(context)) matches.Add(context);
                     }
                     evidence.Add(new(node, matches[0], "outsideTheModel", reference.Role, reference.Name, matches.Count > 1, [.. matches.Skip(1)], reference.Location) { TestOnly = reference.Kind == "verifiedWith" });
+                    continue;
+                }
+                if (reference.Role == "trigger" && foundations.Contains(reference.Name))
+                {
+                    ExcludedReferences++;
                     continue;
                 }
                 unresolved.Add(new(node, reference.Kind, reference.Role, reference.Name, reference.Location));
