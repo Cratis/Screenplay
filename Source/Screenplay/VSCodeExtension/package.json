@@ -57,7 +57,9 @@
                     "comments": false,
                     "strings": true
                 },
-                "editor.suggest.showSnippets": true
+                "editor.suggest.showSnippets": true,
+                "editor.wordBasedSuggestions": "off",
+                "editor.suggest.showWords": false
             }
         },
         "languages": [

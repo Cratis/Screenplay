@@ -16,7 +16,9 @@ export function registerInlineCompletions(context: vscode.ExtensionContext, inde
                 const file = index.fileOf(document.uri);
                 const symbols = symbolsForBuffer(lines, file?.application.symbolsExcept(file.path));
                 const suggestion = structureCompletion(lines, position.line, line.substring(0, position.character), line.substring(position.character), symbols);
-                return suggestion ? [new vscode.InlineCompletionItem(suggestion.text, new vscode.Range(position, position))] : [];
+                // The suggestion replaces the indentation before the cursor, so it starts with indentation of its own -
+                // the editor takes Tab as 'indent' rather than 'accept' for a suggestion that does not.
+                return suggestion ? [new vscode.InlineCompletionItem(`${line.substring(0, position.character)}${suggestion.text}`, new vscode.Range(position.line, 0, position.line, position.character))] : [];
             },
         }),
     );
