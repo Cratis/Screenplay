@@ -1,9 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Dependencies;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
-using Cratis.Screenplay.Syntax.Projections;
 
 namespace Cratis.Screenplay.Files;
 
@@ -54,9 +54,8 @@ internal static class TimelineOrder
         foreach (var consumer in slices)
         {
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var references = consumer.Syntax.Projections.SelectMany(projection => projection.Blocks.SelectMany(EventsOf))
-                .Concat(consumer.Syntax.Reactions.SelectMany(reaction => reaction.Triggers).Where(trigger => trigger.Source is NamedTriggerSourceSyntax)
-                    .Select(trigger => new Reference(((NamedTriggerSourceSyntax)trigger.Source).Name, trigger.Source.Location)))
+            var references = SliceReferences.In(consumer.Syntax).Where(reference => reference.Timeline)
+                .Select(reference => new Reference(reference.Name, reference.Location))
                 .OrderBy(reference => reference.Location.Line).ThenBy(reference => reference.Location.Column);
             foreach (var reference in references)
             {
@@ -152,72 +151,7 @@ internal static class TimelineOrder
 
     static IOrderedEnumerable<Edge> InOrder(IEnumerable<Edge> edges) => edges.OrderBy(edge => edge.Consumer.Index).ThenBy(edge => edge.Location.Line).ThenBy(edge => edge.Location.Column);
 
-    static IEnumerable<Reference> EventsOf(ProjectionBlockSyntax block) => block switch
-    {
-        FromSyntax from => from.Events.Select(value => new Reference(value.Event, value.Location)),
-        JoinSyntax join => join.Events.Select(value => new Reference(value.Event, value.Location)),
-        ChildrenSyntax children => children.Blocks.SelectMany(EventsOf),
-        NestedSyntax nested => nested.Blocks.SelectMany(EventsOf),
-        ProjectionVariantSyntax variant => variant.EntersOn.Select(value => new Reference(value.Event, value.Location)).Concat(variant.Blocks.SelectMany(EventsOf)),
-        RemoveWithSyntax remove => [new(remove.Event, remove.Location)],
-        RemoveViaJoinSyntax remove => [new(remove.Event, remove.Location)],
-        ClearWithSyntax clear => [new(clear.Event, clear.Location)],
-        _ => []
-    };
-
-    static List<IReadOnlyList<string>> StronglyConnected(IReadOnlyDictionary<string, HashSet<string>> graph)
-    {
-        var indices = new Dictionary<string, int>(StringComparer.Ordinal);
-        var low = new Dictionary<string, int>(StringComparer.Ordinal);
-        var stack = new Stack<string>();
-        var active = new HashSet<string>(StringComparer.Ordinal);
-        var groups = new List<IReadOnlyList<string>>();
-        void Visit(string node)
-        {
-            indices[node] = indices.Count;
-            low[node] = indices[node];
-            stack.Push(node);
-            active.Add(node);
-            foreach (var next in graph[node])
-            {
-                if (!indices.TryGetValue(next, out var nextIndex))
-                {
-                    Visit(next);
-                    low[node] = Math.Min(low[node], low[next]);
-                }
-                else if (active.Contains(next))
-                {
-                    low[node] = Math.Min(low[node], nextIndex);
-                }
-            }
-
-            if (low[node] != indices[node])
-            {
-                return;
-            }
-
-            var group = new List<string>();
-            string member;
-            do
-            {
-                member = stack.Pop();
-                active.Remove(member);
-                group.Add(member);
-            }
-            while (member != node);
-            groups.Add(group);
-        }
-
-        foreach (var node in graph.Keys)
-        {
-            if (!indices.ContainsKey(node))
-            {
-                Visit(node);
-            }
-        }
-
-        return groups;
-    }
+    static IReadOnlyList<IReadOnlyList<string>> StronglyConnected(IReadOnlyDictionary<string, HashSet<string>> graph) => StronglyConnectedGroups.In(graph);
 
     sealed record Slice(SliceSyntax Syntax, string[] Scope, int Index)
     {
