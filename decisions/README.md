@@ -30,4 +30,5 @@
 | [0026](0026-generated-values-and-command-responses-in-esm-v7.md) | Admit generated values and command responses as ESM v7 | accepted | none | 2026-10-06 | Sindre Alstad Wilting |
 | [0027](0027-policy-negation-joins-esm-v7.md) | Admit policy negation as a byte-preserving ESM v7 extension | accepted | implemented | 2026-10-06 | Sindre Alstad Wilting |
 | [0028](0028-declared-module-and-feature-dependencies.md) | Let modules and features declare what they depend on, checked against the inferred graph | accepted | none | 2026-10-07 | Sindre Alstad Wilting |
+| [0030](0030-reaction-refusals-and-redelivery.md) | Reaction refusal handling and redelivery specifications | accepted | none | 2026-10-07 | Sindre Alstad Wilting |
 | [0031](0031-event-source-and-stream-in-specifications.md) | State the event source and stream of specification events with the command route's own lines | accepted | none | 2026-10-07 | Sindre Alstad Wilting |

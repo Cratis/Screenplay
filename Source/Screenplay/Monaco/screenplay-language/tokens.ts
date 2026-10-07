@@ -43,7 +43,7 @@ function subLanguageExitRule(subLanguages: SubLanguage[]): MonarchTokenRules[num
 export const commonTokenRules: MonarchTokenRules = [
     [/\/\/.*$/, 'comment'],
     [/^(numbers)([ \t]+)(exact)(?=[ \t]*(?:(?:\/\/|#).*)?$)/, ['keyword', 'white', 'keyword']],
-    [/\$(?:context|eventContext|eventSourceId|causedBy)(?:\.\w+)*/, 'variable.predefined'],
+    [/\$(?:context|eventContext|eventSourceId|causedBy|refusal)(?:\.\w+)*/, 'variable.predefined'],
     [/\$(?:env|secrets|strings)\.[\w.]+/, 'variable.predefined'],
     [/\$\.[\w.]*/, 'variable.predefined'],
     [/"(?:[^"\\]|\\.)*"/, 'string'],
@@ -86,7 +86,14 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             // A specification's clock, trigger, capture and query steps - matched before a sub-language keyword
             // can claim 'capture' and read the rest of the specification as change data capture.
             [/^(\s*)(given|when)(\s+)(clock|capture|trigger|query)\b/, ['white', 'keyword', 'white', 'keyword']],
-            [/^(\s*)(then)(\s+)(result|no\s+result)\b/, ['white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(then)(\s+)(result|no\s+(?:result|events))\b/, ['white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(then)(\s+)(events)(\s+)(in any order)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(when)(\s+)(redelivered)(\s+)([\w.]+)(\s+)(to)(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/,
+                ['white', 'keyword', 'white', 'keyword', 'white', 'type.identifier', 'white', 'keyword', 'white', 'type.identifier']],
+            [/^(\s*)(on)(\s+)(refused)(\s+)(by)(\s+)(validation|constraint|authorization)\b/,
+                ['white', 'keyword', 'white', 'keyword', 'white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(on)(\s+)(refused)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(acknowledge)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword']],
             // A quoted import names .play files rather than a qualified name - the path reads as a link.
             [/^(\s*)(import)(\s+)("[^"\\]*")/, ['white', 'keyword', 'white', 'string.link']],
             // Retain the header indent so event metadata stops at the enclosing block boundary.

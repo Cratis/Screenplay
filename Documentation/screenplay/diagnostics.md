@@ -833,6 +833,23 @@ See [Imports](imports.md).
 | `PLAY0459` | Error | A file imported into a module or feature declares a module other than the one it is placed in. Restating the module it is placed in is allowed. |
 | `PLAY0460` | Error | The top level of a file imported into a module or feature holds something that scope cannot hold, such as a `screen template` in a file placed in a feature. |
 
+### Refusal branches, redelivery and no-event assertions
+
+Refusal branches, `$refusal` values, redelivery and `then no events` are syntax-only and not yet executable: source-valid models still fail binding with `PLAY0268` naming the unadmitted feature.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0538` | Error | An `on refused` header is malformed, uses an unsupported selector, or appears outside an `invokes` block. Use `on refused [by validation \| by constraint [<Name>] \| by authorization]`. |
+| `PLAY0539` | Error | A refusal branch is empty, repeats or adds children to `acknowledge`, combines acknowledgement with productions, or contains another kind of effect. Use `acknowledge` alone or one or more `produces <Event>` blocks. |
+| `PLAY0540` | Warning | A refusal branch is shadowed by an earlier selector, or its declared constraint targets none of the invoked command's events. Bare refusal covers validation and constraints, not authorization. |
+| `PLAY0541` | Error | A `$refusal` value is outside a branch's event mapping, has an unknown member, uses `constraint` outside a constraint selector, or targets an incompatible property type. The values `reason`, `constraint` and `message` are String values. |
+| `PLAY0542` | Error | A named constraint in a refusal selector does not resolve to a declared constraint. |
+| `PLAY0543` | Error | `when redelivered <Event> to <Reaction>` is malformed, or its values and optional `for` locator identify zero or several given event occurrences. |
+| `PLAY0544` | Error | The redelivery reaction is unknown or ambiguous, or has no event trigger on the stated event. |
+| `PLAY0545` | Error | `then no events` is malformed, repeated, has child mappings, follows `when append`, or accompanies event, event-order, error or denial expectations. Use one leaf assertion after a non-append action; read-model, query and response assertions may accompany it. |
+
+See [Refusal branches](reactions.md#refusal-branches-syntax-only), [Redelivery specifications](specifications.md#redelivery-specifications-syntax-only) and [Specification syntax](specifications.md#syntax).
+
 ### Specification actions
 
 See [Specifications](specifications.md#clocks-triggers-and-captures).

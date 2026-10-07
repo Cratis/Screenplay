@@ -17,6 +17,9 @@ internal static class SyntaxJsonWriter
         {
             var value = member.Property.GetValue(node);
             if (member.Type == typeof(SourceOptions) && Equals(value, SourceOptions.Legacy)) continue;
+            if (node is Specifications.SpecificationSyntax && member.Name == "thenNoEvents" && Equals(value, false)) continue;
+            if (node is InvokesSyntax invocation && member.Name == "onRefused" && !invocation.OnRefused.Any()) continue;
+            if (node is Specifications.SpecificationSyntax && member.Name == "whenRedelivered" && value is null) continue;
             result.Add(member.Name, WriteMember(member, value, $"{path}.{member.Name}", depth + 1));
         }
 

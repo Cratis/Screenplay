@@ -13,6 +13,8 @@ import { ExpressionSyntax, ObjectMemberSyntax, PropertyMappingSyntax } from './E
 import { JoinEventSyntax, KeySyntax, MappingSyntax, ProjectionBlockSyntax, ProjectionSyntax } from './Projections';
 import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax } from './EventSources';
 import { QueryParameterSyntax, QuerySyntax } from './Queries';
+import { InvocationRefusalSyntax } from './InvocationRefusalSyntax';
+import { SpecificationRedeliverySyntax } from './SpecificationRedeliverySyntax';
 import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
 import { ScreenDirectiveSyntax, ScreenSyntax } from './Screens';
 import {
@@ -385,6 +387,12 @@ export abstract class ScreenplaySyntaxWalker {
     visitInvokes(syntax: InvokesSyntax): void {
         this.visitNode(syntax);
         syntax.mappings?.forEach(node => this.visitPropertyMapping(node));
+        syntax.onRefused?.forEach(node => this.visitInvocationRefusal(node));
+    }
+
+    visitInvocationRefusal(syntax: InvocationRefusalSyntax): void {
+        this.visitNode(syntax);
+        syntax.produces.forEach(node => this.visitProduces(node));
     }
 
     visitCapture(syntax: CaptureSyntax): void {
@@ -485,6 +493,7 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.when !== null) this.visitSpecificationCommand(syntax.when);
         syntax.givenCaptures.forEach(node => this.visitSpecificationCapture(node));
         if (syntax.whenAppended !== null) this.visitSpecificationEvent(syntax.whenAppended);
+        if (syntax.whenRedelivered != null) this.visitSpecificationRedelivery(syntax.whenRedelivered);
         if (syntax.whenClock !== null) this.visitSpecificationClock(syntax.whenClock);
         if (syntax.whenTrigger !== null) this.visitSpecificationTrigger(syntax.whenTrigger);
         if (syntax.whenCapture !== null) this.visitSpecificationCapture(syntax.whenCapture);
@@ -502,6 +511,12 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.thenDenied != null) this.visitNode(syntax.thenDenied);
         if (syntax.thenReturns != null) this.visitSpecificationReturn(syntax.thenReturns);
         syntax.thenErrors.forEach(node => this.visitNode(node));
+    }
+
+    visitSpecificationRedelivery(syntax: SpecificationRedeliverySyntax): void {
+        this.visitNode(syntax);
+        syntax.values.forEach(node => this.visitPropertyMapping(node));
+        if (syntax.for !== null) this.visitExpression(syntax.for);
     }
 
     visitSpecificationClock(syntax: SpecificationClockSyntax): void {
