@@ -15,22 +15,26 @@ import { parseMappingSource } from './ExpressionParser';
 import { isFileDirective } from './FileReferences';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
+import { addFixtureValue, addInlineValue, parseFixtureBody } from './SpecificationExampleParser';
 import { rejectOperationChildren } from './OperationParser';
-import { generatedFixturePattern, generatedFixturePrefix, parseConcreteMapping, parseReturn, thenReturnsPrefix } from './SpecificationResponseParser';
+import { parseConcreteMapping, parseReturn, thenReturnsPrefix } from './SpecificationResponseParser';
 import { locationOf, SourceLine } from './SourceLine';
 import { SpecificationAbsentReadModelSyntax, SpecificationCallerClaimSyntax, SpecificationCallerSyntax, SpecificationQuerySyntax } from '../Syntax/Specifications';
 
 const operationStepPrefix = pattern('^(?:given\\s+operation|then\\s+(?:operation|compensated))(?:\\s|$)');
 const operationStep = pattern('^(given operation|then operation|then compensated)\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)(\\s+fails)?$');
 const header = pattern('^specification\\s+([A-Za-z_]\\w*)$');
-const givenPattern = pattern('^given\\s+([A-Z]\\w*)$');
-const whenAppendPattern = pattern('^when\\s+append\\s+([A-Z]\\w*)$');
-const whenPattern = pattern('^when\\s+([A-Z]\\w*)$');
-const thenEventPattern = pattern('^then\\s+([A-Z]\\w*)$');
+const stepName = '([A-Z]\\w*(?:\\.\\w+)*)';
+const inlineAssignment = '(?:\\s+(?<property>[\\w.]+)\\s*=(?!=|>)\\s*(?<value>.+))?';
+const stepPattern = (prefix: string, exactly = ''): RegExp => nativePattern(`^${prefix}\\s+${stepName}${exactly}${inlineAssignment}$`.replaceAll('\\s', dotNetWhitespace));
+const givenPattern = stepPattern('given');
+const whenAppendPattern = stepPattern('when\\s+append');
+const whenPattern = stepPattern('when');
+const thenEventPattern = stepPattern('then');
 const thenQueryPrefix = pattern('^then\\s+query\\b');
 const readModelPrefix = pattern('^(?:given|then)\\s+readmodel\\b');
-const givenReadModelPattern = pattern('^given\\s+readmodel\\s+([A-Z]\\w*)$');
-const thenReadModelPattern = pattern('^then\\s+readmodel\\s+([A-Z]\\w*)(\\s+exactly)?$');
+const givenReadModelPattern = stepPattern('given\\s+readmodel');
+const thenReadModelPattern = stepPattern('then\\s+readmodel', '(?<exactly>\\s+exactly)?');
 const thenNoPrefix = pattern('^then\\s+no\\b');
 const thenErrorPattern = pattern(`^then\\s+error\\s+"(${stringBodyPattern})"$`);
 const mappingPattern = pattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
@@ -260,8 +264,8 @@ function parseWhen(context: ParserContext, line: SourceLine, body: Specification
         return;
     }
     const generatedValues: PropertyMappingSyntax[] = [];
-    const values = parseValuesWithEventSource(context, line, generatedValues);
-    body.when = { kind: 'SpecificationCommandSyntax', commandType: match[1], ...values, generatedValues, location: locationOf(line) };
+    const values = parseValuesWithEventSource(context, line, generatedValues, match);
+    body.when = { kind: 'SpecificationCommandSyntax', commandType: match[1], ...values, generatedValues, inlineProperty: match.groups?.property ?? null, location: locationOf(line) };
 }
 
 function parseThen(context: ParserContext, line: SourceLine, body: SpecificationBody): void {
@@ -461,8 +465,9 @@ function parseReadModelStep(context: ParserContext, line: SourceLine, regex: Reg
     return {
         kind: 'SpecificationReadModelSyntax',
         name: match[1],
-        properties: parseValues(context, line),
-        exactly: keyword === 'then' && match[2] !== undefined,
+        properties: parseValues(context, line, false, match),
+        exactly: keyword === 'then' && match.groups?.exactly !== undefined,
+        inlineProperty: match.groups?.property ?? null,
         location: locationOf(line),
     };
 }
@@ -474,40 +479,18 @@ function parseEventStep(context: ParserContext, line: SourceLine, regex: RegExp,
         skipBody(context, line.indent);
         return undefined;
     }
-    return { kind: 'SpecificationEventSyntax', eventType: match[1], ...parseValuesWithEventSource(context, line), location: locationOf(line) };
+    return { kind: 'SpecificationEventSyntax', eventType: match[1], ...parseValuesWithEventSource(context, line, undefined, match), inlineProperty: match.groups?.property ?? null, location: locationOf(line) };
 }
 
-function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, generated?: PropertyMappingSyntax[]): { values: PropertyMappingSyntax[]; for: ExpressionSyntax | null } {
-    const values: PropertyMappingSyntax[] = [];
-    let eventSource: ExpressionSyntax | null = null;
-    for (let child = context.peekChild(parent.indent); child !== undefined; child = context.peekChild(parent.indent)) {
-        context.reader.takeSignificant();
-        if (generated !== undefined && generatedFixturePrefix.test(child.content)) {
-            const fixture = parseConcreteMapping(context, child, generatedFixturePattern, DiagnosticCodes.InvalidGeneratedFixture);
-            if (fixture !== null) generated.push(fixture);
-            continue;
-        }
-        const mapping = mappingPattern.exec(child.content);
-        if (mapping !== null) {
-            values.push(mappingOf(context, child, mapping));
-        } else if (firstWord(child.content) === 'for') {
-            const source = child.content.substring('for'.length).trim();
-            if (source.length === 0) {
-                context.error(DiagnosticCodes.InvalidSpecificationEventSource, 'Invalid event-source assertion \'for\' - expected \'for <value>\'', locationOf(child));
-            } else if (eventSource !== null) {
-                context.error(DiagnosticCodes.DuplicateSpecificationEventSource, 'A specification step can declare its event-source assertion only once', locationOf(child));
-            } else {
-                eventSource = parseMappingSource(source, locationOf(child), context);
-            }
-        } else {
-            context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child));
-        }
-    }
-    return { values, for: eventSource };
+function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, generated?: PropertyMappingSyntax[], inline?: RegExpExecArray): { values: PropertyMappingSyntax[]; for: ExpressionSyntax | null } {
+    const body = parseFixtureBody(context, parent, inline, generated !== undefined);
+    generated?.push(...body.generatedValues);
+    return { values: body.values, for: body.for };
 }
 
-function parseValues(context: ParserContext, parent: SourceLine, nativeIdentifiers = false): PropertyMappingSyntax[] {
+function parseValues(context: ParserContext, parent: SourceLine, nativeIdentifiers = false, inline?: RegExpExecArray): PropertyMappingSyntax[] {
     const values: PropertyMappingSyntax[] = [];
+    addInlineValue(context, parent, inline, values);
     for (let child = context.peekChild(parent.indent); child !== undefined; child = context.peekChild(parent.indent)) {
         context.reader.takeSignificant();
         const mapping = (nativeIdentifiers || context.sourceOptions.numericMode === 'exact' ? nativeMappingPattern : mappingPattern).exec(child.content);
@@ -515,7 +498,7 @@ function parseValues(context: ParserContext, parent: SourceLine, nativeIdentifie
             context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child));
             continue;
         }
-        values.push(mappingOf(context, child, mapping, nativeIdentifiers));
+        addFixtureValue(context, values, mappingOf(context, child, mapping, nativeIdentifiers));
     }
     return values;
 }

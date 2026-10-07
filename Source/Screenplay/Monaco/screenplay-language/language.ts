@@ -49,6 +49,7 @@ export const constructKeywords = [
     'contribute',
     'constraint',
     'specification',
+    'example',
     'seed',
     'behavior',
 ];

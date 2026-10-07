@@ -5,6 +5,7 @@ import { enclosingChain, fenceMap, indentOf, nearestEnclosingLine, withoutCommen
 import { refusalContext } from './refusal-context';
 import { namedRuleContext } from './named-rule-context';
 import { responseCompletions } from './response-completions';
+import { exampleCompletions } from './example-authoring';
 import { scanDocument } from './symbols';
 import { getSubLanguage } from './sub-language-registry';
 import * as items from './completion-items';
@@ -110,7 +111,7 @@ export function planCompletions(
 ): CompletionPlan {
     const fences = fenceMap(lines);
     if (fences[lineIndex] || withoutComment(textBefore).length < textBefore.length) return { kind: 'none' };
-    const responseEntries = responseCompletions(lines, lineIndex, textBefore, scanDocument(lines));
+    const responseEntries = exampleCompletions(lines, lineIndex, textBefore) ?? responseCompletions(lines, lineIndex, textBefore, scanDocument(lines));
     if (responseEntries !== null) return { kind: 'entries', entries: responseEntries };
 
     // Inside the quotes of a file import, what is wanted is a path - replacing what has been typed so far.

@@ -662,6 +662,18 @@ module Invoicing
               label $strings.invoices.actions.newInvoice
               navigate to InvoiceList
 
+      // Reuse one typed input; the pro forma scenario states only its differences.
+      example AcmeInvoice : RegisterInvoice
+        invoiceId      = "9c858901-8a57-4791-81fe-4c455b099bc9"
+        customerId     = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        invoiceNumber  = "INV-000123"
+        lines          = [{"lineNumber": 1, "productName": "Consulting", "quantity": 10, "unitPrice": 1200}]
+        billingContact = {"name": "Ada Lovelace", "email": "ada@acme.test"}
+        currency       = "NOK"
+        paymentTerms   = "net30"
+        dueDate        = "2026-12-31"
+        isProForma     = false
+
       specification RegisteringADraftInvoice
         file Specs/RegisteringADraftInvoice.cs
         given caller
@@ -670,16 +682,7 @@ module Invoicing
         given CustomerRegistered
           for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
           name = "Acme Corp"
-        when RegisterInvoice
-          invoiceId      = "9c858901-8a57-4791-81fe-4c455b099bc9"
-          customerId     = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-          invoiceNumber  = "INV-000123"
-          lines          = [{"lineNumber": 1, "productName": "Consulting", "quantity": 10, "unitPrice": 1200}]
-          billingContact = {"name": "Ada Lovelace", "email": "ada@acme.test"}
-          currency       = "NOK"
-          paymentTerms   = "net30"
-          dueDate        = "2026-12-31"
-          isProForma     = false
+        when AcmeInvoice
         then events in any order
         then InvoiceRegistered
           for "9c858901-8a57-4791-81fe-4c455b099bc9"
@@ -696,16 +699,12 @@ module Invoicing
         given caller
           authenticated
           role "Accountant"
-        when RegisterInvoice
-          invoiceId      = "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
-          customerId     = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-          invoiceNumber  = "INV-000124"
-          lines          = [{"lineNumber": 1, "productName": "License", "quantity": 1, "unitPrice": 500}]
-          billingContact = {"name": "Ada Lovelace", "email": "ada@acme.test"}
-          currency       = "USD"
-          paymentTerms   = "immediate"
-          dueDate        = "2026-12-31"
-          isProForma     = true
+        when AcmeInvoice isProForma = true
+          invoiceId     = "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
+          invoiceNumber = "INV-000124"
+          lines         = [{"lineNumber": 1, "productName": "License", "quantity": 1, "unitPrice": 500}]
+          currency      = "USD"
+          paymentTerms  = "immediate"
         then InvoiceRegistered
           for "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
           currency = "USD"

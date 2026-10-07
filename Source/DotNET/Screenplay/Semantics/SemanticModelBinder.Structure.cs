@@ -99,7 +99,10 @@ public sealed partial class SemanticModelBinder
             var commands = slice.Commands.Select(value =>
             {
                 var bound = BindCommand(address, value, _events);
-                return bound with { Authorization = EffectiveAuthorization(value.Authorize, bound.Properties, module, featurePath, value.Name) };
+                bound = bound with { Authorization = EffectiveAuthorization(value.Authorize, bound.Properties, module, featurePath, value.Name) };
+                _exampleCommands[value] = bound;
+
+                return bound;
             }).ToImmutableArray();
             var readModels = (slice.ReadModels ?? []).Select(value => _readModelDeclarations[value].Model).ToImmutableArray();
             var projections = slice.Projections.SelectMany(value => BindProjections(address, value)).ToImmutableArray();

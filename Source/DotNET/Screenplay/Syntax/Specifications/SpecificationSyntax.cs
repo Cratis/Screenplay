@@ -33,6 +33,11 @@ public record SpecificationSyntax(
     public SourceOptions SourceOptions { get; init; } = SourceOptions.Legacy;
 
     /// <summary>
+    /// Gets the document-scoped examples retained by a standalone specification.
+    /// </summary>
+    public IEnumerable<SpecificationExampleSyntax> Examples { get; init; } = [];
+
+    /// <summary>
     /// Gets the <see cref="FileReferenceSyntax"/> naming the file the specification is realized by,
     /// and <c>null</c> when the document does not name one.
     /// </summary>
@@ -155,6 +160,11 @@ public record SpecificationEventSyntax(
     SourceLocation Location) : SyntaxNode(Location)
 {
     /// <summary>
+    /// Gets the property authored inline in the step header, or null for an indented-only step.
+    /// </summary>
+    public string? InlineProperty { get; init; }
+
+    /// <summary>
     /// Gets the explicit event-source identity asserted for this event occurrence.
     /// </summary>
     /// <remarks>
@@ -175,6 +185,11 @@ public record SpecificationCommandSyntax(
     IEnumerable<PropertyMappingSyntax> Values,
     SourceLocation Location) : SyntaxNode(Location)
 {
+    /// <summary>
+    /// Gets the property authored inline in the step header, or null for an indented-only step.
+    /// </summary>
+    public string? InlineProperty { get; init; }
+
     /// <summary>
     /// Gets the explicit state-change destination asserted for this command occurrence.
     /// </summary>
@@ -202,6 +217,11 @@ public record SpecificationReadModelSyntax(
     IEnumerable<PropertyMappingSyntax> Properties,
     SourceLocation Location) : SyntaxNode(Location)
 {
+    /// <summary>
+    /// Gets the property authored inline in the step header, or null for an indented-only step.
+    /// </summary>
+    public string? InlineProperty { get; init; }
+
     /// <summary>Gets whether every actual property must be asserted; the default is subset matching.</summary>
     public bool Exactly { get; init; }
 }

@@ -2329,6 +2329,46 @@ public static class DiagnosticCodes
     /// </summary>
     public const string TimelineCycleGroup = "PLAY0517";
 
+    /// <summary>
+    /// A typed specification example declaration is malformed.
+    /// </summary>
+    public const string InvalidSpecificationExample = "PLAY0518";
+
+    /// <summary>
+    /// A specification fixture assigns the same property more than once.
+    /// </summary>
+    public const string DuplicateSpecificationAssignment = "PLAY0519";
+
+    /// <summary>
+    /// A specification example type or reference is unknown, ambiguous, or unsupported.
+    /// </summary>
+    public const string UnresolvedSpecificationExampleType = "PLAY0520";
+
+    /// <summary>
+    /// A specification example name collides with a type or another example in its scope.
+    /// </summary>
+    public const string SpecificationExampleNameCollision = "PLAY0521";
+
+    /// <summary>
+    /// A specification step uses an example of another kind.
+    /// </summary>
+    public const string SpecificationExampleKindMismatch = "PLAY0522";
+
+    /// <summary>
+    /// A specification example supplies a value not allowed by its current type.
+    /// </summary>
+    public const string InvalidSpecificationExampleValue = "PLAY0523";
+
+    /// <summary>
+    /// An exact-shape specification step omits a required property after example expansion.
+    /// </summary>
+    public const string MissingSpecificationProperty = "PLAY0524";
+
+    /// <summary>
+    /// A stated example value or destination cannot be admitted by its semantic type, even if unused.
+    /// </summary>
+    public const string UnadmittedSpecificationExampleValue = "PLAY0525";
+
     /// <summary>An event source or stream declaration is invalid or ambiguous.</summary>
     public const string InvalidEventSourceDeclaration = "PLAY0503";
 

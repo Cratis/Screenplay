@@ -37,6 +37,7 @@ internal static partial class PlayFolderMerge
             IsPlacement = false,
             FileImports = [.. parts.SelectMany(part => part.FileImports)],
             SourceComments = [.. parts.SelectMany(part => part.SourceComments).Distinct()],
+            Examples = [.. parts.SelectMany(part => part.Examples)],
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"module '{group.Key}'", context),
             Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"module '{group.Key}'", context),
             ScreenTemplates = DeclaredInOneFile(
@@ -85,6 +86,7 @@ internal static partial class PlayFolderMerge
             IsPlacement = false,
             FileImports = [.. parts.SelectMany(part => part.FileImports)],
             SourceComments = [.. parts.SelectMany(part => part.SourceComments).Distinct()],
+            Examples = [.. parts.SelectMany(part => part.Examples)],
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"feature '{group.Key}'", context),
             Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"feature '{group.Key}'", context),
             Contributions = [.. parts.SelectMany(part => part.Contributions ?? [])],

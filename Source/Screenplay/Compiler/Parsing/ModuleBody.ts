@@ -4,6 +4,7 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthorizeSyntax } from '../Syntax/Authorization';
+import { SpecificationExampleSyntax } from '../Syntax/Specifications';
 import { FeatureSyntax, FileImportSyntax, ModuleSyntax } from '../Syntax/Structure';
 import { pattern } from '../Text/patterns';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
@@ -12,6 +13,7 @@ import { parseFeature } from './FeatureBody';
 import { parseFileImport } from './FileImportParser';
 import { collectInputUses } from './InputUses';
 import { firstWord } from './LineText';
+import { parseExample } from './SpecificationExampleParser';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 
@@ -21,12 +23,13 @@ export const modulePattern = pattern('^module\\s+([A-Za-z_]\\w*)$');
 const opaqueModuleMembers = new Set(['on', 'uses', 'screen', 'dialog', 'form', 'contribute']);
 
 // What a module body may hold, as it reads in a diagnostic.
-export const moduleBodyExpected = 'description, authorize, import, screen template, dialog template, form, contribute, feature, \'on <trigger>\' or \'uses <Behavior>\'';
+export const moduleBodyExpected = 'description, authorize, import, screen template, dialog template, form, contribute, feature, example, \'on <trigger>\' or \'uses <Behavior>\'';
 
 // Collects the body of a module - written beneath a 'module' header, or at the top level of a file imported
 // into the module. The port of the C# ModuleBody.
 export class ModuleBody {
     readonly #features: FeatureSyntax[] = [];
+    readonly #examples: SpecificationExampleSyntax[] = [];
     readonly #fileImports: FileImportSyntax[] = [];
     #description: string | null = null;
     #authorize: AuthorizeSyntax | null = null;
@@ -46,6 +49,9 @@ export class ModuleBody {
                 return true;
             case 'import':
                 parseFileImport(context, line, this.#fileImports);
+                return true;
+            case 'example':
+                this.#examples.push(parseExample(context, line));
                 return true;
             case 'feature':
                 this.#features.push(parseFeature(context, line));
@@ -78,6 +84,7 @@ export class ModuleBody {
             description: this.#description,
             authorize: this.#authorize,
             features: this.#features,
+            examples: this.#examples,
             fileImports: this.#fileImports,
             isPlacement,
             location,

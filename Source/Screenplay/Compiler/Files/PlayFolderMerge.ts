@@ -57,6 +57,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         imports: firstOfEach(applications.flatMap(application => application.imports), item => item.qualifiedName),
         concepts,
         types,
+        examples: applications.flatMap(application => application.examples ?? []),
         systems: applications.flatMap(application => application.systems ?? []),
         eventSources: applications.flatMap(application => application.eventSources ?? []),
         declaredTriggers: applications.flatMap(application => application.declaredTriggers ?? []),
@@ -73,9 +74,9 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
 
 function hasDeclarations(application: ApplicationSyntax): boolean {
     if (isAuthoredDocument(application)) return true;
-    if (application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.policies?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0) return true;
-    const feature = (node: FeatureSyntax): boolean => !node.isPlacement || node.slices.length > 0 || node.features.some(feature);
-    return application.modules.some(module => !module.isPlacement || module.features.some(feature));
+    if (application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.policies?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0) return true;
+    const feature = (node: FeatureSyntax): boolean => !node.isPlacement || (node.examples?.length ?? 0) > 0 || node.slices.length > 0 || node.features.some(feature);
+    return application.modules.some(module => !module.isPlacement || (module.examples?.length ?? 0) > 0 || module.features.some(feature));
 }
 
 function mergeModules(modules: readonly ModuleSyntax[], diagnostics: Diagnostic[]): ModuleSyntax[] {
@@ -83,6 +84,7 @@ function mergeModules(modules: readonly ModuleSyntax[], diagnostics: Diagnostic[
         ...parts[0],
         isPlacement: false,
         fileImports: parts.flatMap(part => part.fileImports),
+        examples: parts.flatMap(part => part.examples ?? []),
         description: firstDescription(parts, `module '${parts[0].name}'`, diagnostics),
         authorize: combineAuthorization(parts.map(part => part.authorize), `module '${parts[0].name}'`, diagnostics),
         features: mergeFeatures(parts.flatMap(part => part.features), diagnostics),
@@ -94,6 +96,7 @@ function mergeFeatures(features: readonly FeatureSyntax[], diagnostics: Diagnost
         ...parts[0],
         isPlacement: false,
         fileImports: parts.flatMap(part => part.fileImports),
+        examples: parts.flatMap(part => part.examples ?? []),
         description: firstDescription(parts, `feature '${parts[0].name}'`, diagnostics),
         authorize: combineAuthorization(parts.map(part => part.authorize), `feature '${parts[0].name}'`, diagnostics),
         features: mergeFeatures(parts.flatMap(part => part.features), diagnostics),

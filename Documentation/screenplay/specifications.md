@@ -88,6 +88,51 @@ Executable specification values must be concrete: literals, inline objects and l
 
 For example, if `OrderView` declares `lines Line[]`, `tags String[]`, and `note String optional`, and `Line` declares `sku String`, you can seed `lines = [{"sku":"A-1"}]`, `tags = []`, and `note = null` in a `given readmodel` block. A `then readmodel` may assert just the identifier and `lines`; the list must match in order.
 
+## Typed specification examples
+
+Use an example when several scenarios repeat the same command input, prior event or read-model state. Keep each scenario's action and outcome visible; an example is one typed instance, not a multi-step setup. Both compilers parse and preserve declarations and inline assignments. C# resolves and expands examples before executable binding. The executable model contains only the merged values, with the same bytes and revision as hand-expanded steps.
+
+`example <Name> : <EventOrCommandOrReadModel>` declares one named, possibly partial fixture. Its body accepts property assignments, an optional `description`, an optional `for` value, and command `generated` fixtures. It cannot contain caller or clock fixtures or Given/When/Then steps. Declare examples at slice, feature, module or document level, or alongside specifications in a specification-only document.
+
+An example reference occupies the ordinary name slot in `given`, `given readmodel`, `when`, `when append`, `then`, or `then readmodel [exactly]`. Names may be qualified. One concrete assignment may follow the name on the same line, including a structured object or list; other assignments stay indented. There is no `with` keyword.
+
+This excerpt assumes `RegisterInvoice` declares `total` and `currency`, and `InvoiceRegistered` declares `total`. The example is partial: the step must supply any remaining required command inputs.
+
+```screenplay
+example AcmeInvoice : RegisterInvoice
+  total = 1000
+  currency = "EUR"
+
+specification RegisteringAcme
+  when AcmeInvoice total = 5000
+    currency = "NOK"
+  then InvoiceRegistered total = 5000
+```
+
+Here, `total = 5000` overrides `1000` inline, and the indented `currency = "NOK"` overrides `"EUR"`. Unchanged example values are inherited. A value supplied only by the step is authored, not an override, including a new `for` destination or `generated` fixture. Override a structured object or list as a whole; there is no recursive member merge. An indented `for` replaces the example's destination, and `generated` fixtures merge by property name. The same assignment spellings also work on ordinary type names without an example.
+
+| Example kind | Supported step slots |
+| --- | --- |
+| Event | `given <Example>`, `when append <Example>`, `then <Example>` |
+| Command | `when <Example>` |
+| Read model | `given readmodel <Example>`, `then readmodel <Example> [exactly]` |
+
+Examples share the type namespace: a name colliding with an event, command, read model, type, concept, or import is an error. The underlying type resolves in the example's declaration scope, not where it is used. Examples always use the current event generation and cannot inherit from another example. A step of the wrong kind reports a suggested corrected spelling. At executable binding, a `when` command must belong to the specification's own slice; a qualified command or example from another slice cannot select a same-named local command.
+
+Syntax consumers can call `SpecificationExamples.Expand(application)` in `Cratis.Screenplay.Syntax.Specifications`. The result contains the effective application, authored/effective specification pairs, resolution diagnostics, and each step's effective values with `Authored`, `Example`, or `Override` provenance. Overrides retain the replaced expression; all expressions retain their source locations. The authored syntax is not changed. Check diagnostics before consuming the effective view. For a standalone specification, call `SpecificationExamples.Expand(specification, declarations, scope)`, supplying the owning application and its module/feature/slice scope segments; document-scoped examples are included automatically.
+
+MCP `find-fixtures` reports those effective values, their origins and replaced values. Declaration search and details include `Example`; reference queries connect specification steps to the example and the example to its underlying type. Workspace rename proposals update example uses, underlying type references and specification names while preserving proven bindings. See the [MCP reference](mcp/reference.md#typed-specification-examples).
+
+At binding, given events and read models, command inputs other than generated properties, appended events, and expected events must state every required property after expansion. Each missing property reports `PLAY0524` at its step, naming the example when used. Partial examples are allowed, but an exact-shape step must complete them. No implicit fixture defaults are supplied. Expected read models keep subset matching unless `exactly` is authored; using an example does not change that rule.
+
+Binding validates every stated example value, even in an unused example or one whose invalid value is overridden. Scalar types, enum membership, nested object completeness, null rules, generated UUID fixtures and `for` identities follow ordinary executable fixture admission. An unknown or ambiguous destination type refuses binding rather than inventing one. This does not require all top-level properties of a partial example to be supplied, execute validation rules, or make unsupported application behavior executable. Syntax acceptance alone is not semantic admission.
+
+Source-bound reference execution uses `SemanticSpecificationRunner.Run(compilation, specificationId)`. Failed comparisons retain their original failure text and append the effective fixture values, their authored/example/override origins, and replaced values. The compilation owns the provenance sidecar; no sidecar enters ESM bytes. `Run(plan, specificationId)` remains available for ESM-only consumers, but cannot reconstruct source origins and does not invent them. Unsupported plan admission is a failed result, not a passing scenario.
+
+Examples cannot supply callers, clocks or whole scenarios, and cannot be used in query results, `then result`, `then returns`, trigger or capture fixtures. Composite-value examples, inheritance, named setups and scenario outlines are not supported; structured values inside an event, command or read-model example are supported. There are no implicit defaults or unused/shadowing warnings.
+
+Assign a property only once within each fixture or step. An inline assignment repeated in the indented body reports `PLAY0519`; a malformed example header reports `PLAY0518`. A declaration does not supply implicit defaults or change the step's matching mode. Unlike `seed`, an example declares specification data, not events to append when the application starts.
+
 ## Rejections
 
 A rejection comes in two forms, and the difference between them is real.

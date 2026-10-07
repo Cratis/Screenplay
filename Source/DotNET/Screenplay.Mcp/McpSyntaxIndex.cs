@@ -132,6 +132,9 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
             case ReducerSyntax value: Declare("Reducer", value.Name, value); break;
             case CaptureSyntax value: Declare("Capture", value.Name, value); break;
             case ConstraintSyntax value when ReferenceEquals(value, _constraint): Declare("Constraint", value.Name, value); break;
+            case SpecificationExampleSyntax value:
+                Declare("Example", value.Name, value, value.Description, new { value.Type, value.Values, value.For, value.GeneratedValues });
+                break;
             case SpecificationSyntax value:
                 Declare("Specification", value.Name, value, details: new
                 {

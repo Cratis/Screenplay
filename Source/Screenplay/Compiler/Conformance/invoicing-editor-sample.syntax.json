@@ -2662,6 +2662,145 @@
                   "tags": []
                 }
               ],
+              "examples": [
+                {
+                  "kind": "SpecificationExampleSyntax",
+                  "description": null,
+                  "for": null,
+                  "generatedValues": [],
+                  "name": "AcmeInvoice",
+                  "type": "RegisterInvoice",
+                  "values": [
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "invoiceId",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                      }
+                    },
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "customerId",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      }
+                    },
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "invoiceNumber",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "INV-000123"
+                      }
+                    },
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "lines",
+                      "source": {
+                        "kind": "ListExpressionSyntax",
+                        "items": [
+                          {
+                            "kind": "ObjectExpressionSyntax",
+                            "members": [
+                              {
+                                "kind": "ObjectMemberSyntax",
+                                "name": "lineNumber",
+                                "value": {
+                                  "kind": "LiteralExpressionSyntax",
+                                  "value": 1
+                                }
+                              },
+                              {
+                                "kind": "ObjectMemberSyntax",
+                                "name": "productName",
+                                "value": {
+                                  "kind": "LiteralExpressionSyntax",
+                                  "value": "Consulting"
+                                }
+                              },
+                              {
+                                "kind": "ObjectMemberSyntax",
+                                "name": "quantity",
+                                "value": {
+                                  "kind": "LiteralExpressionSyntax",
+                                  "value": 10
+                                }
+                              },
+                              {
+                                "kind": "ObjectMemberSyntax",
+                                "name": "unitPrice",
+                                "value": {
+                                  "kind": "LiteralExpressionSyntax",
+                                  "value": 1200
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "billingContact",
+                      "source": {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "name",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "Ada Lovelace"
+                            }
+                          },
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "email",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "ada@acme.test"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "currency",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "NOK"
+                      }
+                    },
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "paymentTerms",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "net30"
+                      }
+                    },
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "dueDate",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "2026-12-31"
+                      }
+                    },
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "isProForma",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": false
+                      }
+                    }
+                  ]
+                }
+              ],
               "name": "RegisterInvoice",
               "operations": [],
               "projections": [],
@@ -2825,138 +2964,10 @@
                   "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
-                    "commandType": "RegisterInvoice",
+                    "commandType": "AcmeInvoice",
                     "for": null,
                     "generatedValues": [],
-                    "values": [
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "invoiceId",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "customerId",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "invoiceNumber",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "INV-000123"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "lines",
-                        "source": {
-                          "kind": "ListExpressionSyntax",
-                          "items": [
-                            {
-                              "kind": "ObjectExpressionSyntax",
-                              "members": [
-                                {
-                                  "kind": "ObjectMemberSyntax",
-                                  "name": "lineNumber",
-                                  "value": {
-                                    "kind": "LiteralExpressionSyntax",
-                                    "value": 1
-                                  }
-                                },
-                                {
-                                  "kind": "ObjectMemberSyntax",
-                                  "name": "productName",
-                                  "value": {
-                                    "kind": "LiteralExpressionSyntax",
-                                    "value": "Consulting"
-                                  }
-                                },
-                                {
-                                  "kind": "ObjectMemberSyntax",
-                                  "name": "quantity",
-                                  "value": {
-                                    "kind": "LiteralExpressionSyntax",
-                                    "value": 10
-                                  }
-                                },
-                                {
-                                  "kind": "ObjectMemberSyntax",
-                                  "name": "unitPrice",
-                                  "value": {
-                                    "kind": "LiteralExpressionSyntax",
-                                    "value": 1200
-                                  }
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "billingContact",
-                        "source": {
-                          "kind": "ObjectExpressionSyntax",
-                          "members": [
-                            {
-                              "kind": "ObjectMemberSyntax",
-                              "name": "name",
-                              "value": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "Ada Lovelace"
-                              }
-                            },
-                            {
-                              "kind": "ObjectMemberSyntax",
-                              "name": "email",
-                              "value": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "ada@acme.test"
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "currency",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "NOK"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "paymentTerms",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "net30"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "dueDate",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "2026-12-31"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "isProForma",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": false
-                        }
-                      }
-                    ]
+                    "values": []
                   },
                   "whenAppended": null,
                   "whenCapture": null,
@@ -3056,24 +3067,25 @@
                   "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
-                    "commandType": "RegisterInvoice",
+                    "commandType": "AcmeInvoice",
                     "for": null,
                     "generatedValues": [],
+                    "inlineProperty": "isProForma",
                     "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "isProForma",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": true
+                        }
+                      },
                       {
                         "kind": "PropertyMappingSyntax",
                         "property": "invoiceId",
                         "source": {
                           "kind": "LiteralExpressionSyntax",
                           "value": "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "customerId",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
                         }
                       },
                       {
@@ -3132,31 +3144,6 @@
                       },
                       {
                         "kind": "PropertyMappingSyntax",
-                        "property": "billingContact",
-                        "source": {
-                          "kind": "ObjectExpressionSyntax",
-                          "members": [
-                            {
-                              "kind": "ObjectMemberSyntax",
-                              "name": "name",
-                              "value": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "Ada Lovelace"
-                              }
-                            },
-                            {
-                              "kind": "ObjectMemberSyntax",
-                              "name": "email",
-                              "value": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "ada@acme.test"
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
                         "property": "currency",
                         "source": {
                           "kind": "LiteralExpressionSyntax",
@@ -3169,22 +3156,6 @@
                         "source": {
                           "kind": "LiteralExpressionSyntax",
                           "value": "immediate"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "dueDate",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "2026-12-31"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "isProForma",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": true
                         }
                       }
                     ]

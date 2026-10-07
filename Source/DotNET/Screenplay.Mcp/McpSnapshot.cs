@@ -151,6 +151,8 @@ sealed class McpSnapshot : IPlayFiles
             applications.SelectMany(application => application.Modules),
             Diagnostics.SourceLocation.Start)
         {
+            Types = applications.SelectMany(application => application.Types ?? []),
+            Examples = applications.SelectMany(application => application.Examples),
             Systems = applications.SelectMany(application => application.Systems),
             EventSources = physical.SelectMany(document => document.Result.Value?.EventSources ?? []),
             SourceOptions = applications.Any(application => application.SourceOptions.NumericMode == NumericMode.Exact) ? SourceOptions.Exact : SourceOptions.Legacy

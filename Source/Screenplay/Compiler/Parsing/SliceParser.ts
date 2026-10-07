@@ -10,7 +10,7 @@ import { ProjectionSyntax } from '../Syntax/Projections';
 import { QuerySyntax } from '../Syntax/Queries';
 import { ReactionSyntax } from '../Syntax/Reactions';
 import { ScreenSyntax } from '../Syntax/Screens';
-import { SpecificationSyntax } from '../Syntax/Specifications';
+import { SpecificationExampleSyntax, SpecificationSyntax } from '../Syntax/Specifications';
 import { SliceSyntax, SliceType, sliceTypes } from '../Syntax/Structure';
 import { pattern } from '../Text/patterns';
 import { parseCapture } from './CaptureParser';
@@ -27,6 +27,7 @@ import { parseProjection } from './ProjectionParser';
 import { parseQuery } from './QueryParser';
 import { parseReaction } from './ReactionParser';
 import { parseScreen } from './ScreenParser';
+import { parseExample } from './SpecificationExampleParser';
 import { parseSpecification } from './SpecificationParser';
 import { locationOf, SourceLine } from './SourceLine';
 
@@ -62,6 +63,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     const captures: CaptureSyntax[] = [];
     const constraints: ConstraintSyntax[] = [];
     const specifications: SpecificationSyntax[] = [];
+    const examples: SpecificationExampleSyntax[] = [];
     const readModels: ReadModelSyntax[] = [];
     const screens: ScreenSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
@@ -88,6 +90,8 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
             reactions.push(parseReaction(context, child));
         } else if (keyword === 'constraint') {
             constraints.push(parseConstraint(context, child));
+        } else if (keyword === 'example') {
+            examples.push(parseExample(context, child));
         } else if (keyword === 'specification') {
             specifications.push(parseSpecification(context, child));
         } else if (keyword === 'readmodel') {
@@ -103,7 +107,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     }
     context.scope = previous;
     return {
-        kind: 'SliceSyntax', type, name, description, events, operations, commands, queries, projections, captures, reactions, constraints, specifications, readModels, screens,
+        kind: 'SliceSyntax', type, name, description, examples, events, operations, commands, queries, projections, captures, reactions, constraints, specifications, readModels, screens,
         location: locationOf(line),
     };
 }

@@ -7,6 +7,7 @@ import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { describePlacement, documentPlacement, isDocumentPlacement, PlayPlacement } from '../Files/PlayPlacement';
 import { PersonaSyntax } from '../Syntax/Authorization';
 import { ConceptAttributeSyntax, ConceptSyntax, DomainSyntax, ImportSyntax, TypeSyntax } from '../Syntax/Declarations';
+import { SpecificationExampleSyntax } from '../Syntax/Specifications';
 import { ApplicationSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax } from '../Syntax/Structure';
 import { parseTriggerDeclaration } from './TriggerDataParser';
 import { pattern } from '../Text/patterns';
@@ -30,6 +31,7 @@ import { parseSystem } from './OperationParser';
 import { SystemSyntax } from '../Syntax/Operations';
 import { EventSourceSyntax } from '../Syntax/EventSources';
 import { parseEventSource } from './EventSourceParser';
+import { parseExample } from './SpecificationExampleParser';
 import { locationOf, SourceLine, startOf } from './SourceLine';
 
 const domainPattern = pattern('^domain\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)$');
@@ -67,6 +69,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     const personas: PersonaSyntax[] = [];
     const policies: PolicySyntax[] = [];
     const seeds: SeedSyntax[] = [];
+    const examples: SpecificationExampleSyntax[] = [];
     const declaredTriggers: NonNullable<ApplicationSyntax['declaredTriggers']>[number][] = [];
     let sawOtherConstruct = false;
     for (let line = context.reader.peekSignificant(); line !== undefined; line = context.reader.peekSignificant()) {
@@ -96,6 +99,9 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             } else {
                 imports.push({ kind: 'ImportSyntax', qualifiedName: match[1], location: locationOf(line) });
             }
+        } else if (keyword === 'example') {
+            if (placedBody !== undefined) placedBody.tryParse(context, line);
+            else examples.push(parseExample(context, line));
         } else if (keyword === 'eventsource') {
             eventSources.push(parseEventSource(context, line));
         } else if (keyword === 'system') {
@@ -131,7 +137,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, modules, personas, policies, seeds, declaredTriggers, fileImports, location: context.start };
+    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, examples, modules, personas, policies, seeds, declaredTriggers, fileImports, location: context.start };
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }
@@ -143,7 +149,7 @@ function declaresConstruct(keyword: string, line: SourceLine, placement: PlayPla
     if (keyword === 'module') {
         return isDocumentPlacement(placement);
     }
-    return keyword === 'eventsource' || keyword === 'system' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || opaqueTopLevel.has(keyword);
+    return keyword === 'example' || keyword === 'eventsource' || keyword === 'system' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || opaqueTopLevel.has(keyword);
 }
 
 function parseModuleInPlacedFile(context: ParserContext, line: SourceLine, placement: PlayPlacement, moduleBody: ModuleBody | undefined): void {

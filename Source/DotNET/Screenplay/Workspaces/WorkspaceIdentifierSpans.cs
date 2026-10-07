@@ -16,6 +16,8 @@ internal static partial class WorkspaceIdentifierSpans
         var keyword = line.Split(' ', '\t')[0];
         return (node, member) switch
         {
+            (SpecificationExampleSyntax, "name" or "type") => keyword == "example",
+            (SpecificationSyntax, "name") => keyword == "specification",
             (ConceptSyntax, "name") => keyword == "concept",
             (TypeSyntax, "name") => keyword == "type",
             (ModuleSyntax, "name") => keyword == "module",
@@ -44,7 +46,7 @@ internal static partial class WorkspaceIdentifierSpans
             (EventInteractionTriggerSyntax, "eventName") => keyword == "on",
             (UniquePropertyConstraintSyntax or UniqueEventConstraintSyntax, "event") => keyword == "unique",
             (ConstraintSyntax, var reference) when reference.StartsWith("releasedBy/", StringComparison.Ordinal) => keyword == "released",
-            (SpecificationEventSyntax, "eventType") => keyword == "given" || keyword == "then" || keyword == "and",
+            (SpecificationEventSyntax, "eventType") => keyword == "given" || keyword == "then" || keyword == "and" || keyword == "when",
             (SpecificationCommandSyntax, "commandType") => keyword == "when",
             (SpecificationReadModelSyntax or SpecificationAbsentReadModelSyntax, "name") => keyword == "given" || keyword == "then" || keyword == "and",
             (SpecificationQuerySyntax, "query") => keyword == "then" || keyword == "and",

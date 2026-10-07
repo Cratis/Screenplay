@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Syntax;
 
@@ -26,6 +27,11 @@ public record ModuleSyntax(
     IEnumerable<ContributionSyntax>? Contributions = null,
     IEnumerable<DialogTemplateSyntax>? DialogTemplates = null) : SyntaxNode(Location)
 {
+    /// <summary>
+    /// Gets the module-scoped specification examples.
+    /// </summary>
+    public IEnumerable<SpecificationExampleSyntax> Examples { get; init; } = [];
+
     /// <summary>
     /// Gets the behaviors attached inline to the module. Every screen beneath it inherits them, additively
     /// with whatever is attached closer in.
@@ -72,6 +78,11 @@ public record FeatureSyntax(
     string? Description = null,
     IEnumerable<ContributionSyntax>? Contributions = null) : SyntaxNode(Location)
 {
+    /// <summary>
+    /// Gets the feature-scoped specification examples.
+    /// </summary>
+    public IEnumerable<SpecificationExampleSyntax> Examples { get; init; } = [];
+
     /// <summary>
     /// Gets the behaviors attached inline to the feature. Every screen beneath it inherits them, additively
     /// with whatever is attached closer in.

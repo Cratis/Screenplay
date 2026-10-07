@@ -35,13 +35,21 @@ static class McpFixtureOccurrences
         return fallback;
     }
 
-    internal static IEnumerable<McpFixtureOccurrence> All(McpSyntaxIndex index) => index.Declarations
-        .Where(declaration => declaration.Syntax is SpecificationSyntax)
-        .SelectMany(For);
-
-    static IEnumerable<McpFixtureOccurrence> For(McpDeclaration declaration)
+    internal static IEnumerable<McpFixtureOccurrence> All(McpSyntaxIndex index, ApplicationSyntax? application)
     {
-        var specification = (SpecificationSyntax)declaration.Syntax;
+        var expanded = application is null ? null : SpecificationExamples.Expand(application);
+        if (expanded?.Diagnostics.Any(diagnostic => diagnostic.Severity == Diagnostics.DiagnosticSeverity.Error) == true)
+        {
+            throw new McpFailure($"SpecificationExampleExpansionFailed: fixture values cannot be reported while example resolution has errors. {string.Join("; ", expanded.Diagnostics.Select(diagnostic => diagnostic.Message))}");
+        }
+
+        return index.Declarations.Where(declaration => declaration.Syntax is SpecificationSyntax).SelectMany(declaration =>
+            For(declaration, expanded?.Specifications.SingleOrDefault(specification => specification.Authored.Name == declaration.Name && specification.Authored.Location == declaration.Location)));
+    }
+
+    static IEnumerable<McpFixtureOccurrence> For(McpDeclaration declaration, EffectiveSpecification? expanded)
+    {
+        var specification = expanded?.Effective ?? (SpecificationSyntax)declaration.Syntax;
         var ordinal = 0;
         foreach (var item in specification.Given)
         {
@@ -96,6 +104,6 @@ static class McpFixtureOccurrences
         }
 
         McpFixtureOccurrence Occurrence(string name, string kind, string role, SyntaxNode node, IEnumerable<PropertyMappingSyntax> values, ExpressionSyntax? destination = null) =>
-            new(declaration.Owner, role, new(name, [kind], declaration.Scope, node.Location, role, declaration.Owner), ordinal++, values, destination);
+            new(declaration.Owner, role, new(name, [kind], declaration.Scope, node.Location, role, declaration.Owner), ordinal++, values, destination, expanded?.Steps.SingleOrDefault(step => ReferenceEquals(step.Effective, node)));
     }
 }

@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Dependencies;
 
@@ -25,6 +26,7 @@ internal sealed partial class DependencyGraph
 
     DependencyGraph(ApplicationSyntax application, IReadOnlyDictionary<string, int>? ranks)
     {
+        application = SpecificationExamples.Expand(application).Application;
         OrderSource = ranks is { Count: > 0 } ? "authored" : "syntax";
         ranks ??= new Dictionary<string, int>();
         _children[_root.Key] = [];
@@ -49,6 +51,9 @@ internal sealed partial class DependencyGraph
         {
             if (!inventory.TryGetValue((kind, name), out var owners)) inventory[(kind, name)] = owners = [];
             if (!owners.Contains(node)) owners.Add(node);
+            var qualified = string.Join('.', node.Scope.Append(name));
+            if (!inventory.TryGetValue((kind, qualified), out var scopedOwners)) inventory[(kind, qualified)] = scopedOwners = [];
+            if (!scopedOwners.Contains(node)) scopedOwners.Add(node);
         }
         foreach (var (node, slice) in _slices)
         {
