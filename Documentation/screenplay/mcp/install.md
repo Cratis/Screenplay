@@ -187,9 +187,24 @@ first time it needs one:
 2. The folder your MCP client offers through its workspace roots, when the client
    offers exactly one. That folder is the project, not necessarily the model: the
    server serves the folder already holding the project's `.play` files, else its
-   `Source` or `src` folder, else a new `Screenplay` folder in the project. When the
-   client offers several, the assistant is told to choose with `path`. When the client
-   changes its roots, a folder bound from them is let go.
+   `Source` or `src` folder, else a new `Screenplay` folder in the project. Existing
+   workspaces keep their root: if `.screenplay/identities.json` or
+   `.screenplay/pending.json` exists at the offered folder or along the directory
+   path down to the discovered model folder (including both ends), the server binds
+   the directory holding that state. With state at several directories on that
+   path, it prefers the one nearest the offered folder and reports
+   `rootBindingConflict` in `open-workspace` and `workspace-state`, listing the
+   competing roots even if opening fails. If any state root on that path holds a
+   pending journal, opening and writes are refused and the journal's root is named.
+   To inspect or recover a competing journal, first pass its root explicitly as
+   `open-workspace.path`, then use `workspace-state` and `recover-workspace`.
+   Existing state never causes a fallback `Screenplay` folder to be created.
+   The server never migrates state automatically. Empty `.screenplay`
+   folders and backup artifacts alone do not select a root; symbolic links in
+   metadata paths are refused. This preserves identities and interrupted-write
+   recovery when upgrading from 4.66. When the client offers several, the assistant
+   is told to choose with `path`. When the client changes its roots, a folder bound
+   from them is let go.
 3. The folder the server was launched from, when it already holds `.play` files or a
    `.screenplay` folder. This is what a terminal client such as Claude Code or Pi
    gives you: start it in the project and the model is the project.
@@ -203,12 +218,47 @@ folder, creating it when needed. That is where a chat in Claude or ChatGPT deskt
 puts the `.play` files, so you can open, commit or move them like any other files.
 Pass `path` to `open-workspace` to work somewhere else.
 
-Pass a root, as below, when you want one fixed folder for every session. A fixed-root
-connection refuses `open-workspace.path` naming a different physical directory
-with `RootChangeRefused`. A case alias is accepted only when native directory
-identity proves it is the same folder, after the symbolic-link and reparse-point
-guards; the originally approved root stays bound. Changing applications requires
-a new authorized connection.
+Pass a root, as below, to restrict the connection to one model and its Git
+worktrees. `open-workspace.path` accepts the same physical directory or the
+corresponding model folder in a registered worktree of the same repository.
+Unrelated repositories and other model folders return `RootChangeRefused`.
+Case aliases require physical directory identity; symbolic links and reparse
+points remain rejected. Without Git worktree metadata, only the original root
+is admitted. Changing applications requires a new authorized connection.
+
+### Work on another branch in a worktree
+
+If the startup root is `/work/shop/.cratis/screenplay` and Git has a registered
+worktree at `/work/shop-feature`, pass either `/work/shop-feature` or
+`/work/shop-feature/.cratis/screenplay` as `open-workspace.path`. The server
+opens the same relative model folder, `.cratis/screenplay`, in that checkout;
+the folder must already exist. It verifies Git's shared directory and the
+worktree registration's back-pointer, not a common path prefix. The main
+checkout is also available when the server starts in a linked worktree.
+Submodules and checkouts created with `--separate-git-dir` cannot switch roots:
+their `.git` pointers lack the linked-worktree `commondir` proof. Start a separate
+connection directly at their model root instead. Root switching also refuses
+repositories with enabled or unverifiable `extensions.worktreeConfig`, or any
+`config.worktree` entry in the checkout's `.git` directory: per-worktree
+configuration can override whether Git treats that checkout as bare.
+
+One workspace is active at a time. Switching or reopening clears outstanding
+proposals, even when both roots have identical source and revisions. Read the
+new workspace's revisions and create a fresh proposal before applying. Source
+writes, identity state and recovery journals stay inside the opened model root;
+state from another checkout is not reused unless you explicitly pass
+`workspaceJson` to import a workspace. That import adds identities only to a
+root that has no `.screenplay` state yet; otherwise `open-workspace` returns
+`IdentityImportConflict`. A pending recovery journal in one root does not block
+opening another root, but still blocks reopening its own root. Commit
+`.screenplay/identities.json` with each model, as usual.
+
+The embedded MCP library does not read `.cratis/ai.json` itself: a model root
+selected through `mcpServers.screenplay.root` by the hosting CLI is a supplied
+startup root and follows the same worktree rules. With Docker, both the
+worktree and its shared Git metadata must be visible at the paths Git records.
+Otherwise use a native server or a separate connection rooted directly at that
+worktree's model.
 
 ## Choose one application root
 

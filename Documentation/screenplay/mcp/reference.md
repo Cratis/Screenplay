@@ -29,13 +29,64 @@ See [installation and client configuration](install.md). One physical root
 is one application, whether it has one source file or hundreds of nested files.
 Symbolic links are rejected. An empty root can be opened to create its first model.
 
-A root supplied at startup is fixed for that connection. `open-workspace.path`
-may name that same physical directory, but another root returns `RootChangeRefused`.
-Start a separately authorized connection to switch applications. Dynamic servers
-retain the root selection described above.
+A root supplied at startup restricts the connection to that model and the same
+relative model folder in registered Git worktrees of its repository.
+`open-workspace.path` accepts either a worktree checkout directory (resolving
+that relative model folder) or its exact model directory. Git's shared directory
+and registration back-pointer must agree by physical identity. Unrelated roots,
+unregistered pointers and different model folders return `RootChangeRefused`;
+missing or malformed metadata also refuses switching. A valid worktree without
+the corresponding model directory reports the missing relative folder.
+Submodules and `--separate-git-dir` checkouts cannot switch roots because they
+lack linked-worktree `commondir` metadata; serve their model through a separate
+connection instead. Symlinks remain forbidden. Start a separately authorized
+connection to switch applications. Dynamic servers retain
+the root selection described above.
+
+Only one workspace is active. Switching roots clears the workspace, cached
+identity state and retained proposals; reopening also clears proposals. A proposal
+from root A cannot be applied in root B, even if their revisions are identical
+(`UnknownProposal`). Reads and writes use the currently opened root, including
+its own `.screenplay` identity state and recovery journal, unless `workspaceJson`
+is explicitly supplied to import identities into a root without persisted state.
+A pending journal blocks only its own root. After an opened worktree is removed,
+an explicit path can return to the configured root without restarting. If the
+startup root itself is removed, start a new connection: switching is refused
+because worktree membership is proven from the startup root's Git metadata. No
+named simultaneous workspaces are exposed. See [worktree setup](install.md#work-on-another-branch-in-a-worktree).
+
+For a single client-offered project, default discovery uses the common ancestor
+of folders holding `.play` files, then `Source`/`src`, then `<project>/Screenplay`.
+Existing `.screenplay/identities.json` or `.screenplay/pending.json` at any
+ancestor-or-self directory between the offered project and that discovered folder
+keeps the workspace bound to that state directory. Both endpoints are included;
+an empty metadata folder or backup artifact alone does not count. Metadata path
+checks reject symbolic links and reparse points before checking state presence.
+With several state directories on that path, the one nearest the offered project
+wins. `open-workspace` and the `workspace-state` status view report
+`rootBindingConflict` with `kind: "WorkspaceRootConflict"`, `boundRoot`, ordered
+`stateRoots` (nearest the offered root first), `pendingRoots` (state roots holding
+`pending.json`, in the same order), and an explanatory `message`. The field is
+omitted when there is no conflict. Failed tool responses also carry the conflict,
+and their error message names the bound root and competing state roots.
+A pending journal at any state root on the discovered path blocks opening, reads
+and writes at the bound root, including visualization and a journal created after
+opening or proposing. `workspace-state` remains available to inspect the conflict.
+For a competing root's recovery, first call `open-workspace` with that root's explicit
+`path` (opening still returns `PendingOperation`), inspect `workspace-state` there,
+then explicitly call `recover-workspace` with its operation ID. A recovery call at
+the outer root cannot recover a nested journal. No identities or recovery journals
+are migrated, and no fallback folder is created when existing state selects a root.
+Inspect competing workspaces using explicit paths before deciding which to keep.
+Explicit paths and roots
+fixed at startup, including `.cratis/ai.json` configuration, are unchanged.
 
 Only `apply` and `recover-workspace` mutate files. Keep client approval enabled
 for both. Source queries, schemas, proposals and status checks are read-only.
+If metadata inspection fails after a verified apply, its response keeps the applied
+outcome and session revision, retains the previous root-conflict snapshot, and
+reports the inspection failure in `metadataProblem`. Repair that metadata before
+continuing; do not retry the completed apply.
 
 ## Generated values and responses
 
@@ -111,6 +162,7 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `declaration-details` | `address`, `kind`; optional `view` | Summary or paged properties, occurrences, commands, specifications, produces, enum values; explicit syntax view |
 | `find-references` | `address`, `kind` | Paged resolved incoming references and ambiguities, with owners/roles |
 | `dependencies` | `address`, `kind`, direction incoming/outgoing; optional descendants/document | Direct indexed dependencies and resolution candidates |
+| `dependency-graph` | Optional view, from/to levels, scope, direction, kinds, includeTestOnly, evidenceLimit | Inferred slice/container/context edges, ordering cycles, story-order suggestions or unresolved references |
 | `find-fixtures` | Specification address, role, property, value, scope/document | Paged assignments with type, value and location, including `when append` event payloads (`whenAppendedEvent`) and `for` destinations (`whenAppendedEventDestination`) |
 | `find-assertion-gaps` | Optional scope/document | Slices without specifications declaring a `then` assertion, including `then denied` |
 | `diagnostics` | Optional `checks` (comma-separated names, codes, or `all`), `scope`, document | Paged diagnostics, severity counts, scoped declaration counts and affected scopes |
@@ -155,6 +207,80 @@ event references and dependencies carry the `whenAppendedEvent` role, not
 `queryResult`; each role also has a `…Destination` form for explicit `for`
 destinations.
 
+## Dependency graph
+
+`dependency-graph` infers dependencies from explicit references inside slices. Edges
+point from the consumer to the producer: A → B means A depends on B. It does not
+inspect code, expression identifiers, property paths or runtime behavior. References
+outside slices, such as module-owned forms, do not acquire an inferred slice owner.
+Use `dependencies` for a declaration's scoped indexed references instead.
+
+| Argument | Type | Default | Values / limits |
+| --- | --- | --- | --- |
+| `view` | String | `edges` | `edges`, `cycles`, `order`, `unresolved` |
+| `from` | String | `module` | `slice`, `feature`, `module` |
+| `to` | String | `module` | `slice`, `feature`, `module`, `context` |
+| `scope` | String | Whole application | Exact module, feature, slice or context address; includes descendants |
+| `direction` | String | `outgoing` | `outgoing` filters consuming nodes; `incoming` filters producing nodes in the edges view |
+| `kinds` | String array | All kinds except test-only references | Any subset of the kinds below |
+| `includeTestOnly` | Boolean | `false` | Allows specification references, including imported specification facts |
+| `evidenceLimit` | Integer | `3` | `0`–`20` references per edge; counts remain complete |
+| `limit` | Integer | `50` | `1`–`200` items |
+| `offset` | Integer | `0` | Page offset; continuation requires `expectedSourceRevision` |
+| `expectedSourceRevision` | String | None | The exact `sourceRevision` returned by the first page |
+
+Kinds are `usesFactsFrom` (projections, reducers, constraints and concurrency event
+lists), `reactsTo` (named event triggers), `decidesFrom` (read-model reads), `asks`
+(command invocations and actions), `shows` (queries and screen navigation),
+`verifiedWith` (specification events and commands), and `outsideTheModel`
+(imported event contracts without a local producer). References to shared
+application types, concepts, policies and triggers are excluded and counted.
+Unresolved graph references never become edges.
+
+Event names resolve to the earliest slice declaring the event, including inline
+events and generations. Other names resolve to the earliest declaring slice;
+read-model reads prefer projection/reducer builders, including variant outputs,
+then fall back to shape declarations. Resolution ignores case and uses authored
+order, with syntax order as fallback. This differs from the case-sensitive,
+scope-aware resolution of `dependencies`. Multiple qualifying slices retain
+`ambiguous: true` and the alternatives; repeated generations in one slice do not
+create alternative owners. Same-slice references are dropped.
+
+The response includes `success`, `sourceRevision`, `orderSource` (`authored` or
+`syntax`), diagnostic summaries, coverage counts and `page`. Failed compilation
+can leave a partial graph; it is not evidence that all dependencies are known.
+An edges page has `source` and `target` with declaration kinds and dotted addresses,
+`sliceEdges` (distinct consumer/producer pairs, regardless of kind), `references`,
+`byKind` reference counts, distinct `consumers` and `producers`, and ordered
+`evidence`. Each reference includes its consumer, producer, kind, role, name,
+ambiguity, alternatives, test-only flag and source location. `evidenceCount` is
+uncapped; `evidenceTruncated` tells you whether more evidence exists. Context
+addresses use `context:Shipping`, so they cannot collide with a feature named
+Shipping. Contexts are not local declarations; local node addresses and kinds
+can be passed to `declaration-details` or `find-references`.
+
+Container edges exist only between disjoint containers. Equal nodes and
+ancestor/descendant pairs are excluded, including a feature and its own
+sub-feature. Mixed levels work in the edges view; `cycles` returns no groups for
+mixed levels. Same-level cycle items contain ordered `members`. The `order` view
+pages per-container `container`, suggested `children` and `changed`, independently
+of from/to levels. The `unresolved` view pages consumer, kind, role, name and
+location. Scope filters cycle members, order containers or unresolved consumers;
+direction applies only to edges. Coverage also lists unused imports.
+
+Cycles and order use only `usesFactsFrom`, `reactsTo` and `decidesFrom`. After
+removing internal cycle edges, the suggestion puts producers first, with authored
+rank breaking ties and cycle members retaining their relative order. It never
+applies an edit or changes executable bytes, revisions or identities. The core
+story traversal visits each feature's own slices before its sub-features.
+
+The graph can find cycles that [timeline diagnostics](../imports.md#timeline-diagnostics)
+do not report: `PLAY0517` observes projection and named-trigger event flow only.
+For example, Library's Catalog consumes loan events while Loans reads CatalogEntry,
+so the graph finds {Catalog, Loans}; the `decidesFrom` edge is outside `PLAY0517`.
+See [Explore a model](explore.md#see-how-modules-and-features-depend-on-each-other)
+for prompts.
+
 ## Event model board
 
 Hosts that render MCP Apps views (`io.modelcontextprotocol/ui`) are also offered
@@ -196,7 +322,7 @@ is canonicalized.
 | `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent, `eventNeverPersisted` (boolean, default false) |
 | `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
 | `expand-layout` | Expected revisions | layout (`single`, `module`, `feature`, `slice`; default `slice`, one file per slice), validation, formatting, referencePolicy, includeContent |
-| `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`implementation-requirements` for proposed attachments), documentId, offset, limit |
+| `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`semantic-diff` for structural impact; `implementation-requirements` for attachments), documentId, offset, limit, expectedSourceRevision |
 | `export-workspace` | expectedRevision | proposalId, offset, limit |
 | `workspace-state` | None | view, proposalId, expectedStateRevision, offset, limit |
 | `discard-proposal` | proposalId | None |
@@ -455,6 +581,119 @@ duplication; other explicitly canonicalized edits may disclose dropped comments.
 Untouched bytes and BOM policy are retained. Printer omissions reject the proposal.
 
 See [the AST API](../ast-authoring.md) and [authoring procedure](authoring-tools.md).
+
+## Semantic proposal difference
+
+`read-proposal` with `view: "semantic-diff"` compares the retained disk baseline
+with the proposal, without applying it. It works without MCP Apps and does not
+execute specifications. Changes to `.play` files or the retained
+`.screenplay/identities.json` bytes since proposal creation refuse this view,
+including revision-pinned continuation pages. Pending recovery also refuses
+review; inspect `workspace-state` and explicitly recover the identified operation.
+Create and review a fresh proposal after baseline drift rather than combining
+different baselines.
+
+The `result` contains:
+
+| Field | Meaning |
+| --- | --- |
+| `sourceRevision` | The proposal workspace revision, including its identity catalog. |
+| `beforeRevision` | The retained baseline workspace revision. |
+| `comparisonLevel` | `authoring-structure`: normalized typed members, not source lines or an execution/equivalence verdict. |
+| `executableBeforeAvailable`, `executableAfterAvailable` | Whether each snapshot binds executably; structural review does not require binding. |
+| `complete` | Whether every comparison section is complete. |
+| `hasSemanticChange` | `true` for a known structural change (including owner moves and opaque-content changes), `false` for a complete comparison with only document moves or no changes, or `null` when incomplete data cannot establish no change. |
+| `sections` | Each section's `complete` flag and `unavailable` reasons. An empty incomplete section never means no change. |
+| `limits` | Comparison exclusions and fallback rules. |
+| `page` | `revision`, `totalCount`, `offset`, `items`, `nextOffset`. |
+
+Items are ordered by section, semantic ID, kind, addresses, change kind, member,
+dependency snapshot/address/role and generation. They share `section`, `changeKind`,
+`semanticId`, `kind`, `beforeAddress` and `afterAddress`. Other fields are nullable
+and apply only to the corresponding record.
+
+`kind` uses one vocabulary across assigned declarations, authoring fallback,
+event contracts, identities and dependant records. Allowed values are:
+`Application`, `Capture`, `Command`, `Concept`, `Constraint`, `ContributionPoint`,
+`DialogTemplate`, `Event`, `EventSource`, `EventStream`, `Feature`, `Form`,
+`Layout`, `Module`, `Operation`, `Persona`, `Policy`, `Projection`, `Property`,
+`Query`, `QueryArgument`, `Reaction`, `ReadModel`, `Reducer`, `Screen`,
+`ScreenTemplate`, `Slice`, `Specification`, `System`, `Theme`, `Trigger`, `Type`,
+and `UiProfile`. Event contracts use `Event`, and composite types use `Type`;
+`eventContractId` distinguishes event-contract identity records. A property's
+aggregated dependants retain `kind: "Property"`, not the owner's kind.
+
+- **`declarations`**: `added`, `removed`, `renamed`, or `moved`. Catalog semantic
+  IDs match declarations across snapshots. Preserved IDs with changed names
+  report renames; changed owner addresses or documents report moves.
+  `moveKind: "owner"` identifies logical address changes, with `beforeOwner` and
+  `afterOwner`; these are semantic changes because inherited authorization and
+  reference resolution can change. `moveKind: "document"` identifies layout-only
+  moves. `beforeDocuments` and `afterDocuments` are arrays of `{ documentId, path }`
+  locations. Only document-only moves receive the no-semantic-change treatment.
+  Adding generation qualification to a preserved property's catalog address is
+  reported as an identity `migrated` record, not a logical owner move.
+- **`events`**: `property-added`, `property-removed`, `property-type-changed`,
+  `generation-added`, or `generation-removed`. `member`, `beforeType` and `afterType` describe the
+  field (types are canonical typed JSON strings). `contractBreaking` is a
+  conservative stored-contract risk flag, including additions.
+  `generationCovered` is true only when an explicitly declared newer generation
+  retains the previous generation's property names and types unchanged.
+  `beforeGeneration` and `afterGeneration` identify the compared generations.
+  Every existing generation is compared with the same generation in the proposal,
+  and every introduced generation with its immediate declared predecessor. This
+  preserves intermediate additions and removals even when the final shape matches
+  the original. Generation coverage is reported per transition and is not runtime
+  migration proof.
+- **`members`**: changed typed members of commands, read models, projections,
+  queries, reactions, captures, triggers (including trigger data properties), and
+  other identity-bearing declarations. Application, module, feature and slice
+  comparisons include their own members (such as domain, authentication,
+  authorization and slice kind), but exclude separately indexed child declarations
+  and physical import-placement metadata. Split hierarchy fragments use the
+  source index's merged meaning; unavailable merges remain incomplete.
+  `member`, `beforeHash` and `afterHash` locate a structural difference without
+  copying a whole subtree. Event member keys include their generation.
+  `opaque-changed` records retain changes to inline code or file references by
+  hash without interpreting their behavior. Description and documentation prose
+  are excluded from structural comparison.
+  Constraints have no catalog semantic kind; their fallback uses exact authoring
+  kind/address keys with `semanticId: null`, not an invented identity.
+- **`specifications`**: additions, removals and `expected-outcome-changed` records
+  for changed authored `then*` members, with member names and hashes. These are
+  static expected assertions, not inferred or executed outcomes. Other fixture
+  changes appear under `members`.
+- **`dependants`**: `direct` indexed references in the `before` or `after`
+  `snapshot`, with `dependantAddress`, `role` and `resolution`. Properties use
+  their owner's references; containers aggregate external direct references to
+  contained declarations, excluding references originating inside that same
+  container. Unresolved or ambiguous indexes mark this section incomplete.
+  These are not transitive dependencies or runtime impact guarantees.
+- **`identities`**: `assigned`, `retired` and `migrated` catalog identities,
+  including `eventContractId` for event-contract identities. Migrations are
+  inferred from preserved IDs and their changed addresses, not name similarity.
+
+Use item `offset` (default `0`) and `limit` (default `50`, range `1`–`200`).
+Pages also have a 192 KiB serialized-item budget; always continue from
+`nextOffset`, which may advance by less than `limit`. A single oversized record
+refuses with `LimitExceeded`, without truncation. Echo `sourceRevision` as
+`expectedSourceRevision` on every continuation; missing pins or stale pins refuse.
+
+When binding fails, the view still compares available authored members and
+preserved catalog IDs. Every assigned semantic ID, of any kind, must have unique
+comparable authored members or be counted in its section's unavailable reasons.
+Every indexed kind/address group is likewise compared or counted as incomplete;
+unassigned multi-generation events retain all their generations rather than
+being discarded. Unassigned declarations use exact kind/address fallback keys
+and explicitly incomplete identity/rename sections. Missing source owners,
+implicit shapes, ambiguous declarations and unavailable hierarchy merges never
+establish no change.
+
+Inline opaque content and file references are compared by hash. The view does
+not analyze behavior inside code, load or compare external attachment file
+contents (inspect `implementation-requirements` hashes separately), execute
+specifications, prove runtime or transitive impact, or compare two arbitrary
+revisions.
 
 ## Review, durable state and recovery
 
