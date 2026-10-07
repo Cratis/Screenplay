@@ -7,6 +7,8 @@ import { CommandSyntax } from '../Syntax/Commands';
 import { EventSyntax, TypeRefSyntax } from '../Syntax/Declarations';
 import { EventSourceCatalog } from '../Syntax/EventSourceCatalog';
 import { EventSourceResolutionKind } from '../Syntax/EventSources';
+import { canonicalExactText } from '../Syntax/ExactMathFacts';
+import { ExpressionSyntax } from '../Syntax/Expressions';
 import { implicitDestination } from '../Syntax/ProductionDestinations';
 import { ApplicationSyntax } from '../Syntax/Structure';
 import { ParserContext } from './ParserContext';
@@ -16,12 +18,30 @@ interface Producer { event: EventSyntax; command: CommandSyntax | null; type: Ty
 
 export function validateSpecificationStreams(application: ApplicationSyntax, context: ParserContext): void {
     const resolver = new AuthoringProductionResolver(application);
-    if (!resolver.slices.flatMap(entry => entry.slice.specifications).some(specification => [...specification.given, ...specification.thenEvents, ...(specification.whenAppended === null ? [] : [specification.whenAppended])].some(node => node.stream !== undefined || node.noStream !== undefined))) return;
+    if (!resolver.slices.flatMap(entry => entry.slice.specifications).some(specification => [...specification.given, ...specification.thenEvents, ...(specification.whenAppended === null ? [] : [specification.whenAppended])].some(node => node.stream != null || node.noStream != null))) return;
     const catalog = new EventSourceCatalog(application);
     const concepts = uniqueByName(application.concepts);
     const composites = uniqueByName(application.types);
     const properties = new Map([...composites].map(([name, type]) => [name, uniqueByName(type.properties)]));
     const compatible = (value: Parameters<typeof compatibleValue>[0], type: TypeRefSyntax): boolean => compatibleValue(value, type, concepts, properties);
+    const known = new Set(['String', 'Uuid', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime', ...concepts.keys(), ...composites.keys()]);
+    const nominallyCompatible = (source: TypeRefSyntax, target: TypeRefSyntax): boolean | null => known.has(source.name) && known.has(target.name)
+        ? source.name === target.name && source.isCollection === target.isCollection && (!source.isOptional || target.isOptional) : null;
+    const formatStreamId = (expression: ExpressionSyntax | null | undefined, type: TypeRefSyntax): string | null => {
+        if (expression?.kind !== 'LiteralExpressionSyntax' || !compatible(expression, type)) return null;
+        const primitive = concepts.get(type.name)?.type ?? type.name;
+        const value = expression.value;
+        if (primitive === 'String' && typeof value === 'string') return value;
+        if (primitive === 'Uuid' && typeof value === 'string') {
+            const hex = value.replace(/[{}()-]/g, '').toLowerCase();
+            return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+        }
+        if (primitive === 'Int') {
+            if (typeof value === 'number') return value.toFixed(0);
+            if (typeof value === 'object' && value !== null && value.literalType === 'ExactNumber') return canonicalExactText(value);
+        }
+        return null;
+    };
     const pathType = (command: CommandSyntax, path: string): TypeRefSyntax | null => {
         let fields = command.properties;
         let result: TypeRefSyntax | null = null;
@@ -75,10 +95,13 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
             ...(specification.whenAppended === null ? [] : [{ node: specification.whenAppended, required: true, expected: false }]),
             ...specification.thenEvents.map(node => ({ node, required: false, expected: true }))];
         for (const { node, required, expected } of occurrences) {
-            if (node.stream === undefined && node.noStream === undefined) continue;
+            if (node.stream == null && node.noStream == null) continue;
+            if (required && node.noStream != null)
+                context.error(DiagnosticCodes.InvalidSpecificationStream, "Expected 'stream Source.Stream', or 'no stream' on a then event.", node.noStream.location);
+            let identifier: TypeRefSyntax | null = null;
             const event = eventOf(node.eventType, slice);
             const eventProducers = producers.filter(producer => producer.event === event);
-            if (node.stream !== undefined) {
+            if (node.stream != null) {
                 const route = node.stream;
                 const resolution = catalog.resolve(route.eventSource, route.stream);
                 if (resolution.kind !== EventSourceResolutionKind.Unique) {
@@ -95,7 +118,7 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
                     if (value.kind !== 'LiteralExpressionSyntax' || value.value === null || value.value === '' || stream.streamId !== null && !compatible(value, stream.streamId))
                         context.error(DiagnosticCodes.InvalidSpecificationStreamRoute, "A specification stream id needs a nonempty concrete scalar literal compatible with the stream's declared type.", value.location);
                 }
-                let identifier = source.identifier;
+                identifier = source.identifier;
                 if (identifier === null) {
                     const types = eventProducers.map(producer => producer.type);
                     const distinct = new Set(types.filter(type => type !== null).map(type => `${type.name}:${type.isOptional}:${type.isCollection}`));
@@ -110,8 +133,18 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
             }
             if (!expected || command === null || eventProducers.length === 0 || eventProducers.some(producer => producer.command !== command)) continue;
             const commandRoute = command.stream?.propertyCandidate === null ? command.stream : null;
-            let contradicts = node.noStream !== undefined ? commandRoute !== null : commandRoute === null || commandRoute.eventSource !== node.stream!.eventSource || commandRoute.stream !== node.stream!.stream;
-            if (node.for?.kind === 'LiteralExpressionSyntax' && eventProducers.every(producer => producer.type !== null && !compatible(node.for!, producer.type))) contradicts = true;
+            let contradicts = node.noStream != null ? commandRoute != null : commandRoute == null || commandRoute.eventSource !== node.stream!.eventSource || commandRoute.stream !== node.stream!.stream;
+            if (!contradicts && node.stream != null && commandRoute != null) {
+                const resolution = catalog.resolve(node.stream.eventSource, node.stream.stream);
+                const type = resolution.kind === EventSourceResolutionKind.Unique ? resolution.streams[0].streamId : null;
+                if (type !== null) {
+                    const actualId = formatStreamId(commandRoute.streamId?.source, type);
+                    const expectedId = formatStreamId(node.stream.streamId?.source, type);
+                    if (actualId !== null && expectedId !== null && actualId !== expectedId) contradicts = true;
+                }
+            }
+            if (node.for?.kind === 'LiteralExpressionSyntax' && eventProducers.every(producer => producer.type !== null &&
+                (identifier !== null ? nominallyCompatible(producer.type, identifier) === false : !compatible(node.for!, producer.type)))) contradicts = true;
             if (contradicts) context.error(DiagnosticCodes.SpecificationStreamContradictsCommand, 'The expected event route contradicts its only producer, the command under test.', (node.stream ?? node.noStream)!.location);
         }
     }

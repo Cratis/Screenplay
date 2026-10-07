@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Globalization;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
@@ -30,6 +31,11 @@ internal static class SpecificationStreamValidator
                     .Concat(specification.ThenEvents.Select(node => (node, false, true))))
                 {
                     if (node.Stream is null && node.NoStream is null) continue;
+                    if (required && node.NoStream is { } noStream)
+                    {
+                        context.Error(DiagnosticCodes.InvalidSpecificationStream, "Expected 'stream Source.Stream', or 'no stream' on a then event.", noStream.Location);
+                    }
+                    TypeRefSyntax? identifier = null;
                     var @event = declarations.Event(node.EventType, scope);
                     var eventProducers = producers.Where(producer => ReferenceEquals(producer.Event, @event)).ToArray();
                     if (node.Stream is { } route)
@@ -50,7 +56,7 @@ internal static class SpecificationStreamValidator
                         {
                             context.Error(DiagnosticCodes.InvalidSpecificationStreamRoute, "A specification stream id needs a nonempty concrete scalar literal compatible with the stream's declared type.", mapping.Source.Location);
                         }
-                        var identifier = source.Identifier;
+                        identifier = source.Identifier;
                         if (identifier is null)
                         {
                             var types = eventProducers.Select(producer => producer.Type).ToArray();
@@ -75,8 +81,12 @@ internal static class SpecificationStreamValidator
                         }
                     }
                     if (!expected || command is null || eventProducers.Length == 0 || eventProducers.Any(producer => !ReferenceEquals(producer.Command, command))) continue;
-                    var contradicts = Contradicts(node, command.Stream);
-                    if (node.For is LiteralExpressionSyntax identityValue && eventProducers.All(producer => producer.Type is { } type && !values.Compatible(identityValue, type))) contradicts = true;
+                    var contradicts = Contradicts(node, command.Stream, catalog, application, values);
+                    if (node.For is LiteralExpressionSyntax identityValue && eventProducers.All(producer => producer.Type is { } type &&
+                        (identifier is not null ? declarations.Compatible(type, identifier) == false : !values.Compatible(identityValue, type))))
+                    {
+                        contradicts = true;
+                    }
                     if (contradicts)
                     {
                         context.Error(DiagnosticCodes.SpecificationStreamContradictsCommand, "The expected event route contradicts its only producer, the command under test.", node.Stream?.Location ?? node.NoStream!.Location);
@@ -116,12 +126,37 @@ internal static class SpecificationStreamValidator
         }
     }
 
-    static bool Contradicts(SpecificationEventSyntax occurrence, CommandStreamSyntax? route)
+    static bool Contradicts(SpecificationEventSyntax occurrence, CommandStreamSyntax? route, EventSourceCatalog catalog, ApplicationSyntax application, ResponseValueTypes values)
     {
         if (route?.PropertyCandidate is not null) route = null;
         if (occurrence.NoStream is not null) return route is not null;
+        var expected = occurrence.Stream!;
+        if (route is null || route.EventSource != expected.EventSource || route.Stream != expected.Stream) return true;
+        var resolution = catalog.Resolve(expected.EventSource, expected.Stream);
+        if (resolution.Kind != EventSourceResolutionKind.Unique || resolution.Streams[0].StreamId is not { } type) return false;
+        var actualId = FormatStreamId(route.StreamId?.Source, type, application, values);
+        var expectedId = FormatStreamId(expected.StreamId?.Source, type, application, values);
 
-        return route is null || route.EventSource != occurrence.Stream!.EventSource || route.Stream != occurrence.Stream.Stream;
+        return actualId is not null && expectedId is not null && actualId != expectedId;
+    }
+
+    // Only known portable scalar types prove equality. Paths and unavailable imported types defer
+    // to execution; a UUID's authored case, hyphens and wrappers are not part of its stream identity.
+    static string? FormatStreamId(ExpressionSyntax? expression, TypeRefSyntax type, ApplicationSyntax application, ResponseValueTypes values)
+    {
+        if (expression is not LiteralExpressionSyntax literal || !values.Compatible(literal, type)) return null;
+        var concepts = application.Concepts.Where(concept => concept.Name == type.Name).ToArray();
+        var primitive = concepts is [var concept] ? concept.Type : type.Name;
+        if (concepts.Length > 1) return null;
+
+        return (primitive, literal.Value) switch
+        {
+            ("String", string text) => text,
+            ("Uuid", string text) when Guid.TryParse(text, out var uuid) => uuid.ToString("D", CultureInfo.InvariantCulture),
+            ("Int", ExactNumber exact) => exact.CanonicalText,
+            ("Int", double number) => number.ToString("0", CultureInfo.InvariantCulture),
+            _ => null
+        };
     }
 
     static TypeRefSyntax? DestinationType(CommandSyntax command, ProducesSyntax produced, ProducesSyntax[] productions, ConsistencyDeclarations declarations)

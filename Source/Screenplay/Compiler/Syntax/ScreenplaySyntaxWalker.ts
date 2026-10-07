@@ -529,8 +529,8 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitSpecificationEvent(syntax: SpecificationEventSyntax): void {
         this.visitNode(syntax);
-        if (syntax.stream !== undefined) this.visitSpecificationStream(syntax.stream);
-        if (syntax.noStream !== undefined) this.visitSpecificationNoStream(syntax.noStream);
+        if (syntax.stream != null) this.visitSpecificationStream(syntax.stream);
+        if (syntax.noStream != null) this.visitSpecificationNoStream(syntax.noStream);
         syntax.values.forEach(node => this.visitPropertyMapping(node));
         if (syntax.for !== null) this.visitExpression(syntax.for);
     }

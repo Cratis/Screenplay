@@ -698,15 +698,16 @@ internal static partial class SpecificationParser
                     context.SkipBlock(child.Indent);
                     continue;
                 }
-                hasRoute = true;
                 if (child.Content == "no stream" && eventKeyword == "then")
                 {
                     noStream = new(child.Location);
+                    hasRoute = true;
                     RejectSpecificationRouteChildren(context, child);
                 }
                 else if (SpecificationStreamRegex().Match(child.Content) is { Success: true } route)
                 {
                     stream = ParseSpecificationStream(context, child, route);
+                    hasRoute = true;
                 }
                 else
                 {

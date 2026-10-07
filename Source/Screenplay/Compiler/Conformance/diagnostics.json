@@ -2,6 +2,70 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "Unknown imported stream id type defers literal contradiction",
+            "validate": true,
+            "source": ["import External.Key", "eventsource Account", "  identifier String", "  stream Profile", "    streamId Key", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = \"first\"", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = \"second\""],
+            "diagnostics": []
+        },
+        {
+            "name": "Different portable UUID stream identities contradict",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "    streamId Uuid", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = \"3FA85F64-5717-4562-B3FC-2C963F66AFA6\"", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = \"3fa85f64-5717-4562-b3fc-2c963f66afa7\""],
+            "diagnostics": ["PLAY0551@19"]
+        },
+        {
+            "name": "Exclusive command literal stream id contradicts expected literal",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "    streamId String", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = \"first\"", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = \"second\""],
+            "diagnostics": ["PLAY0551@19"]
+        },
+        {
+            "name": "UUID stream id spellings compare by portable formatting",
+            "validate": true,
+            "source": ["concept Key : Uuid", "eventsource Account", "  identifier String", "  stream Profile", "    streamId Key", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = \"{3FA85F64-5717-4562-B3FC-2C963F66AFA6}\"", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = \"3fa85f6457174562b3fc2c963f66afa6\""],
+            "diagnostics": []
+        },
+        {
+            "name": "Integer concept stream ids compare by portable formatting in exact mode",
+            "validate": true,
+            "source": ["numbers exact", "concept Month : Int", "eventsource Account", "  identifier String", "  stream Profile", "    streamId Month", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = 202610.0", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = 202610"],
+            "diagnostics": []
+        },
+        {
+            "name": "Integer concept stream ids refuse different literals",
+            "validate": true,
+            "source": ["concept Month : Int", "eventsource Account", "  identifier String", "  stream Profile", "    streamId Month", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = 202609", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = 202610"],
+            "diagnostics": ["PLAY0551@20"]
+        },
+        {
+            "name": "Command path stream id defers expected literal comparison",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "    streamId String", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        key String", "        stream Account.Profile", "          streamId = key", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "          key = \"first\"", "        then E", "          stream Account.Profile", "            streamId = \"second\""],
+            "diagnostics": []
+        },
+        {
+            "name": "Exclusive destination and source identifier concepts differ nominally",
+            "validate": true,
+            "source": ["concept SourceId : Uuid", "concept CommandId : Uuid", "eventsource Account", "  identifier SourceId", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id CommandId identifier", "        stream Account.Profile", "        produces E", "          for id", "      specification X", "        when C", "          id = \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"", "        then E", "          for \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"", "          stream Account.Profile"],
+            "diagnostics": ["PLAY0504@11", "PLAY0551@20"]
+        },
+        {
+            "name": "Unknown destination type defers nominal contradiction",
+            "validate": true,
+            "source": ["import External.CommandId", "concept SourceId : Uuid", "eventsource Account", "  identifier SourceId", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id CommandId identifier", "        stream Account.Profile", "        produces E", "          for id", "      specification X", "        when C", "          id = \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"", "        then E", "          for \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"", "          stream Account.Profile"],
+            "diagnostics": []
+        },
+        {
+            "name": "Malformed first directive does not consume the route slot",
+            "source": ["module M", "  feature F", "    slice StateView S", "      specification X", "        then E", "          stream Account", "          no stream"],
+            "diagnostics": ["PLAY0547@6"]
+        },
+        {
+            "name": "Misplaced no stream does not consume the given route slot",
+            "source": ["eventsource Account", "  identifier String", "  stream Profile", "module M", "  feature F", "    slice StateView S", "      specification X", "        given E", "          no stream", "          stream Account.Profile", "          for \"other\""],
+            "diagnostics": ["PLAY0547@9"]
+        },
+        {
             "name": "One command can produce the expected event with either destination type",
             "validate": true,
             "source": ["eventsource Account", "  identifier String", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        external Uuid", "        stream Account.Profile", "        produces E", "          for id", "        produces E", "          for external", "      specification X", "        when C", "          id = \"other\"", "          external = \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"", "        then E", "          for \"other\"", "          stream Account.Profile"],

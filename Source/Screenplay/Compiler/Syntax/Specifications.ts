@@ -19,8 +19,8 @@ export interface SpecificationEventSyntax extends SyntaxNode {
     readonly eventType: string;
     readonly values: readonly PropertyMappingSyntax[];
     readonly for: ExpressionSyntax | null;
-    readonly stream?: SpecificationStreamSyntax;
-    readonly noStream?: SpecificationNoStreamSyntax;
+    readonly stream?: SpecificationStreamSyntax | null;
+    readonly noStream?: SpecificationNoStreamSyntax | null;
 }
 
 export interface SpecificationStreamSyntax extends SyntaxNode {

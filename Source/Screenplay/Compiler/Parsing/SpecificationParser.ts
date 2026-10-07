@@ -476,13 +476,14 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, 
                 context.skipBlock(child.indent);
                 continue;
             }
-            hasRoute = true;
             const route = specificationStream.exec(child.content);
             if (child.content === 'no stream' && eventKeyword === 'then') {
                 noStream = { kind: 'SpecificationNoStreamSyntax', location: locationOf(child) };
+                hasRoute = true;
                 rejectSpecificationRouteChildren(context, child);
             } else if (route !== null) {
                 stream = parseSpecificationStream(context, child, route);
+                hasRoute = true;
             } else {
                 context.error(DiagnosticCodes.InvalidSpecificationStream, "Expected 'stream Source.Stream', or 'no stream' on a then event.", locationOf(child));
                 context.skipBlock(child.indent);
