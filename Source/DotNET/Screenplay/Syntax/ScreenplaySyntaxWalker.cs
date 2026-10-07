@@ -158,6 +158,12 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitFileImport(FileImportSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
+    /// Visits an authoring-only dependency declaration.
+    /// </summary>
+    /// <param name="syntax">The declaration to visit.</param>
+    public virtual void VisitDependsOn(DependsOnSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
     /// Visits a <see cref="ModuleSyntax"/> node and its children.
     /// </summary>
     /// <param name="syntax">The <see cref="ModuleSyntax"/> to visit.</param>
@@ -182,6 +188,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitModule(ModuleSyntax syntax)
     {
         VisitNode(syntax);
+        foreach (var dependency in syntax.DependsOn) VisitDependsOn(dependency);
 
         foreach (var import in syntax.FileImports)
         {
@@ -442,6 +449,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitFeature(FeatureSyntax syntax)
     {
         VisitNode(syntax);
+        foreach (var dependency in syntax.DependsOn) VisitDependsOn(dependency);
 
         foreach (var import in syntax.FileImports)
         {

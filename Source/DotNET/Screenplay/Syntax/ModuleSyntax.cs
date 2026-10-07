@@ -38,6 +38,11 @@ public record ModuleSyntax(
     public IEnumerable<UsesBehaviorSyntax> UsedBehaviors { get; init; } = [];
 
     /// <summary>
+    /// Gets the ordered authoring-only dependencies of this module.
+    /// </summary>
+    public IEnumerable<DependsOnSyntax> DependsOn { get; init; } = [];
+
+    /// <summary>
     /// Gets the authorization required by every command and query in this module, in addition to their own
     /// and their enclosing features' requirements. This init member preserves the 4.0.0 positional contract.
     /// </summary>
@@ -82,6 +87,11 @@ public record FeatureSyntax(
     /// Gets the named behaviors attached to the feature with <c>uses</c>.
     /// </summary>
     public IEnumerable<UsesBehaviorSyntax> UsedBehaviors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the ordered authoring-only dependencies of this feature.
+    /// </summary>
+    public IEnumerable<DependsOnSyntax> DependsOn { get; init; } = [];
 
     /// <summary>
     /// Gets the authorization required by every command and query beneath this feature, including nested

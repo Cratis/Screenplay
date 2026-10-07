@@ -203,6 +203,7 @@ internal static class SyntaxKinds
         typeof(UiProfileSyntax),
         typeof(UniqueEventConstraintSyntax),
         typeof(UniquePropertyConstraintSyntax),
+        typeof(DependsOnSyntax),
         typeof(UsesBehaviorSyntax),
         typeof(ValidationRuleSyntax),
         typeof(VariantSyntax)

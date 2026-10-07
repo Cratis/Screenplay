@@ -17,6 +17,7 @@ internal static class SyntaxJsonWriter
         {
             var value = member.Property.GetValue(node);
             if (member.Type == typeof(SourceOptions) && Equals(value, SourceOptions.Legacy)) continue;
+            if (member.Name == "dependsOn" && member.ElementType == typeof(DependsOnSyntax) && value is IEnumerable<DependsOnSyntax> dependencies && !dependencies.Any()) continue;
             result.Add(member.Name, WriteMember(member, value, $"{path}.{member.Name}", depth + 1));
         }
 

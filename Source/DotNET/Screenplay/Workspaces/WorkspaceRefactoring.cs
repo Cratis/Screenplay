@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using Cratis.Screenplay.Dependencies;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
@@ -180,6 +182,25 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         RejectOpaque(workspace.Documents, index, target, request);
         var bindings = new WorkspaceReferenceBindings(index);
         bindings.RequireNoCollisions();
+        if (target.Node is ModuleSyntax or FeatureSyntax)
+        {
+            var containers = index.Entries.Where(entry => entry.Node is ModuleSyntax or FeatureSyntax)
+                .DistinctBy(entry => entry.Address).ToArray();
+            var declarations = containers.Select(entry => new Declaration(WorkspaceReferenceBindings.Name(entry.Node)!, WorkspaceReferenceBindings.Scope(entry, index))).ToArray();
+            foreach (var binding in bindings.Bindings.Where(binding => binding.Reference.Domain == WorkspaceReferenceDomain.Container && binding.Target is null))
+            {
+                var resolution = DeclaredDependencyTargets.Resolve(binding.Reference.Text, WorkspaceReferenceBindings.Scope(binding.Reference.Entry, index), declarations);
+                var couldName = binding.Reference.Text.Split('.').Contains(request.ExpectedName, StringComparer.Ordinal) ||
+                    resolution.Ambiguous.Any(candidate => containers.Any(entry => WorkspaceReferenceBindings.Name(entry.Node) == candidate.Name &&
+                        WorkspaceReferenceBindings.Scope(entry, index).Segments.SequenceEqual(candidate.Scope.Segments) &&
+                        (target.Address.Equals(entry.Address) || Ancestors(entry, index).Any(ancestor => target.Address.Equals(ancestor.Address)))));
+                if (couldName)
+                {
+                    throw new InvalidWorkspaceAuthoring($"Cannot prove a rename while dependency target '{binding.Reference.Text}' is {binding.Outcome}. Repair the declaration with a typed edit first.");
+                }
+            }
+        }
+
         var absence = new WorkspaceAbsenceKeyBindings(index, bindings);
         if (absence.Obligations.FirstOrDefault(obligation => obligation.Target is null) is { } debt)
         {
