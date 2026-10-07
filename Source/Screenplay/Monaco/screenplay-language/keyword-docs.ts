@@ -131,7 +131,7 @@ export const specificationKeywordDocs: Record<string, string> = {
     trigger: '`when trigger <Trigger>` - an application trigger fires, as the action, with the values on the lines beneath it.',
     capture: '`given capture <Capture>` - a record the capture\'s source held before; `when capture <Capture>` - the record it sees now, as the action. The fields go on the lines beneath.',
     query: '`when query <Query>` - the query is performed, as the action, with its arguments on the lines beneath; assert what it returns with `then result` or `then no result`. `then query` instead asserts a query after another action.',
-    events: '`then no events` - asserts no new events after a non-append action. Cannot accompany event, event-order, error or denial expectations.',
+    events: '`then no events` - asserts no new events after a non-append action. Syntax-only, not yet executable (PLAY0268). Cannot accompany event, event-order, error or denial expectations.',
     result: '`then result [exactly]` - one result the query performed by `when query` returns, in order; `then no result` - it returns nothing.',
 };
 

@@ -2260,7 +2260,6 @@ module Invoicing
           asOf     = "2026-10-02"
         when query GetExchangeRate
           currency = "EUR"
-        then no events
         then result exactly
           currency = "EUR"
           rate     = 11.52

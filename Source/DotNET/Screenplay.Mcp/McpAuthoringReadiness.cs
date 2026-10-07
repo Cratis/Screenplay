@@ -107,7 +107,8 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
                 .Concat(Feature(command.Handler is not null, "command handlers"))
                 .Concat(Feature(GeneratedConceptRules(command), "generated properties on concepts with validation rules")),
             SpecificationSyntax specification =>
-                ActionCommands(specification).SelectMany(entry => UnadmittedFeatures(entry.Command)),
+                Feature(specification.ThenNoEvents, "explicit no-event assertions (#433)")
+                .Concat(ActionCommands(specification).SelectMany(entry => UnadmittedFeatures(entry.Command))),
             SliceSyntax slice => slice.Commands.Cast<SyntaxNode>().Concat(slice.Specifications).SelectMany(UnadmittedFeatures),
             ApplicationSyntax => Feature(application.EventSources.Any(), streams)
                 .Concat(_owners.Keys.OfType<SliceSyntax>().SelectMany(UnadmittedFeatures)),

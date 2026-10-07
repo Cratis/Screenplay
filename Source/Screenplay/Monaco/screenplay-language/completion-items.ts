@@ -217,7 +217,7 @@ export const specificationItems: CompletionEntry[] = [
     { label: 'when query', insertText: 'when query ${1:Query}\n    ${2:argument} = ${3:value}', documentation: 'Performs a query, as the action.' },
     { label: 'then result', insertText: 'then result\n    ${1:property} = ${2:value}', documentation: 'One result the query performed by `when query` returns, in order.' },
     { label: 'then no result', insertText: 'then no result', documentation: 'The query performed by `when query` returns nothing.' },
-    { label: 'then no events', insertText: 'then no events', documentation: 'Asserts no new events after a non-append action; cannot accompany event, error or denial expectations.' },
+    { label: 'then no events', insertText: 'then no events', documentation: 'Syntax-only assertion of no new events after a non-append action (PLAY0268); cannot accompany event, error or denial expectations.' },
 ];
 
 // What follows a 'given', 'when' or 'then' already typed in a specification.
@@ -245,7 +245,7 @@ export const specificationStepItems: Record<'given' | 'when' | 'then', Completio
         { label: 'result', insertText: 'result\n    ${1:property} = ${2:value}', documentation: 'One result the query performed by `when query` returns, in order.' },
         { label: 'result exactly', insertText: 'result exactly\n    ${1:property} = ${2:value}', documentation: 'One result, with every property asserted.' },
         { label: 'no result', insertText: 'no result', documentation: 'The query performed by `when query` returns nothing.' },
-        { label: 'no events', insertText: 'no events', documentation: 'Asserts no new events after a non-append action.' },
+        { label: 'no events', insertText: 'no events', documentation: 'Syntax-only assertion of no new events after a non-append action; not yet executable (PLAY0268).' },
         { label: 'readmodel', insertText: 'readmodel ${1:ReadModelType}\n    ${2:property} = ${3:value}', documentation: 'The read model state expected afterwards.' },
         { label: 'error', insertText: 'error "${1:reason}"', documentation: 'A rejection, for the named reason.' },
         { label: 'denied', insertText: 'denied', documentation: 'The action is denied to the caller.' },
