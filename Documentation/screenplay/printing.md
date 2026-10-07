@@ -46,10 +46,10 @@ var reprinted = printer.Print(compiler.Compile(printed).Value!);
 
 Because the two directions agree, you can read a `.play` file, adjust the syntax tree - rename a slice, add an event, change a mapping - and print it back out with the rest of the document meaning exactly what it did. Comments from parsed source stay with their declarations; layout is normalized - see [what printing does not keep](#what-printing-does-not-keep).
 
-Two details make the guarantee hold for values you did not type yourself:
+These details make the guarantee hold for values you did not type yourself:
 
 - **Strings are escaped.** A description, message, label or tag holding a `"` or a `\` prints with the backslash escapes described in [the grammar](grammar.md#string-escapes), and compiling that text gives the original value back. You never have to strip quotes out of a value before handing it to the printer.
-- **Numbers are culture-invariant.** Every numeric literal - `decimal`, `float`, `int`, `long` or `double` - prints with a `.` decimal separator regardless of `CurrentCulture`, so output produced on a machine set to `nb-NO` compiles anywhere.
+- **Numbers are culture-invariant.** Every numeric literal - `decimal`, `float`, `int`, `long` or `double` - prints with a `.` decimal separator regardless of `CurrentCulture`, so output produced on a machine set to `nb-NO` compiles anywhere. Legacy `double` literals print as decimal text, not exponent notation, even for large integers and small fractions. Recompiling preserves their represented double value; exact-mode literals keep their exact canonical text.
 - **Grouping is written out.** Every condition - a [policy](policies.md) `require`, a `produces when` - binds `and` tighter than `or`, so the printer adds the parentheses a condition needs to compile back to the tree it came from, and adds them again wherever `or` and `and` mix so the text does not rely on the reader knowing which binds tighter. You build the tree you mean and the text follows - there is no flag to remember to set.
 
 ## What printing does not keep
