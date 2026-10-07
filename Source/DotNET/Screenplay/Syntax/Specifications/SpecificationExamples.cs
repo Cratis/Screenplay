@@ -26,7 +26,7 @@ public static class SpecificationExamples
     /// <param name="scope">The module, nested features, and slice of the specification's use site.</param>
     /// <returns>The effective specification and any resolution diagnostics.</returns>
     public static CompilationResult<EffectiveSpecification> Expand(SpecificationSyntax specification, ApplicationSyntax declarations, IReadOnlyList<string> scope) =>
-        new Expansion(declarations with { Examples = [.. declarations.Examples, .. specification.Examples.Where(example => !declarations.Examples.Any(existing => ReferenceEquals(existing, example)))] }).ExpandStandalone(specification, new(scope));
+        new Expansion(declarations, specification.Examples, new(scope)).ExpandStandalone(specification, new(scope));
 
     sealed class Expansion
     {
@@ -39,7 +39,7 @@ public static class SpecificationExamples
         readonly ReferenceDeclarationIndex _index;
         readonly ConsistencyDeclarations? _declarations;
 
-        internal Expansion(ApplicationSyntax application)
+        internal Expansion(ApplicationSyntax application, IEnumerable<SpecificationExampleSyntax>? standaloneExamples = null, DeclarationScope? standaloneScope = null)
         {
             _application = application;
             AddExamples(application.Examples, new([]));
@@ -49,6 +49,13 @@ public static class SpecificationExamples
             {
                 AddExamples(module.Examples, new([module.Name]));
                 IndexFeatures(module.Features, [module.Name]);
+            }
+
+            if (standaloneExamples is not null)
+            {
+                var examples = standaloneExamples.ToArray();
+                _entries.RemoveAll(entry => examples.Any(example => ReferenceEquals(example, entry.Node)));
+                AddExamples(examples, standaloneScope!);
             }
 
             _index = new(_entries.Select(entry => entry.Declaration));
