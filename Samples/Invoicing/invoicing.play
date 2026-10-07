@@ -1432,7 +1432,11 @@ module Invoicing
               title "Actions"
               action ChangeInvoiceStatus
                 navigate to ChangeInvoiceStatusScreen
-              action CancelInvoice
+              // Cancellation is offered for a draft; the command still validates its inputs.
+              action $strings.invoices.actions.cancel
+                when item.status == "draft" execute CancelInvoice
+                  with invoiceId from item.invoiceId
+                otherwise hidden
                 navigate to CancelInvoiceScreen
               action TagInvoice
                 navigate to TagInvoiceScreen

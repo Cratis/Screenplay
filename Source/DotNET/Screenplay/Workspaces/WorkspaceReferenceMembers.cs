@@ -112,7 +112,7 @@ static class WorkspaceReferenceMembers
             ? WorkspaceReferenceDomain.View : WorkspaceReferenceDomain.Type)],
         CompositeKeySyntax => [("type", WorkspaceReferenceDomain.Type)],
         SpecificationCommandSyntax => [("commandType", WorkspaceReferenceDomain.Command)],
-        InvokesSyntax or ScreenActionSyntax => [("command", WorkspaceReferenceDomain.Command)],
+        InvokesSyntax or ScreenActionSyntax or ScreenActionAlternativeSyntax or ScreenActionOtherwiseSyntax => [("command", WorkspaceReferenceDomain.Command)],
         FormSyntax => [("for", WorkspaceReferenceDomain.Command)],
         ReadsSyntax or ProjectionSyntax or ReducerSyntax => [("readModel", WorkspaceReferenceDomain.View)],
         SpecificationReadModelSyntax or SpecificationAbsentReadModelSyntax => [("name", WorkspaceReferenceDomain.View)],
