@@ -4,7 +4,7 @@
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { ComparisonOperator, ConditionSyntax } from '../Syntax/Conditions';
-import { nativePattern } from '../Text/patterns';
+import { dotNetWhitespace, nativePattern } from '../Text/patterns';
 import { stringBodyPattern } from '../Text/StringLiteral';
 import { parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
 import { ParserContext } from './ParserContext';
@@ -15,11 +15,12 @@ const operators: Record<string, ComparisonOperator> = { '==': 'Equal', '!=': 'No
 // Previously omitted Legacy operands gain structure, not new parser diagnostics.
 export function parseCondition(context: ParserContext, text: string, location: SourceLocation, strict = false): ConditionSyntax | null {
     if (!strict) context = context.valueContext;
-    const numeric = context.sourceOptions.numericMode === 'exact' ? '-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|' : '';
+    const whitespace = strict ? dotNetWhitespace : '\\s';
+    const numeric = context.sourceOptions.numericMode === 'exact' ? `-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|${whitespace}|[()])|` : '';
     const words = context.sourceOptions.numericMode === 'exact' && !strict ? '[\\w.$-]+|[^\\s]' : '[\\w.$-]+';
     const regex = new RegExp(nativePattern(`"${stringBodyPattern}"|==|!=|>=|<=|>|<|\\(|\\)|${numeric}${words}`).source, 'gu');
     if (strict) {
-        const unsupported = text.replace(regex, '').trim();
+        const unsupported = text.replace(regex, '').replace(new RegExp(dotNetWhitespace, 'gu'), '');
         if (unsupported.length > 0) {
             context.error(DiagnosticCodes.UnsupportedActionConditionOperand, `Guarded action conditions contain unsupported character '${unsupported[0]}'`, location);
             return null;

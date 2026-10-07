@@ -28,9 +28,30 @@ describe.each(['', 'numbers exact'])('when rejecting unsupported guarded conditi
         ]);
         result.diagnostics[0].message.should.equal(`Guarded action conditions contain unsupported character '${character}'`);
     });
+    it('should accept dotnet whitespace separators', () => {
+        const result = a_parsed_document(...(preamble ? [preamble] : []), 'module M', '  feature F', '    slice StateView S', '      screen Details',
+            '        action "Again"', '          when item.status\u0085==\u0085"open" execute Retry');
+        result.diagnostics.should.deep.equal([]);
+    });
+    it('should reject a byte order mark as a separator', () => {
+        const result = a_parsed_document(...(preamble ? [preamble] : []), 'module M', '  feature F', '    slice StateView S', '      screen Details',
+            '        action "Again"', '          when item.status\ufeff==\ufeff"open" execute Retry');
+        result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal([
+            DiagnosticCodes.UnsupportedActionConditionOperand, DiagnosticCodes.GuardedActionWithoutAlternatives,
+        ]);
+        result.diagnostics[0].message.should.equal("Guarded action conditions contain unsupported character '\ufeff'");
+    });
     it('should preserve punctuation inside a recognized string literal', () => {
         const result = a_parsed_document(...(preamble ? [preamble] : []), 'module M', '  feature F', '    slice StateView S', '      screen Details',
             '        action "Again"', '          when item.status == "[open];{closed}" execute Retry');
+        result.diagnostics.should.deep.equal([]);
+    });
+});
+
+describe('when parsing exact guarded condition numbers', () => {
+    it('should accept a dotnet whitespace separator after an exponent', () => {
+        const result = a_parsed_document('numbers exact', 'module M', '  feature F', '    slice StateView S', '      screen Details',
+            '        action "Again"', '          when item.count >= 1e+2\u0085and item.count < 2e+2 execute Retry');
         result.diagnostics.should.deep.equal([]);
     });
 });

@@ -34,7 +34,7 @@ internal static partial class ConditionParser
             (NumericMode.Exact, false) => ExactTokenRegex(),
             _ => TokenRegex()
         };
-        if (strict && regex.Replace(text, string.Empty).Trim() is { Length: > 0 } unsupported)
+        if (strict && WhitespaceRegex().Replace(regex.Replace(text, string.Empty), string.Empty) is { Length: > 0 } unsupported)
         {
             context.Error(DiagnosticCodes.UnsupportedActionConditionOperand, $"Guarded action conditions contain unsupported character '{unsupported[0]}'", location);
             return null;
@@ -114,6 +114,9 @@ internal static partial class ConditionParser
 
     [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|[\\w.$-]+|[^\\s]", RegexOptions.None, 1000)]
     private static partial Regex ExactTokenRegex();
+
+    [GeneratedRegex(@"\s", RegexOptions.None, 1000)]
+    private static partial Regex WhitespaceRegex();
 
     [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|[\\w.$-]+", RegexOptions.None, 1000)]
     private static partial Regex TokenRegex();
