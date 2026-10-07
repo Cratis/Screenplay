@@ -368,10 +368,16 @@
             "diagnostics": []
         },
         {
-            "name": "A shared source name checks personal trigger data even when event data is a surrogate",
+            "name": "A shared source name uses surrogate event data instead of personal trigger data",
             "validate": true,
             "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event External", "        patient Uuid", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
-            "diagnostics": ["PLAY0515@14"]
+            "diagnostics": []
+        },
+        {
+            "name": "An imported event shadows personal declared trigger values without claiming a shape",
+            "validate": true,
+            "source": ["import Outside.External", "concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
+            "diagnostics": []
         },
         {
             "name": "A shared source name checks personal event data even when trigger data is a surrogate",

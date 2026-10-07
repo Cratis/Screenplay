@@ -87,6 +87,11 @@ store, a clock, an integration or a custom runtime provider — see
 | 2 | triggers the document declares | `trigger <Name>` |
 | 3 | triggers registered with the compiler, plus the built-in host signals | a consumer, or the language |
 
+If an event and a declared trigger share a name, the event wins. Both reaction value validation and
+executable binding use the event's shape, including values used by `produces ... for <value>`; the shadowed
+trigger's shape does not contribute. An imported event also wins, but its unknown shape cannot be checked
+against the declared trigger's values.
+
 A registration wins over a built-in of the same name, so a host that raises a richer `Startup` can say what
 it carries rather than being overruled by the empty one the language ships.
 

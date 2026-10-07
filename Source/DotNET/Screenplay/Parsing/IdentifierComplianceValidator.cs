@@ -17,6 +17,8 @@ internal static class IdentifierComplianceValidator
         var personal = application.Concepts.Where(concept => concept.AttributeNames.Contains(ConceptAttributeSyntax.Pii))
             .Select(concept => concept.Name).ToHashSet(StringComparer.Ordinal);
         var declaredTriggers = (application.Triggers ?? []).ToLookup(trigger => trigger.Name, StringComparer.Ordinal);
+        var knownEvents = declarations.Slices.SelectMany(entry => EventDeclarations.In(entry.Slice).Select(@event => @event.Name))
+            .Concat(application.Imports.Select(import => import.Name)).ToHashSet(StringComparer.Ordinal);
         foreach (var source in application.EventSources)
         {
             if (source.Identifier is { } identifier) ValidateType(identifier, identifier.Location);
@@ -44,14 +46,17 @@ internal static class IdentifierComplianceValidator
             {
                 if (trigger.Source is not NamedTriggerSourceSyntax named) continue;
                 var shapes = new List<IEnumerable<PropertySyntax>?> { declarations.Event(named.Name, scope)?.Properties };
-                shapes.AddRange(declaredTriggers[named.Name].Select(declared => declared.Data
-                    .Select(datum => datum.Type is { } type ? new PropertySyntax(datum.Name, type, datum.Location) : null)
-                    .OfType<PropertySyntax>()));
+                if (!knownEvents.Contains(named.Name))
+                {
+                    shapes.AddRange(declaredTriggers[named.Name].Select(declared => declared.Data
+                        .Select(datum => datum.Type is { } type ? new PropertySyntax(datum.Name, type, datum.Location) : null)
+                        .OfType<PropertySyntax>()));
+                }
                 foreach (var production in (trigger.Produces ?? []).Where(production => declarations.Productions.IsEventProduction(production, slice)))
                 {
                     if (production.For is not PathExpressionSyntax path) continue;
 
-                    // Compliance is conservative when event and declared-trigger resolution disagree (#439).
+                    // Use only the occurrence selected by event-first reaction resolution.
                     var personalType = shapes.Select(properties => declarations.Property(properties, path.Path, out _)?.Type)
                         .FirstOrDefault(type => type is not null && personal.Contains(type.Name));
                     if (personalType is not null) ValidateType(personalType, path.Location);

@@ -9,10 +9,23 @@ import { toSyntaxJson } from '../Syntax/SyntaxJson';
 const reaction = ['module M', '  feature F', '    slice Automation S', '      event Recorded', '      reaction R', '        when External', '          produces Recorded', '            for patient'];
 
 describe('when validating personal trigger destinations', () => {
-    it.each([['PatientId', 'Uuid', 1], ['Uuid', 'PatientId', 1], ['PatientId', 'PatientId', 1], ['Uuid', 'Uuid', 0]])('should check both shapes for trigger %s and event %s', (triggerType, eventType, count) => {
+    it.each([['PatientId', 'Uuid', 0], ['Uuid', 'PatientId', 1], ['PatientId', 'PatientId', 1], ['Uuid', 'Uuid', 0]])('should prefer the event shape for trigger %s and event %s', (triggerType, eventType, count) => {
         const source = ['concept PatientId : Uuid @pii', 'trigger External', `  patient ${triggerType}`, ...reaction];
         source.splice(6, 0, '      event External', `        patient ${eventType}`);
         expect(parse(source.join('\n')).diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0515')).toHaveLength(count as number);
+    });
+
+    it('should not borrow personal trigger values for an imported event with an unknown shape', () => {
+        const source = ['import Outside.External', 'concept PatientId : Uuid @pii', 'trigger External', '  patient PatientId', ...reaction];
+        expect(parse(source.join('\n')).diagnostics).toEqual([]);
+    });
+
+    it('should prefer the event shape across documents', () => {
+        const declarations = 'concept PatientId : Uuid @pii\ntrigger External\n  patient PatientId';
+        const source = [...reaction];
+        source.splice(3, 0, '      event External', '        patient Uuid');
+        const result = parseFolder([{ path: 'types.play', source: declarations }, { path: 'application.play', source: source.join('\n') }]);
+        expect(result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0515')).toEqual([]);
     });
 
     it('should retain declared trigger shapes across imported documents without changing syntax wire bytes', () => {

@@ -13,6 +13,10 @@ export function validateIdentifierCompliance(application: ApplicationSyntax, con
     const personal = new Set(application.concepts.filter(concept => concept.attributes.some(attribute => attribute.name === 'pii')).map(concept => concept.name));
     const types = uniqueByName(application.types);
     const resolver = new AuthoringProductionResolver(application);
+    const knownEvents = new Set([
+        ...resolver.declarations.filter(declaration => declaration.node.kind === 'EventSyntax').map(declaration => declaration.name),
+        ...application.imports.map(imported => imported.qualifiedName.split('.').at(-1)!),
+    ]);
     const declaredTriggers = new Map<string, (readonly PropertySyntax[])[]>();
     for (const declared of application.declaredTriggers ?? []) {
         const shapes = declaredTriggers.get(declared.name) ?? [];
@@ -46,10 +50,12 @@ export function validateIdentifierCompliance(application: ApplicationSyntax, con
             if (trigger.source.kind !== 'NamedTriggerSourceSyntax') continue;
             const resolution = resolver.resolve(trigger.source.name, slice);
             const event = resolution.declaration?.node;
-            const shapes = [event?.kind === 'EventSyntax' ? event.properties : [], ...declaredTriggers.get(trigger.source.name) ?? []];
+            const shapes = knownEvents.has(trigger.source.name)
+                ? [event?.kind === 'EventSyntax' ? event.properties : []]
+                : declaredTriggers.get(trigger.source.name) ?? [];
             for (const production of trigger.produces.filter(production => resolver.isEventProduction(production, slice))) {
                 if (production.for?.kind !== 'PathExpressionSyntax') continue;
-                // Compliance checks both shapes when event and declared-trigger resolution disagree (#439).
+                // Use only the occurrence selected by event-first reaction resolution.
                 const path = production.for.path;
                 const entry = shapes.map(properties => property(properties, path)).find(entry => entry !== null && personal.has(entry.type.name));
                 if (entry != null) validate(entry.type, production.for.location);
