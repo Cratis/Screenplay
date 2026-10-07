@@ -69,6 +69,11 @@ describe('when authoring typed examples', () => {
         expect(content).toContain('amount = 42 — override');
         expect(content).toContain('for "two" — override (replaces "one" from One)');
     });
+    it('should display parser-owned refusal expressions without claiming executable validity', () => {
+        const source = ['event Refused', '  reason String', 'example Refusal : Refused', '  reason = $refusal.reason', 'specification S', '  given Refusal'];
+        expect(hover(source, 'given Refusal', 'Refusal')).toContain('reason = $refusal.reason — example Refusal');
+        expect(hover(source, 'given Refusal', 'Refusal')).toContain('not execution results');
+    });
     it('should preserve matching and not claim execution', () => {
         const content = hover(fixture, 'then readmodel ModuleBalance exactly total = 5000', 'ModuleBalance');
         expect(content).toContain('Matching is unchanged');
