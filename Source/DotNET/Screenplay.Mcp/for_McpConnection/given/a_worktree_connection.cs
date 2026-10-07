@@ -22,7 +22,7 @@ public class a_worktree_connection : a_connection
         CreateModel(RepositoryPath);
         Git(RepositoryPath, "init", "-b", "main");
         Git(RepositoryPath, "add", ".cratis/screenplay/application.play");
-        Git(RepositoryPath, "-c", "user.name=Screenplay specs", "-c", "user.email=specs@example.invalid", "-c", "commit.gpgsign=false", "commit", "-m", "Create model");
+        Git(RepositoryPath, "commit", "-m", "Create model");
         Git(RepositoryPath, "worktree", "add", "--detach", WorktreePath, "HEAD");
         Root = new(ModelPath);
         Connection = new(new McpTools(Root));
@@ -70,25 +70,42 @@ public class a_worktree_connection : a_connection
 
     internal static void Git(string directory, params string[] arguments)
     {
-        var start = new ProcessStartInfo("git") { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
-        start.ArgumentList.Add("-C");
-        start.ArgumentList.Add(directory);
-        foreach (var argument in arguments)
+        var settings = Path.Combine(Path.GetTempPath(), $"screenplay-git-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(settings);
+        try
         {
-            start.ArgumentList.Add(argument);
-        }
-        using var process = Process.Start(start)!;
-        var output = process.StandardOutput.ReadToEndAsync();
-        var error = process.StandardError.ReadToEndAsync();
-        if (!process.WaitForExit(10000))
-        {
-            process.Kill(entireProcessTree: true);
-            throw new McpFailure("Spec Git setup timed out.");
-        }
+            var config = Path.Combine(settings, "config");
+            var hooks = Path.Combine(settings, "hooks");
+            File.WriteAllText(config, string.Empty);
+            Directory.CreateDirectory(hooks);
+            var start = new ProcessStartInfo("git") { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+            foreach (var variable in start.Environment.Keys.Where(key => key.StartsWith("GIT_", StringComparison.OrdinalIgnoreCase)).ToArray())
+            {
+                start.Environment.Remove(variable);
+            }
+            start.Environment["GIT_CONFIG_NOSYSTEM"] = "1";
+            start.Environment["GIT_CONFIG_GLOBAL"] = config;
+            foreach (var argument in new[] { "-C", directory, "-c", $"core.hooksPath={hooks}", "-c", "user.name=Screenplay specs", "-c", "user.email=specs@example.invalid", "-c", "commit.gpgsign=false" }.Concat(arguments))
+            {
+                start.ArgumentList.Add(argument);
+            }
+            using var process = Process.Start(start)!;
+            var output = process.StandardOutput.ReadToEndAsync();
+            var error = process.StandardError.ReadToEndAsync();
+            if (!process.WaitForExit(10000))
+            {
+                process.Kill(entireProcessTree: true);
+                throw new McpFailure("Spec Git setup timed out.");
+            }
 
-        if (process.ExitCode != 0)
+            if (process.ExitCode != 0)
+            {
+                throw new McpFailure($"Spec Git setup failed: {output.GetAwaiter().GetResult()} {error.GetAwaiter().GetResult()}");
+            }
+        }
+        finally
         {
-            throw new McpFailure($"Spec Git setup failed: {output.GetAwaiter().GetResult()} {error.GetAwaiter().GetResult()}");
+            Directory.Delete(settings, true);
         }
     }
 }
