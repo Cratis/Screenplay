@@ -2324,6 +2324,11 @@ public static class DiagnosticCodes
     /// </summary>
     public const string MissingSpecificationProperty = "PLAY0524";
 
+    /// <summary>
+    /// A stated example value or destination cannot be admitted by its semantic type, even if unused.
+    /// </summary>
+    public const string UnadmittedSpecificationExampleValue = "PLAY0525";
+
     /// <summary>An event source or stream declaration is invalid or ambiguous.</summary>
     public const string InvalidEventSourceDeclaration = "PLAY0503";
 

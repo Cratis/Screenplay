@@ -63,7 +63,10 @@ public static class SpecificationExamples
                 Modules = [.. _application.Modules.Select(module => module with { Features = [.. module.Features.Select(ExpandFeature)] })]
             };
 
-            return new(effective, [.. _specifications], [.. _context.Diagnostics.Distinct()]);
+            return new(effective, [.. _specifications], [.. _context.Diagnostics.Distinct()])
+            {
+                ResolvedExamples = [.. _types.Select(entry => new ResolvedSpecificationExample(entry.Key, entry.Value.Kind, entry.Value.Node, entry.Value.Properties))]
+            };
         }
 
         internal CompilationResult<EffectiveSpecification> ExpandStandalone(SpecificationSyntax specification, DeclarationScope scope)

@@ -66,6 +66,12 @@ Out of scope: named setups, scenario outlines, composite-value examples, example
 
 Authors declare a small cast once and state scenario-relevant differences explicitly. The ESM and reference runner need no fixture construct. Editing an example changes every referencing specification, so effective hover, fixture queries and reference edges make that impact inspectable. Syntax consumers must use the effective API to obtain complete steps; authored syntax deliberately keeps references.
 
+## Technical clarification — 2026-10-07
+
+Unused examples are not an admission escape hatch. Semantic binding validates every stated value with the ordinary fixture normalizer and semantic type validator, including scalar/null/UUID values, generated fixtures, nested object completeness and `for` identities. Top-level partial examples remain partial; the pass does not supply omitted properties, execute business validations, promote an ESM version merely because an unused fixture exists, or change design-mode fixture checks. An unavailable or ambiguous destination contract refuses admission. An override cannot hide an invalid example value.
+
+Failure provenance belongs to the source compilation, not the ESM. A compilation-bound runner overload admits the compilation's own model and appends effective values and authored/example/override origins to failed comparisons. Callers cannot pair an arbitrary provenance sidecar with another plan. ESM-only execution retains existing failure messages and does not infer lost source origins. Failed capability admission remains a failed, unsupported result. The model's canonical bytes and revision remain identical to hand-expanded syntax.
+
 ## Status notes
 
 **2026-10-07 — accepted.** Sindre Alstad Wilting explicitly delegated these choices to the orchestrator. The binding #427 decision table accepts typed examples, inline overrides, no inheritance, no implicit defaults in v1, unchanged matching and the public effective-syntax API. Implementation and verification remain pending.

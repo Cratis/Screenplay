@@ -59,4 +59,9 @@ public sealed record EffectiveSpecification(SpecificationSyntax Authored, Specif
 /// <param name="Application">The application with expanded specifications.</param>
 /// <param name="Specifications">The authored and effective specification pairs.</param>
 /// <param name="Diagnostics">Resolution and example-body diagnostics; errors prevent binding.</param>
-public sealed record EffectiveSpecificationApplication(ApplicationSyntax Application, IReadOnlyList<EffectiveSpecification> Specifications, IReadOnlyList<Diagnostic> Diagnostics);
+public sealed record EffectiveSpecificationApplication(ApplicationSyntax Application, IReadOnlyList<EffectiveSpecification> Specifications, IReadOnlyList<Diagnostic> Diagnostics)
+{
+    internal IReadOnlyList<ResolvedSpecificationExample> ResolvedExamples { get; init; } = [];
+}
+
+internal sealed record ResolvedSpecificationExample(SpecificationExampleSyntax Example, string Kind, SyntaxNode Type, IEnumerable<PropertySyntax> Properties);

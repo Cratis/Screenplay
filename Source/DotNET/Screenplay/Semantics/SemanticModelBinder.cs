@@ -44,7 +44,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         syntax = expansion.Application;
         var steps = new Dictionary<SyntaxNode, EffectiveSpecificationStep>(ReferenceEqualityComparer.Instance);
         foreach (var step in expansion.Specifications.SelectMany(specification => specification.Steps)) steps.Add(step.Effective, step);
-        var context = new BindingContext(applicationName, syntax, documents, steps);
+        var context = new BindingContext(applicationName, syntax, documents, steps, expansion);
         try
         {
             var application = context.BindApplication();
@@ -114,7 +114,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             }
 
             var sourceMap = SemanticSourceMap.Create(context.SourceMapEntries, compiledDocuments.Documents);
-            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap);
+            var compilation = SemanticCompilation.Create(model, compiledDocuments, sourceMap).WithSpecificationOrigins(context.SpecificationOrigins);
             return new CompilationResult<SemanticCompilation>(compilation, context.Diagnostics)
             {
                 ImplementationRequirements = context.ImplementationRequirements,
@@ -128,9 +128,10 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         }
     }
 
-    private sealed partial class BindingContext(string applicationName, ApplicationSyntax syntax, SemanticDocumentSet documents, IReadOnlyDictionary<SyntaxNode, EffectiveSpecificationStep> steps)
+    private sealed partial class BindingContext(string applicationName, ApplicationSyntax syntax, SemanticDocumentSet documents, IReadOnlyDictionary<SyntaxNode, EffectiveSpecificationStep> steps, EffectiveSpecificationApplication expansion)
     {
         readonly List<Diagnostic> _diagnostics = [];
+        readonly Dictionary<SemanticId, EffectiveSpecification> _specificationOrigins = [];
         readonly List<SemanticSourceMapEntry> _sourceMapEntries = [];
         readonly Dictionary<string, (SemanticAddress Address, SemanticId Id)> _concepts = new(StringComparer.Ordinal);
         readonly Dictionary<EventSyntax, BoundEvent> _eventDeclarations = [];
@@ -143,6 +144,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         readonly ApplicationIdentity _applicationIdentity = documents.IdentityCatalog.Application;
 
         internal IEnumerable<Diagnostic> Diagnostics => _diagnostics;
+
+        internal ImmutableDictionary<SemanticId, EffectiveSpecification> SpecificationOrigins => _specificationOrigins.ToImmutableDictionary();
 
         internal bool HasErrors => _diagnostics.Exists(_ => _.Severity == DiagnosticSeverity.Error);
 
@@ -173,6 +176,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var types = (syntax.Types ?? []).Select(BindType).ToImmutableArray();
             var modules = AttachAutomation([.. syntax.Modules.Select(BindModule)]);
             var policies = BindPolicies();
+            ValidateExampleAdmission(concepts, types, modules);
             return new(
                 applicationId,
                 applicationName,

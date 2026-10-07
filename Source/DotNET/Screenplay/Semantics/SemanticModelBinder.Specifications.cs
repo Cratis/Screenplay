@@ -25,6 +25,7 @@ public sealed partial class SemanticModelBinder
             SpecificationSyntax specification,
             Dictionary<string, SemanticCommand> commands)
         {
+            var origin = expansion.Specifications.SingleOrDefault(item => ReferenceEquals(item.Effective, specification));
             if (specification.File is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Specification '{specification.Name}' file reference is realization provenance.", specification.File.Location);
@@ -81,6 +82,7 @@ public sealed partial class SemanticModelBinder
 
             var address = SemanticAddress.ForSpecification(slice, specification.Name);
             var id = Resolve(address, specification.Location);
+            if (origin is not null) _specificationOrigins.Add(id, origin);
             var givenEvents = specification.Given.Select(value => BindSpecificationEvent(value, commands, historicalFact: true)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             var givenReadModels = (specification.GivenReadModels ?? [])
                 .Select(value => BindReadModelState(value.Name, value.Properties, value.Location, value.Exactly))
