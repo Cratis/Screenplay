@@ -68,6 +68,12 @@ export function parseFixtureBody(context: ParserContext, parent: SourceLine, inl
             continue;
         }
         const match = mapping.exec(child.content);
+        if (example !== undefined && (firstWord(child.content) === 'streamId' ||
+            (firstWord(child.content) === 'stream' && match === null) || child.content.startsWith('no stream'))) {
+            context.error(DiagnosticCodes.InvalidSpecificationExampleBody, 'An example cannot declare stream, streamId or no stream; state the route on the specification step.', locationOf(child));
+            context.skipOpaqueBlock(child.indent);
+            continue;
+        }
         if (match !== null) {
             addFixtureValue(context, values, { kind: 'PropertyMappingSyntax', property: match[1], source: parseMappingSource(match[2], locationOf(child), context), location: locationOf(child) }, generatedValues);
         } else if (firstWord(child.content) === 'for') {

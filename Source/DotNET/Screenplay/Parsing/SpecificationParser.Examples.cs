@@ -58,6 +58,14 @@ internal static partial class SpecificationParser
             }
 
             var mapping = MappingRegex().Match(child.Content);
+            if (example is not null && (LineText.FirstWord(child.Content) == "streamId" ||
+                (LineText.FirstWord(child.Content) == "stream" && !mapping.Success) || child.Content.StartsWith("no stream", StringComparison.Ordinal)))
+            {
+                context.Error(DiagnosticCodes.InvalidSpecificationExampleBody, "An example cannot declare stream, streamId or no stream; state the route on the specification step.", child.Location);
+                SkipBody(context, child.Indent);
+                continue;
+            }
+
             if (mapping.Success)
             {
                 AddFixtureValue(context, body.Values, ExpressionParser.ParseMapping(context, mapping.Groups[1].Value, mapping.Groups[2], child), body.Generated);

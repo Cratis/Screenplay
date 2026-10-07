@@ -129,6 +129,10 @@ Binding validates every stated example value, even in an unused example or one w
 
 Source-bound reference execution uses `SemanticSpecificationRunner.Run(compilation, specificationId)`. Failed comparisons retain their original failure text and append the effective fixture values, their authored/example/override origins, and replaced values. The compilation owns the provenance sidecar; no sidecar enters ESM bytes. `Run(plan, specificationId)` remains available for ESM-only consumers, but cannot reconstruct source origins and does not invent them. Unsupported plan admission is a failed result, not a passing scenario.
 
+Examples cannot declare route lines (`stream`, `streamId`, `no stream`): `PLAY0526` asks you to state the route on the specification step, including a step referencing an example. Route support in examples is deferred to [#491](https://github.com/Cratis/Screenplay/issues/491). A payload assignment `stream = <value>` is not a route line.
+
+The effective-syntax API is .NET-only; TypeScript preserves the authored examples but does not expose an expansion API.
+
 Examples cannot supply callers, clocks or whole scenarios, and cannot be used in query results, `then result`, `then returns`, trigger or capture fixtures. Composite-value examples, inheritance, named setups and scenario outlines are not supported; structured values inside an event, command or read-model example are supported. There are no implicit defaults or unused/shadowing warnings.
 
 Assign a property only once within each fixture or step. An inline assignment repeated in the indented body reports `PLAY0519`; a malformed example header reports `PLAY0518`. A declaration does not supply implicit defaults or change the step's matching mode. Unlike `seed`, an example declares specification data, not events to append when the application starts.

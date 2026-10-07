@@ -252,6 +252,7 @@ export const DiagnosticCodes = {
     InvalidSpecificationExampleValue: 'PLAY0523',
     MissingSpecificationProperty: 'PLAY0524',
     UnadmittedSpecificationExampleValue: 'PLAY0525',
+    InvalidSpecificationExampleBody: 'PLAY0526',
     AmbiguousReference: 'PLAY0198',
     InvalidSpecificationStream: 'PLAY0547',
     SpecificationStreamOnCommand: 'PLAY0548',

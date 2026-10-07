@@ -2370,6 +2370,11 @@ public static class DiagnosticCodes
     public const string UnadmittedSpecificationExampleValue = "PLAY0525";
 
     /// <summary>
+    /// A typed specification example declares route metadata instead of stating it on a step.
+    /// </summary>
+    public const string InvalidSpecificationExampleBody = "PLAY0526";
+
+    /// <summary>
     /// A specification routing directive is malformed, duplicated or misplaced.
     /// </summary>
     public const string InvalidSpecificationStream = "PLAY0547";
