@@ -160,6 +160,8 @@ internal sealed partial class DependencyGraph
         return DistinctNodes(nodes);
     }
 
+    internal bool IsWithin(DependencyNode node, DependencyNode scope) => node.Key == scope.Key || Ancestors(node).Any(ancestor => ancestor.Key == scope.Key);
+
     static IReadOnlyList<DependencyNode> DistinctNodes(IEnumerable<DependencyNode> nodes) => [.. nodes.DistinctBy(node => node.Key).OrderBy(node => node.Rank).ThenBy(node => node.Key, StringComparer.Ordinal)];
     static IEnumerable<string> OrderingKinds(IEnumerable<string>? kinds) => SelectedKinds(kinds ?? _orderingKinds).Where(kind => _orderingKinds.Contains(kind, StringComparer.Ordinal));
 
@@ -185,8 +187,6 @@ internal sealed partial class DependencyGraph
 
         return [.. StronglyConnectedGroups.In(graph).Where(group => group.Count > 1).Select(group => new DependencyGroup(container, DistinctNodes(group.Select(key => byKey[key])))).OrderBy(group => group.Members[0].Rank)];
     }
-
-    internal bool IsWithin(DependencyNode node, DependencyNode scope) => node.Key == scope.Key || Ancestors(node).Any(ancestor => ancestor.Key == scope.Key);
 
     bool Disjoint(DependencyNode left, DependencyNode right) => left.Key != right.Key && !Ancestors(left).Contains(right) && !Ancestors(right).Contains(left);
 
