@@ -74,6 +74,7 @@ internal static partial class SpecificationParser
         SpecificationEventSyntax? whenAppended = null;
         var whenDeclared = false;
         var eventsInAnyOrder = false;
+        var thenNoEvents = false;
         SourceLocation? eventsInAnyOrderLocation = null;
         var thenEvents = new List<SpecificationEventSyntax>();
         var thenReadModels = new List<SpecificationReadModelSyntax>();
@@ -192,7 +193,26 @@ internal static partial class SpecificationParser
                     }
                     break;
                 case "then":
-                    if (ThenReturnsPrefixRegex().IsMatch(line.Content))
+                    if (ThenNoEventsPrefixRegex().IsMatch(line.Content))
+                    {
+                        if (line.Content != "then no events" || thenNoEvents)
+                        {
+                            context.Error(DiagnosticCodes.InvalidNoEventsExpectation, "Expected one 'then no events' directive.", line.Location);
+                        }
+                        else
+                        {
+                            thenNoEvents = true;
+                            directiveLocations["then no events"] = line.Location;
+                        }
+
+                        if (context.TryPeekChild(line.Indent, out var child))
+                        {
+                            context.Error(DiagnosticCodes.InvalidNoEventsExpectation, "'then no events' cannot have child mappings.", child.Location);
+                        }
+
+                        SkipBody(context, line.Indent);
+                    }
+                    else if (ThenReturnsPrefixRegex().IsMatch(line.Content))
                     {
                         var expectation = ParseReturn(context, line);
                         if (thenReturns is not null)
@@ -265,6 +285,14 @@ internal static partial class SpecificationParser
             }
         }
 
+        if (thenNoEvents && (whenAppended is not null || thenEvents.Count > 0 || eventsInAnyOrder || thenErrors.Count > 0 || denied is not null))
+        {
+            context.Error(
+                DiagnosticCodes.InvalidNoEventsExpectation,
+                "'then no events' cannot follow 'when append' or accompany event, event-order, error or denial expectations.",
+                directiveLocations["then no events"]);
+        }
+
         return new(name, given, when, thenEvents, thenErrors, header.Location, givenReadModels, thenReadModels)
         {
             SourceOptions = context.SourceOptions,
@@ -279,6 +307,7 @@ internal static partial class SpecificationParser
             ThenCompensated = thenCompensated,
             WhenAppended = whenAppended,
             ThenEventsInAnyOrder = eventsInAnyOrder,
+            ThenNoEvents = thenNoEvents,
             GivenClock = givenClock,
             GivenCaptures = givenCaptures,
             WhenClock = whenClock,
@@ -290,6 +319,9 @@ internal static partial class SpecificationParser
             DirectiveLocations = WithEventOrderLocation(directiveLocations, eventsInAnyOrderLocation)
         };
     }
+
+    [GeneratedRegex(@"^then\s+no\s+events\b", RegexOptions.None, 1000)]
+    private static partial Regex ThenNoEventsPrefixRegex();
 
     static Dictionary<string, SourceLocation> WithEventOrderLocation(Dictionary<string, SourceLocation> locations, SourceLocation? location)
     {

@@ -81,6 +81,7 @@ export const clauseKeywords = [
     'then',
     'arguments',
     'result',
+    'events',
     'clock', // A specification step - 'given clock' and 'when clock' state an instant.
     'exactly',
     'error',

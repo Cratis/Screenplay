@@ -833,6 +833,14 @@ See [Imports](imports.md).
 | `PLAY0459` | Error | A file imported into a module or feature declares a module other than the one it is placed in. Restating the module it is placed in is allowed. |
 | `PLAY0460` | Error | The top level of a file imported into a module or feature holds something that scope cannot hold, such as a `screen template` in a file placed in a feature. |
 
+### No-event specification assertions
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0545` | Error | `then no events` is malformed, repeated, has child mappings, follows `when append`, or accompanies event, event-order, error or denial expectations. Use one leaf assertion after a non-append action; read-model, query and response assertions may accompany it. |
+
+See [Specifications](specifications.md#syntax).
+
 ### Specification actions
 
 See [Specifications](specifications.md#clocks-triggers-and-captures).

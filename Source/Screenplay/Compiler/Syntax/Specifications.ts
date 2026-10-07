@@ -126,6 +126,7 @@ export interface SpecificationSyntax extends SyntaxNode {
     readonly whenAppended: SpecificationEventSyntax | null;
     readonly thenEvents: readonly SpecificationEventSyntax[];
     readonly thenEventsInAnyOrder: boolean;
+    readonly thenNoEvents?: boolean;
     readonly thenReadModels: readonly SpecificationReadModelSyntax[];
     readonly thenErrors: readonly SpecificationErrorSyntax[];
     readonly givenClock: SpecificationClockSyntax | null;

@@ -2309,4 +2309,9 @@ public static class DiagnosticCodes
 
     /// <summary>A personally identifiable concept is used as an event source identifier.</summary>
     public const string PiiNotSupportedOnIdentifier = "PLAY0515";
+
+    /// <summary>
+    /// A no-event assertion is malformed or conflicts with another outcome or an append action.
+    /// </summary>
+    public const string InvalidNoEventsExpectation = "PLAY0545";
 }

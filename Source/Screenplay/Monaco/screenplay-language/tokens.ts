@@ -86,7 +86,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             // A specification's clock, trigger, capture and query steps - matched before a sub-language keyword
             // can claim 'capture' and read the rest of the specification as change data capture.
             [/^(\s*)(given|when)(\s+)(clock|capture|trigger|query)\b/, ['white', 'keyword', 'white', 'keyword']],
-            [/^(\s*)(then)(\s+)(result|no\s+result)\b/, ['white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(then)(\s+)(result|no\s+(?:result|events))\b/, ['white', 'keyword', 'white', 'keyword']],
             // A quoted import names .play files rather than a qualified name - the path reads as a link.
             [/^(\s*)(import)(\s+)("[^"\\]*")/, ['white', 'keyword', 'white', 'string.link']],
             // Retain the header indent so event metadata stops at the enclosing block boundary.

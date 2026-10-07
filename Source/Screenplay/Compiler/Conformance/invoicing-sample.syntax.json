@@ -10961,6 +10961,7 @@
                   "thenErrors": [],
                   "thenEvents": [],
                   "thenEventsInAnyOrder": false,
+                  "thenNoEvents": true,
                   "thenNoResult": null,
                   "thenOperations": [],
                   "thenReadModels": [],

@@ -988,7 +988,9 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract("A specification without a command requires a read model or query outcome and cannot assert events or errors.");
             }
 
-            if (!hasRejection && !hasSuccessOutcome)
+            // An empty expected event list after a non-append action asserts no new events, including
+            // the explicit 'then no events' spelling. It needs no additional serialized outcome.
+            if (!hasRejection && !hasSuccessOutcome && specification.WhenAppended is not null)
             {
                 throw new InvalidSemanticContract("A success specification must contain at least one success outcome.");
             }

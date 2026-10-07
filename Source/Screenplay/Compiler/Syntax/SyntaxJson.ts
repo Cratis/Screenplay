@@ -116,6 +116,7 @@ function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJ
         for (const member of members) {
             const memberValue = structural[member];
             if (member === 'sourceOptions' && (memberValue as { numericMode?: string } | undefined)?.numericMode === 'legacy') continue;
+            if (value.kind === 'SpecificationSyntax' && member === 'thenNoEvents' && memberValue === false) continue;
             result[member] = write(memberValue, owningMode, complete);
         }
         return result;

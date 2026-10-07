@@ -193,6 +193,15 @@
                     }
                 },
                 {
+                    "comment": "A specification explicitly expects no new events.",
+                    "match": "^\\s*(then)\\s+(no)\\s+(events)\\b",
+                    "captures": {
+                        "1": { "name": "keyword.other.screenplay" },
+                        "2": { "name": "keyword.other.screenplay" },
+                        "3": { "name": "keyword.other.screenplay" }
+                    }
+                },
+                {
                     "comment": "What the query a specification performs returns.",
                     "match": "^\\s*(then)\\s+(?:(no)\\s+)?(result)\\b(?:\\s+(exactly)\\b)?",
                     "captures": {

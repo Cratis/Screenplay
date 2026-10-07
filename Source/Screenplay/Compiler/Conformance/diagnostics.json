@@ -2,6 +2,21 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "An append action cannot assert no events",
+            "source": ["module M", "  feature F", "    slice Automation S", "      specification Empty", "        when append Happened", "        then no events"],
+            "diagnostics": ["PLAY0545@6"]
+        },
+        {
+            "name": "No events conflicts with an event outcome regardless of order",
+            "source": ["module M", "  feature F", "    slice Automation S", "      specification Empty", "        when Act", "        then Happened", "        then no events"],
+            "diagnostics": ["PLAY0545@7"]
+        },
+        {
+            "name": "No events is a leaf",
+            "source": ["module M", "  feature F", "    slice Automation S", "      specification Empty", "        when Act", "        then no events", "          value = 1"],
+            "diagnostics": ["PLAY0545@7"]
+        },
+        {
             "name": "Personal declared trigger data cannot supply reaction destinations",
             "validate": true,
             "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],

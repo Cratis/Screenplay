@@ -43,6 +43,7 @@ const whenCapturePrefix = pattern('^when\\s+capture\\b');
 const whenQueryPrefix = pattern('^when\\s+query\\b');
 const thenResultPrefix = pattern('^then\\s+result\\b');
 const noResultPrefix = pattern('^then\\s+no\\s+result\\b');
+const noEventsPrefix = pattern('^then\\s+no\\s+events\\b');
 
 // An instant in ISO 8601 - a date, a time to the minute or finer, and an explicit offset or Z - so the same text
 // means the same moment wherever the specification runs.
@@ -63,6 +64,8 @@ interface SpecificationBody {
     whenDeclared: boolean;
     thenEvents: SpecificationEventSyntax[];
     thenEventsInAnyOrder: boolean;
+    thenNoEvents: boolean;
+    noEventsLine?: SourceLine;
     thenReadModels: SpecificationReadModelSyntax[];
     thenErrors: SpecificationErrorSyntax[];
     thenAbsentReadModels: SpecificationAbsentReadModelSyntax[];
@@ -91,7 +94,7 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
     const body: SpecificationBody = {
         givenOperationFailures: [], thenOperations: [], thenCompensated: [], thenAbsentReadModels: [], thenQueries: [],
         given: [], givenReadModels: [], when: null, whenAppended: null, whenDeclared: false,
-        thenEvents: [], thenEventsInAnyOrder: false, thenReadModels: [], thenErrors: [],
+        thenEvents: [], thenEventsInAnyOrder: false, thenNoEvents: false, thenReadModels: [], thenErrors: [],
         givenClock: null, givenCaptures: [], whenClock: null, whenTrigger: null, whenCapture: null, whenQuery: null, thenResults: [], thenNoResult: null, thenDenied: null, givenCaller: null, thenReturns: null,
     };
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
@@ -113,7 +116,11 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
             context.skipBlock(child.indent);
         }
     }
-    const { whenDeclared: _, ...members } = body;
+    if (body.noEventsLine !== undefined && (body.whenAppended !== null || body.thenEvents.length > 0 || body.thenEventsInAnyOrder || body.thenErrors.length > 0 || body.thenDenied !== null)) {
+        context.error(DiagnosticCodes.InvalidNoEventsExpectation,
+            "'then no events' cannot follow 'when append' or accompany event, event-order, error or denial expectations.", locationOf(body.noEventsLine));
+    }
+    const { whenDeclared: _, noEventsLine: _noEventsLine, ...members } = body;
     return { kind: 'SpecificationSyntax', sourceOptions: context.sourceOptions, name, ...members, location: locationOf(line) };
 }
 
@@ -245,6 +252,18 @@ function parseWhen(context: ParserContext, line: SourceLine, body: Specification
 }
 
 function parseThen(context: ParserContext, line: SourceLine, body: SpecificationBody): void {
+    if (noEventsPrefix.test(line.content)) {
+        if (line.content !== 'then no events' || body.thenNoEvents) {
+            context.error(DiagnosticCodes.InvalidNoEventsExpectation, "Expected one 'then no events' directive.", locationOf(line));
+        } else {
+            body.thenNoEvents = true;
+            body.noEventsLine = line;
+        }
+        const child = context.peekChild(line.indent);
+        if (child !== undefined) context.error(DiagnosticCodes.InvalidNoEventsExpectation, "'then no events' cannot have child mappings.", locationOf(child));
+        skipBody(context, line.indent);
+        return;
+    }
     if (thenReturnsPrefix.test(line.content)) {
         const expectation = parseReturn(context, line);
         if (body.thenReturns !== null) {

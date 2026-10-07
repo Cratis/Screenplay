@@ -71,6 +71,11 @@ public record SpecificationSyntax(
     public bool ThenEventsInAnyOrder { get; init; }
 
     /// <summary>
+    /// Gets whether the scenario explicitly expects no new events.
+    /// </summary>
+    public bool ThenNoEvents { get; init; }
+
+    /// <summary>
     /// Gets the instant the scenario happens at - the occurrence time of everything it does - or <c>null</c>
     /// when the specification does not state one.
     /// </summary>

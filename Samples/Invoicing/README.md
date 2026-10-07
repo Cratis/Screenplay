@@ -46,6 +46,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | `domain` with a qualified name, `import` | top of the file |
 | `concept` of every primitive, `Enum`, `@pii`/`@sensitive` with reasons, `file`, concept `validate` with `matches email`, `rule` with a `file` and an inline body, `severity` | Concepts |
 | `type` with `description`, `file`, optional and collection properties | Composite value types |
+| `then no events` alongside query results | ExchangeRates |
 | `policy` with `require` (`authenticated`, `role`, `claim … matches` a literal, `subject` or `$context` path, `and`/`or`/parentheses, continuation lines), inline ```` ```csharp ```` and `file` bodies | Authorization |
 | `persona` with single-line and fenced descriptions | Authorization |
 | `authentication` with named providers | Authorization |
