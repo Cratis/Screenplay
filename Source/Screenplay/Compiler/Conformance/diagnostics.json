@@ -2,6 +2,24 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "A command example supports operation fixtures assertions and compensation",
+            "validate": true,
+            "source": ["system Mailer", "module M", "  feature F", "    slice StateChange S", "      operation Notify", "        uses Mailer", "        compensate", "          description \"Undo\"",  "      command C", "        produces Notify", "      example Input : C", "      specification T", "        given operation Notify fails", "        when Input", "        then operation Notify", "        then compensated Notify"],
+            "diagnostics": []
+        },
+        {
+            "name": "A command example validates its return expectation",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        amount Int", "        returns amount", "      example Input : C", "        amount = 10", "      specification T", "        when Input", "        then returns \"wrong\""],
+            "diagnostics": ["PLAY0491@11"]
+        },
+        {
+            "name": "A command example validates generated overrides",
+            "validate": true,
+            "source": ["concept Token : Uuid", "module M", "  feature F", "    slice StateChange S", "      command C", "        token Token generated", "      example Input : C", "      specification T", "        when Input", "          generated token = \"wrong\"", "        then no events"],
+            "diagnostics": ["PLAY0490@10"]
+        },
+        {
             "name": "A typed example requires an underlying type",
             "source": ["example AcmeInvoice"],
             "diagnostics": ["PLAY0518@1"]
