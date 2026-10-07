@@ -9,9 +9,12 @@ import type { DependencyMapLevel } from './DependencyMapLevel';
 export function visibleDependencyEdges(map: DependencyMap, level: DependencyMapLevel, kinds: readonly DependencyKind[]): DependencyMapEdge[] {
     const nodes = new Map(map.nodes.map(node => [node.key, node]));
     return map.edges.filter(edge => nodes.get(edge.source)!.kind === level).flatMap(edge => {
-        const evidence = edge.evidence.filter(item => kinds.includes(item.kind) && (!item.testOnly || kinds.includes('verifiedWith')));
+        const evidence = edge.evidence.filter(id => kinds.includes(map.evidence[id].kind) && (!map.evidence[id].testOnly || kinds.includes('verifiedWith')));
         const byKind: Partial<Record<DependencyKind, number>> = {};
-        for (const item of evidence) byKind[item.kind] = (byKind[item.kind] ?? 0) + 1;
-        return evidence.length === 0 ? [] : [{ ...edge, evidence, byKind, references: evidence.length, sliceEdges: new Set(evidence.map(item => JSON.stringify([item.consumer.key, item.producer.key]))).size }];
+        for (const id of evidence) {
+            const item = map.evidence[id];
+            byKind[item.kind] = (byKind[item.kind] ?? 0) + 1;
+        }
+        return evidence.length === 0 ? [] : [{ ...edge, evidence, byKind, references: evidence.length, sliceEdges: new Set(evidence.map(id => JSON.stringify([map.evidence[id].consumer, map.evidence[id].producer]))).size }];
     });
 }

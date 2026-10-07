@@ -31,10 +31,10 @@ module Views
 
 describe('when filtering dependency kinds', () => {
     const defaultEdges = visibleDependencyEdges(map, DependencyMapLevel.Module, ['usesFactsFrom', 'reactsTo', 'decidesFrom']);
-    it('should start with only story-ordering kinds', () => defaultEdges.every(edge => edge.evidence.every(item => item.kind === 'usesFactsFrom')).should.be.true);
+    it('should start with only story-ordering kinds', () => defaultEdges.every(edge => edge.evidence.every(id => map.evidence[id].kind === 'usesFactsFrom')).should.be.true);
     it('should show imported contexts only when enabled', () => visibleDependencyEdges(map, DependencyMapLevel.Module, ['outsideTheModel']).some(edge => edge.target === 'context:context:Customers').should.be.true);
-    it('should hide verified-with evidence unless explicitly enabled', () => defaultEdges.flatMap(edge => edge.evidence).some(item => item.testOnly).should.be.false);
-    it('should allow asks and verification to be enabled', () => visibleDependencyEdges(map, DependencyMapLevel.Module, dependencyKinds).flatMap(edge => edge.evidence).some(item => item.kind === 'verifiedWith').should.be.true);
+    it('should hide verified-with evidence unless explicitly enabled', () => defaultEdges.flatMap(edge => edge.evidence).some(id => map.evidence[id].testOnly).should.be.false);
+    it('should allow asks and verification to be enabled', () => visibleDependencyEdges(map, DependencyMapLevel.Module, dependencyKinds).flatMap(edge => edge.evidence).some(id => map.evidence[id].kind === 'verifiedWith').should.be.true);
     it('should recount references after filtering', () => defaultEdges.every(edge => edge.references === edge.evidence.length && Object.values(edge.byKind).reduce((sum, count) => sum + count, 0) === edge.references).should.be.true);
     it('should group multiple references into one slice pair', () => visibleDependencyEdges(map, DependencyMapLevel.Module, dependencyKinds).find(edge => edge.target === 'module:Facts')!.sliceEdges.should.equal(1));
     it('should select feature-level edges separately', () => visibleDependencyEdges(map, DependencyMapLevel.Feature, dependencyKinds).every(edge => edge.source.startsWith('feature:')).should.be.true);

@@ -14,7 +14,7 @@ describe('when mapping TimeTracking dependencies', () => {
     it('should list all the slices behind Payroll to Timesheets', () => {
         const edge = map.edges.find(edge => edge.source === 'module:Payroll' && edge.target === 'module:Timesheets')!;
         edge.evidence.length.should.equal(edge.references);
-        edge.evidence.some(item => item.consumer.address.startsWith('Payroll.') && item.producer.address.startsWith('Timesheets.') && item.name.length > 0 && item.location.path!.endsWith('.play')).should.be.true;
+        edge.evidence.map(id => map.evidence[id]).some(item => item.consumer.startsWith('Payroll.') && item.producer.startsWith('Timesheets.') && item.name.length > 0 && item.location.path!.endsWith('.play')).should.be.true;
     });
     it('should order modules Engagements Timesheets Payroll', () => map.modules.should.deep.equal(['module:Engagements', 'module:Timesheets', 'module:Payroll']));
     it('should survive JSON transport', () => JSON.parse(JSON.stringify(map)).should.deep.equal(map));

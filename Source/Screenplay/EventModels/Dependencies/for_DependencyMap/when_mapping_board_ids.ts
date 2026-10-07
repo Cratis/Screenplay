@@ -5,7 +5,8 @@ import { readdirSync } from 'node:fs';
 import { describe, it } from 'vitest';
 import { toEventModelDocument } from '../../Mapping/EventModelDocumentVisitor';
 import type { FeatureDocument } from '../../Document/EventModelDocument';
-import { dependencyMapFor } from '../dependencyMapFor';
+import { DependencyGraph } from '@cratis/screenplay-compiler';
+import { boardIdOf } from '../boardIdOf';
 import { sampleApplication, samplesDirectory } from './given/a_sample';
 
 describe('when mapping board identities', () => {
@@ -19,7 +20,7 @@ describe('when mapping board identities', () => {
             features(feature.subFeatures);
         });
         toEventModelDocument(application, sample.name).collections.forEach(collection => collection.modules.forEach(module => { ids.add(module.id); features(module.features); }));
-        missing.push(...dependencyMapFor(application).nodes.filter(node => node.kind !== 'context' && !ids.has(node.boardId!)).map(node => `${sample.name}:${node.key}`));
+        missing.push(...DependencyGraph.for(application).nodes.filter(node => node.kind !== 'context' && !ids.has(boardIdOf(node)!)).map(node => `${sample.name}:${node.key}`));
     }
     it('should use existing board ids for every slice feature and module in every sample', () => missing.should.deep.equal([]));
 });

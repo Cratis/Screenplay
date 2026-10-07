@@ -3,6 +3,8 @@
 
 import type { DependencyNode } from '@cratis/screenplay-compiler';
 
-export interface DependencyMapNode extends DependencyNode {
-    readonly boardId?: string;
+export interface DependencyMapNode {
+    readonly key: string;
+    readonly kind: DependencyNode['kind'];
+    readonly scope: readonly string[];
 }

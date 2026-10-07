@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import type { DependencyEvidence, DependencyKind } from '@cratis/screenplay-compiler';
+import type { DependencyKind } from '@cratis/screenplay-compiler';
 
 export interface DependencyMapEdge {
     readonly id: string;
@@ -10,6 +10,6 @@ export interface DependencyMapEdge {
     readonly byKind: Partial<Record<DependencyKind, number>>;
     readonly sliceEdges: number;
     readonly references: number;
-    readonly evidence: readonly DependencyEvidence[];
+    readonly evidence: readonly number[];
     readonly crossing: boolean;
 }

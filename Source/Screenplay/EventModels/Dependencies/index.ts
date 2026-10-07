@@ -1,3 +1,8 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+export type { DependencyMapEvidence } from './DependencyMapEvidence';
+export type { DependencyMapRoute } from './DependencyMapRoute';
 export type { DependencyMap } from './DependencyMap';
 export type { DependencyMapNode } from './DependencyMapNode';
 export type { DependencyMapEdge } from './DependencyMapEdge';

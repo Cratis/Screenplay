@@ -61,12 +61,11 @@ export const BoardApp = () => {
         <div className='screenplay-board'>
             <Problems problems={board.problems} onShowSource={showSource} />
             <div className='screenplay-board__canvas'>
-                {view === DependencyView.Map ? <div className='screenplay-dependency-map-host'>
-                    <div className='screenplay-dependency-map-toolbar' role='toolbar' aria-label='Board view'>{tools}</div>
-                    <DependencyMapView map={board.dependencies} onShowSource={showSource} />
-                </div> : model instanceof Error
-                    ? <div className='screenplay-board__message'>The board could not read this model: {model.message}</div>
-                    : (
+                <div className={`screenplay-board-view${view !== DependencyView.Board ? ' is-hidden' : ''}`} aria-hidden={view !== DependencyView.Board} inert={view !== DependencyView.Board}>
+                    {model instanceof Error ? <>
+                        <div className='screenplay-dependency-map-toolbar' role='toolbar' aria-label='Board view'>{tools}</div>
+                        <div className='screenplay-board__message'>The board could not read this model: {model.message}</div>
+                    </> : (
                         <MenuDropdownOpenProvider>
                             <EventModelPresentationProvider presentation={presentation} onChange={changePresentation}>
                                 <BoardErrorBoundary resetWhenChanged={presentation} onReset={() => changePresentation(defaultPresentation)}>
@@ -75,6 +74,11 @@ export const BoardApp = () => {
                             </EventModelPresentationProvider>
                         </MenuDropdownOpenProvider>
                     )}
+                </div>
+                <div className='screenplay-dependency-map-host' hidden={view !== DependencyView.Map} style={{ display: view !== DependencyView.Map ? 'none' : undefined }}>
+                    <div className='screenplay-dependency-map-toolbar' role='toolbar' aria-label='Board view'>{tools}</div>
+                    <DependencyMapView map={board.dependencies} onShowSource={showSource} />
+                </div>
             </div>
         </div>
     );

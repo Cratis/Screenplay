@@ -99,5 +99,10 @@
     background: var(--surface-section, #202020);
 }
 
+/* Preserve the board's geometry: display:none makes its viewport observer unmount the grid,
+   losing the read-only collapse state. The hosts also mark this hidden tree inert and aria-hidden. */
+.screenplay-board-view { position: absolute; inset: 0; height: 100%; }
+.screenplay-board-view.is-hidden { visibility: hidden; pointer-events: none; }
+
 .screenplay-dependency-map-host { display: flex; flex-direction: column; height: 100%; }
 .screenplay-dependency-map-host > .screenplay-dependency-map { flex: 1; }

@@ -11,7 +11,7 @@ import { sampleApplication } from './given/a_sample';
 describe('when mapping an empty model', () => {
     const map = dependencyMapFor(parse('').value);
     it('should keep an empty map usable', () => map.nodes.should.deep.equal([]));
-    it('should reserve a minimum drawing area', () => layoutDependencyMap(map).should.deep.equal({ width: 320, height: 240, nodes: [] }));
+    it('should reserve a minimum drawing area', () => layoutDependencyMap(map).should.deep.equal({ width: 320, height: 240, nodes: [], edges: [] }));
     it('should give an application no board scope id', () => (boardIdOf({ kind: 'application', address: '', key: 'application:', scope: [], rank: -1 }) === undefined).should.be.true);
 });
 

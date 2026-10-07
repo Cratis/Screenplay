@@ -65,12 +65,13 @@ export const BoardApp = () => {
         <div className='screenplay-mcp-board' style={style}>
             <MenuDropdownOpenProvider>
                 <BoardErrorBoundary resetWhenChanged={board} onReset={() => setAttempt(attempt + 1)}>
-                    {view === DependencyView.Map ? (
-                        <div className='screenplay-dependency-map-host'>
-                            <div className='screenplay-dependency-map-toolbar' role='toolbar' aria-label='Model and view'>{tools}</div>
-                            <DependencyMapView key={shown} map={board.dependencies} />
-                        </div>
-                    ) : <EventModelBoard key={attempt} document={model} readOnly showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />}
+                    <div className={`screenplay-board-view${view !== DependencyView.Board ? ' is-hidden' : ''}`} aria-hidden={view !== DependencyView.Board} inert={view !== DependencyView.Board}>
+                        <EventModelBoard key={attempt} document={model} readOnly showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
+                    </div>
+                    <div className='screenplay-dependency-map-host' hidden={view !== DependencyView.Map} style={{ display: view !== DependencyView.Map ? 'none' : undefined }}>
+                        <div className='screenplay-dependency-map-toolbar' role='toolbar' aria-label='Model and view'>{tools}</div>
+                        <DependencyMapView map={board.dependencies} />
+                    </div>
                 </BoardErrorBoundary>
             </MenuDropdownOpenProvider>
             {board.errors > 0 && (

@@ -3,12 +3,14 @@
 
 import type { DependencyMapNode } from './DependencyMapNode';
 import type { DependencyMapEdge } from './DependencyMapEdge';
+import type { DependencyMapEvidence } from './DependencyMapEvidence';
 
-/** Serializable presentation data, including uncapped evidence and identities shared with the board. */
+/** Serializable presentation data with a shared table of uncapped reference evidence. */
 export interface DependencyMap {
     readonly nodes: readonly DependencyMapNode[];
     readonly modules: readonly string[];
     readonly features: readonly string[];
     readonly contexts: readonly string[];
     readonly edges: readonly DependencyMapEdge[];
+    readonly evidence: readonly DependencyMapEvidence[];
 }
