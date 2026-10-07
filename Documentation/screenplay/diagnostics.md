@@ -474,7 +474,7 @@ remove duplicate route headers before export.
 |---|---|---|
 | `PLAY0196` | Warning | A screen binds data to a query nothing in scope declares. |
 | `PLAY0197` | Warning | A screen navigates to a screen nothing in scope declares. |
-| `PLAY0198` | Warning | A bare name matches more than one declaration at the same depth, so which one it means is undecided. |
+| `PLAY0198` | Warning | A bare name matches more than one declaration at the same depth, or a qualified name matches more than one trailing container path, so which one it means is undecided. See [declared dependency targets](#declared-dependency-targets). |
 
 ### What a query's results are narrowed to
 

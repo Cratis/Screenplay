@@ -51,7 +51,7 @@ None of those are real. `CompileFolder` reports nothing, because none of them ar
 
 ### Declared dependencies across files
 
-[Module and feature dependencies](slices.md#declared-dependencies) accumulate on the same owner in alphabetical file-path order, regardless of import presentation order. Repeated resolved targets are kept once with `PLAY0555` on each repeat; unresolved repeats compare by text. Target resolution uses the merged inventory, so a target may be declared in another file. Layout expansion writes dependencies only in the owner's own file and strips them from restated ancestor headers, like `description`.
+[Module and feature dependencies](slices.md#declared-dependencies) accumulate on the same owner in ordinal file-path order, regardless of import presentation order. Repeated resolved targets are kept once with `PLAY0555` on each repeat; unresolved repeats compare by text. Target resolution uses the merged inventory, so a target may be declared in another file. Layout expansion writes dependencies only in the owner's own file and strips them from restated ancestor headers, like `description`.
 
 ### Diagnostics know which file they came from
 

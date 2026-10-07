@@ -42,6 +42,7 @@ internal static class DeclaredDependencyTargets
         }
 
         if (!hasDependencies) return application;
+        declarations = [.. declarations.DistinctBy(declaration => (declaration.Name, Scope: string.Join('.', declaration.Scope.Segments)))];
 
         return application with
         {

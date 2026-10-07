@@ -244,7 +244,7 @@ Module         = "module", Ident, NL,
 DependsOnDecl  = "depends", "on", QualifiedName, NL ;
 
 (* Declared dependencies are authoring metadata naming modules or features.
-   One target per line; targets cannot be self, ancestors or descendants. *)
+   One target per line; self, ancestor and descendant targets raise warning PLAY0554. *)
 
 (* A module or feature may attach an inline interaction with "on" or a
    named behavior with "uses". These bindings reach its descendant screens. *)

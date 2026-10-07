@@ -20,9 +20,20 @@ internal static partial class DependsOnParser
         }
 
         var target = match.Groups[1].Value;
-        if (declarations.Exists(declaration => declaration.Target == target))
+        var previous = declarations.FindIndex(declaration => declaration.Target == target);
+        if (previous >= 0)
         {
             context.Warning(DiagnosticCodes.RepeatedDependencyDeclaration, $"Dependency '{target}' is already declared on this container - this repeated declaration is ignored", line.Location);
+            var declaration = declarations[previous];
+
+            // Keep one effective declaration, but retain every proven source occurrence for refactoring.
+            declarations[previous] = declaration with
+            {
+                DirectiveLocations = new Dictionary<string, SourceLocation>(declaration.DirectiveLocations)
+                {
+                    [$"{DirectiveLocationKeys.RepeatedDependencyPrefix}{line.Number}"] = line.Location
+                }
+            };
             return;
         }
 

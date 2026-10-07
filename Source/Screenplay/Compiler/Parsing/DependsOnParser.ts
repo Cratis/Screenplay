@@ -3,11 +3,11 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { DependsOnSyntax } from '../Syntax/Structure';
-import { pattern } from '../Text/patterns';
+import { dotNetWhitespace, nativePattern } from '../Text/patterns';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 
-const declaration = pattern('^depends\\s+on\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)$');
+const declaration = nativePattern(`^depends${dotNetWhitespace}+on${dotNetWhitespace}+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)$`);
 
 export function parseDependsOn(context: ParserContext, line: SourceLine, declarations: DependsOnSyntax[], errorCode: string): void {
     const target = declaration.exec(line.content)?.[1];

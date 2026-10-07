@@ -2,6 +2,28 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "Declared dependencies accept native next-line whitespace",
+            "validate": true,
+            "source": ["module Consumer", "  depends on\u0085Target", "module Target"],
+            "diagnostics": []
+        },
+        {
+            "name": "Declared dependencies reject byte-order-mark whitespace",
+            "source": ["module Consumer", "  depends on\uFEFFTarget"],
+            "diagnostics": ["PLAY0022@2"]
+        },
+        {
+            "name": "Declared dependencies reject supplementary word characters",
+            "source": ["module Consumer", "  depends on A\ud801\udc00"],
+            "diagnostics": ["PLAY0022@2"]
+        },
+        {
+            "name": "Restated modules and features are one dependency target per address",
+            "validate": true,
+            "source": ["module Consumer", "  depends on A", "  depends on A.Shared", "module A", "  feature Shared", "  feature Shared", "module A", "  feature Shared"],
+            "diagnostics": []
+        },
+        {
             "name": "Declared dependency invalid targets are warnings",
             "validate": true,
             "source": ["module Payroll", "  depends on Payroll.Runs", "  feature Handover", "    depends on Handover", "    depends on Payroll", "    depends on Nowhere", "  feature Runs"],

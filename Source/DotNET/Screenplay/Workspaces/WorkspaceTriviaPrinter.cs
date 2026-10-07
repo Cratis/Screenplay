@@ -3,6 +3,7 @@
 
 using System.Text;
 using System.Text.Json;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Printing;
@@ -105,13 +106,21 @@ static class WorkspaceTriviaPrinter
         }
 
         yield return IdentifierPatch(original, originals, tokensByLine, change);
+        if (change.Path.EndsWith("/target", StringComparison.Ordinal) && originals.GetValueOrDefault(ownerPath) is DependsOnSyntax dependency)
+        {
+            foreach (var location in dependency.DirectiveLocations.Where(pair => pair.Key.StartsWith(DirectiveLocationKeys.RepeatedDependencyPrefix, StringComparison.Ordinal)).Select(pair => pair.Value))
+            {
+                yield return IdentifierPatch(original, originals, tokensByLine, change, location);
+            }
+        }
     }
 
     static (int Offset, int Length, byte[] Bytes) IdentifierPatch(
         WorkspaceDocument original,
         Dictionary<string, SyntaxNode> originals,
         ILookup<int, WorkspaceSourceToken> tokensByLine,
-        WorkspaceTriviaChange change)
+        WorkspaceTriviaChange change,
+        SourceLocation? occurrence = null)
     {
         var ownerPath = change.Path;
         SyntaxNode? owner = null;
@@ -135,7 +144,7 @@ static class WorkspaceTriviaPrinter
             return (range.Offset, range.Length, Encoding.UTF8.GetBytes(JsonSerializer.Serialize(change.After)));
         }
 
-        var location = owner.Location;
+        var location = occurrence ?? owner.Location;
         if (owner is ConstraintSyntax constraint && member.StartsWith("releasedBy/", StringComparison.Ordinal))
         {
             var releases = constraint.ReleasedBy.ToArray();

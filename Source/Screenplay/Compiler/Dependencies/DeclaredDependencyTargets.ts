@@ -30,7 +30,7 @@ export class DeclaredDependencyTargets {
 }
 
 export function validateDependencyDeclarations(application: ApplicationSyntax, context: ParserContext): ApplicationSyntax {
-    const containers: DependencyContainer[] = [];
+    let containers: DependencyContainer[] = [];
     let hasDependencies = false;
     const inventory = (feature: FeatureSyntax, parent: readonly string[]): void => {
         containers.push({ name: feature.name, scope: parent });
@@ -43,6 +43,7 @@ export function validateDependencyDeclarations(application: ApplicationSyntax, c
         module.features.forEach(feature => inventory(feature, [module.name]));
     }
     if (!hasDependencies) return application;
+    containers = [...new Map(containers.map(container => [addressOf(container), container])).values()];
 
     const keep = (dependencies: readonly DependsOnSyntax[], from: readonly string[]): DependsOnSyntax[] => {
         const seen = new Set<string>();
