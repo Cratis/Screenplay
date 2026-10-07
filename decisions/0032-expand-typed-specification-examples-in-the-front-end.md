@@ -1,5 +1,5 @@
 ---
-id: 0028
+id: 0032
 title: Expand typed specification examples in the front end
 status: accepted
 stage: none
