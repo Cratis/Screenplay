@@ -835,7 +835,7 @@ See [Imports](imports.md).
 
 ### Refusal branches, redelivery and no-event assertions
 
-Refusal branches, `$refusal` values and redelivery are syntax-only and not yet executable: source-valid models still fail binding with `PLAY0268`. `then no events` executes for admitted non-append actions.
+Refusal branches, `$refusal` values, redelivery and `then no events` are syntax-only and not yet executable: source-valid models still fail binding with `PLAY0268` naming the unadmitted feature.
 
 | Code | Severity | Meaning |
 | --- | --- | --- |

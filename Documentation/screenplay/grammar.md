@@ -1035,14 +1035,14 @@ RefusalBranch  = "on", "refused",
                  INDENT, ( "acknowledge", NL | ProducesDecl, { ProducesDecl } ), DEDENT ;
 RefusalValue   = "$refusal.", ( "reason" | "constraint" | "message" ) ;
 
-(* Refusal branches and values, and "when redelivered", are syntax-only:
+(* Refusal branches and values, "when redelivered" and "then no events" are syntax-only:
    binding refuses them with PLAY0268. No executable admission is claimed.
    Branches are ordered; bare refusal excludes authorization. RefusalValue is
    a String source only in branch event mappings; constraint requires a
    "by constraint" selector. Branches cannot produce operations or inline events.
    Redelivery names one compatible event-trigger reaction and locates exactly
    one given event by optional "for" and all stated values, without appending it.
-   "then no events" is a leaf for admitted non-append actions; it cannot
+   "then no events" is a leaf for non-append actions awaiting admission; it cannot
    accompany events, event-order, error or denial expectations. *)
 
 (* What the reaction sets off. Plain "produces" has the same form as on a command;

@@ -237,7 +237,7 @@ The branch's event mappings may use these String values:
 | `$refusal.constraint` | Violated constraint name | Only a `by constraint` branch |
 | `$refusal.message` | Rejection details verbatim, including an unresolved `$strings.` key | Any branch |
 
-Unknown members, use outside a branch's event mapping and incompatible target types produce `PLAY0541`. Messages are display details, not stable identities. Other mapping inputs follow the trigger's rules; read aliases are not branch inputs. For an event trigger, an omitted production `for` is intended to use the triggering event source. Clock and application triggers require `for`.
+Unknown members, use outside a branch's event mapping and incompatible target types produce `PLAY0541`. Messages are display details, not stable identities. Other mapping inputs follow the trigger's rules; read aliases are not branch inputs. For an event trigger, an omitted production `for` is intended to use the triggering event source. At executable admission, clock and application triggers will require `for`; this destination requirement is not enforced by syntax-only authoring yet.
 
 At admission, a refused command contributes no facts. Handling its refusal will stop the remaining invocations of that trigger; other reactions and cascades from accepted facts will continue. Branch productions remain subject to ordinary append constraints. A rejected branch append cannot be caught by another branch. Unhandled refusals end the scenario, retaining previously accepted facts. These are the accepted design, not current runner behavior.
 
