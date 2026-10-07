@@ -46,7 +46,7 @@ Show me the application as an event model board.
 
 The assistant calls `visualize-model` without arguments. The board shows every
 `.play` document under the server root, compiled as one application. The model
-receives a short summary, such as how many slices, events and errors the board
+receives a short summary, such as how many slices, events, reactions and errors the board
 shows. The documents themselves go only to the board.
 
 The board has the Cratis logo in its upper left and its toolbar in its upper
@@ -83,7 +83,7 @@ with it:
 The board starts on the application as the proposal would leave it. *Current* and
 *Proposed* in the toolbar switch between that and the application as it is. What
 both share keeps its place, so the difference is what moves. The summary lists
-the modules, features, slices, commands, events, read models, screens and reactors
+the modules, features, slices, commands, events, read models, screens and reactions
 the proposal adds and removes. Nothing is written: review and `apply` the proposal
 as described in [Edit a model](edit.md#review-and-apply).
 
