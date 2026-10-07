@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Completeness;
@@ -27,5 +28,14 @@ public static class ModelCompleteness
     /// <param name="application">The complete application. The caller must first verify that source compilation has no errors.</param>
     /// <param name="checks">The selected checks.</param>
     /// <returns>The selected structural warnings. These do not prove runtime completeness.</returns>
-    public static ImmutableArray<Diagnostic> Check(ApplicationSyntax application, CompletenessChecks checks) => [];
+    public static ImmutableArray<Diagnostic> Check(ApplicationSyntax application, CompletenessChecks checks)
+    {
+        if (checks.Selected.Count == 0)
+        {
+            return [];
+        }
+
+        var declarations = new ConsistencyDeclarations(application, [.. ScreenplayValidator.ScopedSlices(application)]);
+        return checks.Selected.Contains(CompletenessCheck.DataBindings) ? [.. DataBindingCompleteness.Check(declarations)] : [];
+    }
 }

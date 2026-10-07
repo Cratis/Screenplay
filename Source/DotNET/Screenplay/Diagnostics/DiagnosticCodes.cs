@@ -2314,4 +2314,14 @@ public static class DiagnosticCodes
     /// A negated claim comparison uses a target that can be absent, null, or is not a string type.
     /// </summary>
     public const string IndeterminateNegatedClaimTarget = "PLAY0546";
+
+    /// <summary>
+    /// Visible screen data bindings share a name but disagree on query, cardinality or parameter.
+    /// </summary>
+    public const string ConflictingScreenDataBinding = "PLAY0530";
+
+    /// <summary>
+    /// A screen data binding disagrees with the resolved query return shape.
+    /// </summary>
+    public const string ScreenDataQueryMismatch = "PLAY0531";
 }

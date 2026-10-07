@@ -630,6 +630,15 @@ itself what an unresolvable one means.
 | `PLAY0280` | Error | A `variant` is declared inside another variant, and variants do not nest. |
 | `PLAY0281` | Error | Two variants of the same projection declare the same name. |
 
+### Opt-in completeness
+
+These structural warnings run only when selected, after error-free whole-application source compilation. See [Completeness checks](completeness.md) for selection and exemptions.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0530` | Warning (opt-in: `--check data-bindings`) | Visible screen bindings share a name but disagree on cardinality, resolved query or `by` parameter. Identical rebinding and sibling sections are allowed. |
+| `PLAY0531` | Warning (opt-in: `--check data-bindings`) | A screen binding's resolved read model or cardinality differs from its query's return. Optional and observable qualifiers are ignored; unresolved or ambiguous names are skipped. |
+
 ### Model consistency
 
 These errors are reported by ordinary compilation, including compilation of a folder as one application; semantic binding is not required. References resolve from the innermost scope outward. Unknown or ambiguous declarations and imported shapes are not guessed.

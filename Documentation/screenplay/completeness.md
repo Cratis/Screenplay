@@ -1,4 +1,7 @@
-# Completeness checks
+---
+title: Completeness checks
+description: Select structural warnings for missing connections in a valid Screenplay model.
+---
 
 Use opt-in structural checks to find missing connections in an otherwise valid model:
 
