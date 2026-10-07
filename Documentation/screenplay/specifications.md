@@ -84,7 +84,7 @@ For example, if `OrderView` declares `lines Line[]`, `tags String[]`, and `note 
 
 ## Typed example declarations (authoring syntax)
 
-> Typed example declarations and inline fixture assignments are parsed and preserved by both compilers. The C# effective-syntax API resolves and expands examples; executable binding integration is not yet available.
+Typed example declarations and inline fixture assignments are parsed and preserved by both compilers. C# resolves and expands the examples before executable binding. The executable model contains only the merged values, with the same bytes and revision as hand-expanded steps.
 
 `example <Name> : <EventOrCommandOrReadModel>` declares one named, possibly partial fixture. Its body accepts property assignments, an optional `description`, an optional `for` value, and command `generated` fixtures. It cannot contain caller or clock fixtures or Given/When/Then steps. Declare examples at slice, feature, module or document level, or alongside specifications in a specification-only document.
 
@@ -104,7 +104,9 @@ specification RegisteringAcme
 
 Examples share the type namespace: a name colliding with an event, command, read model, type, concept, or import is an error. The underlying type resolves in the example's declaration scope, not where it is used. Examples always use the current event generation and cannot inherit from another example. A step of the wrong kind reports a suggested corrected spelling.
 
-Syntax consumers can call `SpecificationExamples.Expand(application)` in `Cratis.Screenplay.Syntax.Specifications`. The result contains the effective application, authored/effective specification pairs, resolution diagnostics, and each step's effective values with `Authored`, `Example`, or `Override` provenance. Overrides retain the replaced expression; all expressions retain their source locations. The authored syntax is not changed. Check diagnostics before consuming the effective view.
+Syntax consumers can call `SpecificationExamples.Expand(application)` in `Cratis.Screenplay.Syntax.Specifications`. The result contains the effective application, authored/effective specification pairs, resolution diagnostics, and each step's effective values with `Authored`, `Example`, or `Override` provenance. Overrides retain the replaced expression; all expressions retain their source locations. The authored syntax is not changed. Check diagnostics before consuming the effective view. For a standalone specification, call `SpecificationExamples.Expand(specification, declarations, scope)`, supplying the owning application and its module/feature/slice scope segments; document-scoped examples are included automatically.
+
+At binding, given events and read models, command inputs other than generated properties, appended events, and expected events must state every required property after expansion. Each missing property reports `PLAY0524` at its step, naming the example when used. Partial examples are allowed, but an exact-shape step must complete them. No implicit fixture defaults are supplied. Expected read models keep subset matching unless `exactly` is authored; using an example does not change that rule.
 
 Assign a property only once within each fixture or step. An inline assignment repeated in the indented body reports `PLAY0519`; a malformed example header reports `PLAY0518`. A declaration does not supply implicit defaults or change the step's matching mode. Unlike `seed`, an example declares specification data, not events to append when the application starts.
 

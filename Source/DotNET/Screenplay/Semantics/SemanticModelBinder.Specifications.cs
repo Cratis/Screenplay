@@ -54,6 +54,8 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
+            ValidateSpecificationCompleteness(specification, command);
+
             var acted = specification.When is not null || specification.WhenAppended is not null || specification.WhenClock is not null ||
                 specification.WhenTrigger is not null || specification.WhenCapture is not null;
             var deniedQuery = specification.ThenDenied is not null && !acted &&
@@ -131,6 +133,42 @@ public sealed partial class SemanticModelBinder
                 WhenTrigger = specification.WhenTrigger is null ? null : BindSpecificationTrigger(specification.WhenTrigger),
                 WhenCapture = specification.WhenCapture is null ? null : BindSpecificationCapture(specification.WhenCapture)
             };
+        }
+
+        void ValidateSpecificationCompleteness(SpecificationSyntax specification, SemanticCommand? command)
+        {
+            foreach (var step in specification.Given.Concat(specification.ThenEvents).Concat(specification.WhenAppended is { } append ? [append] : []))
+            {
+                if (_events.TryGetValue(ShortName(step.EventType), out var declaration))
+                {
+                    ValidateCompleteStep(step, step.EventType, step.Values, declaration.Properties.Values);
+                }
+            }
+
+            foreach (var step in specification.GivenReadModels ?? [])
+            {
+                if (_readModels.TryGetValue(ShortName(step.Name), out var declaration))
+                {
+                    ValidateCompleteStep(step, step.Name, step.Properties, declaration.Properties.Values);
+                }
+            }
+
+            if (specification.When is { } when && command is not null)
+            {
+                ValidateCompleteStep(when, when.CommandType, when.Values, command.Properties.Where(property => !property.IsGenerated));
+            }
+        }
+
+        void ValidateCompleteStep(SyntaxNode step, string type, IEnumerable<PropertyMappingSyntax> values, IEnumerable<SemanticProperty> properties)
+        {
+            var supplied = values.Select(value => value.Property).ToHashSet(StringComparer.Ordinal);
+            var missing = properties.Where(property => !supplied.Contains(property.Name)).ToArray();
+            var origin = steps.GetValueOrDefault(step);
+            var example = origin?.Example is { } declaration ? $" using example '{declaration.Name}'" : string.Empty;
+            foreach (var property in missing)
+            {
+                Error(DiagnosticCodes.MissingSpecificationProperty, $"Specification '{origin?.Role ?? "step"}'{example} for '{type}' is missing required property '{property.Name}'; supply it in the example or step.", step.Location);
+            }
         }
 
         SemanticSpecificationAppend? BindSpecificationAppend(SpecificationEventSyntax value, Dictionary<string, SemanticCommand> commands)

@@ -18,6 +18,16 @@ public static class SpecificationExamples
     /// <returns>The effective syntax, value provenance, and resolution diagnostics.</returns>
     public static EffectiveSpecificationApplication Expand(ApplicationSyntax application) => new Expansion(application).Expand();
 
+    /// <summary>
+    /// Expands a standalone specification against its owning application's declarations.
+    /// </summary>
+    /// <param name="specification">The standalone specification, including its document-scoped examples.</param>
+    /// <param name="declarations">The application declaring the fixture types and shared examples.</param>
+    /// <param name="scope">The module, nested features, and slice of the specification's use site.</param>
+    /// <returns>The effective specification and any resolution diagnostics.</returns>
+    public static CompilationResult<EffectiveSpecification> Expand(SpecificationSyntax specification, ApplicationSyntax declarations, IReadOnlyList<string> scope) =>
+        new Expansion(declarations with { Examples = [.. declarations.Examples, .. specification.Examples.Where(example => !declarations.Examples.Any(existing => ReferenceEquals(existing, example)))] }).ExpandStandalone(specification, new(scope));
+
     sealed class Expansion
     {
         readonly ApplicationSyntax _application;
@@ -27,7 +37,7 @@ public static class SpecificationExamples
         readonly ParserContext _context = ParserContext.ForDiagnostics();
         readonly Dictionary<SpecificationExampleSyntax, Entry> _types = new(ReferenceEqualityComparer.Instance);
         readonly ReferenceDeclarationIndex _index;
-        readonly ConsistencyDeclarations _declarations;
+        readonly ConsistencyDeclarations? _declarations;
 
         internal Expansion(ApplicationSyntax application)
         {
@@ -42,7 +52,7 @@ public static class SpecificationExamples
             }
 
             _index = new(_entries.Select(entry => entry.Declaration));
-            _declarations = new(application, _slices);
+            if (_entries.Exists(entry => entry.Kind == "example")) _declarations = new(application, _slices);
         }
 
         internal EffectiveSpecificationApplication Expand()
@@ -54,6 +64,14 @@ public static class SpecificationExamples
             };
 
             return new(effective, [.. _specifications], [.. _context.Diagnostics.Distinct()]);
+        }
+
+        internal CompilationResult<EffectiveSpecification> ExpandStandalone(SpecificationSyntax specification, DeclarationScope scope)
+        {
+            foreach (var entry in _entries.Where(entry => entry.Node is SpecificationExampleSyntax)) ValidateExample(entry);
+            ExpandSpecification(specification, scope);
+
+            return new(_specifications[0], _context.Diagnostics);
         }
 
         static string Qualified(Entry type) => string.Join('.', type.Declaration.Scope.Segments.Append(type.Declaration.Name));
@@ -99,7 +117,7 @@ public static class SpecificationExamples
         };
 
         void Add(string name, DeclarationScope scope, SyntaxNode node, string kind, IEnumerable<PropertySyntax> properties) =>
-            _entries.Add(new(new(name, scope), node, kind, [.. properties]));
+            _entries.Add(new(new(name, scope), node, kind, properties));
 
         void AddExamples(IEnumerable<SpecificationExampleSyntax> examples, DeclarationScope scope)
         {
@@ -191,7 +209,7 @@ public static class SpecificationExamples
                 _context.Error(DiagnosticCodes.InvalidSpecificationExampleValue, $"Read-model example '{example.Name}' cannot contain 'for'; state the identifier as a property.", example.For.Location);
             }
 
-            SpecificationValueConsistencyValidator.ValidateValues(example.Values.Concat(example.GeneratedValues), type.Properties, _declarations, _context);
+            SpecificationValueConsistencyValidator.ValidateValues(example.Values.Concat(example.GeneratedValues), type.Properties, _declarations!, _context);
         }
 
         void ValidateDuplicates(IEnumerable<PropertyMappingSyntax> values, SourceLocation location)
@@ -281,6 +299,6 @@ public static class SpecificationExamples
             return effective;
         }
 
-        sealed record Entry(Declaration Declaration, SyntaxNode Node, string Kind, IReadOnlyList<PropertySyntax> Properties);
+        sealed record Entry(Declaration Declaration, SyntaxNode Node, string Kind, IEnumerable<PropertySyntax> Properties);
     }
 }

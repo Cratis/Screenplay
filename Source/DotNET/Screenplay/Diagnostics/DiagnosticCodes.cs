@@ -2319,6 +2319,11 @@ public static class DiagnosticCodes
     /// </summary>
     public const string InvalidSpecificationExampleValue = "PLAY0523";
 
+    /// <summary>
+    /// An exact-shape specification step omits a required property after example expansion.
+    /// </summary>
+    public const string MissingSpecificationProperty = "PLAY0524";
+
     /// <summary>An event source or stream declaration is invalid or ambiguous.</summary>
     public const string InvalidEventSourceDeclaration = "PLAY0503";
 

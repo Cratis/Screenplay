@@ -61,4 +61,14 @@ public class when_expanding_typed_examples : Specification
     [Fact] void should_record_overridden_generated_values() => _result.Specifications[0].Steps.Single(step => step.Role == "when").Values.Single(value => value.Property == "generated token").Origin.ShouldEqual(SpecificationValueOrigin.Override);
     [Fact] void should_record_the_replaced_expression() => _result.Specifications[0].Steps[0].Values.Single(value => value.Property == "for").OverriddenValue.ShouldNotBeNull();
     [Fact] void should_be_syntax_idempotent() => SpecificationExamples.Expand(_result.Application).Specifications[0].Effective.When!.Values.ShouldContainOnly(_result.Specifications[0].Effective.When!.Values);
+
+    [Fact]
+    void should_expand_document_scoped_examples_in_a_standalone_specification()
+    {
+        var standalone = new ScreenplayCompiler().CompileSpecification("example Standalone : Record\n  id = \"key\"\n  amount = 10\nspecification Recording\n  when Standalone amount = 20\n  then Recorded amount = 20").Value!;
+        var expanded = SpecificationExamples.Expand(standalone, _authored, ["Billing", "Invoicing", "Recording"]);
+        expanded.Success.ShouldBeTrue();
+        expanded.Value!.Effective.When!.CommandType.ShouldEqual("Billing.Invoicing.Recording.Record");
+        expanded.Value.Steps.Single(step => step.Role == "when").Values.Single(value => value.Property == "amount").Origin.ShouldEqual(SpecificationValueOrigin.Override);
+    }
 }

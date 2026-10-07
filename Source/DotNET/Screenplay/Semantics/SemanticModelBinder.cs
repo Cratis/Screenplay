@@ -4,6 +4,7 @@
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Semantics;
 
@@ -34,7 +35,16 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             return CompilationResult<SemanticCompilation>.Failed(admission);
         }
 
-        var context = new BindingContext(applicationName, syntax, documents);
+        var expansion = SpecificationExamples.Expand(syntax);
+        if (expansion.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
+        {
+            return CompilationResult<SemanticCompilation>.Failed(expansion.Diagnostics);
+        }
+
+        syntax = expansion.Application;
+        var steps = new Dictionary<SyntaxNode, EffectiveSpecificationStep>(ReferenceEqualityComparer.Instance);
+        foreach (var step in expansion.Specifications.SelectMany(specification => specification.Steps)) steps.Add(step.Effective, step);
+        var context = new BindingContext(applicationName, syntax, documents, steps);
         try
         {
             var application = context.BindApplication();
@@ -118,7 +128,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         }
     }
 
-    private sealed partial class BindingContext(string applicationName, ApplicationSyntax syntax, SemanticDocumentSet documents)
+    private sealed partial class BindingContext(string applicationName, ApplicationSyntax syntax, SemanticDocumentSet documents, IReadOnlyDictionary<SyntaxNode, EffectiveSpecificationStep> steps)
     {
         readonly List<Diagnostic> _diagnostics = [];
         readonly List<SemanticSourceMapEntry> _sourceMapEntries = [];

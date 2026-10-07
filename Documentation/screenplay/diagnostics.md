@@ -275,6 +275,7 @@ remove duplicate route headers before export.
 | `PLAY0521` | Error | An example name collides with a type name or repeats in the same scope. Choose a distinct example name. |
 | `PLAY0522` | Error | A step references an example of another kind. Use the corrected step spelling suggested by the diagnostic. |
 | `PLAY0523` | Error | An example supplies an undeclared current-generation property, an invalid generated fixture, or `for` on a read model. Use only the current type's allowed fixture lines. |
+| `PLAY0524` | Error | Binding an exact-shape specification step found a missing required property after expansion. The diagnostic names the step, property, and example when used. Supply the property in the example or step; no defaults are assumed. |
 
 ### Screens
 

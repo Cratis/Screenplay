@@ -239,6 +239,7 @@ export const DiagnosticCodes = {
     SpecificationExampleNameCollision: 'PLAY0521',
     SpecificationExampleKindMismatch: 'PLAY0522',
     InvalidSpecificationExampleValue: 'PLAY0523',
+    MissingSpecificationProperty: 'PLAY0524',
     InvalidEventSourceDeclaration: 'PLAY0503',
     InvalidCommandStream: 'PLAY0504',
     AmbiguousCommandStream: 'PLAY0505',
