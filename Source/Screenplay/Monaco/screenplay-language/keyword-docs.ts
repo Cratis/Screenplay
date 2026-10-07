@@ -53,7 +53,7 @@ export const keywordDocs: Record<string, string> = {
     handler: 'A fully imperative command implementation — a `file <Path>` reference or an inline `csharp` block, instead of `produces`.',
     when: 'Guards a produced event or a capture append with a condition. In a labeled screen action, `when item.<field> == <literal> execute <Command>` selects the first matching alternative.',
     rule: 'Names a predicate. Bare, it states that a constraint exists without expressing what it computes — nothing resolves the name. Optionally followed by an indented `file <Path>` reference or inline `csharp` block giving it a body.',
-    require: 'A policy condition: `authenticated`, `role "..."`, or `claim "..." matches ...`.',
+    require: 'A policy condition: `authenticated`, `role "..."`, or `claim "..." matches ...`. Unary `not` negates a condition or group; precedence is not, and, or.',
     authenticated: 'Requires an authenticated caller.',
     role: 'Requires the caller to have the given role.',
     claim: 'Requires a claim on the caller to match a subject or value.',

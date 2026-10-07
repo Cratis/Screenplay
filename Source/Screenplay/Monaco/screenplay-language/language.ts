@@ -85,7 +85,7 @@ export const clauseKeywords = [
     'exactly',
     'error',
     'message',
-    'not',
+    'not', // Unary policy negation, as well as 'not empty' validation.
     'empty',
     'rule',
     'matches',

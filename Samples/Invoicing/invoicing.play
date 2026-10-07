@@ -152,6 +152,9 @@ type InstallmentPlan
 policy IsAuthenticated
   require authenticated
 
+policy IsPerson
+  require authenticated and not role "Service" and not claim "actorKind" matches "service"
+
 policy IsInvoicingStaff
   require role "InvoiceManager" or role "Accountant" or role "FinanceController"
 
@@ -193,12 +196,14 @@ policy IsWithinCreditLimit
 persona InvoiceManager
   description "Registers invoices and manages their lifecycle"
   policy IsAuthenticated
+  policy IsPerson
   policy IsInvoicingStaff
   policy CanManageInvoice
 
 persona Accountant
   description "Keeps the books, approves invoices and records payments"
   policy IsAuthenticated
+  policy IsPerson
   policy IsInvoicingStaff
   policy CanManageInvoice
   policy IsAccountant
@@ -211,6 +216,7 @@ persona FinanceController
     The only one who writes off what will not be paid.
     ```
   policy IsAuthenticated
+  policy IsPerson
   policy IsInvoicingStaff
   policy IsFinanceDepartment
   policy CanWriteOff
@@ -218,6 +224,7 @@ persona FinanceController
 persona Customer
   description "Sees and pays their own invoices in the customer portal"
   policy IsAuthenticated
+  policy IsPerson
   policy IsCustomer
   policy OwnsInvoice
   policy IsAdultCustomer
@@ -226,6 +233,7 @@ persona Customer
 persona Auditor
   description "Reviews what happened, never changes it"
   policy IsAuthenticated
+  policy IsPerson
   policy IsAuditor
 
 authentication
@@ -344,9 +352,9 @@ module Invoicing
     plus the self-service portal customers use to see and pay them.
     ```
 
-  // Every screen in the module requires a signed-in caller. Gates compose with
+  // Every screen in the module requires a signed-in person, not a service. Gates compose with
   // AND all the way down: module, feature, then the command or query itself.
-  authorize IsAuthenticated
+  authorize IsPerson
 
   // A module level interaction reaches every screen in the module.
   on event InvoiceMarkedOverdue
@@ -733,6 +741,16 @@ module Invoicing
           invoiceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
           invoiceNumber = "INV-000123"
         then error
+
+      specification RejectingAServiceRegisteringAnInvoice
+        given caller
+          authenticated
+          role "InvoiceManager"
+          role "Service"
+        when RegisterInvoice
+          invoiceId     = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceNumber = "INV-000123"
+        then denied
 
       specification RejectingAnAuditorRegisteringAnInvoice
         given caller
