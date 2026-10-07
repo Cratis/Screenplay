@@ -52,6 +52,8 @@ internal static partial class WorkspaceIdentifierSpans
             (SpecificationQuerySyntax, "query") => keyword == "then" || keyword == "and",
             (InvokesSyntax, "command") => keyword == "invokes",
             (ScreenActionSyntax, "command") => keyword == "action",
+            (ScreenActionAlternativeSyntax, "command") => keyword == "when",
+            (ScreenActionOtherwiseSyntax, "command") => keyword == "otherwise",
             (FormSyntax, "for") => keyword == "form",
             (ReadsSyntax, "readModel") => keyword == "reads",
             (ProjectionSyntax, "readModel") => keyword == "projection",

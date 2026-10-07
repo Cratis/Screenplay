@@ -7405,13 +7405,40 @@
                                   }
                                 },
                                 {
-                                  "kind": "ScreenActionSyntax",
-                                  "command": "CancelInvoice",
-                                  "label": null,
+                                  "kind": "ScreenGuardedActionSyntax",
+                                  "alternatives": [
+                                    {
+                                      "kind": "ScreenActionAlternativeSyntax",
+                                      "arguments": [
+                                        {
+                                          "kind": "InteractionArgumentSyntax",
+                                          "binding": "item.invoiceId",
+                                          "name": "invoiceId"
+                                        }
+                                      ],
+                                      "command": "CancelInvoice",
+                                      "condition": {
+                                        "kind": "ComparisonConditionSyntax",
+                                        "left": "item.status",
+                                        "operator": "Equal",
+                                        "right": {
+                                          "kind": "LiteralExpressionSyntax",
+                                          "value": "draft"
+                                        }
+                                      }
+                                    }
+                                  ],
+                                  "label": "$strings.invoices.actions.cancel",
                                   "navigate": {
                                     "kind": "ScreenNavigateSyntax",
                                     "by": null,
                                     "screen": "CancelInvoiceScreen"
+                                  },
+                                  "otherwise": {
+                                    "kind": "ScreenActionOtherwiseSyntax",
+                                    "arguments": [],
+                                    "command": null,
+                                    "outcome": "Hidden"
                                   }
                                 },
                                 {

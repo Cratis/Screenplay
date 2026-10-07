@@ -115,7 +115,7 @@ static class WorkspaceReferenceMembers
         CompositeKeySyntax => [("type", WorkspaceReferenceDomain.Type)],
         SpecificationExampleSyntax => [("type", WorkspaceReferenceDomain.Fixture)],
         SpecificationCommandSyntax => [("commandType", WorkspaceReferenceDomain.Fixture)],
-        InvokesSyntax or ScreenActionSyntax => [("command", WorkspaceReferenceDomain.Command)],
+        InvokesSyntax or ScreenActionSyntax or ScreenActionAlternativeSyntax or ScreenActionOtherwiseSyntax => [("command", WorkspaceReferenceDomain.Command)],
         FormSyntax => [("for", WorkspaceReferenceDomain.Command)],
         ReadsSyntax or ProjectionSyntax or ReducerSyntax => [("readModel", WorkspaceReferenceDomain.View)],
         SpecificationReadModelSyntax => [("name", WorkspaceReferenceDomain.Fixture)],

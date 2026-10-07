@@ -300,6 +300,7 @@ export const validateItems: CompletionEntry[] = [
 export const screenItems: CompletionEntry[] = [
     { label: 'data', insertText: 'data ${1:ReadModel} via query ${2:QueryName}', documentation: 'Binds a read model to the screen through a query.' },
     { label: 'action', insertText: 'action ${1:CommandName}', documentation: 'Makes a command available as an action on the screen.' },
+    { label: 'action "…"', insertText: 'action "${1:Label}"\n    when item.${2:status} == "${3:open}" execute ${4:CommandName}\n    otherwise hidden', documentation: 'One labeled button selecting the first matching command; hidden without a subject or match.' },
     { label: 'layout', insertText: 'layout ${1:LayoutName}', documentation: 'Uses a layout template and fills its slots.' },
     { label: 'section', insertText: 'section ${1:name}', documentation: 'A named structural section of the screen.' },
     { label: 'table', insertText: 'table ${1:name}\n    column ${2:property} label "${3:text}"', documentation: 'A table widget over a read model or collection.' },
@@ -314,6 +315,17 @@ export const screenItems: CompletionEntry[] = [
 export const actionItems: CompletionEntry[] = [
     { label: 'navigate to', insertText: 'navigate to ${1:ScreenName}', documentation: 'Navigates to a screen after the action completes.' },
     { label: 'label', insertText: 'label "${1:text}"', documentation: 'The display label of the action.' },
+];
+
+export const guardedActionItems: CompletionEntry[] = [
+    { label: 'when … execute', insertText: 'when item.${1:status} == "${2:open}" execute ${3:CommandName}', documentation: 'First matching alternative selects the command; authorization never falls through.' },
+    { label: 'otherwise hidden', insertText: 'otherwise hidden', documentation: 'Hides the action when no alternative matches; also the default.' },
+    { label: 'otherwise execute', insertText: 'otherwise execute ${1:CommandName}', documentation: 'Selects a fallback command when no alternative matches and a subject exists.' },
+    ...actionItems.filter(item => item.label !== 'label'),
+];
+
+export const actionArgumentItems: CompletionEntry[] = [
+    { label: 'with … from', insertText: 'with ${1:property} from item.${2:property}', documentation: 'Explicit input binding for this command alternative, before same-name item fields or its form.' },
 ];
 
 export const tableItems: CompletionEntry[] = [

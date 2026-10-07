@@ -92,9 +92,18 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/^(\s*)(then)(\s+)(events)(\s+)(in any order)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword', 'white', 'keyword']],
             [/^(\s*)(when)(\s+)(redelivered)(\s+)([\w.]+)(\s+)(to)(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/,
                 ['white', 'keyword', 'white', 'keyword', 'white', 'type.identifier', 'white', 'keyword', 'white', 'type.identifier']],
+            // Guarded-action words are contextual; property names keep their ordinary meaning.
+            [/^(\s*)(otherwise)(\s+)(hidden)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(otherwise)(\s+)(execute)(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/,
+                ['white', 'keyword', 'white', 'keyword', 'white', 'type.identifier']],
+            [/^(\s*)(when)(\s+)(?=.+\s+execute\s+[\w.]+\s*(?:\/\/.*)?$)/,
+                ['white', 'keyword', { token: 'white', next: '@guardedActionCondition' }]],
+            [/^(\s*)(behavior)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/,
+                ['white', 'keyword', 'white', { token: 'type.identifier', next: '@behaviorBody.$1' }]],
             [/^(\s*)(on)(\s+)(refused)(\s+)(by)(\s+)(validation|constraint|authorization)\b/,
                 ['white', 'keyword', 'white', 'keyword', 'white', 'keyword', 'white', 'keyword']],
             [/^(\s*)(on)(\s+)(refused)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(on)(\s+)([\w-]+)\b/, ['white', 'keyword', 'white', { token: 'keyword', next: '@interactionBody.$1' }]],
             [/^(\s*)(acknowledge)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword']],
             // A quoted import names .play files rather than a qualified name - the path reads as a link.
             [/^(\s*)(import)(\s+)("[^"\\]*")/, ['white', 'keyword', 'white', 'string.link']],
@@ -150,6 +159,22 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
                 },
             ],
             { include: '@common' },
+        ],
+
+        guardedActionCondition: [
+            [/(execute)(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', { token: 'type.identifier', next: '@pop' }]],
+            { include: '@root' },
+        ],
+
+        behaviorBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            { include: '@root' },
+        ],
+
+        interactionBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(execute)(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
+            { include: '@root' },
         ],
 
         commandBody: [

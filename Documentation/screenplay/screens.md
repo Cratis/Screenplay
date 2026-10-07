@@ -41,6 +41,48 @@ screen InvoiceList
   action CancelInvoice
 ```
 
+## One action, several commands
+
+Use a label-headed **guarded action** when one user decision can run different commands as the displayed item's state changes. The label is a quoted string or a `$strings.<key>` reference; it replaces the plain action's `label` child.
+
+```screenplay
+screen PlanDetails
+  data PlanReadModel via query GetPlan by planId
+  section actions
+    action "Read the source again"
+      when item.attempt.status == "open" and item.attempt.answeredAt == null execute ReleaseStaleAttempt
+        with attemptId from item.attempt.attemptId
+      when item.attempt.status == "failed" execute ReleaseStaleAttempt
+        with attemptId from item.attempt.attemptId
+      when item.attempt == null execute RetryUnclaimedPlan
+        with planId from item.planId
+      otherwise hidden
+      navigate to PlanList
+```
+
+### Subject and conditions
+
+`item` is the nearest container's `data` item, or the selected element when that data is a collection. Sibling data in the action's section, filled slot or screen body takes precedence over outer data, regardless of source order. Without an item (loading or no selection), the action is always hidden, even with an execute fallback. Missing or equally near data declarations produce a warning rather than guessing a subject.
+
+Conditions compare `item.<field>[.<field>…]` with a literal: a string, number, Boolean or `null`. They do not read route parameters, screen state, `$context` or `$env`, and cannot compare two item paths. Use `==`, `!=`, numeric `>`, `>=`, `<`, `<=`, or string `contains` and `starts with`. Combine comparisons with `and`, `or` and parentheses; `and` binds more tightly. Collection-valued fields are not supported in conditions. Unsupported punctuation, such as brackets around a literal, is rejected with `PLAY0344` rather than discarded.
+
+The renderer contract treats an absent path value as `null`; `null` equals only `null`. Enum names compare case-sensitively. Ordering requires numbers and text comparisons require strings; null or incompatible values make those comparisons false.
+
+### Selection, inputs and execution
+
+Alternatives are checked in authored order whenever query data changes. The first match selects the command. If none matches, `otherwise execute <Command>` selects a fallback; `otherwise hidden` or an omitted fallback hides the action. At least one `when` is required, and the optional `otherwise` must be last among alternatives. Overlap is intentional; only a provably shadowed alternative warns.
+
+Each alternative and execute fallback may bind inputs with `with <property> from <binding>`. A binding may pass a terminal collection field, such as `with ids from item.ids`, to a matching collection input; it cannot traverse through a collection. Inputs resolve in this order:
+
+1. Explicit `with` bindings.
+2. Subject fields with the same name as the command input.
+3. The command's declared [form](forms.md).
+4. Renderer input.
+
+The guard controls what the user is offered, not what the system accepts. The selected command still enforces its authorization, validation and constraints. Authorization denial never falls through to another command. A click runs the choice shown to the user; if a click-time check changes that choice, the renderer must refresh instead of executing the new one. A single optional `navigate to` runs after whichever command succeeds.
+
+Guarded actions are preserved by the compilers and shown as one labeled prototype button on the event model board. Screens do not enter the executable semantic model. Runtime selection requires downstream renderer support; an older renderer must reject the new kind rather than silently render an empty plain action. See [interactions](interactions.md) for the separate, unchanged `on` bindings.
+
 ## Level 2 — Structure
 
 Adds named sections, tables, and summary widgets, filling a screen template's slots. Command-bound forms are a separate, module-scoped construct - see [Forms](forms.md).
