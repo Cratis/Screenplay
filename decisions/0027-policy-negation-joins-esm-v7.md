@@ -3,7 +3,7 @@ id: 0027
 title: Admit policy negation as a byte-preserving ESM v7 extension
 status: accepted
 stage: implemented
-decided: 2026-10-06
+decided: 2026-10-07
 decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
@@ -27,6 +27,14 @@ applies-to:
 [0004](0004-admission-and-governance-of-portable-executable-semantics.md) permits a construct that previously failed binding to join the highest ESM version when no model that bound before changes bytes. [0025](0025-allocate-esm-v7-to-responses-and-number-later-versions-at-admission.md) and [0026](0026-generated-values-and-command-responses-in-esm-v7.md) admitted generated values and responses as v7. This record adds policy negation to that version without changing their contract or assigning a new version.
 
 ## Decision
+
+> **2026-10-07 — three-valued evaluation clarification.** The earlier Boolean evaluation wording below is superseded by the M1 rule: an undecidable claim target is unknown; `not unknown = unknown`; `and` and `or` use Kleene logic in either operand order; unknown at the top denies. A missing caller claim against a known text target still compares false.
+
+ESM v7 was published in 4.68.0 before this extension. Joining a published version is a deliberate exception to 0025's conservative allocation, justified by 0004's byte-preserving rule: consumers admitting v7 must admit the `not` condition, and release notes must name the extension.
+
+Kleene evaluation in either operand order is safe here because portable comparisons cannot throw, unlike 0005's opaque predicates. Renderers must use nullable-boolean semantics (for example C# `bool?` with `&`, `|` and `!`), not short-circuit `&&` and `||`. Stage currently renders only policies requiring authentication ([Stage#57](https://github.com/Cratis/Stage/issues/57)), so `authenticated and not …` is the renderable form. `PLAY0546` is a .NET semantic check; the TypeScript compiler does not emit it.
+
+Consumer notices are tracked on [Stage#206](https://github.com/Cratis/Stage/issues/206), [StudioIssues#486](https://github.com/Cratis/StudioIssues/issues/486) and [Screenplay.Generation#71](https://github.com/Cratis/Screenplay.Generation/issues/71); [cli#271](https://github.com/Cratis/cli/issues/271) tracks admission of negation with v7.
 
 Policy negation joins ESM v7 as a byte-preserving extension under 0004. A model using negation selects language/semantic `7.0` and `schemaVersion: 7`; every model without it retains its existing version, canonical bytes, revision and outcomes. A policy condition accepts general unary `not <condition>`. `not` binds tighter than `and`, which binds tighter than `or`; parentheses override precedence, and repeated negation nests rightward.
 
@@ -67,7 +75,7 @@ Authors can state exclusions directly without extra claims. Pre-extension v7 str
 
 **2026-10-07 — implemented.** Implemented in #431; Done-when (Tier 1 and golden diff review) pending.
 
-**2026-10-07 — M1 clarification accepted (option (a)).** Decider: Sindre Alstad Wilting. The orchestrator selected option (a) on woksin's explicit delegation. The Boolean-result wording above applies only to decidable comparisons: a claim match with a missing or null comparison target, an absent subject, or a non-text value is **unknown**, not false. A missing caller claim against a known text target still yields false. Conditions use Kleene three-valued logic: `not unknown = unknown`; `true or unknown = true`; `false or unknown = unknown`; `false and unknown = false`; `true and unknown = unknown`, symmetrically for either operand order. Only a final true policy condition allows; false and unknown deny. Authored-order short-circuiting and allow/deny outcomes without `not` remain unchanged.
+**2026-10-07 — M1 clarification accepted (option (a)).** Accepted by Sindre Alstad Wilting on 2026-10-07 after reviewing the amended text. The Boolean-result wording above applies only to decidable comparisons: a claim match with a missing or null comparison target, an absent subject, or a non-text value is **unknown**, not false. A missing caller claim against a known text target still yields false. Conditions use Kleene three-valued logic: `not unknown = unknown`; `true or unknown = true`; `false or unknown = unknown`; `false and unknown = false`; `true and unknown = unknown`, symmetrically for either operand order. Only a final true policy condition allows; false and unknown deny. Authored-order short-circuiting and allow/deny outcomes without `not` remain unchanged.
 
 Binding warns with `PLAY0546` when a claim under `not`, directly or through grouping, uses an optional/nullable path, a command's `subject` without an identifier, or a non-string type. This is a warning, not a refusal; choosing bind-time rejection (option (b)) or two-valued fail-open evaluation (option (c)) was rejected in favor of safe runtime evaluation even when absence cannot be predicted statically. The TypeScript compiler has no equivalent semantic policy binder and does not emit this warning. Consumers must reproduce the three-valued rule, not Boolean negation of a failed target lookup. Canonical bytes and existing corpus outcomes must not change.
 
