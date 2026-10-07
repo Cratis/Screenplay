@@ -12,11 +12,10 @@ namespace Cratis.Screenplay.Mcp;
 
 sealed class McpSnapshot : IPlayFiles
 {
-    readonly ImmutableArray<WorkspaceDocument> _documents;
-    readonly Dictionary<string, WorkspaceDocument> _documentsByPath;
     readonly McpAnalysisCompiler _compiler;
     readonly Lazy<CompilationResult<ApplicationSyntax>> _compilation;
     readonly Lazy<McpSyntaxIndex> _index;
+    readonly Lazy<IReadOnlyList<PlacedPlayDocument>> _placements;
     readonly Lazy<DependencyGraph> _dependencyGraph;
     AuthoredTimeline _timeline = null!;
 
@@ -26,18 +25,41 @@ sealed class McpSnapshot : IPlayFiles
     }
 
     internal McpSnapshot(ImmutableArray<WorkspaceDocument> documents, IScreenplayLanguageRegistry languages)
+        : this(documents.ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal), McpSourceRevision.For(documents), languages)
     {
-        _compiler = new(languages);
-        _documents = documents;
-        _documentsByPath = documents.ToDictionary(document => document.Path.Value, StringComparer.Ordinal);
-        SourceRevision = McpSourceRevision.For(documents);
+    }
+
+    // CLI source paths and encodings follow PlayFileCompiler, not workspace admission rules.
+    internal McpSnapshot(IReadOnlyDictionary<string, string> sources)
+        : this(sources, string.Empty, ScreenplayLanguageRegistry.Default)
+    {
+    }
+
+    internal McpSnapshot(
+        IReadOnlyDictionary<string, string> sources,
+        string revision,
+        IScreenplayLanguageRegistry languages,
+        McpAnalysisCompiler? compiler = null,
+        (CompilationResult<ApplicationSyntax> Result, AuthoredTimeline Timeline)? compilation = null,
+        IEnumerable<string>? roots = null)
+    {
+        _compiler = compiler ?? new(languages);
+        Sources = sources;
+        SourceRevision = revision;
         _compilation = new(() =>
         {
+            if (compilation is { } compiled)
+            {
+                _timeline = compiled.Timeline;
+                return compiled.Result;
+            }
+
             var source = new DiskPlayDocumentSource(this, ".");
-            var (_, result) = PlayApplicationAssembly.Compile(_compiler, source.FilesBeneath(string.Empty), source, _compiler.Languages, out _timeline);
+            var (_, result) = PlayApplicationAssembly.Compile(_compiler, roots ?? source.FilesBeneath(string.Empty), source, _compiler.Languages, out _timeline);
 
             return result;
         });
+        _placements = new(() => PlayImports.Resolve(roots ?? Sources.Keys, new InMemoryPlayDocumentSource(Sources), languages).Documents);
         _index = new(CreateIndex);
         _dependencyGraph = new(() =>
         {
@@ -46,6 +68,8 @@ sealed class McpSnapshot : IPlayFiles
             return DependencyGraph.For(_timeline);
         });
     }
+
+    internal IReadOnlyList<PlacedPlayDocument> Placements => _placements.Value;
 
     internal CompilationResult<ApplicationSyntax> Compilation => _compilation.Value;
 
@@ -59,7 +83,11 @@ sealed class McpSnapshot : IPlayFiles
 
     internal int ParsedDocumentCount => _compiler.ParsedDocumentCount;
 
+    internal IScreenplayLanguageRegistry Languages => _compiler.Languages;
+
     internal string SourceRevision { get; }
+
+    internal IReadOnlyDictionary<string, string> Sources { get; }
 
     /// <inheritdoc/>
     public IEnumerable<PlayFile> FindIn(string root)
@@ -73,13 +101,23 @@ sealed class McpSnapshot : IPlayFiles
 
         // IPlayFiles returns paths relative to the requested folder, not the application root.
         // DiskPlayDocumentSource adds that folder back when it follows native file imports.
-        return _documents.Where(document => document.Path.Value.StartsWith(prefix, StringComparison.Ordinal))
-            .OrderBy(document => document.Path.Value, StringComparer.Ordinal)
-            .Select(document => new PlayFile(document.Path.Value, document.Path.Value[prefix.Length..]));
+        return Sources.Keys.Where(path => path.StartsWith(prefix, StringComparison.Ordinal))
+            .Order(StringComparer.Ordinal)
+            .Select(path => new PlayFile(path, path[prefix.Length..]));
     }
 
     /// <inheritdoc/>
-    public string ReadContent(PlayFile file) => _documentsByPath[file.RelativePath].Text;
+    public string ReadContent(PlayFile file) => Sources[file.RelativePath];
+
+    internal static McpSnapshot Compile(string target, bool isFile)
+    {
+        var compiler = new McpAnalysisCompiler();
+        var files = new PlayFileCompiler(new PlayFiles(), compiler);
+        var compilation = isFile ? files.CompileApplication(target) : files.CompileFolder(target);
+        var sources = compilation.Sources.ToDictionary(source => source.File.RelativePath, source => source.Source, StringComparer.Ordinal);
+
+        return new(sources, string.Empty, compiler.Languages, compiler, (compilation.Result, files.Timeline), isFile ? [Path.GetFileName(target)] : sources.Keys);
+    }
 
     McpSyntaxIndex CreateIndex()
     {
@@ -88,10 +126,7 @@ sealed class McpSnapshot : IPlayFiles
 
         // Compilation retains provisional trees for diagnostics. Physical authoring candidates
         // require an authoritative placement, including descendants of conflicting barrels.
-        var (placements, _) = PlayImports.Resolve(
-            _documentsByPath.Keys,
-            new InMemoryPlayDocumentSource(_documentsByPath.ToDictionary(entry => entry.Key, entry => entry.Value.Text, StringComparer.Ordinal)),
-            _compiler.Languages);
+        var placements = Placements;
         var resolvedPaths = placements.Where(document => document.IsPlacementResolved).Select(document => document.Path).ToHashSet(StringComparer.Ordinal);
         var physical = _compiler.Documents.Select(document =>
         {
@@ -99,7 +134,7 @@ sealed class McpSnapshot : IPlayFiles
 
             // Never parse a conflicting placement as a guessed owner. Read its literal root
             // to retain physical source candidates, independently of navigation authority.
-            var result = resolved ? document.Result : new ScreenplayCompiler(_compiler.Languages).Parse(_documentsByPath[document.Path!].Text, document.Path);
+            var result = resolved ? document.Result : new ScreenplayCompiler(_compiler.Languages).Parse(Sources[document.Path!], document.Path);
             return (Result: result, Resolved: resolved);
         }).ToArray();
         var complete = placements.All(document => document.IsPlacementResolved) && physical.All(document => !EventSourceReadConfidence.HasUnknownExtent(document.Result.Diagnostics));
