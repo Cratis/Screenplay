@@ -115,7 +115,9 @@ a file does:
   the printer uses canonical kind order for that owner. Syntax created without source
   positions (including typed JSON) also uses canonical kind order. A new member added
   to a parsed owner prints after the last member of its kind, or before the first
-  member of a later canonical kind when none exists. Workspace AST replacements
+  member of a later canonical kind when none exists. Features, slices and file imports
+  inserted or moved by typed edits print before their next located sibling when one
+  exists, so timeline moves and pins retain their requested position. Workspace AST replacements
   inherit their original position, even though typed JSON omits source positions.
 - **Blank lines are normalized.** The printer separates members with its own blank lines.
 

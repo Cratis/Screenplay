@@ -66,9 +66,14 @@ static class McpToolSchemas
 
     internal static JsonObject Argument(string tool, string property) => property switch
     {
-        "includeContent" or "eventNeverPersisted" or "pinRepairEvidence" => new() { ["type"] = "boolean", ["default"] = false },
+        "includeTestOnly" or "includeContent" or "eventNeverPersisted" or "pinRepairEvidence" => new() { ["type"] = "boolean", ["default"] = false },
         "descendants" => new() { ["type"] = "boolean", ["default"] = tool != "dependencies" },
         "offset" => McpAstSchemas.Integer(),
+        "evidenceLimit" when tool == "dependency-graph" => new() { ["type"] = "integer", ["minimum"] = 0, ["maximum"] = 20, ["default"] = 3 },
+        "kinds" when tool == "dependency-graph" => McpAstSchemas.Array(McpAstSchemas.Choice(Dependencies.DependencyGraph.Kinds)),
+        "from" when tool == "dependency-graph" => McpAstSchemas.Choice("slice", "feature", "module"),
+        "to" when tool == "dependency-graph" => McpAstSchemas.Choice("slice", "feature", "module", "context"),
+        "view" when tool == "dependency-graph" => McpAstSchemas.Choice("edges", "cycles", "order", "unresolved"),
         "limit" => Limit(tool == "export-workspace" || tool == "read-proposal" || tool == "read-document" || tool == "merged-document" || tool == "workspace-state" || tool == "read-workspace" ? 192 * 1024 : 200),
         "operations" when tool == "propose-ast" => McpAstSchemas.Array(McpAstSchemas.Operations()),
         "operations" => McpAstSchemas.Array(JsonNode.Parse(McpWorkspaceOperations.Schema.GetRawText())!),
