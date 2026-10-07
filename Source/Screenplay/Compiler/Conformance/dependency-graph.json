@@ -31,6 +31,61 @@
             "implied": [],
             "cycles": [],
             "order": ["M.F.V"]
+        },
+        {
+            "name": "duplicate declarations retain all references and choose the earliest producer",
+            "files": {"application.play": "module M\n  feature F\n    slice StateChange P\n      event E\n    slice StateChange P\n      event Other\n    slice StateChange Second\n      event E\n    slice StateView V\n      projection P\n        from E\n        from Other"},
+            "edges": ["M.F.V|M.F.P|usesFactsFrom|from:E,from:Other"],
+            "implied": [],
+            "cycles": [],
+            "order": ["M.F.P", "M.F.Second", "M.F.V"]
+        },
+        {
+            "name": "same named slice and sibling feature have typed disjoint ancestry",
+            "files": {"application.play": "module M\n  feature F\n    slice StateView Same\n      projection P\n        from E\n    feature Same\n      slice StateChange Write\n        event E"},
+            "edges": ["M.F.Same|M.F.Same.Write|usesFactsFrom|from:E"],
+            "implied": [],
+            "cycles": [],
+            "order": ["M.F.Same", "M.F.Same.Write"]
+        },
+        {
+            "name": "ambiguous imports choose source order and hide only test evidence",
+            "files": {"application.play": "import Z.Recorded\nimport A.Recorded\nmodule M\n  feature F\n    slice StateView V\n      projection P\n        from Recorded\n      specification T\n        given Recorded"},
+            "edges": ["M.F.V|context:Z|outsideTheModel|from:Recorded,givenEvent:Recorded"],
+            "implied": [],
+            "cycles": [],
+            "order": ["M.F.V"]
+        },
+        {
+            "name": "reference roles include reads concurrency reducers and specification steps",
+            "files": {"application.play": "module M\n  feature A\n    slice StateChange Producer\n      event E\n      command C\n      query Q => R\n      readmodel R\n      projection R\n        from E\n      screen S\n  feature B\n    slice StateView Consumer\n      command D\n        reads R\n        concurrency\n          events E, E\n      projection P\n        from E\n        join value on id\n          with E\n        remove with E\n        clear with E\n        remove via join on E\n        variant Variant\n          enters on E\n          children items identified by id\n            from E\n          nested item\n            from E\n      reducer Fold => View\n        on E\n      constraint U\n        unique event E\n      constraint V\n        unique id on E\n      reaction React\n        when E\n          reads R\n          invokes C\n      screen Screen\n        data R via query Q\n        action C\n          navigate to S\n      specification T\n        given E\n        when C\n        then E"},
+            "edges": [
+                "M.B.Consumer|M.A.Producer|decidesFrom|reads:R,reads:R",
+                "M.B.Consumer|M.A.Producer|usesFactsFrom|concurrency:E,concurrency:E,from:E,join:E,remove:E,clear:E,removeViaJoin:E,entersOn:E,from:E,from:E,reduces:E,uniqueEvent:E,uniqueProperty:E",
+                "M.B.Consumer|M.A.Producer|reactsTo|trigger:E",
+                "M.B.Consumer|M.A.Producer|asks|invokes:C,action:C",
+                "M.B.Consumer|M.A.Producer|shows|dataQuery:Q,navigate:S",
+                "M.B.Consumer|M.A.Producer|verifiedWith|givenEvent:E,whenCommand:C,thenEvent:E"
+            ],
+            "implied": ["M.B|M.A|1|20"],
+            "cycles": [],
+            "order": ["M.A.Producer", "M.B.Consumer"]
+        },
+        {
+            "name": "appended events and reducer builders participate in ordering",
+            "files": {"application.play": "module M\n  feature A\n    slice StateChange Decide\n      command D\n        reads Built as current by id\n      specification T\n        when append E\n  feature B\n    slice StateView Build\n      reducer Fold => Built\n        on E\n  feature C\n    slice StateChange Produce\n      event E"},
+            "edges": ["M.A.Decide|M.B.Build|decidesFrom|reads:Built", "M.A.Decide|M.C.Produce|verifiedWith|whenAppendedEvent:E", "M.B.Build|M.C.Produce|usesFactsFrom|reduces:E"],
+            "implied": ["M.A|M.B|1|1", "M.B|M.C|1|1"],
+            "cycles": [],
+            "order": ["M.C.Produce", "M.B.Build", "M.A.Decide"]
+        },
+        {
+            "name": "module forms do not acquire a slice owner",
+            "files": {"application.play": "module M\n  feature F\n    slice StateChange Producer\n      command C\n      readmodel R\n      query Q => R\n  form Edit for C\n    populate via query Q"},
+            "edges": [],
+            "implied": [],
+            "cycles": [],
+            "order": ["M.F.Producer"]
         }
     ]
 }

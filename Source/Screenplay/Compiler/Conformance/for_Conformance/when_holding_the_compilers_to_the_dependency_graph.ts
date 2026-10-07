@@ -1,0 +1,45 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { beforeEach, describe, it } from 'vitest';
+import { DependencyGraph } from '../../Dependencies/DependencyGraph';
+import { compileApplication } from '../../Files/PlayApplicationAssembly';
+
+interface Vector {
+    name: string;
+    files: Record<string, string>;
+    edges: string[];
+    implied: string[];
+    cycles: string[][];
+    order: string[];
+}
+const vectors = (JSON.parse(readFileSync(join(__dirname, '..', 'dependency-graph.json'), 'utf8')) as { cases: Vector[] }).cases;
+
+for (const vector of vectors) {
+    describe(`when holding the compilers to the dependency graph: ${vector.name}`, () => {
+        let graph: DependencyGraph;
+        let reversed: DependencyGraph;
+        beforeEach(() => {
+            graph = DependencyGraph.for(compileApplication(new Map(Object.entries(vector.files))).value);
+            reversed = DependencyGraph.for(compileApplication(new Map(Object.entries(vector.files).reverse())).value);
+        });
+        it('should match the slice edges', () => {
+            graph.edges.map(edge => `${edge.consumer.address}|${edge.producer.address}|${edge.kind}|${edge.evidence.map(item => `${item.role}:${item.name}`).join(',')}`).should.deep.equal(vector.edges);
+        });
+        it('should match the implied feature edges', () => {
+            graph.implied('feature', 'feature').map(edge => `${edge.source.address}|${edge.target.address}|${edge.sliceEdges}|${edge.references}`).should.deep.equal(vector.implied);
+        });
+        it('should match the feature cycles', () => {
+            graph.cycles('feature').map(group => group.members.map(node => node.address)).should.deep.equal(vector.cycles);
+        });
+        it('should match the suggested story order', () => {
+            graph.suggestedOrder().slices.map(node => node.address).should.deep.equal(vector.order);
+        });
+        it('should ignore document arrival order', () => {
+            reversed.edges.should.deep.equal(graph.edges);
+            reversed.suggestedOrder().should.deep.equal(graph.suggestedOrder());
+        });
+    });
+}
