@@ -2339,4 +2339,9 @@ public static class DiagnosticCodes
     /// A read model has no builder or a declared field has no projection origin.
     /// </summary>
     public const string ReadModelFieldWithoutOrigin = "PLAY0534";
+
+    /// <summary>
+    /// A query parameter cannot be held by its view's structurally known identity or fields.
+    /// </summary>
+    public const string QueryParameterNotHeldByView = "PLAY0535";
 }

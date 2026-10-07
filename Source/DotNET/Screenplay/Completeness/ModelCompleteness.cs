@@ -40,6 +40,7 @@ public static class ModelCompleteness
         if (checks.Selected.Contains(CompletenessCheck.DataBindings)) findings.AddRange(DataBindingCompleteness.Check(declarations));
         if (checks.Selected.Contains(CompletenessCheck.InputSurfaces)) findings.AddRange(InputSurfaceCompleteness.Check(application, declarations));
         if (checks.Selected.Contains(CompletenessCheck.FieldOrigins)) findings.AddRange(FieldOriginCompleteness.Check(declarations));
+        if (checks.Selected.Contains(CompletenessCheck.QueryKeys)) findings.AddRange(QueryKeyCompleteness.Check(declarations));
 
         return findings.ToImmutable();
     }
