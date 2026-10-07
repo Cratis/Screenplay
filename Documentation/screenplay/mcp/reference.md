@@ -100,7 +100,7 @@ Workspace and catalog revisions, expected nodes, preview and explicit acceptance
 
 Use `kind: "Example"` with `search-declarations`, `declaration-details`, `find-references` and `dependencies`. Example details report the authored underlying type and destination, with paged `values` and `generatedValues` views. Specification references point to the example; the example's `exampleType` dependency points to its underlying event, command or read model.
 
-`find-fixtures` expands [typed examples](../specifications.md#typed-example-declarations-authoring-syntax) before selecting values. Each assignment reports its effective `target`, `value`, source `location`, and `origin`: `authored`, `example`, or `override`. `example` names the supplying declaration; `overriddenValue` holds the expression value replaced by an override, or null. Generated fixtures and destinations carry the same provenance. Expressions remain syntax, not evaluated results. Example resolution errors refuse the query rather than returning unexpanded values as effective fixtures. Omitted properties are not invented.
+`find-fixtures` expands [typed examples](../specifications.md#typed-specification-examples) before selecting values. Each assignment reports its effective `target`, `value`, source `location`, and `origin`: `authored`, `example`, or `override`. `example` names the supplying declaration; `overriddenValue` holds the expression value replaced by an override, or null. Generated fixtures and destinations carry the same provenance. Expressions remain syntax, not evaluated results. Example resolution errors refuse the query rather than returning unexpanded values as effective fixtures. Omitted properties are not invented.
 
 ## Event source and stream inventories (syntax-only)
 
