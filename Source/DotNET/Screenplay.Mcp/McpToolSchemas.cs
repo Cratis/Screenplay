@@ -90,7 +90,7 @@ static class McpToolSchemas
         "view" when tool == "declaration-details" => McpAstSchemas.Choice("summary", "properties", "occurrences", "commands", "specifications", "produces", "response", "inputs", "phases", "values", "streams", "route", "syntax"),
         "view" when tool == "merged-document" => McpAstSchemas.Choice("source", "syntax", "both"),
         "view" when tool == "read-workspace" => McpAstSchemas.Choice("documents", "semantics", "eventContracts", "diagnostics", "executable-diagnostics", "implementation-requirements", "handler-intents", "handler-intent-details", "named-rule-intents", "named-rule-intent-details", "operation-intents", "operation-intent-details", "system-intents", "system-intent-details", "ordered-productions", "event-sources", "event-streams", "event-source-details", "event-stream-details", "command-routes", "event-source-diagnostics", "typed-contexts", "source-map", "repairs", "executable-model"),
-        "view" when tool == "read-proposal" => McpAstSchemas.Choice("changes", "before", "after", "diagnostics", "executable-diagnostics", "implementation-requirements", "typed-contexts", "dropped-comments"),
+        "view" when tool == "read-proposal" => McpAstSchemas.Choice("changes", "before", "after", "diagnostics", "executable-diagnostics", "implementation-requirements", "typed-contexts", "dropped-comments", "semantic-diff"),
         "view" when tool == "read-ast" => McpAstSchemas.Choice("nodes", "children"),
         _ => McpAstSchemas.String()
     };

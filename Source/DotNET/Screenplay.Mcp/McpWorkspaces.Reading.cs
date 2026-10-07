@@ -423,8 +423,10 @@ internal sealed partial class McpWorkspaces
     {
         var proposal = Proposal(arguments);
         var view = McpJson.OptionalString(arguments, "view") ?? "changes";
+        if (view == "semantic-diff") Root.Verify(proposal.Before);
         var result = view switch
         {
+            "semantic-diff" => McpSemanticDiff.Read(proposal, arguments),
             "changes" => McpPaging.Page(
                 proposal.WritePlan.Entries.Select(entry => new
                 {
