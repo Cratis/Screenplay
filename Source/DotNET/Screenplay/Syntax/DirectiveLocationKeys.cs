@@ -9,6 +9,7 @@ namespace Cratis.Screenplay.Syntax;
 internal static class DirectiveLocationKeys
 {
     internal const string PlacementHeaderPrefix = "placement header:";
+    internal const string RepeatedDependencyPrefix = "dependency repeat:";
 
     internal static string ForValue(string directive, IReadOnlyList<string> values, int index)
     {

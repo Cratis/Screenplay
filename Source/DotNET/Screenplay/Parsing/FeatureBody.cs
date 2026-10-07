@@ -25,6 +25,7 @@ internal sealed class FeatureBody(string name)
     readonly List<BehaviorSyntax> _behaviors = [];
     readonly List<UsesBehaviorSyntax> _usedBehaviors = [];
     readonly List<FileImportSyntax> _fileImports = [];
+    readonly List<DependsOnSyntax> _dependsOn = [];
     string? _description;
     AuthorizeSyntax? _authorize;
 
@@ -46,6 +47,9 @@ internal sealed class FeatureBody(string name)
                     _directiveLocations["description"] = line.Location;
                 }
 
+                return true;
+            case "depends":
+                DependsOnParser.Parse(context, line, _dependsOn, DiagnosticCodes.UnknownFeatureDirective);
                 return true;
             case "authorize":
                 _authorize = AuthorizeParser.Combine(_authorize, AuthorizeParser.Parse(context, line));
@@ -82,6 +86,7 @@ internal sealed class FeatureBody(string name)
         {
             Behaviors = _behaviors,
             UsedBehaviors = _usedBehaviors,
+            DependsOn = _dependsOn,
             Authorize = _authorize,
             DirectiveLocations = _directiveLocations,
             FileImports = _fileImports,

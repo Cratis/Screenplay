@@ -474,7 +474,7 @@ remove duplicate route headers before export.
 |---|---|---|
 | `PLAY0196` | Warning | A screen binds data to a query nothing in scope declares. |
 | `PLAY0197` | Warning | A screen navigates to a screen nothing in scope declares. |
-| `PLAY0198` | Warning | A bare name matches more than one declaration at the same depth, so which one it means is undecided. |
+| `PLAY0198` | Warning | A bare name matches more than one declaration at the same depth, or a qualified name matches more than one trailing container path, so which one it means is undecided. See [declared dependency targets](#declared-dependency-targets). |
 
 ### What a query's results are narrowed to
 
@@ -990,6 +990,15 @@ These are syntax diagnostics. A valid system, operation or operation specificati
 | `PLAY0517` | Information | A sibling group uses each other's events, so reordering cannot make every event flow left to right. Reported once per mutually dependent group, at its earliest backward reference, instead of individual `PLAY0516` findings within that group. This does not fail `--warnaserror`. |
 
 See [Timeline diagnostics](imports.md#timeline-diagnostics) for the ordering root, grouping rules, checked references and C#/MCP repair conditions. `PLAY0516` offers verified typed moves or explicit pins before a retained glob where safe; `PLAY0517` and own-sub-feature findings have no repair. These findings and repairs do not change executable behavior.
+
+### Declared dependency targets
+
+| Code | Severity | Reported when |
+| --- | --- | --- |
+| `PLAY0554` | Warning | A `depends on` target is self, an ancestor, a descendant, or does not resolve to a module or feature. |
+| `PLAY0555` | Warning | The same target is declared again on a container, in one file or across files. Resolved aliases count as repeats; unresolved targets compare by text. The first is kept. |
+
+An ambiguous target uses `PLAY0198`, naming the equally near candidates. See [Declared dependencies](slices.md#declared-dependencies) for the sibling and qualified-name rules. Malformed statements are parse errors (`PLAY0022` in a module, `PLAY0024` in a feature).
 
 ### Event sources and command streams
 

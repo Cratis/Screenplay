@@ -39,6 +39,7 @@ internal static partial class PlayFolderMerge
             SourceComments = [.. parts.SelectMany(part => part.SourceComments).Distinct()],
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"module '{group.Key}'", context),
             Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"module '{group.Key}'", context),
+            DependsOn = [.. group.OrderBy(part => part.Location.Path, StringComparer.Ordinal).SelectMany(part => part.DependsOn)],
             ScreenTemplates = DeclaredInOneFile(
                 parts.SelectMany(part => part.ScreenTemplates),
                 template => template.Name,
@@ -87,6 +88,7 @@ internal static partial class PlayFolderMerge
             SourceComments = [.. parts.SelectMany(part => part.SourceComments).Distinct()],
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"feature '{group.Key}'", context),
             Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"feature '{group.Key}'", context),
+            DependsOn = [.. group.OrderBy(part => part.Location.Path, StringComparer.Ordinal).SelectMany(part => part.DependsOn)],
             Contributions = [.. parts.SelectMany(part => part.Contributions ?? [])],
             Behaviors = InlineBehaviorsOnce(parts.SelectMany(part => part.Behaviors), $"feature '{group.Key}'", context),
             UsedBehaviors = UsedBehaviorsOnce(parts.SelectMany(part => part.UsedBehaviors), $"feature '{group.Key}'", context),

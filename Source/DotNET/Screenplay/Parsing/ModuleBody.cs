@@ -27,6 +27,7 @@ internal sealed class ModuleBody(string name)
     readonly List<BehaviorSyntax> _behaviors = [];
     readonly List<UsesBehaviorSyntax> _usedBehaviors = [];
     readonly List<FileImportSyntax> _fileImports = [];
+    readonly List<DependsOnSyntax> _dependsOn = [];
     int _restatedHeaders;
     string? _description;
     AuthorizeSyntax? _authorize;
@@ -49,6 +50,9 @@ internal sealed class ModuleBody(string name)
                     _directiveLocations["description"] = line.Location;
                 }
 
+                return true;
+            case "depends":
+                DependsOnParser.Parse(context, line, _dependsOn, DiagnosticCodes.UnknownModuleDirective);
                 return true;
             case "authorize":
                 _authorize = AuthorizeParser.Combine(_authorize, AuthorizeParser.Parse(context, line));
@@ -93,6 +97,7 @@ internal sealed class ModuleBody(string name)
         {
             Behaviors = _behaviors,
             UsedBehaviors = _usedBehaviors,
+            DependsOn = _dependsOn,
             Authorize = _authorize,
             DirectiveLocations = _directiveLocations,
             FileImports = _fileImports,

@@ -45,7 +45,7 @@ public class ScreenplayCompiler(IScreenplayLanguageRegistry languages) : IScreen
         var lines = SourceLineSplitter.Split(source);
         var context = SourceOptionsParser.Create(lines, languages: languages, streamCandidates: CommandStreamCandidates.Capture([lines], languages));
         var application = SourceCommentCapture.Attach(ScreenplayParser.Parse(context, lines), lines) with { RegisteredTriggers = SnapshotTriggers(languages) };
-        ScreenplayValidator.Validate(application, context);
+        application = ScreenplayValidator.Validate(application, context);
         return new(application, [.. context.Diagnostics, .. ProductionDestinationDiagnostics.In(application), .. TimelineOrder.In(application)]);
     }
 

@@ -9,6 +9,7 @@ import {
 } from './language';
 import { createTokensProvider } from './tokens';
 import { CompletionOptions, createCompletionProvider } from './completions';
+import { createInlineCompletionProvider } from './inline-completions';
 import { responseTokens, responseTokenTypes } from './response-tokens';
 import { createHoverProvider } from './hover';
 import { createInlayHintsProvider } from './inlay-hints';
@@ -56,6 +57,7 @@ export function register(monaco: Monaco, options: LanguageServiceOptions = {}): 
     monaco.languages.setLanguageConfiguration(languageId, languageConfiguration);
     applyTokensProvider(monaco);
     monaco.languages.registerCompletionItemProvider(languageId, createCompletionProvider(monaco, options));
+    monaco.languages.registerInlineCompletionsProvider(languageId, createInlineCompletionProvider(options));
     monaco.languages.registerHoverProvider(languageId, createHoverProvider(options));
     monaco.languages.registerDefinitionProvider(languageId, {
         provideDefinition(model, position) {
@@ -156,6 +158,8 @@ export { completionEntriesFor, planCompletions } from './completion-planner';
 export type { CompletionPlan } from './completion-planner';
 export { responseTokens, responseTokenTypes } from './response-tokens';
 export { responseCompletions } from './response-completions';
+export { structureCompletion } from './structure-completions';
+export type { StructureCompletion } from './structure-completions';
 export { analyzeEventSources, eventSourceAvailability, eventSourceCompletions, eventSourceDetails, eventSourceHover, eventSourceIdentifier, eventSourceReferenceAt } from './event-source-authoring';
 export type { EventSourceAnalysis } from './EventSourceAnalysis';
 export type { AuthoredEventSource } from './AuthoredEventSource';

@@ -85,6 +85,7 @@ function mergeModules(modules: readonly ModuleSyntax[], diagnostics: Diagnostic[
         fileImports: parts.flatMap(part => part.fileImports),
         description: firstDescription(parts, `module '${parts[0].name}'`, diagnostics),
         authorize: combineAuthorization(parts.map(part => part.authorize), `module '${parts[0].name}'`, diagnostics),
+        dependsOn: groupDependencies(parts),
         features: mergeFeatures(parts.flatMap(part => part.features), diagnostics),
     });
 }
@@ -96,9 +97,15 @@ function mergeFeatures(features: readonly FeatureSyntax[], diagnostics: Diagnost
         fileImports: parts.flatMap(part => part.fileImports),
         description: firstDescription(parts, `feature '${parts[0].name}'`, diagnostics),
         authorize: combineAuthorization(parts.map(part => part.authorize), `feature '${parts[0].name}'`, diagnostics),
+        dependsOn: groupDependencies(parts),
         features: mergeFeatures(parts.flatMap(part => part.features), diagnostics),
         slices: declaredInOneFile(parts.flatMap(part => part.slices), 'slice', diagnostics, `feature '${parts[0].name}'`),
     });
+}
+
+// Dependencies accumulate in path order, independently of which header owns the container.
+function groupDependencies(parts: readonly (ModuleSyntax | FeatureSyntax)[]) {
+    return [...parts].sort((left, right) => (left.location.path ?? '') < (right.location.path ?? '') ? -1 : (left.location.path ?? '') > (right.location.path ?? '') ? 1 : 0).flatMap(part => part.dependsOn ?? []);
 }
 
 // Where a module or feature is written comes before files merely placed in it, so the merged one is located

@@ -7,6 +7,7 @@ The module is the top-level namespace and maps to a bounded context. One module 
 ```screenplay
 module <Name>
   [description "<text>"]
+  [depends on <Name>]*
 
   [<screen templates>]
   [<dialog templates>]
@@ -22,9 +23,34 @@ Features are vertical slice groupings. They nest arbitrarily deep for sub-featur
 ```screenplay
 feature <Name>
   [description "<text>"]
+  [depends on <Name>]*
   [feature <Name>]*   ← sub-features
   [slice <type> <Name>]+
 ```
+
+## Declared dependencies
+
+Use `depends on <Name>` on a module or feature to state which other modules or features it intends to use. Write one target per line:
+
+```screenplay
+module Payroll
+  description "Pays people for approved time"
+  depends on Timesheets
+  feature Handover
+    depends on Timesheets.Approval
+    depends on Timesheets.Reporting
+    depends on Runs
+  feature Runs
+module Timesheets
+  feature Approval
+  feature Reporting
+```
+
+A bare name searches the declaring container's siblings, then each ancestor's siblings, then root modules. It does not search cousins or features in another module: qualify those targets. A dotted name matches an unambiguous trailing part of a container's full address. Equally near matches raise `PLAY0198` and name the candidates.
+
+A sibling feature shadows a same-named root module. That root module has no longer qualifying address, so rename one of the containers to make it addressable. Self, ancestor, descendant and unresolved targets raise warning `PLAY0554`. Repeated declarations of the same resolved target (including different spellings such as `Runs` and `Payroll.Runs`) raise warning `PLAY0555` and keep the first. Unresolved repeats compare by target text.
+
+Declarations are optional authoring metadata, not execution or ordering rules: they add no executable model bytes and do not change revisions or identities. The printer places them after `description`, in authored order. [Folder models](folders.md) accumulate them per owner; module and feature rename repairs proven targets and refuses unresolved or ambiguous targets that could name the renamed container, or a rename that would capture another target.
 
 ## Slices
 
