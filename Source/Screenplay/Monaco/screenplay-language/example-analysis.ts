@@ -4,25 +4,18 @@
 import { ApplicationSyntax, eventDeclarations, ExpressionSyntax, FeatureSyntax, PropertyMappingSyntax, SpecificationExampleSyntax, SpecificationSyntax } from '@cratis/screenplay-compiler';
 import { CompletionEntry, specificationStepItems } from './completion-items';
 import { ExampleAnalysis } from './ExampleAnalysis';
+import { FixtureKind } from './FixtureKind';
 import { withoutComment } from './document-context';
 import { bmpWordCharacters } from './bmp-word-characters';
 
 const exampleTypePrefix = new RegExp(`^\\s*example\\s+[A-Z][${bmpWordCharacters}]*\\s*:\\s*([${bmpWordCharacters}.]*)$`);
 const fixtureStepPrefix = new RegExp(`^\\s*(given|when|then)\\s+(?:(readmodel|append)\\s+)?([${bmpWordCharacters}.]*)$`);
 
-type FixtureKind = 'event' | 'command' | 'readmodel';
-interface Declaration {
-    name: string;
-    scope: readonly string[];
-    fixtureKind?: FixtureKind;
-    example?: SpecificationExampleSyntax;
-}
-
 // Editor-only projection of parser-owned fixtures. It does not bind, execute, supply defaults,
 // or publish ESM. Scoped candidates use the same nearest-shared-prefix rule as the compiler.
 export function exampleAnalysis(syntax: unknown, path: string, lines: string[], range: (line: number) => number[], hiddenScopes: ReadonlySet<string>, diagnostics: readonly { severity: string; code: string }[]): ExampleAnalysis {
     const application = syntax as ApplicationSyntax;
-    const declarations: Declaration[] = [];
+    const declarations: { name: string; scope: readonly string[]; fixtureKind?: FixtureKind; example?: SpecificationExampleSyntax }[] = [];
     const rejected = diagnostics.some(diagnostic => diagnostic.severity === 'error')
         ? diagnostics.some(diagnostic => diagnostic.code === 'PLAY0519') ? '**Invalid duplicate assignments; no effective values selected.**' : '**Invalid source; no effective values selected.**'
         : null;
@@ -49,10 +42,10 @@ export function exampleAnalysis(syntax: unknown, path: string, lines: string[], 
                 for (const event of eventDeclarations(slice)) events.set(event.name, [...events.get(event.name) ?? [], event]);
                 for (const generations of events.values()) {
                     const latest = Math.max(...generations.map(event => event.generation));
-                    declarations.push(...generations.filter(event => event.generation === latest).map(event => ({ name: event.name, scope, fixtureKind: 'event' as const })));
+                    declarations.push(...generations.filter(event => event.generation === latest).map(event => ({ name: event.name, scope, fixtureKind: FixtureKind.Event })));
                 }
-                declarations.push(...slice.commands.map(node => ({ name: node.name, scope, fixtureKind: 'command' as const })),
-                    ...slice.readModels.map(node => ({ name: node.name, scope, fixtureKind: 'readmodel' as const })));
+                declarations.push(...slice.commands.map(node => ({ name: node.name, scope, fixtureKind: FixtureKind.Command })),
+                    ...slice.readModels.map(node => ({ name: node.name, scope, fixtureKind: FixtureKind.ReadModel })));
                 for (const node of slice.specifications) { specifications.push({ node, scope }); own(node, scope); examples(node.examples, scope); }
             }
             features(feature.features, scope);
@@ -78,8 +71,8 @@ export function exampleAnalysis(syntax: unknown, path: string, lines: string[], 
         const matches = candidates(reference, scope);
         return matches.length === 1 ? matches[0] : undefined;
     };
-    const kind = (node: Declaration): FixtureKind | undefined => node.example ? unique(node.example.type, node.scope)?.fixtureKind : node.fixtureKind;
-    const display = (node: Declaration) => [...node.scope.filter(part => !hiddenScopes.has(part)), node.name].join('.');
+    const kind = (node: typeof declarations[number]): FixtureKind | undefined => node.example ? unique(node.example.type, node.scope)?.fixtureKind : node.fixtureKind;
+    const display = (node: typeof declarations[number]) => [...node.scope.filter(part => !hiddenScopes.has(part)), node.name].join('.');
     const targets = (scope: readonly string[], expected?: FixtureKind, typesOnly = false, prefix = ''): CompletionEntry[] => declarations.flatMap(node => {
         const fixtureKind = kind(node);
         if (!fixtureKind || (expected && fixtureKind !== expected) || (typesOnly && node.example)) return [];
@@ -117,12 +110,12 @@ export function exampleAnalysis(syntax: unknown, path: string, lines: string[], 
     }
     for (const { node, scope } of specifications) {
         const steps = [
-            ...node.given.map(step => ({ step, name: step.eventType, expected: 'event' as const, values: step.values, generated: [], destination: step.for, prefix: /^\s*given\s+/ })),
-            ...node.givenReadModels.map(step => ({ step, name: step.name, expected: 'readmodel' as const, values: step.properties, generated: [], destination: null, prefix: /^\s*given\s+readmodel\s+/ })),
-            ...(node.when ? [{ step: node.when, name: node.when.commandType, expected: 'command' as const, values: node.when.values, generated: node.when.generatedValues ?? [], destination: node.when.for, prefix: /^\s*when\s+/ }] : []),
-            ...(node.whenAppended ? [{ step: node.whenAppended, name: node.whenAppended.eventType, expected: 'event' as const, values: node.whenAppended.values, generated: [], destination: node.whenAppended.for, prefix: /^\s*when\s+append\s+/ }] : []),
-            ...node.thenEvents.map(step => ({ step, name: step.eventType, expected: 'event' as const, values: step.values, generated: [], destination: step.for, prefix: /^\s*then\s+/ })),
-            ...node.thenReadModels.map(step => ({ step, name: step.name, expected: 'readmodel' as const, values: step.properties, generated: [], destination: null, prefix: /^\s*then\s+readmodel\s+/ })),
+            ...node.given.map(step => ({ step, name: step.eventType, expected: FixtureKind.Event, values: step.values, generated: [], destination: step.for, prefix: /^\s*given\s+/ })),
+            ...node.givenReadModels.map(step => ({ step, name: step.name, expected: FixtureKind.ReadModel, values: step.properties, generated: [], destination: null, prefix: /^\s*given\s+readmodel\s+/ })),
+            ...(node.when ? [{ step: node.when, name: node.when.commandType, expected: FixtureKind.Command, values: node.when.values, generated: node.when.generatedValues ?? [], destination: node.when.for, prefix: /^\s*when\s+/ }] : []),
+            ...(node.whenAppended ? [{ step: node.whenAppended, name: node.whenAppended.eventType, expected: FixtureKind.Event, values: node.whenAppended.values, generated: [], destination: node.whenAppended.for, prefix: /^\s*when\s+append\s+/ }] : []),
+            ...node.thenEvents.map(step => ({ step, name: step.eventType, expected: FixtureKind.Event, values: step.values, generated: [], destination: step.for, prefix: /^\s*then\s+/ })),
+            ...node.thenReadModels.map(step => ({ step, name: step.name, expected: FixtureKind.ReadModel, values: step.properties, generated: [], destination: null, prefix: /^\s*then\s+readmodel\s+/ })),
         ];
         for (const { step, name, expected, values, generated, destination, prefix } of steps.filter(entry => entry.step.location.path === path)) {
             const resolved = unique(name, scope);
@@ -147,7 +140,7 @@ export function exampleAnalysis(syntax: unknown, path: string, lines: string[], 
             const step = before.match(fixtureStepPrefix);
             if (!step) return null;
             if (['clock', 'caller', 'capture', 'trigger', 'query', 'result', 'error', 'denied', 'returns', 'no', 'operation', 'compensated'].includes(step[3])) return null;
-            const expected = step[2] === 'readmodel' ? 'readmodel' : step[2] === 'append' || step[1] !== 'when' ? 'event' : 'command';
+            const expected = step[2] === 'readmodel' ? FixtureKind.ReadModel : step[2] === 'append' || step[1] !== 'when' ? FixtureKind.Event : FixtureKind.Command;
             const entries = targets(scope, expected, false, step[3]);
             // Keep the existing planner's keyword behavior when there are no fixture targets.
             if (!entries.length) return null;
