@@ -50,13 +50,12 @@ internal static class OperationValidator
                     ValidateMappings(production.Mappings, operation, command, scope, declarations, values, context, required: true);
                 }
             }
-            var refusalProductions = slice.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(ReactionProductions.Refusals).ToHashSet();
             foreach (var production in slice.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(ReactionProductions.In))
             {
                 var resolution = resolver.Resolve(production.Event, slice);
                 if (resolution.Kind == AuthoringProductionKind.Ambiguous && resolution.Candidates.Any(node => node.Kind == AuthoringProductionKind.Operation))
                     context.Error(DiagnosticCodes.InvalidProductionReference, $"Production '{production.Event}' is ambiguous.", production.Location);
-                if (!refusalProductions.Contains(production) && production.Event.Contains('.', StringComparison.Ordinal) && resolution.Kind != AuthoringProductionKind.Operation)
+                if (production.Event.Contains('.', StringComparison.Ordinal) && resolution.Kind != AuthoringProductionKind.Operation)
                     context.Error(DiagnosticCodes.InvalidProductionReference, "Qualified productions are supported only for explicitly declared operations.", production.Location);
                 if (resolver.IsOperation(production, slice)) context.Error(DiagnosticCodes.OperationOutsideCommand, "Operations can only be produced by commands.", production.Location);
             }

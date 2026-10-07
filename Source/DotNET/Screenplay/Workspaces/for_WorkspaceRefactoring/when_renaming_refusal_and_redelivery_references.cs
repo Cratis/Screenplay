@@ -30,7 +30,7 @@ public class when_renaming_refusal_and_redelivery_references
                 when Approved
                   invokes Claim
                     on refused by constraint Billing.Claims.Request.Unique
-                      produces Billing.Claims.Handling.Refused
+                      produces Refused
               specification Recovery
                 given Approved
                 when redelivered Approved to Billing.Claims.Handling.Claimer
@@ -62,7 +62,7 @@ public class when_renaming_refusal_and_redelivery_references
         redelivery.EventType.ShouldEqual(name == "Approved" ? "ApprovedAgain" : "Approved");
         redelivery.Reaction.ShouldEqual(name == "Claimer" ? "Billing.Claims.Handling.ClaimerAgain" : "Billing.Claims.Handling.Claimer");
         branch.Constraint.ShouldEqual(name == "Unique" ? "Billing.Claims.Request.UniqueAgain" : "Billing.Claims.Request.Unique");
-        branch.Produces.Single().Event.ShouldEqual(name == "Refused" ? "Billing.Claims.Handling.RefusedAgain" : "Billing.Claims.Handling.Refused");
+        branch.Produces.Single().Event.ShouldEqual(name == "Refused" ? "RefusedAgain" : "Refused");
         new WorkspaceReferenceBindings(after).Bindings.Where(binding => binding.Reference.Domain is WorkspaceReferenceDomain.Reaction or WorkspaceReferenceDomain.Constraint).All(binding => binding.Outcome == "resolved").ShouldBeTrue();
         workspace.Documents.Select(document => document.Text).ShouldContain(Handling);
     }

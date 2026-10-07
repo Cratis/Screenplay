@@ -161,9 +161,9 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
                 (_, SpecificationSyntax specification) => McpFixtureOccurrences.Role(specification, node, reference.Role),
                 _ => reference.Role
             };
-            _references.Add(new(reference.Name, refusalProduction ? ["Event"] : reference.Kinds, [.. _scope], node is CommandStreamSyntax route ? route.ReferenceLocation : node.Location, role, owner?.Owner)
+            _references.Add(new(reference.Name, reference.Kinds, [.. _scope], node is CommandStreamSyntax route ? route.ReferenceLocation : node.Location, role, owner?.Owner)
             {
-                UseProductionCandidates = !refusalProduction && (node is ProducesSyntax or SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax),
+                UseProductionCandidates = node is ProducesSyntax or SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax,
                 AmbiguousSourceOwner = node is CommandStreamSyntax { PropertyCandidate: not null }
             });
         }
@@ -200,7 +200,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         for (var index = 0; index < _references.Count; index++)
         {
             var reference = _references[index];
-            if (reference.Role != "produces") continue;
+            if (reference.Role is not ("produces" or "refusalProduces")) continue;
             var targets = productions.ResolveReference(reference.Name, reference.Scope);
             _references[index] = reference with { Kinds = targets is [var target] ? [target.Kind] : ["Event", "Operation"] };
         }

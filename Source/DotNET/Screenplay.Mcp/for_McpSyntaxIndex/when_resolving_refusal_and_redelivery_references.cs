@@ -41,5 +41,23 @@ public class when_resolving_refusal_and_redelivery_references : Specification
     [Fact] void should_keep_the_branch_reference_owned_by_its_reaction() => _index.References.Single(reference => reference.Role == "refusalProduces").Owner!.Kind.ShouldEqual("Reaction");
     [Fact] void should_keep_the_redelivery_reference_owned_by_its_specification() => _index.References.Single(reference => reference.Role == "redeliveryReaction").Owner!.Kind.ShouldEqual("Specification");
 
+    [Theory]
+    [InlineData("      event Refused\n      event Refused", 2)]
+    [InlineData("      event Refused\n      operation Refused\n        uses Bank", 2)]
+    [InlineData("      operation Refused\n        uses Bank", 1)]
+    void should_resolve_the_same_production_candidates_as_direct_trigger_productions(string declarations, int count)
+    {
+        var application = new ScreenplayCompiler().Parse($"system Bank\nmodule Billing\n  feature Claims\n    slice Automation Handling\n      event Approved\n{declarations}\n      reaction Claimer\n        when Approved\n          produces Refused\n          invokes Claim\n            on refused\n              produces Refused").Value!;
+        var index = new McpSyntaxIndex();
+        index.VisitApplication(application);
+        index.Complete(application);
+        var trigger = index.References.Single(reference => reference.Role == "produces");
+        var branch = index.References.Single(reference => reference.Role == "refusalProduces");
+        branch.UseProductionCandidates.ShouldBeTrue();
+        branch.Kinds.SequenceEqual(trigger.Kinds).ShouldBeTrue();
+        index.Resolve(branch).Length.ShouldEqual(count);
+        index.Resolve(branch).SequenceEqual(index.Resolve(trigger)).ShouldBeTrue();
+    }
+
     McpDeclaration Target(string role) => _index.Resolve(_index.References.Single(reference => reference.Role == role)).Single();
 }
