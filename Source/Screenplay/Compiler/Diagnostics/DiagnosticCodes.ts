@@ -240,6 +240,7 @@ export const DiagnosticCodes = {
     SpecificationExampleKindMismatch: 'PLAY0522',
     InvalidSpecificationExampleValue: 'PLAY0523',
     MissingSpecificationProperty: 'PLAY0524',
+    UnadmittedSpecificationExampleValue: 'PLAY0525',
     InvalidEventSourceDeclaration: 'PLAY0503',
     InvalidCommandStream: 'PLAY0504',
     AmbiguousCommandStream: 'PLAY0505',
