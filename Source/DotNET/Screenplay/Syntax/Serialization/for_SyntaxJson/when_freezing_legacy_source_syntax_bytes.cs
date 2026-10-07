@@ -84,8 +84,40 @@ public class when_freezing_legacy_source_syntax_bytes
                     },
                     _ => slice
                 })
-            } : feature)
+            } : feature).Select(feature => feature with
+            {
+                Slices = feature.Slices.Select(slice => slice with
+                {
+                    Screens = slice.Screens.Select(screen => screen with { Directives = WithoutSampleInputNavigation(screen.Directives) })
+                })
+            })
         })
+    };
+
+    // Current shared vectors protect the pre-input click paths. Reconstruct only the six historical
+    // action-navigation directives and omit the new draft entry point for the frozen legacy sample.
+    static IEnumerable<ScreenDirectiveSyntax> WithoutSampleInputNavigation(IEnumerable<ScreenDirectiveSyntax> directives) =>
+        directives.Where(directive => directive is not ScreenSectionSyntax { Name: "startInvoiceDraftInput" }).Select(directive => directive switch
+        {
+            ScreenSectionSyntax section when LegacyInputCommand(section.Name) is { } command =>
+                new ScreenActionSyntax(command, null, new ScreenNavigateSyntax(command + "Screen", null, section.Location), section.Location),
+            ScreenSectionSyntax section => section with { Directives = WithoutSampleInputNavigation(section.Directives) },
+            ScreenTemplateReferenceSyntax template => template with
+            {
+                Slots = template.Slots.Select(slot => slot with { Directives = WithoutSampleInputNavigation(slot.Directives) })
+            },
+            _ => directive
+        });
+
+    static string? LegacyInputCommand(string section) => section switch
+    {
+        "processInvoiceBatchInput" => "ProcessInvoiceBatch",
+        "archiveOldInvoicesInput" => "ArchiveOldInvoices",
+        "cancelInvoiceInput" => "CancelInvoice",
+        "tagInvoiceInput" => "TagInvoice",
+        "updateBillingContactInput" => "UpdateBillingContact",
+        "requestPaymentPlanInput" => "RequestPaymentPlan",
+        _ => null
     };
 
     // Library's discovered command forms are protected by its current shared vector.

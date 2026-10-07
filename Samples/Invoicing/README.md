@@ -36,6 +36,9 @@ slice: the module's `authorize`, each enclosing feature's, and the slice's comma
 | Integrations (› Notifications) | | | NotifyCustomerOnInvoiceRegistered, DetectOverdueInvoices, SyncBillingDirectory | LegacyInvoiceSync |
 
 Every slice has Given/When/Then specifications, and every state change and state view slice has a screen.
+Click sections on the invoice list, invoice details and customer portal navigate to the draft, batch, archive,
+cancellation, tagging, billing-contact and payment-plan command screens before input is supplied. Each command
+screen issues its own action; action navigation such as returning to `MyInvoices` happens afterward.
 `ExchangeRates`, `CreditStatus` and the overdue list on `InvoiceDashboard` are views no event builds: their
 queries' performers read the central bank feed, a credit bureau and stored invoices.
 

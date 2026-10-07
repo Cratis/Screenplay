@@ -1255,12 +1255,20 @@ module Invoicing
           refresh ListInvoices
         action RegisterInvoice
           navigate to RegisterInvoiceScreen
-        action ProcessInvoiceBatch
-          navigate to ProcessInvoiceBatchScreen
+        section processInvoiceBatchInput
+          title "Process a batch"
+          on click
+            navigate to ProcessInvoiceBatchScreen
+        section startInvoiceDraftInput
+          title "Start invoice draft"
+          on click
+            navigate to StartInvoiceDraftScreen
         template List
           toolbar
-            action ArchiveOldInvoices
-              navigate to ArchiveOldInvoicesScreen
+            section archiveOldInvoicesInput
+              title "Archive old invoices"
+              on click
+                navigate to ArchiveOldInvoicesScreen
             section sync
               title "Synchronize directory"
               on click
@@ -1432,12 +1440,18 @@ module Invoicing
               title "Actions"
               action ChangeInvoiceStatus
                 navigate to ChangeInvoiceStatusScreen
-              action CancelInvoice
-                navigate to CancelInvoiceScreen
-              action TagInvoice
-                navigate to TagInvoiceScreen
-              action UpdateBillingContact
-                navigate to UpdateBillingContactScreen
+              section cancelInvoiceInput
+                title $strings.invoices.actions.cancel
+                on click
+                  navigate to CancelInvoiceScreen
+              section tagInvoiceInput
+                title "Tag invoice"
+                on click
+                  navigate to TagInvoiceScreen
+              section updateBillingContactInput
+                title "Billing contact"
+                on click
+                  navigate to UpdateBillingContactScreen
           main
             section lineItems
               table lineItems
@@ -2440,8 +2454,10 @@ module Invoicing
           column invoiceNumber label "Invoice"
           column dueDate       label "Due"
           column status        label "Status"
-        action RequestPaymentPlan
-          navigate to RequestPaymentPlanScreen
+        section requestPaymentPlanInput
+          title "Pay in installments"
+          on click
+            navigate to RequestPaymentPlanScreen
         on event InvoiceMarkedOverdue
           notify warning $strings.portal.overdueNotice
 

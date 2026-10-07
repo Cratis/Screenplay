@@ -6498,14 +6498,30 @@
                       }
                     },
                     {
-                      "kind": "ScreenActionSyntax",
-                      "command": "ProcessInvoiceBatch",
-                      "label": null,
-                      "navigate": {
-                        "kind": "ScreenNavigateSyntax",
-                        "by": null,
-                        "screen": "ProcessInvoiceBatchScreen"
-                      }
+                      "kind": "ScreenSectionSyntax",
+                      "directives": [
+                        {
+                          "kind": "ScreenTitleSyntax",
+                          "text": "Process a batch"
+                        },
+                        {
+                          "kind": "ScreenBehaviorSyntax"
+                        }
+                      ],
+                      "name": "processInvoiceBatchInput"
+                    },
+                    {
+                      "kind": "ScreenSectionSyntax",
+                      "directives": [
+                        {
+                          "kind": "ScreenTitleSyntax",
+                          "text": "Start invoice draft"
+                        },
+                        {
+                          "kind": "ScreenBehaviorSyntax"
+                        }
+                      ],
+                      "name": "startInvoiceDraftInput"
                     },
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
@@ -6515,14 +6531,17 @@
                           "kind": "ScreenSlotSyntax",
                           "directives": [
                             {
-                              "kind": "ScreenActionSyntax",
-                              "command": "ArchiveOldInvoices",
-                              "label": null,
-                              "navigate": {
-                                "kind": "ScreenNavigateSyntax",
-                                "by": null,
-                                "screen": "ArchiveOldInvoicesScreen"
-                              }
+                              "kind": "ScreenSectionSyntax",
+                              "directives": [
+                                {
+                                  "kind": "ScreenTitleSyntax",
+                                  "text": "Archive old invoices"
+                                },
+                                {
+                                  "kind": "ScreenBehaviorSyntax"
+                                }
+                              ],
+                              "name": "archiveOldInvoicesInput"
                             },
                             {
                               "kind": "ScreenSectionSyntax",
@@ -7434,34 +7453,43 @@
                                   }
                                 },
                                 {
-                                  "kind": "ScreenActionSyntax",
-                                  "command": "CancelInvoice",
-                                  "label": null,
-                                  "navigate": {
-                                    "kind": "ScreenNavigateSyntax",
-                                    "by": null,
-                                    "screen": "CancelInvoiceScreen"
-                                  }
+                                  "kind": "ScreenSectionSyntax",
+                                  "directives": [
+                                    {
+                                      "kind": "ScreenTitleSyntax",
+                                      "text": "$strings.invoices.actions.cancel"
+                                    },
+                                    {
+                                      "kind": "ScreenBehaviorSyntax"
+                                    }
+                                  ],
+                                  "name": "cancelInvoiceInput"
                                 },
                                 {
-                                  "kind": "ScreenActionSyntax",
-                                  "command": "TagInvoice",
-                                  "label": null,
-                                  "navigate": {
-                                    "kind": "ScreenNavigateSyntax",
-                                    "by": null,
-                                    "screen": "TagInvoiceScreen"
-                                  }
+                                  "kind": "ScreenSectionSyntax",
+                                  "directives": [
+                                    {
+                                      "kind": "ScreenTitleSyntax",
+                                      "text": "Tag invoice"
+                                    },
+                                    {
+                                      "kind": "ScreenBehaviorSyntax"
+                                    }
+                                  ],
+                                  "name": "tagInvoiceInput"
                                 },
                                 {
-                                  "kind": "ScreenActionSyntax",
-                                  "command": "UpdateBillingContact",
-                                  "label": null,
-                                  "navigate": {
-                                    "kind": "ScreenNavigateSyntax",
-                                    "by": null,
-                                    "screen": "UpdateBillingContactScreen"
-                                  }
+                                  "kind": "ScreenSectionSyntax",
+                                  "directives": [
+                                    {
+                                      "kind": "ScreenTitleSyntax",
+                                      "text": "Billing contact"
+                                    },
+                                    {
+                                      "kind": "ScreenBehaviorSyntax"
+                                    }
+                                  ],
+                                  "name": "updateBillingContactInput"
                                 }
                               ],
                               "name": "actions"
@@ -12091,14 +12119,17 @@
                       "target": "CustomerInvoiceReadModel"
                     },
                     {
-                      "kind": "ScreenActionSyntax",
-                      "command": "RequestPaymentPlan",
-                      "label": null,
-                      "navigate": {
-                        "kind": "ScreenNavigateSyntax",
-                        "by": null,
-                        "screen": "RequestPaymentPlanScreen"
-                      }
+                      "kind": "ScreenSectionSyntax",
+                      "directives": [
+                        {
+                          "kind": "ScreenTitleSyntax",
+                          "text": "Pay in installments"
+                        },
+                        {
+                          "kind": "ScreenBehaviorSyntax"
+                        }
+                      ],
+                      "name": "requestPaymentPlanInput"
                     },
                     {
                       "kind": "ScreenBehaviorSyntax"
