@@ -53,7 +53,11 @@ internal static class PlayApplicationAssembly
 
         // Resolution owns its import inventory; share one discovery between the presentation passes.
         var imports = documents.ToDictionary(document => document.Path, document => ScreenplayCompiler.DiscoverImports(document.Source, document.Path, languages), StringComparer.Ordinal);
-        var syntax = documents.Select((document, index) => (document.Path, parsed[index].Value!)).ToDictionary(entry => entry.Path, entry => entry.Item2, StringComparer.Ordinal);
+
+        // A caller's compiler may fail a document without a tree; authored order then parses that document itself.
+        var syntax = documents.Zip(parsed)
+            .Where(pair => pair.Second.Value is not null)
+            .ToDictionary(pair => pair.First.Path, pair => pair.Second.Value!, StringComparer.Ordinal);
         var orderingRoot = OrderingRoot.Select(rootPaths, documents, languages, imports);
         var timeline = orderingRoot is not null && merged.Value is { } application
             ? TimelineOrder.In(application, AuthoredOrder.Record([orderingRoot], documents, languages, syntax, imports))

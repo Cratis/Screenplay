@@ -28,7 +28,7 @@ internal static class AuthoredOrder
         var files = documents.ToDictionary(document => document.Path, StringComparer.Ordinal);
         var own = documents.Where(document => document.IsPlacementResolved).ToDictionary(
             document => document.Path,
-            document => Declarations(parsed is not null ? parsed[document.Path] : ScreenplayCompiler.ParsePlaced(document.Source, document.Path, document.Placement, languages).Value!).ToArray(),
+            document => Declarations(parsed?.GetValueOrDefault(document.Path) ?? ScreenplayCompiler.ParsePlaced(document.Source, document.Path, document.Placement, languages).Value!).ToArray(),
             StringComparer.Ordinal);
         var owners = ContainerOwners(own, roots.Select(PlayGlob.Normalize).ToHashSet(StringComparer.Ordinal));
         var explicitDeclarations = own.Values.SelectMany(declarations => declarations).Where(declaration => !declaration.Implicit).Select(declaration => Key(declaration.Scope)).ToHashSet(StringComparer.Ordinal);
