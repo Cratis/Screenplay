@@ -172,8 +172,10 @@ compilation retains alphabetical file-path order for merging; import order suppl
 presentation ranks separately, as described above. Wildcard matches remain ordered
 by path. `expand-layout` uses those presentation ranks when writing child imports,
 so repeated expansion preserves the authored module, feature and slice order without
-changing merge precedence or event ownership. An import-less `application.play`
-keeps path order.
+changing merge precedence or event ownership. Expansion uses the timeline's
+ordering-root selection, including a lone importing barrel beside an import-less
+`application.play`. With no ordering root, it uses path order. Folder layouts
+written without imports by `IPlayFileWriter.Expand` still compile in path order.
 
 ## See also
 

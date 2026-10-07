@@ -138,7 +138,7 @@ internal sealed partial class McpWorkspaces
             return McpJson.ToolResult(new { success = false, failureKind = "ProposalRejected", transaction.Conflicts, transaction.Diagnostics }, true);
         }
 
-        return Store(new McpProposal(workspace, transaction), arguments);
+        return Store(new McpProposal(workspace, transaction), arguments, expand);
     }
 
     internal object Apply(JsonElement arguments)
@@ -251,7 +251,7 @@ internal sealed partial class McpWorkspaces
         return false;
     }
 
-    object Store(IMcpProposal proposal, JsonElement arguments)
+    object Store(IMcpProposal proposal, JsonElement arguments, bool layout = false)
     {
         BeforeStore?.Invoke();
         var pinned = McpJson.Boolean(arguments, "pinRepairEvidence");
@@ -301,7 +301,8 @@ internal sealed partial class McpWorkspaces
             changes = includeContent ? proposal.WritePlan.Entries.Select(DescribeChange) : null,
             introducedExecutableErrors = introducedErrors,
             executableGuidance = introducedErrors.Count == 0 ? null : McpIntroducedErrors.Guidance,
-            review = "Use read-proposal to inspect the complete plan, any dropped comments, and exact before/after bytes before apply."
+            review = (layout && WorkspaceTimelineRepairs.Timeline(proposal.Before).Root is null ? "No ordering root was found; path order was used. " : string.Empty) +
+                "Use read-proposal to inspect the complete plan, any dropped comments, and exact before/after bytes before apply."
         };
         var response = McpJson.ToolResult(result);
         _proposals.Add(id, proposal);

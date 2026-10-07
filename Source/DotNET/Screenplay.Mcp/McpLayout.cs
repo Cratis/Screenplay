@@ -30,6 +30,13 @@ static class McpLayout
             throw new McpFailure("Layout expansion failed the syntax round-trip check; no proposal was created.");
         }
 
+        var texts = expanded.ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal);
+        PlayApplicationAssembly.Compile(new ScreenplayCompiler(), texts.Keys, new InMemoryPlayDocumentSource(texts), ScreenplayLanguageRegistry.Default, out var timeline);
+        if (!KeepsAuthoredOrder(WorkspaceTimelineRepairs.Timeline(workspace), timeline))
+        {
+            throw new McpFailure("Layout expansion would change authored module, feature, or slice order; no proposal was created.");
+        }
+
         var existing = workspace.Documents.ToDictionary(document => document.Path.Value, StringComparer.Ordinal);
         var newPaths = expanded.Select(document => document.Path.Value).ToHashSet(StringComparer.Ordinal);
         var operations = ImmutableArray.CreateBuilder<WorkspaceOperation>();
@@ -44,7 +51,52 @@ static class McpLayout
         return operations.ToImmutable();
     }
 
-    // Layouts preserve the board's authored sibling order without changing path-ordered compilation.
+    internal static bool KeepsAuthoredOrder(ScreenplayWorkspace before, ScreenplayWorkspace after) =>
+        KeepsAuthoredOrder(WorkspaceTimelineRepairs.Timeline(before), WorkspaceTimelineRepairs.Timeline(after));
+
+    static bool KeepsAuthoredOrder(AuthoredTimeline before, AuthoredTimeline after)
+    {
+        if (before.Root is null) return true;
+        if (after.Root is null || before.Application is null || after.Application is null) return false;
+        var previous = SiblingSequences(before);
+        var current = SiblingSequences(after);
+
+        return previous.Count == current.Count && previous.All(sequence =>
+            current.TryGetValue(sequence.Key, out var children) && sequence.Value.SequenceEqual(children));
+    }
+
+    // Global ranks can shift when containers move between files. Compare only each collection's
+    // relative sibling order, folding split containers and duplicate names at their first occurrence.
+    static Dictionary<string, string[]> SiblingSequences(AuthoredTimeline timeline)
+    {
+        var sequences = new Dictionary<string, string[]>(StringComparer.Ordinal);
+        void Add(string kind, string[] scope, IEnumerable<string> names)
+        {
+            var children = names.Distinct(StringComparer.Ordinal).Select(name => AuthoredOrder.Key(scope.Append(name)))
+                .OrderBy(key => timeline.Ranks.GetValueOrDefault(key, int.MaxValue));
+            sequences.Add($"{kind}:{AuthoredOrder.Key(scope)}", [.. children]);
+        }
+
+        void Features(IEnumerable<FeatureSyntax> features, string[] scope)
+        {
+            var items = features.ToArray();
+            Add("features", scope, items.Select(feature => feature.Name));
+            foreach (var group in items.GroupBy(feature => feature.Name, StringComparer.Ordinal))
+            {
+                string[] child = [.. scope, group.Key];
+                Add("slices", child, group.SelectMany(feature => feature.Slices).Select(slice => slice.Name));
+                Features(group.SelectMany(feature => feature.Features), child);
+            }
+        }
+
+        var modules = timeline.Application!.Modules.ToArray();
+        Add("modules", [], modules.Select(module => module.Name));
+        foreach (var group in modules.GroupBy(module => module.Name, StringComparer.Ordinal)) Features(group.SelectMany(module => module.Features), [group.Key]);
+
+        return sequences;
+    }
+
+    // Layouts preserve the timeline's authored sibling order without changing path-ordered compilation.
     static ApplicationSyntax InPresentationOrder(ApplicationSyntax application, ImmutableArray<WorkspaceDocument> documents)
     {
         var languages = ScreenplayLanguageRegistry.Default;
@@ -52,9 +104,7 @@ static class McpLayout
             .ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal);
         var (placed, _) = PlayImports.Resolve(texts.Keys, new InMemoryPlayDocumentSource(texts), languages);
         var imports = placed.ToDictionary(document => document.Path, document => ScreenplayCompiler.DiscoverImports(document.Source, document.Path, languages), StringComparer.Ordinal);
-        var root = imports.TryGetValue("application.play", out var applicationImports) && applicationImports.Count == 0
-            ? null
-            : OrderingRoot.Select([.. texts.Keys], placed, languages, imports);
+        var root = OrderingRoot.Select([.. texts.Keys], placed, languages, imports);
         if (root is null) return application;
         var ranks = AuthoredOrder.Record([root], placed, languages, imports: imports);
 
