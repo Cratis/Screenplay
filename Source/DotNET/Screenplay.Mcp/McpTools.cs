@@ -127,6 +127,7 @@ sealed class McpTools
             "search-declarations" => McpModelQueries.Search(snapshot, arguments),
             "declaration-details" => McpDeclarationDetails.Read(snapshot, arguments),
             "dependencies" => McpDependencyQueries.Read(snapshot, arguments),
+            "dependency-graph" => McpDependencyGraphQueries.Read(snapshot, arguments),
             "find-declaration" => McpModelQueries.Find(snapshot, arguments),
             "find-references" => McpDependencyQueries.Legacy(snapshot, arguments),
             "recommend-layout" => McpLayoutRecommendation.Describe(snapshot, documents),

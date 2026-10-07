@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using Cratis.Screenplay.Dependencies;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Languages;
 using Cratis.Screenplay.Syntax;
@@ -16,6 +17,8 @@ sealed class McpSnapshot : IPlayFiles
     readonly McpAnalysisCompiler _compiler;
     readonly Lazy<CompilationResult<ApplicationSyntax>> _compilation;
     readonly Lazy<McpSyntaxIndex> _index;
+    readonly Lazy<DependencyGraph> _dependencyGraph;
+    AuthoredTimeline _timeline = null!;
 
     internal McpSnapshot(ImmutableArray<WorkspaceDocument> documents)
         : this(documents, ScreenplayLanguageRegistry.Default)
@@ -28,13 +31,27 @@ sealed class McpSnapshot : IPlayFiles
         _documents = documents;
         _documentsByPath = documents.ToDictionary(document => document.Path.Value, StringComparer.Ordinal);
         SourceRevision = McpSourceRevision.For(documents);
-        _compilation = new(() => new PlayFileCompiler(this, _compiler).CompileFolder(".").Result);
+        _compilation = new(() =>
+        {
+            var source = new DiskPlayDocumentSource(this, ".");
+            var (_, result) = PlayApplicationAssembly.Compile(_compiler, source.FilesBeneath(string.Empty), source, _compiler.Languages, out _timeline);
+
+            return result;
+        });
         _index = new(CreateIndex);
+        _dependencyGraph = new(() =>
+        {
+            _ = Compilation;
+
+            return DependencyGraph.For(_timeline);
+        });
     }
 
     internal CompilationResult<ApplicationSyntax> Compilation => _compilation.Value;
 
     internal McpSyntaxIndex Index => _index.Value;
+
+    internal DependencyGraph DependencyGraph => _dependencyGraph.Value;
 
     internal bool IsCompilationCreated => _compilation.IsValueCreated;
 
