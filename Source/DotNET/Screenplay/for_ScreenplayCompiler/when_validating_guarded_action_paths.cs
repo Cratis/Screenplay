@@ -11,6 +11,7 @@ public class when_validating_guarded_action_paths
         """
         type Attempt
           status String
+          ids Uuid[]
         module Work
           feature Items
             slice StateView Details
@@ -37,6 +38,10 @@ public class when_validating_guarded_action_paths
     [InlineData("data Item via query ItemDetails\naction \"Again\"\n  when item.status == null execute Retry\n    with ids from item.attempts.status", DiagnosticCodes.UnknownActionSubjectField)]
     [InlineData("data Item via query ItemDetails\naction \"Again\"\n  when item.status == null execute Retry\n  otherwise execute Retry\n    with ids from item.ids.value", DiagnosticCodes.UnknownActionSubjectField)]
     [InlineData("data Item via query ItemDetails\naction \"Again\"\n  when item.status == null execute Retry\n    with itemId from item.missing", DiagnosticCodes.UnknownActionSubjectField)]
+    [InlineData("data Item via query ItemDetails\naction \"Again\"\n  when item.status == null execute Retry\n    with itemId from item.ids", DiagnosticCodes.UnknownActionArgumentProperty)]
+    [InlineData("data Item via query ItemDetails\naction \"Again\"\n  when item.status == null execute Retry\n    with ids from item.itemId", DiagnosticCodes.UnknownActionArgumentProperty)]
+    [InlineData("data Item via query ItemDetails\naction \"Again\"\n  when item.status == null execute Retry\n  otherwise execute Retry\n    with itemId from item.attempt.ids", DiagnosticCodes.UnknownActionArgumentProperty)]
+    [InlineData("data Item via query ItemDetails\naction \"Again\"\n  when item.status == null execute Retry\n  otherwise execute Retry\n    with ids from item.itemId", DiagnosticCodes.UnknownActionArgumentProperty)]
     [InlineData("data Item via query ItemDetails\naction \"Again\"\n  when item.status == null execute Retry\n    with missing from item.itemId", DiagnosticCodes.UnknownActionArgumentProperty)]
     [InlineData("data Item via query ItemDetails\naction \"Again\"\n  when item.status == null execute Retry\n  otherwise execute Retry\n    with missing from item.itemId", DiagnosticCodes.UnknownActionArgumentProperty)]
     [InlineData("data Item via query ItemDetails\naction \"Again\"\n  when item.status == null execute Unknown", DiagnosticCodes.UnknownCommand)]
@@ -58,6 +63,7 @@ public class when_validating_guarded_action_paths
     [InlineData("data Item via query ItemDetails\nsection actions\n  data Item via query ItemDetails\n  action \"Again\"\n    when item.status == \"failed\" execute Retry")]
     [InlineData("data Item via query ItemDetails\naction \"Again\"\n  when item.status == \"failed\" execute Retry\n    with ids from item.ids")]
     [InlineData("data Item via query ItemDetails\naction \"Again\"\n  when item.status == \"failed\" execute Retry\n  otherwise execute Retry\n    with ids from item.ids")]
+    [InlineData("data Item via query ItemDetails\naction \"Again\"\n  when item.status == \"failed\" execute Retry\n    with ids from item.attempt.ids")]
     public void should_resolve_single_selected_and_nearest_items(string directives) => Compile(directives).Diagnostics.ShouldBeEmpty();
 
     static CompilationResult<Syntax.ApplicationSyntax> Compile(string directives) => new ScreenplayCompiler().Compile(Declarations + "\n        " + directives.Replace("\n", "\n        ", StringComparison.Ordinal));

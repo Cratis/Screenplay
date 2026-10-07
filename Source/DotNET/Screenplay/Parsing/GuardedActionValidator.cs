@@ -93,16 +93,21 @@ internal static class GuardedActionValidator
         var command = declarations.Resolve(commandName, scope, slice => slice.Commands, command => command.Name)?.Node;
         foreach (var argument in arguments)
         {
-            if (command?.Properties.Any(property => property.Name == argument.Name) is false)
+            var inputs = command?.Properties.Where(property => property.Name == argument.Name).ToArray();
+            if (inputs is { Length: 0 })
             {
                 context.Warning(DiagnosticCodes.UnknownActionArgumentProperty, $"Command '{commandName}' has no argument property '{argument.Name}'", argument.Location);
             }
 
-            ValidateItemPath(argument.Binding, argument.Location, subjectProperties, scope, declarations, context, allowTerminalCollection: true);
+            var subjectProperty = ValidateItemPath(argument.Binding, argument.Location, subjectProperties, scope, declarations, context, allowTerminalCollection: true);
+            if (inputs is { Length: 1 } && subjectProperty is not null && inputs[0].Type.IsCollection != subjectProperty.Type.IsCollection)
+            {
+                context.Warning(DiagnosticCodes.UnknownActionArgumentProperty, $"Command argument '{commandName}.{argument.Name}' and subject field '{argument.Binding}' must have matching collection cardinality", argument.Location);
+            }
         }
     }
 
-    static void ValidateItemPath(
+    static PropertySyntax? ValidateItemPath(
         string path,
         SourceLocation location,
         IEnumerable<PropertySyntax>? properties,
@@ -111,7 +116,7 @@ internal static class GuardedActionValidator
         ParserContext context,
         bool allowTerminalCollection = false)
     {
-        if (!path.StartsWith("item.", StringComparison.Ordinal) || properties is null) return;
+        if (!path.StartsWith("item.", StringComparison.Ordinal) || properties is null) return null;
         var segments = path["item.".Length..].Split('.');
         for (var index = 0; index < segments.Length; index++)
         {
@@ -119,10 +124,11 @@ internal static class GuardedActionValidator
             if (matches.Length == 0 || (matches.Length == 1 && matches[0].Type.IsCollection && (!allowTerminalCollection || index < segments.Length - 1)))
             {
                 context.Warning(DiagnosticCodes.UnknownActionSubjectField, $"Unknown or collection-valued subject field '{path}' - guarded actions require an item field path", location);
-                return;
+                return null;
             }
 
-            if (matches.Length != 1 || index == segments.Length - 1) return;
+            if (matches.Length != 1) return null;
+            if (index == segments.Length - 1) return matches[0];
             var type = matches[0].Type;
             properties = declarations.TypeProperties(type.Name) ?? declarations.ViewProperties(type.Name, scope);
             if (properties is null)
@@ -133,9 +139,11 @@ internal static class GuardedActionValidator
                     context.Warning(DiagnosticCodes.UnknownActionSubjectField, $"Subject field '{path}' continues past scalar '{segments[index]}'", location);
                 }
 
-                return;
+                return null;
             }
         }
+
+        return null;
     }
 
     static IEnumerable<ComparisonConditionSyntax> Comparisons(ConditionSyntax condition) => condition switch

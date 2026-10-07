@@ -743,7 +743,7 @@ A behavior is *deferred* from the backend ESM v1 profile in the same way every o
 | `PLAY0345` | Warning | An item path in a guarded action condition or input binding names no subject field, continues past a scalar, or crosses a collection-valued field. |
 | `PLAY0346` | Warning | A guarded action has no nearest `data` subject, or multiple data directives tie in its nearest container. Field checks are skipped until the subject resolves. |
 | `PLAY0347` | Warning | Earlier alternatives provably shadow an alternative. Guards use first-match order; proof uses DNF comparison-set inclusion with a 64-disjunct expansion cap. Overlap alone is not reported. |
-| `PLAY0348` | Warning | A guarded alternative or `otherwise execute` supplies a `with` argument the chosen command does not declare. |
+| `PLAY0348` | Warning | A guarded alternative or `otherwise execute` supplies a `with` argument the chosen command does not declare, or binds a subject field whose collection cardinality differs from the command input. |
 
 An inline `on` block is an anonymous behavior, so it has no name to report against. Diagnostics inside one cite the position and the trigger instead.
 

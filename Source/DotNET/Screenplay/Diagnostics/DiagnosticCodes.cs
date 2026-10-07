@@ -1836,7 +1836,7 @@ public static class DiagnosticCodes
     public const string UnreachableActionAlternative = "PLAY0347";
 
     /// <summary>
-    /// An explicit action argument names no property of the chosen command.
+    /// An explicit action argument names no property of the chosen command or has mismatched collection cardinality.
     /// </summary>
     public const string UnknownActionArgumentProperty = "PLAY0348";
 
