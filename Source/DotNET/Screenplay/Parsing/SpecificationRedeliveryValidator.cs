@@ -25,14 +25,18 @@ internal static class SpecificationRedeliveryValidator
                     trigger.Source is NamedTriggerSourceSyntax named && ReferenceEquals(declarations.Event(named.Name, resolved.Scope), @event)))
                 {
                     context.Error(DiagnosticCodes.UnknownRedeliveryReaction, $"Reaction '{action.Reaction}' must resolve unambiguously and observe event '{action.EventType}'.", action.Location);
+                    continue;
                 }
 
-                SpecificationValueConsistencyValidator.ValidateValues(action.Values, @event?.Properties, declarations, context);
-                var matches = specification.Given.Count(given => @event is not null && ReferenceEquals(declarations.Event(given.EventType, scope), @event) &&
-                    (action.For is null || (given.For is not null && SameValue(action.For, given.For, null, declarations))) &&
-                    action.Values.All(locator => given.Values.Where(value => value.Property == locator.Property).ToArray() is [var value] &&
-                        SameValue(locator.Source, value.Source, declarations.Property(@event.Properties, locator.Property, out _)?.Type, declarations)));
-                if (matches != 1)
+                SpecificationValueConsistencyValidator.ValidateValues(action.Values, @event.Properties, declarations, context);
+                var candidates = specification.Given.Where(given => ReferenceEquals(declarations.Event(given.EventType, scope), @event))
+                    .Select(given => Matches(given, action, @event, declarations)).ToArray();
+                var matches = candidates.Count(match => match == true);
+                if (matches < 2 && candidates.Any(match => match is null))
+                {
+                    context.Error(DiagnosticCodes.UnmatchedRedeliveredOccurrence, $"Cannot locate redelivery of '{action.EventType}' uniquely: a given source or locator value is not decidable; state explicit concrete 'for' and values.", action.Location);
+                }
+                else if (matches != 1)
                 {
                     context.Error(DiagnosticCodes.UnmatchedRedeliveredOccurrence, $"Redelivery of '{action.EventType}' matches {matches} given occurrences; use 'for' or values to identify exactly one.", action.Location);
                 }
@@ -40,12 +44,30 @@ internal static class SpecificationRedeliveryValidator
         }
     }
 
-    static bool SameValue(ExpressionSyntax left, ExpressionSyntax right, TypeRefSyntax? type, ConsistencyDeclarations declarations)
+    static bool? Matches(SpecificationEventSyntax given, SpecificationRedeliverySyntax action, EventSyntax @event, ConsistencyDeclarations declarations)
+    {
+        // Binding retains a null source for a given without 'for'; the producer supplies its type,
+        // not a concrete identity. Do not invent a destination or count an undecidable locator as zero.
+        var comparisons = new List<bool?>();
+        if (action.For is not null) comparisons.Add(given.For is null ? null : SameValue(action.For, given.For, null, declarations));
+        foreach (var locator in action.Values)
+        {
+            comparisons.Add(given.Values.Where(value => value.Property == locator.Property).ToArray() is [var value]
+                ? SameValue(locator.Source, value.Source, declarations.Property(@event.Properties, locator.Property, out _)?.Type, declarations)
+                : null);
+        }
+
+        if (comparisons.Contains(false)) return false;
+
+        return comparisons.Contains(null) ? null : true;
+    }
+
+    static bool? SameValue(ExpressionSyntax left, ExpressionSyntax right, TypeRefSyntax? type, ConsistencyDeclarations declarations)
     {
         if (!SpecificationValueConsistencyValidator.TryValue(left, type, declarations, out var first) ||
             !SpecificationValueConsistencyValidator.TryValue(right, type, declarations, out var second))
         {
-            return false;
+            return null;
         }
 
         return first is ExactNumber || second is ExactNumber ? ExactMathFacts.Equal(first, second) : Equals(first, second);
