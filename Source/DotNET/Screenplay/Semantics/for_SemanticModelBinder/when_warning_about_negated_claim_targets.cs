@@ -19,6 +19,12 @@ public class when_warning_about_negated_claim_targets : given.a_semantic_binder
     [Fact] void should_not_warn_about_a_positive_optional_target() => Quiet("claim \"owner\" matches owner", "String optional");
     [Fact] void should_not_warn_about_an_unnegated_claim_next_to_not() => Quiet("not role \"Service\" and claim \"owner\" matches owner", "String optional");
     [Fact] void should_not_warn_about_a_text_subject() => Quiet("not claim \"owner\" matches subject", "String identifier");
+    [Fact] void should_not_warn_about_a_uuid_subject() => Quiet("not claim \"owner\" matches subject", "Uuid identifier");
+    [Fact] void should_not_warn_about_a_uuid_concept_subject() => Quiet("not claim \"owner\" matches subject", "Owner identifier", declarations: "concept Owner : Uuid");
+    [Fact] void should_not_warn_about_a_date_target() => Quiet("not claim \"owner\" matches owner", "Date");
+    [Fact] void should_not_warn_about_a_datetime_target() => Quiet("not claim \"owner\" matches owner", "DateTime");
+    [Fact] void should_not_warn_about_a_date_concept_target() => Quiet("not claim \"owner\" matches owner", "Owner", declarations: "concept Owner : Date");
+    [Fact] void should_not_warn_about_a_datetime_concept_target() => Quiet("not claim \"owner\" matches owner", "Owner", declarations: "concept Owner : DateTime");
     [Fact] void should_not_warn_about_a_string_concept() => Quiet("not claim \"owner\" matches owner", "Owner", declarations: "concept Owner : String");
     [Fact] void should_warn_about_a_numeric_concept() => Warns("not claim \"owner\" matches owner", "Owner", declarations: "concept Owner : Int");
     [Fact] void should_warn_about_an_optional_parent() => Warns("not claim \"owner\" matches owner.name", "Owner optional", declarations: "type Owner\n  name String");
@@ -43,6 +49,28 @@ public class when_warning_about_negated_claim_targets : given.a_semantic_binder
             """);
         Assert.True(result.Success, string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
         result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.IndeterminateNegatedClaimTarget).ShouldBeEmpty();
+    }
+
+    [Fact]
+    void should_warn_once_about_a_module_policy_shared_by_two_commands()
+    {
+        var result = Bind("""
+            policy Access
+              require not claim "owner" matches owner
+            module Portal
+              authorize Access
+              feature Reports
+                slice StateChange FileReport
+                  command FileReport
+                    owner String optional
+                  command ReviseReport
+                    owner String optional
+            """);
+        Assert.True(result.Success, string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
+        var warning = result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.IndeterminateNegatedClaimTarget);
+        warning.Location.Line.ShouldEqual(4);
+        warning.Message.ShouldContain("Policy 'Access'");
+        warning.Message.ShouldContain("target 'owner' can be absent or null");
     }
 
     void Warns(string condition, string type, string identifier = "", string declarations = "")

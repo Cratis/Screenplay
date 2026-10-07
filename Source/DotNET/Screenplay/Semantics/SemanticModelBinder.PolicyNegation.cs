@@ -10,6 +10,8 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        readonly HashSet<(string Code, SourceLocation Location, string Reason)> _negatedClaimWarnings = [];
+
         static IEnumerable<ClaimConditionSyntax> NegatedClaims(PolicyConditionSyntax? condition, bool underNot = false) => condition switch
         {
             ClaimConditionSyntax claim when underNot => [claim],
@@ -30,10 +32,12 @@ public sealed partial class SemanticModelBinder
                 };
                 if (reason is not null)
                 {
-                    Warning(
-                        DiagnosticCodes.IndeterminateNegatedClaimTarget,
-                        $"Policy '{policy.Name}' negates claim '{claim.Claim}' whose comparison target {reason}. An undecidable target stays unknown under 'not'; a final unknown policy result denies access.",
-                        location);
+                    var target = claim.MatchesSubject ? "subject" : ((PathExpressionSyntax)claim.Matches!).Path;
+                    var message = $"Policy '{policy.Name}' negates claim '{claim.Claim}' whose comparison target '{target}' {reason}. An undecidable target stays unknown under 'not'; a final unknown policy result denies access.";
+                    if (_negatedClaimWarnings.Add((DiagnosticCodes.IndeterminateNegatedClaimTarget, location, message)))
+                    {
+                        Warning(DiagnosticCodes.IndeterminateNegatedClaimTarget, message, location);
+                    }
                 }
             }
         }
@@ -68,10 +72,16 @@ public sealed partial class SemanticModelBinder
         {
             if (optional) return "can be absent or null";
             if (type.IsCollection || type.Kind == SemanticTypeReferenceKind.CompositeType) return "is not a scalar text type";
-            var primitive = type.Kind == SemanticTypeReferenceKind.Concept
-                ? syntax.Concepts.Single(concept => _concepts[concept.Name].Id == type.Target).Type
+            var concept = type.Kind == SemanticTypeReferenceKind.Concept
+                ? syntax.Concepts.Single(concept => _concepts[concept.Name].Id == type.Target)
                 : null;
-            var text = type.Kind == SemanticTypeReferenceKind.Primitive ? type.Primitive == SemanticPrimitiveType.Text : string.Equals(primitive, "String", StringComparison.Ordinal) || string.Equals(primitive, "Enum", StringComparison.Ordinal);
+            var primitive = concept switch
+            {
+                { IsEnum: true } => SemanticPrimitiveType.Text,
+                not null => Primitive(concept.Type),
+                _ => type.Primitive
+            };
+            var text = primitive is SemanticPrimitiveType.Text or SemanticPrimitiveType.Uuid or SemanticPrimitiveType.Date or SemanticPrimitiveType.DateTime;
 
             return text ? null : "is not a string type";
         }
