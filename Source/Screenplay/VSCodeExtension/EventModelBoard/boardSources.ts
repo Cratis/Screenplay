@@ -3,7 +3,7 @@
 
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { ApplicationSyntax, CompilationResult, compileApplication, parse, PlayFileSource, recordAuthoredOrder } from '@cratis/screenplay-compiler';
+import { ApplicationSyntax, CompilationResult, compileApplication, parse, PlayFileSource } from '@cratis/screenplay-compiler';
 import { fileImports } from '@cratis/screenplay-language';
 import { compileEventModelApplication } from '@cratis/screenplay-event-models';
 import { applicationFileName, findApplicationRoot } from './ApplicationRoot';
@@ -41,7 +41,6 @@ export async function compileForBoard(document: vscode.TextDocument): Promise<Bo
         documents.set(path.basename(document.uri.fsPath), document.getText());
         const rootFile = path.basename(document.uri.fsPath);
         const result = compileApplication(documents, [rootFile]);
-        recordAuthoredOrder(result.value, [rootFile], result.documents);
         return { name, result };
     }
     const rootUri = vscode.Uri.file(root);

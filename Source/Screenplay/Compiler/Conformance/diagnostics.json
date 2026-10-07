@@ -2,6 +2,78 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "A backward reference finds a command inline event",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView View", "      projection P", "        from E", "    slice StateChange Write", "      command Write", "        produces event E"],
+            "diagnostics": ["PLAY0516@5"]
+        },
+        {
+            "name": "A cycle includes a command inline event",
+            "validate": true,
+            "source": ["module A", "  feature F", "    slice Automation First", "      command WriteA", "        produces event EA", "      reaction RA", "        when EB", "module B", "  feature F", "    slice Automation Second", "      command WriteB", "        produces event EB", "      reaction RB", "        when EA"],
+            "diagnostics": ["PLAY0517@7"]
+        },
+        {
+            "name": "A slice and its same named sibling feature are distinct timeline children",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView Child", "      projection P", "        from E", "    feature Child", "      slice StateChange Write", "        event E"],
+            "diagnostics": ["PLAY0516@5"]
+        },
+        {
+            "name": "Same named slice and feature remain distinct cycle graph members",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView Child", "      event Own", "      projection P", "        from E", "    feature Child", "      slice StateView Write", "        event E", "        projection Other", "          from Own"],
+            "diagnostics": ["PLAY0517@6"]
+        },
+        {
+            "name": "A three-member cycle suppresses only its internal backward edges",
+            "validate": true,
+            "source": ["module A", "  feature F", "    slice StateView SA", "      event EA", "      projection PA", "        from EB", "        from ED", "module B", "  feature F", "    slice StateView SB", "      event EB", "      projection PB", "        from EC", "module C", "  feature F", "    slice StateView SC", "      event EC", "      projection PC", "        from EA", "module D", "  feature F", "    slice StateChange SD", "      event ED"],
+            "diagnostics": ["PLAY0517@6", "PLAY0516@7"]
+        },
+        {
+            "name": "Timeline index precedes source line order for information emission",
+            "validate": true,
+            "source": ["module M", "  feature F", "    feature Child", "      slice StateView ChildView", "        projection ChildProjection", "          from E", "    slice StateView ParentView", "      projection ParentProjection", "        from E", "  feature Later", "    slice StateChange Write", "      event E"],
+            "diagnostics": ["PLAY0516@9", "PLAY0516@6"]
+        },
+        {
+            "name": "A state view uses an event from its right once at its first reference",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView View", "      projection P", "        from E", "        from E", "    slice StateChange Write", "      event E"],
+            "diagnostics": ["PLAY0516@5"]
+        },
+        {
+            "name": "A reaction uses an event from its right",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Automation React", "      reaction R", "        when E", "    slice StateChange Write", "      event E"],
+            "diagnostics": ["PLAY0516@5"]
+        },
+        {
+            "name": "Mutually dependent modules form one cycle group",
+            "validate": true,
+            "source": ["module A", "  feature F", "    slice StateView ViewA", "      event EA", "      projection PA", "        from EB", "module B", "  feature F", "    slice StateView ViewB", "      event EB", "      projection PB", "        from EA"],
+            "diagnostics": ["PLAY0517@6"]
+        },
+        {
+            "name": "Parent slices precede sub features irrespective of text order",
+            "validate": true,
+            "source": ["module M", "  feature F", "    feature Child", "      slice StateChange Write", "        event E", "    slice StateView View", "      projection P", "        from E"],
+            "diagnostics": ["PLAY0516@8"]
+        },
+        {
+            "name": "External and self produced events do not imply a backward timeline edge",
+            "validate": true,
+            "source": ["import Contracts.E", "module M", "  feature F", "    slice StateView View", "      event Own", "      projection P", "        from E", "        from Own"],
+            "diagnostics": []
+        },
+        {
+            "name": "An event produced on the left flows forward",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange Write", "      event E", "    slice StateView View", "      projection P", "        from E"],
+            "diagnostics": []
+        },
+        {
             "name": "Bare integer stream ids require a later formatting contract",
             "validate": true,
             "source": ["eventsource A", "  stream S", "    streamId Int"],

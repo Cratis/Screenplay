@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.for_ScreenplayPrinter;
@@ -30,8 +31,9 @@ public class when_printing_a_reaction_without_a_body : given.a_printer
 
     void Because() => _roundtrip = RoundTrip(Source);
 
-    [Fact] void should_compile_without_diagnostics() => _roundtrip.Original!.Diagnostics.ShouldBeEmpty();
-    [Fact] void should_reparse_without_diagnostics() => _roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_report_both_original_backward_trigger_references() => _roundtrip.Original!.Diagnostics.Select(diagnostic => $"{diagnostic.Code}@{diagnostic.Location.Line}").ShouldEqual("PLAY0516@6", "PLAY0516@7");
+    [Fact] void should_report_both_reprinted_backward_trigger_references() => _roundtrip.Reparsed.Diagnostics.Select(diagnostic => $"{diagnostic.Code}@{diagnostic.Location.Line}").ShouldEqual("PLAY0516@9", "PLAY0516@10");
+    [Fact] void should_report_only_information() => _roundtrip.Original!.Diagnostics.Concat(_roundtrip.Reparsed.Diagnostics).All(diagnostic => diagnostic.Severity == DiagnosticSeverity.Information).ShouldBeTrue();
     [Fact] void should_print_the_same_text_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldEqual(_roundtrip.Printed);
     [Fact] void should_print_the_reaction_description() => _roundtrip.Printed.ShouldContain("description \"Matches settled payments against outstanding invoices\"");
     [Fact] void should_print_the_trigger_description() => _roundtrip.Printed.ShouldContain("description \"Re-checks whether a late payment has since arrived\"");

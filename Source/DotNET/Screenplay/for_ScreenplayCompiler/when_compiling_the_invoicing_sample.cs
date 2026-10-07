@@ -21,7 +21,9 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     }
 
     [Fact] void should_succeed() => _result.Success.ShouldBeTrue();
-    [Fact] void should_warn_about_legacy_forms() => _result.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.OmittedProductionDestination).All(_ => _.Code == DiagnosticCodes.FileConstraintOnlySupportsUniqueness || _.Code == DiagnosticCodes.LegacyInlineCodeFence || _.Code == DiagnosticCodes.LegacyOptionalSuffix).ShouldBeTrue();
+    [Fact] void should_warn_about_legacy_forms() => _result.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.OmittedProductionDestination && diagnostic.Code != DiagnosticCodes.EventFromLaterSlice).All(_ => _.Code == DiagnosticCodes.FileConstraintOnlySupportsUniqueness || _.Code == DiagnosticCodes.LegacyInlineCodeFence || _.Code == DiagnosticCodes.LegacyOptionalSuffix).ShouldBeTrue();
+    [Fact] void should_report_exactly_the_backward_dashboard_reference() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.EventFromLaterSlice).Select(diagnostic => $"{diagnostic.Code}@{diagnostic.Location.Line}").ShouldEqual("PLAY0516@995");
+    [Fact] void should_report_the_dashboard_reference_as_information() => _result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.EventFromLaterSlice).Severity.ShouldEqual(DiagnosticSeverity.Information);
     [Fact] void should_have_the_domain() => _result.Value!.Domain!.Name.ShouldEqual("Sales");
     [Fact] void should_have_all_imports() => _result.Value!.Imports.Count().ShouldEqual(4);
     [Fact] void should_have_the_customer_import() => _result.Value!.Imports.Select(_ => _.Name).ShouldContain("CustomerRegistered");
