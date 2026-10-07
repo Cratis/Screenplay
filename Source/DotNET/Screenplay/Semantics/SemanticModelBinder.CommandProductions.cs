@@ -23,6 +23,22 @@ public sealed partial class SemanticModelBinder
 
         public override void VisitNode(SyntaxNode node)
         {
+            if (node is InvocationRefusalSyntax or RefusalExpressionSyntax or SpecificationRedeliverySyntax)
+            {
+                Diagnostics.Add(Diagnostic.Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    "Reaction refusal handling and redelivery are not admitted by any supported executable model (ESM) version yet (#433).",
+                    node.Location));
+            }
+
+            if (node is SpecificationSyntax { ThenNoEvents: true } specification)
+            {
+                Diagnostics.Add(Diagnostic.Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    "Explicit no-event assertions are not admitted by any supported executable model (ESM) version yet (#433).",
+                    specification.DirectiveLocations.GetValueOrDefault("then no events", specification.Location)));
+            }
+
             if (node is EventSourceSyntax or EventStreamSyntax or CommandStreamSyntax)
             {
                 Diagnostics.Add(Diagnostic.Error(

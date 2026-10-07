@@ -136,6 +136,18 @@ static class WorkspaceTriviaPrinter
         }
 
         var location = owner.Location;
+        if (owner is ConstraintSyntax namedConstraint && member == "name")
+        {
+            // Additional rules repeat their declaration's name without another authored token.
+            // Identical header patches coalesce, and the complete intended tree must still reparse.
+            var declaration = namedConstraint;
+            var additional = ownerPath.IndexOf("/additionalRules/", StringComparison.Ordinal);
+            if (additional >= 0 && originals.GetValueOrDefault(ownerPath[..additional]) is ConstraintSyntax root && root.Name == change.Before)
+            {
+                declaration = root;
+            }
+            if (!declaration.DirectiveLocations.TryGetValue("header", out location)) throw Unsupported(original, change.Path);
+        }
         if (owner is ConstraintSyntax constraint && member.StartsWith("releasedBy/", StringComparison.Ordinal))
         {
             var releases = constraint.ReleasedBy.ToArray();
@@ -152,7 +164,7 @@ static class WorkspaceTriviaPrinter
             throw Unsupported(original, change.Path);
         }
 
-        var spans = WorkspaceIdentifierSpans.Find(token.Text, change.Before!).ToArray();
+        var spans = WorkspaceIdentifierSpans.Find(owner, member, token.Text, change.Before!).ToArray();
         if (spans.Length != 1)
         {
             throw Unsupported(original, change.Path);

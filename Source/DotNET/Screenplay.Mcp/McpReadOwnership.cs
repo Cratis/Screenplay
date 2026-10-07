@@ -104,7 +104,17 @@ sealed class McpReadOwnership : ScreenplaySyntaxWalker
     public override void VisitCapture(CaptureSyntax syntax) => Owned(syntax, () => base.VisitCapture(syntax));
 
     /// <inheritdoc/>
-    public override void VisitConstraint(ConstraintSyntax syntax) => Owned(syntax, () => base.VisitConstraint(syntax));
+    public override void VisitConstraint(ConstraintSyntax syntax)
+    {
+        if (_owner is ConstraintSyntax)
+        {
+            base.VisitConstraint(syntax);
+        }
+        else
+        {
+            Owned(syntax, () => base.VisitConstraint(syntax));
+        }
+    }
 
     /// <inheritdoc/>
     public override void VisitSpecification(SpecificationSyntax syntax) => Owned(syntax, () => base.VisitSpecification(syntax));

@@ -72,8 +72,10 @@ internal static partial class SpecificationParser
         var givenReadModels = new List<SpecificationReadModelSyntax>();
         SpecificationCommandSyntax? when = null;
         SpecificationEventSyntax? whenAppended = null;
+        SpecificationRedeliverySyntax? whenRedelivered = null;
         var whenDeclared = false;
         var eventsInAnyOrder = false;
+        var thenNoEvents = false;
         SourceLocation? eventsInAnyOrderLocation = null;
         var thenEvents = new List<SpecificationEventSyntax>();
         var thenReadModels = new List<SpecificationReadModelSyntax>();
@@ -170,6 +172,10 @@ internal static partial class SpecificationParser
                     {
                         whenAppended = ParseEventReference(context, line, WhenAppendRegex(), "when append");
                     }
+                    else if (WhenRedeliveredPrefixRegex().IsMatch(line.Content))
+                    {
+                        whenRedelivered = ParseRedelivery(context, line);
+                    }
                     else if (KeywordRegex("when", "clock").IsMatch(line.Content))
                     {
                         whenClock = ParseClock(context, line, "when");
@@ -192,7 +198,26 @@ internal static partial class SpecificationParser
                     }
                     break;
                 case "then":
-                    if (ThenReturnsPrefixRegex().IsMatch(line.Content))
+                    if (ThenNoEventsPrefixRegex().IsMatch(line.Content))
+                    {
+                        if (line.Content != "then no events" || thenNoEvents)
+                        {
+                            context.Error(DiagnosticCodes.InvalidNoEventsExpectation, "Expected one 'then no events' directive.", line.Location);
+                        }
+                        else
+                        {
+                            thenNoEvents = true;
+                            directiveLocations["then no events"] = line.Location;
+                        }
+
+                        if (context.TryPeekChild(line.Indent, out var child))
+                        {
+                            context.Error(DiagnosticCodes.InvalidNoEventsExpectation, "'then no events' cannot have child mappings.", child.Location);
+                        }
+
+                        SkipBody(context, line.Indent);
+                    }
+                    else if (ThenReturnsPrefixRegex().IsMatch(line.Content))
                     {
                         var expectation = ParseReturn(context, line);
                         if (thenReturns is not null)
@@ -265,6 +290,14 @@ internal static partial class SpecificationParser
             }
         }
 
+        if (thenNoEvents && (whenAppended is not null || thenEvents.Count > 0 || eventsInAnyOrder || thenErrors.Count > 0 || denied is not null))
+        {
+            context.Error(
+                DiagnosticCodes.InvalidNoEventsExpectation,
+                "'then no events' cannot follow 'when append' or accompany event, event-order, error or denial expectations.",
+                directiveLocations["then no events"]);
+        }
+
         return new(name, given, when, thenEvents, thenErrors, header.Location, givenReadModels, thenReadModels)
         {
             SourceOptions = context.SourceOptions,
@@ -278,7 +311,9 @@ internal static partial class SpecificationParser
             ThenOperations = thenOperations,
             ThenCompensated = thenCompensated,
             WhenAppended = whenAppended,
+            WhenRedelivered = whenRedelivered,
             ThenEventsInAnyOrder = eventsInAnyOrder,
+            ThenNoEvents = thenNoEvents,
             GivenClock = givenClock,
             GivenCaptures = givenCaptures,
             WhenClock = whenClock,
@@ -290,6 +325,9 @@ internal static partial class SpecificationParser
             DirectiveLocations = WithEventOrderLocation(directiveLocations, eventsInAnyOrderLocation)
         };
     }
+
+    [GeneratedRegex(@"^then\s+no\s+events\b", RegexOptions.None, 1000)]
+    private static partial Regex ThenNoEventsPrefixRegex();
 
     static Dictionary<string, SourceLocation> WithEventOrderLocation(Dictionary<string, SourceLocation> locations, SourceLocation? location)
     {
@@ -337,6 +375,26 @@ internal static partial class SpecificationParser
 
         return new(match.Groups[2].Value, line.Location);
     }
+
+    static SpecificationRedeliverySyntax? ParseRedelivery(ParserContext context, SourceLine line)
+    {
+        var match = WhenRedeliveredRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.UnmatchedRedeliveredOccurrence, "Expected 'when redelivered <Event> to <Reaction>'.", line.Location);
+            SkipBody(context, line.Indent);
+            return null;
+        }
+
+        var body = ParseValuesWithEventSource(context, line);
+        return new(match.Groups[1].Value, match.Groups[2].Value, body.Values, line.Location) { For = body.For };
+    }
+
+    [GeneratedRegex(@"^when\s+redelivered\b", RegexOptions.None, 1000)]
+    private static partial Regex WhenRedeliveredPrefixRegex();
+
+    [GeneratedRegex(@"^when\s+redelivered\s+([A-Za-z_]\w*(?:\.\w+)*)\s+to\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    private static partial Regex WhenRedeliveredRegex();
 
     static SpecificationTriggerSyntax? ParseTrigger(ParserContext context, SourceLine line)
     {
