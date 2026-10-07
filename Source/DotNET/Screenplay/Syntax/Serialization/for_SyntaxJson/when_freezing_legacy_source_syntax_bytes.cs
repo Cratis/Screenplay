@@ -4,6 +4,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 
@@ -28,9 +29,9 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
-            // Invoicing is a living sample. Its intentional v7 and policy-negation additions have full
-            // shared conformance vectors; remove only those additions so the legacy bytes stay frozen.
-            var legacy = name == "invoicing-sample" || name == "invoicing-editor-sample" ? WithoutSampleAdditions(parsed) : parsed;
+            // Invoicing is a living sample. Its intentional v7, policy-negation and example additions
+            // have full shared conformance vectors; project those out so legacy bytes stay frozen.
+            var legacy = name == "invoicing-sample" || name == "invoicing-editor-sample" ? WithoutSampleAdditions(WithoutSampleExamples(parsed)) : parsed;
             var json = SyntaxJson.Serialize(legacy);
             var text = WithoutRuleIntent(json, json.GetRawText())
                 .Replace(",\"eventSources\":[]", string.Empty, StringComparison.Ordinal)
@@ -52,6 +53,35 @@ public class when_freezing_legacy_source_syntax_bytes
 
         count.ShouldEqual(16);
         Assert.False(initializing, "Review the new protected bytes and rerun without SCREENPLAY_INITIALIZE_LEGACY_SYNTAX_BYTES. Existing baselines are never overwritten.");
+    }
+
+    static ApplicationSyntax WithoutSampleExamples(ApplicationSyntax application)
+    {
+        var expanded = SpecificationExamples.Expand(application);
+        expanded.Diagnostics.ShouldBeEmpty();
+
+        return application with
+        {
+            Modules = application.Modules.Select(module => module with
+            {
+                Features = module.Features.Select(feature => feature with
+                {
+                    Slices = feature.Slices.Select(slice => slice.Name == "RegisterInvoice" ? slice with
+                    {
+                        Examples = [],
+                        Specifications = slice.Specifications.Select(specification => specification.When?.CommandType == "AcmeInvoice" ? specification with
+                        {
+                            When = expanded.Specifications.Single(item => ReferenceEquals(item.Authored, specification)).Effective.When! with
+                            {
+                                CommandType = "RegisterInvoice",
+                                InlineProperty = null,
+                                Values = expanded.Specifications.Single(item => ReferenceEquals(item.Authored, specification)).Effective.When!.Values.OrderBy(value => slice.Commands.Single(command => command.Name == "RegisterInvoice").Properties.Select(property => property.Name).ToList().IndexOf(value.Property))
+                            }
+                        } : specification)
+                    } : slice)
+                })
+            })
+        };
     }
 
     static ApplicationSyntax WithoutSampleAdditions(ApplicationSyntax application) => application with

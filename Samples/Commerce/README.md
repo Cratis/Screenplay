@@ -89,6 +89,7 @@ The largest file has 122 lines.
   | WarehouseClerk | ShipmentQueue, DispatchShipmentScreen |
   | SupportAgent | OrderDetails, OrderDetail, CancelOrderScreen |
 
+- **Typed specification examples.** `AdasBasket` in `PlaceOrder.play` shares the checkout input across acceptance, empty-basket rejection and authorization denial. `when AdasBasket lines = []` overrides only the basket; the structured shipping address remains explicit in the example.
 - **Every way to state a scenario.**
   - State changes use `given caller`, `when <Command>` and `then <Event>`, plus `then error` and `then denied` specifications.
   - Projected views use `when append` with `then readmodel` and `then query`.
