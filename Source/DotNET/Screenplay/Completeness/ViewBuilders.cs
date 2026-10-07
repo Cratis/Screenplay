@@ -27,7 +27,9 @@ static class ViewBuilders
 
                 foreach (var variant in variants.Where(variant => ReferenceEquals(ReadModel(variant.Name, scope, declarations), model)))
                 {
-                    yield return (projection, [.. shared, .. variant.Blocks], scope);
+                    // Entering events lower to From handlers and participate in the variant's AutoMap.
+                    var entering = variant.EntersOn.Select(entry => new FromSyntax([new(entry.Event, entry.Key, entry.Location)], null, null, [], entry.Location));
+                    yield return (projection, [.. shared, .. entering, .. variant.Blocks], scope);
                 }
             }
         }

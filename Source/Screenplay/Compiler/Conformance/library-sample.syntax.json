@@ -61,6 +61,7 @@
     }
   ],
   "domain": null,
+  "eventSources": [],
   "fileImports": [],
   "imports": [],
   "modules": [
@@ -184,6 +185,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -831,13 +834,21 @@
                       "kind": "ScreenActionSyntax",
                       "command": "AddBook",
                       "label": null,
-                      "navigate": null
+                      "navigate": {
+                        "kind": "ScreenNavigateSyntax",
+                        "by": null,
+                        "screen": "AddBook"
+                      }
                     },
                     {
                       "kind": "ScreenActionSyntax",
                       "command": "BorrowBook",
                       "label": null,
-                      "navigate": null
+                      "navigate": {
+                        "kind": "ScreenNavigateSyntax",
+                        "by": null,
+                        "screen": "BorrowBook"
+                      }
                     }
                   ],
                   "name": "BookCatalog"
@@ -1318,6 +1329,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -1799,6 +1812,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -2215,6 +2230,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": []
                 }
               ],
@@ -2659,7 +2676,11 @@
                       "kind": "ScreenActionSyntax",
                       "command": "ReturnBook",
                       "label": null,
-                      "navigate": null
+                      "navigate": {
+                        "kind": "ScreenNavigateSyntax",
+                        "by": null,
+                        "screen": "ReturnBook"
+                      }
                     }
                   ],
                   "name": "MyLoans"

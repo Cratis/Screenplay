@@ -22,7 +22,7 @@ static class QueryKeyCompleteness
                 if (builders.Length == 0 || builders.Any(builder => builder.Projection.File is not null)) continue;
 
                 var parts = builders.SelectMany(builder => Keys(builder.Projection, builder.Blocks))
-                    .OfType<CompositeKeySyntax>().SelectMany(key => declarations.TypeProperties(key.Type) ?? []).ToArray();
+                    .Select(entry => entry.Key).OfType<CompositeKeySyntax>().SelectMany(key => declarations.TypeProperties(key.Type) ?? []).ToArray();
                 if (query.By is { } by && !Tenant(by))
                 {
                     var identity = Identity(model, declarations).ToArray();
@@ -35,7 +35,7 @@ static class QueryKeyCompleteness
                 foreach (var filter in query.Filters.Where(filter => !Tenant(filter)))
                 {
                     var held = model.Properties.Concat(parts).Where(property => property.Name == filter.Name).ToArray();
-                    if (held.Length == 0 || held.All(property => declarations.Compatible(filter.Type, property.Type) == false))
+                    if (held.Length == 0 || held.All(property => declarations.Compatible(filter.Type with { IsOptional = false }, property.Type) == false))
                     {
                         yield return Finding(query, filter, model.Name);
                     }
@@ -59,7 +59,8 @@ static class QueryKeyCompleteness
         var types = new List<TypeRefSyntax>();
         foreach (var (projection, blocks, scope) in ViewBuilders.Projections(model, declarations))
         {
-            foreach (var key in Keys(projection, blocks))
+            if (blocks.OfType<FromSyntax>().Any(from => from.Events.Any(source => source.Key is null && from.Key is null && projection.Key is null))) return [];
+            foreach (var (key, sources) in Keys(projection, blocks))
             {
                 if (key is CompositeKeySyntax composite && declarations.TypeProperties(composite.Type) is { } parts)
                 {
@@ -68,9 +69,7 @@ static class QueryKeyCompleteness
                 }
                 else if (key is ExpressionKeySyntax { Expression: PathExpressionSyntax path })
                 {
-                    var sources = blocks.OfType<FromSyntax>().Where(from => ReferenceEquals(from.Key ?? projection.Key, key))
-                        .SelectMany(from => from.Events).Select(source => declarations.Event(source.Event, scope)).ToArray();
-                    var resolved = sources.Select(source => declarations.Property(source?.Properties, path.Path, out _)?.Type).ToArray();
+                    var resolved = sources.Select(source => declarations.Property(declarations.Event(source.Event, scope)?.Properties, path.Path, out _)?.Type).ToArray();
                     if (resolved.Length == 0 || resolved.Any(type => type is null)) return [];
                     types.AddRange(resolved.OfType<TypeRefSyntax>());
                 }
@@ -85,8 +84,17 @@ static class QueryKeyCompleteness
         return types;
     }
 
-    static IEnumerable<KeySyntax> Keys(ProjectionSyntax projection, IReadOnlyList<ProjectionBlockSyntax> blocks) =>
-        blocks.OfType<FromSyntax>().Select(from => from.Key ?? projection.Key).OfType<KeySyntax>().Distinct();
+    static IEnumerable<(KeySyntax Key, IEnumerable<EventSpecSyntax> Sources)> Keys(ProjectionSyntax projection, IReadOnlyList<ProjectionBlockSyntax> blocks)
+    {
+        foreach (var from in blocks.OfType<FromSyntax>())
+        {
+            foreach (var source in from.Events)
+            {
+                var key = source.Key is { } expression ? new ExpressionKeySyntax(expression, source.Location) : from.Key ?? projection.Key;
+                if (key is not null) yield return (key, [source]);
+            }
+        }
+    }
 
     static bool Tenant(QueryParameterSyntax parameter) => parameter.Source is ContextExpressionSyntax context && context.Path == "tenant";
 

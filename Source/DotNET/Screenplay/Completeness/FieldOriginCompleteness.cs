@@ -32,7 +32,10 @@ static class FieldOriginCompleteness
                     continue;
                 }
 
-                covered.UnionWith(properties.Where(property => property.IsIdentifier).Select(property => property.Name));
+                var owner = declarations.Slices.Single(entry => (entry.Slice.ReadModels ?? []).Any(candidate => ReferenceEquals(candidate, model)));
+                var identities = owner.Slice.Queries.Where(query => query.ReturnType.Name.Split('.')[^1] == model.Name && query.By is not null)
+                    .Select(query => query.By!.Name).Distinct(StringComparer.Ordinal).ToArray();
+                if (identities is [var identity] && properties.Any(property => property.Name == identity)) covered.Add(identity);
 
                 // Composite keys declare target parts, unlike a scalar key expression which names its source.
                 covered.UnionWith(blocks.OfType<FromSyntax>().Select(from => from.Key).OfType<CompositeKeySyntax>()

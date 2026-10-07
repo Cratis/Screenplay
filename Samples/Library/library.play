@@ -155,7 +155,9 @@ module Lending
           column author    label "Author"
           column available label "On the shelf"
         action AddBook
+          navigate to AddBook
         action BorrowBook
+          navigate to BorrowBook
 
       specification BorrowingTakesABookOffTheShelf
         given caller
@@ -439,6 +441,7 @@ module Lending
           column dueDate label "Due"
           column status  label "Status"
         action ReturnBook
+          navigate to ReturnBook
 
       specification SeeingAReturnedLoan
         given caller
