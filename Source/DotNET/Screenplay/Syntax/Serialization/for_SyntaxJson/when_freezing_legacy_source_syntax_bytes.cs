@@ -23,8 +23,8 @@ public class when_freezing_legacy_source_syntax_bytes
             var parsed = compiler.Parse(File.ReadAllText(Path.Combine(root, document.GetProperty("path").GetString()!))).Value!;
             var name = document.GetProperty("name").GetString()!;
 
-            // New named-rule vectors have their own full conformance assertions, not a pre-intent baseline.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "named-rule-intent") continue;
+            // New syntax vectors have their own full conformance assertions, not a pre-feature baseline.
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "named-rule-intent" || name == "specification-examples") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.

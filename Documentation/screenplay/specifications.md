@@ -82,6 +82,28 @@ Executable specification values must be concrete: literals, inline objects and l
 
 For example, if `OrderView` declares `lines Line[]`, `tags String[]`, and `note String optional`, and `Line` declares `sku String`, you can seed `lines = [{"sku":"A-1"}]`, `tags = []`, and `note = null` in a `given readmodel` block. A `then readmodel` may assert just the identifier and `lines`; the list must match in order.
 
+## Typed example declarations (authoring syntax)
+
+> Typed example declarations and inline fixture assignments are parsed and preserved by both compilers. Example resolution and expansion are not yet available for execution; use hand-expanded steps when binding an executable model.
+
+`example <Name> : <EventOrCommandOrReadModel>` declares one named, possibly partial fixture. Its body accepts property assignments, an optional `description`, an optional `for` value, and command `generated` fixtures. It cannot contain caller or clock fixtures or Given/When/Then steps. Declare examples at slice, feature, module or document level, or alongside specifications in a specification-only document.
+
+An example reference occupies the ordinary name slot in `given`, `given readmodel`, `when`, `when append`, `then`, or `then readmodel [exactly]`. Names may be qualified. One concrete assignment may follow the name on the same line, including a structured object or list; other assignments stay indented. There is no `with` keyword.
+
+This syntax-only illustration shows the declaration and both assignment spellings:
+
+```screenplay
+example AcmeInvoice : RegisterInvoice
+  total = 1000
+
+specification RegisteringAcme
+  when AcmeInvoice total = 5000
+    currency = "NOK"
+  then InvoiceRegistered total = 5000
+```
+
+Assign a property only once within each fixture or step. An inline assignment repeated in the indented body reports `PLAY0519`; a malformed example header reports `PLAY0518`. A declaration does not supply implicit defaults or change the step's matching mode. Unlike `seed`, an example declares specification data, not events to append when the application starts.
+
 ## Rejections
 
 A rejection comes in two forms, and the difference between them is real.

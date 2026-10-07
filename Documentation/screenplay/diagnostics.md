@@ -258,7 +258,7 @@ remove duplicate route headers before export.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0092` | Error | A specification document holds a top level line that does not open a `specification`. |
+| `PLAY0092` | Error | A specification document holds a top level line that opens neither a `specification` nor an `example`. |
 | `PLAY0093` | Error | A specification document declares no specification at all. |
 | `PLAY0094` | Error | A `specification` line is not `specification <Name>`. |
 | `PLAY0095` | Error | A line in a specification body opens with a word a specification declares nothing by. |
@@ -269,6 +269,8 @@ remove duplicate route headers before export.
 | `PLAY0100` | Error | A `given` or `then` line does not name an event type. |
 | `PLAY0101` | Error | A value a specification step states is not `<property> = <value>`. |
 | `PLAY0453` | Error | A `then no readmodel` line lacks a view or key, uses `exactly`, or has child mappings. |
+| `PLAY0518` | Error | An example declaration is not `example <Name> : <EventOrCommandOrReadModel>`. |
+| `PLAY0519` | Error | A fixture assigns the same property more than once, including across a step's inline assignment and indented body. Assign it once; overriding a value from an example is a separate operation. |
 
 ### Screens
 

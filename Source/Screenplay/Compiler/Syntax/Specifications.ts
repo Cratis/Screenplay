@@ -8,21 +8,12 @@ import { SourceOptions } from './SourceOptions';
 import { SpecificationOperationFailureSyntax } from './SpecificationOperationFailureSyntax';
 import { SpecificationOperationSyntax } from './SpecificationOperationSyntax';
 import { SpecificationCompensatedSyntax } from './SpecificationCompensatedSyntax';
+import { SpecificationExampleSyntax } from './SpecificationExampleSyntax';
 
 export type { SpecificationOperationFailureSyntax } from './SpecificationOperationFailureSyntax';
 export type { SpecificationOperationSyntax } from './SpecificationOperationSyntax';
 export type { SpecificationCompensatedSyntax } from './SpecificationCompensatedSyntax';
-
-// One named, possibly partial typed instance; expanded before binding, never carried in the ESM.
-export interface SpecificationExampleSyntax extends SyntaxNode {
-    readonly kind: 'SpecificationExampleSyntax';
-    readonly name: string;
-    readonly type: string;
-    readonly values: readonly PropertyMappingSyntax[];
-    readonly for: ExpressionSyntax | null;
-    readonly generatedValues: readonly PropertyMappingSyntax[];
-    readonly description: string | null;
-}
+export type { SpecificationExampleSyntax } from './SpecificationExampleSyntax';
 
 // 'given <Event>', 'then <Event>' or 'when append <Event>', with the values it states.
 export interface SpecificationEventSyntax extends SyntaxNode {

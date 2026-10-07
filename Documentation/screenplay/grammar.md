@@ -15,7 +15,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 
 Document       = [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl
                | PersonaDecl | AuthenticationDecl | TriggerDecl | ThemeDecl
-               | LayoutDecl | UiProfileDecl | BehaviorDecl | SystemDecl | EventSourceDecl | Module | SeedDecl } ;
+               | LayoutDecl | UiProfileDecl | BehaviorDecl | SystemDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
 (* At most one domain and authentication block. Put domain first; the compiler
    reports PLAY0004 when it follows another application declaration. *)
@@ -237,6 +237,7 @@ Module         = "module", Ident, NL,
                    | ContributionDecl
                    | InteractionBinding
                    | UsesBehaviorDecl
+                   | ExampleDecl
                    | Feature },
                  DEDENT ;
 
@@ -395,6 +396,7 @@ Feature        = "feature", Ident, NL,
                    | FileImport
                    | Feature
                    | SliceDecl
+                   | ExampleDecl
                    | ContributionDecl
                    | InteractionBinding
                    | UsesBehaviorDecl },
@@ -418,6 +420,7 @@ SliceBody      = EventDecl
                | ReducerDecl
                | CaptureDecl
                | SpecificationDecl
+               | ExampleDecl
                | ReactionDecl
                | ScreenDecl
                | ConstraintDecl ;
@@ -830,27 +833,37 @@ CDLBody        = (* Change Data Capture Language grammar - covers source/key/map
 (* Specifications — Given/When/Then sub-language                   *)
 (* -------------------------------------------------------------- *)
 
+ExampleDecl    = "example", Ident, ":", QualifiedName, NL,
+                 [ INDENT, { DescriptionDecl | SpecificationEventSource | PropertyMapping | GeneratedFixture }, DEDENT ] ;
+
+(* One typed fixture, never a caller, clock or sequence of steps. Its underlying
+   declaration is an event, command or read model, not another example. Examples
+   may be declared at document, module, feature or slice scope, and alongside
+   specifications in a standalone specification document. *)
+
+InlineFixtureAssignment = Path, "=", ConcreteValue ;
+
 SpecificationDecl = "specification", Ident, NL,
                  INDENT, [ FileDirective ], { SpecificationGiven | SpecificationWhen | SpecificationThen }, DEDENT ;
 
 SpecificationGiven = OperationFailureFixture
                | "given", "caller", NL,
                  [ INDENT, { "authenticated", NL | "role", StringLiteral, NL | "claim", StringLiteral, "=", StringLiteral, NL }, DEDENT ]
-               | "given", "readmodel", Ident, NL,
+               | "given", "readmodel", QualifiedName, [ InlineFixtureAssignment ], NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "given", "clock", StringLiteral, NL
                | "given", "capture", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
-               | "given", Ident, NL,
+               | "given", QualifiedName, [ InlineFixtureAssignment ], NL,
                  [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ] ;
 
 (* "given clock" states the ISO 8601 instant the scenario happens at - the
    occurrence time of everything it does. "given capture" states an earlier record
    of a capture's source, so a value transition has something to transition from. *)
 
-SpecificationWhen = "when", Ident, NL,
+SpecificationWhen = "when", QualifiedName, [ InlineFixtureAssignment ], NL,
                  [ INDENT, { SpecificationEventSource | PropertyMapping | GeneratedFixture }, DEDENT ]
-               | "when", "append", Ident, NL,
+               | "when", "append", QualifiedName, [ InlineFixtureAssignment ], NL,
                  [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ]
                | "when", "clock", StringLiteral, NL
                | "when", "trigger", Ident, NL,
@@ -889,7 +902,7 @@ CompensationExpectation = "then", "compensated", QualifiedName, NL ;
 SpecificationThen = ReturnExpectation
                | OperationExpectation
                | CompensationExpectation
-               | "then", "readmodel", Ident, [ "exactly" ], NL,
+               | "then", "readmodel", QualifiedName, [ "exactly" ], [ InlineFixtureAssignment ], NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "then", "no", "readmodel", Ident, "for", Expression, NL
                | "then", "query", QualifiedName, [ "exactly" ], NL,
@@ -900,7 +913,7 @@ SpecificationThen = ReturnExpectation
                | "then", "error", [ StringLiteral ], NL
                | "then", "denied", NL
                | "then", "events", "in", "any", "order", NL
-               | "then", Ident, NL,
+               | "then", QualifiedName, [ InlineFixtureAssignment ], NL,
                  [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ] ;
 
 SpecificationEventSource = "for", Expression, NL ;
