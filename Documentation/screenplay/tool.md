@@ -67,10 +67,15 @@ screenplay path/to/invoicing.play --warnaserror
 | Option | Effect |
 |---|---|
 | `--scope <Module>[.<Feature>[.<Slice>]]` | Report the named scope and declarations that directly reference it |
+| `--check <name>[,<name>]\|all` | Select [completeness checks](completeness.md); repeat to combine selections. Unknown names exit `2` |
 | `--warnaserror` | Warnings in the reported set fail the run - exit code `1` even with zero errors |
 | `--no-color` | Never colorize output |
 
 Colors are enabled automatically on interactive terminals; disable them with `--no-color` or by setting the `NO_COLOR` environment variable.
+
+## Check structural completeness
+
+Select additional warnings with `--check data-bindings,input-surfaces,field-origins,query-keys,event-consumers,navigation` or `--check all`. Combine with `--warnaserror` to gate on findings, and with `--scope` to limit the reported set. Checks are not part of ordinary compilation and run only when the whole application has no source errors. Otherwise output reports `completeness checks skipped: the model has N error(s)`. See [Completeness checks](completeness.md) for rules and exemptions.
 
 ## Check one part of the application
 

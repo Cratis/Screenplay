@@ -2434,4 +2434,44 @@ public static class DiagnosticCodes
     /// A negated claim comparison uses a target that can be absent, null, or is not a string type.
     /// </summary>
     public const string IndeterminateNegatedClaimTarget = "PLAY0546";
+
+    /// <summary>
+    /// Visible screen data bindings share a name but disagree on query, cardinality or parameter.
+    /// </summary>
+    public const string ConflictingScreenDataBinding = "PLAY0530";
+
+    /// <summary>
+    /// A screen data binding disagrees with the resolved query return shape.
+    /// </summary>
+    public const string ScreenDataQueryMismatch = "PLAY0531";
+
+    /// <summary>
+    /// A screen action has no command-bound input surface.
+    /// </summary>
+    public const string ActionWithoutInputSurface = "PLAY0532";
+
+    /// <summary>
+    /// A StateChange command has no UI issuer and is not reaction-invoked.
+    /// </summary>
+    public const string CommandWithoutInputSurface = "PLAY0533";
+
+    /// <summary>
+    /// A read model has no builder or a declared field has no projection origin.
+    /// </summary>
+    public const string ReadModelFieldWithoutOrigin = "PLAY0534";
+
+    /// <summary>
+    /// A query parameter cannot be held by its view's structurally known identity or fields.
+    /// </summary>
+    public const string QueryParameterNotHeldByView = "PLAY0535";
+
+    /// <summary>
+    /// A locally declared event has no declared application consumer.
+    /// </summary>
+    public const string UnconsumedEvent = "PLAY0536";
+
+    /// <summary>
+    /// A screen is unreachable from contributions or attached shell-level behaviors.
+    /// </summary>
+    public const string UnreachableScreen = "PLAY0537";
 }

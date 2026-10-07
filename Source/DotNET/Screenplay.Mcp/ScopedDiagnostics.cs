@@ -25,6 +25,9 @@ static class ScopedDiagnostics
     internal static ScopedDiagnosticResult? Select(McpSnapshot snapshot, string scope) => Select(snapshot, scope, out _);
 
     internal static ScopedDiagnosticResult? Select(McpSnapshot snapshot, string scope, out string? scopeError)
+        => Select(snapshot, scope, [], out scopeError);
+
+    internal static ScopedDiagnosticResult? Select(McpSnapshot snapshot, string scope, IEnumerable<Diagnostic> additional, out string? scopeError)
     {
         var declarations = snapshot.Index.Declarations.ToArray();
         var matches = declarations.Where(declaration =>
@@ -72,7 +75,7 @@ static class ScopedDiagnostics
         var lines = snapshot.Sources.ToDictionary(source => source.Key, source => SourceLineSplitter.Split(source.Value, path: source.Key), StringComparer.Ordinal);
         var ranges = declarations.SelectMany(declaration => declaration.Locations.Select(location => Range(declaration, location, lines, snapshot.Languages)))
             .Where(range => range is not null).OfType<DeclarationRange>().ToArray();
-        var diagnostics = snapshot.Compilation.Diagnostics.Where(diagnostic =>
+        var diagnostics = snapshot.Compilation.Diagnostics.Concat(additional).Where(diagnostic =>
         {
             var owner = ranges.Where(range => range.Contains(diagnostic.Location))
                 .OrderByDescending(range => range.Start.Line).ThenByDescending(range => range.Start.Column).FirstOrDefault();

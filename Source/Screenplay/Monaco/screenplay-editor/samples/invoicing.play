@@ -455,7 +455,7 @@ module Invoicing
     field note   label "Note"
 
   form RecordPaymentForm for RecordPayment
-    populate from item
+    populate via query GetInvoiceBalance by invoiceId
     field amount label "Amount received"
     field method label "Payment method"
 
@@ -807,12 +807,16 @@ module Invoicing
       // A destructive command asks before it runs - the named behavior carries the
       // whole confirm-execute-notify chain.
       screen CancelInvoiceScreen
+        data InvoiceDetailsReadModel via query GetInvoice by invoiceId
         template CommandDialog
           body
             title "Cancel invoice"
           actions
-            action CancelInvoice
-              label $strings.invoices.actions.cancel
+            // Cancellation is offered for a draft; the command still validates its inputs.
+            action $strings.invoices.actions.cancel
+              when item.status == "draft" execute CancelInvoice
+                with invoiceId from item.invoiceId
+              otherwise hidden
         uses ConfirmThenExecute
           command CancelInvoice
           message $strings.invoices.confirm.cancel
@@ -1252,14 +1256,24 @@ module Invoicing
           refresh ListInvoices
         on interval 30 seconds
           refresh ListInvoices
-        action RegisterInvoice
-          navigate to RegisterInvoiceScreen
-        action ProcessInvoiceBatch
-          navigate to ProcessInvoiceBatchScreen
+        section registerInvoiceInput
+          title "Register invoice"
+          on click
+            navigate to RegisterInvoiceScreen
+        section processInvoiceBatchInput
+          title "Process a batch"
+          on click
+            navigate to ProcessInvoiceBatchScreen
+        section startInvoiceDraftInput
+          title "Start invoice draft"
+          on click
+            navigate to StartInvoiceDraftScreen
         template List
           toolbar
-            action ArchiveOldInvoices
-              navigate to ArchiveOldInvoicesScreen
+            section archiveOldInvoicesInput
+              title "Archive old invoices"
+              on click
+                navigate to ArchiveOldInvoicesScreen
             section sync
               title "Synchronize directory"
               on click
@@ -1429,18 +1443,26 @@ module Invoicing
               field customerName  label "Customer"
             section actions
               title "Actions"
-              action ChangeInvoiceStatus
-                navigate to ChangeInvoiceStatusScreen
-              // Cancellation is offered for a draft; the command still validates its inputs.
-              action $strings.invoices.actions.cancel
-                when item.status == "draft" execute CancelInvoice
-                  with invoiceId from item.invoiceId
-                otherwise hidden
-                navigate to CancelInvoiceScreen
-              action TagInvoice
-                navigate to TagInvoiceScreen
-              action UpdateBillingContact
-                navigate to UpdateBillingContactScreen
+              section changeInvoiceStatusInput
+                title "Change invoice status"
+                table InvoiceDetailsReadModel
+                  column invoiceNumber label $strings.invoices.fields.number
+                  on row-click navigate to ChangeInvoiceStatusScreen by invoiceId
+              section cancelInvoiceInput
+                title $strings.invoices.actions.cancel
+                table InvoiceDetailsReadModel
+                  column invoiceNumber label $strings.invoices.fields.number
+                  on row-click navigate to CancelInvoiceScreen by invoiceId
+              section tagInvoiceInput
+                title "Tag invoice"
+                table InvoiceDetailsReadModel
+                  column invoiceNumber label $strings.invoices.fields.number
+                  on row-click navigate to TagInvoiceScreen by invoiceId
+              section updateBillingContactInput
+                title "Billing contact"
+                table InvoiceDetailsReadModel
+                  column invoiceNumber label $strings.invoices.fields.number
+                  on row-click navigate to UpdateBillingContactScreen by invoiceId
           main
             section lineItems
               table lineItems
@@ -1448,7 +1470,11 @@ module Invoicing
                 column quantity   label "Qty"
                 column unitPrice  label "Unit Price"
                 column subtotal   label "Subtotal"
-                on row-click navigate to InvoiceLineDetail by lineNumber
+              section invoiceLineDetailInput
+                title "Line item details"
+                table InvoiceDetailsReadModel
+                  column invoiceNumber label $strings.invoices.fields.number
+                  on row-click navigate to InvoiceLineDetail by invoiceId
             section help
               ```html
               <p class="hint">Line items become read-only once an invoice is paid.</p>
@@ -1641,9 +1667,10 @@ module Invoicing
               ```
           footer
             section actions
-              action RegisterInvoice
-                label $strings.invoices.actions.newInvoice
-                navigate to RegisterInvoiceScreen
+              section registerInvoiceDashboardInput
+                title $strings.invoices.actions.newInvoice
+                on click
+                  navigate to RegisterInvoiceScreen
 
       specification CountingInvoicesAsTheyMove
         given caller
@@ -2036,8 +2063,11 @@ module Invoicing
             field total       label "Total"
             field paid        label "Paid"
             field outstanding label "Outstanding"
-          action RecordPayment
-            navigate to RecordPaymentScreen
+          section recordPaymentInput
+            title "Record payment"
+            table InvoiceBalanceReadModel
+              column outstanding label "Outstanding"
+              on row-click navigate to RecordPaymentScreen by invoiceId
 
       specification ReducingTheBalanceByAPayment
         given caller
@@ -2178,21 +2208,28 @@ module Invoicing
       screen CollectionsBoard
         title $strings.collections.title
         template Board
-          toolbar
-            action RecordPayment
-              navigate to RecordPaymentScreen
           due
             data DueInvoice[] via query ListDueInvoices
             table DueInvoice
               column invoiceId label "Invoice"
               column sentAt    label "Sent"
               on row-click navigate to InvoiceDetails by invoiceId
+            section recordDuePaymentInput
+              title "Record payment"
+              table DueInvoice
+                column invoiceId label "Invoice"
+                on row-click navigate to RecordPaymentScreen by invoiceId
           overdue
             data OverdueInvoice[] via query ListOverdueInvoices
             table OverdueInvoice
               column invoiceId label "Invoice"
               column reminders label "Reminders"
               on row-click navigate to InvoiceDetails by invoiceId
+            section recordOverduePaymentInput
+              title "Record payment"
+              table OverdueInvoice
+                column invoiceId label "Invoice"
+                on row-click navigate to RecordPaymentScreen by invoiceId
           settled
             data SettledInvoice[] via query ListSettledInvoices
             table SettledInvoice
@@ -2443,8 +2480,11 @@ module Invoicing
           column invoiceNumber label "Invoice"
           column dueDate       label "Due"
           column status        label "Status"
-        action RequestPaymentPlan
-          navigate to RequestPaymentPlanScreen
+        section requestPaymentPlanInput
+          title "Pay in installments"
+          table CustomerInvoiceReadModel
+            column invoiceNumber label "Invoice"
+            on row-click navigate to RequestPaymentPlanScreen by invoiceId
         on event InvoiceMarkedOverdue
           notify warning $strings.portal.overdueNotice
 

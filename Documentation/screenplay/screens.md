@@ -36,10 +36,16 @@ screen <Name>
 ```screenplay
 screen InvoiceList
   data InvoiceListReadModel[] via query ListInvoices
-  action RegisterInvoice
-    navigate to RegisterInvoiceScreen
-  action CancelInvoice
+  section registerInvoiceInput
+    title "Register invoice"
+    on click
+      navigate to RegisterInvoiceScreen
 ```
+
+A click or row-click opens a command's input screen **before** the command runs. That screen's action
+issues the command and discovers its command-bound form. An action's `navigate to` is the destination
+**after success**, never a route to that command's own input screen. For example, the action on
+`RegisterInvoiceScreen` can return to `InvoiceList` after registration.
 
 ## One action, several commands
 
@@ -79,7 +85,7 @@ Each alternative and execute fallback may bind inputs with `with <property> from
 3. The command's declared [form](forms.md).
 4. Renderer input.
 
-The guard controls what the user is offered, not what the system accepts. The selected command still enforces its authorization, validation and constraints. Authorization denial never falls through to another command. A click runs the choice shown to the user; if a click-time check changes that choice, the renderer must refresh instead of executing the new one. A single optional `navigate to` runs after whichever command succeeds.
+The guard controls what the user is offered, not what the system accepts. The selected command still enforces its authorization, validation and constraints. Authorization denial never falls through to another command. A click runs the choice shown to the user; if a click-time check changes that choice, the renderer must refresh instead of executing the new one. A single optional `navigate to` runs after whichever command succeeds, never to open that command's own input screen. If input needs a separate screen or dialog, open it first with a click or row-click carrying the item's identity; place the guarded action on that input screen.
 
 Guarded actions are preserved by the compilers and shown as one labeled prototype button on the event model board. Screens do not enter the executable semantic model. Runtime selection requires downstream renderer support; an older renderer must reject the new kind rather than silently render an empty plain action. See [interactions](interactions.md) for the separate, unchanged `on` bindings.
 

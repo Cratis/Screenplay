@@ -183,6 +183,22 @@ internal static class ScreenplayValidator
         foreach (var diagnostic in expansion.Diagnostics.Where(diagnostic => !context.Diagnostics.Contains(diagnostic))) context.Add(diagnostic);
     }
 
+    /// <summary>
+    /// Yields every slice with the scope it sits in, outermost segment first.
+    /// </summary>
+    /// <param name="application">The <see cref="ApplicationSyntax"/> to walk.</param>
+    /// <returns>Each slice and where it sits.</returns>
+    internal static IEnumerable<(SliceSyntax Slice, DeclarationScope Scope)> ScopedSlices(ApplicationSyntax application)
+    {
+        foreach (var module in application.Modules)
+        {
+            foreach (var entry in ScopedSlicesIn(module.Features, [module.Name]))
+            {
+                yield return entry;
+            }
+        }
+    }
+
     static void ValidateAdditionalEventReferences(ApplicationSyntax application, ConsistencyDeclarations declarations, HashSet<string> knownEvents, ParserContext context)
     {
         var events = declarations.Slices.SelectMany(entry => EventDeclarations.In(entry.Slice)
@@ -1367,22 +1383,6 @@ internal static class ScreenplayValidator
         }
 
         context.Warning(unknownCode, $"Unknown {kind} '{reference}' - nothing in scope declares it", location);
-    }
-
-    /// <summary>
-    /// Yields every slice with the scope it sits in, outermost segment first.
-    /// </summary>
-    /// <param name="application">The <see cref="ApplicationSyntax"/> to walk.</param>
-    /// <returns>Each slice and where it sits.</returns>
-    static IEnumerable<(SliceSyntax Slice, DeclarationScope Scope)> ScopedSlices(ApplicationSyntax application)
-    {
-        foreach (var module in application.Modules)
-        {
-            foreach (var entry in ScopedSlicesIn(module.Features, [module.Name]))
-            {
-                yield return entry;
-            }
-        }
     }
 
     static IEnumerable<(SliceSyntax Slice, DeclarationScope Scope)> ScopedSlicesIn(IEnumerable<FeatureSyntax> features, IReadOnlyList<string> path)
