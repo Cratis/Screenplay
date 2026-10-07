@@ -67,6 +67,10 @@ slice StateChange RecordTime
       toolbar
         action RecordTime
           label $strings.timesheets.record.action
+        section submitTimesheet
+          title $strings.timesheets.submit.action
+          on click
+            navigate to SubmitTimesheetDialog
       days
         data TimesheetSummary via query TimesheetById by timesheetId
         section entry

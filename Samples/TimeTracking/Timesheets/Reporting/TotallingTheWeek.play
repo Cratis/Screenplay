@@ -41,9 +41,10 @@ slice StateView TimesheetTotals
   screen TimesheetTotalsScreen
     template WeekView
       toolbar
-        action SubmitTimesheet
-          label $strings.timesheets.submit.action
-          navigate to SubmitTimesheetDialog
+        section submitTimesheet
+          title $strings.timesheets.submit.action
+          on click
+            navigate to SubmitTimesheetDialog
       days
         data TimesheetSummary via query TimesheetById by timesheetId
       totals

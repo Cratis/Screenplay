@@ -91,7 +91,7 @@ Samples/TimeTracking/
 - Queries that are `observable`, `scoped to identity` or `scoped to global`, with parameters filled `from $context.identity.id`.
 - Four ways a read model is built: a projection, projection `variant`s, a `reducer`, and a read model nothing builds, served by a query `performer`.
 - Module and feature gates, a claim-based policy, and personas whose policies decide whose row a screen is drawn on in the event-model board.
-- Templates with `flow` and `freeform` arrangements, forms, `contribute to`, `on enter` and `on click` with `on success` and `on failure`, and named behaviors attached with `uses`.
+- Templates with `flow` and `freeform` arrangements, forms, `contribute to`, `on enter` and `on click` with `on success` and `on failure`, and named behaviors attached with `uses`. Click navigation opens the start-week, submission, engagement-closure and payroll-run dialogs before their commands run. Their issuing actions and confirmation behaviors live on the dialog screens; action navigation back to a list happens afterward.
 - An application `trigger`, reactions driven by events, by the clock and by a trigger, a `where` filter, `invokes`, and a change data `capture`.
 - Specifications on every slice: `then error`, `then denied`, `given clock`, `when query` with `then result` and `then no result`, `when clock`, `when trigger`, and `given capture` with `when capture`.
 

@@ -66,6 +66,10 @@ slice StateView EngagementPortfolio
           action OpenEngagement
             label $strings.engagements.open.action
             navigate to OpenEngagementDialog
+          section closeEngagement
+            title $strings.engagements.close.title
+            on click
+              navigate to CloseEngagementDialog
 
   specification CountingStaffedConsultants
     given caller
