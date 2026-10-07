@@ -186,6 +186,8 @@ internal sealed partial class DependencyGraph
         return [.. StronglyConnectedGroups.In(graph).Where(group => group.Count > 1).Select(group => new DependencyGroup(container, DistinctNodes(group.Select(key => byKey[key])))).OrderBy(group => group.Members[0].Rank)];
     }
 
+    internal bool IsWithin(DependencyNode node, DependencyNode scope) => node.Key == scope.Key || Ancestors(node).Any(ancestor => ancestor.Key == scope.Key);
+
     bool Disjoint(DependencyNode left, DependencyNode right) => left.Key != right.Key && !Ancestors(left).Contains(right) && !Ancestors(right).Contains(left);
 
     IEnumerable<DependencyEvidence> Evidence(IEnumerable<string>? kinds, bool includeTestOnly)
