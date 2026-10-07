@@ -3,6 +3,7 @@
 
 import { beforeEach, describe, it } from 'vitest';
 import { DependencyGraph } from '../DependencyGraph';
+import { InvalidDependencyQuery } from '../InvalidDependencyQuery';
 import { graphOf } from './given/a_model';
 
 const source = 'module Consumer\n  feature Parent\n    slice StateView View\n      projection P\n        from E\n        clear with E\n    feature Child\n      slice StateChange Own\n        event Local\n  feature Other\n    slice StateView Second\n      projection Q\n        from E\nmodule Producer\n  feature Facts\n    slice StateChange Write\n      event E\n';
@@ -21,12 +22,12 @@ describe('when implying mixed levels and counting evidence', () => {
         edge.evidence[0].role.should.equal('from');
     });
     it('should reject invalid query inputs', () => {
-        (() => graph.implied('context', 'slice')).should.throw();
-        (() => graph.implied('slice', 'unknown')).should.throw();
-        (() => graph.implied('slice', 'slice', ['unknown'])).should.throw();
-        (() => graph.implied('slice', 'slice', undefined, false, -1)).should.throw();
-        (() => graph.cycles('context')).should.throw();
-        (() => graph.traverse('Consumer.Parent.View', 'unknown')).should.throw();
+        (() => graph.implied('context', 'slice')).should.throw(InvalidDependencyQuery);
+        (() => graph.implied('slice', 'unknown')).should.throw(InvalidDependencyQuery);
+        (() => graph.implied('slice', 'slice', ['unknown'])).should.throw(InvalidDependencyQuery);
+        (() => graph.implied('slice', 'slice', undefined, false, -1)).should.throw(InvalidDependencyQuery);
+        (() => graph.cycles('context')).should.throw(InvalidDependencyQuery);
+        (() => graph.traverse('Consumer.Parent.View', 'unknown')).should.throw(InvalidDependencyQuery);
     });
 });
 

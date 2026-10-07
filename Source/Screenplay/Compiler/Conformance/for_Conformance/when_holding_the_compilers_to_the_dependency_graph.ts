@@ -14,6 +14,8 @@ interface Vector {
     implied: string[];
     cycles: string[][];
     order: string[];
+    excludedReferences?: number;
+    unresolved?: string[];
 }
 const vectors = (JSON.parse(readFileSync(join(__dirname, '..', 'dependency-graph.json'), 'utf8')) as { cases: Vector[] }).cases;
 
@@ -37,9 +39,19 @@ for (const vector of vectors) {
         it('should match the suggested story order', () => {
             graph.suggestedOrder().slices.map(node => node.address).should.deep.equal(vector.order);
         });
+        it('should match excluded shared references', () => {
+            graph.excludedReferences.should.equal(vector.excludedReferences ?? 0);
+        });
+        it('should match unresolved references', () => {
+            graph.unresolved.map(item => `${item.consumer.address}|${item.kind}|${item.role}:${item.name}`).should.deep.equal(vector.unresolved ?? []);
+        });
         it('should ignore document arrival order', () => {
             reversed.edges.should.deep.equal(graph.edges);
+            reversed.implied('feature', 'feature').should.deep.equal(graph.implied('feature', 'feature'));
+            reversed.cycles('feature').should.deep.equal(graph.cycles('feature'));
             reversed.suggestedOrder().should.deep.equal(graph.suggestedOrder());
+            reversed.unresolved.should.deep.equal(graph.unresolved);
+            reversed.excludedReferences.should.equal(graph.excludedReferences);
         });
     });
 }

@@ -30,7 +30,8 @@
             "edges": [],
             "implied": [],
             "cycles": [],
-            "order": ["M.F.V"]
+            "order": ["M.F.V"],
+            "unresolved": ["M.F.V|usesFactsFrom|from:Missing"]
         },
         {
             "name": "duplicate declarations retain all references and choose the earliest producer",
@@ -86,6 +87,50 @@
             "implied": [],
             "cycles": [],
             "order": ["M.F.Producer"]
+        },
+        {
+            "name": "concurrency dimensions accept descendants deeper than the header",
+            "files": {"application.play": "module M\n  feature A\n    slice StateChange Consumer\n      command C\n        concurrency\n          eventSource\n            events E\n  feature B\n    slice StateChange Producer\n      event E"},
+            "edges": ["M.A.Consumer|M.B.Producer|usesFactsFrom|concurrency:E"],
+            "implied": ["M.A|M.B|1|1"],
+            "cycles": [],
+            "order": ["M.B.Producer", "M.A.Consumer"]
+        },
+        {
+            "name": "concurrency recovery skips unknown blocks but not malformed known dimensions",
+            "files": {"application.play": "module M\n  feature A\n    slice StateChange Consumer\n      command C\n        concurrency\n          unknown\n            events Ignored\n          eventSource wrong\n            events invalid\n              events E\n          events Ignored\n  feature B\n    slice StateChange Producer\n      event E\n      event Ignored"},
+            "edges": ["M.A.Consumer|M.B.Producer|usesFactsFrom|concurrency:E"],
+            "implied": ["M.A|M.B|1|1"],
+            "cycles": [],
+            "order": ["M.B.Producer", "M.A.Consumer"]
+        },
+        {
+            "name": "reference captures use dotnet whitespace",
+            "files": {"application.play": "module M\n  feature A\n    slice StateChange Consumer\n      command C\n        reads \u0085R\n        concurrency\n          events \u0085E\u0085,\u0085E\n      reducer \u0085Fold\u0085=>\u0085Built\n        on \u0085E\n  feature B\n    slice StateChange Producer\n      event E\n      readmodel R"},
+            "edges": ["M.A.Consumer|M.B.Producer|decidesFrom|reads:R", "M.A.Consumer|M.B.Producer|usesFactsFrom|concurrency:E,concurrency:E,reduces:E"],
+            "implied": ["M.A|M.B|1|4"],
+            "cycles": [],
+            "order": ["M.B.Producer", "M.A.Consumer"]
+        },
+        {
+            "name": "shared types and policies are excluded while missing references remain unresolved",
+            "files": {"application.play": "concept Id : Uuid\npolicy Allowed\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        id Id\n        authorize Allowed\n        reads MissingReadModel\n      projection P\n        from MissingEvent"},
+            "edges": [],
+            "implied": [],
+            "cycles": [],
+            "order": ["M.F.S"],
+            "excludedReferences": 2,
+            "unresolved": ["M.F.S|decidesFrom|reads:MissingReadModel", "M.F.S|usesFactsFrom|from:MissingEvent"]
+        },
+        {
+            "name": "multi file cycles and shared foundations ignore document arrival order",
+            "files": {"application.play": "concept Id : Uuid\npolicy Allowed\nmodule M\n  import \"z.play\"\n  import \"a.play\"", "z.play": "feature Z\n  slice StateView View\n    readmodel R\n    projection R\n      from E\n      from Missing\n    command C\n      id Id\n      authorize Allowed", "a.play": "feature A\n  slice StateChange Write\n    event E\n    command D\n      reads R"},
+            "edges": ["M.Z.View|M.A.Write|usesFactsFrom|from:E", "M.A.Write|M.Z.View|decidesFrom|reads:R"],
+            "implied": ["M.Z|M.A|1|1", "M.A|M.Z|1|1"],
+            "cycles": [["M.Z", "M.A"]],
+            "order": ["M.Z.View", "M.A.Write"],
+            "excludedReferences": 2,
+            "unresolved": ["M.Z.View|usesFactsFrom|from:Missing"]
         }
     ]
 }

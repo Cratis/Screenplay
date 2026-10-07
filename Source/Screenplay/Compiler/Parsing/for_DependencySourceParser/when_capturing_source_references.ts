@@ -6,8 +6,6 @@ import { captureReads, captureConcurrency, captureReducer } from '../DependencyS
 import { LineReader } from '../LineReader';
 import { ParserContext } from '../ParserContext';
 import { splitLines } from '../SourceLineSplitter';
-import { SliceReferenceCollector } from '../../Dependencies/SliceReferences';
-import { SyntaxNode } from '../../Syntax/SyntaxNode';
 
 for (const content of ['reads', 'reads R optional', 'reads R as as', 'reads R as by', 'reads R as reads']) {
     describe(`when capturing the unsupported read '${content}'`, () => {
@@ -52,15 +50,23 @@ describe('when a malformed reducer header still contains a rule', () => {
     });
 });
 
-describe('when a trigger value leaves its type unstated', () => {
-    let collector: SliceReferenceCollector;
+describe('when captured event names contain JavaScript only whitespace', () => {
+    let captured: ReturnType<typeof captureConcurrency>;
     beforeEach(() => {
-        collector = new SliceReferenceCollector();
-        collector.visitTriggerData({ kind: 'TriggerDataSyntax', name: 'id', type: null, location: { line: 1, column: 1 } });
-        collector.visitNode({ kind: 'FutureSyntax', location: { line: 2, column: 1 } } satisfies SyntaxNode);
+        const context = new ParserContext(new LineReader(splitLines('concurrency\n  events \ufeffE,\ufeffE')));
+        captured = captureConcurrency(context, context.reader.takeSignificant());
     });
-    it('should not infer a shared type or dependency', () => {
-        collector.shared.should.have.lengthOf(0);
-        collector.references.should.have.lengthOf(0);
+    it('should not trim it into valid event names', () => {
+        captured!.eventTypes.should.have.lengthOf(0);
     });
 });
+
+for (const whitespace of ['\u0085', '\ufeff']) {
+    describe(`when capturing reads with U+${whitespace.charCodeAt(0).toString(16)}`, () => {
+        let captured: ReturnType<typeof captureReads>;
+        beforeEach(() => { captured = captureReads(splitLines(`reads ${whitespace}R`)[0]); });
+        it('should accept only dotnet whitespace', () => {
+            (captured?.readModel ?? '').should.equal(whitespace === '\u0085' ? 'R' : '');
+        });
+    });
+}
