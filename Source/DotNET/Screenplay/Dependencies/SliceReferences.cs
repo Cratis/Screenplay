@@ -20,7 +20,7 @@ internal sealed class SliceReferences : ScreenplaySyntaxWalker
         ["uniqueProperty"] = "usesFactsFrom", ["concurrency"] = "usesFactsFrom", ["trigger"] = "reactsTo", ["reads"] = "decidesFrom",
         ["invokes"] = "asks", ["action"] = "asks", ["formCommand"] = "asks", ["dataQuery"] = "shows", ["populate"] = "shows", ["navigate"] = "shows",
         ["specificationEvent"] = "verifiedWith", ["givenEvent"] = "verifiedWith", ["whenAppendedEvent"] = "verifiedWith", ["thenEvent"] = "verifiedWith", ["whenCommand"] = "verifiedWith",
-        ["declares"] = null, ["uses"] = null, ["commandEventSource"] = null, ["commandStream"] = null, ["thenOperation"] = null,
+        ["declares"] = null, ["uses"] = null, ["commandEventSource"] = null, ["commandStream"] = null, ["specificationEventSource"] = null, ["specificationStream"] = null, ["thenOperation"] = null,
         ["givenOperationFailure"] = null, ["thenCompensated"] = null, ["produces"] = null, ["authorizes"] = null, ["queryResult"] = null,
         ["dataReadModel"] = null, ["type"] = null, ["contributes"] = null, ["template"] = null, ["specificationReadModel"] = null,
         ["thenAbsentReadModel"] = null, ["thenReadModel"] = null, ["givenReadModel"] = null, ["thenQuery"] = null,
