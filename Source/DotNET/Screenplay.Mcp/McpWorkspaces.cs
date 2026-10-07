@@ -20,6 +20,8 @@ internal sealed partial class McpWorkspaces
     McpRoot? _root;
     ScreenplayWorkspace? _workspace;
     byte[]? _stateBytes;
+    McpRootBindingConflict? _rootBindingConflict;
+    ImmutableArray<string> _discoveredRootPaths = [];
 
     internal McpWorkspaces(McpRoot? root = null)
     {
@@ -30,6 +32,9 @@ internal sealed partial class McpWorkspaces
     // Deterministic specs can interrupt between validation and retention, or staging and installation.
     internal Action? BeforeStore { get; set; }
     internal Action? BeforeInstall { get; set; }
+
+    // Deterministic specs can change competing metadata after the verified disk outcome, before status refresh.
+    internal Action? AfterApply { get; set; }
 
     // The client roots a host advertises through the MCP roots capability; empty until the host answers.
     internal ImmutableArray<string> ClientRoots { get; set; } = [];
@@ -72,6 +77,8 @@ internal sealed partial class McpWorkspaces
             else
             {
                 ClientDerivedRootPath = null;
+                _rootBindingConflict = null;
+                _discoveredRootPaths = [];
                 BindRoot(requestedRoot);
             }
         }
@@ -81,7 +88,7 @@ internal sealed partial class McpWorkspaces
         }
 
         var serialized = McpJson.OptionalString(arguments, "workspaceJson");
-        McpRecoveryJournal.RefusePending(Root);
+        RefusePendingWorkspace();
         var persisted = new McpManagedFiles(Root).Read(McpState.FileName);
         var state = persisted is null ? null : McpState.Deserialize(persisted);
         var name = McpJson.OptionalString(arguments, "applicationName") ?? state?.ApplicationName ?? Root.ApplicationName;
@@ -100,9 +107,9 @@ internal sealed partial class McpWorkspaces
 
         Root.Verify(candidate);
         new McpManagedFiles(Root).Verify(McpState.FileName, persisted);
-        McpRecoveryJournal.RefusePending(Root);
+        RefusePendingWorkspace();
         _ = McpWorkspaceTransport.ExportBytes(candidate);
-        var result = McpJson.ToolResult(McpWorkspaceTransport.Describe(candidate, McpJson.Boolean(arguments, "includeContent")));
+        var result = McpJson.ToolResult(WithRootBindingConflict(McpWorkspaceTransport.Describe(candidate, McpJson.Boolean(arguments, "includeContent"))));
         _workspace = candidate;
         _stateBytes = persisted;
         _proposals.Clear();
@@ -138,7 +145,7 @@ internal sealed partial class McpWorkspaces
             return McpJson.ToolResult(new { success = false, failureKind = "ProposalRejected", transaction.Conflicts, transaction.Diagnostics }, true);
         }
 
-        return Store(new McpProposal(workspace, transaction), arguments);
+        return Store(new McpProposal(workspace, transaction), arguments, expand);
     }
 
     internal object Apply(JsonElement arguments)
@@ -156,21 +163,45 @@ internal sealed partial class McpWorkspaces
         var beforeDescription = JsonSerializer.SerializeToElement(McpWorkspaceTransport.Describe(workspace, includeContent), McpJson.Options);
         var afterDescription = JsonSerializer.SerializeToElement(McpWorkspaceTransport.Describe(proposal.Workspace, includeContent), McpJson.Options);
         _repairEvidence.TryGetValue(proposal, out var evidence);
+        var previousConflict = _rootBindingConflict;
         var result = new McpDisk(Root).Apply(
             proposal,
             statePlan,
             () =>
             {
                 BeforeInstall?.Invoke();
+                RefuseCompetingPending();
                 evidence?.Verify(Root, proposal);
             },
             evidence?.OperationId);
         if (result.Success)
         {
-            _workspace = evidence is null ? McpAttachmentContents.Refresh(Root, proposal.Workspace) : proposal.Workspace;
+            // Commit the verified disk outcome to the session before any further inspection can fail.
+            _workspace = proposal.Workspace;
             _stateBytes = statePlan.After;
             _proposals.Clear();
             _statePlans.Clear();
+        }
+
+        string? metadataProblem = null;
+        try
+        {
+            if (result.Success)
+            {
+                AfterApply?.Invoke();
+                if (evidence is null)
+                {
+                    _workspace = McpAttachmentContents.Refresh(Root, proposal.Workspace);
+                }
+            }
+
+            _ = RefreshRootBindingConflict();
+        }
+        catch (Exception failure) when (failure is McpFailure or IOException or UnauthorizedAccessException)
+        {
+            // A failed status inspection does not turn a verified apply into an unknown write outcome.
+            _rootBindingConflict = previousConflict;
+            metadataProblem = failure.Message;
         }
 
         var response = new
@@ -181,11 +212,12 @@ internal sealed partial class McpWorkspaces
             result.Recovery,
             result.PlannedChanges,
             result.InstalledDocuments,
+            metadataProblem,
             validation = proposal.Validation,
             referencePolicy = proposal is McpAuthoringProposal authored ? authored.ReferencePolicy.ToString() : null,
             workspace = result.Success ? afterDescription : beforeDescription
         };
-        return McpJson.ToolResult(response, !result.Success, enforceBudget: false);
+        return McpJson.ToolResult(WithRootBindingConflict(response), !result.Success, enforceBudget: false);
     }
 
     // Drops a binding that came from client roots after the host reports the roots changed; an explicit
@@ -198,10 +230,36 @@ internal sealed partial class McpWorkspaces
         }
 
         _root = null;
+        _rootBindingConflict = null;
+        _discoveredRootPaths = [];
         _workspace = null;
         _stateBytes = null;
         _proposals.Clear();
         _statePlans.Clear();
+    }
+
+    internal object WithRootBindingConflict(object value)
+    {
+        if (_rootBindingConflict is null)
+        {
+            return value;
+        }
+
+        var description = JsonSerializer.SerializeToElement(value, McpJson.Options);
+        var properties = description.EnumerateObject().ToDictionary(property => property.Name, property => property.Value, StringComparer.Ordinal);
+        properties.Add("rootBindingConflict", JsonSerializer.SerializeToElement(_rootBindingConflict, McpJson.Options));
+        if (properties.TryGetValue("message", out var message) && message.ValueKind == JsonValueKind.String)
+        {
+            properties["message"] = JsonSerializer.SerializeToElement($"{message.GetString()} {_rootBindingConflict.Message}");
+        }
+
+        return properties;
+    }
+
+    internal void RefusePendingWorkspace()
+    {
+        RefuseCompetingPending();
+        McpRecoveryJournal.RefusePending(Root);
     }
 
     static McpRoot RootFromClientUri(string uri)
@@ -216,13 +274,6 @@ internal sealed partial class McpWorkspaces
 
     // The directory a host root names, which is where the host's binding came from, not where the model was found.
     static string OfferedPath(string uri) => RootFromClientUri(uri).DirectoryPath;
-
-    // A host root is the project the user works in, not necessarily the folder holding the model.
-    static McpRoot ProjectRootFromClientUri(string uri)
-    {
-        var project = RootFromClientUri(uri);
-        return new McpRoot(McpModelLocation.Project(project.DirectoryPath));
-    }
 
     // A shallow, bounded check: .play files at the top or one level down, or an existing identity-state folder.
     static bool LooksLikeScreenplayRoot(string directory)
@@ -251,9 +302,84 @@ internal sealed partial class McpWorkspaces
         return false;
     }
 
-    object Store(IMcpProposal proposal, JsonElement arguments)
+    static (bool HasState, bool HasJournal) StateAt(string directory)
+    {
+        McpManagedFiles.CheckExisting(directory);
+        var metadata = Path.Combine(directory, ".screenplay");
+        McpManagedFiles.CheckExisting(metadata);
+        var identities = Path.Combine(metadata, McpState.FileName);
+        var journal = Path.Combine(metadata, McpRecoveryJournal.FileName);
+        McpManagedFiles.CheckExisting(identities);
+        McpManagedFiles.CheckExisting(journal);
+        if (File.Exists(metadata) || Directory.Exists(identities) || Directory.Exists(journal))
+        {
+            throw new McpFailure($"MetadataPathConflict: '{metadata}' must be a directory and its identities.json and pending.json entries must be files.");
+        }
+
+        var hasJournal = File.Exists(journal);
+
+        return (File.Exists(identities) || hasJournal, hasJournal);
+    }
+
+    // A host root is the project the user works in, not necessarily the folder holding the model.
+    McpRoot ProjectRootFromClientUri(string uri)
+    {
+        var project = RootFromClientUri(uri);
+        _ = StateAt(project.DirectoryPath);
+        var discovered = McpModelLocation.Project(project.DirectoryPath, createFallback: false);
+        var paths = new List<string>();
+        for (var directory = discovered; directory is not null; directory = Path.GetDirectoryName(directory))
+        {
+            paths.Add(directory);
+            if (string.Equals(Path.TrimEndingDirectorySeparator(directory), Path.TrimEndingDirectorySeparator(project.DirectoryPath), StringComparison.Ordinal))
+            {
+                break;
+            }
+        }
+
+        // Check the entire path, even after finding state, so competing journals cannot be bypassed.
+        paths.Reverse();
+        var states = paths.Select(path => (Path: path, State: StateAt(path))).ToArray();
+        var stateRoots = states.Where(entry => entry.State.HasState).Select(entry => entry.Path).ToImmutableArray();
+        var pendingRoots = states.Where(entry => entry.State.HasJournal).Select(entry => entry.Path).ToImmutableArray();
+        var selectedPath = stateRoots.IsEmpty ? discovered : stateRoots[0];
+        if (stateRoots.IsEmpty)
+        {
+            McpManagedFiles.CheckExisting(selectedPath);
+            Directory.CreateDirectory(selectedPath);
+        }
+
+        var selected = new McpRoot(selectedPath);
+        _discoveredRootPaths = [.. paths];
+        _rootBindingConflict = stateRoots.Length < 2 ? null : new(selected.DirectoryPath, stateRoots, pendingRoots);
+
+        return selected;
+    }
+
+    ImmutableArray<string> RefreshRootBindingConflict()
+    {
+        var root = Root;
+        var states = _discoveredRootPaths.Select(path => (Path: path, State: StateAt(path))).ToArray();
+        var stateRoots = states.Where(entry => entry.State.HasState).Select(entry => entry.Path).ToImmutableArray();
+        var pendingRoots = states.Where(entry => entry.State.HasJournal).Select(entry => entry.Path).ToImmutableArray();
+        _rootBindingConflict = stateRoots.Length < 2 ? null : new(root.DirectoryPath, stateRoots, pendingRoots);
+
+        return pendingRoots;
+    }
+
+    void RefuseCompetingPending()
+    {
+        var pendingRoots = RefreshRootBindingConflict().Where(path => !string.Equals(Path.TrimEndingDirectorySeparator(path), Path.TrimEndingDirectorySeparator(Root.DirectoryPath), StringComparison.Ordinal)).ToArray();
+        if (pendingRoots.Length > 0)
+        {
+            throw new McpFailure($"PendingOperation: bound root '{Root.DirectoryPath}' overlaps pending .screenplay/pending.json journals at {string.Join(", ", pendingRoots.Select(path => $"'{path}'"))}. Opening, reads and writes are refused. Inspect workspace-state, then open each competing root with an explicit path before recovering its journal.") { FailureKind = "PendingOperation" };
+        }
+    }
+
+    object Store(IMcpProposal proposal, JsonElement arguments, bool layout = false)
     {
         BeforeStore?.Invoke();
+        RefusePendingWorkspace();
         var pinned = McpJson.Boolean(arguments, "pinRepairEvidence");
         var evidence = pinned ? McpRepairEvidence.Pin(Root, proposal) : null;
         if (!pinned) proposal = RefreshProposal(proposal);
@@ -301,7 +427,8 @@ internal sealed partial class McpWorkspaces
             changes = includeContent ? proposal.WritePlan.Entries.Select(DescribeChange) : null,
             introducedExecutableErrors = introducedErrors,
             executableGuidance = introducedErrors.Count == 0 ? null : McpIntroducedErrors.Guidance,
-            review = "Use read-proposal to inspect the complete plan, any dropped comments, and exact before/after bytes before apply."
+            review = (layout && WorkspaceTimelineRepairs.Timeline(proposal.Before).Root is null ? "No ordering root was found; path order was used. " : string.Empty) +
+                "Use read-proposal to inspect the complete plan, any dropped comments, and exact before/after bytes before apply."
         };
         var response = McpJson.ToolResult(result);
         _proposals.Add(id, proposal);
@@ -438,7 +565,7 @@ internal sealed partial class McpWorkspaces
 
     ScreenplayWorkspace Current()
     {
-        McpRecoveryJournal.RefusePending(Root);
+        RefusePendingWorkspace();
         var workspace = _workspace ?? throw new McpFailure("Open a workspace first.");
         new McpManagedFiles(Root).Verify(McpState.FileName, _stateBytes);
         var refreshed = McpAttachmentContents.Refresh(Root, workspace);

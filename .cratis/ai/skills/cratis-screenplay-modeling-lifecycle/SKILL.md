@@ -3,7 +3,7 @@ name: cratis-screenplay-modeling-lifecycle
 description: "Model first: load before any Cratis application work where a Screenplay `.play` model is, or should become, the source of truth. Holds the model-first decision rule, modes, independent verdicts V1-V5, the P0-P9 phases with Input / Carry-forward / Gate, stop-or-assume, identity ownership, approvals, untrusted content, session state and handoffs, then routes to ONE phase skill. Not for: Screenplay syntax or the compiler (use `cratis-screenplay-toolchain`), a single construct (use the `cratis-screenplay-*` construct skills), or Chronicle runtime diagnosis (use `cratis-chronicle-cli-operations`)."
 license: MIT
 metadata:
-  cratis-hint-paths: ".cratis/screenplay/**/*.play"
+  cratis-hint-paths: "**/*.play"
 ---
 <!-- cratis-ai-managed: skills/cratis-screenplay-modeling-lifecycle/SKILL.md -->
 
@@ -19,10 +19,10 @@ an unproven pass.
 
 ## Decide the level first (master copy; run once per request, from any entry point)
 
-1. **Opted in?** Only when (a) the model root (default `.cratis/screenplay/`, or the project's
-   configured root) holds a `.play` file **in the committed tree** (`git ls-tree -r --name-only HEAD -- <root>` lists it), or (b)
+1. **Opted in?** Only when (a) the model root (the folder holding the project's `.play` files, or the project's
+   configured root) holds a `.play` file **in the committed tree** (`git ls-tree -r --name-only HEAD` lists a `.play` file there, narrowed to `-- <root>` when a root is configured), or (b)
    the project explicitly set `mcpServers.screenplay.root` in `.cratis/ai.json` (an empty configured
-   root counts). **Not opt-in:** an empty `.cratis/screenplay/` or the MCP entry that `cratis ai
+   root counts). **Not opt-in:** an empty model folder or the MCP entry that `cratis ai
    install`/`update` creates; an installed profile or skill; a `.play` file outside the root; a
    staged or untracked `.play` file under the root (a draft). Committing a model under the root
    is the team's act of acceptance and opts the repository in.
@@ -44,7 +44,7 @@ an unproven pass.
 | An accepted model covers the scope | **Model** | Change the `.play`, verify V1-V3, review, then render or gap-fill |
 | Opted in, but this scope has no model yet | **Model** | New behavior starts in discovery, then slice design |
 | A computed rule inside a modeled slice | **Model + code attachment** | `csharp`/`file` block; it binds only as the construct allows (`cratis-screenplay-model-authoring`) |
-| Scope Stage cannot render yet, including every modeled automation and translation (Stage `v4.24.0` renders neither; the whole behavior is gap-fill, not just its outside call) | **Gap-fill code** | Hand-written; the `.play` slice and specs are the contract. `cratis-screenplay-render-and-gap-fill` separates an authorized existing generated base from fully hand-written delivery |
+| Scope Stage cannot render yet, including every modeled automation and translation (Stage `v4.24.2` renders neither; the whole behavior is gap-fill, not just its outside call) | **Gap-fill code** | Hand-written; the `.play` slice and specs are the contract. `cratis-screenplay-render-and-gap-fill` separates an authorized existing generated base from fully hand-written delivery |
 | Outside call, transport or credentials | **Adapter code** | `Customizations/` or the host, applying `cratis-engineering-effect-boundaries` |
 | Infrastructure, clients, framework-profile repositories, brownfield not opted in | **Code** | Arc, Chronicle, spec and React skills; trivial changes keep the proportional-delegation policy |
 
@@ -214,15 +214,15 @@ the packet opens with `Outcome:`; STATE.md is current.
 
 ## Verified product sources
 Full pin table: `cratis-screenplay-toolchain/references/versions.md`. Used here: Screenplay
-`v4.64.0` (`7e16162`): `Source/DotNET/Tool/Program.cs` (`--warnaserror`, folder mode),
+`v4.66.0` (`c89198b`): `Source/DotNET/Tool/Program.cs` (`--warnaserror`, folder mode),
 `Source/DotNET/Screenplay/Semantics/SemanticModelBinder.cs:209-216` (personas are report-only),
 `Documentation/screenplay/{constraints,specifications}.md`, `mcp/reference.md` (`modelRevision`);
-cratis CLI `v3.27.1` (`cratis screenplay validate --warnings-as-errors`, older bundled compiler);
-Stage `v4.24.0` (admits ESM v1-v3); opt-in key `mcpServers.screenplay.root` in cratis CLI `v3.27.1`
+cratis CLI `v3.28.3` (`cratis screenplay validate --warnings-as-errors`, bundled Screenplay 4.66.0);
+Stage `v4.24.2` (admits ESM v1-v4 and refuses evolved events with `STAGE-ESM-026`); opt-in key `mcpServers.screenplay.root` in cratis CLI `v3.28.3`
 `Documentation/reference/screenplay-mcp.md`. The worked example compiles with both tools.
 ## Verify
 ```shell
-screenplay .cratis/screenplay/ --warnaserror --no-color
+screenplay <model-folder> --warnaserror --no-color
 ```
 - [ ] The first output line states the mode; the last block opens with `Outcome:`; five verdict lines, each a result or "not run: <reason>".
 - [ ] One phase skill per step; STATE.md names the next phase; no code for modeled behavior, no managed output edited.

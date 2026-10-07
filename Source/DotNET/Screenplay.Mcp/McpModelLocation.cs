@@ -18,8 +18,9 @@ static class McpModelLocation
     /// Finds the model inside a project: the folder holding its .play files, else Source or src, else a new Screenplay folder.
     /// </summary>
     /// <param name="project">The project directory.</param>
-    /// <returns>The existing directory to serve.</returns>
-    internal static string Project(string project)
+    /// <param name="createFallback">Whether to create the fallback folder when no existing model or source folder is found.</param>
+    /// <returns>The directory to serve, which may not exist when fallback creation is disabled.</returns>
+    internal static string Project(string project, bool createFallback = true)
     {
         if (Existing(project) is { } existing)
         {
@@ -37,7 +38,11 @@ static class McpModelLocation
         }
 
         var created = Path.Combine(project, ProjectFallback);
-        Directory.CreateDirectory(created);
+        if (createFallback)
+        {
+            Directory.CreateDirectory(created);
+        }
+
         return created;
     }
 

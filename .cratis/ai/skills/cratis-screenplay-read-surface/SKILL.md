@@ -12,11 +12,14 @@ shape, the `query` is the entry point, and the `screen` renders it.
 
 ## Locate the model
 
-Look first in `.cratis/screenplay/` at the repository root. This is the
+Look first for the project's existing `.play` files: the folder holding them is the
+model. A new model goes under the repository's `Source/` or `src/` folder, else in a
+`Screenplay/` folder at the repository root; never under `.cratis/`, which holds
+configuration and the shared AI corpus only. This is the
 conventional home for consumer-owned `.play` source; do not invent another
 location or search the whole repository before checking it.
 
-`cratis ai install` manages `.cratis/ai/`, not `.cratis/screenplay/`. Never
+`cratis ai install` manages `.cratis/ai/`, never model files. Never
 hand-copy Screenplay source between repositories. Keep Markdown that explains,
 questions or navigates the model in the repository's documentation; the `.play`
 source is the single flow model.
@@ -27,7 +30,7 @@ source is the single flow model.
 | --- | --- | --- |
 | `Cratis.Screenplay` | `4.31.0` | Original parser, validator and binder evidence |
 | `Cratis.Screenplay` | main `fd18129` | Canonical optionality; changed examples compiled |
-| `Cratis.Screenplay` | `4.64.0` (`7e16162`) | Which query shapes bind and render (`Semantics/`, `Documentation/screenplay/queries.md`) |
+| `Cratis.Screenplay` | `4.66.0` (`c89198b`) | Which query shapes bind and render (`Semantics/`, `Documentation/screenplay/queries.md`) |
 
 The update follows `types.md`, `queries.md` and `vscode.md` at that main commit
 (after v4.52.0). Compilation does not establish query execution.
@@ -256,10 +259,10 @@ binding failures are errors.
 
 ## Verify
 
-- [ ] Standalone `screenplay <model> --warnaserror` (4.64.0) reports zero errors and zero
-      warnings; with only the bundled compiler, `cratis screenplay validate
-      --warnings-as-errors` on the model folder (3.27.1 bundles Screenplay 4.60.1, ESM v5 or
-      lower). Name which tool produced the result.
+- [ ] Standalone `screenplay <model> --warnaserror` (4.68.0) reports zero errors and zero
+      warnings; or `cratis screenplay validate --warnings-as-errors` on the model folder
+      (3.28.2 bundles the same Screenplay 4.66.0; before 3.28.2 bundled 4.60.1, ESM v5
+      or lower). Name which tool produced the result.
 - [ ] Every value the caller must not choose is a `from` parameter, not a `filter`.
 - [ ] Every `scoped to global` is deliberate and defensible.
 - [ ] `observable` is present exactly where the caller should see changes without

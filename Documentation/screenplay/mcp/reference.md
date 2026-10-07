@@ -34,8 +34,38 @@ may name that same physical directory, but another root returns `RootChangeRefus
 Start a separately authorized connection to switch applications. Dynamic servers
 retain the root selection described above.
 
+For a single client-offered project, default discovery uses the common ancestor
+of folders holding `.play` files, then `Source`/`src`, then `<project>/Screenplay`.
+Existing `.screenplay/identities.json` or `.screenplay/pending.json` at any
+ancestor-or-self directory between the offered project and that discovered folder
+keeps the workspace bound to that state directory. Both endpoints are included;
+an empty metadata folder or backup artifact alone does not count. Metadata path
+checks reject symbolic links and reparse points before checking state presence.
+With several state directories on that path, the one nearest the offered project
+wins. `open-workspace` and the `workspace-state` status view report
+`rootBindingConflict` with `kind: "WorkspaceRootConflict"`, `boundRoot`, ordered
+`stateRoots` (nearest the offered root first), `pendingRoots` (state roots holding
+`pending.json`, in the same order), and an explanatory `message`. The field is
+omitted when there is no conflict. Failed tool responses also carry the conflict,
+and their error message names the bound root and competing state roots.
+A pending journal at any state root on the discovered path blocks opening, reads
+and writes at the bound root, including visualization and a journal created after
+opening or proposing. `workspace-state` remains available to inspect the conflict.
+For a competing root's recovery, first call `open-workspace` with that root's explicit
+`path` (opening still returns `PendingOperation`), inspect `workspace-state` there,
+then explicitly call `recover-workspace` with its operation ID. A recovery call at
+the outer root cannot recover a nested journal. No identities or recovery journals
+are migrated, and no fallback folder is created when existing state selects a root.
+Inspect competing workspaces using explicit paths before deciding which to keep.
+Explicit paths and roots
+fixed at startup, including `.cratis/ai.json` configuration, are unchanged.
+
 Only `apply` and `recover-workspace` mutate files. Keep client approval enabled
 for both. Source queries, schemas, proposals and status checks are read-only.
+If metadata inspection fails after a verified apply, its response keeps the applied
+outcome and session revision, retains the previous root-conflict snapshot, and
+reports the inspection failure in `metadataProblem`. Repair that metadata before
+continuing; do not retry the completed apply.
 
 ## Generated values and responses
 
@@ -263,6 +293,13 @@ is canonicalized.
 | `discard-proposal` | proposalId | None |
 | `apply` | proposalId, expectedRevision, expectedCatalogRevision | includeContent, `expectedRepairEvidenceRevision` |
 | `recover-workspace` | operationId | None |
+
+`expand-layout` guards relative module, feature and slice sibling order in each
+scope before creating a proposal, using the timeline's ordering root: the sole
+document, an importing `application.play`, or the unique importer not itself
+imported. An import-less `application.play` can coexist with that importer. With
+no ordering root, expansion uses path order and discloses this in the existing
+proposal `review` text. Order does not change executable-model bytes or identities.
 
 `tools/list` supplies nested argument schemas. Revisions, IDs and handles come
 from the server; do not infer them from names or line numbers.

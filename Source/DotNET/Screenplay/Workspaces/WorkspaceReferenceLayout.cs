@@ -23,9 +23,10 @@ static class WorkspaceReferenceLayout
         return merged.Success ? merged.Value : null;
     }
 
-    // Folder layouts order these named containers by path. Their sibling ordering is not a binding
-    // dimension. File imports are composition edges already resolved by full-source compilation, not
-    // semantic references. All other collection order and every structural member remain part of this proof.
+    // This is a binding-safety relaxation for layout changes, not an authored-order guard.
+    // Sibling order is presentation-only; expand-layout guards it separately against the ordering root.
+    // File imports are resolved composition edges, not semantic references. All other collection order
+    // and every structural member remain part of this proof.
     static ApplicationSyntax Normalize(ApplicationSyntax application) => application with
     {
         FileImports = [],
