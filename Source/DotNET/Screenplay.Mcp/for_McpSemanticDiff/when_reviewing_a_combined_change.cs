@@ -45,7 +45,7 @@ public class when_reviewing_a_combined_change : given.a_semantic_comparison
     [Fact] void should_report_the_removed_slice() => Items("declarations").Any(item => item.GetProperty("semanticId").GetString() == _sliceId && item.GetProperty("changeKind").GetString() == "removed").ShouldBeTrue();
     [Fact] void should_report_direct_dependants_for_the_renamed_property() => Items("dependants").Any(item => item.GetProperty("semanticId").GetString() == _renamedId && item.GetProperty("dependantAddress").GetString().EndsWith(".All", StringComparison.Ordinal)).ShouldBeTrue();
     [Fact] void should_report_direct_dependants_for_the_event() => Items("dependants").Any(item => item.GetProperty("semanticId").GetString() == _eventId && item.GetProperty("role").GetString() == "produces").ShouldBeTrue();
-    [Fact] void should_report_dependants_of_declarations_inside_the_removed_slice() => Items("dependants").Any(item => item.GetProperty("semanticId").GetString() == _sliceId && item.GetProperty("dependantAddress").GetString().EndsWith(".History", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_exclude_internal_references_from_removed_container_impact() => Items("dependants").Any(item => item.GetProperty("semanticId").GetString() == _sliceId && item.GetProperty("dependantAddress").GetString().EndsWith(".History", StringComparison.Ordinal)).ShouldBeFalse();
     [Fact] void should_report_the_migrated_identity() => Items("identities").Any(item => item.GetProperty("semanticId").GetString() == _renamedId && item.GetProperty("changeKind").GetString() == "migrated").ShouldBeTrue();
     [Fact] void should_report_a_semantic_change() => Diff.GetProperty("hasSemanticChange").GetBoolean().ShouldBeTrue();
 }

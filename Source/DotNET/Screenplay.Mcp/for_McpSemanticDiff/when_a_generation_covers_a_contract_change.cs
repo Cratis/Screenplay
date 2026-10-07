@@ -28,8 +28,8 @@ public class when_a_generation_covers_a_contract_change : given.a_semantic_compa
         Diff = Read();
     }
 
-    [Fact] void should_report_the_new_property() => Items("events").Single().GetProperty("member").GetString().ShouldEqual("extra");
-    [Fact] void should_keep_contract_risk_visible() => Items("events").Single().GetProperty("contractBreaking").GetBoolean().ShouldBeTrue();
-    [Fact] void should_report_the_preserved_previous_generation_as_coverage() => Items("events").Single().GetProperty("generationCovered").GetBoolean().ShouldBeTrue();
-    [Fact] void should_identify_both_generations() => Items("events").Single().GetProperty("afterGeneration").GetUInt32().ShouldEqual(2u);
+    [Fact] void should_report_the_new_property() => Items("events").Single(item => item.GetProperty("changeKind").GetString() == "property-added").GetProperty("member").GetString().ShouldEqual("extra");
+    [Fact] void should_keep_contract_risk_visible() => Items("events").Single(item => item.GetProperty("changeKind").GetString() == "property-added").GetProperty("contractBreaking").GetBoolean().ShouldBeTrue();
+    [Fact] void should_report_the_preserved_previous_generation_as_coverage() => Items("events").Single(item => item.GetProperty("changeKind").GetString() == "property-added").GetProperty("generationCovered").GetBoolean().ShouldBeTrue();
+    [Fact] void should_identify_both_generations() => Items("events").Single(item => item.GetProperty("changeKind").GetString() == "generation-added").GetProperty("afterGeneration").GetUInt32().ShouldEqual(2u);
 }

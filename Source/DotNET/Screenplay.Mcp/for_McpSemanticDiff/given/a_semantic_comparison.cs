@@ -75,7 +75,28 @@ public class a_semantic_comparison : Specification
         Proposal = new McpAuthoringProposal(Workspace, result, WorkspaceAuthoringValidation.Authoring);
     }
 
+    // Comparison specs exercise immutable snapshots, independently of proposal admission/refactoring.
+    internal void CompareSnapshots(string before, string after, Func<SemanticIdentityCatalog, SemanticIdentityCatalog>? migrate = null, ScreenplayWorkspace? seed = null)
+    {
+        var original = seed ?? Create(before);
+        var document = WorkspaceDocument.Create("application", PortablePlayPath.Parse("application.play"), Encoding.UTF8.GetBytes(before));
+        Workspace = ScreenplayWorkspace.Create("Projects", [document], original.IdentityCatalog);
+        var proposed = WorkspaceDocument.Create("application", PortablePlayPath.Parse("application.play"), Encoding.UTF8.GetBytes(after));
+        var candidate = ScreenplayWorkspace.Create("Projects", [proposed], migrate?.Invoke(Workspace.IdentityCatalog) ?? Workspace.IdentityCatalog);
+        Proposal = new Comparison(Workspace, candidate);
+        Diff = Read();
+    }
+
     internal JsonElement Read(object? arguments = null) => JsonSerializer.SerializeToElement(McpSemanticDiff.Read(Proposal, JsonSerializer.SerializeToElement(arguments ?? new { limit = 200 })), McpJson.Options);
 
     internal JsonElement[] Items(string section) => [.. Diff.GetProperty("page").GetProperty("items").EnumerateArray().Where(item => item.GetProperty("section").GetString() == section)];
+
+    internal JsonElement Section(string section) => Diff.GetProperty("sections").EnumerateArray().Single(value => value.GetProperty("section").GetString() == section);
+
+    sealed record Comparison(ScreenplayWorkspace Before, ScreenplayWorkspace Workspace) : IMcpProposal
+    {
+        public WorkspaceWritePlan WritePlan => new() { BeforeRevision = Before.Revision, AfterRevision = Workspace.Revision, BeforeCatalogRevision = Before.IdentityCatalog.Revision, AfterCatalogRevision = Workspace.IdentityCatalog.Revision };
+        public bool Accepted => true;
+        public string Validation => "Authoring";
+    }
 }

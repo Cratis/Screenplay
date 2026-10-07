@@ -18,8 +18,9 @@ static class McpSemanticDiff
 {
     static readonly string[] _sections = ["declarations", "events", "members", "specifications", "dependants", "identities"];
     static readonly string[] _structuralSections = ["events", "members", "specifications"];
-    static readonly string[] _ignoredMembers = ["kind", "name", "id", "description", "documentation", "file"];
-    static readonly string[] _opaqueMembers = ["code", "body", "content", "file", "description", "documentation"];
+    static readonly string[] _ignoredMembers = ["kind", "name", "description", "documentation", "isPlacement", "fileImports"];
+    static readonly string[] _opaqueMembers = ["code", "body", "content", "file"];
+    static readonly string[] _hierarchyChildren = ["modules", "concepts", "types", "policies", "personas", "uiProfiles", "themes", "triggers", "layouts", "systems", "eventSources", "screenTemplates", "dialogTemplates", "forms", "features", "slices", "events", "commands", "queries", "projections", "captures", "reactions", "screens", "constraints", "specifications", "readModels", "reducers", "operations"];
     internal static object Read(IMcpProposal proposal, JsonElement arguments)
     {
         var revision = proposal.Workspace.Revision.ToString();
@@ -57,7 +58,7 @@ static class McpSemanticDiff
             if (!old.Address.Equals(current.Address))
             {
                 var change = old.Address.Name != current.Address.Name ? "renamed" : "moved";
-                Add(new("declarations", change, id, kind, previous, next, BeforeDocuments: before.Documents(id), AfterDocuments: after.Documents(id)));
+                Add(new("declarations", change, id, kind, previous, next, BeforeDocuments: before.Documents(id), AfterDocuments: after.Documents(id), MoveKind: change == "moved" ? "owner" : null, BeforeOwner: Owner(old.Address), AfterOwner: Owner(current.Address)));
                 changes.Add(new("identities", "migrated", id, kind, previous, next));
             }
             var oldNodes = before.Nodes.GetValueOrDefault(id) ?? [];
@@ -67,23 +68,19 @@ static class McpSemanticDiff
             var newPaths = after.Documents(id);
             if (!oldPaths.SequenceEqual(newPaths) && (old.Address.Equals(current.Address) || old.Address.Name != current.Address.Name))
             {
-                Add(new("declarations", "moved", id, kind, previous, next, BeforeDocuments: oldPaths, AfterDocuments: newPaths));
+                Add(new("declarations", "moved", id, kind, previous, next, BeforeDocuments: oldPaths, AfterDocuments: newPaths, MoveKind: "document"));
             }
 
             if (address.Kind == SemanticKind.EventContract)
             {
-                Events(id, previous!, next!, [.. oldNodes.Select(entry => entry.Node).OfType<EventSyntax>()], [.. newNodes.Select(entry => entry.Node).OfType<EventSyntax>()], changes, changedIds);
+                Events(id, previous!, next!, [.. oldNodes.OfType<EventSyntax>()], [.. newNodes.OfType<EventSyntax>()], changes, changedIds);
             }
-            if (address.Kind is not (SemanticKind.Application or SemanticKind.Module or SemanticKind.Feature or SemanticKind.Slice))
+            var left = Members(oldNodes);
+            var right = Members(newNodes);
+            foreach (var member in left.Keys.Union(right.Keys).Where(member => left.GetValueOrDefault(member) != right.GetValueOrDefault(member)).Order(StringComparer.Ordinal))
             {
-                // Split hierarchy scaffolds are not compared as subtrees; descendants have their own IDs.
-                var left = Members(oldNodes[0].Node);
-                var right = Members(newNodes[0].Node);
-                foreach (var member in left.Keys.Union(right.Keys).Where(member => left.GetValueOrDefault(member) != right.GetValueOrDefault(member)).Order(StringComparer.Ordinal))
-                {
-                    var outcome = address.Kind == SemanticKind.Specification && member.StartsWith("then", StringComparison.Ordinal);
-                    Add(new(outcome ? "specifications" : "members", outcome ? "expected-outcome-changed" : "changed", id, kind, previous, next, member, BeforeHash: Hash(left.GetValueOrDefault(member)), AfterHash: Hash(right.GetValueOrDefault(member))));
-                }
+                var outcome = address.Kind == SemanticKind.Specification && member.StartsWith("then", StringComparison.Ordinal);
+                Add(new(outcome ? "specifications" : "members", MemberChange(member, left.GetValueOrDefault(member), right.GetValueOrDefault(member), outcome), id, kind, previous, next, member, BeforeHash: Hash(left.GetValueOrDefault(member)), AfterHash: Hash(right.GetValueOrDefault(member))));
             }
         }
 
@@ -92,23 +89,27 @@ static class McpSemanticDiff
         {
             before.Unassigned.TryGetValue(key, out var old);
             after.Unassigned.TryGetValue(key, out var current);
-            var kind = (current ?? old!).Kind;
+            var declaration = (current ?? old!)[0];
+            var kind = declaration.Kind;
+            if ((old is not null && !before.ComparableAuthoring(key)) || (current is not null && !after.ComparableAuthoring(key))) continue;
+            var previous = old?[0].Address;
+            var next = current?[0].Address;
             var start = changes.Count;
             if (old is null || current is null)
             {
-                changes.Add(new("declarations", Presence(old, current), null, kind, old?.Address, current?.Address));
-                if (kind == "Specification") changes.Add(new("specifications", Presence(old, current), null, kind, old?.Address, current?.Address));
+                changes.Add(new("declarations", Presence(old, current), null, kind, previous, next));
+                if (kind == "Specification") changes.Add(new("specifications", Presence(old, current), null, kind, previous, next));
             }
             if (kind == "Event" && old is not null && current is not null)
             {
-                Events(null, old.Address, current.Address, [.. old.Parts.OfType<EventSyntax>()], [.. current.Parts.OfType<EventSyntax>()], changes, changedIds);
+                Events(null, previous!, next!, [.. old.Select(value => value.Syntax).OfType<EventSyntax>()], [.. current.Select(value => value.Syntax).OfType<EventSyntax>()], changes, changedIds);
             }
-            var left = old is null ? [] : Members(old.Syntax);
-            var right = current is null ? [] : Members(current.Syntax);
+            var left = old is null ? [] : Members(old.Select(value => value.Syntax));
+            var right = current is null ? [] : Members(current.Select(value => value.Syntax));
             foreach (var member in left.Keys.Union(right.Keys).Where(member => left.GetValueOrDefault(member) != right.GetValueOrDefault(member)).Order(StringComparer.Ordinal))
             {
                 var outcome = kind == "Specification" && member.StartsWith("then", StringComparison.Ordinal);
-                changes.Add(new(outcome ? "specifications" : "members", outcome ? "expected-outcome-changed" : Presence(old, current), null, kind, old?.Address, current?.Address, member, BeforeHash: Hash(left.GetValueOrDefault(member)), AfterHash: Hash(right.GetValueOrDefault(member))));
+                changes.Add(new(outcome ? "specifications" : "members", MemberChange(member, left.GetValueOrDefault(member), right.GetValueOrDefault(member), outcome), null, kind, previous, next, member, BeforeHash: Hash(left.GetValueOrDefault(member)), AfterHash: Hash(right.GetValueOrDefault(member))));
             }
             if (changes.Count > start) changes.AddRange(before.AuthoringDependants(key, "before").Concat(after.AuthoringDependants(key, "after")));
         }
@@ -141,7 +142,7 @@ static class McpSemanticDiff
             executableBeforeAvailable = proposal.Before.Compilation.Success,
             executableAfterAvailable = proposal.Workspace.Compilation.Success,
             sections,
-            limits = new[] { "Structural authoring comparison, not an equivalence or execution verdict.", "No behavior comparison inside code attachments; use implementation-requirements for content hashes.", "Direct indexed dependants only (before and after); containers and properties aggregate references to their owning/contained declarations. No transitive or runtime impact.", "Unassigned kinds (including constraints) are compared by exact kind/authoring address only, never claimed as identity-preserving renames.", "No revision-to-revision comparison." },
+            limits = new[] { "Structural authoring comparison, not an equivalence or execution verdict.", "Opaque inline content and file references are compared by hash, but behavior inside code and external file contents are not analyzed; use implementation-requirements for attachment content hashes.", "Direct indexed dependants only (before and after); properties use their owner's references and containers aggregate external references to contained declarations, excluding references inside the container. No transitive or runtime impact.", "Unassigned kinds (including constraints) are compared by exact kind/authoring address only, never claimed as identity-preserving renames.", "No revision-to-revision comparison." },
             page = McpPaging.BoundedSourcePage(ordered.Cast<object>(), arguments, revision)
         };
 
@@ -171,12 +172,14 @@ static class McpSemanticDiff
                 if (id is not null) changedIds.Add(id);
             }
         }
-        if (rightEvents[^1].Generation > leftEvents[^1].Generation)
+        foreach (var current in rightEvents.Where(node => !leftEvents.Any(old => old.Generation == node.Generation)))
         {
-            var old = leftEvents[^1];
-            var current = rightEvents[^1];
-            var covered = current.HasGenerationMarker && rightEvents.Any(node => node.Generation == old.Generation && Shape(node) == Shape(old));
-            Compare(old, current, covered);
+            var previousGeneration = rightEvents.LastOrDefault(node => node.Generation < current.Generation);
+            var baseline = previousGeneration is null ? null : leftEvents.SingleOrDefault(node => node.Generation == previousGeneration.Generation);
+            var covered = previousGeneration is not null && current.HasGenerationMarker && (baseline is null || Shape(baseline) == Shape(previousGeneration));
+            changes.Add(new("events", "generation-added", id, "EventContract", previous, next, GenerationCovered: covered, BeforeGeneration: previousGeneration?.Generation, AfterGeneration: current.Generation));
+            if (id is not null) changedIds.Add(id);
+            if (previousGeneration is not null) Compare(previousGeneration, current, covered);
         }
 
         void Compare(EventSyntax old, EventSyntax current, bool covered)
@@ -199,9 +202,42 @@ static class McpSemanticDiff
 
     static string Shape(EventSyntax node) => string.Join('|', node.Properties.OrderBy(property => property.Name, StringComparer.Ordinal).Select(property => $"{property.Name}:{SyntaxJson.Serialize(property.Type).GetRawText()}"));
 
-    static Dictionary<string, string> Members(SyntaxNode node) => SyntaxJson.Serialize(node).EnumerateObject()
-        .Where(property => !_ignoredMembers.Contains(property.Name, StringComparer.Ordinal))
-        .ToDictionary(property => property.Name, property => Normalize(property.Value), StringComparer.Ordinal);
+    static Dictionary<string, string> Members(IEnumerable<SyntaxNode> nodes) => nodes.SelectMany(node => SyntaxJson.Serialize(node).EnumerateObject()
+        .Where(property => !_ignoredMembers.Contains(property.Name, StringComparer.Ordinal) && (!(node is ApplicationSyntax or ModuleSyntax or FeatureSyntax or SliceSyntax) || !_hierarchyChildren.Contains(property.Name, StringComparer.Ordinal)))
+        .Select(property => new KeyValuePair<string, string>(node is EventSyntax @event ? $"generation:{@event.Generation}/{property.Name}" : property.Name, Normalize(property.Value))))
+        .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
+
+    static string MemberChange(string member, string? before, string? after, bool outcome)
+    {
+        if (Opaque(before, member) != Opaque(after, member)) return "opaque-changed";
+        return outcome ? "expected-outcome-changed" : "changed";
+    }
+
+    static string Opaque(string? value, string member)
+    {
+        if (member == "file" || member.EndsWith("/file", StringComparison.Ordinal)) return value ?? "null";
+        if (value is null) return "{}";
+        var values = new JsonObject();
+        Collect(JsonNode.Parse(value), string.Empty);
+        return values.ToJsonString();
+
+        void Collect(JsonNode? node, string path)
+        {
+            if (node is JsonObject obj)
+            {
+                foreach (var pair in obj)
+                {
+                    var key = $"{path}/{pair.Key}";
+                    if (_opaqueMembers.Contains(pair.Key, StringComparer.Ordinal)) values[key] = pair.Value?.DeepClone();
+                    else Collect(pair.Value, key);
+                }
+            }
+            if (node is JsonArray array)
+            {
+                for (var index = 0; index < array.Count; index++) Collect(array[index], $"{path}/{index}");
+            }
+        }
+    }
 
     static string Normalize(JsonElement value)
     {
@@ -214,7 +250,7 @@ static class McpSemanticDiff
     {
         if (node is JsonObject obj)
         {
-            foreach (var key in obj.Select(pair => pair.Key).Where(key => _opaqueMembers.Contains(key, StringComparer.Ordinal)).ToArray()) obj.Remove(key);
+            foreach (var key in obj.Select(pair => pair.Key).Where(key => key == "description" || key == "documentation").ToArray()) obj.Remove(key);
             foreach (var child in obj.Select(pair => pair.Value)) Strip(child);
         }
         if (node is JsonArray array)
@@ -225,7 +261,7 @@ static class McpSemanticDiff
 
     static bool? SemanticChange(Change[] changes, bool complete)
     {
-        if (changes.Any(change => _structuralSections.Contains(change.Section, StringComparer.Ordinal) || (change.Section == "declarations" && change.ChangeKind != "moved"))) return true;
+        if (changes.Any(change => _structuralSections.Contains(change.Section, StringComparer.Ordinal) || (change.Section == "declarations" && (change.ChangeKind != "moved" || change.MoveKind == "owner")))) return true;
         return complete ? false : null;
     }
 
@@ -245,14 +281,9 @@ static class McpSemanticDiff
 
     static string Kind(SemanticAddress address) => address.Kind switch { SemanticKind.EventContract => "Event", SemanticKind.CompositeType => "Type", _ => address.Kind.ToString() };
 
-    static SemanticKind[] SectionKinds(string section) => section switch
-    {
-        "events" => [SemanticKind.EventContract],
-        "specifications" => [SemanticKind.Specification],
-        _ => [SemanticKind.Command, SemanticKind.ReadModel, SemanticKind.Projection, SemanticKind.Query]
-    };
-
     static string? Hash(string? value) => value is null ? null : Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
+
+    static string Owner(SemanticAddress address) => string.Join('.', address.Parts.SkipLast(1).Where(part => part.Kind is not (SemanticAddressPartKind.Application or SemanticAddressPartKind.OwnerKind)).Select(part => part.Key));
 
     static string Address(SemanticAddress address) => string.Join('.', address.Parts.Where(part => part.Kind is not (SemanticAddressPartKind.Application or SemanticAddressPartKind.OwnerKind or SemanticAddressPartKind.Generation)).Select(part => part.Key));
 
@@ -275,50 +306,51 @@ static class McpSemanticDiff
     {
         readonly McpWorkspaceAnalysis _analysis;
         readonly bool _sourceComplete;
-        readonly HashSet<(string Kind, string Address)> _assignedKeys;
+        readonly Dictionary<string, WorkspaceSyntaxEntry[]> _physical;
+        readonly Dictionary<(string Kind, string Address), McpDeclaration[]> _indexed;
 
         internal Snapshot(ScreenplayWorkspace workspace)
         {
             Workspace = workspace;
             _analysis = McpWorkspaceAnalysis.For(workspace);
             Assignments = workspace.IdentityCatalog.Semantics.ToDictionary(assignment => assignment.Id.ToString(), StringComparer.Ordinal);
-            _assignedKeys = [.. Assignments.Values.Select(assignment => (Kind(assignment.Address), Address(assignment.Address)))];
-            Nodes = _analysis.Syntax.Entries.Where(entry => entry.SemanticId is not null).GroupBy(entry => entry.SemanticId!.Value.ToString())
-                .ToDictionary(group => group.Key, group => group.OrderByDescending(entry => (entry.Node as EventSyntax)?.Generation ?? 0).ToArray(), StringComparer.Ordinal);
-            Unassigned = _analysis.Source.Index.Declarations.Where(declaration => !_assignedKeys.Contains((declaration.Kind, declaration.Address)))
-                .GroupBy(declaration => $"{declaration.Kind}:{declaration.Address}", StringComparer.Ordinal).Where(group => group.Count() == 1)
-                .ToDictionary(group => group.Key, group => group.Single(), StringComparer.Ordinal);
+            HashSet<(string Kind, string Address)> assignedKeys = [.. Assignments.Values.Select(assignment => (Kind(assignment.Address), Address(assignment.Address)))];
+            _physical = _analysis.Syntax.Entries.Where(entry => entry.SemanticId is not null).GroupBy(entry => entry.SemanticId!.Value.ToString()).ToDictionary(group => group.Key, group => group.ToArray(), StringComparer.Ordinal);
+            _indexed = _analysis.Source.Index.Declarations.GroupBy(declaration => (declaration.Kind, declaration.Address)).ToDictionary(group => group.Key, group => group.ToArray());
+            var roots = _analysis.Source.Compilation.Success && _analysis.Source.Compilation.Value is { } application
+                ? [application]
+                : _analysis.Syntax.Entries.Where(entry => entry.Parent is null).Select(entry => entry.Node).OfType<ApplicationSyntax>().ToArray();
+            _indexed[("Application", string.Empty)] = [.. roots.Select(root => new McpDeclaration("Application", string.Empty, [], root.Location, null, null, root))];
+            Nodes = Assignments.ToDictionary(pair => pair.Key, pair => FindNodes(pair.Value), StringComparer.Ordinal);
+            Unassigned = _indexed.Where(pair => pair.Value.Length > 0 && !assignedKeys.Contains(pair.Key)).ToDictionary(pair => $"{pair.Key.Kind}:{pair.Key.Address}", pair => pair.Value, StringComparer.Ordinal);
             _sourceComplete = !_analysis.Syntax.Diagnostics.Concat(_analysis.Source.Compilation.Diagnostics).Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error) && _analysis.Syntax.UnresolvedPlacementDocuments.IsEmpty;
         }
 
         internal ScreenplayWorkspace Workspace { get; }
         internal Dictionary<string, SemanticIdentityAssignment> Assignments { get; }
-        internal Dictionary<string, WorkspaceSyntaxEntry[]> Nodes { get; }
-        internal Dictionary<string, McpDeclaration> Unassigned { get; }
+        internal Dictionary<string, SyntaxNode[]> Nodes { get; }
+        internal Dictionary<string, McpDeclaration[]> Unassigned { get; }
 
-        internal DocumentLocation[] Documents(string id) => Nodes.TryGetValue(id, out var entries)
-            ? [.. entries.Select(entry => Workspace.Documents.Single(document => document.Id == entry.Handle.Document)).Select(document => new DocumentLocation(document.Id.ToString(), document.Path.Value)).Distinct().OrderBy(document => document.DocumentId, StringComparer.Ordinal).ThenBy(document => document.Path, StringComparer.Ordinal)]
-            : [];
+        internal DocumentLocation[] Documents(string id)
+        {
+            var paths = (_physical.GetValueOrDefault(id) ?? []).Select(entry => Workspace.Documents.Single(document => document.Id == entry.Handle.Document).Path.Value)
+                .Concat((Nodes.GetValueOrDefault(id) ?? []).Select(node => node.Location.Path).OfType<string>()).ToHashSet(StringComparer.Ordinal);
+            return [.. Workspace.Documents.Where(document => paths.Contains(document.Path.Value)).Select(document => new DocumentLocation(document.Id.ToString(), document.Path.Value)).OrderBy(document => document.DocumentId, StringComparer.Ordinal).ThenBy(document => document.Path, StringComparer.Ordinal)];
+        }
 
         internal IEnumerable<string> Reasons(string section)
         {
             if (!_sourceComplete) yield return "Source syntax or import placement is incomplete; missing declarations/members are not evidence of no change.";
-            if (_analysis.Source.Index.Declarations.GroupBy(declaration => (declaration.Kind, declaration.Address)).Any(group => group.Count() > 1 && (group.Key.Kind != "Event" || group.SelectMany(declaration => declaration.Parts.OfType<EventSyntax>()).GroupBy(node => node.Generation).Any(generation => generation.Count() > 1))))
-                yield return "Duplicate authoring declaration candidates cannot be compared uniquely.";
+            var unavailable = Assignments.Values.Count(assignment => !Comparable(assignment.Id.ToString()) && (section == "members" || section == "declarations" || (section == "events" && assignment.Address.Kind == SemanticKind.EventContract) || (section == "specifications" && assignment.Address.Kind == SemanticKind.Specification)));
+            if (unavailable > 0) yield return $"{unavailable} assigned semantic IDs have no unique comparable authored members; every catalog kind is included in this count.";
+            var ambiguous = Unassigned.Count(pair => !ComparableAuthoring(pair.Key) && (section == "members" || section == "declarations" || section == "identities" || (section == "events" && pair.Value[0].Kind == "Event") || (section == "specifications" && pair.Value[0].Kind == "Specification")));
+            if (ambiguous > 0) yield return $"{ambiguous} indexed kind/address groups have no comparable authored members; ambiguous or unsupported groups were not discarded.";
             if ((section == "members" || section == "declarations" || section == "identities") && Unassigned.Count > 0)
                 yield return "Unassigned authoring declarations use exact kind/address keys only; semantic rename/identity continuity cannot be established.";
-            if (section == "events" && Unassigned.Values.Any(declaration => declaration.Kind == "Event"))
+            if (section == "events" && Unassigned.Values.Any(group => group[0].Kind == "Event"))
                 yield return "Unassigned event contracts use authoring addresses only; persisted contract identity cannot be compared.";
-            if (section == "specifications" && Unassigned.Values.Any(declaration => declaration.Kind == "Specification"))
+            if (section == "specifications" && Unassigned.Values.Any(group => group[0].Kind == "Specification"))
                 yield return "Unassigned specifications use authoring addresses only; specification identity cannot be compared.";
-            if (_structuralSections.Contains(section, StringComparer.Ordinal))
-            {
-                var kinds = SectionKinds(section);
-                var count = Assignments.Values.Count(assignment => kinds.Contains(assignment.Address.Kind) && !Comparable(assignment.Id.ToString()));
-                if (count > 0) yield return $"{count} catalog declarations have no unique authored structural members available; implicit or ambiguous members cannot be compared.";
-            }
-            if (section == "declarations" && _analysis.Source.Index.Declarations.Any(declaration => !_assignedKeys.Contains((declaration.Kind, declaration.Address))))
-                yield return "Some authoring declarations have no catalog semantic identity and cannot be matched (read-ast/declaration-details retain their syntax).";
             if (section == "dependants" && _analysis.Source.Index.ResolvedReferences.Any(resolution => new McpReferenceEdge(resolution.Reference, resolution.Candidates).Resolution != "resolved"))
                 yield return "Dependency index contains unresolved, ambiguous or incomplete references; candidates are reported, not proven runtime dependants.";
         }
@@ -336,9 +368,39 @@ static class McpSemanticDiff
             return Edges(address, kinds, assignment.Address.Kind is SemanticKind.Module or SemanticKind.Feature or SemanticKind.Slice, id, snapshot);
         }
 
-        internal IEnumerable<Change> AuthoringDependants(string key, string snapshot) => Unassigned.TryGetValue(key, out var declaration) ? Edges(declaration.Address, declaration.Kind, false, null, snapshot) : [];
+        internal IEnumerable<Change> AuthoringDependants(string key, string snapshot) => Unassigned.TryGetValue(key, out var declarations) ? Edges(declarations[0].Address, declarations[0].Kind, declarations[0].Kind == "Module" || declarations[0].Kind == "Feature" || declarations[0].Kind == "Slice", null, snapshot) : [];
 
-        internal bool Comparable(string id) => Nodes.TryGetValue(id, out var nodes) && (nodes.Length == 1 || nodes.All(entry => entry.Node is ModuleSyntax or FeatureSyntax) || (nodes.All(entry => entry.Node is EventSyntax) && nodes.Select(entry => ((EventSyntax)entry.Node).Generation).Distinct().Count() == nodes.Length));
+        internal bool Comparable(string id) => Nodes.TryGetValue(id, out var nodes) && ComparableNodes(nodes);
+
+        internal bool ComparableAuthoring(string key) => Unassigned.TryGetValue(key, out var declarations) && declarations.All(declaration => !declaration.IsImplicit) && ComparableNodes([.. declarations.Select(declaration => declaration.Syntax)]);
+
+        static bool ComparableNodes(SyntaxNode[] nodes) => nodes.Length > 0 && (nodes.Length == 1 || nodes.All(node => node is EventSyntax)) &&
+            (!nodes.Any(node => node is EventSyntax) || (nodes.All(node => node is EventSyntax) && nodes.OfType<EventSyntax>().Select(node => node.Generation).Distinct().Count() == nodes.Length && nodes.OfType<EventSyntax>().All(node => node.Properties.Select(property => property.Name).Distinct(StringComparer.Ordinal).Count() == node.Properties.Count())));
+
+        SyntaxNode[] FindNodes(SemanticIdentityAssignment assignment)
+        {
+            var physical = (_physical.GetValueOrDefault(assignment.Id.ToString()) ?? []).Select(entry => entry.Node).ToArray();
+            var kind = assignment.Address.Kind;
+            if (kind == SemanticKind.Application)
+            {
+                // The source assembly owns merged root meaning. Never compare just one fragment.
+                return _analysis.Source.Compilation.Success && _analysis.Source.Compilation.Value is { } application ? [application] : physical;
+            }
+            var candidates = _indexed.GetValueOrDefault((Kind(assignment.Address), Address(assignment.Address))) ?? [];
+            if (kind is SemanticKind.Module or SemanticKind.Feature)
+            {
+                // McpLogicalDeclarations exposes merged own members and retains physical locations.
+                return _analysis.Source.Compilation.Success && candidates.Length == 1 ? [candidates[0].Syntax] : physical;
+            }
+            if (physical.Length > 0) return physical;
+            if (kind == SemanticKind.Property && assignment.Address.OwnerKind == SemanticKind.Trigger)
+            {
+                var owner = Owner(assignment.Address);
+                var triggers = _indexed.GetValueOrDefault(("Trigger", owner)) ?? [];
+                return triggers.Length == 1 && triggers[0].Syntax is TriggerSyntax trigger ? [.. trigger.Data.Where(data => data.Name == assignment.Address.Name)] : [];
+            }
+            return candidates.All(candidate => !candidate.IsImplicit) ? [.. candidates.Select(candidate => candidate.Syntax)] : [];
+        }
 
         IEnumerable<Change> Edges(string address, string kind, bool descendants, string? id, string snapshot)
         {
@@ -346,7 +408,7 @@ static class McpSemanticDiff
             var targets = descendants
                 ? index.Declarations.Where(declaration => (declaration.Address == address && declaration.Kind == kind) || declaration.Address.StartsWith($"{address}.", StringComparison.Ordinal))
                 : index.Find(address, kind);
-            return targets.SelectMany(index.Incoming).Distinct().Where(resolution => resolution.Reference.Owner is not null)
+            return targets.SelectMany(index.Incoming).Distinct().Where(resolution => resolution.Reference.Owner is not null && (!descendants || (resolution.Reference.Owner.Address != address && !resolution.Reference.Owner.Address.StartsWith($"{address}.", StringComparison.Ordinal))))
                 .Select(resolution => new Change("dependants", "direct", id, kind, snapshot == "before" ? address : null, snapshot == "after" ? address : null, Snapshot: snapshot, DependantAddress: resolution.Reference.Owner!.Address, Role: resolution.Reference.Role, Resolution: new McpReferenceEdge(resolution.Reference, resolution.Candidates).Resolution)).Distinct();
         }
     }
@@ -356,5 +418,6 @@ static class McpSemanticDiff
     sealed record Change(string Section, string ChangeKind, string? SemanticId, string Kind, string? BeforeAddress, string? AfterAddress, string? Member = null,
         string? BeforeHash = null, string? AfterHash = null, string? BeforeType = null, string? AfterType = null, bool? ContractBreaking = null, bool? GenerationCovered = null,
         uint? BeforeGeneration = null, uint? AfterGeneration = null, DocumentLocation[]? BeforeDocuments = null, DocumentLocation[]? AfterDocuments = null,
-        string? Snapshot = null, string? DependantAddress = null, string? Role = null, string? Resolution = null, string? EventContractId = null);
+        string? Snapshot = null, string? DependantAddress = null, string? Role = null, string? Resolution = null, string? EventContractId = null,
+        string? MoveKind = null, string? BeforeOwner = null, string? AfterOwner = null);
 }

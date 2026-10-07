@@ -458,7 +458,7 @@ The `result` contains:
 | `comparisonLevel` | `authoring-structure`: normalized typed members, not source lines or an execution/equivalence verdict. |
 | `executableBeforeAvailable`, `executableAfterAvailable` | Whether each snapshot binds executably; structural review does not require binding. |
 | `complete` | Whether every comparison section is complete. |
-| `hasSemanticChange` | `true` for a known structural change, `false` for a complete comparison with only moves or no changes, or `null` when incomplete data cannot establish no change. |
+| `hasSemanticChange` | `true` for a known structural change (including owner moves and opaque-content changes), `false` for a complete comparison with only document moves or no changes, or `null` when incomplete data cannot establish no change. |
 | `sections` | Each section's `complete` flag and `unavailable` reasons. An empty incomplete section never means no change. |
 | `limits` | Comparison exclusions and fallback rules. |
 | `page` | `revision`, `totalCount`, `offset`, `items`, `nextOffset`. |
@@ -471,21 +471,35 @@ and apply only to the corresponding record:
 - **`declarations`**: `added`, `removed`, `renamed`, or `moved`. Catalog semantic
   IDs match declarations across snapshots. Preserved IDs with changed names
   report renames; changed owner addresses or documents report moves.
-  Document moves include `beforeDocuments` and `afterDocuments`, arrays of
-  `{ documentId, path }` locations. Layout moves
-  alone are not semantic changes.
+  `moveKind: "owner"` identifies logical address changes, with `beforeOwner` and
+  `afterOwner`; these are semantic changes because inherited authorization and
+  reference resolution can change. `moveKind: "document"` identifies layout-only
+  moves. `beforeDocuments` and `afterDocuments` are arrays of `{ documentId, path }`
+  locations. Only document-only moves receive the no-semantic-change treatment.
 - **`events`**: `property-added`, `property-removed`, `property-type-changed`,
-  or `generation-removed`. `member`, `beforeType` and `afterType` describe the
+  `generation-added`, or `generation-removed`. `member`, `beforeType` and `afterType` describe the
   field (types are canonical typed JSON strings). `contractBreaking` is a
   conservative stored-contract risk flag, including additions.
   `generationCovered` is true only when an explicitly declared newer generation
   retains the previous generation's property names and types unchanged.
   `beforeGeneration` and `afterGeneration` identify the compared generations.
-  Existing generations are also compared, so changing historical payloads cannot
-  be hidden by adding a newer generation. Coverage is not runtime migration proof.
+  Every existing generation is compared with the same generation in the proposal,
+  and every introduced generation with its immediate declared predecessor. This
+  preserves intermediate additions and removals even when the final shape matches
+  the original. Generation coverage is reported per transition and is not runtime
+  migration proof.
 - **`members`**: changed typed members of commands, read models, projections,
-  queries and other identity-bearing declarations. `member`, `beforeHash` and
-  `afterHash` locate a structural difference without copying a whole subtree.
+  queries, reactions, captures, triggers (including trigger data properties), and
+  other identity-bearing declarations. Application, module, feature and slice
+  comparisons include their own members (such as domain, authentication,
+  authorization and slice kind), but exclude separately indexed child declarations
+  and physical import-placement metadata. Split hierarchy fragments use the
+  source index's merged meaning; unavailable merges remain incomplete.
+  `member`, `beforeHash` and `afterHash` locate a structural difference without
+  copying a whole subtree. Event member keys include their generation.
+  `opaque-changed` records retain changes to inline code or file references by
+  hash without interpreting their behavior. Description and documentation prose
+  are excluded from structural comparison.
   Constraints have no catalog semantic kind; their fallback uses exact authoring
   kind/address keys with `semanticId: null`, not an invented identity.
 - **`specifications`**: additions, removals and `expected-outcome-changed` records
@@ -494,8 +508,9 @@ and apply only to the corresponding record:
   changes appear under `members`.
 - **`dependants`**: `direct` indexed references in the `before` or `after`
   `snapshot`, with `dependantAddress`, `role` and `resolution`. Properties use
-  their owner's references; containers aggregate direct references to contained
-  declarations. Unresolved or ambiguous indexes mark this section incomplete.
+  their owner's references; containers aggregate external direct references to
+  contained declarations, excluding references originating inside that same
+  container. Unresolved or ambiguous indexes mark this section incomplete.
   These are not transitive dependencies or runtime impact guarantees.
 - **`identities`**: `assigned`, `retired` and `migrated` catalog identities,
   including `eventContractId` for event-contract identities. Migrations are
@@ -508,12 +523,20 @@ refuses with `LimitExceeded`, without truncation. Echo `sourceRevision` as
 `expectedSourceRevision` on every continuation; missing pins or stale pins refuse.
 
 When binding fails, the view still compares available authored members and
-preserved catalog IDs. Unassigned declarations use exact kind/address fallback
-keys and explicitly incomplete identity/rename sections. Missing source owners,
-implicit shapes or ambiguous declarations remain incomplete rather than claiming
-no change. The view excludes behavior inside code attachments (inspect
-`implementation-requirements` hashes separately), runtime and transitive impact,
-and revision-to-revision comparisons.
+preserved catalog IDs. Every assigned semantic ID, of any kind, must have unique
+comparable authored members or be counted in its section's unavailable reasons.
+Every indexed kind/address group is likewise compared or counted as incomplete;
+unassigned multi-generation events retain all their generations rather than
+being discarded. Unassigned declarations use exact kind/address fallback keys
+and explicitly incomplete identity/rename sections. Missing source owners,
+implicit shapes, ambiguous declarations and unavailable hierarchy merges never
+establish no change.
+
+Inline opaque content and file references are compared by hash. The view does
+not analyze behavior inside code, load or compare external attachment file
+contents (inspect `implementation-requirements` hashes separately), execute
+specifications, prove runtime or transitive impact, or compare two arbitrary
+revisions.
 
 ## Review, durable state and recovery
 
