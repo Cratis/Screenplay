@@ -189,6 +189,10 @@ export const primitiveTypes = ['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date
 
 export const conceptAttributes = ['@pii', '@sensitive'];
 
+// The lines that open a block with a body of their own. A line that is complete as written - a `domain`, a
+// `concept` or `query` with nothing under it, a `produces` of an existing event - is not one.
+export const blockHeaderPattern = /^\s*(?:module|feature|slice\s+\w+|type|command|event|readmodel|reducer|projection|capture|reaction|screen|dialog|form|contribute|specification|constraint|persona|policy|behavior|layout|theme|ui\s+profile|trigger|authentication|seed|system|eventsource|operation|screen\s+template|dialog\s+template|produces\s+event|validate|handler|on)\b[^=]*$/;
+
 export const languageConfiguration: languages.LanguageConfiguration = {
     comments: {
         lineComment: '//',
@@ -210,6 +214,11 @@ export const languageConfiguration: languages.LanguageConfiguration = {
     folding: {
         offSide: true,
     },
+    // A header that opens a block puts the cursor one level in on Enter, so what is typed - or suggested - starts at
+    // the block's own indentation. IndentAction.Indent is 1.
+    onEnterRules: [
+        { beforeText: blockHeaderPattern, action: { indentAction: 1 as languages.IndentAction } },
+    ],
     indentationRules: {
         increaseIndentPattern:
             /^\s*(module|feature|slice|policy|persona|authentication|provider|event|command|query|type|screen|projection|capture|reaction|trigger|constraint|specification|layout|template|validate|produces|handler|implementation(?=\s*$)|performer|rule|section|concurrency|seed|for|when|then|arguments|result|every|at)\b.*$/,
