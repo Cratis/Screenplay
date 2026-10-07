@@ -53,6 +53,9 @@ public abstract partial class ScreenplaySyntaxWalker
             case ClaimConditionSyntax claim:
                 VisitClaimCondition(claim);
                 break;
+            case NotPolicyConditionSyntax not:
+                VisitNotPolicyCondition(not);
+                break;
             case LogicalPolicyConditionSyntax logical:
                 VisitLogicalPolicyCondition(logical);
                 break;
@@ -67,6 +70,16 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="AuthenticatedConditionSyntax"/> to visit.</param>
     public virtual void VisitAuthenticatedCondition(AuthenticatedConditionSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a negated policy condition and its operand.
+    /// </summary>
+    /// <param name="syntax">The condition to visit.</param>
+    public virtual void VisitNotPolicyCondition(NotPolicyConditionSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitPolicyCondition(syntax.Operand);
+    }
 
     /// <summary>
     /// Visits a <see cref="RoleConditionSyntax"/> node.

@@ -114,7 +114,7 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `dependency-graph` | Optional view, from/to levels, scope, direction, kinds, includeTestOnly, evidenceLimit | Inferred slice/container/context edges, ordering cycles, story-order suggestions or unresolved references |
 | `find-fixtures` | Specification address, role, property, value, scope/document | Paged assignments with type, value and location, including `when append` event payloads (`whenAppendedEvent`) and `for` destinations (`whenAppendedEventDestination`) |
 | `find-assertion-gaps` | Optional scope/document | Slices without specifications declaring a `then` assertion, including `then denied` |
-| `diagnostics` | Optional document | Paged diagnostics and total severity counts |
+| `diagnostics` | Optional `scope`, document | Paged diagnostics, severity counts, scoped declaration counts and affected scopes |
 | `read-document` | Required relative `path` | Exact original UTF-8 byte pages |
 | `merged-document` | `view`: source, syntax or both | Canonical merged byte pages or explicitly requested typed AST |
 | `recommend-layout` | None | Size-admissible layout choices and recommendation |
@@ -125,11 +125,21 @@ Names and kinds are case-sensitive. Logical address example:
 Modules/features combine physical fragments; all contributing locations remain
 available. Duplicate leaf declarations remain visible with diagnostics.
 
-`scope` includes descendants unless `descendants: false` is specified. Dependency
+Navigation `scope` includes descendants unless `descendants: false` is specified. Dependency
 aggregation uses `descendants: true` explicitly and does not imply transitive
 runtime impact. Reference coverage excludes code, expression identifiers,
 property paths, imports, profile settings and external registrations; results
 state their coverage.
+
+### Scoped diagnostics
+
+Call `diagnostics` with `scope: "Projects.Registration.RegisterProject"` to check a module, feature or slice by its full case-sensitive dotted address. Descendants in the module, feature and slice hierarchy and declarations that directly reference them are included; same-named types, concepts and event sources are not descendants. An unknown, empty or ambiguous scope is refused with a clear invalid-parameters error. Unlike navigation tools, diagnostics always includes descendants and does not accept `descendants`.
+
+The whole application is still compiled for reference resolution. The `summary` severity counts and `success` describe the selected scope and its direct dependents before document filtering or paging; the page contains diagnostics from that set, while `wholeApplicationSuccess` preserves the full compilation verdict. `declarationCount` counts the requested scope and its descendants, and `dependentDeclarationCount` counts additional direct dependents. `affectedScopes` lists their owning scopes (an empty string means application-level). `unresolvedEventConsumers` separately reports `referenceCount` and `scopes` for unresolved event references outside the reported declarations (an empty scope string means application-level). Their former targets cannot be proved after a rename or removal, so they do not change `affectedScopes`, scoped diagnostic counts or `success`; their errors remain part of `wholeApplicationSuccess`. `possiblyAffectedReferenceCount` counts only the remaining unresolved references outside the reported declarations, excluding both direct dependents and the unresolved-event category. `dependencyCoverage` states the reference index's limits. Scope-only fields are omitted from unscoped `diagnostics` responses. An optional `document` narrows only the returned page, not `success`, `summary`, the declaration population or affected scopes. An empty document page can therefore accompany `success: false` when the scope has an error in another document, matching unscoped diagnostics filtering.
+
+Dependents are declarations, not entire slices, and inclusion is not transitive. Ambiguous reference candidates and unresolved references matching names declared in scope are included conservatively as direct dependents. Unattributable event consumers are reported in their separate category, and other unresolved references contribute to the possibly-affected count; neither category expands the diagnostic selection. Code, imports and other unindexed references do not establish impact. Diagnostics outside declaration ranges fall back to the file's import placement or selected slice. Diagnostics without a path or valid line are application-wide and included in every scope. This is not executable readiness or a replacement for a whole-application check. Use the affected scopes to choose wider checks. The `read-workspace` `diagnostics` view accepts the same optional `scope`, returns the same counts, impact and summary alongside its workspace envelope, and pins pages with `expectedRevision`. Without `scope` it remains a whole-workspace view. `scope` is rejected for other workspace views; `executable-diagnostics` remains whole-workspace.
+
+Pages keep the existing `offset`, `limit` and `expectedSourceRevision` contract. Incremental/watch caching is not part of this filter.
 
 Fixture values are syntax, not evaluated expressions. Text filtering is invariant
 and exact. Field types come from their own unambiguous declaration, not a global

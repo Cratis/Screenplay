@@ -109,6 +109,9 @@ internal static partial class ScreenplaySyntaxText
     {
         AuthenticatedConditionSyntax => "authenticated",
         RoleConditionSyntax role => $"role {StringLiteral.Quote(role.Role)}",
+        NotPolicyConditionSyntax not => not.Operand is LogicalPolicyConditionSyntax
+            ? $"not ({PolicyCondition(not.Operand)})"
+            : $"not {PolicyCondition(not.Operand)}",
         ClaimConditionSyntax claim => ClaimCondition(claim),
         LogicalPolicyConditionSyntax logical => Combined(
             PolicyCondition(logical.Left),

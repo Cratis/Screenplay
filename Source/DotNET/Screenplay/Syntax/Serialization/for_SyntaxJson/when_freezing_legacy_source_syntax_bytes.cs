@@ -28,9 +28,9 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
-            // Invoicing is a living sample. Its intentional v7 additions have full shared conformance
-            // vectors; remove only those additions here so the pre-v7 native bytes stay frozen.
-            var legacy = name == "invoicing-sample" || name == "invoicing-editor-sample" ? WithoutV7SampleAdditions(parsed) : parsed;
+            // Invoicing is a living sample. Its intentional v7 and policy-negation additions have full
+            // shared conformance vectors; remove only those additions so the legacy bytes stay frozen.
+            var legacy = name == "invoicing-sample" || name == "invoicing-editor-sample" ? WithoutSampleAdditions(parsed) : parsed;
             var json = SyntaxJson.Serialize(legacy);
             var text = WithoutRuleIntent(json, json.GetRawText())
                 .Replace(",\"eventSources\":[]", string.Empty, StringComparison.Ordinal)
@@ -52,7 +52,9 @@ public class when_freezing_legacy_source_syntax_bytes
                 File.WriteAllBytes(path, actual);
             }
 
-            File.ReadAllBytes(path).SequenceEqual(actual).ShouldBeTrue();
+            var expected = File.ReadAllBytes(path);
+            var difference = expected.Zip(actual).TakeWhile(pair => pair.First == pair.Second).Count();
+            Assert.True(expected.SequenceEqual(actual), $"Legacy syntax bytes changed for '{name}' at byte {difference}. Expected: {Encoding.UTF8.GetString(expected.AsSpan(difference, Math.Min(200, expected.Length - difference)))}. Actual: {Encoding.UTF8.GetString(actual.AsSpan(difference, Math.Min(200, actual.Length - difference)))}.");
             count++;
         }
 
@@ -60,18 +62,31 @@ public class when_freezing_legacy_source_syntax_bytes
         Assert.False(initializing, "Review the new protected bytes and rerun without SCREENPLAY_INITIALIZE_LEGACY_SYNTAX_BYTES. Existing baselines are never overwritten.");
     }
 
-    static ApplicationSyntax WithoutV7SampleAdditions(ApplicationSyntax application) => application with
+    static ApplicationSyntax WithoutSampleAdditions(ApplicationSyntax application) => application with
     {
         Concepts = application.Concepts.Where(concept => concept.Name != "InvoiceReceiptId"),
+        Policies = application.Policies.Where(policy => policy.Name != "IsPerson"),
+        Personas = application.Personas.Select(persona => persona with { Policies = persona.Policies.Where(policy => policy != "IsPerson") }),
         Modules = application.Modules.Select(module => module with
         {
+            Authorize = module.Authorize is { Requirement: PolicyReferenceSyntax reference } authorize && reference.Name == "IsPerson"
+                ? authorize with { Requirement = reference with { Name = "IsAuthenticated" } }
+                : module.Authorize,
             Features = module.Features.Select(feature => feature.Name == "InvoiceManagement" ? feature with
             {
-                Slices = feature.Slices.Where(slice => slice.Name != "StartInvoiceDraft").Select(slice => slice.Name == "CancelInvoice" ? slice with
+                Slices = feature.Slices.Where(slice => slice.Name != "StartInvoiceDraft").Select(slice => slice.Name switch
                 {
-                    Commands = slice.Commands.Select(command => command.Name == "CancelInvoice" ? command with { Response = null } : command),
-                    Specifications = slice.Specifications.Select(specification => specification.Name == "CancellingAnInvoiceWithARefund" ? specification with { ThenReturns = null } : specification)
-                } : slice)
+                    "CancelInvoice" => slice with
+                    {
+                        Commands = slice.Commands.Select(command => command.Name == "CancelInvoice" ? command with { Response = null } : command),
+                        Specifications = slice.Specifications.Select(specification => specification.Name == "CancellingAnInvoiceWithARefund" ? specification with { ThenReturns = null } : specification)
+                    },
+                    "RegisterInvoice" => slice with
+                    {
+                        Specifications = slice.Specifications.Where(specification => specification.Name != "RejectingAServiceRegisteringAnInvoice")
+                    },
+                    _ => slice
+                })
             } : feature)
         })
     };

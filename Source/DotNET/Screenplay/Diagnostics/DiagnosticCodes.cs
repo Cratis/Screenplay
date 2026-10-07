@@ -2349,4 +2349,9 @@ public static class DiagnosticCodes
     /// A redelivery reaction is unknown, ambiguous or does not observe the stated event.
     /// </summary>
     public const string UnknownRedeliveryReaction = "PLAY0544";
+
+    /// <summary>
+    /// A negated claim comparison uses a target that can be absent, null, or is not a string type.
+    /// </summary>
+    public const string IndeterminateNegatedClaimTarget = "PLAY0546";
 }
