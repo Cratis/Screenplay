@@ -110,9 +110,10 @@ slice StateView OrderDetails
           field carrier          label "Carrier"
           field trackingNumber   label "Tracking number"
         section actions
-          action CancelOrder
-            label "Cancel on the customer's behalf"
-            navigate to CancelOrderScreen
+          section cancelOrder
+            title "Cancel on the customer's behalf"
+            on click
+              navigate to CancelOrderScreen
       details
         section lines
           table lines

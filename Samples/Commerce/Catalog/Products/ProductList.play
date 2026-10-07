@@ -81,13 +81,10 @@ slice StateView ProductList
       sidebar
         section actions
           title "Catalog"
-          action RegisterProduct
-            label "Register product"
-            navigate to RegisterProductScreen
-          section discontinueProduct
-            title "Discontinue product"
+          section registerProduct
+            title "Register product"
             on click
-              navigate to DiscontinueProductScreen
+              navigate to RegisterProductScreen
       main
         data ProductListItem[] via query AllProducts
         section products
@@ -97,5 +94,10 @@ slice StateView ProductList
             column price        label "Price"
             column discontinued label "Discontinued"
             on row-click navigate to ChangeProductPriceScreen by productId
+        section discontinueProduct
+          title "Discontinue product"
+          table ProductListItem
+            column name label "Product"
+            on row-click navigate to DiscontinueProductScreen by productId
     on enter
       refresh AllProducts

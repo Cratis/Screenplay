@@ -79,7 +79,7 @@ The largest file has 122 lines.
 ## What else it shows
 
 - **Cross-file resolution.** `OrderPaid` is declared in `Payments`, projected in `Orders` and `Support`, and reacted to in `Shipping`. The storefront search navigates to the checkout screen in another module.
-- **Contributions.** The layout's `navigation contributes Navigation` slot collects one `contribute to Navigation` entry from each feature file. From the catalog, clicking "Discontinue product" navigates to its command screen before the merchandiser supplies the product and reason; the issuing action returns to the catalog afterward.
+- **Contributions.** The layout's `navigation contributes Navigation` slot collects one `contribute to Navigation` entry from each feature file. Click sections open the registration, checkout and cancellation screens before their commands run. In the catalog's "Discontinue product" table, a row click carries `productId` to the command screen, whose discovered form collects the reason; the issuing action returns to the catalog afterward. Action navigation is a post-success destination, never the command's own input screen.
 - **Layered authorization.** Module, feature and command or query gates are combined with AND. Every persona lists the policies it holds, so each screen goes to the right persona:
 
   | Persona | Screens |

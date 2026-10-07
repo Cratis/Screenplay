@@ -36,10 +36,16 @@ screen <Name>
 ```screenplay
 screen InvoiceList
   data InvoiceListReadModel[] via query ListInvoices
-  action RegisterInvoice
-    navigate to RegisterInvoiceScreen
-  action CancelInvoice
+  section registerInvoiceInput
+    title "Register invoice"
+    on click
+      navigate to RegisterInvoiceScreen
 ```
+
+A click or row-click opens a command's input screen **before** the command runs. That screen's action
+issues the command and discovers its command-bound form. An action's `navigate to` is the destination
+**after success**, never a route to that command's own input screen. For example, the action on
+`RegisterInvoiceScreen` can return to `InvoiceList` after registration.
 
 ## Level 2 — Structure
 
