@@ -84,6 +84,10 @@ slice StateView ProductList
           action RegisterProduct
             label "Register product"
             navigate to RegisterProductScreen
+          section discontinueProduct
+            title "Discontinue product"
+            on click
+              navigate to DiscontinueProductScreen
       main
         data ProductListItem[] via query AllProducts
         section products
