@@ -830,7 +830,10 @@ internal static class ScreenplayValidator
     {
         foreach (var trigger in slice.Reactions.SelectMany(reaction => reaction.Triggers))
         {
-            foreach (var produces in (trigger.Produces ?? []).Where(produces => productionResolver.IsEventProduction(produces, slice) && !produces.Event.Contains('.', StringComparison.Ordinal) && !knownEvents.Contains(produces.Event)))
+            foreach (var produces in ReactionProductions.In(trigger).Where(produces => productionResolver.IsEventProduction(produces, slice) &&
+                (produces.Event.Contains('.', StringComparison.Ordinal)
+                    ? ReactionProductions.Refusals(trigger).Contains(produces) && productionResolver.Resolve(produces.Event, slice).Kind == AuthoringProductionKind.Unresolved
+                    : !knownEvents.Contains(produces.Event))))
             {
                 context.Warning(
                     DiagnosticCodes.UnknownEvent,
