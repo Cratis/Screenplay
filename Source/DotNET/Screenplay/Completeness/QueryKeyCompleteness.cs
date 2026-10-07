@@ -21,7 +21,7 @@ static class QueryKeyCompleteness
                 var builders = ViewBuilders.Projections(model, declarations).ToArray();
                 if (builders.Length == 0 || builders.Any(builder => builder.Projection.File is not null)) continue;
 
-                var parts = builders.SelectMany(builder => Keys(builder.Projection, builder.Blocks))
+                var parts = builders.SelectMany(builder => Keys(builder.Blocks))
                     .Select(entry => entry.Key).OfType<CompositeKeySyntax>().SelectMany(key => declarations.TypeProperties(key.Type) ?? []).ToArray();
                 if (query.By is { } by && !Tenant(by))
                 {
@@ -57,10 +57,10 @@ static class QueryKeyCompleteness
         }
 
         var types = new List<TypeRefSyntax>();
-        foreach (var (projection, blocks, scope) in ViewBuilders.Projections(model, declarations))
+        foreach (var (_, blocks, scope) in ViewBuilders.Projections(model, declarations))
         {
-            if (blocks.OfType<FromSyntax>().Any(from => from.Events.Any(source => source.Key is null && from.Key is null && projection.Key is null))) return [];
-            foreach (var (key, sources) in Keys(projection, blocks))
+            if (blocks.OfType<FromSyntax>().Any(from => from.Events.Any(source => source.Key is null && from.Key is null))) return [];
+            foreach (var (key, sources) in Keys(blocks))
             {
                 if (key is CompositeKeySyntax composite && declarations.TypeProperties(composite.Type) is { } parts)
                 {
@@ -84,13 +84,13 @@ static class QueryKeyCompleteness
         return types;
     }
 
-    static IEnumerable<(KeySyntax Key, IEnumerable<EventSpecSyntax> Sources)> Keys(ProjectionSyntax projection, IReadOnlyList<ProjectionBlockSyntax> blocks)
+    static IEnumerable<(KeySyntax Key, IEnumerable<EventSpecSyntax> Sources)> Keys(IReadOnlyList<ProjectionBlockSyntax> blocks)
     {
         foreach (var from in blocks.OfType<FromSyntax>())
         {
             foreach (var source in from.Events)
             {
-                var key = source.Key is { } expression ? new ExpressionKeySyntax(expression, source.Location) : from.Key ?? projection.Key;
+                var key = source.Key is { } expression ? new ExpressionKeySyntax(expression, source.Location) : from.Key;
                 if (key is not null) yield return (key, [source]);
             }
         }
