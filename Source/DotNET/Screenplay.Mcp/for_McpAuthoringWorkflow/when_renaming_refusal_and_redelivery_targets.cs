@@ -34,13 +34,13 @@ public class when_renaming_refusal_and_redelivery_targets : given.an_authoring_c
     [Theory]
     [InlineData("ReactionSyntax", "Claimer")]
     [InlineData("UniqueEventConstraintSyntax", "Unique")]
-    public void should_propose_the_typed_rename_without_changing_disk_or_execution_readiness(string kind, string name)
+    public void should_only_propose_identity_preserving_renames_without_changing_disk(string kind, string name)
     {
         File.WriteAllText(Path.Combine(RootPath, "application.play"), Source);
         Initialize();
         var opened = Open();
         var revision = opened.GetProperty("revision").GetString()!;
-        var proposal = Result("propose-rename", new
+        var response = Call("propose-rename", new
         {
             expectedRevision = revision,
             expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
@@ -48,6 +48,14 @@ public class when_renaming_refusal_and_redelivery_targets : given.an_authoring_c
             expectedName = name,
             newName = $"{name}Again"
         });
+        var proposal = response.GetProperty("result").GetProperty("structuredContent");
+        File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldEqual(Source);
+        if (kind == "UniqueEventConstraintSyntax")
+        {
+            proposal.GetProperty("conflicts").EnumerateArray().Single().GetProperty("message").GetString()!.ShouldContain("renaming starts an empty constraint index");
+            return;
+        }
+
         var candidate = Candidate(proposal);
         var nodes = WorkspaceSyntaxIndex.Create(candidate).Entries.Select(entry => entry.Node).ToArray();
         nodes.OfType<SpecificationRedeliverySyntax>().Single().Reaction.ShouldEqual(name == "Claimer" ? "ClaimerAgain" : "Claimer");

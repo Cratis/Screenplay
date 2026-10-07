@@ -41,7 +41,6 @@ public class when_renaming_refusal_and_redelivery_references
     [InlineData("EventSyntax", "Approved")]
     [InlineData("EventSyntax", "Refused")]
     [InlineData("ReactionSyntax", "Claimer")]
-    [InlineData("UniqueEventConstraintSyntax", "Unique")]
     public void should_update_the_new_typed_references_without_admitting_execution(string kind, string name)
     {
         var workspace = Create();
@@ -87,10 +86,12 @@ public class when_renaming_refusal_and_redelivery_references
         }).Accepted.ShouldBeFalse();
     }
 
-    [Fact]
-    public void should_rename_a_multi_rule_constraint_with_one_header_patch()
+    [Theory]
+    [InlineData("")]
+    [InlineData("\n        unique event Approved")]
+    public void should_refuse_contract_changing_constraint_renames(string additionalRule)
     {
-        var workspace = Create(definitions: Definitions + "\n        unique event Approved");
+        var workspace = Create(definitions: Definitions + additionalRule);
         var target = WorkspaceSyntaxIndex.Create(workspace).Entries.Single(entry => entry.Node is ConstraintSyntax && entry.Member == "constraints");
         var result = workspace.ProposeRename(new()
         {
@@ -100,8 +101,9 @@ public class when_renaming_refusal_and_redelivery_references
             ExpectedName = "Unique",
             NewName = "UniqueAgain"
         });
-        Assert.True(result.Accepted, string.Join("; ", result.Conflicts.Select(conflict => conflict.Message)));
-        WorkspaceSyntaxIndex.Create(result.Workspace!).Entries.Select(entry => entry.Node).OfType<ConstraintSyntax>().All(constraint => constraint.Name == "UniqueAgain").ShouldBeTrue();
+        result.Accepted.ShouldBeFalse();
+        result.Conflicts.Single().Message.ShouldContain("renaming starts an empty constraint index");
+        workspace.Documents.Select(document => document.Text).ShouldContain(Definitions + additionalRule);
     }
 
     [Theory]

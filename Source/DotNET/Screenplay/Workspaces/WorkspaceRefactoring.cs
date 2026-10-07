@@ -160,9 +160,9 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property, command, event, read model, query, module, feature, slice, reaction, or constraint declaration handle.");
         }
 
-        if (target.Node is ConstraintSyntax && (target.Parent is not { } constraintParent || index.Find(constraintParent)?.Node is not SliceSyntax))
+        if (target.Node is ConstraintSyntax)
         {
-            throw new InvalidWorkspaceAuthoring("Rename the complete constraint declaration, not an individual constraint rule.");
+            throw new InvalidWorkspaceAuthoring("Constraint names are executable identity: renaming starts an empty constraint index and changes default rejection messages. Safe rename cannot preserve this contract; use explicit coordinated typed edits.");
         }
 
         if (WorkspaceReferenceBindings.Name(target.Node) != request.ExpectedName || !Identifier(request.NewName))
@@ -218,13 +218,6 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         foreach (var entry in index.Entries.Where(IsTarget).ToArray())
         {
             WorkspaceSyntaxMutation.Set(roots[entry.Handle.Document], $"{entry.Handle.Path}/name", request.NewName);
-            if (entry.Node is ConstraintSyntax)
-            {
-                foreach (var rule in index.Entries.Where(rule => rule.Parent == entry.Handle && rule.Node is ConstraintSyntax))
-                {
-                    WorkspaceSyntaxMutation.Set(roots[rule.Handle.Document], $"{rule.Handle.Path}/name", request.NewName);
-                }
-            }
             if (entry.Node is EventSyntax declaration && request.NewName != request.ExpectedName)
             {
                 var id = plannedEventIds[declaration];
