@@ -28,3 +28,4 @@
 | [0024](0024-exact-numeric-source-mode.md) | Exact numeric source mode and its ESM admission | proposed | none | — | — |
 | [0025](0025-allocate-esm-v7-to-responses-and-number-later-versions-at-admission.md) | Allocate ESM v7 to generated values and responses, and number later versions at admission | accepted | none | 2026-10-06 | Sindre Alstad Wilting |
 | [0026](0026-generated-values-and-command-responses-in-esm-v7.md) | Admit generated values and command responses as ESM v7 | accepted | none | 2026-10-06 | Sindre Alstad Wilting |
+| [0028](0028-expand-typed-specification-examples-in-the-front-end.md) | Expand typed specification examples in the front end | accepted | none | 2026-10-07 | Sindre Alstad Wilting |
