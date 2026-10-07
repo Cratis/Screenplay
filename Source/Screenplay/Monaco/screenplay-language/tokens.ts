@@ -101,6 +101,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/^(\s*)(on)(\s+)(refused)(\s+)(by)(\s+)(validation|constraint|authorization)\b/,
                 ['white', 'keyword', 'white', 'keyword', 'white', 'keyword', 'white', 'keyword']],
             [/^(\s*)(on)(\s+)(refused)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
+            [/^(\s*)(on)(\s+)([\w-]+)\b/, ['white', 'keyword', 'white', { token: 'keyword', next: '@interactionBody.$1' }]],
             [/^(\s*)(acknowledge)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword']],
             // A quoted import names .play files rather than a qualified name - the path reads as a link.
             [/^(\s*)(import)(\s+)("[^"\\]*")/, ['white', 'keyword', 'white', 'string.link']],
@@ -165,7 +166,6 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
 
         behaviorBody: [
             [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
-            [/^(\s*)(on)(\s+)([\w-]+)\b/, ['white', 'keyword', 'white', { token: 'keyword', next: '@interactionBody.$1' }]],
             { include: '@root' },
         ],
 

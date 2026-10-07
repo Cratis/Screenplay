@@ -43,4 +43,27 @@ describe('when highlighting guarded actions', () => {
             }
         } finally { tokenizer.dispose(); }
     });
+    it.each([
+        ['screen V', '  on submit', '    execute C'],
+        ['screen V', '  section "Details"', '    on click', '      execute C'],
+        ['screen V', '  slot main', '    on click', '      execute C'],
+        ['screen V', '  action "Choose"', '    when item.ready == true execute C'],
+    ])('should highlight execute in an action under %s', async (...lines) => {
+        const compilerPath = 'monaco-editor/esm/vs/editor/standalone/common/monarch/monarchCompile.js';
+        const lexerPath = 'monaco-editor/esm/vs/editor/standalone/common/monarch/monarchLexer.js';
+        const { compile } = await import(compilerPath);
+        const { MonarchTokenizer } = await import(lexerPath);
+        const tokenizer = new MonarchTokenizer({}, {}, 'screenplay', compile('screenplay', createTokensProvider([])), { getValue: () => 20000, onDidChangeConfiguration: () => ({ dispose() {} }) });
+        try {
+            let state = tokenizer.getInitialState();
+            for (const line of [...lines, 'type Details', '  execute String']) {
+                const result = tokenizer.tokenize(line, true, state);
+                state = result.endState;
+                if (line.includes('execute')) {
+                    result.tokens.find((token: Token) => token.offset === line.indexOf('execute'))!.type.should.equal(
+                        line.includes('String') ? 'identifier.play' : 'keyword.play');
+                }
+            }
+        } finally { tokenizer.dispose(); }
+    });
 });
