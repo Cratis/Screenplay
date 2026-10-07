@@ -439,13 +439,14 @@ export abstract class ScreenplaySyntaxWalker {
     }
 
     visitScreenDirective(syntax: ScreenDirectiveSyntax): void {
+        if (syntax.kind === 'ScreenGuardedActionSyntax') {
+            this.visitScreenGuardedAction(syntax);
+            return;
+        }
         this.visitNode(syntax);
         switch (syntax.kind) {
             case 'ScreenDataSyntax':
                 this.visitTypeRef(syntax.type);
-                break;
-            case 'ScreenGuardedActionSyntax':
-                this.visitScreenGuardedAction(syntax);
                 break;
             case 'ScreenActionSyntax':
                 if (syntax.navigate !== null) this.visitScreenDirective(syntax.navigate);
@@ -473,6 +474,7 @@ export abstract class ScreenplaySyntaxWalker {
     }
 
     visitScreenGuardedAction(syntax: ScreenGuardedActionSyntax): void {
+        this.visitNode(syntax);
         syntax.alternatives.forEach(node => this.visitScreenActionAlternative(node));
         if (syntax.otherwise !== null) this.visitScreenActionOtherwise(syntax.otherwise);
         if (syntax.navigate !== null) this.visitScreenDirective(syntax.navigate);

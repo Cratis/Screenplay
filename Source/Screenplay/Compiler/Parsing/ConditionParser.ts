@@ -34,7 +34,7 @@ export function parseCondition(context: ParserContext, text: string, location: S
         }
         let operator = tokens[position++];
         if (operator === 'starts' && tokens[position] === 'with') { operator += ' with'; position++; }
-        if (strict && operators[operator] === undefined) {
+        if (strict && !Object.hasOwn(operators, operator)) {
             context.error(DiagnosticCodes.ExpectedComparisonOperator, `Expected a comparison operator after '${left}'`, location);
             return null;
         }

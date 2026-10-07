@@ -54,6 +54,11 @@ describe('when parsing guarded actions', () => {
         const omitted = result.value.modules[0].features[0].slices[0].screens[0].directives[2] as ScreenGuardedActionSyntax;
         [omitted.otherwise, omitted.navigate].should.deep.equal([null, null]);
     });
+    it('should visit the guarded node once through its specialized entry point', () => {
+        const direct = new RecordingWalker();
+        direct.visitScreenGuardedAction(action);
+        direct.kinds.should.deep.equal(walker.kinds);
+    });
     it('should walk conditions arguments fallback and navigation in order', () => walker.kinds.should.deep.equal([
         'ScreenGuardedActionSyntax', 'ScreenActionAlternativeSyntax', 'LogicalConditionSyntax',
         'ComparisonConditionSyntax', 'LiteralExpressionSyntax', 'ComparisonConditionSyntax', 'LiteralExpressionSyntax',
