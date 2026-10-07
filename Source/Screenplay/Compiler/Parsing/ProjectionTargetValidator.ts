@@ -57,20 +57,25 @@ export function validateProjectionTargets(application: ApplicationSyntax, contex
             if ('blocks' in block) removals(block.blocks, slice);
         }
     };
-    const walk = (blocks: readonly ProjectionBlockSyntax[], properties: readonly PropertySyntax[] | null): void => {
+    const reported = new Set<string>();
+    const walk = (blocks: readonly ProjectionBlockSyntax[], properties: readonly PropertySyntax[] | null, element = false, effectiveHandlers = false): void => {
         const validate = (path: string, location: SourceLocation) => {
             const resolved = property(properties, path);
-            if (resolved.missing) context.warning(DiagnosticCodes.UnknownReadModelProperty, `Projection target '${path}' is not a declared read-model property`, location);
+            const key = JSON.stringify([location.path, location.line, location.column]);
+            if (resolved.missing && !reported.has(key)) {
+                reported.add(key);
+                context.warning(DiagnosticCodes.UnknownReadModelProperty, `Projection target '${path}' is not a declared ${element ? 'element' : 'read-model'} property`, location);
+            }
             return resolved.value;
         };
         // An 'every' without local handlers only cascades into the element scopes.
-        const ownsEvents = blocks.some(block => block.kind === 'FromSyntax' || block.kind === 'JoinSyntax' || block.kind === 'AllSyntax');
+        const ownsEvents = effectiveHandlers || blocks.some(block => block.kind === 'FromSyntax' || block.kind === 'JoinSyntax' || block.kind === 'AllSyntax');
         for (const block of blocks) {
             const mappings = block.kind === 'EverySyntax' && !ownsEvents ? [] : 'mappings' in block ? block.mappings : block.kind === 'JoinSyntax' ? block.events.flatMap(event => event.mappings) : [];
             for (const mapping of mappings) validate(mapping.property, mapping.location);
             if (block.kind === 'ChildrenSyntax' || block.kind === 'NestedSyntax') {
                 const target = validate(block.property, block.location);
-                walk(block.blocks, target === null ? null : types.get(target.type.name)?.properties ?? null);
+                walk(block.blocks, target === null ? null : types.get(target.type.name)?.properties ?? null, true);
             }
         }
     };
@@ -87,7 +92,9 @@ export function validateProjectionTargets(application: ApplicationSyntax, contex
             for (const variant of variants) {
                 const properties = viewProperties(variant.name, scope);
                 walk(projection.blocks.filter(block => block.kind === 'ChildrenSyntax' || block.kind === 'NestedSyntax'), properties);
-                walk(variant.blocks, properties);
+                // Lowering combines shared handlers and turns entering events into From handlers.
+                const ownsEvents = variant.entersOn.length > 0 || projection.blocks.some(block => block.kind === 'FromSyntax' || block.kind === 'JoinSyntax' || block.kind === 'AllSyntax');
+                walk(variant.blocks, properties, false, ownsEvents);
             }
         }
     }

@@ -13,6 +13,12 @@ export function validateIdentifierCompliance(application: ApplicationSyntax, con
     const personal = new Set(application.concepts.filter(concept => concept.attributes.some(attribute => attribute.name === 'pii')).map(concept => concept.name));
     const types = uniqueByName(application.types);
     const resolver = new AuthoringProductionResolver(application);
+    const declaredTriggers = new Map<string, (readonly PropertySyntax[])[]>();
+    for (const declared of application.declaredTriggers ?? []) {
+        const shapes = declaredTriggers.get(declared.name) ?? [];
+        shapes.push(declared.data);
+        declaredTriggers.set(declared.name, shapes);
+    }
     const validate = (type: TypeRefSyntax, location: SourceLocation): void => {
         if (personal.has(type.name)) context.error(DiagnosticCodes.PiiNotSupportedOnIdentifier, `Concept '${type.name}' is @pii and cannot be an event source identifier - use a surrogate Uuid identifier and keep the @pii value as a property`, location);
     };
@@ -37,13 +43,16 @@ export function validateIdentifierCompliance(application: ApplicationSyntax, con
             }
         }
         for (const trigger of slice.reactions.flatMap(reaction => reaction.triggers)) {
-            const resolution = trigger.source.kind === 'NamedTriggerSourceSyntax' ? resolver.resolve(trigger.source.name, slice) : null;
-            const event = resolution?.declaration?.node;
-            const properties = event?.kind === 'EventSyntax' ? event.properties : [];
+            if (trigger.source.kind !== 'NamedTriggerSourceSyntax') continue;
+            const resolution = resolver.resolve(trigger.source.name, slice);
+            const event = resolution.declaration?.node;
+            const shapes = [event?.kind === 'EventSyntax' ? event.properties : [], ...declaredTriggers.get(trigger.source.name) ?? []];
             for (const production of trigger.produces.filter(production => resolver.isEventProduction(production, slice))) {
                 if (production.for?.kind !== 'PathExpressionSyntax') continue;
-                const entry = property(properties, production.for.path);
-                if (entry !== null) validate(entry.type, production.for.location);
+                // Compliance checks both shapes when event and declared-trigger resolution disagree (#439).
+                const path = production.for.path;
+                const entry = shapes.map(properties => property(properties, path)).find(entry => entry !== null && personal.has(entry.type.name));
+                if (entry != null) validate(entry.type, production.for.location);
             }
         }
     }
