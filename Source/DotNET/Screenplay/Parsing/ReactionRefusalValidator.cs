@@ -136,7 +136,7 @@ internal static class ReactionRefusalValidator
             {
                 context.Error(DiagnosticCodes.InvalidRefusalValue, $"'$refusal.{syntax.Member}' is only available in a refusal branch's event mapping; constraint requires 'by constraint'.", syntax.Location);
             }
-            else if (_target is { } target && (target.IsCollection || (target.Name != "String" && !application.Concepts.Any(concept => concept.Name == target.Name && concept.Type == "String"))))
+            else if (_target is { } target && (target.IsCollection || (declarations.Compatible(new TypeRefSyntax("String", false, false, target.Location), target) == false && !application.Concepts.Any(concept => concept.Name == target.Name && concept.Type == "String"))))
             {
                 context.Error(DiagnosticCodes.InvalidRefusalValue, $"'$refusal.{syntax.Member}' is a String value, incompatible with '{target.Name}'.", syntax.Location);
             }

@@ -15,6 +15,7 @@ public class when_a_refusal_value_is_invalid : given.a_compiler
     [InlineData("", "unknown", "String", true)]
     [InlineData("", "message", "Int", true)]
     [InlineData("", "reason", "String[]", true)]
+    [InlineData("", "message", "ExternalText", false)]
     void should_check_member_selector_and_type(string selector, string member, string type, bool invalid)
     {
         var result = _compiler.Compile($"module Billing\n  feature Payments\n    slice Automation Claiming\n      event Approved\n      event Refused\n        value {type}\n      command Claim\n      reaction Claimer\n        when Approved\n          invokes Claim\n            on refused {selector}\n              produces Refused\n                value = $refusal.{member}\n");
