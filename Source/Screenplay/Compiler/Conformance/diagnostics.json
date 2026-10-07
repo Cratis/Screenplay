@@ -7,6 +7,16 @@
             "diagnostics": ["PLAY0161@6", "PLAY0161@7", "PLAY0342@5"]
         },
         {
+            "name": "Legacy guarded conditions reject unsupported punctuation",
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.status == [\"open\"] execute C", "          when item.status == \"open\"; execute C", "          when item.status == {\"open\" execute C"],
+            "diagnostics": ["PLAY0344@6", "PLAY0344@7", "PLAY0344@8", "PLAY0342@5"]
+        },
+        {
+            "name": "Exact guarded conditions reject unsupported punctuation",
+            "source": ["numbers exact", "module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.status == [\"open\"] execute C", "          when item.status == \"open\"; execute C", "          when item.status == {\"open\" execute C"],
+            "diagnostics": ["PLAY0344@7", "PLAY0344@8", "PLAY0344@9", "PLAY0342@6"]
+        },
+        {
             "name": "Guarded action alternative needs execute",
             "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true"],
             "diagnostics": ["PLAY0341@6", "PLAY0342@5"]

@@ -16,8 +16,16 @@ const operators: Record<string, ComparisonOperator> = { '==': 'Equal', '!=': 'No
 export function parseCondition(context: ParserContext, text: string, location: SourceLocation, strict = false): ConditionSyntax | null {
     if (!strict) context = context.valueContext;
     const numeric = context.sourceOptions.numericMode === 'exact' ? '-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|' : '';
-    const words = context.sourceOptions.numericMode === 'exact' ? '[\\w.$-]+|[^\\s]' : '[\\w.$-]+';
-    const tokens = text.match(new RegExp(nativePattern(`"${stringBodyPattern}"|==|!=|>=|<=|>|<|\\(|\\)|${numeric}${words}`).source, 'gu')) ?? [];
+    const words = context.sourceOptions.numericMode === 'exact' && !strict ? '[\\w.$-]+|[^\\s]' : '[\\w.$-]+';
+    const regex = new RegExp(nativePattern(`"${stringBodyPattern}"|==|!=|>=|<=|>|<|\\(|\\)|${numeric}${words}`).source, 'gu');
+    if (strict) {
+        const unsupported = text.replace(regex, '').trim();
+        if (unsupported.length > 0) {
+            context.error(DiagnosticCodes.UnsupportedActionConditionOperand, `Guarded action conditions contain unsupported character '${unsupported[0]}'`, location);
+            return null;
+        }
+    }
+    const tokens = text.match(regex) ?? [];
     let position = 0;
     const group = (): ConditionSyntax | null => {
         if (tokens[position] === '(') {

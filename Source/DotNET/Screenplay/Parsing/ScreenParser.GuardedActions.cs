@@ -27,7 +27,7 @@ internal static partial class ScreenParser
                     context.Error(DiagnosticCodes.MisplacedActionOtherwise, "A 'when' alternative must precede 'otherwise'", child.Location);
                 }
 
-                var condition = ConditionParser.Parse(context, alternative.Groups[1].Value, child.Location);
+                var condition = ConditionParser.Parse(context, alternative.Groups[1].Value, child.Location, strict: true);
                 var arguments = ParseActionArguments(context, child);
                 if (condition is not null)
                 {

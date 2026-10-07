@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { beforeEach, describe, it } from 'vitest';
+import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { CompilationResult } from '../ScreenplayCompiler';
 import { ScreenGuardedActionSyntax } from '../Syntax/Screens';
 import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
@@ -13,6 +14,26 @@ class RecordingWalker extends ScreenplaySyntaxWalker {
     readonly kinds: string[] = [];
     override visitNode(node: SyntaxNode): void { this.kinds.push(node.kind); }
 }
+
+describe.each(['', 'numbers exact'])('when rejecting unsupported guarded condition characters with %s', preamble => {
+    it.each([
+        ['["open"]', '['],
+        ['"open";', ';'],
+        ['{"open"', '{'],
+    ])('should reject %s instead of changing the condition', (operand, character) => {
+        const result = a_parsed_document(...(preamble ? [preamble] : []), 'module M', '  feature F', '    slice StateView S', '      screen Details',
+            '        action "Again"', `          when item.status == ${operand} execute Retry`);
+        result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal([
+            DiagnosticCodes.UnsupportedActionConditionOperand, DiagnosticCodes.GuardedActionWithoutAlternatives,
+        ]);
+        result.diagnostics[0].message.should.equal(`Guarded action conditions contain unsupported character '${character}'`);
+    });
+    it('should preserve punctuation inside a recognized string literal', () => {
+        const result = a_parsed_document(...(preamble ? [preamble] : []), 'module M', '  feature F', '    slice StateView S', '      screen Details',
+            '        action "Again"', '          when item.status == "[open];{closed}" execute Retry');
+        result.diagnostics.should.deep.equal([]);
+    });
+});
 
 describe('when parsing guarded actions', () => {
     let result: CompilationResult<ApplicationSyntax>;
