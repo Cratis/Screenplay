@@ -70,7 +70,17 @@ function specificationName(specification: SpecificationSyntax): string {
         ...specification.thenEvents.map((event, index) => ({ event, role: `then ${index + 1}` })),
     ].filter(({ event }) => event.stream || event.noStream);
     if (routes.length === 0) return specification.name;
-    return `${specification.name} — ${routes.map(({ event, role }) => `${role}: ${event.eventType} — ${routeDetails(event)}`).join(' | ')} | ${routeAvailability}`;
+    return `${specificationTitle(specification.name)} — ${routes.map(({ event, role }) => `${role}: ${event.eventType} — ${routeDetails(event)}`).join(' | ')} | ${routeAvailability}`;
+}
+
+// Match the pinned board's unexported specificationTitle before adding spaces in route summaries.
+function specificationTitle(name: string): string {
+    if (/\s/.test(name)) return name;
+    return name
+        .replace(/(\p{Ll})(\p{Lu})/gu, '$1 $2')
+        .replace(/(\p{Lu}+)(\p{Lu}\p{Ll})/gu, '$1 $2')
+        .replace(/(\p{L})(\d)/gu, '$1 $2')
+        .replace(/(\d)(\p{L})/gu, '$1 $2');
 }
 
 // Card names are plain text, not HTML. The header also carries these details because an owned

@@ -48,6 +48,22 @@ describe('when mapping specification routes', () => {
         markup.should.contain('then 2: Recorded — no stream');
         markup.should.contain('PLAY0268');
     });
+    it.each([
+        ['ReadingHistory', 'Reading History'],
+        ['readingHistory', 'reading History'],
+        ['UEDecision2ForAccount3', 'UE Decision 2 For Account 3'],
+        ['Reading history', 'Reading history'],
+    ])('should split the routed base title %s like the pinned board', (name, title) => {
+        const application = parse(source).value;
+        const document = toEventModelDocument({ ...application, modules: application.modules.map(module => ({
+            ...module, features: module.features.map(feature => ({
+                ...feature, slices: feature.slices.map(slice => ({
+                    ...slice, specifications: slice.specifications.map(specification => ({ ...specification, name })),
+                })),
+            })),
+        })) }, 'Banking');
+        document.collections[0].modules[0].features[0].slices[0].specifications[0].name.should.contain(`${title} — given 1:`);
+    });
     it.each(['McpApp/board.css', 'VSCodeExtension/Webview/board.css'])('should keep the route-bearing header readable in %s', path => {
         const css = readFileSync(new URL(`../../../${path}`, import.meta.url), 'utf8');
         const header = css.match(/\.screenplay-board-view \.event-modeling-grid-specification-header\s*\{([^}]+)\}/)![1];
