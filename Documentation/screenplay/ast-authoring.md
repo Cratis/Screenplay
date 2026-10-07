@@ -175,11 +175,25 @@ document with `RepairWouldDropComments`. Review the candidate and `WritePlan`,
 then explicitly accept the plan through the usual destination adapter.
 Stale requests return typed stale conflicts with no partial candidate.
 
-Discovery verifies `PLAY0166`, `PLAY0478`, `PLAY0469` and `PLAY0471` repairs before
+Discovery verifies `PLAY0166`, `PLAY0478`, `PLAY0469`, `PLAY0471` and `PLAY0516` repairs before
 listing them: authoring acceptance and comment preservation, plus each repair's
 routing, consumer or executable-model constraints. Verdicts are cached only on the
 current immutable snapshot; proposals run one fresh transaction. See the
 [repair conditions](mcp/authoring-tools.md#fix-a-diagnostic). `PLAY0470` remains deferred.
+
+`PLAY0516` repairs move sibling modules, features, slices or explicit file imports,
+or add verified explicit pins before a retained glob. Features and slices inserted
+mid-list print before their next located sibling; other collections retain their
+existing printing rule. The reference subject is selected by event name and exact
+location, not by parsing the diagnostic message. Verification preserves comments,
+catalog revision, readiness, documents, placements and simulated ranks, removes
+the selected finding, and introduces no new timeline findings or errors/warnings.
+Both executable models require byte-identical ESM. When neither binds, a separate
+proof requires equal merged syntax after normalizing only timeline sibling order
+and approved import pins, plus the same admission diagnostic code/severity
+multiset. One-sided model availability is refused. Provisional document identities
+that would require a catalog change also prevent a repair. Rediscover after each
+accepted proposal; do not concatenate recipes from one snapshot.
 
 The legacy-fence repair handles only `PLAY0397` on a `validate csharp` header.
 Its discovery identifies the recipe without verifying the candidate; the proposal

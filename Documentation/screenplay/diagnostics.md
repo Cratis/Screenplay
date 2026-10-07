@@ -989,7 +989,7 @@ These are syntax diagnostics. A valid system, operation or operation specificati
 | `PLAY0516` | Information | A projection or named reaction trigger uses an event declared in a slice drawn after its consumer. Reported once per consumer slice and event at its first reference. A producer in the consumer's own sub-feature cannot be fixed by reordering. This does not fail `--warnaserror`. |
 | `PLAY0517` | Information | A sibling group uses each other's events, so reordering cannot make every event flow left to right. Reported once per mutually dependent group, at its earliest backward reference, instead of individual `PLAY0516` findings within that group. This does not fail `--warnaserror`. |
 
-See [Timeline diagnostics](imports.md#timeline-diagnostics) for the ordering root, grouping rules and checked references. These findings do not change executable behavior.
+See [Timeline diagnostics](imports.md#timeline-diagnostics) for the ordering root, grouping rules, checked references and C#/MCP repair conditions. `PLAY0516` offers verified typed moves or explicit pins before a retained glob where safe; `PLAY0517` and own-sub-feature findings have no repair. These findings and repairs do not change executable behavior.
 
 ### Event sources and command streams
 
