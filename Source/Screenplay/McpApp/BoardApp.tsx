@@ -1,8 +1,10 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { EventModelBoard, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
+import { DependencyMapView, DependencyView } from '@cratis/screenplay-views';
+import '@cratis/screenplay-views/dependency-map.css';
 import { boardChrome } from './boardChrome';
 import { BoardErrorBoundary } from './BoardErrorBoundary';
 import { boardHeight } from './boardHeight';
@@ -16,7 +18,27 @@ import { useHost } from './useHost';
 export const BoardApp = () => {
     const host = useHost();
     const [shown, setShown] = useState(ShownModel.Proposed);
+    const [view, setView] = useState(DependencyView.Board);
     const [attempt, setAttempt] = useState(0);
+    const boardHost = useRef<HTMLDivElement>(null);
+    const focusAfterSwitch = useRef(false);
+    const changeView = (next: DependencyView) => {
+        if (next === view) return;
+        if (next === DependencyView.Map) {
+            // The pinned board portals menus to body and dismisses them only on an outside
+            // pointerdown. Dismiss before hiding it, without resetting the canvas or grid.
+            boardHost.current?.ownerDocument.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+        }
+        focusAfterSwitch.current = true;
+        setView(next);
+    };
+    useEffect(() => {
+        if (!focusAfterSwitch.current) return;
+        focusAfterSwitch.current = false;
+        const selector = view === DependencyView.Board ? '.screenplay-board-view' : '.screenplay-dependency-map-host';
+        const label = view === DependencyView.Board ? 'Event model board' : 'Module and feature dependencies';
+        boardHost.current?.querySelector<HTMLButtonElement>(`${selector} button[aria-label="${label}"]`)?.focus();
+    }, [view]);
     const boards = useMemo(() => {
         if (host.model === undefined || host.model instanceof Error) {
             return host.model;
@@ -52,15 +74,23 @@ export const BoardApp = () => {
         <BoardTools
             shown={compiled?.proposed ? shown : undefined}
             onShow={setShown}
+            view={view}
+            onView={changeView}
             fullscreen={host.container?.displayMode === 'fullscreen'}
             onRefresh={host.refresh}
             onToggleFullscreen={host.toggleFullscreen} />
     );
     return (
-        <div className='screenplay-mcp-board' style={style}>
+        <div ref={boardHost} className='screenplay-mcp-board' style={style}>
             <MenuDropdownOpenProvider>
                 <BoardErrorBoundary resetWhenChanged={board} onReset={() => setAttempt(attempt + 1)}>
-                    <EventModelBoard key={attempt} document={model} readOnly showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
+                    <div className={`screenplay-board-view${view !== DependencyView.Board ? ' is-hidden' : ''}`} aria-hidden={view !== DependencyView.Board} inert={view !== DependencyView.Board}>
+                        <EventModelBoard key={attempt} document={model} readOnly showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
+                    </div>
+                    <div className='screenplay-dependency-map-host' hidden={view !== DependencyView.Map} style={{ display: view !== DependencyView.Map ? 'none' : undefined }}>
+                        <div className='screenplay-dependency-map-toolbar' role='toolbar' aria-label='Model and view'>{tools}</div>
+                        <DependencyMapView map={board.dependencies} />
+                    </div>
                 </BoardErrorBoundary>
             </MenuDropdownOpenProvider>
             {board.errors > 0 && (

@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { type PlayFileSource } from '@cratis/screenplay-compiler';
-import { compileEventModelApplication, toEventModelDocument } from '@cratis/screenplay-event-models';
+import { compileEventModelApplication, dependencyMapFor, toEventModelDocument } from '@cratis/screenplay-event-models';
 import { applyChanges } from './applyChanges';
 import type { CompiledBoard } from './CompiledBoard';
 import type { CompiledBoards } from './CompiledBoards';
@@ -23,6 +23,7 @@ function compile(sources: readonly PlayFileSource[], application: string): Compi
     const compilation = compileEventModelApplication(sources);
     return {
         document: toEventModelDocument(compilation.value, application),
+        dependencies: dependencyMapFor(compilation.value),
         errors: compilation.diagnostics.filter(diagnostic => diagnostic.severity === 'error').length,
     };
 }
