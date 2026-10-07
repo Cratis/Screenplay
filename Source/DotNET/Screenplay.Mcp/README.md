@@ -92,7 +92,7 @@ a single MCP root offered by the host, else the working directory when it holds
 client-offered project, existing `.screenplay/identities.json` or `.screenplay/pending.json`
 on the path to the discovered model folder keeps its state directory as the root.
 Competing state is reported even when opening fails; any pending journal on that
-path blocks opening and writes until explicit recovery at the journal's own root.
+path blocks opening, reads and writes until explicit recovery at the journal's own root.
 The icon is Cratis' existing Screenplay PNG. MCPB validation checks manifest and icon compatibility.
 
 To test in the desktop app:
@@ -173,9 +173,9 @@ Existing `.screenplay/identities.json` or `.screenplay/pending.json` between the
 project and discovered model folder (inclusive) keeps its state directory as the root,
 without creating a fallback folder. With several state roots, the nearest to the offered
 root wins and `rootBindingConflict` names all roots and pending journals, including on
-failed opens. Default-bound writes are refused while any state root on that path holds
-a pending journal; open its root with an explicit `path`, inspect `workspace-state`,
-then explicitly recover its journal.
+failed opens. Default-bound opening, reads and writes are refused while any state root
+on that path holds a pending journal; open its root with an explicit `path`, inspect
+`workspace-state`, then explicitly recover its journal.
 
 For an existing model, the CLI installer supplies `--model-root DIRECTORY` and
 configures the owned package's arguments to launch that directory without creation.

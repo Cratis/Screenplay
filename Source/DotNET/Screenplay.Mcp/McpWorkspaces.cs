@@ -33,6 +33,9 @@ internal sealed partial class McpWorkspaces
     internal Action? BeforeStore { get; set; }
     internal Action? BeforeInstall { get; set; }
 
+    // Deterministic specs can change competing metadata after the verified disk outcome, before status refresh.
+    internal Action? AfterApply { get; set; }
+
     // The client roots a host advertises through the MCP roots capability; empty until the host answers.
     internal ImmutableArray<string> ClientRoots { get; set; } = [];
 
@@ -160,6 +163,7 @@ internal sealed partial class McpWorkspaces
         var beforeDescription = JsonSerializer.SerializeToElement(McpWorkspaceTransport.Describe(workspace, includeContent), McpJson.Options);
         var afterDescription = JsonSerializer.SerializeToElement(McpWorkspaceTransport.Describe(proposal.Workspace, includeContent), McpJson.Options);
         _repairEvidence.TryGetValue(proposal, out var evidence);
+        var previousConflict = _rootBindingConflict;
         var result = new McpDisk(Root).Apply(
             proposal,
             statePlan,
@@ -170,13 +174,34 @@ internal sealed partial class McpWorkspaces
                 evidence?.Verify(Root, proposal);
             },
             evidence?.OperationId);
-        _ = RefreshRootBindingConflict();
         if (result.Success)
         {
-            _workspace = evidence is null ? McpAttachmentContents.Refresh(Root, proposal.Workspace) : proposal.Workspace;
+            // Commit the verified disk outcome to the session before any further inspection can fail.
+            _workspace = proposal.Workspace;
             _stateBytes = statePlan.After;
             _proposals.Clear();
             _statePlans.Clear();
+        }
+
+        string? metadataProblem = null;
+        try
+        {
+            if (result.Success)
+            {
+                AfterApply?.Invoke();
+                if (evidence is null)
+                {
+                    _workspace = McpAttachmentContents.Refresh(Root, proposal.Workspace);
+                }
+            }
+
+            _ = RefreshRootBindingConflict();
+        }
+        catch (McpFailure failure)
+        {
+            // A failed status inspection does not turn a verified apply into an unknown write outcome.
+            _rootBindingConflict = previousConflict;
+            metadataProblem = failure.Message;
         }
 
         var response = new
@@ -187,6 +212,7 @@ internal sealed partial class McpWorkspaces
             result.Recovery,
             result.PlannedChanges,
             result.InstalledDocuments,
+            metadataProblem,
             validation = proposal.Validation,
             referencePolicy = proposal is McpAuthoringProposal authored ? authored.ReferencePolicy.ToString() : null,
             workspace = result.Success ? afterDescription : beforeDescription
@@ -228,6 +254,12 @@ internal sealed partial class McpWorkspaces
         }
 
         return properties;
+    }
+
+    internal void RefusePendingWorkspace()
+    {
+        RefuseCompetingPending();
+        McpRecoveryJournal.RefusePending(Root);
     }
 
     static McpRoot RootFromClientUri(string uri)
@@ -340,14 +372,8 @@ internal sealed partial class McpWorkspaces
         var pendingRoots = RefreshRootBindingConflict().Where(path => !string.Equals(Path.TrimEndingDirectorySeparator(path), Path.TrimEndingDirectorySeparator(Root.DirectoryPath), StringComparison.Ordinal)).ToArray();
         if (pendingRoots.Length > 0)
         {
-            throw new McpFailure($"PendingOperation: bound root '{Root.DirectoryPath}' overlaps pending .screenplay/pending.json journals at {string.Join(", ", pendingRoots.Select(path => $"'{path}'"))}. Writes are refused. Inspect workspace-state, then open each competing root with an explicit path before recovering its journal.") { FailureKind = "PendingOperation" };
+            throw new McpFailure($"PendingOperation: bound root '{Root.DirectoryPath}' overlaps pending .screenplay/pending.json journals at {string.Join(", ", pendingRoots.Select(path => $"'{path}'"))}. Opening, reads and writes are refused. Inspect workspace-state, then open each competing root with an explicit path before recovering its journal.") { FailureKind = "PendingOperation" };
         }
-    }
-
-    void RefusePendingWorkspace()
-    {
-        RefuseCompetingPending();
-        McpRecoveryJournal.RefusePending(Root);
     }
 
     object Store(IMcpProposal proposal, JsonElement arguments)

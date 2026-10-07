@@ -48,10 +48,10 @@ wins. `open-workspace` and the `workspace-state` status view report
 `pending.json`, in the same order), and an explanatory `message`. The field is
 omitted when there is no conflict. Failed tool responses also carry the conflict,
 and their error message names the bound root and competing state roots.
-A pending journal at any state root on the discovered path refuses opening,
-proposals and apply at the bound root, including a journal created after opening
-or proposing. `workspace-state` remains available to inspect the conflict. For a
-competing root's recovery, first call `open-workspace` with that root's explicit
+A pending journal at any state root on the discovered path blocks opening, reads
+and writes at the bound root, including visualization and a journal created after
+opening or proposing. `workspace-state` remains available to inspect the conflict.
+For a competing root's recovery, first call `open-workspace` with that root's explicit
 `path` (opening still returns `PendingOperation`), inspect `workspace-state` there,
 then explicitly call `recover-workspace` with its operation ID. A recovery call at
 the outer root cannot recover a nested journal. No identities or recovery journals
@@ -62,6 +62,10 @@ fixed at startup, including `.cratis/ai.json` configuration, are unchanged.
 
 Only `apply` and `recover-workspace` mutate files. Keep client approval enabled
 for both. Source queries, schemas, proposals and status checks are read-only.
+If metadata inspection fails after a verified apply, its response keeps the applied
+outcome and session revision, retains the previous root-conflict snapshot, and
+reports the inspection failure in `metadataProblem`. Repair that metadata before
+continuing; do not retry the completed apply.
 
 ## Generated values and responses
 

@@ -100,14 +100,14 @@ sealed class McpTools
     object Read(string name, JsonElement arguments)
     {
         var root = _workspaces.ReadRoot();
-        McpRecoveryJournal.RefusePending(root);
+        _workspaces.RefusePendingWorkspace();
 
         // Health and overview queries answer for a brand-new empty root too; every other read needs documents.
         var allowEmpty = string.Equals(name, "diagnostics", StringComparison.Ordinal) ||
             string.Equals(name, "describe-application", StringComparison.Ordinal);
         var documents = root.Read(allowEmpty);
         var snapshot = _sources.Read(documents);
-        McpRecoveryJournal.RefusePending(root);
+        _workspaces.RefusePendingWorkspace();
         var expectedSource = McpJson.OptionalString(arguments, "expectedSourceRevision");
         if (McpJson.Integer(arguments, "offset", 0, 0, int.MaxValue) > 0 && expectedSource is null)
         {
@@ -150,7 +150,7 @@ sealed class McpTools
             _ => McpModelQueries.Describe(snapshot, documents.Length, arguments)
         };
         var result = McpJson.ToolResult(value);
-        McpRecoveryJournal.RefusePending(root);
+        _workspaces.RefusePendingWorkspace();
         return result;
     }
 }
