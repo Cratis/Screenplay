@@ -41,6 +41,10 @@ static class InputSurfaceCompleteness
         }
 
         var issued = actions.Select(action => action.Command).OfType<CommandSyntax>().ToHashSet();
+        issued.UnionWith(screens.SelectMany(entry => ScreenContainers.All(entry.Screen.Directives).OfType<ScreenGuardedActionSyntax>()
+            .SelectMany(action => action.Alternatives.Select(alternative => alternative.Command)
+                .Concat(action.Otherwise?.Command is { } fallback ? [fallback] : []))
+            .Select(name => Command(name, entry.Scope, declarations))).OfType<CommandSyntax>());
         issued.UnionWith(executed);
         foreach (var command in declarations.Slices.Where(entry => entry.Slice.Type == SliceType.StateChange).SelectMany(entry => entry.Slice.Commands)
             .Where(command => !issued.Contains(command) && !invoked.Contains(command)))

@@ -100,6 +100,20 @@ static class CompletenessInteractions
         }
 
         /// <inheritdoc/>
+        public override void VisitScreenActionAlternative(ScreenActionAlternativeSyntax syntax)
+        {
+            base.VisitScreenActionAlternative(syntax);
+            DiscoverForms(syntax.Command, _scope);
+        }
+
+        /// <inheritdoc/>
+        public override void VisitScreenActionOtherwise(ScreenActionOtherwiseSyntax syntax)
+        {
+            base.VisitScreenActionOtherwise(syntax);
+            if (syntax.Command is not null) DiscoverForms(syntax.Command, _scope);
+        }
+
+        /// <inheritdoc/>
         public override void VisitScreen(ScreenSyntax syntax)
         {
             var previous = _screen;
