@@ -494,6 +494,7 @@ whole-document replacement can repair parser-invalid source without node handles
 references and assigned identities. It preserves trivia by default. Ambiguity,
 name capture, opaque text naming the old or new name, unsupported spans or resolver
 disagreement refuse automation. It is not global text replacement or automatic property-schema evolution.
+Typed references include refusal-branch constraints and produced events, plus the event and reaction named by `when redelivered`. Reaction and constraint rename proposals update those references without admitting execution. Refusal branches and redelivery remain syntax-only and report unadmitted readiness (`PLAY0268`). Their indexed roles are `refusalConstraint`, `refusalProduces`, `whenRedeliveredEvent` and `redeliveryReaction`; redelivery dependencies are test-only `verifiedWith` edges, not timeline-order dependencies.
 Event renames retain an existing `id` pin or insert the previous name by default.
 `eventNeverPersisted: true` omits a new pin and removes a redundant pin equal to the current name; a pin naming an earlier identity is kept. A rename
 that inserts a pin also refuses comment loss or duplication.

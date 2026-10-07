@@ -833,7 +833,9 @@ See [Imports](imports.md).
 | `PLAY0459` | Error | A file imported into a module or feature declares a module other than the one it is placed in. Restating the module it is placed in is allowed. |
 | `PLAY0460` | Error | The top level of a file imported into a module or feature holds something that scope cannot hold, such as a `screen template` in a file placed in a feature. |
 
-### No-event specification assertions
+### Refusal branches, redelivery and no-event assertions
+
+Refusal branches, `$refusal` values and redelivery are syntax-only and not yet executable: source-valid models still fail binding with `PLAY0268`. `then no events` executes for admitted non-append actions.
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
@@ -846,7 +848,7 @@ See [Imports](imports.md).
 | `PLAY0544` | Error | The redelivery reaction is unknown or ambiguous, or has no event trigger on the stated event. |
 | `PLAY0545` | Error | `then no events` is malformed, repeated, has child mappings, follows `when append`, or accompanies event, event-order, error or denial expectations. Use one leaf assertion after a non-append action; read-model, query and response assertions may accompany it. |
 
-See [Specifications](specifications.md#syntax).
+See [Refusal branches](reactions.md#refusal-branches-syntax-only), [Redelivery specifications](specifications.md#redelivery-specifications-syntax-only) and [Specification syntax](specifications.md#syntax).
 
 ### Specification actions
 

@@ -34,6 +34,9 @@ specification <Name>
   when append <EventType>
     [for <event-source-value>]
     <property> = <value>
+  when redelivered <EventType> to <Reaction> // syntax-only
+    [for <event-source-value>]
+    [<property> = <value> ...]
   when clock "<ISO 8601 instant>"
   when trigger <Trigger>
     <value> = <value>
@@ -65,6 +68,7 @@ specification <Name>
 - `given readmodel <ReadModelType>` — zero or more. Establishes prior read model state directly, for scenarios where expressing the state as events would be noise.
 - `given caller` — zero or one. Explicit authentication, roles, and repeatable claim values for authorization. No fixture is inferred for an authorized scenario (`PLAY0389`).
 - `when <CommandType>` or `when append <EventType>` — at most one action. Append directly establishes an event occurrence, checks append-time constraints, projects it, then checks read models and queries; it does not run a command. Without `when`, provide at least one `then readmodel`, `then no readmodel`, or `then query`; `then` events and errors require an action (`PLAY0352`).
+- `when redelivered <EventType> to <Reaction>` — syntax-only action selecting exactly one given event occurrence for one compatible event-trigger reaction. It participates in the same one-action rule and is not yet executable (`PLAY0268`). See [Redelivery specifications](#redelivery-specifications-syntax-only).
 - `then <EventType>` — zero or more. Compares the complete set of new facts, in authored order by default. For `when append`, if any `then` events are asserted, they must match exactly the appended fact (no extra facts); omit them to check only projected state or queries.
 - `then no events` — once per specification, with no children. Explicitly expects no new events after a non-append action. It can accompany read-model, query or response assertions, but not event expectations, `then events in any order`, errors or denial (`PLAY0545`). It is rejected after `when append`. It executes now and binds to the same ESM bytes as omitting event expectations; it selects no new version.
 - `then events in any order` — once per specification. Compares all asserted events by event type, payload, and optional source without regard to order, still requiring the exact number of new facts. Without it, order matters.
@@ -294,6 +298,36 @@ In v6, projection arithmetic outside the reference numeric range returns `Semant
 
 Default `Startup` and `Shutdown` signals carry no values. If a host registration overrides either with values or an unknown shape, semantic binding rejects its use until a typed trigger declaration supplies an admitted shape; a matching name alone does not make it an empty built-in.
 
+## Redelivery specifications (syntax-only)
+
+> Event redelivery is not yet executable. Both compilers parse and preserve `when redelivered`; the .NET compiler validates the reaction and occurrence locator. Binding refuses it with `PLAY0268`, and MCP reports it as unadmitted. It does not run as `when append` or silently omit the action.
+
+Recovery can deliver an existing fact to one reaction without appending another fact. This syntax-only example declares the event and its observer before selecting a given occurrence:
+
+```screenplay
+module Billing
+  feature Claims
+    slice Automation Recovery
+      event Approved
+        invoice String
+      reaction Claimer
+        when Approved
+      specification Recovery
+        given Approved
+          for "invoice-1"
+          invoice = "invoice-1"
+        when redelivered Approved to Claimer
+          for "invoice-1"
+          invoice = "invoice-1"
+        then no events
+```
+
+`to <Reaction>` is required. The reaction must resolve unambiguously and observe the stated event (`PLAY0544` otherwise). The optional `for` and every stated property value narrow the given occurrences of that event. **Exactly one** must match (`PLAY0543` otherwise); an empty body is sufficient when there is exactly one given fact of that event. This is the specification's sole action, not an additional step after a command or append. `then no events` is executable for admitted actions, but does not make a redelivery scenario executable.
+
+[Decision 0030](https://github.com/Cratis/Screenplay/blob/main/decisions/0030-reaction-refusals-and-redelivery.md) defines the intended execution at admission: establish givens without firing reactions, deliver the selected existing fact only to the named reaction, then settle the ordinary cascade. Do not append the fact again. New effects take the `given clock` instant, and event expectations compare all newly accepted facts. Delivery identity is the reaction paired with the selected given-fact position, not equality of event values as a runtime deduplication guarantee.
+
+A `given caller` supplies no actor to a reaction invocation. Unhandled validation and constraint refusals remain assertable as `then error`; authorization denial uses `then denied`. Recovery redelivery is ordinary observation, not replay, and does not prove once-only external effects. Clock, application-trigger and capture repetition keep their existing action forms. Refusal branches have their own [syntax and admission boundary](reactions.md#refusal-branches-syntax-only).
+
 ## Reference execution
 
 Screenplay supplies a framework-neutral reference path for admitted semantic capabilities. It does not start Arc, Chronicle, a database, the filesystem, or a network service. It executes against an immutable in-memory world so Stage and rendered targets have one normalized behavior to match.
@@ -327,6 +361,7 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `given caller` | Explicit identity, roles, and repeated claims. |
 | `when <CommandType>` | The command under test, with its property values. |
 | `when append <EventType>` | Append an event occurrence, enforce constraints and project it; in v6, run its reaction consequences. |
+| `when redelivered <EventType> to <Reaction>` | Syntax-only: select exactly one given occurrence for one event-trigger reaction; not yet executable. |
 | `given clock "<instant>"` | The instant the scenario happens at. |
 | `given capture <Capture>` | An earlier record of a capture's source. |
 | `when clock "<instant>"` | The clock reaches an instant; scheduled reactions that are due run. |
@@ -335,6 +370,7 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `when query <Query>` | Perform a query with its arguments. |
 | `then result [exactly]` | One expected row of the performed query; repeat for several. |
 | `then no result` | The performed query returns nothing. |
+| `then no events` | Explicitly expect no new facts after a non-append action. |
 | `then events in any order` | Ignore order, but still require the exact set of new facts. |
 | `exactly` on read model or query | Compare every property rather than the default subset. |
 | `then <EventType>` | An expected new fact; if asserted, the full new fact set must match. |
