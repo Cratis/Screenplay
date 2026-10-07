@@ -1821,6 +1821,26 @@ public static class DiagnosticCodes
     public const string UnsupportedActionConditionOperand = "PLAY0344";
 
     /// <summary>
+    /// An item path names no subject field or crosses a collection field.
+    /// </summary>
+    public const string UnknownActionSubjectField = "PLAY0345";
+
+    /// <summary>
+    /// A guarded action has no unambiguous data subject in its enclosing containers.
+    /// </summary>
+    public const string UnresolvedActionSubject = "PLAY0346";
+
+    /// <summary>
+    /// Earlier guarded alternatives provably shadow an alternative.
+    /// </summary>
+    public const string UnreachableActionAlternative = "PLAY0347";
+
+    /// <summary>
+    /// An explicit action argument names no property of the chosen command.
+    /// </summary>
+    public const string UnknownActionArgumentProperty = "PLAY0348";
+
+    /// <summary>
     /// A command or event specification value uses null instead of modeling an optional fact as a separate event.
     /// </summary>
     public const string NullSpecificationFact = "PLAY0350";

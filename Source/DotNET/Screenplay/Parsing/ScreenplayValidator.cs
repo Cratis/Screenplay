@@ -158,6 +158,7 @@ internal static class ScreenplayValidator
         }
 
         ValidateScreenReferences(scopedSlices, knownQueries, knownCommandDeclarations, knownScreenDeclarations, context);
+        GuardedActionValidator.Validate(declarations, context);
         ValidateInteractions(
             application,
             scopedSlices,
@@ -899,6 +900,18 @@ internal static class ScreenplayValidator
                     case ScreenActionSyntax action:
                         Report(action.Command, scope, commands, DiagnosticCodes.UnknownCommand, "command", action.Location, context);
                         break;
+                    case ScreenGuardedActionSyntax guarded:
+                        foreach (var alternative in guarded.Alternatives)
+                        {
+                            Report(alternative.Command, scope, commands, DiagnosticCodes.UnknownCommand, "command", alternative.Location, context);
+                        }
+
+                        if (guarded.Otherwise is { Command: { } fallback })
+                        {
+                            Report(fallback, scope, commands, DiagnosticCodes.UnknownCommand, "command", guarded.Otherwise.Location, context);
+                        }
+
+                        break;
                     case ScreenNavigateSyntax navigate:
                         Report(navigate.Screen, scope, screens, DiagnosticCodes.UnknownScreen, "screen", navigate.Location, context);
                         break;
@@ -1411,6 +1424,11 @@ internal static class ScreenplayValidator
             if (directive is ScreenActionSyntax { Navigate: { } afterAction })
             {
                 yield return afterAction;
+            }
+
+            if (directive is ScreenGuardedActionSyntax { Navigate: { } afterGuardedAction })
+            {
+                yield return afterGuardedAction;
             }
 
             if (directive is ScreenTableSyntax { RowClick: { } onRowClick })
