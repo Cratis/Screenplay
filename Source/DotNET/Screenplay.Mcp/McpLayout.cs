@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using System.Text;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Languages;
 using Cratis.Screenplay.Syntax;
@@ -116,17 +117,24 @@ static class McpLayout
         var imports = placed.ToDictionary(document => document.Path, document => ScreenplayCompiler.DiscoverImports(document.Source, document.Path, languages), StringComparer.Ordinal);
         var root = OrderingRoot.Select([.. texts.Keys], placed, languages, imports);
         if (root is null) return application;
-        var ranks = AuthoredOrder.Record([root], placed, languages, imports: imports);
+        var ranks = AuthoredOrder.Record([root], placed, languages, out var origins, imports: imports);
+
+        SourceLocation? Position(string[] scope, SyntaxNode owner) => origins.GetValueOrDefault(AuthoredOrder.Key(scope))?
+            .LastOrDefault(step => step.Node is FileImportSyntax && step.Path == owner.Location.Path)?.Location;
 
         IEnumerable<T> Ordered<T>(IEnumerable<T> items, string[] scope, Func<T, string> name) => items
             .OrderBy(item => ranks.GetValueOrDefault(AuthoredOrder.Key(scope.Append(name(item))), int.MaxValue));
-        FeatureSyntax Feature(FeatureSyntax feature, string[] outer)
+        FeatureSyntax Feature(FeatureSyntax feature, string[] outer, SyntaxNode owner)
         {
             string[] scope = [.. outer, feature.Name];
             return feature with
             {
-                Features = [.. Ordered(feature.Features, scope, child => child.Name).Select(child => Feature(child, scope))],
-                Slices = [.. Ordered(feature.Slices, scope, slice => slice.Name)]
+                PrintingLocation = Position(scope, owner),
+                Features = [.. Ordered(feature.Features, scope, child => child.Name).Select(child => Feature(child, scope, feature))],
+                Slices = [.. Ordered(feature.Slices, scope, slice => slice.Name).Select(slice => slice with
+                {
+                    PrintingLocation = Position([.. scope, slice.Name], feature)
+                })]
             };
         }
 
@@ -134,7 +142,7 @@ static class McpLayout
         {
             Modules = [.. Ordered(application.Modules, [], module => module.Name).Select(module => module with
             {
-                Features = [.. Ordered(module.Features, [module.Name], feature => feature.Name).Select(feature => Feature(feature, [module.Name]))]
+                Features = [.. Ordered(module.Features, [module.Name], feature => feature.Name).Select(feature => Feature(feature, [module.Name], module))]
             })]
         };
     }

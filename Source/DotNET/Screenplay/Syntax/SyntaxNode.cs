@@ -35,4 +35,8 @@ public abstract record SyntaxNode(SourceLocation Location)
     /// </summary>
     [SourceSpanMetadata]
     public AutoMapMode? ParsedAutoMapMode { get; init; }
+
+    // Snapshot-local parent-relative import position for layout printing only. Keep the physical
+    // Location unchanged: comments and directives still anchor to their original source lines.
+    internal SourceLocation? PrintingLocation { get; init; }
 }

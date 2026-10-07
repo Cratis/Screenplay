@@ -394,7 +394,10 @@ a file it ranks at its first declaration in import order. Repeated sibling names
 count once. A mismatch fails without
 creating a proposal. With no ordering root, that guard is skipped and
 the proposal's `review` text says that path order was used. Order is presentation
-metadata, not executable-model bytes or identity.
+metadata, not executable-model bytes or identity. A child imported into a container
+keeps its parent-relative position among contributions, templates and other members
+when the layout is collapsed. Leading and trailing header comments stay on the
+physical declarations, including the first line of placed files.
 
 Review and apply the resulting proposal exactly like a node edit. Reorganization
 normalizes source formatting and checks structural equivalence; it keeps annotations

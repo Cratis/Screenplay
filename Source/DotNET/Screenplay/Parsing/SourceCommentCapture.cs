@@ -54,7 +54,8 @@ internal static class SourceCommentCapture
             }
 
             var owner = anchor is null ? Enclosing(nodes, line.Number, line.Indent, root) :
-                nodes.Find(node => node.Location.Line == anchor.Number && node.Location.Column == anchor.Indent + 1)
+                nodes.Find(node => node is not ApplicationSyntax and not ModuleSyntax { IsPlacement: true } and not FeatureSyntax { IsPlacement: true } &&
+                    node.Location.Line == anchor.Number && node.Location.Column == anchor.Indent + 1)
                     ?? nodes.Find(node => node.DirectiveLocations.Values.Any(location => location.Line == anchor.Number && location.Column == anchor.Indent + 1))
                     ?? nodes.OfType<ScreenTemplateSyntax>().FirstOrDefault(template => template.FitsSlotLocation?.Line == anchor.Number && template.FitsSlotLocation?.Column == anchor.Indent + 1)
                     ?? Enclosing(nodes, anchor.Number, anchor.Indent, root);

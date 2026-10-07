@@ -94,10 +94,16 @@ static class McpLayoutDocuments
 
     static ModuleSyntax PlacedModule(IEnumerable<FeatureSyntax> features) => new(string.Empty, [], features, SourceLocation.Start) { IsPlacement = true };
 
-    // A child's location in another document cannot order an import among its owner's authored members.
-    static FileImportSyntax Import(string path, SyntaxNode declaration, SyntaxNode owner) => new(
-        path,
-        string.Equals(declaration.Location.Path, owner.Location.Path, StringComparison.Ordinal) ? declaration.Location : SourceLocation.Start);
+    // An imported child keeps the parent-relative position recorded by the presentation timeline.
+    // Without that evidence, locations in different documents retain the canonical fallback.
+    static FileImportSyntax Import(string path, SyntaxNode declaration, SyntaxNode owner)
+    {
+        var position = declaration.PrintingLocation ?? declaration.Location;
+        return new(path, string.Equals(position.Path, owner.Location.Path, StringComparison.Ordinal) ? position : SourceLocation.Start)
+        {
+            PrintingLocation = declaration.PrintingLocation
+        };
+    }
 
     // Imports are source composition, not model declarations. Their attached comments still belong to the
     // reorganized scope even when their former paths no longer exist.

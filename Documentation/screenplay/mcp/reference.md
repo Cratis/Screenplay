@@ -303,7 +303,9 @@ scope before creating a proposal, using the timeline's ordering root: the sole
 document, an importing `application.play`, or the unique importer not itself
 imported. An import-less `application.play` can coexist with that importer. With
 no ordering root, expansion uses path order and discloses this in the existing
-proposal `review` text. Order does not change executable-model bytes or identities.
+proposal `review` text. Imported children retain their parent-relative positions
+among other container members on collapse, and header comments stay with their
+physical declarations. Order does not change executable-model bytes or identities.
 
 `tools/list` supplies nested argument schemas. Revisions, IDs and handles come
 from the server; do not infer them from names or line numbers.

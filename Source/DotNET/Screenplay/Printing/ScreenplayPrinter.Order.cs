@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Printing;
@@ -24,12 +25,14 @@ public sealed partial class ScreenplayPrinter
     }
 
     /// <summary>
-    /// Prints members in their authored order when their positions share a document, otherwise in canonical order.
+    /// Prints members in their authored order when their physical or layout positions share a document, otherwise in canonical order.
     /// </summary>
     /// <remarks>
     /// Source locations suffice for parsed siblings in one document: their lines are unique, and no public
     /// syntax constructor or JSON shape needs to change. A folder merge can combine different paths, whose
     /// line numbers cannot be compared; in that case the existing kind order is the deterministic fallback.
+    /// Layout expansion can supply a temporary parent-relative import position without changing physical
+    /// source locations or comment anchors; those positions participate in the same document-local order.
     /// Start/default locations mark newly authored nodes. Features under modules or features, slices and file imports
     /// are inserted before their next located sibling in that collection, enabling mid-list timeline moves and pins.
     /// If there is no next located sibling, use the existing insertion rule: after the last member of the kind,
@@ -39,9 +42,10 @@ public sealed partial class ScreenplayPrinter
     /// </remarks>
     static void WriteMembers(List<PrintableMember> members)
     {
-        var located = members.Where(member => member.Node.Location is { Line: > 1, Column: > 0 }).ToList();
+        var located = members.Where(member => member.Node.PrintingLocation is { Line: > 0, Column: > 0 } ||
+            member.Node.Location is { Line: > 1, Column: > 0 } or { Line: 1, Column: > 0, Path: not null }).ToList();
         var sameDocument = located.Count > 0 && located.TrueForAll(member =>
-            string.Equals(member.Node.Location.Path, located[0].Node.Location.Path, StringComparison.Ordinal));
+            string.Equals(member.Position.Path, located[0].Position.Path, StringComparison.Ordinal));
 
         if (!sameDocument)
         {
@@ -53,8 +57,8 @@ public sealed partial class ScreenplayPrinter
             return;
         }
 
-        var ordered = located.OrderBy(member => member.Node.Location.Line)
-            .ThenBy(member => member.Node.Location.Column).ToList();
+        var ordered = located.OrderBy(member => member.Position.Line)
+            .ThenBy(member => member.Position.Column).ToList();
         foreach (var member in members.Except(located))
         {
             var nextSibling = member.Node is FeatureSyntax or SliceSyntax or FileImportSyntax
@@ -75,5 +79,8 @@ public sealed partial class ScreenplayPrinter
         }
     }
 
-    sealed record PrintableMember(SyntaxNode Node, int Kind, Action Print);
+    sealed record PrintableMember(SyntaxNode Node, int Kind, Action Print)
+    {
+        internal SourceLocation Position => Node.PrintingLocation ?? Node.Location;
+    }
 }

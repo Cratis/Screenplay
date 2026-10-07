@@ -109,10 +109,12 @@ a file does:
   then attached behaviors: a comment moves with the member it annotates when that
   canonical order differs from the authored order. The printer uses canonical two-space
   indentation. A tree created entirely from typed JSON has no authored comments to keep.
-- **Order across files cannot be recovered.** Parsed members of a slice, feature or
-  module keep their authored order when they share a source file. A folder merge may
-  combine members from different files; their line numbers cannot be compared, so
-  the printer uses canonical kind order for that owner. Syntax created without source
+- **Order across files needs import evidence.** Parsed members of a slice, feature or
+  module keep their authored order when they share a source file. MCP `expand-layout`
+  also retains a child's position at its parent's import, so collapsing an import-based
+  layout keeps contributions, templates and other members in their authored relative
+  order. Without that evidence, a folder merge combines members whose line numbers
+  cannot be compared, and the printer uses canonical kind order for that owner. Syntax created without source
   positions (including typed JSON) also uses canonical kind order. A new member added
   to a parsed owner prints after the last member of its kind, or before the first
   member of a later canonical kind when none exists. Features, slices and file imports
@@ -125,7 +127,9 @@ Round-tripping preserves comments and meaning, not blank lines or every authored
 space. Use [authoring workspace](ast-authoring.md) `PreserveTrivia` when even the
 unchanged source bytes must survive. Folder expansion keeps comments with their
 declarations, including module header comments in the module file; each slice
-file retains its within-slice authored order.
+file retains its within-slice authored order. Leading and trailing header comments
+stay on the physical module, feature or slice declaration, including the first line
+of an imported file; synthetic placement wrappers do not take ownership of them.
 
 ## Generating from a model
 
