@@ -2,6 +2,31 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "A typed example requires an underlying type",
+            "source": ["example AcmeInvoice"],
+            "diagnostics": ["PLAY0518@1"]
+        },
+        {
+            "name": "An example rejects duplicate property assignments",
+            "source": ["example AcmeInvoice : InvoiceRegistered", "  total = 1000", "  total = 5000"],
+            "diagnostics": ["PLAY0519@3"]
+        },
+        {
+            "name": "An example rejects duplicate generated fixtures",
+            "source": ["example AcmeInvoice : RegisterInvoice", "  generated receipt = \"one\"", "  generated receipt = \"two\""],
+            "diagnostics": ["PLAY0519@3"]
+        },
+        {
+            "name": "An inline step assignment cannot repeat in its body",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      specification Registering", "        when AcmeInvoice total = 1000", "          total = 5000"],
+            "diagnostics": ["PLAY0519@6"]
+        },
+        {
+            "name": "A qualified fixture with one structured inline assignment is valid syntax",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      specification Registering", "        given M.F.AcmeInvoice lines = [{\"quantity\":2}]", "        when M.F.AcmeInput total = 5000", "        then readmodel M.F.Balance exactly total = 5000"],
+            "diagnostics": []
+        },
+        {
             "name": "Personal declared trigger data cannot supply reaction destinations",
             "validate": true,
             "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],

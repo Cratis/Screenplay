@@ -16,7 +16,7 @@ import { QueryParameterSyntax, QuerySyntax } from './Queries';
 import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
 import { ScreenDirectiveSyntax, ScreenSyntax } from './Screens';
 import {
-    SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax,
+    SpecificationExampleSyntax, SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationQueryResultSyntax,
     SpecificationReadModelSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationSyntax, SpecificationTriggerSyntax, SpecificationWhenQuerySyntax,
 } from './Specifications';
 import { ApplicationSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax, SliceSyntax } from './Structure';
@@ -44,6 +44,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.policies?.forEach(node => this.visitPolicy(node));
         syntax.seeds?.forEach(node => this.visitSeed(node));
         syntax.modules.forEach(node => this.visitModule(node));
+        syntax.examples?.forEach(node => this.visitSpecificationExample(node));
     }
 
     visitPolicy(syntax: PolicySyntax): void {
@@ -109,6 +110,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitModule(syntax: ModuleSyntax): void {
         this.visitNode(syntax);
+        syntax.examples?.forEach(node => this.visitSpecificationExample(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.features.forEach(node => this.visitFeature(node));
@@ -116,6 +118,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitFeature(syntax: FeatureSyntax): void {
         this.visitNode(syntax);
+        syntax.examples?.forEach(node => this.visitSpecificationExample(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
         syntax.features.forEach(node => this.visitFeature(node));
@@ -124,6 +127,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitSlice(syntax: SliceSyntax): void {
         this.visitNode(syntax);
+        syntax.examples?.forEach(node => this.visitSpecificationExample(node));
         syntax.commands.forEach(node => this.visitCommand(node));
         syntax.operations?.forEach(node => this.visitOperation(node));
         syntax.events.forEach(node => this.visitEvent(node));
@@ -471,6 +475,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitSpecification(syntax: SpecificationSyntax): void {
         this.visitNode(syntax);
+        syntax.examples?.forEach(node => this.visitSpecificationExample(node));
         if (syntax.givenClock !== null) this.visitSpecificationClock(syntax.givenClock);
         syntax.givenOperationFailures?.forEach(node => this.visitSpecificationOperationFailure(node));
         syntax.thenOperations?.forEach(node => this.visitSpecificationOperation(node));
@@ -525,6 +530,13 @@ export abstract class ScreenplaySyntaxWalker {
     visitSpecificationQueryResult(syntax: SpecificationQueryResultSyntax): void {
         this.visitNode(syntax);
         syntax.properties.forEach(node => this.visitPropertyMapping(node));
+    }
+
+    visitSpecificationExample(syntax: SpecificationExampleSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.for !== null) this.visitExpression(syntax.for);
+        syntax.values.forEach(node => this.visitPropertyMapping(node));
+        syntax.generatedValues.forEach(node => this.visitPropertyMapping(node));
     }
 
     visitSpecificationEvent(syntax: SpecificationEventSyntax): void {

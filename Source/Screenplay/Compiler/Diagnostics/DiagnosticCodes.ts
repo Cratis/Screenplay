@@ -233,6 +233,8 @@ export const DiagnosticCodes = {
     IncompatibleNumericSource: 'PLAY0513',
     EventFromLaterSlice: 'PLAY0516',
     TimelineCycleGroup: 'PLAY0517',
+    InvalidSpecificationExample: 'PLAY0518',
+    DuplicateSpecificationAssignment: 'PLAY0519',
     InvalidEventSourceDeclaration: 'PLAY0503',
     InvalidCommandStream: 'PLAY0504',
     AmbiguousCommandStream: 'PLAY0505',
