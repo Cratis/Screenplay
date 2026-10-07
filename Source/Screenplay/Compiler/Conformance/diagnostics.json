@@ -2,6 +2,36 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "Source identifier fallback refuses an unresolved command destination path",
+            "validate": true,
+            "source": ["type Detail", "  id String", "eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        detail Detail", "        produces E", "          for detail.missing", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          detail = {\"id\":\"other\"}"],
+            "diagnostics": ["PLAY0550@16"]
+        },
+        {
+            "name": "Operation productions do not interfere with source identifier fallback",
+            "validate": true,
+            "source": ["system Mailer", "eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      operation Send", "        uses Mailer", "      command C", "        id String identifier", "        produces Send", "        produces E", "          for id", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          id = \"other\""],
+            "diagnostics": []
+        },
+        {
+            "name": "Imported event productions cannot supply a local event's source identifier fallback",
+            "validate": true,
+            "source": ["import External.Missing", "eventsource Account", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        produces Missing", "          for id", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          id = \"other\""],
+            "diagnostics": ["PLAY0550@15"]
+        },
+        {
+            "name": "Capture child producers prevent command-only source identifier fallback",
+            "validate": true,
+            "source": ["eventsource Account", "  stream Profile", "module M", "  feature F", "    slice Translate S", "      event E", "      command C", "        id String identifier", "        produces E", "          for id", "      capture Legacy", "        source webhook", "          path /events", "        key id", "        children items identified by id", "          append E", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          id = \"other\""],
+            "diagnostics": ["PLAY0550@20"]
+        },
+        {
+            "name": "Capture nested producers prevent command-only source identifier fallback",
+            "validate": true,
+            "source": ["eventsource Account", "  stream Profile", "module M", "  feature F", "    slice Translate S", "      event E", "      command C", "        id String identifier", "        produces E", "          for id", "      capture Legacy", "        source webhook", "          path /events", "        key id", "        nested detail", "          append E", "      specification X", "        given E", "          for \"other\"", "          stream Account.Profile", "        when C", "          id = \"other\""],
+            "diagnostics": ["PLAY0550@20"]
+        },
+        {
             "name": "Unknown imported stream id type defers literal contradiction",
             "validate": true,
             "source": ["import External.Key", "eventsource Account", "  identifier String", "  stream Profile", "    streamId Key", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = \"first\"", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = \"second\""],
