@@ -245,20 +245,28 @@ internal static class McpWorktreeRoots
 
     static void RequireNoWorktreeConfiguration(string gitDirectory)
     {
+        RequireAbsent(gitDirectory, "config.worktree", "Per-worktree configuration is not supported.");
+
+        // Git reads the configuration of the common directory a commondir file points to, not this one.
+        RequireAbsent(gitDirectory, "commondir", "A common-directory redirect is not supported.");
+    }
+
+    static void RequireAbsent(string gitDirectory, string name, string reason)
+    {
         try
         {
-            _ = File.GetAttributes(Path.Combine(gitDirectory, "config.worktree"));
+            _ = File.GetAttributes(Path.Combine(gitDirectory, name));
         }
         catch (FileNotFoundException)
         {
-            // Only a missing entry proves that this additional configuration cannot override core.bare.
+            // Only a missing entry proves that this source cannot decide core.bare.
             return;
         }
 
-        throw Refused("Per-worktree configuration is not supported.");
+        throw Refused(reason);
     }
 
-    static string TrimConfigurationWhitespace(string value) => value.Trim(' ', '\t', '\r', '\v', '\f');
+    static string TrimConfigurationWhitespace(string value) => value.Trim(' ', '\t', '\r');
 
     static string ReadConfigurationSection(string line)
     {

@@ -31,12 +31,24 @@ public class when_opening_with_unverifiable_git_configuration : given.a_worktree
     [InlineData("[core]\nbare\u00A0= false\n")]
     [InlineData("[core]\nbare =\u00A0false\n")]
     [InlineData("[core]\nbare = false\u00A0\n")]
+    [InlineData("\v[core]\nbare = false\n")]
+    [InlineData("[core]\nbare\f= false\n")]
     public void should_refuse_ambiguous_or_unreadable_bare_status(string config)
     {
         File.WriteAllText(Path.Combine(RepositoryPath, ".git", "config"), config);
         var refused = Call("open-workspace", new { path = WorktreePath }).GetProperty("result");
         refused.GetProperty("structuredContent").GetProperty("failureKind").GetString().ShouldEqual("RootChangeRefused");
         refused.GetProperty("structuredContent").GetProperty("message").GetString()!.ShouldContain($"Cannot determine whether {RepositoryPath} is a bare repository:");
+    }
+
+    [Fact]
+    void should_refuse_a_common_directory_redirect()
+    {
+        File.WriteAllText(Path.Combine(RepositoryPath, ".git", "commondir"), "../elsewhere/.git\n");
+        var refused = Call("open-workspace", new { path = WorktreePath }).GetProperty("result");
+        refused.GetProperty("structuredContent").GetProperty("failureKind").GetString().ShouldEqual("RootChangeRefused");
+        refused.GetProperty("structuredContent").GetProperty("message").GetString()!.ShouldContain($"Cannot determine whether {RepositoryPath} is a bare repository:");
+        refused.GetProperty("structuredContent").GetProperty("message").GetString()!.ShouldContain("common-directory redirect");
     }
 
     [Fact]
