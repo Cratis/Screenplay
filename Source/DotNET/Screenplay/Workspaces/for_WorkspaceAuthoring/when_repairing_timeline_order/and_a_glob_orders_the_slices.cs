@@ -24,7 +24,7 @@ public class and_a_glob_orders_the_slices : given.a_timeline
     void should_pin_a_safe_prefix_when_pinning_only_the_producer_creates_a_finding()
     {
         var workspace = Create(
-            ("root.play", "module M\n  feature F\n    import \"*.play\"\n"),
+            ("root.play", "module M\n  feature F // keep the feature\n    import \"*.play\" // keep discovering\n"),
             ("a.play", Slice("Consumer", [], "E")),
             ("b.play", Slice("Middle", ["X"])),
             ("c.play", Slice("Producer", ["E"], "X")));
@@ -33,7 +33,8 @@ public class and_a_glob_orders_the_slices : given.a_timeline
         var text = Propose(workspace, repair).Workspace!.Documents.Single(document => document.Path.Value == "root.play").Text;
         text.ShouldContain("import \"b.play\"");
         text.ShouldContain("import \"c.play\"");
-        text.ShouldContain("import \"*.play\"");
+        text.ShouldContain("feature F // keep the feature");
+        text.ShouldContain("import \"*.play\" // keep discovering");
     }
 
     [Fact]
