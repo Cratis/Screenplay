@@ -174,6 +174,20 @@ export const reactionTriggerItems: CompletionEntry[] = [
     { label: 'csharp', insertText: fenced('csharp'), documentation: 'Inline C# returning event side effects.' },
 ];
 
+const refusalAvailability = 'Syntax-only; reaction refusal handling and redelivery are not yet executable (PLAY0268).';
+
+export const invocationItems: CompletionEntry[] = [
+    { label: 'on refused', insertText: 'on refused\n    acknowledge', documentation: `Handles validation and constraint refusals, not authorization. ${refusalAvailability}` },
+    { label: 'on refused by validation', insertText: 'on refused by validation\n    acknowledge', documentation: `Handles validation refusals. ${refusalAvailability}` },
+    { label: 'on refused by constraint', insertText: 'on refused by constraint ${1:Name}\n    acknowledge', documentation: `Handles a named constraint refusal; omit the name for any constraint. ${refusalAvailability}` },
+    { label: 'on refused by authorization', insertText: 'on refused by authorization\n    acknowledge', documentation: `Explicitly handles unauthorized results, never Unsupported. ${refusalAvailability}` },
+];
+
+export const refusalItems: CompletionEntry[] = [
+    { label: 'acknowledge', insertText: 'acknowledge', documentation: `Acknowledges alone, without productions. ${refusalAvailability}` },
+    { label: 'produces', insertText: 'produces ${1:Event}\n    ${2:reason} = \\$refusal.reason', documentation: `Records the refusal with ordinary event productions. ${refusalAvailability}` },
+];
+
 export const triggerItems: CompletionEntry[] = [
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
     { label: 'description', insertText: 'description "${1:when this occurs}"', documentation: 'What makes an occurrence of this trigger happen.' },
@@ -181,6 +195,7 @@ export const triggerItems: CompletionEntry[] = [
 ];
 
 export const specificationItems: CompletionEntry[] = [
+    { label: 'when redelivered', insertText: 'when redelivered ${1:Event} to ${2:Reaction}\n    for ${3:value}', documentation: `Selects exactly one given event occurrence for one event-trigger reaction; does not append it again. ${refusalAvailability}` },
     { label: 'given operation fails', insertText: 'given operation ${1:Name} fails', documentation: 'Failure fixture leaf; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
     { label: 'then operation', insertText: 'then operation ${1:Name}\n    ${2:input} = ${3:value}', documentation: 'Partial requested-operation assertion; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
     { label: 'then compensated', insertText: 'then compensated ${1:Name}', documentation: 'Compensation assertion leaf; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
@@ -215,6 +230,7 @@ export const specificationStepItems: Record<'given' | 'when' | 'then', Completio
         { label: 'caller', insertText: 'caller\n    ${1:authenticated}', documentation: 'The identity the scenario runs as.' },
     ],
     when: [
+        { label: 'redelivered', insertText: 'redelivered ${1:Event} to ${2:Reaction}\n    for ${3:value}', documentation: `Selects exactly one given event occurrence for one reaction. ${refusalAvailability}` },
         { label: 'clock', insertText: 'clock "${1:2026-10-05T09:00:00Z}"', documentation: 'The clock reaches an instant - what a scheduled reaction responds to.' },
         { label: 'trigger', insertText: 'trigger ${1:Trigger}\n    ${2:value} = ${3:value}', documentation: 'An application trigger fires, with the values it carries.' },
         { label: 'capture', insertText: 'capture ${1:Capture}\n    ${2:field} = ${3:value}', documentation: 'The record a capture\'s source holds now.' },

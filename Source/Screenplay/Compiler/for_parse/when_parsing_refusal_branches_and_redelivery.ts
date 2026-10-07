@@ -54,7 +54,7 @@ describe('when parsing refusal branches and redelivery', () => {
     });
 
     it('should preserve legacy bytes for absent branches and redelivery', () => {
-        const value = parse(source.replace('numbers exact\n', '').replace(/            on refused[^]*?      specification/, '      specification').replace(/        when redelivered[^]*?        then no events/, '        when Claim')).value;
+        const value = parse(source.replace('numbers exact\n', '').replace(/ {12}on refused[^]*? {6}specification/, '      specification').replace(/ {8}when redelivered[^]*? {8}then no events/, '        when Claim')).value;
         expect(toSyntaxJson(slice(value).reactions[0].triggers[0].invokes[0])).not.toHaveProperty('onRefused');
         expect(toSyntaxJson(slice(value).specifications[0])).not.toHaveProperty('whenRedelivered');
     });
