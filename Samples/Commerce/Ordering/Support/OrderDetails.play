@@ -112,8 +112,9 @@ slice StateView OrderDetails
         section actions
           section cancelOrder
             title "Cancel on the customer's behalf"
-            on click
-              navigate to CancelOrderScreen
+            table OrderDetail
+              column status label "Status"
+              on row-click navigate to CancelOrderScreen by orderId
       details
         section lines
           table lines
