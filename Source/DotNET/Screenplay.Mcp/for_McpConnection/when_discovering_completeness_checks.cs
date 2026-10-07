@@ -10,7 +10,7 @@ public class when_discovering_completeness_checks : given.a_connection
     JsonElement _schema;
 
     void Establish() => Initialize();
-    void Because() => _schema = JsonSerializer.SerializeToElement(McpToolCatalog.Describe()).EnumerateArray().Single(tool => tool.GetProperty("name").GetString() == "diagnostics").GetProperty("inputSchema");
+    void Because() => _schema = JsonSerializer.SerializeToElement(McpToolCatalog.Describe(), McpJson.Options).EnumerateArray().Single(tool => tool.GetProperty("name").GetString() == "diagnostics").GetProperty("inputSchema");
 
     [Fact] void should_expose_a_string_selection() => _schema.GetProperty("properties").GetProperty("checks").GetProperty("type").GetString().ShouldEqual("string");
 }

@@ -95,7 +95,6 @@ static class McpModelQueries
         var errorCount = snapshot.Compilation.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
         var completenessStatus = checks.Selected.Count > 0 && errorCount > 0
             ? $"completeness checks skipped: the model has {errorCount} error(s)" : null;
-        const string completenessCoverage = "structure only; a finding is a prompt to look";
         var scope = McpJson.OptionalString(arguments, "scope");
         ScopedDiagnosticResult? selection = null;
         if (scope is not null)
@@ -111,19 +110,18 @@ static class McpModelQueries
 
         if (selection is null)
         {
-            return new
+            var result = new
             {
                 snapshot.Compilation.Success,
                 snapshot.SourceRevision,
                 fileCount,
-                completenessStatus,
-                completenessCoverage,
                 summary = DiagnosticSummary(all),
                 page = McpPaging.Page(diagnostics, arguments, snapshot.SourceRevision)
             };
+            return WithCompleteness(result, checks, completenessStatus);
         }
 
-        return new
+        var scopedResult = new
         {
             success = !selection.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error),
             wholeApplicationSuccess = snapshot.Compilation.Success,
@@ -136,11 +134,10 @@ static class McpModelQueries
             selection.UnresolvedEventConsumers,
             selection.PossiblyAffectedReferenceCount,
             selection.DependencyCoverage,
-            completenessStatus,
-            completenessCoverage,
             summary = DiagnosticSummary(selection.Diagnostics),
             page = McpPaging.Page(diagnostics, arguments, snapshot.SourceRevision)
         };
+        return WithCompleteness(scopedResult, checks, completenessStatus);
     }
 
     internal static object DiagnosticSummary(McpSnapshot snapshot) => DiagnosticSummary(snapshot.Compilation.Diagnostics);
@@ -178,6 +175,19 @@ static class McpModelQueries
         }
 
         return declarations;
+    }
+
+    static object WithCompleteness(object result, CompletenessChecks checks, string? status)
+    {
+        if (checks.Selected.Count == 0)
+        {
+            return result;
+        }
+
+        var response = JsonSerializer.SerializeToNode(result, McpJson.Options)!.AsObject();
+        response["completenessStatus"] = status;
+        response["completenessCoverage"] = "structure only; a finding is a prompt to look";
+        return response;
     }
 
     static object Result(McpSnapshot snapshot, IEnumerable<McpDeclaration> candidates, JsonElement arguments, int population)
