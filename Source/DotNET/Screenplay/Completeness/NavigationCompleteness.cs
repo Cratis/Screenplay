@@ -19,30 +19,34 @@ static class NavigationCompleteness
             yield return Diagnostic.Warning(
                 DiagnosticCodes.UnreachableScreen,
                 $"The application has no navigation entry points from contributions or shell-level behaviors; none of its {screens.Length} screens is reachable",
-                application.Location);
+                new(0, 0));
             yield break;
         }
 
-        var reached = new HashSet<ScreenSyntax>(graph.Roots, ReferenceEqualityComparer.Instance);
-        var pending = new Queue<ScreenSyntax>(graph.Roots);
-        while (pending.TryDequeue(out var source))
-        {
-            foreach (var target in graph.Edges.GetValueOrDefault(source) ?? [])
-            {
-                if (reached.Add(target)) pending.Enqueue(target);
-            }
-        }
-
+        var reached = graph.Reached();
         foreach (var screen in screens.Where(screen => !reached.Contains(screen)))
         {
             yield return Diagnostic.Warning(DiagnosticCodes.UnreachableScreen, $"Screen '{screen.Name}' is unreachable from navigation entry points", screen.Location);
         }
     }
 
+    internal static IReadOnlySet<ScreenSyntax> UsedScreens(ApplicationSyntax application, ConsistencyDeclarations declarations)
+    {
+        var graph = new NavigationGraph(application, declarations);
+        graph.VisitApplication(application);
+
+        // Input surfaces inspect authored screens when no navigation is declared. The navigation check
+        // separately reports that missing entry point; once roots exist, disconnected screens do not count.
+        return graph.Roots.Count == 0
+            ? new HashSet<ScreenSyntax>(declarations.Slices.SelectMany(entry => entry.Slice.Screens), ReferenceEqualityComparer.Instance)
+            : graph.Reached();
+    }
+
     sealed class NavigationGraph(ApplicationSyntax application, ConsistencyDeclarations declarations) : ScreenplaySyntaxWalker
     {
         readonly (FormSyntax Form, DeclarationScope Scope)[] _forms = [.. application.Modules.SelectMany(module => (module.Forms ?? []).Select(form => (form, new DeclarationScope([module.Name]))))];
         readonly (DialogTemplateSyntax Template, Declaration Declaration)[] _dialogs = [.. application.Modules.SelectMany(module => (module.DialogTemplates ?? []).Select(template => (template, new Declaration(template.Name, new([module.Name])))))];
+        readonly (ScreenTemplateSyntax Template, Declaration Declaration)[] _templates = [.. application.Modules.SelectMany(module => module.ScreenTemplates.Select(template => (template, new Declaration(template.Name, new([module.Name])))))];
         readonly HashSet<FormSyntax> _activeForms = new(ReferenceEqualityComparer.Instance);
         DeclarationScope _scope = new([]);
         ScreenSyntax? _screen;
@@ -53,6 +57,36 @@ static class NavigationCompleteness
 
         internal HashSet<ScreenSyntax> Roots { get; } = new(ReferenceEqualityComparer.Instance);
         internal Dictionary<ScreenSyntax, HashSet<ScreenSyntax>> Edges { get; } = new(ReferenceEqualityComparer.Instance);
+
+        /// <inheritdoc/>
+        public override void VisitScreenTemplate(ScreenTemplateSyntax syntax)
+        {
+            // Templates have no presence until a screen fills them.
+        }
+
+        /// <inheritdoc/>
+        public override void VisitDialogTemplate(DialogTemplateSyntax syntax)
+        {
+            // Templates have no presence until a screen fills them.
+        }
+
+        /// <inheritdoc/>
+        public override void VisitScreenTemplateReference(ScreenTemplateReferenceSyntax syntax)
+        {
+            var previous = _scope;
+            if (Dialog(syntax.Name, _scope) is { } dialog)
+            {
+                _scope = _dialogs.First(entry => ReferenceEquals(entry.Template, dialog)).Declaration.Scope;
+                base.VisitDialogTemplate(dialog);
+            }
+            else if (ReferenceResolver.Resolve(syntax.Name, _scope, [.. _templates.Select(entry => entry.Declaration)]).Resolved is { } resolved)
+            {
+                _scope = resolved.Scope;
+                base.VisitScreenTemplate(_templates.First(entry => entry.Declaration == resolved).Template);
+            }
+            _scope = previous;
+            base.VisitScreenTemplateReference(syntax);
+        }
 
         /// <inheritdoc/>
         public override void VisitModule(ModuleSyntax syntax)
@@ -166,6 +200,21 @@ static class NavigationCompleteness
                 if (syntax is OpenDialogActionSyntax) OpenDialog(target, scope);
             }
             base.VisitInteractionAction(syntax);
+        }
+
+        internal HashSet<ScreenSyntax> Reached()
+        {
+            var reached = new HashSet<ScreenSyntax>(Roots, ReferenceEqualityComparer.Instance);
+            var pending = new Queue<ScreenSyntax>(Roots);
+            while (pending.TryDequeue(out var source))
+            {
+                foreach (var target in Edges.GetValueOrDefault(source) ?? [])
+                {
+                    if (reached.Add(target)) pending.Enqueue(target);
+                }
+            }
+
+            return reached;
         }
 
         void Navigate(string target, DeclarationScope scope)
