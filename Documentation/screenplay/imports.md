@@ -107,6 +107,7 @@ or explicit file-import moves. A glob repair pins an already placed file with an
 explicit import immediately before the glob; the glob remains, so new files are
 still discovered. If one pin would introduce a finding, the proposal can pin a
 safe prefix instead. Names containing glob metacharacters have no pin repair.
+A multi-pin proposal is one typed replacement of the import's parent container that keeps every existing node and comment and only inserts the pins before the glob.
 
 The proposal first tries the producer before the consumer, then the consumer
 after the producer. It must remove the selected finding without introducing

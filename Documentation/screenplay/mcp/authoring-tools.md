@@ -270,7 +270,8 @@ modules/features/slices/import order and approved explicit import pins; admissio
 diagnostics must retain the same code/severity multiset. One-sided model availability
 and new errors/warnings are refused. Only already placed files at the same placement
 may be pinned, and the glob remains. A prefix can require several pins; no other
-nodes may be added. Provisional document identities that would change the catalog
+nodes may be added. A multi-pin proposal is one typed replacement of the import's parent container that keeps every existing node and comment and only inserts the pins before the glob.
+Provisional document identities that would change the catalog
 prevent a repair. Rediscover after each applied move or pin instead of combining
 recipes from one snapshot. `canFixAll` is true, but each proposal is still verified.
 The MCP pinned-evidence path remains unsupported for `PLAY0516` (`UnsupportedRepair`);

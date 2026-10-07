@@ -76,6 +76,7 @@ internal static class WorkspaceTimelineRepairs
     static string? ReferencedEvent(SyntaxNode node) => node switch
     {
         EventSpecSyntax reference => reference.Event,
+        JoinEventSyntax reference => reference.Event,
         ProjectionEntersOnSyntax reference => reference.Event,
         NamedTriggerSourceSyntax reference => reference.Name,
         RemoveWithSyntax reference => reference.Event,

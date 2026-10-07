@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
@@ -15,6 +16,8 @@ namespace Cratis.Screenplay.Workspaces;
 /// </summary>
 internal static class WorkspaceTimelineContentProof
 {
+    static readonly JsonDocumentOptions _documentOptions = new() { MaxDepth = 256 };
+    static readonly JsonSerializerOptions _jsonOptions = new() { MaxDepth = 256 };
     static readonly Dictionary<Type, SyntaxMember[]> _children = SyntaxKinds.All.ToDictionary(
         kind => kind.Type,
         kind => kind.Members.Where(member => typeof(SyntaxNode).IsAssignableFrom(member.Type) ||
@@ -44,8 +47,8 @@ internal static class WorkspaceTimelineContentProof
             return false;
         }
 
-        var left = JsonNode.Parse(SyntaxJson.Serialize(original.Application).GetRawText())!.AsObject();
-        var right = JsonNode.Parse(SyntaxJson.Serialize(candidate.Application).GetRawText())!.AsObject();
+        var left = JsonNode.Parse(SyntaxJson.Serialize(original.Application).GetRawText(), documentOptions: _documentOptions)!.AsObject();
+        var right = JsonNode.Parse(SyntaxJson.Serialize(candidate.Application).GetRawText(), documentOptions: _documentOptions)!.AsObject();
         var remaining = pins.ToList();
         Normalize(original.Application, left, [], []);
         Normalize(candidate.Application, right, [], remaining);
@@ -106,7 +109,7 @@ internal static class WorkspaceTimelineContentProof
         {
             foreach (var pin in pins.Where(pin => pin.Placement.Scope.SequenceEqual(scope)).ToArray())
             {
-                var expected = JsonNode.Parse(SyntaxJson.Serialize(pin.Import).GetRawText());
+                var expected = JsonNode.Parse(SyntaxJson.Serialize(pin.Import).GetRawText(), documentOptions: _documentOptions);
                 var position = Enumerable.Range(0, imports.Count).FirstOrDefault(position => JsonNode.DeepEquals(imports[position], expected), -1);
                 if (position < 0) continue;
                 imports.RemoveAt(position);
@@ -119,7 +122,7 @@ internal static class WorkspaceTimelineContentProof
             // Only the timeline's named sibling collections and imports may permute. In particular,
             // events, commands, projection blocks, specifications and every scalar array retain order.
             if (!container || member is not ("modules" or "features" or "slices" or "fileImports") || value is not JsonArray children) continue;
-            var ordered = children.OrderBy(element => element?.ToJsonString(), StringComparer.Ordinal).Select(element => element?.DeepClone()).ToArray();
+            var ordered = children.OrderBy(element => element?.ToJsonString(_jsonOptions), StringComparer.Ordinal).Select(element => element?.DeepClone()).ToArray();
             children.Clear();
             foreach (var element in ordered) children.Add(element);
         }
