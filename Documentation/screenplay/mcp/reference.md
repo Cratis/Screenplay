@@ -182,7 +182,7 @@ is canonicalized.
 | `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent, `eventNeverPersisted` (boolean, default false) |
 | `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
 | `expand-layout` | Expected revisions | layout, validation, formatting, referencePolicy, includeContent |
-| `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`implementation-requirements` for proposed attachments), documentId, offset, limit |
+| `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`semantic-diff` for structural impact; `implementation-requirements` for attachments), documentId, offset, limit, expectedSourceRevision |
 | `export-workspace` | expectedRevision | proposalId, offset, limit |
 | `workspace-state` | None | view, proposalId, expectedStateRevision, offset, limit |
 | `discard-proposal` | proposalId | None |
@@ -441,6 +441,79 @@ duplication; other explicitly canonicalized edits may disclose dropped comments.
 Untouched bytes and BOM policy are retained. Printer omissions reject the proposal.
 
 See [the AST API](../ast-authoring.md) and [authoring procedure](authoring-tools.md).
+
+## Semantic proposal difference
+
+`read-proposal` with `view: "semantic-diff"` compares the retained disk baseline
+with the proposal, without applying it. It works without MCP Apps and does not
+execute specifications. Disk changes since proposal creation refuse this view;
+create and review a fresh proposal rather than combining different baselines.
+
+The `result` contains:
+
+| Field | Meaning |
+| --- | --- |
+| `sourceRevision` | The proposal workspace revision, including its identity catalog. |
+| `beforeRevision` | The retained baseline workspace revision. |
+| `comparisonLevel` | `authoring-structure`: normalized typed members, not source lines or an execution/equivalence verdict. |
+| `executableBeforeAvailable`, `executableAfterAvailable` | Whether each snapshot binds executably; structural review does not require binding. |
+| `complete` | Whether every comparison section is complete. |
+| `hasSemanticChange` | `true` for a known structural change, `false` for a complete comparison with only moves or no changes, or `null` when incomplete data cannot establish no change. |
+| `sections` | Each section's `complete` flag and `unavailable` reasons. An empty incomplete section never means no change. |
+| `limits` | Comparison exclusions and fallback rules. |
+| `page` | `revision`, `totalCount`, `offset`, `items`, `nextOffset`. |
+
+Items are ordered by section, semantic ID, kind, addresses, change kind, member,
+dependency snapshot/address/role and generation. They share `section`, `changeKind`,
+`semanticId`, `kind`, `beforeAddress` and `afterAddress`. Other fields are nullable
+and apply only to the corresponding record:
+
+- **`declarations`**: `added`, `removed`, `renamed`, or `moved`. Catalog semantic
+  IDs match declarations across snapshots. Preserved IDs with changed names
+  report renames; changed owner addresses or documents report moves.
+  Document moves include `beforeDocuments` and `afterDocuments`, arrays of
+  `{ documentId, path }` locations. Layout moves
+  alone are not semantic changes.
+- **`events`**: `property-added`, `property-removed`, `property-type-changed`,
+  or `generation-removed`. `member`, `beforeType` and `afterType` describe the
+  field (types are canonical typed JSON strings). `contractBreaking` is a
+  conservative stored-contract risk flag, including additions.
+  `generationCovered` is true only when an explicitly declared newer generation
+  retains the previous generation's property names and types unchanged.
+  `beforeGeneration` and `afterGeneration` identify the compared generations.
+  Existing generations are also compared, so changing historical payloads cannot
+  be hidden by adding a newer generation. Coverage is not runtime migration proof.
+- **`members`**: changed typed members of commands, read models, projections,
+  queries and other identity-bearing declarations. `member`, `beforeHash` and
+  `afterHash` locate a structural difference without copying a whole subtree.
+  Constraints have no catalog semantic kind; their fallback uses exact authoring
+  kind/address keys with `semanticId: null`, not an invented identity.
+- **`specifications`**: additions, removals and `expected-outcome-changed` records
+  for changed authored `then*` members, with member names and hashes. These are
+  static expected assertions, not inferred or executed outcomes. Other fixture
+  changes appear under `members`.
+- **`dependants`**: `direct` indexed references in the `before` or `after`
+  `snapshot`, with `dependantAddress`, `role` and `resolution`. Properties use
+  their owner's references; containers aggregate direct references to contained
+  declarations. Unresolved or ambiguous indexes mark this section incomplete.
+  These are not transitive dependencies or runtime impact guarantees.
+- **`identities`**: `assigned`, `retired` and `migrated` catalog identities,
+  including `eventContractId` for event-contract identities. Migrations are
+  inferred from preserved IDs and their changed addresses, not name similarity.
+
+Use item `offset` (default `0`) and `limit` (default `50`, range `1`–`200`).
+Pages also have a 192 KiB serialized-item budget; always continue from
+`nextOffset`, which may advance by less than `limit`. A single oversized record
+refuses with `LimitExceeded`, without truncation. Echo `sourceRevision` as
+`expectedSourceRevision` on every continuation; missing pins or stale pins refuse.
+
+When binding fails, the view still compares available authored members and
+preserved catalog IDs. Unassigned declarations use exact kind/address fallback
+keys and explicitly incomplete identity/rename sections. Missing source owners,
+implicit shapes or ambiguous declarations remain incomplete rather than claiming
+no change. The view excludes behavior inside code attachments (inspect
+`implementation-requirements` hashes separately), runtime and transitive impact,
+and revision-to-revision comparisons.
 
 ## Review, durable state and recovery
 
