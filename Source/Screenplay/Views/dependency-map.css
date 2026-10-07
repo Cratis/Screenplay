@@ -1,0 +1,103 @@
+/* Copyright (c) Cratis. All rights reserved. */
+/* Licensed under the MIT license. See LICENSE file in the project root for full license information. */
+
+.screenplay-dependency-map {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    color: var(--text-color, #eee);
+    background: var(--surface-ground, #181818);
+}
+
+.screenplay-dependency-map__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+}
+
+.screenplay-dependency-map__controls fieldset {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    border: 1px solid var(--surface-border, #555);
+}
+
+.screenplay-dependency-map__controls label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.screenplay-dependency-map select,
+.screenplay-dependency-map button {
+    font: inherit;
+    color: inherit;
+    background: var(--surface-card, #292929);
+    border: 1px solid var(--surface-border, #555);
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.screenplay-dependency-map button { cursor: pointer; }
+
+.screenplay-dependency-map__drawing {
+    flex: 1;
+    min-height: 120px;
+    overflow: auto;
+}
+
+.screenplay-dependency-map svg { display: block; }
+.screenplay-dependency-map svg text { fill: var(--text-color, #eee); font-size: 14px; }
+.screenplay-dependency-map__column { fill: var(--surface-section, #202020); stroke: var(--surface-border, #555); }
+.screenplay-dependency-map__node { cursor: pointer; }
+.screenplay-dependency-map__node rect { fill: var(--surface-card, #292929); stroke: var(--text-color-secondary, #aaa); stroke-width: 1.5; }
+.screenplay-dependency-map__node .screenplay-dependency-map__node-kind { font-size: 11px; fill: var(--text-color-secondary, #aaa); }
+.screenplay-dependency-map__edge { cursor: pointer; color: var(--text-color-secondary, #aaa); }
+.screenplay-dependency-map__edge path { stroke: currentColor; stroke-width: 2; }
+.screenplay-dependency-map__edge .screenplay-dependency-map__edge-hit { stroke: transparent; stroke-width: 18; fill: none; }
+.screenplay-dependency-map__edge text { font-size: 11px; paint-order: stroke; stroke: var(--surface-ground, #181818); stroke-width: 4px; stroke-linejoin: round; }
+.screenplay-dependency-map__edge.is-selected { color: var(--primary-color, #8ab4f8); }
+.screenplay-dependency-map__edge.is-selected path:not(.screenplay-dependency-map__edge-hit) { stroke-width: 5; }
+.screenplay-dependency-map__node.is-selected rect { stroke-width: 4; stroke: var(--primary-color, #8ab4f8); }
+.screenplay-dependency-map__node:focus rect { stroke-width: 4; stroke-dasharray: 2 2; }
+.screenplay-dependency-map__edge:focus path:not(.screenplay-dependency-map__edge-hit) { stroke-width: 5; }
+.screenplay-dependency-map :focus-visible { outline: 2px solid var(--primary-color, #8ab4f8); outline-offset: 3px; }
+
+.screenplay-dependency-map__details {
+    border-top: 1px solid var(--surface-border, #555);
+    padding: 0.5rem 1rem;
+    max-height: 30%;
+    overflow: auto;
+    font-size: 0.875rem;
+}
+
+.screenplay-dependency-map__details h2 { font-size: 1rem; }
+.screenplay-dependency-map__details li { margin: 0.375rem 0; overflow-wrap: anywhere; }
+
+/* Keep every edge available to assistive technology, including kinds hidden on the diagram. */
+.screenplay-dependency-map__accessible {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+.screenplay-dependency-map-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    background: var(--surface-section, #202020);
+}
+
+.screenplay-dependency-map-host { display: flex; flex-direction: column; height: 100%; }
+.screenplay-dependency-map-host > .screenplay-dependency-map { flex: 1; }

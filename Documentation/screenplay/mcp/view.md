@@ -64,6 +64,21 @@ toolbar draws it again at once, and reports why when it cannot.
 Hosts that do not let a view call the server cannot follow the files. Ask for the
 board again there; every call draws the model as it is at that moment.
 
+## Dependency map
+
+Choose **Map** beside **Board** to inspect module and feature dependencies.
+The map follows **Current** or **Proposed**, including what-if sketches. Modules
+are columns in suggested producer-first order, features sit inside them, and
+imported bounded contexts appear on the right. Arrows run from consumer to producer.
+
+Choose edges between **Modules** or **Features**. The initial filters show
+**uses facts from**, **reacts to**, and **decides from**; enable the other kinds
+when needed. Labels count references. Select an edge to see all the slice pairs
+behind it, with the kind, reference name and source location. Nodes and edges
+accept keyboard focus: Enter selects, arrow keys move focus, and Escape clears.
+Choose **Board** to return to the timeline. The map does not change the model or
+highlight the board, and inferred dependencies do not prove executable readiness.
+
 ## See what a proposal would change
 
 Ask for a change, and ask to see it before it is applied:

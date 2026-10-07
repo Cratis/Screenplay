@@ -66,6 +66,20 @@ Each slice that declares [screens](screens.md) gets a prototype in the board's *
 
 Data a table or summary presents is not drawn twice. A screen implemented in a file is drawn as one content area. The User row appears only when the model has a screen.
 
+## Dependency map
+
+Choose **Map** in the board toolbar to see how modules and features depend on each
+other. The map covers the whole application, even when the board shows only the
+open file. Modules are columns with features inside; imported bounded contexts
+appear on the right. Producers come first, so arrows point from consumer to producer.
+
+Choose **Modules** or **Features** for the edges. By default, the map shows
+**uses facts from**, **reacts to**, and **decides from**; check the other kinds to
+include them. Edge labels count references. Select an edge to list every contributing
+slice pair, its reference and source location. Click a slice pair to open its source.
+Use Tab or arrow keys to focus nodes and edges, Enter to select, and Escape to clear.
+Choose **Board** to return to the timeline; map selections do not highlight the board.
+
 ## View options
 
 The **View** button in the upper right of the board offers the view options Cratis Studio has:

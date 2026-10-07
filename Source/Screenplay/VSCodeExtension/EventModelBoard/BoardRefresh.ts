@@ -52,7 +52,7 @@ export class BoardRefresh implements vscode.Disposable {
             return;
         }
         this.#watch(compilation.root);
-        void this.webview.postMessage(boardFor(compilation.result, compilation.name));
+        void this.webview.postMessage(boardFor(compilation.result, compilation.name, compilation.wholeApplication));
     }
 
     #concerns(uri: vscode.Uri): boolean {

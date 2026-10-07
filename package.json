@@ -4,6 +4,7 @@
     "workspaces": [
         "Source/Screenplay/Compiler",
         "Source/Screenplay/EventModels",
+        "Source/Screenplay/Views",
         "Source/Screenplay/Monaco/screenplay-language",
         "Source/Screenplay/Monaco/screenplay-editor",
         "Source/Screenplay/McpApp",

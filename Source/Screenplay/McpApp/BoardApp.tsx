@@ -3,6 +3,8 @@
 
 import { useMemo, useState } from 'react';
 import { EventModelBoard, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
+import { DependencyMapView, DependencyView } from '@cratis/screenplay-views';
+import '@cratis/screenplay-views/dependency-map.css';
 import { boardChrome } from './boardChrome';
 import { BoardErrorBoundary } from './BoardErrorBoundary';
 import { boardHeight } from './boardHeight';
@@ -16,6 +18,7 @@ import { useHost } from './useHost';
 export const BoardApp = () => {
     const host = useHost();
     const [shown, setShown] = useState(ShownModel.Proposed);
+    const [view, setView] = useState(DependencyView.Board);
     const [attempt, setAttempt] = useState(0);
     const boards = useMemo(() => {
         if (host.model === undefined || host.model instanceof Error) {
@@ -52,6 +55,8 @@ export const BoardApp = () => {
         <BoardTools
             shown={compiled?.proposed ? shown : undefined}
             onShow={setShown}
+            view={view}
+            onView={setView}
             fullscreen={host.container?.displayMode === 'fullscreen'}
             onRefresh={host.refresh}
             onToggleFullscreen={host.toggleFullscreen} />
@@ -60,7 +65,12 @@ export const BoardApp = () => {
         <div className='screenplay-mcp-board' style={style}>
             <MenuDropdownOpenProvider>
                 <BoardErrorBoundary resetWhenChanged={board} onReset={() => setAttempt(attempt + 1)}>
-                    <EventModelBoard key={attempt} document={model} readOnly showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />
+                    {view === DependencyView.Map ? (
+                        <div className='screenplay-dependency-map-host'>
+                            <div className='screenplay-dependency-map-toolbar' role='toolbar' aria-label='Model and view'>{tools}</div>
+                            <DependencyMapView key={shown} map={board.dependencies} />
+                        </div>
+                    ) : <EventModelBoard key={attempt} document={model} readOnly showLogo showViewOptions toolbar={tools} canvas={{ chrome: boardChrome }} />}
                 </BoardErrorBoundary>
             </MenuDropdownOpenProvider>
             {board.errors > 0 && (
