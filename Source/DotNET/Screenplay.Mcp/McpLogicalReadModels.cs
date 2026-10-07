@@ -13,7 +13,7 @@ static class McpLogicalReadModels
         var declared = declarations.ToArray();
         var explicitAddresses = declared.Where(declaration => declaration.Kind == "ReadModel").Select(declaration => declaration.Address).ToHashSet(StringComparer.Ordinal);
         var outputs = declared.SelectMany(declaration => Outputs(declaration.Syntax)
-            .Select(output => new McpDeclaration("ReadModel", output.Name, declaration.Scope, output.Syntax.Location, null, null, output.Syntax) { IsImplicit = true }));
+            .Select(output => new McpDeclaration("ReadModel", output.Name, declaration.Scope, output.Syntax.Location, null, null, output.Syntax) { IsImplicit = true, Hierarchy = declaration.Hierarchy }));
 
         // A shape and its builder name one view, not competing declarations. Keep the builder
         // declarations themselves intact: compilation diagnostics still report multiple builders.
