@@ -1067,7 +1067,19 @@ DataDecl       = "data", RequiredTypeRef, "via", "query", QualifiedName,
                  [ "by", Ident ], NL ;
 
 ActionDecl     = "action", QualifiedName, NL,
-                 [ INDENT, { ActionOption }, DEDENT ] ;
+                 [ INDENT, { ActionOption }, DEDENT ]
+               | "action", LocalizableString, NL,
+                 INDENT, { ActionAlternative | ActionOtherwise | NavigateDecl }, DEDENT ;
+
+ActionAlternative = "when", Condition, "execute", QualifiedName, NL,
+                    [ INDENT, { InteractionArgument }, DEDENT ] ;
+ActionOtherwise   = "otherwise", "hidden", NL
+                  | "otherwise", "execute", QualifiedName, NL,
+                    [ INDENT, { InteractionArgument }, DEDENT ] ;
+(* A guarded action requires at least one alternative; otherwise is optional,
+   occurs once after all alternatives, and hidden has no arguments. At most one
+   navigate is allowed. Conditions compare item.<field>[.<field>...] to literals;
+   ordering requires numbers, contains / starts with require strings. *)
 
 ActionOption   = NavigateDecl
                | "label", LocalizableString, NL ;
