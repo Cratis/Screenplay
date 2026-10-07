@@ -13,10 +13,7 @@ export function validateIdentifierCompliance(application: ApplicationSyntax, con
     const personal = new Set(application.concepts.filter(concept => concept.attributes.some(attribute => attribute.name === 'pii')).map(concept => concept.name));
     const types = uniqueByName(application.types);
     const resolver = new AuthoringProductionResolver(application);
-    const knownEvents = new Set([
-        ...resolver.declarations.filter(declaration => declaration.node.kind === 'EventSyntax').map(declaration => declaration.name),
-        ...application.imports.map(imported => imported.qualifiedName.split('.').at(-1)!),
-    ]);
+    const imports = new Set(application.imports.map(imported => imported.qualifiedName.split('.').at(-1)!));
     const declaredTriggers = new Map<string, (readonly PropertySyntax[])[]>();
     for (const declared of application.declaredTriggers ?? []) {
         const shapes = declaredTriggers.get(declared.name) ?? [];
@@ -50,7 +47,7 @@ export function validateIdentifierCompliance(application: ApplicationSyntax, con
             if (trigger.source.kind !== 'NamedTriggerSourceSyntax') continue;
             const resolution = resolver.resolve(trigger.source.name, slice);
             const event = resolution.declaration?.node;
-            const shapes = knownEvents.has(trigger.source.name)
+            const shapes = event?.kind === 'EventSyntax' || imports.has(trigger.source.name)
                 ? [event?.kind === 'EventSyntax' ? event.properties : []]
                 : declaredTriggers.get(trigger.source.name) ?? [];
             for (const production of trigger.produces.filter(production => resolver.isEventProduction(production, slice))) {

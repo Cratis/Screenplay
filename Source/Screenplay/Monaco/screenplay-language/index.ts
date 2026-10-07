@@ -11,6 +11,7 @@ import { createTokensProvider } from './tokens';
 import { CompletionOptions, createCompletionProvider } from './completions';
 import { createInlineCompletionProvider } from './inline-completions';
 import { responseTokens, responseTokenTypes } from './response-tokens';
+import { reactionReferenceAt } from './reaction-authoring';
 import { createHoverProvider } from './hover';
 import { createInlayHintsProvider } from './inlay-hints';
 import { eventSourceIdentifier, eventSourceReferenceAt } from './event-source-authoring';
@@ -65,11 +66,12 @@ export function register(monaco: Monaco, options: LanguageServiceOptions = {}): 
             if (!word) return [];
             const symbols = options.application?.(model);
             const reference = eventSourceReferenceAt(model.getLinesContent(), position.lineNumber - 1, word.startColumn, word.endColumn, symbols);
-            const target = reference?.target;
+            const reaction = reactionReferenceAt(model.getLinesContent(), position.lineNumber - 1, word.startColumn, word.endColumn, symbols);
+            const target = reaction ? reaction.target : reference?.target;
             if (!target) return [];
             const current = symbols?.authoringPath ?? 'current.play';
             const source = target.location.path === current ? model.getValue() : symbols?.authoringDocuments?.find(document => document.path === target.location.path)?.source;
-            const location = source && eventSourceIdentifier(target.location, target.name, source);
+            const location = reaction ? reaction.target?.location : source && eventSourceIdentifier(target.location, target.name, source);
             if (!location) return [];
             // Foreign navigation requires an actual host model, not a guessed path or merged line.
             const targetUri = target.location.path && model.uri.path.endsWith(`/${current}`)
@@ -100,6 +102,8 @@ export function register(monaco: Monaco, options: LanguageServiceOptions = {}): 
     monaco.editor.defineTheme(screenplayLightThemeName, screenplayLight);
     attachDiagnostics(monaco, options);
 }
+
+export { reactionReferenceAt } from './reaction-authoring';
 
 export {
     causedByProperties,

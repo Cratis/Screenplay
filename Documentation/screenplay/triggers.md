@@ -90,7 +90,9 @@ store, a clock, an integration or a custom runtime provider — see
 If an event and a declared trigger share a name, the event wins. Both reaction value validation and
 executable binding use the event's shape, including values used by `produces ... for <value>`; the shadowed
 trigger's shape does not contribute. An imported event also wins, but its unknown shape cannot be checked
-against the declared trigger's values.
+against the declared trigger's values. Rename and reference queries follow that same precedence: renaming
+an event updates its reaction's `when` reference, while editing a shadowed trigger's name leaves it alone.
+Editor hover and go-to-definition select the event too; an external import has no local definition to open.
 
 A registration wins over a built-in of the same name, so a host that raises a richer `Startup` can say what
 it carries rather than being overruled by the empty one the language ships.

@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { reactionReferenceAt } from './reaction-authoring';
 import { namedRuleContext } from './named-rule-context';
 import { eventSourceHover } from './event-source-authoring';
 import { operationHover } from './operation-authoring';
@@ -37,6 +38,8 @@ export function hoverContent(
         else if (line[index] === '`' && !inString) inTemplate = !inTemplate;
     }
     if (inString || inTemplate) return null;
+    const reaction = reactionReferenceAt(lines, lineIndex, startColumn, endColumn, application);
+    if (reaction) return reaction.content;
     const sourceHover = eventSourceHover(lines, lineIndex, startColumn, endColumn, application);
     if (sourceHover) return sourceHover;
     const operation = operationHover(lines, lineIndex, startColumn, endColumn, application);

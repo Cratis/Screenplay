@@ -20,6 +20,13 @@ describe('when validating personal trigger destinations', () => {
         expect(parse(source.join('\n')).diagnostics).toEqual([]);
     });
 
+    it('should still check a personal trigger destination when event resolution is ambiguous', () => {
+        const source = ['concept PatientId : Uuid @pii', 'trigger External', '  patient PatientId', ...reaction,
+            '    slice StateChange First', '      event External', '        patient Uuid',
+            '    slice StateChange Second', '      event External', '        patient Uuid'];
+        expect(parse(source.join('\n')).diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0515')).toHaveLength(1);
+    });
+
     it('should prefer the event shape across documents', () => {
         const declarations = 'concept PatientId : Uuid @pii\ntrigger External\n  patient PatientId';
         const source = [...reaction];

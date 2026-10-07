@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import * as vscode from 'vscode';
-import { eventSourceIdentifier, eventSourceReferenceAt, analyzeOperations, fenceMap, languageId, operationReferenceAt, scanDocument, withoutComment } from '@cratis/screenplay-language';
+import { reactionReferenceAt, eventSourceIdentifier, eventSourceReferenceAt, analyzeOperations, fenceMap, languageId, operationReferenceAt, scanDocument, withoutComment } from '@cratis/screenplay-language';
 import { ApplicationIndex } from './ApplicationIndex';
 
 export function registerDefinitions(context: vscode.ExtensionContext, index: ApplicationIndex): void {
@@ -15,13 +15,14 @@ export function registerDefinitions(context: vscode.ExtensionContext, index: App
             const lines = document.getText().split(/\r?\n/);
             if (fenceMap(lines)[position.line] || range.end.character > withoutComment(lines[position.line]).length) return [];
             const symbols = file?.application.symbolsExcept(file.path);
+            const reaction = reactionReferenceAt(lines, position.line, range.start.character + 1, range.end.character + 1, symbols);
             const sourceReference = eventSourceReferenceAt(lines, position.line, range.start.character + 1, range.end.character + 1, symbols);
-            if (sourceReference) {
-                const target = sourceReference.target;
+            if (reaction || sourceReference) {
+                const target = reaction ? reaction.target : sourceReference?.target;
                 if (!target) return [];
                 const path = target.location.path;
                 const source = path === (file?.path ?? 'current.play') ? document.getText() : symbols?.authoringDocuments?.find(document => document.path === path)?.source;
-                const location = source && eventSourceIdentifier(target.location, target.name, source);
+                const location = reaction ? reaction.target?.location : source && eventSourceIdentifier(target.location, target.name, source);
                 const folder = vscode.workspace.getWorkspaceFolder(document.uri);
                 const uri = path === (file?.path ?? 'current.play') ? document.uri : folder && path ? vscode.Uri.joinPath(folder.uri, path) : undefined;
                 return uri && location ? [new vscode.Location(uri, new vscode.Range(location.line - 1, location.column - 1, location.line - 1, location.column - 1 + target.name.length))] : [];
