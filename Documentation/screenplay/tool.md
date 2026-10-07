@@ -67,7 +67,7 @@ screenplay path/to/invoicing.play --warnaserror
 | Option | Effect |
 |---|---|
 | `--scope <Module>[.<Feature>[.<Slice>]]` | Report the named scope and declarations that directly reference it |
-| `--check <name>[,<name>]|all` | Select [completeness checks](completeness.md); repeat to combine selections. Unknown names exit `2` |
+| `--check <name>[,<name>]\|all` | Select [completeness checks](completeness.md); repeat to combine selections. Unknown names exit `2` |
 | `--warnaserror` | Warnings in the reported set fail the run - exit code `1` even with zero errors |
 | `--no-color` | Never colorize output |
 

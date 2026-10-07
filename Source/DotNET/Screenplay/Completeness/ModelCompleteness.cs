@@ -36,6 +36,10 @@ public static class ModelCompleteness
         }
 
         var declarations = new ConsistencyDeclarations(application, [.. ScreenplayValidator.ScopedSlices(application)]);
-        return checks.Selected.Contains(CompletenessCheck.DataBindings) ? [.. DataBindingCompleteness.Check(declarations)] : [];
+        var findings = ImmutableArray.CreateBuilder<Diagnostic>();
+        if (checks.Selected.Contains(CompletenessCheck.DataBindings)) findings.AddRange(DataBindingCompleteness.Check(declarations));
+        if (checks.Selected.Contains(CompletenessCheck.InputSurfaces)) findings.AddRange(InputSurfaceCompleteness.Check(application, declarations));
+
+        return findings.ToImmutable();
     }
 }

@@ -2324,4 +2324,14 @@ public static class DiagnosticCodes
     /// A screen data binding disagrees with the resolved query return shape.
     /// </summary>
     public const string ScreenDataQueryMismatch = "PLAY0531";
+
+    /// <summary>
+    /// A screen action has no command-bound input surface.
+    /// </summary>
+    public const string ActionWithoutInputSurface = "PLAY0532";
+
+    /// <summary>
+    /// A StateChange command has no UI issuer and is not reaction-invoked.
+    /// </summary>
+    public const string CommandWithoutInputSurface = "PLAY0533";
 }
