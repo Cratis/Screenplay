@@ -181,6 +181,55 @@
                       "label": "Continue",
                       "navigate": null,
                       "otherwise": null
+                    },
+                    {
+                      "kind": "ScreenGuardedActionSyntax",
+                      "alternatives": [
+                        {
+                          "kind": "ScreenActionAlternativeSyntax",
+                          "arguments": [
+                            {
+                              "kind": "InteractionArgumentSyntax",
+                              "binding": "﻿item.id",
+                              "name": "id"
+                            },
+                            {
+                              "kind": "InteractionArgumentSyntax",
+                              "binding": "﻿item.id",
+                              "name": "next"
+                            }
+                          ],
+                          "command": "C",
+                          "condition": {
+                            "kind": "ComparisonConditionSyntax",
+                            "left": "item.ready",
+                            "operator": "Equal",
+                            "right": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": true
+                            }
+                          }
+                        }
+                      ],
+                      "label": "Trim bindings",
+                      "navigate": null,
+                      "otherwise": {
+                        "kind": "ScreenActionOtherwiseSyntax",
+                        "arguments": [
+                          {
+                            "kind": "InteractionArgumentSyntax",
+                            "binding": "﻿item.id",
+                            "name": "id"
+                          },
+                          {
+                            "kind": "InteractionArgumentSyntax",
+                            "binding": "﻿item.id",
+                            "name": "next"
+                          }
+                        ],
+                        "command": "D",
+                        "outcome": "Execute"
+                      }
                     }
                   ],
                   "name": "Details"

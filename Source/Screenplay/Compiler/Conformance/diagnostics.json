@@ -2,6 +2,11 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "Guarded action bindings preserve UFEFF and trim U0085",
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true execute C", "            with id from \ufeffitem.id", "            with next from \ufeffitem.id\u0085", "          otherwise execute D", "            with id from \ufeffitem.id", "            with next from \ufeffitem.id\u0085"],
+            "diagnostics": []
+        },
+        {
             "name": "Guarded conditions reject prototype named operators",
             "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready constructor true execute C", "          when item.ready toString true execute C"],
             "diagnostics": ["PLAY0161@6", "PLAY0161@7", "PLAY0342@5"]

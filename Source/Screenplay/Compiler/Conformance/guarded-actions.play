@@ -17,3 +17,10 @@ module M
           otherwise hidden
         action "Continue"
           when item.ready == true execute Continue
+        action "Trim bindings"
+          when item.ready == true execute C
+            with id from ﻿item.id
+            with next from ﻿item.id
+          otherwise execute D
+            with id from ﻿item.id
+            with next from ﻿item.id

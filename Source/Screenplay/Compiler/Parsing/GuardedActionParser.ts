@@ -15,6 +15,7 @@ const alternative = pattern(`^when${dotNetWhitespace}+([^\\n]+)${dotNetWhitespac
 const otherwise = pattern(`^otherwise${dotNetWhitespace}+execute${dotNetWhitespace}+([A-Za-z_]\\w*(?:\\.\\w+)*)$`);
 const argument = pattern(`^with${dotNetWhitespace}+([A-Za-z_]\\w*)${dotNetWhitespace}+from${dotNetWhitespace}+([^\\n]+)$`);
 const itemPath = pattern('^item\\.[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*$');
+const bindingWhitespace = new RegExp(`^${dotNetWhitespace}+|${dotNetWhitespace}+$`, 'gu');
 
 type ParseNavigate = (context: ParserContext, text: string, line: SourceLine) => ScreenNavigateSyntax | undefined;
 
@@ -68,7 +69,7 @@ function parseArguments(context: ParserContext, line: SourceLine): InteractionAr
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const match = argument.exec(child.content);
-        if (match !== null) args.push({ kind: 'InteractionArgumentSyntax', name: match[1], binding: match[2].trim(), location: locationOf(child) });
+        if (match !== null) args.push({ kind: 'InteractionArgumentSyntax', name: match[1], binding: match[2].replace(bindingWhitespace, ''), location: locationOf(child) });
         else {
             context.error(DiagnosticCodes.InvalidInteractionArgument, `Invalid argument '${child.content}' - expected 'with <name> from <binding>'`, locationOf(child));
             context.skipBlock(child.indent);

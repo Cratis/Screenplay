@@ -70,6 +70,22 @@ describe.each(['\u2028', '\u2029'])('when parsing guarded lines containing %s', 
     });
 });
 
+describe('when trimming guarded action bindings', () => {
+    it.each([
+        ['\ufeffitem.id', '\ufeffitem.id'],
+        ['\ufeffitem.id\u0085', '\ufeffitem.id'],
+        ['\u0085item.id\u0085', 'item.id'],
+    ])('should trim only dotnet whitespace from %s', (binding, expected) => {
+        const result = a_parsed_document('module M', '  feature F', '    slice StateView S', '      screen Details',
+            '        action "Again"', '          when item.ready == true execute Retry', `            with id from ${binding}`,
+            '          otherwise execute Start', `            with id from ${binding}`);
+        result.diagnostics.should.deep.equal([]);
+        const action = result.value.modules[0].features[0].slices[0].screens[0].directives[0] as ScreenGuardedActionSyntax;
+        action.alternatives[0].arguments[0].binding.should.equal(expected);
+        action.otherwise!.arguments[0].binding.should.equal(expected);
+    });
+});
+
 describe('when parsing guarded directive separators', () => {
     it('should accept U0085 around execute and with from', () => {
         const result = a_parsed_document('module M', '  feature F', '    slice StateView S', '      screen Details',
