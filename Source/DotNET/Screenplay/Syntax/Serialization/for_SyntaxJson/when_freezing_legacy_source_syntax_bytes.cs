@@ -33,7 +33,7 @@ public class when_freezing_legacy_source_syntax_bytes
             var legacy = name switch
             {
                 "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleAdditions(parsed),
-                "library-sample" => WithoutLibraryNavigation(parsed),
+                "library-sample" => WithoutLibraryForms(parsed),
                 _ => parsed
             };
             var json = SyntaxJson.Serialize(legacy);
@@ -88,26 +88,13 @@ public class when_freezing_legacy_source_syntax_bytes
         })
     };
 
-    // Library's new action-to-input-screen navigation is protected by its current shared vector.
+    // Library's discovered command forms are protected by its current shared vector.
     // Keep its pre-completeness bytes frozen without rewriting the historical baseline.
-    static ApplicationSyntax WithoutLibraryNavigation(ApplicationSyntax application) => application with
+    static ApplicationSyntax WithoutLibraryForms(ApplicationSyntax application) => application with
     {
         Modules = application.Modules.Select(module => module with
         {
-            Features = module.Features.Select(feature => feature with
-            {
-                Slices = feature.Slices.Select(slice => slice with
-                {
-                    Screens = slice.Screens.Select(screen => screen with
-                    {
-                        Directives = screen.Directives.Select(directive => directive is ScreenActionSyntax action &&
-                            ((screen.Name == "BookCatalog" && (action.Command == "AddBook" || action.Command == "BorrowBook")) ||
-                                (screen.Name == "MyLoans" && action.Command == "ReturnBook")) && action.Navigate?.Screen == action.Command
-                            ? action with { Navigate = null }
-                            : directive)
-                    })
-                })
-            })
+            Forms = module.Forms?.Where(form => form.Name is not ("AddBookInput" or "BorrowBookInput" or "ReturnBookInput"))
         })
     };
 

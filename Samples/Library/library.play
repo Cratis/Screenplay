@@ -44,6 +44,21 @@ module Lending
     body
     actions
 
+  form AddBookInput for AddBook
+    field bookId
+    field isbn
+    field title
+    field author
+
+  form BorrowBookInput for BorrowBook
+    field bookId
+    field memberId
+    field dueDate
+
+  form ReturnBookInput for ReturnBook
+    field bookId
+    field returnedOn
+
   feature Catalog
     description "The books the library owns"
 
@@ -155,9 +170,7 @@ module Lending
           column author    label "Author"
           column available label "On the shelf"
         action AddBook
-          navigate to AddBook
         action BorrowBook
-          navigate to BorrowBook
 
       specification BorrowingTakesABookOffTheShelf
         given caller
@@ -441,7 +454,6 @@ module Lending
           column dueDate label "Due"
           column status  label "Status"
         action ReturnBook
-          navigate to ReturnBook
 
       specification SeeingAReturnedLoan
         given caller

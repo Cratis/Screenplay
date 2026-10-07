@@ -834,21 +834,13 @@
                       "kind": "ScreenActionSyntax",
                       "command": "AddBook",
                       "label": null,
-                      "navigate": {
-                        "kind": "ScreenNavigateSyntax",
-                        "by": null,
-                        "screen": "AddBook"
-                      }
+                      "navigate": null
                     },
                     {
                       "kind": "ScreenActionSyntax",
                       "command": "BorrowBook",
                       "label": null,
-                      "navigate": {
-                        "kind": "ScreenNavigateSyntax",
-                        "by": null,
-                        "screen": "BorrowBook"
-                      }
+                      "navigate": null
                     }
                   ],
                   "name": "BookCatalog"
@@ -2676,11 +2668,7 @@
                       "kind": "ScreenActionSyntax",
                       "command": "ReturnBook",
                       "label": null,
-                      "navigate": {
-                        "kind": "ScreenNavigateSyntax",
-                        "by": null,
-                        "screen": "ReturnBook"
-                      }
+                      "navigate": null
                     }
                   ],
                   "name": "MyLoans"

@@ -5,7 +5,7 @@ using Cratis.Screenplay.Diagnostics;
 
 namespace Cratis.Screenplay.Completeness.for_InputSurfaceCompleteness;
 
-public class when_an_action_navigates_to_the_command_slice : given.a_model
+public class when_only_a_title_screen_is_in_the_command_slice : given.a_model
 {
     void Establish() => Compile("""
         module M
@@ -15,12 +15,8 @@ public class when_an_action_navigates_to_the_command_slice : given.a_model
                 value String
               screen Input
                 title "Input"
-            slice StateView View
-              screen S
-                action C
-                  navigate to Input
         """);
     void Because() => Findings = ModelCompleteness.Check(Compilation, new([CompletenessCheck.InputSurfaces]));
 
-    [Fact] void should_not_treat_a_title_only_destination_as_input() => Findings.Select(finding => finding.Code).ShouldContainOnly(DiagnosticCodes.ActionWithoutInputSurface);
+    [Fact] void should_require_an_actual_command_issuer() => Findings.Select(finding => finding.Code).ShouldContainOnly(DiagnosticCodes.CommandWithoutInputSurface);
 }

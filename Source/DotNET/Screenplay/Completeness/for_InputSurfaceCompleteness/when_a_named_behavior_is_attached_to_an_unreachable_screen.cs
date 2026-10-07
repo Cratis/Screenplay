@@ -5,23 +5,26 @@ using Cratis.Screenplay.Diagnostics;
 
 namespace Cratis.Screenplay.Completeness.for_InputSurfaceCompleteness;
 
-public class when_navigating_to_another_screen_for_the_command : given.a_model
+public class when_a_named_behavior_is_attached_to_an_unreachable_screen : given.a_model
 {
     void Establish() => Compile("""
+        behavior Reusable
+          on click
+            execute M.F.Change.C
         module M
+          on load
+            navigate to Home
           feature F
             slice StateChange Change
               command C
                 value String
+              screen Lost
+                uses Reusable
             slice StateView View
-              screen S
-                action C
-                  navigate to Input
-              screen Input
-                action C
+              screen Home
+                title "Home"
         """);
     void Because() => Findings = ModelCompleteness.Check(Compilation, new([CompletenessCheck.InputSurfaces]));
 
-    [Fact] void should_report_both_actions_without_their_own_surfaces() => Findings.Select(finding => finding.Code).ShouldContainOnly(DiagnosticCodes.ActionWithoutInputSurface, DiagnosticCodes.ActionWithoutInputSurface);
-    [Fact] void should_not_use_post_action_navigation_as_input() => Findings.Select(finding => finding.Location.Line).ShouldContainOnly(8, 11);
+    [Fact] void should_not_count_the_disconnected_attachment_as_an_issuer() => Findings.Select(finding => finding.Code).ShouldContainOnly(DiagnosticCodes.CommandWithoutInputSurface);
 }
