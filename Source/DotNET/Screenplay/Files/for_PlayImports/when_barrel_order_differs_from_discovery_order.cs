@@ -16,8 +16,9 @@ public class when_barrel_order_differs_from_discovery_order : given.a_folder
         _documents.Add("Alpha/Alpha.play", "module Alpha\n");
     }
 
-    void Because() => Resolve([.. _documents.Keys.Order(StringComparer.Ordinal)]);
+    void Because() => Resolve("application.play");
 
+    [Fact] void should_keep_folder_merge_order_independent_of_imports() => PlayImports.Resolve(_documents.Keys.Order(StringComparer.Ordinal), new InMemoryPlayDocumentSource(_documents)).Documents.Select(document => document.Path).ShouldEqual(_documents.Keys.Order(StringComparer.Ordinal));
     [Fact] void should_resolve_without_diagnostics() => _diagnostics.ShouldBeEmpty();
-    [Fact] void should_follow_authored_import_order_despite_every_file_being_a_root() => _resolved.Select(document => document.Path).ShouldEqual(["application.play", "Zulu/Zulu.play", "Zulu/Zulu/Zulu.play", "Zulu/Zulu/Second.play", "Zulu/Zulu/First.play", "Zulu/Alpha/Alpha.play", "Alpha/Alpha.play"]);
+    [Fact] void should_follow_authored_import_order_from_the_single_root() => _resolved.Select(document => document.Path).ShouldEqual(["application.play", "Zulu/Zulu.play", "Zulu/Zulu/Zulu.play", "Zulu/Zulu/Second.play", "Zulu/Zulu/First.play", "Zulu/Alpha/Alpha.play", "Alpha/Alpha.play"]);
 }

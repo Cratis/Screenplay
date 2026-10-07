@@ -57,6 +57,7 @@ sealed class McpSnapshot : IPlayFiles
         // IPlayFiles returns paths relative to the requested folder, not the application root.
         // DiskPlayDocumentSource adds that folder back when it follows native file imports.
         return _documents.Where(document => document.Path.Value.StartsWith(prefix, StringComparison.Ordinal))
+            .OrderBy(document => document.Path.Value, StringComparer.Ordinal)
             .Select(document => new PlayFile(document.Path.Value, document.Path.Value[prefix.Length..]));
     }
 

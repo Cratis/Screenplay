@@ -28,7 +28,7 @@ export interface ResolvedImports {
 // neither lies inside the other are a conflict, and placements that keep deepening are an import cycle. A file's
 // placement depends on the placements of the files importing it, so it is recomputed from every importer's
 // current placement until nothing changes - the order files are found in never decides where one belongs. The
-// unimported roots keep the order they were given in; their imports follow in authored traversal order.
+// documents keep discovery order for multiple roots; a single root follows authored imports depth-first.
 export function resolveImports(roots: Iterable<string>, source: PlayDocumentSource, languages?: ReadonlySet<string>): ResolvedImports {
     const resolution = new Resolution(source, languages);
     for (const root of new Set([...roots].map(normalizePlayPath))) {
@@ -87,11 +87,12 @@ class Resolution {
     }
 
     #orderedPaths(): string[] {
-        // Folder discovery also includes imported documents as roots. Barrel order wins over path order.
-        const imported = new Set([...this.#imports.values()].flatMap(imports => imports.flatMap(imported => imported.targets)));
+        // Folder compilation keeps discovery order for merge precedence and event ownership.
+        // AuthoredOrder records presentation ranks independently, including explicit pins before globs.
+        if (this.#roots.size !== 1) return [...this.#found];
         const seen = new Set<string>();
         const ordered: string[] = [];
-        for (const root of [...this.#found.filter(path => !imported.has(path)), ...this.#found]) {
+        for (const root of this.#found) {
             const pending = [root];
             for (let path = pending.pop(); path !== undefined; path = pending.pop()) {
                 if (seen.has(path)) continue;

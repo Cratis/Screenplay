@@ -39,7 +39,7 @@ public static class PlayImports
     /// </summary>
     /// <param name="roots">The portable paths of the root documents, each a whole document.</param>
     /// <param name="source">The <see cref="IPlayDocumentSource"/> to find and read documents through.</param>
-    /// <returns>Every document in import traversal order, with unimported roots in the order given, and the diagnostics resolving them produced.</returns>
+    /// <returns>Every document in discovery order for multiple roots, or depth-first import order for one root, and the diagnostics resolving them produced.</returns>
     public static (IReadOnlyList<PlacedPlayDocument> Documents, IReadOnlyList<Diagnostic> Diagnostics) Resolve(
         IEnumerable<string> roots,
         IPlayDocumentSource source) => Resolve(roots, source, ScreenplayLanguageRegistry.Default);
@@ -68,7 +68,7 @@ public static class PlayImports
 
     sealed class Resolution(IPlayDocumentSource source, IScreenplayLanguageRegistry languages)
     {
-        // Discovery order breaks ties between unimported roots; authored imports determine traversal order.
+        // Multiple roots retain discovery order; a single root follows authored imports depth-first.
         readonly List<string> _found = [];
         readonly HashSet<string> _roots = new(StringComparer.Ordinal);
         readonly Dictionary<string, string> _sources = new(StringComparer.Ordinal);
@@ -120,11 +120,16 @@ public static class PlayImports
 
         IEnumerable<string> OrderedPaths()
         {
-            // A folder also discovers imported files as roots. Do not let their physical path order
-            // override the authored order of the barrel's imports. Unimported documents keep found order.
-            var imported = _imports.Values.SelectMany(imports => imports.SelectMany(import => import.Targets)).ToHashSet(StringComparer.Ordinal);
+            // Folder compilation keeps its discovery order for merge precedence and event ownership.
+            // AuthoredOrder records presentation ranks independently, including explicit pins before globs.
+            if (_roots.Count != 1)
+            {
+                foreach (var path in _found) yield return path;
+                yield break;
+            }
+
             var seen = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var root in _found.Where(path => !imported.Contains(path)).Concat(_found))
+            foreach (var root in _found)
             {
                 var pending = new Stack<string>();
                 pending.Push(root);
