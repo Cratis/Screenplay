@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using Cratis.Screenplay.Completeness;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Languages;
 using Cratis.Screenplay.Syntax;
@@ -12,6 +14,7 @@ namespace Cratis.Screenplay.Mcp;
 sealed class McpSnapshot : IPlayFiles
 {
     readonly McpAnalysisCompiler _compiler;
+    readonly Dictionary<string, ImmutableArray<Diagnostic>> _completeness = [];
     readonly Lazy<CompilationResult<ApplicationSyntax>> _compilation;
     readonly Lazy<McpSyntaxIndex> _index;
     readonly Lazy<IReadOnlyList<PlacedPlayDocument>> _placements;
@@ -94,6 +97,18 @@ sealed class McpSnapshot : IPlayFiles
         var sources = compilation.Sources.ToDictionary(source => source.File.RelativePath, source => source.Source, StringComparer.Ordinal);
 
         return new(sources, string.Empty, compiler.Languages, compiler, compilation.Result, isFile ? [Path.GetFileName(target)] : sources.Keys);
+    }
+
+    internal ImmutableArray<Diagnostic> Completeness(CompletenessChecks checks)
+    {
+        var key = string.Join(',', checks.Selected.Order());
+        if (!_completeness.TryGetValue(key, out var diagnostics))
+        {
+            diagnostics = ModelCompleteness.Check(Compilation, checks);
+            _completeness.Add(key, diagnostics);
+        }
+
+        return diagnostics;
     }
 
     McpSyntaxIndex CreateIndex()

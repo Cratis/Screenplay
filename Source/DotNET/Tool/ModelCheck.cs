@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Completeness;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Mcp;
 
@@ -12,6 +13,7 @@ static class ModelCheck
     {
         string? target = null;
         string? scope = null;
+        var checks = CompletenessChecks.None;
         for (var index = 0; index < args.Length; index++)
         {
             var argument = args[index];
@@ -24,6 +26,16 @@ static class ModelCheck
                 }
 
                 scope = args[++index];
+            }
+            else if (argument == "--check")
+            {
+                if (index + 1 == args.Length || !CompletenessChecks.TryParse(args[++index], out var selected))
+                {
+                    error.WriteLine("--check requires recognized completeness check names, diagnostic codes, or all.");
+                    return 2;
+                }
+
+                checks = new(checks.Selected.Union(selected.Selected));
             }
             else if (argument is not "--no-color" and not "--warnaserror")
             {
@@ -53,7 +65,7 @@ static class ModelCheck
 
         try
         {
-            return Check(target, isFile, scope, args.Contains("--warnaserror"), output, error, useColors && !args.Contains("--no-color"));
+            return Check(target, isFile, scope, checks, args.Contains("--warnaserror"), output, error, useColors && !args.Contains("--no-color"));
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
@@ -62,15 +74,17 @@ static class ModelCheck
         }
     }
 
-    static int Check(string target, bool isFile, string? scope, bool warnAsError, TextWriter output, TextWriter error, bool useColors)
+    static int Check(string target, bool isFile, string? scope, CompletenessChecks checks, bool warnAsError, TextWriter output, TextWriter error, bool useColors)
     {
         var snapshot = McpSnapshot.Compile(target, isFile);
         var sources = snapshot.Sources;
         var compilation = snapshot.Compilation;
-        var diagnostics = compilation.Diagnostics;
+        var additional = snapshot.Completeness(checks);
+        var wholeDiagnostics = compilation.Diagnostics.Concat(additional).ToArray();
+        IEnumerable<Diagnostic> diagnostics = wholeDiagnostics;
         if (scope is not null)
         {
-            var selection = ScopedDiagnostics.Select(snapshot, scope, out var scopeError);
+            var selection = ScopedDiagnostics.Select(snapshot, scope, additional, out var scopeError);
             if (selection is null)
             {
                 error.WriteLine(scopeError);
@@ -83,11 +97,17 @@ static class ModelCheck
             output.WriteLine($"Unresolved event consumers (cannot be attributed to a scope): {selection.UnresolvedEventConsumers.ReferenceCount} reference(s) in {(selection.UnresolvedEventConsumers.Scopes.Length == 0 ? "none" : string.Join(", ", selection.UnresolvedEventConsumers.Scopes.Select(consumerScope => consumerScope.Length == 0 ? "<application>" : consumerScope)))}");
             output.WriteLine($"Possibly affected: {selection.PossiblyAffectedReferenceCount} other unresolved reference(s) outside the reported declarations");
             output.WriteLine($"Dependency coverage: {selection.DependencyCoverage}");
-            var wholeErrors = compilation.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-            var wholeWarnings = compilation.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Warning);
-            var wholeSummary = $"Whole application: {wholeErrors} error(s), {wholeWarnings} warning(s) ({compilation.Diagnostics.Count() - diagnostics.Count()} outside the reported set)";
+            var wholeErrors = wholeDiagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+            var wholeWarnings = wholeDiagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Warning);
+            var wholeSummary = $"Whole application: {wholeErrors} error(s), {wholeWarnings} warning(s) ({wholeDiagnostics.Length - diagnostics.Count()} outside the reported set)";
             var wholeFailed = !compilation.Success || (warnAsError && wholeWarnings > 0);
             output.WriteLine(useColors && wholeFailed ? $"\e[31m{wholeSummary}\e[0m" : wholeSummary);
+        }
+
+        var errorCount = compilation.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        if (checks.Selected.Count > 0 && errorCount > 0)
+        {
+            output.WriteLine($"completeness checks skipped: the model has {errorCount} error(s)");
         }
 
         if (sources.Count == 0)

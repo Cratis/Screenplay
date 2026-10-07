@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.Json;
+using Cratis.Screenplay.Completeness;
 using Cratis.Screenplay.Diagnostics;
 
 namespace Cratis.Screenplay.Mcp;
@@ -83,14 +84,26 @@ static class McpModelQueries
 
     internal static object Diagnostics(McpSnapshot snapshot, int fileCount, JsonElement arguments)
     {
+        var checks = CompletenessChecks.None;
+        if (McpJson.OptionalString(arguments, "checks") is { } value && !CompletenessChecks.TryParse(value, out checks))
+        {
+            throw new McpFailure("Unknown completeness check. Expected comma-separated check names, diagnostic codes, or all.", -32602);
+        }
+
+        var additional = snapshot.Completeness(checks);
+        var all = snapshot.Compilation.Diagnostics.Concat(additional).ToArray();
+        var errorCount = snapshot.Compilation.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        var completenessStatus = checks.Selected.Count > 0 && errorCount > 0
+            ? $"completeness checks skipped: the model has {errorCount} error(s)" : null;
+        const string completenessCoverage = "structure only; a finding is a prompt to look";
         var scope = McpJson.OptionalString(arguments, "scope");
         ScopedDiagnosticResult? selection = null;
         if (scope is not null)
         {
-            selection = ScopedDiagnostics.Select(snapshot, scope, out var scopeError)
+            selection = ScopedDiagnostics.Select(snapshot, scope, additional, out var scopeError)
                 ?? throw new McpFailure(scopeError!, -32602);
         }
-        var diagnostics = selection?.Diagnostics.AsEnumerable() ?? snapshot.Compilation.Diagnostics;
+        var diagnostics = selection?.Diagnostics.AsEnumerable() ?? all;
         if (McpJson.OptionalString(arguments, "document") is { } document)
         {
             diagnostics = diagnostics.Where(diagnostic => diagnostic.Location.Path == document);
@@ -103,7 +116,9 @@ static class McpModelQueries
                 snapshot.Compilation.Success,
                 snapshot.SourceRevision,
                 fileCount,
-                summary = DiagnosticSummary(snapshot),
+                completenessStatus,
+                completenessCoverage,
+                summary = DiagnosticSummary(all),
                 page = McpPaging.Page(diagnostics, arguments, snapshot.SourceRevision)
             };
         }
@@ -121,6 +136,8 @@ static class McpModelQueries
             selection.UnresolvedEventConsumers,
             selection.PossiblyAffectedReferenceCount,
             selection.DependencyCoverage,
+            completenessStatus,
+            completenessCoverage,
             summary = DiagnosticSummary(selection.Diagnostics),
             page = McpPaging.Page(diagnostics, arguments, snapshot.SourceRevision)
         };
