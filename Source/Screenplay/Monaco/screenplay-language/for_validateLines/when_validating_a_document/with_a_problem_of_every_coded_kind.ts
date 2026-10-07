@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { describe, beforeEach, it } from 'vitest';
+import { parse } from '@cratis/screenplay-compiler';
 import { diagnosticCodes } from '../../diagnostic-codes';
 import { ValidationIssue, validateLines } from '../../validation';
 
@@ -88,6 +89,12 @@ describe('when validating a document with a problem of every coded kind', () => 
             ['eventsource Account', '  id "Account"'],
         ];
         issues.push(...sources.flatMap(lines => validateLines(lines)));
+        // Timeline findings come from the compiler, which reads the whole document's order.
+        const timelines = [
+            ['module M', '  feature F', '    slice StateView View', '      projection P', '        from E', '    slice StateChange Write', '      event E'],
+            ['module M', '  feature A', '    slice StateView ViewA', '      event EA', '      projection PA', '        from EB', '  feature B', '    slice StateView ViewB', '      event EB', '      projection PB', '        from EA'],
+        ];
+        issues.push(...timelines.flatMap(lines => validateLines(lines, { compilerDiagnostics: parse(lines.join('\n')).diagnostics })));
     });
 
     it('should give every issue it reports a code', () => {
