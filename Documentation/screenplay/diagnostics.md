@@ -134,7 +134,7 @@ remove duplicate route headers before export.
 | `PLAY0011` | Warning | A value of an enumeration is called `validate`, which the concept body reads as an empty validate block. |
 | `PLAY0012` | Error | A concept gives the reason for an attribute it does not carry. |
 | `PLAY0013` | Error | A concept gives the reason for one attribute more than once. |
-| `PLAY0515` | Error | A concept marked `@pii` is used as a command identifier, an explicit `for` destination, or an event source identifier. Use a surrogate `Uuid` identifier and keep personal data as a property. When a reaction source names both an event and a declared trigger, a personal destination under either shape is rejected. |
+| `PLAY0515` | Error | A concept marked `@pii` is used as a command identifier, an explicit `for` destination, or an event source identifier. Use a surrogate `Uuid` identifier and keep personal data as a property. Reaction destinations also check values typed directly in the trigger clause, even for an undeclared or registered trigger. When a reaction source names both an event and a declared trigger, a personal destination under any of these shapes is rejected. |
 
 ### Types
 

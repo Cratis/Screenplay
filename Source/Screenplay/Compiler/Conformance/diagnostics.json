@@ -362,6 +362,33 @@
             "diagnostics": ["PLAY0515@12"]
         },
         {
+            "name": "Personal clause-local data cannot supply a registered trigger destination",
+            "validate": true,
+            "registeredTriggers": ["External"],
+            "source": ["concept PatientId : Uuid @pii", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient PatientId", "          produces Recorded", "            for patient"],
+            "diagnostics": ["PLAY0515@10"]
+        },
+        {
+            "name": "Personal clause-local data cannot hide behind a surrogate declared trigger value",
+            "validate": true,
+            "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient Uuid", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient PatientId", "          produces Recorded", "            for patient"],
+            "diagnostics": ["PLAY0515@12"]
+        },
+        {
+            "name": "Composite clause-local data cannot hide personal identifiers",
+            "validate": true,
+            "registeredTriggers": ["External"],
+            "source": ["concept PatientId : Uuid @pii", "type Detail", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          detail Detail", "          produces Recorded", "            for detail.patient"],
+            "diagnostics": ["PLAY0515@12"]
+        },
+        {
+            "name": "Surrogate clause-local data remains a valid reaction destination",
+            "validate": true,
+            "registeredTriggers": ["External"],
+            "source": ["concept PatientId : Uuid @pii", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient Uuid", "          produces Recorded", "            for patient"],
+            "diagnostics": []
+        },
+        {
             "name": "Surrogate declared trigger data remains a valid reaction destination",
             "validate": true,
             "source": ["concept PatientId : Uuid", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],

@@ -3,6 +3,7 @@
 
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using Cratis.Screenplay.Languages;
 
 namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 
@@ -12,15 +13,15 @@ namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 public class when_holding_the_typescript_compiler_to_its_diagnostics : Specification
 {
     readonly List<string> _mismatches = [];
-    List<(string Name, string Source, string[] Expected, bool Validate)> _vectors;
+    List<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers)> _vectors;
 
     void Establish() => _vectors = [.. Vectors()];
 
     void Because()
     {
-        foreach (var (name, source, expected, validate) in _vectors)
+        foreach (var (name, source, expected, validate, registeredTriggers) in _vectors)
         {
-            var compiler = new ScreenplayCompiler();
+            var compiler = new ScreenplayCompiler(new ScreenplayLanguageRegistry(triggers: registeredTriggers.Select(triggerName => new TriggerDefinition(triggerName))));
             var result = validate ? compiler.Compile(source) : compiler.Parse(source);
             var reported = result.Diagnostics.Select(diagnostic => $"{diagnostic.Code}@{diagnostic.Location.Line}").ToArray();
             if (!reported.SequenceEqual(expected, StringComparer.Ordinal))
@@ -47,7 +48,7 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
         return directory!.FullName;
     }
 
-    static IEnumerable<(string Name, string Source, string[] Expected, bool Validate)> Vectors()
+    static IEnumerable<(string Name, string Source, string[] Expected, bool Validate, string[] RegisteredTriggers)> Vectors()
     {
         var file = Path.Combine(Root(), "Source", "Screenplay", "Compiler", "Conformance", "diagnostics.json");
         using var document = JsonDocument.Parse(File.ReadAllText(file));
@@ -55,6 +56,7 @@ public class when_holding_the_typescript_compiler_to_its_diagnostics : Specifica
             vector.GetProperty("name").GetString()!,
             string.Join('\n', vector.GetProperty("source").EnumerateArray().Select(line => line.GetString())),
             vector.GetProperty("diagnostics").EnumerateArray().Select(diagnostic => diagnostic.GetString()!).ToArray(),
-            vector.TryGetProperty("validate", out var validate) && validate.GetBoolean()))];
+            vector.TryGetProperty("validate", out var validate) && validate.GetBoolean(),
+            vector.TryGetProperty("registeredTriggers", out var triggers) ? triggers.EnumerateArray().Select(trigger => trigger.GetString()!).ToArray() : []))];
     }
 }
