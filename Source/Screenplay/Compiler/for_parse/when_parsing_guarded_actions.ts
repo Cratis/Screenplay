@@ -56,6 +56,45 @@ describe('when parsing exact guarded condition numbers', () => {
     });
 });
 
+describe.each(['\u2028', '\u2029'])('when parsing guarded lines containing %s', separator => {
+    it('should retain the condition and argument bindings on one source line', () => {
+        const binding = `"first${separator}second"`;
+        const result = a_parsed_document('module M', '  feature F', '    slice StateView S', '      screen Details',
+            '        action "Again"', `          when item.status == "open"${separator}and item.ready == true execute Retry`,
+            `            with note from ${binding}`, '          otherwise execute Start', `            with note from ${binding}`);
+        result.diagnostics.should.deep.equal([]);
+        const action = result.value.modules[0].features[0].slices[0].screens[0].directives[0] as ScreenGuardedActionSyntax;
+        action.alternatives[0].condition.kind.should.equal('LogicalConditionSyntax');
+        action.alternatives[0].arguments[0].binding.should.equal(binding);
+        action.otherwise!.arguments[0].binding.should.equal(binding);
+    });
+});
+
+describe('when parsing guarded directive separators', () => {
+    it('should accept U0085 around execute and with from', () => {
+        const result = a_parsed_document('module M', '  feature F', '    slice StateView S', '      screen Details',
+            '        action "Again"', '          when\u0085item.ready == true\u0085execute\u0085Retry',
+            '            with\u0085id\u0085from\u0085item.id', '          otherwise\u0085execute\u0085Start',
+            '            with\u0085id\u0085from\u0085item.id');
+        result.diagnostics.should.deep.equal([]);
+        const action = result.value.modules[0].features[0].slices[0].screens[0].directives[0] as ScreenGuardedActionSyntax;
+        action.alternatives[0].command.should.equal('Retry');
+        action.alternatives[0].arguments[0].binding.should.equal('item.id');
+        action.otherwise!.command!.should.equal('Start');
+        action.otherwise!.arguments[0].binding.should.equal('item.id');
+    });
+    it('should reject UFEFF around execute and with from', () => {
+        const result = a_parsed_document('module M', '  feature F', '    slice StateView S', '      screen Details',
+            '        action "Again"', '          when item.ready == true execute Retry', '            with\ufeffid\ufefffrom\ufeffitem.id',
+            '          when item.ready == false\ufeffexecute Retry', '          otherwise\ufeffexecute Start',
+            '          otherwise execute Start', '            with id\ufefffrom item.id', '            with id from\ufeffitem.id');
+        result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal([
+            DiagnosticCodes.InvalidInteractionArgument, DiagnosticCodes.InvalidActionAlternative, DiagnosticCodes.InvalidActionAlternative,
+            DiagnosticCodes.InvalidInteractionArgument, DiagnosticCodes.InvalidInteractionArgument,
+        ]);
+    });
+});
+
 describe('when parsing guarded actions', () => {
     let result: CompilationResult<ApplicationSyntax>;
     let action: ScreenGuardedActionSyntax;

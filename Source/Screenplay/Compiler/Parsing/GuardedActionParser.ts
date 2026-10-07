@@ -4,15 +4,16 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { ConditionSyntax } from '../Syntax/Conditions';
 import { InteractionArgumentSyntax, ScreenActionAlternativeSyntax, ScreenActionOtherwiseSyntax, ScreenGuardedActionSyntax, ScreenNavigateSyntax } from '../Syntax/Screens';
-import { pattern } from '../Text/patterns';
+import { dotNetWhitespace, pattern } from '../Text/patterns';
 import { parseCondition } from './ConditionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 
-const alternative = pattern('^when\\s+(.+)\\s+execute\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
-const otherwise = pattern('^otherwise\\s+execute\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
-const argument = pattern('^with\\s+([A-Za-z_]\\w*)\\s+from\\s+(.+)$');
+// .NET '.' stops only at LF; U+2028/U+2029 stay inside a CR/LF-delimited source line.
+const alternative = pattern(`^when${dotNetWhitespace}+([^\\n]+)${dotNetWhitespace}+execute${dotNetWhitespace}+([A-Za-z_]\\w*(?:\\.\\w+)*)$`);
+const otherwise = pattern(`^otherwise${dotNetWhitespace}+execute${dotNetWhitespace}+([A-Za-z_]\\w*(?:\\.\\w+)*)$`);
+const argument = pattern(`^with${dotNetWhitespace}+([A-Za-z_]\\w*)${dotNetWhitespace}+from${dotNetWhitespace}+([^\\n]+)$`);
 const itemPath = pattern('^item\\.[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*$');
 
 type ParseNavigate = (context: ParserContext, text: string, line: SourceLine) => ScreenNavigateSyntax | undefined;
