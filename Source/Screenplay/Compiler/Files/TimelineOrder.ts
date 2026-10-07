@@ -4,6 +4,7 @@
 import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
+import { eventDeclarations } from '../Syntax/EventDeclarations';
 import { ProjectionBlockSyntax } from '../Syntax/Projections';
 import { ApplicationSyntax, FeatureSyntax, SliceSyntax } from '../Syntax/Structure';
 import { authoredOrderKey, authoredOrderOf } from './AuthoredOrder';
@@ -11,6 +12,7 @@ import { authoredOrderKey, authoredOrderOf } from './AuthoredOrder';
 interface Slice {
     syntax: SliceSyntax;
     scope: readonly string[];
+    identity: readonly string[];
     index: number;
 }
 interface Reference { event: string; location: SourceLocation }
@@ -25,7 +27,7 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
     const slices: Slice[] = [];
     const feature = (syntax: FeatureSyntax, outer: readonly string[]) => {
         const scope = [...outer, syntax.name];
-        for (const slice of ordered(syntax.slices, scope)) slices.push({ syntax: slice, scope: [...scope, slice.name], index: slices.length });
+        for (const slice of ordered(syntax.slices, scope)) slices.push({ syntax: slice, scope: [...scope, slice.name], identity: [...scope.map(name => `container:${name}`), `slice:${slice.name}`], index: slices.length });
         for (const child of ordered(syntax.features, scope)) feature(child, scope);
     };
     for (const module of ordered(application.modules, [])) {
@@ -33,7 +35,7 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
     }
     const producers = new Map<string, Slice>();
     for (const slice of slices) {
-        for (const event of slice.syntax.events) {
+        for (const event of eventDeclarations(slice.syntax)) {
             if (!producers.has(event.name.toLowerCase())) producers.set(event.name.toLowerCase(), slice);
         }
     }
@@ -51,9 +53,9 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
             const producer = producers.get(name);
             if (producer === undefined || producer === consumer) continue;
             let common = 0;
-            while (common < consumer.scope.length && common < producer.scope.length && consumer.scope[common] === producer.scope[common]) common++;
+            while (common < consumer.scope.length && common < producer.scope.length && consumer.identity[common] === producer.identity[common]) common++;
             if (common === consumer.scope.length || common === producer.scope.length) continue;
-            edges.push({ ...reference, consumer, producer, container: authoredOrderKey(consumer.scope.slice(0, common)), left: consumer.scope[common], right: producer.scope[common] });
+            edges.push({ ...reference, consumer, producer, container: authoredOrderKey(consumer.identity.slice(0, common)), left: consumer.identity[common], right: producer.identity[common] });
         }
     }
     const compare = (left: Edge, right: Edge) => left.consumer.index - right.consumer.index || left.location.line - right.location.line || left.location.column - right.location.column;
@@ -75,10 +77,10 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
             if (first === undefined) continue;
             const memberIndex = (member: string) => Math.min(...internal.flatMap(edge => [edge.consumer, edge.producer]).filter(slice => {
                 const scope = JSON.parse(container) as string[];
-                return slice.scope[scope.length] === member;
+                return slice.identity[scope.length] === member;
             }).map(slice => slice.index));
             group.sort((left, right) => memberIndex(left) - memberIndex(right));
-            findings.push({ edge: first, diagnostic: { severity: 'information', code: DiagnosticCodes.TimelineCycleGroup, message: `Timeline group ${group.map(member => `'${member}'`).join(', ')} uses each other's events; reordering these members cannot make every event flow left to right.`, location: first.location } });
+            findings.push({ edge: first, diagnostic: { severity: 'information', code: DiagnosticCodes.TimelineCycleGroup, message: `Timeline group ${group.map(member => `'${member.slice(member.indexOf(':') + 1)}'`).join(', ')} uses each other's events; reordering these members cannot make every event flow left to right.`, location: first.location } });
         }
     }
     for (const edge of edges) {

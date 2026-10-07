@@ -41,7 +41,7 @@ internal static class TimelineOrder
         var producers = new Dictionary<string, Slice>(StringComparer.OrdinalIgnoreCase);
         foreach (var slice in slices)
         {
-            foreach (var produced in slice.Syntax.Events)
+            foreach (var produced in EventDeclarations.In(slice.Syntax))
             {
                 producers.TryAdd(produced.Name, slice);
             }
@@ -63,7 +63,7 @@ internal static class TimelineOrder
                 }
 
                 var common = 0;
-                while (common < consumer.Scope.Length && common < producer.Scope.Length && consumer.Scope[common] == producer.Scope[common])
+                while (common < consumer.Scope.Length && common < producer.Scope.Length && consumer.Identity[common] == producer.Identity[common])
                 {
                     common++;
                 }
@@ -73,7 +73,7 @@ internal static class TimelineOrder
                     continue;
                 }
 
-                edges.Add(new(consumer, producer, reference.Event, reference.Location, AuthoredOrder.Key(consumer.Scope.Take(common)), consumer.Scope[common], producer.Scope[common]));
+                edges.Add(new(consumer, producer, reference.Event, reference.Location, AuthoredOrder.Key(consumer.Identity.Take(common)), consumer.Identity[common], producer.Identity[common]));
             }
         }
 
@@ -117,7 +117,7 @@ internal static class TimelineOrder
                 findings.Add((first, new(
                     DiagnosticSeverity.Information,
                     DiagnosticCodes.TimelineCycleGroup,
-                    $"Timeline group {string.Join(", ", orderedMembers.Select(member => $"'{member}'"))} uses each other's events; reordering these members cannot make every event flow left to right.",
+                    $"Timeline group {string.Join(", ", orderedMembers.Select(member => $"'{member[(member.IndexOf(':') + 1)..]}'"))} uses each other's events; reordering these members cannot make every event flow left to right.",
                     first.Location)));
             }
         }
@@ -213,7 +213,11 @@ internal static class TimelineOrder
         return groups;
     }
 
-    sealed record Slice(SliceSyntax Syntax, string[] Scope, int Index);
+    sealed record Slice(SliceSyntax Syntax, string[] Scope, int Index)
+    {
+        // Container children and slice children occupy separate groups even when their names match.
+        public string[] Identity { get; } = [.. Scope.SkipLast(1).Select(name => $"container:{name}"), $"slice:{Syntax.Name}"];
+    }
     sealed record Reference(string Event, SourceLocation Location);
     sealed record Edge(Slice Consumer, Slice Producer, string Event, SourceLocation Location, string Container, string Left, string Right);
 }

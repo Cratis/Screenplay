@@ -1,15 +1,16 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { DiscoveredImport } from '../Parsing/ImportDiscovery';
 import { discoverImports } from '../ScreenplayCompiler';
 import { PlacedPlayDocument } from './PlayDocumentSource';
 import { matchesPlayPattern, normalizePlayPath, resolvePlayPattern } from './PlayGlob';
 
 // Choosing presentation order never changes the roots used for resolving or merging documents.
-export function selectOrderingRoot(roots: readonly string[], documents: readonly PlacedPlayDocument[], languages?: ReadonlySet<string>): string | undefined {
+export function selectOrderingRoot(roots: readonly string[], documents: readonly PlacedPlayDocument[], languages?: ReadonlySet<string>, imports?: ReadonlyMap<string, readonly DiscoveredImport[]>): string | undefined {
     const normalized = [...new Set(roots.map(normalizePlayPath))];
     if (normalized.length === 1) return normalized[0];
-    const imports = new Map(documents.map(document => [document.path, discoverImports(document.source, document.path, languages)]));
+    imports ??= new Map(documents.map(document => [document.path, discoverImports(document.source, document.path, languages)]));
     if ((imports.get('application.play')?.length ?? 0) > 0) return 'application.play';
     const imported = new Set<string>();
     for (const [path, entries] of imports) {

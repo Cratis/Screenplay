@@ -18,12 +18,17 @@ internal static class AuthoredOrder
 
     internal static string Key(IEnumerable<string> scope) => JsonSerializer.Serialize(scope.ToArray(), _json);
 
-    internal static IReadOnlyDictionary<string, int> Record(IReadOnlyList<string> roots, IReadOnlyList<PlacedPlayDocument> documents, IScreenplayLanguageRegistry languages)
+    internal static IReadOnlyDictionary<string, int> Record(
+        IReadOnlyList<string> roots,
+        IReadOnlyList<PlacedPlayDocument> documents,
+        IScreenplayLanguageRegistry languages,
+        IReadOnlyDictionary<string, ApplicationSyntax>? parsed = null,
+        IReadOnlyDictionary<string, IReadOnlyList<DiscoveredFileImport>>? imports = null)
     {
         var files = documents.ToDictionary(document => document.Path, StringComparer.Ordinal);
         var own = documents.Where(document => document.IsPlacementResolved).ToDictionary(
             document => document.Path,
-            document => Declarations(ScreenplayCompiler.ParsePlaced(document.Source, document.Path, document.Placement, languages).Value!).ToArray(),
+            document => Declarations(parsed is not null ? parsed[document.Path] : ScreenplayCompiler.ParsePlaced(document.Source, document.Path, document.Placement, languages).Value!).ToArray(),
             StringComparer.Ordinal);
         var owners = ContainerOwners(own, roots.Select(PlayGlob.Normalize).ToHashSet(StringComparer.Ordinal));
         var explicitDeclarations = own.Values.SelectMany(declarations => declarations).Where(declaration => !declaration.Implicit).Select(declaration => Key(declaration.Scope)).ToHashSet(StringComparer.Ordinal);
@@ -48,7 +53,7 @@ internal static class AuthoredOrder
                 entries.Add((declaration.Location, () => order.TryAdd(key, order.Count)));
             }
 
-            foreach (var import in ScreenplayCompiler.DiscoverImports(document.Source, path, languages))
+            foreach (var import in imports is not null ? imports[path] : ScreenplayCompiler.DiscoverImports(document.Source, path, languages))
             {
                 entries.Add((import.Import.Location, () =>
                 {

@@ -48,11 +48,15 @@ internal static class PlayApplicationAssembly
             return !document.IsPlacementResolved && result.Value is { } application
                 ? result with { Value = application with { EventSources = [] } }
                 : result;
-        });
-        var merged = PlayFolderMerge.Merge([.. parsed], allowUnresolvedPersonaPolicies);
-        var orderingRoot = OrderingRoot.Select(rootPaths, documents, languages);
+        }).ToArray();
+        var merged = PlayFolderMerge.Merge(parsed, allowUnresolvedPersonaPolicies);
+
+        // Resolution owns its import inventory; share one discovery between the presentation passes.
+        var imports = documents.ToDictionary(document => document.Path, document => ScreenplayCompiler.DiscoverImports(document.Source, document.Path, languages), StringComparer.Ordinal);
+        var syntax = documents.Select((document, index) => (document.Path, parsed[index].Value!)).ToDictionary(entry => entry.Path, entry => entry.Item2, StringComparer.Ordinal);
+        var orderingRoot = OrderingRoot.Select(rootPaths, documents, languages, imports);
         var timeline = orderingRoot is not null && merged.Value is { } application
-            ? TimelineOrder.In(application, AuthoredOrder.Record([orderingRoot], documents, languages))
+            ? TimelineOrder.In(application, AuthoredOrder.Record([orderingRoot], documents, languages, syntax, imports))
             : [];
 
         return (documents, merged with { Diagnostics = [.. diagnostics, .. merged.Diagnostics, .. timeline] });

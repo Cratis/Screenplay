@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { placementFrom } from '../Parsing/ImportDiscovery';
+import { DiscoveredImport, placementFrom } from '../Parsing/ImportDiscovery';
 import { discoverImports, parseForAuthoring } from '../ScreenplayCompiler';
 import { ApplicationSyntax, FeatureSyntax } from '../Syntax/Structure';
 import { PlacedPlayDocument } from './PlayDocumentSource';
@@ -64,9 +64,9 @@ function containerOwners(own: ReadonlyMap<string, readonly AuthoredDeclaration[]
 
 // Walk text, not the merged tree: placement stubs must not claim the position of a declaration that is
 // written elsewhere. Expand an import only if it contributes the file's settled (deepest) placement.
-export function recordAuthoredOrder(application: ApplicationSyntax, roots: readonly string[], documents: readonly PlacedPlayDocument[], languages?: ReadonlySet<string>): void {
+export function recordAuthoredOrder(application: ApplicationSyntax, roots: readonly string[], documents: readonly PlacedPlayDocument[], languages?: ReadonlySet<string>, parsed?: ReadonlyMap<string, ApplicationSyntax>, imports?: ReadonlyMap<string, readonly DiscoveredImport[]>): void {
     const files = new Map(documents.map(document => [document.path, document]));
-    const own = new Map(documents.filter(document => document.isPlacementResolved !== false).map(document => [document.path, declarations(parseForAuthoring(document.source, document.path, document.placement, false, undefined, languages).value)]));
+    const own = new Map(documents.filter(document => document.isPlacementResolved !== false).map(document => [document.path, declarations(parsed?.get(document.path) ?? parseForAuthoring(document.source, document.path, document.placement, false, undefined, languages).value)]));
     const owners = containerOwners(own, new Set(roots.map(normalizePlayPath)));
     const explicit = new Set([...own.values()].flat().filter(declaration => !declaration.implicit).map(declaration => authoredOrderKey(declaration.scope)));
     const order = new Map<string, number>();
@@ -84,7 +84,7 @@ export function recordAuthoredOrder(application: ApplicationSyntax, roots: reado
                     const key = authoredOrderKey(declaration.scope);
                     if (!order.has(key)) order.set(key, order.size);
                 } })),
-            ...discoverImports(document.source, path, languages).map(imported => ({
+            ...(imports?.get(path) ?? discoverImports(document.source, path, languages)).map(imported => ({
                 ...imported.fileImport.location,
                 run: () => {
                     const placement = placementFrom(imported, document.placement);

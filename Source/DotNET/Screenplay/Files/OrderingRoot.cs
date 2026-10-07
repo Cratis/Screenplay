@@ -10,7 +10,7 @@ namespace Cratis.Screenplay.Files;
 /// </summary>
 internal static class OrderingRoot
 {
-    internal static string? Select(IReadOnlyList<string> roots, IReadOnlyList<PlacedPlayDocument> documents, IScreenplayLanguageRegistry languages)
+    internal static string? Select(IReadOnlyList<string> roots, IReadOnlyList<PlacedPlayDocument> documents, IScreenplayLanguageRegistry languages, IReadOnlyDictionary<string, IReadOnlyList<DiscoveredFileImport>>? imports = null)
     {
         var normalized = roots.Select(PlayGlob.Normalize).Distinct(StringComparer.Ordinal).ToArray();
         if (normalized.Length == 1)
@@ -18,7 +18,7 @@ internal static class OrderingRoot
             return normalized[0];
         }
 
-        var imports = documents.ToDictionary(document => document.Path, document => ScreenplayCompiler.DiscoverImports(document.Source, document.Path, languages), StringComparer.Ordinal);
+        imports ??= documents.ToDictionary(document => document.Path, document => ScreenplayCompiler.DiscoverImports(document.Source, document.Path, languages), StringComparer.Ordinal);
         if (imports.TryGetValue("application.play", out var applicationImports) && applicationImports.Count > 0)
         {
             return "application.play";

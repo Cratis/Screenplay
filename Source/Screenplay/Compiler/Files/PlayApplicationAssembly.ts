@@ -10,7 +10,7 @@ import { splitLines } from '../Parsing/SourceLineSplitter';
 import { ParserContext } from '../Parsing/ParserContext';
 import { validateResponses } from '../Parsing/ResponseValidator';
 import { validateOperations } from '../Parsing/OperationValidator';
-import { CompilationResult, parseForAuthoring } from '../ScreenplayCompiler';
+import { CompilationResult, discoverImports, parseForAuthoring } from '../ScreenplayCompiler';
 import { ApplicationSyntax } from '../Syntax/Structure';
 import { EventSourceSyntax } from '../Syntax/EventSources';
 import { EventSourceReadConfidence } from '../Syntax/EventSourceReadConfidence';
@@ -39,9 +39,11 @@ export interface ApplicationCompilation extends CompilationResult<ApplicationSyn
 export function assembleApplication(roots: Iterable<string>, source: PlayDocumentSource, languages?: ReadonlySet<string>, presentationRoot?: string | null): ApplicationCompilation {
     const rootPaths = [...roots];
     const { documents, diagnostics } = resolveImports(rootPaths, source, languages);
-    const merged = parsePlacedDocuments(documents, languages);
-    const orderingRoot = presentationRoot === null ? undefined : selectOrderingRoot(presentationRoot === undefined ? rootPaths : [presentationRoot], documents, languages);
-    if (orderingRoot !== undefined) recordAuthoredOrder(merged.value, [orderingRoot], documents, languages);
+    const { result: merged, syntax } = parsePlacedDocumentsWithSyntax(documents, languages);
+    // Resolution owns its import inventory; share one discovery between the presentation passes.
+    const imports = new Map(documents.map(document => [document.path, discoverImports(document.source, document.path, languages)]));
+    const orderingRoot = presentationRoot === null ? undefined : selectOrderingRoot(presentationRoot === undefined ? rootPaths : [presentationRoot], documents, languages, imports);
+    if (orderingRoot !== undefined) recordAuthoredOrder(merged.value, [orderingRoot], documents, languages, syntax, imports);
     const timeline = orderingRoot === undefined ? [] : timelineOrderDiagnostics(merged.value);
     const all = [...diagnostics, ...merged.diagnostics, ...timeline];
     return { ...merged, documents, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error') };
@@ -53,6 +55,10 @@ export function parsePlacedDocuments(documents: readonly PlacedPlayDocument[], l
     readonly physicalEventSources: readonly { source: EventSourceSyntax; placementResolved: boolean }[];
     readonly sourceInventoryComplete: boolean;
 } {
+    return parsePlacedDocumentsWithSyntax(documents, languages).result;
+}
+
+function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[], languages?: ReadonlySet<string>) {
     const candidates = CommandStreamCandidates.capturePlaced(documents.filter(document => document.isPlacementResolved !== false).map(document => ({ lines: splitLines(document.source, false, document.path), placement: document.placement })), languages);
     const physical = documents.map(document => parseForAuthoring(document.source, document.path, document.isPlacementResolved === false ? [] : document.placement, false, candidates, languages));
     const physicalEventSources = physical.flatMap((result, index) => (result.value.eventSources ?? []).map(source => ({ source, placementResolved: documents[index].isPlacementResolved !== false })));
@@ -68,7 +74,10 @@ export function parsePlacedDocuments(documents: readonly PlacedPlayDocument[], l
     const existing = merged.diagnostics;
     const reported = new Set(existing.map(diagnosticKey));
     const all = [...existing, ...context.diagnostics.filter(diagnostic => !reported.has(diagnosticKey(diagnostic)))];
-    return { ...merged, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error'), physicalEventSources, sourceInventoryComplete };
+    return {
+        result: { ...merged, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error'), physicalEventSources, sourceInventoryComplete },
+        syntax: new Map(parsed.map((result, index) => [documents[index].path, result.value])),
+    };
 }
 
 function diagnosticKey(diagnostic: Diagnostic): string {

@@ -2,9 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { describe, it } from 'vitest';
-import { parse, parseForAuthoring } from '../../ScreenplayCompiler';
+import { parse } from '../../ScreenplayCompiler';
 import { toSyntaxJson } from '../../Syntax/SyntaxJson';
-import { compileApplication } from '../PlayApplicationAssembly';
+import { compileApplication, parsePlacedDocuments } from '../PlayApplicationAssembly';
 
 const projection = 'module M\n  feature F\n    slice StateView View\n      projection P\n        from E\n        from E\n    slice StateChange Write\n      event E';
 
@@ -38,8 +38,12 @@ describe('when a folder has no ordering root', () => {
 
 describe('when the pass runs after merging', () => {
     it('should leave syntax bytes unchanged and not run during physical parsing', () => {
-        const before = parseForAuthoring(projection, undefined, [], false);
-        const after = parse(projection);
+        const after = compileApplication(new Map([
+            ['application.play', 'module M\n  feature F\n    import "z.play"\n    import "a.play"'],
+            ['z.play', 'slice StateView View\n  projection P\n    from E'],
+            ['a.play', 'slice StateChange Write\n  event E'],
+        ]), ['application.play']);
+        const before = parsePlacedDocuments(after.documents);
         JSON.stringify(toSyntaxJson(after.value)).should.equal(JSON.stringify(toSyntaxJson(before.value)));
         JSON.stringify(after.value).should.equal(JSON.stringify(before.value));
         before.diagnostics.should.deep.equal([]);
