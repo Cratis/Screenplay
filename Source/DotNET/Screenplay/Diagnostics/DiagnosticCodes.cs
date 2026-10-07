@@ -2349,4 +2349,9 @@ public static class DiagnosticCodes
     /// A locally declared event has no declared application consumer.
     /// </summary>
     public const string UnconsumedEvent = "PLAY0536";
+
+    /// <summary>
+    /// A screen is unreachable from contributions or attached shell-level behaviors.
+    /// </summary>
+    public const string UnreachableScreen = "PLAY0537";
 }

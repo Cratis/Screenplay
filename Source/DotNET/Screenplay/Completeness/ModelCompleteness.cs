@@ -42,6 +42,7 @@ public static class ModelCompleteness
         if (checks.Selected.Contains(CompletenessCheck.FieldOrigins)) findings.AddRange(FieldOriginCompleteness.Check(declarations));
         if (checks.Selected.Contains(CompletenessCheck.QueryKeys)) findings.AddRange(QueryKeyCompleteness.Check(declarations));
         if (checks.Selected.Contains(CompletenessCheck.EventConsumers)) findings.AddRange(EventConsumerCompleteness.Check(application, declarations));
+        if (checks.Selected.Contains(CompletenessCheck.Navigation)) findings.AddRange(NavigationCompleteness.Check(application, declarations));
 
         return findings.ToImmutable();
     }
