@@ -30,7 +30,12 @@ public class when_freezing_legacy_source_syntax_bytes
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
             // Invoicing is a living sample. Its intentional v7 and policy-negation additions have full
             // shared conformance vectors; remove only those additions so the legacy bytes stay frozen.
-            var legacy = name == "invoicing-sample" || name == "invoicing-editor-sample" ? WithoutSampleAdditions(parsed) : parsed;
+            var legacy = name switch
+            {
+                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleAdditions(parsed),
+                "library-sample" => WithoutLibraryNavigation(parsed),
+                _ => parsed
+            };
             var json = SyntaxJson.Serialize(legacy);
             var text = WithoutRuleIntent(json, json.GetRawText())
                 .Replace(",\"eventSources\":[]", string.Empty, StringComparison.Ordinal)
@@ -80,6 +85,29 @@ public class when_freezing_legacy_source_syntax_bytes
                     _ => slice
                 })
             } : feature)
+        })
+    };
+
+    // Library's new action-to-input-screen navigation is protected by its current shared vector.
+    // Keep its pre-completeness bytes frozen without rewriting the historical baseline.
+    static ApplicationSyntax WithoutLibraryNavigation(ApplicationSyntax application) => application with
+    {
+        Modules = application.Modules.Select(module => module with
+        {
+            Features = module.Features.Select(feature => feature with
+            {
+                Slices = feature.Slices.Select(slice => slice with
+                {
+                    Screens = slice.Screens.Select(screen => screen with
+                    {
+                        Directives = screen.Directives.Select(directive => directive is ScreenActionSyntax action &&
+                            ((screen.Name == "BookCatalog" && (action.Command == "AddBook" || action.Command == "BorrowBook")) ||
+                                (screen.Name == "MyLoans" && action.Command == "ReturnBook")) && action.Navigate?.Screen == action.Command
+                            ? action with { Navigate = null }
+                            : directive)
+                    })
+                })
+            })
         })
     };
 
