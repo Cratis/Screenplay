@@ -13,7 +13,7 @@ static class EventConsumerCompleteness
 {
     internal static IEnumerable<Diagnostic> Check(ApplicationSyntax application, ConsistencyDeclarations declarations)
     {
-        var consumers = new Consumers(declarations);
+        var consumers = new Consumers(application, declarations);
         consumers.VisitApplication(application);
 
         // Only local declarations are candidates. An imported external contract has no local declaration.
@@ -28,9 +28,10 @@ static class EventConsumerCompleteness
         }
     }
 
-    sealed class Consumers(ConsistencyDeclarations declarations) : ScreenplaySyntaxWalker
+    sealed class Consumers(ApplicationSyntax application, ConsistencyDeclarations declarations) : ScreenplaySyntaxWalker
     {
         DeclarationScope _scope = new([]);
+        BehaviorSyntax? _instantiated;
         internal HashSet<EventSyntax> Consumed { get; } = new(ReferenceEqualityComparer.Instance);
 
         /// <inheritdoc/>
@@ -57,6 +58,25 @@ static class EventConsumerCompleteness
             var previous = _scope;
             _scope = new([.. previous.Segments, syntax.Name]);
             base.VisitSlice(syntax);
+            _scope = previous;
+        }
+
+        /// <inheritdoc/>
+        public override void VisitBehavior(BehaviorSyntax syntax)
+        {
+            if (syntax.Name is null || ReferenceEquals(syntax, _instantiated)) base.VisitBehavior(syntax);
+        }
+
+        /// <inheritdoc/>
+        public override void VisitUsesBehavior(UsesBehaviorSyntax syntax)
+        {
+            if (application.Behaviors.Where(behavior => behavior.Name == syntax.Behavior).ToArray() is not [var behavior]) return;
+            var previous = _scope;
+            var previousBehavior = _instantiated;
+            _scope = new([]);
+            _instantiated = behavior;
+            VisitBehavior(behavior);
+            _instantiated = previousBehavior;
             _scope = previous;
         }
 
