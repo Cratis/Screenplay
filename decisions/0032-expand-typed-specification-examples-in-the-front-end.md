@@ -29,6 +29,8 @@ Specifications repeat the same command inputs, event payloads and read-model sta
 
 ## Decision
 
+> **2026-10-07 — routes and effective-syntax consumers clarification.** Route lines from 0031 (`stream`, `streamId`, `no stream`) are not allowed in examples in this version. An example stating one is rejected with a clear invalid-example-body diagnostic; routes are stated on the step. [#491](https://github.com/Cratis/Screenplay/issues/491) tracks route lines in examples. The effective-syntax API is .NET-only; named consumers are Stage ([Stage#209](https://github.com/Cratis/Stage/issues/209)) and Studio's importer ([StudioIssues#534](https://github.com/Cratis/StudioIssues/issues/534)). Implicit fixture defaults remain undecided; [#492](https://github.com/Cratis/Screenplay/issues/492) tracks production-model measurement. This record was renumbered from 0028 when main allocated 0028 to module and feature dependencies.
+
 Typed examples expand in the front end and never reach the ESM. `example <Name> : <EventOrCommandOrReadModel>` names one typed instance, with ordinary property assignments, `for`, command `generated` fixtures and an optional description. Examples are declared at slice, feature, module or top level, including specification-only documents. They share the type namespace: collision with an event, command, read model, type or concept is an error. A unified resolver resolves the underlying type from the example's declaration scope. Examples always mean the current generation; historical-only fields are errors. There is no example-to-example inheritance in v1.
 
 An example name may occupy the existing type slot in `given`, `given readmodel`, `when`, `when append`, `then` and `then readmodel [exactly]`. The kind keyword remains explicit; a mismatch is an error with a suggested corrected step. Step assignments override the example's values. Overrides may be indented or one inline assignment after the name, including structured values, without `with`. Repeating a property within the same step or example, including across header and body, is an error; overriding an example's property once is intentional and allowed.
@@ -74,4 +76,4 @@ Failure provenance belongs to the source compilation, not the ESM. A compilation
 
 ## Status notes
 
-**2026-10-07 — accepted.** Sindre Alstad Wilting explicitly delegated these choices to the orchestrator. The binding #427 decision table accepts typed examples, inline overrides, no inheritance, no implicit defaults in v1, unchanged matching and the public effective-syntax API. Implementation and verification remain pending.
+**2026-10-07 — accepted.** Accepted by Sindre Alstad Wilting on 2026-10-07 after reviewing the amended text. Acceptance covers typed examples, inline overrides, no inheritance, no implicit defaults in v1, unchanged matching and the public effective-syntax API. Implementation and verification remain pending.
