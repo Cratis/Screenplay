@@ -60,6 +60,8 @@ sealed class McpSnapshot : IPlayFiles
 
     internal int ParsedDocumentCount => _compiler.ParsedDocumentCount;
 
+    internal IScreenplayLanguageRegistry Languages => _compiler.Languages;
+
     internal string SourceRevision { get; }
 
     internal IReadOnlyDictionary<string, string> Sources { get; }

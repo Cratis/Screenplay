@@ -3,6 +3,8 @@
 
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Languages;
+using Cratis.Screenplay.Parsing;
 
 namespace Cratis.Screenplay.Mcp;
 
@@ -54,8 +56,8 @@ static class ScopedDiagnostics
             .Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToImmutableArray();
         var possiblyAffected = outside.Except(unresolvedEvents).Count();
 
-        var lines = snapshot.Sources.ToDictionary(source => source.Key, source => source.Value.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Split('\n'), StringComparer.Ordinal);
-        var ranges = declarations.SelectMany(declaration => declaration.Locations.Select(location => Range(declaration, location, lines)))
+        var lines = snapshot.Sources.ToDictionary(source => source.Key, source => SourceLineSplitter.Split(source.Value, path: source.Key), StringComparer.Ordinal);
+        var ranges = declarations.SelectMany(declaration => declaration.Locations.Select(location => Range(declaration, location, lines, snapshot.Languages)))
             .Where(range => range is not null).OfType<DeclarationRange>().ToArray();
         var diagnostics = snapshot.Compilation.Diagnostics.Where(diagnostic =>
         {
@@ -92,13 +94,13 @@ static class ScopedDiagnostics
     static bool Within(IEnumerable<string> segments, string scope) => string.Join('.', segments) is var address &&
         (address == scope || address.StartsWith(scope + ".", StringComparison.Ordinal));
 
-    static DeclarationRange? Range(McpDeclaration declaration, SourceLocation location, Dictionary<string, string[]> sources)
+    static DeclarationRange? Range(McpDeclaration declaration, SourceLocation location, Dictionary<string, IReadOnlyList<SourceLine>> sources, IScreenplayLanguageRegistry languages)
     {
         if (location.Path is null || !sources.TryGetValue(location.Path, out var lines))
         {
             return null;
         }
-        if (location.Line < 1 || location.Line > lines.Length)
+        if (location.Line < 1 || location.Line > lines.Count)
         {
             return null;
         }
@@ -106,20 +108,29 @@ static class ScopedDiagnostics
 
         // Import scaffolds have synthetic header locations, not physical declaration ranges.
         if ((declaration.Kind == "Module" || declaration.Kind == "Feature") &&
-            !header.TrimStart().StartsWith(declaration.Kind.ToLowerInvariant() + " ", StringComparison.Ordinal))
+            !header.Content.StartsWith(declaration.Kind.ToLowerInvariant() + " ", StringComparison.Ordinal))
         {
             return null;
         }
 
-        var indent = header.TakeWhile(char.IsWhiteSpace).Count();
         var end = location.Line;
-        while (end < lines.Length)
+        var inFence = false;
+        while (end < lines.Count)
         {
             var line = lines[end];
-            if (!string.IsNullOrWhiteSpace(line) && !line.TrimStart().StartsWith("//", StringComparison.Ordinal) &&
-                line.TakeWhile(char.IsWhiteSpace).Count() <= indent)
+            if (inFence)
             {
-                break;
+                // The parser consumes raw body and closing lines regardless of indentation.
+                if (CodeBlockParser.IsClosingFence(line)) inFence = false;
+            }
+            else
+            {
+                if (!line.IsBlank && line.Indent <= header.Indent)
+                {
+                    break;
+                }
+
+                inFence = CodeBlockParser.IsOpeningFence(line, languages);
             }
             end++;
         }
