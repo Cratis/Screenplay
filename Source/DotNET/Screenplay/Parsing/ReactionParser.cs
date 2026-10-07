@@ -256,7 +256,7 @@ internal static partial class ReactionParser
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
-            if (LineText.FirstWord(child.Content) == "on")
+            if (RefusalPrefixRegex().IsMatch(child.Content))
             {
                 if (ParseRefusal(context, child) is { } refusal) refusals.Add(refusal);
                 continue;
@@ -334,7 +334,7 @@ internal static partial class ReactionParser
         };
     }
 
-    [GeneratedRegex(@"^on\s+refused\b", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^on\s+refused\b(?=$|\s+by\b)", RegexOptions.None, 1000)]
     private static partial Regex RefusalPrefixRegex();
 
     [GeneratedRegex(@"^on\s+refused(?:\s+by\s+(validation|constraint|authorization)(?:\s+([A-Za-z_]\w*(?:\.\w+)*))?)?$", RegexOptions.None, 1000)]

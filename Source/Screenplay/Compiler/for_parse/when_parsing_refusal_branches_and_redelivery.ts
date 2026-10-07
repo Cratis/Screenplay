@@ -21,6 +21,14 @@ class visited_nodes extends ScreenplaySyntaxWalker {
 }
 
 describe('when parsing refusal branches and redelivery', () => {
+    it.each(['on', '@on'])('should retain the invocation mapping named %s', property => {
+        const result = parse(`module Billing\n  feature Claims\n    slice Automation Claiming\n      reaction Claimer\n        when Approved\n          invokes Claim\n            ${property} = "value"`);
+        result.diagnostics.should.be.empty;
+        const invocation = slice(result.value).reactions[0].triggers[0].invokes[0];
+        expect(invocation.onRefused).toEqual([]);
+        expect(invocation.mappings![0]).toMatchObject({ property: 'on', source: { kind: 'LiteralExpressionSyntax', value: 'value' } });
+    });
+
     it('should retain the ordered selectors and branch effects', () => {
         parse(source).diagnostics.should.be.empty;
         const branches = slice(application()).reactions[0].triggers[0].invokes[0].onRefused!;
