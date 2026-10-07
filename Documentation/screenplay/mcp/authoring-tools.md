@@ -263,7 +263,7 @@ executable-model/catalog preservation for `PLAY0471`. For example, an inferred
 event that conflicts with a specification's asserted fields is not listed.
 `PLAY0479` verifies all spellings together once per document and snapshot; occurrence
 repairs are offered only when that document migration passes.
-`PLAY0516` preserves catalog revision, executable readiness, documents, placements,
+`PLAY0516` preserves existing catalog assignments, executable readiness, documents, placements,
 comments and simulated presentation ranks. When both models bind, their ESM bytes
 must match. When neither binds, merged syntax must match modulo only sibling
 modules/features/slices/import order and approved explicit import pins; admission
@@ -271,8 +271,11 @@ diagnostics must retain the same code/severity multiset. One-sided model availab
 and new errors/warnings are refused. Only already placed files at the same placement
 may be pinned, and the glob remains. A prefix can require several pins; no other
 nodes may be added. A multi-pin proposal is one typed replacement of the import's parent container that keeps every existing node and comment and only inserts the pins before the glob.
-Provisional document identities that would change the catalog
-prevent a repair. Rediscover after each applied move or pin instead of combining
+In a fresh workspace, a proposal may establish missing document assignments using
+only the documents' existing IDs and stable keys. Every existing assignment, origin
+and event contract revision must remain unchanged; any other catalog change refuses
+the repair. Discovery and proposals do not persist these assignments; only apply does.
+Rediscover after each applied move or pin instead of combining
 recipes from one snapshot. `canFixAll` is true, but each proposal is still verified.
 The MCP pinned-evidence path remains unsupported for `PLAY0516` (`UnsupportedRepair`);
 there is no TypeScript quick fix or VS Code pinned-evidence action for it.
