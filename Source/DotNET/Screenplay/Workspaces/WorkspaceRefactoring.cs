@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Workspaces;
 
@@ -16,7 +17,7 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         WorkspaceAbsenceKeyBindings before,
         WorkspaceAbsenceKeyBindings after,
         Dictionary<SemanticAddress, SemanticAddress> migrations,
-        SemanticAddress renamed,
+        SemanticAddress? renamed,
         string newName)
     {
         var remaining = after.Obligations.ToDictionary(obligation => obligation.Position);
@@ -25,7 +26,7 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             if (!remaining.Remove(previous.Position, out var current) || current.IsKey != previous.IsKey ||
                 previous.Target?.Address is not { } original || current.Target?.Address is not { } address ||
                 !(migrations.GetValueOrDefault(original) ?? original).Equals(address) ||
-                (!previous.IsKey && current.Text != (renamed.Equals(original) ? newName : previous.Text)))
+                (!previous.IsKey && current.Text != (renamed?.Equals(original) == true ? newName : previous.Text)))
             {
                 throw new InvalidWorkspaceAuthoring($"Rename changes absence key binding at '{previous.Occurrence.Handle.Path}' ({previous.Text}). Capture, retargeting, and lost absence keys are not admitted.");
             }
@@ -155,9 +156,10 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         var index = WorkspaceSyntaxIndex.Create(workspace);
         var target = request.Target is null ? null : index.Find(request.Target);
         var compositeProperty = target?.Node is PropertySyntax && target.Parent is { } parent && index.Find(parent)?.Node is TypeSyntax;
-        if (target?.Address is null || (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax)))
+        if (target is null || (target.Address is null && target.Node is not SpecificationExampleSyntax) ||
+            (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or SpecificationExampleSyntax or SpecificationSyntax)))
         {
-            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property, command, event, read model, query, module, feature, or slice declaration handle.");
+            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property, command, event, read model, query, module, feature, slice, example, or specification declaration handle.");
         }
 
         if (WorkspaceReferenceBindings.Name(target.Node) != request.ExpectedName || !Identifier(request.NewName))
@@ -186,7 +188,9 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             throw new InvalidWorkspaceAuthoring($"Cannot prove a rename while absence key '{debt.Text}' at '{Position(workspace.Documents, debt.Occurrence)}' is unresolved ({debt.Reason}). Repair the absence key with a typed edit first.");
         }
 
-        var generations = index.Entries.Where(entry => target.Address.Equals(entry.Address)).Select(entry => entry.Node).OfType<EventSyntax>().ToArray();
+        bool IsTarget(WorkspaceSyntaxEntry entry) => target.Address is { } address ? address.Equals(entry.Address) : target.Handle == entry.Handle;
+
+        var generations = index.Entries.Where(IsTarget).Select(entry => entry.Node).OfType<EventSyntax>().ToArray();
         if (generations.Select(declaration => declaration.Id ?? declaration.Name).Distinct(StringComparer.Ordinal).Skip(1).Any())
         {
             throw new InvalidWorkspaceAuthoring("Event generations have contradictory effective identity pins. Resolve them before renaming.");
@@ -201,7 +205,7 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         var roots = index.Entries.Where(entry => entry.Parent is null).ToDictionary(entry => entry.Handle.Document, entry => WorkspaceSyntaxMutation.Json(entry.Node));
         var touched = new HashSet<DocumentId>();
         var insertsEventPin = false;
-        foreach (var entry in index.Entries.Where(entry => target.Address.Equals(entry.Address)).ToArray())
+        foreach (var entry in index.Entries.Where(IsTarget).ToArray())
         {
             WorkspaceSyntaxMutation.Set(roots[entry.Handle.Document], $"{entry.Handle.Path}/name", request.NewName);
             if (entry.Node is EventSyntax declaration && request.NewName != request.ExpectedName)
@@ -222,13 +226,13 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             var ancestors = Ancestors(entry, index).Where(ancestor => ancestor.Node is ModuleSyntax or FeatureSyntax or SliceSyntax).Reverse().ToArray();
             for (var position = 0; position < ancestors.Length; position++)
             {
-                if (target.Address.Equals(ancestors[position].Address))
+                if (IsTarget(ancestors[position]))
                 {
                     scope[position] = request.NewName;
                 }
             }
 
-            var name = target.Address.Equals(entry.Address) ? request.NewName : declaration.Name;
+            var name = IsTarget(entry) ? request.NewName : declaration.Name;
             var segments = binding.Reference.Text.Split('.');
             var replacement = segments.Length == 1 ? name : string.Join('.', scope.TakeLast(segments.Length - 1).Append(name));
             if (replacement != binding.Reference.Text)
@@ -239,7 +243,7 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         }
 
         // Only absence-key members bound to the renamed composite-type property are rewritten.
-        foreach (var obligation in absence.Obligations.Where(obligation => !obligation.IsKey && target.Address.Equals(obligation.Target!.Address)))
+        foreach (var obligation in absence.Obligations.Where(obligation => !obligation.IsKey && target.Address?.Equals(obligation.Target!.Address) == true))
         {
             WorkspaceSyntaxMutation.Set(roots[obligation.Occurrence.Handle.Document], $"{obligation.Occurrence.Handle.Path}/name", request.NewName);
             touched.Add(obligation.Occurrence.Handle.Document);

@@ -23,7 +23,8 @@ enum WorkspaceReferenceDomain
     Operation,
     System,
     EventSource,
-    EventStream
+    EventStream,
+    Fixture
 }
 
 sealed record WorkspaceReferenceMember(WorkspaceSyntaxEntry Entry, string Member, int? Index, string Text, WorkspaceReferenceDomain Domain, string? Owner = null)
@@ -90,7 +91,7 @@ static class WorkspaceReferenceMembers
         ConstraintSyntax => [("releasedBy", WorkspaceReferenceDomain.Event)],
         ProducesSyntax or SeedEventSyntax or EventSpecSyntax or JoinEventSyntax or ClearWithSyntax or RemoveWithSyntax or
             RemoveViaJoinSyntax or ProjectionEntersOnSyntax or CaptureAppendSyntax or ReducerRuleSyntax => [("event", WorkspaceReferenceDomain.Event)],
-        SpecificationEventSyntax => [("eventType", WorkspaceReferenceDomain.Event)],
+        SpecificationEventSyntax => [("eventType", WorkspaceReferenceDomain.Fixture)],
         EventInteractionTriggerSyntax => [("eventName", WorkspaceReferenceDomain.Event)],
         ConcurrencySyntax => [("eventTypes", WorkspaceReferenceDomain.Event)],
         NamedTriggerSourceSyntax => [("name", WorkspaceReferenceDomain.Trigger)],
@@ -106,11 +107,13 @@ static class WorkspaceReferenceMembers
         TypeRefSyntax => [("name", entry.Parent is { } parent && index.Find(parent)?.Node is QuerySyntax or ScreenDataSyntax
             ? WorkspaceReferenceDomain.View : WorkspaceReferenceDomain.Type)],
         CompositeKeySyntax => [("type", WorkspaceReferenceDomain.Type)],
-        SpecificationCommandSyntax => [("commandType", WorkspaceReferenceDomain.Command)],
+        SpecificationExampleSyntax => [("type", WorkspaceReferenceDomain.Fixture)],
+        SpecificationCommandSyntax => [("commandType", WorkspaceReferenceDomain.Fixture)],
         InvokesSyntax or ScreenActionSyntax => [("command", WorkspaceReferenceDomain.Command)],
         FormSyntax => [("for", WorkspaceReferenceDomain.Command)],
         ReadsSyntax or ProjectionSyntax or ReducerSyntax => [("readModel", WorkspaceReferenceDomain.View)],
-        SpecificationReadModelSyntax or SpecificationAbsentReadModelSyntax => [("name", WorkspaceReferenceDomain.View)],
+        SpecificationReadModelSyntax => [("name", WorkspaceReferenceDomain.Fixture)],
+        SpecificationAbsentReadModelSyntax => [("name", WorkspaceReferenceDomain.View)],
         ScreenDataSyntax or FormPopulateViaQuerySyntax or SpecificationQuerySyntax => [("query", WorkspaceReferenceDomain.Query)],
         ScreenNavigateSyntax => [("screen", WorkspaceReferenceDomain.Screen)],
         PolicyReferenceSyntax => [("name", WorkspaceReferenceDomain.Policy)],

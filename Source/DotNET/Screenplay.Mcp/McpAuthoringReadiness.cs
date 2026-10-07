@@ -9,6 +9,7 @@ namespace Cratis.Screenplay.Mcp;
 sealed class McpAuthoringReadiness(ApplicationSyntax application)
 {
     readonly AuthoringProductionResolver _productions = new(application);
+    readonly EffectiveSpecificationApplication _effective = SpecificationExamples.Expand(application);
     readonly Dictionary<SyntaxNode, SliceSyntax> _owners = Owners(application);
     readonly Dictionary<SyntaxNode, bool> _operations = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<SliceSyntax, string[]> _scopes = Scopes(application);
@@ -127,8 +128,9 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
 
             return [];
         }
-        var candidates = Candidates(specification.When.CommandType);
-        if (candidates.Length == 0 && _imports[specification.When.CommandType].ToArray() is [var imported]) candidates = Candidates(imported.QualifiedName);
+        var command = _effective.Specifications.FirstOrDefault(value => ReferenceEquals(value.Authored, specification))?.Effective.When?.CommandType ?? specification.When.CommandType;
+        var candidates = Candidates(command);
+        if (candidates.Length == 0 && _imports[command].ToArray() is [var imported]) candidates = Candidates(imported.QualifiedName);
 
         return candidates;
     }

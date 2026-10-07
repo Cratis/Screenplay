@@ -45,6 +45,12 @@ Discover `CommandSyntax.response`, `RecordCommandResponseSyntax.fields`, `Scalar
 
 Workspace and catalog revisions, expected nodes, preview and explicit acceptance still apply. Inspect `read-proposal` before `apply`; discovery and preview never write. Generated values, responses, fixtures and return expectations are admitted as ESM v7. Response-only commands report `syntaxOnly: false` and null `executionReadiness`; a command that also uses operations, streams, handlers, exact numeric mode or generated properties on concepts with validation rules remains unadmitted. Null readiness is not proof that the whole application binds or that reference execution has every generation fixture. Canonical `executable-model` byte pages include `generated`, `response`, `generatedValues` and `thenReturns` when present. Pin `expectedModelRevision` and `expectedAttachmentManifestRevision` on continuation; stale revisions refuse without a page. Form response scopes and an official renderer response type remain downstream work. Inline-event extraction can prove its executable-byte invariant for admitted response-bearing commands; other refusal and comment-preservation rules still apply. Rename with `PreserveTrivia` to retain response comments; canonical rename can refuse a proposal that would drop comments. See the [response contract](../commands.md#generated-values-and-responses).
 
+## Typed specification examples
+
+Use `kind: "Example"` with `search-declarations`, `declaration-details`, `find-references` and `dependencies`. Example details report the authored underlying type and destination, with paged `values` and `generatedValues` views. Specification references point to the example; the example's `exampleType` dependency points to its underlying event, command or read model.
+
+`find-fixtures` expands [typed examples](../specifications.md#typed-example-declarations-authoring-syntax) before selecting values. Each assignment reports its effective `target`, `value`, source `location`, and `origin`: `authored`, `example`, or `override`. `example` names the supplying declaration; `overriddenValue` holds the expression value replaced by an override, or null. Generated fixtures and destinations carry the same provenance. Expressions remain syntax, not evaluated results. Example resolution errors refuse the query rather than returning unexpanded values as effective fixtures. Omitted properties are not invented.
+
 ## Event source and stream inventories (syntax-only)
 
 `read-workspace` offers `event-sources`, `event-streams`, `event-source-details`, `event-stream-details` `command-routes` and the paged `event-source-diagnostics` evidence view. Supply `expectedRevision`; continuation pages also pin `expectedCatalogRevision`. Detail views require the exact `authoringKey` from the matching kind's inventory. Keys include application, kind, full owner path and name; physical handles remain separate. Duplicate sources make every child owner ambiguous, even if one duplicate alone declares that child. Detail requests return typed refusal rather than selecting a survivor. The physical inventory retains partial declarations and route candidates from errorful files without granting write eligibility. `inventoryComplete` and authoring diagnostics disclose incomplete parsed extent; otherwise noncolliding ownership is `incomplete`, not falsely `unique`, and confident details refuse with `IncompleteSource`. Parser/import and whole-assembly diagnostics are retained. Unresolved import placement is reported without an authoritative owner or key.
@@ -111,7 +117,7 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `declaration-details` | `address`, `kind`; optional `view` | Summary or paged properties, occurrences, commands, specifications, produces, enum values; explicit syntax view |
 | `find-references` | `address`, `kind` | Paged resolved incoming references and ambiguities, with owners/roles |
 | `dependencies` | `address`, `kind`, direction incoming/outgoing; optional descendants/document | Direct indexed dependencies and resolution candidates |
-| `find-fixtures` | Specification address, role, property, value, scope/document | Paged assignments with type, value and location, including `when append` event payloads (`whenAppendedEvent`) and `for` destinations (`whenAppendedEventDestination`) |
+| `find-fixtures` | Specification address, role, property, value, scope/document | Paged effective assignments with type, value, location and authored/example/override origin, including `when append` event payloads (`whenAppendedEvent`) and `for` destinations (`whenAppendedEventDestination`) |
 | `find-assertion-gaps` | Optional scope/document | Slices without specifications declaring a `then` assertion, including `then denied` |
 | `diagnostics` | Optional `scope`, document | Paged diagnostics, severity counts, scoped declaration counts and affected scopes |
 | `read-document` | Required relative `path` | Exact original UTF-8 byte pages |
@@ -416,7 +422,7 @@ atomic proposal. Disjoint edits in one file compose before validation. Typed
 whole-document replacement can repair parser-invalid source without node handles.
 
 `propose-rename` coordinates logical declarations, fragments, supported typed
-references and assigned identities. It preserves trivia by default. Ambiguity,
+references and assigned identities. Examples and specifications are supported rename targets; underlying event, command and read-model renames update example type references. Examples have no ESM identities. It preserves trivia by default. Ambiguity,
 name capture, opaque text naming the old or new name, unsupported spans or resolver
 disagreement refuse automation. It is not global text replacement or automatic property-schema evolution.
 Event renames retain an existing `id` pin or insert the previous name by default.

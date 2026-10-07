@@ -109,6 +109,9 @@ sealed class McpReadOwnership : ScreenplaySyntaxWalker
     /// <inheritdoc/>
     public override void VisitSpecification(SpecificationSyntax syntax) => Owned(syntax, () => base.VisitSpecification(syntax));
 
+    /// <inheritdoc/>
+    public override void VisitSpecificationExample(SpecificationExampleSyntax syntax) => Owned(syntax, () => base.VisitSpecificationExample(syntax));
+
     internal SyntaxNode? For(SyntaxNode node) => _owners.GetValueOrDefault(node);
 
     void Owned(SyntaxNode owner, Action visit)
