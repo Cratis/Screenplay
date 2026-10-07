@@ -26,6 +26,15 @@ export const topLevelItems: CompletionEntry[] = [
     { label: 'type', insertText: 'type ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares a composite value type — a named shape built from several properties.' },
     { label: 'policy', insertText: 'policy ${1:Name}\n    require ${2:authenticated}', documentation: 'Declares a named authorization rule for commands and queries.' },
     { label: 'module', insertText: 'module ${1:Name}\n    ', documentation: 'Declares the top-level namespace — maps to a bounded context.' },
+    { label: 'domain', insertText: 'domain ${1:Name}', documentation: 'The domain the file belongs to — optional, at most one per file, before everything else.' },
+    { label: 'persona', insertText: 'persona ${1:Name}\n    description "${2:who they are}"', documentation: 'A named role interacting with the application, with the policies it holds.' },
+    { label: 'authentication', insertText: 'authentication\n    provider ${1:Name}\n        ${2:setting} ${3:value}', documentation: 'Declares the identity providers of the application — at most one block per file.' },
+    { label: 'seed', insertText: 'seed\n    for ${1:EventSourceId}\n        ${2:EventType}', documentation: 'Declares events to seed into the event store per event source id.' },
+    { label: 'layout', insertText: 'layout ${1:Name}\n    ${2:slot}', documentation: 'Declares the application shell with named slots.' },
+    { label: 'theme', insertText: 'theme ${1:Name}\n    compatible with ${2:Package}', documentation: 'Declares a theme and the component packages it is compatible with.' },
+    { label: 'ui profile', insertText: 'ui profile ${1:Name}\n    target platform ${2:web}\n    layout ${3:Layout}\n    theme ${4:Theme}', documentation: 'Binds a target platform and size to a layout, theme and component packages.' },
+    { label: 'behavior', insertText: 'behavior ${1:Name}\n    on ${2:click}\n        ${3:execute command}', documentation: 'A named interaction wiring, attached to a screen, form or dialog with `uses`.' },
+    { label: 'trigger', insertText: 'trigger ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares an integration signal a reaction can run on.' },
 ];
 
 export const operationItems: CompletionEntry[] = [
@@ -65,11 +74,18 @@ export const moduleItems: CompletionEntry[] = [
     { label: 'import "…"', insertText: 'import "${1:*/*.play}"', documentation: 'Imports `.play` files into this module — their top level is the module\'s body, so they hold features and module members without restating the module.' },
     { label: 'layout', insertText: 'layout ${1:Name}\n    template\n        ${2:slot}', documentation: 'Declares a reusable screen template with named slots.' },
     { label: 'feature', insertText: 'feature ${1:Name}\n    ', documentation: 'Groups related slices into a vertical feature.' },
+    { label: 'description', insertText: 'description "${1:what this module is for}"', documentation: 'A human-readable description.' },
+    { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'Policies that must pass for everything in the module.' },
+    { label: 'screen', insertText: 'screen ${1:Name}\n    data ${2:ReadModel} via query ${3:QueryName}', documentation: 'Declares a module-level UI screen.' },
+    { label: 'dialog', insertText: 'dialog ${1:Name}\n    ${2:body}', documentation: 'Declares a dialog opened over the shell.' },
+    { label: 'form', insertText: 'form ${1:Name} for ${2:Command}\n    field ${3:property} label "${4:Label}"', documentation: 'Declares a form bound to a command.' },
+    { label: 'contribute', insertText: 'contribute to ${1:Navigation}\n    navigate to ${2:Screen}\n    label "${3:Label}"', documentation: 'Contributes an entry to a named slot of the shell, such as navigation.' },
 ];
 
 export const featureItems: CompletionEntry[] = [
     { label: 'import "…"', insertText: 'import "${1:*.play}"', documentation: 'Imports `.play` files into this feature — their top level is the feature\'s body, so they hold slices and nested features without restating where they belong.' },
     { label: 'feature', insertText: 'feature ${1:Name}\n    ', documentation: 'Declares a nested sub-feature.' },
+    { label: 'contribute', insertText: 'contribute to ${1:Navigation}\n    navigate to ${2:Screen}\n    label "${3:Label}"', documentation: 'Contributes an entry to a named slot of the shell, such as navigation.' },
     { label: 'slice StateChange', insertText: 'slice StateChange ${1:Name}\n    ', documentation: 'A command → events flow; something that changes the system.' },
     { label: 'slice StateView', insertText: 'slice StateView ${1:Name}\n    ', documentation: 'A query + projection + screen; something that reads the system.' },
     { label: 'slice Automation', insertText: 'slice Automation ${1:Name}\n    ', documentation: 'A reaction or reducer; something that runs when something happens.' },
@@ -84,6 +100,9 @@ export const sliceItems: CompletionEntry[] = [
     { label: 'command', insertText: 'command ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares a command — an imperative intent that produces events.' },
     { label: 'query', insertText: 'query ${1:Name} => ${2:ReadModel}', documentation: 'Declares a read-side entry point mapping to a return type.' },
     { label: 'query observable', insertText: 'query ${1:Name} => observable ${2:ReadModel}', documentation: 'Declares a live read — the query keeps pushing as the read model changes, instead of answering once.' },
+    { label: 'readmodel', insertText: 'readmodel ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares the shape of a read model — its properties — that a projection, reducer or query fills and returns.' },
+    { label: 'reducer', insertText: 'reducer ${1:Name} => ${2:ReadModel}\n    on ${3:EventType}\n        ```csharp\n        ${4}\n        ```', documentation: 'Declares a reducer building a read model from events with imperative code, for what a projection cannot express.' },
+    { label: 'specification', insertText: 'specification ${1:Name}\n    given ${2:EventType}\n    when ${3:Command}\n    then ${4:EventType}', documentation: 'Given/when/then acceptance criteria for the slice.' },
     { label: 'projection', insertText: 'projection ${1:Name} => ${2:ReadModel}\n    from ${3:EventType}', documentation: 'Declares how events project into a read model (PDL).' },
     { label: 'capture', insertText: 'capture ${1:Name}\n    source ${2:api}', documentation: 'Declares a change data capture converting external data into events (CDL).' },
     { label: 'reaction', insertText: 'reaction ${1:Name}\n    when ${2:Trigger}', documentation: 'Declares behavior that runs when something happens.' },
