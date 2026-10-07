@@ -3,6 +3,7 @@
 
 import { namedRuleContext } from './named-rule-context';
 import { eventSourceHover } from './event-source-authoring';
+import { exampleHover } from './example-authoring';
 import { operationHover } from './operation-authoring';
 import { DocumentSymbols } from './symbols';
 import { responseAnalysis, responseAvailability } from './response-analysis';
@@ -37,6 +38,8 @@ export function hoverContent(
         else if (line[index] === '`' && !inString) inTemplate = !inTemplate;
     }
     if (inString || inTemplate) return null;
+    const fixtureHover = exampleHover(lines, lineIndex, startColumn, endColumn, application);
+    if (fixtureHover) return fixtureHover;
     const sourceHover = eventSourceHover(lines, lineIndex, startColumn, endColumn, application);
     if (sourceHover) return sourceHover;
     const operation = operationHover(lines, lineIndex, startColumn, endColumn, application);

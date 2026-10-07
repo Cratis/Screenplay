@@ -15,7 +15,12 @@ export interface CompletionEntry {
 
 const fenced = (tag: string) => `\`\`\`${tag}\n\${1}\n\`\`\``;
 
+export const exampleDeclarationItems: CompletionEntry[] = [
+    { label: 'example', insertText: 'example ${1:Name} : ${2:Type}\n    ${3:property} = ${4:value}', documentation: 'One possibly partial event, command or read-model fixture. Step assignments override its values; no implicit defaults.' },
+];
+
 export const topLevelItems: CompletionEntry[] = [
+    ...exampleDeclarationItems,
     { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
     { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system; not admitted by any supported executable model (ESM) version yet.' },
     { label: 'import', insertText: 'import ${1:Module}.${2:Type}', documentation: 'Imports a type from another module by its qualified name.' },
@@ -62,12 +67,14 @@ export const typeItems: CompletionEntry[] = [
 ];
 
 export const moduleItems: CompletionEntry[] = [
+    ...exampleDeclarationItems,
     { label: 'import "…"', insertText: 'import "${1:*/*.play}"', documentation: 'Imports `.play` files into this module — their top level is the module\'s body, so they hold features and module members without restating the module.' },
     { label: 'layout', insertText: 'layout ${1:Name}\n    template\n        ${2:slot}', documentation: 'Declares a reusable screen template with named slots.' },
     { label: 'feature', insertText: 'feature ${1:Name}\n    ', documentation: 'Groups related slices into a vertical feature.' },
 ];
 
 export const featureItems: CompletionEntry[] = [
+    ...exampleDeclarationItems,
     { label: 'import "…"', insertText: 'import "${1:*.play}"', documentation: 'Imports `.play` files into this feature — their top level is the feature\'s body, so they hold slices and nested features without restating where they belong.' },
     { label: 'feature', insertText: 'feature ${1:Name}\n    ', documentation: 'Declares a nested sub-feature.' },
     { label: 'slice StateChange', insertText: 'slice StateChange ${1:Name}\n    ', documentation: 'A command → events flow; something that changes the system.' },
@@ -77,6 +84,7 @@ export const featureItems: CompletionEntry[] = [
 ];
 
 export const sliceItems: CompletionEntry[] = [
+    ...exampleDeclarationItems,
     { label: 'operation', insertText: 'operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type}', documentation: 'Reusable slice-owned operation intent; not admitted by any supported executable model (ESM) version yet.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
     { label: 'event', insertText: 'event ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares an event type — an immutable, past-tense fact.' },

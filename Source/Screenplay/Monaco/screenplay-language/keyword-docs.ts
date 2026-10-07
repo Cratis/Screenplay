@@ -10,6 +10,7 @@ export const handlerIntentDocs = {
 };
 
 export const keywordDocs: Record<string, string> = {
+    example: 'One typed, possibly partial fixture: `example <Name> : <EventOrCommandOrReadModel>`. Use its name in a matching specification step; assignments override example values without changing matching or supplying defaults.',
     domain: 'The domain the file belongs to — optional, at most one per file, before everything else.',
     import: 'Imports a type from another module by its qualified name — `import Module.Type` — making it available by its short name; or, quoted, other `.play` files by path or glob — `import "Orders/**/*.play"`, relative to this file\'s folder. Written inside a module or feature, a file import places the imported files there: their top level is that module\'s or feature\'s body.',
     concept: 'A formalized value type wrapping a primitive. Attributes such as `@pii` travel with every usage, optionally with a `<attribute> reason "..."` line saying why.',

@@ -25,10 +25,15 @@
         { "include": "#description-block" },
         { "include": "#projection-block" },
         { "include": "#capture-block" },
+        { "include": "#example-header" },
         { "include": "#keywords" },
         { "include": "#common" }
     ],
     "repository": {
+        "example-header": {
+            "match": "^\\s*(example)\\s+([A-Z][\\p{L}\\p{Mn}\\p{Nd}\\p{Pc}&&[\\x{0000}-\\x{FFFF}]]*)\\s*(:)\\s*([A-Z](?:[\\p{L}\\p{Mn}\\p{Nd}\\p{Pc}&&[\\x{0000}-\\x{FFFF}]]|[.])*)(?=\\s*(?://.*)?$)",
+            "captures": { "1": { "name": "keyword.control.screenplay" }, "2": { "name": "entity.name.type.screenplay" }, "3": { "name": "keyword.operator.screenplay" }, "4": { "name": "entity.name.type.screenplay" } }
+        },
         "numeric-preamble": {
             "match": "^(?:\\uFEFF)?(numbers)([ \\t]+)(exact)(?=[ \\t]*(?:(?://|#).*)?$)",
             "captures": { "1": { "name": "keyword.control.screenplay" }, "3": { "name": "keyword.other.screenplay" } }
@@ -218,7 +223,7 @@
                     }
                 },
                 {
-                    "match": "^\\s*(domain|import|concept|type|policy|persona|authentication|module|layout|feature|slice|event|command|query|reaction|trigger|screen|constraint|specification|seed)\\b",
+                    "match": "^\\s*(domain|import|concept|type|policy|persona|authentication|module|layout|feature|slice|event|command|query|reaction|trigger|screen|constraint|specification|example|seed)\\b",
                     "captures": {
                         "1": { "name": "keyword.control.screenplay" }
                     }
