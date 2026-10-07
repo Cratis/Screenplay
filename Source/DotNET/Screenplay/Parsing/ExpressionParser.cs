@@ -52,6 +52,11 @@ internal static partial class ExpressionParser
             return literal;
         }
 
+        if (text == "$refusal" || text.StartsWith("$refusal.", StringComparison.Ordinal))
+        {
+            return new RefusalExpressionSyntax(text == "$refusal" ? string.Empty : text["$refusal.".Length..], location);
+        }
+
         if (text == "$eventSourceId")
         {
             return new EventSourceIdExpressionSyntax(location);

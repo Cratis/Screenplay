@@ -21,6 +21,12 @@ public class when_printing_refusal_branches_and_redelivery : given.a_printer
                 message String
               command Claim
                 id String
+                produces Claimed
+                  id = id
+              event Claimed
+                id String
+              constraint OneClaim
+                unique event Claimed
               reaction Claimer
                 when Approved
                   id
@@ -60,6 +66,8 @@ public class when_printing_refusal_branches_and_redelivery : given.a_printer
     SliceSyntax Slice => _roundtrip.Reparsed.Value!.Modules.Single().Features.Single().Slices.Single();
     InvokesSyntax Invocation => Slice.Reactions.Single().Triggers.Single().Invokes!.Single();
 
+    [Fact] void should_validate_the_source() => _roundtrip.Original!.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_validate_the_reparsed_source() => _roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
     [Fact] void should_keep_branch_order() => Invocation.OnRefused.Select(branch => branch.Selector).ShouldContainOnly("constraint", "validation", "any", "authorization");
     [Fact] void should_keep_the_named_constraint() => Invocation.OnRefused.First().Constraint.ShouldEqual("OneClaim");
     [Fact] void should_keep_the_production_mapping_members() => Invocation.OnRefused.First().Produces.Single().Mappings.Select(mapping => ((RefusalExpressionSyntax)mapping.Source).Member).ShouldContainOnly("reason", "constraint", "message");
