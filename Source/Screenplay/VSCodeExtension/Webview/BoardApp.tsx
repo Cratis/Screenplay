@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { EventModelBoard, EventModelPresentationProvider, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
 import { ToolbarButton } from '@cratis/components/Toolbar';
 import { DependencyMapView, DependencyView } from '@cratis/screenplay-views';
@@ -26,6 +26,25 @@ export const BoardApp = () => {
     const [board, setBoard] = useState<Board | undefined>();
     const [view, setView] = useState(DependencyView.Board);
     const [presentation, changePresentation] = usePresentation();
+    const boardHost = useRef<HTMLDivElement>(null);
+    const focusAfterSwitch = useRef(false);
+    const changeView = (next: DependencyView) => {
+        if (next === view) return;
+        if (next === DependencyView.Map) {
+            // The pinned board portals menus to body and dismisses them only on an outside
+            // pointerdown. Dismiss before hiding it, without resetting the canvas or grid.
+            boardHost.current?.ownerDocument.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+        }
+        focusAfterSwitch.current = true;
+        setView(next);
+    };
+    useEffect(() => {
+        if (!focusAfterSwitch.current) return;
+        focusAfterSwitch.current = false;
+        const selector = view === DependencyView.Board ? '.screenplay-board-view' : '.screenplay-dependency-map-host';
+        const label = view === DependencyView.Board ? 'Event model board' : 'Module and feature dependencies';
+        boardHost.current?.querySelector<HTMLButtonElement>(`${selector} button[aria-label="${label}"]`)?.focus();
+    }, [view]);
 
     useEffect(() => {
         const receive = (event: MessageEvent<ExtensionToBoardMessage>) => {
@@ -54,11 +73,11 @@ export const BoardApp = () => {
     }
     const showSource = (line?: number, path?: string) => vscode.postMessage({ type: 'showSource', line, path });
     const tools = <>
-        <ToolbarButton text='Board' title='Event model board' active={view === DependencyView.Board} tooltipPosition='bottom' onClick={() => setView(DependencyView.Board)} />
-        <ToolbarButton text='Map' title='Module and feature dependencies' active={view === DependencyView.Map} tooltipPosition='bottom' onClick={() => setView(DependencyView.Map)} />
+        <ToolbarButton text='Board' title='Event model board' active={view === DependencyView.Board} tooltipPosition='bottom' onClick={() => changeView(DependencyView.Board)} />
+        <ToolbarButton text='Map' title='Module and feature dependencies' active={view === DependencyView.Map} tooltipPosition='bottom' onClick={() => changeView(DependencyView.Map)} />
     </>;
     return (
-        <div className='screenplay-board'>
+        <div ref={boardHost} className='screenplay-board'>
             <Problems problems={board.problems} onShowSource={showSource} />
             <div className='screenplay-board__canvas'>
                 <div className={`screenplay-board-view${view !== DependencyView.Board ? ' is-hidden' : ''}`} aria-hidden={view !== DependencyView.Board} inert={view !== DependencyView.Board}>

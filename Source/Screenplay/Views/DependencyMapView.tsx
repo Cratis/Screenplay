@@ -37,9 +37,9 @@ export const DependencyMapView = ({ map, selectedEdgeId, onShowSource }: Depende
     const tabStop = focusedKey && focusableKeys.includes(focusedKey) ? focusedKey : focusableKeys[0];
     const selectedEdge = edges.find(edge => edge.id === selection);
     const selectedNode = positions.get(selection ?? '');
-    const labelOf = (edge: DependencyMapEdge) => dependencyKinds.flatMap(kind => {
+    const labelOf = (edge: DependencyMapEdge, withUnits = false) => dependencyKinds.flatMap(kind => {
         const count = edge.byKind[kind] ?? 0;
-        return count > 0 ? [`${dependencyKindLabels[kind]} ${count}`] : [];
+        return count > 0 ? [`${dependencyKindLabels[kind]} ${count}${withUnits ? ` ${count === 1 ? 'reference' : 'references'}` : ''}`] : [];
     }).join(' · ');
     const accessibleLabelOf = (edge: DependencyMapEdge) => `${nameOf(positions.get(edge.source)!)} ${dependencyKinds.filter(kind => (edge.byKind[kind] ?? 0) > 0).map(kind => dependencyKindLabels[kind]).join(', ')} ${nameOf(positions.get(edge.target)!)}, ${edge.sliceEdges} ${edge.sliceEdges === 1 ? 'slice pair' : 'slice pairs'}`;
     const selectWithKeyboard = (event: KeyboardEvent<SVGGElement>, key: string) => {
@@ -84,7 +84,7 @@ export const DependencyMapView = ({ map, selectedEdgeId, onShowSource }: Depende
                             onClick={event => { event.currentTarget.focus(); setSelection(edge.id); }} onKeyDown={event => selectWithKeyboard(event, edge.id)}>
                             <path d={route.path} className='screenplay-dependency-map__edge-hit' />
                             <path d={route.path} fill='none' strokeDasharray={edge.crossing ? '8 4' : undefined} markerEnd={`url(#${markerId})`} />
-                            <title>{labelOf(edge)}</title>
+                            <title>{`${edge.sliceEdges} ${edge.sliceEdges === 1 ? 'slice pair' : 'slice pairs'} · ${labelOf(edge, true)}`}</title>
                             <text x={route.labelX} y={route.labelY} textAnchor='middle' textLength={Math.min(route.labelWidth, count.length * 7)} lengthAdjust='spacingAndGlyphs'>{count}</text>
                         </g>;
                     })}

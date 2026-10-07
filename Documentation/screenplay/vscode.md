@@ -75,9 +75,10 @@ appear on the right. Producers come first, so arrows point from consumer to prod
 
 Choose **Modules** or **Features** for the edges. By default, the map shows
 **uses facts from**, **reacts to**, and **decides from**; check the other kinds to
-include them. Edge labels count references. Select an edge to list every contributing
-slice pair, its reference and source location. Click a slice pair to open its source.
-Use Tab or arrow keys to focus nodes and edges, Enter to select, and Escape to clear.
+include them. Edge labels count slice pairs. Select an edge to list the references
+under each slice pair. Click a reference's source location to open its source.
+Tab moves into the drawing; arrow keys move between nodes and edges, Enter selects,
+and Escape clears.
 Choose **Board** to return to the timeline; map selections do not highlight the board.
 
 ## View options

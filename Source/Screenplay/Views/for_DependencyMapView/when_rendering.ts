@@ -35,7 +35,7 @@ describe('when rendering a dependency map', () => {
     it('should group references under a single slice-pair row', () => (markup.match(/class="screenplay-dependency-map__slice-pair"/g) ?? []).length.should.equal(1));
     it('should nest every reference below its slice pair', () => markup.should.contain('<ul><li>uses facts from: TimeRecorded'));
     it('should cap line labels to counts while retaining the full title', () => {
-        markup.should.contain('<title>uses facts from 2</title>');
+        markup.should.contain('<title>1 slice pair · uses facts from 2 references</title>');
         markup.should.match(/<text[^>]*text-anchor="middle"[^>]*>1<\/text>/);
     });
     it('should check all ordering kinds by default', () => ['usesFactsFrom', 'reactsTo', 'decidesFrom'].every(kind => (markup.match(/<input[^>]*>/g) ?? []).some(input => input.includes(`value="${kind}"`) && input.includes('checked=""'))).should.be.true);

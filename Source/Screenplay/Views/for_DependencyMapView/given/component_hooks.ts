@@ -15,6 +15,7 @@ export const componentHooks = {
     useId: () => 'map-marker',
     useMemo: <Value>(factory: () => Value) => factory(),
     useEffect: () => undefined,
+    useRef: <Value>(initial: Value) => ({ current: initial }),
     useState: <Value>(initial?: Value | (() => Value)) => {
         const index = hooks.cursor++;
         if (index >= hooks.values.length) hooks.values[index] = typeof initial === 'function' ? (initial as () => Value)() : initial;

@@ -73,9 +73,9 @@ imported bounded contexts appear on the right. Arrows run from consumer to produ
 
 Choose edges between **Modules** or **Features**. The initial filters show
 **uses facts from**, **reacts to**, and **decides from**; enable the other kinds
-when needed. Labels count references. Select an edge to see all the slice pairs
-behind it, with the kind, reference name and source location. Nodes and edges
-accept keyboard focus: Enter selects, arrow keys move focus, and Escape clears.
+when needed. Edge labels count slice pairs. Select an edge to see the references
+under each slice pair, with their kind, name and source location. Tab moves into
+the drawing; arrow keys move between nodes and edges, Enter selects, and Escape clears.
 Choose **Board** to return to the timeline. The map does not change the model or
 highlight the board, and inferred dependencies do not prove executable readiness.
 
