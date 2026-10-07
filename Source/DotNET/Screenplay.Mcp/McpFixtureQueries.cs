@@ -14,7 +14,7 @@ static class McpFixtureQueries
         snapshot.Compilation.Success,
         snapshot.SourceRevision,
         snapshot.Compilation.Diagnostics,
-        coverage = "Specification property assignments and explicit destinations only. Values are syntax, not evaluated expressions. Types resolve only direct fields of an unambiguous local declaration; nested paths, imports and implicit view shapes have no inferred type.",
+        coverage = "Specification property assignments, explicit destinations and authored event routes only. Values are syntax, not evaluated expressions. Types resolve only direct fields of an unambiguous local declaration; nested paths, imports and implicit view shapes have no inferred type.",
         page = McpReadPage<McpFixtureValue>.Create(
             McpFixtureOccurrences.All(snapshot.Index).SelectMany(occurrence => Values(snapshot.Index, occurrence)),
             item => (specification is null || item.Specification.Address == specification) &&
@@ -84,6 +84,20 @@ static class McpFixtureQueries
                 destination.GetType().Name,
                 Value(destination),
                 destination.Location);
+        }
+
+        if (occurrence.Stream is { } stream)
+        {
+            yield return new(occurrence.Specification, $"{occurrence.Role}Stream", occurrence.Ordinal, occurrence.Reference.Name, candidates, "stream", null, nameof(SpecificationStreamSyntax), $"{stream.EventSource}.{stream.Stream}", stream.ReferenceLocation);
+            if (stream.StreamId is { } streamId)
+            {
+                yield return new(occurrence.Specification, $"{occurrence.Role}StreamId", occurrence.Ordinal, occurrence.Reference.Name, candidates, "streamId", null, streamId.Source.GetType().Name, Value(streamId.Source), streamId.Location);
+            }
+        }
+
+        if (occurrence.NoStream is { } noStream)
+        {
+            yield return new(occurrence.Specification, $"{occurrence.Role}NoStream", occurrence.Ordinal, occurrence.Reference.Name, candidates, "no stream", null, nameof(SpecificationNoStreamSyntax), true, noStream.Location);
         }
     }
 
