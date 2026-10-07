@@ -92,14 +92,18 @@ export function exampleAnalysis(syntax: unknown, path: string, lines: string[], 
         const merge = (base: readonly PropertyMappingSyntax[], overrides: readonly PropertyMappingSyntax[], prefix = '') => {
             if (new Set(base.map(value => value.property)).size !== base.length || new Set(overrides.map(value => value.property)).size !== overrides.length) return null;
             const result = new Map(base.map(value => [value.property, { value, origin: 'example', replaced: undefined as PropertyMappingSyntax | undefined }]));
-            for (const value of overrides) result.set(value.property, { value, origin: example ? 'override' : 'authored', replaced: result.get(value.property)?.value });
+            for (const value of overrides) {
+                const replaced = result.get(value.property)?.value;
+                result.delete(value.property);
+                result.set(value.property, { value, origin: replaced ? 'override' : 'authored', replaced });
+            }
             return [...result.values()].map(({ value, origin, replaced }) => `${prefix}${value.property} = ${expressionText(value.source)} — ${origin}${origin === 'example' ? ` ${example!.name}` : ''}${replaced ? ` (replaces ${expressionText(replaced.source)} from ${example!.name})` : ''}`);
         };
         const properties = merge(example?.values ?? [], values);
         const fixtures = merge(example?.generatedValues ?? [], generated, 'generated ');
         if (!properties || !fixtures) return '**Invalid duplicate assignments; no effective values selected.**';
         const selected = destination ?? example?.for;
-        return [...properties, ...fixtures, ...(selected ? [`for ${expressionText(selected)} — ${!example ? 'authored' : destination ? `override${example.for ? ` (replaces ${expressionText(example.for)} from ${example.name})` : ''}` : `example ${example.name}`}`] : [])].join('\n');
+        return [...properties, ...fixtures, ...(selected ? [`for ${expressionText(selected)} — ${destination ? example?.for ? `override (replaces ${expressionText(example.for)} from ${example.name})` : 'authored' : `example ${example!.name}`}`] : [])].join('\n');
     };
     const hovers = new Map<number, { start: number; length: number; content: string }>();
     for (const declaration of declarations.filter(node => node.example?.location.path === path)) {
@@ -120,7 +124,7 @@ export function exampleAnalysis(syntax: unknown, path: string, lines: string[], 
         for (const { step, name, expected, values, generated, destination, prefix } of steps.filter(entry => entry.step.location.path === path)) {
             const resolved = unique(name, scope);
             const competing = candidates(name, scope).some(node => node.example);
-            if (!resolved?.fixtureKind && !resolved?.example && !competing) continue;
+            if (!resolved?.example && (resolved || !competing)) continue;
             const line = step.location.line - 1;
             const start = withoutComment(lines[line] ?? '').match(prefix)?.[0].length;
             if (start === undefined) continue;

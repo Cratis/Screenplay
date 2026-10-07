@@ -58,16 +58,29 @@ describe('when authoring typed examples', () => {
         expect(hover(fixture, 'when FeatureInput', 'FeatureInput')).toContain('total = 7000 — override');
         expect(hover(fixture, 'example RootInvoice : Invoices.Registration.RegisterInvoice.InvoiceRegistered', 'RootInvoice')).toContain('total = 1000 — example RootInvoice');
     });
-    it('should distinguish authored fixture origins from example overrides', () => {
+    it('should not show example hovers for plain types, including a wrong-kind step', () => {
         const plain = fixture.map(line => line.replace('when AcmeInput total = 5000', 'when RegisterInvoice total = 5000'));
-        expect(hover(plain, 'when RegisterInvoice total = 5000', 'RegisterInvoice')).toContain('total = 5000 — authored');
+        expect(hover(plain, 'when RegisterInvoice total = 5000', 'RegisterInvoice')?.includes('— authored') ?? false).toBe(false);
+        const mismatched = fixture.map(line => line.replace('given RootInvoice total = 3000', 'given RegisterInvoice total = 3000'));
+        expect(hover(mismatched, 'given RegisterInvoice total = 3000', 'RegisterInvoice')?.includes('Example kind mismatch') ?? false).toBe(false);
     });
     it('should display structured values and overridden destinations without inventing omitted properties', () => {
         const source = ['type Address', '  street String', 'event E', '  address Address', '  amount Int', 'example One : E', '  address = { "street": "first" }', '  for "one"', 'specification S', '  when append One amount = 42', '    for "two"'];
         const content = hover(source, 'when append One amount = 42', 'One');
         expect(content).toContain('address = { "street": "first" } — example One');
-        expect(content).toContain('amount = 42 — override');
+        expect(content).toContain('amount = 42 — authored');
         expect(content).toContain('for "two" — override (replaces "one" from One)');
+    });
+    it('should mark a new destination and generated fixture as authored', () => {
+        const source = ['concept Token : Uuid', 'command C', '  id Token generated identifier', '  token Token generated', 'example Input : C', 'specification S', '  when Input', '    for "11111111-1111-1111-1111-111111111111"', '    generated token = "22222222-2222-2222-2222-222222222222"', '  then no events'];
+        const content = hover(source, 'when Input', 'Input');
+        expect(content).toContain('for "11111111-1111-1111-1111-111111111111" — authored');
+        expect(content).toContain('generated token = "22222222-2222-2222-2222-222222222222" — authored');
+    });
+    it('should list retained inherited values before authored overrides like the effective API', () => {
+        const source = ['event E', '  a Int', '  b Int', 'example Fact : E', '  a = 1', '  b = 2', 'specification S', '  given Fact a = 3'];
+        const content = hover(source, 'given Fact a = 3', 'Fact')!;
+        expect(content.indexOf('b = 2')).toBeLessThan(content.indexOf('a = 3'));
     });
     it('should display parser-owned refusal expressions without claiming executable validity', () => {
         const source = ['event Refused', '  reason String', 'example Refusal : Refused', '  reason = $refusal.reason', 'specification S', '  given Refusal'];

@@ -109,7 +109,7 @@ specification RegisteringAcme
   then InvoiceRegistered total = 5000
 ```
 
-Here, `total = 5000` overrides `1000` inline, and the indented `currency = "NOK"` overrides `"EUR"`. Unchanged example values are inherited. Override a structured object or list as a whole; there is no recursive member merge. An indented `for` replaces the example's destination, and `generated` fixtures merge by property name. The same assignment spellings also work on ordinary type names without an example.
+Here, `total = 5000` overrides `1000` inline, and the indented `currency = "NOK"` overrides `"EUR"`. Unchanged example values are inherited. A value supplied only by the step is authored, not an override, including a new `for` destination or `generated` fixture. Override a structured object or list as a whole; there is no recursive member merge. An indented `for` replaces the example's destination, and `generated` fixtures merge by property name. The same assignment spellings also work on ordinary type names without an example.
 
 | Example kind | Supported step slots |
 | --- | --- |
@@ -117,7 +117,7 @@ Here, `total = 5000` overrides `1000` inline, and the indented `currency = "NOK"
 | Command | `when <Example>` |
 | Read model | `given readmodel <Example>`, `then readmodel <Example> [exactly]` |
 
-Examples share the type namespace: a name colliding with an event, command, read model, type, concept, or import is an error. The underlying type resolves in the example's declaration scope, not where it is used. Examples always use the current event generation and cannot inherit from another example. A step of the wrong kind reports a suggested corrected spelling.
+Examples share the type namespace: a name colliding with an event, command, read model, type, concept, or import is an error. The underlying type resolves in the example's declaration scope, not where it is used. Examples always use the current event generation and cannot inherit from another example. A step of the wrong kind reports a suggested corrected spelling. At executable binding, a `when` command must belong to the specification's own slice; a qualified command or example from another slice cannot select a same-named local command.
 
 Syntax consumers can call `SpecificationExamples.Expand(application)` in `Cratis.Screenplay.Syntax.Specifications`. The result contains the effective application, authored/effective specification pairs, resolution diagnostics, and each step's effective values with `Authored`, `Example`, or `Override` provenance. Overrides retain the replaced expression; all expressions retain their source locations. The authored syntax is not changed. Check diagnostics before consuming the effective view. For a standalone specification, call `SpecificationExamples.Expand(specification, declarations, scope)`, supplying the owning application and its module/feature/slice scope segments; document-scoped examples are included automatically.
 
