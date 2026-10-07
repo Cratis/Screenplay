@@ -43,7 +43,7 @@ static class McpSemanticDiff
             before.Assignments.TryGetValue(id, out var old);
             after.Assignments.TryGetValue(id, out var current);
             var address = current?.Address ?? old!.Address;
-            var kind = address.Kind.ToString();
+            var kind = Kind(address);
             var previous = old is null ? null : Address(old.Address);
             var next = current is null ? null : Address(current.Address);
             if (old is null || current is null)
@@ -57,8 +57,11 @@ static class McpSemanticDiff
 
             if (!old.Address.Equals(current.Address))
             {
-                var change = old.Address.Name != current.Address.Name ? "renamed" : "moved";
-                Add(new("declarations", change, id, kind, previous, next, BeforeDocuments: before.Documents(id), AfterDocuments: after.Documents(id), MoveKind: change == "moved" ? "owner" : null, BeforeOwner: Owner(old.Address), AfterOwner: Owner(current.Address)));
+                if (!SameDeclarationLocation(old.Address, current.Address))
+                {
+                    var change = old.Address.Name != current.Address.Name ? "renamed" : "moved";
+                    Add(new("declarations", change, id, kind, previous, next, BeforeDocuments: before.Documents(id), AfterDocuments: after.Documents(id), MoveKind: change == "moved" ? "owner" : null, BeforeOwner: Owner(old.Address), AfterOwner: Owner(current.Address)));
+                }
                 changes.Add(new("identities", "migrated", id, kind, previous, next));
             }
             var oldNodes = before.Nodes.GetValueOrDefault(id) ?? [];
@@ -168,7 +171,7 @@ static class McpSemanticDiff
             }
             else
             {
-                changes.Add(new("events", "generation-removed", id, "EventContract", previous, next, ContractBreaking: true, GenerationCovered: false, BeforeGeneration: old.Generation));
+                changes.Add(new("events", "generation-removed", id, "Event", previous, next, ContractBreaking: true, GenerationCovered: false, BeforeGeneration: old.Generation));
                 if (id is not null) changedIds.Add(id);
             }
         }
@@ -177,7 +180,7 @@ static class McpSemanticDiff
             var previousGeneration = rightEvents.LastOrDefault(node => node.Generation < current.Generation);
             var baseline = previousGeneration is null ? null : leftEvents.SingleOrDefault(node => node.Generation == previousGeneration.Generation);
             var covered = previousGeneration is not null && current.HasGenerationMarker && (baseline is null || Shape(baseline) == Shape(previousGeneration));
-            changes.Add(new("events", "generation-added", id, "EventContract", previous, next, GenerationCovered: covered, BeforeGeneration: previousGeneration?.Generation, AfterGeneration: current.Generation));
+            changes.Add(new("events", "generation-added", id, "Event", previous, next, GenerationCovered: covered, BeforeGeneration: previousGeneration?.Generation, AfterGeneration: current.Generation));
             if (id is not null) changedIds.Add(id);
             if (previousGeneration is not null) Compare(previousGeneration, current, covered);
         }
@@ -194,7 +197,7 @@ static class McpSemanticDiff
                     (_, false) => "property-removed",
                     _ => "property-type-changed"
                 };
-                changes.Add(new("events", change, id, "EventContract", previous, next, property, BeforeType: left.GetValueOrDefault(property), AfterType: right.GetValueOrDefault(property), ContractBreaking: true, GenerationCovered: covered, BeforeGeneration: old.Generation, AfterGeneration: current.Generation));
+                changes.Add(new("events", change, id, "Event", previous, next, property, BeforeType: left.GetValueOrDefault(property), AfterType: right.GetValueOrDefault(property), ContractBreaking: true, GenerationCovered: covered, BeforeGeneration: old.Generation, AfterGeneration: current.Generation));
                 if (id is not null) changedIds.Add(id);
             }
         }
@@ -283,7 +286,9 @@ static class McpSemanticDiff
 
     static string? Hash(string? value) => value is null ? null : Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
 
-    static string Owner(SemanticAddress address) => string.Join('.', address.Parts.SkipLast(1).Where(part => part.Kind is not (SemanticAddressPartKind.Application or SemanticAddressPartKind.OwnerKind)).Select(part => part.Key));
+    static bool SameDeclarationLocation(SemanticAddress before, SemanticAddress after) => before.Kind == after.Kind && before.Parts.Where(part => part.Kind != SemanticAddressPartKind.Generation).SequenceEqual(after.Parts.Where(part => part.Kind != SemanticAddressPartKind.Generation));
+
+    static string Owner(SemanticAddress address) => string.Join('.', address.Parts.SkipLast(1).Where(part => part.Kind is not (SemanticAddressPartKind.Application or SemanticAddressPartKind.OwnerKind or SemanticAddressPartKind.Generation)).Select(part => part.Key));
 
     static string Address(SemanticAddress address) => string.Join('.', address.Parts.Where(part => part.Kind is not (SemanticAddressPartKind.Application or SemanticAddressPartKind.OwnerKind or SemanticAddressPartKind.Generation)).Select(part => part.Key));
 
@@ -297,7 +302,7 @@ static class McpSemanticDiff
             right.TryGetValue(id, out var current);
             if (old is null || current is null || !old.Address.Equals(current.Address))
             {
-                changes.Add(new("identities", IdentityChange(old, current), null, "EventContractIdentity", old is null ? null : Address(old.Address), current is null ? null : Address(current.Address), EventContractId: id));
+                changes.Add(new("identities", IdentityChange(old, current), null, "Event", old is null ? null : Address(old.Address), current is null ? null : Address(current.Address), EventContractId: id));
             }
         }
     }
@@ -408,8 +413,9 @@ static class McpSemanticDiff
             var targets = descendants
                 ? index.Declarations.Where(declaration => (declaration.Address == address && declaration.Kind == kind) || declaration.Address.StartsWith($"{address}.", StringComparison.Ordinal))
                 : index.Find(address, kind);
+            var recordKind = id is null ? kind : Kind(Assignments[id].Address);
             return targets.SelectMany(index.Incoming).Distinct().Where(resolution => resolution.Reference.Owner is not null && (!descendants || (resolution.Reference.Owner.Address != address && !resolution.Reference.Owner.Address.StartsWith($"{address}.", StringComparison.Ordinal))))
-                .Select(resolution => new Change("dependants", "direct", id, kind, snapshot == "before" ? address : null, snapshot == "after" ? address : null, Snapshot: snapshot, DependantAddress: resolution.Reference.Owner!.Address, Role: resolution.Reference.Role, Resolution: new McpReferenceEdge(resolution.Reference, resolution.Candidates).Resolution)).Distinct();
+                .Select(resolution => new Change("dependants", "direct", id, recordKind, snapshot == "before" ? address : null, snapshot == "after" ? address : null, Snapshot: snapshot, DependantAddress: resolution.Reference.Owner!.Address, Role: resolution.Reference.Role, Resolution: new McpReferenceEdge(resolution.Reference, resolution.Candidates).Resolution)).Distinct();
         }
     }
 

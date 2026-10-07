@@ -456,8 +456,12 @@ See [the AST API](../ast-authoring.md) and [authoring procedure](authoring-tools
 
 `read-proposal` with `view: "semantic-diff"` compares the retained disk baseline
 with the proposal, without applying it. It works without MCP Apps and does not
-execute specifications. Disk changes since proposal creation refuse this view;
-create and review a fresh proposal rather than combining different baselines.
+execute specifications. Changes to `.play` files or the retained
+`.screenplay/identities.json` bytes since proposal creation refuse this view,
+including revision-pinned continuation pages. Pending recovery also refuses
+review; inspect `workspace-state` and explicitly recover the identified operation.
+Create and review a fresh proposal after baseline drift rather than combining
+different baselines.
 
 The `result` contains:
 
@@ -476,7 +480,18 @@ The `result` contains:
 Items are ordered by section, semantic ID, kind, addresses, change kind, member,
 dependency snapshot/address/role and generation. They share `section`, `changeKind`,
 `semanticId`, `kind`, `beforeAddress` and `afterAddress`. Other fields are nullable
-and apply only to the corresponding record:
+and apply only to the corresponding record.
+
+`kind` uses one vocabulary across assigned declarations, authoring fallback,
+event contracts, identities and dependant records. Allowed values are:
+`Application`, `Capture`, `Command`, `Concept`, `Constraint`, `ContributionPoint`,
+`DialogTemplate`, `Event`, `EventSource`, `EventStream`, `Feature`, `Form`,
+`Layout`, `Module`, `Operation`, `Persona`, `Policy`, `Projection`, `Property`,
+`Query`, `QueryArgument`, `Reaction`, `ReadModel`, `Reducer`, `Screen`,
+`ScreenTemplate`, `Slice`, `Specification`, `System`, `Theme`, `Trigger`, `Type`,
+and `UiProfile`. Event contracts use `Event`, and composite types use `Type`;
+`eventContractId` distinguishes event-contract identity records. A property's
+aggregated dependants retain `kind: "Property"`, not the owner's kind.
 
 - **`declarations`**: `added`, `removed`, `renamed`, or `moved`. Catalog semantic
   IDs match declarations across snapshots. Preserved IDs with changed names
@@ -486,6 +501,8 @@ and apply only to the corresponding record:
   reference resolution can change. `moveKind: "document"` identifies layout-only
   moves. `beforeDocuments` and `afterDocuments` are arrays of `{ documentId, path }`
   locations. Only document-only moves receive the no-semantic-change treatment.
+  Adding generation qualification to a preserved property's catalog address is
+  reported as an identity `migrated` record, not a logical owner move.
 - **`events`**: `property-added`, `property-removed`, `property-type-changed`,
   `generation-added`, or `generation-removed`. `member`, `beforeType` and `afterType` describe the
   field (types are canonical typed JSON strings). `contractBreaking` is a

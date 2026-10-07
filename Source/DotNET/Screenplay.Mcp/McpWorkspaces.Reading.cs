@@ -452,7 +452,12 @@ internal sealed partial class McpWorkspaces
     {
         var proposal = Proposal(arguments);
         var view = McpJson.OptionalString(arguments, "view") ?? "changes";
-        if (view == "semantic-diff") Root.Verify(proposal.Before);
+        if (view == "semantic-diff")
+        {
+            McpRecoveryJournal.RefusePending(Root);
+            new McpManagedFiles(Root).Verify(McpState.FileName, StatePlan(proposal).Before);
+            Root.Verify(proposal.Before);
+        }
         var result = view switch
         {
             "semantic-diff" => McpSemanticDiff.Read(proposal, arguments),
