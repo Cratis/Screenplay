@@ -1253,8 +1253,10 @@ module Invoicing
           refresh ListInvoices
         on interval 30 seconds
           refresh ListInvoices
-        action RegisterInvoice
-          navigate to RegisterInvoiceScreen
+        section registerInvoiceInput
+          title "Register invoice"
+          on click
+            navigate to RegisterInvoiceScreen
         section processInvoiceBatchInput
           title "Process a batch"
           on click
@@ -1438,8 +1440,10 @@ module Invoicing
               field customerName  label "Customer"
             section actions
               title "Actions"
-              action ChangeInvoiceStatus
-                navigate to ChangeInvoiceStatusScreen
+              section changeInvoiceStatusInput
+                title "Change invoice status"
+                on click
+                  navigate to ChangeInvoiceStatusScreen
               section cancelInvoiceInput
                 title $strings.invoices.actions.cancel
                 on click
@@ -1652,9 +1656,10 @@ module Invoicing
               ```
           footer
             section actions
-              action RegisterInvoice
-                label $strings.invoices.actions.newInvoice
-                navigate to RegisterInvoiceScreen
+              section registerInvoiceDashboardInput
+                title $strings.invoices.actions.newInvoice
+                on click
+                  navigate to RegisterInvoiceScreen
 
       specification CountingInvoicesAsTheyMove
         given caller
@@ -2047,8 +2052,10 @@ module Invoicing
             field total       label "Total"
             field paid        label "Paid"
             field outstanding label "Outstanding"
-          action RecordPayment
-            navigate to RecordPaymentScreen
+          section recordPaymentInput
+            title "Record payment"
+            on click
+              navigate to RecordPaymentScreen
 
       specification ReducingTheBalanceByAPayment
         given caller
@@ -2190,8 +2197,10 @@ module Invoicing
         title $strings.collections.title
         template Board
           toolbar
-            action RecordPayment
-              navigate to RecordPaymentScreen
+            section recordPaymentInput
+              title "Record payment"
+              on click
+                navigate to RecordPaymentScreen
           due
             data DueInvoice[] via query ListDueInvoices
             table DueInvoice

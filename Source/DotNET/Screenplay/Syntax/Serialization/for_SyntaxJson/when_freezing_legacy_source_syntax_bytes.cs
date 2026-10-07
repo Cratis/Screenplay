@@ -102,13 +102,13 @@ public class when_freezing_legacy_source_syntax_bytes
         })
     };
 
-    // Current shared vectors protect the pre-input click paths. Reconstruct only the six historical
+    // Current shared vectors protect the pre-input click paths. Reconstruct only the historical
     // action-navigation directives and omit the new draft entry point for the frozen legacy sample.
     static IEnumerable<ScreenDirectiveSyntax> WithoutSampleInputNavigation(IEnumerable<ScreenDirectiveSyntax> directives) =>
         directives.Where(directive => directive is not ScreenSectionSyntax { Name: "startInvoiceDraftInput" }).Select(directive => directive switch
         {
             ScreenSectionSyntax section when LegacyInputCommand(section.Name) is { } command =>
-                new ScreenActionSyntax(command, null, new ScreenNavigateSyntax(command + "Screen", null, section.Location), section.Location),
+                new ScreenActionSyntax(command, section.Name == "registerInvoiceDashboardInput" ? "$strings.invoices.actions.newInvoice" : null, new ScreenNavigateSyntax(command + "Screen", null, section.Location), section.Location),
             ScreenSectionSyntax section => section with { Directives = WithoutSampleInputNavigation(section.Directives) },
             ScreenTemplateReferenceSyntax template => template with
             {
@@ -119,6 +119,9 @@ public class when_freezing_legacy_source_syntax_bytes
 
     static string? LegacyInputCommand(string section) => section switch
     {
+        "registerInvoiceInput" or "registerInvoiceDashboardInput" => "RegisterInvoice",
+        "changeInvoiceStatusInput" => "ChangeInvoiceStatus",
+        "recordPaymentInput" => "RecordPayment",
         "processInvoiceBatchInput" => "ProcessInvoiceBatch",
         "archiveOldInvoicesInput" => "ArchiveOldInvoices",
         "cancelInvoiceInput" => "CancelInvoice",

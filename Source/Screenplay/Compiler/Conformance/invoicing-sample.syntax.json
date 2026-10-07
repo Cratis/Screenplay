@@ -6488,14 +6488,17 @@
                       "kind": "ScreenBehaviorSyntax"
                     },
                     {
-                      "kind": "ScreenActionSyntax",
-                      "command": "RegisterInvoice",
-                      "label": null,
-                      "navigate": {
-                        "kind": "ScreenNavigateSyntax",
-                        "by": null,
-                        "screen": "RegisterInvoiceScreen"
-                      }
+                      "kind": "ScreenSectionSyntax",
+                      "directives": [
+                        {
+                          "kind": "ScreenTitleSyntax",
+                          "text": "Register invoice"
+                        },
+                        {
+                          "kind": "ScreenBehaviorSyntax"
+                        }
+                      ],
+                      "name": "registerInvoiceInput"
                     },
                     {
                       "kind": "ScreenSectionSyntax",
@@ -7443,14 +7446,17 @@
                                   "text": "Actions"
                                 },
                                 {
-                                  "kind": "ScreenActionSyntax",
-                                  "command": "ChangeInvoiceStatus",
-                                  "label": null,
-                                  "navigate": {
-                                    "kind": "ScreenNavigateSyntax",
-                                    "by": null,
-                                    "screen": "ChangeInvoiceStatusScreen"
-                                  }
+                                  "kind": "ScreenSectionSyntax",
+                                  "directives": [
+                                    {
+                                      "kind": "ScreenTitleSyntax",
+                                      "text": "Change invoice status"
+                                    },
+                                    {
+                                      "kind": "ScreenBehaviorSyntax"
+                                    }
+                                  ],
+                                  "name": "changeInvoiceStatusInput"
                                 },
                                 {
                                   "kind": "ScreenSectionSyntax",
@@ -8533,14 +8539,17 @@
                               "kind": "ScreenSectionSyntax",
                               "directives": [
                                 {
-                                  "kind": "ScreenActionSyntax",
-                                  "command": "RegisterInvoice",
-                                  "label": "$strings.invoices.actions.newInvoice",
-                                  "navigate": {
-                                    "kind": "ScreenNavigateSyntax",
-                                    "by": null,
-                                    "screen": "RegisterInvoiceScreen"
-                                  }
+                                  "kind": "ScreenSectionSyntax",
+                                  "directives": [
+                                    {
+                                      "kind": "ScreenTitleSyntax",
+                                      "text": "$strings.invoices.actions.newInvoice"
+                                    },
+                                    {
+                                      "kind": "ScreenBehaviorSyntax"
+                                    }
+                                  ],
+                                  "name": "registerInvoiceDashboardInput"
                                 }
                               ],
                               "name": "actions"
@@ -9783,14 +9792,17 @@
                           "target": "InvoiceBalanceReadModel"
                         },
                         {
-                          "kind": "ScreenActionSyntax",
-                          "command": "RecordPayment",
-                          "label": null,
-                          "navigate": {
-                            "kind": "ScreenNavigateSyntax",
-                            "by": null,
-                            "screen": "RecordPaymentScreen"
-                          }
+                          "kind": "ScreenSectionSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenTitleSyntax",
+                              "text": "Record payment"
+                            },
+                            {
+                              "kind": "ScreenBehaviorSyntax"
+                            }
+                          ],
+                          "name": "recordPaymentInput"
                         }
                       ],
                       "name": "balance"
@@ -10610,14 +10622,17 @@
                           "kind": "ScreenSlotSyntax",
                           "directives": [
                             {
-                              "kind": "ScreenActionSyntax",
-                              "command": "RecordPayment",
-                              "label": null,
-                              "navigate": {
-                                "kind": "ScreenNavigateSyntax",
-                                "by": null,
-                                "screen": "RecordPaymentScreen"
-                              }
+                              "kind": "ScreenSectionSyntax",
+                              "directives": [
+                                {
+                                  "kind": "ScreenTitleSyntax",
+                                  "text": "Record payment"
+                                },
+                                {
+                                  "kind": "ScreenBehaviorSyntax"
+                                }
+                              ],
+                              "name": "recordPaymentInput"
                             }
                           ],
                           "name": "toolbar"
