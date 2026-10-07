@@ -113,6 +113,23 @@
             "order": ["M.B.Producer", "M.A.Consumer"]
         },
         {
+            "name": "dependency captures reject supplementary identifier characters",
+            "files": {"application.play": "module M\n  feature F\n    slice StateChange Consumer\n      command C\n        reads R𐐀\n        reads R as r𐐀\n        reads R by r𐐀\n        concurrency\n          events E𐐀\n      reducer Fold => View\n        on E𐐀\n      reducer Fold𐐀 => View\n        on E\n      reducer Fold => View𐐀\n        on E"},
+            "edges": [],
+            "implied": [],
+            "cycles": [],
+            "order": ["M.F.Consumer"],
+            "unresolved": ["M.F.Consumer|usesFactsFrom|reduces:E", "M.F.Consumer|usesFactsFrom|reduces:E"]
+        },
+        {
+            "name": "dependency captures retain basic multilingual plane letters",
+            "files": {"application.play": "module M\n  feature F\n    slice StateChange Consumer\n      command C\n        reads RΣ as rσ by rς\n        concurrency\n          events EΣ\n      reducer FoldΣ => ViewΣ\n        on EΣ\n    slice StateChange Producer\n      readmodel RΣ\n      event EΣ"},
+            "edges": ["M.F.Consumer|M.F.Producer|decidesFrom|reads:RΣ", "M.F.Consumer|M.F.Producer|usesFactsFrom|concurrency:EΣ,reduces:EΣ"],
+            "implied": [],
+            "cycles": [],
+            "order": ["M.F.Producer", "M.F.Consumer"]
+        },
+        {
             "name": "reference captures use dotnet whitespace",
             "files": {"application.play": "module M\n  feature A\n    slice StateChange Consumer\n      command C\n        reads \u0085R\n        concurrency\n          events \u0085E\u0085,\u0085E\n      reducer \u0085Fold\u0085=>\u0085Built\n        on \u0085E\n  feature B\n    slice StateChange Producer\n      event E\n      readmodel R"},
             "edges": ["M.A.Consumer|M.B.Producer|decidesFrom|reads:R", "M.A.Consumer|M.B.Producer|usesFactsFrom|concurrency:E,concurrency:E,reduces:E"],

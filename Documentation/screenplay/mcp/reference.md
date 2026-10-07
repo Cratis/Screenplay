@@ -200,7 +200,10 @@ lists), `reactsTo` (named event triggers), `decidesFrom` (read-model reads), `as
 `verifiedWith` (specification events and commands), and `outsideTheModel`
 (imported event contracts without a local producer). References to shared
 application types, concepts, policies and triggers are excluded and counted.
-Unresolved graph references never become edges.
+Unresolved graph references never become edges. Reference capture for `reads`,
+concurrency dimensions and event lists, and reducer headers and rules follows
+.NET's UTF-16 identifier recognition: supplementary-plane letters are not word
+characters in these declarations and do not create captured names.
 
 `view: "declarations"` pages opted-in containers in syntax order. Each item has a `container`, header `location`, `declarations` (target text, resolved address, location and status `used`, `provisional`, `unused` or `invalid`) and counted `edges` grouped by consumer, producer, kind, coverage status and covering declarations. An edge is `declared`, `provisional` or `undeclared`, with its `coveringDeclarations` and an `evidence` array of reference names, roles, locations and ambiguous alternatives. `evidenceLimit` bounds that array per edge (default `3`, maximum `20`); `evidenceCount` stays complete and `evidenceTruncated` reports omitted references. A limit of `0` returns counts and coverage without evidence. Ambiguous ownership is always provisional, even when no declaration covers a candidate; it never raises an undeclared warning. A declaration used by certain evidence remains `used` even if other evidence is ambiguous.
 

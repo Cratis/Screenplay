@@ -593,7 +593,8 @@
             "name": "Same named slice and feature remain distinct cycle graph members",
             "validate": true,
             "source": ["module M", "  feature F", "    slice StateView Child", "      event Own", "      projection P", "        from E", "    feature Child", "      slice StateView Write", "        event E", "        projection Other", "          from Own"],
-            "diagnostics": ["PLAY0517@6"]
+            "diagnostics": ["PLAY0517@6"],
+            "messages": ["Timeline group slice 'Child', feature 'Child' uses each other's events; reordering these members cannot make every event flow left to right."]
         },
         {
             "name": "A three-member cycle suppresses only its internal backward edges",
@@ -606,6 +607,32 @@
             "validate": true,
             "source": ["module M", "  feature F", "    feature Child", "      slice StateView ChildView", "        projection ChildProjection", "          from E", "    slice StateView ParentView", "      projection ParentProjection", "        from E", "  feature Later", "    slice StateChange Write", "      event E"],
             "diagnostics": ["PLAY0516@9", "PLAY0516@6"]
+        },
+        {
+            "name": "Final and capital sigma match on the timeline and deduplicate references",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView View", "      projection P", "        from EςX", "        from EσX", "        from EΣX", "    slice StateChange Write", "      event EΣX"],
+            "diagnostics": ["PLAY0516@5"],
+            "messages": ["Slice 'View' uses event 'EςX' produced by slice 'Write' drawn after it. Consider drawing the producer before the consumer."]
+        },
+        {
+            "name": "Ordinal event matching does not expand sharp s or equate ASCII with dotless i long s or Kelvin sign",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView View", "      projection P", "        from EßX", "        from EıX", "        from EſX", "        from EKX", "    slice StateChange Write", "      event ESSX", "      event EIX", "      event ESX", "      event EKX"],
+            "diagnostics": []
+        },
+        {
+            "name": "Ordinal event matching uses simple uppercase for Greek subscript iota",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView View", "      projection P", "        from EᾀX", "    slice StateChange Write", "      event EᾈX"],
+            "diagnostics": ["PLAY0516@5"]
+        },
+        {
+            "name": "Sigma case variants close a timeline cycle",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView First", "      event Own", "      projection P", "        from EςX", "    slice StateView Second", "      event EΣX", "      projection Other", "        from Own"],
+            "diagnostics": ["PLAY0517@6"],
+            "messages": ["Timeline group slice 'First', slice 'Second' uses each other's events; reordering these members cannot make every event flow left to right."]
         },
         {
             "name": "A state view uses an event from its right once at its first reference",
@@ -623,7 +650,8 @@
             "name": "Mutually dependent modules form one cycle group",
             "validate": true,
             "source": ["module A", "  feature F", "    slice StateView ViewA", "      event EA", "      projection PA", "        from EB", "module B", "  feature F", "    slice StateView ViewB", "      event EB", "      projection PB", "        from EA"],
-            "diagnostics": ["PLAY0517@6"]
+            "diagnostics": ["PLAY0517@6"],
+            "messages": ["Timeline group module 'A', module 'B' uses each other's events; reordering these members cannot make every event flow left to right."]
         },
         {
             "name": "Parent slices precede sub features irrespective of text order",
