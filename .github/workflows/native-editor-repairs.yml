@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - 'Source/Screenplay/VSCodeExtension/**'
+      - 'Source/Screenplay/Views/**'
       - 'Source/DotNET/Screenplay.Mcp/**'
       - 'Source/DotNET/Screenplay/Workspaces/Workspace*Repair*.cs'
       - 'Source/DotNET/Tool/**'

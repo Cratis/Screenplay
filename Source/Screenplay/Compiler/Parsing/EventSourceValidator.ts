@@ -9,6 +9,7 @@ import { EventSourceResolutionKind } from '../Syntax/EventSources';
 import { ApplicationSyntax } from '../Syntax/Structure';
 import { ParserContext } from './ParserContext';
 import { compatibleValue, uniqueByName } from './ResponseValidator';
+import { validateSpecificationStreams } from './SpecificationStreamValidator';
 
 const primitives = new Set(['String', 'Uuid', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime']);
 
@@ -83,4 +84,5 @@ export function validateEventSources(application: ApplicationSyntax, context: Pa
         else if (['RawExpressionSyntax', 'ObjectExpressionSyntax', 'ListExpressionSyntax'].includes(expression.kind) || expression.kind === 'LiteralExpressionSyntax' && expression.value === null)
             context.error(DiagnosticCodes.InvalidCommandStream, 'A stream id needs a scalar value source, not a raw expression, collection or absence.', expression.location);
     }
+    validateSpecificationStreams(application, context);
 }

@@ -35,6 +35,18 @@ describe('when completing the structure of a command', () => {
     });
 });
 
+describe('when completing a command that has nothing yet', () => {
+    it('should suggest the identity, the properties of the likely event and its production', () => {
+        suggest(`${catalog}\n            event ProductAdded\n                productId ProductId\n                sku Sku\n            command AddProduct\n                `)
+            .should.equal('productId ProductId identifier\n                sku Sku\n                produces ProductAdded\n                    for productId\n                    sku = sku');
+    });
+
+    it('should suggest producing a new event when none is declared', () => {
+        suggest(`${catalog}\n            command AddProduct\n                `)
+            .should.equal('productId ProductId identifier\n                produces event ProductAdded');
+    });
+});
+
 describe('when completing the structure of a specification', () => {
     it('should suggest a skeleton from the slice command and its event', () => {
         suggest(`${catalog}\n            command AddProduct\n                productId ProductId identifier\n                sku Sku\n                produces ProductAdded\n            specification AddingAProduct\n                `)

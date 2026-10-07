@@ -26,6 +26,8 @@ static class WorkspaceStructuredReferences
             return null;
         }
 
+        if (ancestors.Skip(mappingIndex + 1).Any(ancestor => ancestor.Node is SpecificationStreamSyntax)) return null;
+
         var mapping = (PropertyMappingSyntax)ancestors[mappingIndex].Node;
         var step = ancestors.Skip(mappingIndex + 1).FirstOrDefault(ancestor => ancestor.Node is SpecificationOperationSyntax or SpecificationCommandSyntax or SpecificationEventSyntax or SpecificationReadModelSyntax or SpecificationQuerySyntax or SpecificationQueryResultSyntax or ProducesSyntax or CaptureAppendSyntax);
         if (step is null)

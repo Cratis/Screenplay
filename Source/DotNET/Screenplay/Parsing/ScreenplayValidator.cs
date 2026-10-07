@@ -130,6 +130,7 @@ internal static class ScreenplayValidator
         var declarations = new ConsistencyDeclarations(application, scopedSlices);
         ValidateAdditionalEventReferences(application, declarations, knownEvents, context);
         EventSourceValidator.Validate(application, declarations, context);
+        SpecificationStreamValidator.Validate(application, declarations, context);
         OperationValidator.Validate(application, declarations, context);
         ImportValidator.Validate(application, declarations, context);
         CommandConsistencyValidator.Validate(declarations, context);

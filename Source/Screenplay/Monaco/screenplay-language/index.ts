@@ -159,6 +159,7 @@ export type { CompletionPlan } from './completion-planner';
 export { responseTokens, responseTokenTypes } from './response-tokens';
 export { responseCompletions } from './response-completions';
 export { structureCompletion } from './structure-completions';
+export { blockHeaderPattern } from './language';
 export type { StructureCompletion } from './structure-completions';
 export { analyzeEventSources, eventSourceAvailability, eventSourceCompletions, eventSourceDetails, eventSourceHover, eventSourceIdentifier, eventSourceReferenceAt } from './event-source-authoring';
 export type { EventSourceAnalysis } from './EventSourceAnalysis';

@@ -84,12 +84,18 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
         IEnumerable<string> LocalFeatures() => node switch
         {
             EventSourceSyntax or EventStreamSyntax or CommandStreamSyntax => [streams],
+            SpecificationStreamSyntax or SpecificationNoStreamSyntax => ["specification event routes (#457)"],
             CommandSyntax command =>
                 Feature(command.Stream is not null || command.StreamCandidates.Any(), streams)
                 .Concat(Feature(command.Handler is not null, "command handlers"))
                 .Concat(Feature(GeneratedConceptRules(command), "generated properties on concepts with validation rules")),
             SpecificationSyntax specification =>
-                ActionCommands(specification).SelectMany(entry => UnadmittedFeatures(entry.Command)),
+                Feature(
+                    specification.Given.Concat(specification.ThenEvents)
+                        .Concat(specification.WhenAppended is { } appended ? [appended] : [])
+                        .Any(occurrence => occurrence.Stream is not null || occurrence.NoStream is not null),
+                    "specification event routes (#457)")
+                .Concat(ActionCommands(specification).SelectMany(entry => UnadmittedFeatures(entry.Command))),
             SliceSyntax slice => slice.Commands.Cast<SyntaxNode>().Concat(slice.Specifications).SelectMany(UnadmittedFeatures),
             ApplicationSyntax => Feature(application.EventSources.Any(), streams)
                 .Concat(_owners.Keys.OfType<SliceSyntax>().SelectMany(UnadmittedFeatures)),

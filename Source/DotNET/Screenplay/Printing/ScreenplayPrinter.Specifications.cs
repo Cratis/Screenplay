@@ -205,6 +205,15 @@ public partial class ScreenplayPrinter
         using (writer.Indent())
         {
             WriteSpecificationEventSource(writer, @event.For);
+            if (@event.Stream is { } route)
+            {
+                writer.Line($"stream {route.EventSource}.{route.Stream}", route);
+                using (writer.Indent())
+                {
+                    if (route.StreamId is { } streamId) writer.Line($"streamId = {writer.Expression(streamId.Source)}", streamId);
+                }
+            }
+            if (@event.NoStream is { } noStream) writer.Line("no stream", noStream);
             WriteSpecificationValues(writer, @event.Values);
         }
     }

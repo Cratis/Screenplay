@@ -51,7 +51,7 @@ const providerFor = (index: ApplicationIndex): vscode.CompletionItemProvider => 
         const application = file?.application.symbolsExcept(file.path);
         const symbols = symbolsForBuffer(lines, application);
         const responseEntries = eventSourceCompletions(lines, position.line, textBefore, symbols) ?? operationCompletions(lines, position.line, textBefore, symbols) ?? responseCompletions(lines, position.line, textBefore, symbols);
-        const plan = responseEntries === null ? planCompletions(lines, position.line, textBefore) : { kind: 'entries' as const, entries: responseEntries };
+        const plan = responseEntries === null ? planCompletions(lines, position.line, textBefore, symbols) : { kind: 'entries' as const, entries: responseEntries };
         if (plan.kind === 'none') return [];
         const eventNames = () => {
             const inlineNames = new Set(symbols.events.filter(event => event.inline).map(event => event.name));

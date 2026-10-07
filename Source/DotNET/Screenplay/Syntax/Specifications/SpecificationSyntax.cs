@@ -152,6 +152,16 @@ public record SpecificationEventSyntax(
     /// The expression identifies occurrence context and is not part of the event payload.
     /// </remarks>
     public ExpressionSyntax? For { get; init; }
+
+    /// <summary>
+    /// Gets the explicit event route, separate from the payload.
+    /// </summary>
+    public SpecificationStreamSyntax? Stream { get; init; }
+
+    /// <summary>
+    /// Gets the explicit unrouted expectation.
+    /// </summary>
+    public SpecificationNoStreamSyntax? NoStream { get; init; }
 }
 
 /// <summary>

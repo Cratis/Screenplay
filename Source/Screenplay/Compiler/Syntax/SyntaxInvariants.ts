@@ -9,6 +9,7 @@ import { InvalidSyntaxJson } from './InvalidSyntaxJson';
 import { OperationPhaseSyntax } from './Operations';
 import { ProducesSyntax } from './Reactions';
 import { SyntaxNode } from './SyntaxNode';
+import { SpecificationEventSyntax, SpecificationStreamSyntax } from './Specifications';
 import { isBlankImplementationHint } from '../Text/ImplementationHintText';
 import { isSourceStreamName, isSourceStreamTypeName, sourceStreamPattern } from '../Text/SourceStreamNames';
 
@@ -106,6 +107,18 @@ function validateSourceStream(node: SyntaxNode): void {
             if (rejected.propertyCandidate === null && command.stream == null) refuse('A duplicate route candidate requires an authoritative route.');
             if (rejected.propertyCandidate !== null) for (let index = 0; index < command.properties.length; index++) if (command.properties[index] === rejected.propertyCandidate) refuse('An ambiguous property is owned only by its stream candidate.');
         }
+    }
+    if (node.kind === 'SpecificationEventSyntax') {
+        const occurrence = node as SpecificationEventSyntax;
+        if (occurrence.stream != null && occurrence.noStream != null) refuse('An event occurrence cannot declare both stream and no stream.');
+        if (occurrence.stream != null && !hasKind(occurrence.stream, 'SpecificationStreamSyntax')) refuse('A specification stream requires a specification stream node.');
+        if (occurrence.noStream != null && !hasKind(occurrence.noStream, 'SpecificationNoStreamSyntax')) refuse('An unrouted expectation requires a specification no stream node.');
+    }
+    if (node.kind === 'SpecificationStreamSyntax') {
+        const route = node as SpecificationStreamSyntax;
+        name(route.eventSource);
+        name(route.stream);
+        if (route.streamId !== null && route.streamId.property !== 'streamId') refuse('A specification stream maps only streamId.');
     }
     if (node.kind === 'CommandStreamSyntax') {
         const route = node as CommandStreamSyntax;
