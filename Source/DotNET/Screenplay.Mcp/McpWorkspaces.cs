@@ -197,7 +197,7 @@ internal sealed partial class McpWorkspaces
 
             _ = RefreshRootBindingConflict();
         }
-        catch (McpFailure failure)
+        catch (Exception failure) when (failure is McpFailure or IOException or UnauthorizedAccessException)
         {
             // A failed status inspection does not turn a verified apply into an unknown write outcome.
             _rootBindingConflict = previousConflict;
