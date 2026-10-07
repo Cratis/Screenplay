@@ -24,7 +24,7 @@ const featurePattern = pattern('^feature\\s+([A-Za-z_]\\w*)$');
 const opaqueFeatureMembers = new Set(['on', 'uses', 'contribute']);
 
 // What a feature body may hold, as it reads in a diagnostic.
-export const featureBodyExpected = 'description, authorize, import, feature, slice, contribute, example, \'on <trigger>\' or \'uses <Behavior>\'';
+export const featureBodyExpected = 'description, depends on <Name>, authorize, import, feature, slice, contribute, example, \'on <trigger>\' or \'uses <Behavior>\'';
 
 // Collects the body of a feature - written beneath a 'feature' header, or at the top level of a file imported
 // into the feature. The port of the C# FeatureBody.

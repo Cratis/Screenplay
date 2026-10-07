@@ -17,7 +17,7 @@ internal sealed class ModuleBody(string name)
     /// <summary>
     /// What a module body may hold, as it reads in a diagnostic.
     /// </summary>
-    public const string Expected = "description, authorize, import, screen template, dialog template, form, contribute, feature, example, 'on <trigger>' or 'uses <Behavior>'";
+    public const string Expected = "description, depends on <Name>, authorize, import, screen template, dialog template, form, contribute, feature, example, 'on <trigger>' or 'uses <Behavior>'";
 
     readonly List<ScreenTemplateSyntax> _screenTemplates = [];
     readonly List<DialogTemplateSyntax> _dialogTemplates = [];

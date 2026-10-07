@@ -24,7 +24,7 @@ export const modulePattern = pattern('^module\\s+([A-Za-z_]\\w*)$');
 const opaqueModuleMembers = new Set(['on', 'uses', 'screen', 'dialog', 'form', 'contribute']);
 
 // What a module body may hold, as it reads in a diagnostic.
-export const moduleBodyExpected = 'description, authorize, import, screen template, dialog template, form, contribute, feature, example, \'on <trigger>\' or \'uses <Behavior>\'';
+export const moduleBodyExpected = 'description, depends on <Name>, authorize, import, screen template, dialog template, form, contribute, feature, example, \'on <trigger>\' or \'uses <Behavior>\'';
 
 // Collects the body of a module - written beneath a 'module' header, or at the top level of a file imported
 // into the module. The port of the C# ModuleBody.

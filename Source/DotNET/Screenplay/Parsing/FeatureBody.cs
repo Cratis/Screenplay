@@ -17,7 +17,7 @@ internal sealed class FeatureBody(string name)
     /// <summary>
     /// What a feature body may hold, as it reads in a diagnostic.
     /// </summary>
-    public const string Expected = "description, authorize, import, feature, slice, contribute, example, 'on <trigger>' or 'uses <Behavior>'";
+    public const string Expected = "description, depends on <Name>, authorize, import, feature, slice, contribute, example, 'on <trigger>' or 'uses <Behavior>'";
 
     readonly List<FeatureSyntax> _features = [];
     readonly List<SliceSyntax> _slices = [];

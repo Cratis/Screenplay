@@ -3,6 +3,7 @@
 
 import { Diagnostic } from './Diagnostics/Diagnostic';
 import { validateDependencyDeclarations } from './Dependencies/DeclaredDependencyTargets';
+import { DeclaredDependencies } from './Dependencies/DeclaredDependencies';
 import { documentPlacement, PlayPlacement } from './Files/PlayPlacement';
 import { DiscoveredImport, discoverImports as discoverImportsIn } from './Parsing/ImportDiscovery';
 import { InputUse } from './Parsing/InputUses';
@@ -67,6 +68,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateProjectionTargets(value, context);
         validateIdentifierCompliance(value, context);
         value = validateDependencyDeclarations(value, context);
+        DeclaredDependencies.validate(value, context);
         for (const diagnostic of timelineOrderDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);
     }
     return {

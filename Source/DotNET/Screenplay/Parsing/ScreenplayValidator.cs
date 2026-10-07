@@ -186,7 +186,10 @@ internal static class ScreenplayValidator
         ValidateArrangements(application, context);
         foreach (var diagnostic in expansion.Diagnostics.Where(diagnostic => !context.Diagnostics.Contains(diagnostic))) context.Add(diagnostic);
 
-        return DeclaredDependencyTargets.Validate(authored, context);
+        authored = DeclaredDependencyTargets.Validate(authored, context);
+        DeclaredDependencies.Validate(authored, context);
+
+        return authored;
     }
 
     /// <summary>
