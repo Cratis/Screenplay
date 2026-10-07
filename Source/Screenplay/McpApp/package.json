@@ -27,7 +27,7 @@
         "@cratis/components": "4.25.0",
         "@cratis/event-models": "0.118.2",
         "@cratis/fundamentals": "7.22.0",
-        "@cratis/scene": "0.115.0",
+        "@cratis/scene": "0.118.2",
         "@modelcontextprotocol/ext-apps": "2.0.3",
         "@types/chai": "^5.2.3",
         "@types/node": "26.6.4",
