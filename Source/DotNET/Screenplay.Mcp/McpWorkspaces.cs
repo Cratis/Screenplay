@@ -20,6 +20,7 @@ internal sealed partial class McpWorkspaces
     McpRoot? _root;
     ScreenplayWorkspace? _workspace;
     byte[]? _stateBytes;
+    object? _rootBindingConflict;
 
     internal McpWorkspaces(McpRoot? root = null)
     {
@@ -72,6 +73,7 @@ internal sealed partial class McpWorkspaces
             else
             {
                 ClientDerivedRootPath = null;
+                _rootBindingConflict = null;
                 BindRoot(requestedRoot);
             }
         }
@@ -102,7 +104,14 @@ internal sealed partial class McpWorkspaces
         new McpManagedFiles(Root).Verify(McpState.FileName, persisted);
         McpRecoveryJournal.RefusePending(Root);
         _ = McpWorkspaceTransport.ExportBytes(candidate);
-        var result = McpJson.ToolResult(McpWorkspaceTransport.Describe(candidate, McpJson.Boolean(arguments, "includeContent")));
+        var description = JsonSerializer.SerializeToElement(McpWorkspaceTransport.Describe(candidate, McpJson.Boolean(arguments, "includeContent")), McpJson.Options);
+        var properties = description.EnumerateObject().ToDictionary(property => property.Name, property => property.Value, StringComparer.Ordinal);
+        if (_rootBindingConflict is not null)
+        {
+            properties.Add("rootBindingConflict", JsonSerializer.SerializeToElement(_rootBindingConflict, McpJson.Options));
+        }
+
+        var result = McpJson.ToolResult(properties);
         _workspace = candidate;
         _stateBytes = persisted;
         _proposals.Clear();
@@ -198,6 +207,7 @@ internal sealed partial class McpWorkspaces
         }
 
         _root = null;
+        _rootBindingConflict = null;
         _workspace = null;
         _stateBytes = null;
         _proposals.Clear();
@@ -216,13 +226,6 @@ internal sealed partial class McpWorkspaces
 
     // The directory a host root names, which is where the host's binding came from, not where the model was found.
     static string OfferedPath(string uri) => RootFromClientUri(uri).DirectoryPath;
-
-    // A host root is the project the user works in, not necessarily the folder holding the model.
-    static McpRoot ProjectRootFromClientUri(string uri)
-    {
-        var project = RootFromClientUri(uri);
-        return new McpRoot(McpModelLocation.Project(project.DirectoryPath));
-    }
 
     // A shallow, bounded check: .play files at the top or one level down, or an existing identity-state folder.
     static bool LooksLikeScreenplayRoot(string directory)
@@ -249,6 +252,45 @@ internal sealed partial class McpWorkspaces
         }
 
         return false;
+    }
+
+    // A host root is the project the user works in, not necessarily the folder holding the model.
+    McpRoot ProjectRootFromClientUri(string uri)
+    {
+        var project = RootFromClientUri(uri);
+        var discovered = new McpRoot(McpModelLocation.Project(project.DirectoryPath));
+        var stateRoots = new List<string>();
+        for (var directory = discovered.DirectoryPath; directory is not null; directory = Path.GetDirectoryName(directory))
+        {
+            var metadata = Path.Combine(directory, ".screenplay");
+            McpManagedFiles.CheckExisting(metadata);
+            var identities = Path.Combine(metadata, McpState.FileName);
+            var journal = Path.Combine(metadata, McpRecoveryJournal.FileName);
+            McpManagedFiles.CheckExisting(identities);
+            McpManagedFiles.CheckExisting(journal);
+            if (File.Exists(identities) || File.Exists(journal))
+            {
+                stateRoots.Add(directory);
+            }
+
+            if (string.Equals(Path.TrimEndingDirectorySeparator(directory), Path.TrimEndingDirectorySeparator(project.DirectoryPath), StringComparison.Ordinal))
+            {
+                break;
+            }
+        }
+
+        // The outermost existing state is nearest the offered root and retains the pre-discovery binding.
+        stateRoots.Reverse();
+        var selected = stateRoots.Count == 0 ? discovered : new McpRoot(stateRoots[0]);
+        _rootBindingConflict = stateRoots.Count < 2 ? null : new
+        {
+            kind = "WorkspaceRootConflict",
+            boundRoot = selected.DirectoryPath,
+            stateRoots,
+            message = "Multiple workspace roots hold .screenplay/identities.json or .screenplay/pending.json. Bound the state root nearest the client-offered root; no state was migrated. Inspect each root with an explicit open-workspace path before choosing which workspace to keep."
+        };
+
+        return selected;
     }
 
     object Store(IMcpProposal proposal, JsonElement arguments)

@@ -39,6 +39,7 @@ internal sealed partial class McpWorkspaces
             byteCount = persisted?.Length ?? 0,
             identity = IdentityStatus(persisted),
             recovery = RecoveryStatus(),
+            rootBindingConflict = _rootBindingConflict,
             stateChange = proposal is null ? null : StatePlan(proposal).Describe()
         });
     }

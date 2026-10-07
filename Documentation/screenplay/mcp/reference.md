@@ -34,6 +34,21 @@ may name that same physical directory, but another root returns `RootChangeRefus
 Start a separately authorized connection to switch applications. Dynamic servers
 retain the root selection described above.
 
+For a single client-offered project, default discovery uses the common ancestor
+of folders holding `.play` files, then `Source`/`src`, then `<project>/Screenplay`.
+Existing `.screenplay/identities.json` or `.screenplay/pending.json` at any
+ancestor-or-self directory between the offered project and that discovered folder
+keeps the workspace bound to that state directory. Both endpoints are included;
+an empty metadata folder or backup artifact alone does not count. Metadata path
+checks reject symbolic links and reparse points before checking state presence.
+With several state directories on that path, the one nearest the offered project
+wins. `open-workspace` and the `workspace-state` status view report
+`rootBindingConflict` with `kind: "WorkspaceRootConflict"`, `boundRoot`, ordered
+`stateRoots` (nearest the offered root first), and an explanatory `message`.
+No identities or recovery journals are migrated; inspect competing workspaces
+using explicit paths before deciding which to keep. Explicit paths and roots
+fixed at startup, including `.cratis/ai.json` configuration, are unchanged.
+
 Only `apply` and `recover-workspace` mutate files. Keep client approval enabled
 for both. Source queries, schemas, proposals and status checks are read-only.
 
