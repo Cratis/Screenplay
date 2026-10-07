@@ -32,6 +32,18 @@
             "diagnostics": []
         },
         {
+            "name": "Legacy integer stream ids normalize negative zero",
+            "validate": true,
+            "source": ["concept Key : Int", "eventsource Account", "  identifier String", "  stream Profile", "    streamId Key", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = -0", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = 0"],
+            "diagnostics": []
+        },
+        {
+            "name": "Legacy integer stream ids retain all integral digits",
+            "validate": true,
+            "source": ["concept Key : Int", "eventsource Account", "  identifier String", "  stream Profile", "    streamId Key", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = 10000000000000000", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = 10000000000000002"],
+            "diagnostics": ["PLAY0551@20"]
+        },
+        {
             "name": "Integer concept stream ids refuse different literals",
             "validate": true,
             "source": ["concept Month : Int", "eventsource Account", "  identifier String", "  stream Profile", "    streamId Month", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = 202609", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = 202610"],

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Globalization;
+using System.Numerics;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
@@ -154,7 +155,7 @@ internal static class SpecificationStreamValidator
             ("String", string text) => text,
             ("Uuid", string text) when Guid.TryParse(text, out var uuid) => uuid.ToString("D", CultureInfo.InvariantCulture),
             ("Int", ExactNumber exact) => exact.CanonicalText,
-            ("Int", double number) => number.ToString("0", CultureInfo.InvariantCulture),
+            ("Int", double number) => new BigInteger(number).ToString(CultureInfo.InvariantCulture),
             _ => null
         };
     }

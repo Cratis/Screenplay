@@ -37,7 +37,7 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
             return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
         }
         if (primitive === 'Int') {
-            if (typeof value === 'number') return value.toFixed(0);
+            if (typeof value === 'number') return BigInt(value).toString();
             if (typeof value === 'object' && value !== null && value.literalType === 'ExactNumber') return canonicalExactText(value);
         }
         return null;
