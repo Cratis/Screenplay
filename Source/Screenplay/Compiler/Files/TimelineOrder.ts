@@ -5,7 +5,8 @@ import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { eventDeclarations } from '../Syntax/EventDeclarations';
-import { ProjectionBlockSyntax } from '../Syntax/Projections';
+import { sliceReferences } from '../Dependencies/SliceReferences';
+import { stronglyConnectedGroups } from '../Dependencies/StronglyConnectedGroups';
 import { ApplicationSyntax, FeatureSyntax, SliceSyntax } from '../Syntax/Structure';
 import { authoredOrderKey, authoredOrderOf } from './AuthoredOrder';
 
@@ -42,10 +43,8 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
     const edges: Edge[] = [];
     for (const consumer of slices) {
         const seen = new Set<string>();
-        const references = [
-            ...consumer.syntax.projections.flatMap(projection => projection.blocks.flatMap(eventsOf)),
-            ...consumer.syntax.reactions.flatMap(reaction => reaction.triggers).flatMap(trigger => trigger.source.kind === 'NamedTriggerSourceSyntax' ? [{ event: trigger.source.name, location: trigger.source.location }] : []),
-        ].sort((left, right) => left.location.line - right.location.line || left.location.column - right.location.column);
+        const references = sliceReferences(consumer.syntax).references.filter(reference => reference.timeline)
+            .map(reference => ({ event: reference.name, location: reference.location }));
         for (const reference of references) {
             const name = reference.event.toLowerCase();
             if (seen.has(name)) continue;
@@ -69,7 +68,7 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
             if (!graph.has(edge.right)) graph.set(edge.right, new Set());
             graph.get(edge.left)!.add(edge.right);
         }
-        for (const group of stronglyConnected(graph).filter(group => group.length > 1)) {
+        for (const group of stronglyConnectedGroups(graph).filter(group => group.length > 1)) {
             const members = new Set(group);
             const internal = local.filter(edge => members.has(edge.left) && members.has(edge.right));
             internal.forEach(edge => suppressed.add(edge));
@@ -91,49 +90,4 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
         findings.push({ edge, diagnostic: { severity: 'information', code: DiagnosticCodes.EventFromLaterSlice, message: `Slice '${edge.consumer.syntax.name}' uses event '${edge.event}' produced by slice '${edge.producer.syntax.name}' drawn after it.${consequence}`, location: edge.location } });
     }
     return findings.sort((left, right) => compare(left.edge, right.edge)).map(finding => finding.diagnostic);
-}
-
-function eventsOf(block: ProjectionBlockSyntax): Reference[] {
-    switch (block.kind) {
-        case 'FromSyntax':
-        case 'JoinSyntax': return block.events.map(event => ({ event: event.event, location: event.location }));
-        case 'ChildrenSyntax':
-        case 'NestedSyntax': return block.blocks.flatMap(eventsOf);
-        case 'ProjectionVariantSyntax': return [...block.entersOn.map(entry => ({ event: entry.event, location: entry.location })), ...block.blocks.flatMap(eventsOf)];
-        case 'RemoveWithSyntax':
-        case 'RemoveViaJoinSyntax':
-        case 'ClearWithSyntax': return [{ event: block.event, location: block.location }];
-        default: return [];
-    }
-}
-
-function stronglyConnected(graph: ReadonlyMap<string, ReadonlySet<string>>): string[][] {
-    const indices = new Map<string, number>();
-    const low = new Map<string, number>();
-    const stack: string[] = [];
-    const active = new Set<string>();
-    const groups: string[][] = [];
-    const visit = (node: string) => {
-        indices.set(node, indices.size);
-        low.set(node, indices.get(node)!);
-        stack.push(node);
-        active.add(node);
-        for (const next of graph.get(node)!) {
-            if (!indices.has(next)) {
-                visit(next);
-                low.set(node, Math.min(low.get(node)!, low.get(next)!));
-            } else if (active.has(next)) low.set(node, Math.min(low.get(node)!, indices.get(next)!));
-        }
-        if (low.get(node) !== indices.get(node)) return;
-        const group: string[] = [];
-        let member: string;
-        do {
-            member = stack.pop()!;
-            active.delete(member);
-            group.push(member);
-        } while (member !== node);
-        groups.push(group);
-    };
-    for (const node of graph.keys()) if (!indices.has(node)) visit(node);
-    return groups;
 }
