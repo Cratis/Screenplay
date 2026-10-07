@@ -2303,4 +2303,10 @@ public static class DiagnosticCodes
 
     /// <summary>A rename pin repeats a source or stream's current name.</summary>
     public const string RedundantSourceStreamId = "PLAY0507";
+
+    /// <summary>A projection maps to a property absent from the declared read-model shape.</summary>
+    public const string UnknownReadModelProperty = "PLAY0514";
+
+    /// <summary>A personally identifiable concept is used as an event source identifier.</summary>
+    public const string PiiNotSupportedOnIdentifier = "PLAY0515";
 }

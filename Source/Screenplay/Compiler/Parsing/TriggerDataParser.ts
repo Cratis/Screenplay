@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { PropertySyntax } from '../Syntax/Declarations';
 import { pattern } from '../Text/patterns';
 import { parseDescription } from './DescriptionParser';
 import { isFileDirective } from './FileReferences';
@@ -12,7 +13,7 @@ import { locationOf, SourceLine } from './SourceLine';
 
 const typedValue = pattern('^@?[a-z_]\\w*\\s+[\\w.]+');
 
-// Trigger values are not part of the TypeScript syntax projection. Recognize their type spelling in
+// Trigger values are kept as parser-owned diagnostic metadata, outside the syntax wire projection. Recognize their type spelling in
 // exactly the C# data positions, without scanning descriptions, attachments, code or mapping expressions.
 export function parseTriggerData(context: ParserContext, line: SourceLine): void {
     const property = parseProperty(context, line);
@@ -29,7 +30,8 @@ export function parseTriggerData(context: ParserContext, line: SourceLine): void
     context.skipOpaqueBlock(line.indent);
 }
 
-export function parseTriggerDeclaration(context: ParserContext, header: SourceLine): void {
+export function parseTriggerDeclaration(context: ParserContext, header: SourceLine): readonly PropertySyntax[] {
+    const start = context.triggerData.length;
     for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
         if (firstWord(line.content) === 'description') {
@@ -38,4 +40,5 @@ export function parseTriggerDeclaration(context: ParserContext, header: SourceLi
             parseTriggerData(context, line);
         }
     }
+    return context.triggerData.slice(start);
 }

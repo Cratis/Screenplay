@@ -2,6 +2,222 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "Personal declared trigger data cannot supply reaction destinations",
+            "validate": true,
+            "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
+            "diagnostics": ["PLAY0515@12"]
+        },
+        {
+            "name": "Surrogate declared trigger data remains a valid reaction destination",
+            "validate": true,
+            "source": ["concept PatientId : Uuid", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
+            "diagnostics": []
+        },
+        {
+            "name": "A shared source name checks personal trigger data even when event data is a surrogate",
+            "validate": true,
+            "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event External", "        patient Uuid", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
+            "diagnostics": ["PLAY0515@14"]
+        },
+        {
+            "name": "A shared source name checks personal event data even when trigger data is a surrogate",
+            "validate": true,
+            "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient Uuid", "module M", "  feature F", "    slice Automation S", "      event External", "        patient PatientId", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
+            "diagnostics": ["PLAY0515@14"]
+        },
+        {
+            "name": "Personal trigger and event data at the same destination report only once",
+            "validate": true,
+            "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event External", "        patient PatientId", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
+            "diagnostics": ["PLAY0515@14"]
+        },
+        {
+            "name": "Composite command destination paths cannot hide personal identifiers",
+            "validate": true,
+            "source": ["concept PatientId : Uuid @pii", "type Detail", "  patient PatientId", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        detail Detail", "        produces E", "          for detail.patient"],
+            "diagnostics": ["PLAY0515@11"]
+        },
+        {
+            "name": "Composite trigger destination paths cannot hide personal identifiers",
+            "validate": true,
+            "source": ["concept PatientId : Uuid @pii", "type Detail", "  patient PatientId", "trigger External", "  detail Detail", "module M", "  feature F", "    slice Automation S", "      event E", "      reaction R", "        when External", "          detail", "          produces E", "            for detail.patient"],
+            "diagnostics": ["PLAY0515@14"]
+        },
+        {
+            "name": "Composite surrogate destinations remain valid",
+            "validate": true,
+            "source": ["type Detail", "  patient Uuid", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        detail Detail", "        produces E", "          for detail.patient"],
+            "diagnostics": []
+        },
+        {
+            "name": "Variant entering events make every mappings executable targets",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      event E", "      readmodel V", "        value String", "      projection P", "        variant V", "          enters on E", "          every", "            missing = \"recorded\""],
+            "diagnostics": ["PLAY0514@11"]
+        },
+        {
+            "name": "Variant entering events accept declared every targets",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      event E", "      readmodel V", "        value String", "      projection P", "        variant V", "          enters on E", "          every", "            value = \"recorded\""],
+            "diagnostics": []
+        },
+        {
+            "name": "Shared handlers also execute variant-local every mappings",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      event E", "      event Entered", "      readmodel V", "        value String", "      projection P", "        from E", "          value = \"recorded\"", "        variant V", "          enters on Entered", "          every", "            missing = \"recorded\""],
+            "diagnostics": ["PLAY0514@14"]
+        },
+        {
+            "name": "Shared element target warnings are not repeated for each variant",
+            "validate": true,
+            "source": ["type Row", "  value String", "module M", "  feature F", "    slice StateView S", "      event E", "        value String", "      event Entered", "        value String", "      readmodel A", "        rows Row[]", "      readmodel B", "        rows Row[]", "      projection P", "        children rows identified by value", "          from E", "            value = value", "            missing = value", "        variant A", "          enters on E", "        variant B", "          enters on Entered"],
+            "diagnostics": ["PLAY0514@18"]
+        },
+        {
+            "name": "Children removal reports undeclared events",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      event E", "      projection P", "        children rows identified by id", "          from E", "          remove with Missing"],
+            "diagnostics": ["PLAY0166@8"]
+        },
+        {
+            "name": "Nested removal via join reports undeclared events",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      event E", "      projection P", "        nested row", "          from E", "          remove via join on Missing"],
+            "diagnostics": ["PLAY0166@8"]
+        },
+        {
+            "name": "Children capture appends report undeclared events",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Translate S", "      capture C", "        source api", "          api LegacyApi", "        key id", "        children rows identified by id", "          append Missing", "            when added"],
+            "diagnostics": ["PLAY0166@9"]
+        },
+        {
+            "name": "Nested capture appends report undeclared events",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Translate S", "      capture C", "        source api", "          api LegacyApi", "        key id", "        nested row", "          append Missing", "            when changed"],
+            "diagnostics": ["PLAY0166@9"]
+        },
+        {
+            "name": "Declared nested removal and append events remain valid",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Translate S", "      event E", "      projection P", "        children rows identified by id", "          from E", "          remove with E", "        nested row", "          from E", "          remove via join on E", "      capture C", "        source api", "          api LegacyApi", "        key id", "        children rows identified by id", "          append E", "            when added", "        nested row", "          append E", "            when changed"],
+            "diagnostics": []
+        },
+        {
+            "name": "Personal event values cannot supply a reaction's explicit destination",
+            "validate": true,
+            "source": ["concept PatientId : Uuid @pii", "module M", "  feature F", "    slice Automation S", "      event E", "        patient PatientId", "      event Recorded", "      reaction R", "        when E", "          patient", "          produces Recorded", "            for patient"],
+            "diagnostics": ["PLAY0515@12"]
+        },
+        {
+            "name": "Qualified declared removal events remain valid",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange Producer", "      event E", "    slice Translate Consumer", "      projection P", "        remove with Producer.E", "        remove via join on Producer.E", "      capture C", "        source api", "          api LegacyApi", "        key id", "        append E", "          when added"],
+            "diagnostics": []
+        },
+        {
+            "name": "A wrong event qualifier is not satisfied by an unrelated short name",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange Producer", "      event E", "    slice StateView Consumer", "      projection P", "        remove with Missing.E"],
+            "diagnostics": ["PLAY0166@7"]
+        },
+        {
+            "name": "Every at a handler-free parent only cascades into child scopes",
+            "validate": true,
+            "source": ["type Row", "  audit String", "module M", "  feature F", "    slice StateView S", "      event E", "        audit String", "      readmodel V", "        rows Row[]", "      projection P => V", "        every", "          audit = \"recorded\"", "        children rows identified by audit", "          from E"],
+            "diagnostics": []
+        },
+        {
+            "name": "Every mapping targets are checked where the scope handles events",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      event E", "        value String", "      readmodel V", "        value String", "      projection P => V", "        every", "          missing = \"recorded\"", "        from E", "          value = value"],
+            "diagnostics": ["PLAY0514@10"]
+        },
+        {
+            "name": "Projection mappings report absent read-model targets",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      event E", "        value String", "      readmodel V", "        value String", "      projection P => V", "        from E", "          missing = value"],
+            "diagnostics": ["PLAY0514@10"]
+        },
+        {
+            "name": "Children mappings use the element shape",
+            "validate": true,
+            "source": ["type Row", "  value String", "module M", "  feature F", "    slice StateView S", "      event E", "        value String", "      readmodel V", "        rows Row[]", "      projection P => V", "        children rows identified by value", "          from E", "            value = value", "            missing = value"],
+            "diagnostics": ["PLAY0514@14"]
+        },
+        {
+            "name": "Nested mappings use the nested shape",
+            "validate": true,
+            "source": ["type Row", "  value String", "module M", "  feature F", "    slice StateView S", "      event E", "        value String", "      readmodel V", "        row Row optional", "      projection P => V", "        nested row", "          from E", "            value = value", "            missing = value"],
+            "diagnostics": ["PLAY0514@14"]
+        },
+        {
+            "name": "Declared projection mapping targets remain valid",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      event E", "        value String", "      readmodel V", "        value String", "      projection P => V", "        from E", "          value = value"],
+            "diagnostics": []
+        },
+        {
+            "name": "Inferred read-model shapes remain undecided",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      event E", "        value String", "      projection P => V", "        from E", "          value = value"],
+            "diagnostics": []
+        },
+        {
+            "name": "Projection removal reports an undeclared event",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      projection P", "        remove with Missing"],
+            "diagnostics": ["PLAY0166@5"]
+        },
+        {
+            "name": "Projection removal via join reports an undeclared event",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      projection P", "        remove via join on Missing"],
+            "diagnostics": ["PLAY0166@5"]
+        },
+        {
+            "name": "Capture append reports an undeclared event",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Translate S", "      capture C", "        source api", "          api LegacyApi", "        key id", "        append Missing", "          when added"],
+            "diagnostics": ["PLAY0166@8"]
+        },
+        {
+            "name": "Declared removal and capture events remain valid",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Translate S", "      event E", "      projection P", "        remove with E", "        remove via join on E", "      capture C", "        source api", "          api LegacyApi", "        key id", "        append E", "          when added"],
+            "diagnostics": []
+        },
+        {
+            "name": "Personal concepts cannot identify commands",
+            "validate": true,
+            "source": ["concept PatientId : Uuid @pii", "module M", "  feature F", "    slice StateChange S", "      command C", "        id PatientId identifier"],
+            "diagnostics": ["PLAY0515@6"]
+        },
+        {
+            "name": "Personal concepts cannot supply explicit event source destinations",
+            "validate": true,
+            "source": ["concept PatientId : Uuid @pii", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        patient PatientId", "        produces E", "          for patient"],
+            "diagnostics": ["PLAY0515@9"]
+        },
+        {
+            "name": "Personal concepts cannot identify event sources",
+            "validate": true,
+            "source": ["concept PatientId : Uuid @pii", "eventsource Patients", "  identifier PatientId"],
+            "diagnostics": ["PLAY0515@3"]
+        },
+        {
+            "name": "Surrogate identifiers keep personal values as ordinary properties",
+            "validate": true,
+            "source": ["concept PatientId : Uuid", "concept NationalId : String @pii", "module M", "  feature F", "    slice StateChange S", "      command C", "        id PatientId identifier", "        nationalId NationalId"],
+            "diagnostics": []
+        },
+        {
+            "name": "Sensitive classification is not redefined by the identifier check",
+            "validate": true,
+            "source": ["concept PatientId : Uuid @sensitive", "module M", "  feature F", "    slice StateChange S", "      command C", "        id PatientId identifier"],
+            "diagnostics": []
+        },
+        {
             "name": "A backward reference finds a command inline event",
             "validate": true,
             "source": ["module M", "  feature F", "    slice StateView View", "      projection P", "        from E", "    slice StateChange Write", "      command Write", "        produces event E"],
@@ -1535,12 +1751,13 @@
                 "module A",
                 "  feature B",
                 "    slice StateView C",
+                "      event A",
                 "      projection P => R",
                 "        remove with A",
                 "          key x"
             ],
             "diagnostics": [
-                "PLAY0069@6"
+                "PLAY0069@7"
             ]
         },
         {

@@ -6,6 +6,8 @@ import { validateInlineEvents } from '../Parsing/InlineEventValidator';
 import { LineReader } from '../Parsing/LineReader';
 import { CommandStreamCandidates } from '../Parsing/CommandStreamCandidates';
 import { validateEventSources } from '../Parsing/EventSourceValidator';
+import { validateProjectionTargets } from '../Parsing/ProjectionTargetValidator';
+import { validateIdentifierCompliance } from '../Parsing/IdentifierComplianceValidator';
 import { splitLines } from '../Parsing/SourceLineSplitter';
 import { ParserContext } from '../Parsing/ParserContext';
 import { validateResponses } from '../Parsing/ResponseValidator';
@@ -71,6 +73,8 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     validateOperations(merged.value, context);
     validateInlineEvents(merged.value, context);
     validateResponses(merged.value, context, parsed.flatMap(document => document.inputUses));
+    validateProjectionTargets(merged.value, context);
+    validateIdentifierCompliance(merged.value, context);
     const existing = merged.diagnostics;
     const reported = new Set(existing.map(diagnosticKey));
     const all = [...existing, ...context.diagnostics.filter(diagnostic => !reported.has(diagnosticKey(diagnostic)))];

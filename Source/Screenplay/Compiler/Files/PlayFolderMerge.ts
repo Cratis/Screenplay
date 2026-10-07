@@ -59,6 +59,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         types,
         systems: applications.flatMap(application => application.systems ?? []),
         eventSources: applications.flatMap(application => application.eventSources ?? []),
+        declaredTriggers: applications.flatMap(application => application.declaredTriggers ?? []),
         modules,
         personas,
         policies: applications.flatMap(application => application.policies ?? []),
