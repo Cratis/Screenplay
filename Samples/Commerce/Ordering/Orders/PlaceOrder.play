@@ -29,17 +29,19 @@ slice StateChange PlaceOrder
   constraint OrderPlacedOnce
     unique event OrderPlaced
 
+  example AdasBasket : PlaceOrder
+    orderId         = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+    customerId      = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
+    lines           = [{"productId":"6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01","sku":"MUG-0042","quantity":2,"unitPrice":12.5}]
+    shippingAddress = {"recipient":"Ada Lovelace","street":"12 Analytical Way","postalCode":"0150","city":"Oslo","country":"NO"}
+
   // The module gate (IsAuthenticated) and the command gate (IsCustomer)
   // both have to pass, so the caller states both.
   specification PlacingAnOrder
     given caller
       authenticated
       role "Customer"
-    when PlaceOrder
-      orderId         = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-      customerId      = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
-      lines           = [{"productId":"6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01","sku":"MUG-0042","quantity":2,"unitPrice":12.5}]
-      shippingAddress = {"recipient":"Ada Lovelace","street":"12 Analytical Way","postalCode":"0150","city":"Oslo","country":"NO"}
+    when AdasBasket
     then OrderPlaced
       for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
       customerId      = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
@@ -50,11 +52,7 @@ slice StateChange PlaceOrder
     given caller
       authenticated
       role "Customer"
-    when PlaceOrder
-      orderId         = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-      customerId      = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
-      lines           = []
-      shippingAddress = {"recipient":"Ada Lovelace","street":"12 Analytical Way","postalCode":"0150","city":"Oslo","country":"NO"}
+    when AdasBasket lines = []
     then error "An order needs at least one line"
 
   // Authenticated, but not a customer - the command gate denies it.
@@ -62,11 +60,7 @@ slice StateChange PlaceOrder
     given caller
       authenticated
       role "Merchandiser"
-    when PlaceOrder
-      orderId         = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
-      customerId      = "c2a4e6f8-1b3d-4f5a-9c7e-2d4f6a8b0c01"
-      lines           = [{"productId":"6f1c2a3e-8b4d-4c5e-9f60-1a2b3c4d5e01","sku":"MUG-0042","quantity":2,"unitPrice":12.5}]
-      shippingAddress = {"recipient":"Ada Lovelace","street":"12 Analytical Way","postalCode":"0150","city":"Oslo","country":"NO"}
+    when AdasBasket
     then denied
 
   // Reached from the storefront search in the Catalog module.

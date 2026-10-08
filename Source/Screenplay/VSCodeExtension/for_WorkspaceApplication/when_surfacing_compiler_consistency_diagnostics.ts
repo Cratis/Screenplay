@@ -8,6 +8,7 @@ import { WorkspaceApplication } from '../WorkspaceApplication';
 const cases = [
     { code: 'PLAY0514', source: ['slice StateView S', '  event E', '  readmodel V', '    value String', '  projection P => V', '    from E', '      missing = "recorded"'] },
     { code: 'PLAY0515', source: ['slice Automation S', '  event E', '  reaction R', '    when External', '      produces E', '        for patient'] },
+    { code: 'PLAY0515', source: ['slice Automation S', '  event E', '  reaction R', '    when External', '      patient PatientId', '      produces E', '        for patient'] },
     { code: 'PLAY0166', source: ['slice StateView S', '  projection P', '    remove with Missing'] },
     { code: 'PLAY0166', source: ['slice Translate S', '  capture C', '    source api', '      api LegacyApi', '    key id', '    append Missing', '      when added'] },
 ];

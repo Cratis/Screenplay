@@ -85,7 +85,7 @@ public partial class ScreenplayPrinter
 
             if (specification.When is not null)
             {
-                writer.Line($"when {specification.When.CommandType}", specification.When);
+                writer.Line(SpecificationHeader(writer, $"when {specification.When.CommandType}", specification.When.Values, specification.When.InlineProperty), specification.When);
                 using (writer.Indent())
                 {
                     WriteSpecificationEventSource(writer, specification.When.For);
@@ -94,13 +94,23 @@ public partial class ScreenplayPrinter
                         writer.Line($"generated {fixture.Property} = {ScreenplaySyntaxText.ResponseValue(fixture.Source)}", fixture);
                     }
 
-                    WriteSpecificationValues(writer, specification.When.Values);
+                    WriteSpecificationValues(writer, specification.When.Values.Where(value => value.Property != specification.When.InlineProperty));
                 }
             }
 
             if (specification.WhenAppended is { } appended)
             {
                 WriteSpecificationEvent(writer, "when append", appended);
+            }
+
+            if (specification.WhenRedelivered is { } redelivered)
+            {
+                writer.Line($"when redelivered {redelivered.EventType} to {redelivered.Reaction}", redelivered);
+                using (writer.Indent())
+                {
+                    WriteSpecificationEventSource(writer, redelivered.For);
+                    WriteSpecificationValues(writer, redelivered.Values);
+                }
             }
 
             if (specification.WhenClock is { } tick)
@@ -129,6 +139,7 @@ public partial class ScreenplayPrinter
             WriteSpecificationReturn(writer, specification.ThenReturns);
 
             if (specification.ThenEventsInAnyOrder) writer.DirectiveLine("then events in any order", specification, "then events in any order");
+            if (specification.ThenNoEvents) writer.DirectiveLine("then no events", specification, "then no events");
 
             if (specification.ThenAbsentReadModels.Any())
             {
@@ -201,7 +212,7 @@ public partial class ScreenplayPrinter
     void WriteSpecificationEvent(ScreenplayWriter writer, string keyword, SpecificationEventSyntax @event)
     {
         using var anchor = writer.Anchor(@event);
-        writer.Line($"{keyword} {@event.EventType}");
+        writer.Line(SpecificationHeader(writer, $"{keyword} {@event.EventType}", @event.Values, @event.InlineProperty));
         using (writer.Indent())
         {
             WriteSpecificationEventSource(writer, @event.For);
@@ -214,17 +225,17 @@ public partial class ScreenplayPrinter
                 }
             }
             if (@event.NoStream is { } noStream) writer.Line("no stream", noStream);
-            WriteSpecificationValues(writer, @event.Values);
+            WriteSpecificationValues(writer, @event.Values.Where(value => value.Property != @event.InlineProperty));
         }
     }
 
     void WriteSpecificationReadModel(ScreenplayWriter writer, string keyword, SpecificationReadModelSyntax readModel)
     {
         using var anchor = writer.Anchor(readModel);
-        writer.Line($"{keyword} readmodel {readModel.Name}{(readModel.Exactly ? " exactly" : string.Empty)}");
+        writer.Line(SpecificationHeader(writer, $"{keyword} readmodel {readModel.Name}{(readModel.Exactly ? " exactly" : string.Empty)}", readModel.Properties, readModel.InlineProperty));
         using (writer.Indent())
         {
-            WriteSpecificationValues(writer, readModel.Properties);
+            WriteSpecificationValues(writer, readModel.Properties.Where(value => value.Property != readModel.InlineProperty));
         }
     }
 

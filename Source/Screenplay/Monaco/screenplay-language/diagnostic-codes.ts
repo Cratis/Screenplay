@@ -22,6 +22,7 @@ export const diagnosticCodes = {
     redundantSourceStreamId: 'PLAY0507',
     eventFromLaterSlice: 'PLAY0516',
     timelineCycleGroup: 'PLAY0517',
+    invalidSpecificationExampleBody: 'PLAY0526',
     undeclaredDependency: 'PLAY0552',
     unusedDependencyDeclaration: 'PLAY0553',
     invalidDependencyTarget: 'PLAY0554',

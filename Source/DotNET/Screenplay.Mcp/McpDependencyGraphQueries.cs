@@ -22,8 +22,11 @@ static class McpDependencyGraphQueries
         var evidenceLimit = McpJson.Integer(arguments, "evidenceLimit", 3, 0, 20);
         var kinds = arguments.TryGetProperty("kinds", out var selected) ? selected.EnumerateArray().Select(item => item.ValueKind == JsonValueKind.String ? item.GetString()! : throw new McpFailure("Dependency kinds must be strings.", -32602)).ToArray() : null;
         if (kinds?.Any(kind => !DependencyGraph.Kinds.Contains(kind, StringComparer.Ordinal)) == true) throw new McpFailure("Unsupported dependency kind.", -32602);
-        if (scope is not null && !graph.Nodes.Any(node => node.Address == scope)) throw new McpFailure("Dependency scope must name a module, feature, slice or context.", -32602);
-        bool InScope(DependencyNode node) => scope is null || node.Address == scope || node.Address.StartsWith(scope + ".", StringComparison.Ordinal);
+        var scopeNodes = scope is null ? [] : graph.Nodes.Where(node => node.Address == scope).ToArray();
+        if (scope is not null && scopeNodes.Length == 0) throw new McpFailure("Dependency scope must name a module, feature, slice or context.", -32602);
+        if (scopeNodes.Length > 1) throw new McpFailure($"Dependency scope '{scope}' is ambiguous; it matches multiple node kinds.", -32602);
+        var scopeNode = scopeNodes.SingleOrDefault();
+        bool InScope(DependencyNode node) => scopeNode is null || graph.IsWithin(node, scopeNode);
         var items = view switch
         {
             "edges" => graph.Implied(from, to, kinds, includeTestOnly, evidenceLimit).Where(edge => InScope(direction == "incoming" ? edge.Target : edge.Source)).Select(edge => (object)new

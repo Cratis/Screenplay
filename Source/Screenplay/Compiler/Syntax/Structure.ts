@@ -14,7 +14,7 @@ import { OperationSyntax, SystemSyntax } from './Operations';
 import { QuerySyntax } from './Queries';
 import { ReactionSyntax } from './Reactions';
 import { ScreenSyntax } from './Screens';
-import { SpecificationSyntax } from './Specifications';
+import { SpecificationExampleSyntax, SpecificationSyntax } from './Specifications';
 import { SyntaxNode } from './SyntaxNode';
 import { SourceOptions } from './SourceOptions';
 
@@ -25,6 +25,7 @@ export const sliceTypes: readonly SliceType[] = ['StateChange', 'StateView', 'Au
 
 export interface SliceSyntax extends SyntaxNode {
     readonly kind: 'SliceSyntax';
+    readonly examples?: readonly SpecificationExampleSyntax[];
     readonly type: SliceType;
     readonly name: string;
     readonly description: string | null;
@@ -57,6 +58,7 @@ export interface DependsOnSyntax extends SyntaxNode {
 export interface FeatureSyntax extends SyntaxNode {
     readonly dependsOn?: readonly DependsOnSyntax[];
     readonly kind: 'FeatureSyntax';
+    readonly examples?: readonly SpecificationExampleSyntax[];
     readonly name: string;
     readonly description: string | null;
     readonly authorize: AuthorizeSyntax | null;
@@ -72,6 +74,7 @@ export interface FeatureSyntax extends SyntaxNode {
 export interface ModuleSyntax extends SyntaxNode {
     readonly dependsOn?: readonly DependsOnSyntax[];
     readonly kind: 'ModuleSyntax';
+    readonly examples?: readonly SpecificationExampleSyntax[];
     readonly name: string;
     readonly description: string | null;
     readonly authorize: AuthorizeSyntax | null;
@@ -85,6 +88,7 @@ export interface ModuleSyntax extends SyntaxNode {
 
 export interface ApplicationSyntax extends SyntaxNode {
     readonly kind: 'ApplicationSyntax';
+    readonly examples?: readonly SpecificationExampleSyntax[];
     readonly sourceOptions?: SourceOptions;
     readonly domain: DomainSyntax | null;
     readonly policies?: readonly PolicySyntax[];

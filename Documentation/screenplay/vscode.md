@@ -118,6 +118,9 @@ Tab moves into the drawing; arrow keys move between nodes and edges, Enter selec
 and Escape clears.
 Choose **Board** to return to the timeline; map selections do not highlight the board.
 
+The selected node or edge, and its details, stay selected when you edit and the board
+refreshes, as long as that item still exists. If it is gone, the selection clears.
+
 ## View options
 
 The **View** button in the upper right of the board offers the view options Cratis Studio has:

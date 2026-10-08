@@ -18,6 +18,35 @@ internal sealed partial class McpWorkspaces
         var workspace = CheckedCurrent(arguments);
         McpRepairEvidence.Check(McpRepairEvidence.Expected(arguments), workspace);
         var view = McpJson.OptionalString(arguments, "view") ?? "documents";
+        if (McpJson.OptionalString(arguments, "scope") is { } scope)
+        {
+            if (view != "diagnostics")
+            {
+                throw new McpFailure("scope is supported only for the diagnostics workspace view.", -32602);
+            }
+
+            var source = McpWorkspaceAnalysis.For(workspace).Source;
+            var selection = ScopedDiagnostics.Select(source, scope, out var scopeError)
+                ?? throw new McpFailure(scopeError!, -32602);
+            return McpJson.ToolResult(new
+            {
+                workspace = McpWorkspaceTransport.Describe(workspace),
+                view,
+                scope,
+                success = !selection.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error),
+                wholeApplicationSuccess = source.Compilation.Success,
+                selection.DeclarationCount,
+                selection.DependentDeclarationCount,
+                selection.AffectedScopes,
+                selection.UnresolvedEventConsumers,
+                selection.PossiblyAffectedReferenceCount,
+                selection.DependencyCoverage,
+                summary = McpModelQueries.DiagnosticSummary(selection.Diagnostics),
+                repairEvidenceRevision = McpRepairEvidence.Revision(workspace),
+                page = McpPaging.Page(selection.Diagnostics, arguments, workspace.Revision.ToString())
+            });
+        }
+
         if (view == "executable-model")
         {
             var model = workspace.Compilation.Success ? workspace.Compilation.Value!.Model : null;
@@ -421,10 +450,22 @@ internal sealed partial class McpWorkspaces
 
     internal object ReadProposal(JsonElement arguments)
     {
-        var proposal = Proposal(arguments);
         var view = McpJson.OptionalString(arguments, "view") ?? "changes";
+        if (view == "semantic-diff")
+        {
+            // Report a pending recovery here or in an overlapping root before reading the proposal from disk.
+            RefusePendingWorkspace();
+        }
+
+        var proposal = Proposal(arguments);
+        if (view == "semantic-diff")
+        {
+            new McpManagedFiles(Root).Verify(McpState.FileName, StatePlan(proposal).Before);
+            Root.Verify(proposal.Before);
+        }
         var result = view switch
         {
+            "semantic-diff" => McpSemanticDiff.Read(proposal, arguments),
             "changes" => McpPaging.Page(
                 proposal.WritePlan.Entries.Select(entry => new
                 {

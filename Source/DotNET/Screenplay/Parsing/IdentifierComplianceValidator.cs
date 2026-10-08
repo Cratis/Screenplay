@@ -43,11 +43,16 @@ internal static class IdentifierComplianceValidator
             foreach (var trigger in slice.Reactions.SelectMany(reaction => reaction.Triggers))
             {
                 if (trigger.Source is not NamedTriggerSourceSyntax named) continue;
-                var shapes = new List<IEnumerable<PropertySyntax>?> { declarations.Event(named.Name, scope)?.Properties };
+                var shapes = new List<IEnumerable<PropertySyntax>?>
+                {
+                    declarations.Event(named.Name, scope)?.Properties,
+                    trigger.Data.Select(datum => datum.Type is { } type ? new PropertySyntax(datum.Name, type, datum.Location) : null)
+                        .OfType<PropertySyntax>()
+                };
                 shapes.AddRange(declaredTriggers[named.Name].Select(declared => declared.Data
                     .Select(datum => datum.Type is { } type ? new PropertySyntax(datum.Name, type, datum.Location) : null)
                     .OfType<PropertySyntax>()));
-                foreach (var production in (trigger.Produces ?? []).Where(production => declarations.Productions.IsEventProduction(production, slice)))
+                foreach (var production in ReactionProductions.In(trigger).Where(production => declarations.Productions.IsEventProduction(production, slice)))
                 {
                     if (production.For is not PathExpressionSyntax path) continue;
 

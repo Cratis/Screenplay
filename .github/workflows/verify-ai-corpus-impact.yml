@@ -1,0 +1,43 @@
+name: Verify AI Corpus Impact
+
+# Repository-local for now; promote this policy to Cratis/Workflows when shared.
+# No paths filter: every PR gets a check, and the script passes unrelated changes.
+# Only the PR identity comes from the event. Labels, draft status and evidence are read live.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled, ready_for_review]
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  ai-corpus:
+    name: ai-corpus / verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23.x
+
+      - name: Test corpus impact verifier
+        run: node --test .github/scripts/tests/*.test.mjs
+
+      - name: Verify corpus impact
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node .github/scripts/verify-ai-corpus-impact.mjs

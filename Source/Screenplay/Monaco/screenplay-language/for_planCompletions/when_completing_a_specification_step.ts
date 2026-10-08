@@ -21,7 +21,7 @@ describe('when completing a specification step', () => {
     });
 
     it('should offer what can follow then', () => {
-        labelsAfter('    then res').should.include.members(['result', 'result exactly', 'no result']);
+        labelsAfter('    then res').should.include.members(['result', 'result exactly', 'no result', 'no events']);
     });
 
     it('should offer the queries after when query', () => {
@@ -29,7 +29,7 @@ describe('when completing a specification step', () => {
     });
 
     it('should offer every step on an empty line', () => {
-        completionEntriesFor(['specification']).map((entry) => entry.label).should.include.members(['given clock', 'when trigger', 'when capture', 'when query', 'then result', 'then no result']);
+        completionEntriesFor(['specification']).map((entry) => entry.label).should.include.members(['given clock', 'when trigger', 'when capture', 'when query', 'then result', 'then no result', 'then no events']);
     });
 
     it('should document a step word in a specification', () => {

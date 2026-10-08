@@ -73,7 +73,7 @@ internal static partial class SemanticModelRead
         Object(ref reader, "policy condition");
         var seen = NewSeen();
         string? kind = null, role = null, claim = null, targetKind = null, value = null, op = null;
-        SemanticPolicyCondition? left = null, right = null;
+        SemanticPolicyCondition? left = null, right = null, operand = null;
         while (NextProperty(ref reader, seen, "policy condition") is { } property)
         {
             switch (property)
@@ -86,9 +86,17 @@ internal static partial class SemanticModelRead
                 case "operator": op = String(ref reader, property); break;
                 case "left": RequiredToken(ref reader, JsonTokenType.StartObject, property); left = PolicyCondition(ref reader, false); break;
                 case "right": RequiredToken(ref reader, JsonTokenType.StartObject, property); right = PolicyCondition(ref reader, false); break;
+                case "operand": RequiredToken(ref reader, JsonTokenType.StartObject, property); operand = PolicyCondition(ref reader, false); break;
                 default: throw Unknown(property, "policy condition");
             }
         }
+        if (kind == "not")
+        {
+            Required(seen.SetEquals(["kind", "operand"]) && operand is not null, "negated policy condition");
+            return new SemanticNotPolicyCondition(operand!);
+        }
+        if (seen.Contains("operand")) throw Unknown("operand", "policy condition");
+
         return kind switch
         {
             "opaque" when allowOpaque && role is null && claim is null && targetKind is null && value is null && op is null && left is null && right is null => new SemanticOpaquePolicyCondition(string.Empty),
