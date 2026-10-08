@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { eventContextPaths } from './event-context';
+import { exampleDeclarationItems } from './example-declaration-items';
 
 export const optionalTypeItems: CompletionEntry[] = [
     { label: 'optional', insertText: 'optional', documentation: 'Allows the complete value, including a collection, to be absent.' },
@@ -15,7 +16,10 @@ export interface CompletionEntry {
 
 const fenced = (tag: string) => `\`\`\`${tag}\n\${1}\n\`\`\``;
 
+export { exampleDeclarationItems } from './example-declaration-items';
+
 export const topLevelItems: CompletionEntry[] = [
+    ...exampleDeclarationItems,
     { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
     { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system; not admitted by any supported executable model (ESM) version yet.' },
     { label: 'import', insertText: 'import ${1:Module}.${2:Type}', documentation: 'Imports a type from another module by its qualified name.' },
@@ -70,9 +74,8 @@ export const typeItems: CompletionEntry[] = [
     { label: 'property', insertText: '${1:property} ${2:Type}', documentation: 'A property of the type — a name and a type reference.' },
 ];
 
-
-
 export const sliceItems: CompletionEntry[] = [
+    ...exampleDeclarationItems,
     { label: 'operation', insertText: 'operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type}', documentation: 'Reusable slice-owned operation intent; not admitted by any supported executable model (ESM) version yet.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
     { label: 'event', insertText: 'event ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares an event type — an immutable, past-tense fact.' },
@@ -177,6 +180,20 @@ export const reactionTriggerItems: CompletionEntry[] = [
     { label: 'csharp', insertText: fenced('csharp'), documentation: 'Inline C# returning event side effects.' },
 ];
 
+const refusalAvailability = 'Syntax-only; reaction refusal handling and redelivery are not yet executable (PLAY0268).';
+
+export const invocationItems: CompletionEntry[] = [
+    { label: 'on refused', insertText: 'on refused\n    acknowledge', documentation: `Handles validation and constraint refusals, not authorization. ${refusalAvailability}` },
+    { label: 'on refused by validation', insertText: 'on refused by validation\n    acknowledge', documentation: `Handles validation refusals. ${refusalAvailability}` },
+    { label: 'on refused by constraint', insertText: 'on refused by constraint ${1:Name}\n    acknowledge', documentation: `Handles a named constraint refusal; omit the name for any constraint. ${refusalAvailability}` },
+    { label: 'on refused by authorization', insertText: 'on refused by authorization\n    acknowledge', documentation: `Explicitly handles unauthorized results, never Unsupported. ${refusalAvailability}` },
+];
+
+export const refusalItems: CompletionEntry[] = [
+    { label: 'acknowledge', insertText: 'acknowledge', documentation: `Acknowledges alone, without productions. ${refusalAvailability}` },
+    { label: 'produces', insertText: 'produces ${1:Event}\n    ${2:reason} = \\$refusal.reason', documentation: `Records the refusal with ordinary event productions. ${refusalAvailability}` },
+];
+
 export const triggerItems: CompletionEntry[] = [
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
     { label: 'description', insertText: 'description "${1:when this occurs}"', documentation: 'What makes an occurrence of this trigger happen.' },
@@ -184,6 +201,7 @@ export const triggerItems: CompletionEntry[] = [
 ];
 
 export const specificationItems: CompletionEntry[] = [
+    { label: 'when redelivered', insertText: 'when redelivered ${1:Event} to ${2:Reaction}\n    for ${3:value}', documentation: `Selects exactly one given event occurrence for one event-trigger reaction; does not append it again. ${refusalAvailability}` },
     { label: 'given operation fails', insertText: 'given operation ${1:Name} fails', documentation: 'Failure fixture leaf; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
     { label: 'then operation', insertText: 'then operation ${1:Name}\n    ${2:input} = ${3:value}', documentation: 'Partial requested-operation assertion; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
     { label: 'then compensated', insertText: 'then compensated ${1:Name}', documentation: 'Compensation assertion leaf; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
@@ -205,6 +223,7 @@ export const specificationItems: CompletionEntry[] = [
     { label: 'when query', insertText: 'when query ${1:Query}\n    ${2:argument} = ${3:value}', documentation: 'Performs a query, as the action.' },
     { label: 'then result', insertText: 'then result\n    ${1:property} = ${2:value}', documentation: 'One result the query performed by `when query` returns, in order.' },
     { label: 'then no result', insertText: 'then no result', documentation: 'The query performed by `when query` returns nothing.' },
+    { label: 'then no events', insertText: 'then no events', documentation: 'Syntax-only assertion of no new events after a non-append action (PLAY0268); cannot accompany event, error or denial expectations.' },
 ];
 
 // What follows a 'given', 'when' or 'then' already typed in a specification.
@@ -217,6 +236,7 @@ export const specificationStepItems: Record<'given' | 'when' | 'then', Completio
         { label: 'caller', insertText: 'caller\n    ${1:authenticated}', documentation: 'The identity the scenario runs as.' },
     ],
     when: [
+        { label: 'redelivered', insertText: 'redelivered ${1:Event} to ${2:Reaction}\n    for ${3:value}', documentation: `Selects exactly one given event occurrence for one reaction. ${refusalAvailability}` },
         { label: 'clock', insertText: 'clock "${1:2026-10-05T09:00:00Z}"', documentation: 'The clock reaches an instant - what a scheduled reaction responds to.' },
         { label: 'trigger', insertText: 'trigger ${1:Trigger}\n    ${2:value} = ${3:value}', documentation: 'An application trigger fires, with the values it carries.' },
         { label: 'capture', insertText: 'capture ${1:Capture}\n    ${2:field} = ${3:value}', documentation: 'The record a capture\'s source holds now.' },
@@ -231,6 +251,7 @@ export const specificationStepItems: Record<'given' | 'when' | 'then', Completio
         { label: 'result', insertText: 'result\n    ${1:property} = ${2:value}', documentation: 'One result the query performed by `when query` returns, in order.' },
         { label: 'result exactly', insertText: 'result exactly\n    ${1:property} = ${2:value}', documentation: 'One result, with every property asserted.' },
         { label: 'no result', insertText: 'no result', documentation: 'The query performed by `when query` returns nothing.' },
+        { label: 'no events', insertText: 'no events', documentation: 'Syntax-only assertion of no new events after a non-append action; not yet executable (PLAY0268).' },
         { label: 'readmodel', insertText: 'readmodel ${1:ReadModelType}\n    ${2:property} = ${3:value}', documentation: 'The read model state expected afterwards.' },
         { label: 'error', insertText: 'error "${1:reason}"', documentation: 'A rejection, for the named reason.' },
         { label: 'denied', insertText: 'denied', documentation: 'The action is denied to the caller.' },
@@ -256,6 +277,8 @@ export const ruleItems: CompletionEntry[] = [
 export const policyItems: CompletionEntry[] = [
     { label: 'require authenticated', insertText: 'require authenticated', documentation: 'Requires an authenticated caller.' },
     { label: 'require role', insertText: 'require role "${1:role}"', documentation: 'Requires the caller to have a role.' },
+    { label: 'require not role', insertText: 'require not role "${1:role}"', documentation: 'Excludes callers with a role. Add authenticated to require a signed-in caller.' },
+    { label: 'require not claim', insertText: 'require not claim "${1:claim}" matches ${2:subject}', documentation: 'Requires that no claim value matches the subject or a value.' },
     { label: 'require claim', insertText: 'require claim "${1:claim}" matches ${2:subject}', documentation: 'Requires a claim to match the subject or a value.' },
     { label: 'csharp', insertText: fenced('csharp'), documentation: 'Fully custom policy logic in C#, returning a bool.' },
 ];
@@ -275,6 +298,7 @@ export const validateItems: CompletionEntry[] = [
 export const screenItems: CompletionEntry[] = [
     { label: 'data', insertText: 'data ${1:ReadModel} via query ${2:QueryName}', documentation: 'Binds a read model to the screen through a query.' },
     { label: 'action', insertText: 'action ${1:CommandName}', documentation: 'Makes a command available as an action on the screen.' },
+    { label: 'action "…"', insertText: 'action "${1:Label}"\n    when item.${2:status} == "${3:open}" execute ${4:CommandName}\n    otherwise hidden', documentation: 'One labeled button selecting the first matching command; hidden without a subject or match.' },
     { label: 'layout', insertText: 'layout ${1:LayoutName}', documentation: 'Uses a layout template and fills its slots.' },
     { label: 'section', insertText: 'section ${1:name}', documentation: 'A named structural section of the screen.' },
     { label: 'table', insertText: 'table ${1:name}\n    column ${2:property} label "${3:text}"', documentation: 'A table widget over a read model or collection.' },
@@ -289,6 +313,17 @@ export const screenItems: CompletionEntry[] = [
 export const actionItems: CompletionEntry[] = [
     { label: 'navigate to', insertText: 'navigate to ${1:ScreenName}', documentation: 'Navigates to a screen after the action completes.' },
     { label: 'label', insertText: 'label "${1:text}"', documentation: 'The display label of the action.' },
+];
+
+export const guardedActionItems: CompletionEntry[] = [
+    { label: 'when … execute', insertText: 'when item.${1:status} == "${2:open}" execute ${3:CommandName}', documentation: 'First matching alternative selects the command; authorization never falls through.' },
+    { label: 'otherwise hidden', insertText: 'otherwise hidden', documentation: 'Hides the action when no alternative matches; also the default.' },
+    { label: 'otherwise execute', insertText: 'otherwise execute ${1:CommandName}', documentation: 'Selects a fallback command when no alternative matches and a subject exists.' },
+    ...actionItems.filter(item => item.label !== 'label'),
+];
+
+export const actionArgumentItems: CompletionEntry[] = [
+    { label: 'with … from', insertText: 'with ${1:property} from item.${2:property}', documentation: 'Explicit input binding for this command alternative, before same-name item fields or its form.' },
 ];
 
 export const tableItems: CompletionEntry[] = [
@@ -331,5 +366,5 @@ const sliceMembers: Record<string, readonly string[]> = {
 
 export function sliceItemsFor(sliceType: string | undefined): CompletionEntry[] {
     const members = sliceType ? sliceMembers[sliceType] : undefined;
-    return members ? sliceItems.filter(item => members.includes(item.label)) : sliceItems;
+    return members ? sliceItems.filter(item => item.label === 'example' || members.includes(item.label)) : sliceItems;
 }

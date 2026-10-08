@@ -1,0 +1,40 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+numbers exact
+
+module Billing
+  feature Claims
+    slice Automation Handling
+      event Approved
+        invoice String
+      event Refused
+        reason String
+        constraint String
+        message String
+      reaction Claimer
+        when Approved
+          invokes Claim
+            invoice = invoice
+            on refused by constraint Claims.UniqueClaim
+              produces Refused
+                for invoice
+                reason = $refusal.reason
+                constraint = $refusal.constraint
+                message = $refusal.message
+            on refused by validation
+              acknowledge
+            on refused by constraint
+              acknowledge
+            on refused by authorization
+              acknowledge
+            on refused
+              acknowledge
+      specification Recovery
+        given Approved
+          for "invoice-1"
+          invoice = "invoice-1"
+        when redelivered Approved to Claimer
+          for "invoice-1"
+          invoice = "invoice-1"
+        then no events

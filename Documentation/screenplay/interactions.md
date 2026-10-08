@@ -25,6 +25,8 @@ Three words carry the whole idea:
 | **Action** | What happens — `execute`, `navigate to`, `open dialog`, `refresh`, and the rest of a closed set. |
 | **Behavior** | A bundle of trigger-to-action bindings, attached to something. |
 
+For one labeled button that selects a command from the current item's state, use a [guarded screen action](screens.md#one-action-several-commands). That structured `when … execute` condition is separate from an interaction binding's `where` text, which remains opaque. Guarded choices inside `on` blocks are not supported.
+
 ## Write it inline, or name it
 
 Most interaction is one trigger and one action, written where it belongs:

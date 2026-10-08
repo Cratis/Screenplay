@@ -47,6 +47,11 @@ public sealed partial class ScreenplayPrinter :
     public string Print(SpecificationSyntax specification)
     {
         var writer = DocumentWriter(specification);
+        foreach (var example in specification.Examples)
+        {
+            WriteSpecificationExample(writer, example);
+            writer.Blank();
+        }
         WriteSpecification(writer, specification);
         return PrintComments(specification, writer);
     }
@@ -166,6 +171,12 @@ public sealed partial class ScreenplayPrinter :
         {
             writer.Blank();
             WriteUiProfile(writer, uiProfile);
+        }
+
+        foreach (var example in application.Examples)
+        {
+            writer.Blank();
+            WriteSpecificationExample(writer, example);
         }
 
         foreach (var module in application.Modules)
@@ -479,7 +490,8 @@ public sealed partial class ScreenplayPrinter :
         AddSeparatedMembers(members, writer, module.DialogTemplates ?? [], 4, WriteDialogTemplate);
         AddSeparatedMembers(members, writer, module.Forms ?? [], 5, WriteForm);
         AddSeparatedMembers(members, writer, module.Contributions ?? [], 6, WriteContribution);
-        AddSeparatedMembers(members, writer, module.Features, 7, WriteFeature);
+        AddSeparatedMembers(members, writer, module.Examples, 7, WriteSpecificationExample);
+        AddSeparatedMembers(members, writer, module.Features, 8, WriteFeature);
         WriteMembers(members, module);
     }
 
@@ -805,6 +817,7 @@ public sealed partial class ScreenplayPrinter :
 
         AddMembers(members, feature.Behaviors, 1, behavior => WriteAttachedBehavior(writer, behavior));
         AddMembers(members, feature.UsedBehaviors, 2, uses => WriteUsesBehavior(writer, uses));
+        AddSeparatedMembers(members, writer, feature.Examples, 3, WriteSpecificationExample);
         AddSeparatedMembers(members, writer, feature.Features, 3, WriteFeature);
         AddSeparatedMembers(members, writer, feature.Slices, 4, WriteSlice);
         AddSeparatedMembers(members, writer, feature.Contributions ?? [], 5, WriteContribution);
@@ -834,7 +847,8 @@ public sealed partial class ScreenplayPrinter :
             AddSeparatedMembers(members, writer, slice.Captures, 7, WriteCapture);
             AddSeparatedMembers(members, writer, slice.Reactions, 8, WriteReaction);
             AddSeparatedMembers(members, writer, slice.Screens, 9, WriteScreen);
-            AddSeparatedMembers(members, writer, slice.Specifications, 10, WriteSpecification);
+            AddSeparatedMembers(members, writer, slice.Examples, 10, WriteSpecificationExample);
+            AddSeparatedMembers(members, writer, slice.Specifications, 11, WriteSpecification);
             WriteMembers(members, slice);
         }
     }

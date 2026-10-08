@@ -16,7 +16,7 @@ describe('when highlighting specification steps', () => {
         rules.indexOf(stepRules[stepRules.length - 1]).should.be.below(captureLanguage);
     });
 
-    for (const line of ['    given clock "2026-10-05T08:00:00Z"', '    given capture LegacyLoans', '    when trigger NightlySync', '    when query OpeningHoursFor', '    then result exactly', '    then no result']) {
+    for (const line of ['    given clock "2026-10-05T08:00:00Z"', '    given capture LegacyLoans', '    when trigger NightlySync', '    when query OpeningHoursFor', '    then result exactly', '    then no result', '    then no events']) {
         it(`should read the step words of '${line.trim()}' as keywords`, () => {
             stepRules.some((rule) => rule[0].test(line)).should.be.true;
         });

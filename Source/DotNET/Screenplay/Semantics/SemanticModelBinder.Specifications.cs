@@ -20,14 +20,33 @@ public sealed partial class SemanticModelBinder
         static IEnumerable<SliceSyntax> AllSlices(FeatureSyntax feature) =>
             feature.Slices.Concat(feature.Features.SelectMany(AllSlices));
 
+        static bool CommandBelongsToSlice(string reference, SemanticAddress slice)
+        {
+            var qualifiers = reference.Split('.')[..^1];
+            var scope = slice.Parts.Where(part => part.Kind is SemanticAddressPartKind.Module or SemanticAddressPartKind.Feature or SemanticAddressPartKind.Slice).Select(part => part.Key).ToArray();
+
+            return qualifiers.Length <= scope.Length && qualifiers.SequenceEqual(scope.TakeLast(qualifiers.Length));
+        }
+
         SemanticSpecification? BindSpecification(
             SemanticAddress slice,
             SpecificationSyntax specification,
             Dictionary<string, SemanticCommand> commands)
         {
+            var origin = expansion.Specifications.SingleOrDefault(item => ReferenceEquals(item.Effective, specification));
             if (specification.File is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Specification '{specification.Name}' file reference is realization provenance.", specification.File.Location);
+            }
+
+            if (specification.ThenNoEvents && (specification.WhenAppended is not null || specification.ThenEvents.Any() ||
+                specification.ThenEventsInAnyOrder || specification.ThenErrors.Any() || specification.ThenDenied is not null))
+            {
+                Error(
+                    DiagnosticCodes.InvalidNoEventsExpectation,
+                    "'then no events' cannot follow 'when append' or accompany event, event-order, error or denial expectations.",
+                    specification.DirectiveLocations.GetValueOrDefault("then no events", specification.Location));
+                return null;
             }
 
             // Performing a query and asserting its results says what 'then query' says, so it binds to exactly the
@@ -48,11 +67,18 @@ public sealed partial class SemanticModelBinder
             }
 
             SemanticCommand? command = null;
-            if (specification.When is not null && !commands.TryGetValue(ShortName(specification.When.CommandType), out command))
+            if (specification.When is not null &&
+                (!commands.TryGetValue(ShortName(specification.When.CommandType), out command) ||
+                !CommandBelongsToSlice(specification.When.CommandType, slice)))
             {
-                Error(DiagnosticCodes.InvalidSemanticBinding, $"Specification '{specification.Name}' command is unresolved in its slice.", specification.When.Location);
+                var message = specification.When.CommandType.Contains('.', StringComparison.Ordinal)
+                    ? $"Specification '{specification.Name}' command '{specification.When.CommandType}' is unresolved in its slice."
+                    : $"Specification '{specification.Name}' command is unresolved in its slice.";
+                Error(DiagnosticCodes.InvalidSemanticBinding, message, specification.When.Location);
                 return null;
             }
+
+            ValidateSpecificationCompleteness(specification, command);
 
             var acted = specification.When is not null || specification.WhenAppended is not null || specification.WhenClock is not null ||
                 specification.WhenTrigger is not null || specification.WhenCapture is not null;
@@ -79,6 +105,7 @@ public sealed partial class SemanticModelBinder
 
             var address = SemanticAddress.ForSpecification(slice, specification.Name);
             var id = Resolve(address, specification.Location);
+            if (origin?.Steps.Any(step => step.Example is not null) == true) _specificationOrigins.TryAdd(id, origin);
             var givenEvents = specification.Given.Select(value => BindSpecificationEvent(value, commands, historicalFact: true)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             var givenReadModels = (specification.GivenReadModels ?? [])
                 .Select(value => BindReadModelState(value.Name, value.Properties, value.Location, value.Exactly))
@@ -131,6 +158,42 @@ public sealed partial class SemanticModelBinder
                 WhenTrigger = specification.WhenTrigger is null ? null : BindSpecificationTrigger(specification.WhenTrigger),
                 WhenCapture = specification.WhenCapture is null ? null : BindSpecificationCapture(specification.WhenCapture)
             };
+        }
+
+        void ValidateSpecificationCompleteness(SpecificationSyntax specification, SemanticCommand? command)
+        {
+            foreach (var step in specification.Given.Concat(specification.ThenEvents).Concat(specification.WhenAppended is { } append ? [append] : []))
+            {
+                if (_events.TryGetValue(ShortName(step.EventType), out var declaration))
+                {
+                    ValidateCompleteStep(step, step.EventType, step.Values, declaration.Properties.Values);
+                }
+            }
+
+            foreach (var step in specification.GivenReadModels ?? [])
+            {
+                if (_readModels.TryGetValue(ShortName(step.Name), out var declaration))
+                {
+                    ValidateCompleteStep(step, step.Name, step.Properties, declaration.Properties.Values);
+                }
+            }
+
+            if (specification.When is { } when && command is not null)
+            {
+                ValidateCompleteStep(when, when.CommandType, when.Values, command.Properties.Where(property => !property.IsGenerated));
+            }
+        }
+
+        void ValidateCompleteStep(SyntaxNode step, string type, IEnumerable<PropertyMappingSyntax> values, IEnumerable<SemanticProperty> properties)
+        {
+            var supplied = values.Select(value => value.Property).ToHashSet(StringComparer.Ordinal);
+            var missing = properties.Where(property => !supplied.Contains(property.Name)).ToArray();
+            var origin = steps.GetValueOrDefault(step);
+            var example = origin?.Example is { } declaration ? $" using example '{declaration.Name}'" : string.Empty;
+            foreach (var property in missing)
+            {
+                Error(DiagnosticCodes.MissingSpecificationProperty, $"Specification '{origin?.Role ?? "step"}'{example} for '{type}' is missing required property '{property.Name}'; supply it in the example or step.", step.Location);
+            }
         }
 
         SemanticSpecificationAppend? BindSpecificationAppend(SpecificationEventSyntax value, Dictionary<string, SemanticCommand> commands)

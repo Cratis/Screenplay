@@ -15,11 +15,11 @@ Invoicing/
 
 | Persona | Holds | Sees the screens of |
 | --- | --- | --- |
-| `InvoiceManager` | `IsAuthenticated`, `IsInvoicingStaff`, `CanManageInvoice` | StartInvoiceDraft, RegisterInvoice, CancelInvoice, TagInvoice, UpdateBillingContact, InvoiceList, InvoiceDetails |
+| `InvoiceManager` | `IsAuthenticated`, `IsPerson`, `IsInvoicingStaff`, `CanManageInvoice` | StartInvoiceDraft, RegisterInvoice, CancelInvoice, TagInvoice, UpdateBillingContact, InvoiceList, InvoiceDetails |
 | `Accountant` | the above, plus `IsAccountant`, `IsFinanceDepartment` | everything the invoice manager sees, plus ChangeInvoiceStatus, ProcessInvoiceBatch, ArchiveOldInvoices, InvoiceLineReport, InvoiceDashboard, ApplyDiscount, RecordPayment, InvoiceBalances, InvoiceAging, CollectionsBoard, ExchangeRates |
-| `FinanceController` | `IsAuthenticated`, `IsInvoicingStaff`, `IsFinanceDepartment`, `CanWriteOff` | WriteOffInvoice |
-| `Customer` | `IsAuthenticated`, `IsCustomer`, `OwnsInvoice`, `IsAdultCustomer`, `IsWithinCreditLimit` | MyInvoices, RequestPaymentPlan, CreditStatus |
-| `Auditor` | `IsAuthenticated`, `IsAuditor` | CancelledInvoices, SystemActivity |
+| `FinanceController` | `IsAuthenticated`, `IsPerson`, `IsInvoicingStaff`, `IsFinanceDepartment`, `CanWriteOff` | WriteOffInvoice |
+| `Customer` | `IsAuthenticated`, `IsPerson`, `IsCustomer`, `OwnsInvoice`, `IsAdultCustomer`, `IsWithinCreditLimit` | MyInvoices, RequestPaymentPlan, CreditStatus |
+| `Auditor` | `IsAuthenticated`, `IsPerson`, `IsAuditor` | CancelledInvoices, SystemActivity |
 
 The event model board draws a slice's screens in the row of every persona whose policies satisfy what gates the
 slice: the module's `authorize`, each enclosing feature's, and the slice's command or query.
@@ -36,6 +36,12 @@ slice: the module's `authorize`, each enclosing feature's, and the slice's comma
 | Integrations (› Notifications) | | | NotifyCustomerOnInvoiceRegistered, DetectOverdueInvoices, SyncBillingDirectory | LegacyInvoiceSync |
 
 Every slice has Given/When/Then specifications, and every state change and state view slice has a screen.
+Click sections and row-click links on the lists, details, dashboards and customer portal open the registration, draft, status,
+batch, archive, cancellation, tagging, billing-contact, payment and payment-plan command screens before input
+is supplied. Each command screen issues its own action; action navigation such as returning to `MyInvoices`
+happens only after success, never to the command's own input screen. Row clicks carry `invoiceId` to status,
+tagging, billing-contact, cancellation, payment and payment-plan screens. Payments are opened from the
+balance or due/overdue invoice rows; the payment form loads the balance by that identity.
 `ExchangeRates`, `CreditStatus` and the overdue list on `InvoiceDashboard` are views no event builds: their
 queries' performers read the central bank feed, a credit bureau and stored invoices.
 
@@ -46,7 +52,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | `domain` with a qualified name, `import` | top of the file |
 | `concept` of every primitive, `Enum`, `@pii`/`@sensitive` with reasons, `file`, concept `validate` with `matches email`, `rule` with a `file` and an inline body, `severity` | Concepts |
 | `type` with `description`, `file`, optional and collection properties | Composite value types |
-| `policy` with `require` (`authenticated`, `role`, `claim … matches` a literal, `subject` or `$context` path, `and`/`or`/parentheses, continuation lines), inline ```` ```csharp ```` and `file` bodies | Authorization |
+| `policy` with `require` (`authenticated`, `role`, `claim … matches` a literal, `subject` or `$context` path, `not`/`and`/`or`/parentheses, continuation lines), inline ```` ```csharp ```` and `file` bodies | Authorization |
 | `persona` with single-line and fenced descriptions | Authorization |
 | `authentication` with named providers | Authorization |
 | `trigger` with `description`, `file`, typed and untyped values | Triggers |
@@ -70,11 +76,15 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | projection `variant`s with `enters on` and a shared handler | CollectionsBoard |
 | `reducer` with inline and `file` rules | InvoiceAging |
 | `screen` at all three levels: intent (`data`, `action`, `label`, `navigate to`), structure (`template`, slots, `section`, `title`, `table`, `summary`, `on row-click`) and inline ```` ```react ````/```` ```html ````/```` ```typescript ````; a `file` screen | every state change and state view slice |
+| guarded screen action: label header, `when item.status … execute`, explicit `with … from` and `otherwise hidden` | CancelInvoiceScreen — cancellation is offered only for a draft |
 | interactions: `on load`, `enter`, `click`, `double click`, `select`, `submit`, `change`, `leave`, `interval`, `event … where`; `execute`, `navigate to`/`back`, `open dialog … with … from`, `close dialog`, `refresh`, `set`, `notify`, `confirm`, `raise`; `on success`/`failure`/`result` | InvoiceList, InvoiceLineDetail, ChangeInvoiceStatus, CollectionsBoard, behaviors |
 | `reaction` with `when` an event, `Startup`, a declared trigger; `every`; `at`, `at … on Monday`, `at … on day 1`; trigger values, `reads`, `produces`, `invokes`, `where`, inline and `file` bodies | Automation and Translate slices |
 | `capture` with `source`, `key`, `map`/`translate`/`split`/templates, `append` with `tag` and every `when` form, `children`, `nested` | LegacyInvoiceSync |
 | `specification` with `file`, `given caller`, `given clock`, `given <Event> for`, `given readmodel`, `given capture`, `when <Command> for`, `when append`, `when clock`, `when trigger`, `when capture`, `when query`, `then events in any order`, `then <Event> for`, `then readmodel exactly`, `then no readmodel`, `then query` with `arguments`/`result`, `then result exactly`, `then no result`, `then error` with and without a message, `then denied` | throughout |
+| `example` with structured values, indented and inline overrides | RegisterInvoice: `AcmeInvoice` supplies repeated command inputs without hiding the caller or outcome |
 | `seed` - two blocks | bottom of the file |
+
+`IsAuthenticated` requires only authentication. The module's `IsPerson` policy also excludes the `Service` role and an `actorKind` claim matching `service`. `RejectingAServiceRegisteringAnInvoice` demonstrates a denial even when that service holds the `InvoiceManager` role.
 
 ## Specifying what is not a command
 
@@ -98,6 +108,8 @@ invoiceNumber rule BeUnusedInvoiceNumber message "Invoice number is already in u
 This excerpt belongs inside the command's `validate` block. Its hint records guidance without changing the predicate contract or claiming that the selected code ran. The referenced implementation files are not included in this syntax showcase.
 
 `StartInvoiceDraft` creates a draft with a generated invoice identity and receipt and returns both only on acceptance. Its specification supplies deterministic UUID fixtures separately from `customerId`, then asserts the fact and response. `CancelInvoice` returns the cancelled invoice identity as a scalar. These constructs select ESM v7; generated values are not request/form inputs and give no retry or idempotency guarantee. Response-name binding in UI continuations remains downstream work.
+
+The cancellation row-click in `InvoiceDetails` opens `CancelInvoiceScreen` with `invoiceId` before input. That screen's guarded cancellation button reads the invoice's status and binds its identity explicitly, without navigating to its own input screen after execution. The guard offers an action; it does not authorize it or satisfy `CancelInvoice`'s validation. Remaining inputs come from the renderer. Guarded actions are syntax and renderer contracts, not executable-model assertions; downstream renderer support is required.
 
 ## Parsed is not executable
 
