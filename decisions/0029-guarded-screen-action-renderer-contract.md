@@ -52,4 +52,6 @@ Authors describe one user decision without duplicating buttons. Older renderers 
 
 ## Status notes
 
+**2026-10-08 — guarded bindings.** Guarded `on` bindings are specified by [0048](0048-guarded-on-bindings.md); this record's exclusion of them no longer applies.
+
 **2026-10-07 — accepted.** Accepted by Sindre Alstad Wilting on 2026-10-07 after reviewing the amended text. Renderer verification remains downstream work; the record therefore stays at `stage: none`.

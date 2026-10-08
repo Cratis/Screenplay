@@ -39,3 +39,4 @@
 | [0035](0035-keep-model-reasoning-as-report-only-metadata.md) | Keep model reasoning as report-only authoring metadata | proposed | none | — | — |
 | [0036](0036-admit-event-sources-streams-and-command-routes.md) | Admit event sources, streams and command routes into the executable model, with specification routes and composite stream ids | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0037](0037-routes-in-redelivery-locators-and-specification-examples.md) | State routes in redelivery locators and in typed specification examples with the existing route lines | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
+| [0048](0048-guarded-on-bindings.md) | Select whole interaction action lists with ordered item conditions | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
