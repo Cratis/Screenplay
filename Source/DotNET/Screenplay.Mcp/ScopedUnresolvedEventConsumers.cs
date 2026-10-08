@@ -5,4 +5,9 @@ using System.Collections.Immutable;
 
 namespace Cratis.Screenplay.Mcp;
 
-sealed record ScopedUnresolvedEventConsumers(int ReferenceCount, ImmutableArray<string> Scopes);
+/// <summary>
+/// Describes unresolved event consumers that cannot be attributed to the selected scope.
+/// </summary>
+/// <param name="ReferenceCount">The number of unresolved event references outside the reported declarations.</param>
+/// <param name="Scopes">The sorted, distinct consumer scopes; an empty address means the application.</param>
+public sealed record ScopedUnresolvedEventConsumers(int ReferenceCount, ImmutableArray<string> Scopes);
