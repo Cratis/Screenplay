@@ -24,24 +24,30 @@ public sealed partial class ScreenplayPrinter
     }
 
     /// <summary>
-    /// Prints members in their authored order when their positions share a document, otherwise in canonical order.
+    /// Prints members in their authored order when their physical or layout positions share a document, otherwise in canonical order.
     /// </summary>
     /// <remarks>
     /// Source locations suffice for parsed siblings in one document: their lines are unique, and no public
     /// syntax constructor or JSON shape needs to change. A folder merge can combine different paths, whose
     /// line numbers cannot be compared; in that case the existing kind order is the deterministic fallback.
+    /// Layout expansion can supply a temporary parent-relative import position without changing physical
+    /// source locations or comment anchors; those positions participate in the same document-local order.
     /// Start/default locations mark newly authored nodes. Features under modules or features, slices and file imports
     /// are inserted before their next located sibling in that collection, enabling mid-list timeline moves and pins.
     /// If there is no next located sibling, use the existing insertion rule: after the last member of the kind,
     /// or before the first member of a later canonical kind if none exists. Every other collection keeps that
     /// existing rule exactly, including structurally identical occurrences with distinct comments.
+    /// Whether a member is located is decided by <see cref="AuthoredPositions"/>, the definition AST edits, comment
+    /// ownership and layout expansion share.
     /// Retaining a declaration's location retains its authored position.
     /// </remarks>
-    static void WriteMembers(List<PrintableMember> members)
+    static void WriteMembers(List<PrintableMember> members, SyntaxNode owner)
     {
-        var located = members.Where(member => member.Node.Location is { Line: > 1, Column: > 0 }).ToList();
-        var sameDocument = located.Count > 0 && located.TrueForAll(member =>
-            string.Equals(member.Node.Location.Path, located[0].Node.Location.Path, StringComparison.Ordinal));
+        var resolved = AuthoredPositions.Resolve(owner.Location, [.. members.Select(member => (member.Node.Location, member.Node.PrintingLocation))]);
+        var positions = members.Zip(resolved).Where(pair => pair.Second is not null)
+            .ToDictionary(pair => pair.First, pair => pair.Second!, (IEqualityComparer<PrintableMember>)ReferenceEqualityComparer.Instance);
+        var located = members.Where(positions.ContainsKey).ToList();
+        var sameDocument = AuthoredPositions.ShareDocument([.. positions.Values]);
 
         if (!sameDocument)
         {
@@ -53,8 +59,8 @@ public sealed partial class ScreenplayPrinter
             return;
         }
 
-        var ordered = located.OrderBy(member => member.Node.Location.Line)
-            .ThenBy(member => member.Node.Location.Column).ToList();
+        var ordered = located.OrderBy(member => positions[member].Line)
+            .ThenBy(member => positions[member].Column).ToList();
         foreach (var member in members.Except(located))
         {
             var nextSibling = member.Node is FeatureSyntax or SliceSyntax or FileImportSyntax

@@ -26,8 +26,9 @@ internal static partial class PlayFolderMerge
     static ModuleSyntax Combine(IGrouping<string, ModuleSyntax> group, ParserContext context)
     {
         // Where the module is written comes before files merely placed in it, so the merged module is located
-        // at its declaration. Within each kind, path order is kept.
-        var parts = group.OrderBy(part => part.IsPlacement).ToList();
+        // at its declaration and its members' first-line positions are judged against that document.
+        // Within each kind, path order is kept.
+        var parts = group.OrderBy(AuthoredPositions.IsWrapper).ToList();
         if (parts.Count == 1)
         {
             return parts[0] with { IsPlacement = false, Features = [.. parts[0].Features.Select(Unplaced)] };
@@ -76,8 +77,9 @@ internal static partial class PlayFolderMerge
     static FeatureSyntax Combine(IGrouping<string, FeatureSyntax> group, ParserContext context)
     {
         // Where the feature is written comes before files merely placed in it, so the merged feature is located
-        // at its declaration. Within each kind, path order is kept.
-        var parts = group.OrderBy(part => part.IsPlacement).ToList();
+        // at its declaration and its members' first-line positions are judged against that document.
+        // Within each kind, path order is kept.
+        var parts = group.OrderBy(AuthoredPositions.IsWrapper).ToList();
         if (parts.Count == 1)
         {
             return Unplaced(parts[0]);
