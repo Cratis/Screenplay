@@ -50,6 +50,22 @@ body {
     font: inherit;
 }
 
+/* The pinned board truncates specification titles. These titles also carry explicit route
+   statements, so wrap the full header rather than hiding assertions behind an ellipsis. */
+.screenplay-board-view .event-modeling-grid-specification-header {
+    height: auto;
+    min-height: 44px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.screenplay-board-view .event-modeling-grid-specification-header-label .event-modeling-grid-editable-label {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    overflow: visible;
+    text-overflow: clip;
+}
+
 /* What the webview shows instead of a board that failed to draw. */
 .screenplay-board__failure pre {
     white-space: pre-wrap;

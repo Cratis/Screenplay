@@ -15,6 +15,8 @@ public class when_validating_v7_pre_generation_references : a_v7_contract
     }
 
     [Fact] void should_refuse_a_composed_policy_over_generated_values() => Refuse(Authorized(new SemanticLogicalPolicyCondition(new SemanticAuthenticatedCondition(), SemanticLogicalOperator.And, new SemanticClaimCondition("identity", SemanticClaimTargetKind.Artifact, "Id"))));
+    [Fact] void should_refuse_a_negated_policy_over_generated_values() => Refuse(Authorized(new SemanticNotPolicyCondition(new SemanticClaimCondition("identity", SemanticClaimTargetKind.Artifact, "Id"))));
+    [Fact] void should_refuse_a_negated_policy_over_a_generated_subject() => Refuse(Authorized(new SemanticNotPolicyCondition(new SemanticClaimCondition("identity", SemanticClaimTargetKind.Subject, null))));
     [Fact] void should_refuse_a_policy_over_a_generated_subject() => Refuse(Authorized(new SemanticClaimCondition("identity", SemanticClaimTargetKind.Subject, null)));
     [Fact]
     void should_allow_unrelated_and_input_only_policies()

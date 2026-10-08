@@ -63,9 +63,15 @@ slice StateView EngagementPortfolio
             column status          label $strings.engagements.fields.status
             column consultantCount label $strings.engagements.fields.consultants
             on row-click navigate to AssignConsultantDialog by engagementId
-          action OpenEngagement
-            label $strings.engagements.open.action
-            navigate to OpenEngagementDialog
+          section openEngagement
+            title $strings.engagements.open.action
+            on click
+              navigate to OpenEngagementDialog
+          section closeEngagement
+            title $strings.engagements.close.title
+            table engagements
+              column name label $strings.engagements.fields.name
+              on row-click navigate to CloseEngagementDialog by engagementId
 
   specification CountingStaffedConsultants
     given caller

@@ -44,5 +44,10 @@ module Catalog
     field newPrice label "New price"
     on submit navigate to ProductList
 
+  form DiscontinueProductForm for DiscontinueProduct
+    populate via query ProductById by productId
+    field reason label "Reason for discontinuing"
+    on submit navigate to ProductList
+
   import "Products/Products.play"
   import "Storefront/Storefront.play"

@@ -23,6 +23,22 @@ body {
     padding: 1rem;
 }
 
+/* The pinned board truncates specification titles. These titles also carry explicit route
+   statements, so wrap the full header rather than hiding assertions behind an ellipsis. */
+.screenplay-board-view .event-modeling-grid-specification-header {
+    height: auto;
+    min-height: 44px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.screenplay-board-view .event-modeling-grid-specification-header-label .event-modeling-grid-editable-label {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    overflow: visible;
+    text-overflow: clip;
+}
+
 /* The errors compiling found, in the lower left so they do not cover the logo or the toolbar. */
 .screenplay-mcp-board__problems {
     position: absolute;

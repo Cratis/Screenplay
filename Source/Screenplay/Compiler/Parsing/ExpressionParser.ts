@@ -26,6 +26,9 @@ export function parseModeledMappingSource(text: string, location: SourceLocation
 
 export function parseMappingSource(text: string, location: SourceLocation, context?: ParserContext, nativeIdentifiers = false): ExpressionSyntax {
     text = text.trim();
+    if (text === '$refusal' || text.startsWith('$refusal.')) {
+        return { kind: 'RefusalExpressionSyntax', member: text === '$refusal' ? '' : text.substring('$refusal.'.length), location };
+    }
     if (text.startsWith('$context.')) {
         const path = text.substring('$context.'.length);
         warnOnUnknownContextPath(path, location, context);
