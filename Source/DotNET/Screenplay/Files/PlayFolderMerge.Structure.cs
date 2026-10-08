@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
@@ -116,8 +117,14 @@ internal static partial class PlayFolderMerge
 
     static AuthorizeSyntax? CombineAuthorization(IEnumerable<AuthorizeSyntax?> declarations, string owner, ParserContext context)
     {
+        var authorizations = declarations.OfType<AuthorizeSyntax>().ToArray();
+        if (authorizations.Length < 2)
+        {
+            return authorizations.SingleOrDefault();
+        }
+
         var kept = new List<AuthorizeSyntax>();
-        foreach (var authorization in declarations.OfType<AuthorizeSyntax>())
+        foreach (var authorization in authorizations)
         {
             var first = kept.Find(earlier =>
                 !string.Equals(earlier.Location.Path, authorization.Location.Path, StringComparison.Ordinal) &&
@@ -134,21 +141,37 @@ internal static partial class PlayFolderMerge
             kept.Add(authorization);
         }
 
-        if (kept.Count == 0)
-        {
-            return null;
-        }
-
-        var requirement = kept[0].Requirement;
+        var requirement = WithoutComments(kept[0].Requirement);
         foreach (var next in kept.Skip(1))
         {
-            requirement = new LogicalPolicyRequirementSyntax(requirement, LogicalOperator.And, next.Requirement, requirement.Location);
+            requirement = new LogicalPolicyRequirementSyntax(requirement, LogicalOperator.And, WithoutComments(next.Requirement), requirement.Location);
         }
 
-        // Keep source metadata on the merged gate: layout collapse may remove every document
-        // that could otherwise restore its authorization comments during an authoring edit.
-        return kept[0] with { Requirement = requirement, SourceComments = [.. kept.SelectMany(authorization => authorization.SourceComments)] };
+        // Every gate - kept or ignored - may carry comments on itself and on its requirements, for
+        // example on a second 'authorize' line folded into the first. The merged gate prints as one
+        // line, so all of them move onto it as leading lines: each file's comments together in source
+        // order, files in path order. Their source lines are file-local, so they all take the gate's
+        // line; the printer then keeps them in this order.
+        var line = kept[0].Location.Line;
+        var comments = authorizations.OrderBy(authorization => authorization.Location.Path, StringComparer.Ordinal)
+            .SelectMany(authorization => CommentsOf(authorization).OrderBy(comment => comment.Line))
+            .Select(comment => comment with { Line = line, Placement = SourceCommentPlacement.Leading, AnchorLine = line });
+
+        return kept[0] with { Requirement = requirement, SourceComments = [.. comments] };
     }
+
+    static ImmutableArray<SourceComment> CommentsOf(SyntaxNode node) => node switch
+    {
+        AuthorizeSyntax authorization => [.. authorization.SourceComments, .. CommentsOf(authorization.Requirement)],
+        LogicalPolicyRequirementSyntax logical => [.. logical.SourceComments, .. CommentsOf(logical.Left), .. CommentsOf(logical.Right)],
+        _ => node.SourceComments
+    };
+
+    static PolicyRequirementSyntax WithoutComments(PolicyRequirementSyntax requirement) => requirement switch
+    {
+        LogicalPolicyRequirementSyntax logical => logical with { Left = WithoutComments(logical.Left), Right = WithoutComments(logical.Right), SourceComments = [] },
+        _ => requirement with { SourceComments = [] }
+    };
 
     /// <summary>
     /// Picks the description of a module or feature the files describe between them.

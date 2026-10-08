@@ -84,9 +84,10 @@ incorrect child types, invalid enums and illegal nulls are rejected.
 - Missing collections initialize empty; optional null collections normalize to
   empty arrays. Required scalar values must be supplied according to the schema.
 - Source locations, description offsets and parsed comments are server-owned, not editable data.
-- Ordinary JSON numbers decode as finite `Double` literals, matching the parser.
-  Other admitted numeric CLR literal types use typed `literalType`/`value`
-  envelopes to retain precision and type.
+- Ordinary JSON numbers decode as finite `Double` literals in Legacy source trees,
+  matching the Legacy parser. Other admitted numeric CLR literal types use typed
+  `literalType`/`value` envelopes to retain precision and type. Exact source trees
+  require the `ExactNumber` envelope described below; no implicit conversion occurs.
 - Inline JSON-shaped objects and lists have typed value nodes and individually
   addressable keys. Existing code blocks and raw expressions remain language
   constructs, not an escape hatch for structured data or untyped AST subtrees.
@@ -94,6 +95,38 @@ incorrect child types, invalid enums and illegal nulls are rejected.
 Being a well-typed AST does not guarantee that every hand-built combination can
 be expressed in `.play`. Authoring rejects a print/parse round-trip that loses
 structural content, even if the printed text itself compiles.
+
+## Exact numeric source authoring (Phase A)
+
+Use the top-level `numbers exact` preamble to preserve numeric literals without
+Double rounding. This is source and syntax support only: Exact trees pass Authoring
+validation when otherwise valid, but Executable validation refuses them with
+`PLAY0268`. No supported ESM version admits Exact mode yet.
+
+`ApplicationSyntax`, `ProjectionSyntax`, `CaptureSyntax` and `SpecificationSyntax`
+carry `SourceOptions` in C# and `sourceOptions` in SyntaxJSON. Exact roots serialize
+as `"sourceOptions":{"numericMode":"exact"}`; Legacy options are omitted to
+preserve existing JSON bytes. Missing options default independently to Legacy,
+including on nested source roots: restoration does not inherit a parent's mode.
+Explicit null, unknown modes, extra option members and conflicting nested modes
+are rejected. Set consistent options on every source root in a typed candidate.
+
+In a literal-value slot, represent an exact number as
+`{"literalType":"ExactNumber","value":"9007199254740993"}`. The value is a
+canonical fixed-point string within the bounded Decimal domain defined by the
+[grammar](grammar.md); it is not a JSON number or a JavaScript `Number`. Exponent
+source such as `1e-28` is normalized before transport. The decoder rejects
+noncanonical or out-of-range text, plain JSON numbers and Legacy numeric envelopes
+in Exact trees. Exact tags do not opt a Legacy root into Exact mode. Business
+objects with `literalType` and `value` keys remain business objects; only typed
+literal slots interpret the envelope.
+
+Typed edits and source printing preserve the owning mode. Complete Exact documents
+print one preamble; fragment printing uses its owner's mode without inserting a
+nested preamble. Preview mode changes as a deliberate whole-tree edit, including
+numeric leaves and nested source options, rather than changing the root flag alone.
+Existing revision, reference and print/parse fidelity checks still apply. Workspace
+transport preserves the original preamble in [exact source bytes](workspace-transport.md#numeric-mode-restoration).
 
 ## Original-document handles
 

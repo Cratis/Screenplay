@@ -43,7 +43,8 @@ public class when_printing_the_invoicing_sample : given.a_printer
     [Fact] void should_preserve_the_provider_names() => _reparsed.Value!.Authentication!.Providers.Select(_ => _.Identity).ShouldContainOnly(_original.Value!.Authentication!.Providers.Select(_ => _.Identity));
     [Fact] void should_preserve_the_slices() => Slices(_reparsed).Count().ShouldEqual(Slices(_original).Count());
     [Fact] void should_preserve_the_module_description() => _reparsed.Value!.Modules.Single().Description.ShouldEqual(_original.Value!.Modules.Single().Description);
-    [Fact] void should_preserve_the_feature_description() => _reparsed.Value!.Modules.Single().Features.Single().Description.ShouldEqual(_original.Value!.Modules.Single().Features.Single().Description);
+    [Fact] void should_preserve_the_feature_description() => _reparsed.Value!.Modules.Single().Features.Single(_ => _.Name == "InvoiceManagement").Description.ShouldEqual(_original.Value!.Modules.Single().Features.Single(_ => _.Name == "InvoiceManagement").Description);
+    [Fact] void should_preserve_the_payment_dependency() => _reparsed.Value!.Modules.Single().Features.Single(_ => _.Name == "Payments").DependsOn.Single().Target.ShouldEqual("InvoiceManagement");
     [Fact] void should_preserve_the_slice_description() => Slices(_reparsed).Single(_ => _.Name == "RegisterInvoice").Description.ShouldEqual(Slices(_original).Single(_ => _.Name == "RegisterInvoice").Description);
     [Fact] void should_preserve_the_multiline_module_description() => _reparsed.Value!.Modules.Single().Description.ShouldEqual("Everything related to invoicing customers.\nRegistration, lifecycle and payment tracking of invoices.");
     [Fact] void should_preserve_the_command_description() => Command(_reparsed, "RegisterInvoice").Description.ShouldEqual(Command(_original, "RegisterInvoice").Description);
@@ -77,7 +78,7 @@ public class when_printing_the_invoicing_sample : given.a_printer
         (LogicalPolicyConditionSyntax)result.Value!.Policies.Single(_ => _.Name == "CanWriteOff").Condition!;
 
     static IEnumerable<SliceSyntax> Slices(CompilationResult<ApplicationSyntax> result) =>
-        result.Value!.Modules.Single().Features.Single().Slices;
+        result.Value!.Modules.Single().Features.SelectMany(_ => _.Slices);
 
     static CommandSyntax Command(CompilationResult<ApplicationSyntax> result, string slice) =>
         Slices(result).Single(_ => _.Name == slice).Commands.Single();
