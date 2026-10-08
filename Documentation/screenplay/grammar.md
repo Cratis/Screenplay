@@ -13,7 +13,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl
+Document       = [ NumericPreamble ], [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl
                | PersonaDecl | AuthenticationDecl | TriggerDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | SystemDecl | EventSourceDecl | Module | SeedDecl } ;
 
@@ -23,6 +23,22 @@ Document       = [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl
 (* A document a FileImport placed in a module or feature holds, besides the
    declarations above, the body of that module or feature at its top level - see
    Module and Feature below, and imports.md.                                   *)
+
+(* -------------------------------------------------------------- *)
+(* Numeric source mode — syntax-only exact authoring                *)
+(* -------------------------------------------------------------- *)
+
+NumericPreamble = "numbers", "exact", NL ;
+
+(* The preamble appears at most once, at the top level before domain, imports
+   and declarations. Leading blank lines, comments and an initial BOM are
+   allowed. Absence selects Legacy mode; "numbers legacy", unknown modes,
+   duplicate and late directives are errors. Standalone projection, capture
+   and specification documents accept the same preamble before their root.
+   Each declaration-bearing physical file selects its own mode; imports do not
+   pass it to children. Unmarked import-only barrels are neutral, while marked
+   barrels assert mode agreement. Exact mode is authoring-only: executable
+   binding reports PLAY0268. See ast-authoring.md and workspace-transport.md. *)
 
 (* -------------------------------------------------------------- *)
 (* Domain                                                          *)
@@ -1168,7 +1184,18 @@ LanguageTag    = "csharp" | "typescript" | "react" | "html" | "sql"
 StringLiteral  = '"', { StringChar }, '"' ;
 StringChar     = ? any char except '"', '\' and newline ? | Escape ;
 Escape         = "\", ( '"' | "\" | "n" | "r" | "t" ) ;
-Number         = [ "-" ], Digit, { Digit }, [ ".", Digit, { Digit } ] ;
+Number         = LegacyNumber | ExactNumber ;
+LegacyNumber   = [ "-" ], Digit, { Digit }, [ ".", Digit, { Digit } ] ;
+ExactNumber    = LegacyNumber, [ Exponent ] ;
+Exponent       = ( "e" | "E" ), [ "+" | "-" ], Digit, { Digit } ;
+(* Select LegacyNumber without a preamble and ExactNumber with "numbers exact"
+   for scalar tokens. Structured values retain strict JSON number grammar.
+   Exact values must be representable without rounding: after normalization,
+   the unsigned coefficient is at most 79228162514264337593543950335 and the
+   scale is 0..28. Complete out-of-range tokens are errors, never Double or raw
+   fallbacks. Canonical text is fixed-point without insignificant zeros;
+   every spelling of zero becomes 0. No leading plus, hex, separators, suffixes
+   or special values are numeric literals. *)
 Integer        = Digit, { Digit } ;
 Ident          = Letter, { Letter | Digit | "_" } ;
 LowerIdent     = ( "a".."z" | "_" ), { Letter | Digit | "_" } ;
