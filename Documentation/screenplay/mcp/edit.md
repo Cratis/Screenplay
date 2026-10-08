@@ -82,6 +82,30 @@ A layout change keeps declaration identities and keeps annotations such as
 written in several files is one logical declaration, so renaming its header changes
 every fragment in a single proposal.
 
+## Move a slice or feature to another parent
+
+```text
+Move the AddBook slice from Catalog to Acquisitions, keeping every identity and
+its behavior. Use propose-move and show me the migrations before applying.
+```
+
+`propose-move` takes the target and destination parent as logical addresses, so a
+feature written in several files moves every fragment together. Slices can move
+to features; features can move to modules or other features. Declaration moves
+between slices are deferred.
+
+The proposal computes every assigned semantic and event-contract identity migration
+and repairs qualified typed references, including `depends on`. Event names and
+`id` pins remain unchanged. It refuses collisions, capture, moves into descendants,
+and changes to inherited authorization or screen interaction bindings. Literal
+placing imports need one unambiguous destination; placing globs are refused.
+
+Files stay where they are. Use `expand-layout` afterwards if you want to realign
+the folders. Inspect `moveReport` in the proposal and `read-proposal`, including
+`identityMigrations`, `retired` (always empty), `referenceRepairs` and
+`fragmentsMoved`, then approve the existing `apply` tool. Trivia preservation is
+the default and never falls back silently to canonical formatting.
+
 ## Fix a diagnostic
 
 ```text
