@@ -54,6 +54,7 @@ sealed class McpTools
             return name switch
             {
                 "repair-capabilities" => McpRepairCapabilities.Read(),
+                "semantic-diff" => McpRevisionDiff.Read(arguments),
                 "syntax-schema" => Schema(arguments),
                 "open-workspace" => _workspaces.Open(arguments),
                 "workspace-state" => _workspaces.State(arguments),
@@ -142,6 +143,8 @@ sealed class McpTools
                 McpJson.Integer(arguments, "limit", 50, 1, 200),
                 McpJson.OptionalString(arguments, "scope"),
                 McpJson.OptionalString(arguments, "document")),
+            "find-modeling-smells" => McpModelingSmells.Read(snapshot, arguments),
+            "find-specification-obligations" => McpSpecificationObligations.Read(snapshot, arguments),
             "find-assertion-gaps" => McpFixtureQueries.AssertionGaps(
                 snapshot,
                 McpJson.Integer(arguments, "offset", 0, 0, int.MaxValue),
