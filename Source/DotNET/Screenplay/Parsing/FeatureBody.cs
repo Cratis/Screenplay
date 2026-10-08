@@ -3,6 +3,7 @@
 
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -16,10 +17,11 @@ internal sealed class FeatureBody(string name)
     /// <summary>
     /// What a feature body may hold, as it reads in a diagnostic.
     /// </summary>
-    public const string Expected = "description, authorize, import, feature, slice, contribute, 'on <trigger>' or 'uses <Behavior>'";
+    public const string Expected = "description, depends on <Name>, authorize, import, feature, slice, contribute, example, 'on <trigger>' or 'uses <Behavior>'";
 
     readonly List<FeatureSyntax> _features = [];
     readonly List<SliceSyntax> _slices = [];
+    readonly List<SpecificationExampleSyntax> _examples = [];
     readonly Dictionary<string, SourceLocation> _directiveLocations = [];
     readonly List<ContributionSyntax> _contributions = [];
     readonly List<BehaviorSyntax> _behaviors = [];
@@ -64,6 +66,9 @@ internal sealed class FeatureBody(string name)
             case "feature":
                 _features.Add(ScreenplayParser.ParseFeature(context, line));
                 return true;
+            case "example":
+                _examples.Add(SpecificationParser.ParseExample(context, line));
+                return true;
             case "slice":
                 _slices.Add(SliceParser.Parse(context, line));
                 return true;
@@ -84,6 +89,7 @@ internal sealed class FeatureBody(string name)
     public FeatureSyntax Build(SourceLocation location, bool isPlacement = false) =>
         new(name, _features, _slices, location, _description, _contributions)
         {
+            Examples = _examples,
             Behaviors = _behaviors,
             UsedBehaviors = _usedBehaviors,
             DependsOn = _dependsOn,

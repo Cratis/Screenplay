@@ -57,9 +57,10 @@ slice StateView PayrollRuns
         summary CurrentPayrollRun
           field year label $strings.timesheets.fields.year
           field week label $strings.timesheets.fields.week
-        action OpenPayrollRun
-          label $strings.payroll.open.action
-          navigate to OpenPayrollRunDialog
+        section openPayrollRun
+          title $strings.payroll.open.action
+          on click
+            navigate to OpenPayrollRunDialog
       lines
         section runs
           data PayrollRun[] via query PayrollRuns

@@ -1,9 +1,11 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, Diagnostic, EventSourceReadConfidence, OperationSyntax, parsePlacedDocuments, SpecificationSyntax } from '@cratis/screenplay-compiler';
+import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, Diagnostic, EventSourceReadConfidence, OperationSyntax, parsePlacedDocuments, SpecificationEventSyntax, SpecificationSyntax } from '@cratis/screenplay-compiler';
 import { fenceMap, indentOf, withoutComment } from './document-context';
 import { ResponseAnalysis } from './ResponseAnalysis';
+import { ExampleAnalysis } from './ExampleAnalysis';
+import { exampleAnalysis } from './example-analysis';
 import { EventSourceAnalysis } from './EventSourceAnalysis';
 import { AuthoredCommandRoute } from './AuthoredCommandRoute';
 import { AuthoringDocument } from './AuthoringDocument';
@@ -48,7 +50,7 @@ function authoringSource(lines: string[], headers: readonly string[]) {
     return { source, locations };
 }
 
-function analyze(lines: string[], otherSources: readonly (string | AuthoringDocument)[], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis } {
+function analyze(lines: string[], otherSources: readonly (string | AuthoringDocument)[], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis; readonly examples: ExampleAnalysis } {
     const others = otherSources.map((document, index) => typeof document === 'string' ? { path: `other-${index}.play`, source: document } : document).filter(document => document.path !== path);
     const documents: AuthoringDocument[] = [{ path, source: lines.join('\n'), placement, isPlacementResolved }, ...others];
     // Modules/features merge, but slices are real declarations: equal slice names discard later
@@ -208,7 +210,7 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
     const targets = sourceDeclarations.flatMap(source => {
         return source.streams.filter(stream => resolve(source.name, stream.name).state === 'unique' && !importedTypeReferences.has(`${source.name}.${stream.name}`)).map(stream => ({ name: `${source.name}.${stream.name}`, source, stream }));
     });
-    const sourceContexts = new Map<number, { command?: CommandSyntax; route?: AuthoredCommandRoute; source?: typeof sourceDeclarations[number]; stream?: typeof sourceDeclarations[number]['streams'][number] }>();
+    const sourceContexts = new Map<number, { command?: CommandSyntax; event?: SpecificationEventSyntax; expectation?: boolean; route?: AuthoredCommandRoute; source?: typeof sourceDeclarations[number]; stream?: typeof sourceDeclarations[number]['streams'][number] }>();
     const routes: AuthoredCommandRoute[] = [];
     for (const command of commands.values()) {
         for (const line of range(command.location.line - 1)) sourceContexts.set(line, { command });
@@ -220,16 +222,26 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
             for (const line of range(command.stream.location.line - 1)) sourceContexts.set(line, { command, route: command.stream });
         }
     }
+    for (const specification of specifications.values()) {
+        for (const event of [...specification.given, ...(specification.whenAppended ? [specification.whenAppended] : []), ...specification.thenEvents]) {
+            const context = { event, expectation: specification.thenEvents.includes(event) };
+            for (const line of range(event.location.line - 1)) sourceContexts.set(line, context);
+            if (event.stream) {
+                routes.push(event.stream);
+                for (const line of range(event.stream.location.line - 1)) sourceContexts.set(line, { ...context, route: event.stream });
+            }
+        }
+    }
     for (const source of sourceDeclarations.filter(source => source.location.path === path)) {
         for (const line of range(source.location.line - 1)) sourceContexts.set(line, { source });
         for (const stream of source.streams) for (const line of range(stream.location.line - 1)) sourceContexts.set(line, { source, stream });
     }
     const ambiguousCandidates = [...commands.values()].flatMap(command => command.streamCandidates ?? []).filter(candidate => candidate.propertyCandidate !== null);
     const eventSources: EventSourceAnalysis = { declarations: sourceDeclarations, routes, ambiguousCandidates, contexts: sourceContexts, targets, resolve };
-    return { commands, specifications, diagnostics, operationProductionLines, operations, eventSources };
+    return { commands, specifications, diagnostics, operationProductionLines, operations, eventSources, examples: exampleAnalysis(parsed.value, path, lines, range, syntheticScopes, parsed.diagnostics) };
 }
 
-export function responseAnalysis(lines: string[], otherSources: readonly (string | AuthoringDocument)[] = [], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis } {
+export function responseAnalysis(lines: string[], otherSources: readonly (string | AuthoringDocument)[] = [], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis; readonly examples: ExampleAnalysis } {
     const key = JSON.stringify([lines, otherSources, placement, path, isPlacementResolved]);
     let analysis = revisions.get(key);
     if (analysis === undefined) {

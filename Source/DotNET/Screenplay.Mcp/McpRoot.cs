@@ -27,6 +27,9 @@ sealed class McpRoot
 
     internal string ApplicationName => new DirectoryInfo(_path).Name;
 
+    // Rebinding must not dereference a previous root that has been removed or made unreadable.
+    internal bool Exists => Directory.Exists(_path);
+
     internal string DirectoryPath
     {
         get
@@ -59,6 +62,8 @@ sealed class McpRoot
             }
         }
     }
+
+    internal bool SamePath(McpRoot other) => string.Equals(_path, other._path, StringComparison.Ordinal);
 
     internal ImmutableArray<WorkspaceDocument> Read(bool allowEmpty = false)
     {

@@ -62,6 +62,11 @@ public static partial class SemanticModelCanonicalJson
                 });
                 if (claim.Value is not null) CanonicalJson.WriteString(writer, "value", claim.Value);
                 break;
+            case SemanticNotPolicyCondition not:
+                writer.WriteString("kind", "not");
+                writer.WritePropertyName("operand");
+                WritePolicyCondition(writer, not.Operand);
+                break;
             case SemanticLogicalPolicyCondition logical:
                 writer.WriteString("kind", "logical");
                 writer.WriteString("operator", logical.Operator == SemanticLogicalOperator.And ? "and" : "or");

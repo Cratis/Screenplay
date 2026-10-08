@@ -58,6 +58,7 @@ static class WorkspaceSyntaxAddresses
                 EventSyntax @event when member == "events" => SemanticAddress.ForEventContract(owner, @event.Name),
                 ReadModelSyntax readModel when member == "readModels" => SemanticAddress.ForReadModel(owner, readModel.Name),
                 ProjectionSyntax projection when member == "projections" => SemanticAddress.ForProjection(owner, projection.Name),
+                ReactionSyntax reaction when member == "reactions" => SemanticAddress.ForReaction(owner, reaction.Name),
                 QuerySyntax query when member == "queries" => SemanticAddress.ForQuery(owner, query.Name),
                 SpecificationSyntax specification when member == "specifications" => SemanticAddress.ForSpecification(owner, specification.Name),
                 _ => null

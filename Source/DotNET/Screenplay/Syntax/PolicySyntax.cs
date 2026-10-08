@@ -47,6 +47,13 @@ public record PolicySyntax(
 public abstract record PolicyConditionSyntax(SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
+/// Negates a policy condition.
+/// </summary>
+/// <param name="Operand">The condition to negate.</param>
+/// <param name="Location">The source location.</param>
+public record NotPolicyConditionSyntax(PolicyConditionSyntax Operand, SourceLocation Location) : PolicyConditionSyntax(Location);
+
+/// <summary>
 /// Represents the <c>authenticated</c> policy condition.
 /// </summary>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>

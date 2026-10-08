@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Text.RegularExpressions;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
@@ -8,13 +9,15 @@ using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Workspaces;
 
-static class WorkspaceIdentifierSpans
+internal static partial class WorkspaceIdentifierSpans
 {
     internal static bool Supports(SyntaxNode node, string member, string line)
     {
         var keyword = line.Split(' ', '\t')[0];
         return (node, member) switch
         {
+            (SpecificationExampleSyntax, "name" or "type") => keyword == "example",
+            (SpecificationSyntax, "name") => keyword == "specification",
             (ConceptSyntax, "name") => keyword == "concept",
             (TypeSyntax, "name") => keyword == "type",
             (ModuleSyntax, "name") => keyword == "module",
@@ -25,6 +28,10 @@ static class WorkspaceIdentifierSpans
             (EventSyntax, "name") => keyword == "event" || (keyword == "produces" && line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).ElementAtOrDefault(1) == "event"),
             (ReadModelSyntax, "name") => keyword == "readmodel",
             (QuerySyntax, "name") => keyword == "query",
+            (ReactionSyntax, "name") => keyword == "reaction",
+            (ConstraintSyntax, "name") => keyword == "constraint",
+            (InvocationRefusalSyntax, "constraint") => keyword == "on",
+            (SpecificationRedeliverySyntax, "eventType" or "reaction") => keyword == "when",
             (TypeRefSyntax, "name") => line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).Length >= 2,
             (PropertySyntax, "name") => line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).Length >= 2,
             (CompositeKeySyntax, "type") => keyword == "key",
@@ -40,12 +47,14 @@ static class WorkspaceIdentifierSpans
             (EventInteractionTriggerSyntax, "eventName") => keyword == "on",
             (UniquePropertyConstraintSyntax or UniqueEventConstraintSyntax, "event") => keyword == "unique",
             (ConstraintSyntax, var reference) when reference.StartsWith("releasedBy/", StringComparison.Ordinal) => keyword == "released",
-            (SpecificationEventSyntax, "eventType") => keyword == "given" || keyword == "then" || keyword == "and",
+            (SpecificationEventSyntax, "eventType") => keyword == "given" || keyword == "then" || keyword == "and" || keyword == "when",
             (SpecificationCommandSyntax, "commandType") => keyword == "when",
             (SpecificationReadModelSyntax or SpecificationAbsentReadModelSyntax, "name") => keyword == "given" || keyword == "then" || keyword == "and",
             (SpecificationQuerySyntax, "query") => keyword == "then" || keyword == "and",
             (InvokesSyntax, "command") => keyword == "invokes",
             (ScreenActionSyntax, "command") => keyword == "action",
+            (ScreenActionAlternativeSyntax, "command") => keyword == "when",
+            (ScreenActionOtherwiseSyntax, "command") => keyword == "otherwise",
             (FormSyntax, "for") => keyword == "form",
             (ReadsSyntax, "readModel") => keyword == "reads",
             (ProjectionSyntax, "readModel") => keyword == "projection",
@@ -56,6 +65,18 @@ static class WorkspaceIdentifierSpans
             (NamedTriggerSourceSyntax, "name") => keyword == "when",
             _ => false
         };
+    }
+
+    internal static IEnumerable<(int Offset, int Length)> Find(SyntaxNode node, string member, string line, string expected)
+    {
+        if (node is SpecificationRedeliverySyntax && (member == "eventType" || member == "reaction"))
+        {
+            var match = RedeliveryRegex().Match(line);
+            var group = match.Groups[member];
+            return match.Success && group.Value == expected ? [(group.Index, group.Length)] : [];
+        }
+
+        return Find(line, expected);
     }
 
     internal static IEnumerable<(int Offset, int Length)> Find(string line, string expected)
@@ -100,4 +121,7 @@ static class WorkspaceIdentifierSpans
             }
         }
     }
+
+    [GeneratedRegex(@"^when\s+redelivered\s+(?<eventType>[A-Za-z_]\w*(?:\.\w+)*)\s+to\s+(?<reaction>[A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    private static partial Regex RedeliveryRegex();
 }

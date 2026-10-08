@@ -41,7 +41,7 @@ internal static class SemanticPolicyEvaluation
             var condition = plan.Model.Application.Policies.Single(policy => policy.Name == reference.Name).Condition;
             return condition is SemanticOpaquePolicyCondition
                 ? new(SemanticPolicyOutcome.Unsupported, reference.Name)
-                : new(EvaluateCondition(condition, plan, caller, artifact, subject, properties)
+                : new(EvaluateCondition(condition, plan, caller, artifact, subject, properties).IsTrue
                     ? SemanticPolicyOutcome.Allow : SemanticPolicyOutcome.Deny);
         }
 
@@ -65,7 +65,7 @@ internal static class SemanticPolicyEvaluation
         return EvaluateAuthorization(logical.Right, plan, caller, artifact, subject, properties);
     }
 
-    static bool EvaluateCondition(
+    static SemanticPolicyTruth EvaluateCondition(
         SemanticPolicyCondition condition,
         SemanticExecutionPlan plan,
         SemanticCaller caller,
@@ -73,17 +73,35 @@ internal static class SemanticPolicyEvaluation
         SemanticValue? subject,
         IEnumerable<SemanticProperty> properties) => condition switch
     {
-        SemanticAuthenticatedCondition => caller.Authenticated,
-        SemanticRoleCondition role => caller.Roles.Contains(role.Role, StringComparer.Ordinal),
+        SemanticAuthenticatedCondition => new(caller.Authenticated),
+        SemanticNotPolicyCondition not => EvaluateCondition(not.Operand, plan, caller, artifact, subject, properties).Not(),
+        SemanticRoleCondition role => new(caller.Roles.Contains(role.Role, StringComparer.Ordinal)),
         SemanticClaimCondition claim => MatchClaim(claim, plan, caller, artifact, subject, properties),
-        SemanticLogicalPolicyCondition { Operator: SemanticLogicalOperator.And } logical =>
-            EvaluateCondition(logical.Left, plan, caller, artifact, subject, properties) && EvaluateCondition(logical.Right, plan, caller, artifact, subject, properties),
-        SemanticLogicalPolicyCondition { Operator: SemanticLogicalOperator.Or } logical =>
-            EvaluateCondition(logical.Left, plan, caller, artifact, subject, properties) || EvaluateCondition(logical.Right, plan, caller, artifact, subject, properties),
+        SemanticLogicalPolicyCondition { Operator: SemanticLogicalOperator.And or SemanticLogicalOperator.Or } logical =>
+            EvaluateLogicalCondition(logical, plan, caller, artifact, subject, properties),
         _ => throw new InvalidSemanticContract("Unknown policy condition node or operator.")
     };
 
-    static bool MatchClaim(SemanticClaimCondition claim, SemanticExecutionPlan plan, SemanticCaller caller, IReadOnlyDictionary<string, SemanticValue> artifact, SemanticValue? subject, IEnumerable<SemanticProperty> properties)
+    static SemanticPolicyTruth EvaluateLogicalCondition(
+        SemanticLogicalPolicyCondition logical,
+        SemanticExecutionPlan plan,
+        SemanticCaller caller,
+        IReadOnlyDictionary<string, SemanticValue> artifact,
+        SemanticValue? subject,
+        IEnumerable<SemanticProperty> properties)
+    {
+        var left = EvaluateCondition(logical.Left, plan, caller, artifact, subject, properties);
+        if ((logical.Operator == SemanticLogicalOperator.And && left.IsFalse) ||
+            (logical.Operator == SemanticLogicalOperator.Or && left.IsTrue))
+        {
+            return left;
+        }
+        var right = EvaluateCondition(logical.Right, plan, caller, artifact, subject, properties);
+
+        return logical.Operator == SemanticLogicalOperator.And ? left.And(right) : left.Or(right);
+    }
+
+    static SemanticPolicyTruth MatchClaim(SemanticClaimCondition claim, SemanticExecutionPlan plan, SemanticCaller caller, IReadOnlyDictionary<string, SemanticValue> artifact, SemanticValue? subject, IEnumerable<SemanticProperty> properties)
     {
         var target = claim.TargetKind switch
         {
@@ -92,9 +110,11 @@ internal static class SemanticPolicyEvaluation
             SemanticClaimTargetKind.Artifact when claim.Value is not null => Text(ArtifactValue(claim.Value, artifact, plan, properties)),
             _ => null
         };
-        return target is not null && caller.Claims.Any(value =>
+        if (target is null) return SemanticPolicyTruth.Unknown;
+
+        return new(caller.Claims.Any(value =>
             string.Equals(value.Type, claim.Claim, StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(value.Value, target, StringComparison.Ordinal));
+            string.Equals(value.Value, target, StringComparison.Ordinal)));
     }
 
     static SemanticValue? ArtifactValue(string path, IReadOnlyDictionary<string, SemanticValue> artifact, SemanticExecutionPlan plan, IEnumerable<SemanticProperty> properties)

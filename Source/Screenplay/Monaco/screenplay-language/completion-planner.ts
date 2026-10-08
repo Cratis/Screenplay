@@ -2,8 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { enclosingChain, enclosingHeaders, fenceMap, indentOf, nearestEnclosingLine, withoutComment } from './document-context';
+import { refusalContext } from './refusal-context';
 import { namedRuleContext } from './named-rule-context';
 import { responseCompletions } from './response-completions';
+import { exampleCompletions } from './example-authoring';
 import { DocumentSymbols, scanDocument } from './symbols';
 import { structureCompletion } from './structure-completions';
 import { getSubLanguage } from './sub-language-registry';
@@ -125,6 +127,8 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
             return items.constraintItems;
         case 'reaction':
             return items.reactionItems;
+        case 'invokes':
+            return chain.includes('reaction') ? items.invocationItems : [];
         case 'trigger':
             return items.triggerItems;
         case 'when':
@@ -165,7 +169,7 @@ export function planCompletions(
 ): CompletionPlan {
     const fences = fenceMap(lines);
     if (fences[lineIndex] || withoutComment(textBefore).length < textBefore.length) return { kind: 'none' };
-    const responseEntries = responseCompletions(lines, lineIndex, textBefore, scanDocument(lines));
+    const responseEntries = exampleCompletions(lines, lineIndex, textBefore) ?? responseCompletions(lines, lineIndex, textBefore, scanDocument(lines));
     if (responseEntries !== null) return { kind: 'entries', entries: responseEntries };
 
     // Inside the quotes of a file import, what is wanted is a path - replacing what has been typed so far.
@@ -177,6 +181,10 @@ export function planCompletions(
     // A quote or a slash only asks for a completion inside an import path.
     if (/["/]$/.test(textBefore)) return { kind: 'none' };
 
+    const refusal = refusalContext(lines, lineIndex, indentOf(lines[lineIndex] ?? textBefore));
+    if (/\$refusal\.\w*$/.test(textBefore)) {
+        return { kind: 'entries', entries: refusal === undefined ? [] : ['reason', 'message', ...(/^on\s+refused\s+by\s+constraint(?:\s|$)/.test(refusal) ? ['constraint'] : [])].map(member => ({ label: member, insertText: member, documentation: 'String refusal value; syntax-only, not yet executable (PLAY0268).' })) };
+    }
     const contextVariableMatch = textBefore.match(/\$[\w.]*$/);
     if (contextVariableMatch) {
         return { kind: 'contextVariables', replaceLength: contextVariableMatch[0].length };
@@ -186,6 +194,27 @@ export function planCompletions(
     const effectiveIndent =
         textBefore.trim().length === 0 ? textBefore.length : indentOf(currentLine);
     const chain = enclosingChain(lines, fences, lineIndex, effectiveIndent);
+    if (chain.includes('screen')) {
+        let parentIndent = effectiveIndent;
+        let guarded = false;
+        for (let index = lineIndex - 1; index >= 0; index--) {
+            if (fences[index]) continue;
+            const parent = withoutComment(lines[index]);
+            if (parent.trim().length === 0 || indentOf(parent) >= parentIndent) continue;
+            parentIndent = indentOf(parent);
+            if (/^\s*action\s+(?:"|\$strings\.)/.test(parent)) { guarded = true; break; }
+            if (/^\s*screen\b/.test(parent)) break;
+        }
+        if (guarded) {
+            if (/^\s*(?:when\b.*|otherwise)\s+execute\s+[\w.]*$/.test(textBefore)) return { kind: 'commands' };
+            if (chain[0] === 'action') return { kind: 'entries', entries: items.guardedActionItems };
+            if (['when', 'otherwise'].includes(chain[0])) {
+                const parent = nearestEnclosingLine(lines, fences, lineIndex, effectiveIndent) ?? '';
+                return { kind: 'entries', entries: /\bexecute\s+[\w.]+$/.test(parent) ? items.actionArgumentItems : [] };
+            }
+        }
+    }
+    if (chain[0] === 'on' && refusal !== undefined) return { kind: 'entries', entries: items.refusalItems };
     const ruleContext = namedRuleContext(lines, lineIndex, effectiveIndent);
     if (ruleContext === 'implementation') return { kind: 'entries', entries: items.namedRuleImplementationItems };
     if (ruleContext === 'rule') return { kind: 'entries', entries: items.commandRuleItems };
