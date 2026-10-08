@@ -774,6 +774,8 @@ A behavior is *deferred* from the backend ESM v1 profile in the same way every o
 | `PLAY0347` | Warning | Earlier alternatives provably shadow an alternative. Guards use first-match order; proof uses DNF comparison-set inclusion with a 64-disjunct expansion cap. Overlap alone is not reported. |
 | `PLAY0348` | Warning | A guarded alternative or `otherwise execute` supplies a `with` argument the chosen command does not declare, or binds a subject field whose collection cardinality differs from the command input. |
 
+Guarded-action checks `PLAY0341`–`PLAY0348` are shared by the TypeScript compiler, Monaco and VS Code. Subject and command shapes that are imported but undeclared, or ambiguous, remain unknown rather than guessed. See [Editor diagnostic support](editor-diagnostics.md) for the remaining C#-only checks.
+
 An inline `on` block is an anonymous behavior, so it has no name to report against. Diagnostics inside one cite the position and the trigger instead.
 
 ### Match validation binding

@@ -54,53 +54,8 @@ public sealed partial class SemanticModelBinder
 
                 // Chronicle ModelBoundProjectionBuilder.cs:144-166 merges global handlers before VariantReclassifier.cs:28-50
                 // reclassifies every non-entering From as a self-referential, update-only join (Decision: 0001).
-                var blocks = shared.Concat(variant.Blocks).ToArray();
                 var entryNames = variant.EntersOn.Select(entry => entry.Event).ToHashSet(StringComparer.Ordinal);
-                var enteringMappings = new Dictionary<string, List<MappingSyntax>>(StringComparer.Ordinal);
-                var ordinaryBlocks = new List<ProjectionBlockSyntax>();
-                foreach (var block in blocks)
-                {
-                    if (block is not FromSyntax sourceBlock)
-                    {
-                        ordinaryBlocks.Add(block);
-                        continue;
-                    }
-
-                    var otherEvents = new List<EventSpecSyntax>();
-                    foreach (var spec in sourceBlock.Events)
-                    {
-                        if (entryNames.Contains(spec.Event))
-                        {
-                            if (!enteringMappings.TryGetValue(spec.Event, out var mappings))
-                            {
-                                enteringMappings[spec.Event] = mappings = [];
-                            }
-
-                            mappings.AddRange(sourceBlock.Mappings);
-                        }
-                        else
-                        {
-                            otherEvents.Add(spec);
-                        }
-                    }
-
-                    if (otherEvents.Count > 0)
-                    {
-                        ordinaryBlocks.Add(sourceBlock with { Events = otherEvents });
-                    }
-                }
-
-                foreach (var entry in variant.EntersOn)
-                {
-                    ordinaryBlocks.Add(new FromSyntax(
-                        [new EventSpecSyntax(entry.Event, entry.Key, entry.Location)],
-                        null,
-                        null,
-                        enteringMappings.GetValueOrDefault(entry.Event) ?? [],
-                        entry.Location));
-                }
-
-                var scope = BindScope(ordinaryBlocks, level, projection.AutoMap);
+                var scope = BindScope(ProjectionVariantHandlers.For(shared, variant), level, projection.AutoMap);
                 var from = scope.From.Where(item => entryNames.Contains(EventName(item.EventContract))).ToImmutableArray();
                 var joins = scope.Joins.ToBuilder();
                 foreach (var transition in scope.From.Where(item => !entryNames.Contains(EventName(item.EventContract))))

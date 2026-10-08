@@ -37,9 +37,9 @@ public class when_exchanging_a_protocol_transcript : given.a_connection
     [Fact]
     void should_list_all_public_tools() => _responses[2].GetProperty("result").GetProperty("tools").EnumerateArray().Select(tool => tool.GetProperty("name").GetString()).ShouldContainOnly(
         ["repair-capabilities", "describe-application", "find-declaration", "search-declarations", "declaration-details", "dependencies", "dependency-graph", "find-references",
-        "find-fixtures", "find-assertion-gaps", "merged-document", "read-document", "diagnostics", "recommend-layout", "syntax-schema",
+        "find-fixtures", "find-assertion-gaps", "find-specification-obligations", "find-modeling-smells", "merged-document", "read-document", "diagnostics", "recommend-layout", "syntax-schema",
         "open-workspace", "workspace-state", "recover-workspace", "propose-rename", "read-workspace", "read-ast", "propose", "propose-extract-inline-event", "propose-repair", "propose-ast", "propose-source",
-        "expand-layout", "read-proposal", "export-workspace", "discard-proposal", "apply"]);
+        "expand-layout", "read-proposal", "export-workspace", "discard-proposal", "semantic-diff", "apply"]);
     [Fact] void should_return_unknown_method_error() => _responses[4].GetProperty("error").GetProperty("code").GetInt32().ShouldEqual(-32601);
     [Fact] void should_return_parse_error() => _responses[5].GetProperty("error").GetProperty("code").GetInt32().ShouldEqual(-32700);
     [Fact] void should_preserve_concrete_mapping_expression() => _responses[3].GetProperty("result").GetProperty("structuredContent").GetProperty("syntax").GetProperty("modules")[0].GetProperty("features")[0].GetProperty("slices")[0].GetProperty("commands")[0].GetProperty("produces")[0].GetProperty("mappings")[1].GetProperty("source").GetProperty("path").GetString().ShouldEqual("name");

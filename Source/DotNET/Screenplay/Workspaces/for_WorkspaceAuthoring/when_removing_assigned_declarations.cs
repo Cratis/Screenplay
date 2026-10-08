@@ -27,4 +27,7 @@ public class when_removing_assigned_declarations : given.an_authoring_workspace
     [Fact] void should_accept_explicit_retirement() => _retired.Accepted.ShouldBeTrue();
     [Fact] void should_remove_only_the_requested_document() => _retired.Workspace.Documents.Single().Id.ShouldEqual(Concepts.Id);
     [Fact] void should_reject_unexplained_identity_loss() => _unexplained.Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.InvalidIdentityMigration);
+    [Fact] void should_report_every_missing_assignment() => _unexplained.Conflicts.Single().IdentityMigrationIssues.Length.ShouldEqual(Workspace.IdentityCatalog.Semantics.Count(assignment => !_retired.Workspace.IdentityCatalog.Semantics.Any(current => current.Address.Equals(assignment.Address))) + Workspace.IdentityCatalog.EventContracts.Length);
+    [Fact] void should_name_the_exact_event_address() => _unexplained.Conflicts.Single().IdentityMigrationIssues.Single(issue => issue.Arguments.Contains("retiredEventAddresses")).Address.ShouldEqual(Workspace.IdentityCatalog.EventContracts.Single().Address);
+    [Fact] void should_name_the_retirement_arrays_in_the_message() => _unexplained.Conflicts.Single().Message.ShouldContain("retiredSemanticAddresses");
 }

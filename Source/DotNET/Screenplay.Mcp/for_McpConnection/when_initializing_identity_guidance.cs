@@ -20,6 +20,7 @@ public class when_initializing_identity_guidance : given.a_connection
     [Fact] void should_require_a_path_for_multiple_client_roots() => _instructions.ShouldContain("With multiple client roots, pass path to choose one");
     [Fact] void should_condition_the_working_directory_fallback_on_model_content() => _instructions.ShouldContain("the working directory when it holds .play files or a .screenplay folder");
     [Fact] void should_name_the_per_user_fallback() => _instructions.ShouldContain("otherwise Documents/Screenplay in the user's home folder");
+    [Fact] void should_explain_actionable_identity_migration_refusals() => _instructions.ShouldContain("InvalidIdentityMigration refusals return identityMigrationIssues with exact kind/parts addresses and argument arrays");
     [Fact] void should_state_that_apply_persists_identity_state() => _instructions.Contains("identity state persists on apply", StringComparison.Ordinal).ShouldBeTrue();
     [Fact] void should_offer_export_as_optional_transfer_or_backup() => _instructions.Contains("export-workspace is optional for portable transfer or backup", StringComparison.Ordinal).ShouldBeTrue();
     [Fact] void should_not_require_export_to_preserve_identities() => _instructions.Contains("save export-workspace to preserve identities", StringComparison.Ordinal).ShouldBeFalse();

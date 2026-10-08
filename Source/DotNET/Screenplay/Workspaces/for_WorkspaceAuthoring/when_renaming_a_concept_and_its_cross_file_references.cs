@@ -33,4 +33,6 @@ public class when_renaming_a_concept_and_its_cross_file_references : given.an_au
     [Fact] void should_preserve_the_assigned_identity() => _result.Workspace!.IdentityCatalog.ResolveSemantic(_renamed).ShouldEqual(_concept.SemanticId!.Value);
     [Fact] void should_write_both_documents() => _result.WritePlan.Entries.Length.ShouldEqual(2);
     [Fact] void should_reject_the_same_rename_without_migration() => Workspace.ProposeAuthoring(_request with { SemanticRenames = [] }).Conflicts.Single().Kind.ShouldEqual(WorkspaceConflictKind.InvalidIdentityMigration);
+    [Fact] void should_name_the_address_of_a_stale_rename() => Workspace.ProposeAuthoring(_request with { SemanticRenames = [new(_renamed, _renamed)] }).Conflicts.Single().IdentityMigrationIssues.Single().Address.ShouldEqual(_renamed);
+    [Fact] void should_name_the_argument_array_of_a_stale_rename() => Workspace.ProposeAuthoring(_request with { SemanticRenames = [new(_renamed, _renamed)] }).Conflicts.Single().IdentityMigrationIssues.Single().Arguments.ShouldContainOnly("semanticRenames");
 }
