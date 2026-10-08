@@ -101,9 +101,9 @@ static class McpSpecificationExecution
 
     static string Outcome(bool passed, bool unsupported) => (passed, unsupported) switch
     {
-        (_, true) => "unsupported",
-        (true, false) => "passed",
-        _ => "failed"
+        (false, _) => "failed",
+        (true, true) => "unsupported",
+        _ => "passed"
     };
 
     static string Address(SemanticAddress address) => string.Join('.', address.Parts.Where(part => part.Kind != SemanticAddressPartKind.Application).Select(part => part.Key));

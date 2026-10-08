@@ -104,16 +104,16 @@ screenplay test path/to/invoicing.play --filter Billing.Invoices.Send.SendingAnI
 
 `PATH` defaults to the current directory. A folder is one application; a file includes its imports. `--filter` selects one exact, case-sensitive dotted specification address (module, nested features, slice, specification); a semantic id is also accepted. Unknown selections are usage errors, not empty passes. Without a filter, every discovered specification is selected. `--format` defaults to `text`; `json` writes one camel-case JSON report to stdout.
 
-The reference evaluator runs deterministically in memory. It never contacts external services or runs attached code. Clock, trigger and capture scenarios use the [specification evaluator](specifications.md)'s existing semantics. Opaque reducers and other missing capabilities produce `unsupported`, with a capability and reason, rather than a pass.
+The reference evaluator runs deterministically in memory. It never contacts external services or runs attached code. Clock, trigger and capture scenarios use the [specification evaluator](specifications.md)'s existing semantics. Opaque reducers and other missing capabilities produce `unsupported`, with a capability and reason, rather than a pass. Failures include expected and actual facts, read models, command responses and query results; example-based failures also include effective fixture provenance. The CLI uses the root directory's application name and persisted `.screenplay` identities, when present, so an MCP semantic id selects the same scenario.
 
 The report includes `sourceRevision`, `outcome`, `discovered`, `selected`, `executed`, `passed`, `failed`, `unsupported`, `diagnostics`, `planIssues` and `results`. Counts cover the complete selection; `executed` excludes unsupported scenarios. Each result gives its `address`, `semanticId`, `outcome`, `executionOutcome`, comparison `failures`, and nullable `capability` and `reason`. A model that does not bind reports `unbound` and executable diagnostics, with no scenario results. A bound model with no specifications reports zero discovered; that is not evidence of scenario coverage.
 
 | Exit code | Meaning |
 |---|---|
 | `0` | Every selected specification passed |
-| `1` | At least one failed, with none unsupported |
+| `1` | At least one selected specification failed, even if others were unsupported |
 | `2` | Invalid arguments, selection or input, or the command could not run |
-| `3` | The model did not bind or reference execution was unsupported (even if another scenario failed) |
+| `3` | The model did not bind, or nothing failed but reference execution was unsupported |
 
 ## Use the compiler as a library
 
