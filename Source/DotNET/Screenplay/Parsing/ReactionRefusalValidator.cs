@@ -14,12 +14,14 @@ internal static class ReactionRefusalValidator
     internal static void Validate(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context)
     {
         new ValueWalker(application, declarations, context).VisitApplication(application);
+        Dictionary<CommandSyntax, bool>? authorizationGates = null;
         foreach (var (slice, scope) in declarations.Slices)
         {
             foreach (var invocation in slice.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(trigger => trigger.Invokes ?? []))
             {
                 var command = declarations.Resolve(invocation.Command, scope, owner => owner.Commands, node => node.Name);
-                var authorizationGated = command is { } invokedCommand && IsAuthorizationGated(application, invokedCommand.Node, invokedCommand.Scope);
+                var authorizationGated = invocation.OnRefused.Any(branch => branch.Selector == "authorization") &&
+                    command is { } invokedCommand && (authorizationGates ??= CollectAuthorizationGates(application))[invokedCommand.Node];
                 var earlier = new List<InvocationRefusalSyntax>();
                 foreach (var branch in invocation.OnRefused)
                 {
@@ -77,20 +79,26 @@ internal static class ReactionRefusalValidator
     // Invocations have no identity declaration until #383; keep that decision separate from authorization gating.
     static bool InvocationHasNoDeclaredIdentity() => true;
 
-    static bool IsAuthorizationGated(ApplicationSyntax application, CommandSyntax command, DeclarationScope scope)
+    static Dictionary<CommandSyntax, bool> CollectAuthorizationGates(ApplicationSyntax application)
     {
-        if (command.Authorize is not null) return true;
-        var module = application.Modules.First(value => value.Name == scope.Segments[0]);
-        if (module.Authorize is not null) return true;
-        var features = module.Features;
-        foreach (var name in scope.Segments.Skip(1).SkipLast(1))
+        var gates = new Dictionary<CommandSyntax, bool>(ReferenceEqualityComparer.Instance);
+        foreach (var module in application.Modules)
         {
-            var feature = features.First(value => value.Name == name);
-            if (feature.Authorize is not null) return true;
-            features = feature.Features;
+            foreach (var feature in module.Features) Collect(feature, module.Authorize is not null);
         }
 
-        return false;
+        return gates;
+
+        void Collect(FeatureSyntax feature, bool inherited)
+        {
+            var gated = inherited || feature.Authorize is not null;
+            foreach (var command in feature.Slices.SelectMany(slice => slice.Commands))
+            {
+                gates[command] = gated || command.Authorize is not null;
+            }
+
+            foreach (var child in feature.Features) Collect(child, gated);
+        }
     }
 
     sealed class ValueWalker(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context) : ScreenplaySyntaxWalker

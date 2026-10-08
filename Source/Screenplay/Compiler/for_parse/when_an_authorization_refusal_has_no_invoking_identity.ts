@@ -30,6 +30,27 @@ describe('when an authorization refusal has no invoking identity', () => {
         if (expected) expect(warnings[0]).toEqual({ code, severity: 'warning', message, location: { path: 'application.play', line: source.split('\n').findIndex(line => line.includes('on refused')) + 1, column: 15 } });
     });
 
+    it.each([
+        ['module', false, true], ['module', false, false], ['module', true, true], ['module', true, false],
+        ['feature', false, true], ['feature', false, false], ['feature', true, true], ['feature', true, false],
+        ['nested', false, true], ['nested', false, false], ['nested', true, true], ['nested', true, false],
+    ])('should use the command own %s containers with gate %s and refusal %s without crashing', (container, gated, withRefusal) => {
+        const otherGate = !gated && withRefusal ? '    authorize Access\n' : '';
+        const commandGate = gated ? '    authorize Access\n' : '';
+        const prefix = container === 'module'
+            ? 'module M\n  feature A\nmodule M\n' + (gated ? '  authorize Access\n' : '') + '  feature B\n'
+            : container === 'feature'
+                ? 'module M\n  feature F\n' + otherGate + '  feature F\n' + commandGate
+                : 'module M\n  feature F\n' + otherGate + '    feature Other\n  feature F\n' + commandGate + '    feature Claims\n';
+        let body = '    slice Automation S\n      event Approved\n      command Claim\n      reaction R\n        when Approved\n          invokes Claim\n' +
+            (withRefusal ? '            on refused by authorization\n              acknowledge\n' : '');
+        if (container === 'nested') body = body.split('\n').map(line => `  ${line}`).join('\n');
+        const result = parse('policy Access\n  require authenticated\n' + prefix + body);
+
+        expect(result.success).toBe(true);
+        expect(result.diagnostics.filter(diagnostic => diagnostic.code === code)).toHaveLength(gated && withRefusal ? 1 : 0);
+    });
+
     it('should check the merged command gates once at the invocation file', () => {
         const result = compileApplication(new Map([
             ['command.play', 'policy Access\n  require role "Manager"\nmodule Billing\n  authorize Access\n  feature Claims\n    slice StateChange Claiming\n      command Claim\n        produces Claimed\n      event Claimed'],

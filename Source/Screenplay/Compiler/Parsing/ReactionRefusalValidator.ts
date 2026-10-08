@@ -38,9 +38,11 @@ export function validateReactionRefusals(application: ApplicationSyntax, context
     };
     for (const { slice, scope } of slices) {
         for (const invocation of slice.reactions.flatMap(reaction => reaction.triggers).flatMap(trigger => trigger.invokes)) {
+            const branches = (invocation.onRefused ?? []).filter(branch => branch.selector === 'authorization');
+            if (branches.length === 0) continue;
             const command = resolve(invocation.command, scope);
             if (command?.gated !== true || !invocationHasNoDeclaredIdentity()) continue;
-            for (const branch of (invocation.onRefused ?? []).filter(branch => branch.selector === 'authorization')) {
+            for (const branch of branches) {
                 context.warning(DiagnosticCodes.AuthorizationRefusalWithoutIdentity,
                     `Command '${invocation.command}' is authorization-gated, but this invocation has no declared identity. This authorization refusal branch always fires in the reference runner because there is no caller; Arc runs reactor commands as the system. Declare an invoking identity once supported (#383).`,
                     branch.location);

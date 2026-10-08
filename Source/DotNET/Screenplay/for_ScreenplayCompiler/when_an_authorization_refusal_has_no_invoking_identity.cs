@@ -8,6 +8,38 @@ namespace Cratis.Screenplay.for_ScreenplayCompiler;
 public class when_an_authorization_refusal_has_no_invoking_identity : given.a_compiler
 {
     [Theory]
+    [InlineData("module", false, true)]
+    [InlineData("module", false, false)]
+    [InlineData("module", true, true)]
+    [InlineData("module", true, false)]
+    [InlineData("feature", false, true)]
+    [InlineData("feature", false, false)]
+    [InlineData("feature", true, true)]
+    [InlineData("feature", true, false)]
+    [InlineData("nested", false, true)]
+    [InlineData("nested", false, false)]
+    [InlineData("nested", true, true)]
+    [InlineData("nested", true, false)]
+    void should_use_the_commands_own_repeated_containers_without_crashing(string container, bool gated, bool withRefusal)
+    {
+        var otherGate = !gated && withRefusal ? "    authorize Access\n" : string.Empty;
+        var commandGate = gated ? "    authorize Access\n" : string.Empty;
+        var prefix = container switch
+        {
+            "module" => "module M\n  feature A\nmodule M\n" + (gated ? "  authorize Access\n" : string.Empty) + "  feature B\n",
+            "feature" => "module M\n  feature F\n" + otherGate + "  feature F\n" + commandGate,
+            _ => "module M\n  feature F\n" + otherGate + "    feature Other\n  feature F\n" + commandGate + "    feature Claims\n"
+        };
+        var body = "    slice Automation S\n      event Approved\n      command Claim\n      reaction R\n        when Approved\n          invokes Claim\n" +
+            (withRefusal ? "            on refused by authorization\n              acknowledge\n" : string.Empty);
+        if (container == "nested") body = string.Join('\n', body.Split('\n').Select(line => $"  {line}"));
+        var result = _compiler.Compile("policy Access\n  require authenticated\n" + prefix + body);
+
+        result.Success.ShouldBeTrue();
+        result.Diagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.AuthorizationRefusalWithoutIdentity).ShouldEqual(gated && withRefusal ? 1 : 0);
+    }
+
+    [Theory]
     [InlineData("module", "authorization", true)]
     [InlineData("feature", "authorization", true)]
     [InlineData("nested", "authorization", true)]
