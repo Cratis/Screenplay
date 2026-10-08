@@ -9890,6 +9890,227 @@
       }
     },
     {
+      "name": "propose-move",
+      "requiredParameters": [
+        "expectedCatalogRevision",
+        "expectedRevision",
+        "newParent",
+        "target"
+      ],
+      "optionalParameters": [
+        "formatting",
+        "includeContent",
+        "newParentHandle",
+        "targetHandle",
+        "validation"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "string"
+          },
+          "expectedCatalogRevision": {
+            "type": "string"
+          },
+          "target": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "Application",
+                  "Module",
+                  "Feature",
+                  "Slice",
+                  "Concept",
+                  "CompositeType",
+                  "Property",
+                  "Command",
+                  "EventContract",
+                  "ReadModel",
+                  "Projection",
+                  "Query",
+                  "Specification",
+                  "QueryArgument",
+                  "Trigger",
+                  "Reaction",
+                  "Capture"
+                ]
+              },
+              "parts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "Application",
+                        "Module",
+                        "Feature",
+                        "Slice",
+                        "Declaration",
+                        "Member",
+                        "Discriminator",
+                        "OwnerKind",
+                        "Generation"
+                      ]
+                    },
+                    "key": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "key"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 128,
+                "minItems": 1
+              }
+            },
+            "required": [
+              "kind",
+              "parts"
+            ],
+            "additionalProperties": false
+          },
+          "newParent": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "Application",
+                  "Module",
+                  "Feature",
+                  "Slice",
+                  "Concept",
+                  "CompositeType",
+                  "Property",
+                  "Command",
+                  "EventContract",
+                  "ReadModel",
+                  "Projection",
+                  "Query",
+                  "Specification",
+                  "QueryArgument",
+                  "Trigger",
+                  "Reaction",
+                  "Capture"
+                ]
+              },
+              "parts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "Application",
+                        "Module",
+                        "Feature",
+                        "Slice",
+                        "Declaration",
+                        "Member",
+                        "Discriminator",
+                        "OwnerKind",
+                        "Generation"
+                      ]
+                    },
+                    "key": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "key"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 128,
+                "minItems": 1
+              }
+            },
+            "required": [
+              "kind",
+              "parts"
+            ],
+            "additionalProperties": false
+          },
+          "targetHandle": {
+            "type": "object",
+            "properties": {
+              "revision": {
+                "type": "string"
+              },
+              "documentId": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "revision",
+              "documentId",
+              "path"
+            ],
+            "additionalProperties": false
+          },
+          "newParentHandle": {
+            "type": "object",
+            "properties": {
+              "revision": {
+                "type": "string"
+              },
+              "documentId": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "revision",
+              "documentId",
+              "path"
+            ],
+            "additionalProperties": false
+          },
+          "formatting": {
+            "type": "string",
+            "enum": [
+              "CanonicalizeTouchedDocuments",
+              "PreserveExactSource",
+              "PreserveTrivia"
+            ]
+          },
+          "validation": {
+            "type": "string",
+            "enum": [
+              "Authoring",
+              "Executable"
+            ]
+          },
+          "includeContent": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "expectedCatalogRevision",
+          "target",
+          "newParent"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "propose-rename",
       "requiredParameters": [
         "expectedCatalogRevision",
