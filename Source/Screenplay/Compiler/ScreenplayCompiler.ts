@@ -10,6 +10,7 @@ import { documentPlacement, PlayPlacement } from './Files/PlayPlacement';
 import { DiscoveredImport, discoverImports as discoverImportsIn } from './Parsing/ImportDiscovery';
 import { InputUse } from './Parsing/InputUses';
 import { validateResponses } from './Parsing/ResponseValidator';
+import { validateReactionRefusals } from './Parsing/ReactionRefusalValidator';
 import { sourceContext } from './Parsing/SourceOptionsParser';
 import { validateInlineEvents } from './Parsing/InlineEventValidator';
 import { validateOperations } from './Parsing/OperationValidator';
@@ -67,6 +68,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateConstraintProperties(value, context);
         validateOperations(value, context);
         validateResponses(value, context);
+        validateReactionRefusals(value, context);
         validateEventSources(value, context);
         validateProjectionTargets(value, context);
         validateIdentifierCompliance(value, context);
