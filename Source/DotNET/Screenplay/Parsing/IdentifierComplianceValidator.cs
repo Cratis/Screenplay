@@ -7,7 +7,7 @@ using Cratis.Screenplay.Syntax;
 namespace Cratis.Screenplay.Parsing;
 
 /// <summary>
-/// Rejects personal data as an event source identity, which cannot be encrypted or erased.
+/// Rejects personal data and operational secrets as event source identities, which cannot be encrypted or erased.
 /// </summary>
 internal static class IdentifierComplianceValidator
 {
@@ -15,6 +15,8 @@ internal static class IdentifierComplianceValidator
     public static void Validate(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context)
     {
         var personal = application.Concepts.Where(concept => concept.AttributeNames.Contains(ConceptAttributeSyntax.Pii))
+            .Select(concept => concept.Name).ToHashSet(StringComparer.Ordinal);
+        var sensitive = application.Concepts.Where(concept => concept.AttributeNames.Contains(ConceptAttributeSyntax.Sensitive))
             .Select(concept => concept.Name).ToHashSet(StringComparer.Ordinal);
         var declaredTriggers = (application.Triggers ?? []).ToLookup(trigger => trigger.Name, StringComparer.Ordinal);
         var imports = application.Imports.Select(import => import.Name).ToHashSet(StringComparer.Ordinal);
@@ -62,18 +64,19 @@ internal static class IdentifierComplianceValidator
                     if (production.For is not PathExpressionSyntax path) continue;
 
                     // Check clause-local types alongside the occurrence selected by event-first reaction resolution.
-                    var personalType = shapes.Select(properties => declarations.Property(properties, path.Path, out _)?.Type)
-                        .FirstOrDefault(type => type is not null && personal.Contains(type.Name));
-                    if (personalType is not null) ValidateType(personalType, path.Location);
+                    var protectedType = shapes.Select(properties => declarations.Property(properties, path.Path, out _)?.Type)
+                        .FirstOrDefault(type => type is not null && (personal.Contains(type.Name) || sensitive.Contains(type.Name)));
+                    if (protectedType is not null) ValidateType(protectedType, path.Location);
                 }
             }
         }
 
         void ValidateType(TypeRefSyntax type, SourceLocation location)
         {
-            if (personal.Contains(type.Name))
+            if (personal.Contains(type.Name) || sensitive.Contains(type.Name))
             {
-                context.Error(DiagnosticCodes.PiiNotSupportedOnIdentifier, $"Concept '{type.Name}' is @pii and cannot be an event source identifier - use a surrogate Uuid identifier and keep the @pii value as a property", location);
+                var attribute = personal.Contains(type.Name) ? "@pii" : "@sensitive";
+                context.Error(DiagnosticCodes.PiiNotSupportedOnIdentifier, $"Concept '{type.Name}' is {attribute} and cannot be an event source identifier - use a surrogate Uuid identifier and keep the {attribute} value as a property", location);
             }
         }
     }

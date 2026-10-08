@@ -4,7 +4,7 @@ Name the business classification of an event source and its streams, then refere
 
 ## Declare a source and its streams
 
-`eventsource` belongs to the application, including declarations in imported or placed files. A `stream` belongs to its exact physical source declaration. Both support one optional description and one rename-only `id "<old stored name>"` pin. New declarations omit pins. Pins do not create semantic identities or authorize an automatic rename.
+`eventsource` belongs to the application, including declarations in imported or placed files. A `stream` belongs to its exact physical source declaration. Both support one optional description and one rename-only `id "<old stored name>"` pin. New declarations omit pins. Pins do not create semantic identities or change the identity catalog.
 
 | Member | Required | Meaning |
 | --- | --- | --- |
@@ -55,13 +55,21 @@ Resolution uses the complete compilation input, independently of declaration or 
 
 Properties named `stream`, `eventsource`, `from`, `streamId` and `identifier` remain legal. `stream String`, optional/collection/modifier property forms and `@stream Account.Transactions` are properties. Payload mappings named `stream` remain mappings. If both a unique stream reference and a known imported qualified value type are viable, `PLAY0505` blocks the model and retains both candidates. Choose the intended property with `@stream`. A [typed route selection](ast-authoring.md#source-and-stream-edits-syntax-only) can promote an exact retained route candidate while explicitly resolving the competing qualified type import/declaration in the same canonical proposal. Its source and stream must remain unchanged unique physical owners; unrelated reference removals and structural selection with `PreserveTrivia` are refused. Removing a retained JSON candidate alone cannot change the grammar's ambiguity. Neither interpretation resolving preserves legacy property syntax and its unresolved-type evidence rather than inventing a route.
 
+## Rename a source or stream
+
+Use MCP `propose-rename` with the source or stream's original `read-ast` handle, both expected revisions, `expectedName` and `newName`. Preview with `read-proposal` before `apply`. A source rename repairs the source member of command and specification routes; a stream rename repairs only routes bound to that stream under its source. Given, `when append` and then routes are included; `no stream` assertions stay unchanged.
+
+Existing `id` pins stay untouched, even when the new name equals the pin. No pins are added automatically, and no source or stream identity-catalog entries are created or migrated. If an external stored name matters, add `id "OldName"` with a typed edit before renaming. `eventNeverPersisted` has no effect on source or stream renames.
+
+Colliding names, duplicate physical source declarations, captured route debt and affected opaque references refuse the proposal. The default `PreserveTrivia` patches only proved identifier spans; canonical formatting does not waive reference safety.
+
 ## Tooling support
 
 | Surface | Supported in this increment | Not available |
 | --- | --- | --- |
 | C# and TypeScript syntax | Declarations, command routes, key mappings, strict typed JSON, full-input ambiguity validation | Not admitted by any supported executable model (ESM) version yet |
 | Monaco and VS Code | Typed symbols, contextual tokens, reference/key completion, hover and exact source navigation where the host has authoritative source | Guessed effective routing, automatic source/stream rename, routing quick fixes |
-| MCP | Paged source/stream inventories, exact owner keys, physical AST handles, type and route links, Authoring add/replace/remove | Source/stream semantic or requirement IDs, execution or identity refactors |
+| MCP | Paged source/stream inventories, exact owner keys, physical AST handles, type and route links, Authoring add/replace/remove, `propose-rename` with command and specification route repair | Source/stream semantic or requirement IDs, execution or identity refactors |
 | Board | Authored stream and readable key expression in existing command details | Stream event cards, inferred facts or successful routed specification states |
 | Documentation fixture | Source validation and explicit semantic refusal | Runtime sample or proof of routing execution |
 

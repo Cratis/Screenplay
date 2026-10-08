@@ -1019,9 +1019,27 @@
             "diagnostics": []
         },
         {
-            "name": "Sensitive classification is not redefined by the identifier check",
+            "name": "Sensitive concepts cannot identify commands",
             "validate": true,
             "source": ["concept PatientId : Uuid @sensitive", "module M", "  feature F", "    slice StateChange S", "      command C", "        id PatientId identifier"],
+            "diagnostics": ["PLAY0515@6"]
+        },
+        {
+            "name": "Sensitive concepts cannot supply explicit event source destinations",
+            "validate": true,
+            "source": ["concept PatientId : Uuid @sensitive", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        patient PatientId", "        produces E", "          for patient"],
+            "diagnostics": ["PLAY0515@9"]
+        },
+        {
+            "name": "Sensitive concepts cannot identify event sources",
+            "validate": true,
+            "source": ["concept PatientId : Uuid @sensitive", "eventsource Patients", "  identifier PatientId"],
+            "diagnostics": ["PLAY0515@3"]
+        },
+        {
+            "name": "Combined personal and sensitive concepts remain ordinary values",
+            "validate": true,
+            "source": ["concept PatientId : Uuid", "concept NationalId : String @pii @sensitive", "module M", "  feature F", "    slice StateChange S", "      command C", "        id PatientId identifier", "        nationalId NationalId"],
             "diagnostics": []
         },
         {

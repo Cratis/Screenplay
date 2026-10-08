@@ -2419,7 +2419,9 @@ public static class DiagnosticCodes
     /// <summary>A projection maps to a property absent from the declared read-model shape.</summary>
     public const string UnknownReadModelProperty = "PLAY0514";
 
-    /// <summary>A personally identifiable concept is used as an event source identifier.</summary>
+    /// <summary>
+    /// A concept marked @pii or @sensitive is used as an event source identifier.
+    /// </summary>
     public const string PiiNotSupportedOnIdentifier = "PLAY0515";
 
     /// <summary>

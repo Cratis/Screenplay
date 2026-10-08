@@ -53,7 +53,7 @@ Generic source details, dependency resolution and editor navigation share physic
 
 Generic `EventSource`/`EventStream` declaration queries and dependencies include source identifier/stream-id type references and separate `commandEventSource`/`commandStream` links. Stream references accept exactly `Source.Stream`, not arbitrary suffixes. Combined type/declaration collisions remain blocking and are not navigated confidently.
 
-For edits, read the actual `read-ast` handles and `syntax-schema` kinds, then use Authoring Add/Replace/Remove with preview and explicit apply. The member paths and candidate-selection rules are in [AST authoring](../ast-authoring.md#source-and-stream-edits-syntax-only). No source or stream rename, semantic catalog enrollment or new routing quick fix is automatic. Executable validation still refuses with `PLAY0268`, and `PLAY0470`/`PLAY0478` repairs require unavailable before/after executable proof.
+For edits, read the actual `read-ast` handles and `syntax-schema` kinds, then use Authoring Add/Replace/Remove with preview and explicit apply. The member paths and candidate-selection rules are in [AST authoring](../ast-authoring.md#source-and-stream-edits-syntax-only). Use `propose-rename` for source and stream renames with bound command and specification route repair. Semantic catalog enrollment and new routing quick fixes remain unavailable. Executable validation still refuses with `PLAY0268`, and `PLAY0470`/`PLAY0478` repairs require unavailable before/after executable proof.
 
 ## Operation and system intent
 
@@ -185,7 +185,7 @@ is `PreserveTrivia`: verified identifier patches leave comments, line endings,
 BOM and unrelated text intact. Event renames update typed consumers, including
 constraint `released by` references and screen/behavior `on event` triggers.
 
-Examples and specifications are also rename targets. Renaming an example updates only the steps resolved to that declaration, including qualified names and `when append`; same-named examples in other scopes remain unchanged. Renaming its underlying event, command or read model updates the example's type reference. Renaming a composite-type property updates structured keys in example bodies and step overrides. Examples remain front-end syntax and receive no ESM identity. Use `find-fixtures` to inspect effective values and origins before editing an example shared by several specifications.
+Event sources and streams, examples and specifications are also rename targets. Source and stream renames repair bound command and specification routes, leaving existing pins and identity-catalog entries unchanged. No pins are added automatically; add `id` with a typed edit when an external stored name matters. Renaming an example updates only the steps resolved to that declaration, including qualified names and `when append`; same-named examples in other scopes remain unchanged. Renaming its underlying event, command or read model updates the example's type reference. Renaming a composite-type property updates structured keys in example bodies and step overrides. Examples remain front-end syntax and receive no ESM identity. Use `find-fixtures` to inspect effective values and origins before editing an example shared by several specifications.
 
 The planner coordinates logical fragments, repairs proven typed references and
 preserves assigned descendant/event identities. It refuses ambiguous targets,

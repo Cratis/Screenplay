@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { ExpressionSyntax, PropertyMappingSyntax, SpecificationCallerSyntax, SpecificationEventSyntax, SpecificationSyntax } from '@cratis/screenplay-compiler';
+import { ExpressionSyntax, PropertyMappingSyntax, SpecificationCallerSyntax, SpecificationEventSyntax, SpecificationRedeliverySyntax, SpecificationSyntax } from '@cratis/screenplay-compiler';
 import { emptyGuid } from '../Document/identity';
 import { SliceSpecificationDocument, SpecificationCallerDocument, SpecificationStepDocument } from '../Document/EventModelDocument';
 import { expressionText } from './expressionText';
@@ -37,6 +37,18 @@ export function toSpecifications(
             collapsed: false,
         };
         if (specification.givenCaller != null) document.caller = callerOf(specification.givenCaller);
+        if (specification.givenReadModels.length) {
+            document.givenReadModels = specification.givenReadModels.map(model => ({ name: model.name, values: valuesOf(model.properties), exactly: model.exactly }));
+        }
+        if (specification.thenReadModels.length) {
+            document.thenReadModels = specification.thenReadModels.map(model => ({ name: model.name, values: valuesOf(model.properties), exactly: model.exactly }));
+        }
+        if (specification.whenRedelivered != null) {
+            const action = specification.whenRedelivered;
+            document.whenRedelivered = { eventType: action.eventType, reaction: action.reaction, values: valuesOf(action.values) };
+            if (action.for != null) document.whenRedelivered.for = valueOf(action.for);
+        }
+        if (specification.thenNoEvents) document.thenNoEvents = true;
         if (specification.thenReturns != null) {
             document.thenReturns = specification.thenReturns.kind === 'ScalarSpecificationReturnSyntax'
                 ? { value: valueOf(specification.thenReturns.value) }
@@ -61,6 +73,7 @@ export function toSpecifications(
 // kind is part of its name - 'clock 2026-10-05T08:00:00Z', 'trigger DirectoryChanged' - and the values travel
 // with it as a command's would.
 function actionOf(specification: SpecificationSyntax): { name: string; values: Record<string, unknown> } | undefined {
+    if (specification.whenRedelivered != null) return { name: redeliveryText(specification.whenRedelivered), values: valuesOf(specification.whenRedelivered.values) };
     if (specification.whenAppended !== null) return { name: `append ${factName(specification.whenAppended)}`, values: valuesOf(specification.whenAppended.values) };
     if (specification.whenClock !== null) return { name: `clock ${specification.whenClock.instant}`, values: {} };
     if (specification.whenTrigger !== null) return { name: `trigger ${specification.whenTrigger.trigger}`, values: valuesOf(specification.whenTrigger.values) };
@@ -80,6 +93,17 @@ function specificationName(specification: SpecificationSyntax): string {
     ].filter(({ event }) => event.stream || event.noStream);
     const details = routes.map(({ event, role }) => `${role}: ${event.eventType} — ${routeDetails(event)}`);
     if (routes.length > 0) details.push(routeAvailability);
+    for (const model of specification.givenReadModels) {
+        details.push(`given readmodel ${model.name} { ${mappingText(model.properties)} }`);
+    }
+    for (const model of specification.thenReadModels) {
+        details.push(`then readmodel ${model.name}${model.exactly ? ' exactly' : ''} { ${mappingText(model.properties)} }`);
+    }
+    if (specification.whenRedelivered != null) details.push(`when ${redeliveryText(specification.whenRedelivered)}`);
+    if (specification.thenNoEvents) details.push('then no events');
+    if (specification.whenRedelivered != null || specification.thenNoEvents) {
+        details.push('Syntax-only (PLAY0268); redelivery and no-event expectations are not executable assertions.');
+    }
     if (specification.when?.generatedValues?.length) {
         details.push(`generated (not request inputs): ${mappingText(specification.when.generatedValues)}`);
     }
@@ -94,6 +118,10 @@ function specificationName(specification: SpecificationSyntax): string {
     }
     if (details.length === 0) return specification.name;
     return `${specificationTitle(specification.name)} — ${details.join(' | ')}`;
+}
+
+function redeliveryText(action: SpecificationRedeliverySyntax): string {
+    return `redelivered ${action.eventType} to ${action.reaction}${action.for == null ? '' : ` for ${expressionText(action.for)}`}`;
 }
 
 function mappingText(values: readonly PropertyMappingSyntax[]): string {
