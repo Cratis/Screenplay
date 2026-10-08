@@ -12,4 +12,5 @@ import { SourceLocation } from '../Diagnostics/SourceLocation';
 export interface SyntaxNode {
     readonly kind: string;
     readonly location: SourceLocation;
+    readonly directiveLocations?: Readonly<Record<string, SourceLocation>>;
 }

@@ -15,14 +15,16 @@
           "description": null,
           "id": null,
           "name": "Onboarding",
-          "streamId": null
+          "streamId": null,
+          "streamIdParts": []
         },
         {
           "kind": "EventStreamSyntax",
           "description": null,
           "id": null,
           "name": "Transactions",
-          "streamId": null
+          "streamId": null,
+          "streamIdParts": []
         }
       ]
     }
@@ -80,7 +82,8 @@
                     "eventSource": "Account",
                     "propertyCandidate": null,
                     "stream": "Onboarding",
-                    "streamId": null
+                    "streamId": null,
+                    "streamIdParts": []
                   },
                   "streamCandidates": [
                     {
@@ -99,7 +102,8 @@
                         }
                       },
                       "stream": "Transactions",
-                      "streamId": null
+                      "streamId": null,
+                      "streamIdParts": []
                     }
                   ],
                   "validations": []
@@ -131,7 +135,8 @@
                     "eventSource": "Account",
                     "propertyCandidate": null,
                     "stream": "Onboarding",
-                    "streamId": null
+                    "streamId": null,
+                    "streamIdParts": []
                   },
                   "streamCandidates": [
                     {
@@ -150,7 +155,8 @@
                         }
                       },
                       "stream": "Transactions",
-                      "streamId": null
+                      "streamId": null,
+                      "streamIdParts": []
                     }
                   ],
                   "validations": []
@@ -207,7 +213,8 @@
                         }
                       },
                       "stream": "Transactions",
-                      "streamId": null
+                      "streamId": null,
+                      "streamIdParts": []
                     },
                     {
                       "kind": "CommandStreamSyntax",
@@ -225,7 +232,8 @@
                         }
                       },
                       "stream": "Transactions",
-                      "streamId": null
+                      "streamId": null,
+                      "streamIdParts": []
                     }
                   ],
                   "validations": []
@@ -244,7 +252,8 @@
                     "eventSource": "Account",
                     "propertyCandidate": null,
                     "stream": "Onboarding",
-                    "streamId": null
+                    "streamId": null,
+                    "streamIdParts": []
                   },
                   "streamCandidates": [
                     {
@@ -252,7 +261,8 @@
                       "eventSource": "Account",
                       "propertyCandidate": null,
                       "stream": "Onboarding",
-                      "streamId": null
+                      "streamId": null,
+                      "streamIdParts": []
                     }
                   ],
                   "validations": []

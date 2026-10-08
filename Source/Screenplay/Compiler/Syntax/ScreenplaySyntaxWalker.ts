@@ -23,6 +23,7 @@ import {
 } from './Specifications';
 import { ApplicationSyntax, DependsOnSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax, SliceSyntax } from './Structure';
 import { CommandResponseSyntax, PropertyResponseSourceSyntax, RecordCommandResponseSyntax, RecordSpecificationReturnSyntax, ResponseFieldSyntax, ScalarCommandResponseSyntax, ScalarSpecificationReturnSyntax, SpecificationReturnSyntax } from './Responses';
+import { EventStreamIdPartSyntax } from './EventStreamIdPartSyntax';
 import { SyntaxNode } from './SyntaxNode';
 import { OperationSyntax, OperationPhaseSyntax, SystemSyntax } from './Operations';
 import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSyntax, ImplementationHintSyntax } from './Implementations';
@@ -193,10 +194,16 @@ export abstract class ScreenplaySyntaxWalker {
     visitEventStream(syntax: EventStreamSyntax): void {
         this.visitNode(syntax);
         if (syntax.streamId !== null) this.visitTypeRef(syntax.streamId);
+        syntax.streamIdParts.forEach(part => this.visitEventStreamIdPart(part));
+    }
+    visitEventStreamIdPart(syntax: EventStreamIdPartSyntax): void {
+        this.visitNode(syntax);
+        this.visitTypeRef(syntax.type);
     }
     visitCommandStream(syntax: CommandStreamSyntax): void {
         this.visitNode(syntax);
         if (syntax.streamId !== null) this.visitPropertyMapping(syntax.streamId);
+        syntax.streamIdParts.forEach(part => this.visitPropertyMapping(part));
         if (syntax.propertyCandidate !== null) this.visitProperty(syntax.propertyCandidate);
     }
 
@@ -619,6 +626,7 @@ export abstract class ScreenplaySyntaxWalker {
     visitSpecificationStream(syntax: SpecificationStreamSyntax): void {
         this.visitNode(syntax);
         if (syntax.streamId !== null) this.visitPropertyMapping(syntax.streamId);
+        syntax.streamIdParts.forEach(part => this.visitPropertyMapping(part));
     }
 
     visitSpecificationNoStream(syntax: SpecificationNoStreamSyntax): void { this.visitNode(syntax); }

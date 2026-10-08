@@ -15,7 +15,8 @@
           "description": null,
           "id": null,
           "name": "Transactions",
-          "streamId": null
+          "streamId": null,
+          "streamIdParts": []
         }
       ]
     }
@@ -86,7 +87,8 @@
                         }
                       },
                       "stream": "Transactions",
-                      "streamId": null
+                      "streamId": null,
+                      "streamIdParts": []
                     }
                   ],
                   "validations": []

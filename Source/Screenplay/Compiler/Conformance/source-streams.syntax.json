@@ -47,14 +47,16 @@
             "isCollection": false,
             "isOptional": false,
             "name": "Month"
-          }
+          },
+          "streamIdParts": []
         },
         {
           "kind": "EventStreamSyntax",
           "description": null,
           "id": null,
           "name": "Onboarding",
-          "streamId": null
+          "streamId": null,
+          "streamIdParts": []
         },
         {
           "kind": "EventStreamSyntax",
@@ -66,7 +68,76 @@
             "isCollection": false,
             "isOptional": false,
             "name": "Partition"
-          }
+          },
+          "streamIdParts": []
+        },
+        {
+          "kind": "EventStreamSyntax",
+          "description": null,
+          "id": null,
+          "name": "PeriodLedger",
+          "streamId": null,
+          "streamIdParts": [
+            {
+              "kind": "EventStreamIdPartSyntax",
+              "name": "accountId",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "AccountId"
+              }
+            },
+            {
+              "kind": "EventStreamIdPartSyntax",
+              "name": "period",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "Month"
+              }
+            }
+          ]
+        },
+        {
+          "kind": "EventStreamSyntax",
+          "description": null,
+          "id": null,
+          "name": "ThreeParts",
+          "streamId": null,
+          "streamIdParts": [
+            {
+              "kind": "EventStreamIdPartSyntax",
+              "name": "streamId",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "String"
+              }
+            },
+            {
+              "kind": "EventStreamIdPartSyntax",
+              "name": "stream",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "Partition"
+              }
+            },
+            {
+              "kind": "EventStreamIdPartSyntax",
+              "name": "owner",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "AccountId"
+              }
+            }
+          ]
         }
       ]
     },
@@ -87,7 +158,8 @@
             "isCollection": false,
             "isOptional": false,
             "name": "Uuid"
-          }
+          },
+          "streamIdParts": []
         }
       ]
     }
@@ -213,7 +285,200 @@
                         "kind": "PathExpressionSyntax",
                         "path": "month"
                       }
+                    },
+                    "streamIdParts": []
+                  },
+                  "streamCandidates": [],
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Book",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "Booked",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "accountId"
+                      },
+                      "inlineEvent": {
+                        "kind": "EventSyntax",
+                        "description": null,
+                        "documentation": null,
+                        "generation": 1,
+                        "hasGenerationMarker": false,
+                        "id": null,
+                        "name": "Booked",
+                        "properties": [
+                          {
+                            "kind": "PropertySyntax",
+                            "isGenerated": false,
+                            "isIdentifier": false,
+                            "name": "streamId",
+                            "type": {
+                              "kind": "TypeRefSyntax",
+                              "isCollection": false,
+                              "isOptional": false,
+                              "name": "String"
+                            }
+                          }
+                        ],
+                        "tags": []
+                      },
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "streamId",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "month"
+                          }
+                        }
+                      ],
+                      "tags": []
                     }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "accountId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "AccountId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "month",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Month"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": {
+                    "kind": "CommandStreamSyntax",
+                    "eventSource": "Account",
+                    "propertyCandidate": null,
+                    "stream": "PeriodLedger",
+                    "streamId": null,
+                    "streamIdParts": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "period",
+                        "source": {
+                          "kind": "PathExpressionSyntax",
+                          "path": "month"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "accountId",
+                        "source": {
+                          "kind": "PathExpressionSyntax",
+                          "path": "accountId"
+                        }
+                      }
+                    ]
+                  },
+                  "streamCandidates": [],
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Three",
+                  "produces": [],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "accountId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "AccountId"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": {
+                    "kind": "CommandStreamSyntax",
+                    "eventSource": "Account",
+                    "propertyCandidate": null,
+                    "stream": "ThreeParts",
+                    "streamId": null,
+                    "streamIdParts": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "owner",
+                        "source": {
+                          "kind": "PathExpressionSyntax",
+                          "path": "accountId"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "stream",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 42
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "streamId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "literal"
+                        }
+                      }
+                    ]
+                  },
+                  "streamCandidates": [],
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Opaque",
+                  "produces": [],
+                  "properties": [],
+                  "response": null,
+                  "stream": {
+                    "kind": "CommandStreamSyntax",
+                    "eventSource": "Account",
+                    "propertyCandidate": null,
+                    "stream": "Transactions",
+                    "streamId": {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "streamId",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "p-1:2026-10"
+                      }
+                    },
+                    "streamIdParts": []
                   },
                   "streamCandidates": [],
                   "validations": []
@@ -260,7 +525,8 @@
                         "kind": "PathExpressionSyntax",
                         "path": "month"
                       }
-                    }
+                    },
+                    "streamIdParts": []
                   },
                   "streamCandidates": [],
                   "validations": []
@@ -279,7 +545,8 @@
                     "eventSource": "Account",
                     "propertyCandidate": null,
                     "stream": "Onboarding",
-                    "streamId": null
+                    "streamId": null,
+                    "streamIdParts": []
                   },
                   "streamCandidates": [],
                   "validations": []
@@ -374,6 +641,18 @@
                         "isCollection": false,
                         "isOptional": true,
                         "name": "Account.Transactions"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "stream",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": true,
+                        "name": "Account.ThreeParts"
                       }
                     }
                   ],

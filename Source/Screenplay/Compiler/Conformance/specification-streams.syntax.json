@@ -33,14 +33,16 @@
             "isCollection": false,
             "isOptional": false,
             "name": "String"
-          }
+          },
+          "streamIdParts": []
         },
         {
           "kind": "EventStreamSyntax",
           "description": null,
           "id": null,
           "name": "Profile",
-          "streamId": null
+          "streamId": null,
+          "streamIdParts": []
         },
         {
           "kind": "EventStreamSyntax",
@@ -52,7 +54,37 @@
             "isCollection": false,
             "isOptional": false,
             "name": "Partition"
-          }
+          },
+          "streamIdParts": []
+        },
+        {
+          "kind": "EventStreamSyntax",
+          "description": null,
+          "id": null,
+          "name": "Composite",
+          "streamId": null,
+          "streamIdParts": [
+            {
+              "kind": "EventStreamIdPartSyntax",
+              "name": "streamId",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "String"
+              }
+            },
+            {
+              "kind": "EventStreamIdPartSyntax",
+              "name": "stream",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "Partition"
+              }
+            }
+          ]
         }
       ]
     }
@@ -139,6 +171,146 @@
                       "stream": {
                         "kind": "SpecificationStreamSyntax",
                         "eventSource": "Account",
+                        "stream": "Composite",
+                        "streamId": null,
+                        "streamIdParts": [
+                          {
+                            "kind": "PropertyMappingSyntax",
+                            "property": "stream",
+                            "source": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": 202610
+                            }
+                          },
+                          {
+                            "kind": "PropertyMappingSyntax",
+                            "property": "streamId",
+                            "source": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "period"
+                            }
+                          }
+                        ]
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "streamId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 6
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "CompositeHistory",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Recorded",
+                      "for": null,
+                      "stream": {
+                        "kind": "SpecificationStreamSyntax",
+                        "eventSource": "Account",
+                        "stream": "Composite",
+                        "streamId": null,
+                        "streamIdParts": [
+                          {
+                            "kind": "PropertyMappingSyntax",
+                            "property": "stream",
+                            "source": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": 202610
+                            }
+                          },
+                          {
+                            "kind": "PropertyMappingSyntax",
+                            "property": "streamId",
+                            "source": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "period"
+                            }
+                          }
+                        ]
+                      },
+                      "values": []
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": {
+                    "kind": "SpecificationEventSyntax",
+                    "eventType": "Recorded",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "other"
+                    },
+                    "stream": {
+                      "kind": "SpecificationStreamSyntax",
+                      "eventSource": "Account",
+                      "stream": "Composite",
+                      "streamId": null,
+                      "streamIdParts": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "streamId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "period"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "stream",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 202610
+                          }
+                        }
+                      ]
+                    },
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "stream",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 5
+                        }
+                      }
+                    ]
+                  },
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Recorded",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "other"
+                      },
+                      "stream": {
+                        "kind": "SpecificationStreamSyntax",
+                        "eventSource": "Account",
                         "stream": "Transactions",
                         "streamId": {
                           "kind": "PropertyMappingSyntax",
@@ -147,7 +319,8 @@
                             "kind": "LiteralExpressionSyntax",
                             "value": "p-1:2026-10"
                           }
-                        }
+                        },
+                        "streamIdParts": []
                       },
                       "values": [
                         {
@@ -188,7 +361,8 @@
                             "kind": "LiteralExpressionSyntax",
                             "value": 202610
                           }
-                        }
+                        },
+                        "streamIdParts": []
                       },
                       "values": [
                         {
@@ -253,7 +427,8 @@
                       "kind": "SpecificationStreamSyntax",
                       "eventSource": "Account",
                       "stream": "Profile",
-                      "streamId": null
+                      "streamId": null,
+                      "streamIdParts": []
                     },
                     "values": [
                       {
