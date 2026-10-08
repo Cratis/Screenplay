@@ -9,7 +9,6 @@ using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Semantics.Serialization;
 using Cratis.Screenplay.Syntax;
-using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Workspaces;
 
@@ -132,9 +131,11 @@ internal sealed partial class WorkspaceRefactoring
     {
         var bindings = new WorkspaceReferenceBindings(index, includeInteractions: true);
         var targets = new Dictionary<SyntaxNode, List<string>>(ReferenceEqualityComparer.Instance);
+        var attachments = new Dictionary<SyntaxNode, JsonNode>(ReferenceEqualityComparer.Instance);
         foreach (var binding in bindings.Bindings.Where(binding => binding.Reference.Entry.Node is InteractionActionSyntax or BehaviorArgumentSyntax))
         {
-            var owner = WorkspaceReferenceMembers.Parents(binding.Reference.Entry, index).First(entry => entry.Node is BehaviorSyntax or UsesBehaviorSyntax).Node;
+            var ownerEntry = WorkspaceReferenceMembers.Parents(binding.Reference.Entry, index).First(entry => entry.Node is BehaviorSyntax or UsesBehaviorSyntax);
+            var owner = ownerEntry.Node;
             if (!targets.TryGetValue(owner, out var values)) targets[owner] = values = [];
             var target = binding.Target;
             var path = target is null ? binding.Reference.Text : string.Join('.', target.Scope.Segments.Append(target.Name));
@@ -142,7 +143,18 @@ internal sealed partial class WorkspaceRefactoring
             {
                 var prefix = string.Join('.', migration.Target.Parts.Skip(1).Select(part => part.Key));
                 var replacement = string.Join('.', MovedAddress(migration.Target, migration).Parts.Skip(1).Select(part => part.Key));
-                if (path.StartsWith(prefix + ".", StringComparison.Ordinal)) path = replacement + path[prefix.Length..];
+                if (path.StartsWith(prefix + ".", StringComparison.Ordinal))
+                {
+                    path = replacement + path[prefix.Length..];
+                    var reference = binding.Reference;
+                    if (reference.Text.Contains('.'))
+                    {
+                        if (!attachments.TryGetValue(owner, out var attachment)) attachments[owner] = attachment = WorkspaceSyntaxMutation.Json(owner);
+                        var referenceNode = WorkspaceSyntaxMutation.At(attachment, reference.Entry.Handle.Path[ownerEntry.Handle.Path.Length..]);
+                        if (reference.Index is { } position) referenceNode[reference.Member]![position] = path;
+                        else referenceNode[reference.Member] = path;
+                    }
+                }
             }
             values.Add($"{binding.Reference.Domain}:{binding.Outcome}:{path}");
         }
@@ -157,7 +169,8 @@ internal sealed partial class WorkspaceRefactoring
                     throw new InvalidWorkspaceAuthoring($"Inherited interaction behavior '{uses.Behavior}' cannot be resolved uniquely for move continuity.");
                 resolved = [.. resolved, .. targets.GetValueOrDefault(declarations[0]) ?? []];
             }
-            return SyntaxJson.Serialize(node).GetRawText() + "|targets:" + string.Join(',', resolved);
+            var attachment = (attachments.GetValueOrDefault(node) ?? WorkspaceSyntaxMutation.Json(node)).ToJsonString(new() { MaxDepth = 256 });
+            return attachment + "|targets:" + string.Join(',', resolved);
         }
         var merged = WorkspaceSyntaxIndex.ForSyntax(Merged(index), index.Workspace.IdentityCatalog);
         var byHandle = merged.ToDictionary(entry => entry.Handle);
