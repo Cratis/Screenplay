@@ -105,6 +105,20 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A v2 command using $context needs an occurrence supplied by the execution request.");
         }
 
+        SemanticEventRoute? route = null;
+        if (command.Route is { } declaredRoute)
+        {
+            var (source, stream) = SemanticEventRouting.Resolve(plan.Model.Application, declaredRoute.Source, declaredRoute.Stream);
+            var scalar = declaredRoute.StreamId is null ? null : Evaluate(declaredRoute.StreamId, SemanticExpressionRootKind.Command, commandValues);
+            var parts = declaredRoute.StreamIdParts.Select(part => new SemanticFixtureRoutePart(
+                part.Part,
+                Evaluate(part.Value, SemanticExpressionRootKind.Command, commandValues))).ToImmutableArray();
+            if (!SemanticEventRouting.TryFormat(source, stream, scalar, parts, plan.Model.Application.Concepts, out route, out var failure))
+            {
+                return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, SemanticStreamIdFormatter.FailureMessage(failure));
+            }
+        }
+
         if (Generate(plan, world, command, request.GeneratedValues, commandValues) is { } generationFailure)
         {
             return generationFailure;
@@ -179,7 +193,8 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                     : null,
                 Tags = plan.Events[produced.EventContract].Tags.AddRange(produced.Tags),
                 Occurred = request.Occurrence?.Occurred,
-                ReactionOrigin = request.ReactionOrigin
+                ReactionOrigin = request.ReactionOrigin,
+                Route = route
             });
         }
 
@@ -211,7 +226,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
     /// </summary>
     /// <remarks>
     /// Unlike specification runs that do not inspect reducer state, this public operation fails closed when
-    /// a supplied event affects a reducer-backed read model. Legacy ESM v1 facts may omit typed event sources; a supplied source always matches the declared producer destination type.
+    /// a supplied event affects a reducer-backed read model. Legacy ESM v1 facts may omit typed event sources; a routed fact matches its declared source identifier type, and an unrouted fact matches the declared producer destination type.
     /// </remarks>
     /// <param name="plan">The capability-admitted plan.</param>
     /// <param name="facts">The ordered existing facts; no read-model snapshots are required.</param>
@@ -414,13 +429,14 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                 }
 
                 validator.ValidateVariant(fact.Destination);
+                var routedType = fact.Route is null ? null : plan.RoutedFactSourceType(fact);
                 if (fact.Context is { } context)
                 {
-                    // Legacy v1 specification events keep their authored source type (model validation already
-                    // checks them); supplied facts always answer to the event's declared producer destination.
-                    var requiredType = plan.Model.SemanticVersion == SemanticVersion.V1 && !publicReplay
+                    // Routed occurrences are typed by their source, independently of event producers. Legacy v1
+                    // specification events keep their authored source type; unrouted history keeps the producer rule.
+                    var requiredType = routedType ?? (plan.Model.SemanticVersion == SemanticVersion.V1 && !publicReplay
                         ? context.EventSource.Type
-                        : SemanticModelValidator.DeclaredEventSourceType(plan.Commands.Values, plan.Reactions, plan.Captures.Values, fact.EventContract);
+                        : SemanticModelValidator.DeclaredEventSourceType(plan.Commands.Values, plan.Reactions, plan.Captures.Values, fact.EventContract));
                     if (context.EventSource.Type != requiredType)
                     {
                         throw new InvalidSemanticContract("A specification event source must have the required scalar destination type.");
