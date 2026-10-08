@@ -198,6 +198,10 @@ public static class SpecificationExamples
             }
 
             _types[example] = type;
+            if (type.Kind != "event" && (example.Stream is not null || example.NoStream is not null))
+            {
+                _context.Error(DiagnosticCodes.InvalidSpecificationExampleBody, "only event examples carry routes; a command's route comes from its declaration, and read models have none", example.Stream?.Location ?? example.NoStream!.Location);
+            }
             ValidateDuplicates(example.Values.Concat(example.GeneratedValues), example.Location);
             foreach (var value in example.Values.Where(value => !type.Properties.Any(property => property.Name == value.Property)))
             {
@@ -281,8 +285,24 @@ public static class SpecificationExamples
             var (example, type) = ExampleFor(step.EventType, "event", role, scope, step.Location);
             var inherited = type is null ? [] : example!.Values;
             var source = type is null ? null : example!.For;
-            var effective = type is null ? step : step with { EventType = Qualified(type), Values = Merge(inherited, step.Values), For = step.For ?? source };
-            steps.Add(new(role, step, effective, example, [.. Origins(inherited, step.Values), .. ForOrigin(source, step.For)]));
+            var authoredRoute = (SyntaxNode?)step.Stream ?? step.NoStream;
+            var inheritedRoute = type is null ? null : (SyntaxNode?)example!.Stream ?? example.NoStream;
+            var route = authoredRoute ?? inheritedRoute;
+            var effective = type is null ? step : step with
+            {
+                EventType = Qualified(type), Values = Merge(inherited, step.Values), For = step.For ?? source,
+                Stream = route as SpecificationStreamSyntax, NoStream = route as SpecificationNoStreamSyntax
+            };
+            var origin = (authoredRoute, inheritedRoute) switch
+            {
+                (null, _) => SpecificationValueOrigin.Example,
+                (_, null) => SpecificationValueOrigin.Authored,
+                _ => SpecificationValueOrigin.Override
+            };
+            steps.Add(new(role, step, effective, example, [.. Origins(inherited, step.Values), .. ForOrigin(source, step.For)])
+            {
+                Route = route is null ? null : new(route, origin, authoredRoute is null ? null : inheritedRoute)
+            });
 
             return effective;
         }

@@ -63,7 +63,7 @@ describe('when parsing refusal branches and redelivery', () => {
         walker.visitApplication(application());
         walker.kinds.filter(kind => kind === 'InvocationRefusalSyntax').length.should.equal(5);
         walker.kinds.filter(kind => kind === 'RefusalExpressionSyntax').length.should.equal(3);
-        walker.kinds.filter(kind => kind === 'SpecificationRedeliverySyntax').length.should.equal(1);
+        walker.kinds.filter(kind => kind === 'SpecificationRedeliverySyntax').length.should.equal(3);
     });
 
     it('should preserve legacy bytes for absent branches and redelivery', () => {

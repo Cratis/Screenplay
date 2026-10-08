@@ -9,10 +9,12 @@ import { ApplicationSyntax } from '../Syntax/Structure';
 import { ParserContext } from './ParserContext';
 import { RefusalDeclarations } from './RefusalDeclarations';
 import { sameRedeliveryValue } from './RedeliveryValues';
+import { matchesSpecificationRoute } from './SpecificationRouteComparison';
 import { expandSpecificationExamples } from './SpecificationCommandExamples';
 
 export function validateSpecificationRedelivery(application: ApplicationSyntax, context: ParserContext): void {
-    const declarations = new RefusalDeclarations(expandSpecificationExamples(application));
+    application = expandSpecificationExamples(application);
+    const declarations = new RefusalDeclarations(application);
     for (const { slice } of declarations.slices) for (const specification of slice.specifications) {
         const action = specification.whenRedelivered;
         if (action == null) continue;
@@ -22,21 +24,22 @@ export function validateSpecificationRedelivery(application: ApplicationSyntax, 
             context.error(DiagnosticCodes.UnknownRedeliveryReaction, `Reaction '${action.reaction}' must resolve unambiguously and observe event '${action.eventType}'.`, action.location);
             continue;
         }
-        const candidates = specification.given.filter(given => declarations.event(given.eventType, slice) === event).map(given => matches(given, action, event, declarations));
+        const candidates = specification.given.filter(given => declarations.event(given.eventType, slice) === event).map(given => matches(given, action, event, declarations, application));
         const count = candidates.filter(match => match === true).length;
-        if (count < 2 && candidates.some(match => match === null))
-            context.error(DiagnosticCodes.UnmatchedRedeliveredOccurrence, `Cannot locate redelivery of '${action.eventType}' uniquely: a given source or locator value is not decidable; state explicit concrete 'for' and values.`, action.location);
+        if (candidates.some(match => match === null))
+            context.error(DiagnosticCodes.UnmatchedRedeliveredOccurrence, `Cannot locate redelivery of '${action.eventType}' uniquely: a given source or locator value is not decidable; use 'for', values, 'stream' or 'no stream'.`, action.location);
         else if (count !== 1)
-            context.error(DiagnosticCodes.UnmatchedRedeliveredOccurrence, `Redelivery of '${action.eventType}' matches ${count} given occurrences; use 'for' or values to identify exactly one.`, action.location);
+            context.error(DiagnosticCodes.UnmatchedRedeliveredOccurrence, `Redelivery of '${action.eventType}' matches ${count} given occurrences; use 'for', values, 'stream' or 'no stream' to identify exactly one.`, action.location);
     }
 }
 
-function matches(given: SpecificationEventSyntax, action: SpecificationRedeliverySyntax, event: EventSyntax, declarations: RefusalDeclarations): boolean | null {
+function matches(given: SpecificationEventSyntax, action: SpecificationRedeliverySyntax, event: EventSyntax, declarations: RefusalDeclarations, application: ApplicationSyntax): boolean | null {
     const comparisons: (boolean | null)[] = [];
     if (action.for !== null) comparisons.push(given.for === null ? null : sameRedeliveryValue(action.for, given.for, null, declarations));
     for (const locator of action.values) {
         const values = given.values.filter(value => value.property === locator.property);
         comparisons.push(values.length === 1 ? sameRedeliveryValue(locator.source, values[0].source, declarations.property(event.properties, locator.property)?.type ?? null, declarations) : null);
     }
+    comparisons.push(matchesSpecificationRoute(given.stream, action.stream, action.noStream, application));
     return comparisons.includes(false) ? false : comparisons.includes(null) ? null : true;
 }

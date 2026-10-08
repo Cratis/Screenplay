@@ -58,7 +58,7 @@ public class and_steps_use_typed_examples : given.a_connection
     [Fact] void should_report_the_expected_stream_id() => Row("thenEventStreamId", "streamId").GetProperty("value").GetString().ShouldEqual("october");
     [Fact] void should_report_the_unrouted_assertion() => Row("thenEventNoStream", "no stream").GetProperty("value").GetBoolean().ShouldBeTrue();
     [Fact] void should_mark_every_route_value_as_authored() => RouteRows().All(item => item.GetProperty("origin").GetString() == "authored").ShouldBeTrue();
-    [Fact] void should_not_attribute_routes_to_examples() => RouteRows().All(item => !item.TryGetProperty("example", out var example) || example.ValueKind == JsonValueKind.Null).ShouldBeTrue();
+    [Fact] void should_name_the_example_used_by_the_step() => RouteRows().All(item => item.GetProperty("example").GetString() == "Prior").ShouldBeTrue();
 
     IEnumerable<JsonElement> RouteRows() => _fixtures.EnumerateArray().Where(item => _routeProperties.Contains(item.GetProperty("property").GetString(), StringComparer.Ordinal));
 

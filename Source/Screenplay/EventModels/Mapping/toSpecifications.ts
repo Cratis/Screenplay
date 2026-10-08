@@ -121,7 +121,7 @@ function specificationName(specification: SpecificationSyntax): string {
 }
 
 function redeliveryText(action: SpecificationRedeliverySyntax): string {
-    return `redelivered ${action.eventType} to ${action.reaction}${action.for == null ? '' : ` for ${expressionText(action.for)}`}`;
+    return `redelivered ${action.eventType} to ${action.reaction}${action.stream || action.noStream ? ` — ${routeDetails(action)}` : action.for == null ? '' : ` for ${expressionText(action.for)}`}`;
 }
 
 function mappingText(values: readonly PropertyMappingSyntax[]): string {
@@ -147,7 +147,7 @@ function factName(event: SpecificationEventSyntax): string {
     return `${event.eventType} — ${routeDetails(event)}; ${routeAvailability}`;
 }
 
-function routeDetails(event: SpecificationEventSyntax): string {
+function routeDetails(event: Pick<SpecificationEventSyntax, 'for' | 'stream' | 'noStream'>): string {
     const route = event.stream;
     return [event.for ? `for ${expressionText(event.for)}` : '',
         route ? `stream ${route.eventSource}.${route.stream}` : 'no stream',

@@ -241,7 +241,7 @@ function parseWhen(context: ParserContext, line: SourceLine, body: Specification
             context.error(DiagnosticCodes.UnmatchedRedeliveredOccurrence, "Expected 'when redelivered <Event> to <Reaction>'.", locationOf(line));
             skipBody(context, line.indent);
         } else {
-            body.whenRedelivered = { kind: 'SpecificationRedeliverySyntax', eventType: match[1], reaction: match[2], ...parseValuesWithEventSource(context, line), location: locationOf(line) };
+            body.whenRedelivered = { kind: 'SpecificationRedeliverySyntax', eventType: match[1], reaction: match[2], ...parseValuesWithEventSource(context, line, undefined, undefined, 'when redelivered'), location: locationOf(line) };
         }
         return;
     }
@@ -488,7 +488,7 @@ function parseEventStep(context: ParserContext, line: SourceLine, regex: RegExp,
     return { kind: 'SpecificationEventSyntax', eventType: match[1], ...parseValuesWithEventSource(context, line, undefined, match, keyword), inlineProperty: match.groups?.property ?? null, location: locationOf(line) };
 }
 
-const specificationStream = sourceStreamPattern('^stream\\s+([A-Za-z_]\\w*)\\.([A-Za-z_]\\w*)$');
+export const specificationStream = sourceStreamPattern('^stream\\s+([A-Za-z_]\\w*)\\.([A-Za-z_]\\w*)$');
 const specificationStreamId = pattern('^streamId\\s*=(?!=|>)\\s*(.+)$');
 
 function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, generated?: PropertyMappingSyntax[], inline?: RegExpExecArray, eventKeyword?: string): { values: PropertyMappingSyntax[]; for: ExpressionSyntax | null; stream?: SpecificationStreamSyntax; noStream?: SpecificationNoStreamSyntax } {
@@ -520,7 +520,7 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, 
                 continue;
             }
             const route = specificationStream.exec(child.content);
-            if (child.content === 'no stream' && eventKeyword === 'then') {
+            if (child.content === 'no stream' && (eventKeyword === 'then' || eventKeyword === 'when redelivered')) {
                 noStream = { kind: 'SpecificationNoStreamSyntax', location: locationOf(child) };
                 hasRoute = true;
                 rejectSpecificationRouteChildren(context, child);
@@ -547,7 +547,7 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, 
     return { values, for: eventSource, ...(stream === undefined ? {} : { stream }), ...(noStream === undefined ? {} : { noStream }) };
 }
 
-function parseSpecificationStream(context: ParserContext, header: SourceLine, route: RegExpExecArray): SpecificationStreamSyntax {
+export function parseSpecificationStream(context: ParserContext, header: SourceLine, route: RegExpExecArray): SpecificationStreamSyntax {
     let streamId: PropertyMappingSyntax | null = null;
     let streamIdParts: PropertyMappingSyntax[] = [];
     let block = false;
@@ -580,7 +580,7 @@ function parseSpecificationStream(context: ParserContext, header: SourceLine, ro
         referenceLength: route[1].length + 1 + route[2].length, location: locationOf(header) };
 }
 
-function rejectSpecificationRouteChildren(context: ParserContext, line: SourceLine): void {
+export function rejectSpecificationRouteChildren(context: ParserContext, line: SourceLine): void {
     const child = context.peekChild(line.indent);
     if (child !== undefined) {
         context.error(DiagnosticCodes.InvalidSpecificationStream, 'This directive cannot have children.', locationOf(child));

@@ -11,7 +11,8 @@ import { EventModelDocument, SliceSpecificationDocument } from '../../Document/E
 import { toEventModelDocument } from '../EventModelDocumentVisitor';
 import { problems_the_board_finds_in } from './given/the_board_schema';
 
-const source = readFileSync(new URL('../../../Compiler/Conformance/reaction-refusals-redelivery.play', import.meta.url), 'utf8').replace('numbers exact\n', '') + `
+const routeSource = readFileSync(new URL('../../../Compiler/Conformance/reaction-refusals-redelivery.play', import.meta.url), 'utf8').replace('numbers exact\n', '');
+const source = routeSource.split('      specification Routed_recovery')[0] + `
       specification UnhandledRefusal
         given Approved
           invoice = "invoice-1"
@@ -95,6 +96,14 @@ describe('when mapping redelivery outcomes', () => {
     it('should retain the expected refusal event payload instead of treating it as a rejection', () => {
         specifications[3].thenEvents[0].values.should.deep.equal({ reason: 'constraint', constraint: 'UniqueClaim', message: 'Already claimed' });
         specifications[3].thenErrors.should.deep.equal([]);
+    });
+    it('should retain routed and unrouted locator text on the action and header', () => {
+        const routed = toEventModelDocument(parse(routeSource).value, 'Billing');
+        const scenarios = routed.collections[0].modules[0].features[0].slices[0].specifications;
+        scenarios[1].when!.name.should.contain('stream Invoice.Ledger; streamId = "september"');
+        headerOf(routed, 1).should.contain('stream Invoice.Ledger; streamId = &quot;september&quot;');
+        scenarios[2].when!.name.should.contain('no stream');
+        headerOf(routed, 2).should.contain('no stream');
     });
     it('should remain readable by the published board schema', () => {
         problems_the_board_finds_in(document).should.deep.equal([]);

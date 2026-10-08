@@ -25,6 +25,8 @@ internal static partial class SpecificationParser
         return new(match.Groups[1].Value, match.Groups[2].Value, body.Values, header.Location)
         {
             For = body.For,
+            Stream = body.Stream,
+            NoStream = body.NoStream,
             GeneratedValues = body.Generated,
             Description = body.Description,
             DirectiveLocations = body.DirectiveLocations
@@ -58,11 +60,27 @@ internal static partial class SpecificationParser
             }
 
             var mapping = MappingRegex().Match(child.Content);
-            if (example is not null && (LineText.FirstWord(child.Content) == "streamId" ||
-                (LineText.FirstWord(child.Content) == "stream" && !mapping.Success) || child.Content.StartsWith("no stream", StringComparison.Ordinal)))
+            if (example is not null && !mapping.Success && (LineText.FirstWord(child.Content) == "stream" || child.Content.StartsWith("no stream", StringComparison.Ordinal)))
             {
-                context.Error(DiagnosticCodes.InvalidSpecificationExampleBody, "An example cannot declare stream, streamId or no stream; state the route on the specification step.", child.Location);
-                SkipBody(context, child.Indent);
+                if (body.Stream is not null || body.NoStream is not null)
+                {
+                    context.Error(DiagnosticCodes.InvalidSpecificationStream, "An event occurrence declares at most one stream or no stream directive.", child.Location);
+                    SkipBody(context, child.Indent);
+                }
+                else if (child.Content == "no stream")
+                {
+                    body.NoStream = new(child.Location);
+                    RejectSpecificationRouteChildren(context, child);
+                }
+                else if (SpecificationStreamRegex().Match(child.Content) is { Success: true } route)
+                {
+                    body.Stream = ParseSpecificationStream(context, child, route);
+                }
+                else
+                {
+                    context.Error(DiagnosticCodes.InvalidSpecificationStream, "Expected 'stream Source.Stream', or 'no stream' on an event example.", child.Location);
+                    SkipBody(context, child.Indent);
+                }
                 continue;
             }
 
@@ -129,6 +147,8 @@ internal static partial class SpecificationParser
         internal List<PropertyMappingSyntax> Generated { get; } = [];
         internal Dictionary<string, SourceLocation> DirectiveLocations { get; } = [];
         internal ExpressionSyntax? For { get; set; }
+        internal SpecificationStreamSyntax? Stream { get; set; }
+        internal SpecificationNoStreamSyntax? NoStream { get; set; }
         internal string? Description { get; set; }
     }
 }

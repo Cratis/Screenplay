@@ -29,6 +29,16 @@ public record SpecificationExampleSyntax(
     public ExpressionSyntax? For { get; init; }
 
     /// <summary>
+    /// Gets the optional event route supplied by this example.
+    /// </summary>
+    public SpecificationStreamSyntax? Stream { get; init; }
+
+    /// <summary>
+    /// Gets the explicit unrouted event assertion supplied by this example.
+    /// </summary>
+    public SpecificationNoStreamSyntax? NoStream { get; init; }
+
+    /// <summary>
     /// Gets the generated command fixtures, separate from request values.
     /// </summary>
     public IEnumerable<PropertyMappingSyntax> GeneratedValues { get; init; } = [];
