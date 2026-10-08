@@ -148,7 +148,12 @@ PolicyExpr     = "require", PolicyCondition ;
 
 PolicyCondition = PolicyAnd, { "or", PolicyAnd } ;
 
-PolicyAnd      = PolicyOperand, { "and", PolicyOperand } ;
+PolicyAnd      = PolicyUnary, { "and", PolicyUnary } ;
+
+PolicyUnary    = "not", PolicyUnary | PolicyOperand ;
+
+(* Policy "not" binds tighter than "and" and "or"; it may be repeated or
+   applied to a parenthesized condition. It is not a general value operator. *)
 
 PolicyOperand  = "authenticated"
                | "role", StringLiteral
