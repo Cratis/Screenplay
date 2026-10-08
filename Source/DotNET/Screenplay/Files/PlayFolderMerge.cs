@@ -71,6 +71,7 @@ internal static partial class PlayFolderMerge
             // same way a layout or a theme is. Without this a 'uses' in one file cannot see a behavior declared
             // in another - and the folder is one application.
             SourceOptions = SourceNumericModes.Consensus(applications, context.Add),
+            Examples = [.. applications.SelectMany(application => application.Examples)],
             Systems = [.. applications.SelectMany(application => application.Systems)],
 
             // Preserve physical parents; a duplicate source makes every child scope ambiguous.

@@ -99,8 +99,9 @@ slice StateView MyOrders
         column status         label "Status"
         column trackingNumber label "Tracking"
         on row-click navigate to CancelOrderScreen by orderId
-    action PlaceOrder
-      label "New order"
-      navigate to PlaceOrderScreen
+    section placeOrder
+      title "New order"
+      on click
+        navigate to PlaceOrderScreen
     on enter
       refresh OrdersForCustomer

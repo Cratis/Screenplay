@@ -49,6 +49,9 @@ export function responseTokens(lines: string[], symbols?: DocumentSymbols): { li
         }
     }
     for (const specification of analysis.specifications.values()) {
+        for (const event of specification.thenEvents ?? []) {
+            if (event.noStream) add(event.noStream.location.line, event.noStream.location.column, 9, 0);
+        }
         for (const fixture of specification.when?.generatedValues ?? []) {
             add(fixture.location.line, fixture.location.column, 9, 0);
         }

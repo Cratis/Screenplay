@@ -5,6 +5,7 @@ using Cratis.Screenplay.Dependencies;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -30,6 +31,9 @@ internal static class ScreenplayValidator
     public static ApplicationSyntax Validate(ApplicationSyntax application, ParserContext context, bool allowUnresolvedPersonaPolicies = false)
     {
         foreach (var error in SourceNumericModes.Errors(application)) context.Add(error);
+        var authored = application;
+        var expansion = SpecificationExamples.Expand(application);
+        if (!expansion.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)) application = expansion.Application;
 
         var slices = application.Modules
             .SelectMany(module => module.Features.SelectMany(AllFeatures))
@@ -144,6 +148,8 @@ internal static class ScreenplayValidator
         SpecificationValueConsistencyValidator.Validate(declarations, context);
         SpecificationOutcomeConsistencyValidator.Validate(declarations, context);
         SpecificationActionValidator.Validate(application, declarations, context);
+        ReactionRefusalValidator.Validate(application, declarations, context);
+        SpecificationRedeliveryValidator.Validate(declarations, context);
         var knownQueries = scopedSlices.SelectMany(entry => entry.Slice.Queries.Select(query => new Declaration(query.Name, entry.Scope))).ToList();
         var knownScreenDeclarations = scopedSlices.SelectMany(entry => entry.Slice.Screens.Select(screen => new Declaration(screen.Name, entry.Scope))).ToList();
         ValidateSpecificationQueries(scopedSlices, knownQueries, context);
@@ -161,6 +167,7 @@ internal static class ScreenplayValidator
         }
 
         ValidateScreenReferences(scopedSlices, knownQueries, knownCommandDeclarations, knownScreenDeclarations, context);
+        GuardedActionValidator.Validate(declarations, context);
         ValidateInteractions(
             application,
             scopedSlices,
@@ -177,8 +184,28 @@ internal static class ScreenplayValidator
         ValidateThemes(application, context);
         ValidateProfileLayouts(application, context);
         ValidateArrangements(application, context);
+        foreach (var diagnostic in expansion.Diagnostics.Where(diagnostic => !context.Diagnostics.Contains(diagnostic))) context.Add(diagnostic);
 
-        return DeclaredDependencyTargets.Validate(application, context);
+        authored = DeclaredDependencyTargets.Validate(authored, context);
+        DeclaredDependencies.Validate(authored, context);
+
+        return authored;
+    }
+
+    /// <summary>
+    /// Yields every slice with the scope it sits in, outermost segment first.
+    /// </summary>
+    /// <param name="application">The <see cref="ApplicationSyntax"/> to walk.</param>
+    /// <returns>Each slice and where it sits.</returns>
+    internal static IEnumerable<(SliceSyntax Slice, DeclarationScope Scope)> ScopedSlices(ApplicationSyntax application)
+    {
+        foreach (var module in application.Modules)
+        {
+            foreach (var entry in ScopedSlicesIn(module.Features, [module.Name]))
+            {
+                yield return entry;
+            }
+        }
     }
 
     static void ValidateAdditionalEventReferences(ApplicationSyntax application, ConsistencyDeclarations declarations, HashSet<string> knownEvents, ParserContext context)
@@ -833,7 +860,7 @@ internal static class ScreenplayValidator
     {
         foreach (var trigger in slice.Reactions.SelectMany(reaction => reaction.Triggers))
         {
-            foreach (var produces in (trigger.Produces ?? []).Where(produces => productionResolver.IsEventProduction(produces, slice) && !produces.Event.Contains('.', StringComparison.Ordinal) && !knownEvents.Contains(produces.Event)))
+            foreach (var produces in ReactionProductions.In(trigger).Where(produces => productionResolver.IsEventProduction(produces, slice) && !produces.Event.Contains('.', StringComparison.Ordinal) && !knownEvents.Contains(produces.Event)))
             {
                 context.Warning(
                     DiagnosticCodes.UnknownEvent,
@@ -903,6 +930,18 @@ internal static class ScreenplayValidator
                         break;
                     case ScreenActionSyntax action:
                         Report(action.Command, scope, commands, DiagnosticCodes.UnknownCommand, "command", action.Location, context);
+                        break;
+                    case ScreenGuardedActionSyntax guarded:
+                        foreach (var alternative in guarded.Alternatives)
+                        {
+                            Report(alternative.Command, scope, commands, DiagnosticCodes.UnknownCommand, "command", alternative.Location, context);
+                        }
+
+                        if (guarded.Otherwise is { Command: { } fallback })
+                        {
+                            Report(fallback, scope, commands, DiagnosticCodes.UnknownCommand, "command", guarded.Otherwise.Location, context);
+                        }
+
                         break;
                     case ScreenNavigateSyntax navigate:
                         Report(navigate.Screen, scope, screens, DiagnosticCodes.UnknownScreen, "screen", navigate.Location, context);
@@ -1355,22 +1394,6 @@ internal static class ScreenplayValidator
         context.Warning(unknownCode, $"Unknown {kind} '{reference}' - nothing in scope declares it", location);
     }
 
-    /// <summary>
-    /// Yields every slice with the scope it sits in, outermost segment first.
-    /// </summary>
-    /// <param name="application">The <see cref="ApplicationSyntax"/> to walk.</param>
-    /// <returns>Each slice and where it sits.</returns>
-    static IEnumerable<(SliceSyntax Slice, DeclarationScope Scope)> ScopedSlices(ApplicationSyntax application)
-    {
-        foreach (var module in application.Modules)
-        {
-            foreach (var entry in ScopedSlicesIn(module.Features, [module.Name]))
-            {
-                yield return entry;
-            }
-        }
-    }
-
     static IEnumerable<(SliceSyntax Slice, DeclarationScope Scope)> ScopedSlicesIn(IEnumerable<FeatureSyntax> features, IReadOnlyList<string> path)
     {
         foreach (var feature in features)
@@ -1416,6 +1439,11 @@ internal static class ScreenplayValidator
             if (directive is ScreenActionSyntax { Navigate: { } afterAction })
             {
                 yield return afterAction;
+            }
+
+            if (directive is ScreenGuardedActionSyntax { Navigate: { } afterGuardedAction })
+            {
+                yield return afterGuardedAction;
             }
 
             if (directive is ScreenTableSyntax { RowClick: { } onRowClick })

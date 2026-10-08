@@ -18,6 +18,7 @@ public sealed partial class SemanticModelBinder
         {
             ClaimConditionSyntax { Matches: PathExpressionSyntax path } => [path.Path],
             LogicalPolicyConditionSyntax logical => PolicyPaths(logical.Left).Concat(PolicyPaths(logical.Right)),
+            NotPolicyConditionSyntax not => PolicyPaths(not.Operand),
             _ => []
         };
 
@@ -25,6 +26,7 @@ public sealed partial class SemanticModelBinder
         {
             ClaimConditionSyntax { MatchesSubject: true } => true,
             LogicalPolicyConditionSyntax logical => PolicyUsesSubject(logical.Left) || PolicyUsesSubject(logical.Right),
+            NotPolicyConditionSyntax not => PolicyUsesSubject(not.Operand),
             _ => false
         };
 
@@ -60,8 +62,16 @@ public sealed partial class SemanticModelBinder
             ClaimConditionSyntax { Matches: PathExpressionSyntax path } claim =>
                 new SemanticClaimCondition(claim.Claim, SemanticClaimTargetKind.Artifact, path.Path),
             LogicalPolicyConditionSyntax logical => BindLogicalPolicy(logical),
+            NotPolicyConditionSyntax not => BindNotPolicy(not),
             _ => UnsupportedPolicyCondition(syntaxCondition)
         };
+
+        SemanticNotPolicyCondition? BindNotPolicy(NotPolicyConditionSyntax not)
+        {
+            UsesV7 = true;
+            var operand = BindPolicyCondition(not.Operand);
+            return operand is null ? null : new SemanticNotPolicyCondition(operand);
+        }
 
         SemanticLogicalPolicyCondition? BindLogicalPolicy(LogicalPolicyConditionSyntax logical)
         {
@@ -144,6 +154,8 @@ public sealed partial class SemanticModelBinder
                     Error(DiagnosticCodes.InvalidSemanticBinding, $"Policy '{policy.Name}' artifact path '{path}' does not resolve against the authorized command properties or query arguments.", reference.Location);
                 }
             }
+
+            WarnAboutUnknownNegatedTargets(policy, properties, commandName, reference.Location);
 
             return new SemanticPolicyReference(reference.Name);
         }

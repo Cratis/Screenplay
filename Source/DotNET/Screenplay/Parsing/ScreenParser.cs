@@ -101,8 +101,14 @@ internal static partial class ScreenParser
         return new(type, match.Groups[2].Value, match.Groups[3].Success ? match.Groups[3].Value : null, line.Location);
     }
 
-    static ScreenActionSyntax? ParseAction(ParserContext context, SourceLine line)
+    static ScreenDirectiveSyntax? ParseAction(ParserContext context, SourceLine line)
     {
+        var guarded = GuardedActionRegex().Match(line.Content);
+        if (guarded.Success)
+        {
+            return ParseGuardedAction(context, line, OperandText(guarded, 1));
+        }
+
         var match = ActionRegex().Match(line.Content);
         if (!match.Success)
         {
@@ -134,7 +140,7 @@ internal static partial class ScreenParser
             }
         }
 
-        return new(match.Groups[1].Value, label, navigate, line.Location)
+        return new ScreenActionSyntax(match.Groups[1].Value, label, navigate, line.Location)
         {
             DirectiveLocations = labelLocation is null ? [] : new Dictionary<string, SourceLocation> { ["label"] = labelLocation }
         };

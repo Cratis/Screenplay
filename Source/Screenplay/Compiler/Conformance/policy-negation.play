@@ -1,0 +1,16 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+numbers exact
+policy PersonOnly
+  require authenticated and not role "Service" and not claim "actorKind" matches "service"
+policy Grouped
+  require not (role "Service" or claim "actorKind" matches "service") and authenticated
+policy Precedence
+  require not role "Service" and role "Accountant" or role "Controller"
+policy DoubleNegative
+  require not not authenticated
+policy NotSubject
+  require not claim "owner" matches subject
+policy NotArtifact
+  require not claim "owner" matches owner

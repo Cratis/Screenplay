@@ -44,6 +44,8 @@ internal static class DeclaredDependencyTargets
         if (!hasDependencies) return application;
         declarations = [.. declarations.DistinctBy(declaration => (declaration.Name, Scope: string.Join('.', declaration.Scope.Segments)))];
 
+        var seenByOwner = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+
         return application with
         {
             Modules = [.. application.Modules.Select(module => module with
@@ -72,9 +74,9 @@ internal static class DeclaredDependencyTargets
 
         DependsOnSyntax[] Keep(IEnumerable<DependsOnSyntax> dependencies, string[] address)
         {
-            var seen = new HashSet<string>(StringComparer.Ordinal);
             var kept = new List<DependsOnSyntax>();
             var owner = string.Join('.', address);
+            if (!seenByOwner.TryGetValue(owner, out var seen)) seenByOwner[owner] = seen = new(StringComparer.Ordinal);
             foreach (var dependency in dependencies)
             {
                 var resolution = Resolve(dependency.Target, new(address), declarations);

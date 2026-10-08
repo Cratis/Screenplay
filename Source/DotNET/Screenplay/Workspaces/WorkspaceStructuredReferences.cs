@@ -29,7 +29,7 @@ static class WorkspaceStructuredReferences
         if (ancestors.Skip(mappingIndex + 1).Any(ancestor => ancestor.Node is SpecificationStreamSyntax)) return null;
 
         var mapping = (PropertyMappingSyntax)ancestors[mappingIndex].Node;
-        var step = ancestors.Skip(mappingIndex + 1).FirstOrDefault(ancestor => ancestor.Node is SpecificationOperationSyntax or SpecificationCommandSyntax or SpecificationEventSyntax or SpecificationReadModelSyntax or SpecificationQuerySyntax or SpecificationQueryResultSyntax or ProducesSyntax or CaptureAppendSyntax);
+        var step = ancestors.Skip(mappingIndex + 1).FirstOrDefault(ancestor => ancestor.Node is SpecificationExampleSyntax or SpecificationOperationSyntax or SpecificationCommandSyntax or SpecificationEventSyntax or SpecificationReadModelSyntax or SpecificationQuerySyntax or SpecificationQueryResultSyntax or ProducesSyntax or CaptureAppendSyntax);
         if (step is null)
         {
             return null;
@@ -42,9 +42,7 @@ static class WorkspaceStructuredReferences
             ProducesSyntax produced => Unique(declarations.OfType<EventSyntax>(), produced.Event)?.Properties,
             SpecificationOperationSyntax operation when index.OwningSlice(step) is { } slice => (index.Productions.Resolve(operation.Operation, slice).Declaration?.Node as OperationSyntax)?.Inputs,
             CaptureAppendSyntax appended => Unique(declarations.OfType<EventSyntax>(), appended.Event)?.Properties,
-            SpecificationCommandSyntax command => Unique(declarations.OfType<CommandSyntax>(), command.CommandType)?.Properties,
-            SpecificationEventSyntax @event => Unique(declarations.OfType<EventSyntax>(), @event.EventType)?.Properties,
-            SpecificationReadModelSyntax view => Unique(declarations.OfType<ReadModelSyntax>(), view.Name)?.Properties,
+            SpecificationExampleSyntax or SpecificationCommandSyntax or SpecificationEventSyntax or SpecificationReadModelSyntax => WorkspaceFixtureDeclarations.Properties(step, index),
             SpecificationQueryResultSyntax => QueryView(step, ancestors, declarations)?.Properties,
             SpecificationQuerySyntax query => Unique(declarations.OfType<QuerySyntax>(), query.Query) is { } declared
                 ? (declared.By is null ? Enumerable.Empty<PropertySyntax>() : [new PropertySyntax(declared.By.Name, declared.By.Type, declared.By.Location)])

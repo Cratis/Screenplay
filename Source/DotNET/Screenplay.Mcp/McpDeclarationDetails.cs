@@ -3,6 +3,7 @@
 
 using System.Text.Json;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Mcp;
 
@@ -30,6 +31,10 @@ static class McpDeclarationDetails
                 authoredRoute = (declaration.Syntax as CommandSyntax)?.Stream,
                 ambiguousStreamCandidates = (declaration.Syntax as CommandSyntax)?.StreamCandidates,
                 operationInputCount = (declaration.Syntax as OperationSyntax)?.Inputs.Count() ?? 0,
+                exampleType = (declaration.Syntax as SpecificationExampleSyntax)?.Type,
+                exampleFor = (declaration.Syntax as SpecificationExampleSyntax)?.For,
+                exampleValueCount = (declaration.Syntax as SpecificationExampleSyntax)?.Values.Count(),
+                exampleGeneratedValueCount = (declaration.Syntax as SpecificationExampleSyntax)?.GeneratedValues.Count(),
                 partCount = declaration.Parts.Count,
                 commandCount = declaration.Syntax is SliceSyntax slice ? slice.Commands.Count() : 0,
                 specificationCount = declaration.Syntax is SliceSyntax described ? described.Specifications.Count() : 0,
@@ -107,11 +112,15 @@ static class McpDeclarationDetails
                 },
                 arguments,
                 snapshot.SourceRevision),
+            "dependencies" when declaration.Syntax is ModuleSyntax module => McpPaging.Page(module.DependsOn, arguments, snapshot.SourceRevision),
+            "dependencies" when declaration.Syntax is FeatureSyntax feature => McpPaging.Page(feature.DependsOn, arguments, snapshot.SourceRevision),
             "streams" when declaration.Syntax is EventSourceSyntax source => McpPaging.Page(source.Streams, arguments, snapshot.SourceRevision),
             "route" when declaration.Syntax is CommandSyntax routed => new { authoredRoute = routed.Stream, ambiguousStreamCandidates = routed.StreamCandidates, executionAvailable = false, executionReadiness = readiness.ExecutionReadiness(routed) },
             "response" when declaration.Syntax is CommandSyntax responseOwner => Response(responseOwner, readiness),
             "produces" when declaration.Syntax is CommandSyntax command => McpPaging.Page(command.Produces, arguments, snapshot.SourceRevision),
             "values" when declaration.Syntax is ConceptSyntax concept => McpPaging.Page(concept.Values, arguments, snapshot.SourceRevision),
+            "values" when declaration.Syntax is SpecificationExampleSyntax example => McpPaging.Page(example.Values, arguments, snapshot.SourceRevision),
+            "generatedValues" when declaration.Syntax is SpecificationExampleSyntax example => McpPaging.Page(example.GeneratedValues, arguments, snapshot.SourceRevision),
             "syntax" => declaration.Syntax,
             _ => throw new McpFailure($"View '{view}' is not available for {declaration.Kind}.", -32602)
         };
@@ -150,12 +159,14 @@ static class McpDeclarationDetails
 
     static IEnumerable<string> Views(SyntaxNode node) => node switch
     {
+        ModuleSyntax or FeatureSyntax => ["summary", "dependencies", "occurrences", "syntax"],
         SliceSyntax => ["summary", "occurrences", "commands", "specifications", "syntax"],
         CommandSyntax => ["summary", "properties", "occurrences", "produces", "response", "route", "syntax"],
         EventSourceSyntax => ["summary", "streams", "occurrences", "syntax"],
         OperationSyntax => ["summary", "inputs", "phases", "occurrences", "syntax"],
         EventSyntax or ReadModelSyntax or TypeSyntax => ["summary", "properties", "occurrences", "syntax"],
         ConceptSyntax => ["summary", "values", "occurrences", "syntax"],
+        SpecificationExampleSyntax => ["summary", "values", "generatedValues", "occurrences", "syntax"],
         _ => ["summary", "occurrences", "syntax"]
     };
 

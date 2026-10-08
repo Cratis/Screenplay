@@ -22,12 +22,18 @@ internal static partial class SpecificationParser
     public static IReadOnlyList<SpecificationSyntax> ParseDocument(ParserContext context)
     {
         var specifications = new List<SpecificationSyntax>();
+        var examples = new List<SpecificationExampleSyntax>();
         while (context.Reader.PeekSignificant() is { } line)
         {
             if (line.Content.StartsWith("specification", StringComparison.Ordinal))
             {
                 context.Reader.TakeSignificant();
                 specifications.Add(Parse(context, line));
+            }
+            else if (LineText.FirstWord(line.Content) == "example")
+            {
+                context.Reader.TakeSignificant();
+                examples.Add(ParseExample(context, line));
             }
             else
             {
@@ -42,7 +48,7 @@ internal static partial class SpecificationParser
             context.Error(DiagnosticCodes.SpecificationDocumentWithoutSpecification, "Document must contain at least one specification", SourceLocation.Start);
         }
 
-        return specifications;
+        return [.. specifications.Select(specification => specification with { Examples = examples })];
     }
 
     /// <summary>
@@ -72,8 +78,10 @@ internal static partial class SpecificationParser
         var givenReadModels = new List<SpecificationReadModelSyntax>();
         SpecificationCommandSyntax? when = null;
         SpecificationEventSyntax? whenAppended = null;
+        SpecificationRedeliverySyntax? whenRedelivered = null;
         var whenDeclared = false;
         var eventsInAnyOrder = false;
+        var thenNoEvents = false;
         SourceLocation? eventsInAnyOrderLocation = null;
         var thenEvents = new List<SpecificationEventSyntax>();
         var thenReadModels = new List<SpecificationReadModelSyntax>();
@@ -170,6 +178,10 @@ internal static partial class SpecificationParser
                     {
                         whenAppended = ParseEventReference(context, line, WhenAppendRegex(), "when append");
                     }
+                    else if (WhenRedeliveredPrefixRegex().IsMatch(line.Content))
+                    {
+                        whenRedelivered = ParseRedelivery(context, line);
+                    }
                     else if (KeywordRegex("when", "clock").IsMatch(line.Content))
                     {
                         whenClock = ParseClock(context, line, "when");
@@ -192,7 +204,26 @@ internal static partial class SpecificationParser
                     }
                     break;
                 case "then":
-                    if (ThenReturnsPrefixRegex().IsMatch(line.Content))
+                    if (ThenNoEventsPrefixRegex().IsMatch(line.Content))
+                    {
+                        if (line.Content != "then no events" || thenNoEvents)
+                        {
+                            context.Error(DiagnosticCodes.InvalidNoEventsExpectation, "Expected one 'then no events' directive.", line.Location);
+                        }
+                        else
+                        {
+                            thenNoEvents = true;
+                            directiveLocations["then no events"] = line.Location;
+                        }
+
+                        if (context.TryPeekChild(line.Indent, out var child))
+                        {
+                            context.Error(DiagnosticCodes.InvalidNoEventsExpectation, "'then no events' cannot have child mappings.", child.Location);
+                        }
+
+                        SkipBody(context, line.Indent);
+                    }
+                    else if (ThenReturnsPrefixRegex().IsMatch(line.Content))
                     {
                         var expectation = ParseReturn(context, line);
                         if (thenReturns is not null)
@@ -265,6 +296,14 @@ internal static partial class SpecificationParser
             }
         }
 
+        if (thenNoEvents && (whenAppended is not null || thenEvents.Count > 0 || eventsInAnyOrder || thenErrors.Count > 0 || denied is not null))
+        {
+            context.Error(
+                DiagnosticCodes.InvalidNoEventsExpectation,
+                "'then no events' cannot follow 'when append' or accompany event, event-order, error or denial expectations.",
+                directiveLocations["then no events"]);
+        }
+
         return new(name, given, when, thenEvents, thenErrors, header.Location, givenReadModels, thenReadModels)
         {
             SourceOptions = context.SourceOptions,
@@ -278,7 +317,9 @@ internal static partial class SpecificationParser
             ThenOperations = thenOperations,
             ThenCompensated = thenCompensated,
             WhenAppended = whenAppended,
+            WhenRedelivered = whenRedelivered,
             ThenEventsInAnyOrder = eventsInAnyOrder,
+            ThenNoEvents = thenNoEvents,
             GivenClock = givenClock,
             GivenCaptures = givenCaptures,
             WhenClock = whenClock,
@@ -290,6 +331,9 @@ internal static partial class SpecificationParser
             DirectiveLocations = WithEventOrderLocation(directiveLocations, eventsInAnyOrderLocation)
         };
     }
+
+    [GeneratedRegex(@"^then\s+no\s+events\b", RegexOptions.None, 1000)]
+    private static partial Regex ThenNoEventsPrefixRegex();
 
     static Dictionary<string, SourceLocation> WithEventOrderLocation(Dictionary<string, SourceLocation> locations, SourceLocation? location)
     {
@@ -337,6 +381,26 @@ internal static partial class SpecificationParser
 
         return new(match.Groups[2].Value, line.Location);
     }
+
+    static SpecificationRedeliverySyntax? ParseRedelivery(ParserContext context, SourceLine line)
+    {
+        var match = WhenRedeliveredRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.UnmatchedRedeliveredOccurrence, "Expected 'when redelivered <Event> to <Reaction>'.", line.Location);
+            SkipBody(context, line.Indent);
+            return null;
+        }
+
+        var body = ParseValuesWithEventSource(context, line);
+        return new(match.Groups[1].Value, match.Groups[2].Value, body.Values, line.Location) { For = body.For };
+    }
+
+    [GeneratedRegex(@"^when\s+redelivered\b", RegexOptions.None, 1000)]
+    private static partial Regex WhenRedeliveredPrefixRegex();
+
+    [GeneratedRegex(@"^when\s+redelivered\s+([A-Za-z_]\w*(?:\.\w+)*)\s+to\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    private static partial Regex WhenRedeliveredRegex();
 
     static SpecificationTriggerSyntax? ParseTrigger(ParserContext context, SourceLine line)
     {
@@ -459,11 +523,12 @@ internal static partial class SpecificationParser
         }
 
         var generated = new List<PropertyMappingSyntax>();
-        var body = ParseValuesWithEventSource(context, line, generated);
+        var body = ParseValuesWithEventSource(context, line, generated, match);
         return new SpecificationCommandSyntax(match.Groups[1].Value, body.Values, line.Location)
         {
             For = body.For,
-            GeneratedValues = generated
+            GeneratedValues = generated,
+            InlineProperty = match.Groups["property"].Success ? match.Groups["property"].Value : null
         };
     }
 
@@ -631,7 +696,11 @@ internal static partial class SpecificationParser
             return null;
         }
 
-        return new(match.Groups[1].Value, ParseValues(context, line), line.Location) { Exactly = keyword == "then" && match.Groups[2].Success };
+        return new(match.Groups[1].Value, ParseValues(context, line, match), line.Location)
+        {
+            Exactly = keyword == "then" && match.Groups["exactly"].Success,
+            InlineProperty = match.Groups["property"].Success ? match.Groups["property"].Value : null
+        };
     }
 
     static SpecificationEventSyntax? ParseEventReference(ParserContext context, SourceLine line, Regex regex, string keyword)
@@ -644,12 +713,13 @@ internal static partial class SpecificationParser
             return null;
         }
 
-        var body = ParseValuesWithEventSource(context, line, eventKeyword: keyword);
+        var body = ParseValuesWithEventSource(context, line, inline: match, eventKeyword: keyword);
         return new SpecificationEventSyntax(match.Groups[1].Value, body.Values, line.Location)
         {
             For = body.For,
             Stream = body.Stream,
-            NoStream = body.NoStream
+            NoStream = body.NoStream,
+            InlineProperty = match.Groups["property"].Success ? match.Groups["property"].Value : null
         };
     }
 
@@ -657,9 +727,11 @@ internal static partial class SpecificationParser
         ParserContext context,
         SourceLine parent,
         List<PropertyMappingSyntax>? generated = null,
+        Match? inline = null,
         string? eventKeyword = null)
     {
         var values = new List<PropertyMappingSyntax>();
+        AddInlineValue(context, parent, inline, values);
         ExpressionSyntax? eventSource = null;
         SpecificationStreamSyntax? stream = null;
         SpecificationNoStreamSyntax? noStream = null;
@@ -680,7 +752,7 @@ internal static partial class SpecificationParser
             var mapping = MappingRegex().Match(child.Content);
             if (mapping.Success)
             {
-                values.Add(ExpressionParser.ParseMapping(context, mapping.Groups[1].Value, mapping.Groups[2], child));
+                AddFixtureValue(context, values, ExpressionParser.ParseMapping(context, mapping.Groups[1].Value, mapping.Groups[2], child));
                 continue;
             }
 
@@ -782,9 +854,10 @@ internal static partial class SpecificationParser
     [GeneratedRegex(@"^streamId\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
     private static partial Regex SpecificationStreamIdRegex();
 
-    static List<PropertyMappingSyntax> ParseValues(ParserContext context, SourceLine parent)
+    static List<PropertyMappingSyntax> ParseValues(ParserContext context, SourceLine parent, Match? inline = null)
     {
         var values = new List<PropertyMappingSyntax>();
+        AddInlineValue(context, parent, inline, values);
         while (context.TryPeekChild(parent.Indent, out var child))
         {
             context.Reader.TakeSignificant();
@@ -795,7 +868,7 @@ internal static partial class SpecificationParser
                 continue;
             }
 
-            values.Add(ExpressionParser.ParseMapping(context, match.Groups[1].Value, match.Groups[2], child));
+            AddFixtureValue(context, values, ExpressionParser.ParseMapping(context, match.Groups[1].Value, match.Groups[2], child));
         }
 
         return values;
@@ -851,16 +924,16 @@ internal static partial class SpecificationParser
     [GeneratedRegex(@"^specification\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^given\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^given\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
     private static partial Regex GivenRegex();
 
-    [GeneratedRegex(@"^when\s+append\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+append\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
     private static partial Regex WhenAppendRegex();
 
-    [GeneratedRegex(@"^when\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^when\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
     private static partial Regex WhenRegex();
 
-    [GeneratedRegex(@"^then\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
     private static partial Regex ThenEventRegex();
 
     [GeneratedRegex(@"^then\s+query\b", RegexOptions.None, 1000)]
@@ -872,10 +945,10 @@ internal static partial class SpecificationParser
     [GeneratedRegex(@"^(?:given|then)\s+readmodel\b", RegexOptions.None, 1000)]
     private static partial Regex ReadModelPrefixRegex();
 
-    [GeneratedRegex(@"^given\s+readmodel\s+([A-Z]\w*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^given\s+readmodel\s+([A-Z]\w*(?:\.\w+)*)(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
     private static partial Regex GivenReadModelRegex();
 
-    [GeneratedRegex(@"^then\s+readmodel\s+([A-Z]\w*)(\s+exactly)?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^then\s+readmodel\s+([A-Z]\w*(?:\.\w+)*)(?<exactly>\s+exactly)?(?:\s+(?<property>[\w.]+)\s*=(?!=|>)\s*(?<value>.+))?$", RegexOptions.None, 1000)]
     private static partial Regex ThenReadModelRegex();
 
     [GeneratedRegex(@"^then\s+no\b", RegexOptions.None, 1000)]

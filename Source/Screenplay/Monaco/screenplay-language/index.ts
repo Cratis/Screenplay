@@ -125,6 +125,7 @@ export { cdl } from './sub-languages/cdl';
 export { screenplayDarkThemeName } from './themes/screenplay-dark';
 export { screenplayLightThemeName } from './themes/screenplay-light';
 export { enclosingChain, fenceMap, firstWord, indentOf, withoutComment } from './document-context';
+export { exampleCompletions, exampleHover } from './example-authoring';
 export {
     fileReferenceKeyword,
     fileReferenceOn,
@@ -166,6 +167,7 @@ export type { EventSourceAnalysis } from './EventSourceAnalysis';
 export type { AuthoredEventSource } from './AuthoredEventSource';
 export type { AuthoredStream } from './AuthoredStream';
 export type { AuthoredCommandRoute } from './AuthoredCommandRoute';
+export type { AuthoredSpecificationEvent } from './AuthoredSpecificationEvent';
 export { analyzeOperations, operationCompletions, operationDetails, operationAvailability, operationHover, operationReferenceAt, phaseState } from './operation-authoring';
 export type { OperationAnalysis, OperationDeclaration, OperationInput, OperationPhase, OperationReference, SystemDeclaration } from './OperationAnalysis';
 export { responseAvailability, responseAnalysis } from './response-analysis';

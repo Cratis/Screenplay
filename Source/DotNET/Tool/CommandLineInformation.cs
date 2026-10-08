@@ -11,12 +11,17 @@ static class CommandLineInformation
         Screenplay compiler and model authoring tools
 
         Usage:
-          screenplay [<file.play|folder>] [--warnaserror] [--no-color]
+          screenplay [<file.play|folder>] [--scope <Module>[.<Feature>[.<Slice>]]] [--check <name>[,<name>]|all] [--warnaserror] [--no-color]
           screenplay mcp <model-folder>
           screenplay --help
           screenplay --version
 
         A folder of .play files describes one application.
+        --scope reports the named scope and its direct dependent declarations after whole-application binding.
+        --check selects opt-in structural completeness warnings; repeat it to combine selections.
+        Completeness checks run only when the whole model has no errors.
+        Scoped exit codes follow the reported set; a separate line shows whole-application defects.
+        Exit codes: 0 clean, 1 defects (including warnings with --warnaserror), 2 could not run.
         The MCP server uses stdio and requires an existing physical directory.
         Open an empty model folder through MCP to create its first typed document.
         MCP proposals do not write files; review them before invoking apply.
