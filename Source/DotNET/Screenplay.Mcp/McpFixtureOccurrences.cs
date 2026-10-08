@@ -30,8 +30,6 @@ static class McpFixtureOccurrences
             return (specification.GivenReadModels ?? []).Any(item => ReferenceEquals(item, node)) ? "givenReadModel" : "thenReadModel";
         }
 
-        if (node is SpecificationRedeliverySyntax) return "whenRedeliveredEvent";
-
         if (node is SpecificationAbsentReadModelSyntax) return "thenAbsentReadModel";
 
         return fallback;
