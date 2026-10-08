@@ -53,7 +53,11 @@ static class McpSpecificationExecution
                 failures = failures.Append($"Expected facts: {string.Join("; ", expected.ThenEvents.Select(fact => DescribeFact(plan, fact.EventContract, fact.Values)))}")
                     .Append($"Actual facts: {string.Join("; ", accepted.Facts.Select(fact => DescribeFact(plan, fact.EventContract, fact.Values)))}")
                     .Append($"Expected read models: {string.Join("; ", expected.ThenReadModels.Select(state => DescribeState(plan, state.ReadModel, state.Key, state.Values)))}")
-                    .Append($"Actual read models: {string.Join("; ", accepted.World.ReadModels.Select(state => DescribeState(plan, state.ReadModel, state.Key, state.Values)))}");
+                    .Append($"Actual read models: {string.Join("; ", accepted.World.ReadModels.Select(state => DescribeState(plan, state.ReadModel, state.Key, state.Values)))}")
+                    .Append($"Expected response: {DescribeResponse(expected.ThenReturns)}")
+                    .Append($"Actual response: {DescribeResponse(accepted.Response)}")
+                    .Append($"Expected query results: {string.Join("; ", expected.ThenQueries.Select(query => DescribeQuery(plan, query.Query, query.Key, query.Results.Select(state => DescribeState(plan, state.ReadModel, state.Key, state.Values)))))}")
+                    .Append($"Actual query results: {string.Join("; ", accepted.Queries.Select(query => DescribeQuery(plan, query.Query, query.Key, query.Results.Select(state => DescribeState(plan, state.ReadModel, state.Key, state.Values)))))}");
             }
 
             return new McpSpecificationResult(assignment.Address, assignment.Id.ToString(), outcome, run.Execution.Kind.ToString(), [.. failures], unsupported?.Capability.ToString(), unsupported?.Details);
@@ -81,6 +85,18 @@ static class McpSpecificationExecution
 
         return $"{declaration.Name} key {key} ({string.Join(", ", properties)})";
     }
+
+    static string DescribeResponse(object? response) => response switch
+    {
+        SemanticScalarSpecificationResponse scalar => scalar.Value.ToString(),
+        SemanticScalarExecutionResponse scalar => scalar.Value.ToString(),
+        SemanticRecordSpecificationResponse record => string.Join(", ", record.Fields.Select(field => $"{field.Name} = {field.Value}")),
+        SemanticRecordExecutionResponse record => string.Join(", ", record.Fields.Select(field => $"{field.Name} = {field.Value}")),
+        _ => "none"
+    };
+
+    static string DescribeQuery(SemanticExecutionPlan plan, SemanticId query, SemanticValue key, IEnumerable<string> rows) =>
+        $"{plan.Queries[query].Name} key {key} [{string.Join("; ", rows)}]";
 
     static string Outcome(bool passed, bool unsupported) => (passed, unsupported) switch
     {
