@@ -12,9 +12,9 @@ public class when_repairing_the_sample_timelines(Xunit.Abstractions.ITestOutputH
 {
     [Theory]
     [InlineData("Library", 2, 2)]
-    [InlineData("Invoicing", 3, 1)]
+    [InlineData("Invoicing", 4, 2)]
     [InlineData("Commerce", 7, 4)]
-    [InlineData("TimeTracking", 7, 7)]
+    [InlineData("TimeTracking", 8, 7)]
     void should_repair_only_the_findings_in_the_plan_table(string name, int findings, int repairable)
     {
         var folder = _samples.Single(sample => Path.GetFileName(sample) == name);
@@ -61,6 +61,7 @@ public class when_repairing_the_sample_timelines(Xunit.Abstractions.ITestOutputH
                     _ => string.Empty
                 },
                 AddWorkspaceNode add => ((FileImportSyntax)add.Node).Pattern,
+                ReplaceWorkspaceNode { Expected: ApplicationSyntax before, Node: ApplicationSyntax after } => string.Join(',', after.FileImports.Select(import => import.Pattern).Except(before.FileImports.Select(import => import.Pattern), StringComparer.Ordinal)),
                 _ => string.Empty
             };
             actual.ShouldEqual(expected);
@@ -97,8 +98,8 @@ public class when_repairing_the_sample_timelines(Xunit.Abstractions.ITestOutputH
             "Library" => "Loans",
             "Invoicing" => Event("InvoiceReminderSent", "ChaseOverdueInvoices"),
             "Commerce" => Event("ProductRegistered", "RegisterProduct.play") ?? Event("OrderPlaced", "PlaceOrder.play") ?? Event("OrderPaid", "Payments/Payments.play") ?? Event("ShipmentRequested", "StartFulfillment.play"),
-            "TimeTracking" => Event("PayrollRunAcknowledged", "Handover") ??
-                (diagnostic.Message.Contains("Slice 'QueueApprovedTimesheets'", StringComparison.Ordinal) ? "Timesheets/Timesheets.play" : null) ??
+            "TimeTracking" => (diagnostic.Message.Contains("reads read model 'DraftTimesheet'", StringComparison.Ordinal) ? "Engagements/Engagements.play,Timesheets/Timesheets.play" : null) ??
+                (diagnostic.Message.Contains("Slice 'QueueApprovedTimesheets'", StringComparison.Ordinal) ? "Engagements/Engagements.play,Timesheets/Timesheets.play" : null) ??
                 Event("TimesheetApproved", "Approval") ?? Event("TimesheetRejected", "Approval") ?? Event("TimesheetStarted", "Recording/StartingAWeek.play") ?? Event("TimesheetSubmitted", "Recording/SubmittingTheWeek.play") ?? Event("AbsenceReported", "Absences/ImportingAbsences.play"),
             _ => null
         };
