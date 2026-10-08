@@ -105,15 +105,16 @@ static class McpSpecificationObligations
             foreach (var removal in index.Outgoing(projection.Owner).Where(reference => reference.Role == "remove"))
             {
                 var events = index.Resolve(removal);
-                Add("SPEC007", projection, removal.Location, removal.Name, "A removal specification asserting an absent instance after the removal event", (spec, value) => events is [var @event] && value.WhenAppended is { } appended && McpReviewSelection.Resolves(index, spec, appended.EventType, "Event", @event) && value.ThenAbsentReadModels.Any(view => models.Any(model => McpReviewSelection.Resolves(index, spec, view.Name, "ReadModel", model))));
+                Add("SPEC007", projection, removal.Location, removal.Name, "A removal specification asserting an absent instance after the removal event", (spec, value) => events is [var @event] && DrivesEvent(index, spec, value, @event) && value.ThenAbsentReadModels.Any(view => models.Any(model => McpReviewSelection.Resolves(index, spec, view.Name, "ReadModel", model))));
             }
         }
         foreach (var reaction in selected.Where(declaration => declaration.Syntax is ReactionSyntax))
         {
             var syntax = (ReactionSyntax)reaction.Syntax;
             var triggers = index.Outgoing(reaction.Owner).Where(reference => reference.Role == "trigger").SelectMany(index.Resolve).ToArray();
-            Add("SPEC008", reaction, syntax.Location, "reaction", "A specification driving this reaction with an outcome assertion", (spec, value) => Asserted(value) && ((value.WhenRedelivered is { } redelivery && McpReviewSelection.Resolves(index, spec, redelivery.Reaction, "Reaction", reaction)) ||
-                triggers.Any(trigger => (value.WhenAppended is { } appended && trigger.Kind == "Event" && McpReviewSelection.Resolves(index, spec, appended.EventType, "Event", trigger)) || (value.WhenTrigger is { } when && trigger.Kind == "Trigger" && McpReviewSelection.Resolves(index, spec, when.Trigger, "Trigger", trigger))) ||
+            Add("SPEC008", reaction, syntax.Location, "reaction", "A specification driving this reaction with an outcome assertion", (spec, value) => ReactionOutcome(index, reaction, spec, value) && ((value.WhenRedelivered is { } redelivery && McpReviewSelection.Resolves(index, spec, redelivery.Reaction, "Reaction", reaction)) ||
+                triggers.Any(trigger => (trigger.Kind == "Event" && DrivesEvent(index, spec, value, trigger)) || (value.WhenTrigger is { } when && trigger.Kind == "Trigger" && McpReviewSelection.Resolves(index, spec, when.Trigger, "Trigger", trigger))) ||
+                (value.WhenTrigger is { } builtIn && (builtIn.Trigger == "Startup" || builtIn.Trigger == "Shutdown") && syntax.Triggers.Any(trigger => trigger.Source is NamedTriggerSourceSyntax named && named.Name == builtIn.Trigger)) ||
                 (value.WhenClock is not null && spec.Scope.SequenceEqual(reaction.Scope, StringComparer.Ordinal) && syntax.Triggers.Any(trigger => trigger.Source is IntervalTriggerSourceSyntax or ScheduleTriggerSourceSyntax))));
         }
         foreach (var constraint in index.Declarations.Where(declaration => declaration.Syntax is ConstraintSyntax))
@@ -136,6 +137,27 @@ static class McpSpecificationObligations
         FeatureSyntax feature => feature.Authorize is not null,
         _ => false
     });
+
+    static bool ReactionOutcome(McpSyntaxIndex index, McpDeclaration reaction, McpDeclaration spec, SpecificationSyntax syntax)
+    {
+        var references = index.Outgoing(reaction.Owner).ToArray();
+        var invoked = references.Where(reference => reference.Role == "invokes").Select(index.Resolve).Where(candidates => candidates.Length == 1).Select(candidates => candidates[0]);
+        var events = references.Where(reference => reference.Role == "produces")
+            .Concat(invoked.SelectMany(command => index.Outgoing(command.Owner).Where(reference => reference.Role == "produces")))
+            .Select(index.Resolve).Where(candidates => candidates.Length == 1).Select(candidates => candidates[0]).Where(declaration => declaration.Kind == "Event").ToArray();
+
+        return syntax.ThenEvents.Any(assertion => events.Any(@event => McpReviewSelection.Resolves(index, spec, assertion.EventType, "Event", @event))) ||
+            (syntax.ThenNoEvents && spec.Scope.SequenceEqual(reaction.Scope, StringComparer.Ordinal));
+    }
+
+    static bool DrivesEvent(McpSyntaxIndex index, McpDeclaration spec, SpecificationSyntax syntax, McpDeclaration @event)
+    {
+        if (syntax.WhenAppended is { } appended && McpReviewSelection.Resolves(index, spec, appended.EventType, "Event", @event)) return true;
+        if (syntax.When is not { } when) return false;
+        var candidates = index.Resolve(new(when.CommandType, ["Command"], spec.Scope, when.Location, "review", spec.Owner));
+
+        return candidates is [var command] && command.Syntax is CommandSyntax action && action.Produces.Any(production => McpReviewSelection.Resolves(index, command, production.Event, "Event", @event));
+    }
 
     static bool QueryReturns(McpSyntaxIndex index, McpDeclaration from, string name, McpDeclaration model)
     {
