@@ -54,7 +54,7 @@ export class EventOwners {
                 const name = event.name.toLowerCase();
                 if (!this.#owned.has(name)) this.#owned.set(name, owned);
                 // Effective examples name their underlying declaration by its full scope.
-                this.#owned.set(`${scope.path.replace(/[\/#]/g, '.')}.${event.name}`.toLowerCase(), owned);
+                this.#owned.set(`${scope.path.replace(/[/#]/g, '.')}.${event.name}`.toLowerCase(), owned);
             });
     }
 }
