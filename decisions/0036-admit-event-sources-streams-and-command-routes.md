@@ -1,5 +1,5 @@
 ---
-id: 0035
+id: 0036
 title: Admit event sources, streams and command routes into the executable model, with specification routes and composite stream ids
 status: accepted
 stage: none

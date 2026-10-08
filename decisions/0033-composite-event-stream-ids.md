@@ -349,4 +349,4 @@ The decider delegated this verdict to the orchestrating agent. The choices below
 
 ## Status notes
 
-**2026-10-08.** Decision [0035](0035-admit-event-sources-streams-and-command-routes.md) narrows this decision's text domain for execution. Stream id text, scalar or a composite part, must be NFC, because executable model text is NFC. Non-NFC values are refused, never normalized. Normalization-equivalent spellings therefore cannot both appear, instead of staying distinct.
+**2026-10-08.** Decision [0036](0036-admit-event-sources-streams-and-command-routes.md) narrows this decision's text domain for execution. Stream id text, scalar or a composite part, must be NFC, because executable model text is NFC. Non-NFC values are refused, never normalized. Normalization-equivalent spellings therefore cannot both appear, instead of staying distinct.
