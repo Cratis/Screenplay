@@ -526,7 +526,7 @@ produces InvoiceLineItemAdded
   for invoiceId
   addedAt    = $context.occurred
 
-produces InvoiceChargesIncurred
+produces InvoiceRunningTotalUpdated
   for invoiceId
   adjustment = lines.sum(l => l.quantity * l.unitPrice * (1 - l.discountPct / 100))
 ```
