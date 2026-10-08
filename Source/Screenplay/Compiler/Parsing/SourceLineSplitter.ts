@@ -1,7 +1,11 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { dotNetWhitespace } from '../Text/patterns';
 import { SourceLine } from './SourceLine';
+
+const dependencyPrefix = new RegExp(`^depends${dotNetWhitespace}+on(?:${dotNetWhitespace}|$)`, 'u');
+const dependencyTrailingWhitespace = new RegExp(`${dotNetWhitespace}+$`, 'u');
 
 // Splits a document into lines the way the C# SourceLineSplitter does: a line's indent is its leading
 // whitespace, and its content is what follows with any comment and trailing whitespace removed. A comment
@@ -14,7 +18,9 @@ export function splitLines(source: string, hashComments = false, path?: string):
         number++;
         const line = raw.endsWith('\r') ? raw.replace(/\r+$/, '') : raw;
         const indent = line.length - line.trimStart().length;
-        const content = stripComment(line.substring(indent), hashComments).trimEnd();
+        const body = stripComment(line.substring(indent), hashComments);
+        // Dependency grammar follows .NET's whitespace exactly, including NEL but not FEFF.
+        const content = dependencyPrefix.test(body) ? body.replace(dependencyTrailingWhitespace, '') : body.trimEnd();
         result.push(path === undefined
             ? { number, raw: line, indent, content, startOffset: offset }
             : { number, raw: line, indent, content, path, startOffset: offset });

@@ -10,7 +10,7 @@ namespace Cratis.Screenplay.Mcp;
 
 static class McpReferenceKinds
 {
-    internal const string Coverage = "Explicit declaration references in source identifier/stream-id types, authored command source/stream routes, types, policies, commands, queries, screen data, forms, contribution points, specifications, projections, reducers, reactions, captures, constraints, seeds and concurrency event lists. Not code, property paths, imports, profile settings, external host registrations or expression identifiers. Read models include projection output aliases and variants, not the projection builder's name when it produces a different view.";
+    internal const string Coverage = "Explicit declaration references in source identifier/stream-id types, authored command and specification event source/stream routes, types, policies, commands, queries, screen data, forms, contribution points, specifications, projections, reducers, reactions, captures, constraints, seeds and concurrency event lists. Not code, property paths, imports, profile settings, external host registrations or expression identifiers. Read models include projection output aliases and variants, not the projection builder's name when it produces a different view.";
     static readonly string[] _eventKinds = ["Event"];
 
     internal static IEnumerable<(string Name, string[] Kinds, string Role)> For(SyntaxNode node, SyntaxNode? owner = null) => node switch
@@ -18,6 +18,7 @@ static class McpReferenceKinds
         SliceSyntax value => EventDeclarations.In(value).Except(value.Events).Select(@event => (@event.Name, _eventKinds, "declares")),
         OperationSyntax value => [(value.Uses, ["System"], "uses")],
         CommandStreamSyntax value => [(value.EventSource, ["EventSource"], "commandEventSource"), ($"{value.EventSource}.{value.Stream}", ["EventStream"], "commandStream")],
+        SpecificationStreamSyntax value => [(value.EventSource, ["EventSource"], "specificationEventSource"), ($"{value.EventSource}.{value.Stream}", ["EventStream"], "specificationStream")],
         SpecificationOperationSyntax value => [(value.Operation, ["Operation"], "thenOperation")],
         SpecificationOperationFailureSyntax value => [(value.Operation, ["Operation"], "givenOperationFailure")],
         SpecificationCompensatedSyntax value => [(value.Operation, ["Operation"], "thenCompensated")],

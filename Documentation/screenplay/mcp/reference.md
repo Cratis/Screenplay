@@ -83,7 +83,7 @@ Detail pages use `detailShape: "compact-header-v1"`. The first `declaration` ite
 
 Generic source details, source dependencies and editor navigation use the same source-only physical confidence as the inventories. Unresolved placement candidates are not discarded before checking duplicate parents. Unknown root extent refuses confident selection even when one surviving declaration is readable; nonrouting event and operation resolution keeps its existing rules. `confidenceReasons` explains source inventory ownership, and reference edges expose `sourceConfidenceReasons`.
 
-`declaration-details` adds source `streams` and command `route` views. The route view retains `authoredRoute` and every `ambiguousStreamCandidates` node; it does not claim effective routing. Dependencies include `commandEventSource`, `commandStream` and nominal identifier/key type links. Source references are application-exact; stream references are exactly `Source.Stream`, without suffix guessing.
+`declaration-details` adds source `streams` and command `route` views. The route view retains `authoredRoute` and every `ambiguousStreamCandidates` node; it does not claim effective routing. Dependencies include `commandEventSource`, `commandStream`, `specificationEventSource`, `specificationStream` and nominal identifier/key type links. Specification route references point at the qualified `Source.Stream` operand and belong to the specification, so `find-references` on either the source or stream includes its authored event routes. These classification links do not add slice dependency-graph edges or change timeline order. Source references are application-exact; stream references are exactly `Source.Stream`, without suffix guessing.
 
 All new inventories disclose that these constructs are not admitted by any supported executable model (ESM) version yet and `executionAvailable: false`, without source/stream semantic or requirement IDs. Old syntax JSON omissions retain additive defaults. Use [typed authoring edits](authoring-tools.md#event-source-and-stream-authoring), not automatic source/stream renames or routing repairs. Strict malformed draft syntax content or merged syntax export refuses with `InvalidSyntaxJson`; a compact `read-ast` query can still expose replacement handles. `export-workspace` preserves exact original bytes, including invalid-but-editable drafts, rather than converting them to typed syntax.
 
@@ -138,10 +138,10 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `describe-application` | `view`: summary, children or declarations; optional `parent`, scope/kind/document filters | Compact counts or paged logical navigation |
 | `find-declaration` | Required exact `name`; optional kind/scope/document | Paged matches; typed syntax only with `includeContent: true` |
 | `search-declarations` | Optional `name`, `match`: exact/prefix/contains, kind/scope/document | Compact scoped search |
-| `declaration-details` | `address`, `kind`; optional `view` | Summary or paged properties, occurrences, commands, specifications, produces, enum values; explicit syntax view |
+| `declaration-details` | `address`, `kind`; optional `view` | Summary or paged properties, occurrences, commands, specifications, produces, enum values, module/feature dependencies; explicit syntax view |
 | `find-references` | `address`, `kind` | Paged resolved incoming references and ambiguities, with owners/roles |
 | `dependencies` | `address`, `kind`, direction incoming/outgoing; optional descendants/document | Direct indexed dependencies and resolution candidates |
-| `dependency-graph` | Optional view, from/to levels, scope, direction, kinds, includeTestOnly, evidenceLimit | Inferred slice/container/context edges, ordering cycles, story-order suggestions or unresolved references |
+| `dependency-graph` | Optional view, from/to levels, scope, direction, kinds, includeTestOnly, evidenceLimit | Inferred slice/container/context edges, ordering cycles, story-order suggestions, unresolved references or checked dependency declarations |
 | `find-fixtures` | Specification address, role, property, value, scope/document | Paged assignments with type, value and location, including `when append` event payloads (`whenAppendedEvent`) and `for` destinations (`whenAppendedEventDestination`) |
 | `find-assertion-gaps` | Optional scope/document | Slices without specifications declaring a `then` assertion, including `then denied` |
 | `diagnostics` | Optional document | Paged diagnostics and total severity counts |
@@ -170,7 +170,7 @@ event references and dependencies carry the `whenAppendedEvent` role, not
 `thenEvent`. Fixture roles are `givenEvent`, `whenAppendedEvent`, `thenEvent`,
 `whenCommand`, `givenReadModel`, `thenReadModel`, `queryArguments`, and
 `queryResult`; each role also has a `…Destination` form for explicit `for`
-destinations.
+destinations. Event roles additionally expose `…Stream` (`property: "stream"`, qualified source/stream text), `…StreamId` (`property: "streamId"`, literal value), and `…NoStream` (`property: "no stream"`, `value: true`) rows when authored. They share the occurrence ordinal with its payload and destination; a payload property named `stream` or `streamId` remains a separate ordinary event-role row. Missing routing lines produce no route rows, not default or inferred routing. `no stream` is legal only on `then` events. Route rows describe syntax only: specification routes remain refused by executable-model binding with `PLAY0268` (#457).
 
 ## Dependency graph
 
@@ -182,7 +182,7 @@ Use `dependencies` for a declaration's scoped indexed references instead.
 
 | Argument | Type | Default | Values / limits |
 | --- | --- | --- | --- |
-| `view` | String | `edges` | `edges`, `cycles`, `order`, `unresolved` |
+| `view` | String | `edges` | `edges`, `cycles`, `order`, `unresolved`, `declarations` |
 | `from` | String | `module` | `slice`, `feature`, `module` |
 | `to` | String | `module` | `slice`, `feature`, `module`, `context` |
 | `scope` | String | Whole application | Exact module, feature, slice or context address; includes descendants |
@@ -201,6 +201,10 @@ lists), `reactsTo` (named event triggers), `decidesFrom` (read-model reads), `as
 (imported event contracts without a local producer). References to shared
 application types, concepts, policies and triggers are excluded and counted.
 Unresolved graph references never become edges.
+
+`view: "declarations"` pages opted-in containers in syntax order. Each item has a `container`, header `location`, `declarations` (target text, resolved address, location and status `used`, `provisional`, `unused` or `invalid`) and counted `edges` grouped by consumer, producer, kind, coverage status and covering declarations. An edge is `declared`, `provisional` or `undeclared`, with its `coveringDeclarations` and an `evidence` array of reference names, roles, locations and ambiguous alternatives. `evidenceLimit` bounds that array per edge (default `3`, maximum `20`); `evidenceCount` stays complete and `evidenceTruncated` reports omitted references. A limit of `0` returns counts and coverage without evidence. Ambiguous ownership is always provisional, even when no declaration covers a candidate; it never raises an undeclared warning. A declaration used by certain evidence remains `used` even if other evidence is ambiguous.
+
+This view checks each container against its own declarations, including descendant consumers. It always counts `usesFactsFrom`, `reactsTo`, `decidesFrom`, `asks` and `shows`; `kinds`, `includeTestOnly`, `direction` and level selectors apply to the inferred views, not to this inventory check. `evidenceLimit` bounds only the returned evidence, never the inventory check. Internal edges and producers in a proper ancestor's own slices are excluded. `scope` selects checked containers, including descendants. Use `declaration-details` with `view: "dependencies"` and kind `Module` or `Feature` to page authored dependency syntax, or [declared dependencies](../slices.md#declared-dependencies) for diagnostic rules.
 
 Event names resolve to the earliest slice declaring the event, including inline
 events and generations. Other names resolve to the earliest declaring slice;

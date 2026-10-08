@@ -25,6 +25,7 @@
         { "include": "#description-block" },
         { "include": "#projection-block" },
         { "include": "#capture-block" },
+        { "include": "#specification-stream" },
         { "include": "#keywords" },
         { "include": "#common" }
     ],
@@ -61,6 +62,15 @@
             "beginCaptures": { "2": { "name": "variable.other.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "4": { "name": "entity.name.type.screenplay" } },
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
             "patterns": [{ "include": "#handler-implementation" }, { "include": "#fenced-csharp" }, { "include": "#fenced-typescript" }, { "include": "#fenced-react" }, { "include": "#fenced-html" }, { "include": "#fenced-sql" }, { "include": "#keywords" }, { "include": "#common" }]
+        },
+        "specification-stream": {
+            "begin": "^([ \\t]*)(stream)\\s+([A-Za-z_]\\w*\\.[A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
+            "beginCaptures": { "2": { "name": "keyword.other.screenplay" }, "3": { "name": "entity.name.type.screenplay" } },
+            "while": "^(?=\\1[ \\t]+\\S|[ \\t]*$)",
+            "patterns": [
+                { "match": "^\\s*(streamId)\\s*=(?!=|>)", "captures": { "1": { "name": "keyword.other.screenplay" } } },
+                { "include": "#common" }
+            ]
         },
         "keyword-input": {
             "match": "^\\s*(@?(?:system|operation|command|uses|execute|compensate|eventsource|stream|streamId|identifier|from))\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)(?=\\s*(?:=(?!=|>)|//|$))",
@@ -111,6 +121,14 @@
         },
         "keywords": {
             "patterns": [
+                {
+                    "match": "^\\s*(no)\\s+(stream)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
+                },
+                {
+                    "match": "^\\s*(stream|streamId)\\s*=(?!=|>)",
+                    "captures": { "1": { "name": "variable.other.screenplay" } }
+                },
                 {
                     "match": "^(system|eventsource)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
                     "captures": { "1": { "name": "keyword.control.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }

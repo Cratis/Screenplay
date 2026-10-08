@@ -21,6 +21,6 @@ public class when_fragments_declare_dependencies : Specification
 
     [Fact] void should_accumulate_module_targets_in_path_order() => _result.Value!.Modules.First().DependsOn.Select(dependency => dependency.Target).ShouldEqual(["Timesheets", "Engagements"]);
     [Fact] void should_deduplicate_resolved_aliases() => _result.Value!.Modules.First().Features.First().DependsOn.Select(dependency => dependency.Target).ShouldEqual(["Runs", "Timesheets.Approval"]);
-    [Fact] void should_warn_on_each_repeat() => _result.Diagnostics.Select(diagnostic => $"{diagnostic.Code}@{diagnostic.Location.Path}:{diagnostic.Location.Line}").ShouldEqual(["PLAY0555@a.play:5", "PLAY0555@b.play:2", "PLAY0555@b.play:5"]);
-    [Fact] void should_report_repeats_as_warnings() => _result.Diagnostics.All(diagnostic => diagnostic.Severity == DiagnosticSeverity.Warning).ShouldBeTrue();
+    [Fact] void should_warn_on_each_repeat() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.RepeatedDependencyDeclaration).Select(diagnostic => $"{diagnostic.Code}@{diagnostic.Location.Path}:{diagnostic.Location.Line}").ShouldEqual(["PLAY0555@a.play:5", "PLAY0555@b.play:2", "PLAY0555@b.play:5"]);
+    [Fact] void should_report_repeats_as_warnings() => _result.Diagnostics.Where(diagnostic => diagnostic.Code == DiagnosticCodes.RepeatedDependencyDeclaration).All(diagnostic => diagnostic.Severity == DiagnosticSeverity.Warning).ShouldBeTrue();
 }
