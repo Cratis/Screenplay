@@ -214,18 +214,17 @@ sealed class WorkspaceReferenceBindings
 
         var name = reference.Text.Split('.')[^1];
         var declarations = _byName.GetValueOrDefault((domain, name)) ?? [];
-        var declaredTrigger = domain == WorkspaceReferenceDomain.Trigger && declarations.Length > 0;
-
-        // The compiler resolves declared triggers before considering events, irrespective of scope.
-        if (domain == WorkspaceReferenceDomain.Trigger && declarations.Length == 0)
-        {
-            declarations = _byName.GetValueOrDefault((WorkspaceReferenceDomain.Event, name)) ?? [];
-        }
-
         var scope = Scope(reference.Entry, _index);
         var imports = AdmitsImports(reference) ? _imports.GetValueOrDefault(reference.Text) ?? [] : [];
+
+        // A reaction names an event (including an import) before a declared trigger.
+        if (domain == WorkspaceReferenceDomain.Trigger)
+        {
+            var events = _byName.GetValueOrDefault((WorkspaceReferenceDomain.Event, name)) ?? [];
+            if (events.Length > 0 || imports.Length > 0) declarations = events;
+        }
         if (imports.Length > 0 && !declarations.Any(declaration => declaration.Name == reference.Text &&
-            (declaredTrigger || domain == WorkspaceReferenceDomain.Type || declaration.Scope.SharesPrefixWith(scope, scope.Depth))))
+            (domain == WorkspaceReferenceDomain.Type || declaration.Scope.SharesPrefixWith(scope, scope.Depth))))
         {
             return imports.Length == 1
                 ? new(reference, new($"import:{imports[0]}", reference.Text, new([]), domain, null), "resolved")

@@ -724,39 +724,39 @@ internal static class ScreenplayValidator
                 continue;
             }
 
+            // Events (including imports) shadow declared and registered application triggers.
+            if (knownEvents.Contains(named.Name))
+            {
+                // Imported events have no declared shape to validate.
+                if (eventsByName.TryGetValue(named.Name, out var @event))
+                {
+                    ValidateTriggerData(trigger, @event.Properties.Select(property => property.Name), named.Name, context);
+                }
+
+                continue;
+            }
+
             if (declaredTriggers.TryGetValue(named.Name, out var declared))
             {
                 ValidateTriggerData(trigger, declared.Data.Select(datum => datum.Name), named.Name, context);
                 continue;
             }
 
-            if (!knownEvents.Contains(named.Name))
+            if (!context.Languages.Triggers.TryGetValue(named.Name, out var registered))
             {
-                if (!context.Languages.Triggers.TryGetValue(named.Name, out var registered))
-                {
-                    context.Warning(
-                        DiagnosticCodes.UnknownTrigger,
-                        $"Unknown trigger '{named.Name}' - declare it with 'event {named.Name}' or 'trigger {named.Name}'",
-                        named.Location);
-                    continue;
-                }
-
-                // A registration that states no shape is not a registration that states an empty one. The
-                // first leaves the values alone; the second says an occurrence carries nothing, and taking
-                // something from it is worth reporting.
-                if (registered.Values is { } values)
-                {
-                    ValidateTriggerData(trigger, values, named.Name, context);
-                }
-
+                context.Warning(
+                    DiagnosticCodes.UnknownTrigger,
+                    $"Unknown trigger '{named.Name}' - declare it with 'event {named.Name}' or 'trigger {named.Name}'",
+                    named.Location);
                 continue;
             }
 
-            // An imported event is a name and nothing more, so there is no property list to check against and
-            // taking a value from it says only what the author intends.
-            if (eventsByName.TryGetValue(named.Name, out var @event))
+            // A registration that states no shape is not a registration that states an empty one. The
+            // first leaves the values alone; the second says an occurrence carries nothing, and taking
+            // something from it is worth reporting.
+            if (registered.Values is { } values)
             {
-                ValidateTriggerData(trigger, @event.Properties.Select(property => property.Name), named.Name, context);
+                ValidateTriggerData(trigger, values, named.Name, context);
             }
         }
     }
