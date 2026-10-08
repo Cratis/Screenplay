@@ -33,6 +33,7 @@ export interface SpecificationStreamSyntax extends SyntaxNode {
     readonly eventSource: string;
     readonly stream: string;
     readonly streamId: PropertyMappingSyntax | null;
+    readonly streamIdParts: PropertyMappingSyntax[];
     readonly referenceLocation: SyntaxNode['location'];
     readonly referenceLength: number;
 }

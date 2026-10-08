@@ -24,12 +24,21 @@ export function responseTokens(lines: string[], symbols?: DocumentSymbols): { li
         for (const stream of source.streams) {
             add(stream.location.line, stream.location.column, 6, 0);
             if (stream.streamId) add(stream.streamId.location.line, stream.streamId.location.column, stream.streamId.name.length, 2);
+            const header = stream.directiveLocations?.streamId;
+            if (header) add(header.line, header.column, 8, 0);
+            for (const part of stream.streamIdParts) {
+                add(part.location.line, part.location.column, part.name.length, 1);
+                add(part.type.location.line, part.type.location.column, part.type.name.length, 2);
+            }
         }
     }
     for (const route of analysis.eventSources.routes) {
         add(route.location.line, route.location.column, 6, 0);
         if (route.referenceLocation) add(route.referenceLocation.line, route.referenceLocation.column, `${route.eventSource}.${route.stream}`.length, 2);
         if (route.streamId) add(route.streamId.location.line, route.streamId.location.column, 8, 0);
+        const header = route.directiveLocations?.streamId;
+        if (header) add(header.line, header.column, 8, 0);
+        for (const part of route.streamIdParts) add(part.location.line, part.location.column, part.property.length, 1);
     }
     for (const command of analysis.commands.values()) {
         for (const property of command.properties) {

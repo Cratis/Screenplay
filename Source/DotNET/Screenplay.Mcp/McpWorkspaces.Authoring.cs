@@ -123,6 +123,7 @@ internal sealed partial class McpWorkspaces
                 _ => "ProposalRejected"
             },
             result.Conflicts,
+            identityMigrationIssues = result.Conflicts.SelectMany(conflict => conflict.IdentityMigrationIssues).Select(issue => issue.Describe()),
             result.AuthoringDiagnostics,
             result.ExecutableReady,
             result.ExecutableDiagnostics

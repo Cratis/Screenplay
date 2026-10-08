@@ -1,6 +1,119 @@
 {
-    "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
+    "description": "Guarded syntax-only fixtures use an external data shape so subject validation stays unknown. Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
+        { "name": "Personal concepts cannot declare scalar stream ids", "validate": true, "source": ["concept Personal : String @pii", "eventsource A", "  stream S", "    streamId Personal"], "diagnostics": ["PLAY0515@4"], "messages": ["Concept 'Personal' is @pii and cannot be a stream id - use a surrogate Uuid identifier and keep the @pii value as a property"] },
+        { "name": "Sensitive concepts cannot declare composite stream id parts", "validate": true, "source": ["concept Secret : String @sensitive", "eventsource A", "  stream S", "    streamId", "      owner Secret", "      period String"], "diagnostics": ["PLAY0515@5"], "messages": ["Concept 'Secret' is @sensitive and cannot be a stream id part 'owner' - use a surrogate Uuid identifier and keep the @sensitive value as a property"] },
+        { "name": "Personal command paths cannot feed scalar stream id mappings", "validate": true, "source": ["concept Personal : String @pii", "eventsource A", "  stream S", "    streamId String", "module M", "  feature F", "    slice StateChange S", "      command C", "        personal Personal", "        stream A.S", "          streamId = personal"], "diagnostics": ["PLAY0504@11", "PLAY0515@11"], "messages": ["Stream id source 'personal' is absent or incompatible with nominal type 'String'.", "Concept 'Personal' is @pii and cannot be a stream id route mapping - use a surrogate Uuid identifier and keep the @pii value as a property"] },
+        { "name": "Sensitive command paths cannot feed composite stream id mappings", "validate": true, "source": ["concept Secret : String @sensitive", "eventsource A", "  stream S", "    streamId", "      owner String", "      period String", "module M", "  feature F", "    slice StateChange S", "      command C", "        secret Secret", "        stream A.S", "          streamId", "            owner = secret", "            period = \"public\""], "diagnostics": ["PLAY0504@14", "PLAY0515@14"], "messages": ["Stream id source 'secret' is absent or incompatible with nominal type 'String'.", "Concept 'Secret' is @sensitive and cannot be a stream id route mapping - use a surrogate Uuid identifier and keep the @sensitive value as a property"] },
+        { "name": "A protected scalar declaration does not repeat its own mapping report", "validate": true, "source": ["concept Personal : String @pii", "eventsource A", "  stream S", "    streamId Personal", "module M", "  feature F", "    slice StateChange S", "      command C", "        personal Personal", "        stream A.S", "          streamId = personal"], "diagnostics": ["PLAY0515@4"], "messages": ["Concept 'Personal' is @pii and cannot be a stream id - use a surrogate Uuid identifier and keep the @pii value as a property"] },
+        { "name": "A protected composite declaration does not repeat its own mapping report", "validate": true, "source": ["concept Personal : String @pii", "eventsource A", "  stream S", "    streamId", "      owner Personal", "      period String", "module M", "  feature F", "    slice StateChange S", "      command C", "        personal Personal", "        stream A.S", "          streamId", "            owner = personal", "            period = \"public\""], "diagnostics": ["PLAY0515@5"], "messages": ["Concept 'Personal' is @pii and cannot be a stream id part 'owner' - use a surrogate Uuid identifier and keep the @pii value as a property"] },
+        { "name": "A different protected route source is reported even with a protected declaration", "validate": true, "source": ["concept Target : String @pii", "concept Source : String @sensitive", "eventsource A", "  stream S", "    streamId Target", "module M", "  feature F", "    slice StateChange S", "      command C", "        source Source", "        stream A.S", "          streamId = source"], "diagnostics": ["PLAY0504@12", "PLAY0515@5", "PLAY0515@12"], "messages": ["Stream id source 'source' is absent or incompatible with nominal type 'Target'.", "Concept 'Target' is @pii and cannot be a stream id - use a surrogate Uuid identifier and keep the @pii value as a property", "Concept 'Source' is @sensitive and cannot be a stream id route mapping - use a surrogate Uuid identifier and keep the @sensitive value as a property"] },
+        { "name": "Specification route literals rely on their protected declaration check", "validate": true, "source": ["concept Personal : String @pii", "eventsource A", "  identifier String", "  stream S", "    streamId Personal", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId = \"value-not-in-diagnostics\""], "diagnostics": ["PLAY0515@5"], "messages": ["Concept 'Personal' is @pii and cannot be a stream id - use a surrogate Uuid identifier and keep the @pii value as a property"] },
+        { "name": "Composite duplicate diagnostics precede invalid part type diagnostics", "validate": true, "source": ["eventsource A", "  stream S", "    streamId", "      one Decimal", "      one String"], "diagnostics": ["PLAY0503@5", "PLAY0506@4"] },
+        { "name": "Composite command routes refuse an empty block", "validate": true, "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId"], "diagnostics": ["PLAY0504@11", "PLAY0504@10", "PLAY0504@10"] },
+        { "name": "Composite command routes refuse both mapping forms", "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId", "            one = \"a\"", "            two = \"b\"", "          streamId = \"joined\""], "diagnostics": ["PLAY0504@14"] },
+        { "name": "Composite command parts take no children", "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId", "            one = \"a\"", "              child = \"ignored\"", "            two = \"b\""], "diagnostics": ["PLAY0504@13"] },
+        { "name": "Composite specification routes refuse an empty block", "validate": true, "source": ["eventsource A", "  identifier String", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId"], "diagnostics": ["PLAY0547@14", "PLAY0549@13", "PLAY0549@13"] },
+        { "name": "Composite specification routes refuse both mapping forms", "source": ["eventsource A", "  identifier String", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId", "              one = \"a\"", "              two = \"b\"", "            streamId = \"joined\""], "diagnostics": ["PLAY0547@17"] },
+        { "name": "Composite specification parts take no children", "source": ["eventsource A", "  identifier String", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId", "              one = \"a\"", "                child = \"ignored\"", "              two = \"b\""], "diagnostics": ["PLAY0547@16"] },
+        { "name": "Composite specification parts accept whitespace", "validate": true, "source": ["eventsource A", "  identifier String", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId", "              two = \" \"", "              one = \"a\""], "diagnostics": [] },
+        { "name": "Composite specification UUID parts compare canonically independent of mapping order", "validate": true, "source": ["eventsource A", "  identifier String", "  stream S", "    streamId", "      key Uuid", "      text String", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream A.S", "          streamId", "            text = \"value\"", "            key = \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"", "        produces E", "          for id", "      specification X", "        when C", "          id = \"a\"", "        then E", "          stream A.S", "            streamId", "              key = \"3FA85F64-5717-4562-B3FC-2C963F66AFA6\"", "              text = \"value\""], "diagnostics": [] },
+        { "name": "Composite specification contradiction needs only one differing canonical part", "validate": true, "source": ["eventsource A", "  identifier String", "  stream S", "    streamId", "      key Uuid", "      text String", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream A.S", "          streamId", "            text = \"value\"", "            key = \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"", "        produces E", "          for id", "      specification X", "        when C", "          id = \"a\"", "        then E", "          stream A.S", "            streamId", "              key = \"3FA85F64-5717-4562-B3FC-2C963F66AFA6\"", "              text = \"other\""], "diagnostics": ["PLAY0551@23"] },
+        { "name": "Composite stream declarations do not change PLAY0505 ambiguity", "source": ["import A.S", "type S", "  value String", "eventsource A", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S"], "diagnostics": ["PLAY0505@13"] },
+        { "name": "Composite declarations require two parts even with header trivia", "validate": true, "source": ["eventsource A", "  stream S", "    streamId", "      // comment", "      one String"], "diagnostics": ["PLAY0503@3"] },
+        { "name": "Composite declaration part names are exact and unique", "validate": true, "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      one String"], "diagnostics": ["PLAY0503@5"] },
+        { "name": "Composite parts take no modifiers", "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      two String", "      extra String identifier"], "diagnostics": ["PLAY0503@6"] },
+        { "name": "Composite parts take no children", "source": ["eventsource A", "  stream S", "    streamId", "      one String", "        child String", "      two String"], "diagnostics": ["PLAY0503@5"] },
+        { "name": "Composite parts cannot be optional", "validate": true, "source": ["eventsource A", "  stream S", "    streamId", "      one String optional", "      two String"], "diagnostics": ["PLAY0503@4"] },
+        { "name": "Composite parts cannot be collections", "validate": true, "source": ["eventsource A", "  stream S", "    streamId", "      one String[]", "      two String"], "diagnostics": ["PLAY0503@4"] },
+        { "name": "Composite parts cannot use composite types", "validate": true, "source": ["type Details", "  value String", "eventsource A", "  stream S", "    streamId", "      one Details", "      two String"], "diagnostics": ["PLAY0503@6"] },
+        { "name": "Composite parts cannot use Decimal", "validate": true, "source": ["eventsource A", "  stream S", "    streamId", "      one Decimal", "      two String"], "diagnostics": ["PLAY0506@4"] },
+        { "name": "Composite parts cannot use enums", "validate": true, "source": ["concept Choice : Enum", "  first", "eventsource A", "  stream S", "    streamId", "      one Choice", "      two String"], "diagnostics": ["PLAY0506@6"] },
+        { "name": "Composite declarations refuse a scalar after a block", "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      two String", "    streamId String"], "diagnostics": ["PLAY0503@6"] },
+        { "name": "Composite declarations refuse a block after a scalar", "source": ["eventsource A", "  stream S", "    streamId String", "    streamId", "      one String", "      two String"], "diagnostics": ["PLAY0503@4"] },
+        { "name": "Composite declarations refuse duplicate headers", "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      two String", "    streamId", "      three String", "      four String"], "diagnostics": ["PLAY0503@6"] },
+        { "name": "Composite declarations refuse empty headers", "source": ["eventsource A", "  stream S", "    streamId"], "diagnostics": ["PLAY0503@3"] },
+        { "name": "Composite declaration parts must be nested under the header", "source": ["eventsource A", "  stream S", "    streamId", "    one String"], "diagnostics": ["PLAY0503@3", "PLAY0503@4"] },
+        { "name": "Composite command routes require every part", "validate": true, "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId", "            one = \"a\""], "diagnostics": ["PLAY0504@10"] },
+        { "name": "Composite command routes refuse unknown parts", "validate": true, "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId", "            one = \"a\"", "            two = \"b\"", "            extra = \"c\""], "diagnostics": ["PLAY0504@14"] },
+        { "name": "Composite command routes refuse duplicate parts", "validate": true, "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId", "            one = \"a\"", "            two = \"b\"", "            two = \"c\""], "diagnostics": ["PLAY0504@14"] },
+        { "name": "Composite command routes refuse scalar mappings", "validate": true, "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId = \"joined\""], "diagnostics": ["PLAY0504@10"] },
+        { "name": "Scalar command routes refuse composite mappings", "validate": true, "source": ["eventsource A", "  stream S", "    streamId String", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId", "            one = \"a\"", "            two = \"b\""], "diagnostics": ["PLAY0504@8"] },
+        { "name": "Composite command parts require nominally compatible properties", "validate": true, "source": ["concept Label : String", "eventsource A", "  stream S", "    streamId", "      one Label", "      two String", "module M", "  feature F", "    slice StateChange S", "      command C", "        value String", "        stream A.S", "          streamId", "            one = value", "            two = \"b\""], "diagnostics": ["PLAY0504@14"] },
+        { "name": "Composite command parts refuse empty text", "validate": true, "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId", "            one = \"\"", "            two = \"b\""], "diagnostics": ["PLAY0504@12"] },
+        { "name": "Composite command parts accept whitespace and case-distinct names", "validate": true, "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      One String", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId", "            One = \" \"", "            one = \"a\""], "diagnostics": [] },
+        { "name": "Composite command blocks refuse malformed mappings", "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId", "            one = \"a\"", "            two = \"b\"", "            broken"], "diagnostics": ["PLAY0504@14"] },
+        { "name": "Composite command blocks refuse duplicate headers", "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId", "            one = \"a\"", "            two = \"b\"", "          streamId"], "diagnostics": ["PLAY0504@14"] },
+        { "name": "Composite specification routes require every part", "validate": true, "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId", "              one = \"a\""], "diagnostics": ["PLAY0549@12", "PLAY0550@12"] },
+        { "name": "Composite specification routes refuse unknown parts", "validate": true, "source": ["eventsource A", "  identifier String", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId", "              one = \"a\"", "              two = \"b\"", "              extra = \"c\""], "diagnostics": ["PLAY0549@17"] },
+        { "name": "Composite specification routes refuse duplicate parts", "validate": true, "source": ["eventsource A", "  identifier String", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId", "              one = \"a\"", "              two = \"b\"", "              two = \"c\""], "diagnostics": ["PLAY0549@17"] },
+        { "name": "Composite specification routes refuse scalar mappings", "validate": true, "source": ["eventsource A", "  identifier String", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId = \"joined\""], "diagnostics": ["PLAY0549@13"] },
+        { "name": "Scalar specification routes refuse composite mappings", "validate": true, "source": ["eventsource A", "  identifier String", "  stream S", "    streamId String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId", "              one = \"a\"", "              two = \"b\""], "diagnostics": ["PLAY0549@11"] },
+        { "name": "Composite specification parts refuse paths", "validate": true, "source": ["eventsource A", "  identifier String", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId", "              one = value", "              two = \"b\""], "diagnostics": ["PLAY0549@15"] },
+        { "name": "Composite specification parts refuse empty text", "validate": true, "source": ["eventsource A", "  identifier String", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId", "              one = \"\"", "              two = \"b\""], "diagnostics": ["PLAY0549@15"] },
+        { "name": "Composite specification parts refuse incompatible literals", "validate": true, "source": ["eventsource A", "  identifier String", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId", "              one = 42", "              two = \"b\""], "diagnostics": ["PLAY0549@15"] },
+        { "name": "Composite specification blocks refuse duplicate headers", "source": ["eventsource A", "  identifier String", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateView S", "      specification X", "        then E", "          stream A.S", "            streamId", "              one = \"a\"", "              two = \"b\"", "            streamId"], "diagnostics": ["PLAY0547@16"] },
+        { "name": "Composite specification blocks refuse malformed mappings", "source": ["eventsource A", "  identifier String", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateView S", "      specification X", "        then E", "          stream A.S", "            streamId", "              one = \"a\"", "              two = \"b\"", "              broken"], "diagnostics": ["PLAY0547@16"] },
+        { "name": "Examples refuse composite stream blocks without cascading", "source": ["example X : E", "  stream A.S", "    streamId", "      one = \"a\"", "      two = \"b\""], "diagnostics": ["PLAY0526@2"] },
+        { "name": "Examples refuse standalone composite stream id headers", "source": ["example X : E", "  streamId", "    one = \"a\"", "    two = \"b\""], "diagnostics": ["PLAY0526@2"] },
+        {
+            "name": "Guarded item paths reject missing nested scalar and collection fields",
+            "validate": true,
+            "source": ["type Attempt", "  status String", "  ids Uuid[]", "module Work", "  feature Items", "    slice StateView Details", "      readmodel Item", "        itemId Uuid", "        ids Uuid[]", "        status String", "        attempt Attempt optional", "        attempts Attempt[]", "      query ItemDetails => Item", "      command Retry", "        itemId Uuid", "        ids Uuid[]", "      screen Details", "        data Item via query ItemDetails", "        action \"Missing\"", "          when item.missing == null execute Retry", "        action \"Nested\"", "          when item.attempt.missing == null execute Retry", "        action \"Scalar\"", "          when item.status.missing == null execute Retry", "        action \"Composite collection\"", "          when item.attempts == null execute Retry", "        action \"Through collection\"", "          when item.attempts.status == null execute Retry", "        action \"Scalar collection\"", "          when item.ids == null execute Retry"],
+            "diagnostics": ["PLAY0345@20", "PLAY0345@22", "PLAY0345@24", "PLAY0345@26", "PLAY0345@28", "PLAY0345@30"],
+            "messages": ["Unknown or collection-valued subject field 'item.missing' - guarded actions require an item field path", "Unknown or collection-valued subject field 'item.attempt.missing' - guarded actions require an item field path", "Subject field 'item.status.missing' continues past scalar 'status'", "Unknown or collection-valued subject field 'item.attempts' - guarded actions require an item field path", "Unknown or collection-valued subject field 'item.attempts.status' - guarded actions require an item field path", "Unknown or collection-valued subject field 'item.ids' - guarded actions require an item field path"]
+        },
+        {
+            "name": "Guarded arguments validate item paths and command properties including fallback inputs",
+            "validate": true,
+            "source": ["type Attempt", "  status String", "  ids Uuid[]", "module Work", "  feature Items", "    slice StateView Details", "      readmodel Item", "        itemId Uuid", "        ids Uuid[]", "        status String", "        attempt Attempt optional", "        attempts Attempt[]", "      query ItemDetails => Item", "      command Retry", "        itemId Uuid", "        ids Uuid[]", "      screen Details", "        data Item via query ItemDetails", "        action \"Again\"", "          when item.status == null execute Retry", "            with ids from item.attempts.status", "            with itemId from item.missing", "            with itemId from item.ids", "            with ids from item.itemId", "            with missing from item.itemId", "          otherwise execute Retry", "            with ids from item.ids.value", "            with itemId from item.attempt.ids", "            with ids from item.itemId", "            with missing from item.itemId"],
+            "diagnostics": ["PLAY0345@21", "PLAY0345@22", "PLAY0348@23", "PLAY0348@24", "PLAY0348@25", "PLAY0345@27", "PLAY0348@28", "PLAY0348@29", "PLAY0348@30"],
+            "messages": ["Unknown or collection-valued subject field 'item.attempts.status' - guarded actions require an item field path", "Unknown or collection-valued subject field 'item.missing' - guarded actions require an item field path", "Command argument 'Retry.itemId' and subject field 'item.ids' must have matching collection cardinality", "Command argument 'Retry.ids' and subject field 'item.itemId' must have matching collection cardinality", "Command 'Retry' has no argument property 'missing'", "Unknown or collection-valued subject field 'item.ids.value' - guarded actions require an item field path", "Command argument 'Retry.itemId' and subject field 'item.attempt.ids' must have matching collection cardinality", "Command argument 'Retry.ids' and subject field 'item.itemId' must have matching collection cardinality", "Command 'Retry' has no argument property 'missing'"]
+        },
+        {
+            "name": "Guarded actions require one nearest data subject and skip unresolved field paths",
+            "validate": true,
+            "source": ["module Work", "  feature Items", "    slice StateView Details", "      readmodel Item", "        status String", "      query ItemDetails => Item", "      command Retry", "      screen NoSubject", "        action \"Again\"", "          when item.status == null execute Retry", "      screen TiedSubjects", "        data Item via query ItemDetails", "        data Item via query ItemDetails", "        action \"Again\"", "          when item.missing == null execute Retry"],
+            "diagnostics": ["PLAY0346@9", "PLAY0346@14"],
+            "messages": ["A guarded action requires exactly one nearest 'data' subject; no data or equally near data bindings leave 'item' unresolved", "A guarded action requires exactly one nearest 'data' subject; no data or equally near data bindings leave 'item' unresolved"]
+        },
+        {
+            "name": "Guarded actions inherit and replace nearest subjects and accept matching terminal collections",
+            "validate": true,
+            "source": ["type Attempt", "  status String", "  ids Uuid[]", "module Work", "  feature Items", "    slice StateView Details", "      readmodel Item", "        itemId Uuid", "        ids Uuid[]", "        status String", "        attempt Attempt optional", "      query ItemDetails => Item", "      command Retry", "        itemId Uuid", "        ids Uuid[]", "      screen Details", "        data Item[] via query ItemDetails", "        section inherited", "          action \"Nested\"", "            when item.attempt.status == \"failed\" execute Retry", "              with itemId from item.itemId", "        section nearest", "          data Item via query ItemDetails", "          action \"Qualified\"", "            when item.status == \"failed\" execute Work.Items.Details.Retry", "              with ids from item.ids", "            otherwise execute Retry", "              with ids from item.attempt.ids"],
+            "diagnostics": []
+        },
+        {
+            "name": "Guarded actions warn only for comparison-set inclusion not overlap",
+            "validate": true,
+            "source": ["module Work", "  feature Items", "    slice StateView Details", "      readmodel Item", "        status String", "        ready Bool", "      query Details => Item", "      command Retry", "      screen Details", "        data Item via query Details", "        action \"Same\"", "          when item.status == \"open\" execute Retry", "          when item.status == \"open\" execute Retry", "        action \"Stronger later\"", "          when item.status == \"open\" execute Retry", "          when item.status == \"open\" and item.ready == true execute Retry", "        action \"Reordered disjunction\"", "          when item.status == \"open\" or item.status == \"failed\" execute Retry", "          when item.status == \"failed\" or item.status == \"open\" execute Retry", "        action \"Weaker later\"", "          when item.status == \"open\" and item.ready == true execute Retry", "          when item.status == \"open\" execute Retry", "        action \"Partial overlap\"", "          when item.status == \"open\" execute Retry", "          when item.status == \"open\" or item.status == \"failed\" execute Retry", "        action \"Different path\"", "          when item.ready == true execute Retry", "          when item.status == \"open\" execute Retry", "        action \"Different literal\"", "          when item.status == \"open\" execute Retry", "          when item.status == \"failed\" execute Retry", "          otherwise execute Retry"],
+            "diagnostics": ["PLAY0347@13", "PLAY0347@16", "PLAY0347@19"],
+            "messages": ["Alternative executing 'Retry' is shadowed by earlier alternatives in this action", "Alternative executing 'Retry' is shadowed by earlier alternatives in this action", "Alternative executing 'Retry' is shadowed by earlier alternatives in this action"]
+        },
+        {
+            "name": "Several earlier guarded alternatives together prove coverage",
+            "validate": true,
+            "source": ["module Work", "  feature Items", "    slice StateView Details", "      readmodel Item", "        status String", "      query Details => Item", "      command Retry", "      screen Details", "        data Item via query Details", "        action \"Again\"", "          when item.status == \"open\" execute Retry", "          when item.status == \"failed\" execute Retry", "          when item.status == \"open\" or item.status == \"failed\" execute Retry"],
+            "diagnostics": ["PLAY0347@13"]
+        },
+        {
+            "name": "Guarded shadowing admits 64 disjuncts and skips larger expansions",
+            "validate": true,
+            "source": ["module Work", "  feature Items", "    slice StateView Details", "      readmodel Item", "        status String", "      query Details => Item", "      command Retry", "      screen Details", "        data Item via query Details", "        action \"Again\"", "          when item.status == \"a0\" or item.status == \"b0\" execute Retry", "          when (item.status == \"a0\" or item.status == \"b0\") and (item.status == \"a1\" or item.status == \"b1\") and (item.status == \"a2\" or item.status == \"b2\") and (item.status == \"a3\" or item.status == \"b3\") and (item.status == \"a4\" or item.status == \"b4\") and (item.status == \"a5\" or item.status == \"b5\") execute Retry", "          when (item.status == \"a0\" or item.status == \"b0\") and (item.status == \"a1\" or item.status == \"b1\") and (item.status == \"a2\" or item.status == \"b2\") and (item.status == \"a3\" or item.status == \"b3\") and (item.status == \"a4\" or item.status == \"b4\") and (item.status == \"a5\" or item.status == \"b5\") and (item.status == \"a6\" or item.status == \"b6\") execute Retry"],
+            "diagnostics": ["PLAY0347@12"]
+        },
+        {
+            "name": "Guarded actions keep imported nested field shapes unknown",
+            "validate": true,
+            "source": ["import External.Attempt", "module Work", "  feature Items", "    slice StateView S", "      readmodel Item", "        attempt Attempt", "      query Details => Item", "      command Retry", "        id Uuid", "      screen Details", "        data Item via query Details", "        action \"Again\"", "          when item.attempt.missing == null execute Retry", "            with id from item.attempt.id", "          otherwise execute Retry", "            with id from item.attempt.other"],
+            "diagnostics": []
+        },
+        {
+            "name": "Guarded exact numeric comparisons use canonical value equality and preserve literal types",
+            "validate": true,
+            "source": ["numbers exact", "module Work", "  feature Items", "    slice StateView S", "      readmodel Item", "        count Decimal", "      query Details => Item", "      command Retry", "      screen Details", "        data Item via query Details", "        action \"Again\"", "          when item.count == 1.00 execute Retry", "          when item.count == 1e0 execute Retry", "          when item.count == \"1\" execute Retry", "          when item.count == null execute Retry", "          when item.count == null execute Retry"],
+            "diagnostics": ["PLAY0347@13", "PLAY0347@16"]
+        },
         {
             "name": "An ungated command in a repeated module has no callerless authorization warning or crash",
             "validate": true,
@@ -149,7 +262,7 @@
         },
         {
             "name": "Guarded actions preserve nullable comparisons for downstream evaluation",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen Details", "        action \"Choose\"", "          when item.status != \"closed\" execute Act", "          when item.status == null execute Act", "          when item.missing == null execute Act"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen Details", "        action \"Choose\"", "          when item.status != \"closed\" execute Act", "          when item.status == null execute Act", "          when item.missing == null execute Act", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": []
         },
         {
@@ -197,117 +310,117 @@
         },
         {
             "name": "Guarded action bindings preserve UFEFF and trim U0085",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true execute C", "            with id from \ufeffitem.id", "            with next from \ufeffitem.id\u0085", "          otherwise execute D", "            with id from \ufeffitem.id", "            with next from \ufeffitem.id\u0085"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true execute C", "            with id from \ufeffitem.id", "            with next from \ufeffitem.id\u0085", "          otherwise execute D", "            with id from \ufeffitem.id", "            with next from \ufeffitem.id\u0085", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": []
         },
         {
             "name": "Guarded conditions reject prototype named operators",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready constructor true execute C", "          when item.ready toString true execute C"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready constructor true execute C", "          when item.ready toString true execute C", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0161@6", "PLAY0161@7", "PLAY0342@5"]
         },
         {
             "name": "Legacy guarded conditions reject unsupported punctuation",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.status == [\"open\"] execute C", "          when item.status == \"open\"; execute C", "          when item.status == {\"open\" execute C"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.status == [\"open\"] execute C", "          when item.status == \"open\"; execute C", "          when item.status == {\"open\" execute C", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0344@6", "PLAY0344@7", "PLAY0344@8", "PLAY0342@5"]
         },
         {
             "name": "Exact guarded conditions reject unsupported punctuation",
-            "source": ["numbers exact", "module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.status == [\"open\"] execute C", "          when item.status == \"open\"; execute C", "          when item.status == {\"open\" execute C"],
+            "source": ["numbers exact", "module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.status == [\"open\"] execute C", "          when item.status == \"open\"; execute C", "          when item.status == {\"open\" execute C", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0344@7", "PLAY0344@8", "PLAY0344@9", "PLAY0342@6"]
         },
         {
             "name": "Legacy guarded conditions accept U0085 and reject UFEFF separators",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.status\u0085==\u0085\"open\" execute C", "          when item.status\ufeff==\ufeff\"open\" execute C"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.status\u0085==\u0085\"open\" execute C", "          when item.status\ufeff==\ufeff\"open\" execute C", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0344@7"]
         },
         {
             "name": "Exact guarded conditions accept U0085 and reject UFEFF separators",
-            "source": ["numbers exact", "module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.status\u0085==\u0085\"open\" execute C", "          when item.status\ufeff==\ufeff\"open\" execute C", "          when item.count >= 1e+2\u0085and item.count < 2e+2 execute C"],
+            "source": ["numbers exact", "module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.status\u0085==\u0085\"open\" execute C", "          when item.status\ufeff==\ufeff\"open\" execute C", "          when item.count >= 1e+2\u0085and item.count < 2e+2 execute C", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0344@8"]
         },
         {
             "name": "Guarded conditions and bindings retain U2028 and U2029 on one source line",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.status == \"open\"\u2028and item.ready == true execute C", "            with note from \"first\u2028second\"", "          when item.status == \"failed\"\u2029or item.ready == false execute D", "            with note from \"first\u2029second\""],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.status == \"open\"\u2028and item.ready == true execute C", "            with note from \"first\u2028second\"", "          when item.status == \"failed\"\u2029or item.ready == false execute D", "            with note from \"first\u2029second\"", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": []
         },
         {
             "name": "Guarded action clauses accept U0085 structural separators",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when\u0085item.ready == true\u0085execute\u0085C", "            with\u0085id\u0085from\u0085item.id", "          otherwise\u0085execute\u0085D", "            with\u0085id\u0085from\u0085item.id"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when\u0085item.ready == true\u0085execute\u0085C", "            with\u0085id\u0085from\u0085item.id", "          otherwise\u0085execute\u0085D", "            with\u0085id\u0085from\u0085item.id", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": []
         },
         {
             "name": "Guarded action clauses reject UFEFF structural separators",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true execute C", "            with\ufeffid\ufefffrom\ufeffitem.id", "          when item.status == \"open\"\ufeffexecute C", "          otherwise\ufeffexecute D", "          otherwise execute D", "            with id\ufefffrom item.id", "            with id from\ufeffitem.id"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true execute C", "            with\ufeffid\ufefffrom\ufeffitem.id", "          when item.status == \"open\"\ufeffexecute C", "          otherwise\ufeffexecute D", "          otherwise execute D", "            with id\ufefffrom item.id", "            with id from\ufeffitem.id", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0319@7", "PLAY0341@8", "PLAY0341@9", "PLAY0319@11", "PLAY0319@12"]
         },
         {
             "name": "Guarded action alternative needs execute",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0341@6", "PLAY0342@5"]
         },
         {
             "name": "Guarded action needs an alternative",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          otherwise hidden"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          otherwise hidden", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0342@5"]
         },
         {
             "name": "Guarded action alternative precedes otherwise",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          otherwise hidden", "          when item.ready == true execute C"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          otherwise hidden", "          when item.ready == true execute C", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0343@7"]
         },
         {
             "name": "Guarded action has only one otherwise",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true execute C", "          otherwise hidden", "          otherwise execute D"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true execute C", "          otherwise hidden", "          otherwise execute D", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0343@8"]
         },
         {
             "name": "Guarded action operand roots and literal types are restricted",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when status == \"open\" execute C", "          when item.status == item.other execute C", "          when item.count > \"two\" execute C", "          when item.status starts with 2 execute C"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when status == \"open\" execute C", "          when item.status == item.other execute C", "          when item.count > \"two\" execute C", "          when item.status starts with 2 execute C", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0344@6", "PLAY0344@7", "PLAY0344@8", "PLAY0344@9"]
         },
         {
             "name": "Guarded action header already supplies label",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true execute C", "          label \"Again\""],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true execute C", "          label \"Again\"", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0106@7"]
         },
         {
             "name": "Guarded hidden fallback rejects arguments",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true execute C", "          otherwise hidden", "            with id from item.id"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true execute C", "          otherwise hidden", "            with id from item.id", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0341@8"]
         },
         {
             "name": "Guarded action arguments use with from",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true execute C", "            id = item.id"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true execute C", "            id = item.id", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0319@7"]
         },
         {
             "name": "Guarded action permits one navigation",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true execute C", "          navigate to A", "          navigate to B"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true execute C", "          navigate to A", "          navigate to B", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0341@8"]
         },
         {
             "name": "Guarded condition requires comparison operator",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready execute C"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready execute C", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0161@6", "PLAY0342@5"]
         },
         {
             "name": "Guarded condition requires comparison value",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == execute C"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == execute C", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0162@6", "PLAY0342@5"]
         },
         {
             "name": "Guarded condition requires operand after logical operator",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true and execute C"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true and execute C", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0159@6", "PLAY0342@5"]
         },
         {
             "name": "Guarded condition requires closing group",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when (item.ready == true execute C"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when (item.ready == true execute C", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0160@6"]
         },
         {
             "name": "Guarded condition rejects trailing tokens",
-            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true extra execute C"],
+            "source": ["module M", "  feature F", "    slice StateView S", "      screen V", "        action \"Choose\"", "          when item.ready == true extra execute C", "        data ExternalItem via query ExternalDetails"],
             "diagnostics": ["PLAY0158@6"]
         },
         {

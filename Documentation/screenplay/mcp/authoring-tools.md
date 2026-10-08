@@ -283,7 +283,21 @@ require explicit identity migrations:
 3. Update affected typed references and assigned descendant addresses in the same
    batch. No tool globally replaces names in descriptions, code or literals.
 
-Use explicit retirement addresses when removing assigned declarations. If edits
+Use `retiredSemanticAddresses` and `retiredEventAddresses` when removing assigned
+declarations. An event has both assignments: preserve it in both `semanticRenames`
+and `eventRenames`, or retire it in both retirement arrays. Include every assigned
+descendant, not just the parent whose address changed.
+
+An `InvalidIdentityMigration` refusal returns `identityMigrationIssues`. Each item
+contains the exact `address` (`kind` and typed `parts`, in the input schema's shape)
+and `arguments`, the arrays to correct. A stale rename names both endpoints and its
+rename array; an invalid retirement names its retirement array. An unexplained
+removed assignment lists the rename and retirement arrays as **alternatives**:
+choose a rename to preserve identity, or a retirement only for a removed declaration.
+The conflict message also names these addresses and arrays. No proposal is retained
+and no source is written on refusal.
+
+If edits
 overlap, replace their common containing subtree instead of sending conflicting
 parent/child operations. See [the authoring contract](../ast-authoring.md).
 

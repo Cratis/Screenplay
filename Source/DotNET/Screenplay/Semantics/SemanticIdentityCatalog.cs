@@ -527,18 +527,24 @@ public sealed class SemanticIdentityCatalog
         ValidateSemanticRenameEndpoints(semanticRenames);
         ValidateEventRenameEndpoints(eventRenames);
         ValidateOneToOne(documentRenames, _ => _.PreviousKey, _ => _.CurrentKey, StringComparer.Ordinal, "document rename");
-        ValidateOneToOne(semanticRenames, _ => _.PreviousAddress, _ => _.CurrentAddress, EqualityComparer<SemanticAddress>.Default, "semantic rename");
-        ValidateOneToOne(eventRenames, _ => _.PreviousAddress, _ => _.CurrentAddress, EqualityComparer<SemanticAddress>.Default, "event rename");
+        RejectMigrationDuplicates(semanticRenames.Select(_ => _.PreviousAddress), nameof(semanticRenames));
+        RejectMigrationDuplicates(semanticRenames.Select(_ => _.CurrentAddress), nameof(semanticRenames));
+        RejectMigrationDuplicates(eventRenames.Select(_ => _.PreviousAddress), nameof(eventRenames));
+        RejectMigrationDuplicates(eventRenames.Select(_ => _.CurrentAddress), nameof(eventRenames));
         RejectDuplicates(retiredDocumentKeys, StringComparer.Ordinal, "retired document key");
-        RejectDuplicates(retiredSemanticAddresses, EqualityComparer<SemanticAddress>.Default, "retired semantic address");
-        RejectDuplicates(retiredEventAddresses, EqualityComparer<SemanticAddress>.Default, "retired event address");
+        RejectMigrationDuplicates(retiredSemanticAddresses, nameof(retiredSemanticAddresses));
+        RejectMigrationDuplicates(retiredEventAddresses, nameof(retiredEventAddresses));
 
+        IdentityMigrationIssue.Reject(
+            "An identity rename is stale, guessed, or does not map one removed assignment to one new address.",
+            semanticRenames.Where(_ => _.PreviousAddress.Equals(_.CurrentAddress) || !previous.Semantics.Any(a => a.Address.Equals(_.PreviousAddress)) ||
+                previous.Semantics.Any(a => a.Address.Equals(_.CurrentAddress)) || !currentSemantics.Contains(_.CurrentAddress) || currentSemantics.Contains(_.PreviousAddress))
+                .SelectMany(_ => RenameIssues(nameof(semanticRenames), _.PreviousAddress, _.CurrentAddress))
+                .Concat(eventRenames.Where(_ => _.PreviousAddress.Equals(_.CurrentAddress) || !previous.EventContracts.Any(a => a.Address.Equals(_.PreviousAddress)) ||
+                    previous.EventContracts.Any(a => a.Address.Equals(_.CurrentAddress)) || !currentEvents.Contains(_.CurrentAddress) || currentEvents.Contains(_.PreviousAddress))
+                    .SelectMany(_ => RenameIssues(nameof(eventRenames), _.PreviousAddress, _.CurrentAddress))));
         if (documentRenames.Any(_ => _.PreviousKey == _.CurrentKey || !previous.Documents.Any(a => a.Key == _.PreviousKey) ||
-                                    previous.Documents.Any(a => a.Key == _.CurrentKey) || !currentKeys.Contains(_.CurrentKey) || currentKeys.Contains(_.PreviousKey)) ||
-            semanticRenames.Any(_ => _.PreviousAddress.Equals(_.CurrentAddress) || !previous.Semantics.Any(a => a.Address.Equals(_.PreviousAddress)) ||
-                                     previous.Semantics.Any(a => a.Address.Equals(_.CurrentAddress)) || !currentSemantics.Contains(_.CurrentAddress) || currentSemantics.Contains(_.PreviousAddress)) ||
-            eventRenames.Any(_ => _.PreviousAddress.Equals(_.CurrentAddress) || !previous.EventContracts.Any(a => a.Address.Equals(_.PreviousAddress)) ||
-                                  previous.EventContracts.Any(a => a.Address.Equals(_.CurrentAddress)) || !currentEvents.Contains(_.CurrentAddress) || currentEvents.Contains(_.PreviousAddress)))
+                                    previous.Documents.Any(a => a.Key == _.CurrentKey) || !currentKeys.Contains(_.CurrentKey) || currentKeys.Contains(_.PreviousKey)))
         {
             throw new InvalidSemanticContract("An identity rename is stale, guessed, or does not map one removed assignment to one new address.");
         }
@@ -546,9 +552,13 @@ public sealed class SemanticIdentityCatalog
         var renamedDocumentSources = documentRenames.Select(_ => _.PreviousKey).ToHashSet(StringComparer.Ordinal);
         var renamedSemanticSources = semanticRenames.Select(_ => _.PreviousAddress).ToHashSet();
         var renamedEventSources = eventRenames.Select(_ => _.PreviousAddress).ToHashSet();
-        if (retiredDocumentKeys.Any(key => !previous.Documents.Any(_ => _.Key == key) || currentKeys.Contains(key) || renamedDocumentSources.Contains(key)) ||
-            retiredSemanticAddresses.Any(address => !previous.Semantics.Any(_ => _.Address.Equals(address)) || currentSemantics.Contains(address) || renamedSemanticSources.Contains(address)) ||
-            retiredEventAddresses.Any(address => !previous.EventContracts.Any(_ => _.Address.Equals(address)) || currentEvents.Contains(address) || renamedEventSources.Contains(address)))
+        IdentityMigrationIssue.Reject(
+            "An identity retirement is stale, still current, duplicated by a rename, or was never assigned.",
+            retiredSemanticAddresses.Where(address => !previous.Semantics.Any(_ => _.Address.Equals(address)) || currentSemantics.Contains(address) || renamedSemanticSources.Contains(address))
+                .Select(address => new IdentityMigrationIssue([nameof(retiredSemanticAddresses)], address))
+                .Concat(retiredEventAddresses.Where(address => !previous.EventContracts.Any(_ => _.Address.Equals(address)) || currentEvents.Contains(address) || renamedEventSources.Contains(address))
+                    .Select(address => new IdentityMigrationIssue([nameof(retiredEventAddresses)], address))));
+        if (retiredDocumentKeys.Any(key => !previous.Documents.Any(_ => _.Key == key) || currentKeys.Contains(key) || renamedDocumentSources.Contains(key)))
         {
             throw new InvalidSemanticContract("An identity retirement is stale, still current, duplicated by a rename, or was never assigned.");
         }
@@ -556,9 +566,13 @@ public sealed class SemanticIdentityCatalog
         var retiredDocuments = retiredDocumentKeys.ToHashSet(StringComparer.Ordinal);
         var retiredSemantics = retiredSemanticAddresses.ToHashSet();
         var retiredEvents = retiredEventAddresses.ToHashSet();
-        if (previous.Documents.Any(_ => !currentKeys.Contains(_.Key) && !renamedDocumentSources.Contains(_.Key) && !retiredDocuments.Contains(_.Key)) ||
-            previous.Semantics.Any(_ => !currentSemantics.Contains(_.Address) && !renamedSemanticSources.Contains(_.Address) && !retiredSemantics.Contains(_.Address)) ||
-            previous.EventContracts.Any(_ => !currentEvents.Contains(_.Address) && !renamedEventSources.Contains(_.Address) && !retiredEvents.Contains(_.Address)))
+        IdentityMigrationIssue.Reject(
+            "A base catalog assignment is stale and has no explicit one-to-one rename or retirement. Choose a rename to preserve identity or a retirement for a removed declaration.",
+            previous.Semantics.Where(_ => !currentSemantics.Contains(_.Address) && !renamedSemanticSources.Contains(_.Address) && !retiredSemantics.Contains(_.Address))
+                .Select(_ => new IdentityMigrationIssue([nameof(semanticRenames), nameof(retiredSemanticAddresses)], _.Address))
+                .Concat(previous.EventContracts.Where(_ => !currentEvents.Contains(_.Address) && !renamedEventSources.Contains(_.Address) && !retiredEvents.Contains(_.Address))
+                    .Select(_ => new IdentityMigrationIssue([nameof(eventRenames), nameof(retiredEventAddresses)], _.Address))));
+        if (previous.Documents.Any(_ => !currentKeys.Contains(_.Key) && !renamedDocumentSources.Contains(_.Key) && !retiredDocuments.Contains(_.Key)))
         {
             throw new InvalidSemanticContract("A base catalog assignment is stale and has no explicit one-to-one rename or retirement.");
         }
@@ -568,27 +582,44 @@ public sealed class SemanticIdentityCatalog
     {
         if (renames.Any(_ => _ is null || _.PreviousAddress is null || _.CurrentAddress is null))
         {
-            throw new InvalidSemanticContract("A semantic identity rename and both endpoints must be non-null.");
+            IdentityMigrationIssue.Reject(
+                "A semantic identity rename and both endpoints in semanticRenames must be non-null.",
+                renames.Where(_ => _ is not null && (_.PreviousAddress is null || _.CurrentAddress is null))
+                    .SelectMany(_ => RenameIssues("semanticRenames", _.PreviousAddress, _.CurrentAddress)));
+            throw new InvalidSemanticContract("A semantic identity rename and both endpoints in semanticRenames must be non-null.");
         }
 
-        if (renames.Any(_ => _.PreviousAddress.Kind != _.CurrentAddress.Kind))
-        {
-            throw new InvalidSemanticContract("A semantic identity rename must preserve the semantic kind.");
-        }
+        IdentityMigrationIssue.Reject(
+            "A semantic identity rename must preserve the semantic kind.",
+            renames.Where(_ => _.PreviousAddress.Kind != _.CurrentAddress.Kind)
+                .SelectMany(_ => RenameIssues("semanticRenames", _.PreviousAddress, _.CurrentAddress)));
     }
 
     static void ValidateEventRenameEndpoints(ImmutableArray<EventContractIdentityRename> renames)
     {
         if (renames.Any(_ => _ is null || _.PreviousAddress is null || _.CurrentAddress is null))
         {
-            throw new InvalidSemanticContract("An event contract identity rename and both endpoints must be non-null.");
+            IdentityMigrationIssue.Reject(
+                "An event contract identity rename and both endpoints in eventRenames must be non-null.",
+                renames.Where(_ => _ is not null && (_.PreviousAddress is null || _.CurrentAddress is null))
+                    .SelectMany(_ => RenameIssues("eventRenames", _.PreviousAddress, _.CurrentAddress)));
+            throw new InvalidSemanticContract("An event contract identity rename and both endpoints in eventRenames must be non-null.");
         }
 
-        if (renames.Any(_ => _.PreviousAddress.Kind != SemanticKind.EventContract || _.CurrentAddress.Kind != SemanticKind.EventContract))
-        {
-            throw new InvalidSemanticContract("An event contract identity rename requires event contract endpoints.");
-        }
+        IdentityMigrationIssue.Reject(
+            "An event contract identity rename requires event contract endpoints.",
+            renames.Where(_ => _.PreviousAddress.Kind != SemanticKind.EventContract || _.CurrentAddress.Kind != SemanticKind.EventContract)
+                .SelectMany(_ => RenameIssues("eventRenames", _.PreviousAddress, _.CurrentAddress)));
     }
+
+    static IEnumerable<IdentityMigrationIssue> RenameIssues(string argument, SemanticAddress? previous, SemanticAddress? current) =>
+        new[] { previous, current }.OfType<SemanticAddress>().Select(address => new IdentityMigrationIssue([argument], address));
+
+    static void RejectMigrationDuplicates(IEnumerable<SemanticAddress> addresses, string argument) =>
+        IdentityMigrationIssue.Reject(
+            $"Duplicate addresses in {argument} are ambiguous.",
+            addresses.GroupBy(address => address).Where(group => group.Count() > 1)
+                .Select(group => new IdentityMigrationIssue([argument], group.Key)));
 
     static void ValidateOneToOne<T, TKey>(
         ImmutableArray<T> renames,

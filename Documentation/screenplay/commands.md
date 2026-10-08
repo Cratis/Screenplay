@@ -90,7 +90,7 @@ The unescaped directives `namespace`, `sequence`, `correlation`, `causation`, `c
 
 ## Command stream routing (syntax-only)
 
-Use `stream Source.Stream` to select a declared [event source and stream](event-sources.md). Map a keyed stream with nested `streamId = <value>`. This route never supplies the event's `for` destination and does not change plain-production allocation or inline defaults. Handler commands may author routing without statically declared events; `handler` with `produces` is still prohibited.
+Use `stream Source.Stream` to select a declared [event source and stream](event-sources.md). Map a scalar keyed stream with nested `streamId = <value>`. For a composite stream, nest a bare `streamId` header and one `<part> = <source>` mapping for every declared part, exactly once. Mapping order is free; the printer retains it. Each source is a nominally compatible nonoptional command path or scalar literal; empty text parts are refused. Scalar and composite mapping forms cannot substitute for one another. This route never supplies the event's `for` destination and does not change plain-production allocation or inline defaults. Handler commands may author routing without statically declared events; `handler` with `produces` is still prohibited.
 
 Both viable stream/property interpretations remain blocking `PLAY0505` candidates, never a guessed route. Source/stream declarations and routed commands are not admitted by any supported executable model (ESM) version yet (`PLAY0268`). Per-production overrides, reaction/reducer filters and new concurrency flags are not supported. The board shows only the authored route and readable key expression in existing command details.
 

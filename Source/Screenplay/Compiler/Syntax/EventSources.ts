@@ -4,5 +4,6 @@
 export * from './CommandStreamSyntax';
 export * from './EventSourceSyntax';
 export * from './EventStreamSyntax';
+export * from './EventStreamIdPartSyntax';
 export * from './EventSourceResolution';
 export * from './EventSourceResolutionKind';

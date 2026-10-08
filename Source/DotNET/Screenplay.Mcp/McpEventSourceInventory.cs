@@ -44,6 +44,7 @@ sealed class McpEventSourceInventory
         handle = McpAstHandles.Describe(entry.Handle), entry.Location, ownership = Ownership(entry), confidenceReasons = Confidence(entry).Reasons,
         placementResolved = View.HasResolvedPlacement(entry), inventoryComplete = View.IsComplete, readOnly = true,
         identifier = (entry.Node as EventSourceSyntax)?.Identifier, streamId = (entry.Node as EventStreamSyntax)?.StreamId,
+        streamIdParts = (entry.Node as EventStreamSyntax)?.StreamIdParts.Select(part => new { part.Name, part.Type }),
         id = Inline(Pin(entry)),
         description = Inline(Description(entry)),
         metadata = Metadata(entry),

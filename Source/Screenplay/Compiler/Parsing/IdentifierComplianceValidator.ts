@@ -5,6 +5,8 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
 import { PropertySyntax, TypeRefSyntax } from '../Syntax/Declarations';
+import { EventSourceCatalog } from '../Syntax/EventSourceCatalog';
+import { EventSourceResolutionKind } from '../Syntax/EventSources';
 import { ApplicationSyntax } from '../Syntax/Structure';
 import { dependencySourcesOf } from '../Syntax/DependencySources';
 import { ParserContext } from './ParserContext';
@@ -22,10 +24,10 @@ export function validateIdentifierCompliance(application: ApplicationSyntax, con
         shapes.push(declared.data);
         declaredTriggers.set(declared.name, shapes);
     }
-    const validate = (type: TypeRefSyntax, location: SourceLocation): void => {
+    const validate = (type: TypeRefSyntax, location: SourceLocation, position = 'an event source identifier'): void => {
         if (personal.has(type.name) || sensitive.has(type.name)) {
             const attribute = personal.has(type.name) ? '@pii' : '@sensitive';
-            context.error(DiagnosticCodes.PiiNotSupportedOnIdentifier, `Concept '${type.name}' is ${attribute} and cannot be an event source identifier - use a surrogate Uuid identifier and keep the ${attribute} value as a property`, location);
+            context.error(DiagnosticCodes.PiiNotSupportedOnIdentifier, `Concept '${type.name}' is ${attribute} and cannot be ${position} - use a surrogate Uuid identifier and keep the ${attribute} value as a property`, location);
         }
     };
     const property = (properties: readonly PropertySyntax[], path: string): PropertySyntax | null => {
@@ -38,10 +40,31 @@ export function validateIdentifierCompliance(application: ApplicationSyntax, con
     };
     for (const source of application.eventSources ?? []) {
         if (source.identifier != null) validate(source.identifier, source.identifier.location);
+        for (const stream of source.streams) {
+            if (stream.streamId !== null) validate(stream.streamId, stream.streamId.location, 'a stream id');
+            for (const part of stream.streamIdParts) validate(part.type, part.type.location, `a stream id part '${part.name}'`);
+        }
     }
+    const catalog = new EventSourceCatalog(application);
     for (const { slice } of resolver.slices) {
         for (const command of slice.commands) {
             for (const entry of command.properties.filter(entry => entry.isIdentifier)) validate(entry.type, entry.location);
+            for (const route of [...(command.stream ? [command.stream] : []), ...command.streamCandidates ?? []].filter(route => route.propertyCandidate === null)) {
+                const resolution = catalog.resolve(route.eventSource, route.stream);
+                const stream = resolution.kind === EventSourceResolutionKind.Unique ? resolution.streams[0] : undefined;
+                const mappings = [
+                    ...(route.streamId === null ? [] : [{ mapping: route.streamId, target: stream?.streamId }]),
+                    ...route.streamIdParts.map(mapping => ({ mapping, target: stream?.streamIdParts.find(part => part.name === mapping.property)?.type })),
+                ];
+                for (const { mapping, target } of mappings) {
+                    if (mapping.source.kind !== 'PathExpressionSyntax') continue;
+                    const entry = property(command.properties, mapping.source.path);
+                    if (entry === null) continue;
+                    // The same protected concept has already been reported at its resolved declaration.
+                    if (entry.type.name === target?.name && (personal.has(entry.type.name) || sensitive.has(entry.type.name))) continue;
+                    validate(entry.type, mapping.source.location, 'a stream id route mapping');
+                }
+            }
             for (const production of command.produces.filter(production => resolver.isEventProduction(production, slice))) {
                 if (production.for?.kind !== 'PathExpressionSyntax') continue;
                 const entry = property(command.properties, production.for.path);

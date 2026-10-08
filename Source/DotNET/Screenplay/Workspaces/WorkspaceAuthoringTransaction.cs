@@ -67,7 +67,7 @@ sealed class WorkspaceAuthoringTransaction(
         }
         catch (InvalidSemanticContract exception)
         {
-            return Failure(WorkspaceConflictKind.InvalidIdentityMigration, exception.Message);
+            return Failure(WorkspaceConflictKind.InvalidIdentityMigration, exception.Message, exception.IdentityMigrationIssues);
         }
         catch (Exception exception) when (exception is InvalidWorkspaceAuthoring or InvalidScreenplayWorkspace or InvalidWorkspaceDocument or InvalidPortablePlayPath or JsonException or ArgumentException or InvalidOperationException ||
             exception.GetType().Namespace == "Cratis.Screenplay.Syntax.Serialization")
@@ -347,9 +347,9 @@ sealed class WorkspaceAuthoringTransaction(
         }
     }
 
-    WorkspaceAuthoringResult Failure(WorkspaceConflictKind kind, string message) => new()
+    WorkspaceAuthoringResult Failure(WorkspaceConflictKind kind, string message, ImmutableArray<IdentityMigrationIssue> identityMigrationIssues = default) => new()
     {
-        Conflicts = [new WorkspaceConflict { Kind = kind, Message = message }],
+        Conflicts = [new WorkspaceConflict { Kind = kind, Message = message, IdentityMigrationIssues = identityMigrationIssues.IsDefault ? [] : identityMigrationIssues }],
         AuthoringDiagnostics = _diagnostics.ToImmutable()
     };
 }

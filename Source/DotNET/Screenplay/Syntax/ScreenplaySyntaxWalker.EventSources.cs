@@ -20,6 +20,15 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         if (syntax.StreamId is not null) VisitTypeRef(syntax.StreamId);
+        foreach (var part in syntax.StreamIdParts) VisitEventStreamIdPart(part);
+    }
+
+    /// <summary>Visits a composite stream id part and its type.</summary>
+    /// <param name="syntax">The part declaration.</param>
+    public virtual void VisitEventStreamIdPart(EventStreamIdPartSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitTypeRef(syntax.Type);
     }
 
     /// <summary>Visits an authored command route and its mapping or preserved property candidate.</summary>
@@ -28,6 +37,7 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         if (syntax.StreamId is not null) VisitPropertyMapping(syntax.StreamId);
+        foreach (var part in syntax.StreamIdParts) VisitPropertyMapping(part);
         if (syntax.PropertyCandidate is not null) VisitProperty(syntax.PropertyCandidate);
     }
 }

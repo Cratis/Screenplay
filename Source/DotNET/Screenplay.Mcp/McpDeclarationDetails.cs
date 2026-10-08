@@ -27,6 +27,7 @@ static class McpDeclarationDetails
                 uses = (declaration.Syntax as OperationSyntax)?.Uses,
                 identifier = (declaration.Syntax as EventSourceSyntax)?.Identifier,
                 streamId = (declaration.Syntax as EventStreamSyntax)?.StreamId,
+                streamIdParts = (declaration.Syntax as EventStreamSyntax)?.StreamIdParts.Select(part => new { part.Name, part.Type }),
                 renameOnlyId = declaration.Syntax switch { EventSourceSyntax source => source.Id, EventStreamSyntax stream => stream.Id, _ => null },
                 authoredRoute = (declaration.Syntax as CommandSyntax)?.Stream,
                 ambiguousStreamCandidates = (declaration.Syntax as CommandSyntax)?.StreamCandidates,

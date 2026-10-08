@@ -249,7 +249,7 @@ event references and dependencies carry the `whenAppendedEvent` role, not
 `thenEvent`. Fixture roles are `givenEvent`, `whenAppendedEvent`, `thenEvent`,
 `whenCommand`, `givenReadModel`, `thenReadModel`, `queryArguments`, and
 `queryResult`; each role also has a `…Destination` form for explicit `for`
-destinations. Event roles additionally expose `…Stream` (`property: "stream"`, qualified source/stream text), `…StreamId` (`property: "streamId"`, literal value), and `…NoStream` (`property: "no stream"`, `value: true`) rows when authored. They share the occurrence ordinal with its payload and destination; a payload property named `stream` or `streamId` remains a separate ordinary event-role row. Missing routing lines produce no route rows, not default or inferred routing. `no stream` is legal only on `then` events. Route rows describe syntax only: specification routes remain refused by executable-model binding with `PLAY0268` (#457).
+destinations. Event roles additionally expose `…Stream` (`property: "stream"`, qualified source/stream text), `…StreamId` (`property: "streamId"`, literal value), and `…NoStream` (`property: "no stream"`, `value: true`) rows when authored. They share the occurrence ordinal with its payload and destination; a payload property named `stream` or `streamId` remains a separate ordinary event-role row. Composite routes expose one `…StreamIdPart` row per authored mapping, with `property` equal to the part name and its literal `value`, in authored order. Stream inventory and declaration summaries expose `streamIdParts` as ordered name/type declarations. Parts have AST handles but no declaration or semantic identity; typed proposals edit the three `streamIdParts` collections through `syntax-schema` and `propose-ast`. Missing routing lines produce no route rows, not default or inferred routing. `no stream` is legal only on `then` events. Route rows describe syntax only: specification routes remain refused by executable-model binding with `PLAY0268` (#457).
 
 ## Dependency graph
 
@@ -650,6 +650,16 @@ Two independent choices control AST authoring:
 - **Reference policy:** `Safe` is the default. It rejects new unresolved/ambiguous
   model references and unintended capture. `Draft` reports deliberate unresolved
   debt but does not waive structure, identities or existing-binding protection.
+
+Identity migration refusals use conflict kind `InvalidIdentityMigration` and return
+`identityMigrationIssues` on rejected `propose`, `propose-ast` and `propose-source`
+results. Each item has `arguments` (input array names) and `address` with only `kind`
+and typed `parts`, matching the MCP address schema. Stale renames identify both
+endpoints in `semanticRenames` or `eventRenames`; invalid retirements identify
+`retiredSemanticAddresses` or `retiredEventAddresses`. Missing continuity lists
+rename and retirement as alternatives, not instructions to retire an identity.
+Events have both semantic and event-contract assignments, so both must be addressed,
+as must all assigned descendants. The conflict message contains the same details.
 
 Source acceptance is not executable readiness or proof of business correctness.
 Explicit valid reference edits differ from an untouched reference changing meaning.

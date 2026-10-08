@@ -145,7 +145,7 @@ public class when_holding_the_typescript_compiler_to_it : Specification
                         "SystemSyntax" or "OperationSyntax" or "OperationPhaseSyntax" or "SpecificationOperationFailureSyntax" or "SpecificationOperationSyntax" or "SpecificationCompensatedSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "PropertySyntax" => ["isGenerated"],
                         "CommandSyntax" => ["response", "handler", "stream", "streamCandidates"],
-                        "EventSourceSyntax" or "EventStreamSyntax" or "CommandStreamSyntax" or "SpecificationStreamSyntax" or "SpecificationNoStreamSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
+                        "EventSourceSyntax" or "EventStreamSyntax" or "EventStreamIdPartSyntax" or "CommandStreamSyntax" or "SpecificationStreamSyntax" or "SpecificationNoStreamSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
 
                         // Legacy only models rule payloads on wire when the rule opts into an implementation wrapper.
                         "ValidationRuleSyntax" when !_exact && actual.GetProperty("implementation").ValueKind == JsonValueKind.Null => ["kind", "message", "property", "rule", "severity", "value"],

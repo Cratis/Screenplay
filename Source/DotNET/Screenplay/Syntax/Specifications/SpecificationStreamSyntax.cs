@@ -20,6 +20,11 @@ public record SpecificationStreamSyntax(string EventSource, string Stream, Sourc
     public PropertyMappingSyntax? StreamId { get; init; }
 
     /// <summary>
+    /// Gets the named composite part mappings in authored order.
+    /// </summary>
+    public IEnumerable<PropertyMappingSyntax> StreamIdParts { get; init; } = [];
+
+    /// <summary>
     /// Gets the source and stream reference location.
     /// </summary>
     public SourceLocation ReferenceLocation { get; init; } = Location;

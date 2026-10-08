@@ -25,6 +25,16 @@ public class when_indexing_authored_source_streams : Specification
     [Fact] void should_disclose_a_specification_using_the_routed_command_as_unavailable() => _index.Readiness.ExecutionReadiness(_index.Find("Banking.Deposits.Deposit.Routed", "Specification")[0].Syntax).ShouldContain("event sources, streams and routes (#302)");
 
     [Fact]
+    void should_index_part_types_under_the_stream_owner_without_part_declarations()
+    {
+        var snapshot = new McpSnapshot([given.synthetic_model.Document("composite", "concept Period : String\neventsource A\n  stream S\n    streamId\n      period Period\n      key Uuid")]);
+        snapshot.Index.References.Any(reference => reference.Name == "Period" && reference.Owner?.Kind == "EventStream").ShouldBeTrue();
+        snapshot.Index.Find("period", "EventStreamIdPart").ShouldBeEmpty();
+        var part = snapshot.Compilation.Value!.EventSources.Single().Streams.Single().StreamIdParts.First();
+        snapshot.Index.Readiness.SyntaxOnly(part).ShouldBeTrue();
+    }
+
+    [Fact]
     void should_keep_duplicate_parent_ownership_ambiguous_even_with_one_child()
     {
         var duplicate = new McpSnapshot([given.synthetic_model.Document("source", Source), given.synthetic_model.Document("duplicate", "eventsource Account\n  stream Other\n"), given.synthetic_model.Document("command", Command)]).Index;

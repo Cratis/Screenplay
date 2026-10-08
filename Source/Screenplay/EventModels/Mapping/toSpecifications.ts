@@ -151,7 +151,7 @@ function routeDetails(event: SpecificationEventSyntax): string {
     const route = event.stream;
     return [event.for ? `for ${expressionText(event.for)}` : '',
         route ? `stream ${route.eventSource}.${route.stream}` : 'no stream',
-        route?.streamId ? `streamId = ${expressionText(route.streamId.source)}` : ''].filter(Boolean).join('; ');
+        route?.streamId ? `streamId = ${expressionText(route.streamId.source)}` : route?.streamIdParts.length ? `streamId ${mappingText(route.streamIdParts)}` : ''].filter(Boolean).join('; ');
 }
 
 function callerOf(caller: SpecificationCallerSyntax): SpecificationCallerDocument {

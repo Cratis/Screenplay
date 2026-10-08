@@ -17,6 +17,15 @@ eventsource Account
   stream Onboarding
   stream Partitioned
     streamId Partition
+  stream PeriodLedger
+    streamId
+      accountId AccountId
+      period Month
+  stream ThreeParts
+    streamId
+      streamId String
+      stream Partition
+      owner AccountId
 
 eventsource Ledger
   stream Transactions
@@ -33,6 +42,31 @@ module Banking
           streamId = month
         produces event Deposited
           amount Decimal = amount
+      command Book
+        accountId AccountId identifier
+        month Month
+        stream Account.PeriodLedger
+          streamId
+            period = month
+            accountId = accountId
+        produces event Booked
+          for accountId
+          streamId String = month
+        concurrency
+          eventSource
+          sourceType Account
+          streamType PeriodLedger
+          streamId Primary
+      command Three
+        accountId AccountId identifier
+        stream Account.ThreeParts
+          streamId
+            owner = accountId
+            stream = 42
+            streamId = "literal"
+      command Opaque
+        stream Account.Transactions
+          streamId = "p-1:2026-10"
       command Import
         month Month
         stream Account.Transactions
@@ -49,3 +83,4 @@ module Banking
         streamId String
         from String
         @stream Account.Transactions optional
+        @stream Account.ThreeParts optional

@@ -25,13 +25,13 @@ const surfacedCodes = new Set<string>([
     DiagnosticCodes.UnknownRedeliveryReaction,
     DiagnosticCodes.UnmatchedRedeliveredOccurrence,
     DiagnosticCodes.InvalidNoEventsExpectation,
-    // Not produced by compileApplication: retain the C# catalogue explicitly rather than implying
-    // TypeScript runs scoped reference, semantic binding or opt-in completeness checks.
-    // See Documentation/screenplay/editor-diagnostics.md.
     DiagnosticCodes.UnknownActionSubjectField,
     DiagnosticCodes.UnresolvedActionSubject,
     DiagnosticCodes.UnreachableActionAlternative,
     DiagnosticCodes.UnknownActionArgumentProperty,
+    // Not produced by compileApplication: retain the C# catalogue explicitly rather than implying
+    // TypeScript runs semantic binding or opt-in completeness checks.
+    // See Documentation/screenplay/editor-diagnostics.md.
     DiagnosticCodes.IndeterminateNegatedClaimTarget,
     DiagnosticCodes.ConflictingScreenDataBinding,
     DiagnosticCodes.ScreenDataQueryMismatch,

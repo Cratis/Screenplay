@@ -69,7 +69,7 @@ function routeDetails(command: CommandSyntax): string {
     const route = command.stream;
     if (!route) return '';
     return escape([`Authored stream: ${route.eventSource}.${route.stream}`,
-        route.streamId ? `Stream id: ${expressionText(route.streamId.source)}` : '',
+        route.streamId ? `Stream id: ${expressionText(route.streamId.source)}` : route.streamIdParts.length > 0 ? `Stream id: ${route.streamIdParts.map(part => `${part.property} = ${expressionText(part.source)}`).join(', ')}` : '',
         'Syntax-only: not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302). This classification does not supply an identity destination.'
     ].filter(Boolean).join('\n'));
 }

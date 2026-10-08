@@ -99,6 +99,10 @@ static class McpFixtureQueries
             {
                 yield return new(occurrence.Specification, $"{occurrence.Role}StreamId", occurrence.Ordinal, occurrence.Reference.Name, candidates, "streamId", null, streamId.Source.GetType().Name, Value(streamId.Source), streamId.Location, "authored", null, null);
             }
+            foreach (var part in stream.StreamIdParts)
+            {
+                yield return new(occurrence.Specification, $"{occurrence.Role}StreamIdPart", occurrence.Ordinal, occurrence.Reference.Name, candidates, part.Property, null, part.Source.GetType().Name, Value(part.Source), part.Location, "authored", null, null);
+            }
         }
 
         if (occurrence.NoStream is { } noStream)

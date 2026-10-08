@@ -93,6 +93,7 @@ The compiler reads what an event model is made of:
 - systems, operations and their phase/specification intent (syntax-only)
 - generated command values, response contracts, fixtures and return expectations (syntax shared with C# ESM v7 admission)
 - modules, features (nested too) and slices
+- guarded screen actions with nearest-subject field paths, command input properties and collection cardinality, and provable alternative shadowing (PLAY0345–PLAY0348)
 - standalone and inline events with their tags, descriptions, documentation, and rename pins
 - commands with their properties, declarative `validate` rules, and productions (typed mappings, destinations and `produces when` conditions included)
 - queries with their parameters
