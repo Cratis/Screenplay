@@ -17,7 +17,7 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     void Because()
     {
         _result = _compiler.Compile(given.Samples.Invoicing);
-        _feature = _result.Value!.Modules.Single().Features.Single();
+        _feature = _result.Value!.Modules.Single().Features.Single(_ => _.Name == "InvoiceManagement");
     }
 
     [Fact] void should_succeed() => _result.Success.ShouldBeTrue();
@@ -55,7 +55,8 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
     [Fact] void should_have_the_application_layout_slots() => _result.Value!.Layouts!.Single().Slots.Select(_ => _.Name).ShouldContainOnly("topbar", "navigation", "content", "footer");
     [Fact] void should_have_the_navigation_contribution_point_on_the_layout() => _result.Value!.Layouts!.Single().Slots.Single(_ => _.Name == "navigation").Contributes.ShouldEqual("Navigation");
     [Fact] void should_have_the_profile_selecting_the_layout() => _result.Value!.UiProfiles!.Single().Layout.ShouldEqual("AppShell");
-    [Fact] void should_have_all_slices() => _feature.Slices.Count().ShouldEqual(17);
+    [Fact] void should_have_all_slices() => _result.Value!.Modules.Single().Features.SelectMany(_ => _.Slices).Count().ShouldEqual(17);
+    [Fact] void should_declare_the_payment_dependency() => _result.Value!.Modules.Single().Features.Single(_ => _.Name == "Payments").DependsOn.Single().Target.ShouldEqual("InvoiceManagement");
     [Fact] void should_have_the_fully_auto_mapped_projection() => Slice("CancelledInvoices").Projections.Single().Blocks.OfType<FromSyntax>().Single().Mappings.ShouldBeEmpty();
     [Fact] void should_have_the_nested_feature() => _feature.Features.Single().Name.ShouldEqual("Adjustments");
     [Fact] void should_have_the_nested_feature_slices() => _feature.Features.Single().Slices.Select(_ => _.Name).ShouldContainOnly("ApplyDiscount", "WriteOffInvoice");
@@ -182,5 +183,5 @@ public class when_compiling_the_invoicing_sample : given.a_compiler
 
     SpecificationSyntax StatusSpecification => Slice("ChangeInvoiceStatus").Specifications.Single();
 
-    SliceSyntax Slice(string name) => _feature.Slices.Single(_ => _.Name == name);
+    SliceSyntax Slice(string name) => _result.Value!.Modules.Single().Features.SelectMany(_ => _.Slices).Single(_ => _.Name == name);
 }

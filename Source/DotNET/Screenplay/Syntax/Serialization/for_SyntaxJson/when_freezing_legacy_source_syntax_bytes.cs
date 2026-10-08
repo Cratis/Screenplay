@@ -31,6 +31,7 @@ public class when_freezing_legacy_source_syntax_bytes
             // Invoicing is a living sample. Its intentional v7 additions have full shared conformance
             // vectors; remove only those additions here so the pre-v7 native bytes stay frozen.
             var legacy = name == "invoicing-sample" || name == "invoicing-editor-sample" ? WithoutV7SampleAdditions(parsed) : parsed;
+            if (name == "invoicing" || name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleDependencies(legacy, name == "invoicing");
             var json = SyntaxJson.Serialize(legacy);
             var text = WithoutRuleIntent(json, json.GetRawText())
                 .Replace(",\"eventSources\":[]", string.Empty, StringComparison.Ordinal)
@@ -52,6 +53,22 @@ public class when_freezing_legacy_source_syntax_bytes
         count.ShouldEqual(16);
         Assert.False(initializing, "Review the new protected bytes and rerun without SCREENPLAY_INITIALIZE_LEGACY_SYNTAX_BYTES. Existing baselines are never overwritten.");
     }
+
+    // Dependency declarations are covered by the shared vectors. Restore the embedded fixture's
+    // former single-feature layout here rather than rewriting its protected pre-dependency bytes.
+    static ApplicationSyntax WithoutSampleDependencies(ApplicationSyntax application, bool embedded) => application with
+    {
+        Modules = application.Modules.Select(module => module with
+        {
+            Features = module.Features.Where(feature => !embedded || feature.Name != "Payments").Select(feature => feature with
+            {
+                DependsOn = [],
+                Slices = embedded && feature.Name == "InvoiceManagement"
+                    ? feature.Slices.Concat(module.Features.Single(candidate => candidate.Name == "Payments").Slices)
+                    : feature.Slices
+            })
+        })
+    };
 
     static ApplicationSyntax WithoutV7SampleAdditions(ApplicationSyntax application) => application with
     {

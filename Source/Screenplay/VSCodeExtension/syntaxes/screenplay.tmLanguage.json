@@ -26,6 +26,7 @@
         { "include": "#projection-block" },
         { "include": "#capture-block" },
         { "include": "#specification-stream" },
+        { "include": "#declared-dependency" },
         { "include": "#keywords" },
         { "include": "#common" }
     ],
@@ -118,6 +119,15 @@
         "comment": {
             "match": "//.*",
             "name": "comment.line.double-slash.screenplay"
+        },
+        "declared-dependency": {
+            "comment": "Depends on is a module/feature directive phrase, not a globally reserved property name.",
+            "match": "^[ \\t]*(depends)[ \\t]+(on)[ \\t]+([A-Za-z_][\\p{L}\\p{Mn}\\p{Nd}\\p{Pc}&&[\\x{0000}-\\x{FFFF}]]*(?:\\.[A-Za-z_][\\p{L}\\p{Mn}\\p{Nd}\\p{Pc}&&[\\x{0000}-\\x{FFFF}]]*)*)(?=[ \\t]*(?://.*)?$)",
+            "captures": {
+                "1": { "name": "keyword.other.screenplay" },
+                "2": { "name": "keyword.other.screenplay" },
+                "3": { "name": "entity.name.type.screenplay" }
+            }
         },
         "keywords": {
             "patterns": [
