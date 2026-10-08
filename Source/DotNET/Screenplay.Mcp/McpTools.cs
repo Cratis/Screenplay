@@ -142,6 +142,7 @@ sealed class McpTools
                 McpJson.Integer(arguments, "limit", 50, 1, 200),
                 McpJson.OptionalString(arguments, "scope"),
                 McpJson.OptionalString(arguments, "document")),
+            "find-specification-obligations" => McpSpecificationObligations.Read(snapshot, arguments),
             "find-assertion-gaps" => McpFixtureQueries.AssertionGaps(
                 snapshot,
                 McpJson.Integer(arguments, "offset", 0, 0, int.MaxValue),

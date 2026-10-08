@@ -171,6 +171,7 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `dependency-graph` | Optional view, from/to levels, scope, direction, kinds, includeTestOnly, evidenceLimit | Inferred slice/container/context edges, ordering cycles, story-order suggestions, unresolved references or checked dependency declarations |
 | `find-fixtures` | Specification address, role, property, value, scope/document | Paged effective assignments with type, value, location and authored/example/override origin, including `when append` event payloads (`whenAppendedEvent`) and `for` destinations (`whenAppendedEventDestination`) |
 | `find-assertion-gaps` | Optional scope/document | Slices without specifications declaring a `then` assertion, including `then denied` |
+| `find-specification-obligations` | Optional module/feature/slice scope, document | Per-declaration specification obligations with met/unmet status and matching specification owners |
 | `diagnostics` | Optional `checks` (comma-separated names, codes, or `all`), `scope`, document | Paged diagnostics, severity counts, scoped declaration counts and affected scopes |
 | `read-document` | Required relative `path` | Exact original UTF-8 byte pages |
 | `merged-document` | `view`: source, syntax or both | Canonical merged byte pages or explicitly requested typed AST |
@@ -187,6 +188,25 @@ aggregation uses `descendants: true` explicitly and does not imply transitive
 runtime impact. Reference coverage excludes code, expression identifiers,
 property paths, imports, profile settings and external registrations; results
 state their coverage.
+
+### Specification obligations
+
+`find-specification-obligations` derives authored obligations, not runtime coverage. A **met** obligation says that a matching specification exists, not that behavior is fully covered or that the specification passes. Items carry a stable `ruleId`, resolvable `declaration` owner (address/kind), rule `location`, `subject`, `description`, `severity`, nullable `reason`, `status`, and matching `specifications`. The list is capped at 20 with `specificationCount` and `specificationsTruncated`; inspect the relevant slice's specification details for the complete inventory. Pages enforce both item and serialized-byte budgets.
+
+| Rule ID | Obligation and matching evidence |
+| --- | --- |
+| `SPEC001` | Command success: a resolved `when` command, an outcome assertion, no error or denial |
+| `SPEC002` | Each `require`: a resolved command action and exact explicit rejection message |
+| `SPEC003` | Each command or concept validation rule: exact explicit rejection message; concept rules use commands accepting that concept |
+| `SPEC004` | Authorized command/query (including module/feature gates): its resolved action and `then denied` |
+| `SPEC005` | Each value-unique constraint: prior claim event, equal literal composite key through production mappings, different known destinations, and rejection |
+| `SPEC006` | Read model: state/absence assertion or results asserted through a resolved query returning that view |
+| `SPEC007` | Each projection `remove with`: append its resolved event and assert absence of a built view |
+| `SPEC008` | Reaction: append its named event, fire its trigger, drive a same-slice clock schedule, or explicitly redeliver to it, with an outcome assertion |
+
+Examples are expanded before matching. Ambiguous references do not meet obligations. Rejection rules without an explicit message remain `info`/`unmet`: a bare `then error` cannot distinguish individual rules. Opaque validation blocks report one information-level obligation rather than invented code rules. Syntax-only owners retain authored presence status but carry `info` and the executable-readiness reason. Competing claims use literal fixtures and direct command-to-event property mappings; unknown expressions do not prove an equal claim. A constraint's explicit message must match; without one, any rejection suffices alongside the competing-claim evidence. This is a deterministic presence heuristic, not simulation or proof of causation.
+
+Optional `scope` must name exactly one module, feature or slice; unknown/ambiguous scopes reject. Scoped results include referenced concept validations and value constraints on selected events, even when declared at application level. `document` filters obligation owners by contributing source path. Use `offset`, `limit` (default 50, maximum 200) and `expectedSourceRevision`; continuation requires the first page's `sourceRevision`, and stale source is refused. The report preserves the compilation verdict and never adds compiler diagnostics.
 
 ### Completeness diagnostics
 
