@@ -20,7 +20,7 @@ sealed class WorkspaceReferenceBindings
     readonly Dictionary<string, string[]> _imports;
     readonly Dictionary<(string? Source, string Stream), WorkspaceReferenceDeclaration[]> _streams;
 
-    internal WorkspaceReferenceBindings(WorkspaceSyntaxIndex index)
+    internal WorkspaceReferenceBindings(WorkspaceSyntaxIndex index, bool includeInteractions = false)
     {
         _index = index;
         _declarations = [.. Declarations(index)];
@@ -29,7 +29,7 @@ sealed class WorkspaceReferenceBindings
             .GroupBy(declaration => (declaration.Owner, declaration.Name)).ToDictionary(group => group.Key, group => group.ToArray());
         _imports = index.Entries.Select(entry => entry.Node).OfType<ImportSyntax>().GroupBy(import => import.Name, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.Select(import => import.QualifiedName).Distinct(StringComparer.Ordinal).ToArray(), StringComparer.Ordinal);
-        Bindings = [.. WorkspaceReferenceMembers.All(index).Select(Bind)];
+        Bindings = [.. WorkspaceReferenceMembers.All(index).Concat(includeInteractions ? WorkspaceReferenceMembers.Interactions(index) : []).Select(Bind)];
     }
 
     internal WorkspaceReferenceBinding[] Bindings { get; }

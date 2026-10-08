@@ -33,5 +33,6 @@ public class when_moving_split_features : given.a_refactoring_workspace
     [Fact] void should_preserve_every_assigned_identity() => _result.Workspace.IdentityCatalog.Semantics.Select(assignment => assignment.Id).ShouldContainOnly(Workspace.IdentityCatalog.Semantics.Select(assignment => assignment.Id));
     [Fact] void should_preserve_both_physical_files() => _result.Workspace.Documents.Select(document => document.Path).ShouldContainOnly(Workspace.Documents.Select(document => document.Path));
     [Fact] void should_move_both_logical_feature_fragments() => WorkspaceSyntaxIndex.Create(_result.Workspace).Entries.Count(entry => entry.Address?.Equals(SemanticAddress.ForFeature(Workspace.IdentityCatalog.Application, "Archive", "Registration")) == true).ShouldEqual(2);
+    [Fact] void should_remove_the_redundant_empty_wrapper_fragment() => _result.Workspace.Documents.Single(document => document.Path.Value == "One.play").Text.ShouldNotContain("module Projects");
     [Fact] void should_keep_the_old_logical_module() => WorkspaceSyntaxIndex.Create(_result.Workspace).Entries.Select(entry => entry.Node).OfType<ModuleSyntax>().Any(module => module.Name == "Projects").ShouldBeTrue();
 }
