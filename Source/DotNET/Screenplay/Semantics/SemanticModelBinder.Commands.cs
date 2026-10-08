@@ -105,6 +105,7 @@ public sealed partial class SemanticModelBinder
             return new(id, command.Name, properties, validations, produced)
             {
                 Response = BindResponse(command, propertiesByName),
+                Route = BindCommandRoute(command, propertiesByName, produced),
                 CodeValidations = codeValidations,
                 Requirements = requirements,
                 Destination = defaultDestination is null ? null : new(defaultDestination.Type, SemanticExpression.Property(SemanticExpressionRootKind.Command, defaultDestination.Id))

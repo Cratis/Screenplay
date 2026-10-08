@@ -46,6 +46,11 @@ public sealed partial class SemanticModelBinder
             _ => throw new InvalidSemanticContract($"Literal value type '{expression.Value.GetType().Name}' is unsupported during semantic binding.")
         };
 
+        SemanticValue BindRouteLiteral(LiteralExpressionSyntax expression) => expression.Value is double value &&
+            double.IsFinite(value) && Math.Truncate(value) == value && Math.Abs(value) <= 9007199254740991d
+                ? SemanticValue.Number(new decimal((long)value))
+                : BindLiteral(expression);
+
         SemanticExpression? UnsupportedExpression(ExpressionSyntax expression, string description)
         {
             Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"The {description} expression '{expression.GetType().Name}' is not admitted by ESM v1.", expression.Location);
