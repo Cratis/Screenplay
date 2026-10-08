@@ -181,19 +181,25 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             RegisterQueryDeclarations();
             var concepts = syntax.Concepts.Select(BindConcept).ToImmutableArray();
             var types = (syntax.Types ?? []).Select(BindType).ToImmutableArray();
+            var eventSources = BindEventSources(concepts);
             var modules = AttachAutomation([.. syntax.Modules.Select(BindModule)]);
             var policies = BindPolicies();
             ValidateExampleAdmission(concepts, types, modules);
-            return new(
+            var application = new SemanticApplication(
                 applicationId,
                 applicationName,
                 concepts,
                 types,
-                UsesV2 || UsesV3 || UsesV4 || UsesV5 || UsesV6 || UsesV7 ? [.. modules.Select(PromoteV2Destinations)] : modules)
+                UsesV2 || UsesV3 || UsesV4 || UsesV5 || UsesV6 || UsesV7 || !eventSources.IsEmpty ? [.. modules.Select(PromoteV2Destinations)] : modules)
             {
                 Policies = policies,
-                Triggers = triggers
+                Triggers = triggers,
+                EventSources = eventSources
             };
+            application = BindRoutedFixtureSources(application);
+            UsesEventRoutes = SemanticEventRouting.Uses(application);
+
+            return application;
         }
 
         internal void Error(string code, string message, SourceLocation location) =>
