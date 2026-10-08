@@ -69,11 +69,22 @@
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
             "patterns": [{ "include": "#handler-implementation" }, { "include": "#fenced-csharp" }, { "include": "#fenced-typescript" }, { "include": "#fenced-react" }, { "include": "#fenced-html" }, { "include": "#fenced-sql" }, { "include": "#keywords" }, { "include": "#common" }]
         },
+        "stream-id-parts": {
+            "begin": "^([ \\t]*)(streamId)(?=\\s*(?://.*)?$)",
+            "beginCaptures": { "2": { "name": "keyword.other.screenplay" } },
+            "while": "^(?=\\1[ \\t]+\\S|[ \\t]*$)",
+            "patterns": [
+                { "match": "^\\s*([A-Za-z_]\\w*)\\s*=(?!=|>)", "captures": { "1": { "name": "variable.other.screenplay" } } },
+                { "include": "#keyword-input" },
+                { "include": "#common" }
+            ]
+        },
         "specification-stream": {
             "begin": "^([ \\t]*)(stream)\\s+([A-Za-z_]\\w*\\.[A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
             "beginCaptures": { "2": { "name": "keyword.other.screenplay" }, "3": { "name": "entity.name.type.screenplay" } },
             "while": "^(?=\\1[ \\t]+\\S|[ \\t]*$)",
             "patterns": [
+                { "include": "#stream-id-parts" },
                 { "match": "^\\s*(streamId)\\s*=(?!=|>)", "captures": { "1": { "name": "keyword.other.screenplay" } } },
                 { "include": "#common" }
             ]
@@ -136,6 +147,7 @@
         },
         "keywords": {
             "patterns": [
+                { "include": "#stream-id-parts" },
                 {
                     "comment": "Ordered invocation refusal selectors are syntax-only.",
                     "match": "^\\s*(on)\\s+(refused)(?:\\s+(by)\\s+(validation|constraint|authorization)(?:\\s+([\\w.]+))?)?(?=\\s*(?://.*)?$)",
