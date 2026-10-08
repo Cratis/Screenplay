@@ -34,3 +34,4 @@
 | [0030](0030-reaction-refusals-and-redelivery.md) | Reaction refusal handling and redelivery specifications | accepted | none | 2026-10-07 | Sindre Alstad Wilting |
 | [0031](0031-event-source-and-stream-in-specifications.md) | State the event source and stream of specification events with the command route's own lines | accepted | none | 2026-10-07 | Sindre Alstad Wilting |
 | [0032](0032-expand-typed-specification-examples-in-the-front-end.md) | Expand typed specification examples in the front end | accepted | none | 2026-10-07 | Sindre Alstad Wilting |
+| [0033](0033-sensitive-means-operational-secret.md) | Treat sensitive values as operational secrets, not personal data | accepted | implemented | 2026-10-08 | Sindre Alstad Wilting |
