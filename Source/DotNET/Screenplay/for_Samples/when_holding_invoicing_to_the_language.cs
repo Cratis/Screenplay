@@ -110,6 +110,7 @@ public class when_holding_invoicing_to_the_language : Specification
     [Fact] void should_classify_each_missing_kind_once() => Preview.SelectMany(preview => preview.Fixtures).SelectMany(fixture => fixture.Nodes).Concat(CoveredElsewhere.Select(elsewhere => elsewhere.Node)).Concat(Infrastructure).GroupBy(type => type).Where(group => group.Count() != 1).Select(group => group.Key.Name).ShouldBeEmpty();
     [Fact] void should_keep_each_preview_fixture_clean_present_and_refused_for_its_own_issue() => string.Join('\n', _fixtureFindings).ShouldEqual(string.Empty);
     [Fact] void should_keep_each_elsewhere_exception_at_its_tested_location() => _elsewhereFindings.ShouldBeEmpty();
+    [Fact] void should_keep_explicit_no_event_assertions_out_of_invoicing() => SyntaxNodes.Under(_invoicing).OfType<SpecificationSyntax>().Any(specification => specification.ThenNoEvents).ShouldBeFalse();
     [Fact] void should_keep_exact_numeric_mode_out_of_invoicing() => _invoicing.SourceOptions.NumericMode.ShouldEqual(NumericMode.Legacy);
     [Fact] void should_demonstrate_exact_numeric_mode_in_its_preview_fixture() => _exact.SourceOptions.NumericMode.ShouldEqual(NumericMode.Exact);
     [Fact] void should_keep_the_documented_preview_table_equal_to_the_enforced_list() => _documentedPreview.ShouldEqual(Preview.Select(preview => $"| {preview.Construct} | #{preview.Issue} | {string.Join(", ", preview.Fixtures.Select(fixture => $"`{fixture.Path}`"))} |"));

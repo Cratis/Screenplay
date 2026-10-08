@@ -33,7 +33,7 @@ module Projects
           projectId = projectId
 ````
 
-The [complete source fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/operations.play) includes inline and standalone declarations, composite input sources, optional collections, failure and compensation specifications, and a cross-slice reference. It is intentionally outside `Samples/`: operations refuse the whole model before binding because they are not admitted by any supported executable model (ESM) version yet. Invoicing is a syntax showcase with individual binding dispositions, not a runnable model. Operations are one of the [preview constructs](../../.cratis/ai/rules/project/samples.md#preview-constructs) excepted by the samples policy, not an executable integration example.
+The [complete source fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/operations.play) includes inline and standalone declarations, composite input sources, optional collections, failure and compensation specifications, and a cross-slice reference. It is intentionally outside `Samples/`: operations refuse the whole model before binding because they are not admitted by any supported executable model (ESM) version yet. Invoicing is a syntax showcase with individual binding dispositions, not a runnable model. Operations are one of the [preview constructs](https://github.com/Cratis/Screenplay/blob/main/.cratis/ai/rules/project/samples.md#preview-constructs) excepted by the samples policy, not an executable integration example.
 
 ## Declare inline or reference a declaration
 
