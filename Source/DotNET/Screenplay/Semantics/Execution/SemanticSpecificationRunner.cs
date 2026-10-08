@@ -155,7 +155,8 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
                 appended.EventSource?.Value ?? SemanticValue.Null,
                 appended.Values)
                 {
-                    Context = appended.EventSource is null ? null : new(appended.EventSource)
+                    Context = appended.EventSource is null ? null : new(appended.EventSource),
+                    Route = plan.FormatFixtureRoute(appended.Route)
                 },
                 queries,
                 expected.GivenCaller)
@@ -175,7 +176,8 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         var facts = specification.GivenEvents
             .Select(value => new SemanticFact(value.EventContract, value.EventSource?.Value ?? SemanticValue.Null, value.Values)
             {
-                Context = value.EventSource is null ? null : new(value.EventSource)
+                Context = value.EventSource is null ? null : new(value.EventSource),
+                Route = plan.FormatFixtureRoute(value.Route)
             })
             .ToImmutableArray();
         var establishment = new SemanticEvaluator().EstablishSpecificationWorld(plan, facts);
@@ -244,7 +246,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         var following = actionFacts >= 0 && expected.WhenAppended is not null ? accepted.Facts[actionFacts..] : accepted.Facts;
         if (expected.WhenAppended is null || expected.ThenEvents.Length > 0)
         {
-            CompareFacts(expected.ThenEvents, following, failures, expected.ThenEventsInAnyOrder);
+            CompareFacts(plan, expected.ThenEvents, following, failures, expected.ThenEventsInAnyOrder);
         }
 
         var commandFacts = actionFacts >= 0 ? accepted.Facts[..actionFacts] : accepted.Facts;
@@ -334,6 +336,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
     }
 
     static void CompareFacts(
+        SemanticExecutionPlan plan,
         ImmutableArray<SemanticSpecificationEvent> expected,
         ImmutableArray<SemanticFact> actual,
         ImmutableArray<string>.Builder failures,
@@ -345,11 +348,43 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return;
         }
 
+        var routes = expected.Select(value => plan.FormatFixtureRoute(value.Route)).ToArray();
+        if (inAnyOrder && plan.Model.SemanticVersion.IsAtLeast(EventRoutesVersion.Semantic))
+        {
+            // Augmenting paths reassign earlier wildcard matches instead of consuming an exact match greedily.
+            var assignments = Enumerable.Repeat(-1, actual.Length).ToArray();
+            for (var index = 0; index < expected.Length; index++)
+            {
+                if (!Assign(index, new bool[actual.Length]))
+                {
+                    failures.Add($"Fact at index {index} does not match the expected event contract and values.");
+                }
+            }
+
+            return;
+
+            bool Assign(int expectation, bool[] visited)
+            {
+                for (var fact = 0; fact < actual.Length; fact++)
+                {
+                    if (visited[fact] || !FactMatches(expected[expectation], actual[fact], routes[expectation])) continue;
+                    visited[fact] = true;
+                    if (assignments[fact] < 0 || Assign(assignments[fact], visited))
+                    {
+                        assignments[fact] = expectation;
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
         var remaining = actual.ToList();
         for (var index = 0; index < expected.Length; index++)
         {
-            var matched = inAnyOrder ? remaining.FindIndex(fact => FactMatches(expected[index], fact)) : index;
-            if (matched < 0 || !FactMatches(expected[index], inAnyOrder ? remaining[matched] : actual[index]))
+            var matched = inAnyOrder ? remaining.FindIndex(fact => FactMatches(expected[index], fact, routes[index])) : index;
+            if (matched < 0 || !FactMatches(expected[index], inAnyOrder ? remaining[matched] : actual[index], routes[index]))
             {
                 failures.Add($"Fact at index {index} does not match the expected event contract and values.");
             }
@@ -358,8 +393,9 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         }
     }
 
-    static bool FactMatches(SemanticSpecificationEvent expected, SemanticFact actual) =>
+    static bool FactMatches(SemanticSpecificationEvent expected, SemanticFact actual, SemanticEventRoute? route) =>
         expected.EventContract == actual.EventContract && ValuesEqual(expected.Values, actual.Values) &&
+        (route is null || route == actual.Route) && (!expected.Unrouted || actual.Route is null) &&
         (expected.EventSource is null ||
          (actual.Context?.EventSource.Type == expected.EventSource.Type &&
           SemanticValueRules.AreEqual(actual.Destination, expected.EventSource.Value)));
