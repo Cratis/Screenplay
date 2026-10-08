@@ -49,6 +49,35 @@ public class when_an_event_and_trigger_share_a_name : given.a_compiler
         result.Diagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownTriggerData).ShouldEqual(warnings);
     }
 
+    [Theory]
+    [InlineData("PatientId", "Uuid", "Uuid", 0)]
+    [InlineData("PatientId", "Uuid", "PatientId", 1)]
+    [InlineData("Uuid", "Uuid", "PatientId", 1)]
+    [InlineData("Uuid", "PatientId", "Uuid", 1)]
+    [InlineData("PatientId", "PatientId", "PatientId", 1)]
+    void should_check_clause_local_types_without_borrowing_the_shadowed_trigger_shape(string triggerType, string eventType, string clauseType, int errors)
+    {
+        var result = _compiler.Compile($$"""
+            concept PatientId : Uuid @pii
+            trigger External
+              patient {{triggerType}}
+            module M
+              feature F
+                slice Automation S
+                  event External
+                    patient {{eventType}}
+                  event Recorded
+                  reaction R
+                    when External
+                      patient {{clauseType}}
+                      produces Recorded
+                        for patient
+            """);
+
+        result.Diagnostics.Select(diagnostic => $"{diagnostic.Code}@{diagnostic.Location.Line}")
+            .ShouldContainOnly(Enumerable.Repeat("PLAY0515@14", errors).ToArray());
+    }
+
     [Fact]
     void should_check_personal_trigger_values_when_the_event_shape_is_ambiguous()
     {

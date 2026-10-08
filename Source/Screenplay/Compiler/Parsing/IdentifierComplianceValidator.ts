@@ -6,6 +6,7 @@ import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
 import { PropertySyntax, TypeRefSyntax } from '../Syntax/Declarations';
 import { ApplicationSyntax } from '../Syntax/Structure';
+import { dependencySourcesOf } from '../Syntax/DependencySources';
 import { ParserContext } from './ParserContext';
 import { uniqueByName } from './ResponseValidator';
 
@@ -47,12 +48,14 @@ export function validateIdentifierCompliance(application: ApplicationSyntax, con
             if (trigger.source.kind !== 'NamedTriggerSourceSyntax') continue;
             const resolution = resolver.resolve(trigger.source.name, slice);
             const event = resolution.declaration?.node;
-            const shapes = event?.kind === 'EventSyntax' || imports.has(trigger.source.name)
-                ? [event?.kind === 'EventSyntax' ? event.properties : []]
-                : declaredTriggers.get(trigger.source.name) ?? [];
+            const clauseData = (dependencySourcesOf(trigger).data ?? []).flatMap<PropertySyntax>(datum => datum.type === null ? [] : [{ kind: 'PropertySyntax', name: datum.name, type: datum.type, isIdentifier: false, location: datum.location }]);
+            const shapes = [event?.kind === 'EventSyntax' ? event.properties : [], clauseData];
+            if (event?.kind !== 'EventSyntax' && !imports.has(trigger.source.name)) {
+                shapes.push(...declaredTriggers.get(trigger.source.name) ?? []);
+            }
             for (const production of trigger.produces.filter(production => resolver.isEventProduction(production, slice))) {
                 if (production.for?.kind !== 'PathExpressionSyntax') continue;
-                // Use only the occurrence selected by event-first reaction resolution.
+                // Check clause-local types alongside the occurrence selected by event-first reaction resolution.
                 const path = production.for.path;
                 const entry = shapes.map(properties => property(properties, path)).find(entry => entry !== null && personal.has(entry.type.name));
                 if (entry != null) validate(entry.type, production.for.location);

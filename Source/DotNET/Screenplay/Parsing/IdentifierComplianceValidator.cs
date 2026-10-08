@@ -45,7 +45,12 @@ internal static class IdentifierComplianceValidator
             {
                 if (trigger.Source is not NamedTriggerSourceSyntax named) continue;
                 var resolvedEvent = declarations.Event(named.Name, scope);
-                var shapes = new List<IEnumerable<PropertySyntax>?> { resolvedEvent?.Properties };
+                var shapes = new List<IEnumerable<PropertySyntax>?>
+                {
+                    resolvedEvent?.Properties,
+                    trigger.Data.Select(datum => datum.Type is { } type ? new PropertySyntax(datum.Name, type, datum.Location) : null)
+                        .OfType<PropertySyntax>()
+                };
                 if (resolvedEvent is null && !imports.Contains(named.Name))
                 {
                     shapes.AddRange(declaredTriggers[named.Name].Select(declared => declared.Data
@@ -56,7 +61,7 @@ internal static class IdentifierComplianceValidator
                 {
                     if (production.For is not PathExpressionSyntax path) continue;
 
-                    // Use only the occurrence selected by event-first reaction resolution.
+                    // Check clause-local types alongside the occurrence selected by event-first reaction resolution.
                     var personalType = shapes.Select(properties => declarations.Property(properties, path.Path, out _)?.Type)
                         .FirstOrDefault(type => type is not null && personal.Contains(type.Name));
                     if (personalType is not null) ValidateType(personalType, path.Location);
