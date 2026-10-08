@@ -15,6 +15,7 @@ import { validateIdentifierCompliance } from '../Parsing/IdentifierComplianceVal
 import { splitLines } from '../Parsing/SourceLineSplitter';
 import { ParserContext } from '../Parsing/ParserContext';
 import { validateResponses } from '../Parsing/ResponseValidator';
+import { validateReactionRefusals } from '../Parsing/ReactionRefusalValidator';
 import { validateOperations } from '../Parsing/OperationValidator';
 import { CompilationResult, discoverImports, parseForAuthoring } from '../ScreenplayCompiler';
 import { ApplicationSyntax } from '../Syntax/Structure';
@@ -78,6 +79,7 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     validateInlineEvents(merged.value, context);
     validateConstraintProperties(merged.value, context);
     validateResponses(merged.value, context, parsed.flatMap(document => document.inputUses));
+    validateReactionRefusals(merged.value, context);
     validateProjectionTargets(merged.value, context);
     validateIdentifierCompliance(merged.value, context);
     const value = validateDependencyDeclarations(merged.value, context);
