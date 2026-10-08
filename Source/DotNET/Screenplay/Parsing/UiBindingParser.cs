@@ -18,11 +18,6 @@ internal static partial class UiBindingParser
             : Parse(context, trimmed, location);
     }
 
-    static bool IsTypedBindingSource(string? source) =>
-        string.Equals(source, "data", StringComparison.Ordinal) ||
-        string.Equals(source, "query", StringComparison.Ordinal) ||
-        string.Equals(source, "component", StringComparison.Ordinal);
-
     public static UiBindingSyntax Parse(ParserContext context, string text, SourceLocation location)
     {
         var trimmed = text.Trim();
@@ -53,6 +48,11 @@ internal static partial class UiBindingParser
 
         return ParseModifiers(context, binding, modifiers, location);
     }
+
+    static bool IsTypedBindingSource(string? source) =>
+        string.Equals(source, "data", StringComparison.Ordinal) ||
+        string.Equals(source, "query", StringComparison.Ordinal) ||
+        string.Equals(source, "component", StringComparison.Ordinal);
 
     static UiBindingSyntax ParseQuery(ParserContext context, string expression, SourceLocation location, string raw)
     {
@@ -123,7 +123,7 @@ internal static partial class UiBindingParser
             }
 
             context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unsupported UI binding modifier '{rest}' - supported modifiers are 'mode oneWay|twoWay', 'null propagate|clear|preserve' and 'expected <Type>'.", location);
-            return binding with { RawText = binding.RawText ?? rest };
+            return binding with { BindingKind = UiBindingKind.Invalid, RawText = binding.RawText ?? rest };
         }
 
         return binding;

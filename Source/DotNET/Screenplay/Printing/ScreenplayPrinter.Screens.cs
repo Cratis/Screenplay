@@ -107,11 +107,6 @@ public partial class ScreenplayPrinter
 
     string WriteUiBinding(UiBindingSyntax binding)
     {
-        if (binding.RawText is not null)
-        {
-            return binding.RawText;
-        }
-
         var head = binding.BindingKind switch
         {
             UiBindingKind.DataContext => $"from data {binding.Path}",
