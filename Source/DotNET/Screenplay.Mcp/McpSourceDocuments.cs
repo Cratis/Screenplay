@@ -21,7 +21,7 @@ static class McpSourceDocuments
     // Layout expansion and source authoring share the parser boundary. Resolve placements and route
     // candidates against the complete post-operation source set, not each fragment in isolation.
     internal static (ImmutableArray<WorkspaceOperation> Documents, ImmutableArray<Diagnostic> Diagnostics) Parse(
-        ScreenplayWorkspace workspace, ImmutableArray<WorkspaceOperation> operations)
+        ScreenplayWorkspace workspace, ImmutableArray<WorkspaceOperation> operations, bool generatedLayout = false)
     {
         var candidates = workspace.Documents.ToDictionary(document => document.Id);
         var targeted = new HashSet<DocumentId>();
@@ -77,6 +77,11 @@ static class McpSourceDocuments
         var (placed, placementDiagnostics) = PlayImports.Resolve(sources.Keys, new InMemoryPlayDocumentSource(sources));
         var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
         diagnostics.AddRange(placementDiagnostics);
+        if (generatedLayout && placementDiagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
+        {
+            throw new McpFailure("Generated layout imports could not be resolved.");
+        }
+
         if (placed.Any(document => !document.IsPlacementResolved))
         {
             return ([], diagnostics.ToImmutable());
@@ -102,6 +107,11 @@ static class McpSourceDocuments
 
             var parsed = parser.ParseWithCandidates(document.Text, document.Path.Value, placements[document.Path.Value], streamCandidates);
             diagnostics.AddRange(parsed.Diagnostics);
+            if (generatedLayout && !parsed.Success)
+            {
+                throw new McpFailure($"Generated layout document '{document.Path}' could not be parsed.");
+            }
+
             if (parsed.Success && parsed.Value is ApplicationSyntax syntax)
             {
                 documents.Add(operation is AddWorkspaceDocument

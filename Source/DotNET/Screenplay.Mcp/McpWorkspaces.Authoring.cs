@@ -135,11 +135,7 @@ internal sealed partial class McpWorkspaces
     {
         var nodes = ImmutableArray.CreateBuilder<WorkspaceAstOperation>();
         var documents = ImmutableArray.CreateBuilder<WorkspaceOperation>();
-        var parsed = McpSourceDocuments.Parse(workspace, McpLayout.Expand(workspace, layout));
-        if (parsed.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
-        {
-            throw new McpFailure("Generated layout documents could not be parsed or their imports resolved.");
-        }
+        var parsed = McpSourceDocuments.Parse(workspace, McpLayout.Expand(workspace, layout), generatedLayout: true);
 
         foreach (var operation in parsed.Documents)
         {
