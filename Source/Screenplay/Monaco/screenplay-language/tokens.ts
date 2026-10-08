@@ -133,8 +133,11 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
                     { token: 'keyword', next: `@${subLanguageState(subLanguage.keyword)}` },
                 ],
             ),
-            // A bare description keyword at end of line opens a fenced plain-text block.
-            [/\bdescription\b(?=\s*$)/, { token: 'keyword', next: '@descriptionBlockPending' }],
+            // Typed documentation names are properties, not metadata directives.
+            [/^(\s*)(documentation)(?=\s+[\w.]+(?:\[\])?(?:\?|\s+optional)?\s*(?:identifier\b|generated\b|=(?!=|>)|\/\/|$))/,
+                ['white', 'identifier']],
+            // A bare description or documentation keyword opens a fenced prose block.
+            [/\b(?:description|documentation)\b(?=\s*(?:\/\/.*)?$)/, { token: 'keyword', next: '@descriptionBlockPending' }],
             [/\brow-click\b/, 'keyword'],
             // A leading @ escapes a name that collides with a directive keyword - it is a name, not an attribute.
             [/^\s*@[a-z_]\w*/, 'identifier'],

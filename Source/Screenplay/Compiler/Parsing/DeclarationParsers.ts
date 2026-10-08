@@ -6,6 +6,7 @@ import { EventSyntax, PropertySyntax, ReadModelSyntax, TagSyntax, TypeSyntax } f
 import { pattern } from '../Text/patterns';
 import { eventBodyReservedWords } from '../Text/ReservedWords';
 import { parseDescription } from './DescriptionParser';
+import { parseDocumentation } from './DocumentationParser';
 import { EventMetadataParser } from './EventMetadataParser';
 import { parseMappingSource } from './ExpressionParser';
 import { isFileDirectiveAmongProperties } from './FileReferences';
@@ -137,10 +138,13 @@ export function parseReadModel(context: ParserContext, header: SourceLine): Read
     }
     const properties: PropertySyntax[] = [];
     let description: string | null = null;
+    let documentation: string | null = null;
     for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
         if (isDescription(line)) {
             description = parseDescription(context, line, description, `Read model '${name}'`);
+        } else if (firstWord(line.content) === 'documentation' && tryParseProperty(line) === undefined) {
+            documentation = parseDocumentation(context, line, documentation, `Read model '${name}'`);
         } else if (isFileDirectiveAmongProperties(line)) {
             continue;
         } else {
@@ -153,5 +157,5 @@ export function parseReadModel(context: ParserContext, header: SourceLine): Read
                 `Property '${property.name}' of read model '${name}' cannot be marked identifier - only a command property can be`));
         }
     }
-    return { kind: 'ReadModelSyntax', name, properties, description, location: locationOf(header) };
+    return { kind: 'ReadModelSyntax', name, properties, description, documentation, location: locationOf(header) };
 }

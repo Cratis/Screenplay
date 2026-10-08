@@ -17,7 +17,7 @@ internal sealed class FeatureBody(string name)
     /// <summary>
     /// What a feature body may hold, as it reads in a diagnostic.
     /// </summary>
-    public const string Expected = "description, depends on <Name>, authorize, import, feature, slice, contribute, example, 'on <trigger>' or 'uses <Behavior>'";
+    public const string Expected = "description, documentation, depends on <Name>, authorize, import, feature, slice, contribute, example, 'on <trigger>' or 'uses <Behavior>'";
 
     readonly List<FeatureSyntax> _features = [];
     readonly List<SliceSyntax> _slices = [];
@@ -29,6 +29,7 @@ internal sealed class FeatureBody(string name)
     readonly List<FileImportSyntax> _fileImports = [];
     readonly List<DependsOnSyntax> _dependsOn = [];
     string? _description;
+    string? _documentation;
     AuthorizeSyntax? _authorize;
 
     /// <summary>
@@ -49,6 +50,9 @@ internal sealed class FeatureBody(string name)
                     _directiveLocations["description"] = line.Location;
                 }
 
+                return true;
+            case "documentation":
+                _documentation = DocumentationParser.Parse(context, line, _documentation, $"Feature '{name}'", _directiveLocations);
                 return true;
             case "depends":
                 DependsOnParser.Parse(context, line, _dependsOn, DiagnosticCodes.UnknownFeatureDirective);
@@ -89,6 +93,7 @@ internal sealed class FeatureBody(string name)
     public FeatureSyntax Build(SourceLocation location, bool isPlacement = false) =>
         new(name, _features, _slices, location, _description, _contributions)
         {
+            Documentation = _documentation,
             Examples = _examples,
             Behaviors = _behaviors,
             UsedBehaviors = _usedBehaviors,

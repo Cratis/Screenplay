@@ -192,7 +192,8 @@ export function hoverContent(
         const source = eventAnalysisSource(lines);
         const inEvent = symbols.events.some(event => directBody(source, fences, event.line, indentOf(source[event.line])).includes(lineIndex));
         const directive = word === 'id' ? /^\s*id\s+"/.test(source[lineIndex]) : /^\s*documentation\s*$/.test(source[lineIndex]);
-        if (!inEvent || !directive || startColumn !== indentOf(line) + 1) return null;
+        const supportedOwner = inEvent || (word === 'documentation' && ['module', 'feature', 'slice', 'command', 'readmodel', 'reaction'].includes(chain[0]));
+        if (!supportedOwner || !directive || startColumn !== indentOf(line) + 1) return null;
     }
 
     if (word === 'optional' || word === 'generated' || word === 'returns') return null;

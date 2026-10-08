@@ -42,6 +42,11 @@ public record ReadModelSyntax(
     /// an init property is neither, and is how this record should grow from here.
     /// </remarks>
     public FileReferenceSyntax? File { get; init; }
+
+    /// <summary>
+    /// Gets the authoring-only markdown explaining this read model.
+    /// </summary>
+    public string? Documentation { get; init; }
 }
 
 /// <summary>

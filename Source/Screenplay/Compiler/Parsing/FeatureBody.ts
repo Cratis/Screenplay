@@ -9,6 +9,7 @@ import { DependsOnSyntax, FeatureSyntax, FileImportSyntax, SliceSyntax } from '.
 import { pattern } from '../Text/patterns';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseDescription } from './DescriptionParser';
+import { parseDocumentation } from './DocumentationParser';
 import { parseDependsOn } from './DependsOnParser';
 import { parseFileImport } from './FileImportParser';
 import { collectInputUses } from './InputUses';
@@ -24,7 +25,7 @@ const featurePattern = pattern('^feature\\s+([A-Za-z_]\\w*)$');
 const opaqueFeatureMembers = new Set(['on', 'uses', 'contribute']);
 
 // What a feature body may hold, as it reads in a diagnostic.
-export const featureBodyExpected = 'description, depends on <Name>, authorize, import, feature, slice, contribute, example, \'on <trigger>\' or \'uses <Behavior>\'';
+export const featureBodyExpected = 'description, documentation, depends on <Name>, authorize, import, feature, slice, contribute, example, \'on <trigger>\' or \'uses <Behavior>\'';
 
 // Collects the body of a feature - written beneath a 'feature' header, or at the top level of a file imported
 // into the feature. The port of the C# FeatureBody.
@@ -35,6 +36,7 @@ export class FeatureBody {
     readonly #fileImports: FileImportSyntax[] = [];
     readonly #dependsOn: DependsOnSyntax[] = [];
     #description: string | null = null;
+    #documentation: string | null = null;
     #authorize: AuthorizeSyntax | null = null;
 
     constructor(readonly name: string) {}
@@ -46,6 +48,9 @@ export class FeatureBody {
         switch (keyword) {
             case 'description':
                 this.#description = parseDescription(context, line, this.#description, `Feature '${this.name}'`);
+                return true;
+            case 'documentation':
+                this.#documentation = parseDocumentation(context, line, this.#documentation, `Feature '${this.name}'`);
                 return true;
             case 'depends':
                 parseDependsOn(context, line, this.#dependsOn, DiagnosticCodes.UnknownFeatureDirective);
@@ -80,6 +85,7 @@ export class FeatureBody {
             kind: 'FeatureSyntax',
             name: this.name,
             description: this.#description,
+            documentation: this.#documentation,
             authorize: this.#authorize,
             dependsOn: this.#dependsOn,
             features: this.#features,

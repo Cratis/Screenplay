@@ -574,7 +574,7 @@
             ]
         },
         "description-block": {
-            "begin": "^([ ]*)(description)[ ]*$",
+            "begin": "^([ ]*)(description|documentation)[ ]*$",
             "beginCaptures": {
                 "2": { "name": "keyword.other.screenplay" }
             },

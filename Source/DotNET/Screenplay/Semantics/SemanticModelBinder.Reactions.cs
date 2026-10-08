@@ -97,6 +97,11 @@ public sealed partial class SemanticModelBinder
         SemanticReaction BindReaction(SemanticAddress slice, ReactionSyntax reaction, Dictionary<string, SemanticCommand?> commands)
         {
             UsesV6 = true;
+            if (reaction.Documentation is not null)
+            {
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Reaction '{reaction.Name}' documentation is authoring metadata.", reaction.Location);
+            }
+
             if (reaction.Description is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Reaction '{reaction.Name}' description is authoring metadata.", reaction.Location);

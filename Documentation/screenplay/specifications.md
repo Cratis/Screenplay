@@ -11,10 +11,23 @@ The [complete source fixture](https://github.com/Cratis/Screenplay/blob/main/Doc
 
 Specifications express Given/When/Then scenarios against a slice's behavior, or read-only Given/Then scenarios against established state — executable documentation for the behavior a slice implements. A `specification` block lives inside a `slice`, alongside its `command`, `event`, `projection` and other constructs, and is compiled by the Screenplay compiler like every other sub-language.
 
+## Authoring descriptions
+
+Add one `description` to state which rule or case a specification witnesses. Use `description "<text>"` for one line, or a fenced `text` block for several lines. The field is report-only (`PLAY0270`): it does not change execution or executable-model bytes. Specifications do not accept `documentation`; put longer modeling reasoning on the owning slice. See [Descriptions and documentation](slices.md#descriptions-and-documentation).
+
+```screenplay
+specification RejectingAnEmptyName
+  description "Witnesses that a project must have a name"
+  when RenameProject
+    name = ""
+  then error "A name is required"
+```
+
 ## Syntax
 
 ```screenplay
 specification <Name>
+  [description "<rule or case>"]
   [file <path>]
   given <EventType>
     [for <event-source-value>]

@@ -285,6 +285,8 @@ export const DiagnosticCodes = {
     UnusedDependencyDeclaration: 'PLAY0553',
     MutualDependencyDeclarations: 'PLAY0556',
     AuthorizationRefusalWithoutIdentity: 'PLAY0557',
+    InvalidDocumentation: 'PLAY0558',
+    ConflictingDocumentationAcrossFiles: 'PLAY0559',
     InvalidEventSourceDeclaration: 'PLAY0503',
     InvalidCommandStream: 'PLAY0504',
     AmbiguousCommandStream: 'PLAY0505',

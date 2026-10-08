@@ -34,6 +34,7 @@ internal static partial class ReactionParser
         var name = match.Groups[1].Value;
         var triggers = new List<ReactionTriggerSyntax>();
         string? description = null;
+        string? documentation = null;
         ConditionSyntax? where = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
 
@@ -55,6 +56,12 @@ internal static partial class ReactionParser
                     directiveLocations["description"] = line.Location;
                 }
 
+                continue;
+            }
+
+            if (keyword == "documentation")
+            {
+                documentation = DocumentationParser.Parse(context, line, documentation, $"Reaction '{name}'", directiveLocations);
                 continue;
             }
 
@@ -113,7 +120,7 @@ internal static partial class ReactionParser
             context.Error(DiagnosticCodes.ReactionWithoutTrigger, $"Reaction '{name}' must declare at least one trigger - nothing sets it off", header.Location);
         }
 
-        return new(name, triggers, header.Location, description, where) { DirectiveLocations = directiveLocations };
+        return new(name, triggers, header.Location, description, where) { Documentation = documentation, DirectiveLocations = directiveLocations };
     }
 
     // Two triggers are the same when they name the same occurrence, wherever in the file they were written -

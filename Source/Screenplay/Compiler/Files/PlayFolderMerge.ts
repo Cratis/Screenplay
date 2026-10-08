@@ -86,6 +86,7 @@ function mergeModules(modules: readonly ModuleSyntax[], diagnostics: Diagnostic[
         fileImports: parts.flatMap(part => part.fileImports),
         examples: parts.flatMap(part => part.examples ?? []),
         description: firstDescription(parts, `module '${parts[0].name}'`, diagnostics),
+        documentation: firstDocumentation(parts, `module '${parts[0].name}'`, diagnostics),
         authorize: combineAuthorization(parts.map(part => part.authorize), `module '${parts[0].name}'`, diagnostics),
         dependsOn: groupDependencies(parts),
         features: mergeFeatures(parts.flatMap(part => part.features), diagnostics),
@@ -99,6 +100,7 @@ function mergeFeatures(features: readonly FeatureSyntax[], diagnostics: Diagnost
         fileImports: parts.flatMap(part => part.fileImports),
         examples: parts.flatMap(part => part.examples ?? []),
         description: firstDescription(parts, `feature '${parts[0].name}'`, diagnostics),
+        documentation: firstDocumentation(parts, `feature '${parts[0].name}'`, diagnostics),
         authorize: combineAuthorization(parts.map(part => part.authorize), `feature '${parts[0].name}'`, diagnostics),
         dependsOn: groupDependencies(parts),
         features: mergeFeatures(parts.flatMap(part => part.features), diagnostics),
@@ -151,6 +153,15 @@ function groupByName<T extends { readonly name: string }>(items: readonly T[]): 
         groups.set(item.name, [...(groups.get(item.name) ?? []), item]);
     }
     return [...groups.values()];
+}
+
+function firstDocumentation(parts: readonly { documentation?: string | null; location: SourceLocation }[], owner: string, diagnostics: Diagnostic[]): string | null {
+    const documented = parts.filter(part => part.documentation != null);
+    for (const disagreeing of documented.slice(1).filter(part => part.documentation !== documented[0].documentation)) {
+        diagnostics.push(warning(DiagnosticCodes.ConflictingDocumentationAcrossFiles,
+            `The ${owner} is already documented in '${describe(documented[0].location.path)}' - keeping that documentation`, disagreeing.location));
+    }
+    return documented[0]?.documentation ?? null;
 }
 
 function firstDescription(parts: readonly { description: string | null; location: SourceLocation }[], owner: string, diagnostics: Diagnostic[]): string | null {

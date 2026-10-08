@@ -46,6 +46,7 @@ export type ValidateSyntax = DeclarativeValidateSyntax | CodeValidateSyntax;
 
 export interface CommandSyntax extends SyntaxNode {
     readonly kind: 'CommandSyntax';
+    readonly documentation?: string | null;
     readonly name: string;
     readonly description: string | null;
     readonly authorize: AuthorizeSyntax | null;

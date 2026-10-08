@@ -62,6 +62,8 @@ command RegisterInvoice
     ```
 ````
 
+Commands also accept one nonempty fenced `markdown` `documentation` block for reasoning and assumptions. It is report-only (`PLAY0270`), with no effect on executable bytes. See [Descriptions and documentation](slices.md#descriptions-and-documentation).
+
 Command descriptions use `text` fences, not `markdown`; Markdown description fences are available only on events. Descriptions work the same on modules, features, slices, and personas — see [Descriptions](slices.md#descriptions).
 
 ## Declare an event inline
