@@ -96,21 +96,24 @@ This is presentation only: it does not reorder the compiler's documents or chang
 
 [Declared dependencies](slices.md#declared-dependencies) state intended module and feature coupling; they are not an import or a timeline ordering rule.
 
-The compiler checks event flow against the same presentation timeline: modules in order, with each feature's own slices before its sub-features. A projection or named reaction trigger using an event declared in a slice to its right reports `PLAY0516` once per consumer slice and event, at the first reference. The earliest declaring slice is the producer; external events and a slice's own events do not create a finding. Event names match using ordinal case-insensitive comparison in both compilers, including Greek sigma variants. A producer in the consumer's own sub-feature is reported too, with a note that reordering cannot fix it.
+The compiler checks event flow against the same presentation timeline: modules in order, with each feature's own slices before its sub-features. A projection, reducer `on E` rule or named reaction trigger using an event declared in a slice to its right reports `PLAY0516` once per consumer slice and event, at the first reference. The earliest declaring slice is the producer; external events and a slice's own events do not create a finding. Event names match using ordinal case-insensitive comparison in both compilers, including Greek sigma variants. A producer in the consumer's own sub-feature is reported too, with a note that reordering cannot fix it.
 
-Mutually dependent sibling groups report one `PLAY0517` instead of individual `PLAY0516` findings within that group. The compiler considers event flow in both directions, groups dependencies at their lowest common container, and lists mutually dependent members in timeline order, naming each member's kind (`slice`, `feature` or `module`) so a slice and a sibling feature with the same name remain distinguishable. Other backward edges still report individually. These are information diagnostics and do not fail `--warnaserror`. Command `reads` and reducers are not checked.
+A command or reaction trigger's `reads R` also reports `PLAY0516` when the slice that builds `R` is drawn later. The message names the read model and its builder, once per consumer slice and read model at the first reference. Resolution matches the dependency graph's `decidesFrom`: projections (including variants) and reducers take precedence over the read-model declaration; without a builder, the earliest declaring slice is used. An unresolved read model or a slice's own read model creates no edge.
+
+Feedback reads are excluded before backward findings and cycle grouping. Find the lowest common container of the reader and builder, then take the child of that container containing the reader. If the builder's projections or reducers that build the read model being read consume any event produced anywhere inside that child, the read creates no timeline edge. A projection that declares a matching variant also builds that read model; its shared blocks and variant transitions count. Unrelated projections and reducers in the same slice do not. For two slices in the same feature, that child is the reading slice itself; across features or modules, it includes all slices nested on the reader's side. Produced events include declared events and events named in commands' or reactions' `produces` clauses, even when imported and not declared locally. Reading a summary built from facts your own side produced is read-after-write feedback, not a story-order dependency. Event-consumption edges remain checked.
+
+Mutually dependent sibling groups report one `PLAY0517` instead of individual `PLAY0516` findings within that group. The compiler considers event flow and non-feedback reads in both directions, groups dependencies at their lowest common container, and lists mutually dependent members in timeline order, naming each member's kind (`slice`, `feature` or `module`) so a slice and a sibling feature with the same name remain distinguishable. The message names dependencies on events or read models, since reordering cannot make every dependency flow left to right. Other backward edges still report individually. These are information diagnostics and do not fail `--warnaserror`.
 
 A single document uses text order. For application or folder compilation, the ordering root is the sole root when there is one; otherwise it is the folder-root `application.play` if that file imports others, or the unique importing document not itself imported. With no such root, the compiler assigns no presentation ranks and skips the timeline check. When a folder has an `application.play` without imports, the compiler takes its order from the only importing document while the boards keep path order, so the check can describe an order the board does not draw. It checks the merged application once, not each physical file separately. This does not change merge order, syntax JSON, executable model bytes, revisions or identities.
 
-For dependencies beyond projection and trigger event flow, use the read-only
+For the full dependency inventory, use the read-only
 [MCP dependency graph](mcp/reference.md#dependency-graph). Its cycles and story-order
-suggestions also include read-model decisions; they do not change these diagnostics
-or apply a reorder.
+suggestions include feedback reads as well; they do not apply a reorder.
 
-### Repair a backward event reference
+### Repair a backward timeline reference
 
 C# workspaces and MCP offer typed `PLAY0516` proposals for safe sibling declaration
-or explicit file-import moves. A glob repair pins an already placed file with an
+or explicit file-import moves, including `reads` and reducer references. A glob repair pins an already placed file with an
 explicit import immediately before the glob; the glob remains, so new files are
 still discovered. If one pin would introduce a finding, the proposal can pin a
 safe prefix instead. Names containing glob metacharacters have no pin repair.
