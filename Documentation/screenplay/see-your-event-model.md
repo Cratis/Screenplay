@@ -49,7 +49,16 @@ including when event cards show the linked event's current name instead of the
 step's name. Headers wrap so long route summaries remain readable. Payload values
 and event links stay unchanged. This is routing
 intent only: specification routes remain syntax-only (`PLAY0268`), not executable
-route assertions. Specifications without routing statements keep their titles.
+route assertions.
+
+Specification headers also show deterministic `generated` fixtures, labeled
+**not request inputs**, scalar or record `then returns` assertions, and every
+`then no readmodel ... for ...` absence assertion with its key. These summaries
+keep response expectations and missing read-model instances visible without
+turning them into event cards or command inputs. Specifications without routes,
+generated fixtures, return assertions or absence assertions keep their titles.
+Like the rest of the board, these are authored expectations, not test results;
+use the specification runner to check them.
 
 ## Ask for the board in an AI chat
 
