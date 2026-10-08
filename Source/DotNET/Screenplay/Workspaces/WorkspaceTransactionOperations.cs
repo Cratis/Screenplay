@@ -107,7 +107,11 @@ static class WorkspaceTransactionOperations
 
     internal static WorkspaceTransactionResult Failure(
         WorkspaceConflictKind kind,
-        string message) => Failure(Conflict(kind, message));
+        string message,
+        ImmutableArray<IdentityMigrationIssue> identityMigrationIssues = default) => Failure(Conflict(kind, message) with
+        {
+            IdentityMigrationIssues = identityMigrationIssues.IsDefault ? [] : identityMigrationIssues
+        });
 
     internal static WorkspaceTransactionResult Failure(WorkspaceConflict conflict) => new()
     {

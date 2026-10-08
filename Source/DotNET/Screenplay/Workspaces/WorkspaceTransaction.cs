@@ -215,7 +215,8 @@ sealed class WorkspaceTransaction(ScreenplayWorkspace workspace)
         {
             return WorkspaceTransactionOperations.Failure(
                 WorkspaceConflictKind.InvalidIdentityMigration,
-                exception.Message);
+                exception.Message,
+                exception.IdentityMigrationIssues);
         }
 
         CompilationResult<SemanticCompilation> compilation;
@@ -227,7 +228,8 @@ sealed class WorkspaceTransaction(ScreenplayWorkspace workspace)
         {
             return WorkspaceTransactionOperations.Failure(
                 WorkspaceConflictKind.InvalidIdentityMigration,
-                exception.Message);
+                exception.Message,
+                exception.IdentityMigrationIssues);
         }
 
         if (!compilation.Success)

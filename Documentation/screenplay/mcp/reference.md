@@ -613,6 +613,16 @@ Two independent choices control AST authoring:
   model references and unintended capture. `Draft` reports deliberate unresolved
   debt but does not waive structure, identities or existing-binding protection.
 
+Identity migration refusals use conflict kind `InvalidIdentityMigration` and return
+`identityMigrationIssues` on rejected `propose`, `propose-ast` and `propose-source`
+results. Each item has `arguments` (input array names) and `address` with only `kind`
+and typed `parts`, matching the MCP address schema. Stale renames identify both
+endpoints in `semanticRenames` or `eventRenames`; invalid retirements identify
+`retiredSemanticAddresses` or `retiredEventAddresses`. Missing continuity lists
+rename and retirement as alternatives, not instructions to retire an identity.
+Events have both semantic and event-contract assignments, so both must be addressed,
+as must all assigned descendants. The conflict message contains the same details.
+
 Source acceptance is not executable readiness or proof of business correctness.
 Explicit valid reference edits differ from an untouched reference changing meaning.
 
