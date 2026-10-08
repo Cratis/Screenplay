@@ -1,0 +1,46 @@
+module Workspaces
+  feature Tracking
+    slice StateView WorkItemList
+      readmodel WorkItemSummary
+        workItemId WorkItemId
+        title String
+        status WorkStatus
+
+      query AllWorkItems => observable WorkItemSummary[]
+      query WorkItemById => WorkItemSummary optional
+        by workItemId WorkItemId
+
+      projection WorkItemList => WorkItemSummary
+        from WorkItemCreated
+          workItemId = $eventSourceId
+          title = title
+          status = status
+        from WorkItemRenamed
+          title = title
+        from WorkItemClosed
+          status = status
+
+      screen WorkItemList
+        template MasterDetail
+          list
+            title "Work items"
+            data WorkItemSummary[] via query AllWorkItems
+            table WorkItemSummary
+              column title label "Title"
+              column status label "Status"
+              on row-click navigate to WorkItemDetails by workItemId
+          details
+            section emptyState
+              title "Select a work item"
+              action CreateWorkItem
+
+      specification ListingCreatedWorkItems
+        given WorkItemCreated
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          title = "Design master detail"
+          status = "open"
+        when query WorkItemById
+          workItemId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        then result
+          title = "Design master detail"
+          status = "open"
