@@ -22,21 +22,27 @@ static class McpSemanticDiff
     static readonly string[] _ignoredMembers = ["kind", "name", "description", "documentation", "isPlacement", "fileImports"];
     static readonly string[] _opaqueMembers = ["code", "body", "content", "file"];
     static readonly string[] _hierarchyChildren = ["modules", "concepts", "types", "policies", "personas", "uiProfiles", "themes", "triggers", "layouts", "systems", "eventSources", "screenTemplates", "dialogTemplates", "forms", "features", "slices", "events", "commands", "queries", "projections", "captures", "reactions", "screens", "constraints", "specifications", "readModels", "reducers", "operations"];
-    internal static object Read(IMcpProposal proposal, JsonElement arguments)
+    static readonly string[] _limits = ["Structural authoring comparison, not an equivalence or execution verdict.", "Opaque inline content and file references are compared by hash, but behavior inside code and external file contents are not analyzed; use implementation-requirements for attachment content hashes.", "Direct indexed dependants only (before and after); properties use their owner's references and containers aggregate external references to contained declarations, excluding references inside the container. No transitive or runtime impact.", "Unassigned kinds (including constraints) are compared by exact kind/authoring address only, never claimed as identity-preserving renames."];
+
+    internal static object Read(IMcpProposal proposal, JsonElement arguments) => Read(proposal.Before, proposal.Workspace, arguments, proposal.Workspace.Revision.ToString(), false);
+
+    internal static object Compare(ScreenplayWorkspace before, ScreenplayWorkspace after, JsonElement arguments) =>
+        Read(before, after, arguments, $"comparison:{Hash($"{before.Revision}:{after.Revision}")}", true);
+
+    static object Read(ScreenplayWorkspace baseline, ScreenplayWorkspace candidate, JsonElement arguments, string revision, bool revisions)
     {
-        var revision = proposal.Workspace.Revision.ToString();
         var expected = McpJson.OptionalString(arguments, "expectedSourceRevision");
         if (expected is not null && expected != revision)
         {
-            throw new McpFailure("StaleRevision: semantic-diff pages must identify the proposal revision.");
+            throw new McpFailure(revisions ? "StaleRevision: semantic-diff pages must identify both snapshot revisions." : "StaleRevision: semantic-diff pages must identify the proposal revision.") { FailureKind = revisions ? "StaleRevision" : "RequestFailed" };
         }
         if (McpJson.Integer(arguments, "offset", 0, 0, int.MaxValue) > 0 && expected is null)
         {
             throw new McpFailure("'expectedSourceRevision' is required for continuation.", -32602);
         }
 
-        var before = new Snapshot(proposal.Before);
-        var after = new Snapshot(proposal.Workspace);
+        var before = new Snapshot(baseline);
+        var after = new Snapshot(candidate);
         var changes = new List<Change>();
         var changedIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var id in before.Assignments.Keys.Union(after.Assignments.Keys).Order(StringComparer.Ordinal))
@@ -139,14 +145,15 @@ static class McpSemanticDiff
         return new
         {
             sourceRevision = revision,
-            beforeRevision = proposal.Before.Revision.ToString(),
+            beforeRevision = baseline.Revision.ToString(),
+            afterRevision = candidate.Revision.ToString(),
             complete = sections.All(section => section.complete),
             hasSemanticChange = SemanticChange(ordered, sections.All(section => section.complete)),
             comparisonLevel = "authoring-structure",
-            executableBeforeAvailable = proposal.Before.Compilation.Success,
-            executableAfterAvailable = proposal.Workspace.Compilation.Success,
+            executableBeforeAvailable = baseline.Compilation.Success,
+            executableAfterAvailable = candidate.Compilation.Success,
             sections,
-            limits = new[] { "Structural authoring comparison, not an equivalence or execution verdict.", "Opaque inline content and file references are compared by hash, but behavior inside code and external file contents are not analyzed; use implementation-requirements for attachment content hashes.", "Direct indexed dependants only (before and after); properties use their owner's references and containers aggregate external references to contained declarations, excluding references inside the container. No transitive or runtime impact.", "Unassigned kinds (including constraints) are compared by exact kind/authoring address only, never claimed as identity-preserving renames.", "No revision-to-revision comparison." },
+            limits = revisions ? _limits : [.. _limits, "No revision-to-revision comparison."],
             page = McpPaging.BoundedSourcePage(ordered.Cast<object>(), arguments, revision)
         };
 

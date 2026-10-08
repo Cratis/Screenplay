@@ -171,11 +171,14 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `dependency-graph` | Optional view, from/to levels, scope, direction, kinds, includeTestOnly, evidenceLimit | Inferred slice/container/context edges, ordering cycles, story-order suggestions, unresolved references or checked dependency declarations |
 | `find-fixtures` | Specification address, role, property, value, scope/document | Paged effective assignments with type, value, location and authored/example/override origin, including `when append` event payloads (`whenAppendedEvent`) and `for` destinations (`whenAppendedEventDestination`) |
 | `find-assertion-gaps` | Optional scope/document | Slices without specifications declaring a `then` assertion, including `then denied` |
+| `find-specification-obligations` | Optional module/feature/slice scope, document | Per-declaration specification obligations with met/unmet status and matching specification owners |
+| `find-modeling-smells` | Optional scope/document, eventFanOutThreshold/propertyFanInThreshold | Information-level modeling questions; no compiler diagnostics |
 | `diagnostics` | Optional `checks` (comma-separated names, codes, or `all`), `scope`, document | Paged diagnostics, severity counts, scoped declaration counts and affected scopes |
 | `read-document` | Required relative `path` | Exact original UTF-8 byte pages |
 | `merged-document` | `view`: source, syntax or both | Canonical merged byte pages or explicitly requested typed AST |
 | `recommend-layout` | None | Size-admissible layout choices and recommendation |
 | `syntax-schema` | Optional concrete `kind` | Kind list or exact typed JSON schema |
+| `semantic-diff` | Required `beforeWorkspaceJson`, `afterWorkspaceJson`; optional offset/limit/expectedSourceRevision | Paged authoring-structure comparison of two exported model revisions |
 
 Names and kinds are case-sensitive. Logical address example:
 `Projects.Registration.RegisterProject.RegisterProject`, kind `Command`.
@@ -187,6 +190,41 @@ aggregation uses `descendants: true` explicitly and does not imply transitive
 runtime impact. Reference coverage excludes code, expression identifiers,
 property paths, imports, profile settings and external registrations; results
 state their coverage.
+
+### Specification obligations
+
+`find-specification-obligations` derives authored obligations, not runtime coverage. A **met** obligation says that a matching specification exists, not that behavior is fully covered or that the specification passes. Items carry a stable `ruleId`, resolvable `declaration` owner (address/kind), rule `location`, `subject`, `description`, `severity`, nullable `reason`, `status`, and matching `specifications`. The list is capped at 20 with `specificationCount` and `specificationsTruncated`; inspect the relevant slice's specification details for the complete inventory. Pages enforce both item and serialized-byte budgets.
+
+| Rule ID | Obligation and matching evidence |
+| --- | --- |
+| `SPEC001` | Command success: a resolved `when` command, an outcome assertion, no error or denial |
+| `SPEC002` | Each `require`: a resolved command action and exact explicit rejection message |
+| `SPEC003` | Each command or concept validation rule: exact explicit rejection message; concept rules use commands accepting that concept |
+| `SPEC004` | Authorized command/query (including module/feature gates): its resolved action and `then denied` |
+| `SPEC005` | Each value-unique constraint: prior claim event, equal literal composite key through production mappings, different known destinations, and rejection |
+| `SPEC006` | Read model: state/absence assertion or results asserted through a resolved query returning that view |
+| `SPEC007` | Each projection `remove with`: append its resolved event or execute a command producing it; root removals require absence of the affected view, while child/nested removals require an assertion of the affected collection/object path. Variant-local removals match only that variant's view |
+| `SPEC008` | Reaction: drive its event by append/command, fire its named or built-in trigger, drive a same-slice clock schedule, or explicitly redeliver to it; assert a declared produced event (including invoked-command events) or same-slice `then no events` |
+
+Examples are expanded before matching. Ambiguous references do not meet obligations. Rejection rules without an explicit message remain `info`/`unmet`: a bare `then error` cannot distinguish individual rules. Opaque validation blocks report one information-level obligation rather than invented code rules. Syntax-only owners retain authored presence status but carry `info` and the executable-readiness reason. Competing claims use literal fixtures and direct command-to-event property mappings; unknown expressions do not prove an equal claim. A constraint's explicit message must match; without one, any rejection suffices alongside the competing-claim evidence. This is a deterministic presence heuristic, not simulation or proof of causation.
+
+Optional `scope` must name exactly one module, feature or slice; unknown/ambiguous scopes reject. Scoped results include referenced concept validations and value constraints on selected events, even when declared at application level. Concept rejection evidence is matched across all commands accepting the concept, independent of the selected scope. `document` filters obligation owners by contributing source path. Use `offset`, `limit` (default 50, maximum 200) and `expectedSourceRevision`; continuation requires the first page's `sourceRevision`, and stale source is refused. The report preserves the compilation verdict and never adds compiler diagnostics.
+
+### Advisory modeling smells
+
+`find-modeling-smells` is separate from compilation. Every finding has `severity: "info"`, a stable `ruleId`, a resolvable `declaration` owner, nullable `property`, and a `question`, never a prescription or a compiler warning. Its findings do not change the compilation verdict, including with `--warnaserror`. Identical syntax does not prove identical business meaning.
+
+| Rule ID | Review question prompted by |
+| --- | --- |
+| `SMELL001` | Event name ending in `Updated`, `Changed`, `Edited`, `Saved`, `Modified`, `Deleted`, `Synced` or `Received` |
+| `SMELL002` | Command name starting with the PascalCase word `Update`, `Edit`, `Save`, `Set`, `Manage`, `Get`, `Load` or `Fetch` (not longer words such as `Settle`) |
+| `SMELL003` | Nonempty event property set identical to another event produced by a different command |
+| `SMELL004` | Command producing more distinct resolved events than `eventFanOutThreshold` |
+| `SMELL005` | Read-model property fed by more distinct resolved events than `propertyFanInThreshold` |
+
+Names are case-sensitive. Property sets compare declared names, type names, collection and optional modifiers, independent of order. Descriptions, intent, payload values and code are not compared. Fan-out counts event targets, not repeated production clauses or operations. Fan-in follows explicit projection mappings and known-event automap, `every`/`all`, joins, nested/child property paths and variants, including synthesized `enters on` handlers. Effective automap excludes aggregate-only `from` blocks, explicitly mapped targets and consumed join sources; it matches compatible declared properties by case-insensitive name. Unresolved references, imported event shapes and opaque code are not guessed. Thresholds default to 5 and accept integers from 1 through 200; a count equal to the threshold is not flagged.
+
+`related` declaration evidence is capped at 20, with `relatedCount` and `relatedTruncated`. Pages use the same bounded item/byte budgets and revision contract as the obligations report. Scope must name one module, feature or slice; document filters finding owners. The report is read-only and has **no per-declaration suppression yet**. Choosing a source annotation or an external address/rule-ID suppression contract remains a separate language/tooling decision; no new `.play` syntax is accepted by this report.
 
 ### Completeness diagnostics
 
@@ -655,6 +693,7 @@ The `result` contains:
 | --- | --- |
 | `sourceRevision` | The proposal workspace revision, including its identity catalog. |
 | `beforeRevision` | The retained baseline workspace revision. |
+| `afterRevision` | The candidate workspace revision (the same as `sourceRevision` for proposal review). |
 | `comparisonLevel` | `authoring-structure`: normalized typed members, not source lines or an execution/equivalence verdict. |
 | `executableBeforeAvailable`, `executableAfterAvailable` | Whether each snapshot binds executably; structural review does not require binding. |
 | `complete` | Whether every comparison section is complete. |
@@ -750,6 +789,48 @@ not analyze behavior inside code, load or compare external attachment file
 contents (inspect `implementation-requirements` hashes separately), execute
 specifications, prove runtime or transitive impact, or compare two arbitrary
 revisions.
+
+## Semantic revision difference
+
+`semantic-diff` compares two complete canonical workspace exports without opening
+or replacing the active workspace, reading disk files or writing identities.
+Pass the decoded, reassembled UTF-8 JSON from `export-workspace` as the strings
+`beforeWorkspaceJson` and `afterWorkspaceJson`. These are snapshots, not Git refs,
+paths, labels or raw `.play` text. To compare committed revisions, export each
+revision from its checkout with its corresponding identity state; to compare a
+generated model with a curated model, export both workspaces instead.
+
+Both exports must have the same application identity. Preserve their authoritative
+catalogs: separately generated IDs do not establish rename continuity. The tool
+never guesses a rename from similar names or edits a catalog to make it match.
+Malformed, noncanonical, incomplete, duplicated or content-revision-mismatched
+exports return a tool error with `failureKind: "UnreadableRevision"` naming the
+unreadable input. Different application identities return `IncompatibleRevisions`
+rather than an ambiguous comparison. Structurally ambiguous declarations in a
+readable snapshot retain the proposal comparison's explicit incomplete sections.
+
+The result reuses the [semantic proposal difference](#semantic-proposal-difference)
+fields, sections, ordering, completeness rules and exclusions. `beforeRevision`
+and `afterRevision` identify the two validated workspace revisions, including
+catalogs and exact sources. `sourceRevision` and `page.revision` instead identify
+the ordered pair with a SHA-256 comparison token. Send the same two exports and
+echo that token as `expectedSourceRevision` on every continuation. Changing either
+snapshot rejects with `StaleRevision`; missing continuation pins are invalid
+arguments. No retained proposal or MCP Apps support is required.
+
+Pages use `offset`, `limit` (default `50`, range `1`–`200`) and the same 192 KiB
+serialized-item budget; follow `nextOffset` rather than assuming a full count
+page. Both exports must fit the ordinary request envelope together, and each is
+subject to the existing workspace/source admission bounds. This tool does not
+resolve Git refs directly or provide a chunked snapshot-upload protocol.
+
+As with proposal review, this is not an equivalence or execution verdict. Opaque
+inline content and file references are compared by hash, but code behavior and
+external file contents are not analyzed. Specification expectations are static,
+not executed; dependants are direct indexed references, not transitive or runtime
+impact. Unassigned declarations use exact kind/address fallback keys, never
+identity-preserving rename claims. These exclusions are returned in `limits`;
+only the proposal-specific exclusion of revision-to-revision comparison is absent.
 
 ## Review, durable state and recovery
 
