@@ -58,9 +58,9 @@ export const commonTokenRules: MonarchTokenRules = [
 export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMonarchLanguage {
     const tokenizer: Record<string, MonarchTokenRules> = {
         root: [
-            [/^(numbers)([ \t]+)(exact)(?=[ \t]*(?:(?:\/\/|#).*)?$)/, ['keyword', 'white', 'keyword']],
             [new RegExp(`^(\\s*)(example)(\\s+)([A-Z][${bmpWordCharacters}]*)(\\s*)(:)(\\s*)([A-Z][${bmpWordCharacters}.]*)(?=\\s*(?://.*)?$)`),
                 ['white', 'keyword', 'white', 'type.identifier', 'white', 'operator', 'white', 'type.identifier']],
+            [/^(numbers)([ \t]+)(exact)(?=[ \t]*(?:(?:\/\/|#).*)?$)/, ['keyword', 'white', 'keyword']],
             [/^(eventsource)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
             [/^(system)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
             [/^(\s*)(produces\s+operation)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/,
