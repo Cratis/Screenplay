@@ -10,8 +10,8 @@
         {
             "name": "Example backed expectations still reject a contradictory command route",
             "validate": true,
-            "source": ["eventsource Account", "  identifier String", "  stream Events", "module M", "  feature F", "    slice StateChange S", "      event Happened", "      command Act", "        id String identifier", "        stream Account.Events", "        produces Happened", "      example Input : Act", "        id = \"account\"", "      example Expected : Happened", "      specification Routed", "        when Input", "        then Expected", "          no stream"],
-            "diagnostics": ["PLAY0551@18"]
+            "source": ["eventsource Account", "  identifier String", "  stream Events", "module M", "  feature F", "    slice StateChange S", "      event Happened", "      command Act", "        id String identifier", "        stream Account.Events", "        produces Happened", "          for id", "      example Input : Act", "        id = \"account\"", "      example Expected : Happened", "      specification Routed", "        when Input", "        then Expected", "          no stream"],
+            "diagnostics": ["PLAY0551@19"]
         },
         {
             "name": "An example rejects a stream and its nested stream id without cascading errors",
