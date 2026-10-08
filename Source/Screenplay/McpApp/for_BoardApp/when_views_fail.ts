@@ -6,7 +6,7 @@
 import { createElement, type ReactNode } from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, vi } from 'vitest';
 import { BoardApp } from '../BoardApp';
 
 const failures = vi.hoisted(() => ({ unreadable: false, boardDraw: false, mapDraw: false, compile: false }));
@@ -73,24 +73,24 @@ afterEach(async () => {
 describe('when the board document cannot be read', () => {
     beforeEach(async () => { failures.unreadable = true; await render(); });
 
-    it('should explain the failure in the board view', () => expect(boardView().textContent).toContain('document unreadable'));
+    it('should explain the failure in the board view', () => boardView().textContent!.should.contain('document unreadable'));
     it('should keep the board and map controls in both views', () => {
-        expect(toolbarButtons(boardView())).toContain('Module and feature dependencies');
-        expect(toolbarButtons(mapHost())).toContain('Event model board');
+        toolbarButtons(boardView()).should.contain('Module and feature dependencies');
+        toolbarButtons(mapHost()).should.contain('Event model board');
     });
-    it('should still draw the dependency map', () => expect(mapHost().querySelector('.screenplay-dependency-map')).not.toBeNull());
+    it('should still draw the dependency map', () => (mapHost().querySelector('.screenplay-dependency-map') !== null).should.be.true);
 });
 
 describe('when drawing the board fails', () => {
     beforeEach(async () => { failures.boardDraw = true; await render(); });
 
     it('should explain the failure in the board view with the controls kept', () => {
-        expect(boardView().textContent).toContain('The board failed to draw: board exploded');
-        expect(toolbarButtons(boardView())).toContain('Module and feature dependencies');
+        boardView().textContent!.should.contain('The board failed to draw: board exploded');
+        toolbarButtons(boardView()).should.contain('Module and feature dependencies');
     });
     it('should keep the dependency map', () => {
-        expect(mapHost().querySelector('.screenplay-dependency-map')).not.toBeNull();
-        expect(toolbarButtons(mapHost())).toContain('Event model board');
+        (mapHost().querySelector('.screenplay-dependency-map') !== null).should.be.true;
+        toolbarButtons(mapHost()).should.contain('Event model board');
     });
 });
 
@@ -98,18 +98,18 @@ describe('when drawing the dependency map fails', () => {
     beforeEach(async () => { failures.mapDraw = true; await render(); });
 
     it('should explain the failure in the map view with the controls kept', () => {
-        expect(mapHost().textContent).toContain('The dependency map failed to draw: map exploded');
-        expect(toolbarButtons(mapHost())).toContain('Event model board');
+        mapHost().textContent!.should.contain('The dependency map failed to draw: map exploded');
+        toolbarButtons(mapHost()).should.contain('Event model board');
     });
-    it('should keep the board', () => expect(boardView().querySelector('.fake-board')).not.toBeNull());
+    it('should keep the board', () => (boardView().querySelector('.fake-board') !== null).should.be.true);
 });
 
 describe('when compiling yields no map', () => {
     beforeEach(async () => { failures.compile = true; await render(); });
 
-    it('should say the dependency map is unavailable', () => expect(mapHost().textContent).toContain('The dependency map is unavailable: compilation failed'));
+    it('should say the dependency map is unavailable', () => mapHost().textContent!.should.contain('The dependency map is unavailable: compilation failed'));
     it('should explain the failure in the board view with the controls kept', () => {
-        expect(boardView().textContent).toContain('The board could not be drawn: compilation failed');
-        expect(toolbarButtons(boardView())).toContain('Module and feature dependencies');
+        boardView().textContent!.should.contain('The board could not be drawn: compilation failed');
+        toolbarButtons(boardView()).should.contain('Module and feature dependencies');
     });
 });

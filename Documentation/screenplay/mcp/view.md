@@ -82,8 +82,8 @@ highlight the board, and inferred dependencies do not prove executable readiness
 If the board cannot read or draw the model, **Board** and **Map** stay in the
 toolbar. The Board view says why, and the Map stays available when the dependencies
 were compiled. A failure in one view leaves the other in place. If compiling gives no
-map, the Map view says it is unavailable. A selection stays when the view refreshes, and
-switching between **Current** and **Proposed** clears it.
+map, the Map view says it is unavailable. A selection stays when the view refreshes, as long as the
+item still exists, and switching between **Current** and **Proposed** clears it.
 
 ## See what a proposal would change
 

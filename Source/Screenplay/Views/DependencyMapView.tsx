@@ -38,10 +38,13 @@ export const DependencyMapView = ({ map, selectedEdgeId, modelKey, onShowSource 
     const routes = useMemo(() => new Map(layout.edges.map(edge => [edge.id, edge])), [layout]);
     const focusableKeys = [...edges.map(edge => edge.id), ...layout.nodes.map(node => node.key)];
     const tabStop = focusedKey && focusableKeys.includes(focusedKey) ? focusedKey : focusableKeys[0];
-    const selection = chosen !== undefined && focusableKeys.includes(chosen) ? chosen : undefined;
+    // Hiding an item through the filters is not removing it: validate against the unfiltered map.
+    const exists = chosen !== undefined && (map.edges.some(edge => edge.id === chosen) || map.nodes.some(node => node.key === chosen));
+    const selection = exists ? chosen : undefined;
     if (chosen !== undefined && selection === undefined) setSelected({ modelKey, id: undefined });
     const selectedEdge = edges.find(edge => edge.id === selection);
     const selectedNode = positions.get(selection ?? '');
+    const shownSelection = selectedEdge || selectedNode ? selection : undefined;
     const labelOf = (edge: DependencyMapEdge, withUnits = false) => dependencyKinds.flatMap(kind => {
         const count = edge.byKind[kind] ?? 0;
         return count > 0 ? [`${dependencyKindLabels[kind]} ${count}${withUnits ? ` ${count === 1 ? 'reference' : 'references'}` : ''}`] : [];
@@ -116,7 +119,7 @@ export const DependencyMapView = ({ map, selectedEdgeId, modelKey, onShowSource 
                         </li>)}</ul>
                     </li>)}</ul>
                 </> : selectedNode ? <><h2>{nameOf(selectedNode)}</h2><p>Select an edge to see its consumer and producer slices.</p></> : <p>Select an edge to see the slices behind it. Press Escape to clear the selection.</p>}
-                {selection && <button type='button' onClick={() => setSelection(undefined)}>Clear selection</button>}
+                {shownSelection && <button type='button' onClick={() => setSelection(undefined)}>Clear selection</button>}
             </aside>
             <table className='screenplay-dependency-map__accessible'><caption>All dependencies</caption>
                 <thead><tr><th>Consumer</th><th>Producer</th><th>Kinds and references</th><th>Slice pairs</th></tr></thead>

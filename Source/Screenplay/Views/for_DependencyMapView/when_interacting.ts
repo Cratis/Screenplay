@@ -82,6 +82,19 @@ describe('when switching the shown model', () => {
     });
 });
 
+describe('when the filters hide the selected edge', () => {
+    const toggleKind = (kind: string, checked: boolean) => invoke(render().find(element => element.type === 'input' && element.props.value === kind)!, 'onChange', { target: { checked } });
+    it('should bring the selection back when the kind is shown again', () => {
+        invoke(edges()[0], 'onKeyDown', { key: 'Enter', preventDefault: vi.fn() });
+        const key = pressed(render())[0].key as string;
+        const kind = map.evidence[map.edges.find(edge => edge.id === key)!.evidence[0]].kind;
+        toggleKind(kind, false);
+        pressed(render()).length.should.equal(0);
+        toggleKind(kind, true);
+        pressed(render()).map(element => element.key).should.deep.equal([key]);
+    });
+});
+
 describe('when the same model is refreshed', () => {
     it('should keep a selected edge', () => {
         invoke(edges()[0], 'onKeyDown', { key: 'Enter', preventDefault: vi.fn() });
