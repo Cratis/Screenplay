@@ -5,7 +5,7 @@ The Screenplay extension for Visual Studio Code (`cratis.screenplay`) opens a `.
 - modules and features across
 - each slice as a column holding its command, the events it produces and the read model it builds
 - the specifications of each slice beneath it
-- the screens of each slice, drawn as a prototype in the **User** row above it
+- the screens of each slice, drawn as a prototype in the row of each [persona](personas.md) who may use it, above the slice
 
 The text stays the source of truth. The board redraws as you edit, and the language support (highlighting, completion, hover and diagnostics) is one click away.
 
@@ -57,14 +57,51 @@ The board does not show handler execution outputs or confirmation status. This a
 
 ## Screens
 
-Each slice that declares [screens](screens.md) gets a prototype in the board's **User** row. The prototype is a sketch of what the screen holds, laid out top to bottom:
+Each slice that declares [screens](screens.md) gets a prototype in the board, in the row of each persona who may use it. A persona may use a slice's screens when the policies it holds satisfy everything the slice is gated by: the `authorize` of its module, its features and its own command or query, taken together. A slice that nothing gates, or that no persona satisfies, is shown in the generic **User** row. Once the model has a screen, the board draws a row for every persona, then the **User** row if a screen fell to it. Without a screen there are no rows.
+
+The prototype is a sketch of what the screen holds, laid out top to bottom:
 
 - titles
 - actions, side by side
 - tables, summaries and inline code
 - the slots of a template, the header and footer spanning and the others side by side
 
-Data a table or summary presents is not drawn twice. A screen implemented in a file is drawn as one content area. The User row appears only when the model has a screen.
+Data a table or summary presents is not drawn twice. A screen implemented in a file is drawn as one content area.
+
+## Completion that fits the block
+
+Completion in the text editor offers only what the block under the cursor can hold. Monaco and VS Code share the same rules:
+
+- A `slice` offers the members of its type: a `StateChange` slice, a `StateView` slice, an `Automation` slice and a `Translate` slice each get their own list.
+- A module offers, among others, `feature`, `screen`, `form`, `contribute`, `import` and `depends on`; a feature offers its slices, nested features, `contribute` and `depends on`.
+- `readmodel`, `reducer`, `form`, `contribute`, `behavior`, `persona`, `authentication`, `seed`, `theme`, `ui profile`, `layout`, and screen and dialog templates offer their own members.
+- At the top level, `domain` and `authentication` are not offered again once the document declares them.
+
+### Expand an empty command
+
+On an empty line directly under `command <Name>`, completion lists the whole body as its first entry. The expansion is built from what the document declares:
+
+- the identifier, when a concept named `<Subject>Id` is declared (for `AddProduct`, `productId ProductId identifier` needs a `ProductId` concept)
+- the properties of the event the command most likely produces: a declared event whose name starts with the subject, otherwise the subject followed by the past tense of the verb (`AddProduct` gives `ProductAdded`)
+- the `produces` of that event, with its `for` destination and property mappings, or `produces event` when the event is not declared
+
+Pressing Enter after a block header indents one level, so the suggestion starts at the block's own indentation.
+
+### Ghost text for structure
+
+On an empty line inside a block whose next structure is missing, both editors show the structure the block most obviously needs as ghost text. Press Tab to accept it:
+
+| Block | Suggestion |
+| --- | --- |
+| `command` with no `produces` or `handler` | the `produces` of the likely event, or the expansion above when the command has no properties yet |
+| `specification` in a slice with a command | a `when` for the slice's command with example values, then a `then` for the likely event. A `given caller` with `authenticated` comes first when the command has an `authorize` |
+| `form <Name> for <Command>` | a `field` for each property of the command |
+
+Nothing is suggested inside a code fence, or when the block already has its outcome or the command it needs is not declared.
+
+### Other extensions
+
+The extension turns GitHub Copilot's inline suggestions off for `.play` files, so they do not compete with the language service. To bring them back, set `"github.copilot.enable": { "screenplay": true }`. It also registers the language's keywords with the Code Spell Checker extension, when installed, so words such as `readmodel` are not flagged. For `.play` files it turns word-based suggestions off.
 
 ## Dependency map
 
