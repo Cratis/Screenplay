@@ -92,6 +92,7 @@ internal static partial class SpecificationParser
         SpecificationDeniedSyntax? denied = null;
         SpecificationReturnSyntax? thenReturns = null;
         FileReferenceSyntax? file = null;
+        string? description = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
         SpecificationClockSyntax? givenClock = null;
         var givenCaptures = new List<SpecificationCaptureSyntax>();
@@ -116,6 +117,14 @@ internal static partial class SpecificationParser
             // Absence assertions admit any whitespace after 'then'; every other directive keeps its space-separated first word.
             switch (ThenNoPrefixRegex().IsMatch(line.Content) ? "then" : LineText.FirstWord(line.Content))
             {
+                case "description":
+                    var previousDescription = description;
+                    description = DescriptionParser.Parse(context, line, description, $"Specification '{name}'");
+                    if (previousDescription is null && description is not null)
+                    {
+                        directiveLocations["description"] = line.Location;
+                    }
+                    break;
                 case "given":
                     if (KeywordRegex("given", "clock").IsMatch(line.Content))
                     {
@@ -306,6 +315,7 @@ internal static partial class SpecificationParser
 
         return new(name, given, when, thenEvents, thenErrors, header.Location, givenReadModels, thenReadModels)
         {
+            Description = description,
             SourceOptions = context.SourceOptions,
             File = file,
             ThenQueries = thenQueries,

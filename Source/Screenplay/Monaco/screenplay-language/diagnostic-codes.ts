@@ -61,6 +61,8 @@ export const diagnosticCodes = {
     invalidDependencyTarget: 'PLAY0554',
     repeatedDependencyDeclaration: 'PLAY0555',
     mutualDependencyDeclarations: 'PLAY0556',
+    invalidDocumentation: 'PLAY0558',
+    conflictingDocumentationAcrossFiles: 'PLAY0559',
     ambiguousReference: 'PLAY0198',
     invalidImplementationBlock: 'PLAY0492',
     invalidImplementationHint: 'PLAY0493',

@@ -4,6 +4,8 @@ A reaction is behavior that runs when something happens — the "if this then th
 what sets it off and what that sets off in turn: notifications, calls to external systems, follow-up events,
 or commands. Reactions live inside `Automation` slices.
 
+A reaction can carry one nonempty fenced `markdown` `documentation` block directly in its body to explain its assumptions and recovery ownership. It is authoring-only (`PLAY0270`), with no executable effect; it does not belong under a trigger. See [Descriptions and documentation](slices.md#descriptions-and-documentation).
+
 ## Syntax
 
 ```screenplay

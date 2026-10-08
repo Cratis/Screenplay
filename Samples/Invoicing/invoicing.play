@@ -345,6 +345,10 @@ behavior RefreshOnEnter
 // ============================================================
 
 module Invoicing
+  documentation
+    ```markdown
+    Invoicing owns billing decisions. Payment-provider facts enter through translation slices.
+    ```
   description
     ```text
     Everything related to invoicing customers.
@@ -471,6 +475,10 @@ module Invoicing
   // ==========================================================
 
   feature InvoiceManagement
+    documentation
+      ```markdown
+      Drafting, issuing and cancellation remain separate business decisions.
+      ```
     description "Registering and managing the lifecycle of invoices"
     authorize IsInvoicingStaff
 
@@ -484,7 +492,15 @@ module Invoicing
     // Start a draft with fresh identities; generated values are never form inputs.
     // ESM v7 fixtures make generation deterministic, not random, in a specification.
     slice StateChange StartInvoiceDraft
+      documentation
+        ```markdown
+        A draft reserves identities without claiming that an invoice has been issued.
+        ```
       command StartInvoiceDraft
+        documentation
+          ```markdown
+          The server creates both identities; callers supply only the customer.
+          ```
         invoiceId InvoiceId generated identifier
         receiptId InvoiceReceiptId generated
         customerId CustomerId
@@ -503,6 +519,7 @@ module Invoicing
           label "Start invoice draft"
 
       specification StartingAnInvoiceDraft
+        description "Witnesses that creating a draft returns the generated invoice and receipt identities"
         given caller
           authenticated
           role "InvoiceManager"
@@ -1201,6 +1218,10 @@ module Invoicing
       description "The staff's list of every invoice"
 
       readmodel InvoiceListReadModel
+        documentation
+          ```markdown
+          This list summarizes invoice state, not the full line-item history.
+          ```
         description "One row per invoice in the invoice list"
         file Invoicing/InvoiceList/InvoiceListReadModel.cs
         invoiceId      InvoiceId
@@ -2357,6 +2378,10 @@ module Invoicing
       description "Closes an invoice out once it is paid in full"
 
       reaction PaymentReconciler
+        documentation
+          ```markdown
+          Payment recording and invoice closure are separate facts so reconciliation can be reviewed.
+          ```
         description "Marks an invoice paid when a payment covers what is outstanding"
         when PaymentRecorded
           description "A payment arrived - is the invoice settled now?"

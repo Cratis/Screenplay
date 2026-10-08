@@ -2533,4 +2533,14 @@ public static class DiagnosticCodes
     /// Two containers declare each other as dependencies.
     /// </summary>
     public const string MutualDependencyDeclarations = "PLAY0556";
+
+    /// <summary>
+    /// A documentation directive requires one nonempty fenced markdown block.
+    /// </summary>
+    public const string InvalidDocumentation = "PLAY0558";
+
+    /// <summary>
+    /// Files give conflicting documentation for the same module or feature.
+    /// </summary>
+    public const string ConflictingDocumentationAcrossFiles = "PLAY0559";
 }

@@ -21,6 +21,7 @@ public partial class ScreenplayPrinter
         using (writer.Indent())
         {
             WriteDescription(writer, command.Description, command);
+            WriteDocumentation(writer, command.Documentation, command);
             WriteCommandProperties(writer, command);
 
             // What the command reads comes before what references it - a mapping fed from state and a rule
@@ -218,6 +219,7 @@ public partial class ScreenplayPrinter
         using (writer.Indent())
         {
             WriteDescription(writer, reaction.Description, reaction);
+            WriteDocumentation(writer, reaction.Documentation, reaction);
 
             foreach (var trigger in reaction.Triggers)
             {
@@ -493,16 +495,7 @@ public partial class ScreenplayPrinter
         }
 
         WriteDescription(writer, declaration.Description, declaration);
-        if (declaration.Documentation is not null)
-        {
-            writer.DirectiveLine("documentation", declaration, "documentation");
-            using (writer.Indent())
-            {
-                writer.Line("```markdown");
-                foreach (var line in declaration.Documentation.Split('\n')) writer.Line(line);
-                writer.Line("```");
-            }
-        }
+        WriteDocumentation(writer, declaration.Documentation, declaration);
     }
 
     // Where the event lands comes before what fills it - the same order the reader asks the questions in.

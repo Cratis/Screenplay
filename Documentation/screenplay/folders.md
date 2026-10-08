@@ -53,6 +53,10 @@ None of those are real. `CompileFolder` reports nothing, because none of them ar
 
 [Module and feature dependencies](slices.md#declared-dependencies) accumulate on the same owner in ordinal file-path order, regardless of import presentation order. Repeated resolved targets are kept once with `PLAY0555` on each repeat; unresolved repeats compare by text. Target resolution uses the merged inventory, so a target may be declared in another file. Layout expansion writes dependencies only in the owner's own file and strips them from restated ancestor headers, like `description`.
 
+### Documentation across files
+
+Module and feature `documentation` follows first-wins merge order, just like descriptions: identical copies are accepted, and a different copy warns with `PLAY0559` while retaining the first text. Put reasoning in the owning container file. Layout expansion keeps it there and strips it from restated ancestor headers. See [Descriptions and documentation](slices.md#descriptions-and-documentation).
+
 ### Diagnostics know which file they came from
 
 A single document needs no file identity - there is one source text, and you handed it over. A folder does, so every `SourceLocation` in a folder compilation carries the relative path of the file it came from:

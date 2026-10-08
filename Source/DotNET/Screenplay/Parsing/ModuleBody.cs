@@ -17,7 +17,7 @@ internal sealed class ModuleBody(string name)
     /// <summary>
     /// What a module body may hold, as it reads in a diagnostic.
     /// </summary>
-    public const string Expected = "description, depends on <Name>, authorize, import, screen template, dialog template, form, contribute, feature, example, 'on <trigger>' or 'uses <Behavior>'";
+    public const string Expected = "description, documentation, depends on <Name>, authorize, import, screen template, dialog template, form, contribute, feature, example, 'on <trigger>' or 'uses <Behavior>'";
 
     readonly List<ScreenTemplateSyntax> _screenTemplates = [];
     readonly List<DialogTemplateSyntax> _dialogTemplates = [];
@@ -32,6 +32,7 @@ internal sealed class ModuleBody(string name)
     readonly List<DependsOnSyntax> _dependsOn = [];
     int _restatedHeaders;
     string? _description;
+    string? _documentation;
     AuthorizeSyntax? _authorize;
 
     /// <summary>
@@ -52,6 +53,9 @@ internal sealed class ModuleBody(string name)
                     _directiveLocations["description"] = line.Location;
                 }
 
+                return true;
+            case "documentation":
+                _documentation = DocumentationParser.Parse(context, line, _documentation, $"Module '{name}'", _directiveLocations);
                 return true;
             case "depends":
                 DependsOnParser.Parse(context, line, _dependsOn, DiagnosticCodes.UnknownModuleDirective);
@@ -100,6 +104,7 @@ internal sealed class ModuleBody(string name)
     public ModuleSyntax Build(SourceLocation location, bool isPlacement = false) =>
         new(name, _screenTemplates, _features, location, _description, _forms, _contributions, _dialogTemplates)
         {
+            Documentation = _documentation,
             Examples = _examples,
             Behaviors = _behaviors,
             UsedBehaviors = _usedBehaviors,

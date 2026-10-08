@@ -3,6 +3,10 @@ title: AST authoring API
 description: Typed syntax serialization, original-document node handles, atomic source transactions, and identity continuity.
 ---
 
+## Authoring metadata
+
+Use nullable `description` on `SpecificationSyntax` and nullable `documentation` on `ModuleSyntax`, `FeatureSyntax`, `SliceSyntax`, `CommandSyntax`, `ReadModelSyntax` and `ReactionSyntax`. `EventSyntax` retains its existing fields. The typed AST carries the text without changing executable semantics; preserve these members during replacements. MCP `declaration-details` includes both fields in the summary for supporting kinds. See [Descriptions and documentation](slices.md#descriptions-and-documentation) for the source forms.
+
 ## Validation contracts
 
 `Cratis.Screenplay.Workspaces.ScreenplayWorkspace` exposes two distinct proposal

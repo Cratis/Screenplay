@@ -50,24 +50,7 @@ internal sealed partial class EventMetadataParser(string name)
                 _locations.TryAdd("description", line.Location);
                 return true;
             case "documentation":
-                var valid = line.Content == "documentation" && context.TryPeekChild(line.Indent, out var fence) && fence.Content == "```markdown";
-                if (!valid)
-                {
-                    context.Error(DiagnosticCodes.InvalidEventDocumentation, $"Event '{name}' documentation requires a fenced markdown block", line.Location);
-                    context.SkipBlock(line.Indent);
-                    return true;
-                }
-
-                var text = CodeBlockParser.ParseFencedText(context, "markdown", line);
-                if (string.IsNullOrWhiteSpace(text) || _documentation is not null)
-                {
-                    context.Error(DiagnosticCodes.InvalidEventDocumentation, $"Event '{name}' accepts one nonempty documentation block", line.Location);
-                }
-                else
-                {
-                    _documentation = text;
-                    _locations["documentation"] = line.Location;
-                }
+                _documentation = DocumentationParser.Parse(context, line, _documentation, $"Event '{name}'", _locations, DiagnosticCodes.InvalidEventDocumentation);
 
                 return true;
             default:

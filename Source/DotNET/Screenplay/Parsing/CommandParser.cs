@@ -46,6 +46,7 @@ internal static partial class CommandParser
         CommandStreamSyntax? stream = null;
         var streamCandidates = new List<CommandStreamSyntax>();
         string? description = null;
+        string? documentation = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
@@ -57,7 +58,7 @@ internal static partial class CommandParser
                 // is a property no matter which keyword it starts with - 'description String' declares a
                 // property called description. Only the directives that do take an identifier operand
                 // ('authorize', 'produces') stay ambiguous, and those use the '@' escape.
-                case "description" or "handler" or "concurrency" when PropertyLineParser.TryParse(line) is { } named:
+                case "description" or "documentation" or "handler" or "concurrency" when PropertyLineParser.TryParse(line) is { } named:
                     AddProperty(context, properties, named, name.Groups[1].Value, line);
                     break;
                 case "validate" when line.Content != "validate csharp" && PropertyLineParser.TryParse(line) is { } validated:
@@ -110,6 +111,9 @@ internal static partial class CommandParser
                         directiveLocations["description"] = line.Location;
                     }
 
+                    break;
+                case "documentation":
+                    documentation = DocumentationParser.Parse(context, line, documentation, $"Command '{name.Groups[1].Value}'", directiveLocations);
                     break;
                 case "authorize":
                     authorize = AuthorizeParser.Combine(authorize, AuthorizeParser.Parse(context, line));
@@ -214,6 +218,7 @@ internal static partial class CommandParser
 
         return new(name.Groups[1].Value, properties, authorize, validations, produces, handler, header.Location, concurrency, description, reads)
         {
+            Documentation = documentation,
             DirectiveLocations = directiveLocations,
             Response = response,
             Stream = stream,

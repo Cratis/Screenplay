@@ -249,7 +249,7 @@ PackageName    = Ident, { ".", Ident } ;
 
 Module         = "module", Ident, NL,
                  INDENT,
-                   { DescriptionDecl
+                   { DescriptionDecl | DocumentationDecl
                    | AuthorizeDecl
                    | DependsOnDecl
                    | FileImport
@@ -418,7 +418,7 @@ ArrangementSizeClass = "compact" | "regular" ;
 
 Feature        = "feature", Ident, NL,
                  INDENT,
-                   { DescriptionDecl
+                   { DescriptionDecl | DocumentationDecl
                    | AuthorizeDecl
                    | DependsOnDecl
                    | FileImport
@@ -435,7 +435,7 @@ Feature        = "feature", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 SliceDecl      = "slice", SliceType, Ident, NL,
-                 INDENT, { DescriptionDecl | FileDirective | SliceBody }, DEDENT ;
+                 INDENT, { DescriptionDecl | DocumentationDecl | FileDirective | SliceBody }, DEDENT ;
 
 SliceType      = "StateChange" | "StateView" | "Automation" | "Translate" ;
 
@@ -454,7 +454,7 @@ SliceBody      = EventDecl
                | ConstraintDecl ;
 
 ReadModelDecl  = "readmodel", Ident, NL,
-                 INDENT, { DescriptionDecl | FileDirective | PropertyLine }, DEDENT ;
+                 INDENT, { DescriptionDecl | DocumentationDecl | FileDirective | PropertyLine }, DEDENT ;
 
 ReducerDecl    = "reducer", Ident, "=>", Ident, NL,
                  INDENT, { DescriptionDecl | ReducerRule }, DEDENT ;
@@ -525,7 +525,7 @@ RequiredTypeRef = QualifiedName, [ "[]" ] ;
 
 CommandDecl    = "command", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | PropertyLine | ReadsDecl | AuthorizeDecl
+                   { DescriptionDecl | DocumentationDecl | PropertyLine | ReadsDecl | AuthorizeDecl
                    | ValidateDecl | ProducesDecl | HandlerDecl | ConcurrencyDecl | CommandResponse | CommandStreamDecl },
                  DEDENT ;
 
@@ -872,7 +872,7 @@ ExampleDecl    = "example", Ident, ":", QualifiedName, NL,
 InlineFixtureAssignment = Path, "=", ConcreteValue ;
 
 SpecificationDecl = "specification", Ident, NL,
-                 INDENT, [ FileDirective ], { SpecificationGiven | SpecificationWhen | SpecificationThen }, DEDENT ;
+                 INDENT, { DescriptionDecl | FileDirective | SpecificationGiven | SpecificationWhen | SpecificationThen }, DEDENT ;
 
 SpecificationGiven = OperationFailureFixture
                | "given", "caller", NL,
@@ -1028,7 +1028,7 @@ ConstraintOption = "released", "by", Ident, NL
 
 ReactionDecl   = "reaction", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | TriggerClause | WhereDecl },
+                   { DescriptionDecl | DocumentationDecl | TriggerClause | WhereDecl },
                  DEDENT ;
 
 (* A reaction needs at least one trigger and at most one where condition.

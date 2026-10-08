@@ -2,6 +2,7 @@
   "kind": "ApplicationSyntax",
   "concepts": [],
   "domain": null,
+  "eventSources": [],
   "fileImports": [],
   "imports": [],
   "modules": [
@@ -9,11 +10,13 @@
       "kind": "ModuleSyntax",
       "authorize": null,
       "description": null,
+      "documentation": "Projects owns naming decisions.",
       "features": [
         {
           "kind": "FeatureSyntax",
           "authorize": null,
           "description": null,
+          "documentation": "Renaming retains the project identity.",
           "features": [],
           "fileImports": [],
           "isPlacement": false,
@@ -27,6 +30,7 @@
                   "kind": "CommandSyntax",
                   "authorize": null,
                   "description": null,
+                  "documentation": "The caller supplies the existing project identifier.",
                   "handler": null,
                   "name": "Rename",
                   "produces": [
@@ -107,11 +111,14 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": []
                 }
               ],
               "constraints": [],
               "description": null,
+              "documentation": "A rename changes the name, not the event source.",
               "events": [],
               "name": "Rename",
               "operations": [],

@@ -153,6 +153,11 @@ public record CommandSyntax(
     IEnumerable<ReadsSyntax>? Reads = null) : SyntaxNode(Location)
 {
     /// <summary>
+    /// Gets the authoring-only markdown explaining this command.
+    /// </summary>
+    public string? Documentation { get; init; }
+
+    /// <summary>
     /// Gets the unconditional syntax-only response contract, if declared.
     /// </summary>
     public CommandResponseSyntax? Response { get; init; }

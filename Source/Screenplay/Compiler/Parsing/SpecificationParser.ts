@@ -13,6 +13,7 @@ import { dotNetWhitespace, nativePattern, pattern } from '../Text/patterns';
 import { sourceStreamPattern } from '../Text/SourceStreamNames';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { parseMappingSource } from './ExpressionParser';
+import { parseDescription } from './DescriptionParser';
 import { isFileDirective } from './FileReferences';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -99,6 +100,7 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
     if (name === '') {
         context.error(DiagnosticCodes.InvalidSpecificationDeclaration, `Invalid specification declaration '${line.content}' - expected 'specification <Name>'`, locationOf(line));
     }
+    let description: string | null = null;
     const body: SpecificationBody = {
         givenOperationFailures: [], thenOperations: [], thenCompensated: [], thenAbsentReadModels: [], thenQueries: [],
         given: [], givenReadModels: [], when: null, whenAppended: null, whenRedelivered: null, whenDeclared: false,
@@ -113,7 +115,9 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
         if (parseOperationStep(context, child, body)) continue;
         // Absence assertions admit any whitespace after 'then'; every other directive keeps its first word.
         const keyword = thenNoPrefix.test(child.content) ? 'then' : firstWord(child.content);
-        if (keyword === 'given') {
+        if (keyword === 'description') {
+            description = parseDescription(context, child, description, `Specification '${name}'`);
+        } else if (keyword === 'given') {
             parseGiven(context, child, body);
         } else if (keyword === 'when') {
             parseWhen(context, child, body, name);
@@ -129,7 +133,7 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
             "'then no events' cannot follow 'when append' or accompany event, event-order, error or denial expectations.", locationOf(body.noEventsLine));
     }
     const { whenDeclared: _, noEventsLine: _noEventsLine, ...members } = body;
-    return { kind: 'SpecificationSyntax', sourceOptions: context.sourceOptions, name, ...members, location: locationOf(line) };
+    return { kind: 'SpecificationSyntax', sourceOptions: context.sourceOptions, name, description, ...members, location: locationOf(line) };
 }
 
 function parseOperationStep(context: ParserContext, line: SourceLine, body: SpecificationBody): boolean {

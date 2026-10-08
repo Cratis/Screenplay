@@ -25,6 +25,7 @@ export const sliceTypes: readonly SliceType[] = ['StateChange', 'StateView', 'Au
 
 export interface SliceSyntax extends SyntaxNode {
     readonly kind: 'SliceSyntax';
+    readonly documentation?: string | null;
     readonly examples?: readonly SpecificationExampleSyntax[];
     readonly type: SliceType;
     readonly name: string;
@@ -58,6 +59,7 @@ export interface DependsOnSyntax extends SyntaxNode {
 export interface FeatureSyntax extends SyntaxNode {
     readonly dependsOn?: readonly DependsOnSyntax[];
     readonly kind: 'FeatureSyntax';
+    readonly documentation?: string | null;
     readonly examples?: readonly SpecificationExampleSyntax[];
     readonly name: string;
     readonly description: string | null;
@@ -74,6 +76,7 @@ export interface FeatureSyntax extends SyntaxNode {
 export interface ModuleSyntax extends SyntaxNode {
     readonly dependsOn?: readonly DependsOnSyntax[];
     readonly kind: 'ModuleSyntax';
+    readonly documentation?: string | null;
     readonly examples?: readonly SpecificationExampleSyntax[];
     readonly name: string;
     readonly description: string | null;

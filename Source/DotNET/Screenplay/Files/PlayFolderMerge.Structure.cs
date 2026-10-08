@@ -41,6 +41,7 @@ internal static partial class PlayFolderMerge
             SourceComments = [.. parts.SelectMany(part => part.SourceComments).Distinct()],
             Examples = [.. parts.SelectMany(part => part.Examples)],
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"module '{group.Key}'", context),
+            Documentation = FirstDocumentation(parts.Select(part => (part.Documentation, part.Location)), $"module '{group.Key}'", context),
             Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"module '{group.Key}'", context),
             DependsOn = [.. group.OrderBy(part => part.Location.Path, StringComparer.Ordinal).SelectMany(part => part.DependsOn)],
             ScreenTemplates = DeclaredInOneFile(
@@ -92,6 +93,7 @@ internal static partial class PlayFolderMerge
             SourceComments = [.. parts.SelectMany(part => part.SourceComments).Distinct()],
             Examples = [.. parts.SelectMany(part => part.Examples)],
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"feature '{group.Key}'", context),
+            Documentation = FirstDocumentation(parts.Select(part => (part.Documentation, part.Location)), $"feature '{group.Key}'", context),
             Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"feature '{group.Key}'", context),
             DependsOn = [.. group.OrderBy(part => part.Location.Path, StringComparer.Ordinal).SelectMany(part => part.DependsOn)],
             Contributions = [.. parts.SelectMany(part => part.Contributions ?? [])],
@@ -283,6 +285,26 @@ internal static partial class PlayFolderMerge
         }
 
         return kept;
+    }
+
+    static string? FirstDocumentation(
+        IEnumerable<(string? Documentation, SourceLocation Location)> parts,
+        string owner,
+        ParserContext context)
+    {
+        var documented = parts.Where(part => part.Documentation is not null).ToList();
+        if (documented.Count == 0) return null;
+
+        foreach (var disagreeing in documented.Skip(1)
+            .Where(part => !string.Equals(part.Documentation, documented[0].Documentation, StringComparison.Ordinal)))
+        {
+            context.Warning(
+                DiagnosticCodes.ConflictingDocumentationAcrossFiles,
+                $"The {owner} is already documented in '{Describe(documented[0].Location.Path)}' - keeping that documentation",
+                disagreeing.Location);
+        }
+
+        return documented[0].Documentation;
     }
 
     static string Signature(UsesBehaviorSyntax uses) =>

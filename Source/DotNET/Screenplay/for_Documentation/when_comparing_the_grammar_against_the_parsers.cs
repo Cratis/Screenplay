@@ -22,6 +22,7 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
             ["constraint"] = ("ConstraintDecl", "constraints.md"),
             ["contribute"] = ("ContributionDecl", "contributions.md"),
             ["description"] = ("DescriptionDecl", "slices.md"),
+            ["documentation"] = ("DocumentationDecl", "slices.md"),
             ["depends"] = ("DependsOnDecl", "slices.md"),
             ["dialog"] = ("DialogTemplateDecl", "templates.md"),
             ["domain"] = ("DomainDecl", "domain.md"),
