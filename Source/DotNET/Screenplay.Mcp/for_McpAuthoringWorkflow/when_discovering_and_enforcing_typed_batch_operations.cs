@@ -60,7 +60,7 @@ public class when_discovering_and_enforcing_typed_batch_operations : given.an_au
     [Fact]
     void should_advertise_all_public_tools() => _tools.EnumerateArray().Select(tool => tool.GetProperty("name").GetString()).ShouldContainOnly(
         ["repair-capabilities", "describe-application", "find-declaration", "search-declarations", "declaration-details", "dependencies", "dependency-graph", "find-references",
-        "find-fixtures", "find-assertion-gaps", "find-specification-obligations", "merged-document", "read-document", "diagnostics", "recommend-layout", "syntax-schema",
+        "find-fixtures", "find-assertion-gaps", "find-specification-obligations", "find-modeling-smells", "merged-document", "read-document", "diagnostics", "recommend-layout", "syntax-schema",
         "open-workspace", "workspace-state", "recover-workspace", "propose-rename", "read-workspace", "read-ast", "propose", "propose-extract-inline-event", "propose-repair", "propose-ast", "propose-source",
         "expand-layout", "read-proposal", "export-workspace", "discard-proposal", "apply"]);
     [Fact] void should_advertise_only_supported_extraction_formatting() => Schema("propose-extract-inline-event").GetProperty("properties").GetProperty("formatting")

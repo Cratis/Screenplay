@@ -69,6 +69,7 @@ static class McpToolSchemas
         "includeTestOnly" or "includeContent" or "eventNeverPersisted" or "pinRepairEvidence" => new() { ["type"] = "boolean", ["default"] = false },
         "descendants" => new() { ["type"] = "boolean", ["default"] = tool != "dependencies" },
         "offset" => McpAstSchemas.Integer(),
+        "eventFanOutThreshold" or "propertyFanInThreshold" when tool == "find-modeling-smells" => new() { ["type"] = "integer", ["minimum"] = 1, ["maximum"] = 200, ["default"] = 5 },
         "evidenceLimit" when tool == "dependency-graph" => new() { ["type"] = "integer", ["minimum"] = 0, ["maximum"] = 20, ["default"] = 3 },
         "kinds" when tool == "dependency-graph" => McpAstSchemas.Array(McpAstSchemas.Choice(Dependencies.DependencyGraph.Kinds)),
         "from" when tool == "dependency-graph" => McpAstSchemas.Choice("slice", "feature", "module"),

@@ -172,6 +172,7 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `find-fixtures` | Specification address, role, property, value, scope/document | Paged effective assignments with type, value, location and authored/example/override origin, including `when append` event payloads (`whenAppendedEvent`) and `for` destinations (`whenAppendedEventDestination`) |
 | `find-assertion-gaps` | Optional scope/document | Slices without specifications declaring a `then` assertion, including `then denied` |
 | `find-specification-obligations` | Optional module/feature/slice scope, document | Per-declaration specification obligations with met/unmet status and matching specification owners |
+| `find-modeling-smells` | Optional scope/document, eventFanOutThreshold/propertyFanInThreshold | Information-level modeling questions; no compiler diagnostics |
 | `diagnostics` | Optional `checks` (comma-separated names, codes, or `all`), `scope`, document | Paged diagnostics, severity counts, scoped declaration counts and affected scopes |
 | `read-document` | Required relative `path` | Exact original UTF-8 byte pages |
 | `merged-document` | `view`: source, syntax or both | Canonical merged byte pages or explicitly requested typed AST |
@@ -207,6 +208,22 @@ state their coverage.
 Examples are expanded before matching. Ambiguous references do not meet obligations. Rejection rules without an explicit message remain `info`/`unmet`: a bare `then error` cannot distinguish individual rules. Opaque validation blocks report one information-level obligation rather than invented code rules. Syntax-only owners retain authored presence status but carry `info` and the executable-readiness reason. Competing claims use literal fixtures and direct command-to-event property mappings; unknown expressions do not prove an equal claim. A constraint's explicit message must match; without one, any rejection suffices alongside the competing-claim evidence. This is a deterministic presence heuristic, not simulation or proof of causation.
 
 Optional `scope` must name exactly one module, feature or slice; unknown/ambiguous scopes reject. Scoped results include referenced concept validations and value constraints on selected events, even when declared at application level. `document` filters obligation owners by contributing source path. Use `offset`, `limit` (default 50, maximum 200) and `expectedSourceRevision`; continuation requires the first page's `sourceRevision`, and stale source is refused. The report preserves the compilation verdict and never adds compiler diagnostics.
+
+### Advisory modeling smells
+
+`find-modeling-smells` is separate from compilation. Every finding has `severity: "info"`, a stable `ruleId`, a resolvable `declaration` owner, nullable `property`, and a `question`, never a prescription or a compiler warning. Its findings do not change the compilation verdict, including with `--warnaserror`. Identical syntax does not prove identical business meaning.
+
+| Rule ID | Review question prompted by |
+| --- | --- |
+| `SMELL001` | Event name ending in `Updated`, `Changed`, `Edited`, `Saved`, `Modified`, `Deleted`, `Synced` or `Received` |
+| `SMELL002` | Command name starting with `Update`, `Edit`, `Save`, `Set`, `Manage`, `Get`, `Load` or `Fetch` |
+| `SMELL003` | Nonempty event property set identical to another event produced by a different command |
+| `SMELL004` | Command producing more distinct resolved events than `eventFanOutThreshold` |
+| `SMELL005` | Read-model property fed by more distinct resolved events than `propertyFanInThreshold` |
+
+Names are case-sensitive. Property sets compare declared names, type names, collection and optional modifiers, independent of order. Descriptions, intent, payload values and code are not compared. Fan-out counts event targets, not repeated production clauses or operations. Fan-in follows explicit projection mappings and known-event automap, `every`/`all`, joins, nested/child property paths and variants. Unresolved references, imported event shapes and opaque code are not guessed. Thresholds default to 5 and accept integers from 1 through 200; a count equal to the threshold is not flagged.
+
+`related` declaration evidence is capped at 20, with `relatedCount` and `relatedTruncated`. Pages use the same bounded item/byte budgets and revision contract as the obligations report. Scope must name one module, feature or slice; document filters finding owners. The report is read-only and has **no per-declaration suppression yet**. Choosing a source annotation or an external address/rule-ID suppression contract remains a separate language/tooling decision; no new `.play` syntax is accepted by this report.
 
 ### Completeness diagnostics
 
