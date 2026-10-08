@@ -68,17 +68,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return new(specification, false, unsupported, [details]);
         }
 
-        var run = Run(plan, specification);
-        if (run.Passed || !compilation.SpecificationOrigins.TryGetValue(specification, out var origin) ||
-            !origin.Steps.Any(step => step.Example is not null))
-        {
-            return run;
-        }
-
-        var fixtures = origin.Steps.SelectMany(step => step.Values.Select(value =>
-            $"{step.Role}{(step.Example is null ? string.Empty : $" {step.Example.Name}")}: {value.Property} = {ScreenplaySyntaxText.Expression(value.Value)} ({value.Origin.ToString().ToLowerInvariant()}{(value.OverriddenValue is null ? string.Empty : $", replaces {ScreenplaySyntaxText.Expression(value.OverriddenValue)}")})"));
-        var provenance = $"Effective fixtures: {string.Join("; ", fixtures)}.";
-        return run with { Failures = [.. run.Failures.Select(failure => $"{failure} {provenance}")] };
+        return EnrichFailures(compilation, Run(plan, specification));
     }
 
     /// <inheritdoc/>
@@ -162,6 +152,20 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             : evaluator.Execute(plan, world, request with { Caller = expected.GivenCaller });
         var failures = Compare(plan, expected, execution);
         return new(specification, failures.IsEmpty, execution, failures);
+    }
+
+    internal static SemanticSpecificationRun EnrichFailures(SemanticCompilation compilation, SemanticSpecificationRun run)
+    {
+        if (run.Passed || !compilation.SpecificationOrigins.TryGetValue(run.Specification, out var origin) ||
+            !origin.Steps.Any(step => step.Example is not null))
+        {
+            return run;
+        }
+
+        var fixtures = origin.Steps.SelectMany(step => step.Values.Select(value =>
+            $"{step.Role}{(step.Example is null ? string.Empty : $" {step.Example.Name}")}: {value.Property} = {ScreenplaySyntaxText.Expression(value.Value)} ({value.Origin.ToString().ToLowerInvariant()}{(value.OverriddenValue is null ? string.Empty : $", replaces {ScreenplaySyntaxText.Expression(value.OverriddenValue)}")})"));
+        var provenance = $"Effective fixtures: {string.Join("; ", fixtures)}.";
+        return run with { Failures = [.. run.Failures.Select(failure => $"{failure} {provenance}")] };
     }
 
     static IEnumerable<SemanticSlice> AllSlices(ImmutableArray<SemanticFeature> features) =>
