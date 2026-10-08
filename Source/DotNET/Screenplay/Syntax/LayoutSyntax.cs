@@ -40,6 +40,26 @@ public record LayoutSyntax(
     /// Gets the named behaviors attached to the layout with <c>uses</c>.
     /// </summary>
     public IEnumerable<UsesBehaviorSyntax> UsedBehaviors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the optional category for cataloging this template.
+    /// </summary>
+    public string? Category { get; init; }
+
+    /// <summary>
+    /// Gets the optional package or designer template type.
+    /// </summary>
+    public string? TemplateType { get; init; }
+
+    /// <summary>
+    /// Gets the values this template instance exposes.
+    /// </summary>
+    public IEnumerable<TemplateExposedValueSyntax> Exposes { get; init; } = [];
+
+    /// <summary>
+    /// Gets recursively fillable outlets declared by the template.
+    /// </summary>
+    public IEnumerable<TemplateOutletSyntax> Outlets { get; init; } = [];
 }
 
 /// <summary>
@@ -79,6 +99,26 @@ public record ScreenTemplateSyntax(
     /// </summary>
     [SourceSpanMetadata]
     public SourceLocation? FitsSlotLocation { get; init; }
+
+    /// <summary>
+    /// Gets the optional category for cataloging this template.
+    /// </summary>
+    public string? Category { get; init; }
+
+    /// <summary>
+    /// Gets the optional package or designer template type.
+    /// </summary>
+    public string? TemplateType { get; init; }
+
+    /// <summary>
+    /// Gets the values this template instance exposes.
+    /// </summary>
+    public IEnumerable<TemplateExposedValueSyntax> Exposes { get; init; } = [];
+
+    /// <summary>
+    /// Gets recursively fillable outlets declared by the template.
+    /// </summary>
+    public IEnumerable<TemplateOutletSyntax> Outlets { get; init; } = [];
 }
 
 /// <summary>
@@ -109,6 +149,26 @@ public record DialogTemplateSyntax(
     /// Gets the named behaviors attached to the dialog template with <c>uses</c>.
     /// </summary>
     public IEnumerable<UsesBehaviorSyntax> UsedBehaviors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the optional category for cataloging this template.
+    /// </summary>
+    public string? Category { get; init; }
+
+    /// <summary>
+    /// Gets the optional package or designer template type.
+    /// </summary>
+    public string? TemplateType { get; init; }
+
+    /// <summary>
+    /// Gets the values this template instance exposes.
+    /// </summary>
+    public IEnumerable<TemplateExposedValueSyntax> Exposes { get; init; } = [];
+
+    /// <summary>
+    /// Gets recursively fillable outlets declared by the template.
+    /// </summary>
+    public IEnumerable<TemplateOutletSyntax> Outlets { get; init; } = [];
 }
 
 /// <summary>
@@ -118,3 +178,19 @@ public record DialogTemplateSyntax(
 /// <param name="Contributes">The name of the contribution point this slot accepts contributions for, or <c>null</c> if it does not accept any.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record SlotSyntax(string Name, string? Contributes, SourceLocation Location) : SyntaxNode(Location);
+
+
+/// <summary>
+/// Represents a template value exposed to descendants or package consumers.
+/// </summary>
+/// <param name="Name">The exposed value name.</param>
+/// <param name="Type">The optional exposed value type.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record TemplateExposedValueSyntax(string Name, TypeRefSyntax? Type, SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
+/// Represents a recursive outlet declared by a template.
+/// </summary>
+/// <param name="Name">The outlet name.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record TemplateOutletSyntax(string Name, SourceLocation Location) : SyntaxNode(Location);

@@ -114,4 +114,9 @@ public record SliceSyntax(
     /// An <c>init</c> property for the same binary-compatibility reason as <see cref="File"/>.
     /// </remarks>
     public int? DescriptionRawLength { get; init; }
+
+    /// <summary>
+    /// Gets slice-scoped template assignments.
+    /// </summary>
+    public IEnumerable<TemplateAssignmentSyntax> Templates { get; init; } = [];
 }

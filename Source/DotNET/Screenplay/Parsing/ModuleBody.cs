@@ -30,6 +30,7 @@ internal sealed class ModuleBody(string name)
     readonly List<UsesBehaviorSyntax> _usedBehaviors = [];
     readonly List<FileImportSyntax> _fileImports = [];
     readonly List<DependsOnSyntax> _dependsOn = [];
+    readonly List<TemplateAssignmentSyntax> _templates = [];
     int _restatedHeaders;
     string? _description;
     AuthorizeSyntax? _authorize;
@@ -80,6 +81,13 @@ internal sealed class ModuleBody(string name)
             case "contribute":
                 _contributions.Add(ContributionParser.Parse(context, line));
                 return true;
+            case "template":
+                if (TemplateAssignmentParser.Parse(context, line) is { } template)
+                {
+                    _templates.Add(template);
+                }
+
+                return true;
             case "example":
                 _examples.Add(SpecificationParser.ParseExample(context, line));
                 return true;
@@ -107,7 +115,8 @@ internal sealed class ModuleBody(string name)
             Authorize = _authorize,
             DirectiveLocations = _directiveLocations,
             FileImports = _fileImports,
-            IsPlacement = isPlacement
+            IsPlacement = isPlacement,
+            Templates = _templates
         };
 
     internal void RecordRestatedHeader(SourceLocation location) =>

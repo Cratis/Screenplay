@@ -58,6 +58,7 @@ internal static partial class SliceParser
         var examples = new List<SpecificationExampleSyntax>();
         var readModels = new List<ReadModelSyntax>();
         var reducers = new List<ReducerSyntax>();
+        var templates = new List<TemplateAssignmentSyntax>();
         FileReferenceSyntax? file = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
@@ -110,6 +111,13 @@ internal static partial class SliceParser
                 case "screen":
                     screens.Add(ScreenParser.Parse(context, line));
                     break;
+                case "template":
+                    if (TemplateAssignmentParser.Parse(context, line) is { } template)
+                    {
+                        templates.Add(template);
+                    }
+
+                    break;
                 case "constraint":
                     constraints.Add(ConstraintParser.Parse(context, line));
                     break;
@@ -139,6 +147,7 @@ internal static partial class SliceParser
             File = file,
             DescriptionLocation = descriptionLocation,
             DescriptionRawLength = descriptionRawLength,
+            Templates = templates,
             DirectiveLocations = directiveLocations
         };
     }

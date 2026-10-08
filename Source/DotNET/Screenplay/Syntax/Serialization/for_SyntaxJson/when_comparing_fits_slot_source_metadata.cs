@@ -24,5 +24,5 @@ public class when_comparing_fits_slot_source_metadata : Specification
     [Fact] void should_compare_fits_slot_names() => SyntaxJson.StructurallyEqual(_template, _relocated with { FitsSlot = "sidebar" }).ShouldBeFalse();
     [Fact] void should_not_advertise_the_anchor_in_the_schema() => SyntaxSchema.For(nameof(ScreenTemplateSyntax)).GetProperty("properties").TryGetProperty("fitsSlotLocation", out _).ShouldBeFalse();
     [Fact] void should_not_advertise_a_directive_as_a_kind() => SyntaxSchema.Kinds.ShouldNotContain("FitsSlotSyntax");
-    [Fact] void should_keep_the_original_typed_json_members() => SyntaxJson.Serialize(_template).GetRawText().ShouldEqual("{\"kind\":\"ScreenTemplateSyntax\",\"arrangement\":null,\"behaviors\":[],\"fitsSlot\":\"content\",\"name\":\"Shell\",\"slots\":[],\"usedBehaviors\":[]}");
+    [Fact] void should_keep_the_original_typed_json_members() => SyntaxJson.Serialize(_template).GetRawText().ShouldEqual("{\"kind\":\"ScreenTemplateSyntax\",\"arrangement\":null,\"behaviors\":[],\"category\":null,\"exposes\":[],\"fitsSlot\":\"content\",\"name\":\"Shell\",\"outlets\":[],\"slots\":[],\"templateType\":null,\"usedBehaviors\":[]}");
 }

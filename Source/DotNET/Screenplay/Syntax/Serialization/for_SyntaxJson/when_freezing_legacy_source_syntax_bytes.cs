@@ -44,7 +44,15 @@ public class when_freezing_legacy_source_syntax_bytes
                 .Replace(",\"eventSources\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"stream\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"noStream\":null", string.Empty, StringComparison.Ordinal)
-                .Replace(",\"streamCandidates\":[]", string.Empty, StringComparison.Ordinal);
+                .Replace(",\"streamCandidates\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"templates\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"parameters\":[],\"route\":null", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"columnMode\":\"Unspecified\",\"columns\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"icons\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"category\":null", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"templateType\":null", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"exposes\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"outlets\":[]", string.Empty, StringComparison.Ordinal);
 
             // Only the two living samples author the additive no-event assertion. Its own conformance
             // vector protects it; removing that member here keeps all pre-feature bytes frozen.

@@ -65,6 +65,10 @@ internal static partial class ScreenParser
                 return ParseTable(context, line);
             case "summary":
                 return ParseSummary(context, line);
+            case "component":
+                return ParseComponent(context, line);
+            case "toolbar":
+                return ParseToolbar(context, line);
             case "navigate":
                 return ParseNavigate(context, line.Content, line);
             case "on":
@@ -155,7 +159,29 @@ internal static partial class ScreenParser
             return null;
         }
 
-        return new(match.Groups[1].Value, match.Groups[2].Success ? match.Groups[2].Value : null, line.Location);
+        var parameters = new List<ScreenNavigationParameterSyntax>();
+        string? route = null;
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            var parameter = ParameterRegex().Match(child.Content);
+            if (parameter.Success)
+            {
+                parameters.Add(new(parameter.Groups[1].Value, parameter.Groups[2].Value.Trim(), child.Location));
+                continue;
+            }
+
+            var routeMatch = RouteRegex().Match(child.Content);
+            if (routeMatch.Success)
+            {
+                route = OperandText(routeMatch, 1);
+                continue;
+            }
+
+            context.Error(DiagnosticCodes.InvalidNavigation, $"Unexpected '{child.Content}' in navigation - expected 'route \"...\"' or 'parameter <name> from <binding>'", child.Location);
+        }
+
+        return new(match.Groups[1].Value, match.Groups[2].Success ? match.Groups[2].Value : null, line.Location) { Route = route, Parameters = parameters };
     }
 
     static ScreenTemplateReferenceSyntax ParseTemplateReference(ParserContext context, SourceLine line)
@@ -290,6 +316,192 @@ internal static partial class ScreenParser
         return new(target, fields, line.Location);
     }
 
+
+    static ScreenComponentSyntax? ParseComponent(ParserContext context, SourceLine line)
+    {
+        var match = ComponentRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid component directive '{line.Content}' - expected 'component <Package.Component> <name>'", line.Location);
+            context.SkipBlock(line.Indent);
+            return null;
+        }
+
+        string? dataContext = null;
+        string? icon = null;
+        var properties = new List<ComponentPropertySyntax>();
+        var exposes = new List<ComponentExposedValueSyntax>();
+        var presentation = new List<PresentationValueSyntax>();
+        var outlets = new List<ComponentOutletSyntax>();
+        var behaviors = new List<BehaviorSyntax>();
+        var usedBehaviors = new List<UsesBehaviorSyntax>();
+
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            switch (LineText.FirstWord(child.Content))
+            {
+                case "context":
+                    dataContext = child.Content["context".Length..].Trim();
+                    break;
+                case "property":
+                    if (ParseComponentProperty(context, child) is { } property) properties.Add(property);
+                    break;
+                case "icon":
+                    icon = child.Content["icon".Length..].Trim();
+                    break;
+                case "presentation":
+                    if (ParsePresentation(context, child) is { } value) presentation.Add(value);
+                    break;
+                case "exposes":
+                    if (ParseComponentExposes(context, child) is { } exposed) exposes.Add(exposed);
+                    break;
+                case "outlet":
+                    outlets.Add(ParseComponentOutlet(context, child));
+                    break;
+                case "on":
+                case "uses":
+                    InteractionParser.ParseAttachment(context, child, behaviors, usedBehaviors);
+                    break;
+                default:
+                    context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{child.Content}' in component - expected context, property, icon, presentation, exposes, outlet, on or uses", child.Location);
+                    context.SkipBlock(child.Indent);
+                    break;
+            }
+        }
+
+        return new(match.Groups[1].Value, match.Groups[2].Value, line.Location)
+        {
+            Context = dataContext,
+            Properties = properties,
+            Exposes = exposes,
+            Presentation = presentation,
+            Icon = string.IsNullOrWhiteSpace(icon) ? null : icon,
+            Outlets = outlets,
+            Behaviors = behaviors,
+            UsedBehaviors = usedBehaviors
+        };
+    }
+
+    static ComponentPropertySyntax? ParseComponentProperty(ParserContext context, SourceLine line)
+    {
+        var bound = ComponentPropertyBindingRegex().Match(line.Content);
+        if (bound.Success) return new(bound.Groups[1].Value, bound.Groups[2].Value.Trim(), null, line.Location);
+
+        var literal = ComponentPropertyLiteralRegex().Match(line.Content);
+        if (literal.Success) return new(literal.Groups[1].Value, null, OperandText(literal, 2), line.Location);
+
+        context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid component property '{line.Content}' - expected 'property <path> from <binding>' or 'property <path> = \"value\"'", line.Location);
+        return null;
+    }
+
+    static ComponentExposedValueSyntax? ParseComponentExposes(ParserContext context, SourceLine line)
+    {
+        var match = ExposesRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid exposed value '{line.Content}' - expected 'exposes <name> from <binding>'", line.Location);
+            return null;
+        }
+
+        return new(match.Groups[1].Value, match.Groups[2].Value.Trim(), line.Location);
+    }
+
+    static ComponentOutletSyntax ParseComponentOutlet(ParserContext context, SourceLine line)
+    {
+        var name = line.Content["outlet".Length..].Trim();
+        var directives = new List<ScreenDirectiveSyntax>();
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            if (ParseDirective(context, child) is { } directive) directives.Add(directive);
+        }
+
+        return new(name, directives, line.Location);
+    }
+
+    static ScreenToolbarSyntax ParseToolbar(ParserContext context, SourceLine line)
+    {
+        var name = line.Content["toolbar".Length..].Trim();
+        var items = new List<ToolbarItemSyntax>();
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            if (ParseToolbarItem(context, child) is { } item) items.Add(item);
+        }
+
+        return new(name, items, line.Location);
+    }
+
+    static ToolbarItemSyntax? ParseToolbarItem(ParserContext context, SourceLine line)
+    {
+        var match = ToolbarItemRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid toolbar item '{line.Content}' - expected 'item <name> action <Command>', 'item <name> navigate to <Screen>' or 'item <name> dialog <DialogTemplate>'", line.Location);
+            context.SkipBlock(line.Indent);
+            return null;
+        }
+
+        var kind = match.Groups[2].Value switch
+        {
+            "action" => ToolbarItemKind.Action,
+            "navigate" => ToolbarItemKind.Navigate,
+            _ => ToolbarItemKind.Dialog
+        };
+        var item = new ToolbarItemSyntax(match.Groups[1].Value, kind, match.Groups[3].Value, line.Location);
+        string? label = null;
+        string? icon = null;
+        var parameters = new List<ScreenNavigationParameterSyntax>();
+        var presentation = new List<PresentationValueSyntax>();
+
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            var labelMatch = LabelRegex().Match(child.Content);
+            if (labelMatch.Success)
+            {
+                label = OperandText(labelMatch, 1);
+                continue;
+            }
+
+            var parameter = ParameterRegex().Match(child.Content);
+            if (parameter.Success)
+            {
+                parameters.Add(new(parameter.Groups[1].Value, parameter.Groups[2].Value.Trim(), child.Location));
+                continue;
+            }
+
+            if (LineText.FirstWord(child.Content) == "icon")
+            {
+                icon = child.Content["icon".Length..].Trim();
+                continue;
+            }
+
+            if (ParsePresentation(context, child) is { } value)
+            {
+                presentation.Add(value);
+                continue;
+            }
+
+            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{child.Content}' in toolbar item - expected label, icon, parameter or presentation", child.Location);
+        }
+
+        return item with { Label = label, Icon = icon, Parameters = parameters, Presentation = presentation };
+    }
+
+    static PresentationValueSyntax? ParsePresentation(ParserContext context, SourceLine line)
+    {
+        var match = PresentationRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid presentation value '{line.Content}' - expected 'presentation <key> \"value\"'", line.Location);
+            return null;
+        }
+
+        return new(match.Groups[1].Value, OperandText(match, 2), line.Location);
+    }
+
     static string OperandText(Match match, int quotedGroup) =>
         match.Groups[quotedGroup].Success ? StringLiteral.Unescape(match.Groups[quotedGroup].Value) : match.Groups[quotedGroup + 1].Value;
 
@@ -307,6 +519,30 @@ internal static partial class ScreenParser
 
     [GeneratedRegex(@"^navigate\s+to\s+(\w+(?:\.\w+)*)(?:\s+by\s+(\w+))?$", RegexOptions.None, 1000)]
     private static partial Regex NavigateRegex();
+
+    [GeneratedRegex("^route\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\S+))$", RegexOptions.None, 1000)]
+    private static partial Regex RouteRegex();
+
+    [GeneratedRegex(@"^parameter\s+([A-Za-z_]\w*)\s+from\s+(.+)$", RegexOptions.None, 1000)]
+    private static partial Regex ParameterRegex();
+
+    [GeneratedRegex(@"^component\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex ComponentRegex();
+
+    [GeneratedRegex(@"^property\s+([\w.]+)\s+from\s+(.+)$", RegexOptions.None, 1000)]
+    private static partial Regex ComponentPropertyBindingRegex();
+
+    [GeneratedRegex("^property\\s+([\\w.]+)\\s*=\\s*(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\S+))$", RegexOptions.None, 1000)]
+    private static partial Regex ComponentPropertyLiteralRegex();
+
+    [GeneratedRegex(@"^exposes\s+([A-Za-z_]\w*)\s+from\s+(.+)$", RegexOptions.None, 1000)]
+    private static partial Regex ExposesRegex();
+
+    [GeneratedRegex("^presentation\\s+([A-Za-z_]\\w*)\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\S+))$", RegexOptions.None, 1000)]
+    private static partial Regex PresentationRegex();
+
+    [GeneratedRegex(@"^item\s+([A-Za-z_]\w*)\s+(action|navigate|dialog)(?:\s+to)?\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
+    private static partial Regex ToolbarItemRegex();
 
     [GeneratedRegex(@"^[a-z_]\w*$", RegexOptions.None, 1000)]
     private static partial Regex SlotRegex();

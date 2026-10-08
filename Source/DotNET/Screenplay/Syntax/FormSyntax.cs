@@ -38,6 +38,16 @@ public record FormSyntax(
     /// Gets the named behaviors attached to the form with <c>uses</c>.
     /// </summary>
     public IEnumerable<UsesBehaviorSyntax> UsedBehaviors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the command-property column mode for renderers that arrange form fields in columns.
+    /// </summary>
+    public FormColumnMode ColumnMode { get; init; } = FormColumnMode.Unspecified;
+
+    /// <summary>
+    /// Gets the manually authored columns when <see cref="ColumnMode"/> is <see cref="FormColumnMode.Manual"/>.
+    /// </summary>
+    public IEnumerable<FormColumnSyntax> Columns { get; init; } = [];
 }
 
 /// <summary>
@@ -70,3 +80,33 @@ public record FormPopulateFromItemSyntax(SourceLocation Location) : FormPopulate
 /// <param name="ComposeUsing">The optional callback that computes the property's value.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record FormFieldSyntax(string Property, string? Label, string? From, string? ComposeUsing, SourceLocation Location) : SyntaxNode(Location);
+
+
+/// <summary>
+/// Defines how a command-bound form arranges command properties into columns.
+/// </summary>
+public enum FormColumnMode
+{
+    /// <summary>
+    /// The form does not declare a column mode.
+    /// </summary>
+    Unspecified = 0,
+
+    /// <summary>
+    /// Columns are inferred from the command and package defaults.
+    /// </summary>
+    Auto = 1,
+
+    /// <summary>
+    /// Columns are authored explicitly.
+    /// </summary>
+    Manual = 2
+}
+
+/// <summary>
+/// Represents a manually authored form column.
+/// </summary>
+/// <param name="Property">The command property shown in the column.</param>
+/// <param name="Label">The optional display label.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record FormColumnSyntax(string Property, string? Label, SourceLocation Location) : SyntaxNode(Location);

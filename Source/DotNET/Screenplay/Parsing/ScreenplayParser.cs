@@ -53,6 +53,7 @@ internal static partial class ScreenplayParser
         var systems = new List<SystemSyntax>();
         var eventSources = new List<EventSourceSyntax>();
         var examples = new List<SpecificationExampleSyntax>();
+        var templates = new List<TemplateAssignmentSyntax>();
 
         while (context.Reader.PeekSignificant() is { } line)
         {
@@ -138,6 +139,13 @@ internal static partial class ScreenplayParser
                 case "layout":
                     AddLayout(context, LayoutParser.ParseLayout(context, line), layouts);
                     break;
+                case "template":
+                    if (TemplateAssignmentParser.Parse(context, line) is { } template)
+                    {
+                        templates.Add(template);
+                    }
+
+                    break;
                 case "behavior":
                     AddBehavior(context, InteractionParser.ParseBehavior(context, line), behaviors);
                     break;
@@ -168,7 +176,8 @@ internal static partial class ScreenplayParser
             Systems = systems,
             EventSources = eventSources,
             Behaviors = behaviors,
-            FileImports = fileImports
+            FileImports = fileImports,
+            Templates = templates
         };
     }
 
