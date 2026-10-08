@@ -260,6 +260,14 @@ internal sealed partial class McpWorkspaces
         McpRecoveryJournal.RefusePending(Root);
     }
 
+    static object? DescribeMove(WorkspaceMoveReport? report) => report is null ? null : new
+    {
+        identityMigrations = report.IdentityMigrations.Select(migration => new { migration.Domain, migration.Id, previousAddress = McpSemanticAddresses.Describe(migration.PreviousAddress), currentAddress = McpSemanticAddresses.Describe(migration.CurrentAddress) }),
+        report.Retired,
+        report.ReferenceRepairs,
+        report.FragmentsMoved
+    };
+
     static McpRoot RootFromClientUri(string uri)
     {
         if (!Uri.TryCreate(uri, UriKind.Absolute, out var parsed) || !string.Equals(parsed.Scheme, "file", StringComparison.OrdinalIgnoreCase))
@@ -417,6 +425,7 @@ internal sealed partial class McpWorkspaces
             referencePolicy = proposal is McpAuthoringProposal policy ? policy.ReferencePolicy.ToString() : null,
             before = McpWorkspaceTransport.Describe(proposal.Before, includeContent),
             after = McpWorkspaceTransport.Describe(candidate, includeContent),
+            moveReport = proposal is McpAuthoringProposal moved ? DescribeMove(moved.Result.MoveReport) : null,
             changeCount = proposal.WritePlan.Entries.Length,
             stateChange = statePlan.Describe(),
             authoringDiagnosticCount = proposal is McpAuthoringProposal authored ? authored.Result.AuthoringDiagnostics.Length : 0,

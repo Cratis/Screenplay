@@ -39,6 +39,7 @@
 | [0035](0035-keep-model-reasoning-as-report-only-metadata.md) | Keep model reasoning as report-only authoring metadata | accepted | implemented | 2026-10-08 | Sindre Alstad Wilting |
 | [0036](0036-admit-event-sources-streams-and-command-routes.md) | Admit event sources, streams and command routes into the executable model, with specification routes and composite stream ids | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0037](0037-routes-in-redelivery-locators-and-specification-examples.md) | State routes in redelivery locators and in typed specification examples with the existing route lines | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
+| [0038](0038-move-logical-subtrees-with-identity-continuity.md) | Move logical slices and features across parents with identity and behavior continuity | accepted | none | 2026-10-08 | Sindre Alstad Wilting (delegated to the implementing agent's recommendation) |
 | [0042](0042-persona-callers-in-specifications.md) | Expand persona callers in specifications and check persona coverage on request | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0043](0043-reaction-identity-runs-as.md) | Declare the system identity under which a reaction's invoked commands run | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0044](0044-evolve-event-properties-through-mcp.md) | Add, rename and remove a property along its mapping chain through a planned proposal, with an explicit event-evolution choice | accepted | none | 2026-10-08 | Sindre Alstad Wilting |

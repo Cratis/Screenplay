@@ -499,7 +499,7 @@ internal sealed partial class McpWorkspaces
             "before" or "after" => ProposalBytes(proposal, arguments, view),
             _ => throw new McpFailure("Unknown proposal view.", -32602)
         };
-        return McpJson.ToolResult(new { proposal.Validation, repairEvidence = _repairEvidence.TryGetValue(proposal, out var evidence) ? evidence : null, before = McpWorkspaceTransport.Describe(proposal.Before), after = McpWorkspaceTransport.Describe(proposal.Workspace), view, result });
+        return McpJson.ToolResult(new { proposal.Validation, moveReport = proposal is McpAuthoringProposal moved ? DescribeMove(moved.Result.MoveReport) : null, repairEvidence = _repairEvidence.TryGetValue(proposal, out var evidence) ? evidence : null, before = McpWorkspaceTransport.Describe(proposal.Before), after = McpWorkspaceTransport.Describe(proposal.Workspace), view, result });
     }
 
     internal object ExportWorkspace(JsonElement arguments)

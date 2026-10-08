@@ -24,6 +24,25 @@ internal sealed partial class McpWorkspaces
         return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation), arguments) : Rejected(result);
     }
 
+    internal object Move(JsonElement arguments)
+    {
+        var workspace = Current();
+        var request = new WorkspaceMoveRequest
+        {
+            ExpectedRevision = WorkspaceRevision.Parse(McpJson.RequiredString(arguments, "expectedRevision")),
+            ExpectedCatalogRevision = CatalogRevision.Parse(McpJson.RequiredString(arguments, "expectedCatalogRevision")),
+            Target = McpSemanticAddresses.Read(arguments.GetProperty("target")),
+            NewParent = McpSemanticAddresses.Read(arguments.GetProperty("newParent")),
+            TargetHandle = arguments.TryGetProperty("targetHandle", out var target) ? McpAstHandles.Read(target) : null,
+            NewParentHandle = arguments.TryGetProperty("newParentHandle", out var parent) ? McpAstHandles.Read(parent) : null,
+            Formatting = McpJson.Enumeration(arguments, "formatting", WorkspaceAuthoringFormatting.PreserveTrivia),
+            Validation = McpJson.Enumeration(arguments, "validation", WorkspaceAuthoringValidation.Authoring)
+        };
+        Root.Verify(workspace);
+        var result = workspace.ProposeMove(request);
+        return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation), arguments) : Rejected(result);
+    }
+
     internal object Rename(JsonElement arguments)
     {
         var workspace = Current();

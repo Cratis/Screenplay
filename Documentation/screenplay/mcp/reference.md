@@ -398,6 +398,7 @@ An unbound model returns `outcome: "unbound"`, executable diagnostics and `page:
 | `propose-source` | `expectedRevision`, `expectedCatalogRevision`, `formatting`, `documents` | validation (`Authoring` default or `Executable`), referencePolicy (`Safe` default or `Draft`), semanticRenames, eventRenames, retiredSemanticAddresses, retiredEventAddresses, includeContent |
 | `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | `pinRepairEvidence`, `expectedRepairEvidenceRevision`, includeContent; use the discovered `requiredFormatting`. `PLAY0479` supports `PreserveTrivia` or explicit `CanonicalizeTouchedDocuments`; other repairs require `CanonicalizeTouchedDocuments` |
 | `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent, `eventNeverPersisted` (boolean, default false) |
+| `propose-move` | Expected revisions, target address, newParent address | targetHandle, newParentHandle, formatting, validation, includeContent |
 | `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
 | `expand-layout` | Expected revisions | layout (`single`, `module`, `feature`, `slice`; default `slice`, one file per slice), validation, formatting, referencePolicy, includeContent |
 | `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`semantic-diff` for structural impact; `implementation-requirements` for attachments), documentId, offset, limit, expectedSourceRevision |
@@ -647,6 +648,40 @@ and repairs requiring a choice are not offered.
 `propose-ast` creates, replaces, removes or moves typed nodes/documents in one
 atomic proposal. Disjoint edits in one file compose before validation. Typed
 whole-document replacement can repair parser-invalid source without node handles.
+
+### Logical parent moves
+
+`propose-move` accepts `target` and `newParent` as `{kind, parts}` semantic addresses,
+using the same typed parts returned by the identity inventories. Copy the complete
+address, including its application identity. Optional `targetHandle` and
+`newParentHandle` must resolve to the same logical declarations. Both expected
+revisions are required. Formatting defaults to `PreserveTrivia`, validation to
+`Authoring`; formatting consent and executable validation work as for rename.
+
+The first release moves a Slice to a Feature or a Feature to a Module or Feature.
+Moving modules or declarations between slices is not offered. Every assigned
+subtree declaration gets an automatic semantic migration and every affected event
+contract an event migration. Event names and identity pins do not change. Qualified
+typed references, including container `depends on` references, are repaired.
+
+No-op moves, collisions, capture or ambiguous references, descendant destinations,
+disallowed parent kinds and any identity loss refuse with structured conflicts.
+Inherited `authorize` and screen `on`/`uses` bindings must not change. When the
+original model is executable, the candidate executable model is compared by
+preserved identity, allowing only container ownership changes; differences refuse.
+Authoring-only source still has inherited binding and reference continuity checked.
+
+Split subtrees move all fragments together. Inline and restated-header fragments
+remain in their documents. Literal placing imports move to one authored destination
+(or a single own-named file for a split destination); placing globs and ambiguous
+split destinations refuse. An empty metadata-free wrapper fragment can be removed,
+but the old logical parent remains. Files are never relocated; `expand-layout` is
+a separate operation.
+
+The proposal response and every `read-proposal` response include `moveReport`:
+`identityMigrations` (domain, unchanged id, previousAddress and currentAddress),
+`retired: []`, `referenceRepairs` and `fragmentsMoved`. Review the usual source,
+dropped-comment and semantic-diff views before the existing `apply` tool.
 
 `propose-rename` coordinates logical declarations, fragments, supported typed
 references and assigned identities. Event sources, streams, examples and specifications are supported rename targets; underlying event, command and read-model renames update example type references. Examples have no ESM identities. It preserves trivia by default. Ambiguity,

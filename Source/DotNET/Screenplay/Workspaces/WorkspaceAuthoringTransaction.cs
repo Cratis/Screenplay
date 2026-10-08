@@ -16,7 +16,8 @@ namespace Cratis.Screenplay.Workspaces;
 sealed class WorkspaceAuthoringTransaction(
     ScreenplayWorkspace workspace,
     IReadOnlyDictionary<SemanticAddress, SemanticAddress>? referenceRenames = null,
-    IReadOnlySet<DocumentId>? shapePreservingReplacements = null)
+    IReadOnlySet<DocumentId>? shapePreservingReplacements = null,
+    IReadOnlyDictionary<(DocumentId Document, string Path), (DocumentId Document, string Path)>? movedOccurrences = null)
 {
     readonly ImmutableArray<Diagnostic>.Builder _diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
 
@@ -176,7 +177,12 @@ sealed class WorkspaceAuthoringTransaction(
             candidates[spellings.Key] = WorkspaceOptionalityRepairs.Print(index, document, [.. spellings], request.Formatting, _diagnostics);
         }
 
-        edits.ValidateFragmentRenames(replacements);
+        // The logical move planner supplies exact occurrence lineage and proves all fragments and
+        // identities survive. Positional rename checks cannot interpret a reparented header.
+        if (movedOccurrences is null)
+        {
+            edits.ValidateFragmentRenames(replacements);
+        }
 
         // Printing uses the original placement to identify authored tokens. Structural validation waits
         // until all source edits and document moves have settled the final import placements.
@@ -269,7 +275,13 @@ sealed class WorkspaceAuthoringTransaction(
 
         var candidate = ScreenplayWorkspace.CreateValidated(workspace.ApplicationName, ordered, catalog, compilation, attachments.Contents, attachments.Diagnostics);
         var migrations = IdentifierMigrations(index, edits, referenceRenames);
-        WorkspaceAuthoringReferences.Validate(workspace, candidate, request, _diagnostics, migrations);
+
+        // A logical move uses planner-owned object lineage, not address/ordinal guesses. The planner
+        // checks every original reference against its exact candidate occurrence before returning it.
+        if (movedOccurrences is null)
+        {
+            WorkspaceAuthoringReferences.Validate(workspace, candidate, request, _diagnostics, migrations);
+        }
         ValidateSourceTransitions(request, index, candidate, edits, replacements, migrations);
         return new()
         {
@@ -334,6 +346,19 @@ sealed class WorkspaceAuthoringTransaction(
         foreach (var document in generatedReplacements)
         {
             ruleSources.Subtree(before, (document, string.Empty), (document, string.Empty));
+        }
+
+        // Move lineage comes from retained JSON objects, never a positional guess after reparenting.
+        foreach (var (original, current) in movedOccurrences ?? new Dictionary<(DocumentId Document, string Path), (DocumentId Document, string Path)>())
+        {
+            var previous = before.Entries.Single(entry => entry.Handle.Document == original.Document && entry.Handle.Path == original.Path);
+            var candidateEntry = after.Entries.SingleOrDefault(entry => entry.Handle.Document == current.Document && entry.Handle.Path == current.Path);
+            if (candidateEntry?.Kind != previous.Kind)
+            {
+                throw new InvalidWorkspaceAuthoring("A generated move changed an occurrence kind or lost its source correspondence.");
+            }
+            provenance.Map(current, original);
+            ruleSources.Map(current, original);
         }
 
         var removals = edits.PendingRuleRemovals.Select(entry => entry.Handle).ToHashSet();
