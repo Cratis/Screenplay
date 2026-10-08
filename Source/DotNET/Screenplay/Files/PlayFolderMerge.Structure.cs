@@ -112,11 +112,10 @@ internal static partial class PlayFolderMerge
 
     static AuthorizeSyntax? CombineAuthorization(IEnumerable<AuthorizeSyntax?> declarations, string owner, ParserContext context)
     {
+        var authorizations = declarations.OfType<AuthorizeSyntax>().ToArray();
         var kept = new List<AuthorizeSyntax>();
-        var comments = new List<SourceComment>();
-        foreach (var authorization in declarations.OfType<AuthorizeSyntax>())
+        foreach (var authorization in authorizations)
         {
-            comments.AddRange(authorization.SourceComments);
             var first = kept.Find(earlier =>
                 !string.Equals(earlier.Location.Path, authorization.Location.Path, StringComparison.Ordinal) &&
                 SyntaxJson.StructurallyEqual(earlier, authorization));
@@ -143,8 +142,14 @@ internal static partial class PlayFolderMerge
             requirement = new LogicalPolicyRequirementSyntax(requirement, LogicalOperator.And, next.Requirement, requirement.Location);
         }
 
-        // Keep source metadata on the merged gate: layout collapse may remove every document
-        // that could otherwise restore its authorization comments during an authoring edit.
+        // Source lines are comparable only inside one file. Keep each file's explanation together,
+        // including comments on ignored gates. A merged gate has just one printed line, so comments
+        // from multiple files become leading lines rather than coalescing trailing comments.
+        var acrossFiles = authorizations.Any(authorization => !string.Equals(authorization.Location.Path, kept[0].Location.Path, StringComparison.Ordinal));
+        var comments = authorizations.OrderBy(authorization => authorization.Location.Path, StringComparer.Ordinal)
+            .SelectMany(authorization => authorization.SourceComments.OrderBy(comment => comment.Line))
+            .Select(comment => acrossFiles ? comment with { Placement = SourceCommentPlacement.Leading, AnchorLine = kept[0].Location.Line } : comment);
+
         return kept[0] with { Requirement = requirement, SourceComments = [.. comments] };
     }
 
