@@ -111,7 +111,8 @@ internal static partial class PolicyParser
             location,
             ParseOperand,
             static (left, @operator, right, location) => new LogicalPolicyConditionSyntax(left, @operator, right, location),
-            _diagnostics);
+            _diagnostics,
+            static (operand, location) => new NotPolicyConditionSyntax(operand, location));
 
     static PolicyConditionSyntax? ParseOperand(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
     {

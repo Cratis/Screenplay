@@ -55,6 +55,7 @@ internal static partial class SliceParser
         var screens = new List<ScreenSyntax>();
         var constraints = new List<ConstraintSyntax>();
         var specifications = new List<SpecificationSyntax>();
+        var examples = new List<SpecificationExampleSyntax>();
         var readModels = new List<ReadModelSyntax>();
         var reducers = new List<ReducerSyntax>();
         FileReferenceSyntax? file = null;
@@ -112,6 +113,9 @@ internal static partial class SliceParser
                 case "constraint":
                     constraints.Add(ConstraintParser.Parse(context, line));
                     break;
+                case "example":
+                    examples.Add(SpecificationParser.ParseExample(context, line));
+                    break;
                 case "specification":
                     specifications.Add(SpecificationParser.Parse(context, line));
                     break;
@@ -130,6 +134,7 @@ internal static partial class SliceParser
 
         return new(type, name, events, commands, queries, projections, captures, reactions, screens, constraints, specifications, header.Location, description, readModels, reducers)
         {
+            Examples = examples,
             Operations = operations,
             File = file,
             DescriptionLocation = descriptionLocation,

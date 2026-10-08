@@ -52,6 +52,7 @@ internal static class LogicalConditionParser
     /// <param name="operand">Parses one operand of the construct's condition.</param>
     /// <param name="combine">Builds the construct's node for two conditions combined with an operator.</param>
     /// <param name="diagnostics">The <see cref="LogicalConditionDiagnostics"/> the construct reports.</param>
+    /// <param name="negate">Builds a unary negation node when the construct admits <c>not</c>.</param>
     /// <returns>The parsed condition, or <c>null</c> when it is malformed.</returns>
     public static T? Parse<T>(
         ParserContext context,
@@ -59,11 +60,12 @@ internal static class LogicalConditionParser
         SourceLocation location,
         ParseOperand<T> operand,
         Func<T, LogicalOperator, T, SourceLocation, T> combine,
-        LogicalConditionDiagnostics diagnostics)
+        LogicalConditionDiagnostics diagnostics,
+        Func<T, SourceLocation, T>? negate = null)
         where T : class
     {
         var position = 0;
-        var condition = ParseOr(context, tokens, ref position, location, operand, combine, diagnostics);
+        var condition = ParseOr(context, tokens, ref position, location, operand, combine, diagnostics, negate);
         if (condition is not null && position < tokens.Count)
         {
             context.Error(diagnostics.UnexpectedToken, $"Unexpected '{tokens[position]}' in {diagnostics.Subject}", location);
@@ -79,14 +81,15 @@ internal static class LogicalConditionParser
         SourceLocation location,
         ParseOperand<T> operand,
         Func<T, LogicalOperator, T, SourceLocation, T> combine,
-        LogicalConditionDiagnostics diagnostics)
+        LogicalConditionDiagnostics diagnostics,
+        Func<T, SourceLocation, T>? negate)
         where T : class
     {
-        var left = ParseAnd(context, tokens, ref position, location, operand, combine, diagnostics);
+        var left = ParseAnd(context, tokens, ref position, location, operand, combine, diagnostics, negate);
         while (left is not null && position < tokens.Count && tokens[position] == "or")
         {
             position++;
-            var right = ParseAnd(context, tokens, ref position, location, operand, combine, diagnostics);
+            var right = ParseAnd(context, tokens, ref position, location, operand, combine, diagnostics, negate);
             if (right is null)
             {
                 return null;
@@ -105,14 +108,15 @@ internal static class LogicalConditionParser
         SourceLocation location,
         ParseOperand<T> operand,
         Func<T, LogicalOperator, T, SourceLocation, T> combine,
-        LogicalConditionDiagnostics diagnostics)
+        LogicalConditionDiagnostics diagnostics,
+        Func<T, SourceLocation, T>? negate)
         where T : class
     {
-        var left = ParseGroupOrOperand(context, tokens, ref position, location, operand, combine, diagnostics);
+        var left = ParseGroupOrOperand(context, tokens, ref position, location, operand, combine, diagnostics, negate);
         while (left is not null && position < tokens.Count && tokens[position] == "and")
         {
             position++;
-            var right = ParseGroupOrOperand(context, tokens, ref position, location, operand, combine, diagnostics);
+            var right = ParseGroupOrOperand(context, tokens, ref position, location, operand, combine, diagnostics, negate);
             if (right is null)
             {
                 return null;
@@ -131,16 +135,24 @@ internal static class LogicalConditionParser
         SourceLocation location,
         ParseOperand<T> operand,
         Func<T, LogicalOperator, T, SourceLocation, T> combine,
-        LogicalConditionDiagnostics diagnostics)
+        LogicalConditionDiagnostics diagnostics,
+        Func<T, SourceLocation, T>? negate)
         where T : class
     {
+        if (negate is not null && position < tokens.Count && tokens[position] == "not")
+        {
+            position++;
+            var negated = ParseGroupOrOperand(context, tokens, ref position, location, operand, combine, diagnostics, negate);
+            return negated is null ? null : negate(negated, location);
+        }
+
         if (position >= tokens.Count || tokens[position] != "(")
         {
             return operand(context, tokens, ref position, location);
         }
 
         position++;
-        var condition = ParseOr(context, tokens, ref position, location, operand, combine, diagnostics);
+        var condition = ParseOr(context, tokens, ref position, location, operand, combine, diagnostics, negate);
         if (position < tokens.Count && tokens[position] == ")")
         {
             position++;
