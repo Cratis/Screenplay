@@ -13,9 +13,17 @@ MCP or CLI change must leave it correct and complete.
 - Do not copy this repository's AI tree into another repository, or the corpus into this one.
 - The corpus is authored in `Cratis/AI` under `.cratis/ai/` (skills, agents, prompts, `mcp-servers.json`,
   `profile-catalog.json`). A skill's checks live next to it in `verification.json`.
-- The pull request comment (not the release-note body) carries one line:
-  `Corpus impact: <Cratis/AI issue or pull request URL>` or `Corpus impact: none - <reason>`.
-  A reason such as "internal refactor, no behavior change" is fine; "will do later" is not.
+- Add exactly one label: `ai-corpus: tracked` or `ai-corpus: none`. For `tracked`, link an existing
+  `Cratis/AI` issue or PR in a pull request comment (`Corpus impact: <URL>`), or link back to the pull request
+  from that AI issue or PR. The gate also accepts `Cratis/AI#<n>` or a GitHub issue/PR URL in the body, but
+  comments keep internal status out of the release notes. The referenced issue or PR must exist.
+- For `none`, a pull request comment must carry a line `Corpus impact: none - <reason>`.
+  A reason such as "internal refactor, no behavior change" is fine; reasons containing `later`, `follow-up`,
+  `followup`, `TBD` or `todo` are not. Add the evidence first and the label last.
+- `ai-corpus / verify` reads the live PR, files, labels, comments and cross-references. It passes drafts,
+  Dependabot PRs and changes outside the language paths (excluding `for_*` and `.Specs` folders).
+  Editing a comment does not start a run: re-run the failed check with
+  `gh run rerun <run-id> --failed --repo Cratis/Screenplay` after correcting evidence.
 
 ## Which skill teaches which construct
 
@@ -88,16 +96,18 @@ Released in: Cratis.Screenplay <version> (cratis CLI <version> once bundled)
 <PLAY codes, tool names, versions, counts, verification.json assertions that must change>
 ```
 
-## Backstops that do not exist yet
+## Backstops
 
-Today nothing checks the corpus against Screenplay: `Cratis/AI` verifies only that each skill contains the
-strings its `verification.json` lists. Three pieces are planned, and until they ship, this checklist is the
-only guard:
+The `ai-corpus / verify` gate enforces the impact decision and verifies its evidence, but a `none` reason
+still relies on review. It does not check the corpus against Screenplay: `Cratis/AI` verifies only that each
+skill contains the strings its `verification.json` lists. Three further pieces are planned:
 
 - https://github.com/Cratis/Screenplay/issues/500: a machine-readable contract (keywords, diagnostic codes,
-  MCP tools and arguments, CLI commands, ESM versions) published with each release.
+  MCP tools and arguments, CLI commands, ESM versions) published with each release. Once its artifact path
+  is known, the gate must reject `ai-corpus: none` for changes to that artifact.
 - https://github.com/Cratis/AI/issues/529: the corpus checks itself against the latest Screenplay release and
-  opens an issue on drift.
+  opens an issue on drift. It can query merged PRs labelled `ai-corpus: none` since the last release and
+  flag contract changes that were declared to have no impact.
 - https://github.com/Cratis/AI/issues/416: skill examples are compiled.
 
 When they land, reduce this section to what they cannot see: new constructs that need new teaching, not just

@@ -40,8 +40,11 @@ seconds to rule out.
 2. **Every other repository that must adapt gets a GitHub issue** (or pull request), created when the change
    is made and linked from the pull request. `Cratis/AI` is first and most important. See
    [other repositories](references/other-repositories.md).
-3. **State the corpus impact** in the pull request comment (not the release-note body):
-   `Corpus impact: <Cratis/AI issue or PR URL>` or `Corpus impact: none - <reason>`.
+3. **Add exactly one corpus-impact label:** `ai-corpus: tracked` or `ai-corpus: none`.
+   For `tracked`, link an existing `Cratis/AI` issue or PR in a pull request comment, or link back from that
+   AI issue or PR. For `none`, add a comment line `Corpus impact: none - <reason>`; deferring work is not a
+   reason. Add the evidence first and the label last. The `ai-corpus / verify` gate enforces this decision;
+   keep the release-note body free of internal status.
 4. **Diagnostic codes are permanent.** Never reuse or renumber a `PLAY` code.
 5. **Samples never carry deprecated syntax or a form the compiler warns about.** See
    `.cratis/ai/rules/project/samples.md`.
@@ -100,12 +103,16 @@ never edit the managed `.cratis/ai/skills/cratis-*` copies here.
 The backstops that would catch drift automatically are not in place yet: a machine-readable contract
 (https://github.com/Cratis/Screenplay/issues/500), a corpus drift check
 (https://github.com/Cratis/AI/issues/529) and compiling skill examples
-(https://github.com/Cratis/AI/issues/416). Until they land, this checklist is the only guard.
+(https://github.com/Cratis/AI/issues/416). The `ai-corpus / verify` gate checks that a decision and its
+evidence exist, not whether the corpus is correct; until those backstops land, review must catch drift.
 
 ## 6. Local verification
 
 Mirror CI (`.github/workflows/dotnet-build.yml`, `javascript-build.yml`). Run each phase on its own, and
-only the affected ones while iterating; run the full set before reporting done.
+only the affected ones while iterating; run the full set before reporting done. For changes to the corpus
+impact gate, run `node --test .github/scripts/tests/*.test.mjs` and `actionlint` if available. After editing
+comment evidence, re-run the failed gate (`gh run rerun <run-id> --failed --repo Cratis/Screenplay`): comment
+edits do not trigger it, but a re-run reads live state.
 
 ```bash
 yarn                                                    # once
@@ -143,4 +150,6 @@ Tick each before reporting a language change complete. "N/A" needs a reason you 
 - [ ] cspell lists updated for new words.
 - [ ] Every section 6 phase passes, as CI runs it: `dotnet test` (Debug), Release build, CanonicalVectors Release tests, `dotnet pack` with `verify-package.py`, and `yarn build`, `compile`, `lint:ci`, `test`.
 - [ ] Issues opened or linked for every affected repository, `Cratis/AI` first.
-- [ ] Pull request comment states `Corpus impact: ...`; the pull request body is release-note only.
+- [ ] Exactly one `ai-corpus:` label added last: `tracked` with a verified `Cratis/AI` comment link or
+  back-reference, or `none` with a `Corpus impact: none - <reason>` comment; `ai-corpus / verify` passes.
+  The pull request body is release-note only.
