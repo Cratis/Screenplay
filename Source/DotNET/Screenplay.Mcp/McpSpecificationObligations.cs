@@ -91,8 +91,8 @@ static class McpSpecificationObligations
         }
         foreach (var concept in index.Declarations.Where(declaration => declaration.Syntax is ConceptSyntax))
         {
-            var commands = selected.Where(declaration => declaration.Syntax is CommandSyntax command && command.Properties.Any(property => McpReviewSelection.Resolves(index, declaration, property.Type.Name, "Concept", concept))).ToArray();
-            if (commands.Length == 0 && !selected.Contains(concept)) continue;
+            var commands = index.Declarations.Where(declaration => declaration.Syntax is CommandSyntax command && command.Properties.Any(property => McpReviewSelection.Resolves(index, declaration, property.Type.Name, "Concept", concept))).ToArray();
+            if (!commands.Any(selected.Contains) && !selected.Contains(concept)) continue;
             Validation(concept, ((ConceptSyntax)concept.Syntax).Validations ?? [], (spec, value) => commands.Any(command => Action(spec, value, command)));
         }
         foreach (var model in selected.Where(declaration => declaration.Kind == "ReadModel"))
