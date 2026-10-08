@@ -57,6 +57,17 @@ describe('when authoring refusals and redelivery', () => {
             expect(validateLines(lines, { compilerDiagnostics: [{ code, severity: 'error', message: 'Invalid refusal', location: { line: 4, column: 7 } }] }).map(issue => issue.code)).toContain(code);
         }
     });
+    it('should surface the callerless authorization warning at the branch', () => {
+        const source = 'policy Access\n  require role "Manager"\nmodule Billing\n  feature Claims\n    slice Automation Claiming\n      event Approved\n      command Claim\n        authorize Access\n      reaction Claimer\n        when Approved\n          invokes Claim\n            on refused by authorization\n              acknowledge';
+        const lines = source.split('\n');
+        const native = parse(source).diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0557');
+        expect(native).toHaveLength(1);
+        for (const context of [{}, { compilerDiagnostics: native }]) {
+            expect(validateLines(lines, context).filter(issue => issue.code === 'PLAY0557')).toEqual([
+                { code: 'PLAY0557', severity: 'warning', message: native[0].message, line: 11, startColumn: 13, endColumn: lines[11].length + 1 },
+            ]);
+        }
+    });
     it('should highlight selectors acknowledgement redelivery and refusal values', async () => {
         const compilerPath = 'monaco-editor/esm/vs/editor/standalone/common/monarch/monarchCompile.js';
         const lexerPath = 'monaco-editor/esm/vs/editor/standalone/common/monarch/monarchLexer.js';
