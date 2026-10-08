@@ -19,6 +19,7 @@ internal static class ReactionRefusalValidator
             foreach (var invocation in slice.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(trigger => trigger.Invokes ?? []))
             {
                 var command = declarations.Resolve(invocation.Command, scope, owner => owner.Commands, node => node.Name);
+                var authorizationGated = command is { } invokedCommand && IsAuthorizationGated(application, invokedCommand.Node, invokedCommand.Scope);
                 var earlier = new List<InvocationRefusalSyntax>();
                 foreach (var branch in invocation.OnRefused)
                 {
@@ -28,8 +29,7 @@ internal static class ReactionRefusalValidator
                     }
 
                     earlier.Add(branch);
-                    if (branch.Selector == "authorization" && InvocationHasNoDeclaredIdentity() &&
-                        command is { } authorized && IsAuthorizationGated(application, authorized.Node, authorized.Scope))
+                    if (branch.Selector == "authorization" && InvocationHasNoDeclaredIdentity() && authorizationGated)
                     {
                         context.Warning(
                             DiagnosticCodes.AuthorizationRefusalWithoutIdentity,

@@ -2,6 +2,18 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "An imported command without a declared authorization shape has no callerless authorization warning",
+            "validate": true,
+            "source": ["import External.Claims.Claim", "module M", "  feature F", "    slice Automation S", "      event Approved", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by authorization", "              acknowledge"],
+            "diagnostics": []
+        },
+        {
+            "name": "An ambiguous bare command name has no callerless authorization warning",
+            "validate": true,
+            "source": ["policy Access", "  require authenticated", "module M", "  feature F", "    slice StateChange First", "      command Claim", "        authorize Access", "    slice StateChange Second", "      command Claim", "        authorize Access", "    slice Automation S", "      event Approved", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by authorization", "              acknowledge"],
+            "diagnostics": []
+        },
+        {
             "name": "An authorization refusal without an identity warns for a gated command",
             "validate": true,
             "source": ["policy Access", "  require not role \"Blocked\"", "module M", "  feature F", "    slice Automation S", "      event Approved", "      command Claim", "        authorize Access", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by authorization", "              acknowledge"],
