@@ -23,6 +23,10 @@ static class McpModelingSmells
         var events = index.Declarations.Where(declaration => declaration.Syntax is EventSyntax).ToArray();
         var commands = index.Declarations.Where(declaration => declaration.Syntax is CommandSyntax).ToArray();
         var producers = commands.ToDictionary(command => command, command => Produced(index, command));
+        var eventProducers = producers.SelectMany(pair => pair.Value.Select(@event => (Event: @event, Command: pair.Key)))
+            .ToLookup(pair => pair.Event, pair => pair.Command);
+        var shapes = events.ToDictionary(@event => @event, @event => string.Join('\0', Shape((EventSyntax)@event.Syntax)));
+        var shapeGroups = events.ToLookup(@event => shapes[@event], StringComparer.Ordinal);
 
         void Add(string ruleId, McpDeclaration owner, string question, string? property = null, IEnumerable<McpDeclaration>? related = null)
         {
@@ -47,10 +51,10 @@ static class McpModelingSmells
             {
                 Add("SMELL001", @event, $"Does '{@event.Name}' name the business reason for the fact rather than a generic change or technical delivery?");
             }
-            var shape = Shape((EventSyntax)@event.Syntax);
-            var ownProducers = commands.Where(command => producers[command].Contains(@event)).ToArray();
-            var duplicates = events.Where(other => other != @event && shape.Length > 0 && Shape((EventSyntax)other.Syntax).SequenceEqual(shape, StringComparer.Ordinal) &&
-                commands.Any(command => producers[command].Contains(other) && ownProducers.Any(own => own != command))).ToArray();
+            var shape = shapes[@event];
+            var ownProducers = eventProducers[@event].ToArray();
+            var duplicates = shape.Length == 0 || ownProducers.Length == 0 ? [] : shapeGroups[shape].Where(other => other != @event &&
+                eventProducers[other].Any(command => ownProducers.Length > 1 || ownProducers[0] != command)).ToArray();
             if (duplicates.Length > 0)
             {
                 Add("SMELL003", @event, $"Do '{@event.Name}' and the {duplicates.Length} same-shaped event(s) produced by different commands record distinct business facts, or duplicate one meaning?", related: duplicates);
