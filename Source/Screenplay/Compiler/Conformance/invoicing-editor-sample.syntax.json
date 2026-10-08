@@ -8877,6 +8877,12 @@
               "name": "IsInvoicingStaff"
             }
           },
+          "dependsOn": [
+            {
+              "kind": "DependsOnSyntax",
+              "target": "InvoiceManagement"
+            }
+          ],
           "description": "Recording what customers pay and chasing what they do not",
           "features": [],
           "fileImports": [],

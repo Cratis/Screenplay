@@ -1086,6 +1086,9 @@ module Invoicing
                 return [new MarkInvoiceOverdue(InvoiceId, DateTimeOffset.UtcNow)];
             ```
 
+  feature Payments
+    depends on InvoiceManagement
+
     slice Automation ReconcilePayments
       description "Described before any of it is implemented - no 'file' anywhere"
 
