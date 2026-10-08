@@ -1,7 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Text;
 using System.Text.Json;
 using Cratis.Screenplay.Mcp;
 using Cratis.Screenplay.Semantics;
@@ -70,8 +69,8 @@ static class ModelTest
             var snapshot = McpSnapshot.Compile(target, isFile);
 
             // The compiler owns file/import discovery. Only its selected source set enters execution.
-            var documents = snapshot.Sources.OrderBy(source => source.Key, StringComparer.Ordinal).Select((source, index) =>
-                WorkspaceDocument.Create($"document-{index}", PortablePlayPath.Parse(source.Key), Encoding.UTF8.GetBytes(source.Value))).ToArray();
+            var directory = isFile ? Path.GetDirectoryName(Path.GetFullPath(target))! : Path.GetFullPath(target);
+            var documents = McpTestDocuments.From(snapshot, directory);
             var name = isFile ? Path.GetFileNameWithoutExtension(target) : new DirectoryInfo(target).Name;
             var identity = ApplicationIdentity.Create(name);
             var workspace = documents.Length == 0
@@ -94,7 +93,7 @@ static class ModelTest
             error.WriteLine(failure.Message);
             return 2;
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidWorkspaceDocument or InvalidScreenplayWorkspace or InvalidSemanticContract)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidWorkspaceDocument or InvalidScreenplayWorkspace or InvalidSemanticContract or InvalidPortablePlayPath)
         {
             error.WriteLine($"Could not test '{target}': {exception.Message}");
             return 2;
