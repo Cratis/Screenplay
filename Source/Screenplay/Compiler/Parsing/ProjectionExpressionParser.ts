@@ -46,6 +46,7 @@ export function parseProjectionExpression(text: string, location: SourceLocation
         context.error(DiagnosticCodes.ExpectedLiteralValue, `Expected a literal value after 'literal', got '${text.substring('literal '.length).trim()}'`, location);
         return { kind: 'RawExpressionSyntax', text, location };
     }
+    if (text === '$refusal' || text.startsWith('$refusal.')) return { kind: 'RefusalExpressionSyntax', member: text === '$refusal' ? '' : text.substring('$refusal.'.length), location };
     if (text === '$eventSourceId') return { kind: 'EventSourceIdExpressionSyntax', location };
     if (text.startsWith('$eventContext.')) return { kind: 'EventContextExpressionSyntax', path: text.substring('$eventContext.'.length), location };
     if (text === '$causedBy') return { kind: 'CausedByExpressionSyntax', property: null, location };

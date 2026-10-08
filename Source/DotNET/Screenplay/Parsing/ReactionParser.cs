@@ -70,6 +70,14 @@ internal static partial class ReactionParser
                 continue;
             }
 
+            if (RefusalPrefixRegex().IsMatch(line.Content))
+            {
+                context.Error(DiagnosticCodes.InvalidRefusalBranch, "A refusal branch belongs inside 'invokes <Command>'.", line.Location);
+                context.SkipBlock(line.Indent);
+                reported = true;
+                continue;
+            }
+
             if (!TriggerParser.ClauseKeywords.Contains(keyword))
             {
                 context.Error(
@@ -192,6 +200,10 @@ internal static partial class ReactionParser
                     }
 
                     continue;
+                case "on" when RefusalPrefixRegex().IsMatch(body.Content):
+                    context.Error(DiagnosticCodes.InvalidRefusalBranch, "A refusal branch belongs inside 'invokes <Command>'.", body.Location);
+                    context.SkipBlock(body.Indent);
+                    continue;
                 case "invokes":
                     if (ParseInvokes(context, body) is { } invoked)
                     {
@@ -240,9 +252,16 @@ internal static partial class ReactionParser
         }
 
         var mappings = new List<PropertyMappingSyntax>();
+        var refusals = new List<InvocationRefusalSyntax>();
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
+            if (RefusalPrefixRegex().IsMatch(child.Content))
+            {
+                if (ParseRefusal(context, child) is { } refusal) refusals.Add(refusal);
+                continue;
+            }
+
             var mapping = MappingRegex().Match(child.Content);
             if (!mapping.Success)
             {
@@ -253,8 +272,73 @@ internal static partial class ReactionParser
             mappings.Add(ExpressionParser.ParseMapping(context, LineText.Unescape(mapping.Groups[1].Value), mapping.Groups[2], child));
         }
 
-        return new(match.Groups[1].Value, mappings, line.Location);
+        return new(match.Groups[1].Value, mappings, line.Location) { OnRefused = refusals };
     }
+
+    static InvocationRefusalSyntax? ParseRefusal(ParserContext context, SourceLine line)
+    {
+        var match = RefusalRegex().Match(line.Content);
+        if (!match.Success || (match.Groups[2].Success && match.Groups[1].Value != "constraint"))
+        {
+            context.Error(DiagnosticCodes.InvalidRefusalBranch, "Expected 'on refused [by validation | by constraint [<Name>] | by authorization]'.", line.Location);
+            context.SkipBlock(line.Indent);
+            return null;
+        }
+
+        var produces = new List<ProducesSyntax>();
+        var acknowledge = false;
+        var reported = false;
+        var locations = new Dictionary<string, SourceLocation>();
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            if (child.Content == "acknowledge")
+            {
+                if (acknowledge || produces.Count > 0 || context.TryPeekChild(child.Indent, out _))
+                {
+                    context.Error(DiagnosticCodes.InvalidRefusalBranchBody, "A refusal branch contains 'acknowledge' alone or one or more 'produces' blocks.", child.Location);
+                    reported = true;
+                }
+
+                acknowledge = true;
+                locations.TryAdd("acknowledge", child.Location);
+                context.SkipBlock(child.Indent);
+            }
+            else if (LineText.FirstWord(child.Content) == "produces")
+            {
+                if (acknowledge)
+                {
+                    context.Error(DiagnosticCodes.InvalidRefusalBranchBody, "A refusal branch cannot combine 'acknowledge' and 'produces'.", child.Location);
+                    reported = true;
+                }
+
+                if (ProducesParser.Parse(context, child) is { } produced) produces.Add(produced);
+                else reported = true;
+            }
+            else
+            {
+                context.Error(DiagnosticCodes.InvalidRefusalBranchBody, "Expected 'acknowledge' or 'produces <Event>' in a refusal branch.", child.Location);
+                context.SkipBlock(child.Indent);
+                reported = true;
+            }
+        }
+
+        if (!acknowledge && produces.Count == 0 && !reported)
+        {
+            context.Error(DiagnosticCodes.InvalidRefusalBranchBody, "A refusal branch must acknowledge or produce an event.", line.Location);
+        }
+
+        return new(match.Groups[1].Success ? match.Groups[1].Value : "any", match.Groups[2].Success ? match.Groups[2].Value : null, acknowledge, produces, line.Location)
+        {
+            DirectiveLocations = locations
+        };
+    }
+
+    [GeneratedRegex(@"^on\s+refused\b(?=$|\s+by\b)", RegexOptions.None, 1000)]
+    private static partial Regex RefusalPrefixRegex();
+
+    [GeneratedRegex(@"^on\s+refused(?:\s+by\s+(validation|constraint|authorization)(?:\s+([A-Za-z_]\w*(?:\.\w+)*))?)?$", RegexOptions.None, 1000)]
+    private static partial Regex RefusalRegex();
 
     [GeneratedRegex(@"^reaction\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();

@@ -59,6 +59,10 @@
                           Link="Golden/full-esm-v7.json"
                           WithCulture="false"
                           LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v7.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/policy-negation-v7.json"
+                          Link="Golden/policy-negation-v7.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.policy-negation-v7.json" />
         <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-identity-catalog-v1.json"
                           Link="Golden/full-identity-catalog-v1.json"
                           WithCulture="false"

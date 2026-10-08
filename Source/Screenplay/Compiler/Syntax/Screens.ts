@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { ConditionSyntax } from './Conditions';
 import { TypeRefSyntax } from './Declarations';
 import { SyntaxNode } from './SyntaxNode';
 
@@ -26,6 +27,37 @@ export interface ScreenActionSyntax extends SyntaxNode {
     readonly command: string;
     readonly label: string | null;
     readonly navigate: ScreenNavigateSyntax | null;
+}
+
+// One labeled action with ordered command alternatives.
+export interface ScreenGuardedActionSyntax extends SyntaxNode {
+    readonly kind: 'ScreenGuardedActionSyntax';
+    readonly label: string;
+    readonly alternatives: readonly ScreenActionAlternativeSyntax[];
+    readonly otherwise: ScreenActionOtherwiseSyntax | null;
+    readonly navigate: ScreenNavigateSyntax | null;
+}
+
+export interface ScreenActionAlternativeSyntax extends SyntaxNode {
+    readonly kind: 'ScreenActionAlternativeSyntax';
+    readonly condition: ConditionSyntax;
+    readonly command: string;
+    readonly arguments: readonly InteractionArgumentSyntax[];
+}
+
+export type ScreenActionOtherwiseOutcome = 'Unknown' | 'Hidden' | 'Execute';
+
+export interface ScreenActionOtherwiseSyntax extends SyntaxNode {
+    readonly kind: 'ScreenActionOtherwiseSyntax';
+    readonly outcome: ScreenActionOtherwiseOutcome;
+    readonly command: string | null;
+    readonly arguments: readonly InteractionArgumentSyntax[];
+}
+
+export interface InteractionArgumentSyntax extends SyntaxNode {
+    readonly kind: 'InteractionArgumentSyntax';
+    readonly name: string;
+    readonly binding: string;
 }
 
 // 'navigate to <Screen> [by <param>]'.
@@ -114,6 +146,7 @@ export interface ScreenUsesBehaviorSyntax extends SyntaxNode {
 export type ScreenDirectiveSyntax =
     | ScreenDataSyntax
     | ScreenActionSyntax
+    | ScreenGuardedActionSyntax
     | ScreenNavigateSyntax
     | ScreenTemplateReferenceSyntax
     | ScreenSectionSyntax

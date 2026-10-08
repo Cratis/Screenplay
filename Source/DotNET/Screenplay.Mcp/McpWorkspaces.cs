@@ -16,7 +16,7 @@ internal sealed partial class McpWorkspaces
     readonly ConditionalWeakTable<IMcpProposal, McpStatePlan> _statePlans = [];
     readonly ConditionalWeakTable<IMcpProposal, McpRepairEvidence> _repairEvidence = [];
 
-    readonly bool _staticRoot;
+    readonly McpRoot? _configuredRoot;
     McpRoot? _root;
     ScreenplayWorkspace? _workspace;
     byte[]? _stateBytes;
@@ -25,7 +25,7 @@ internal sealed partial class McpWorkspaces
 
     internal McpWorkspaces(McpRoot? root = null)
     {
-        _staticRoot = root is not null;
+        _configuredRoot = root;
         _root = root;
     }
 
@@ -46,7 +46,7 @@ internal sealed partial class McpWorkspaces
     internal string? DocumentsDirectoryHint { get; set; }
 
     // Whether the server was started without a fixed root and chooses one per workspace.
-    internal bool DynamicRoot => !_staticRoot;
+    internal bool DynamicRoot => _configuredRoot is null;
 
     // The path of a root bound from a single client root, null when unbound or chosen by path.
     internal string? ClientDerivedRootPath { get; private set; }
@@ -60,19 +60,17 @@ internal sealed partial class McpWorkspaces
     internal object Open(JsonElement arguments)
     {
         // A dynamic server chooses its root here: an explicit path wins, then a single client root,
-        // then the working directory when it already holds Screenplay source. A static root stays bound.
+        // then the working directory when it already holds Screenplay source. A configured root admits its Git worktrees.
         var requestedPath = McpJson.OptionalString(arguments, "path");
         if (requestedPath is not null)
         {
             var requestedRoot = new McpRoot(Path.GetFullPath(requestedPath, CurrentDirectoryHint ?? Environment.CurrentDirectory));
-            if (_staticRoot)
+            if (_configuredRoot is not null)
             {
-                if (!McpDirectoryIdentity.Same(Root, requestedRoot))
-                {
-                    throw new McpFailure("A fixed-root server cannot switch to another application root.") { FailureKind = "RootChangeRefused" };
-                }
-
-                // A proven alias is admitted, but never replaces the originally approved root object or spelling.
+                // Check the approved root before touching an old worktree that may have been removed.
+                var resolved = McpDirectoryIdentity.Same(_configuredRoot, requestedRoot)
+                    ? _configuredRoot : McpWorktreeRoots.Resolve(_configuredRoot, requestedRoot);
+                BindRoot(resolved);
             }
             else
             {
@@ -224,7 +222,7 @@ internal sealed partial class McpWorkspaces
     // path the caller chose survives.
     internal void UnbindClientRoot(string directoryPath)
     {
-        if (_staticRoot || _root is null || ClientDerivedRootPath is null || !string.Equals(ClientDerivedRootPath, directoryPath, StringComparison.OrdinalIgnoreCase))
+        if (_configuredRoot is not null || _root is null || ClientDerivedRootPath is null || !string.Equals(ClientDerivedRootPath, directoryPath, StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
@@ -439,7 +437,7 @@ internal sealed partial class McpWorkspaces
 
     void BindRoot(McpRoot candidate)
     {
-        if (_root is not null && string.Equals(_root.DirectoryPath, candidate.DirectoryPath, StringComparison.OrdinalIgnoreCase))
+        if (_root?.Exists == true && _root.SamePath(candidate))
         {
             return;
         }

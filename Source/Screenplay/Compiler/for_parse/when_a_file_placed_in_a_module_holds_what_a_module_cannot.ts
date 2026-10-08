@@ -19,7 +19,7 @@ describe('when a file placed in a module holds what a module cannot', () => {
     });
 
     it('should say what a module body holds', () => {
-        result.diagnostics[0].message.should.equal('Unexpected \'slice\' in a file imported into module \'Ordering\' - expected an application declaration or description, authorize, import, screen template, dialog template, form, contribute, feature, \'on <trigger>\' or \'uses <Behavior>\'');
+        result.diagnostics[0].message.should.equal('Unexpected \'slice\' in a file imported into module \'Ordering\' - expected an application declaration or description, depends on <Name>, authorize, import, screen template, dialog template, form, contribute, feature, example, \'on <trigger>\' or \'uses <Behavior>\'');
     });
 
     it('should still place the module', () => {

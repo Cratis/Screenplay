@@ -39,8 +39,8 @@ export function layoutDirectives(canvas: PrototypeCanvas, directives: readonly S
         buttons = [];
     };
     for (const directive of directives) {
-        if (directive.kind === 'ScreenActionSyntax' || directive.kind === 'ScreenNavigateSyntax') {
-            buttons.push(directive.kind === 'ScreenActionSyntax' ? directive.label ?? directive.command : directive.screen);
+        if (directive.kind === 'ScreenActionSyntax' || directive.kind === 'ScreenGuardedActionSyntax' || directive.kind === 'ScreenNavigateSyntax') {
+            buttons.push(directive.kind === 'ScreenNavigateSyntax' ? directive.screen : directive.kind === 'ScreenGuardedActionSyntax' ? directive.label : directive.label ?? directive.command);
             continue;
         }
         flushButtons();
