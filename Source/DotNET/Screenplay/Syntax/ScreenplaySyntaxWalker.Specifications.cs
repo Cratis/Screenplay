@@ -109,6 +109,8 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         if (syntax.For is not null) VisitExpression(syntax.For);
+        if (syntax.Stream is { } stream) VisitSpecificationStream(stream);
+        if (syntax.NoStream is { } noStream) VisitSpecificationNoStream(noStream);
         foreach (var value in syntax.Values) VisitPropertyMapping(value);
         foreach (var value in syntax.GeneratedValues) VisitPropertyMapping(value);
     }
@@ -121,6 +123,8 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         if (syntax.For is not null) VisitExpression(syntax.For);
+        if (syntax.Stream is { } stream) VisitSpecificationStream(stream);
+        if (syntax.NoStream is { } noStream) VisitSpecificationNoStream(noStream);
         foreach (var value in syntax.Values) VisitPropertyMapping(value);
     }
 

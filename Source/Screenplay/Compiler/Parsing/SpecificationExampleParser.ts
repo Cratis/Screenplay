@@ -3,8 +3,9 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
-import { SpecificationExampleSyntax } from '../Syntax/Specifications';
+import { SpecificationNoStreamSyntax, SpecificationStreamSyntax, SpecificationExampleSyntax } from '../Syntax/Specifications';
 import { dotNetWhitespace, nativePattern } from '../Text/patterns';
+import { parseSpecificationStream, rejectSpecificationRouteChildren, specificationStream } from './SpecificationParser';
 import { parseDescription } from './DescriptionParser';
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
@@ -46,11 +47,14 @@ export function addFixtureValue(context: ParserContext, values: PropertyMappingS
 
 export function parseFixtureBody(context: ParserContext, parent: SourceLine, inline?: RegExpExecArray, allowGenerated = false, example?: string): {
     values: PropertyMappingSyntax[]; for: ExpressionSyntax | null; generatedValues: PropertyMappingSyntax[]; description: string | null;
+    stream?: SpecificationStreamSyntax; noStream?: SpecificationNoStreamSyntax;
 } {
     const values: PropertyMappingSyntax[] = [];
     const generatedValues: PropertyMappingSyntax[] = [];
     let eventSource: ExpressionSyntax | null = null;
     let description: string | null = null;
+    let stream: SpecificationStreamSyntax | undefined;
+    let noStream: SpecificationNoStreamSyntax | undefined;
     addInlineValue(context, parent, inline, values);
     for (let child = context.peekChild(parent.indent); child !== undefined; child = context.peekChild(parent.indent)) {
         context.reader.takeSignificant();
@@ -68,10 +72,20 @@ export function parseFixtureBody(context: ParserContext, parent: SourceLine, inl
             continue;
         }
         const match = mapping.exec(child.content);
-        if (example !== undefined && (firstWord(child.content) === 'streamId' ||
-            (firstWord(child.content) === 'stream' && match === null) || child.content.startsWith('no stream'))) {
-            context.error(DiagnosticCodes.InvalidSpecificationExampleBody, 'An example cannot declare stream, streamId or no stream; state the route on the specification step.', locationOf(child));
-            context.skipOpaqueBlock(child.indent);
+        if (example !== undefined && match === null && (firstWord(child.content) === 'stream' || child.content.startsWith('no stream'))) {
+            const route = specificationStream.exec(child.content);
+            if (stream !== undefined || noStream !== undefined) {
+                context.error(DiagnosticCodes.InvalidSpecificationStream, 'An event occurrence declares at most one stream or no stream directive.', locationOf(child));
+                context.skipOpaqueBlock(child.indent);
+            } else if (child.content === 'no stream') {
+                noStream = { kind: 'SpecificationNoStreamSyntax', location: locationOf(child) };
+                rejectSpecificationRouteChildren(context, child);
+            } else if (route !== null) {
+                stream = parseSpecificationStream(context, child, route);
+            } else {
+                context.error(DiagnosticCodes.InvalidSpecificationStream, "Expected 'stream Source.Stream', or 'no stream' on an event example.", locationOf(child));
+                context.skipOpaqueBlock(child.indent);
+            }
             continue;
         }
         if (match !== null) {
@@ -85,5 +99,5 @@ export function parseFixtureBody(context: ParserContext, parent: SourceLine, inl
             context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child));
         }
     }
-    return { values, for: eventSource, generatedValues, description };
+    return { values, for: eventSource, generatedValues, description, ...(stream === undefined ? {} : { stream }), ...(noStream === undefined ? {} : { noStream }) };
 }

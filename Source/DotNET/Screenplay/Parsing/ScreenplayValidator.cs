@@ -134,7 +134,7 @@ internal static class ScreenplayValidator
         var declarations = new ConsistencyDeclarations(application, scopedSlices);
         ValidateAdditionalEventReferences(application, declarations, knownEvents, context);
         EventSourceValidator.Validate(application, declarations, context);
-        SpecificationStreamValidator.Validate(application, declarations, context);
+        SpecificationStreamValidator.Validate(application, declarations, context, expansion);
         OperationValidator.Validate(application, declarations, context);
         ImportValidator.Validate(application, declarations, context);
         CommandConsistencyValidator.Validate(declarations, context);
@@ -149,7 +149,7 @@ internal static class ScreenplayValidator
         SpecificationOutcomeConsistencyValidator.Validate(declarations, context);
         SpecificationActionValidator.Validate(application, declarations, context);
         ReactionRefusalValidator.Validate(application, declarations, context);
-        SpecificationRedeliveryValidator.Validate(declarations, context);
+        SpecificationRedeliveryValidator.Validate(application, declarations, context);
         var knownQueries = scopedSlices.SelectMany(entry => entry.Slice.Queries.Select(query => new Declaration(query.Name, entry.Scope))).ToList();
         var knownScreenDeclarations = scopedSlices.SelectMany(entry => entry.Slice.Screens.Select(screen => new Declaration(screen.Name, entry.Scope))).ToList();
         ValidateSpecificationQueries(scopedSlices, knownQueries, context);

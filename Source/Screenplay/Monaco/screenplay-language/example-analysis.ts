@@ -87,7 +87,7 @@ export function exampleAnalysis(syntax: unknown, path: string, lines: string[], 
         return [{ label: unique(node.name, scope) === node ? node.name : display(node), insertText: qualifiers ? node.name : name,
             documentation: node.example ? `Example of ${node.example.type}. Step assignments override example values; no implicit defaults.` : `Declared ${fixtureKind}.` }];
     });
-    const effective = (example: SpecificationExampleSyntax | undefined, values: readonly PropertyMappingSyntax[], generated: readonly PropertyMappingSyntax[], destination: ExpressionSyntax | null) => {
+    const effective = (example: SpecificationExampleSyntax | undefined, values: readonly PropertyMappingSyntax[], generated: readonly PropertyMappingSyntax[], destination: ExpressionSyntax | null, authoredRoute?: Pick<SpecificationExampleSyntax, 'stream' | 'noStream'>) => {
         if (rejected) return rejected;
         const merge = (base: readonly PropertyMappingSyntax[], overrides: readonly PropertyMappingSyntax[], prefix = '') => {
             if (new Set(base.map(value => value.property)).size !== base.length || new Set(overrides.map(value => value.property)).size !== overrides.length) return null;
@@ -103,7 +103,13 @@ export function exampleAnalysis(syntax: unknown, path: string, lines: string[], 
         const fixtures = merge(example?.generatedValues ?? [], generated, 'generated ');
         if (!properties || !fixtures) return '**Invalid duplicate assignments; no effective values selected.**';
         const selected = destination ?? example?.for;
-        return [...properties, ...fixtures, ...(selected ? [`for ${expressionText(selected)} — ${destination ? example?.for ? `override (replaces ${expressionText(example.for)} from ${example.name})` : 'authored' : `example ${example!.name}`}`] : [])].join('\n');
+        const priorRoute = example?.stream ?? example?.noStream;
+        const replacementRoute = authoredRoute?.stream ?? authoredRoute?.noStream;
+        const route = replacementRoute ?? priorRoute;
+        const routeText = (value: NonNullable<typeof route>): string => value.kind === 'SpecificationNoStreamSyntax' ? 'no stream' :
+            `stream ${value.eventSource}.${value.stream}${value.streamId ? ` streamId = ${expressionText(value.streamId.source)}` : value.streamIdParts.length ? ` streamId ${value.streamIdParts.map(part => `${part.property} = ${expressionText(part.source)}`).join(', ')}` : ''}`;
+        const routing = route ? [`${routeText(route)} — ${replacementRoute ? priorRoute ? `override (replaces ${routeText(priorRoute)} from ${example!.name})` : 'authored' : `example ${example!.name}`}`] : [];
+        return [...properties, ...fixtures, ...routing, ...(selected ? [`for ${expressionText(selected)} — ${destination ? example?.for ? `override (replaces ${expressionText(example.for)} from ${example.name})` : 'authored' : `example ${example!.name}`}`] : [])].join('\n');
     };
     const hovers = new Map<number, { start: number; length: number; content: string }>();
     for (const declaration of declarations.filter(node => node.example?.location.path === path)) {
@@ -129,11 +135,12 @@ export function exampleAnalysis(syntax: unknown, path: string, lines: string[], 
             const start = withoutComment(lines[line] ?? '').match(prefix)?.[0].length;
             if (start === undefined) continue;
             const content = !resolved ? '**Ambiguous example; no effective values selected.**' : kind(resolved) !== expected ? '**Example kind mismatch; no effective values selected.**'
-                : `**${expected} ${resolved.example?.type ?? name}${resolved.example ? ` — example ${display(resolved)}` : ''}**\n\n${effective(resolved.example, values, generated, destination)}\n\nAuthored fixture values, not execution results. Matching is unchanged.`;
+                : `**${expected} ${resolved.example?.type ?? name}${resolved.example ? ` — example ${display(resolved)}` : ''}**\n\n${effective(resolved.example, values, generated, destination, 'eventType' in step ? step : undefined)}\n\nAuthored fixture values, not execution results. Matching is unchanged.`;
             hovers.set(line, { start: start + 1, length: name.length, content });
         }
     }
     return {
+        eventExamples: declarations.filter(declaration => declaration.example?.location.path === path && kind(declaration) === FixtureKind.Event).map(declaration => declaration.example!),
         completions(line, before) {
             const scope = contexts.get(line) ?? [];
             const header = before.match(exampleTypePrefix);

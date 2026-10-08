@@ -6,7 +6,7 @@ export * from './Diagnostics';
 export * from './Dependencies';
 export * from './Syntax';
 export * from './ScreenplayCompiler';
-export { expandSpecificationExamples } from './Parsing/SpecificationCommandExamples';
+export { expandSpecificationExamples, expandEffectiveSpecificationExamples } from './Parsing/SpecificationCommandExamples';
 export { eventBodyReservedWords } from './Text/ReservedWords';
 export { pattern } from './Text/patterns';
 export { isSourceStreamName, isSourceStreamTypeName, sourceStreamPattern } from './Text/SourceStreamNames';
