@@ -346,3 +346,7 @@ The decider delegated this verdict to the orchestrating agent. The choices below
 5. **Comparison?** Canonical formatted part values under the same resolved stream, which is the same as comparing encoded ids.
 6. **#459?** It is recommended to adopt name-based value binding. It is not bound by this decision.
 7. **Version?** The authoring surface lands now, refused at binding. Execution joins #407's version or takes the next claimed one.
+
+## Status notes
+
+**2026-10-08.** Decision [0036](0036-admit-event-sources-streams-and-command-routes.md) narrows this decision's text domain for execution. Stream id text, scalar or a composite part, must be NFC, because executable model text is NFC. Non-NFC values are refused, never normalized. Normalization-equivalent spellings therefore cannot both appear, instead of staying distinct.
