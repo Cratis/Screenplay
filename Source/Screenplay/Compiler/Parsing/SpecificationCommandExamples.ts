@@ -85,12 +85,6 @@ export function specificationExamples(application: ApplicationSyntax) {
             const { example, name } = effective;
             return { ...action, commandType: name, values: merge(example.values, action.values), generatedValues: merge(example.generatedValues, action.generatedValues ?? []), for: action.for ?? example.for };
         },
-        event: (step: SpecificationEventSyntax, scope: readonly string[]): SpecificationEventSyntax => {
-            const effective = fixture(step.eventType, 'event', scope);
-            if (!effective) return step;
-            const route = step.stream ?? step.noStream ?? effective.example.stream ?? effective.example.noStream;
-            return { ...step, eventType: effective.name, values: merge(effective.example.values, step.values), for: step.for ?? effective.example.for, stream: route?.kind === 'SpecificationStreamSyntax' ? route : null, noStream: route?.kind === 'SpecificationNoStreamSyntax' ? route : null };
-        },
         readModel: (step: SpecificationReadModelSyntax, scope: readonly string[]): SpecificationReadModelSyntax => {
             const effective = fixture(step.name, 'readmodel', scope);
             if (!effective) return step;
