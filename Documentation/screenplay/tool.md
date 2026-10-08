@@ -95,7 +95,7 @@ Impact uses the same explicit source-reference index as MCP `dependencies`. It d
 
 ## Use the compiler as a library
 
-Everything the CLI does lives in the `Cratis.Screenplay` NuGet package - parsing, the syntax tree, diagnostics, file discovery and formatting:
+The `Cratis.Screenplay` NuGet package provides parsing, the syntax tree, diagnostics, file discovery and formatting:
 
 ```bash
 dotnet add package Cratis.Screenplay
@@ -139,5 +139,38 @@ var compilation = new PlayFileCompiler().CompileApplication("application.play");
 ```
 
 `CompileIn(rootDirectory)` is the third option: it compiles every discovered file as a document in its own right and hands back one result per file. Reach for it only when the files genuinely are separate documents that happen to share a directory - see [Folders](folders.md) for why a folder is normally one application.
+
+### Validate a scope from .NET
+
+To use the same scoped validation as `screenplay --scope` and MCP `diagnostics`, also reference the `Cratis.Screenplay.Mcp` NuGet package:
+
+```bash
+dotnet add package Cratis.Screenplay.Mcp
+```
+
+Pass all application sources, keyed by application-relative path (every key is a compilation root), the case-sensitive scope address, and the [completeness checks](completeness.md) you want. This excerpt assumes `sources` is an `IReadOnlyDictionary<string, string>` containing the whole application, including imported documents:
+
+```csharp
+using Cratis.Screenplay.Completeness;
+using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Mcp;
+
+if (!ScopedDiagnostics.TryValidate(sources, "Billing.Invoices.SendInvoice", CompletenessChecks.None, out var result, out var error))
+{
+    Console.Error.WriteLine($"{error.Kind}: {error.Message}");
+    return;
+}
+
+var scopedErrors = result.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+Console.WriteLine($"Scope: {scopedErrors} error(s); whole application: {result.WholeApplicationErrorCount} error(s), {result.WholeApplicationWarningCount} warning(s)");
+```
+
+`TryValidate` returns `true` when the scope resolves uniquely, even if the model has errors. On `false`, `result` is null and `error` carries `UnknownScope` or `AmbiguousScope` plus its message; no exception is thrown for either outcome.
+
+The immutable `ScopedDiagnosticResult` contains `Scope`, `Diagnostics`, `DeclarationCount`, `DependentDeclarationCount`, `AffectedScopes`, `UnresolvedEventConsumers` (`ReferenceCount` and `Scopes`), `PossiblyAffectedReferenceCount`, `DependencyCoverage`, `WholeApplicationErrorCount` and `WholeApplicationWarningCount`. An empty scope address in an affected or unresolved-consumer list denotes an application-level declaration. Whole-application counts include requested completeness findings, which run only when the whole application has no source errors. Use `CompletenessChecks.None` to omit them.
+
+You can pass a path instead of `sources`: the `TryValidate(string path, ...)` overload follows the tool's file and folder semantics, including imports and file encodings, and returns `InvalidPath` for a missing path or a non-`.play` file, or `UnreadablePath` for I/O and permission failures, rather than throwing.
+
+The [scoped selection rules above](#check-one-part-of-the-application) apply unchanged: direct dependents only, uncertainty reported separately, and a clean scoped result is not a whole-application or executable-model verdict. Both overloads start a fresh analysis for each call; the dictionary overload reads only the supplied sources.
 
 To go the other way - turn a syntax tree back into `.play` text, or generate Screenplay from a model - see [Printing and generating](printing.md).

@@ -97,10 +97,9 @@ static class McpModelQueries
             ? $"completeness checks skipped: the model has {errorCount} error(s)" : null;
         var scope = McpJson.OptionalString(arguments, "scope");
         ScopedDiagnosticResult? selection = null;
-        if (scope is not null)
+        if (scope is not null && !ScopedDiagnostics.TryValidate(snapshot, scope, checks, out selection, out var scopeError))
         {
-            selection = ScopedDiagnostics.Select(snapshot, scope, additional, out var scopeError)
-                ?? throw new McpFailure(scopeError!, -32602);
+            throw new McpFailure(scopeError.Message, -32602);
         }
         var diagnostics = selection?.Diagnostics.AsEnumerable() ?? all;
         if (McpJson.OptionalString(arguments, "document") is { } document)
