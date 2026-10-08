@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { Diagnostic } from '../Diagnostics/Diagnostic';
+import { productionDestinationDiagnostics } from '../Diagnostics/ProductionDestinationDiagnostics';
+import { validateConstraintProperties } from '../Parsing/ConstraintPropertyValidator';
 import { validateDependencyDeclarations } from '../Dependencies/DeclaredDependencyTargets';
 import { DeclaredDependencies } from '../Dependencies/DeclaredDependencies';
 import { validateInlineEvents } from '../Parsing/InlineEventValidator';
@@ -75,12 +77,14 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     validateEventSources(merged.value, context);
     validateOperations(merged.value, context);
     validateInlineEvents(merged.value, context);
+    validateConstraintProperties(merged.value, context);
     validateResponses(merged.value, context, parsed.flatMap(document => document.inputUses));
     validateReactionRefusals(merged.value, context);
     validateProjectionTargets(merged.value, context);
     validateIdentifierCompliance(merged.value, context);
     const value = validateDependencyDeclarations(merged.value, context);
     DeclaredDependencies.validate(value, context);
+    for (const diagnostic of productionDestinationDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);
     const existing = merged.diagnostics;
     const reported = new Set(existing.map(diagnosticKey));
     const all = [...existing, ...context.diagnostics.filter(diagnostic => !reported.has(diagnosticKey(diagnostic)))];

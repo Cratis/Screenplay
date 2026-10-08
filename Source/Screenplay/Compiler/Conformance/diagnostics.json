@@ -87,6 +87,40 @@
             "diagnostics": []
         },
         {
+            "name": "A unique constraint rejects a missing direct event field",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange S", "      event E", "        value String", "      constraint UniqueValue", "        unique missing, value on E"],
+            "diagnostics": ["PLAY0391@7"]
+        },
+        {
+            "name": "A unique constraint leaves dotted paths and earlier generation fields to binding",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange S", "      event E generation 1", "        value String", "      event E generation 2", "        other String", "      constraint UniqueValue", "        unique value, nested.missing on E"],
+            "diagnostics": []
+        },
+        {
+            "name": "A plain production advises an explicit identifier destination",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        produces E"],
+            "diagnostics": ["PLAY0478@7"],
+            "messages": ["Plain 'produces E' omits its destination - use 'for id' to explicitly select the command's identifier."]
+        },
+        {
+            "name": "Exact absence assertions reject a missing key",
+            "source": ["numbers exact", "module M", "  feature F", "    slice StateView S", "      specification Missing", "        then no readmodel V for"],
+            "diagnostics": ["PLAY0453@6"]
+        },
+        {
+            "name": "Exact absence assertions reject property paths",
+            "source": ["numbers exact", "module M", "  feature F", "    slice StateView S", "      specification Missing", "        then no readmodel V for key"],
+            "diagnostics": ["PLAY0453@6"]
+        },
+        {
+            "name": "Exact absence assertions reject child mappings",
+            "source": ["numbers exact", "module M", "  feature F", "    slice StateView S", "      specification Missing", "        then no readmodel V for 1", "          value = 1"],
+            "diagnostics": ["PLAY0453@7"]
+        },
+        {
             "name": "Routed given and append inherit an example destination and producer type",
             "validate": true,
             "source": ["eventsource Account", "  stream Events", "module M", "  feature F", "    slice StateChange S", "      event Happened", "      command Act", "        id String identifier", "        produces Happened", "          for id", "      example Prior : Happened", "        for \"other\"", "      specification Routed", "        given Prior", "          stream Account.Events", "        when append Prior", "          stream Account.Events", "        then Happened"],
@@ -1834,18 +1868,21 @@
         },
         {
             "name": "deeper productions after a validate property",
+            "validate": true,
             "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        projectId Uuid identifier", "        validate String", "          produces First", "            for projectId", "        produces Legacy", "        produces event Renamed", "          for projectId", "          value String = validate", "      event First", "      event Legacy"],
-            "diagnostics": []
+            "diagnostics": ["PLAY0478@9"]
         },
         {
             "name": "deeper productions after a handler property",
+            "validate": true,
             "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        projectId Uuid identifier", "        handler String", "          produces First", "            for projectId", "        produces Legacy", "        produces event Renamed", "          for projectId", "          value String = handler", "      event First", "      event Legacy"],
-            "diagnostics": []
+            "diagnostics": ["PLAY0478@9"]
         },
         {
             "name": "deeper productions after a concurrency property",
+            "validate": true,
             "source": ["module M", "  feature F", "    slice StateChange S", "      command C", "        projectId Uuid identifier", "        concurrency String", "          produces First", "            for projectId", "        produces Legacy", "        produces event Renamed", "          for projectId", "          value String = concurrency", "      event First", "      event Legacy"],
-            "diagnostics": []
+            "diagnostics": ["PLAY0478@9"]
         },
         {
             "name": "inline and plain productions both omit destinations without an identifier",

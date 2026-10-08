@@ -1,9 +1,27 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// The subset of the C# compiler's DiagnosticCodes this compiler reports. The values are the same, so a
-// code means the same thing whichever compiler reported it.
+// Shared diagnostic names, including the explicitly C#-only checks below. Catalogue membership does
+// not imply TypeScript validation support; see Documentation/screenplay/editor-diagnostics.md.
 export const DiagnosticCodes = {
+    // C#-only: opt-in completeness, scoped action/refusal reference validation, and semantic binding.
+    ConflictingScreenDataBinding: 'PLAY0530',
+    ScreenDataQueryMismatch: 'PLAY0531',
+    ActionWithoutInputSurface: 'PLAY0532',
+    CommandWithoutInputSurface: 'PLAY0533',
+    ReadModelFieldWithoutOrigin: 'PLAY0534',
+    QueryParameterNotHeldByView: 'PLAY0535',
+    UnconsumedEvent: 'PLAY0536',
+    UnreachableScreen: 'PLAY0537',
+    UnknownActionSubjectField: 'PLAY0345',
+    UnresolvedActionSubject: 'PLAY0346',
+    UnreachableActionAlternative: 'PLAY0347',
+    UnknownActionArgumentProperty: 'PLAY0348',
+    UnreachableRefusalBranch: 'PLAY0540',
+    InvalidRefusalValue: 'PLAY0541',
+    UnknownRefusalConstraint: 'PLAY0542',
+    UnknownRedeliveryReaction: 'PLAY0544',
+    IndeterminateNegatedClaimTarget: 'PLAY0546',
     InvalidRefusalBranch: 'PLAY0538',
     InvalidRefusalBranchBody: 'PLAY0539',
     UnmatchedRedeliveredOccurrence: 'PLAY0543',
@@ -21,6 +39,8 @@ export const DiagnosticCodes = {
     InlineEventGeneration: 'PLAY0475',
     ReservedProductionMetadata: 'PLAY0476',
     InvalidEventDocumentation: 'PLAY0477',
+    OmittedProductionDestination: 'PLAY0478',
+    UnknownConstraintProperty: 'PLAY0391',
     UnknownTopLevelConstruct: 'PLAY0001',
     InvalidDomainDeclaration: 'PLAY0002',
     DuplicateDomain: 'PLAY0003',
