@@ -1,7 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Printing;
@@ -38,20 +37,17 @@ public sealed partial class ScreenplayPrinter
     /// If there is no next located sibling, use the existing insertion rule: after the last member of the kind,
     /// or before the first member of a later canonical kind if none exists. Every other collection keeps that
     /// existing rule exactly, including structurally identical occurrences with distinct comments.
-    /// A first-line physical member is located only in its owner's document or the other located members' document;
-    /// first-line members from separate folder fragments keep the existing insertion rule.
+    /// Whether a member is located is decided by <see cref="AuthoredPositions"/>, the definition AST edits, comment
+    /// ownership and layout expansion share.
     /// Retaining a declaration's location retains its authored position.
     /// </remarks>
     static void WriteMembers(List<PrintableMember> members, SyntaxNode owner)
     {
-        var positioned = members.Where(member => member.Node.PrintingLocation is { Line: > 0, Column: > 0 } ||
-            member.Node.Location is { Line: > 1, Column: > 0 }).ToList();
-        var located = members.Where(member => positioned.Contains(member) ||
-            (member.Node.Location is { Line: 1, Column: > 0, Path: not null } location &&
-                (string.Equals(location.Path, owner.Location.Path, StringComparison.Ordinal) ||
-                    (positioned.Count > 0 && positioned.TrueForAll(existing => string.Equals(existing.Position.Path, location.Path, StringComparison.Ordinal)))))).ToList();
-        var sameDocument = located.Count > 0 && located.TrueForAll(member =>
-            string.Equals(member.Position.Path, located[0].Position.Path, StringComparison.Ordinal));
+        var resolved = AuthoredPositions.Resolve(owner.Location, [.. members.Select(member => (member.Node.Location, member.Node.PrintingLocation))]);
+        var positions = members.Zip(resolved).Where(pair => pair.Second is not null)
+            .ToDictionary(pair => pair.First, pair => pair.Second!, (IEqualityComparer<PrintableMember>)ReferenceEqualityComparer.Instance);
+        var located = members.Where(positions.ContainsKey).ToList();
+        var sameDocument = AuthoredPositions.ShareDocument([.. positions.Values]);
 
         if (!sameDocument)
         {
@@ -63,8 +59,8 @@ public sealed partial class ScreenplayPrinter
             return;
         }
 
-        var ordered = located.OrderBy(member => member.Position.Line)
-            .ThenBy(member => member.Position.Column).ToList();
+        var ordered = located.OrderBy(member => positions[member].Line)
+            .ThenBy(member => positions[member].Column).ToList();
         foreach (var member in members.Except(located))
         {
             var nextSibling = member.Node is FeatureSyntax or SliceSyntax or FileImportSyntax
@@ -85,8 +81,5 @@ public sealed partial class ScreenplayPrinter
         }
     }
 
-    sealed record PrintableMember(SyntaxNode Node, int Kind, Action Print)
-    {
-        internal SourceLocation Position => Node.PrintingLocation ?? Node.Location;
-    }
+    sealed record PrintableMember(SyntaxNode Node, int Kind, Action Print);
 }

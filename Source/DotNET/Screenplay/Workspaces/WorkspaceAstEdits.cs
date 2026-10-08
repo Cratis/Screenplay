@@ -295,7 +295,15 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index, bool
             return true;
         }
 
-        if (!_sourceLocations.TryGetValue(node, out var location) || location is not { Line: > 1, Column: > 0 })
+        // Decide which locations are fixed exactly as the printer does: from every member of the owner.
+        var members = destination.Owner.Select(pair => pair.Value).OfType<JsonArray>()
+            .SelectMany(array => array.OfType<JsonObject>()).Cast<JsonNode>().Where(member => !ReferenceEquals(member, node)).Prepend(node).ToList();
+        var resolved = AuthoredPositions.Resolve(
+            _sourceLocations.GetValueOrDefault(destination.Owner) ?? SourceLocation.Start,
+            [.. members.Select(member => (_sourceLocations.GetValueOrDefault(member) ?? SourceLocation.Start, (SourceLocation?)null))]);
+        var positions = members.Zip(resolved).Where(pair => pair.Second is not null)
+            .ToDictionary(pair => pair.First, pair => pair.Second!, (IEqualityComparer<JsonNode>)ReferenceEqualityComparer.Instance);
+        if (!positions.TryGetValue(node, out var location))
         {
             return false;
         }
@@ -303,7 +311,7 @@ internal sealed partial class WorkspaceAstEdits(WorkspaceSyntaxIndex index, bool
         var boundary = destination.Anchor is null ? siblings.Count : siblings.IndexOf(destination.Anchor);
         for (var position = 0; position < siblings.Count; position++)
         {
-            if (siblings[position] is not { } sibling || !_sourceLocations.TryGetValue(sibling, out var other) || other is not { Line: > 1, Column: > 0 })
+            if (siblings[position] is not { } sibling || !positions.TryGetValue(sibling, out var other))
             {
                 // The printer inserts unlocated features and slices before their next located sibling;
                 // other collections still go after the last located member of their kind.

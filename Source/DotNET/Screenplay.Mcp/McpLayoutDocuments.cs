@@ -96,14 +96,11 @@ static class McpLayoutDocuments
 
     // An imported child keeps the parent-relative position recorded by the presentation timeline.
     // Without that evidence, locations in different documents retain the canonical fallback.
-    static FileImportSyntax Import(string path, SyntaxNode declaration, SyntaxNode owner)
-    {
-        var position = declaration.PrintingLocation ?? declaration.Location;
-        return new(path, string.Equals(position.Path, owner.Location.Path, StringComparison.Ordinal) ? position : SourceLocation.Start)
+    static FileImportSyntax Import(string path, SyntaxNode declaration, SyntaxNode owner) =>
+        new(path, AuthoredPositions.InDocumentOf(declaration, owner) ?? SourceLocation.Start)
         {
             PrintingLocation = declaration.PrintingLocation
         };
-    }
 
     // Imports are source composition, not model declarations. Their attached comments still belong to the
     // reorganized scope even when their former paths no longer exist.

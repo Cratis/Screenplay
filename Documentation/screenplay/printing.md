@@ -121,7 +121,8 @@ a file does:
   to a parsed owner prints after the last member of its kind, or before the first
   member of a later canonical kind when none exists. Features, slices and file imports
   inserted or moved by typed edits print before their next located sibling when one
-  exists, so timeline moves and pins retain their requested position. Workspace AST replacements
+  exists, so timeline moves and pins retain their requested position, including the first
+  position of an imported file whose first declaration is on its first line. Workspace AST replacements
   inherit their original position, even though typed JSON omits source positions.
 - **Blank lines are normalized.** The printer separates members with its own blank lines.
 

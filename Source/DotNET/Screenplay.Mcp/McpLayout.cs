@@ -120,7 +120,9 @@ static class McpLayout
         var ranks = AuthoredOrder.Record([root], placed, languages, out var origins, imports: imports);
 
         SourceLocation? Position(string[] scope, SyntaxNode owner) => origins.GetValueOrDefault(AuthoredOrder.Key(scope))?
-            .LastOrDefault(step => step.Node is FileImportSyntax && step.Path == owner.Location.Path)?.Location;
+            .Where(step => step.Node is FileImportSyntax)
+            .Select(step => AuthoredPositions.InDocumentOf(null, step.Location.In(step.Path), owner.Location))
+            .LastOrDefault(position => position is not null);
 
         IEnumerable<T> Ordered<T>(IEnumerable<T> items, string[] scope, Func<T, string> name) => items
             .OrderBy(item => ranks.GetValueOrDefault(AuthoredOrder.Key(scope.Append(name(item))), int.MaxValue));
