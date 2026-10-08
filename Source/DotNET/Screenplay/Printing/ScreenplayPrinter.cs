@@ -480,7 +480,7 @@ public sealed partial class ScreenplayPrinter :
         AddSeparatedMembers(members, writer, module.Forms ?? [], 5, WriteForm);
         AddSeparatedMembers(members, writer, module.Contributions ?? [], 6, WriteContribution);
         AddSeparatedMembers(members, writer, module.Features, 7, WriteFeature);
-        WriteMembers(members);
+        WriteMembers(members, module);
     }
 
     void WriteContribution(ScreenplayWriter writer, ContributionSyntax contribution)
@@ -808,7 +808,7 @@ public sealed partial class ScreenplayPrinter :
         AddSeparatedMembers(members, writer, feature.Features, 3, WriteFeature);
         AddSeparatedMembers(members, writer, feature.Slices, 4, WriteSlice);
         AddSeparatedMembers(members, writer, feature.Contributions ?? [], 5, WriteContribution);
-        WriteMembers(members);
+        WriteMembers(members, feature);
     }
 
     void WriteSlice(ScreenplayWriter writer, SliceSyntax slice)
@@ -835,7 +835,7 @@ public sealed partial class ScreenplayPrinter :
             AddSeparatedMembers(members, writer, slice.Reactions, 8, WriteReaction);
             AddSeparatedMembers(members, writer, slice.Screens, 9, WriteScreen);
             AddSeparatedMembers(members, writer, slice.Specifications, 10, WriteSpecification);
-            WriteMembers(members);
+            WriteMembers(members, slice);
         }
     }
 

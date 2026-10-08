@@ -114,7 +114,9 @@ a file does:
   also retains a child's position at its parent's import, so collapsing an import-based
   layout keeps contributions, templates and other members in their authored relative
   order. Without that evidence, a folder merge combines members whose line numbers
-  cannot be compared, and the printer uses canonical kind order for that owner. Syntax created without source
+  cannot be compared, and the printer uses canonical kind order for that owner. A first-line
+  declaration from another file follows the new-member insertion rule instead of displacing
+  the owner's comparable members. Syntax created without source
   positions (including typed JSON) also uses canonical kind order. A new member added
   to a parsed owner prints after the last member of its kind, or before the first
   member of a later canonical kind when none exists. Features, slices and file imports
@@ -130,6 +132,8 @@ declarations, including module header comments in the module file; each slice
 file retains its within-slice authored order. Leading and trailing header comments
 stay on the physical module, feature or slice declaration, including the first line
 of an imported file; synthetic placement wrappers do not take ownership of them.
+End comments also belong to the enclosing physical declaration rather than a placement wrapper;
+comments with no enclosing physical declaration stay on the application.
 
 ## Generating from a model
 

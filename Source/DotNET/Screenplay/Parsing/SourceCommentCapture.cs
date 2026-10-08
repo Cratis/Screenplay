@@ -94,7 +94,8 @@ internal static class SourceCommentCapture
     }
 
     static SyntaxNode Enclosing(List<SyntaxNode> nodes, int line, int indent, SyntaxNode root) =>
-        nodes.Where(node => node.Location.Line < line && node.Location.Column <= indent && node.Location.Line > 0)
+        nodes.Where(node => node is not ApplicationSyntax and not ModuleSyntax { IsPlacement: true } and not FeatureSyntax { IsPlacement: true } &&
+                node.Location.Line < line && node.Location.Column <= indent && node.Location.Line > 0)
             .OrderByDescending(node => node.Location.Line).ThenByDescending(node => node.Location.Column).FirstOrDefault() ?? root;
 
     static void Visit(SyntaxNode node, List<SyntaxNode> nodes)

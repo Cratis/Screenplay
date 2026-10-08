@@ -38,12 +38,18 @@ public sealed partial class ScreenplayPrinter
     /// If there is no next located sibling, use the existing insertion rule: after the last member of the kind,
     /// or before the first member of a later canonical kind if none exists. Every other collection keeps that
     /// existing rule exactly, including structurally identical occurrences with distinct comments.
+    /// A first-line physical member is located only in its owner's document or the other located members' document;
+    /// first-line members from separate folder fragments keep the existing insertion rule.
     /// Retaining a declaration's location retains its authored position.
     /// </remarks>
-    static void WriteMembers(List<PrintableMember> members)
+    static void WriteMembers(List<PrintableMember> members, SyntaxNode owner)
     {
-        var located = members.Where(member => member.Node.PrintingLocation is { Line: > 0, Column: > 0 } ||
-            member.Node.Location is { Line: > 1, Column: > 0 } or { Line: 1, Column: > 0, Path: not null }).ToList();
+        var positioned = members.Where(member => member.Node.PrintingLocation is { Line: > 0, Column: > 0 } ||
+            member.Node.Location is { Line: > 1, Column: > 0 }).ToList();
+        var located = members.Where(member => positioned.Contains(member) ||
+            (member.Node.Location is { Line: 1, Column: > 0, Path: not null } location &&
+                (string.Equals(location.Path, owner.Location.Path, StringComparison.Ordinal) ||
+                    (positioned.Count > 0 && positioned.TrueForAll(existing => string.Equals(existing.Position.Path, location.Path, StringComparison.Ordinal)))))).ToList();
         var sameDocument = located.Count > 0 && located.TrueForAll(member =>
             string.Equals(member.Position.Path, located[0].Position.Path, StringComparison.Ordinal));
 
