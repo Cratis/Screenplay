@@ -62,8 +62,8 @@ public class when_using_routes_in_examples_and_redelivery
     [Fact]
     void should_recheck_for_when_a_step_replaces_the_source()
     {
-        var source = "eventsource Other\n  identifier Uuid\n  stream Ledger\n    streamId String\n" + Prefix;
-        var result = new ScreenplayCompiler().Compile(source + "      specification Moved\n        given September\n          stream Other.Ledger\n            streamId = \"september\"");
+        const string Source = "eventsource Other\n  identifier Uuid\n  stream Ledger\n    streamId String\n" + Prefix;
+        var result = new ScreenplayCompiler().Compile(Source + "      specification Moved\n        given September\n          stream Other.Ledger\n            streamId = \"september\"");
         var error = result.Diagnostics.Single(diagnostic => diagnostic.Code == "PLAY0550");
         error.Location.Line.ShouldEqual(24);
         error.Message.ShouldContain("September");

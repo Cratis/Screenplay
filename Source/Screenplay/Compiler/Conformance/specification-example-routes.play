@@ -13,8 +13,10 @@ module M
       event Happened
         amount Int
       command Act
+        id String identifier
         amount Int
         produces Happened
+          for id
           amount = amount
       example Fixture : Happened
         for "account"
@@ -36,6 +38,7 @@ module M
           stream Account.Events
             streamId = "partition"
         when Act
+          id = "account"
           amount = 3
         then Fixture amount = 3
           no stream
@@ -45,5 +48,6 @@ module M
           stream Account.Events
             streamId = "replacement"
         when Act
+          id = "account"
           amount = 3
         then Unrouted

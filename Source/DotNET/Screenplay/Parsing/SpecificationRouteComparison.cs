@@ -31,7 +31,9 @@ internal static class SpecificationRouteComparison
                 comparisons.Add(left is [var first] && right is [var second] ? Compare(first.Source, second.Source, part.Type, application, values) : null);
             }
 
-            return comparisons.Contains(false) ? false : comparisons.Contains(null) ? null : true;
+            if (comparisons.Contains(false)) return false;
+
+            return comparisons.Contains(null) ? null : true;
         }
         if (given.StreamIdParts.Any() || expected.StreamIdParts.Any()) return null;
         if (stream.StreamId is null) return given.StreamId is null && expected.StreamId is null ? true : null;
@@ -41,8 +43,8 @@ internal static class SpecificationRouteComparison
 
     static bool? Compare(ExpressionSyntax? left, ExpressionSyntax? right, TypeRefSyntax type, ApplicationSyntax application, ResponseValueTypes values)
     {
-        var first = SpecificationStreamValidator.FormatStreamId(left, type, application, values);
-        var second = SpecificationStreamValidator.FormatStreamId(right, type, application, values);
+        var first = SpecificationStreamValidator.CanonicalStreamId(left, type, application, values);
+        var second = SpecificationStreamValidator.CanonicalStreamId(right, type, application, values);
 
         return first is null || second is null ? null : first == second;
     }

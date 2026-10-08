@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Globalization;
+using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
 
@@ -124,7 +125,12 @@ static class McpFixtureQueries
         var resolution = application is null ? null : new EventSourceCatalog(application).Resolve(stream.EventSource, stream.Stream);
         if (resolution?.Kind == EventSourceResolutionKind.Unique)
         {
-            parts = resolution.Streams[0].StreamIdParts.SelectMany(declaration => parts.Where(part => part.Property == declaration.Name)).ToArray();
+            var declarations = resolution.Streams[0].StreamIdParts.ToArray();
+            var authored = parts.ToArray();
+            if (declarations.Length == authored.Length && declarations.All(declaration => authored.Count(part => part.Property == declaration.Name) == 1))
+            {
+                parts = [.. declarations.Select(declaration => authored.Single(part => part.Property == declaration.Name))];
+            }
         }
 
         return parts.Any() ? text + " streamId " + string.Join(", ", parts.Select(part => $"{part.Property} = {ScreenplaySyntaxText.ResponseValue(part.Source)}")) : text;

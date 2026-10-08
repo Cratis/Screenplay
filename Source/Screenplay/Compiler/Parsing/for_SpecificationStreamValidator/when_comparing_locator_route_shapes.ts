@@ -11,7 +11,7 @@ const application = parse('concept Period : Int\neventsource A\n  identifier Str
 const location = { line: 1, column: 1 };
 const literal = (value: string | number): ExpressionSyntax => ({ kind: 'LiteralExpressionSyntax', value, location });
 const mapping = (property: string, value: string) => ({ kind: 'PropertyMappingSyntax' as const, property, source: literal(value), location });
-const route = (stream: string): SpecificationStreamSyntax => ({ kind: 'SpecificationStreamSyntax', eventSource: 'A', stream, streamId: null, streamIdParts: [], location });
+const route = (stream: string): SpecificationStreamSyntax => ({ kind: 'SpecificationStreamSyntax', eventSource: 'A', stream, streamId: null, streamIdParts: [], location, referenceLocation: location, referenceLength: stream.length + 2 });
 const composite: SpecificationStreamSyntax = { ...route('Composite'), streamIdParts: [mapping('one', 'a'), mapping('two', 'b')] };
 const noStream = { kind: 'SpecificationNoStreamSyntax' as const, location };
 const same = (given: SpecificationStreamSyntax | null, expected: SpecificationStreamSyntax | null, unrouted = false) => matchesSpecificationRoute(given, expected, unrouted ? noStream : null, application);

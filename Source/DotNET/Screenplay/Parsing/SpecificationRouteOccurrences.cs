@@ -17,8 +17,7 @@ internal sealed record SpecificationRouteOccurrence(
         foreach (var resolved in expansion.ResolvedExamples.Where(resolved => resolved.Kind == "event"))
         {
             var example = resolved.Example;
-            yield return new(new(example.Type, example.Values, example.Location) { For = example.For, Stream = example.Stream, NoStream = example.NoStream },
-                (EventSyntax)resolved.Type, null, false, false, true, true, null);
+            yield return new(new(example.Type, example.Values, example.Location) { For = example.For, Stream = example.Stream, NoStream = example.NoStream }, (EventSyntax)resolved.Type, null, false, false, true, true, null);
         }
         foreach (var (slice, scope) in declarations.Slices)
         {
@@ -38,11 +37,27 @@ internal sealed record SpecificationRouteOccurrence(
                 }
                 if (specification.WhenRedelivered is { } locator)
                 {
-                    yield return new(new(locator.EventType, locator.Values, locator.Location) { For = locator.For, Stream = locator.Stream, NoStream = locator.NoStream },
-                        declarations.Event(locator.EventType, scope), null, false, false, true, true, null);
+                    yield return new(new(locator.EventType, locator.Values, locator.Location) { For = locator.For, Stream = locator.Stream, NoStream = locator.NoStream }, declarations.Event(locator.EventType, scope), null, false, false, true, true, null);
                 }
             }
         }
+    }
+
+    internal bool InheritedIdentityIsInvalid(EventSourceCatalog catalog, ResponseValueTypes values, IEnumerable<TypeRefSyntax?> producerTypes)
+    {
+        if (Step?.Example is not { Stream: { } route, For: { } identity } || !ReferenceEquals(Node.For, identity)) return false;
+        var resolution = catalog.Resolve(route.EventSource, route.Stream);
+        if (resolution.Kind != EventSourceResolutionKind.Unique) return false;
+        var identifier = resolution.Sources[0].Identifier;
+        if (identifier is null)
+        {
+            var types = producerTypes.ToArray();
+            if (types.Length == 0 || types.Any(type => type is null) || types.OfType<TypeRefSyntax>().Select(type => (type.Name, type.IsOptional, type.IsCollection)).Distinct().Count() != 1) return false;
+            identifier = types[0];
+        }
+
+        return identity is not LiteralExpressionSyntax { Value: not null } || (identifier is { } type &&
+            (type.IsCollection || type.IsOptional || !values.Compatible(identity, type)));
     }
 
     internal void ContextualError(ParserContext context, string code, string message, SourceLocation location)

@@ -11,6 +11,8 @@ namespace Cratis.Screenplay.Parsing;
 
 internal static class SpecificationStreamValidator
 {
+    internal static string? CanonicalStreamId(ExpressionSyntax? expression, TypeRefSyntax type, ApplicationSyntax application, ResponseValueTypes values) => FormatStreamId(expression, type, application, values);
+
     internal static void Validate(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context, EffectiveSpecificationApplication expansion)
     {
         var catalog = new EventSourceCatalog(application);
@@ -74,7 +76,7 @@ internal static class SpecificationStreamValidator
                 {
                     occurrence.ContextualError(context, DiagnosticCodes.InvalidSpecificationStreamEventSource, "A routed given or when append event requires 'for <literal>'.", route.Location);
                 }
-                else if (occurrence.ValidateFor && node.For is { } identity && (identity is not LiteralExpressionSyntax { Value: not null } || (identifier is { } type &&
+                else if (occurrence.ValidateFor && !occurrence.InheritedIdentityIsInvalid(catalog, values, eventProducers.Select(producer => producer.Type)) && node.For is { } identity && (identity is not LiteralExpressionSyntax { Value: not null } || (identifier is { } type &&
                     (type.IsCollection || type.IsOptional || !values.Compatible(identity, type)))))
                 {
                     occurrence.ContextualError(context, DiagnosticCodes.InvalidSpecificationStreamEventSource, "A routed event's for value must be a concrete literal compatible with the source's identifier type.", identity.Location);
@@ -164,7 +166,7 @@ internal static class SpecificationStreamValidator
 
     // Only known portable scalar types prove equality. Paths and unavailable imported types defer
     // to execution; a UUID's authored case, hyphens and wrappers are not part of its stream identity.
-    internal static string? FormatStreamId(ExpressionSyntax? expression, TypeRefSyntax type, ApplicationSyntax application, ResponseValueTypes values)
+    static string? FormatStreamId(ExpressionSyntax? expression, TypeRefSyntax type, ApplicationSyntax application, ResponseValueTypes values)
     {
         if (expression is not LiteralExpressionSyntax literal || !values.Compatible(literal, type)) return null;
         var concepts = application.Concepts.Where(concept => concept.Name == type.Name).ToArray();

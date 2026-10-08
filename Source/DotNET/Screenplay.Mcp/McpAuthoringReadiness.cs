@@ -142,7 +142,7 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
 
         return effective.Given.Concat(effective.ThenEvents).Concat(effective.WhenAppended is { } appended ? [appended] : [])
             .Any(occurrence => occurrence.Stream is not null || occurrence.NoStream is not null) ||
-            effective.WhenRedelivered is { } locator && (locator.Stream is not null || locator.NoStream is not null);
+            (effective.WhenRedelivered is { } locator && (locator.Stream is not null || locator.NoStream is not null));
     }
 
     (CommandSyntax Command, string[] Scope)[] ActionCommands(SpecificationSyntax specification)

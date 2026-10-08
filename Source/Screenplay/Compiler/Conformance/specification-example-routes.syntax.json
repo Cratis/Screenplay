@@ -62,7 +62,10 @@
                     {
                       "kind": "ProducesSyntax",
                       "event": "Happened",
-                      "for": null,
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "id"
+                      },
                       "inlineEvent": null,
                       "inlineOperation": null,
                       "mappings": [
@@ -80,6 +83,18 @@
                     }
                   ],
                   "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "id",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
                     {
                       "kind": "PropertySyntax",
                       "isGenerated": false,
@@ -335,6 +350,14 @@
                     "values": [
                       {
                         "kind": "PropertyMappingSyntax",
+                        "property": "id",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "account"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
                         "property": "amount",
                         "source": {
                           "kind": "LiteralExpressionSyntax",
@@ -413,6 +436,14 @@
                     "for": null,
                     "generatedValues": [],
                     "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "id",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "account"
+                        }
+                      },
                       {
                         "kind": "PropertyMappingSyntax",
                         "property": "amount",

@@ -146,9 +146,19 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
                         if (validateRoute) context.error(DiagnosticCodes.InvalidSpecificationStreamEventSource, `Declare an identifier on source '${source.name}'; the event's producers do not supply one unambiguous destination type.`, route.location);
                     } else identifier = types[0];
                 }
+                let inheritedIdentityIsInvalid = false;
+                if (step?.example?.stream != null && node.for !== null && node.for === step.example.for) {
+                    const prior = catalog.resolve(step.example.stream.eventSource, step.example.stream.stream);
+                    if (prior.kind === EventSourceResolutionKind.Unique) {
+                        const types = eventProducers.map(producer => producer.type);
+                        const distinct = new Set(types.filter(type => type !== null).map(type => `${type.name}:${type.isOptional}:${type.isCollection}`));
+                        const priorIdentifier = prior.sources[0].identifier ?? (types.length > 0 && !types.some(type => type === null) && distinct.size === 1 ? types[0] : null);
+                        inheritedIdentityIsInvalid = node.for.kind !== 'LiteralExpressionSyntax' || node.for.value === null || priorIdentifier !== null && (priorIdentifier.isCollection || priorIdentifier.isOptional || !compatible(node.for, priorIdentifier));
+                    }
+                }
                 if (required && node.for === null)
                     contextualError(DiagnosticCodes.InvalidSpecificationStreamEventSource, "A routed given or when append event requires 'for <literal>'.", route.location);
-                else if (validateFor && node.for !== null && (node.for.kind !== 'LiteralExpressionSyntax' || node.for.value === null || identifier !== null && (identifier.isCollection || identifier.isOptional || !compatible(node.for, identifier))))
+                else if (validateFor && !inheritedIdentityIsInvalid && node.for !== null && (node.for.kind !== 'LiteralExpressionSyntax' || node.for.value === null || identifier !== null && (identifier.isCollection || identifier.isOptional || !compatible(node.for, identifier))))
                     contextualError(DiagnosticCodes.InvalidSpecificationStreamEventSource, "A routed event's for value must be a concrete literal compatible with the source's identifier type.", node.for.location);
             }
             if (!expected || command === null || eventProducers.length === 0 || eventProducers.some(producer => producer.command !== command)) continue;
