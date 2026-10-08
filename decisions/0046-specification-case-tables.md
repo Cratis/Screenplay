@@ -16,7 +16,7 @@ applies-to:
   - Source/DotNET/Screenplay/Semantics/Execution/SemanticSpecificationRunner*.cs
   - Source/DotNET/Screenplay/Workspaces/**
   - Source/DotNET/Screenplay.Mcp/McpDeclarationDetails.cs
-  - Source/DotNET/Screenplay.Mcp/McpFixtures*.cs
+  - Source/DotNET/Screenplay.Mcp/McpFixture*.cs
   - Source/Screenplay/Compiler/Parsing/Specification*.ts
   - Source/Screenplay/Compiler/Parsing/ExpressionParser.ts
   - Source/Screenplay/Monaco/**
@@ -107,7 +107,7 @@ A step's route (`stream …`, `no stream`) replaces the example's route as a who
 - `EffectiveSpecification` gains `Case` and `SpecificationValueOrigin` gains `Case`, with `EffectiveSpecificationValue.CaseParameter`. The enum gains a member, so exhaustive consumers (Stage's converter) must handle it.
 - **The singular `SpecificationExamples.Expand(SpecificationSyntax, …)` returns one effective specification and cannot express N cases. It refuses a table with a diagnostic.** A plural overload returns every effective specification of a declaration, and `EffectiveSpecificationApplication.Specifications` uses it. Stage's `ApplicationSet.ExpandSpecification` and `CratisRenderer` move to the plural overload; Stage gets an issue.
 
-**TypeScript.** `expandSpecificationExamples` expands cases with identical derived names and returns no provenance, as today.
+**TypeScript.** `expandSpecificationExamples` expands cases with identical derived names and returns the table and case name for each derived specification, as minimal provenance (it returned none before).
 
 **MCP.** All additions change the golden contract of [0039](0039-publish-a-machine-readable-screenplay-contract.md), which the implementing PR regenerates.
 - `declaration-details` on a specification: `summary` adds `parameters` and `caseCount`; a new `cases` view pages `{ name, effectiveName, effectiveAddress, location, values }`.
@@ -119,7 +119,7 @@ A step's route (`stream …`, `no stream`) replaces the example's route as a who
 - `SemanticSpecificationRun` is unchanged. **Failures are reported with the case name**: `Case '<Case>' of '<Specification>':`, with the derived address as the MCP key. `Run(plan, id)` sees only the derived name and invents nothing.
 - `EnrichFailures` adds provenance when any step has an example **or the origin is `Case`**; without that condition a table with no examples would lose its case provenance.
 
-**Board.** `expandSpecificationExamples` feeds the board, so a table shows as N derived specification cards, each titled `<Specification> — <Case>`, in case order, with no grouping container in v1.
+**Board.** `expandSpecificationExamples` feeds the board, and the board titles cards from that provenance; Monaco hover uses a `case` origin. A table shows as N derived specification cards, each titled `<Specification> — <Case>`, in case order, with no grouping container in v1.
 
 ### Diagnostics (all new codes)
 
@@ -161,7 +161,7 @@ From acceptance until superseded, after the #490/#491 work lands. It lifts 0032'
 | 4 | M | MCP, runner, scope selection, `screenplay test --filter`, workspace rename |
 | 5 | S | Monaco, VS Code grammar, board, `specifications.md`, `diagnostics.md`, one sample |
 
-Slices 1–3 share one PR so both compilers ship together; slices 4–5 a second. Downstream issues: Cratis/AI (`cratis-screenplay-specifications`, `cratis-screenplay-scenario-coverage`), Stage (plural overload, `Case` origin), and Studio's importer.
+Every surface lands in **one pull request to main**, as `.cratis/ai/rules/project/language-change-surface.md` requires: both compilers, expansion, runner and MCP selection of table addresses, rename, editors, docs and the Invoicing sample. The slices above are internal build steps; they may be built on sub-branches merged into an integration branch first, but nothing merges to main before all of them are done. Downstream issues: Cratis/AI (`cratis-screenplay-specifications`, `cratis-screenplay-scenario-coverage`), Stage (plural overload, `Case` origin), and Studio's importer.
 
 ## Verification
 

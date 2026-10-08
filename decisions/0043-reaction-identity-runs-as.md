@@ -40,7 +40,7 @@ reaction CloseExpiredClaims
       claim = claim
 ```
 
-`runs as system` is optionally followed by `role "<Role>"` repeated with `and`: zero or more roles, mirroring Arc's `SystemPrincipal`. It is one reaction-level line, at most once, after an optional description and before the first trigger (the printer's canonical position). Roles are non-empty quoted literals; duplicates are errors. `runs as <Persona>` is rejected for v1: the attribute carries no claims, personas would start affecting portable behavior and reopen [#254](https://github.com/Cratis/Screenplay/issues/254) (see [0042](0042-persona-callers-in-specifications.md)), and a persona edit would silently widen automation.
+`runs as system` is optionally followed by `role "<Role>"` repeated with `and`: zero or more roles, mirroring Arc's `SystemPrincipal`. It is one reaction-level line, at most once. The established printer order is description, documentation, triggers, then `where`; `runs as` prints after documentation and before the first trigger, and the parser accepts it anywhere in the body before the first trigger, like the other reaction-level lines. Roles are non-empty quoted literals; duplicates are errors. `runs as <Persona>` is rejected for v1: the attribute carries no claims, personas would start affecting portable behavior and reopen [#254](https://github.com/Cratis/Screenplay/issues/254) (see [0042](0042-persona-callers-in-specifications.md)), and a persona edit would silently widen automation.
 
 The identity applies to every command the reaction returns or `invokes`, under every trigger. It does **not** cover imperative `ICommandPipeline` calls inside implementation bodies (inline or `file` code), nor `produces`, `reads`, refusal-branch productions or causation. Omitting the line keeps today's no-caller behavior and bytes. `given caller` still supplies no actor to invocations.
 
@@ -56,22 +56,25 @@ The reference evaluator runs each invocation of an identity-bearing reaction wit
 
 ### Admission
 
-Before admission, syntax, printing, validation and diagnostics may land; binding refuses `runs as` with PLAY0268 naming the feature and #383, never a version number, and MCP readiness lists it. Admission happens at the first ESM version claim whose own 0004 gate-2 evidence is ready, **never later than 0030's admission**. It queues behind the single unreleased claim (0025), currently held by the 0036 routes batch, and does not amend 0036. Stage must explicitly refuse the member at admission (a `SemanticVersionFeatures` entry); rendering `[ExecuteCommandsAsSystem]` is a follow-up, not an admission prerequisite, because Stage#79 blocks every v6 reaction anyway. Admission evidence: Arc runtime meaning, golden vector, reference allowed/denied vectors, source-backed corpus vector, prior-reader rejection, activation only when used.
+Before admission, syntax, printing, validation and diagnostics may land; binding refuses `runs as` with PLAY0268 naming the feature and #383, never a version number, and MCP readiness lists it. Identity is admitted at the first ESM version claim whose own 0004 gate-2 evidence is ready, **never later than 0030's admission**. No unreleased ESM claim exists today (`interoperability.md` claims no version; `Versions.cs` supports released v1-v7), and the planned 0036 routes batch is not a claim holder or an unconditional predecessor. Under 0025 only one unreleased claim may exist at a time, so if another claim has merged first and is unreleased, identity joins that claim or waits for its release. It does not amend 0036. Stage must explicitly refuse the member at admission (a `SemanticVersionFeatures` entry); rendering `[ExecuteCommandsAsSystem]` is a follow-up, not an admission prerequisite, because Stage#79 blocks every v6 reaction anyway. Admission evidence: Arc runtime meaning, golden vector, reference allowed/denied vectors, source-backed corpus vector, prior-reader rejection, activation only when used.
 
 ### Diagnostics
 
 - **PLAY0557's stub becomes real:** a declared `runs as` suppresses it; its message names `runs as system role` as the remedy and states that Arc runs commands as the system only for a reactor carrying `[ExecuteCommandsAsSystem]`. `Documentation/screenplay/reactions.md` is corrected the same way, with #383's implementation.
-- **New warning, both compilers: gated invocation without identity** when an `invokes` targets a gated command and the reaction declares no `runs as`; same gate-exists predicate as PLAY0557 (an absent caller satisfies no gate, opaque ones included), at most one finding per invocation (PLAY0557 wins when a refusal branch exists).
-- **New warning: least privilege.** A declared role referenced by no invoked command's effective gate; silent when gates are opaque.
+- **New warning, both compilers: gated invocation without identity** when an `invokes` targets a gated command and the reaction declares no `runs as`; same gate-exists predicate as PLAY0557 (an absent caller satisfies no gate, opaque ones included), at most one finding per invocation (PLAY0557 wins when the invocation has an `on refused by authorization` branch).
+- **New warning, C# only (like the other effective-gate analyses, which need the bound semantic model): least privilege.** A declared role referenced by no invoked command's effective gate; silent when gates are opaque and silent when the reaction has an inline or `file` implementation body.
 - **New warning, C# only: declared identity cannot satisfy** a definite-deny gate; unknown results stay silent.
 - **New warning, both compilers: unused identity** on a reaction with no `invokes` and no implementation body.
 - **New error, both compilers:** malformed, repeated or misplaced `runs as`, empty or duplicate roles.
-- **Opt-in `privilege` completeness finding:** compares the effective gates of commands that produce the trigger event with the `runs as` roles, because a low-privilege caller's event can trigger an elevated reaction (confused deputy). Arc limits the override to request-less work, so HTTP-origin commands are not elevated; the reaction path is the channel.
-- Roles may name gates in other modules or features (0028 boundaries are not a limit), but MCP `declaration-details` surfaces each such cross-boundary role.
+- **Opt-in `privilege` completeness finding** (confused deputy: a low-privilege caller's event can trigger an elevated reaction; Arc limits the override to request-less work, so HTTP-origin commands are not elevated and the reaction path is the channel). For each event-triggered reaction with `runs as`, it reports a **Warning** for every producer of the trigger event whose effective gate does not require each declared `runs as` role.
+  - Ungated commands, captures and events produced by other reactions count as unprivileged producers and are reported.
+  - Opaque gates (named rules or implementation bodies the evaluator cannot see) are reported at **Information** as "cannot be compared", never silently.
+  - Clock and application triggers are silent: there is no producer.
+- **Cross-boundary roles.** A role that appears only in effective gates of commands outside the reaction's own module (the 0028 module boundary) is allowed, produces no diagnostic, and is listed in MCP `declaration-details`.
 
 ### MCP and corpus
 
-`declaration-details` for `Reaction` adds `runsAs` (kind, roles, location, readiness note); `syntax-schema` shows `ReactionSyntax.RunsAs`; `propose-ast` can set or remove it; after admission the executable-model view includes `runsAs`. The Cratis/AI trap "never invent `runs as`" stays until a release ships the syntax, then changes (`ai-corpus: tracked`). #286's acknowledge item is superseded by 0030.
+`declaration-details` for `Reaction` adds `runsAs` (kind, roles, location, readiness note); `syntax-schema` shows `ReactionSyntax.RunsAs`; `propose-ast` can set or remove it (with no special review flag; see Options considered); after admission the executable-model view includes `runsAs`. The Cratis/AI trap "never invent `runs as`" stays until a release ships the syntax, then changes (`ai-corpus: tracked`). #286's acknowledge item is superseded by 0030.
 
 ## Options considered
 
@@ -83,6 +86,7 @@ Before admission, syntax, printing, validation and diagnostics may land; binding
 - **Mirror Arc's `[System]` claims in the reference:** pins runtime constants; unknown is safer.
 - **Join the 0036 batch or extend released v7:** rejected; needs amending an accepted record or changes a version Stage already admitted.
 - **Warning on clock and application triggers:** rejected; it would flag valid models.
+- **A review flag on `propose-ast` edits to `runs as`:** rejected. Any source edit can change authorization, and `read-proposal view=semantic-diff` shows the `runsAs` change.
 
 ## Default if unanswered
 

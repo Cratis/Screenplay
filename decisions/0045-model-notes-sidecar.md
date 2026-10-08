@@ -9,8 +9,9 @@ decided: 2026-10-08
 decider: Sindre Alstad Wilting
 applies-to:
   - Source/DotNET/Screenplay/Workspaces/ModelNotes*.cs
-  - Source/DotNET/Screenplay/Workspaces/WorkspaceDurableState*.cs
-  - Source/DotNET/Screenplay.Mcp/McpDurableState.cs
+  - Source/DotNET/Screenplay.Mcp/McpRecoveryJournal*.cs
+  - Source/DotNET/Screenplay.Mcp/McpState*.cs
+  - Source/DotNET/Screenplay.Mcp/McpWorkspaces*.cs
   - Source/DotNET/Screenplay.Mcp/McpToolCatalog.cs
   - Source/DotNET/Screenplay.Mcp/McpToolSchemas.cs
   - Source/DotNET/Tool/**

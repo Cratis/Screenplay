@@ -14,12 +14,12 @@ applies-to:
   - Source/DotNET/Screenplay/Parsing/ProducesParser.cs
   - Source/DotNET/Screenplay/Parsing/InlineEventValidator.cs
   - Source/DotNET/Screenplay/Parsing/ScreenplayValidator.cs
-  - Source/DotNET/Screenplay/Parsing/EventSubjectValidator.cs
+  - Source/DotNET/Screenplay/Parsing/EventSourceValidator.cs
   - Source/DotNET/Screenplay/Semantics/SemanticModelBinder.Structure.cs
   - Source/DotNET/Screenplay/Printing/**
   - Source/DotNET/Screenplay.Mcp/McpDeclarationDetails.cs
   - Source/Screenplay/Compiler/Parsing/PropertyLineParser.ts
-  - Source/Screenplay/Compiler/Parsing/EventSubjectValidator.ts
+  - Source/Screenplay/Compiler/Parsing/EventSourceValidator.ts
   - Source/Screenplay/Monaco/screenplay-language/**
   - Source/Screenplay/VSCodeExtension/syntaxes/**
   - Documentation/screenplay/events.md
@@ -66,14 +66,14 @@ command ChangeEmail
   accountId AccountId identifier
   customerId CustomerId
   email EmailAddress
-  produces event CustomerEmailChanged
+  produces event CustomerEmailCorrected
     customerId CustomerId subject = customerId
     email EmailAddress = email
 ```
 
 - On inline events the modifier sits before the mapping `=`.
 - A property named `subject` or of type `subject` still parses (`subject String` in `Samples/Invoicing`): the modifier is purely positional.
-- The shared modifier grammar is `optional generated identifier`. `InvalidGeneratedModifiersRegex` is extended with `subject` in last position in both compilers, so malformed orders such as `x T optional subject` get a precise error rather than a generic one.
+- The shared modifier grammar is `optional generated identifier`. `InvalidGeneratedModifiersRegex` is extended with `subject` in last position in both compilers, so malformed orders such as `x T subject optional` get a precise error rather than a generic one. `x T optional subject` and `x T? subject` parse (the order is valid) and then report the optional-target refusal below.
 - An event without a mark has its event source as subject (0008). The resulting value is readable as `$eventContext.subject`, which already means "the event source identifier unless one was given".
 
 ### Valid targets
