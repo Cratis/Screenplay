@@ -36,7 +36,7 @@ public class when_exchanging_a_protocol_transcript : given.a_connection
     [Fact] void should_preserve_string_request_ids() => _responses[1].GetProperty("id").GetString().ShouldEqual("ping");
     [Fact]
     void should_list_all_public_tools() => _responses[2].GetProperty("result").GetProperty("tools").EnumerateArray().Select(tool => tool.GetProperty("name").GetString()).ShouldContainOnly(
-        ["repair-capabilities", "describe-application", "find-declaration", "search-declarations", "declaration-details", "dependencies", "dependency-graph", "find-references",
+        ["run-specifications", "repair-capabilities", "describe-application", "find-declaration", "search-declarations", "declaration-details", "dependencies", "dependency-graph", "find-references",
         "find-fixtures", "find-assertion-gaps", "find-specification-obligations", "find-modeling-smells", "merged-document", "read-document", "diagnostics", "recommend-layout", "syntax-schema",
         "open-workspace", "workspace-state", "recover-workspace", "propose-rename", "read-workspace", "read-ast", "propose", "propose-extract-inline-event", "propose-repair", "propose-ast", "propose-source",
         "expand-layout", "read-proposal", "export-workspace", "discard-proposal", "semantic-diff", "apply"]);

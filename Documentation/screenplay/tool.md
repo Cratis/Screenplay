@@ -93,6 +93,30 @@ Output includes the scope's declaration count, the additional direct-dependent d
 
 Impact uses the same explicit source-reference index as MCP `dependencies`. It does not inspect inline code, property paths, imports or expression identifiers, and ambiguous candidates are included conservatively. Unresolved references matching a name in scope are included conservatively as direct dependents. **Unresolved event consumers (cannot be attributed to a scope)** separately reports the count and scopes of unresolved event references outside the reported declarations. Their former targets cannot be proved after a rename or removal, so they do not change **affected scopes**, scoped diagnostic counts or the scoped exit code; their errors remain visible in the **Whole application** line. **Possibly affected** counts only the remaining unresolved references outside the reported declarations, excluding both direct dependents and the unresolved-event category. Diagnostics outside declaration ranges fall back to the file's import placement or its selected slice; diagnostics without a path or valid line are application-wide and included in every scoped result. A clean scoped check is not proof that the whole application is valid or executable. No watch or incremental cache is provided by this option.
 
+## Run the model's specifications
+
+Run scenarios without rendering an application or starting services:
+
+```bash
+screenplay test path/to/screenplays
+screenplay test path/to/invoicing.play --filter Billing.Invoices.Send.SendingAnInvoice --format json
+```
+
+`PATH` defaults to the current directory. A folder is one application; a file includes only that file and its imports, not unimported siblings. `--filter` takes one exact, case-sensitive dotted specification address (module, nested features, slice, specification). Unknown selections are usage errors, not empty passes. Without a filter, every discovered specification is selected. `--format` defaults to `text`; `json` writes one camel-case JSON report to stdout.
+
+The CLI does not read MCP workspace state from `.screenplay/identities.json`. Its printed semantic ids are derived from addresses and may differ from MCP's persisted identities after renames. A CLI-derived semantic id is also accepted by `--filter`; use MCP `run-specifications` for identity-stable selection.
+
+The reference evaluator runs deterministically in memory. It never contacts external services or runs attached code. Clock, trigger and capture scenarios use the [specification evaluator](specifications.md)'s existing semantics. Opaque reducers and other missing capabilities produce `unsupported`, with a capability and reason, rather than a pass. Failures include expected and actual facts, read models, command responses and query results; example-based failures also include effective fixture provenance.
+
+The report includes `sourceRevision`, `outcome`, `discovered`, `selected`, `executed`, `passed`, `failed`, `unsupported`, `diagnostics`, `planIssues` and `results`. Counts cover the complete selection; `executed` excludes unsupported scenarios. Each result gives its `address`, `semanticId`, `outcome`, `executionOutcome`, comparison `failures`, and nullable `capability` and `reason`. A model that does not bind reports `unbound` and executable diagnostics, with no scenario results. A bound model with no specifications reports zero discovered; that is not evidence of scenario coverage.
+
+| Exit code | Meaning |
+|---|---|
+| `0` | Every selected specification passed |
+| `1` | At least one selected specification failed, even if others were unsupported |
+| `2` | Invalid arguments, selection or input, or the command could not run |
+| `3` | The model did not bind, or nothing failed but reference execution was unsupported |
+
 ## Use the compiler as a library
 
 The `Cratis.Screenplay` NuGet package provides parsing, the syntax tree, diagnostics, file discovery and formatting:

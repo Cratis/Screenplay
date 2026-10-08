@@ -1,0 +1,74 @@
+layout ApplicationShell
+  category application
+  type masterDetail
+  exposes selectedItem String
+  outlet details
+  navigation contributes Navigation
+  content
+
+ui profile Web
+  target platform web
+
+  packages
+    scene.web
+
+  icons
+    scene.icons
+
+  layout ApplicationShell
+
+template ApplicationShell
+
+module Sales
+  template FeatureShell
+
+  screen template FeatureShell
+    fits slot content
+    category feature
+    type masterDetail
+    exposes selectedInvoice String
+    outlet detail
+    list
+    detail
+
+  form EditInvoice for EditInvoice
+    field invoiceId
+    columns manual
+      column invoiceId label "Invoice"
+      column customerName label "Customer"
+
+  feature Invoices
+    template FeatureShell
+
+    slice StateView BrowseInvoices
+      template FeatureShell
+
+      command EditInvoice
+        invoiceId String
+        customerName String
+
+      readmodel InvoiceList
+        invoiceId String
+        customerName String
+
+      query AllInvoices => InvoiceList[]
+
+      screen BrowseInvoices
+        data InvoiceList via query AllInvoices
+        toolbar main
+          item edit action EditInvoice
+            label "Edit"
+            icon edit
+            presentation placement "primary"
+          item details navigate to InvoiceDetails
+            parameter invoiceId from component invoices.selectedItem.id
+        component scene.web.DataGrid invoices
+          context from query AllInvoices
+          property selectedItem from component invoices.selectedItem null preserve
+          property title = "Invoices"
+          icon table
+          presentation density "compact"
+          exposes selectedInvoice from component invoices.selectedItem
+          outlet detail
+            summary selectedInvoice
+              field invoiceId label "Invoice"

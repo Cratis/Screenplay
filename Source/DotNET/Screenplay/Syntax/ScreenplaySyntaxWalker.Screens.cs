@@ -69,6 +69,12 @@ public abstract partial class ScreenplaySyntaxWalker
             case ScreenSummarySyntax summary:
                 VisitScreenSummary(summary);
                 break;
+            case ScreenComponentSyntax component:
+                VisitScreenComponent(component);
+                break;
+            case ScreenToolbarSyntax toolbar:
+                VisitScreenToolbar(toolbar);
+                break;
             case ScreenCodeSyntax code:
                 VisitScreenCode(code);
                 break;
@@ -112,7 +118,12 @@ public abstract partial class ScreenplaySyntaxWalker
     /// Visits a <see cref="ScreenNavigateSyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="ScreenNavigateSyntax"/> to visit.</param>
-    public virtual void VisitScreenNavigate(ScreenNavigateSyntax syntax) => VisitNode(syntax);
+    public virtual void VisitScreenNavigate(ScreenNavigateSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var parameter in syntax.Parameters) VisitNode(parameter);
+        foreach (var parameter in syntax.Parameters) VisitNode(parameter.Binding);
+    }
 
     /// <summary>
     /// Visits a <see cref="ScreenTemplateReferenceSyntax"/> node and its children.
@@ -216,6 +227,53 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="ScreenFieldSyntax"/> to visit.</param>
     public virtual void VisitScreenField(ScreenFieldSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a <see cref="ScreenComponentSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ScreenComponentSyntax"/> to visit.</param>
+    public virtual void VisitScreenComponent(ScreenComponentSyntax syntax)
+    {
+        VisitNode(syntax);
+        if (syntax.Context is not null) VisitNode(syntax.Context);
+        foreach (var property in syntax.Properties)
+        {
+            VisitNode(property);
+            if (property.Binding is not null) VisitNode(property.Binding);
+        }
+        foreach (var exposed in syntax.Exposes)
+        {
+            VisitNode(exposed);
+            VisitNode(exposed.Binding);
+        }
+        foreach (var presentation in syntax.Presentation) VisitNode(presentation);
+        foreach (var outlet in syntax.Outlets)
+        {
+            VisitNode(outlet);
+            foreach (var directive in outlet.Directives) VisitScreenDirective(directive);
+        }
+        foreach (var behavior in syntax.Behaviors) VisitBehavior(behavior);
+        foreach (var uses in syntax.UsedBehaviors) VisitUsesBehavior(uses);
+    }
+
+    /// <summary>
+    /// Visits a <see cref="ScreenToolbarSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ScreenToolbarSyntax"/> to visit.</param>
+    public virtual void VisitScreenToolbar(ScreenToolbarSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var item in syntax.Items)
+        {
+            VisitNode(item);
+            foreach (var parameter in item.Parameters)
+            {
+                VisitNode(parameter);
+                VisitNode(parameter.Binding);
+            }
+            foreach (var presentation in item.Presentation) VisitNode(presentation);
+        }
+    }
 
     /// <summary>
     /// Visits a <see cref="ScreenCodeSyntax"/> node and its children.

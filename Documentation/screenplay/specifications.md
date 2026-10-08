@@ -1,5 +1,7 @@
 # Specifications
 
+Run scenarios with [`screenplay test`](tool.md#run-the-models-specifications) or the read-only MCP [`run-specifications`](mcp/reference.md#execute-specifications) tool. Both use the in-memory reference evaluator; binding alone does not tell you whether a scenario passes.
+
 ## Operation specifications (syntax-only)
 
 > Operation fixtures and assertions are experimental authoring syntax. The current reference runner cannot execute them; binding refuses them with `PLAY0268` because they are not admitted by any supported executable model (ESM) version yet.

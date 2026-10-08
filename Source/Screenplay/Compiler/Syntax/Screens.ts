@@ -5,6 +5,23 @@ import { ConditionSyntax } from './Conditions';
 import { TypeRefSyntax } from './Declarations';
 import { SyntaxNode } from './SyntaxNode';
 
+export type UiBindingKind = 'Invalid' | 'DataContext' | 'QueryResult' | 'ComponentProperty';
+export type UiBindingMode = 'OneWay' | 'TwoWay';
+export type UiBindingNullBehavior = 'Propagate' | 'Clear' | 'Preserve';
+
+export interface UiBindingSyntax extends SyntaxNode {
+    readonly kind: 'UiBindingSyntax';
+    readonly bindingKind: UiBindingKind;
+    readonly path: string;
+    readonly query: string | null;
+    readonly componentId: string | null;
+    readonly componentPropertyPath: string | null;
+    readonly mode: UiBindingMode | null;
+    readonly nullBehavior: UiBindingNullBehavior | null;
+    readonly expectedValueType: string | null;
+    readonly rawText: string | null;
+}
+
 // 'screen <Name>' - the intent level directives a screen is made of. A 'file <path>' screen is recognized
 // but its reference is not modeled, so it reads as a screen without directives.
 export interface ScreenSyntax extends SyntaxNode {
@@ -65,6 +82,14 @@ export interface ScreenNavigateSyntax extends SyntaxNode {
     readonly kind: 'ScreenNavigateSyntax';
     readonly screen: string;
     readonly by: string | null;
+    readonly route: string | null;
+    readonly parameters: readonly ScreenNavigationParameterSyntax[];
+}
+
+export interface ScreenNavigationParameterSyntax extends SyntaxNode {
+    readonly kind: 'ScreenNavigationParameterSyntax';
+    readonly name: string;
+    readonly binding: UiBindingSyntax;
 }
 
 // 'template <Name>' and the slots it fills.
@@ -121,6 +146,63 @@ export interface ScreenFieldSyntax extends SyntaxNode {
     readonly label: string;
 }
 
+
+export interface ComponentPropertySyntax extends SyntaxNode {
+    readonly kind: 'ComponentPropertySyntax';
+    readonly property: string;
+    readonly binding: UiBindingSyntax | null;
+    readonly value: string | null;
+}
+
+export interface ComponentExposedValueSyntax extends SyntaxNode {
+    readonly kind: 'ComponentExposedValueSyntax';
+    readonly name: string;
+    readonly binding: UiBindingSyntax;
+}
+
+export interface PresentationValueSyntax extends SyntaxNode {
+    readonly kind: 'PresentationValueSyntax';
+    readonly name: string;
+    readonly value: string;
+}
+
+export interface ComponentOutletSyntax extends SyntaxNode {
+    readonly kind: 'ComponentOutletSyntax';
+    readonly name: string;
+    readonly directives: readonly ScreenDirectiveSyntax[];
+}
+
+export interface ScreenComponentSyntax extends SyntaxNode {
+    readonly kind: 'ScreenComponentSyntax';
+    readonly component: string;
+    readonly name: string;
+    readonly context: UiBindingSyntax | null;
+    readonly properties: readonly ComponentPropertySyntax[];
+    readonly exposes: readonly ComponentExposedValueSyntax[];
+    readonly presentation: readonly PresentationValueSyntax[];
+    readonly icon: string | null;
+    readonly outlets: readonly ComponentOutletSyntax[];
+}
+
+export type ToolbarItemKind = 'Unknown' | 'Action' | 'Navigate' | 'Dialog';
+
+export interface ToolbarItemSyntax extends SyntaxNode {
+    readonly kind: 'ToolbarItemSyntax';
+    readonly name: string;
+    readonly syntaxKind: ToolbarItemKind;
+    readonly target: string;
+    readonly label: string | null;
+    readonly icon: string | null;
+    readonly parameters: readonly ScreenNavigationParameterSyntax[];
+    readonly presentation: readonly PresentationValueSyntax[];
+}
+
+export interface ScreenToolbarSyntax extends SyntaxNode {
+    readonly kind: 'ScreenToolbarSyntax';
+    readonly name: string;
+    readonly items: readonly ToolbarItemSyntax[];
+}
+
 // Inline code in a registered language.
 export interface ScreenCodeSyntax extends SyntaxNode {
     readonly kind: 'ScreenCodeSyntax';
@@ -153,6 +235,8 @@ export type ScreenDirectiveSyntax =
     | ScreenTitleSyntax
     | ScreenTableSyntax
     | ScreenSummarySyntax
+    | ScreenComponentSyntax
+    | ScreenToolbarSyntax
     | ScreenCodeSyntax
     | ScreenBehaviorSyntax
     | ScreenUsesBehaviorSyntax;

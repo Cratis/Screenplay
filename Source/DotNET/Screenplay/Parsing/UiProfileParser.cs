@@ -24,11 +24,13 @@ internal static partial class UiProfileParser
         var platforms = new List<string>();
         string? defaultSizeClass = null;
         var packages = new List<string>();
+        var icons = new List<string>();
         string? theme = null;
         string? layout = null;
         var hasTargetPlatform = false;
         var hasTargetSize = false;
         var hasPackagesBlock = false;
+        var hasIconsBlock = false;
         var hasTheme = false;
         var hasLayout = false;
         var directiveLocations = new Dictionary<string, SourceLocation>();
@@ -59,7 +61,19 @@ internal static partial class UiProfileParser
 
                     hasPackagesBlock = true;
                     directiveLocations["packages"] = line.Location;
-                    ParsePackages(context, line, packages, directiveLocations);
+                    ParsePackages(context, line, packages, directiveLocations, "package");
+                    break;
+                case "icons":
+                    if (hasIconsBlock)
+                    {
+                        context.Error(DiagnosticCodes.UnknownUiProfileDirective, "This ui profile already declares an icons block - a profile can have at most one", line.Location);
+                        context.SkipBlock(line.Indent);
+                        break;
+                    }
+
+                    hasIconsBlock = true;
+                    directiveLocations["icons"] = line.Location;
+                    ParsePackages(context, line, icons, directiveLocations, "icon");
                     break;
                 case "theme":
                     if (hasTheme)
@@ -104,7 +118,7 @@ internal static partial class UiProfileParser
             }
         }
 
-        return new(name, platforms, defaultSizeClass, packages, header.Location, theme, layout) { DirectiveLocations = directiveLocations };
+        return new(name, platforms, defaultSizeClass, packages, header.Location, theme, layout) { DirectiveLocations = directiveLocations, Icons = icons };
     }
 
     static void ParseTarget(ParserContext context, SourceLine line, List<string> platforms, ref bool hasTargetPlatform, ref bool hasTargetSize, ref string? defaultSizeClass)
@@ -143,7 +157,7 @@ internal static partial class UiProfileParser
             line.Location);
     }
 
-    static void ParsePackages(ParserContext context, SourceLine header, List<string> packages, Dictionary<string, SourceLocation> directiveLocations)
+    static void ParsePackages(ParserContext context, SourceLine header, List<string> packages, Dictionary<string, SourceLocation> directiveLocations, string key)
     {
         var seen = new HashSet<string>();
         while (context.TryPeekChild(header.Indent, out var line))
@@ -162,7 +176,7 @@ internal static partial class UiProfileParser
             }
 
             packages.Add(line.Content);
-            directiveLocations[DirectiveLocationKeys.ForValue("package", packages, packages.Count - 1)] = line.Location;
+            directiveLocations[DirectiveLocationKeys.ForValue(key, packages, packages.Count - 1)] = line.Location;
         }
     }
 

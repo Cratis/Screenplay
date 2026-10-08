@@ -68,6 +68,11 @@ public record ApplicationSyntax(
     /// </summary>
     public IEnumerable<FileImportSyntax> FileImports { get; init; } = [];
 
+    /// <summary>
+    /// Gets application-scoped template assignments inherited by modules, features and slices unless overridden.
+    /// </summary>
+    public IEnumerable<TemplateAssignmentSyntax> Templates { get; init; } = [];
+
     // Immutable parse-time host facts, not an executable typed trigger descriptor. Programmatic syntax
     // without a compiler context uses the language defaults; copying parsed syntax retains its context.
     internal IReadOnlyDictionary<string, TriggerDefinition>? RegisteredTriggers { get; init; }

@@ -28,4 +28,10 @@ public record UiProfileSyntax(
     IEnumerable<string> Packages,
     SourceLocation Location,
     string? Theme = null,
-    string? Layout = null) : SyntaxNode(Location);
+    string? Layout = null) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the selected icon sets or packages available to this profile.
+    /// </summary>
+    public IEnumerable<string> Icons { get; init; } = [];
+}

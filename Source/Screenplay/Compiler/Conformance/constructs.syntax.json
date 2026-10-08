@@ -37,6 +37,7 @@
     "kind": "DomainSyntax",
     "name": "Cratis.Conformance"
   },
+  "eventSources": [],
   "fileImports": [
     {
       "kind": "FileImportSyntax",
@@ -127,6 +128,8 @@
                         }
                       ],
                       "response": null,
+                      "stream": null,
+                      "streamCandidates": [],
                       "validations": []
                     }
                   ],
@@ -314,6 +317,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -1385,6 +1390,8 @@
                       "navigate": {
                         "kind": "ScreenNavigateSyntax",
                         "by": "customerId",
+                        "parameters": [],
+                        "route": null,
                         "screen": "CustomerDetail"
                       }
                     },
@@ -1411,6 +1418,8 @@
                       "rowClick": {
                         "kind": "ScreenNavigateSyntax",
                         "by": "customerId",
+                        "parameters": [],
+                        "route": null,
                         "screen": "CustomerDetail"
                       },
                       "target": "customers"
@@ -1486,6 +1495,8 @@
                             {
                               "kind": "ScreenNavigateSyntax",
                               "by": null,
+                              "parameters": [],
+                              "route": null,
                               "screen": "CustomerOverview"
                             },
                             {
