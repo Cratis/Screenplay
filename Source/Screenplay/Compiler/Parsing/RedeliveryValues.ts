@@ -11,7 +11,7 @@ import { RedeliveryValue } from './RedeliveryValue';
 // specification consistency validator, including nominal enums and structured fixture values.
 export function redeliveryValue(expression: ExpressionSyntax, type: TypeRefSyntax | null, declarations: RefusalDeclarations): RedeliveryValue | undefined {
     const concept = type === null || type.isCollection ? undefined : declarations.concepts.get(type.name);
-    const enumeration = concept !== undefined && concept.values.length > 0 ? concept : null;
+    const enumeration = concept !== undefined && concept.type === 'Enum' ? concept : null;
     const member = (text: string) => enumeration !== null && text.startsWith(`${enumeration.name}.`) ? text.substring(enumeration.name.length + 1) : text;
     if (type?.isCollection && expression.kind === 'ListExpressionSyntax' && declarations.compatible({ ...type, isCollection: false }, { ...type, isCollection: false }) === true) {
         const items = expression.items.map(item => redeliveryValue(item, { ...type, isCollection: false, isOptional: false }, declarations));
