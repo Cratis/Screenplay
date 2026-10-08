@@ -95,10 +95,15 @@ to features; features can move to modules or other features. Declaration moves
 between slices are deferred.
 
 The proposal computes every assigned semantic and event-contract identity migration
-and repairs qualified typed references, including `depends on`. Event names and
-`id` pins remain unchanged. It refuses collisions, capture, moves into descendants,
-and changes to inherited authorization or screen interaction bindings. Literal
-placing imports need one unambiguous destination; placing globs are refused.
+and repairs qualified typed references, including `depends on` and interaction
+navigation, command execution and query refresh targets. Named-behavior parameters
+are not declaration names: their `uses` argument values are repaired instead.
+Event names and `id` pins remain unchanged. It refuses collisions, capture, moves into descendants,
+and changes to inherited authorization or resolved screen interaction targets,
+even if the attachment text stays the same. An argument used for multiple target
+domains also refuses. Literal placing imports need one unambiguous destination;
+placing globs are refused. Restated headers inside an imported file stay authored
+outside the file's actual placement scope.
 
 Files stay where they are. Use `expand-layout` afterwards if you want to realign
 the folders. Inspect `moveReport` in the proposal and `read-proposal`, including
