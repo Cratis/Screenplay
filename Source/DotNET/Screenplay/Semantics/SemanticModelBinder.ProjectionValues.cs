@@ -145,25 +145,15 @@ public sealed partial class SemanticModelBinder
         // differ is left unmapped, because ESM cannot express Chronicle's runtime conversion.
         IEnumerable<SemanticProjectionMapping> AutoMapped(MappingSyntax[] mappings, ProjectionLevel level, BoundEvent @event, bool isJoin)
         {
-            var aggregateOnly = mappings.Length > 0 && mappings.All(_ => _ is AddMappingSyntax or SubtractMappingSyntax or IncrementMappingSyntax or DecrementMappingSyntax or CountMappingSyntax);
-            if (!isJoin && aggregateOnly)
+            foreach (var (target, source) in ProjectionAutoMap.Properties(
+                mappings,
+                level.Targets.Values,
+                @event.Contract.Properties,
+                property => property.Name,
+                (target, source) => target.Type.Kind == source.Type.Kind && target.Type.Primitive == source.Type.Primitive && target.Type.Target == source.Type.Target &&
+                    target.Type.IsCollection == source.Type.IsCollection && (!source.Type.IsOptional || target.Type.IsOptional),
+                isJoin))
             {
-                yield break;
-            }
-
-            var mapped = mappings.Select(_ => _.Property.Split('.')[^1]).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var sources = isJoin ? JoinAutoMapSources.ExplicitlyMapped(mappings) : [];
-            foreach (var source in @event.Contract.Properties)
-            {
-                var target = level.Targets.Values.FirstOrDefault(_ => string.Equals(_.Name, source.Name, StringComparison.OrdinalIgnoreCase));
-                if (target is null || mapped.Contains(target.Name) || sources.Contains(source.Name) ||
-                    target.Type.Kind != source.Type.Kind || target.Type.Primitive != source.Type.Primitive || target.Type.Target != source.Type.Target ||
-                    target.Type.IsCollection != source.Type.IsCollection || (source.Type.IsOptional && !target.Type.IsOptional))
-                {
-                    continue;
-                }
-
-                mapped.Add(target.Name);
                 yield return new([target.Id], SemanticProjectionOperation.Set, SemanticProjectionValue.EventProperty([source.Id]));
             }
         }
