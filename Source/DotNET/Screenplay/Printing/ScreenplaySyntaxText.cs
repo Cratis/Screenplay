@@ -290,7 +290,7 @@ internal static partial class ScreenplaySyntaxText
     static string Number(double number) =>
         number == Math.Floor(number) && number >= long.MinValue && number < 9223372036854775808d
             ? ((long)number).ToString(CultureInfo.InvariantCulture)
-            : number.ToString(CultureInfo.InvariantCulture);
+            : ResponseNumber(number);
 
     static string Template(TemplateExpressionSyntax template)
     {
