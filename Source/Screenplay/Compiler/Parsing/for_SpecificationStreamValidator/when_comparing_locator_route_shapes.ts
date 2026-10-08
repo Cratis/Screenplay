@@ -43,6 +43,11 @@ describe('when comparing locator route shapes', () => {
         expect(same(route('Plain'), route('Plain'))).toBe(true);
         expect(same(route('Scalar'), route('Scalar'))).toBeNull();
     });
+    it('should keep unrelated composite value declarations out of scalar identity formatting', () => {
+        const model = parse('type Detail\n  value String\n  number Int\nconcept Key : Uuid').value;
+        const type = { kind: 'TypeRefSyntax' as const, name: 'Key', isOptional: false, isCollection: false, location };
+        expect(formatSpecificationStreamId(literal('3FA85F64-5717-4562-B3FC-2C963F66AFA6'), type, model)).toBe('3fa85f64-5717-4562-b3fc-2c963f66afa6');
+    });
     it('should format only known portable literal types', () => {
         const type = (name: string) => ({ kind: 'TypeRefSyntax' as const, name, isOptional: false, isCollection: false, location });
         expect(formatSpecificationStreamId(undefined, type('String'), application)).toBeNull();
