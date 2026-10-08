@@ -120,6 +120,85 @@ public class when_validating_programmatic_event_routes : Specification
     }
 
     [Fact]
+    void should_refuse_a_command_scalar_literal_with_a_mismatched_value_kind()
+    {
+        var application = Application;
+        var slice = Slice(application);
+        var command = slice.Commands[1];
+        var route = command.Route! with
+        {
+            StreamId = SemanticExpression.FromValue(new SemanticTextValue("x") with { Kind = SemanticValueKind.Number })
+        };
+        Assert.Throws<InvalidSemanticContract>(() => Create(WithSlice(application, slice with
+        {
+            Commands = slice.Commands.SetItem(1, command with { Route = route })
+        })));
+    }
+
+    [Fact]
+    void should_refuse_a_command_composite_part_literal_with_a_mismatched_value_kind()
+    {
+        var application = Application;
+        var slice = Slice(application);
+        var command = slice.Commands[^1];
+        var route = command.Route! with
+        {
+            StreamIdParts = command.Route.StreamIdParts.SetItem(1, command.Route.StreamIdParts[1] with
+            {
+                Value = SemanticExpression.FromValue(new SemanticTextValue("x") with { Kind = SemanticValueKind.Number })
+            })
+        };
+        Assert.Throws<InvalidSemanticContract>(() => Create(WithSlice(application, slice with
+        {
+            Commands = slice.Commands.SetItem(slice.Commands.Length - 1, command with { Route = route })
+        })));
+    }
+
+    [Fact]
+    void should_refuse_a_fixture_scalar_with_a_mismatched_value_kind()
+    {
+        var route = Slice(Application).Specifications[0].GivenEvents[0].Route! with
+        {
+            StreamId = new SemanticTextValue("0b4f8e6c-1d6a-4a52-9a53-3f5b6a0c1d11") with { Kind = SemanticValueKind.Number }
+        };
+        RejectFixtureRoute(0, route);
+    }
+
+    [Fact]
+    void should_refuse_a_fixture_part_with_a_mismatched_value_kind()
+    {
+        var specifications = Slice(Application).Specifications;
+        var route = specifications[^1].GivenEvents[0].Route!;
+        RejectFixtureRoute(specifications.Length - 1, route with
+        {
+            StreamIdParts = route.StreamIdParts.SetItem(1, route.StreamIdParts[1] with
+            {
+                Value = new SemanticTextValue("x") with { Kind = SemanticValueKind.Number }
+            })
+        });
+    }
+
+    static void RejectFixtureRoute(int specificationIndex, SemanticFixtureRoute route)
+    {
+        var application = Application;
+        var slice = Slice(application);
+        var specification = slice.Specifications[specificationIndex];
+        var fixture = specification.GivenEvents[0];
+        foreach (var invalid in new[]
+        {
+            specification with { GivenEvents = [fixture with { Route = route }] },
+            specification with { When = null, WhenAppended = new(fixture.EventContract, fixture.Values) { EventSource = fixture.EventSource, Route = route } },
+            specification with { ThenEvents = [fixture with { Route = route }] }
+        })
+        {
+            Assert.Throws<InvalidSemanticContract>(() => Create(WithSlice(application, slice with
+            {
+                Specifications = slice.Specifications.SetItem(specificationIndex, invalid)
+            })));
+        }
+    }
+
+    [Fact]
     void should_refuse_malformed_fixture_routes()
     {
         var application = Application;

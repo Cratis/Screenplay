@@ -116,6 +116,7 @@ internal static partial class SemanticModelValidator
 
         void ValidateRouteLiteral(SemanticTypeReference type, SemanticValue value)
         {
+            ValidateValueVariant(value);
             var stream = new SemanticEventStream(default, "literal", "literal") { StreamIdType = type };
             var source = new SemanticEventSource(default, "literal", "literal", []);
             if (!SemanticEventRouting.TryFormat(source, stream, value, [], _eventRoutesApplication.Concepts, out _, out _))
@@ -132,6 +133,8 @@ internal static partial class SemanticModelValidator
             var (source, stream) = SemanticEventRouting.Resolve(_eventRoutesApplication, route.Source, route.Stream);
             RequireObjects(route.StreamIdParts, nameof(route.StreamIdParts), "fixture stream identity part");
             ValidateRouteShape(stream, route.StreamId is not null, [.. route.StreamIdParts.Select(part => part.Part)]);
+            if (route.StreamId is { } scalar) ValidateValueVariant(scalar);
+            foreach (var part in route.StreamIdParts) ValidateValueVariant(part.Value);
             if (!SemanticEventRouting.TryFormat(source, stream, route.StreamId, route.StreamIdParts, _eventRoutesApplication.Concepts, out _, out _))
             {
                 throw new InvalidSemanticContract("A fixture route must carry valid portable stream identity literals.");
