@@ -13,7 +13,7 @@ sealed record McpSpecificationReport(string SourceRevision, string Outcome, int 
 
 static class McpSpecificationExecution
 {
-    internal static McpSpecificationReport Run(ScreenplayWorkspace workspace, string? specification = null, string? scope = null)
+    internal static McpSpecificationReport Run(ScreenplayWorkspace workspace, string? specification = null, string? scope = null, IReadOnlySet<DocumentId>? documents = null)
     {
         var source = McpWorkspaceAnalysis.For(workspace).Source;
         var revision = source.SourceRevision;
@@ -24,6 +24,7 @@ static class McpSpecificationExecution
 
         var compilation = workspace.Compilation.Value!;
         var declarations = workspace.IdentityCatalog.Semantics.Where(assignment => assignment.Address.Kind == SemanticKind.Specification)
+            .Where(assignment => documents is null || compilation.SourceMap.Entries.Any(entry => entry.SemanticId == assignment.Id && entry.Role == SemanticSourceMapRole.Declaration && documents.Contains(entry.Span.Document)))
             .Select(assignment => (assignment.Id, Address: Address(assignment.Address)))
             .OrderBy(assignment => assignment.Address, StringComparer.Ordinal).ToArray();
         var selected = declarations.Where(assignment =>

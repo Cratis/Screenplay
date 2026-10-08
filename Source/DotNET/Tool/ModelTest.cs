@@ -71,12 +71,20 @@ static class ModelTest
             // The compiler owns file/import discovery. Only its selected source set enters execution.
             var directory = isFile ? Path.GetDirectoryName(Path.GetFullPath(target))! : Path.GetFullPath(target);
             var documents = McpTestDocuments.From(snapshot, directory);
-            var name = isFile ? Path.GetFileNameWithoutExtension(target) : new DirectoryInfo(target).Name;
+            var root = new McpRoot(directory);
+            var persisted = new McpManagedFiles(root).Read(McpState.FileName);
+            var name = root.ApplicationName;
             var identity = ApplicationIdentity.Create(name);
-            var workspace = documents.Length == 0
-                ? ScreenplayWorkspace.CreateEmpty(identity, name)
-                : ScreenplayWorkspace.Create(identity, name, [.. documents], SemanticIdentityCatalog.Empty(identity));
-            var report = McpSpecificationExecution.Run(workspace, filter);
+            var workspace = persisted is not null
+                ? McpState.Deserialize(persisted).Open(root)
+                : documents.Length == 0
+                    ? ScreenplayWorkspace.CreateEmpty(identity, name)
+                    : ScreenplayWorkspace.Create(identity, name, documents, SemanticIdentityCatalog.Empty(identity));
+            var selectedPaths = snapshot.Sources.Keys.ToHashSet(StringComparer.Ordinal);
+            var selectedDocuments = persisted is not null && isFile
+                ? workspace.Documents.Where(document => selectedPaths.Contains(document.Path.Value)).Select(document => document.Id).ToHashSet()
+                : null;
+            var report = McpSpecificationExecution.Run(workspace, filter, documents: selectedDocuments);
             if (format == "json")
             {
                 output.WriteLine(JsonSerializer.Serialize(report, McpJson.Options));
@@ -88,7 +96,7 @@ static class ModelTest
 
             return report.Outcome switch { "passed" => 0, "failed" => 1, _ => 3 };
         }
-        catch (McpFailure failure) when (failure.Code == -32602)
+        catch (McpFailure failure)
         {
             error.WriteLine(failure.Message);
             return 2;
