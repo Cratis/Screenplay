@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { readFileSync } from 'node:fs';
 import { describe, beforeEach, it } from 'vitest';
 import { parse } from '@cratis/screenplay-compiler';
 import { diagnosticCodes } from '../../diagnostic-codes';
@@ -90,6 +91,9 @@ describe('when validating a document with a problem of every coded kind', () => 
             ['eventsource Account', '  id "Account"'],
         ];
         issues.push(...sources.flatMap(lines => validateLines(lines)));
+        const vectors = JSON.parse(readFileSync(new URL('../../../../Compiler/Conformance/diagnostics.json', import.meta.url), 'utf8')) as { cases: { source: string[]; diagnostics: string[] }[] };
+        const routes = ['PLAY0547', 'PLAY0548', 'PLAY0549', 'PLAY0550', 'PLAY0551'].map(code => vectors.cases.find(vector => vector.diagnostics.some(diagnostic => diagnostic.startsWith(code + '@')))!.source);
+        issues.push(...routes.flatMap(lines => validateLines(lines, { compilerDiagnostics: parse(lines.join('\n')).diagnostics })));
         // Timeline findings come from the compiler, which reads the whole document's order.
         const timelines = [
             ['module M', '  feature F', '    slice StateView View', '      projection P', '        from E', '    slice StateChange Write', '      event E'],

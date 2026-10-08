@@ -12,6 +12,11 @@
 export const diagnosticCodes = {
     invalidEventSourceDeclaration: 'PLAY0503',
     invalidCommandStream: 'PLAY0504',
+    invalidSpecificationStream: 'PLAY0547',
+    specificationStreamOnCommand: 'PLAY0548',
+    invalidSpecificationStreamRoute: 'PLAY0549',
+    invalidSpecificationStreamEventSource: 'PLAY0550',
+    specificationStreamContradictsCommand: 'PLAY0551',
     ambiguousCommandStream: 'PLAY0505',
     unsupportedStreamIdType: 'PLAY0506',
     redundantSourceStreamId: 'PLAY0507',

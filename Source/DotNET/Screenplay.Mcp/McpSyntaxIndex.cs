@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
@@ -164,7 +165,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
                 (_, SpecificationSyntax specification) => McpFixtureOccurrences.Role(specification, node, reference.Role),
                 _ => reference.Role
             };
-            _references.Add(new(reference.Name, reference.Kinds, [.. _scope], node is CommandStreamSyntax route ? route.ReferenceLocation : node.Location, role, owner?.Owner)
+            _references.Add(new(reference.Name, reference.Kinds, [.. _scope], ReferenceLocation(node), role, owner?.Owner)
             {
                 UseProductionCandidates = node is ProducesSyntax or SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax,
                 AmbiguousSourceOwner = node is CommandStreamSyntax { PropertyCandidate: not null }
@@ -231,6 +232,13 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     internal IEnumerable<McpReference> Outgoing(McpReadOwner owner) => _queries.Outgoing(owner);
 
     internal IEnumerable<McpReference> Outgoing(string ownerAddress) => _queries.Outgoing(ownerAddress);
+
+    static SourceLocation ReferenceLocation(SyntaxNode node) => node switch
+    {
+        CommandStreamSyntax route => route.ReferenceLocation,
+        SpecificationStreamSyntax route => route.ReferenceLocation,
+        _ => node.Location
+    };
 
     McpDeclaration Declare(string kind, string name, SyntaxNode node, string? description = null, object? details = null)
     {

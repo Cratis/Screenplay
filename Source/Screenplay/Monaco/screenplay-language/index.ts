@@ -167,6 +167,7 @@ export type { EventSourceAnalysis } from './EventSourceAnalysis';
 export type { AuthoredEventSource } from './AuthoredEventSource';
 export type { AuthoredStream } from './AuthoredStream';
 export type { AuthoredCommandRoute } from './AuthoredCommandRoute';
+export type { AuthoredSpecificationEvent } from './AuthoredSpecificationEvent';
 export { analyzeOperations, operationCompletions, operationDetails, operationAvailability, operationHover, operationReferenceAt, phaseState } from './operation-authoring';
 export type { OperationAnalysis, OperationDeclaration, OperationInput, OperationPhase, OperationReference, SystemDeclaration } from './OperationAnalysis';
 export { responseAvailability, responseAnalysis } from './response-analysis';

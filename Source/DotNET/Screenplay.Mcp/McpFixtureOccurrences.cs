@@ -53,17 +53,17 @@ static class McpFixtureOccurrences
         var ordinal = 0;
         foreach (var item in specification.Given)
         {
-            yield return Occurrence(item.EventType, "Event", "givenEvent", item, item.Values, item.For);
+            yield return Occurrence(item.EventType, "Event", "givenEvent", item, item.Values, item.For, item.Stream, item.NoStream);
         }
 
         if (specification.WhenAppended is { } appended)
         {
-            yield return Occurrence(appended.EventType, "Event", "whenAppendedEvent", appended, appended.Values, appended.For);
+            yield return Occurrence(appended.EventType, "Event", "whenAppendedEvent", appended, appended.Values, appended.For, appended.Stream, appended.NoStream);
         }
 
         foreach (var item in specification.ThenEvents)
         {
-            yield return Occurrence(item.EventType, "Event", "thenEvent", item, item.Values, item.For);
+            yield return Occurrence(item.EventType, "Event", "thenEvent", item, item.Values, item.For, item.Stream, item.NoStream);
         }
 
         if (specification.When is { } when)
@@ -103,7 +103,7 @@ static class McpFixtureOccurrences
             }
         }
 
-        McpFixtureOccurrence Occurrence(string name, string kind, string role, SyntaxNode node, IEnumerable<PropertyMappingSyntax> values, ExpressionSyntax? destination = null) =>
-            new(declaration.Owner, role, new(name, [kind], declaration.Scope, node.Location, role, declaration.Owner), ordinal++, values, destination, expanded?.Steps.SingleOrDefault(step => ReferenceEquals(step.Effective, node)));
+        McpFixtureOccurrence Occurrence(string name, string kind, string role, SyntaxNode node, IEnumerable<PropertyMappingSyntax> values, ExpressionSyntax? destination = null, SpecificationStreamSyntax? stream = null, SpecificationNoStreamSyntax? noStream = null) =>
+            new(declaration.Owner, role, new(name, [kind], declaration.Scope, node.Location, role, declaration.Owner), ordinal++, values, destination, stream, noStream, expanded?.Steps.SingleOrDefault(step => ReferenceEquals(step.Effective, node)));
     }
 }

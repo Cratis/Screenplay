@@ -14,7 +14,7 @@ static class McpFixtureQueries
         snapshot.Compilation.Success,
         snapshot.SourceRevision,
         snapshot.Compilation.Diagnostics,
-        coverage = "Effective specification property assignments and explicit destinations, with authored/example/override origins. Values are syntax, not evaluated expressions. Types resolve only direct fields of an unambiguous local declaration; nested paths, imports and implicit view shapes have no inferred type.",
+        coverage = "Effective specification property assignments and explicit destinations, with authored/example/override origins, and authored event routes. Examples never contribute routes. Values are syntax, not evaluated expressions. Types resolve only direct fields of an unambiguous local declaration; nested paths, imports and implicit view shapes have no inferred type.",
         page = McpReadPage<McpFixtureValue>.Create(
             McpFixtureOccurrences.All(snapshot.Index, snapshot.Compilation.Value).SelectMany(occurrence => Values(snapshot.Index, occurrence)),
             item => (specification is null || item.Specification.Address == specification) &&
@@ -90,6 +90,20 @@ static class McpFixtureQueries
                 Origin(occurrence, "for")?.Origin.ToString().ToLowerInvariant() ?? "authored",
                 occurrence.Step?.Example?.Name,
                 Origin(occurrence, "for")?.OverriddenValue is { } replaced ? Value(replaced) : null);
+        }
+
+        if (occurrence.Stream is { } stream)
+        {
+            yield return new(occurrence.Specification, $"{occurrence.Role}Stream", occurrence.Ordinal, occurrence.Reference.Name, candidates, "stream", null, nameof(SpecificationStreamSyntax), $"{stream.EventSource}.{stream.Stream}", stream.ReferenceLocation, "authored", null, null);
+            if (stream.StreamId is { } streamId)
+            {
+                yield return new(occurrence.Specification, $"{occurrence.Role}StreamId", occurrence.Ordinal, occurrence.Reference.Name, candidates, "streamId", null, streamId.Source.GetType().Name, Value(streamId.Source), streamId.Location, "authored", null, null);
+            }
+        }
+
+        if (occurrence.NoStream is { } noStream)
+        {
+            yield return new(occurrence.Specification, $"{occurrence.Role}NoStream", occurrence.Ordinal, occurrence.Reference.Name, candidates, "no stream", null, nameof(SpecificationNoStreamSyntax), true, noStream.Location, "authored", null, null);
         }
     }
 

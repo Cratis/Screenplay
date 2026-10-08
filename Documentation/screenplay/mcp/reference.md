@@ -110,7 +110,7 @@ Detail pages use `detailShape: "compact-header-v1"`. The first `declaration` ite
 
 Generic source details, source dependencies and editor navigation use the same source-only physical confidence as the inventories. Unresolved placement candidates are not discarded before checking duplicate parents. Unknown root extent refuses confident selection even when one surviving declaration is readable; nonrouting event and operation resolution keeps its existing rules. `confidenceReasons` explains source inventory ownership, and reference edges expose `sourceConfidenceReasons`.
 
-`declaration-details` adds source `streams` and command `route` views. The route view retains `authoredRoute` and every `ambiguousStreamCandidates` node; it does not claim effective routing. Dependencies include `commandEventSource`, `commandStream` and nominal identifier/key type links. Source references are application-exact; stream references are exactly `Source.Stream`, without suffix guessing.
+`declaration-details` adds source `streams` and command `route` views. The route view retains `authoredRoute` and every `ambiguousStreamCandidates` node; it does not claim effective routing. Dependencies include `commandEventSource`, `commandStream`, `specificationEventSource`, `specificationStream` and nominal identifier/key type links. Specification route references point at the qualified `Source.Stream` operand and belong to the specification, so `find-references` on either the source or stream includes its authored event routes. These classification links do not add slice dependency-graph edges or change timeline order. Source references are application-exact; stream references are exactly `Source.Stream`, without suffix guessing.
 
 All new inventories disclose that these constructs are not admitted by any supported executable model (ESM) version yet and `executionAvailable: false`, without source/stream semantic or requirement IDs. Old syntax JSON omissions retain additive defaults. Use [typed authoring edits](authoring-tools.md#event-source-and-stream-authoring), not automatic source/stream renames or routing repairs. Strict malformed draft syntax content or merged syntax export refuses with `InvalidSyntaxJson`; a compact `read-ast` query can still expose replacement handles. `export-workspace` preserves exact original bytes, including invalid-but-editable drafts, rather than converting them to typed syntax.
 
@@ -211,7 +211,7 @@ event references and dependencies carry the `whenAppendedEvent` role, not
 `thenEvent`. Fixture roles are `givenEvent`, `whenAppendedEvent`, `thenEvent`,
 `whenCommand`, `givenReadModel`, `thenReadModel`, `queryArguments`, and
 `queryResult`; each role also has a `…Destination` form for explicit `for`
-destinations.
+destinations. Event roles additionally expose `…Stream` (`property: "stream"`, qualified source/stream text), `…StreamId` (`property: "streamId"`, literal value), and `…NoStream` (`property: "no stream"`, `value: true`) rows when authored. They share the occurrence ordinal with its payload and destination; a payload property named `stream` or `streamId` remains a separate ordinary event-role row. Missing routing lines produce no route rows, not default or inferred routing. `no stream` is legal only on `then` events. Route rows describe syntax only: specification routes remain refused by executable-model binding with `PLAY0268` (#457).
 
 ## Dependency graph
 

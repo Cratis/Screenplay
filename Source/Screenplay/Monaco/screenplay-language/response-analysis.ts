@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, Diagnostic, EventSourceReadConfidence, OperationSyntax, parsePlacedDocuments, SpecificationSyntax } from '@cratis/screenplay-compiler';
+import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, Diagnostic, EventSourceReadConfidence, OperationSyntax, parsePlacedDocuments, SpecificationEventSyntax, SpecificationSyntax } from '@cratis/screenplay-compiler';
 import { fenceMap, indentOf, withoutComment } from './document-context';
 import { ResponseAnalysis } from './ResponseAnalysis';
 import { ExampleAnalysis } from './ExampleAnalysis';
@@ -210,7 +210,7 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
     const targets = sourceDeclarations.flatMap(source => {
         return source.streams.filter(stream => resolve(source.name, stream.name).state === 'unique' && !importedTypeReferences.has(`${source.name}.${stream.name}`)).map(stream => ({ name: `${source.name}.${stream.name}`, source, stream }));
     });
-    const sourceContexts = new Map<number, { command?: CommandSyntax; route?: AuthoredCommandRoute; source?: typeof sourceDeclarations[number]; stream?: typeof sourceDeclarations[number]['streams'][number] }>();
+    const sourceContexts = new Map<number, { command?: CommandSyntax; event?: SpecificationEventSyntax; expectation?: boolean; route?: AuthoredCommandRoute; source?: typeof sourceDeclarations[number]; stream?: typeof sourceDeclarations[number]['streams'][number] }>();
     const routes: AuthoredCommandRoute[] = [];
     for (const command of commands.values()) {
         for (const line of range(command.location.line - 1)) sourceContexts.set(line, { command });
@@ -220,6 +220,16 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
         if (command.stream) {
             routes.push(command.stream);
             for (const line of range(command.stream.location.line - 1)) sourceContexts.set(line, { command, route: command.stream });
+        }
+    }
+    for (const specification of specifications.values()) {
+        for (const event of [...specification.given, ...(specification.whenAppended ? [specification.whenAppended] : []), ...specification.thenEvents]) {
+            const context = { event, expectation: specification.thenEvents.includes(event) };
+            for (const line of range(event.location.line - 1)) sourceContexts.set(line, context);
+            if (event.stream) {
+                routes.push(event.stream);
+                for (const line of range(event.stream.location.line - 1)) sourceContexts.set(line, { ...context, route: event.stream });
+            }
         }
     }
     for (const source of sourceDeclarations.filter(source => source.location.path === path)) {
