@@ -183,8 +183,8 @@ These stay refused:
 - new concurrency flags, and legacy `concurrency` (PLAY0271);
 - handler commands (PLAY0268);
 - Chronicle stream completion;
-- route lines in specification examples (#491);
-- redelivery locators by stream (#490).
+- route lines in specification examples (#491). Under [0037](0037-routes-in-redelivery-locators-and-specification-examples.md) they expand in the front end, so they become executable wherever specification routes are admitted. No separate admission is needed.
+- redelivery locators by stream (#490). Redelivery stays refused until 0030's own admission requirements are met, even after specification routes are admitted.
 
 Captures and a reaction's direct productions remain unrouted.
 
