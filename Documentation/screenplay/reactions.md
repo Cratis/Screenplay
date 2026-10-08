@@ -229,6 +229,8 @@ Branches are ordered: the first matching selector wins. A branch contains `ackno
 
 Duplicate selectors and narrower branches after a covering branch produce `PLAY0540`. Bare refusal never shadows authorization. An unresolved named constraint produces `PLAY0542`; a known constraint that cannot target any of the invoked command's produced events also produces `PLAY0540`.
 
+Both compilers warn with `PLAY0557` on an `on refused by authorization` branch when the invoked command has an `authorize` gate of its own or inherits one from its module or enclosing features, but the invocation has no declared identity. The reference runner has no caller for reaction invocations and always denies a gated command; Arc runs reactor commands as the system, so the branch would behave differently. The remedy is an invoking identity, tracked by [#383](https://github.com/Cratis/Screenplay/issues/383); no identity syntax is available yet. `given caller` does not supply that identity. Resolve this mismatch before admitting refusal handling into an executable model. Validation and constraint branches do not receive this warning.
+
 The branch's event mappings may use these String values:
 
 | Value | Meaning | Scope |

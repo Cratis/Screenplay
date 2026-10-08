@@ -2529,4 +2529,9 @@ public static class DiagnosticCodes
     /// Two containers declare each other as dependencies.
     /// </summary>
     public const string MutualDependencyDeclarations = "PLAY0556";
+
+    /// <summary>
+    /// An authorization refusal branch invokes an authorization-gated command without a declared identity.
+    /// </summary>
+    public const string AuthorizationRefusalWithoutIdentity = "PLAY0557";
 }

@@ -18,6 +18,7 @@ internal static class ReactionRefusalValidator
         {
             foreach (var invocation in slice.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(trigger => trigger.Invokes ?? []))
             {
+                var command = declarations.Resolve(invocation.Command, scope, owner => owner.Commands, node => node.Name);
                 var earlier = new List<InvocationRefusalSyntax>();
                 foreach (var branch in invocation.OnRefused)
                 {
@@ -27,6 +28,15 @@ internal static class ReactionRefusalValidator
                     }
 
                     earlier.Add(branch);
+                    if (branch.Selector == "authorization" && InvocationHasNoDeclaredIdentity() &&
+                        command is { } authorized && IsAuthorizationGated(application, authorized.Node, authorized.Scope))
+                    {
+                        context.Warning(
+                            DiagnosticCodes.AuthorizationRefusalWithoutIdentity,
+                            $"Command '{invocation.Command}' is authorization-gated, but this invocation has no declared identity. This authorization refusal branch always fires in the reference runner because there is no caller; Arc runs reactor commands as the system. Declare an invoking identity once supported (#383).",
+                            branch.Location);
+                    }
+
                     if (branch.Constraint is not { } name) continue;
                     var constraint = declarations.Resolve(name, scope, owner => owner.Constraints, node => node.Name);
                     if (constraint is not { } resolved)
@@ -35,7 +45,6 @@ internal static class ReactionRefusalValidator
                         continue;
                     }
 
-                    var command = declarations.Resolve(invocation.Command, scope, owner => owner.Commands, node => node.Name);
                     if (command is not { } invoked || invoked.Node.Handler is not null) continue;
                     var rules = new[] { resolved.Node }.Concat(resolved.Node.AdditionalRules).ToArray();
                     if (rules.Any(rule => rule is FileConstraintSyntax)) continue;
@@ -63,6 +72,25 @@ internal static class ReactionRefusalValidator
                     declarations.Resolve(right, scope, owner => owner.Constraints, node => node.Name) is { } second && ReferenceEquals(first.Node, second.Node));
             }
         }
+    }
+
+    // Invocations have no identity declaration until #383; keep that decision separate from authorization gating.
+    static bool InvocationHasNoDeclaredIdentity() => true;
+
+    static bool IsAuthorizationGated(ApplicationSyntax application, CommandSyntax command, DeclarationScope scope)
+    {
+        if (command.Authorize is not null) return true;
+        var module = application.Modules.First(value => value.Name == scope.Segments[0]);
+        if (module.Authorize is not null) return true;
+        var features = module.Features;
+        foreach (var name in scope.Segments.Skip(1).SkipLast(1))
+        {
+            var feature = features.First(value => value.Name == name);
+            if (feature.Authorize is not null) return true;
+            features = feature.Features;
+        }
+
+        return false;
     }
 
     sealed class ValueWalker(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context) : ScreenplaySyntaxWalker

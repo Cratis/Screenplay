@@ -28,6 +28,7 @@ export const diagnosticCodes = {
     invalidDependencyTarget: 'PLAY0554',
     repeatedDependencyDeclaration: 'PLAY0555',
     mutualDependencyDeclarations: 'PLAY0556',
+    authorizationRefusalWithoutIdentity: 'PLAY0557',
     ambiguousReference: 'PLAY0198',
     invalidImplementationBlock: 'PLAY0492',
     invalidImplementationHint: 'PLAY0493',
