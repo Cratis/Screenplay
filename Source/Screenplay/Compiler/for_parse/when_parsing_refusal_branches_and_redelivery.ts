@@ -33,7 +33,7 @@ describe('when parsing refusal branches and redelivery', () => {
         parse(source).diagnostics.should.be.empty;
         const branches = slice(application()).reactions[0].triggers[0].invokes[0].onRefused!;
         branches.map(branch => branch.selector).should.deep.equal(['constraint', 'validation', 'constraint', 'authorization', 'any']);
-        branches[0].constraint!.should.equal('Claims.UniqueClaim');
+        branches[0].constraint!.should.equal('Handling.UniqueClaim');
         branches[0].produces[0].mappings.map(mapping => mapping.source.kind).should.deep.equal(['RefusalExpressionSyntax', 'RefusalExpressionSyntax', 'RefusalExpressionSyntax']);
         branches[1].acknowledge.should.be.true;
     });
@@ -47,10 +47,11 @@ describe('when parsing refusal branches and redelivery', () => {
     });
 
     it('should round trip the new source members through exact syntax JSON', () => {
-        const json = toSyntaxJson(application());
+        const exact = parse(`numbers exact\n${source}`).value;
+        const json = toSyntaxJson(exact);
         const restored = slice(decodeExactSyntaxJson(JSON.stringify(json)) as ApplicationSyntax);
-        expect(toSyntaxJson(restored.reactions[0].triggers[0].invokes[0])).toEqual(toSyntaxJson(slice(application()).reactions[0].triggers[0].invokes[0]));
-        expect(toSyntaxJson(restored.specifications[0].whenRedelivered!)).toEqual(toSyntaxJson(slice(application()).specifications[0].whenRedelivered!));
+        expect(toSyntaxJson(restored.reactions[0].triggers[0].invokes[0])).toEqual(toSyntaxJson(slice(exact).reactions[0].triggers[0].invokes[0]));
+        expect(toSyntaxJson(restored.specifications[0].whenRedelivered!)).toEqual(toSyntaxJson(slice(exact).specifications[0].whenRedelivered!));
     });
 
     it('should walk the branches values productions and redelivery', () => {

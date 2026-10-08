@@ -25,7 +25,8 @@ public class when_freezing_legacy_source_syntax_bytes
             var name = document.GetProperty("name").GetString()!;
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "named-rule-intent" || name == "specification-examples" || name == "guarded-actions" || name == "no-events" || name == "declared-dependencies") continue;
+            // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "named-rule-intent" || name == "specification-examples" || name == "guarded-actions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -108,7 +109,9 @@ public class when_freezing_legacy_source_syntax_bytes
             Authorize = module.Authorize is { Requirement: PolicyReferenceSyntax reference } authorize && reference.Name == "IsPerson"
                 ? authorize with { Requirement = reference with { Name = "IsAuthenticated" } }
                 : module.Authorize,
-            Forms = module.Forms?.Select(form => form.Name == "RecordPaymentForm" ? form with { Populate = new FormPopulateFromItemSyntax(form.Location) } : form),
+
+            // The samples-policy coverage spec protects TagInvoiceForm's newly restored item population.
+            Forms = module.Forms?.Where(form => form.Name != "TagInvoiceForm").Select(form => form.Name == "RecordPaymentForm" ? form with { Populate = new FormPopulateFromItemSyntax(form.Location) } : form),
             Features = module.Features.Select(feature => feature.Name == "InvoiceManagement" ? feature with
             {
                 Slices = feature.Slices.Where(slice => slice.Name != "StartInvoiceDraft").Select(slice => slice.Name switch

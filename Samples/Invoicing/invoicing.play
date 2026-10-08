@@ -449,6 +449,11 @@ module Invoicing
     on change
       refresh ListExchangeRates
 
+  // Tag the invoice already selected in a list row, without fetching it again.
+  form TagInvoiceForm for TagInvoice
+    populate from item
+    field tag label "Tag"
+
   form ChangeInvoiceStatusForm for ChangeInvoiceStatus
     populate via query GetInvoice by invoiceId
     field status label "New status"

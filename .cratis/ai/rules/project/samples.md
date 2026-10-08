@@ -10,7 +10,7 @@ living reference for the language, so they must say what the language says today
 | Sample | Shows |
 | --- | --- |
 | `Samples/Library` | The smallest useful application in one file - where a newcomer starts. |
-| `Samples/Invoicing` | Every construct the language has, in one document, with its `.strings` files. |
+| `Samples/Invoicing` | Every construct the language has, in one document, with its `.strings` files - except the preview constructs listed below. |
 | `Samples/Commerce` | Focused files composed with explicit imports at every level: a root that reads like a table of contents, a file per module and feature that imports its own folder, and one file per slice with nothing above it. |
 | `Samples/TimeTracking` | Focused files composed from one root glob: module files declare their features inline and import each feature's step files, one slice per file. |
 
@@ -19,9 +19,13 @@ living reference for the language, so they must say what the language says today
 Any change to the language — grammar, a construct, a keyword, a diagnostic that starts firing, a deprecation, a
 rename — updates the samples in the same pull request:
 
-- **A new construct or form** is added to `Samples/Invoicing`, which covers the whole language, and to any other
-  sample where it is the natural way to say something. Add it the way an author would actually use it, not as an
-  isolated fragment.
+- **A new construct or form** is added to `Samples/Invoicing` and to any other sample where it is the natural
+  way to say something. Add it the way an author would actually use it, not as an isolated fragment. If the binder
+  refuses it only where it is used, it stays in Invoicing and is pinned in `when_binding_the_invoicing_sample`.
+  If the binder refuses the whole model before binding (exact numeric mode, or anything
+  `CommandProductionAdmission` refuses), it is a **preview construct**. List it under *Preview constructs* with
+  its issue and a fixture that compiles with no diagnostics and binds to `PLAY0268` naming that issue. The pull
+  request that admits it into an ESM version removes its row and adds it to Invoicing.
 - **A changed or deprecated form** is rewritten in every sample that uses it. Samples never carry deprecated
   syntax (`PLAY0397`) or a form the compiler warns about.
 - **A removed construct** is removed from every sample, along with any README text describing it.
@@ -33,6 +37,25 @@ rename — updates the samples in the same pull request:
   Monaco language service (`Source/Screenplay/Monaco/screenplay-language`: highlighting, hover, completion,
   validation) and the VS Code extension's TextMate grammar (`Source/Screenplay/VSCodeExtension/syntaxes`). A
   sample that uses a new form is only correct once every one of them understands it.
+
+### Preview constructs
+
+These forms parse and print, but refuse the whole model before per-construct binding. Keep their fixtures
+outside `Samples/` so Invoicing continues to exercise its individual binding dispositions.
+
+| Construct | Issue | Fixture |
+| --- | --- | --- |
+| `numbers exact` | #285 | `Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play` |
+| `eventsource`, `stream`, command routes | #302 | `Documentation/screenplay/fixtures/source-streams.play` |
+| specification `stream`/`streamId`/`no stream` | #457 | `Source/Screenplay/Compiler/Conformance/specification-streams.play` |
+| `system`, `operation`, operation specifications | #301 | `Documentation/screenplay/fixtures/operations.play` |
+| refusals, redelivery, `then no events` | #433 | `Source/Screenplay/Compiler/Conformance/reaction-refusals-redelivery.play`, `Source/Screenplay/Compiler/Conformance/no-events.play` |
+
+`for_Samples/when_holding_invoicing_to_the_language` reflects over concrete syntax nodes and requires every
+kind missing from Invoicing to be classified exactly once as Preview, CoveredElsewhere (a concrete, tested
+location), or Infrastructure (error/trivia nodes only). Newly covered kinds must leave those lists. It checks
+preview fixture compilation, node presence and issue-specific binding refusal, and holds this table to the
+Preview list. Exact numeric mode is checked separately because it is a document option, not a syntax node.
 
 ### The conventions every sample keeps
 
