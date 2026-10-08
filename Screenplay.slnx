@@ -6,5 +6,6 @@
         <Project Path="Source/DotNET/Screenplay.Contexts/Screenplay.Contexts.csproj" />
         <Project Path="Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj" />
         <Project Path="Source/DotNET/Tool/Tool.csproj" />
+        <Project Path="Source/DotNET/Screenplay.Contracts/Screenplay.Contracts.csproj" />
     </Folder>
 </Solution>

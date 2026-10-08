@@ -14,6 +14,7 @@ static class CommandLineInformation
           screenplay [<file.play|folder>] [--scope <Module>[.<Feature>[.<Slice>]]] [--check <name>[,<name>]|all] [--warnaserror] [--no-color]
           screenplay test [<file.play|folder>] [--filter <specification-address>] [--format text|json]
           screenplay mcp <model-folder>
+          screenplay contract [--output <path>]
           screenplay --help
           screenplay --version
 
@@ -40,7 +41,7 @@ static class CommandLineInformation
         }
 
         if ((arguments.Length == 1 && (arguments[0] == "--help" || arguments[0] == "-h" || arguments[0] == "help")) ||
-            (arguments.Length == 2 && (arguments[0] == "mcp" || arguments[0] == "test") && (arguments[1] == "--help" || arguments[1] == "-h")))
+            (arguments.Length == 2 && (arguments[0] == "mcp" || arguments[0] == "test" || arguments[0] == "contract") && (arguments[1] == "--help" || arguments[1] == "-h")))
         {
             output.WriteLine(Usage);
             return true;

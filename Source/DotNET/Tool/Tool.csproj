@@ -22,7 +22,15 @@
 
     <ItemGroup>
         <ProjectReference Include="../Screenplay/Screenplay.csproj" />
+        <ProjectReference Include="../Screenplay.Contracts/Screenplay.Contracts.csproj" />
         <ProjectReference Include="../Screenplay.CanonicalCorpus/Screenplay.CanonicalCorpus.csproj" Condition="'$(Configuration)'=='Debug'" />
         <ProjectReference Include="../Screenplay.Mcp/Screenplay.Mcp.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+        <None Include="$(TargetDir)screenplay-contract.json" Pack="true" PackagePath="/" />
+    </ItemGroup>
+    <Target Name="GenerateScreenplayContract" AfterTargets="Build" Condition="'$(Configuration)'=='Release' AND '$(TargetFramework)'!=''">
+        <Exec Command="dotnet &quot;$(TargetPath)&quot; contract --output &quot;$(TargetDir)screenplay-contract.json&quot;" />
+    </Target>
 </Project>

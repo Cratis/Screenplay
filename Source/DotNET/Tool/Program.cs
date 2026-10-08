@@ -14,6 +14,11 @@ if (args.FirstOrDefault() == "mcp")
     return McpCommand.Run(args);
 }
 
+if (args.FirstOrDefault() == "contract")
+{
+    return ContractCommand.Run(args[1..], Console.Out, Console.Error);
+}
+
 if (args.FirstOrDefault() == "test")
 {
     return ModelTest.Run(args[1..], Console.Out, Console.Error);
