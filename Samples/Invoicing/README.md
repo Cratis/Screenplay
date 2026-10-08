@@ -78,7 +78,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | projection `variant`s with `enters on` and a shared handler | CollectionsBoard |
 | `reducer` with inline and `file` rules | InvoiceAging |
 | `screen` at all three levels: intent (`data`, `action`, `label`, `navigate to`), structure (`template`, slots, `section`, `title`, `table`, `summary`, `on row-click`) and inline ```` ```react ````/```` ```html ````/```` ```typescript ````; a `file` screen | every state change and state view slice |
-| guarded interaction: block-form `when item.status …` and `otherwise` selecting an action list | InvoiceList — double click opens editing only for a draft |
+| guarded interaction: block-form `when item.status …` and `otherwise` selecting an action list | InvoiceList — double click opens editing only for a draft; InvoiceDetails — click opens cancellation only for a draft |
 | guarded screen action: label header, `when item.status … execute`, explicit `with … from` and `otherwise hidden` | CancelInvoiceScreen — cancellation is offered only for a draft |
 | interactions: `on load`, `enter`, `click`, `double click`, `select`, `submit`, `change`, `leave`, `interval`, `event … where`; `execute`, `navigate to`/`back`, `open dialog … with … from`, `close dialog`, `refresh`, `set`, `notify`, `confirm`, `raise`; `on success`/`failure`/`result` | InvoiceList, InvoiceLineDetail, ChangeInvoiceStatus, CollectionsBoard, behaviors |
 | `reaction` with `when` an event, `Startup`, a declared trigger; `every`; `at`, `at … on Monday`, `at … on day 1`; trigger values, `reads`, `produces`, `invokes`, `where`, inline and `file` bodies | Automation and Translate slices |

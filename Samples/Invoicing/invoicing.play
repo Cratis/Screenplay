@@ -1508,7 +1508,12 @@ module Invoicing
                 title $strings.invoices.actions.cancel
                 table InvoiceDetailsReadModel
                   column invoiceNumber label $strings.invoices.fields.number
-                  on row-click navigate to CancelInvoiceScreen by invoiceId
+                  on click
+                    when item.status == "draft"
+                      navigate to CancelInvoiceScreen
+                        with invoiceId from item.invoiceId
+                    otherwise
+                      notify info "Only draft invoices can be canceled"
               section tagInvoiceInput
                 title "Tag invoice"
                 table InvoiceDetailsReadModel
