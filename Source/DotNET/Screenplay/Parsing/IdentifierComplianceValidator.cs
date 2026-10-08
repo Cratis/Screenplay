@@ -17,6 +17,7 @@ internal static class IdentifierComplianceValidator
         var personal = application.Concepts.Where(concept => concept.AttributeNames.Contains(ConceptAttributeSyntax.Pii))
             .Select(concept => concept.Name).ToHashSet(StringComparer.Ordinal);
         var declaredTriggers = (application.Triggers ?? []).ToLookup(trigger => trigger.Name, StringComparer.Ordinal);
+        var imports = application.Imports.Select(import => import.Name).ToHashSet(StringComparer.Ordinal);
         foreach (var source in application.EventSources)
         {
             if (source.Identifier is { } identifier) ValidateType(identifier, identifier.Location);
@@ -43,20 +44,24 @@ internal static class IdentifierComplianceValidator
             foreach (var trigger in slice.Reactions.SelectMany(reaction => reaction.Triggers))
             {
                 if (trigger.Source is not NamedTriggerSourceSyntax named) continue;
+                var resolvedEvent = declarations.Event(named.Name, scope);
                 var shapes = new List<IEnumerable<PropertySyntax>?>
                 {
-                    declarations.Event(named.Name, scope)?.Properties,
+                    resolvedEvent?.Properties,
                     trigger.Data.Select(datum => datum.Type is { } type ? new PropertySyntax(datum.Name, type, datum.Location) : null)
                         .OfType<PropertySyntax>()
                 };
-                shapes.AddRange(declaredTriggers[named.Name].Select(declared => declared.Data
-                    .Select(datum => datum.Type is { } type ? new PropertySyntax(datum.Name, type, datum.Location) : null)
-                    .OfType<PropertySyntax>()));
+                if (resolvedEvent is null && !imports.Contains(named.Name))
+                {
+                    shapes.AddRange(declaredTriggers[named.Name].Select(declared => declared.Data
+                        .Select(datum => datum.Type is { } type ? new PropertySyntax(datum.Name, type, datum.Location) : null)
+                        .OfType<PropertySyntax>()));
+                }
                 foreach (var production in ReactionProductions.In(trigger).Where(production => declarations.Productions.IsEventProduction(production, slice)))
                 {
                     if (production.For is not PathExpressionSyntax path) continue;
 
-                    // Compliance is conservative when event and declared-trigger resolution disagree (#439).
+                    // Check clause-local types alongside the occurrence selected by event-first reaction resolution.
                     var personalType = shapes.Select(properties => declarations.Property(properties, path.Path, out _)?.Type)
                         .FirstOrDefault(type => type is not null && personal.Contains(type.Name));
                     if (personalType is not null) ValidateType(personalType, path.Location);

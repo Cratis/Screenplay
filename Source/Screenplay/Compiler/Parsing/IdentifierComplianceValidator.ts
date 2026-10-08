@@ -14,6 +14,7 @@ export function validateIdentifierCompliance(application: ApplicationSyntax, con
     const personal = new Set(application.concepts.filter(concept => concept.attributes.some(attribute => attribute.name === 'pii')).map(concept => concept.name));
     const types = uniqueByName(application.types);
     const resolver = new AuthoringProductionResolver(application);
+    const imports = new Set(application.imports.map(imported => imported.qualifiedName.split('.').at(-1)!));
     const declaredTriggers = new Map<string, (readonly PropertySyntax[])[]>();
     for (const declared of application.declaredTriggers ?? []) {
         const shapes = declaredTriggers.get(declared.name) ?? [];
@@ -48,10 +49,13 @@ export function validateIdentifierCompliance(application: ApplicationSyntax, con
             const resolution = resolver.resolve(trigger.source.name, slice);
             const event = resolution.declaration?.node;
             const clauseData = (dependencySourcesOf(trigger).data ?? []).flatMap<PropertySyntax>(datum => datum.type === null ? [] : [{ kind: 'PropertySyntax', name: datum.name, type: datum.type, isIdentifier: false, location: datum.location }]);
-            const shapes = [event?.kind === 'EventSyntax' ? event.properties : [], clauseData, ...declaredTriggers.get(trigger.source.name) ?? []];
+            const shapes = [event?.kind === 'EventSyntax' ? event.properties : [], clauseData];
+            if (event?.kind !== 'EventSyntax' && !imports.has(trigger.source.name)) {
+                shapes.push(...declaredTriggers.get(trigger.source.name) ?? []);
+            }
             for (const production of trigger.produces.filter(production => resolver.isEventProduction(production, slice))) {
                 if (production.for?.kind !== 'PathExpressionSyntax') continue;
-                // Compliance checks both shapes when event and declared-trigger resolution disagree (#439).
+                // Check clause-local types alongside the occurrence selected by event-first reaction resolution.
                 const path = production.for.path;
                 const entry = shapes.map(properties => property(properties, path)).find(entry => entry !== null && personal.has(entry.type.name));
                 if (entry != null) validate(entry.type, production.for.location);
