@@ -109,10 +109,6 @@ export class DependencyGraph {
                     if (producer !== node) evidence.push({ consumer: node, producer, kind: reference.kind, role: reference.role, name: reference.name, ambiguous: candidates.length > 1, alternatives: candidates.slice(1), location: reference.location, testOnly: reference.kind === 'verifiedWith' });
                     continue;
                 }
-                if (reference.role === 'trigger' && foundations.has(reference.name.toLowerCase())) {
-                    excluded++;
-                    continue;
-                }
                 const imported = reference.targetKind === 'Event' ? imports.filter(imported => imported.qualifiedName.slice(imported.qualifiedName.lastIndexOf('.') + 1).toLowerCase() === reference.name.toLowerCase()) : [];
                 if (imported.length > 0) {
                     const matches: DependencyNode[] = [];
@@ -129,6 +125,10 @@ export class DependencyGraph {
                         if (!matches.includes(context)) matches.push(context);
                     }
                     evidence.push({ consumer: node, producer: matches[0], kind: 'outsideTheModel', role: reference.role, name: reference.name, ambiguous: matches.length > 1, alternatives: matches.slice(1), location: reference.location, testOnly: reference.kind === 'verifiedWith' });
+                    continue;
+                }
+                if (reference.role === 'trigger' && foundations.has(reference.name.toLowerCase())) {
+                    excluded++;
                     continue;
                 }
                 unresolved.push({ consumer: node, kind: reference.kind, role: reference.role, name: reference.name, location: reference.location });

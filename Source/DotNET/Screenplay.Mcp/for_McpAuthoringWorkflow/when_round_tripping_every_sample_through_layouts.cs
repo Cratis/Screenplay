@@ -88,9 +88,7 @@ public class when_round_tripping_every_sample_through_layouts : given.an_authori
                         }
                     }
 
-                    // Invoicing's exact text equality for interleaved module members is tracked separately (#460).
-                    // Its sibling order, model/syntax, identities and complete comment multiset remain checked above.
-                    if (layout == "single" && sample != "Invoicing")
+                    if (layout == "single")
                     {
                         var text = candidate.Documents.Single().Text;
                         if (firstSingle is not null && firstSingle != text)
@@ -146,6 +144,6 @@ public class when_round_tripping_every_sample_through_layouts : given.an_authori
     [Fact] void should_keep_each_scopes_authored_sibling_sequences() => _orderFailures.ShouldBeEmpty();
     [Fact] void should_keep_executable_bytes_or_unbound_syntax_modulo_layout() => _modelFailures.ShouldBeEmpty();
     [Fact] void should_keep_persisted_semantic_and_event_contract_identities() => _identityFailures.ShouldBeEmpty();
-    [Fact] void should_finish_commerce_time_tracking_and_library_with_the_exact_first_single_document() => Assert.True(_singleFailures.Count == 0, string.Join('\n', _singleFailures));
+    [Fact] void should_finish_every_sample_with_the_exact_first_single_document() => Assert.True(_singleFailures.Count == 0, string.Join('\n', _singleFailures));
     [Fact] void should_preserve_every_invoicing_comment_occurrence_exactly_once() => _invoicingCommentFailures.ShouldBeEmpty();
 }
