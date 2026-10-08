@@ -90,8 +90,9 @@ export async function checkPackage() {
         const runtimeBytes = packed.files.filter(file => file.path.endsWith('.js')).reduce((sum, file) => sum + file.size, 0);
         // Guards against accidentally bundling dependencies, not against language growth.
         // The combined routes, dependency checks, typed examples, guarded actions, policy negation
-        // and refusal authoring runtime is ~503 KB; 512 KB keeps a bounded margin for this surface.
-        if (runtimeBytes > 512_000) throw new Error(`Monaco runtime bundle budget exceeded: ${runtimeBytes} bytes`);
+        // and refusal authoring runtime with diagnostic catalogue/validation parity is ~514 KB;
+        // 528 KB keeps a bounded margin for this surface without treating language growth as a dependency leak.
+        if (runtimeBytes > 528_000) throw new Error(`Monaco runtime bundle budget exceeded: ${runtimeBytes} bytes`);
         console.log(`Monaco pack: ${entries.length} exports type-checked and bundled; ${runtimeBytes} runtime bytes; ${packed.size} packed bytes`);
     } finally {
         // This directory was created exclusively by this check; never clean another build's output.

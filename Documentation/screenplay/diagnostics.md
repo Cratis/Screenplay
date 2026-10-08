@@ -646,14 +646,14 @@ itself what an unresolvable one means.
 
 ### Opt-in completeness
 
-These structural warnings run only when selected, after error-free whole-application source compilation. See [Completeness checks](completeness.md) for selection and exemptions.
+These structural warnings run only when selected, after error-free whole-application source compilation. See [Completeness checks](completeness.md) for selection and exemptions and [editor diagnostic support](editor-diagnostics.md) for the TypeScript/C# boundary.
 
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0530` | Warning (opt-in: `--check data-bindings`) | Visible screen bindings share a name but disagree on cardinality, resolved query or `by` parameter. Identical rebinding and sibling sections are allowed. |
 | `PLAY0531` | Warning (opt-in: `--check data-bindings`) | A screen binding's resolved read model or cardinality differs from its query's return. Optional and observable qualifiers are ignored; unresolved or ambiguous names are skipped. |
-| `PLAY0532` | Warning (opt-in: `--check input-surfaces`) | An action has no command-bound form, own-slice screen, or navigation to a screen for its command. Commands with only generated properties (including no properties) require no typed input. |
-| `PLAY0533` | Warning (opt-in: `--check input-surfaces`) | A StateChange command has no resolving action, form or behavior execute, and no reaction invokes it. Automation and Translate commands are exempt. |
+| `PLAY0532` | Warning (opt-in: `--check input-surfaces`) | An action has no module-level command-bound form or issuing screen in the command's own slice. Post-action navigation does not supply input; a title-only screen does not issue a command. Commands with only generated properties (including no properties) require no typed input. |
+| `PLAY0533` | Warning (opt-in: `--check input-surfaces`) | A StateChange command has no used screen action or attached behavior execute, and no reaction invokes it. A form alone is not an issuer; attached navigation or open dialog may reach an issuing screen. Automation and Translate commands are exempt. |
 | `PLAY0534` | Warning (opt-in: `--check field-origins`) | A declared read model has no builder or performer, or a top-level field lacks an identity, mapping, compatible AutoMap source, child or nested target. Variants are checked independently, including entering-event AutoMap; the owning slice's keyed-query property counts as identity. Opaque builders and unknown coverage are skipped. |
 | `PLAY0535` | Warning (opt-in: `--check query-keys`) | A query parameter cannot be held by its view's known identity or fields. Identity comes from the owning slice's unambiguous keyed-query property or structurally resolved projection keys. Performer-served views, tenant-context parameters and unknown identity types are skipped. |
 | `PLAY0536` | Warning (opt-in: `--check event-consumers`) | The newest generation of a local event has no declared projection, reducer, reaction, constraint or interaction consumer. Specifications and production do not count. Imported external contracts are exempt; legitimate terminal facts may still be reported. |
