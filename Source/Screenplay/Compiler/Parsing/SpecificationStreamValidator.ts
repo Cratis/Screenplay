@@ -13,10 +13,12 @@ import { implicitDestination } from '../Syntax/ProductionDestinations';
 import { ApplicationSyntax } from '../Syntax/Structure';
 import { ParserContext } from './ParserContext';
 import { compatibleValue, uniqueByName } from './ResponseValidator';
+import { expandSpecificationExamples } from './SpecificationCommandExamples';
 
 interface Producer { event: EventSyntax; command: CommandSyntax | null; type: TypeRefSyntax | null }
 
 export function validateSpecificationStreams(application: ApplicationSyntax, context: ParserContext): void {
+    application = expandSpecificationExamples(application);
     const resolver = new AuthoringProductionResolver(application);
     if (!resolver.slices.flatMap(entry => entry.slice.specifications).some(specification => [...specification.given, ...specification.thenEvents, ...(specification.whenAppended === null ? [] : [specification.whenAppended])].some(node => node.stream != null || node.noStream != null))) return;
     const catalog = new EventSourceCatalog(application);
@@ -85,9 +87,11 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
     }
     for (const { slice, scope } of resolver.slices) for (const specification of slice.specifications) {
         const commands = resolver.slices.flatMap(entry => entry.slice.commands.map(command => ({ command, scope: entry.scope })));
-        const candidates = specification.when === null ? [] : commands.filter(entry => entry.command.name === specification.when!.commandType);
-        let command: CommandSyntax | null = null;
-        for (let depth = scope.length; depth >= 0 && command === null; depth--) {
+        const parts = specification.when?.commandType.split('.') ?? [];
+        const qualifiers = parts.slice(0, -1);
+        const candidates = commands.filter(entry => entry.command.name === parts.at(-1) && qualifiers.every((segment, index) => entry.scope[entry.scope.length - qualifiers.length + index] === segment));
+        let command: CommandSyntax | null = qualifiers.length > 0 && candidates.length === 1 ? candidates[0].command : null;
+        for (let depth = scope.length; qualifiers.length === 0 && depth >= 0 && command === null; depth--) {
             const visible = candidates.filter(entry => scope.slice(0, depth).every((segment, index) => entry.scope[index] === segment));
             if (visible.length > 0) { command = visible.length === 1 ? visible[0].command : null; break; }
         }

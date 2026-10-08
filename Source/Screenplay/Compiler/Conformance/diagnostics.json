@@ -2,6 +2,18 @@
     "description": "Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
         {
+            "name": "Routed given and append inherit an example destination and producer type",
+            "validate": true,
+            "source": ["eventsource Account", "  stream Events", "module M", "  feature F", "    slice StateChange S", "      event Happened", "      command Act", "        id String identifier", "        produces Happened", "          for id", "      example Prior : Happened", "        for \"other\"", "      specification Routed", "        given Prior", "          stream Account.Events", "        when append Prior", "          stream Account.Events", "        then Happened"],
+            "diagnostics": []
+        },
+        {
+            "name": "Example backed expectations still reject a contradictory command route",
+            "validate": true,
+            "source": ["eventsource Account", "  identifier String", "  stream Events", "module M", "  feature F", "    slice StateChange S", "      event Happened", "      command Act", "        id String identifier", "        stream Account.Events", "        produces Happened", "      example Input : Act", "        id = \"account\"", "      example Expected : Happened", "      specification Routed", "        when Input", "        then Expected", "          no stream"],
+            "diagnostics": ["PLAY0551@18"]
+        },
+        {
             "name": "An example rejects a stream and its nested stream id without cascading errors",
             "source": ["example Fixture : Happened", "  stream Account.Events", "    streamId = \"partition\"", "  amount = 1"],
             "diagnostics": ["PLAY0526@2"]
