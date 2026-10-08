@@ -34,7 +34,7 @@ function sample(name: string) {
             'PLAY0517@Fulfillment/Shipping/ShipmentQueue.play:38',
         ],
         TimeTracking: [
-            'PLAY0517@Payroll/Runs/ReviewingRuns.play:43',
+            'PLAY0516@Payroll/Runs/ReviewingRuns.play:43',
             'PLAY0516@Payroll/Handover/QueueingApprovedWeeks.play:9',
             'PLAY0516@Payroll/Handover/RemindingConsultants.play:10',
             'PLAY0516@Payroll/Absences/BookingTimeOff.play:8',
@@ -42,7 +42,6 @@ function sample(name: string) {
             'PLAY0516@Timesheets/Recording/FollowingMyWeeks.play:25',
             'PLAY0516@Timesheets/Recording/FollowingMyWeeks.play:27',
             'PLAY0516@Timesheets/Recording/FollowingMyWeeks.play:29',
-            'PLAY0517@Timesheets/Recording/SubmittingTheWeek.play:10',
         ],
     };
     const timeline = compilation.diagnostics.slice(baseline.diagnostics.length);

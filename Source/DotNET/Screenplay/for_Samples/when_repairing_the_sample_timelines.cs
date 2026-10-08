@@ -14,7 +14,7 @@ public class when_repairing_the_sample_timelines(Xunit.Abstractions.ITestOutputH
     [InlineData("Library", 2, 2)]
     [InlineData("Invoicing", 4, 2)]
     [InlineData("Commerce", 7, 4)]
-    [InlineData("TimeTracking", 9, 7)]
+    [InlineData("TimeTracking", 8, 8)]
     void should_repair_only_the_findings_in_the_plan_table(string name, int findings, int repairable)
     {
         var folder = _samples.Single(sample => Path.GetFileName(sample) == name);
@@ -100,7 +100,7 @@ public class when_repairing_the_sample_timelines(Xunit.Abstractions.ITestOutputH
             "Commerce" => Event("ProductRegistered", "RegisterProduct.play") ?? Event("OrderPlaced", "PlaceOrder.play") ?? Event("OrderPaid", "Payments/Payments.play") ?? Event("ShipmentRequested", "StartFulfillment.play"),
             "TimeTracking" => (diagnostic.Message.Contains("reads read model 'DraftTimesheet'", StringComparison.Ordinal) ? "Engagements/Engagements.play,Timesheets/Timesheets.play" : null) ??
                 (diagnostic.Message.Contains("Slice 'QueueApprovedTimesheets'", StringComparison.Ordinal) ? "Engagements/Engagements.play,Timesheets/Timesheets.play" : null) ??
-                Event("TimesheetApproved", "Approval") ?? Event("TimesheetRejected", "Approval") ?? Event("TimesheetStarted", "Recording/StartingAWeek.play") ?? Event("TimesheetSubmitted", "Recording/SubmittingTheWeek.play") ?? Event("AbsenceReported", "Absences/ImportingAbsences.play"),
+                Event("PayrollRunAcknowledged", "Handover") ?? Event("TimesheetApproved", "Approval") ?? Event("TimesheetRejected", "Approval") ?? Event("TimesheetStarted", "Recording/StartingAWeek.play") ?? Event("TimesheetSubmitted", "Recording/SubmittingTheWeek.play") ?? Event("AbsenceReported", "Absences/ImportingAbsences.play"),
             _ => null
         };
     }

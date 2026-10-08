@@ -77,14 +77,6 @@ internal static class TimelineOrder
                     continue;
                 }
 
-                // A view of this reader's own facts is feedback, not a timeline dependency.
-                // Exclude it before sibling grouping as well as before backward-edge emission.
-                if (readModel && SliceReferences.In(producer.Syntax).Any(value => value.Timeline && value.Kind == "usesFactsFrom" &&
-                    value.TargetKind == "Event" && producers.GetValueOrDefault(value.Name) == consumer))
-                {
-                    continue;
-                }
-
                 var common = 0;
                 while (common < consumer.Scope.Length && common < producer.Scope.Length && consumer.Identity[common] == producer.Identity[common])
                 {
@@ -94,6 +86,20 @@ internal static class TimelineOrder
                 if (common == consumer.Scope.Length || common == producer.Scope.Length)
                 {
                     continue;
+                }
+
+                // At the lowest common container, facts from anywhere inside the reader's
+                // child are feedback. Exclude this read before SCC grouping, not just emission.
+                if (readModel)
+                {
+                    var side = consumer.Identity.Take(common + 1).ToArray();
+                    var produced = slices.Where(slice => slice.Identity.Take(side.Length).SequenceEqual(side))
+                        .SelectMany(slice => slice.Produced).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                    if (SliceReferences.In(producer.Syntax).Any(value => value.Timeline && value.Kind == "usesFactsFrom" &&
+                        value.TargetKind == "Event" && produced.Contains(value.Name)))
+                    {
+                        continue;
+                    }
                 }
 
                 edges.Add(new(consumer, producer, reference.Name, reference.Location, AuthoredOrder.Key(consumer.Identity.Take(common)), consumer.Identity[common], producer.Identity[common], readModel));
@@ -140,7 +146,7 @@ internal static class TimelineOrder
                 findings.Add((first, Finding(first, false, orderedMembers, new(
                     DiagnosticSeverity.Information,
                     DiagnosticCodes.TimelineCycleGroup,
-                    $"Timeline group {string.Join(", ", orderedMembers.Select(member => $"'{member[(member.IndexOf(':') + 1)..]}'"))} uses each other's events; reordering these members cannot make every event flow left to right.",
+                    $"Timeline group {string.Join(", ", orderedMembers.Select(member => $"'{member[(member.IndexOf(':') + 1)..]}'"))} depend on each other's events or read models; reordering these members cannot make every dependency flow left to right.",
                     first.Location))));
             }
         }
@@ -179,6 +185,9 @@ internal static class TimelineOrder
     {
         // Container children and slice children occupy separate groups even when their names match.
         public string[] Identity { get; } = [.. Scope.SkipLast(1).Select(name => $"container:{name}"), $"slice:{Syntax.Name}"];
+        public IEnumerable<string> Produced { get; } = EventDeclarations.In(Syntax).Select(value => value.Name)
+            .Concat(Syntax.Commands.SelectMany(command => command.Produces).Select(value => value.Event))
+            .Concat(Syntax.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(trigger => trigger.Produces ?? []).Select(value => value.Event));
     }
     sealed record Edge(Slice Consumer, Slice Producer, string Event, SourceLocation Location, string Container, string Left, string Right, bool ReadModel);
 }

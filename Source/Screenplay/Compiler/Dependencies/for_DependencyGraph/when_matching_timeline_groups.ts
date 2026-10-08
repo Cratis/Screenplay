@@ -22,8 +22,7 @@ for (const sample of ['Library', 'Invoicing', 'Commerce', 'TimeTracking']) {
         });
         it('should include fact groups and non feedback reads in timeline groups', () => {
             // The full graph includes feedback reads too, unlike timeline grouping.
-            const expected = sample === 'TimeTracking' ? [['Runs', 'Handover'], ['Recording', 'Reporting']] : groups;
-            timelineGroups.should.deep.equal(expected);
+            timelineGroups.should.deep.equal(groups);
         });
     });
 }

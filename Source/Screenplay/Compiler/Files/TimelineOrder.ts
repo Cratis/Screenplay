@@ -35,6 +35,11 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
     for (const module of ordered(application.modules, [])) {
         for (const child of ordered(module.features, [module.name])) feature(child, [module.name]);
     }
+    const produced = new Map(slices.map(slice => [slice, new Set([
+        ...eventDeclarations(slice.syntax).map(event => event.name.toLowerCase()),
+        ...slice.syntax.commands.flatMap(command => command.produces.map(value => value.event.toLowerCase())),
+        ...slice.syntax.reactions.flatMap(reaction => reaction.triggers.flatMap(trigger => trigger.produces.map(value => value.event.toLowerCase()))),
+    ])]));
     const producers = new Map<string, Slice>();
     for (const slice of slices) {
         for (const event of eventDeclarations(slice.syntax)) {
@@ -66,11 +71,16 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
             seen.add(key);
             const producer = reference.readModel ? readers.get(authoredOrderKey([...consumer.scope, name])) : producers.get(name);
             if (producer === undefined || producer === consumer) continue;
-            // Feedback from the reader's own facts must not enter SCC grouping either.
-            if (reference.readModel && sliceReferences(producer.syntax).references.some(value => value.timeline && value.kind === 'usesFactsFrom' && value.targetKind === 'Event' && producers.get(value.name.toLowerCase()) === consumer)) continue;
             let common = 0;
             while (common < consumer.scope.length && common < producer.scope.length && consumer.identity[common] === producer.identity[common]) common++;
             if (common === consumer.scope.length || common === producer.scope.length) continue;
+            // At the lowest common container, the reader's whole child supplies feedback.
+            // Exclude this read before SCC grouping, not just backward-edge emission.
+            if (reference.readModel) {
+                const side = consumer.identity.slice(0, common + 1);
+                const facts = new Set(slices.filter(slice => side.every((name, index) => slice.identity[index] === name)).flatMap(slice => [...produced.get(slice)!]));
+                if (sliceReferences(producer.syntax).references.some(value => value.timeline && value.kind === 'usesFactsFrom' && value.targetKind === 'Event' && facts.has(value.name.toLowerCase()))) continue;
+            }
             edges.push({ ...reference, consumer, producer, container: authoredOrderKey(consumer.identity.slice(0, common)), left: consumer.identity[common], right: producer.identity[common] });
         }
     }
@@ -96,7 +106,7 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
                 return slice.identity[scope.length] === member;
             }).map(slice => slice.index));
             group.sort((left, right) => memberIndex(left) - memberIndex(right));
-            findings.push({ edge: first, diagnostic: { severity: 'information', code: DiagnosticCodes.TimelineCycleGroup, message: `Timeline group ${group.map(member => `'${member.slice(member.indexOf(':') + 1)}'`).join(', ')} uses each other's events; reordering these members cannot make every event flow left to right.`, location: first.location } });
+            findings.push({ edge: first, diagnostic: { severity: 'information', code: DiagnosticCodes.TimelineCycleGroup, message: `Timeline group ${group.map(member => `'${member.slice(member.indexOf(':') + 1)}'`).join(', ')} depend on each other's events or read models; reordering these members cannot make every dependency flow left to right.`, location: first.location } });
         }
     }
     for (const edge of edges) {
