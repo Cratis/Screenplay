@@ -94,6 +94,22 @@ describe('when validating a document with a problem of every coded kind', () => 
         const vectors = JSON.parse(readFileSync(new URL('../../../../Compiler/Conformance/diagnostics.json', import.meta.url), 'utf8')) as { cases: { source: string[]; diagnostics: string[] }[] };
         const routes = ['PLAY0547', 'PLAY0548', 'PLAY0549', 'PLAY0550', 'PLAY0551'].map(code => vectors.cases.find(vector => vector.diagnostics.some(diagnostic => diagnostic.startsWith(code + '@')))!.source);
         issues.push(...routes.flatMap(lines => validateLines(lines, { compilerDiagnostics: parse(lines.join('\n')).diagnostics })));
+        const authorizationRefusal = [
+            'policy Access',
+            '  require authenticated',
+            'module M',
+            '  feature F',
+            '    slice Automation S',
+            '      event Approved',
+            '      command Claim',
+            '        authorize Access',
+            '      reaction R',
+            '        when Approved',
+            '          invokes Claim',
+            '            on refused by authorization',
+            '              acknowledge',
+        ];
+        issues.push(...validateLines(authorizationRefusal));
         // Timeline findings come from the compiler, which reads the whole document's order.
         const timelines = [
             ['module M', '  feature F', '    slice StateView View', '      projection P', '        from E', '    slice StateChange Write', '      event E'],
