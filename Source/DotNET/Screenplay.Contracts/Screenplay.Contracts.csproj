@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Cratis.Screenplay.Contracts</AssemblyName>
+        <RootNamespace>Cratis.Screenplay.Contracts</RootNamespace>
+        <TargetFramework>net10.0</TargetFramework>
+        <TargetFrameworks></TargetFrameworks>
+        <IsPackable>true</IsPackable>
+        <!-- This is a new package; no released API baseline exists yet. -->
+        <PackageValidationBaselineVersion></PackageValidationBaselineVersion>
+        <Description>Machine-readable Screenplay language and tool contract, independent of an MCP connection</Description>
+    </PropertyGroup>
+    <ItemGroup>
+        <None Include="../../../README.md" Pack="true" PackagePath="/" />
+        <ProjectReference Include="../Screenplay/Screenplay.csproj" />
+        <ProjectReference Include="../Screenplay.Mcp/Screenplay.Mcp.csproj" />
+        <EmbeddedResource Include="../Screenplay/**/*.cs" Exclude="../Screenplay/**/for_*/**;../Screenplay/**/when_*/**;../Screenplay/**/given/**;../Screenplay/Specs/**;../Screenplay/obj/**;../Screenplay/bin/**" LogicalName="compiler/%(RecursiveDir)%(Filename)%(Extension)" />
+        <EmbeddedResource Include="../Tool/CommandLineInformation.cs;../Tool/ModelCheck.cs;../Tool/ModelTest.cs;../Tool/Program.cs;../Tool/ContractCommand.cs" LogicalName="cli/%(Filename)%(Extension)" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(Configuration)'=='Debug'">
+        <EmbeddedResource Include="Golden/screenplay-contract.json" LogicalName="screenplay-contract.json" Condition="Exists('Golden/screenplay-contract.json')" />
+    </ItemGroup>
+</Project>
