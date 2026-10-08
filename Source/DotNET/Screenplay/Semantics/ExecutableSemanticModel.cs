@@ -78,7 +78,7 @@ public sealed record ExecutableSemanticModel
         SemanticVersion semanticVersion,
         SemanticApplication application)
     {
-        EsmSchemaV7Support.EnsureSupported(languageVersion, semanticVersion);
+        EsmSchemaEventRoutesSupport.EnsureSupported(languageVersion, semanticVersion);
         SemanticModelValidator.Validate(application, semanticVersion);
         var withoutRevision = SemanticModelCanonicalJson.SerializeWithoutRevision(languageVersion, semanticVersion, application);
         var revision = SemanticRevision.Compute(withoutRevision);

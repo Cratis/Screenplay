@@ -380,6 +380,62 @@ public static class EsmSchemaV7Support
     }
 }
 
+/// <summary>
+/// Defines the provisional version pair for the event routes admission batch.
+/// </summary>
+public static class EventRoutesVersion
+{
+    /// <summary>
+    /// Gets the language version for event routes.
+    /// </summary>
+    public static LanguageVersion Language { get; } = new(8, 0);
+
+    /// <summary>
+    /// Gets the semantic version for event routes.
+    /// </summary>
+    public static SemanticVersion Semantic { get; } = new(8, 0);
+}
+
+/// <summary>
+/// Defines version pairs supported by the event routes admission batch.
+/// </summary>
+public static class EsmSchemaEventRoutesSupport
+{
+    /// <summary>
+    /// Gets the supported language versions.
+    /// </summary>
+    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [.. EsmSchemaV7Support.LanguageVersions, EventRoutesVersion.Language];
+
+    /// <summary>
+    /// Gets the supported semantic versions.
+    /// </summary>
+    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [.. EsmSchemaV7Support.SemanticVersions, EventRoutesVersion.Semantic];
+
+    /// <summary>
+    /// Determines whether the exact pair is supported.
+    /// </summary>
+    /// <param name="languageVersion">The source language version.</param>
+    /// <param name="semanticVersion">The portable semantic version.</param>
+    /// <returns>Whether the pair has defined meaning.</returns>
+    public static bool Supports(LanguageVersion languageVersion, SemanticVersion semanticVersion) =>
+        EsmSchemaV7Support.Supports(languageVersion, semanticVersion) ||
+        (languageVersion == EventRoutesVersion.Language && semanticVersion == EventRoutesVersion.Semantic);
+
+    /// <summary>
+    /// Rejects unsupported version pairs.
+    /// </summary>
+    /// <param name="languageVersion">The source language version.</param>
+    /// <param name="semanticVersion">The portable semantic version.</param>
+    /// <exception cref="InvalidSemanticContract">The version pair is unsupported.</exception>
+    public static void EnsureSupported(LanguageVersion languageVersion, SemanticVersion semanticVersion)
+    {
+        if (!Supports(languageVersion, semanticVersion))
+        {
+            throw new InvalidSemanticContract($"The ESM event routes contract does not declare language version '{languageVersion}' and semantic version '{semanticVersion}'.");
+        }
+    }
+}
+
 static class VersionParser
 {
     internal static LanguageVersion ParseLanguage(string value)
@@ -406,7 +462,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV7Support.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaEventRoutesSupport.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -419,7 +475,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV7Support.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaEventRoutesSupport.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

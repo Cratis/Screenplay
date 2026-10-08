@@ -23,6 +23,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <EmbeddedResource Include="../../Screenplay/Compiler/Conformance/stream-id-codec.json"
+                          Link="Conformance/stream-id-codec.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Conformance.stream-id-codec.json" />
         <EmbeddedResource Include="../../../Documentation/screenplay/interoperability.md"
                           Link="Documentation/interoperability.md"
                           WithCulture="false"

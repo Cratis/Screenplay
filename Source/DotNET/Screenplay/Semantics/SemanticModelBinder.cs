@@ -56,7 +56,12 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
             var languageVersion = LanguageVersion.V1;
             var semanticVersion = SemanticVersion.V1;
-            if (context.UsesV7)
+            if (context.UsesEventRoutes)
+            {
+                languageVersion = EventRoutesVersion.Language;
+                semanticVersion = EventRoutesVersion.Semantic;
+            }
+            else if (context.UsesV7)
             {
                 languageVersion = LanguageVersion.V7;
                 semanticVersion = SemanticVersion.V7;
@@ -158,6 +163,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         internal bool UsesV5 { get; set; }
 
         internal bool UsesV7 { get; set; }
+
+        internal bool UsesEventRoutes { get; set; }
 
         internal ImmutableArray<SemanticSourceMapEntry> SourceMapEntries => [.. _sourceMapEntries];
 

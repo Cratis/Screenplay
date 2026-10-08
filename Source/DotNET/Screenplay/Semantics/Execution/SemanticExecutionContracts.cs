@@ -163,6 +163,11 @@ public sealed record SemanticFact(
     /// This causation identity is not a caller identity.
     /// </summary>
     public SemanticId? ReactionOrigin { get; init; }
+
+    /// <summary>
+    /// Gets the canonical stored route, or null for an unrouted fact.
+    /// </summary>
+    public SemanticEventRoute? Route { get; init; }
 }
 
 /// <summary>
