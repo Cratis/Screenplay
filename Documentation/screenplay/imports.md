@@ -121,8 +121,11 @@ after the producer. It must remove the selected finding without introducing
 `PLAY0516` or `PLAY0517`. Own-sub-feature findings, cycle groups, unranked members,
 mixed declaration/import boundaries and different parents have no repair.
 
-Verification preserves comments, document placements, catalog revision and
-executable readiness. Executable models require identical ESM bytes. When neither
+Verification preserves comments, document placements, existing catalog assignments
+and executable readiness. In a fresh workspace, a proposal can establish missing
+document assignments using the existing document IDs and stable keys; it refuses
+any other catalog change. Assignments are persisted only on apply.
+Executable models require identical ESM bytes. When neither
 side binds, a separate proof compares merged syntax modulo only timeline sibling
 order and verified import pins, and preserves admission diagnostic counts and
 severities. A one-sided change in model availability is refused. Repairs also
