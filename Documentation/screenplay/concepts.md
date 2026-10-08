@@ -147,7 +147,7 @@ concept PatientId : Uuid
 concept NationalId : String @pii
 ```
 
-The meaning and C# provider mapping are recorded in [decision 0033](https://github.com/Cratis/Screenplay/blob/main/decisions/0033-sensitive-means-operational-secret.md).
+The meaning and C# provider mapping are recorded in [decision 0034](https://github.com/Cratis/Screenplay/blob/main/decisions/0034-sensitive-means-operational-secret.md).
 
 ## Attribute inheritance
 

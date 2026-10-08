@@ -23,8 +23,58 @@
             {
               "kind": "SliceSyntax",
               "captures": [],
-              "commands": [],
-              "constraints": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Claim",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "Claimed",
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "invoice"
+                      },
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [],
+                      "tags": []
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "invoice",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [
+                {
+                  "kind": "UniqueEventConstraintSyntax",
+                  "additionalRules": [],
+                  "event": "Claimed",
+                  "ignoreCasing": false,
+                  "message": null,
+                  "name": "UniqueClaim",
+                  "releasedBy": []
+                }
+              ],
               "description": null,
               "events": [
                 {
@@ -98,6 +148,17 @@
                     }
                   ],
                   "tags": []
+                },
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "Claimed",
+                  "properties": [],
+                  "tags": []
                 }
               ],
               "name": "Handling",
@@ -117,21 +178,11 @@
                         {
                           "kind": "InvokesSyntax",
                           "command": "Claim",
-                          "mappings": [
-                            {
-                              "kind": "PropertyMappingSyntax",
-                              "property": "invoice",
-                              "source": {
-                                "kind": "PathExpressionSyntax",
-                                "path": "invoice"
-                              }
-                            }
-                          ],
                           "onRefused": [
                             {
                               "kind": "InvocationRefusalSyntax",
                               "acknowledge": false,
-                              "constraint": "Claims.UniqueClaim",
+                              "constraint": "Handling.UniqueClaim",
                               "produces": [
                                 {
                                   "kind": "ProducesSyntax",
@@ -168,8 +219,7 @@
                                       }
                                     }
                                   ],
-                                  "tags": [],
-                                  "when": null
+                                  "tags": []
                                 }
                               ],
                               "selector": "constraint"
@@ -211,8 +261,7 @@
                         "name": "Approved"
                       }
                     }
-                  ],
-                  "where": null
+                  ]
                 }
               ],
               "readModels": [],
@@ -240,16 +289,11 @@
                       ]
                     }
                   ],
-                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "Recovery",
-                  "sourceOptions": {
-                    "numericMode": "exact"
-                  },
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -258,7 +302,6 @@
                   "thenNoEvents": true,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -300,11 +343,6 @@
     }
   ],
   "personas": [],
-  "policies": [],
-  "seeds": [],
-  "sourceOptions": {
-    "numericMode": "exact"
-  },
   "systems": [],
   "types": []
 }

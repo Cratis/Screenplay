@@ -56,7 +56,7 @@ public class and_it_is_a_projection : Specification
 
     void Because() => _walker.VisitProjection(_projection);
 
-    [Fact] void should_reach_every_node_the_fragment_holds() => _walker.Nodes.Count.ShouldEqual(given.SyntaxNodes.Under(_projection).Count);
+    [Fact] void should_reach_every_node_the_fragment_holds() => _walker.Nodes.Count.ShouldEqual(global::Cratis.Screenplay.given.SyntaxNodes.Under(_projection).Count);
     [Fact] void should_reach_every_top_level_block() => _projection.Blocks.All(_walker.Nodes.Contains).ShouldBeTrue();
     [Fact] void should_descend_into_the_blocks_a_block_nests() => _walker.Nodes.OfType<Projections.ClearWithSyntax>().Count().ShouldEqual(1);
 }

@@ -1,5 +1,5 @@
 ---
-id: 0033
+id: 0034
 title: Treat sensitive values as operational secrets, not personal data
 status: accepted
 stage: implemented
