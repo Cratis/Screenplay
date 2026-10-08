@@ -24,7 +24,7 @@ public class when_walking_a_projection_that_clears_a_property : Specification
 
     void Because() => _walker.VisitProjection(_projection);
 
-    [Fact] void should_reach_every_node_the_projection_holds() => _walker.Nodes.Count.ShouldEqual(given.SyntaxNodes.Under(_projection).Count);
+    [Fact] void should_reach_every_node_the_projection_holds() => _walker.Nodes.Count.ShouldEqual(global::Cratis.Screenplay.given.SyntaxNodes.Under(_projection).Count);
     [Fact] void should_reach_the_clear_mapping_as_a_node() => _walker.Nodes.OfType<Projections.ClearMappingSyntax>().Count().ShouldEqual(1);
     [Fact] void should_dispatch_the_clear_to_its_own_method() => _walker.Cleared.ShouldContainOnly("note");
     [Fact] void should_keep_dispatching_the_assignment_to_its_own_method() => _walker.Assigned.ShouldContainOnly("summary");

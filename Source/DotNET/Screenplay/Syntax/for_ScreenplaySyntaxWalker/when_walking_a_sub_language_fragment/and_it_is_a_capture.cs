@@ -51,6 +51,6 @@ public class and_it_is_a_capture : Specification
 
     void Because() => _walker.VisitCapture(_capture);
 
-    [Fact] void should_reach_every_node_the_fragment_holds() => _walker.Nodes.Count.ShouldEqual(given.SyntaxNodes.Under(_capture).Count);
+    [Fact] void should_reach_every_node_the_fragment_holds() => _walker.Nodes.Count.ShouldEqual(global::Cratis.Screenplay.given.SyntaxNodes.Under(_capture).Count);
     [Fact] void should_reach_every_append() => _walker.Nodes.OfType<Captures.CaptureAppendSyntax>().Count().ShouldEqual(3);
 }

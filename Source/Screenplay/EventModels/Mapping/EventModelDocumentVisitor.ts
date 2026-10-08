@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { authoredOrderKey, authoredOrderOf, AuthoringProductionResolver, ApplicationSyntax, ApplicationSyntaxVisitor, FeatureSyntax, ModuleSyntax } from '@cratis/screenplay-compiler';
+import { authoredOrderKey, authoredOrderOf, expandSpecificationExamples, AuthoringProductionResolver, ApplicationSyntax, ApplicationSyntaxVisitor, FeatureSyntax, ModuleSyntax } from '@cratis/screenplay-compiler';
 import { EventModelDocument, FeatureDocument, ModuleDocument } from '../Document/EventModelDocument';
 import { guidFor } from '../Document/identity';
 import { SchemaSynthesizer } from '../Schemas/SchemaSynthesizer';
@@ -22,10 +22,12 @@ export class EventModelDocumentVisitor implements ApplicationSyntaxVisitor<Event
     constructor(private readonly name: string) {}
 
     visit(syntax: ApplicationSyntax): EventModelDocument {
-        const owners = new EventOwners(syntax.modules, new SchemaSynthesizer(syntax), new AuthoringProductionResolver(syntax), syntax.systems ?? []);
         const audience = Audience.of(syntax.personas);
         const order = authoredOrderOf(syntax);
-        const modules = ordered(syntax.modules, [], order).map((module, index) => toModule(module, index, owners, audience, order));
+        // Expand against the whole declaration inventory, but retain the authored order sidecar.
+        const effective = expandSpecificationExamples(syntax);
+        const owners = new EventOwners(effective.modules, new SchemaSynthesizer(effective), new AuthoringProductionResolver(effective), effective.systems ?? []);
+        const modules = ordered(effective.modules, [], order).map((module, index) => toModule(module, index, owners, audience, order));
         return {
             id: guidFor(`event-model:${this.name}`),
             name: this.name,

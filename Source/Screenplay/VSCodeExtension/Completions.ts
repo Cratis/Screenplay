@@ -28,6 +28,8 @@ function snippetItem(entry: CompletionEntry): vscode.CompletionItem {
     const item = new vscode.CompletionItem(entry.label, kind);
     item.insertText = new vscode.SnippetString(entry.insertText);
     item.documentation = entry.documentation;
+    item.sortText = entry.sortText;
+    item.detail = entry.detail;
     return item;
 }
 

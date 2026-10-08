@@ -3,8 +3,9 @@
 
 using System.Collections;
 using System.Reflection;
+using Cratis.Screenplay.Syntax;
 
-namespace Cratis.Screenplay.Syntax.for_ScreenplaySyntaxWalker.given;
+namespace Cratis.Screenplay.given;
 
 /// <summary>
 /// Enumerates a syntax tree by reflection rather than by the walker, so the walk can be held against an
@@ -12,6 +13,11 @@ namespace Cratis.Screenplay.Syntax.for_ScreenplaySyntaxWalker.given;
 /// </summary>
 public static class SyntaxNodes
 {
+    /// <summary>
+    /// Enumerates every syntax node held by a tree independently of the visitor contract.
+    /// </summary>
+    /// <param name="root">The root to enumerate.</param>
+    /// <returns>The nodes in the tree.</returns>
     public static IReadOnlyList<SyntaxNode> Under(SyntaxNode root)
     {
         var nodes = new List<SyntaxNode>();
