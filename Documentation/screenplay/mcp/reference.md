@@ -226,7 +226,7 @@ Use `dependencies` for a declaration's scoped indexed references instead.
 | `view` | String | `edges` | `edges`, `cycles`, `order`, `unresolved`, `declarations` |
 | `from` | String | `module` | `slice`, `feature`, `module` |
 | `to` | String | `module` | `slice`, `feature`, `module`, `context` |
-| `scope` | String | Whole application | Exact module, feature, slice or context address; includes descendants |
+| `scope` | String | Whole application | Exact, unambiguous module, feature, slice or context address; includes descendants |
 | `direction` | String | `outgoing` | `outgoing` filters consuming nodes; `incoming` filters producing nodes in the edges view |
 | `kinds` | String array | All kinds except test-only references | Any subset of the kinds below |
 | `includeTestOnly` | Boolean | `false` | Allows specification references, including imported specification facts |
@@ -277,7 +277,11 @@ mixed levels. Same-level cycle items contain ordered `members`. The `order` view
 pages per-container `container`, suggested `children` and `changed`, independently
 of from/to levels. The `unresolved` view pages consumer, kind, role, name and
 location. Scope filters cycle members, order containers or unresolved consumers;
-direction applies only to edges. Coverage also lists unused imports.
+direction applies only to edges. Scope resolves to one node before filtering its
+actual descendants. An unknown address or an address shared by different node kinds
+(for example, a slice and its sibling feature) returns JSON-RPC `-32602`. For an
+ambiguous address, use an unambiguous ancestor or descendant scope, or omit scope.
+Coverage also lists unused imports.
 
 Cycles and order use only `usesFactsFrom`, `reactsTo` and `decidesFrom`. After
 removing internal cycle edges, the suggestion puts producers first, with authored
