@@ -27,6 +27,7 @@
         { "include": "#capture-block" },
         { "include": "#example-header" },
         { "include": "#specification-stream" },
+        { "include": "#stream-id-parts" },
         { "include": "#declared-dependency" },
         { "include": "#keywords" },
         { "include": "#common" }
@@ -52,6 +53,7 @@
                 { "include": "#event-block" },
                 { "include": "#description-block" },
                 { "include": "#fenced-csharp" },
+                { "include": "#stream-id-parts" },
                 { "include": "#keyword-input" },
                 { "include": "#keywords" },
                 { "include": "#common" }
@@ -147,7 +149,6 @@
         },
         "keywords": {
             "patterns": [
-                { "include": "#stream-id-parts" },
                 {
                     "comment": "Ordered invocation refusal selectors are syntax-only.",
                     "match": "^\\s*(on)\\s+(refused)(?:\\s+(by)\\s+(validation|constraint|authorization)(?:\\s+([\\w.]+))?)?(?=\\s*(?://.*)?$)",
