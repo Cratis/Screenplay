@@ -42,7 +42,6 @@ function subLanguageExitRule(subLanguages: SubLanguage[]): MonarchTokenRules[num
 // (comments, `$`-prefixed context variables, strings, numbers, operators, delimiters, whitespace).
 export const commonTokenRules: MonarchTokenRules = [
     [/\/\/.*$/, 'comment'],
-    [/^(numbers)([ \t]+)(exact)(?=[ \t]*(?:(?:\/\/|#).*)?$)/, ['keyword', 'white', 'keyword']],
     [/\$(?:context|eventContext|eventSourceId|causedBy|refusal)(?:\.\w+)*/, 'variable.predefined'],
     [/\$(?:env|secrets|strings)\.[\w.]+/, 'variable.predefined'],
     [/\$\.[\w.]*/, 'variable.predefined'],
@@ -61,6 +60,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
         root: [
             [new RegExp(`^(\\s*)(example)(\\s+)([A-Z][${bmpWordCharacters}]*)(\\s*)(:)(\\s*)([A-Z][${bmpWordCharacters}.]*)(?=\\s*(?://.*)?$)`),
                 ['white', 'keyword', 'white', 'type.identifier', 'white', 'operator', 'white', 'type.identifier']],
+            [/^(numbers)([ \t]+)(exact)(?=[ \t]*(?:(?:\/\/|#).*)?$)/, ['keyword', 'white', 'keyword']],
             [/^(eventsource)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
             [/^(system)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
             [/^(\s*)(produces\s+operation)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/,
