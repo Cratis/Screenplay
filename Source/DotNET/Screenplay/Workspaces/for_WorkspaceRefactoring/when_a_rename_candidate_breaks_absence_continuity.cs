@@ -23,7 +23,7 @@ public class when_a_rename_candidate_breaks_absence_continuity : given.a_workspa
             new(before, new(before)),
             new(after, new(after)),
             [],
-            part.Address!,
+            part.Address,
             "segment"));
     }
 

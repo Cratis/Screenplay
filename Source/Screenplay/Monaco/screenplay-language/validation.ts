@@ -162,11 +162,13 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
     // One parser pass covers committed types, including query results and trigger data, without
     // speculative property scans mistaking tags, paths, strings or code for optionality.
     const optionalCodes = new Set<string>([DiagnosticCodes.LegacyOptionalSuffix, DiagnosticCodes.InvalidOptionalModifierOrder, DiagnosticCodes.OptionalReadsNotSupported]);
+    const policyCodes = new Set<string>([DiagnosticCodes.UnexpectedTokenInPolicyCondition, DiagnosticCodes.ExpectedPolicyCondition, DiagnosticCodes.UnclosedPolicyConditionGroup, DiagnosticCodes.ExpectedRoleName, DiagnosticCodes.ExpectedClaimName, DiagnosticCodes.ExpectedClaimMatches, DiagnosticCodes.ExpectedClaimMatchTarget]);
     const consistencyCodes = new Set<string>([DiagnosticCodes.UnknownEvent, DiagnosticCodes.UnknownReadModelProperty, DiagnosticCodes.PiiNotSupportedOnIdentifier]);
     const timelineCodes = new Set<string>([DiagnosticCodes.EventFromLaterSlice, DiagnosticCodes.TimelineCycleGroup]);
+    const dependencyCodes = new Set<string>([DiagnosticCodes.UndeclaredDependency, DiagnosticCodes.UnusedDependencyDeclaration, DiagnosticCodes.InvalidDependencyTarget, DiagnosticCodes.RepeatedDependencyDeclaration, DiagnosticCodes.MutualDependencyDeclarations, DiagnosticCodes.AmbiguousReference]);
     const compilerUnknownEventLines = new Set<number>();
     for (const diagnostic of context.compilerDiagnostics ?? analysis.diagnostics) {
-        if (!optionalCodes.has(diagnostic.code) && !consistencyCodes.has(diagnostic.code) && !timelineCodes.has(diagnostic.code) && diagnostic.code !== DiagnosticCodes.UnknownRuleImplementationDirective && diagnostic.code !== DiagnosticCodes.InvalidValidationRule && diagnostic.code !== DiagnosticCodes.RepeatedDeclarationAcrossFiles && !/^PLAY049[0-9]$|^PLAY050[0-7]$|^PLAY048[2-9]$|^PLAY004[56]$/.test(diagnostic.code)) continue;
+        if (!optionalCodes.has(diagnostic.code) && !policyCodes.has(diagnostic.code) && !consistencyCodes.has(diagnostic.code) && !timelineCodes.has(diagnostic.code) && !dependencyCodes.has(diagnostic.code) && diagnostic.code !== DiagnosticCodes.InvalidSpecificationExampleBody && diagnostic.code !== DiagnosticCodes.UnknownRuleImplementationDirective && diagnostic.code !== DiagnosticCodes.InvalidValidationRule && diagnostic.code !== DiagnosticCodes.RepeatedDeclarationAcrossFiles && !/^PLAY049[0-9]$|^PLAY050[0-7]$|^PLAY054[7-9]$|^PLAY055[01]$|^PLAY048[2-9]$|^PLAY004[56]$|^PLAY053[89]$|^PLAY054[0-5]$/.test(diagnostic.code)) continue;
         const line = diagnostic.location.line - 1;
         if (diagnostic.code === DiagnosticCodes.UnknownEvent) compilerUnknownEventLines.add(line);
         const length = legacyOptionalTypeLength(lines[line], diagnostic) || lines[line].length - diagnostic.location.column + 1;

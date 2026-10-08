@@ -50,6 +50,7 @@ export const constructKeywords = [
     'contribute',
     'constraint',
     'specification',
+    'example',
     'seed',
     'behavior',
 ];
@@ -58,6 +59,7 @@ export const constructKeywords = [
 export const typeModifierKeywords = ['optional'];
 
 export const clauseKeywords = [
+    'depends',
     'description',
     'template',
     'profile',
@@ -86,7 +88,7 @@ export const clauseKeywords = [
     'exactly',
     'error',
     'message',
-    'not',
+    'not', // Unary policy negation, as well as 'not empty' validation.
     'empty',
     'rule',
     'matches',
@@ -140,7 +142,6 @@ export const clauseKeywords = [
     'uses',
     'parameter',
     'order',
-    'execute',
     'open',
     'close',
     'refresh',
@@ -221,7 +222,7 @@ export const languageConfiguration: languages.LanguageConfiguration = {
     ],
     indentationRules: {
         increaseIndentPattern:
-            /^\s*(module|feature|slice|policy|persona|authentication|provider|event|command|query|type|screen|projection|capture|reaction|trigger|constraint|specification|layout|template|validate|produces|handler|implementation(?=\s*$)|performer|rule|section|concurrency|seed|for|when|then|arguments|result|every|at)\b.*$/,
+            /^\s*(module|feature|slice|policy|persona|authentication|provider|event|command|query|type|screen|projection|capture|reaction|trigger|constraint|specification|layout|template|validate|produces|handler|implementation(?=\s*$)|performer|rule|section|action|otherwise(?=\s+execute\b)|concurrency|seed|for|when|then|arguments|result|every|at|invokes|on)\b.*$/,
         // Dedents are always explicit in an offside language — never auto-dedent.
         decreaseIndentPattern: /(?!)/,
     },

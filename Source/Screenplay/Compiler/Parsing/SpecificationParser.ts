@@ -6,7 +6,7 @@ import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
 import {
     SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationErrorSyntax, SpecificationEventSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
     SpecificationNoResultSyntax, SpecificationQueryResultSyntax, SpecificationReadModelSyntax, SpecificationSyntax, SpecificationTriggerSyntax,
-    SpecificationWhenQuerySyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax,
+    SpecificationWhenQuerySyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationRedeliverySyntax,
 } from '../Syntax/Specifications';
 import { SpecificationDeniedSyntax, SpecificationReturnSyntax } from '../Syntax/Responses';
 import { dotNetWhitespace, nativePattern, pattern } from '../Text/patterns';
@@ -16,6 +16,7 @@ import { parseMappingSource } from './ExpressionParser';
 import { isFileDirective } from './FileReferences';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
+import { addFixtureValue, addInlineValue } from './SpecificationExampleParser';
 import { rejectOperationChildren } from './OperationParser';
 import { generatedFixturePattern, generatedFixturePrefix, parseConcreteMapping, parseReturn, thenReturnsPrefix } from './SpecificationResponseParser';
 import { locationOf, SourceLine } from './SourceLine';
@@ -24,14 +25,17 @@ import { SpecificationAbsentReadModelSyntax, SpecificationCallerClaimSyntax, Spe
 const operationStepPrefix = pattern('^(?:given\\s+operation|then\\s+(?:operation|compensated))(?:\\s|$)');
 const operationStep = pattern('^(given operation|then operation|then compensated)\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)(\\s+fails)?$');
 const header = pattern('^specification\\s+([A-Za-z_]\\w*)$');
-const givenPattern = pattern('^given\\s+([A-Z]\\w*)$');
-const whenAppendPattern = pattern('^when\\s+append\\s+([A-Z]\\w*)$');
-const whenPattern = pattern('^when\\s+([A-Z]\\w*)$');
-const thenEventPattern = pattern('^then\\s+([A-Z]\\w*)$');
+const stepName = '([A-Z]\\w*(?:\\.\\w+)*)';
+const inlineAssignment = '(?:\\s+(?<property>[\\w.]+)\\s*=(?!=|>)\\s*(?<value>.+))?';
+const stepPattern = (prefix: string, exactly = ''): RegExp => nativePattern(`^${prefix}\\s+${stepName}${exactly}${inlineAssignment}$`.replaceAll('\\s', dotNetWhitespace));
+const givenPattern = stepPattern('given');
+const whenAppendPattern = stepPattern('when\\s+append');
+const whenPattern = stepPattern('when');
+const thenEventPattern = stepPattern('then');
 const thenQueryPrefix = pattern('^then\\s+query\\b');
 const readModelPrefix = pattern('^(?:given|then)\\s+readmodel\\b');
-const givenReadModelPattern = pattern('^given\\s+readmodel\\s+([A-Z]\\w*)$');
-const thenReadModelPattern = pattern('^then\\s+readmodel\\s+([A-Z]\\w*)(\\s+exactly)?$');
+const givenReadModelPattern = stepPattern('given\\s+readmodel');
+const thenReadModelPattern = stepPattern('then\\s+readmodel', '(?<exactly>\\s+exactly)?');
 const thenNoPrefix = pattern('^then\\s+no\\b');
 const thenErrorPattern = pattern(`^then\\s+error\\s+"(${stringBodyPattern})"$`);
 const mappingPattern = pattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
@@ -44,6 +48,9 @@ const whenCapturePrefix = pattern('^when\\s+capture\\b');
 const whenQueryPrefix = pattern('^when\\s+query\\b');
 const thenResultPrefix = pattern('^then\\s+result\\b');
 const noResultPrefix = pattern('^then\\s+no\\s+result\\b');
+const whenRedeliveredPrefix = nativePattern('^when\\s+redelivered\\b');
+const whenRedeliveredPattern = nativePattern('^when\\s+redelivered\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)\\s+to\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
+const noEventsPrefix = pattern('^then\\s+no\\s+events\\b');
 
 // An instant in ISO 8601 - a date, a time to the minute or finer, and an explicit offset or Z - so the same text
 // means the same moment wherever the specification runs.
@@ -61,9 +68,12 @@ interface SpecificationBody {
     givenReadModels: SpecificationReadModelSyntax[];
     when: SpecificationCommandSyntax | null;
     whenAppended: SpecificationEventSyntax | null;
+    whenRedelivered: SpecificationRedeliverySyntax | null;
     whenDeclared: boolean;
     thenEvents: SpecificationEventSyntax[];
     thenEventsInAnyOrder: boolean;
+    thenNoEvents: boolean;
+    noEventsLine?: SourceLine;
     thenReadModels: SpecificationReadModelSyntax[];
     thenErrors: SpecificationErrorSyntax[];
     thenAbsentReadModels: SpecificationAbsentReadModelSyntax[];
@@ -91,8 +101,8 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
     }
     const body: SpecificationBody = {
         givenOperationFailures: [], thenOperations: [], thenCompensated: [], thenAbsentReadModels: [], thenQueries: [],
-        given: [], givenReadModels: [], when: null, whenAppended: null, whenDeclared: false,
-        thenEvents: [], thenEventsInAnyOrder: false, thenReadModels: [], thenErrors: [],
+        given: [], givenReadModels: [], when: null, whenAppended: null, whenRedelivered: null, whenDeclared: false,
+        thenEvents: [], thenEventsInAnyOrder: false, thenNoEvents: false, thenReadModels: [], thenErrors: [],
         givenClock: null, givenCaptures: [], whenClock: null, whenTrigger: null, whenCapture: null, whenQuery: null, thenResults: [], thenNoResult: null, thenDenied: null, givenCaller: null, thenReturns: null,
     };
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
@@ -114,7 +124,11 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
             context.skipBlock(child.indent);
         }
     }
-    const { whenDeclared: _, ...members } = body;
+    if (body.noEventsLine !== undefined && (body.whenAppended !== null || body.thenEvents.length > 0 || body.thenEventsInAnyOrder || body.thenErrors.length > 0 || body.thenDenied !== null)) {
+        context.error(DiagnosticCodes.InvalidNoEventsExpectation,
+            "'then no events' cannot follow 'when append' or accompany event, event-order, error or denial expectations.", locationOf(body.noEventsLine));
+    }
+    const { whenDeclared: _, noEventsLine: _noEventsLine, ...members } = body;
     return { kind: 'SpecificationSyntax', sourceOptions: context.sourceOptions, name, ...members, location: locationOf(line) };
 }
 
@@ -216,6 +230,16 @@ function parseWhen(context: ParserContext, line: SourceLine, body: Specification
         body.whenAppended = parseEventStep(context, line, whenAppendPattern, 'when append') ?? null;
         return;
     }
+    if (whenRedeliveredPrefix.test(line.content)) {
+        const match = whenRedeliveredPattern.exec(line.content);
+        if (match === null) {
+            context.error(DiagnosticCodes.UnmatchedRedeliveredOccurrence, "Expected 'when redelivered <Event> to <Reaction>'.", locationOf(line));
+            skipBody(context, line.indent);
+        } else {
+            body.whenRedelivered = { kind: 'SpecificationRedeliverySyntax', eventType: match[1], reaction: match[2], ...parseValuesWithEventSource(context, line), location: locationOf(line) };
+        }
+        return;
+    }
     if (whenClockPrefix.test(line.content)) {
         body.whenClock = parseClock(context, line, 'when');
         return;
@@ -241,11 +265,23 @@ function parseWhen(context: ParserContext, line: SourceLine, body: Specification
         return;
     }
     const generatedValues: PropertyMappingSyntax[] = [];
-    const values = parseValuesWithEventSource(context, line, generatedValues);
-    body.when = { kind: 'SpecificationCommandSyntax', commandType: match[1], ...values, generatedValues, location: locationOf(line) };
+    const values = parseValuesWithEventSource(context, line, generatedValues, match);
+    body.when = { kind: 'SpecificationCommandSyntax', commandType: match[1], ...values, generatedValues, inlineProperty: match.groups?.property ?? null, location: locationOf(line) };
 }
 
 function parseThen(context: ParserContext, line: SourceLine, body: SpecificationBody): void {
+    if (noEventsPrefix.test(line.content)) {
+        if (line.content !== 'then no events' || body.thenNoEvents) {
+            context.error(DiagnosticCodes.InvalidNoEventsExpectation, "Expected one 'then no events' directive.", locationOf(line));
+        } else {
+            body.thenNoEvents = true;
+            body.noEventsLine = line;
+        }
+        const child = context.peekChild(line.indent);
+        if (child !== undefined) context.error(DiagnosticCodes.InvalidNoEventsExpectation, "'then no events' cannot have child mappings.", locationOf(child));
+        skipBody(context, line.indent);
+        return;
+    }
     if (thenReturnsPrefix.test(line.content)) {
         const expectation = parseReturn(context, line);
         if (body.thenReturns !== null) {
@@ -430,8 +466,9 @@ function parseReadModelStep(context: ParserContext, line: SourceLine, regex: Reg
     return {
         kind: 'SpecificationReadModelSyntax',
         name: match[1],
-        properties: parseValues(context, line),
-        exactly: keyword === 'then' && match[2] !== undefined,
+        properties: parseValues(context, line, false, match),
+        exactly: keyword === 'then' && match.groups?.exactly !== undefined,
+        inlineProperty: match.groups?.property ?? null,
         location: locationOf(line),
     };
 }
@@ -443,14 +480,15 @@ function parseEventStep(context: ParserContext, line: SourceLine, regex: RegExp,
         skipBody(context, line.indent);
         return undefined;
     }
-    return { kind: 'SpecificationEventSyntax', eventType: match[1], ...parseValuesWithEventSource(context, line, undefined, keyword), location: locationOf(line) };
+    return { kind: 'SpecificationEventSyntax', eventType: match[1], ...parseValuesWithEventSource(context, line, undefined, match, keyword), inlineProperty: match.groups?.property ?? null, location: locationOf(line) };
 }
 
 const specificationStream = sourceStreamPattern('^stream\\s+([A-Za-z_]\\w*)\\.([A-Za-z_]\\w*)$');
 const specificationStreamId = pattern('^streamId\\s*=(?!=|>)\\s*(.+)$');
 
-function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, generated?: PropertyMappingSyntax[], eventKeyword?: string): { values: PropertyMappingSyntax[]; for: ExpressionSyntax | null; stream?: SpecificationStreamSyntax; noStream?: SpecificationNoStreamSyntax } {
+function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, generated?: PropertyMappingSyntax[], inline?: RegExpExecArray, eventKeyword?: string): { values: PropertyMappingSyntax[]; for: ExpressionSyntax | null; stream?: SpecificationStreamSyntax; noStream?: SpecificationNoStreamSyntax } {
     const values: PropertyMappingSyntax[] = [];
+    addInlineValue(context, parent, inline, values);
     let eventSource: ExpressionSyntax | null = null;
     let stream: SpecificationStreamSyntax | undefined;
     let noStream: SpecificationNoStreamSyntax | undefined;
@@ -464,7 +502,7 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, 
         }
         const mapping = mappingPattern.exec(child.content);
         if (mapping !== null) {
-            values.push(mappingOf(context, child, mapping));
+            addFixtureValue(context, values, mappingOf(context, child, mapping));
         } else if (firstWord(child.content) === 'stream' || child.content.startsWith('no stream')) {
             if (eventKeyword === undefined) {
                 context.error(DiagnosticCodes.SpecificationStreamOnCommand, 'A command occurrence cannot declare a route; assert it on a then event.', locationOf(child));
@@ -531,8 +569,9 @@ function rejectSpecificationRouteChildren(context: ParserContext, line: SourceLi
     }
 }
 
-function parseValues(context: ParserContext, parent: SourceLine, nativeIdentifiers = false): PropertyMappingSyntax[] {
+function parseValues(context: ParserContext, parent: SourceLine, nativeIdentifiers = false, inline?: RegExpExecArray): PropertyMappingSyntax[] {
     const values: PropertyMappingSyntax[] = [];
+    addInlineValue(context, parent, inline, values);
     for (let child = context.peekChild(parent.indent); child !== undefined; child = context.peekChild(parent.indent)) {
         context.reader.takeSignificant();
         const mapping = (nativeIdentifiers || context.sourceOptions.numericMode === 'exact' ? nativeMappingPattern : mappingPattern).exec(child.content);
@@ -540,7 +579,7 @@ function parseValues(context: ParserContext, parent: SourceLine, nativeIdentifie
             context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child));
             continue;
         }
-        values.push(mappingOf(context, child, mapping, nativeIdentifiers));
+        addFixtureValue(context, values, mappingOf(context, child, mapping, nativeIdentifiers));
     }
     return values;
 }

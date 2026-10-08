@@ -50,6 +50,12 @@ A bare name searches the declaring container's siblings, then each ancestor's si
 
 A sibling feature shadows a same-named root module. That root module has no longer qualifying address, so rename one of the containers to make it addressable. Self, ancestor, descendant and unresolved targets raise warning `PLAY0554`. Repeated declarations of the same resolved target (including different spellings such as `Runs` and `Payroll.Runs`) raise warning `PLAY0555` and keep the first. Unresolved repeats compare by target text.
 
+A container without declarations is not checked. Once you declare a dependency, that container's own list must cover every counted explicit reference leaving it, including references from descendant features. A module target covers all its features; a feature target covers its descendants. Parent and child inventories are independent: neither satisfies the other. References within the checked container, or into an ancestor's own slices, are ignored.
+
+The check counts `usesFactsFrom`, `reactsTo`, `decidesFrom`, `asks` and `shows`, not specification (`verifiedWith`) or outside-context (`outsideTheModel`) edges. It reports one warning `PLAY0552` per checked container and uncovered producer module, at the container header, naming the shared feature path when possible and listing source evidence. An unused valid declaration gets information `PLAY0553` on its line. Two containers declaring each other get information `PLAY0556` on each declaring line; this does not permit cycles or prohibit reverse coupling.
+
+Ambiguous graph ownership never produces an undeclared warning. Any declaration covering a candidate is provisionally satisfied and is not reported as unused. The MCP [declarations view](mcp/reference.md#dependency-graph) shows this uncertainty. The graph covers explicit slice references only, not code, expressions or module-owned forms.
+
 Declarations are optional authoring metadata, not execution or ordering rules: they add no executable model bytes and do not change revisions or identities. The printer places them after `description`, in authored order. [Folder models](folders.md) accumulate them per owner; module and feature rename repairs proven targets and refuses unresolved or ambiguous targets that could name the renamed container, or a rename that would capture another target.
 
 ## Slices

@@ -71,4 +71,10 @@ public record ReactionTriggerSyntax(
 public record InvokesSyntax(
     string Command,
     IEnumerable<PropertyMappingSyntax> Mappings,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the ordered refusal branches. Bare refusal excludes authorization.
+    /// </summary>
+    public IEnumerable<InvocationRefusalSyntax> OnRefused { get; init; } = [];
+}

@@ -38,9 +38,10 @@ slice StateView MyTimesheets
         column week   label $strings.timesheets.fields.week
         column status label $strings.timesheets.fields.status
         on row-click navigate to RecordTimeScreen by timesheetId
-    action StartTimesheet
-      label $strings.timesheets.start.action
-      navigate to StartTimesheetDialog
+    section startTimesheet
+      title $strings.timesheets.start.action
+      on click
+        navigate to StartTimesheetDialog
 
   specification FollowingAWeekThroughSubmission
     given caller

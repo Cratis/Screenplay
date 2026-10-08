@@ -18,6 +18,6 @@ describe('when a file placed in a feature holds a module construct', () => {
     });
 
     it('should name the placement', () => {
-        result.diagnostics[0].message.should.equal('Unexpected \'screen\' in a file imported into feature \'Ordering.Orders\' - expected an application declaration or description, authorize, import, feature, slice, contribute, \'on <trigger>\' or \'uses <Behavior>\'');
+        result.diagnostics[0].message.should.equal('Unexpected \'screen\' in a file imported into feature \'Ordering.Orders\' - expected an application declaration or description, depends on <Name>, authorize, import, feature, slice, contribute, example, \'on <trigger>\' or \'uses <Behavior>\'');
     });
 });

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Languages;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
@@ -65,6 +66,10 @@ internal static class CodeBlockParser
 
     internal static string? ParseFencedText(ParserContext context, string opener, SourceLine tagLine, bool allowMarkdown) =>
         ParseFencedBody(context, opener, tagLine, allowMarkdown)?.Code;
+
+    internal static bool IsOpeningFence(SourceLine line, IScreenplayLanguageRegistry languages) =>
+        line.Content.StartsWith("```", StringComparison.Ordinal) &&
+        (line.Content == "```" || line.Content == "```text" || line.Content == "```markdown" || languages.InlineLanguages.Contains(line.Content[3..]));
 
     internal static bool IsClosingFence(SourceLine line) => line.Raw.Trim() == "```";
 
