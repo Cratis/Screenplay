@@ -35,6 +35,12 @@ describe('when highlighting composite stream ids', () => {
         expect(scope(['    stream A.S', '      streamId', '        streamId = "value"'], 'streamId')).toContain('variable.other.screenplay');
         expect(scope(['    stream A.S', '      streamId', '        stream = "value"'], 'stream')).toContain('variable.other.screenplay');
     });
+    it.each(['example Prior : E', 'when redelivered E to Observer'])('should retain routes under %s', parent => {
+        expect(scope([parent, '  stream A.S'], 'stream')).toContain('keyword.other.screenplay');
+        expect(scope([parent, '  stream A.S', '    streamId'], 'streamId')).toContain('keyword.other.screenplay');
+        expect(scope([parent, '  no stream'], 'no')).toContain('keyword.other.screenplay');
+        expect(scope([parent, '  streamId = "payload"'], 'streamId')).toContain('variable.other.screenplay');
+    });
     it('should retain scalar routing and payload highlighting', () => {
         expect(scope(['    stream A.S', '      streamId = "scalar"'], 'streamId')).toContain('keyword.other.screenplay');
         expect(scope(['    streamId = "payload"'], 'streamId')).toContain('variable.other.screenplay');

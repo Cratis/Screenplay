@@ -100,7 +100,7 @@ Handler commands may author routes without declaring their returned events.
 | `PLAY0505` | Error | An exact `stream Source.Stream` header resolves both to one source-owned stream and to a viable imported value type. Both candidates remain visible; neither is selected automatically. |
 | `PLAY0506` | Error | A known scalar stream-id or composite part type falls outside text and UUID values and their nominal concepts, plus integer-backed concepts. Bare Int is rejected. Other types need a future portable formatting contract. Unavailable imported shapes remain unresolved. |
 | `PLAY0507` | Information | A source or stream's rename-only `id` pin repeats its current name. New declarations omit the pin. |
-| `PLAY0547` | Error | A specification routing directive or composite part block is malformed, empty, repeated, conflicting, has invalid children, or uses `no stream` outside a `then` event. |
+| `PLAY0547` | Error | A specification routing directive or composite part block is malformed, empty, repeated, conflicting, has invalid children, or leaves effective `no stream` on a `given` or `when append` event. Event examples and redelivery locators may carry `no stream`. |
 | `PLAY0548` | Error | A `when <Command>` occurrence declares `stream` or `no stream`; the route belongs to the command declaration. |
 | `PLAY0549` | Error | A specification stream reference is missing or ambiguous, its key mapping is missing or superfluous, or the scalar stream id or composite part is nonliteral, empty text or incompatible. Composite routes require every declared part exactly once and refuse unknown/duplicate names and mismatched scalar/block forms. |
 | `PLAY0550` | Error | A routed `given` or `when append` lacks `for`, a routed identity is not a compatible concrete literal, or a source without `identifier` has no unambiguous known producer destination type. |
@@ -282,7 +282,7 @@ remove duplicate route headers before export.
 | `PLAY0523` | Error | An example supplies an undeclared current-generation property, an invalid generated fixture, or `for` on a read model. Use only the current type's allowed fixture lines. |
 | `PLAY0524` | Error | Binding an exact-shape specification step found a missing required property after expansion. The diagnostic names the step, property, and example when used. Supply the property in the example or step; no defaults are assumed. |
 | `PLAY0525` | Error | Semantic admission found a stated example value incompatible with its type, or `for` without one unambiguous required scalar destination type. Fix the value or its destination contract, even if the example is unused or that value is overridden. Partial top-level examples remain allowed. Ordinary fixture diagnostics also apply to null, nonconcrete, structured and generated values. |
-| `PLAY0526` | Error | An example states `stream`, scalar or composite `streamId`, or `no stream`. State route metadata on the specification step, not in the reusable example. |
+| `PLAY0526` | Error | A command or read-model example states a route. Only event examples carry routes; a command's route comes from its declaration, and read models have none. Top-level `streamId = value` is payload, not route metadata. |
 
 ### Screens
 
@@ -882,7 +882,7 @@ Refusal branches, `$refusal` values, redelivery and `then no events` are syntax-
 | `PLAY0541` | Error | A `$refusal` value is outside a branch's event mapping, has an unknown member, uses `constraint` outside a constraint selector, or targets an incompatible property type. The values `reason`, `constraint` and `message` are String values. |
 | `PLAY0542` | Error | A named constraint in a refusal selector does not resolve to a declared constraint. |
 | `PLAY0557` | Warning | An `on refused by authorization` branch invokes a command gated by its own, feature or module authorization without a declared invoking identity. With no caller the reference runner always refuses the command, while Arc runs reactor commands as the system. Declare an invoking identity once [#383](https://github.com/Cratis/Screenplay/issues/383) supports it; identity syntax is not available yet. |
-| `PLAY0543` | Error | `when redelivered <Event> to <Reaction>` is malformed, or its values and optional `for` locator identify zero or several given event occurrences. |
+| `PLAY0543` | Error | `when redelivered <Event> to <Reaction>` is malformed, or its values, optional `for` and route locator do not identify exactly one definitely matching given event occurrence with no undecidable candidates. Use `for`, values, `stream` or `no stream` to narrow the locator. |
 | `PLAY0544` | Error | The redelivery reaction is unknown or ambiguous, or has no event trigger on the stated event. |
 | `PLAY0545` | Error | `then no events` is malformed, repeated, has child mappings, follows `when append`, or accompanies event, event-order, error or denial expectations. Use one leaf assertion after a non-append action; read-model, query and response assertions may accompany it. |
 
