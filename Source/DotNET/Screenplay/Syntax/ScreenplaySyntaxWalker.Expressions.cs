@@ -37,6 +37,9 @@ public abstract partial class ScreenplaySyntaxWalker
             case ContextExpressionSyntax context:
                 VisitContextExpression(context);
                 break;
+            case RefusalExpressionSyntax refusal:
+                VisitRefusalExpression(refusal);
+                break;
             case EnvironmentExpressionSyntax environment:
                 VisitEnvironmentExpression(environment);
                 break;
@@ -120,6 +123,12 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="ContextExpressionSyntax"/> to visit.</param>
     public virtual void VisitContextExpression(ContextExpressionSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a refusal value expression.
+    /// </summary>
+    /// <param name="syntax">The refusal value.</param>
+    public virtual void VisitRefusalExpression(RefusalExpressionSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits an <see cref="EnvironmentExpressionSyntax"/> node.

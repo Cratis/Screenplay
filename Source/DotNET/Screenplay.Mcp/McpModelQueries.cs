@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.Json;
+using Cratis.Screenplay.Completeness;
 using Cratis.Screenplay.Diagnostics;
 
 namespace Cratis.Screenplay.Mcp;
@@ -83,25 +84,67 @@ static class McpModelQueries
 
     internal static object Diagnostics(McpSnapshot snapshot, int fileCount, JsonElement arguments)
     {
-        var diagnostics = snapshot.Compilation.Diagnostics;
+        var checks = CompletenessChecks.None;
+        if (McpJson.OptionalString(arguments, "checks") is { } value && !CompletenessChecks.TryParse(value, out checks))
+        {
+            throw new McpFailure("Unknown completeness check. Expected comma-separated check names, diagnostic codes, or all.", -32602);
+        }
+
+        var additional = snapshot.Completeness(checks);
+        var all = snapshot.Compilation.Diagnostics.Concat(additional).ToArray();
+        var errorCount = snapshot.Compilation.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        var completenessStatus = checks.Selected.Count > 0 && errorCount > 0
+            ? $"completeness checks skipped: the model has {errorCount} error(s)" : null;
+        var scope = McpJson.OptionalString(arguments, "scope");
+        ScopedDiagnosticResult? selection = null;
+        if (scope is not null)
+        {
+            selection = ScopedDiagnostics.Select(snapshot, scope, additional, out var scopeError)
+                ?? throw new McpFailure(scopeError!, -32602);
+        }
+        var diagnostics = selection?.Diagnostics.AsEnumerable() ?? all;
         if (McpJson.OptionalString(arguments, "document") is { } document)
         {
             diagnostics = diagnostics.Where(diagnostic => diagnostic.Location.Path == document);
         }
 
-        return new
+        if (selection is null)
         {
-            snapshot.Compilation.Success,
+            var result = new
+            {
+                snapshot.Compilation.Success,
+                snapshot.SourceRevision,
+                fileCount,
+                summary = DiagnosticSummary(all),
+                page = McpPaging.Page(diagnostics, arguments, snapshot.SourceRevision)
+            };
+            return WithCompleteness(result, checks, completenessStatus);
+        }
+
+        var scopedResult = new
+        {
+            success = !selection.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error),
+            wholeApplicationSuccess = snapshot.Compilation.Success,
             snapshot.SourceRevision,
             fileCount,
-            summary = DiagnosticSummary(snapshot),
+            scope,
+            selection.DeclarationCount,
+            selection.DependentDeclarationCount,
+            selection.AffectedScopes,
+            selection.UnresolvedEventConsumers,
+            selection.PossiblyAffectedReferenceCount,
+            selection.DependencyCoverage,
+            summary = DiagnosticSummary(selection.Diagnostics),
             page = McpPaging.Page(diagnostics, arguments, snapshot.SourceRevision)
         };
+        return WithCompleteness(scopedResult, checks, completenessStatus);
     }
 
-    internal static object DiagnosticSummary(McpSnapshot snapshot)
+    internal static object DiagnosticSummary(McpSnapshot snapshot) => DiagnosticSummary(snapshot.Compilation.Diagnostics);
+
+    internal static object DiagnosticSummary(IEnumerable<Diagnostic> selected)
     {
-        var diagnostics = snapshot.Compilation.Diagnostics.ToArray();
+        var diagnostics = selected.ToArray();
         return new
         {
             total = diagnostics.Length,
@@ -132,6 +175,19 @@ static class McpModelQueries
         }
 
         return declarations;
+    }
+
+    static object WithCompleteness(object result, CompletenessChecks checks, string? status)
+    {
+        if (checks.Selected.Count == 0)
+        {
+            return result;
+        }
+
+        var response = JsonSerializer.SerializeToNode(result, McpJson.Options)!.AsObject();
+        response["completenessStatus"] = status;
+        response["completenessCoverage"] = "structure only; a finding is a prompt to look";
+        return response;
     }
 
     static object Result(McpSnapshot snapshot, IEnumerable<McpDeclaration> candidates, JsonElement arguments, int population)

@@ -263,7 +263,7 @@ remove duplicate route headers before export.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0092` | Error | A specification document holds a top level line that does not open a `specification`. |
+| `PLAY0092` | Error | A specification document holds a top level line that opens neither a `specification` nor an `example`. |
 | `PLAY0093` | Error | A specification document declares no specification at all. |
 | `PLAY0094` | Error | A `specification` line is not `specification <Name>`. |
 | `PLAY0095` | Error | A line in a specification body opens with a word a specification declares nothing by. |
@@ -274,6 +274,15 @@ remove duplicate route headers before export.
 | `PLAY0100` | Error | A `given` or `then` line does not name an event type. |
 | `PLAY0101` | Error | A value a specification step states is not `<property> = <value>`. |
 | `PLAY0453` | Error | A `then no readmodel` line lacks a view or key, uses `exactly`, or has child mappings. |
+| `PLAY0518` | Error | An example declaration is not `example <Name> : <EventOrCommandOrReadModel>`. |
+| `PLAY0519` | Error | A fixture assigns the same property more than once, including across a step's inline assignment and indented body. Assign it once; overriding a value from an example is a separate operation. |
+| `PLAY0520` | Error | An example's type or reference is unknown, ambiguous, or not an event, command, or read model. Qualify the declaration; example inheritance is not supported. |
+| `PLAY0521` | Error | An example name collides with a type name or repeats in the same scope. Choose a distinct example name. |
+| `PLAY0522` | Error | A step references an example of another kind. Use the corrected step spelling suggested by the diagnostic. |
+| `PLAY0523` | Error | An example supplies an undeclared current-generation property, an invalid generated fixture, or `for` on a read model. Use only the current type's allowed fixture lines. |
+| `PLAY0524` | Error | Binding an exact-shape specification step found a missing required property after expansion. The diagnostic names the step, property, and example when used. Supply the property in the example or step; no defaults are assumed. |
+| `PLAY0525` | Error | Semantic admission found a stated example value incompatible with its type, or `for` without one unambiguous required scalar destination type. Fix the value or its destination contract, even if the example is unused or that value is overridden. Partial top-level examples remain allowed. Ordinary fixture diagnostics also apply to null, nonconcrete, structured and generated values. |
+| `PLAY0526` | Error | An example states `stream`, `streamId` or `no stream`. State route metadata on the specification step, not in the reusable example. |
 
 ### Screens
 
@@ -635,6 +644,21 @@ itself what an unresolvable one means.
 | `PLAY0280` | Error | A `variant` is declared inside another variant, and variants do not nest. |
 | `PLAY0281` | Error | Two variants of the same projection declare the same name. |
 
+### Opt-in completeness
+
+These structural warnings run only when selected, after error-free whole-application source compilation. See [Completeness checks](completeness.md) for selection and exemptions.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0530` | Warning (opt-in: `--check data-bindings`) | Visible screen bindings share a name but disagree on cardinality, resolved query or `by` parameter. Identical rebinding and sibling sections are allowed. |
+| `PLAY0531` | Warning (opt-in: `--check data-bindings`) | A screen binding's resolved read model or cardinality differs from its query's return. Optional and observable qualifiers are ignored; unresolved or ambiguous names are skipped. |
+| `PLAY0532` | Warning (opt-in: `--check input-surfaces`) | An action has no command-bound form, own-slice screen, or navigation to a screen for its command. Commands with only generated properties (including no properties) require no typed input. |
+| `PLAY0533` | Warning (opt-in: `--check input-surfaces`) | A StateChange command has no resolving action, form or behavior execute, and no reaction invokes it. Automation and Translate commands are exempt. |
+| `PLAY0534` | Warning (opt-in: `--check field-origins`) | A declared read model has no builder or performer, or a top-level field lacks an identity, mapping, compatible AutoMap source, child or nested target. Variants are checked independently, including entering-event AutoMap; the owning slice's keyed-query property counts as identity. Opaque builders and unknown coverage are skipped. |
+| `PLAY0535` | Warning (opt-in: `--check query-keys`) | A query parameter cannot be held by its view's known identity or fields. Identity comes from the owning slice's unambiguous keyed-query property or structurally resolved projection keys. Performer-served views, tenant-context parameters and unknown identity types are skipped. |
+| `PLAY0536` | Warning (opt-in: `--check event-consumers`) | The newest generation of a local event has no declared projection, reducer, reaction, constraint or interaction consumer. Specifications and production do not count. Imported external contracts are exempt; legitimate terminal facts may still be reported. |
+| `PLAY0537` | Warning (opt-in: `--check navigation`) | A screen is unreachable from contributions or attached shell-level behaviors, including through screen actions, row clicks, behaviors, discovered forms or opened dialog templates. Unattached named behaviors and unreachable cycles do not establish entry points. With no entry points, one application finding reports that no screen is reachable. |
+
 ### Model consistency
 
 These errors are reported by ordinary compilation, including compilation of a folder as one application; semantic binding is not required. References resolve from the innermost scope outward. Unknown or ambiguous declarations and imported shapes are not guessed.
@@ -741,6 +765,14 @@ A behavior is *deferred* from the backend ESM v1 profile in the same way every o
 | `PLAY0338` | Error | A `uses` site leaves a behavior parameter without an argument. |
 | `PLAY0339` | Warning | Actions follow an unconditional navigation, so they could never run. |
 | `PLAY0340` | Warning | Another file of a folder repeats an attachment of the same `module` or `feature` - a `uses` of the same behavior with the same arguments, or an inline `on` block identical to one already attached. Only the first, in file-path order, is kept; the repeat is ignored and the warning names the file that attached it first. Folders written by earlier versions restate a module's or feature's attachments in every descendant file, and report this once per copy. |
+| `PLAY0341` | Error | A guarded action child is not `when <condition> execute <Command>`, `otherwise hidden`, `otherwise execute <Command>` or `navigate to …`; navigation is repeated, or `otherwise hidden` has command arguments. |
+| `PLAY0342` | Error | A label-headed guarded action declares no `when` alternatives. |
+| `PLAY0343` | Error | A guarded action repeats `otherwise`, or declares a `when` alternative after it. |
+| `PLAY0344` | Error | A guarded action condition does not compare an `item.<field>` path with a literal. Ordering operators require a number; `contains` and `starts with` require a string. |
+| `PLAY0345` | Warning | An item path in a guarded action condition or input binding names no subject field, continues past a scalar, or crosses a collection-valued field. |
+| `PLAY0346` | Warning | A guarded action has no nearest `data` subject, or multiple data directives tie in its nearest container. Field checks are skipped until the subject resolves. |
+| `PLAY0347` | Warning | Earlier alternatives provably shadow an alternative. Guards use first-match order; proof uses DNF comparison-set inclusion with a 64-disjunct expansion cap. Overlap alone is not reported. |
+| `PLAY0348` | Warning | A guarded alternative or `otherwise execute` supplies a `with` argument the chosen command does not declare, or binds a subject field whose collection cardinality differs from the command input. |
 
 An inline `on` block is an anonymous behavior, so it has no name to report against. Diagnostics inside one cite the position and the trigger instead.
 
@@ -837,6 +869,23 @@ See [Imports](imports.md).
 | `PLAY0458` | Error | Imports keep placing a file deeper than 32 levels - they form a cycle. |
 | `PLAY0459` | Error | A file imported into a module or feature declares a module other than the one it is placed in. Restating the module it is placed in is allowed. |
 | `PLAY0460` | Error | The top level of a file imported into a module or feature holds something that scope cannot hold, such as a `screen template` in a file placed in a feature. |
+
+### Refusal branches, redelivery and no-event assertions
+
+Refusal branches, `$refusal` values, redelivery and `then no events` are syntax-only and not yet executable: source-valid models still fail binding with `PLAY0268` naming the unadmitted feature.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0538` | Error | An `on refused` header is malformed, uses an unsupported selector, or appears outside an `invokes` block. Use `on refused [by validation \| by constraint [<Name>] \| by authorization]`. |
+| `PLAY0539` | Error | A refusal branch is empty, repeats or adds children to `acknowledge`, combines acknowledgement with productions, or contains another kind of effect. Use `acknowledge` alone or one or more `produces <Event>` blocks. |
+| `PLAY0540` | Warning | A refusal branch is shadowed by an earlier selector, or its declared constraint targets none of the invoked command's events. Bare refusal covers validation and constraints, not authorization. |
+| `PLAY0541` | Error | A `$refusal` value is outside a branch's event mapping, has an unknown member, uses `constraint` outside a constraint selector, or targets an incompatible property type. The values `reason`, `constraint` and `message` are String values. |
+| `PLAY0542` | Error | A named constraint in a refusal selector does not resolve to a declared constraint. |
+| `PLAY0543` | Error | `when redelivered <Event> to <Reaction>` is malformed, or its values and optional `for` locator identify zero or several given event occurrences. |
+| `PLAY0544` | Error | The redelivery reaction is unknown or ambiguous, or has no event trigger on the stated event. |
+| `PLAY0545` | Error | `then no events` is malformed, repeated, has child mappings, follows `when append`, or accompanies event, event-order, error or denial expectations. Use one leaf assertion after a non-append action; read-model, query and response assertions may accompany it. |
+
+See [Refusal branches](reactions.md#refusal-branches-syntax-only), [Redelivery specifications](specifications.md#redelivery-specifications-syntax-only) and [Specification syntax](specifications.md#syntax).
 
 ### Specification actions
 
@@ -1024,6 +1073,14 @@ An ambiguous target uses `PLAY0198`, naming the equally near candidates. See [De
 | `PLAY0551` | Expected route contradicts its sole producer, the command under test |
 
 Valid [source/stream authoring](event-sources.md) is not admitted by any supported executable model (ESM) version yet; executable binding refuses it with `PLAY0268`. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
+
+### Negated claim targets
+
+| Code | Severity | Reported when |
+| --- | --- | --- |
+| `PLAY0546` | Warning | Semantic binding applies a policy with a claim under `not`, directly or through grouping, whose target is an optional path, a command's `subject` without an identifier, or a non-string type. An undecidable target evaluates to unknown even under negation; a final unknown policy result denies. Reported at the authorization reference against that command's properties or query argument. The TypeScript syntax compiler does not perform this semantic check. |
+
+See [Policies](policies.md#portable-evaluation) for three-valued evaluation and the distinction between a missing caller claim and a missing comparison target.
 
 ## Retired codes
 

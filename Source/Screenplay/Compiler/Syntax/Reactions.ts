@@ -7,6 +7,7 @@ import { ExpressionSyntax, PropertyMappingSyntax } from './Expressions';
 import { SyntaxNode } from './SyntaxNode';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { OperationSyntax } from './Operations';
+import { InvocationRefusalSyntax } from './InvocationRefusalSyntax';
 
 // 'when <Name>' - an event, a declared trigger, or one a consumer registered.
 export interface NamedTriggerSourceSyntax extends SyntaxNode {
@@ -55,6 +56,7 @@ export interface ProducesSyntax extends SyntaxNode {
 export interface InvokesSyntax extends SyntaxNode {
     readonly kind: 'InvokesSyntax';
     readonly command: string;
+    readonly onRefused?: readonly InvocationRefusalSyntax[];
     readonly mappings?: readonly PropertyMappingSyntax[];
 }
 

@@ -133,6 +133,8 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitModule(module);
         }
 
+        foreach (var example in syntax.Examples) VisitSpecificationExample(example);
+
         foreach (var seed in syntax.Seeds ?? [])
         {
             VisitSeed(seed);
@@ -188,6 +190,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitModule(ModuleSyntax syntax)
     {
         VisitNode(syntax);
+        foreach (var example in syntax.Examples) VisitSpecificationExample(example);
         foreach (var dependency in syntax.DependsOn) VisitDependsOn(dependency);
 
         foreach (var import in syntax.FileImports)
@@ -449,6 +452,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitFeature(FeatureSyntax syntax)
     {
         VisitNode(syntax);
+        foreach (var example in syntax.Examples) VisitSpecificationExample(example);
         foreach (var dependency in syntax.DependsOn) VisitDependsOn(dependency);
 
         foreach (var import in syntax.FileImports)
@@ -486,6 +490,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitSlice(SliceSyntax syntax)
     {
         VisitNode(syntax);
+        foreach (var example in syntax.Examples) VisitSpecificationExample(example);
 
         if (syntax.File is not null)
         {

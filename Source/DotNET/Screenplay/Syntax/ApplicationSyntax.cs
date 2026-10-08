@@ -3,6 +3,7 @@
 
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Languages;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Syntax;
 
@@ -48,6 +49,11 @@ public record ApplicationSyntax(
     /// Gets the named behaviors the document declares, attached where a <c>uses</c> clause references them.
     /// </summary>
     public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the application-scoped specification examples.
+    /// </summary>
+    public IEnumerable<SpecificationExampleSyntax> Examples { get; init; } = [];
 
     /// <summary>
     /// Gets the application-scoped external systems.

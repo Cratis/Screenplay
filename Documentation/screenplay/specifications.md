@@ -34,6 +34,9 @@ specification <Name>
   when append <EventType>
     [for <event-source-value>]
     <property> = <value>
+  when redelivered <EventType> to <Reaction> // syntax-only
+    [for <event-source-value>]
+    [<property> = <value> ...]
   when clock "<ISO 8601 instant>"
   when trigger <Trigger>
     <value> = <value>
@@ -41,6 +44,7 @@ specification <Name>
     <field> = <value>
   when query <Query>
     <argument> = <value>
+  then no events // syntax-only
   then events in any order
   then <EventType>
     [for <event-source-value>]
@@ -64,7 +68,9 @@ specification <Name>
 - `given readmodel <ReadModelType>` — zero or more. Establishes prior read model state directly, for scenarios where expressing the state as events would be noise.
 - `given caller` — zero or one. Explicit authentication, roles, and repeatable claim values for authorization. No fixture is inferred for an authorized scenario (`PLAY0389`).
 - `when <CommandType>` or `when append <EventType>` — at most one action. Append directly establishes an event occurrence, checks append-time constraints, projects it, then checks read models and queries; it does not run a command. Without `when`, provide at least one `then readmodel`, `then no readmodel`, or `then query`; `then` events and errors require an action (`PLAY0352`).
+- `when redelivered <EventType> to <Reaction>` — syntax-only action selecting exactly one given event occurrence for one compatible event-trigger reaction. It participates in the same one-action rule and is not yet executable (`PLAY0268`). See [Redelivery specifications](#redelivery-specifications-syntax-only).
 - `then <EventType>` — zero or more. Compares the complete set of new facts, in authored order by default. For `when append`, if any `then` events are asserted, they must match exactly the appended fact (no extra facts); omit them to check only projected state or queries.
+- `then no events` — once per specification, with no children. Explicitly expects no new events after a non-append action. It can accompany read-model, query or response assertions, but not event expectations, `then events in any order`, errors or denial (`PLAY0545`). It is rejected after `when append`. It is syntax-only: binding refuses it with `PLAY0268` until the same admission checkpoint as refusal handling and redelivery. Existing executable contracts still require at least one success outcome for a successful action; an outcome-less specification does not bind.
 - `then events in any order` — once per specification. Compares all asserted events by event type, payload, and optional source without regard to order, still requiring the exact number of new facts. Without it, order matters.
 - `then readmodel <ReadModelType> [exactly]` — zero or more. The read model state after projection. By default, only asserted properties need match; `exactly` also disallows unasserted properties.
 - `then no readmodel <ReadModelType> for <key>` — zero or more. Asserts that precisely the keyed instance is absent, not that it exists with empty or null properties, and not that a query result is empty. The concrete key is required and type-checked against the view identifier. It has no children or `exactly` qualifier. Presence and absence for the same view and key conflict.
@@ -81,6 +87,55 @@ Property values (`<property> = <value>`) accept literals (including `null`), sin
 Executable specification values must be concrete: literals, inline objects and lists. The ESM binds object members to the declared composite properties and list items to the element type, preserving authored list order. An empty list `[]` is valid for any collection property. Objects must supply every required member; optional members may be omitted. `null` is valid only for an optional read-model property (including nested properties). `null` in command or event values, even nested ones, is rejected (`PLAY0350`): in Chronicle, an optional fact is a separate event. Non-literal mapping expressions other than typed objects and lists are not portable specification values in ESM v1.
 
 For example, if `OrderView` declares `lines Line[]`, `tags String[]`, and `note String optional`, and `Line` declares `sku String`, you can seed `lines = [{"sku":"A-1"}]`, `tags = []`, and `note = null` in a `given readmodel` block. A `then readmodel` may assert just the identifier and `lines`; the list must match in order.
+
+## Typed specification examples
+
+Use an example when several scenarios repeat the same command input, prior event or read-model state. Keep each scenario's action and outcome visible; an example is one typed instance, not a multi-step setup. Both compilers parse and preserve declarations and inline assignments. C# resolves and expands examples before executable binding. The executable model contains only the merged values, with the same bytes and revision as hand-expanded steps.
+
+`example <Name> : <EventOrCommandOrReadModel>` declares one named, possibly partial fixture. Its body accepts property assignments, an optional `description`, an optional `for` value, and command `generated` fixtures. It cannot contain caller or clock fixtures or Given/When/Then steps. Declare examples at slice, feature, module or document level, or alongside specifications in a specification-only document.
+
+An example reference occupies the ordinary name slot in `given`, `given readmodel`, `when`, `when append`, `then`, or `then readmodel [exactly]`. Names may be qualified. One concrete assignment may follow the name on the same line, including a structured object or list; other assignments stay indented. There is no `with` keyword.
+
+This excerpt assumes `RegisterInvoice` declares `total` and `currency`, and `InvoiceRegistered` declares `total`. The example is partial: the step must supply any remaining required command inputs.
+
+```screenplay
+example AcmeInvoice : RegisterInvoice
+  total = 1000
+  currency = "EUR"
+
+specification RegisteringAcme
+  when AcmeInvoice total = 5000
+    currency = "NOK"
+  then InvoiceRegistered total = 5000
+```
+
+Here, `total = 5000` overrides `1000` inline, and the indented `currency = "NOK"` overrides `"EUR"`. Unchanged example values are inherited. A value supplied only by the step is authored, not an override, including a new `for` destination or `generated` fixture. Override a structured object or list as a whole; there is no recursive member merge. An indented `for` replaces the example's destination, and `generated` fixtures merge by property name. The same assignment spellings also work on ordinary type names without an example.
+
+| Example kind | Supported step slots |
+| --- | --- |
+| Event | `given <Example>`, `when append <Example>`, `then <Example>` |
+| Command | `when <Example>` |
+| Read model | `given readmodel <Example>`, `then readmodel <Example> [exactly]` |
+
+Examples share the type namespace: a name colliding with an event, command, read model, type, concept, or import is an error. The underlying type resolves in the example's declaration scope, not where it is used. Examples always use the current event generation and cannot inherit from another example. A step of the wrong kind reports a suggested corrected spelling. At executable binding, a `when` command must belong to the specification's own slice; a qualified command or example from another slice cannot select a same-named local command.
+
+Syntax consumers can call `SpecificationExamples.Expand(application)` in `Cratis.Screenplay.Syntax.Specifications`. The result contains the effective application, authored/effective specification pairs, resolution diagnostics, and each step's effective values with `Authored`, `Example`, or `Override` provenance. Overrides retain the replaced expression; all expressions retain their source locations. The authored syntax is not changed. Check diagnostics before consuming the effective view. For a standalone specification, call `SpecificationExamples.Expand(specification, declarations, scope)`, supplying the owning application and its module/feature/slice scope segments; document-scoped examples are included automatically.
+
+MCP `find-fixtures` reports those effective values, their origins and replaced values. Declaration search and details include `Example`; reference queries connect specification steps to the example and the example to its underlying type. Workspace rename proposals update example uses, underlying type references and specification names while preserving proven bindings. See the [MCP reference](mcp/reference.md#typed-specification-examples).
+
+At binding, given events and read models, command inputs other than generated properties, appended events, and expected events must state every required property after expansion. Each missing property reports `PLAY0524` at its step, naming the example when used. Partial examples are allowed, but an exact-shape step must complete them. No implicit fixture defaults are supplied. Expected read models keep subset matching unless `exactly` is authored; using an example does not change that rule.
+
+Binding validates every stated example value, even in an unused example or one whose invalid value is overridden. Scalar types, enum membership, nested object completeness, null rules, generated UUID fixtures and `for` identities follow ordinary executable fixture admission. An unknown or ambiguous destination type refuses binding rather than inventing one. This does not require all top-level properties of a partial example to be supplied, execute validation rules, or make unsupported application behavior executable. Syntax acceptance alone is not semantic admission.
+
+Source-bound reference execution uses `SemanticSpecificationRunner.Run(compilation, specificationId)`. Failed comparisons retain their original failure text and append the effective fixture values, their authored/example/override origins, and replaced values. The compilation owns the provenance sidecar; no sidecar enters ESM bytes. `Run(plan, specificationId)` remains available for ESM-only consumers, but cannot reconstruct source origins and does not invent them. Unsupported plan admission is a failed result, not a passing scenario.
+
+Examples cannot declare route lines (`stream`, `streamId`, `no stream`): `PLAY0526` asks you to state the route on the specification step, including a step referencing an example. Route support in examples is deferred to [#491](https://github.com/Cratis/Screenplay/issues/491). A payload assignment `stream = <value>` is not a route line.
+
+The effective-syntax API is .NET-only; TypeScript preserves the authored examples but does not expose an expansion API.
+
+Examples cannot supply callers, clocks or whole scenarios, and cannot be used in query results, `then result`, `then returns`, trigger or capture fixtures. Composite-value examples, inheritance, named setups and scenario outlines are not supported; structured values inside an event, command or read-model example are supported. There are no implicit defaults or unused/shadowing warnings.
+
+Assign a property only once within each fixture or step. An inline assignment repeated in the indented body reports `PLAY0519`; a malformed example header reports `PLAY0518`. A declaration does not supply implicit defaults or change the step's matching mode. Unlike `seed`, an example declares specification data, not events to append when the application starts.
 
 ## Event routes (syntax-only)
 
@@ -335,6 +390,36 @@ In v6, projection arithmetic outside the reference numeric range returns `Semant
 
 Default `Startup` and `Shutdown` signals carry no values. If a host registration overrides either with values or an unknown shape, semantic binding rejects its use until a typed trigger declaration supplies an admitted shape; a matching name alone does not make it an empty built-in.
 
+## Redelivery specifications (syntax-only)
+
+> Event redelivery is not yet executable. Both compilers parse and preserve `when redelivered`; the .NET compiler validates the reaction and occurrence locator. Binding refuses it with `PLAY0268`, and MCP reports it as unadmitted. It does not run as `when append` or silently omit the action.
+
+Recovery can deliver an existing fact to one reaction without appending another fact. This syntax-only example declares the event and its observer before selecting a given occurrence:
+
+```screenplay
+module Billing
+  feature Claims
+    slice Automation Recovery
+      event Approved
+        invoice String
+      reaction Claimer
+        when Approved
+      specification Recovery
+        given Approved
+          for "invoice-1"
+          invoice = "invoice-1"
+        when redelivered Approved to Claimer
+          for "invoice-1"
+          invoice = "invoice-1"
+        then no events
+```
+
+`to <Reaction>` is required. The reaction must resolve unambiguously and observe the stated event (`PLAY0544` otherwise). The optional `for` and every stated property value narrow the given occurrences of that event. **Exactly one** must match (`PLAY0543` otherwise); an empty body is sufficient when there is exactly one given fact of that event. This is the specification's sole action, not an additional step after a command or append. `then no events` is also syntax-only and does not make a redelivery scenario executable. When source identity or locator values cannot be decided, `PLAY0543` reports that it cannot locate the occurrence rather than claiming zero matches. A given without `for` retains a null source; its producer supplies a source type, not a concrete locator identity.
+
+[Decision 0030](https://github.com/Cratis/Screenplay/blob/main/decisions/0030-reaction-refusals-and-redelivery.md) defines the intended execution at admission: establish givens without firing reactions, deliver the selected existing fact only to the named reaction, then settle the ordinary cascade. Do not append the fact again. New effects take the `given clock` instant, and event expectations compare all newly accepted facts. Delivery identity is the reaction paired with the selected given-fact position, not equality of event values as a runtime deduplication guarantee.
+
+A `given caller` supplies no actor to a reaction invocation. Unhandled validation and constraint refusals remain assertable as `then error`; authorization denial uses `then denied`. Recovery redelivery is ordinary observation, not replay, and does not prove once-only external effects. Clock, application-trigger and capture repetition keep their existing action forms. Refusal branches have their own [syntax and admission boundary](reactions.md#refusal-branches-syntax-only).
+
 ## Reference execution
 
 Screenplay supplies a framework-neutral reference path for admitted semantic capabilities. It does not start Arc, Chronicle, a database, the filesystem, or a network service. It executes against an immutable in-memory world so Stage and rendered targets have one normalized behavior to match.
@@ -368,6 +453,7 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `given caller` | Explicit identity, roles, and repeated claims. |
 | `when <CommandType>` | The command under test, with its property values. |
 | `when append <EventType>` | Append an event occurrence, enforce constraints and project it; in v6, run its reaction consequences. |
+| `when redelivered <EventType> to <Reaction>` | Syntax-only: select exactly one given occurrence for one event-trigger reaction; not yet executable. |
 | `given clock "<instant>"` | The instant the scenario happens at. |
 | `given capture <Capture>` | An earlier record of a capture's source. |
 | `when clock "<instant>"` | The clock reaches an instant; scheduled reactions that are due run. |
@@ -376,6 +462,7 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `when query <Query>` | Perform a query with its arguments. |
 | `then result [exactly]` | One expected row of the performed query; repeat for several. |
 | `then no result` | The performed query returns nothing. |
+| `then no events` | Syntax-only assertion of no new facts after a non-append action; binding refuses it until admission. |
 | `then events in any order` | Ignore order, but still require the exact set of new facts. |
 | `exactly` on read model or query | Compare every property rather than the default subset. |
 | `then <EventType>` | An expected new fact; if asserted, the full new fact set must match. |

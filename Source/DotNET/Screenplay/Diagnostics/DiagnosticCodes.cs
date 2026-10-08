@@ -1801,6 +1801,46 @@ public static class DiagnosticCodes
     public const string DuplicateBehaviorAttachment = "PLAY0340";
 
     /// <summary>
+    /// A guarded action child is not an alternative, fallback or navigation.
+    /// </summary>
+    public const string InvalidActionAlternative = "PLAY0341";
+
+    /// <summary>
+    /// A guarded action declares no condition alternatives.
+    /// </summary>
+    public const string GuardedActionWithoutAlternatives = "PLAY0342";
+
+    /// <summary>
+    /// A guarded action repeats its fallback or declares an alternative after it.
+    /// </summary>
+    public const string MisplacedActionOtherwise = "PLAY0343";
+
+    /// <summary>
+    /// A guarded action condition uses an unsupported operand or operator value type.
+    /// </summary>
+    public const string UnsupportedActionConditionOperand = "PLAY0344";
+
+    /// <summary>
+    /// An item path names no subject field or crosses a collection field.
+    /// </summary>
+    public const string UnknownActionSubjectField = "PLAY0345";
+
+    /// <summary>
+    /// A guarded action has no unambiguous data subject in its enclosing containers.
+    /// </summary>
+    public const string UnresolvedActionSubject = "PLAY0346";
+
+    /// <summary>
+    /// Earlier guarded alternatives provably shadow an alternative.
+    /// </summary>
+    public const string UnreachableActionAlternative = "PLAY0347";
+
+    /// <summary>
+    /// An explicit action argument names no property of the chosen command or has mismatched collection cardinality.
+    /// </summary>
+    public const string UnknownActionArgumentProperty = "PLAY0348";
+
+    /// <summary>
     /// A command or event specification value uses null instead of modeling an optional fact as a separate event.
     /// </summary>
     public const string NullSpecificationFact = "PLAY0350";
@@ -2290,6 +2330,51 @@ public static class DiagnosticCodes
     public const string TimelineCycleGroup = "PLAY0517";
 
     /// <summary>
+    /// A typed specification example declaration is malformed.
+    /// </summary>
+    public const string InvalidSpecificationExample = "PLAY0518";
+
+    /// <summary>
+    /// A specification fixture assigns the same property more than once.
+    /// </summary>
+    public const string DuplicateSpecificationAssignment = "PLAY0519";
+
+    /// <summary>
+    /// A specification example type or reference is unknown, ambiguous, or unsupported.
+    /// </summary>
+    public const string UnresolvedSpecificationExampleType = "PLAY0520";
+
+    /// <summary>
+    /// A specification example name collides with a type or another example in its scope.
+    /// </summary>
+    public const string SpecificationExampleNameCollision = "PLAY0521";
+
+    /// <summary>
+    /// A specification step uses an example of another kind.
+    /// </summary>
+    public const string SpecificationExampleKindMismatch = "PLAY0522";
+
+    /// <summary>
+    /// A specification example supplies a value not allowed by its current type.
+    /// </summary>
+    public const string InvalidSpecificationExampleValue = "PLAY0523";
+
+    /// <summary>
+    /// An exact-shape specification step omits a required property after example expansion.
+    /// </summary>
+    public const string MissingSpecificationProperty = "PLAY0524";
+
+    /// <summary>
+    /// A stated example value or destination cannot be admitted by its semantic type, even if unused.
+    /// </summary>
+    public const string UnadmittedSpecificationExampleValue = "PLAY0525";
+
+    /// <summary>
+    /// A typed specification example declares route metadata instead of stating it on a step.
+    /// </summary>
+    public const string InvalidSpecificationExampleBody = "PLAY0526";
+
+    /// <summary>
     /// A specification routing directive is malformed, duplicated or misplaced.
     /// </summary>
     public const string InvalidSpecificationStream = "PLAY0547";
@@ -2334,6 +2419,91 @@ public static class DiagnosticCodes
 
     /// <summary>A personally identifiable concept is used as an event source identifier.</summary>
     public const string PiiNotSupportedOnIdentifier = "PLAY0515";
+
+    /// <summary>
+    /// A no-event assertion is malformed or conflicts with another outcome or an append action.
+    /// </summary>
+    public const string InvalidNoEventsExpectation = "PLAY0545";
+
+    /// <summary>
+    /// A refusal branch header is malformed or appears outside a command invocation.
+    /// </summary>
+    public const string InvalidRefusalBranch = "PLAY0538";
+
+    /// <summary>
+    /// A refusal branch does not contain either acknowledge alone or event productions.
+    /// </summary>
+    public const string InvalidRefusalBranchBody = "PLAY0539";
+
+    /// <summary>
+    /// A refusal branch is shadowed by an earlier branch or cannot target the invoked command's events.
+    /// </summary>
+    public const string UnreachableRefusalBranch = "PLAY0540";
+
+    /// <summary>
+    /// A refusal value has an invalid member, scope or target type.
+    /// </summary>
+    public const string InvalidRefusalValue = "PLAY0541";
+
+    /// <summary>
+    /// A named refusal constraint is not declared.
+    /// </summary>
+    public const string UnknownRefusalConstraint = "PLAY0542";
+
+    /// <summary>
+    /// A redelivery action is malformed or does not identify exactly one given event occurrence.
+    /// </summary>
+    public const string UnmatchedRedeliveredOccurrence = "PLAY0543";
+
+    /// <summary>
+    /// A redelivery reaction is unknown, ambiguous or does not observe the stated event.
+    /// </summary>
+    public const string UnknownRedeliveryReaction = "PLAY0544";
+
+    /// <summary>
+    /// A negated claim comparison uses a target that can be absent, null, or is not a string type.
+    /// </summary>
+    public const string IndeterminateNegatedClaimTarget = "PLAY0546";
+
+    /// <summary>
+    /// Visible screen data bindings share a name but disagree on query, cardinality or parameter.
+    /// </summary>
+    public const string ConflictingScreenDataBinding = "PLAY0530";
+
+    /// <summary>
+    /// A screen data binding disagrees with the resolved query return shape.
+    /// </summary>
+    public const string ScreenDataQueryMismatch = "PLAY0531";
+
+    /// <summary>
+    /// A screen action has no command-bound input surface.
+    /// </summary>
+    public const string ActionWithoutInputSurface = "PLAY0532";
+
+    /// <summary>
+    /// A StateChange command has no UI issuer and is not reaction-invoked.
+    /// </summary>
+    public const string CommandWithoutInputSurface = "PLAY0533";
+
+    /// <summary>
+    /// A read model has no builder or a declared field has no projection origin.
+    /// </summary>
+    public const string ReadModelFieldWithoutOrigin = "PLAY0534";
+
+    /// <summary>
+    /// A query parameter cannot be held by its view's structurally known identity or fields.
+    /// </summary>
+    public const string QueryParameterNotHeldByView = "PLAY0535";
+
+    /// <summary>
+    /// A locally declared event has no declared application consumer.
+    /// </summary>
+    public const string UnconsumedEvent = "PLAY0536";
+
+    /// <summary>
+    /// A screen is unreachable from contributions or attached shell-level behaviors.
+    /// </summary>
+    public const string UnreachableScreen = "PLAY0537";
 
     /// <summary>
     /// A declared dependency target is unresolved, self, an ancestor, or a descendant.

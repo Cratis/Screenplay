@@ -10,5 +10,5 @@ export interface AuthoredCommandRoute {
     readonly referenceLocation?: AnalysisLocation;
     readonly referenceLength?: number;
     readonly streamId: { readonly location: AnalysisLocation; readonly source: unknown } | null;
-    readonly propertyCandidate: unknown;
+    readonly propertyCandidate?: unknown;
 }
