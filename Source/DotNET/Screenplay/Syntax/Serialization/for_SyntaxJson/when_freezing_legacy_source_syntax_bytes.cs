@@ -39,6 +39,7 @@ public class when_freezing_legacy_source_syntax_bytes
                 _ => parsed
             };
             if (name == "invoicing" || name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleDependencies(legacy, name == "invoicing");
+
             // Report-only metadata has its own conformance vector. Keep existing event metadata
             // protected, and project only the newly supported owners out of pre-metadata bytes.
             var json = SyntaxJson.Serialize(WithoutNewAuthoringMetadata(legacy));
@@ -46,7 +47,15 @@ public class when_freezing_legacy_source_syntax_bytes
                 .Replace(",\"eventSources\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"stream\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"noStream\":null", string.Empty, StringComparison.Ordinal)
-                .Replace(",\"streamCandidates\":[]", string.Empty, StringComparison.Ordinal);
+                .Replace(",\"streamCandidates\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"templates\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"parameters\":[],\"route\":null", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"columnMode\":\"Unspecified\",\"columns\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"icons\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"category\":null", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"templateType\":null", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"exposes\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"outlets\":[]", string.Empty, StringComparison.Ordinal);
 
             // Only the two living samples author the additive no-event assertion. Its own conformance
             // vector protects it; removing that member here keeps all pre-feature bytes frozen.
@@ -75,6 +84,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
     static ApplicationSyntax WithoutNewAuthoringMetadata(ApplicationSyntax application) => application with
     {
+        UiProfiles = application.UiProfiles?.Select(profile => profile with { Icons = [] }),
         Modules = application.Modules.Select(module => module with
         {
             Documentation = null,
@@ -153,7 +163,12 @@ public class when_freezing_legacy_source_syntax_bytes
                 : module.Authorize,
 
             // The samples-policy coverage spec protects TagInvoiceForm's newly restored item population.
-            Forms = module.Forms?.Where(form => form.Name != "TagInvoiceForm").Select(form => form.Name == "RecordPaymentForm" ? form with { Populate = new FormPopulateFromItemSyntax(form.Location) } : form),
+            Forms = module.Forms?.Where(form => form.Name != "TagInvoiceForm").Select(form =>
+                (form.Name == "RecordPaymentForm" ? form with { Populate = new FormPopulateFromItemSyntax(form.Location) } : form) with
+                {
+                    ColumnMode = FormColumnMode.Unspecified,
+                    Columns = []
+                }),
             Features = module.Features.Select(feature => feature.Name == "InvoiceManagement" ? feature with
             {
                 Slices = feature.Slices.Where(slice => slice.Name != "StartInvoiceDraft").Select(slice => slice.Name switch
@@ -182,7 +197,7 @@ public class when_freezing_legacy_source_syntax_bytes
     // Current shared vectors protect the pre-input click paths. Reconstruct only the historical
     // action-navigation directives and omit the new draft entry point for the frozen legacy sample.
     static IEnumerable<ScreenDirectiveSyntax> WithoutSampleInputNavigation(IEnumerable<ScreenDirectiveSyntax> directives) =>
-        directives.Where(directive => directive is not ScreenSectionSyntax { Name: "startInvoiceDraftInput" or "recordDuePaymentInput" or "recordOverduePaymentInput" or "invoiceLineDetailInput" }).Select(directive => directive switch
+        directives.Where(directive => directive is not ScreenSectionSyntax { Name: "startInvoiceDraftInput" or "recordDuePaymentInput" or "recordOverduePaymentInput" or "invoiceLineDetailInput" } and not ScreenToolbarSyntax and not ScreenComponentSyntax).Select(directive => directive switch
         {
             ScreenSectionSyntax section when LegacyInputCommand(section.Name) is { } command =>
                 new ScreenActionSyntax(command, section.Name == "registerInvoiceDashboardInput" ? "$strings.invoices.actions.newInvoice" : null, new ScreenNavigateSyntax(command + "Screen", null, section.Location), section.Location),

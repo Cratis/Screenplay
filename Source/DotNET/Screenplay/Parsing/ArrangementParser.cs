@@ -37,6 +37,10 @@ internal static partial class ArrangementParser
         ArrangementSyntax? arrangement = null;
         string? fitsSlot = null;
         SourceLocation? fitsSlotLocation = null;
+        string? category = null;
+        string? templateType = null;
+        var exposes = new List<TemplateExposedValueSyntax>();
+        var outlets = new List<TemplateOutletSyntax>();
 
         while (context.TryPeekChild(header.Indent, out var child))
         {
@@ -56,6 +60,22 @@ internal static partial class ArrangementParser
                 case "fits":
                     ParseFitsSlot(context, child, keyword, allowsFitsSlot, ref fitsSlot, ref fitsSlotLocation);
                     break;
+                case "category":
+                    category = child.Content["category".Length..].Trim();
+                    break;
+                case "type":
+                    templateType = child.Content["type".Length..].Trim();
+                    break;
+                case "exposes":
+                    if (ParseTemplateExposes(context, child) is { } exposed)
+                    {
+                        exposes.Add(exposed);
+                    }
+
+                    break;
+                case "outlet":
+                    outlets.Add(new TemplateOutletSyntax(child.Content["outlet".Length..].Trim(), child.Location));
+                    break;
                 case "on":
                 case "uses":
                     // A behavior here applies to every screen using this structure, which is how a template
@@ -68,7 +88,20 @@ internal static partial class ArrangementParser
             }
         }
 
-        return new(slots, arrangement, fitsSlot, fitsSlotLocation, behaviors, usedBehaviors);
+        return new(slots, arrangement, fitsSlot, fitsSlotLocation, behaviors, usedBehaviors, category, templateType, exposes, outlets);
+    }
+
+    static TemplateExposedValueSyntax? ParseTemplateExposes(ParserContext context, SourceLine line)
+    {
+        var match = TemplateExposesRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.UnknownLayoutDirective, $"Invalid exposed template value '{line.Content}' - expected 'exposes <name> [<Type>]'", line.Location);
+            return null;
+        }
+
+        var type = match.Groups[2].Success ? PropertyLineParser.ParseTypeRef(match.Groups[2].Value, line.Location) : null;
+        return new(match.Groups[1].Value, type, line.Location);
     }
 
     static void ParseFitsSlot(ParserContext context, SourceLine line, string keyword, bool allowsFitsSlot, ref string? fitsSlot, ref SourceLocation? fitsSlotLocation)
@@ -414,6 +447,9 @@ internal static partial class ArrangementParser
     [GeneratedRegex(@"^fits\s+slot\s+([a-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex FitsSlotRegex();
 
+    [GeneratedRegex(@"^exposes\s+([A-Za-z_]\w*)(?:\s+([\w.]+(?:\[\])?))?$", RegexOptions.None, 1000)]
+    private static partial Regex TemplateExposesRegex();
+
     [GeneratedRegex(@"^([a-z_]\w*)(?:\s+contributes\s+([A-Za-z_]\w*))?$", RegexOptions.None, 1000)]
     private static partial Regex SlotDeclarationRegex();
 
@@ -445,5 +481,9 @@ internal static partial class ArrangementParser
         string? FitsSlot,
         SourceLocation? FitsSlotLocation,
         IReadOnlyList<BehaviorSyntax> Behaviors,
-        IReadOnlyList<UsesBehaviorSyntax> UsedBehaviors);
+        IReadOnlyList<UsesBehaviorSyntax> UsedBehaviors,
+        string? Category,
+        string? TemplateType,
+        IReadOnlyList<TemplateExposedValueSyntax> Exposes,
+        IReadOnlyList<TemplateOutletSyntax> Outlets);
 }

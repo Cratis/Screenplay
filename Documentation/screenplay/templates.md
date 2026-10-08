@@ -32,12 +32,19 @@ layout AppShell
 ```
 
 - Each plain line in the body **declares a slot**. `contributes <ContributionPoint>` opens it up to contributors declared anywhere in the document — see [Contributions](contributions.md). The application shell is where an application-wide contribution point such as `Navigation` belongs.
+- `category <name>` and `type <name>` provide catalog metadata for designers and renderers.
+- `exposes <name> [<Type>]` names a value the structure makes available to descendants or package tooling.
+- `outlet <name>` declares a recursive fill point for package components and design-time tools.
 - `arrangement` says how those slots share the space. It is optional: a layout that only names its slots is a complete declaration.
 
 An application selects its layout from a [ui profile](ui-profile.md), the same way it selects its theme:
 
 ```screenplay
 layout AppShell
+  category application
+  type masterDetail
+  exposes selectedItem String
+  outlet details
   content
 
 ui profile Desktop
@@ -135,6 +142,25 @@ module Invoicing
 ```
 
 A screen never names the application's `layout`. The shell is selected once, per build, by a `ui profile` — which is what keeps a screen portable across web, mobile and desktop instead of tied to one shell.
+
+## Inheriting a template choice
+
+A bare `template <Name>` can also appear at application, module, feature or slice scope. It assigns the default template for the declarations below that scope until a more specific scope overrides it:
+
+```screenplay
+template AppShell
+
+module Invoicing
+  template FeatureShell
+
+  feature InvoiceManagement
+    template FeatureShell
+
+    slice StateView InvoiceDetails
+      template FeatureShell
+```
+
+Use scoped template assignments when a whole feature area shares the same shape. Use a screen-local `template <Name>` body when the screen fills slots directly. The assignment is preserved as authored metadata; a renderer that cannot apply a scoped template must report that limitation instead of falling back to an unstructured screen.
 
 ## See also
 

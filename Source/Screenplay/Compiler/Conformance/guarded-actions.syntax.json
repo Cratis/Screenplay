@@ -118,6 +118,8 @@
                       "navigate": {
                         "kind": "ScreenNavigateSyntax",
                         "by": "planId",
+                        "parameters": [],
+                        "route": null,
                         "screen": "List"
                       },
                       "otherwise": {

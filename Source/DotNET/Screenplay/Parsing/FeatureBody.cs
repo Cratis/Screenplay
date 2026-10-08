@@ -28,6 +28,7 @@ internal sealed class FeatureBody(string name)
     readonly List<UsesBehaviorSyntax> _usedBehaviors = [];
     readonly List<FileImportSyntax> _fileImports = [];
     readonly List<DependsOnSyntax> _dependsOn = [];
+    readonly List<TemplateAssignmentSyntax> _templates = [];
     string? _description;
     string? _documentation;
     AuthorizeSyntax? _authorize;
@@ -79,6 +80,13 @@ internal sealed class FeatureBody(string name)
             case "contribute":
                 _contributions.Add(ContributionParser.Parse(context, line));
                 return true;
+            case "template":
+                if (TemplateAssignmentParser.Parse(context, line) is { } template)
+                {
+                    _templates.Add(template);
+                }
+
+                return true;
             default:
                 return false;
         }
@@ -101,6 +109,7 @@ internal sealed class FeatureBody(string name)
             Authorize = _authorize,
             DirectiveLocations = _directiveLocations,
             FileImports = _fileImports,
-            IsPlacement = isPlacement
+            IsPlacement = isPlacement,
+            Templates = _templates
         };
 }

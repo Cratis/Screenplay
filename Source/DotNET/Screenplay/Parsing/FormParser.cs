@@ -36,6 +36,8 @@ internal static partial class FormParser
         var behaviors = new List<BehaviorSyntax>();
         var usedBehaviors = new List<UsesBehaviorSyntax>();
         ScreenNavigateSyntax? onSubmit = null;
+        var columns = new List<FormColumnSyntax>();
+        var columnMode = FormColumnMode.Unspecified;
         var hasPopulate = false;
         var hasSubmit = false;
 
@@ -58,6 +60,13 @@ internal static partial class FormParser
                     if (ParseField(context, line) is { } field)
                     {
                         fields.Add(field);
+                    }
+
+                    break;
+                case "columns":
+                    if (ParseColumns(context, line, columns) is { } mode)
+                    {
+                        columnMode = mode;
                     }
 
                     break;
@@ -93,7 +102,9 @@ internal static partial class FormParser
         return new(name, forCommand, populate, fields, onSubmit, header.Location)
         {
             Behaviors = behaviors,
-            UsedBehaviors = usedBehaviors
+            UsedBehaviors = usedBehaviors,
+            ColumnMode = columnMode,
+            Columns = columns
         };
     }
 
@@ -130,6 +141,42 @@ internal static partial class FormParser
         var composeUsing = match.Groups[3].Success ? match.Groups[3].Value : null;
         var label = match.Groups[4].Success || match.Groups[5].Success ? OperandText(match, 4) : null;
         return new(match.Groups[1].Value, label, from, composeUsing, line.Location);
+    }
+
+    static FormColumnMode? ParseColumns(ParserContext context, SourceLine line, List<FormColumnSyntax> columns)
+    {
+        if (ColumnsAutoRegex().IsMatch(line.Content))
+        {
+            if (context.TryPeekChild(line.Indent, out _))
+            {
+                context.Error(DiagnosticCodes.UnknownFormDirective, "'columns auto' cannot have a body - use 'columns manual' when authoring columns", line.Location);
+                context.SkipBlock(line.Indent);
+            }
+
+            return FormColumnMode.Auto;
+        }
+
+        if (!ColumnsManualRegex().IsMatch(line.Content))
+        {
+            context.Error(DiagnosticCodes.UnknownFormDirective, $"Invalid columns declaration '{line.Content}' - expected 'columns auto' or 'columns manual'", line.Location);
+            context.SkipBlock(line.Indent);
+            return null;
+        }
+
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            var column = ColumnRegex().Match(child.Content);
+            if (!column.Success)
+            {
+                context.Error(DiagnosticCodes.UnknownFormDirective, $"Invalid form column '{child.Content}' - expected 'column <property> [label \"...\"]'", child.Location);
+                continue;
+            }
+
+            columns.Add(new(column.Groups[1].Value, column.Groups[2].Success || column.Groups[3].Success ? OperandText(column, 2) : null, child.Location));
+        }
+
+        return FormColumnMode.Manual;
     }
 
     static ScreenNavigateSyntax? ParseSubmit(ParserContext context, SourceLine line)
@@ -174,6 +221,15 @@ internal static partial class FormParser
 
     [GeneratedRegex(@"^on\s+submit\s+(navigate\s+to\s+.+)$", RegexOptions.None, 1000)]
     private static partial Regex SubmitRegex();
+
+    [GeneratedRegex(@"^columns\s+auto$", RegexOptions.None, 1000)]
+    private static partial Regex ColumnsAutoRegex();
+
+    [GeneratedRegex(@"^columns\s+manual$", RegexOptions.None, 1000)]
+    private static partial Regex ColumnsManualRegex();
+
+    [GeneratedRegex("^column\\s+([\\w.]+)(?:\\s+label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*)))?$", RegexOptions.None, 1000)]
+    private static partial Regex ColumnRegex();
 
     [GeneratedRegex(@"^navigate\s+to\s+(\w+(?:\.\w+)*)(?:\s+by\s+(\w+))?$", RegexOptions.None, 1000)]
     private static partial Regex NavigateRegex();
