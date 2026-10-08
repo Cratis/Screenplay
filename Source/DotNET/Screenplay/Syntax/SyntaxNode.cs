@@ -35,4 +35,9 @@ public abstract record SyntaxNode(SourceLocation Location)
     /// </summary>
     [SourceSpanMetadata]
     public AutoMapMode? ParsedAutoMapMode { get; init; }
+
+    // Transient, print-only parent-relative import position on a layout snapshot. Never carry this into
+    // semantic comparisons or persisted syntax: record equality includes it. Keep the physical Location
+    // unchanged: comments and directives still anchor to their original source lines.
+    internal SourceLocation? PrintingLocation { get; init; }
 }

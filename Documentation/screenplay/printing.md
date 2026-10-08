@@ -96,6 +96,12 @@ a file does:
   lines keep their own lines: directly above the retained line for `file`, `by`, `handler` and
   projection `parent`, and at the start of the declaration body otherwise. They are never merged
   into the declaration's header comment.
+  When modules or features repeat an identical `authorize` gate across files, merging
+  keeps one requirement and the duplicate-gate warning. Printing and collapsing the
+  folder to a single document retain every gate's comments, including repeated text.
+  When gates are merged across files, the comments on every `authorize` line of every
+  gate, including trailing comments, become separate lines directly above the merged
+  gate: in file-path order, then source order within each file.
   Repeated projection `automap` settings warn (`PLAY0452`):
   the last setting wins, but printing keeps each authored line and its comments until
   a typed edit changes the mode. Then only the edited setting prints: its comment
@@ -109,15 +115,20 @@ a file does:
   then attached behaviors: a comment moves with the member it annotates when that
   canonical order differs from the authored order. The printer uses canonical two-space
   indentation. A tree created entirely from typed JSON has no authored comments to keep.
-- **Order across files cannot be recovered.** Parsed members of a slice, feature or
-  module keep their authored order when they share a source file. A folder merge may
-  combine members from different files; their line numbers cannot be compared, so
-  the printer uses canonical kind order for that owner. Syntax created without source
+- **Order across files needs import evidence.** Parsed members of a slice, feature or
+  module keep their authored order when they share a source file. MCP `expand-layout`
+  also retains a child's position at its parent's import, so collapsing an import-based
+  layout keeps contributions, templates and other members in their authored relative
+  order. Without that evidence, a folder merge combines members whose line numbers
+  cannot be compared, and the printer uses canonical kind order for that owner. A first-line
+  declaration from another file follows the new-member insertion rule instead of displacing
+  the owner's comparable members. Syntax created without source
   positions (including typed JSON) also uses canonical kind order. A new member added
   to a parsed owner prints after the last member of its kind, or before the first
   member of a later canonical kind when none exists. Features, slices and file imports
   inserted or moved by typed edits print before their next located sibling when one
-  exists, so timeline moves and pins retain their requested position. Workspace AST replacements
+  exists, so timeline moves and pins retain their requested position, including the first
+  position of an imported file whose first declaration is on its first line. Workspace AST replacements
   inherit their original position, even though typed JSON omits source positions.
 - **Blank lines are normalized.** The printer separates members with its own blank lines.
 
@@ -125,7 +136,11 @@ Round-tripping preserves comments and meaning, not blank lines or every authored
 space. Use [authoring workspace](ast-authoring.md) `PreserveTrivia` when even the
 unchanged source bytes must survive. Folder expansion keeps comments with their
 declarations, including module header comments in the module file; each slice
-file retains its within-slice authored order.
+file retains its within-slice authored order. Leading and trailing header comments
+stay on the physical module, feature or slice declaration, including the first line
+of an imported file; synthetic placement wrappers do not take ownership of them.
+End comments also belong to the enclosing physical declaration rather than a placement wrapper;
+comments with no enclosing physical declaration stay on the application.
 
 ## Generating from a model
 

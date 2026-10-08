@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
 
@@ -41,7 +42,9 @@ public class when_compiling_repeated_reads_with_aliases : given.a_compiler
 
     void Because() => _result = _compiler.Compile(Source);
 
-    [Fact] void should_compile_without_diagnostics() => _result.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_report_only_the_informational_read_dependency() => _result.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldEqual([DiagnosticCodes.EventFromLaterSlice]);
+    [Fact] void should_report_the_first_read_reference() => _result.Diagnostics.Single().Location.Line.ShouldEqual(7);
+    [Fact] void should_keep_the_read_dependency_informational() => _result.Diagnostics.Single().Severity.ShouldEqual(DiagnosticSeverity.Information);
     [Fact] void should_keep_both_instances_of_the_view() => Reads.Select(read => read.ReadModel).ShouldEqual("Account", "Account");
     [Fact] void should_keep_distinct_aliases() => Reads.Select(read => read.Alias).ShouldEqual("source", "destination");
     [Fact] void should_keep_each_key() => Reads.Select(read => read.By).ShouldEqual("sourceId", "destinationId");

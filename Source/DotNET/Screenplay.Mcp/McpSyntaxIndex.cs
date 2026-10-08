@@ -208,7 +208,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
             var targets = productions.ResolveReference(reference.Name, reference.Scope);
             _references[index] = reference with { Kinds = targets is [var target] ? [target.Kind] : ["Event", "Operation"] };
         }
-        _queries = new(_declarations, _references, productions);
+        _queries = new(_declarations, _references, productions, application?.Imports.Select(import => import.Name) ?? []);
     }
 
     internal McpDeclaration[] Resolve(McpReference reference) => _queries.Resolve(reference);
