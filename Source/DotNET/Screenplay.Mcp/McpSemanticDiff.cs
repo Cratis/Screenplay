@@ -9,6 +9,7 @@ using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Serialization;
+using Cratis.Screenplay.Syntax.Specifications;
 using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
@@ -78,8 +79,8 @@ static class McpSemanticDiff
             {
                 Events(id, previous!, next!, [.. oldNodes.OfType<EventSyntax>()], [.. newNodes.OfType<EventSyntax>()], changes, changedIds);
             }
-            var left = Members(oldNodes);
-            var right = Members(newNodes);
+            var left = before.EffectiveMembers(oldNodes);
+            var right = after.EffectiveMembers(newNodes);
             foreach (var member in left.Keys.Union(right.Keys).Where(member => left.GetValueOrDefault(member) != right.GetValueOrDefault(member)).Order(StringComparer.Ordinal))
             {
                 var outcome = address.Kind == SemanticKind.Specification && member.StartsWith("then", StringComparison.Ordinal);
@@ -107,8 +108,8 @@ static class McpSemanticDiff
             {
                 Events(null, previous!, next!, [.. old.Select(value => value.Syntax).OfType<EventSyntax>()], [.. current.Select(value => value.Syntax).OfType<EventSyntax>()], changes, changedIds);
             }
-            var left = old is null ? [] : Members(old.Select(value => value.Syntax));
-            var right = current is null ? [] : Members(current.Select(value => value.Syntax));
+            var left = old is null ? [] : before.EffectiveMembers(old.Select(value => value.Syntax));
+            var right = current is null ? [] : after.EffectiveMembers(current.Select(value => value.Syntax));
             foreach (var member in left.Keys.Union(right.Keys).Where(member => left.GetValueOrDefault(member) != right.GetValueOrDefault(member)).Order(StringComparer.Ordinal))
             {
                 var outcome = kind == "Specification" && member.StartsWith("then", StringComparison.Ordinal);
@@ -313,6 +314,8 @@ static class McpSemanticDiff
         readonly bool _sourceComplete;
         readonly Dictionary<string, WorkspaceSyntaxEntry[]> _physical;
         readonly Dictionary<(string Kind, string Address), McpDeclaration[]> _indexed;
+        readonly Dictionary<(string Name, SourceLocation Location), SpecificationSyntax> _effectiveSpecifications;
+        readonly bool _exampleExpansionFailed;
 
         internal Snapshot(ScreenplayWorkspace workspace)
         {
@@ -325,6 +328,10 @@ static class McpSemanticDiff
             var roots = _analysis.Source.Compilation.Success && _analysis.Source.Compilation.Value is { } application
                 ? [application]
                 : _analysis.Syntax.Entries.Where(entry => entry.Parent is null).Select(entry => entry.Node).OfType<ApplicationSyntax>().ToArray();
+            var expanded = roots.Select(SpecificationExamples.Expand).ToArray();
+            _effectiveSpecifications = expanded.SelectMany(value => value.Specifications).GroupBy(value => (value.Authored.Name, value.Authored.Location))
+                .Where(group => group.Count() == 1).ToDictionary(group => group.Key, group => group.Single().Effective);
+            _exampleExpansionFailed = expanded.SelectMany(value => value.Diagnostics).Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
             _indexed[("Application", string.Empty)] = [.. roots.Select(root => new McpDeclaration("Application", string.Empty, [], root.Location, null, null, root))];
             Nodes = Assignments.ToDictionary(pair => pair.Key, pair => FindNodes(pair.Value), StringComparer.Ordinal);
             Unassigned = _indexed.Where(pair => pair.Value.Length > 0 && !assignedKeys.Contains(pair.Key)).ToDictionary(pair => $"{pair.Key.Kind}:{pair.Key.Address}", pair => pair.Value, StringComparer.Ordinal);
@@ -343,8 +350,13 @@ static class McpSemanticDiff
             return [.. Workspace.Documents.Where(document => paths.Contains(document.Path.Value)).Select(document => new DocumentLocation(document.Id.ToString(), document.Path.Value)).OrderBy(document => document.DocumentId, StringComparer.Ordinal).ThenBy(document => document.Path, StringComparer.Ordinal)];
         }
 
+        internal Dictionary<string, string> EffectiveMembers(IEnumerable<SyntaxNode> nodes) => Members(nodes.Select(node => node is SpecificationSyntax specification
+            ? _effectiveSpecifications.GetValueOrDefault((specification.Name, specification.Location)) ?? node
+            : node));
+
         internal IEnumerable<string> Reasons(string section)
         {
+            if (_exampleExpansionFailed && (section == "members" || section == "specifications")) yield return "Typed example resolution is incomplete; effective specification steps cannot be compared.";
             if (!_sourceComplete) yield return "Source syntax or import placement is incomplete; missing declarations/members are not evidence of no change.";
             var unavailable = Assignments.Values.Count(assignment => !Comparable(assignment.Id.ToString()) && (section == "members" || section == "declarations" || (section == "events" && assignment.Address.Kind == SemanticKind.EventContract) || (section == "specifications" && assignment.Address.Kind == SemanticKind.Specification)));
             if (unavailable > 0) yield return $"{unavailable} assigned semantic IDs have no unique comparable authored members; every catalog kind is included in this count.";
@@ -379,7 +391,7 @@ static class McpSemanticDiff
 
         internal bool ComparableAuthoring(string key) => Unassigned.TryGetValue(key, out var declarations) && declarations.All(declaration => !declaration.IsImplicit) && ComparableNodes([.. declarations.Select(declaration => declaration.Syntax)]);
 
-        static bool ComparableNodes(SyntaxNode[] nodes) => nodes.Length > 0 && (nodes.Length == 1 || nodes.All(node => node is EventSyntax)) &&
+        bool ComparableNodes(SyntaxNode[] nodes) => nodes.Length > 0 && !(_exampleExpansionFailed && nodes.Any(node => node is SpecificationSyntax)) && (nodes.Length == 1 || nodes.All(node => node is EventSyntax)) &&
             (!nodes.Any(node => node is EventSyntax) || (nodes.All(node => node is EventSyntax) && nodes.OfType<EventSyntax>().Select(node => node.Generation).Distinct().Count() == nodes.Length && nodes.OfType<EventSyntax>().All(node => node.Properties.Select(property => property.Name).Distinct(StringComparer.Ordinal).Count() == node.Properties.Count())));
 
         SyntaxNode[] FindNodes(SemanticIdentityAssignment assignment)
