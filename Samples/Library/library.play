@@ -44,6 +44,21 @@ module Lending
     body
     actions
 
+  form AddBookInput for AddBook
+    field bookId
+    field isbn
+    field title
+    field author
+
+  form BorrowBookInput for BorrowBook
+    field bookId
+    field memberId
+    field dueDate
+
+  form ReturnBookInput for ReturnBook
+    field bookId
+    field returnedOn
+
   feature Catalog
     description "The books the library owns"
 

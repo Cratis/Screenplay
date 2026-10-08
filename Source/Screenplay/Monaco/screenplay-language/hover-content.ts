@@ -1,8 +1,10 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { refusalContext } from './refusal-context';
 import { namedRuleContext } from './named-rule-context';
 import { eventSourceHover } from './event-source-authoring';
+import { exampleHover } from './example-authoring';
 import { operationHover } from './operation-authoring';
 import { DocumentSymbols } from './symbols';
 import { responseAnalysis, responseAvailability } from './response-analysis';
@@ -37,6 +39,8 @@ export function hoverContent(
         else if (line[index] === '`' && !inString) inTemplate = !inTemplate;
     }
     if (inString || inTemplate) return null;
+    const fixtureHover = exampleHover(lines, lineIndex, startColumn, endColumn, application);
+    if (fixtureHover) return fixtureHover;
     const sourceHover = eventSourceHover(lines, lineIndex, startColumn, endColumn, application);
     if (sourceHover) return sourceHover;
     const operation = operationHover(lines, lineIndex, startColumn, endColumn, application);
@@ -54,6 +58,12 @@ export function hoverContent(
     if (before === '$' || before === '.') {
         const variable = line.substring(0, endColumn - 1).match(/\$[\w.]*$/)?.[0];
         if (variable) {
+            if (variable.startsWith('$refusal')) {
+                const branch = refusalContext(lines, lineIndex, indentOf(line));
+                const member = variable.substring('$refusal.'.length);
+                const descriptions: Record<string, string> = { reason: 'Refusal kind as a String: validation, constraint or authorization.', message: 'Rejection details verbatim, including unresolved $strings keys.', constraint: 'Violated constraint name as a String, only in a by constraint branch.' };
+                return branch !== undefined && descriptions[member] !== undefined ? `**${variable}** — ${descriptions[member]} Syntax-only, not yet executable (PLAY0268).` : null;
+            }
             const doc =
                 contextVariableDocs[variable] ??
                 (variable.startsWith('$env') ? contextVariableDocs['$env'] : undefined);

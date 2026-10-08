@@ -58,6 +58,11 @@ form AssignConsultantForm for AssignConsultant
   field hourlyRate   label $strings.engagements.fields.rate
   on submit navigate to EngagementPortfolioScreen
 
+form CloseEngagementForm for CloseEngagement
+  populate via query EngagementById by engagementId
+  field reason label "Reason for closing"
+  on submit navigate to EngagementPortfolioScreen
+
 // The module's entry in the shell's navigation slot.
 contribute to Navigation
   navigate to EngagementPortfolioScreen

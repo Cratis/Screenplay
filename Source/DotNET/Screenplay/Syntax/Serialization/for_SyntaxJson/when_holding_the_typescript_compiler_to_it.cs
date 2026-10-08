@@ -125,6 +125,7 @@ public class when_holding_the_typescript_compiler_to_it : Specification
                         "CodeValidateSyntax" => ["code"],
                         "QueryParameterSyntax" => ["source"],
                         "ReactionSyntax" => ["where"],
+                        "InvokesSyntax" when actual.TryGetProperty("onRefused", out _) => ["mappings", "onRefused"],
                         "InvokesSyntax" => ["mappings"],
                         "FromSyntax" => ["key", "parentKey"],
                         "EventSpecSyntax" or "ProjectionEntersOnSyntax" or "RemoveViaJoinSyntax" => ["key"],
@@ -139,7 +140,7 @@ public class when_holding_the_typescript_compiler_to_it : Specification
                         "EventSourceIdExpressionSyntax" or "EventContextExpressionSyntax" or "CausedByExpressionSyntax" or
                         "CaptureMapEntrySyntax" or "CaptureTranslationSyntax" or "CaptureSplitSyntax" or "CaptureWhenSyntax" or
                         "PolicySyntax" or "AuthenticatedConditionSyntax" or "RoleConditionSyntax" or "ClaimConditionSyntax" or
-                        "LogicalPolicyConditionSyntax" or "SpecificationAbsentReadModelSyntax" or "SpecificationQuerySyntax" or "SeedSyntax" or "SeedGroupSyntax" or "SeedEventSyntax" or "RequirementSyntax" or
+                        "LogicalPolicyConditionSyntax" or "NotPolicyConditionSyntax" or "SpecificationAbsentReadModelSyntax" or "SpecificationQuerySyntax" or "SeedSyntax" or "SeedGroupSyntax" or "SeedEventSyntax" or "RequirementSyntax" or
                         "ComparisonConditionSyntax" or "LogicalConditionSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "SystemSyntax" or "OperationSyntax" or "OperationPhaseSyntax" or "SpecificationOperationFailureSyntax" or "SpecificationOperationSyntax" or "SpecificationCompensatedSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "PropertySyntax" => ["isGenerated"],
@@ -150,6 +151,8 @@ public class when_holding_the_typescript_compiler_to_it : Specification
                         "ValidationRuleSyntax" when !_exact && actual.GetProperty("implementation").ValueKind == JsonValueKind.Null => ["kind", "message", "property", "rule", "severity", "value"],
                         "ValidationRuleSyntax" or "HandlerSyntax" or "ImplementationSyntax" or "ImplementationHintSyntax" or "FileReferenceSyntax" or "CodeBlockSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         "SpecificationCommandSyntax" => ["generatedValues"],
+                        "InvocationRefusalSyntax" or "RefusalExpressionSyntax" or "SpecificationRedeliverySyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
+                        "SpecificationSyntax" when actual.TryGetProperty("whenRedelivered", out _) => ["whenRedelivered"],
                         "SpecificationSyntax" => ["thenReturns", "thenDenied", "givenOperationFailures", "thenOperations", "thenCompensated", "thenAbsentReadModels", "thenQueries"],
                         "ScalarCommandResponseSyntax" or "RecordCommandResponseSyntax" or "ResponseFieldSyntax" or "PropertyResponseSourceSyntax" or "ScalarSpecificationReturnSyntax" or "RecordSpecificationReturnSyntax" => [.. actual.EnumerateObject().Select(member => member.Name)],
                         _ => []

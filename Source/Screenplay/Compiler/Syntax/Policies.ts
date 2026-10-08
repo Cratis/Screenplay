@@ -19,7 +19,11 @@ export interface LogicalPolicyConditionSyntax extends SyntaxNode {
     readonly operator: 'And' | 'Or';
     readonly right: PolicyConditionSyntax;
 }
-export type PolicyConditionSyntax = AuthenticatedConditionSyntax | RoleConditionSyntax | ClaimConditionSyntax | LogicalPolicyConditionSyntax;
+export interface NotPolicyConditionSyntax extends SyntaxNode {
+    readonly kind: 'NotPolicyConditionSyntax';
+    readonly operand: PolicyConditionSyntax;
+}
+export type PolicyConditionSyntax = AuthenticatedConditionSyntax | RoleConditionSyntax | ClaimConditionSyntax | LogicalPolicyConditionSyntax | NotPolicyConditionSyntax;
 export interface PolicySyntax extends SyntaxNode {
     readonly kind: 'PolicySyntax';
     readonly name: string;

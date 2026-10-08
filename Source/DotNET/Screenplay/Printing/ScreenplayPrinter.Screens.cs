@@ -39,6 +39,9 @@ public partial class ScreenplayPrinter
             case ScreenActionSyntax action:
                 WriteScreenAction(writer, action);
                 break;
+            case ScreenGuardedActionSyntax guarded:
+                WriteScreenGuardedAction(writer, guarded);
+                break;
             case ScreenNavigateSyntax navigate:
                 writer.Line(WriteScreenNavigate(navigate));
                 break;
