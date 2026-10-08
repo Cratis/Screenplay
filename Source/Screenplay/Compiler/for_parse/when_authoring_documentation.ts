@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, it } from 'vitest';
 import { parse } from '../ScreenplayCompiler';
 import { mergeDocuments } from '../Files/PlayFolderMerge';
 
@@ -12,20 +12,20 @@ const documentation = (text: string) => `  documentation\n    \`\`\`markdown\n  
 describe('when authoring documentation', () => {
     it('should retain metadata on every supported owner and typed documentation properties', () => {
         const result = parse(source);
-        expect(result.diagnostics).toEqual([]);
+        result.diagnostics.should.deep.equal([]);
         const module = result.value.modules[0];
         const feature = module.features[0];
         const slice = feature.slices[0];
-        expect(module.documentation).toContain('# Boundary');
-        expect(feature.documentation).toContain('drafts');
-        expect(slice.documentation).toContain('## Assumption');
-        expect(slice.commands[0].documentation).toContain('delivery');
-        expect(slice.readModels[0].documentation).toContain('delivery');
-        expect(slice.reactions[0].documentation).toContain('issuance');
-        expect(slice.specifications[0].description).toContain('Witnesses');
-        expect(slice.specifications[1].description).toContain('\n');
-        expect(slice.commands[0].properties.map(property => property.name)).toEqual(['documentation', 'invoiceId']);
-        expect(slice.readModels[0].properties.map(property => property.name)).toEqual(['documentation']);
+        module.documentation!.should.contain('# Boundary');
+        feature.documentation!.should.contain('drafts');
+        slice.documentation!.should.contain('## Assumption');
+        slice.commands[0].documentation!.should.contain('delivery');
+        slice.readModels[0].documentation!.should.contain('delivery');
+        slice.reactions[0].documentation!.should.contain('issuance');
+        slice.specifications[0].description!.should.contain('Witnesses');
+        slice.specifications[1].description!.should.contain('\n');
+        slice.commands[0].properties.map(property => property.name).should.deep.equal(['documentation', 'invoiceId']);
+        slice.readModels[0].properties.map(property => property.name).should.deep.equal(['documentation']);
     });
 
     it('should keep the first documentation while warning only on disagreement', () => {
@@ -34,8 +34,8 @@ describe('when authoring documentation', () => {
             parse(`module M\n${documentation('First')}`, 'b.play'),
             parse(`module M\n${documentation('Other')}`, 'c.play'),
         ]);
-        expect(result.value.modules[0].documentation).toBe('First');
-        expect(result.diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PLAY0559']);
-        expect(result.diagnostics[0].location.path).toBe('c.play');
+        result.value.modules[0].documentation!.should.equal('First');
+        result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0559']);
+        result.diagnostics[0].location.path!.should.equal('c.play');
     });
 });
