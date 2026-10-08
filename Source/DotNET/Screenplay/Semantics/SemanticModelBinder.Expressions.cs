@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Globalization;
+using System.Numerics;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
@@ -47,8 +48,8 @@ public sealed partial class SemanticModelBinder
         };
 
         SemanticValue BindRouteLiteral(LiteralExpressionSyntax expression) => expression.Value is double value &&
-            double.IsFinite(value) && Math.Truncate(value) == value && Math.Abs(value) <= 9007199254740991d
-                ? SemanticValue.Number(new decimal((long)value))
+            double.IsFinite(value) && Math.Truncate(value) == value
+                ? SemanticValue.Number((decimal)new BigInteger(value))
                 : BindLiteral(expression);
 
         SemanticExpression? UnsupportedExpression(ExpressionSyntax expression, string description)
