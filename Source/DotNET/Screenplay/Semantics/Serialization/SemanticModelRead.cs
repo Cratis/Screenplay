@@ -21,6 +21,7 @@ internal static partial class SemanticModelRead
         ImmutableArray<SemanticModule> modules = default;
         ImmutableArray<SemanticPolicy> policies = [];
         ImmutableArray<SemanticApplicationTrigger> triggers = [];
+        ImmutableArray<SemanticEventSource> eventSources = [];
         while (NextProperty(ref reader, seen, "application") is { } property)
         {
             switch (property)
@@ -32,12 +33,16 @@ internal static partial class SemanticModelRead
                 case "modules": modules = Array(ref reader, (ref Utf8JsonReader item) => Module(ref item, schemaVersion), property); break;
                 case "policies": policies = Array(ref reader, Policy, property); break;
                 case "triggers" when schemaVersion >= 6: triggers = Array(ref reader, Trigger, property); break;
+                case "eventSources" when schemaVersion >= EventRoutesVersion.Language.Major:
+                    eventSources = Array(ref reader, EventSourceDeclaration, property);
+                    Required(!eventSources.IsEmpty, "event sources");
+                    break;
                 default: throw Unknown(property, "application");
             }
         }
 
         Required(id.IsSet && name is not null && !concepts.IsDefault && !types.IsDefault && !modules.IsDefault, "application");
-        return new(id, name!, concepts, types, modules) { Policies = policies, Triggers = triggers };
+        return new(id, name!, concepts, types, modules) { Policies = policies, Triggers = triggers, EventSources = eventSources };
     }
 
     internal static SemanticConcept Concept(ref Utf8JsonReader reader)
@@ -390,6 +395,7 @@ internal static partial class SemanticModelRead
         SemanticStateChangeDestination? destination = null;
         SemanticAuthorization? authorization = null;
         SemanticCommandResponse? response = null;
+        SemanticCommandRoute? route = null;
         while (NextProperty(ref reader, seen, "command") is { } property)
         {
             switch (property)
@@ -404,12 +410,13 @@ internal static partial class SemanticModelRead
                 case "authorization": RequiredToken(ref reader, JsonTokenType.StartObject, property); authorization = Authorization(ref reader); break;
                 case "destination": RequiredToken(ref reader, JsonTokenType.StartObject, property); destination = StateChangeDestination(ref reader); break;
                 case "response" when schemaVersion >= 7: RequiredToken(ref reader, JsonTokenType.StartObject, property); response = Response(ref reader); break;
+                case "route" when schemaVersion >= EventRoutesVersion.Language.Major: RequiredToken(ref reader, JsonTokenType.StartObject, property); route = CommandRoute(ref reader); break;
                 default: throw Unknown(property, "command");
             }
         }
 
         Required(id.IsSet && name is not null && !properties.IsDefault && !validations.IsDefault && !produces.IsDefault, "command");
-        return new(id, name!, properties, validations, produces) { CodeValidations = codeValidations, Requirements = requirements, Destination = destination, Authorization = authorization, Response = response };
+        return new(id, name!, properties, validations, produces) { CodeValidations = codeValidations, Requirements = requirements, Destination = destination, Authorization = authorization, Response = response, Route = route };
     }
 
     internal static SemanticCodeValidation CodeValidation(ref Utf8JsonReader reader)
@@ -637,13 +644,13 @@ internal static partial class SemanticModelRead
             {
                 case "id": id = SemanticId.Parse(String(ref reader, property)); break;
                 case "name": name = String(ref reader, property); break;
-                case "givenEvents": givenEvents = Array(ref reader, SpecificationEvent, property); break;
+                case "givenEvents": givenEvents = Array(ref reader, (ref Utf8JsonReader item) => SpecificationEvent(ref item, schemaVersion, false), property); break;
                 case "givenReadModels": givenReadModels = Array(ref reader, SpecificationReadModel, property); break;
                 case "givenCaller": RequiredToken(ref reader, JsonTokenType.StartObject, property); caller = Caller(ref reader); break;
                 case "when": RequiredToken(ref reader, JsonTokenType.StartObject, property); when = SpecificationCommand(ref reader, schemaVersion); break;
-                case "whenAppended": RequiredToken(ref reader, JsonTokenType.StartObject, property); whenAppended = SpecificationAppend(ref reader); break;
+                case "whenAppended": RequiredToken(ref reader, JsonTokenType.StartObject, property); whenAppended = SpecificationAppend(ref reader, schemaVersion); break;
                 case "thenEventsInAnyOrder": thenEventsInAnyOrder = Boolean(ref reader, property); if (!thenEventsInAnyOrder) throw Malformed("specification", "thenEventsInAnyOrder may only be true when present"); break;
-                case "thenEvents": thenEvents = Array(ref reader, SpecificationEvent, property); break;
+                case "thenEvents": thenEvents = Array(ref reader, (ref Utf8JsonReader item) => SpecificationEvent(ref item, schemaVersion, true), property); break;
                 case "thenReadModels": thenReadModels = Array(ref reader, SpecificationReadModel, property); break;
                 case "thenAbsentReadModels" when schemaVersion >= 5: thenAbsentReadModels = Array(ref reader, SpecificationAbsentReadModel, property); break;
                 case "thenQueries": thenQueries = Array(ref reader, SpecificationQuery, property); break;
@@ -675,19 +682,21 @@ internal static partial class SemanticModelRead
         };
     }
 
-    internal static SemanticSpecificationAppend SpecificationAppend(ref Utf8JsonReader reader)
+    internal static SemanticSpecificationAppend SpecificationAppend(ref Utf8JsonReader reader, uint schemaVersion)
     {
-        var value = SpecificationEvent(ref reader);
-        return new(value.EventContract, value.Values) { EventSource = value.EventSource };
+        var value = SpecificationEvent(ref reader, schemaVersion, false);
+        return new(value.EventContract, value.Values) { EventSource = value.EventSource, Route = value.Route };
     }
 
-    internal static SemanticSpecificationEvent SpecificationEvent(ref Utf8JsonReader reader)
+    internal static SemanticSpecificationEvent SpecificationEvent(ref Utf8JsonReader reader, uint schemaVersion, bool then)
     {
         Object(ref reader, "specification event");
         var seen = NewSeen();
         SemanticId eventContract = default;
         ImmutableArray<SemanticPropertyValue> values = default;
         SemanticEventSourceIdentity? eventSource = null;
+        SemanticFixtureRoute? route = null;
+        var unrouted = false;
         while (NextProperty(ref reader, seen, "specification event") is { } property)
         {
             switch (property)
@@ -695,12 +704,17 @@ internal static partial class SemanticModelRead
                 case "eventContract": eventContract = SemanticId.Parse(String(ref reader, property)); break;
                 case "values": values = Array(ref reader, PropertyValue, property); break;
                 case "eventSource": RequiredToken(ref reader, JsonTokenType.StartObject, property); eventSource = EventSource(ref reader); break;
+                case "route" when schemaVersion >= EventRoutesVersion.Language.Major: RequiredToken(ref reader, JsonTokenType.StartObject, property); route = FixtureRoute(ref reader); break;
+                case "unrouted" when then && schemaVersion >= EventRoutesVersion.Language.Major:
+                    unrouted = Boolean(ref reader, property);
+                    Required(unrouted, "unrouted assertion");
+                    break;
                 default: throw Unknown(property, "specification event");
             }
         }
 
         Required(eventContract.IsSet && !values.IsDefault, "specification event");
-        return new(eventContract, values) { EventSource = eventSource };
+        return new(eventContract, values) { EventSource = eventSource, Route = route, Unrouted = unrouted };
     }
 
     internal static SemanticSpecificationCommand SpecificationCommand(ref Utf8JsonReader reader, uint schemaVersion)
