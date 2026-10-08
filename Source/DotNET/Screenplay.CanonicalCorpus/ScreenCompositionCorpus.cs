@@ -86,15 +86,13 @@ public static class ScreenCompositionCorpus
                 {
                     Name = "screen-release-ui-positive",
                     Document = Document("screen-release-ui-positive", "positive/ScreenReleaseUi.play", $"{Prefix}.positive.ScreenReleaseUi.play.txt"),
-                    Requires = "Screenplay PR #553 typed screen authoring syntax",
-                    PendingReason = "Current origin/main has not merged the typed screen binding/component/toolbar/icon authoring parser yet.",
+                    Requires = "Screenplay v4.96.0 typed screen authoring syntax",
+                    PendingReason = null,
                     ExpectedSyntaxKinds =
                     [
-                        "TemplateAssignmentSyntax",
                         "ScreenComponentSyntax",
                         "ScreenToolbarSyntax",
-                        "ScreenComponentBindingSyntax",
-                        "FormColumnsSyntax",
+                        "UiBindingSyntax",
                         "UiProfileSyntax"
                     ]
                 }
@@ -206,8 +204,8 @@ public static class ScreenCompositionCorpus
                     "mcp-authoring",
                     "Screenplay MCP",
                     "screenplay-conformance mcp --vector screen-composition/v1 --source-case screen-release-ui-positive",
-                    "Screenplay >= PR553 release",
-                    "Typed syntax branch is still open.",
+                    "Screenplay >=4.96.0",
+                    null,
                     [
                         Assertion("mcp.mcp-edit-component-binding", "passes", "true"),
                         Assertion("mcp.mcp-edit-dialog-action", "passes", "true")
@@ -313,7 +311,7 @@ public static class ScreenCompositionCorpus
         Assertions = assertions
     };
 
-    static CanonicalScreenHarnessExpectation Harness(string name, string host, string entryPoint, string requiredVersionVector, string pendingReason, ImmutableArray<CanonicalScreenAssertion> assertions) => new()
+    static CanonicalScreenHarnessExpectation Harness(string name, string host, string entryPoint, string requiredVersionVector, string? pendingReason, ImmutableArray<CanonicalScreenAssertion> assertions) => new()
     {
         Name = name,
         Host = host,

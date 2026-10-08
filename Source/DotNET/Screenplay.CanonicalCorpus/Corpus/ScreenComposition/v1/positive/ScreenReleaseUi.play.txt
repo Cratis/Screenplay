@@ -1,5 +1,7 @@
 theme WorkspaceTheme
+  compatible with core
   compatible with scene.web
+  compatible with Cratis.Components
 
 layout ApplicationShell
   category application
@@ -78,7 +80,7 @@ module Workspaces
       command CreateWorkItem
         workItemId WorkItemId identifier
         title String
-        priority Int32
+        priority Int
         produces WorkItemCreated
           for workItemId
           title = title
@@ -87,7 +89,7 @@ module Workspaces
 
       event WorkItemCreated
         title String
-        priority Int32
+        priority Int
         status WorkStatus
 
     slice StateChange RenameWorkItem
@@ -117,7 +119,7 @@ module Workspaces
       readmodel WorkItemSummary
         workItemId WorkItemId
         title String
-        priority Int32
+        priority Int
         status WorkStatus
 
       query AllWorkItems => WorkItemSummary[]
@@ -153,7 +155,7 @@ module Workspaces
       readmodel WorkItemDetails
         workItemId WorkItemId
         title String
-        priority Int32
+        priority Int
         status WorkStatus
 
       query GetWorkItem => WorkItemDetails optional
@@ -173,15 +175,15 @@ module Workspaces
           item deepLink navigate to WorkItemDetails
             parameter workItemId from data.workItemId
         component scene.web.DetailsPanel details
-          context from data
+          context from data workItemId
           property title from data.title
           property status from data.status
           icon file
           presentation route "work-items/{workItemId}"
           outlet actions
             component scene.web.CommandForm renameForm
-              context from command RenameWorkItem
-              property initialTitle from data.title preserve user
+              context from data workItemId
+              property initialTitle from data title null preserve
               exposes submittedWorkItem from data.workItemId
 
     slice StateView WorkItemDialog
@@ -189,9 +191,9 @@ module Workspaces
         template EditWorkItemDialog
           body
             component scene.web.CommandForm renameWorkItem
-              context from command RenameWorkItem
-              property workItemId from data.workItemId
-              property title from data.title preserve user
+              context from data workItemId
+              property workItemId from data workItemId
+              property title from data title null preserve
           actions
             toolbar dialogActions
               item submit action RenameWorkItem
