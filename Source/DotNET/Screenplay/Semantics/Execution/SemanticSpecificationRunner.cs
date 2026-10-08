@@ -68,8 +68,12 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return new(specification, false, unsupported, [details]);
         }
 
-        var run = Run(plan, specification);
-        if (run.Passed || !compilation.SpecificationOrigins.TryGetValue(specification, out var origin) ||
+        return EnrichFailures(compilation, Run(plan, specification));
+    }
+
+    internal static SemanticSpecificationRun EnrichFailures(SemanticCompilation compilation, SemanticSpecificationRun run)
+    {
+        if (run.Passed || !compilation.SpecificationOrigins.TryGetValue(run.Specification, out var origin) ||
             !origin.Steps.Any(step => step.Example is not null))
         {
             return run;

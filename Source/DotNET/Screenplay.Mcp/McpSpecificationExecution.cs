@@ -43,7 +43,7 @@ static class McpSpecificationExecution
                 return new McpSpecificationResult(assignment.Address, assignment.Id.ToString(), "unsupported", null, [], "Specification", string.Join("; ", admitted.Issues.Select(issue => issue.Details)));
             }
 
-            var run = runner.Run(plan, assignment.Id);
+            var run = SemanticSpecificationRunner.EnrichFailures(compilation, runner.Run(plan, assignment.Id));
             var unsupported = run.Execution as SemanticUnsupported;
             var outcome = unsupported is not null ? "unsupported" : Outcome(run.Passed, false);
             var failures = run.Failures.AsEnumerable();

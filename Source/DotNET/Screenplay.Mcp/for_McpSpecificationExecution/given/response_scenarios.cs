@@ -5,6 +5,20 @@ namespace Cratis.Screenplay.Mcp.for_McpSpecificationExecution.given;
 
 public static class response_scenarios
 {
+    public const string Example = """
+        module M
+          feature F
+            slice StateChange Scalar
+              command Echo
+                name String
+                returns name
+              example Greeting : Echo
+                name = "hello"
+              specification Wrong
+                when Greeting
+                then returns "different"
+        """;
+
     public const string Source = """
         module M
           feature F
