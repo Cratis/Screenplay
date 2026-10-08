@@ -41,8 +41,11 @@ The binder refuses all of them with PLAY0268 (`Semantics/SemanticModelBinder.Com
 
 **What is admitted.** One new ESM version, the "event routes" version, admits:
 - application-level event sources and their streams;
-- one command-level route with its stream id, scalar or composite;
-- 0031's specification routes.
+- one command-level route with its scalar stream id.
+
+**Two conditional parts.** 0031's specification routes and 0033's composite stream ids join the same version **if their evidence is ready at the claim** (see Delivery).
+- Every rule below for fixture routes, `unrouted`, `streamIdParts`, the composite encoder and the assignment matcher applies only to the parts that join.
+- A part that misses the claim stays refused with PLAY0268 and is admitted in a later version under this record's rules.
 
 **Which models select it.** A model selects this version only when it declares a source, routes a command or states a specification route. Every other model keeps its version, bytes, revision and outcomes.
 
@@ -67,7 +70,14 @@ The binder refuses all of them with PLAY0268 (`Semantics/SemanticModelBinder.Com
 - **Keyed stream:** carries exactly one of `streamId` or `streamIdParts`, matching the stream's shape. Composite parts are written in declaration order and cover every part exactly once.
 - **Unkeyed stream:** carries neither.
 
-**Specification fixtures.** A given, when-append or then fixture may carry `route` as its last member: `{ "source", "stream" }`, plus a literal `streamId` or literal `streamIdParts`.
+**Specification fixtures.** A given, when-append or then fixture may carry `route` as its last member. Literals use the existing semantic value object (`{ "kind": …, "value": … }`), as fixture `values` do:
+
+```json
+"route": { "source": "<source id>", "stream": "<stream id>", "streamId": { "kind": "string", "value": "2026-10" } }
+"route": { "source": "<source id>", "stream": "<stream id>", "streamIdParts": [{ "part": "projectId", "value": { "kind": "string", "value": "3fa85f64-…" } }, …] }
+```
+
+A command route's `streamId` and part `value` use the existing expression encoding (a property reference or a literal expression). A fact's route is shown below.
 - A `then` fixture may instead carry `"unrouted": true`, the ESM spelling of `no stream`. It is true-only, `then`-only, and omitted otherwise.
 - `route` and `unrouted` are mutually exclusive.
 - A fixture with neither asserts nothing about its route, as 0031 decides.
@@ -119,7 +129,9 @@ This direct-member rule is a choice of portable subset. It is not an Arc limit: 
 - Stage's conformance tests pin a command that is both unauthorized and carries an unformattable stream id. Authorization must win.
 
 *Failure.*
-- A run-time formatting failure is `Rejected(Contract)` for the failing command. Examples: empty text, an out-of-range integer, a non-NFC text value, a lone surrogate, a malformed composite.
+- **Existing contract failures stay where they are.** A non-NFC or ill-formed direct input value is already `Rejected(Contract)` at request type validation (0026's step 3, `SemanticEvaluator.cs:71-73`), before declarative rules. That precedence does not change.
+- **Formatting failures come later.** Failures only the formatter can detect are `Rejected(Contract)` at the route phase, after step 4, for the failing command. Examples: empty text, an integer outside the Double bound, a malformed composite.
+- **Facts carry the encoded id.** Example: `"route": { "sourceKind": "Project", "streamKind": "Ledger", "streamId": "3fa85f64-…|2026-10" }`.
 - The failing command allocates nothing, appends nothing and has no response.
 - Facts already accepted earlier in the cascade are kept, as 0026 defines for later failures.
 - An invalid **literal** is already refused by authoring diagnostics: PLAY0504 for routes, PLAY0549 for specifications. Binding adds PLAY0273 only where authoring cannot know the problem, such as a pin collision or a generated source.
@@ -132,14 +144,14 @@ This direct-member rule is a choice of portable subset. It is not an Arc limit: 
 **l. One formatter.**
 - `SemanticStreamIdFormatter` implements 0023's scalar rules and 0033's composite encoder and strict decoder.
 - A TypeScript twin in the compiler package uses the same rules.
-- Both are held to `Compiler/Conformance/stream-id-codec.json`. It holds 0033's vector list, the ±(2^53−1) bounds with adjacent values, and NFC refusals.
+- Both are held to `Compiler/Conformance/stream-id-codec.json`. The composite rules are exercised by vectors now; they are admitted for execution only when 0033's part joins. It holds 0033's vector list, the ±(2^53−1) bounds with adjacent values, and NFC refusals.
 - The authoring validators in both compilers switch to it.
 
 **m. Reference runner.**
 - Routed `given` and `when append` facts are placed with their route.
 - `then` compares the route when one is stated, and requires an unrouted fact when `unrouted` is stated.
 - **Any-order matching is version-gated.** At this version and later, `then events in any order` uses assignment (bipartite) matching, as 0031 requires. Below it, the greedy matcher stays, so the outcomes of released versions don't change.
-- **Event source typing follows 0031.** Routed fixtures are typed by the named source's identifier type, with 0031's single-producer fallback. That applies in the binder, the model validator, the strict reader and world establishment. It replaces deriving the type from event producers, which refuses history with no producer or a differently typed one.
+- **Event source typing follows 0031.** Routed fixtures are typed by the named source's identifier type, with 0031's fallback to a single unambiguous destination type across producers. That applies in the binder, the model validator, the strict reader and world establishment. It replaces deriving the type from event producers, which refuses history with no producer or a differently typed one.
 - Supplied fixture routes are validated against the declarations, and formatted canonically, before projections observe them.
 
 **n. Stored names and the unrouted triple.**
@@ -215,7 +227,7 @@ Until each consumer admits the version, it refuses it explicitly.
    - pinned sources and streams, and a source without an identifier type;
    - UUID-, text- and integer-keyed routes, with integers adjacent to both bounds;
    - a literal stream id, and a command with both `response` and `route`;
-   - given, when-append and then fixture routes, and `unrouted`.
+   - given, when-append and then fixture routes, and `unrouted` (if 0031's part joins).
 3. **Reference execution.**
    - routed facts;
    - a reaction-invoked routed command, and a reaction's direct production staying unrouted;
@@ -223,8 +235,10 @@ Until each consumer admits the version, it refuses it explicitly.
    - precedence against authorization, validation and requirements;
    - routed `given` history with no producer, and with a conflicting producer;
    - `then` route, stream-id and `unrouted` comparison;
-   - a composite `then` that differs in one part, and one that passes with a UUID in another case;
-   - an any-order case where greedy matching fails but an assignment exists, passing only at this version.
+   - a composite `then` that differs in one part, and one that passes with a UUID in another case (if 0033's part joins);
+   - an any-order case where greedy matching fails but an assignment exists, passing only at this version (if 0031's part joins).
+
+   Items marked "if … joins" are required only for a part that joins. A part that misses the claim needs a corpus vector showing it is still refused with PLAY0268.
 4. **Corpus.** Single-file, folder, reordered and relocated forms, with routes in outcomes. Rejection vectors for:
    - PLAY0268: paths and overrides;
    - PLAY0271;
@@ -264,7 +278,7 @@ The decider delegated this verdict to the orchestrating agent. The choices above
 - integers are lowered losslessly;
 - the `Default` source name is reserved.
 
-1. **Scope?** Sources, streams, command routes, specification routes and composite ids, in one version named by feature until the claim.
+1. **Scope?** Sources, streams and scalar command routes in one version, named by feature until the claim. Specification routes and composite ids join it if they're ready at the claim, and are admitted later under these rules if not.
 2. **#407 a–g?** As in the table: one stored-name member, catalog identity, report-only descriptions, refusing mismatched routed identifiers, no materialized defaults, 0031's spelling, Double bound with lossless lowering.
 3. **Mappings?** Direct, required, non-generated properties or literals. Paths are refused for now.
 4. **Phase?** After validation and requirements, before generation. Failure is atomic for the failing command.
