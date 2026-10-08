@@ -28,6 +28,6 @@ public class when_walking_an_appended_specification : Specification
 
     void Because() => _walker.VisitSpecification(_specification);
 
-    [Fact] void should_reach_every_node() => _walker.Nodes.Count.ShouldEqual(given.SyntaxNodes.Under(_specification).Count);
+    [Fact] void should_reach_every_node() => _walker.Nodes.Count.ShouldEqual(global::Cratis.Screenplay.given.SyntaxNodes.Under(_specification).Count);
     [Fact] void should_reach_the_appended_event() => _walker.Nodes.OfType<SpecificationEventSyntax>().Single().ShouldEqual(_specification.WhenAppended);
 }

@@ -55,7 +55,7 @@ public class and_it_declares_every_structural_kind : Specification
     {
         _document = new ScreenplayCompiler().Compile(Source).Value!;
         _walker = new();
-        _expected = given.SyntaxNodes.Under(_document);
+        _expected = global::Cratis.Screenplay.given.SyntaxNodes.Under(_document);
     }
 
     void Because() => _walker.VisitApplication(_document);
