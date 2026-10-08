@@ -6,7 +6,7 @@ import { DependencyKind } from './DependencyKind';
 
 export interface SliceReference {
     readonly name: string;
-    readonly targetKind: 'Event' | 'ReadModel' | 'Command' | 'Query' | 'Screen';
+    readonly targetKind: 'Event' | 'ReadModel' | 'Command' | 'Query' | 'Screen' | 'Reaction';
     readonly kind: DependencyKind;
     readonly role: string;
     readonly location: SourceLocation;

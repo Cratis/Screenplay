@@ -1,6 +1,21 @@
 {
   "cases": [
     {
+      "name": "guarded alternatives and otherwise satisfy a cross module declaration",
+      "files": {"application.play": "module A\n  depends on B\n  feature F\n    slice StateView V\n      screen Details\n        action \"Choose\"\n          when item.ready == true execute C\n          otherwise execute D\nmodule B\n  feature G\n    slice StateChange W\n      command C\n      command D"},
+      "diagnostics": [], "report": ["A|B|B|used", "A|A.F.V|B.G.W|asks|declared|B", "A|A.F.V|B.G.W|asks|declared|B"]
+    },
+    {
+      "name": "undeclared guarded alternatives and otherwise report their command owner",
+      "files": {"application.play": "module A\n  depends on Other\n  feature F\n    slice StateView V\n      screen Details\n        action \"Choose\"\n          when item.ready == true execute C\n          otherwise execute D\nmodule B\n  feature G\n    slice StateChange W\n      command C\n      command D\nmodule Other"},
+      "diagnostics": ["PLAY0552@application.play:1", "PLAY0553@application.play:2"], "report": ["A|Other|Other|unused", "A|A.F.V|B.G.W|asks|undeclared|", "A|A.F.V|B.G.W|asks|undeclared|"]
+    },
+    {
+      "name": "example backed specification steps do not satisfy declarations",
+      "files": {"application.play": "example Prior : B.G.W.E\nexample Input : B.G.W.C\nmodule A\n  depends on B\n  feature F\n    slice StateChange V\n      specification T\n        given Prior\n        when Input\n        then Prior\nmodule B\n  feature G\n    slice StateChange W\n      event E\n      command C"},
+      "diagnostics": ["PLAY0553@application.play:4"], "report": ["A|B|B|unused"]
+    },
+    {
       "name": "containers declaring nothing are not checked",
       "files": {"application.play": "module A\n  feature F\n    slice StateView V\n      projection P\n        from E\nmodule B\n  feature G\n    slice StateChange W\n      event E"},
       "diagnostics": [], "report": []

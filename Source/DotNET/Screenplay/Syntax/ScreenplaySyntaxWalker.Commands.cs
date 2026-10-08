@@ -256,6 +256,18 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitPropertyMapping(mapping);
         }
+
+        foreach (var refusal in syntax.OnRefused) VisitInvocationRefusal(refusal);
+    }
+
+    /// <summary>
+    /// Visits an invocation refusal branch and its event productions.
+    /// </summary>
+    /// <param name="syntax">The refusal branch.</param>
+    public virtual void VisitInvocationRefusal(InvocationRefusalSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var produced in syntax.Produces) VisitProduces(produced);
     }
 
     /// <summary>

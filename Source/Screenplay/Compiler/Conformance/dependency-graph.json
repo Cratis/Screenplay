@@ -1,6 +1,30 @@
 {
     "cases": [
         {
+            "name": "guarded alternatives and executable otherwise create asks edges",
+            "files": {"application.play": "module A\n  feature F\n    slice StateView Consumer\n      screen Details\n        action \"Choose\"\n          when item.ready == true execute C\n          otherwise execute D\n        action \"Hide\"\n          when item.ready == false execute C\n          otherwise hidden\nmodule B\n  feature G\n    slice StateChange Producer\n      command C\n      command D"},
+            "edges": ["A.F.Consumer|B.G.Producer|asks|actionAlternative:C,actionOtherwise:D,actionAlternative:C"],
+            "implied": ["A.F|B.G|1|3"],
+            "cycles": [],
+            "order": ["A.F.Consumer", "B.G.Producer"]
+        },
+        {
+            "name": "example backed specification references resolve to qualified typed targets",
+            "files": {"application.play": "example Prior : B.G.Producer.E\nexample Input : B.G.Producer.C\nmodule A\n  feature F\n    slice StateChange Consumer\n      specification T\n        given Prior\n        when Input\n        then Prior\nmodule B\n  feature G\n    slice StateChange Producer\n      event E\n      command C"},
+            "edges": ["A.F.Consumer|B.G.Producer|verifiedWith|givenEvent:B.G.Producer.E,whenCommand:B.G.Producer.C,thenEvent:B.G.Producer.E"],
+            "implied": [],
+            "cycles": [],
+            "order": ["A.F.Consumer", "B.G.Producer"]
+        },
+        {
+            "name": "redelivery references both the event and its reaction owner",
+            "files": {"application.play": "module A\n  feature F\n    slice Automation Consumer\n      specification T\n        when redelivered E to React\n        then no events\nmodule B\n  feature G\n    slice Automation Producer\n      event E\n      reaction React\n        when E"},
+            "edges": ["A.F.Consumer|B.G.Producer|verifiedWith|redeliveryReaction:React,whenRedeliveredEvent:E"],
+            "implied": [],
+            "cycles": [],
+            "order": ["A.F.Consumer", "B.G.Producer"]
+        },
+        {
             "name": "projection and decisions form an ordering cycle",
             "files": {"application.play": "module M\n  feature A\n    slice StateView View\n      readmodel R\n      projection R\n        from E\n  feature B\n    slice StateChange Write\n      event E\n      command C\n        reads R"},
             "edges": ["M.A.View|M.B.Write|usesFactsFrom|from:E", "M.B.Write|M.A.View|decidesFrom|reads:R"],
@@ -111,6 +135,23 @@
             "implied": ["M.A|M.B|1|1"],
             "cycles": [],
             "order": ["M.B.Producer", "M.A.Consumer"]
+        },
+        {
+            "name": "dependency captures reject supplementary identifier characters",
+            "files": {"application.play": "module M\n  feature F\n    slice StateChange Consumer\n      command C\n        reads R𐐀\n        reads R as r𐐀\n        reads R by r𐐀\n        concurrency\n          events E𐐀\n      reducer Fold => View\n        on E𐐀\n      reducer Fold𐐀 => View\n        on E\n      reducer Fold => View𐐀\n        on E"},
+            "edges": [],
+            "implied": [],
+            "cycles": [],
+            "order": ["M.F.Consumer"],
+            "unresolved": ["M.F.Consumer|usesFactsFrom|reduces:E", "M.F.Consumer|usesFactsFrom|reduces:E"]
+        },
+        {
+            "name": "dependency captures retain basic multilingual plane letters",
+            "files": {"application.play": "module M\n  feature F\n    slice StateChange Consumer\n      command C\n        reads RΣ as rσ by rς\n        concurrency\n          events EΣ\n      reducer FoldΣ => ViewΣ\n        on EΣ\n    slice StateChange Producer\n      readmodel RΣ\n      event EΣ"},
+            "edges": ["M.F.Consumer|M.F.Producer|decidesFrom|reads:RΣ", "M.F.Consumer|M.F.Producer|usesFactsFrom|concurrency:EΣ,reduces:EΣ"],
+            "implied": [],
+            "cycles": [],
+            "order": ["M.F.Producer", "M.F.Consumer"]
         },
         {
             "name": "reference captures use dotnet whitespace",

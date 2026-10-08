@@ -65,8 +65,14 @@ slice StateChange RecordTime
       refresh TimesheetById
     template WeekView
       toolbar
+        data TimesheetSummary via query TimesheetById by timesheetId
         action RecordTime
           label $strings.timesheets.record.action
+        section submitTimesheet
+          title $strings.timesheets.submit.action
+          table TimesheetSummary
+            column totalHours label $strings.timesheets.fields.totalHours
+            on row-click navigate to SubmitTimesheetDialog by timesheetId
       days
         data TimesheetSummary via query TimesheetById by timesheetId
         section entry
@@ -83,18 +89,21 @@ slice StateChange RecordTime
           field totalHours    label $strings.timesheets.fields.totalHours
           field billableHours label $strings.timesheets.fields.billableHours
 
+  // Shared input, not a setup: each scenario still states its caller and outcome.
+  example BillableDay : RecordTime
+    timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+    engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+    workDate     = "2026-09-28"
+    hours        = 7.5
+    activity     = "DEV-01"
+    billing      = "billable"
+    note         = "Data mapping workshop"
+
   specification RecordingABillableDay
     given caller
       authenticated
       role "Consultant"
-    when RecordTime
-      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
-      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
-      workDate     = "2026-09-28"
-      hours        = 7.5
-      activity     = "DEV-01"
-      billing      = "billable"
-      note         = "Data mapping workshop"
+    when BillableDay
     then TimeRecorded
       for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
       engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
@@ -106,14 +115,10 @@ slice StateChange RecordTime
     given caller
       authenticated
       role "Consultant"
-    when RecordTime
-      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
-      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
-      workDate     = "2026-09-29"
-      hours        = 11
-      activity     = "DEV-01"
-      billing      = "billable"
-      note         = "Cut-over weekend preparation"
+    when BillableDay
+      workDate = "2026-09-29"
+      hours    = 11
+      note     = "Cut-over weekend preparation"
     then TimeRecorded
       for "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
       hours = 11
@@ -126,22 +131,15 @@ slice StateChange RecordTime
     given caller
       authenticated
       role "Consultant"
-    when RecordTime
-      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
-      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
-      workDate     = "2026-09-28"
-      hours        = 25
-      activity     = "DEV-01"
-      billing      = "billable"
-      note         = "Typo"
+    when BillableDay hours = 25
+      note = "Typo"
     then error "$strings.timesheets.validation.hoursPerDay"
 
   specification RejectingALongNonBillableDay
     given caller
       authenticated
       role "Consultant"
-    when RecordTime
-      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
+    when BillableDay
       engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b12"
       workDate     = "2026-09-30"
       hours        = 9
@@ -158,14 +156,10 @@ slice StateChange RecordTime
       for "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
       engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
       reason       = "Delivered"
-    when RecordTime
-      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
-      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
-      workDate     = "2026-10-01"
-      hours        = 4
-      activity     = "DEV-01"
-      billing      = "billable"
-      note         = "Late bug fix"
+    when BillableDay
+      workDate = "2026-10-01"
+      hours    = 4
+      note     = "Late bug fix"
     then error "$strings.timesheets.validation.engagementNotActive"
 
   specification PayrollCannotRecordTime
@@ -173,12 +167,5 @@ slice StateChange RecordTime
       authenticated
       role "PayrollOfficer"
       claim "department" = "Finance"
-    when RecordTime
-      timesheetId  = "7e1f3a5b-9c2d-4e6f-8a0b-1c3d5e7f9a41"
-      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
-      workDate     = "2026-09-28"
-      hours        = 7.5
-      activity     = "DEV-01"
-      billing      = "billable"
-      note         = "Data mapping workshop"
+    when BillableDay
     then denied

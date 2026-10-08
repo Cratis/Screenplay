@@ -10,6 +10,7 @@ export const handlerIntentDocs = {
 };
 
 export const keywordDocs: Record<string, string> = {
+    example: 'One typed, possibly partial fixture: `example <Name> : <EventOrCommandOrReadModel>`. Use its name in a matching specification step; assignments override example values without changing matching or supplying defaults.',
     domain: 'The domain the file belongs to — optional, at most one per file, before everything else.',
     import: 'Imports a type from another module by its qualified name — `import Module.Type` — making it available by its short name; or, quoted, other `.play` files by path or glob — `import "Orders/**/*.play"`, relative to this file\'s folder. Written inside a module or feature, a file import places the imported files there: their top level is that module\'s or feature\'s body.',
     concept: 'A formalized value type wrapping a primitive. Attributes such as `@pii` travel with every usage, optionally with a `<attribute> reason "..."` line saying why.',
@@ -43,6 +44,11 @@ export const keywordDocs: Record<string, string> = {
     where: 'Narrows which occurrences actually run the reaction.',
     contains: 'Text comparison — true when the left string holds the right one anywhere.',
     every: 'Runs a reaction on an interval — `every 15 minutes`, `every 1 day`.',
+    refused: 'Ordered invocation refusal branch: first match wins. Bare `on refused` covers validation and constraints, not authorization. Syntax-only, not yet executable (PLAY0268).',
+    acknowledge: 'A refusal branch acknowledges alone, or produces events instead. Syntax-only, not yet executable (PLAY0268).',
+    validation: 'In `on refused by validation`, selects property, concept and require refusals. Syntax-only, not yet executable (PLAY0268).',
+    authorization: 'In `on refused by authorization`, explicitly selects unauthorized results, never Unsupported. Syntax-only, not yet executable (PLAY0268).',
+    redelivered: '`when redelivered <Event> to <Reaction>` selects exactly one given occurrence by optional for and stated values, without appending it again. Syntax-only, not yet executable (PLAY0268).',
     invokes: 'A command a reaction hands on. A command is asked for, not produced — it may still be rejected.',
     screen: 'A UI declaration. Supports intent, structure, and layout-with-code levels, or a full file reference.',
     constraint: 'A server-side rule enforced in the Chronicle kernel before events are committed.',
@@ -52,15 +58,18 @@ export const keywordDocs: Record<string, string> = {
     reads: 'Declares a view consulted by a command or reaction trigger: `reads <View> [as <alias>] [by <value>]`. A reaction `by` names a value taken by its trigger; clock triggers cannot use `by`. Repeated views require unique aliases. Runtime binding is not yet supported for command or reaction reads.',
     as: 'Names an instance of a view in a command or reaction trigger reads declaration, for example `reads Account as source by sourceId`.',
     handler: 'A fully imperative command implementation — a `file <Path>` reference or an inline `csharp` block, instead of `produces`.',
-    when: 'Guards a produced event or a capture append with a condition.',
+    when: 'Guards a produced event or a capture append with a condition. In a labeled screen action, `when item.<field> == <literal> execute <Command>` selects the first matching alternative.',
     rule: 'Names a predicate. Bare, it states that a constraint exists without expressing what it computes — nothing resolves the name. Optionally followed by an indented `file <Path>` reference or inline `csharp` block giving it a body.',
-    require: 'A policy condition: `authenticated`, `role "..."`, or `claim "..." matches ...`.',
+    require: 'A policy condition: `authenticated`, `role "..."`, or `claim "..." matches ...`. Unary `not` negates a condition or group; precedence is not, and, or.',
     authenticated: 'Requires an authenticated caller.',
     role: 'Requires the caller to have the given role.',
     claim: 'Requires a claim on the caller to match a subject or value.',
     subject: 'The subject (identity) of the caller.',
     data: 'Binds a read model to a screen through a query.',
-    action: 'Makes a command available as an action on a screen.',
+    action: 'Makes a command available on a screen. `action "Label"` declares one button with ordered `when … execute` alternatives over the nearest data item or selected row. No subject hides it; commands still enforce authorization and validation.',
+    otherwise: 'The last fallback of a guarded action: `otherwise hidden` (the default) or `otherwise execute <Command>`. Authorization never falls through to a different alternative.',
+    hidden: 'Hides a guarded action when no condition matches. Without a subject the action is always hidden, even with an execute fallback.',
+    execute: 'Executes a command. A guarded screen action selects it by the first matching condition; explicit `with … from` bindings precede same-name item fields, its declared form and renderer input.',
     navigate: 'Navigates to a screen, optionally passing a parameter with `by`.',
     section: 'A named structural section of a screen.',
     table: 'A table widget over a read model or child collection.',
@@ -134,9 +143,11 @@ export const keywordDocs: Record<string, string> = {
 // scenario exercises rather than declare one.
 export const specificationKeywordDocs: Record<string, string> = {
     clock: keywordDocs.clock,
+    redelivered: keywordDocs.redelivered,
     trigger: '`when trigger <Trigger>` - an application trigger fires, as the action, with the values on the lines beneath it.',
     capture: '`given capture <Capture>` - a record the capture\'s source held before; `when capture <Capture>` - the record it sees now, as the action. The fields go on the lines beneath.',
     query: '`when query <Query>` - the query is performed, as the action, with its arguments on the lines beneath; assert what it returns with `then result` or `then no result`. `then query` instead asserts a query after another action.',
+    events: '`then no events` - asserts no new events after a non-append action. Syntax-only, not yet executable (PLAY0268). Cannot accompany event, event-order, error or denial expectations.',
     result: '`then result [exactly]` - one result the query performed by `when query` returns, in order; `then no result` - it returns nothing.',
 };
 
