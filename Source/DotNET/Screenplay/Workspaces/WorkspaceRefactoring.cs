@@ -303,6 +303,31 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         var referenceRenames = new Dictionary<SemanticAddress, SemanticAddress>();
         var semanticRenames = new Dictionary<SemanticAddress, SemanticAddress>();
         var eventRenames = new Dictionary<SemanticAddress, SemanticAddress>();
+        if (eventSource is not null && request.NewName != request.ExpectedName)
+        {
+            var previousSource = SemanticAddress.ForEventSource(workspace.IdentityCatalog.Application, eventSource.Name);
+            var currentSource = target.Node is EventSourceSyntax
+                ? SemanticAddress.ForEventSource(workspace.IdentityCatalog.Application, request.NewName)
+                : previousSource;
+            if (target.Node is EventSourceSyntax) Preserve(previousSource, currentSource);
+            foreach (var stream in eventSource.Streams.Where(stream => target.Node is EventSourceSyntax || ReferenceEquals(stream, target.Node)))
+            {
+                Preserve(
+                    SemanticAddress.ForEventStream(previousSource, stream.Name),
+                    SemanticAddress.ForEventStream(currentSource, target.Node is EventStreamSyntax ? request.NewName : stream.Name));
+            }
+        }
+
+        void Preserve(SemanticAddress previous, SemanticAddress current)
+        {
+            // The authoring index can retain source-only syntax without addresses. Migrate only
+            // proven existing assignments; this never enrolls a source that has not bound.
+            if (workspace.IdentityCatalog.Semantics.Any(assignment => assignment.Address.Equals(previous)))
+            {
+                semanticRenames.Add(previous, current);
+            }
+        }
+
         var documents = ImmutableArray.CreateBuilder<WorkspaceOperation>();
         foreach (var document in touched)
         {

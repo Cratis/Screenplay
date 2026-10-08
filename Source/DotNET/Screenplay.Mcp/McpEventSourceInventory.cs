@@ -3,6 +3,7 @@
 
 using System.Text;
 using System.Text.Json;
+using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
 
@@ -40,7 +41,7 @@ sealed class McpEventSourceInventory
 
     internal object Summary(WorkspaceSyntaxEntry entry) => new
     {
-        authoringKey = Key(entry), keyKind = "logical-authoring-only", kind = Kind(entry), name = Name(entry), scope = Scope(entry),
+        authoringKey = Key(entry), keyKind = "logical-authoring-only", semanticId = SemanticIdentity(entry), kind = Kind(entry), name = Name(entry), scope = Scope(entry),
         handle = McpAstHandles.Describe(entry.Handle), entry.Location, ownership = Ownership(entry), confidenceReasons = Confidence(entry).Reasons,
         placementResolved = View.HasResolvedPlacement(entry), inventoryComplete = View.IsComplete, readOnly = true,
         identifier = (entry.Node as EventSourceSyntax)?.Identifier, streamId = (entry.Node as EventStreamSyntax)?.StreamId,
@@ -48,7 +49,7 @@ sealed class McpEventSourceInventory
         id = Inline(Pin(entry)),
         description = Inline(Description(entry)),
         metadata = Metadata(entry),
-        syntaxOnly = true, executionAvailable = false, executionReadiness = "Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302). Pins are rename-only authored metadata, not semantic identities."
+        syntaxOnly = Readiness.SyntaxOnly(entry.Node), executionAvailable = _workspace.Compilation.Success, executionReadiness = Readiness.ExecutionReadiness(entry.Node)
     };
 
     internal IEnumerable<object> Details(WorkspaceSyntaxEntry entry)
@@ -78,9 +79,28 @@ sealed class McpEventSourceInventory
                 kind = "command-route", command = command.Name, scope = Scope(entry), handle = McpAstHandles.Describe(entry.Handle),
                 authoredRoute = command.Stream, ambiguousStreamCandidates = command.StreamCandidates,
                 placementResolved = View.HasResolvedPlacement(entry), inventoryComplete = View.IsComplete,
-                syntaxOnly = true, executionAvailable = false, executionReadiness = "Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302). Authored routing does not infer identity destinations."
+                syntaxOnly = Readiness.SyntaxOnly(command), executionAvailable = _workspace.Compilation.Success, executionReadiness = Readiness.ExecutionReadiness(command)
             };
         }
+    }
+
+    McpAuthoringReadiness Readiness => McpWorkspaceAnalysis.For(_workspace).Source.Index.Readiness;
+
+    string? SemanticIdentity(WorkspaceSyntaxEntry entry)
+    {
+        if (!View.HasResolvedPlacement(entry) || Confidence(entry).State != "unique") return null;
+        var application = _workspace.IdentityCatalog.Application;
+        SemanticAddress? address = null;
+        if (entry.Node is EventSourceSyntax source)
+        {
+            address = SemanticAddress.ForEventSource(application, source.Name);
+        }
+        else if (entry.Parent is { } parent && _entries.TryGetValue(parent, out var owner) && owner.Node is EventSourceSyntax sourceOwner)
+        {
+            address = SemanticAddress.ForEventStream(SemanticAddress.ForEventSource(application, sourceOwner.Name), Name(entry));
+        }
+
+        return _workspace.IdentityCatalog.Semantics.FirstOrDefault(assignment => assignment.Address.Equals(address))?.Id.ToString();
     }
 
     static string? Pin(WorkspaceSyntaxEntry entry) => entry.Node is EventSourceSyntax source ? source.Id : ((EventStreamSyntax)entry.Node).Id;

@@ -64,13 +64,17 @@ function operationDetails(command: CommandSyntax, owners?: EventOwners): string 
 
 function routeDetails(command: CommandSyntax): string {
     const escape = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    if ((command.streamCandidates ?? []).some(candidate => candidate.propertyCandidate != null)) return 'Ambiguous stream/property authoring: no route selected (PLAY0505). Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302).';
-    if ((command.streamCandidates ?? []).length > 0) return 'Conflicting authored stream routes: no effective route selected. Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302).';
+    if ((command.streamCandidates ?? []).some(candidate => candidate.propertyCandidate != null)) return 'Ambiguous stream/property authoring: no route selected (PLAY0505).';
+    if ((command.streamCandidates ?? []).length > 0) return 'Conflicting authored stream routes: no effective route selected.';
     const route = command.stream;
     if (!route) return '';
     return escape([`Authored stream: ${route.eventSource}.${route.stream}`,
         route.streamId ? `Stream id: ${expressionText(route.streamId.source)}` : route.streamIdParts.length > 0 ? `Stream id: ${route.streamIdParts.map(part => `${part.property} = ${expressionText(part.source)}`).join(', ')}` : '',
-        'Syntax-only: not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302). This classification does not supply an identity destination.'
+        command.handler ? 'Command handlers remain unadmitted (PLAY0268).' :
+            [route.streamId?.source, ...route.streamIdParts.map(part => part.source)].some(source => source?.kind === 'PathExpressionSyntax' && source.path.includes('.')) ?
+                'Property paths remain unadmitted (PLAY0268).' :
+                'Admitted by the event routes executable model: direct required, non-generated properties or literals. Other unadmitted constructs still prevent binding.',
+        'This classification does not supply an identity destination.'
     ].filter(Boolean).join('\n'));
 }
 

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { describe, expect, it } from 'vitest';
+import { topLevelItems } from '../completion-items';
 import { analyzeEventSources, eventSourceCompletions, eventSourceHover, eventSourceIdentifier, eventSourceReferenceAt } from '../event-source-authoring';
 import { responseAnalysis } from '../response-analysis';
 import { responseTokens } from '../response-tokens';
@@ -20,6 +21,12 @@ function complete(source: string, marker: string, application = mergeSymbols()) 
 }
 
 describe('when authoring source streams', () => {
+    it('should describe the event routes admission without assigning a public version number', () => {
+        const description = topLevelItems.find(item => item.label === 'eventsource')!.documentation;
+        expect(description).toContain('event routes executable model');
+        expect(description).not.toContain('not admitted');
+        expect(description).not.toMatch(/ESM v\d/);
+    });
     it('should retain application declarations around isolated command fragments', () => {
         const analysis = analyzeEventSources(source.split('\n'));
         expect(analysis.declarations.map(source => source.name)).toEqual(['Account']);

@@ -25,7 +25,7 @@ command <Name>
 
   [validate <inline csharp block yielding messages for broken rules>]
 
-  [stream <EventSource>.<Stream>   ← syntax-only authored classification
+  [stream <EventSource>.<Stream>   ← event classification
     [streamId = <value>]]
 
   [produces ...]                  ← declarative — repeatable
@@ -90,11 +90,13 @@ Plain `produces <Name>` retains its legacy omission behavior; it does not acquir
 
 The unescaped directives `namespace`, `sequence`, `correlation`, `causation`, `causedBy`, and `occurred` are reserved system-assigned metadata in production bodies. Escape a genuine payload field, for example `@sequence String = name`; `occurred at` is not supported yet.
 
-## Command stream routing (syntax-only)
+## Command stream routing
 
 Use `stream Source.Stream` to select a declared [event source and stream](event-sources.md). Map a scalar keyed stream with nested `streamId = <value>`. For a composite stream, nest a bare `streamId` header and one `<part> = <source>` mapping for every declared part, exactly once. Mapping order is free; the printer retains it. Each source is a nominally compatible nonoptional command path or scalar literal. Literals are checked like any stream id: text must be non-empty, well-formed and NFC, and an integer must lie within ±(2^53−1) in the default Double numeric mode. The command's identifier and each event's destination must have the source's identifier type, otherwise `PLAY0504` is an error. Scalar and composite mapping forms cannot substitute for one another. This route never supplies the event's `for` destination and does not change plain-production allocation or inline defaults. Handler commands may author routing without statically declared events; `handler` with `produces` is still prohibited.
 
-Both viable stream/property interpretations remain blocking `PLAY0505` candidates, never a guessed route. Source/stream declarations and routed commands are not admitted by any supported executable model (ESM) version yet (`PLAY0268`). Per-production overrides, reaction/reducer filters and new concurrency flags are not supported. The board shows only the authored route and readable key expression in existing command details.
+Both viable stream/property interpretations remain blocking `PLAY0505` candidates, never a guessed route. Source/stream declarations and routed commands select the **event routes** executable model. Executable mappings read direct, required, non-collection, non-generated command properties or literals. Paths remain refused with `PLAY0268`; generated mappings are refused with `PLAY0273`. Per-production overrides, reaction/reducer filters and new concurrency flags are not supported. The board shows only the authored route and readable key expression in existing command details.
+
+The route resolves once after declarative validation and requirements, before generation and productions. Formatting failure rejects the failing command as `Contract` with no allocation, append or response; authorization and validation take precedence. Invalid non-NFC direct inputs still fail earlier at request type validation. Arc computes the stream id before authorization, so its native ordering is not equivalent; renderers must preserve this portable precedence. See [route phase and failure](event-sources.md#route-phase-and-failure).
 
 ## Operations and external systems (syntax-only)
 
@@ -126,7 +128,7 @@ Authorization policies (including inherited/composed policies and the implicit s
 
 A generated identifier supplies an inline production's implicit destination. Plain `produces` without `for` keeps its separate legacy allocation channel; a generation fixture never satisfies that allocation. A response-only command records no facts. No response differs from a scalar response whose optional source is `Null`. Record fields preserve authored order and have external contract names, not independent semantic identities.
 
-Responses also parse beside a handler, but handlers, streams, operations and exact numeric mode remain unadmitted independently. The compiler does not emit a renderer's `<Command>Response` type. Form `on submit` and interaction `on success` response-name binding remains separate downstream work; ESM v7 is not end-to-end navigation. Generated values provide no idempotency, retry or deduplication guarantee.
+Responses also parse beside a handler, but handlers, operations and exact numeric mode remain unadmitted independently. The compiler does not emit a renderer's `<Command>Response` type. Form `on submit` and interaction `on success` response-name binding remains separate downstream work; ESM v7 is not end-to-end navigation. Generated values provide no idempotency, retry or deduplication guarantee.
 
 The board excludes generated properties from the request schema and shows generated/response details in the existing command description. It creates no response event or response identity. See [specification fixtures and return assertions](specifications.md#generated-fixtures-and-return-expectations).
 
