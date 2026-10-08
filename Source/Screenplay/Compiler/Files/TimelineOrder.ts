@@ -9,6 +9,7 @@ import { sliceReferences } from '../Dependencies/SliceReferences';
 import { stronglyConnectedGroups } from '../Dependencies/StronglyConnectedGroups';
 import { ApplicationSyntax, FeatureSyntax, SliceSyntax } from '../Syntax/Structure';
 import { authoredOrderKey, authoredOrderOf } from './AuthoredOrder';
+import { ordinalIgnoreCaseKey } from '../Text/ordinalIgnoreCaseKey';
 
 interface Slice {
     syntax: SliceSyntax;
@@ -37,7 +38,8 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
     const producers = new Map<string, Slice>();
     for (const slice of slices) {
         for (const event of eventDeclarations(slice.syntax)) {
-            if (!producers.has(event.name.toLowerCase())) producers.set(event.name.toLowerCase(), slice);
+            const name = ordinalIgnoreCaseKey(event.name);
+            if (!producers.has(name)) producers.set(name, slice);
         }
     }
     const edges: Edge[] = [];
@@ -46,7 +48,7 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
         const references = sliceReferences(consumer.syntax).references.filter(reference => reference.timeline)
             .map(reference => ({ event: reference.name, location: reference.location }));
         for (const reference of references) {
-            const name = reference.event.toLowerCase();
+            const name = ordinalIgnoreCaseKey(reference.event);
             if (seen.has(name)) continue;
             seen.add(name);
             const producer = producers.get(name);
@@ -79,7 +81,7 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
                 return slice.identity[scope.length] === member;
             }).map(slice => slice.index));
             group.sort((left, right) => memberIndex(left) - memberIndex(right));
-            findings.push({ edge: first, diagnostic: { severity: 'information', code: DiagnosticCodes.TimelineCycleGroup, message: `Timeline group ${group.map(member => `'${member.slice(member.indexOf(':') + 1)}'`).join(', ')} uses each other's events; reordering these members cannot make every event flow left to right.`, location: first.location } });
+            findings.push({ edge: first, diagnostic: { severity: 'information', code: DiagnosticCodes.TimelineCycleGroup, message: `Timeline group ${group.map(member => `${member.startsWith('slice:') ? 'slice' : container === authoredOrderKey([]) ? 'module' : 'feature'} '${member.slice(member.indexOf(':') + 1)}'`).join(', ')} uses each other's events; reordering these members cannot make every event flow left to right.`, location: first.location } });
         }
     }
     for (const edge of edges) {

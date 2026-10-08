@@ -219,13 +219,16 @@ or add verified explicit pins before a retained glob. Features and slices insert
 mid-list print before their next located sibling; other collections retain their
 existing printing rule. The reference subject is selected by event name and exact
 location, not by parsing the diagnostic message. Verification preserves comments,
-catalog revision, readiness, documents, placements and simulated ranks, removes
+existing catalog assignments, readiness, documents, placements and simulated ranks, removes
 the selected finding, and introduces no new timeline findings or errors/warnings.
 Both executable models require byte-identical ESM. When neither binds, a separate
 proof requires equal merged syntax after normalizing only timeline sibling order
 and approved import pins, plus the same admission diagnostic code/severity
-multiset. One-sided model availability is refused. Provisional document identities
-that would require a catalog change also prevent a repair. Rediscover after each
+multiset. One-sided model availability is refused. A fresh workspace may establish
+missing document assignments with its existing document IDs and stable keys. All
+existing assignments, origins and event contract revisions remain unchanged, and
+any other catalog change refuses the repair. These assignments are persisted only
+when the proposal is applied. Rediscover after each
 accepted proposal; do not concatenate recipes from one snapshot.
 
 The legacy-fence repair handles only `PLAY0397` on a `validate csharp` header.

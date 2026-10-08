@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { ConcurrencySyntax, ReadsSyntax, ReducerRuleSyntax, ReducerSyntax } from '../Syntax/DependencySources';
-import { dotNetWhitespace, pattern } from '../Text/patterns';
+import { dotNetWhitespace, nativePattern } from '../Text/patterns';
 import { parseDescription } from './DescriptionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -11,7 +11,7 @@ import { locationOf, SourceLine } from './SourceLine';
 // Reference-only capture does not change the committed parser's diagnostics or opaque-block skipping.
 // Fork before reading a body: code, malformed operands and unsupported realization stay opaque.
 export function captureReads(line: SourceLine): ReadsSyntax | undefined {
-    const match = pattern(`^reads${dotNetWhitespace}+([A-Z]\\w*)(?:${dotNetWhitespace}+as${dotNetWhitespace}+([a-z_]\\w*))?(?:${dotNetWhitespace}+by${dotNetWhitespace}+([a-z_]\\w*))?$`).exec(line.content);
+    const match = nativePattern(`^reads${dotNetWhitespace}+([A-Z]\\w*)(?:${dotNetWhitespace}+as${dotNetWhitespace}+([a-z_]\\w*))?(?:${dotNetWhitespace}+by${dotNetWhitespace}+([a-z_]\\w*))?$`).exec(line.content);
     if (match === null || ['as', 'by', 'reads'].includes(match[2])) return undefined;
     return { kind: 'ReadsSyntax', readModel: match[1], alias: match[2] ?? null, by: match[3] ?? null, location: locationOf(line) };
 }
@@ -37,14 +37,14 @@ export function captureConcurrency(context: ParserContext, line: SourceLine): Co
             case 'sourceType':
             case 'streamType':
             case 'streamId': {
-                const dimension = pattern(`^(sourceType|streamType|streamId)${dotNetWhitespace}+([A-Za-z_]\\w*)$`).exec(child.content);
+                const dimension = nativePattern(`^(sourceType|streamType|streamId)${dotNetWhitespace}+([A-Za-z_]\\w*)$`).exec(child.content);
                 if (dimension !== null) dimensions[dimension[1]] ??= dimension[2];
                 break;
             }
             case 'events': {
                 if (eventTypes !== undefined) break;
                 const names = child.content.slice('events'.length).split(',').map(name => name.replace(new RegExp(`^${dotNetWhitespace}+|${dotNetWhitespace}+$`, 'gu'), '')).filter(Boolean);
-                if (names.length > 0 && names.every(name => pattern('^[A-Z]\\w*$').test(name))) eventTypes = names;
+                if (names.length > 0 && names.every(name => nativePattern('^[A-Z]\\w*$').test(name))) eventTypes = names;
                 break;
             }
             default:
@@ -56,7 +56,7 @@ export function captureConcurrency(context: ParserContext, line: SourceLine): Co
 }
 
 export function captureReducer(context: ParserContext, line: SourceLine): ReducerSyntax {
-    const match = pattern(`^reducer${dotNetWhitespace}+([A-Za-z_]\\w*)${dotNetWhitespace}*=>${dotNetWhitespace}*([A-Za-z_]\\w*)$`).exec(line.content);
+    const match = nativePattern(`^reducer${dotNetWhitespace}+([A-Za-z_]\\w*)${dotNetWhitespace}*=>${dotNetWhitespace}*([A-Za-z_]\\w*)$`).exec(line.content);
     const body = fork(context);
     const rules: ReducerRuleSyntax[] = [];
     for (let child = body.peekChild(line.indent); child !== undefined; child = body.peekChild(line.indent)) {
@@ -67,7 +67,7 @@ export function captureReducer(context: ParserContext, line: SourceLine): Reduce
             parseDescription(body, child, null, 'Reducer');
             continue;
         }
-        const rule = pattern(`^on${dotNetWhitespace}+([A-Z]\\w*)$`).exec(child.content);
+        const rule = nativePattern(`^on${dotNetWhitespace}+([A-Z]\\w*)$`).exec(child.content);
         if (rule !== null) rules.push({ kind: 'ReducerRuleSyntax', event: rule[1], file: null, code: null, description: null, location: locationOf(child) });
         body.skipOpaqueBlock(child.indent);
     }

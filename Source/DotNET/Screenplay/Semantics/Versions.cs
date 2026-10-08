@@ -38,7 +38,7 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V6 = new(6, 0);
 
     /// <summary>
-    /// The language version for generated command values and responses.
+    /// The language version for generated command values, responses and policy negation.
     /// </summary>
     public static readonly LanguageVersion V7 = new(7, 0);
 
@@ -103,7 +103,7 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     public static readonly SemanticVersion V6 = new(6, 0);
 
     /// <summary>
-    /// The semantic version for generated command values and responses.
+    /// The semantic version for generated command values, responses and policy negation.
     /// </summary>
     public static readonly SemanticVersion V7 = new(7, 0);
 

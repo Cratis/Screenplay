@@ -79,8 +79,19 @@ public class when_binding_the_invoicing_sample : given.a_semantic_binder
     ];
 
     Diagnostic[] _errors;
+    Diagnostic[] _incompleteSteps;
 
-    void Because() => _errors = [.. Bind(Samples.Invoicing).Diagnostics.Where(_ => _.Severity == DiagnosticSeverity.Error)];
+    void Because()
+    {
+        var errors = Bind(Samples.Invoicing).Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).ToArray();
+
+        // The design-mode sample deliberately states partial fixtures. Binding now reports those at each step
+        // instead of waiting for the executable model's generic shape failure.
+        _incompleteSteps = [.. errors.Where(diagnostic => diagnostic.Code == DiagnosticCodes.MissingSpecificationProperty)];
+        _errors = [.. errors.Where(diagnostic => diagnostic.Code != DiagnosticCodes.MissingSpecificationProperty)];
+    }
+
+    [Fact] void should_report_partial_design_fixtures_at_their_steps() => _incompleteSteps.ShouldNotBeEmpty();
 
     [Fact] void should_report_nothing_but_the_pinned_dispositions() =>
         _errors.Where(error => !_dispositions.Any(_ => Matches(error, _))).Select(Describe).ShouldBeEmpty();

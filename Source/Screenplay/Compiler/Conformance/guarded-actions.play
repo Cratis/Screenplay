@@ -1,0 +1,26 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+module M
+  feature F
+    slice StateView S
+      screen Details
+        action "Read the \"source\" again"
+          when item.attempt.status == "open" and item.attempt.answeredAt == null execute ReleaseStaleAttempt
+            with attemptId from item.attempt.attemptId
+          when (item.attempt.status == "failed" or item.note contains "execute Retry") and item.count >= 2 execute Retry
+          otherwise execute RetryUnclaimedPlan
+            with planId from item.planId
+          navigate to List by planId
+        action $strings.actions.close
+          when item.status != "closed" execute Close
+          otherwise hidden
+        action "Continue"
+          when item.ready == true execute Continue
+        action "Trim bindings"
+          when item.ready == true execute C
+            with id from ﻿item.id
+            with next from ﻿item.id
+          otherwise execute D
+            with id from ﻿item.id
+            with next from ﻿item.id

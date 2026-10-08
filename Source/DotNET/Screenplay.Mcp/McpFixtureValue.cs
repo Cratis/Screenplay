@@ -16,4 +16,7 @@ sealed record McpFixtureValue(
     TypeRefSyntax? DeclaredType,
     string ExpressionKind,
     object? Value,
-    SourceLocation Location);
+    SourceLocation Location,
+    string Origin,
+    string? Example,
+    object? OverriddenValue);

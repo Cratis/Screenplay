@@ -12,6 +12,8 @@ import { groupDependencyEvidence } from './groupDependencyEvidence';
 export interface DependencyMapViewProps {
     readonly map: DependencyMap;
     readonly selectedEdgeId?: string;
+    /** Identifies which model the map shows (for example Current or Proposed). A refresh of the same model keeps the selection; a different key clears it. */
+    readonly modelKey?: unknown;
     readonly onShowSource?: (line: number, path?: string) => void;
 }
 
@@ -19,15 +21,16 @@ const orderingKinds: readonly DependencyKind[] = ['usesFactsFrom', 'reactsTo', '
 const nameOf = (node: DependencyMapPosition) => node.kind === 'feature' ? node.scope.join(' / ') : node.scope[0];
 
 /** The same serializable map is drawn in both hosts, without a canvas or a graph-library runtime. */
-export const DependencyMapView = ({ map, selectedEdgeId, onShowSource }: DependencyMapViewProps) => {
+export const DependencyMapView = ({ map, selectedEdgeId, modelKey, onShowSource }: DependencyMapViewProps) => {
     const [level, setLevel] = useState(DependencyMapLevel.Module);
     const [kinds, setKinds] = useState<readonly DependencyKind[]>(orderingKinds);
-    const [selected, setSelected] = useState({ map, id: selectedEdgeId });
+    const [selected, setSelected] = useState({ modelKey, id: selectedEdgeId });
     const [focusedKey, setFocusedKey] = useState<string | undefined>();
-    const selection = selected.map === map ? selected.id : undefined;
-    const setSelection = (id: string | undefined) => setSelected({ map, id });
-    // Changing Current/Proposed clears only selection, not the level or kind filters.
-    if (selected.map !== map) setSelected({ map, id: undefined });
+    const chosen = selected.modelKey === modelKey ? selected.id : undefined;
+    const setSelection = (id: string | undefined) => setSelected({ modelKey, id });
+    // Changing Current/Proposed clears only selection, not the level or kind filters. A refresh of the same
+    // model keeps the selection for as long as the selected node or edge still exists.
+    if (selected.modelKey !== modelKey) setSelected({ modelKey, id: undefined });
     const markerId = useId().replaceAll(':', '');
     const edges = useMemo(() => visibleDependencyEdges(map, level, kinds), [map, level, kinds]);
     const layout = useMemo(() => layoutDependencyMap({ ...map, edges }), [map, edges]);
@@ -35,8 +38,13 @@ export const DependencyMapView = ({ map, selectedEdgeId, onShowSource }: Depende
     const routes = useMemo(() => new Map(layout.edges.map(edge => [edge.id, edge])), [layout]);
     const focusableKeys = [...edges.map(edge => edge.id), ...layout.nodes.map(node => node.key)];
     const tabStop = focusedKey && focusableKeys.includes(focusedKey) ? focusedKey : focusableKeys[0];
+    // Hiding an item through the filters is not removing it: validate against the unfiltered map.
+    const exists = chosen !== undefined && (map.edges.some(edge => edge.id === chosen) || map.nodes.some(node => node.key === chosen));
+    const selection = exists ? chosen : undefined;
+    if (chosen !== undefined && selection === undefined) setSelected({ modelKey, id: undefined });
     const selectedEdge = edges.find(edge => edge.id === selection);
     const selectedNode = positions.get(selection ?? '');
+    const shownSelection = selectedEdge || selectedNode ? selection : undefined;
     const labelOf = (edge: DependencyMapEdge, withUnits = false) => dependencyKinds.flatMap(kind => {
         const count = edge.byKind[kind] ?? 0;
         return count > 0 ? [`${dependencyKindLabels[kind]} ${count}${withUnits ? ` ${count === 1 ? 'reference' : 'references'}` : ''}`] : [];
@@ -111,7 +119,7 @@ export const DependencyMapView = ({ map, selectedEdgeId, onShowSource }: Depende
                         </li>)}</ul>
                     </li>)}</ul>
                 </> : selectedNode ? <><h2>{nameOf(selectedNode)}</h2><p>Select an edge to see its consumer and producer slices.</p></> : <p>Select an edge to see the slices behind it. Press Escape to clear the selection.</p>}
-                {selection && <button type='button' onClick={() => setSelection(undefined)}>Clear selection</button>}
+                {shownSelection && <button type='button' onClick={() => setSelection(undefined)}>Clear selection</button>}
             </aside>
             <table className='screenplay-dependency-map__accessible'><caption>All dependencies</caption>
                 <thead><tr><th>Consumer</th><th>Producer</th><th>Kinds and references</th><th>Slice pairs</th></tr></thead>

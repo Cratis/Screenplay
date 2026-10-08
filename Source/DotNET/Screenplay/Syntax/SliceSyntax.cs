@@ -93,6 +93,11 @@ public record SliceSyntax(
     public IEnumerable<OperationSyntax> Operations { get; init; } = [];
 
     /// <summary>
+    /// Gets the slice-scoped specification examples.
+    /// </summary>
+    public IEnumerable<SpecificationExampleSyntax> Examples { get; init; } = [];
+
+    /// <summary>
     /// Gets the <see cref="Diagnostics.SourceLocation"/> of the first character of the raw quoted body of
     /// <see cref="Description"/>, or <c>null</c> when the slice has no single-line quoted description.
     /// </summary>

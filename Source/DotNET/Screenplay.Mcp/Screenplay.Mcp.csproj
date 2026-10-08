@@ -15,6 +15,7 @@
 
     <ItemGroup>
         <ProjectReference Include="../Screenplay/Screenplay.csproj" />
+        <InternalsVisibleTo Include="Cratis.Screenplay.Tool" />
     </ItemGroup>
 
     <!-- The event model board hosts render beside the conversation (MCP Apps). It is built by the

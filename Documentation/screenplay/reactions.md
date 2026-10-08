@@ -197,6 +197,52 @@ consequence, and they are not.
 Both are declarations of *what happens*, not of how — a trigger can state its consequences and still carry a
 `file` or an inline block that implements them.
 
+## Refusal branches (syntax-only)
+
+> Refusal branches and `$refusal` values are authoring syntax, not yet executable. Both compilers preserve the syntax; the .NET compiler checks selectors and value scope. Binding refuses these constructs with `PLAY0268`, and MCP reports them as unadmitted. [Decision 0030](https://github.com/Cratis/Screenplay/blob/main/decisions/0030-reaction-refusals-and-redelivery.md) defines their intended behavior for admission.
+
+Inside `invokes`, state how the reaction should handle a command's refusal. This excerpt assumes the command, constraint and output event are declared:
+
+```screenplay
+invokes Claim
+  invoice = invoice
+  on refused by constraint UniqueClaim
+    produces Refused
+      reason = $refusal.reason
+      constraint = $refusal.constraint
+      message = $refusal.message
+  on refused by validation
+    acknowledge
+  on refused by authorization
+    acknowledge
+```
+
+Branches are ordered: the first matching selector wins. A branch contains `acknowledge` alone or one or more ordinary `produces <Event>` blocks, with mappings and optional `for`. Empty branches, repeated acknowledgement, acknowledgement combined with productions, operations, inline event declarations and implementation attachments are invalid.
+
+| Selector | Intended refusal category |
+| --- | --- |
+| `on refused` | Validation or constraint refusal, **not authorization** |
+| `on refused by validation` | Property rules, concept rules or `require` |
+| `on refused by constraint` | Any append-time constraint refusal |
+| `on refused by constraint <Name>` | The named, unambiguously resolved constraint |
+| `on refused by authorization` | Explicit unauthorized result, never an opaque policy's Unsupported outcome |
+
+Duplicate selectors and narrower branches after a covering branch produce `PLAY0540`. Bare refusal never shadows authorization. An unresolved named constraint produces `PLAY0542`; a known constraint that cannot target any of the invoked command's produced events also produces `PLAY0540`.
+
+The branch's event mappings may use these String values:
+
+| Value | Meaning | Scope |
+| --- | --- | --- |
+| `$refusal.reason` | `validation`, `constraint` or `authorization` | Any branch |
+| `$refusal.constraint` | Violated constraint name | Only a `by constraint` branch |
+| `$refusal.message` | Rejection details verbatim, including an unresolved `$strings.` key | Any branch |
+
+Unknown members, use outside a branch's event mapping and incompatible target types produce `PLAY0541`. Messages are display details, not stable identities. Other mapping inputs follow the trigger's rules; read aliases are not branch inputs. For an event trigger, an omitted production `for` is intended to use the triggering event source. At executable admission, clock and application triggers will require `for`; this destination requirement is not enforced by syntax-only authoring yet.
+
+At admission, a refused command contributes no facts. Handling its refusal will stop the remaining invocations of that trigger; other reactions and cascades from accepted facts will continue. Branch productions remain subject to ordinary append constraints. A rejected branch append cannot be caught by another branch. Unhandled refusals end the scenario, retaining previously accepted facts. These are the accepted design, not current runner behavior.
+
+Infrastructure failures, exceptions, contract errors, Unsupported outcomes and concurrency conflicts are never refusals. There is no `by concurrency` form: transient concurrency must fail and retry, not be acknowledged. Refusal handling promises neither a cascade-wide transaction nor once-only external effects. To describe recovery of an existing observed fact, see [redelivery specifications](specifications.md#redelivery-specifications-syntax-only).
+
 ## In the executable semantic model
 
 Reactions bind to the executable semantic model as ESM v6 ([decision 0022](https://github.com/Cratis/Screenplay/blob/main/decisions/0022-esm-v6-time-triggers-captures-and-reactions-in-specifications.md)),
