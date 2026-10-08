@@ -1,7 +1,10 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Globalization;
+using System.Numerics;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.Parsing;
@@ -37,7 +40,7 @@ internal static class EventSourceValidator
 
         var catalog = new EventSourceCatalog(application);
         var values = new ResponseValueTypes(application);
-        foreach (var command in declarations.Slices.SelectMany(entry => entry.Slice.Commands))
+        foreach (var (slice, command) in declarations.Slices.SelectMany(entry => entry.Slice.Commands.Select(command => (entry.Slice, Command: command))))
         {
             if (command.Stream is not { } route || route.PropertyCandidate is not null) continue;
             var resolution = catalog.Resolve(route.EventSource, route.Stream);
@@ -50,7 +53,27 @@ internal static class EventSourceValidator
             var stream = resolution.Streams[0];
             if (source.Identifier is { } expected && command.Properties.Where(property => property.IsIdentifier).ToArray() is [var identifier] && declarations.Compatible(identifier.Type, expected) == false)
             {
-                context.Warning(DiagnosticCodes.InvalidCommandStream, $"Command identifier '{identifier.Name}' does not have the source's nominal identifier type '{expected.Name}'. The stream does not supply a destination.", identifier.Location);
+                context.Error(DiagnosticCodes.InvalidCommandStream, $"Command identifier '{identifier.Name}' does not have the source's nominal identifier type '{expected.Name}'. The stream does not supply a destination.", identifier.Location);
+            }
+            var productions = command.Produces.Where(produced => declarations.Productions.IsEventProduction(produced, slice)).ToArray();
+            foreach (var produced in productions)
+            {
+                if (source.Identifier is not { } expectedType) continue;
+                var destination = CommandDestinationTypes.DestinationType(command, produced, productions, declarations);
+                if (destination is null) continue;
+                var identifierProperty = command.Properties.Where(property => property.IsIdentifier).ToArray();
+                if (produced.For is null && produced.InlineEvent is not null && identifierProperty is [var implicitIdentifier] && declarations.Compatible(implicitIdentifier.Type, expectedType) == false) continue;
+                var allocated = produced.For is null && produced.InlineEvent is null && !command.Properties.Any(property => property.IsGenerated && property.IsIdentifier);
+                var compatible = declarations.Compatible(destination, expectedType);
+                if (allocated)
+                {
+                    var primitive = Primitive(expectedType, application);
+                    compatible = primitive is null ? null : primitive == "Uuid";
+                }
+                if (compatible == false)
+                {
+                    context.Error(DiagnosticCodes.InvalidCommandStream, $"Command production destination does not have the source's nominal identifier type '{expectedType.Name}'. The stream does not supply a destination.", produced.For?.Location ?? produced.Location);
+                }
             }
             if (stream.StreamIdParts.Any())
             {
@@ -61,11 +84,7 @@ internal static class EventSourceValidator
                     route.Location,
                     DiagnosticCodes.InvalidCommandStream,
                     context,
-                    (mapping, target) =>
-                    {
-                        ValidateMapping(command, mapping, target, declarations, values, context);
-                        if (mapping.Source is LiteralExpressionSyntax { Value: "" }) context.Error(DiagnosticCodes.InvalidCommandStream, "A composite stream id part cannot be empty text.", mapping.Source.Location);
-                    });
+                    (mapping, target) => ValidateMapping(command, mapping, target, application, declarations, values, context));
                 continue;
             }
             if (route.StreamIdParts.Any())
@@ -77,7 +96,7 @@ internal static class EventSourceValidator
             {
                 context.Error(DiagnosticCodes.InvalidCommandStream, stream.StreamId is null ? "An unkeyed stream cannot take a streamId mapping." : "This keyed stream requires a streamId mapping.", route.Location);
             }
-            if (stream.StreamId is { } target && route.StreamId is { } mapping) ValidateMapping(command, mapping, target, declarations, values, context);
+            if (stream.StreamId is { } target && route.StreamId is { } mapping) ValidateMapping(command, mapping, target, application, declarations, values, context);
         }
     }
 
@@ -104,7 +123,7 @@ internal static class EventSourceValidator
         }
     }
 
-    static void ValidateType(TypeRefSyntax? type, bool streamId, ApplicationSyntax application, ParserContext context)
+    internal static void ValidateType(TypeRefSyntax? type, bool streamId, ApplicationSyntax application, ParserContext context)
     {
         if (type is null) return;
         if (type.IsOptional || type.IsCollection || (application.Types ?? []).Any(composite => composite.Name == type.Name))
@@ -126,7 +145,39 @@ internal static class EventSourceValidator
         }
     }
 
-    static void ValidateMapping(CommandSyntax command, PropertyMappingSyntax mapping, TypeRefSyntax target, ConsistencyDeclarations declarations, ResponseValueTypes values, ParserContext context)
+    internal static string? Primitive(TypeRefSyntax type, ApplicationSyntax application)
+    {
+        var concepts = application.Concepts.Where(concept => concept.Name == type.Name).ToArray();
+
+        if (concepts is [var concept]) return concept.Type;
+
+        return concepts.Length == 0 && ConceptSyntax.PrimitiveTypes.Contains(type.Name) ? type.Name : null;
+    }
+
+    internal static string? FormatLiteral(ExpressionSyntax? expression, TypeRefSyntax? type, ApplicationSyntax application, out StreamIdFormatFailure failure)
+    {
+        failure = StreamIdFormatFailure.None;
+        string? formatted = null;
+        if (expression is not LiteralExpressionSyntax literal) return null;
+        switch (literal.Value)
+        {
+            case string text:
+                if (type is not null && Primitive(type, application) == "Uuid") SemanticStreamIdFormatter.TryFormatUuidText(text, out formatted, out failure);
+                else SemanticStreamIdFormatter.TryFormatText(text, out formatted, out failure);
+                break;
+            case double number:
+                SemanticStreamIdFormatter.TryFormatInteger(number, out formatted, out failure);
+                break;
+            case ExactNumber exact:
+                if (!exact.IsIntegral) failure = StreamIdFormatFailure.NotIntegral;
+                else SemanticStreamIdFormatter.TryFormatInteger(BigInteger.Parse(exact.CanonicalText, CultureInfo.InvariantCulture), false, out formatted, out failure);
+                break;
+        }
+
+        return formatted;
+    }
+
+    static void ValidateMapping(CommandSyntax command, PropertyMappingSyntax mapping, TypeRefSyntax target, ApplicationSyntax application, ConsistencyDeclarations declarations, ResponseValueTypes values, ParserContext context)
     {
         if (mapping.Source is PathExpressionSyntax path)
         {
@@ -148,9 +199,11 @@ internal static class EventSourceValidator
                 context.Error(DiagnosticCodes.InvalidCommandStream, $"Stream id source '{path.Path}' is absent or incompatible with nominal type '{target.Name}'.", path.Location);
             }
         }
-        else if (mapping.Source is LiteralExpressionSyntax && !values.Compatible(mapping.Source, target))
+        else if (mapping.Source is LiteralExpressionSyntax { Value: not null })
         {
-            context.Error(DiagnosticCodes.InvalidCommandStream, $"Stream id value is incompatible with nominal type '{target.Name}'.", mapping.Source.Location);
+            FormatLiteral(mapping.Source, target, application, out var failure);
+            if (failure != StreamIdFormatFailure.None) context.Error(DiagnosticCodes.InvalidCommandStream, SemanticStreamIdFormatter.FailureMessage(failure), mapping.Source.Location);
+            else if (!values.Compatible(mapping.Source, target)) context.Error(DiagnosticCodes.InvalidCommandStream, $"Stream id value is incompatible with nominal type '{target.Name}'.", mapping.Source.Location);
         }
         else if (mapping.Source is RawExpressionSyntax or ObjectExpressionSyntax or ListExpressionSyntax or LiteralExpressionSyntax { Value: null })
         {

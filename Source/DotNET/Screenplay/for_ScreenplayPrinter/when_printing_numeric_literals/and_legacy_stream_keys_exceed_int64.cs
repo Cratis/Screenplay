@@ -12,7 +12,7 @@ public class and_legacy_stream_keys_exceed_int64 : given.a_printer
     [InlineData("-100000000000000000000")]
     [InlineData("1000000000000000000000")]
     [InlineData("-1000000000000000000000")]
-    void should_compile_the_printed_application_with_literal_stream_keys(string token)
+    void should_preserve_printed_literal_stream_keys_but_refuse_the_double_mode_bound(string token)
     {
         var source = $$"""
             concept Key : Int
@@ -34,10 +34,10 @@ public class and_legacy_stream_keys_exceed_int64 : given.a_printer
                         streamId = {{token}}
             """;
         var roundtrip = RoundTrip(source);
-        roundtrip.Original!.Success.ShouldBeTrue();
-        roundtrip.Original.Diagnostics.ShouldBeEmpty();
-        roundtrip.Reparsed.Success.ShouldBeTrue();
-        roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
+        roundtrip.Original!.Success.ShouldBeFalse();
+        roundtrip.Original.Diagnostics.Select(diagnostic => diagnostic.Code).ToArray().ShouldEqual(["PLAY0504", "PLAY0549"]);
+        roundtrip.Reparsed.Success.ShouldBeFalse();
+        roundtrip.Reparsed.Diagnostics.Select(diagnostic => diagnostic.Code).ToArray().ShouldEqual(["PLAY0504", "PLAY0549"]);
         var before = roundtrip.Original.Value!.Modules.Single().Features.Single().Slices.Single();
         var after = roundtrip.Reparsed.Value!.Modules.Single().Features.Single().Slices.Single();
         var commandKey = after.Commands.Single().Stream!.StreamId!.Source;

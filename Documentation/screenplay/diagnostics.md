@@ -96,13 +96,13 @@ Handler commands may author routes without declaring their returned events.
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0503` | Error | An event source or its source-owned stream has invalid syntax, a repeated directive or physical declaration, an invalid rename pin, or an optional, collection or known composite identifier type. Composite stream-id blocks also refuse fewer than two parts, duplicate names, modifiers, children, empty/repeated headers and mixed scalar/block forms. Duplicate physical sources make their child ownership ambiguous. |
-| `PLAY0504` | Error or warning | A known source's stream does not resolve uniquely, or a command route or stream-id mapping is invalid, missing or incompatible, including missing, unknown, duplicated, mismatched-shape or empty-text composite parts. A command identifier with a different known nominal source identifier type is a warning; it is not silently retargeted. |
+| `PLAY0504` | Error | A known source's stream does not resolve uniquely, or a command route or stream-id mapping is invalid, missing or incompatible, including missing, unknown, duplicated or mismatched-shape composite parts. Scalar literals and composite literal parts refuse empty, non-NFC or ill-formed text and integers outside ±9007199254740991 in Double numeric mode. A command identifier or known production destination type differing from the source's nominal identifier type is refused, never silently retargeted. |
 | `PLAY0505` | Error | An exact `stream Source.Stream` header resolves both to one source-owned stream and to a viable imported value type. Both candidates remain visible; neither is selected automatically. |
 | `PLAY0506` | Error | A known scalar stream-id or composite part type falls outside text and UUID values and their nominal concepts, plus integer-backed concepts. Bare Int is rejected. Other types need a future portable formatting contract. Unavailable imported shapes remain unresolved. |
 | `PLAY0507` | Information | A source or stream's rename-only `id` pin repeats its current name. New declarations omit the pin. |
 | `PLAY0547` | Error | A specification routing directive or composite part block is malformed, empty, repeated, conflicting, has invalid children, or uses `no stream` outside a `then` event. |
 | `PLAY0548` | Error | A `when <Command>` occurrence declares `stream` or `no stream`; the route belongs to the command declaration. |
-| `PLAY0549` | Error | A specification stream reference is missing or ambiguous, its key mapping is missing or superfluous, or the scalar stream id or composite part is nonliteral, empty text or incompatible. Composite routes require every declared part exactly once and refuse unknown/duplicate names and mismatched scalar/block forms. |
+| `PLAY0549` | Error | A specification stream reference is missing or ambiguous, its key mapping is missing or superfluous, or the scalar stream id or composite part is nonliteral or incompatible, or contains empty, non-NFC or ill-formed text or an integer outside ±9007199254740991 in Double numeric mode. Composite routes require every declared part exactly once and refuse unknown/duplicate names and mismatched scalar/block forms. |
 | `PLAY0550` | Error | A routed `given` or `when append` lacks `for`, a routed identity is not a compatible concrete literal, or a source without `identifier` has no unambiguous known producer destination type. |
 | `PLAY0551` | Error | A `then` route or destination type contradicts the command under test, which is the event's only producer in the whole model. Other producers defer the comparison. |
 
@@ -1063,13 +1063,13 @@ An ambiguous target uses `PLAY0198`, naming the equally near candidates. See [De
 | Code | Condition |
 | --- | --- |
 | `PLAY0503` | Invalid or duplicate source/stream declaration, including non-scalar types or invalid composite part declarations |
-| `PLAY0504` | Missing or ambiguous source-owned stream, invalid scalar/composite key mapping, or known incompatible command identifier/key type |
+| `PLAY0504` | Missing or ambiguous source-owned stream, invalid scalar/composite key mapping or literal formatting, or known incompatible command identifier, production destination or key type |
 | `PLAY0505` | Both the route and qualified value-property interpretations are viable; neither is selected |
 | `PLAY0506` | Known scalar or composite part type needs an unsupported portable formatter; bare `Int` is not supported |
 | `PLAY0507` | Redundant rename-only stored-name pin |
 | `PLAY0547` | Invalid, empty, duplicated, conflicting or misplaced specification route/part block |
 | `PLAY0548` | Specification command occurrence declares routing metadata |
-| `PLAY0549` | Unresolved specification route or missing, unknown, duplicated, mismatched-shape, nonliteral, empty or incompatible stream id/part |
+| `PLAY0549` | Unresolved specification route or missing, unknown, duplicated, mismatched-shape, nonliteral, incompatible or unformattable stream id/part |
 | `PLAY0550` | Missing or incompatible routed source identity, or ambiguous producer fallback without a source identifier |
 | `PLAY0551` | Expected route contradicts its sole producer, the command under test |
 
