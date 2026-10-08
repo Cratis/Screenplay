@@ -53,7 +53,7 @@ public class when_walking_declarations_that_name_a_file : Specification
     {
         _document = new ScreenplayCompiler().Compile(Source).Value!;
         _walker = new();
-        _expected = given.SyntaxNodes.Under(_document);
+        _expected = global::Cratis.Screenplay.given.SyntaxNodes.Under(_document);
     }
 
     void Because() => _walker.VisitApplication(_document);

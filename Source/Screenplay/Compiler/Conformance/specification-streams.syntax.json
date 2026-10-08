@@ -6,7 +6,6 @@
       "attributes": [],
       "name": "Partition",
       "type": "Int",
-      "validations": [],
       "values": []
     }
   ],
@@ -156,25 +155,17 @@
                           "property": "stream",
                           "source": {
                             "kind": "LiteralExpressionSyntax",
-                            "value": {
-                              "literalType": "ExactNumber",
-                              "value": "5"
-                            }
+                            "value": 5
                           }
                         }
                       ]
                     }
                   ],
-                  "givenCaller": null,
                   "givenCaptures": [],
                   "givenClock": null,
                   "givenOperationFailures": [],
                   "givenReadModels": [],
                   "name": "ReadingHistory",
-                  "sourceOptions": {
-                    "numericMode": "exact"
-                  },
-                  "thenAbsentReadModels": [],
                   "thenCompensated": [],
                   "thenDenied": null,
                   "thenErrors": [],
@@ -195,10 +186,7 @@
                           "property": "streamId",
                           "source": {
                             "kind": "LiteralExpressionSyntax",
-                            "value": {
-                              "literalType": "ExactNumber",
-                              "value": "202610"
-                            }
+                            "value": 202610
                           }
                         }
                       },
@@ -208,10 +196,7 @@
                           "property": "stream",
                           "source": {
                             "kind": "LiteralExpressionSyntax",
-                            "value": {
-                              "literalType": "ExactNumber",
-                              "value": "7"
-                            }
+                            "value": 7
                           }
                         }
                       ]
@@ -229,10 +214,7 @@
                           "property": "streamId",
                           "source": {
                             "kind": "LiteralExpressionSyntax",
-                            "value": {
-                              "literalType": "ExactNumber",
-                              "value": "8"
-                            }
+                            "value": 8
                           }
                         }
                       ]
@@ -247,10 +229,7 @@
                           "property": "stream",
                           "source": {
                             "kind": "LiteralExpressionSyntax",
-                            "value": {
-                              "literalType": "ExactNumber",
-                              "value": "9"
-                            }
+                            "value": 9
                           }
                         }
                       ]
@@ -259,7 +238,6 @@
                   "thenEventsInAnyOrder": false,
                   "thenNoResult": null,
                   "thenOperations": [],
-                  "thenQueries": [],
                   "thenReadModels": [],
                   "thenResults": [],
                   "thenReturns": null,
@@ -283,10 +261,7 @@
                         "property": "streamId",
                         "source": {
                           "kind": "LiteralExpressionSyntax",
-                          "value": {
-                            "literalType": "ExactNumber",
-                            "value": "6"
-                          }
+                          "value": 6
                         }
                       }
                     ]
@@ -308,11 +283,6 @@
     }
   ],
   "personas": [],
-  "policies": [],
-  "seeds": [],
-  "sourceOptions": {
-    "numericMode": "exact"
-  },
   "systems": [],
   "types": []
 }

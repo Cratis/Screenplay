@@ -1,5 +1,5 @@
 // Specification routes are authoring-only until an ESM version admits them.
-numbers exact
+// Legacy numeric mode lets binding report the route's own admission issue (#457).
 concept Partition : Int
 eventsource Account
   identifier String

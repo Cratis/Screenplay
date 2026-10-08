@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-numbers exact
+// Legacy numeric mode lets binding report the reaction's own admission issue (#433).
 
 module Billing
   feature Claims
@@ -12,11 +12,18 @@ module Billing
         reason String
         constraint String
         message String
+      command Claim
+        invoice String identifier
+        produces Claimed
+          for invoice
+      event Claimed
+      constraint UniqueClaim
+        unique event Claimed
       reaction Claimer
         when Approved
           invokes Claim
             invoice = invoice
-            on refused by constraint Claims.UniqueClaim
+            on refused by constraint Handling.UniqueClaim
               produces Refused
                 for invoice
                 reason = $refusal.reason
