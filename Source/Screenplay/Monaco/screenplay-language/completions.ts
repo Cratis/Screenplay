@@ -53,6 +53,8 @@ export function createCompletionProvider(monaco: Monaco, options: CompletionOpti
                 insertText: entry.insertText,
                 insertTextRules: asSnippet,
                 documentation: entry.documentation,
+                sortText: entry.sortText,
+                detail: entry.detail,
                 range,
             });
             const symbolItem = (

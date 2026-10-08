@@ -15,6 +15,35 @@ const addressOf = (container: DependencyContainer) => [...container.scope, conta
 
 // Children sets only: siblings, ancestors' siblings, then root modules. Dotted references match suffixes.
 export class DeclaredDependencyTargets {
+    static containersOf(application: ApplicationSyntax): DependencyContainer[] {
+        const containers: DependencyContainer[] = [];
+        const inventory = (feature: FeatureSyntax, parent: readonly string[]): void => {
+            containers.push({ name: feature.name, scope: parent });
+            feature.features.forEach(child => inventory(child, [...parent, feature.name]));
+        };
+        for (const module of application.modules) {
+            containers.push({ name: module.name, scope: [] });
+            module.features.forEach(feature => inventory(feature, [module.name]));
+        }
+        return [...new Map(containers.map(container => [addressOf(container), container])).values()];
+    }
+
+    static candidates(from: readonly string[], containers: readonly DependencyContainer[]): { container: DependencyContainer; reference: string; tier: number | 'qualified' }[] {
+        const owner = from.join('.');
+        return containers.flatMap(container => {
+            const address = addressOf(container);
+            if (address === owner || address.startsWith(owner + '.') || owner.startsWith(address + '.')) return [];
+            const parts = [...container.scope, container.name];
+            for (let length = 1; length <= parts.length; length++) {
+                const reference = parts.slice(-length).join('.');
+                if (this.resolve(reference, from, containers).resolved !== container) continue;
+                const tier: number | 'qualified' = length === 1 ? from.length - 1 - container.scope.length : 'qualified';
+                return [{ container, reference, tier }];
+            }
+            return [];
+        }).sort((left, right) => (left.tier === 'qualified' ? from.length : left.tier) - (right.tier === 'qualified' ? from.length : right.tier));
+    }
+
     static resolve(reference: string, from: readonly string[], containers: readonly DependencyContainer[]): { resolved?: DependencyContainer; ambiguous: readonly DependencyContainer[] } {
         const segments = reference.split('.');
         if (segments.length > 1) {
@@ -30,20 +59,10 @@ export class DeclaredDependencyTargets {
 }
 
 export function validateDependencyDeclarations(application: ApplicationSyntax, context: ParserContext): ApplicationSyntax {
-    let containers: DependencyContainer[] = [];
-    let hasDependencies = false;
-    const inventory = (feature: FeatureSyntax, parent: readonly string[]): void => {
-        containers.push({ name: feature.name, scope: parent });
-        hasDependencies ||= (feature.dependsOn?.length ?? 0) > 0;
-        feature.features.forEach(child => inventory(child, [...parent, feature.name]));
-    };
-    for (const module of application.modules) {
-        containers.push({ name: module.name, scope: [] });
-        hasDependencies ||= (module.dependsOn?.length ?? 0) > 0;
-        module.features.forEach(feature => inventory(feature, [module.name]));
-    }
-    if (!hasDependencies) return application;
-    containers = [...new Map(containers.map(container => [addressOf(container), container])).values()];
+    const hasDependencies = (container: { dependsOn?: readonly DependsOnSyntax[]; features: readonly FeatureSyntax[] }): boolean =>
+        (container.dependsOn?.length ?? 0) > 0 || container.features.some(hasDependencies);
+    if (!application.modules.some(hasDependencies)) return application;
+    const containers = DeclaredDependencyTargets.containersOf(application);
 
     const seenByOwner = new Map<string, Set<string>>();
     const keep = (dependencies: readonly DependsOnSyntax[], from: readonly string[]): DependsOnSyntax[] => {
