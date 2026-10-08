@@ -7,9 +7,10 @@ import { CommandSyntax } from '../Syntax/Commands';
 import { EventSyntax, TypeRefSyntax } from '../Syntax/Declarations';
 import { EventSourceCatalog } from '../Syntax/EventSourceCatalog';
 import { EventSourceResolutionKind } from '../Syntax/EventSources';
-import { canonicalExactText } from '../Syntax/ExactMathFacts';
+import { streamIdFailureMessage } from '../Syntax/StreamIdFormatter';
 import { ExpressionSyntax } from '../Syntax/Expressions';
-import { implicitDestination } from '../Syntax/ProductionDestinations';
+import { commandDestinationType } from './CommandDestinationTypes';
+import { formatStreamIdLiteral } from './EventSourceValidator';
 import { ApplicationSyntax } from '../Syntax/Structure';
 import { PropertyMappingSyntax } from '../Syntax/Expressions';
 import { validateStreamIdParts } from './CompositeStreamIdValidator';
@@ -34,33 +35,7 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
     const formatStreamId = (expression: ExpressionSyntax | null | undefined, type: TypeRefSyntax): string | null => {
         if (expression?.kind !== 'LiteralExpressionSyntax' || !compatible(expression, type)) return null;
         const primitive = concepts.get(type.name)?.type ?? type.name;
-        const value = expression.value;
-        if (primitive === 'String' && typeof value === 'string') return value;
-        if (primitive === 'Uuid' && typeof value === 'string') {
-            const hex = value.replace(/[{}()-]/g, '').toLowerCase();
-            return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-        }
-        if (primitive === 'Int') {
-            if (typeof value === 'number') return BigInt(value).toString();
-            if (typeof value === 'object' && value !== null && value.literalType === 'ExactNumber') return canonicalExactText(value);
-        }
-        return null;
-    };
-    const pathType = (command: CommandSyntax, path: string): TypeRefSyntax | null => {
-        let fields = command.properties;
-        let result: TypeRefSyntax | null = null;
-        let optional = false;
-        let collection = false;
-        for (const segment of path.split('.')) {
-            const matches = fields.filter(field => field.name === segment);
-            if (matches.length !== 1) return null;
-            const type = matches[0].type;
-            optional ||= type.isOptional;
-            collection ||= type.isCollection;
-            result = { ...type, isOptional: optional, isCollection: collection };
-            fields = composites.get(type.name)?.properties ?? [];
-        }
-        return result;
+        return ['String', 'Uuid', 'Int'].includes(primitive) ? formatStreamIdLiteral(expression, type, application)?.value ?? null : null;
     };
     const eventOf = (reference: string, slice: typeof resolver.slices[number]['slice']): EventSyntax | null => {
         const declared = resolver.resolve(reference, slice).declaration;
@@ -72,10 +47,7 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
             if (!resolver.isEventProduction(produced, slice)) continue;
             const event = eventOf(produced.event, slice);
             if (event === null) continue;
-            const destination = produced.for?.kind === 'PathExpressionSyntax' ? produced.for.path : implicitDestination(command, produced, { resolver, slice });
-            const type = destination === 'new event source'
-                ? { kind: 'TypeRefSyntax' as const, name: 'Uuid', isOptional: false, isCollection: false, location: produced.location }
-                : destination === undefined ? null : pathType(command, destination);
+            const type = commandDestinationType(command, produced, application, { resolver, slice });
             producers.push({ event, command, type });
         }
         for (const produced of slice.reactions.flatMap(reaction => reaction.triggers).flatMap(trigger => trigger.produces)) {
@@ -119,7 +91,9 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
                 const stream = resolution.streams[0];
                 const validateLiteral = (mapping: PropertyMappingSyntax, target: TypeRefSyntax | null): void => {
                     const value = mapping.source;
-                    if (value.kind !== 'LiteralExpressionSyntax' || value.value === null || value.value === '' || target !== null && !compatible(value, target))
+                    const formatted = formatStreamIdLiteral(value, target, application);
+                    if (formatted?.failure != null) context.error(DiagnosticCodes.InvalidSpecificationStreamRoute, streamIdFailureMessage(formatted.failure), value.location);
+                    else if (value.kind !== 'LiteralExpressionSyntax' || value.value === null || target !== null && !compatible(value, target))
                         context.error(DiagnosticCodes.InvalidSpecificationStreamRoute, "A specification stream id needs a nonempty concrete scalar literal compatible with the stream's declared type.", value.location);
                 };
                 if (stream.streamIdParts.length > 0)
