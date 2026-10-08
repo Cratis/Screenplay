@@ -8,6 +8,10 @@ eventsource Account
   stream Profile
   stream Partitioned
     streamId Partition
+  stream Composite
+    streamId
+      streamId String
+      stream Partition
 module Banking
   feature Accounts
     slice StateView History
@@ -34,3 +38,23 @@ module Banking
           streamId = 8
         then Recorded
           stream = 9
+      specification CompositeHistory
+        given Recorded
+          for "other"
+          stream Account.Composite
+            streamId
+              stream = 202610
+              streamId = "period"
+          streamId = 6
+        when append Recorded
+          for "other"
+          stream Account.Composite
+            streamId
+              streamId = "period"
+              stream = 202610
+          stream = 5
+        then Recorded
+          stream Account.Composite
+            streamId
+              stream = 202610
+              streamId = "period"

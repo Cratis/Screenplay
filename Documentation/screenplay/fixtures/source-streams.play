@@ -7,6 +7,10 @@ eventsource Account
   stream Transactions
     description "Account activity for one month"
     streamId Month
+  stream Ledger
+    streamId
+      account AccountId
+      month Month
 
 module Banking
   feature Deposits
@@ -19,3 +23,14 @@ module Banking
           streamId = month
         produces event Deposited
           amount Decimal = amount
+    slice StateChange Book
+      command BookEntry
+        accountId AccountId identifier
+        month Month
+        stream Account.Ledger
+          streamId
+            month = month
+            account = accountId
+        produces event EntryBooked
+          for accountId
+          month Month = month

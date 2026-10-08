@@ -27,6 +27,7 @@
         { "include": "#capture-block" },
         { "include": "#example-header" },
         { "include": "#specification-stream" },
+        { "include": "#stream-id-parts" },
         { "include": "#declared-dependency" },
         { "include": "#keywords" },
         { "include": "#common" }
@@ -52,6 +53,7 @@
                 { "include": "#event-block" },
                 { "include": "#description-block" },
                 { "include": "#fenced-csharp" },
+                { "include": "#stream-id-parts" },
                 { "include": "#keyword-input" },
                 { "include": "#keywords" },
                 { "include": "#common" }
@@ -69,11 +71,22 @@
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
             "patterns": [{ "include": "#handler-implementation" }, { "include": "#fenced-csharp" }, { "include": "#fenced-typescript" }, { "include": "#fenced-react" }, { "include": "#fenced-html" }, { "include": "#fenced-sql" }, { "include": "#keywords" }, { "include": "#common" }]
         },
+        "stream-id-parts": {
+            "begin": "^([ \\t]*)(streamId)(?=\\s*(?://.*)?$)",
+            "beginCaptures": { "2": { "name": "keyword.other.screenplay" } },
+            "while": "^(?=\\1[ \\t]+\\S|[ \\t]*$)",
+            "patterns": [
+                { "match": "^\\s*([A-Za-z_]\\w*)\\s*=(?!=|>)", "captures": { "1": { "name": "variable.other.screenplay" } } },
+                { "include": "#keyword-input" },
+                { "include": "#common" }
+            ]
+        },
         "specification-stream": {
             "begin": "^([ \\t]*)(stream)\\s+([A-Za-z_]\\w*\\.[A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
             "beginCaptures": { "2": { "name": "keyword.other.screenplay" }, "3": { "name": "entity.name.type.screenplay" } },
             "while": "^(?=\\1[ \\t]+\\S|[ \\t]*$)",
             "patterns": [
+                { "include": "#stream-id-parts" },
                 { "match": "^\\s*(streamId)\\s*=(?!=|>)", "captures": { "1": { "name": "keyword.other.screenplay" } } },
                 { "include": "#common" }
             ]

@@ -49,13 +49,21 @@ internal static class SpecificationStreamValidator
                         }
                         var source = resolution.Sources[0];
                         var stream = resolution.Streams[0];
-                        if ((stream.StreamId is null) != (route.StreamId is null))
+                        if (stream.StreamIdParts.Any())
                         {
-                            context.Error(DiagnosticCodes.InvalidSpecificationStreamRoute, stream.StreamId is null ? "An unkeyed stream cannot take a streamId mapping." : "This keyed stream requires a streamId mapping.", route.Location);
+                            EventSourceValidator.ValidateParts(stream, route.StreamIdParts, route.StreamId is not null, route.Location, DiagnosticCodes.InvalidSpecificationStreamRoute, context, (mapping, target) => ValidateLiteral(mapping, target, values, context));
                         }
-                        if (route.StreamId is { } mapping && (mapping.Source is (not LiteralExpressionSyntax { Value: not null }) or LiteralExpressionSyntax { Value: "" } || (stream.StreamId is { } target && !values.Compatible(mapping.Source, target))))
+                        else if (route.StreamIdParts.Any())
                         {
-                            context.Error(DiagnosticCodes.InvalidSpecificationStreamRoute, "A specification stream id needs a nonempty concrete scalar literal compatible with the stream's declared type.", mapping.Source.Location);
+                            context.Error(DiagnosticCodes.InvalidSpecificationStreamRoute, "A streamId part block requires a composite stream.", route.Location);
+                        }
+                        else
+                        {
+                            if ((stream.StreamId is null) != (route.StreamId is null))
+                            {
+                                context.Error(DiagnosticCodes.InvalidSpecificationStreamRoute, stream.StreamId is null ? "An unkeyed stream cannot take a streamId mapping." : "This keyed stream requires a streamId mapping.", route.Location);
+                            }
+                            if (route.StreamId is { } mapping) ValidateLiteral(mapping, stream.StreamId, values, context);
                         }
                         identifier = source.Identifier;
                         if (identifier is null)
@@ -97,6 +105,14 @@ internal static class SpecificationStreamValidator
         }
     }
 
+    static void ValidateLiteral(PropertyMappingSyntax mapping, TypeRefSyntax? target, ResponseValueTypes values, ParserContext context)
+    {
+        if (mapping.Source is (not LiteralExpressionSyntax { Value: not null }) or LiteralExpressionSyntax { Value: "" } || (target is not null && !values.Compatible(mapping.Source, target)))
+        {
+            context.Error(DiagnosticCodes.InvalidSpecificationStreamRoute, "A specification stream id needs a nonempty concrete scalar literal compatible with the stream's declared type.", mapping.Source.Location);
+        }
+    }
+
     static IEnumerable<Producer> Producers(ConsistencyDeclarations declarations)
     {
         foreach (var (slice, scope) in declarations.Slices)
@@ -134,7 +150,23 @@ internal static class SpecificationStreamValidator
         var expected = occurrence.Stream!;
         if (route is null || route.EventSource != expected.EventSource || route.Stream != expected.Stream) return true;
         var resolution = catalog.Resolve(expected.EventSource, expected.Stream);
-        if (resolution.Kind != EventSourceResolutionKind.Unique || resolution.Streams[0].StreamId is not { } type) return false;
+        if (resolution.Kind != EventSourceResolutionKind.Unique) return false;
+        var stream = resolution.Streams[0];
+        if (stream.StreamIdParts.Any())
+        {
+            if (route.StreamId is not null || expected.StreamId is not null || !route.StreamIdParts.Any() || !expected.StreamIdParts.Any()) return false;
+            foreach (var part in stream.StreamIdParts)
+            {
+                var actualParts = route.StreamIdParts.Where(mapping => mapping.Property == part.Name).ToArray();
+                var expectedParts = expected.StreamIdParts.Where(mapping => mapping.Property == part.Name).ToArray();
+                if (actualParts.Length != 1 || expectedParts.Length != 1) continue;
+                var actualPart = FormatStreamId(actualParts[0].Source, part.Type, application, values);
+                var expectedPart = FormatStreamId(expectedParts[0].Source, part.Type, application, values);
+                if (actualPart is not null && expectedPart is not null && actualPart != expectedPart) return true;
+            }
+            return false;
+        }
+        if (route.StreamIdParts.Any() || expected.StreamIdParts.Any() || stream.StreamId is not { } type) return false;
         var actualId = FormatStreamId(route.StreamId?.Source, type, application, values);
         var expectedId = FormatStreamId(expected.StreamId?.Source, type, application, values);
 

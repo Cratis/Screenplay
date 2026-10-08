@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { parseRouteParts } from './EventSourceParser';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
 import {
@@ -548,11 +549,25 @@ function parseValuesWithEventSource(context: ParserContext, parent: SourceLine, 
 
 function parseSpecificationStream(context: ParserContext, header: SourceLine, route: RegExpExecArray): SpecificationStreamSyntax {
     let streamId: PropertyMappingSyntax | null = null;
+    let streamIdParts: PropertyMappingSyntax[] = [];
+    let block = false;
+    const directiveLocations: Record<string, ReturnType<typeof locationOf>> = {};
     for (let child = context.peekChild(header.indent); child !== undefined; child = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
+        if (child.content === 'streamId') {
+            if (streamId !== null || block) {
+                context.error(DiagnosticCodes.InvalidSpecificationStream, "Declare either one 'streamId = <literal>' mapping or one streamId part block.", locationOf(child));
+                context.skipBlock(child.indent);
+            } else {
+                block = true;
+                directiveLocations.streamId = locationOf(child);
+                streamIdParts = parseRouteParts(context, child, DiagnosticCodes.InvalidSpecificationStream);
+            }
+            continue;
+        }
         const mapping = specificationStreamId.exec(child.content);
-        if (mapping === null || streamId !== null) {
-            context.error(DiagnosticCodes.InvalidSpecificationStream, "A specification stream accepts at most one 'streamId = <literal>' mapping.", locationOf(child));
+        if (mapping === null || streamId !== null || block) {
+            context.error(DiagnosticCodes.InvalidSpecificationStream, "Declare either one 'streamId = <literal>' mapping or one streamId part block.", locationOf(child));
             context.skipBlock(child.indent);
             continue;
         }
@@ -560,7 +575,7 @@ function parseSpecificationStream(context: ParserContext, header: SourceLine, ro
         streamId = { kind: 'PropertyMappingSyntax', property: 'streamId', source: parseMappingSource(mapping[1], location, context), location: locationOf(child) };
         rejectSpecificationRouteChildren(context, child);
     }
-    return { kind: 'SpecificationStreamSyntax', eventSource: route[1], stream: route[2], streamId,
+    return { kind: 'SpecificationStreamSyntax', eventSource: route[1], stream: route[2], streamId, streamIdParts, directiveLocations,
         referenceLocation: { ...locationOf(header), column: header.indent + 1 + header.content.indexOf(route[1], 'stream'.length) },
         referenceLength: route[1].length + 1 + route[2].length, location: locationOf(header) };
 }

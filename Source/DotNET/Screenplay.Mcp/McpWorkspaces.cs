@@ -140,7 +140,7 @@ internal sealed partial class McpWorkspaces
         var transaction = workspace.Propose(request);
         if (!transaction.Success)
         {
-            return McpJson.ToolResult(new { success = false, failureKind = "ProposalRejected", transaction.Conflicts, transaction.Diagnostics }, true);
+            return McpJson.ToolResult(new { success = false, failureKind = "ProposalRejected", transaction.Conflicts, identityMigrationIssues = transaction.Conflicts.SelectMany(conflict => conflict.IdentityMigrationIssues).Select(issue => issue.Describe()), transaction.Diagnostics }, true);
         }
 
         return Store(new McpProposal(workspace, transaction), arguments, expand);

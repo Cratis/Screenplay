@@ -3,7 +3,8 @@
 
 import { CommandSyntax, ValidationRuleSyntax } from './Commands';
 import { ConceptSyntax } from './Declarations';
-import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax } from './EventSources';
+import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax, EventStreamIdPartSyntax } from './EventSources';
+import { PropertyMappingSyntax } from './Expressions';
 import { HandlerSyntax, ImplementationSyntax, ImplementationHintSyntax } from './Implementations';
 import { InvalidSyntaxJson } from './InvalidSyntaxJson';
 import { OperationPhaseSyntax } from './Operations';
@@ -81,6 +82,11 @@ export function validateSyntaxInvariants(node: SyntaxNode): void {
 
 function validateSourceStream(node: SyntaxNode): void {
     const name = (value: string): void => { if (!isSourceStreamName(value)) refuse('Event source and stream names must be identifiers.'); };
+    const mappings = (scalar: PropertyMappingSyntax | null, parts: PropertyMappingSyntax[]): void => {
+        collection(parts, 'PropertyMappingSyntax', 'Stream id part mappings must be a collection.');
+        if (scalar !== null && parts.length > 0) refuse('A route cannot map both scalar and composite stream ids.');
+        parts.forEach(part => name(part.property));
+    };
     if (node.kind === 'ApplicationSyntax') {
         const sources = (node as unknown as { eventSources?: unknown }).eventSources;
         if (sources !== undefined) collection(sources, 'EventSourceSyntax', 'Event sources must be a collection of event source nodes without null elements.');
@@ -94,6 +100,18 @@ function validateSourceStream(node: SyntaxNode): void {
         if (type !== null && (type.isCollection || type.isOptional)) refuse('Source identifiers and stream ids require nonoptional scalar type references.');
         if (type !== null && !isSourceStreamTypeName(type.name)) refuse('Source identifiers and stream ids require an exact type reference name.');
         if (declaration.kind === 'EventSourceSyntax') collection(declaration.streams, 'EventStreamSyntax', 'Event streams must contain event stream nodes without null elements.');
+        else {
+            collection(declaration.streamIdParts, 'EventStreamIdPartSyntax', 'Stream id parts must be a collection.');
+            if (declaration.streamId !== null && declaration.streamIdParts.length > 0) refuse('A stream cannot declare both scalar and composite stream ids.');
+            declaration.streamIdParts.forEach(part => validateSourceStream(part));
+        }
+    }
+    if (node.kind === 'EventStreamIdPartSyntax') {
+        const part = node as EventStreamIdPartSyntax;
+        name(part.name);
+        if (!hasKind(part.type, 'TypeRefSyntax')) refuse('A stream id part requires a type.');
+        if (part.type.isOptional || part.type.isCollection) refuse('Source identifiers and stream ids require nonoptional scalar type references.');
+        if (!isSourceStreamTypeName(part.type.name)) refuse('Source identifiers and stream ids require an exact type reference name.');
     }
     if (node.kind === 'CommandSyntax') {
         const command = node as CommandSyntax;
@@ -119,13 +137,15 @@ function validateSourceStream(node: SyntaxNode): void {
         name(route.eventSource);
         name(route.stream);
         if (route.streamId !== null && route.streamId.property !== 'streamId') refuse('A specification stream maps only streamId.');
+        mappings(route.streamId, route.streamIdParts);
     }
     if (node.kind === 'CommandStreamSyntax') {
         const route = node as CommandStreamSyntax;
         name(route.eventSource);
         name(route.stream);
         if (route.streamId !== null && route.streamId.property !== 'streamId') refuse('A command stream maps only streamId.');
+        mappings(route.streamId, route.streamIdParts);
         const candidate = route.propertyCandidate;
-        if (candidate !== null && (candidate.name !== 'stream' || candidate.type.name !== `${route.eventSource}.${route.stream}` || candidate.type.isCollection || candidate.type.isOptional || candidate.isGenerated || candidate.isIdentifier || route.streamId !== null)) refuse('An ambiguous route must retain its exact unmodified property candidate, without selecting nested routing.');
+        if (candidate !== null && (candidate.name !== 'stream' || candidate.type.name !== `${route.eventSource}.${route.stream}` || candidate.type.isCollection || candidate.type.isOptional || candidate.isGenerated || candidate.isIdentifier || route.streamId !== null || route.streamIdParts.length > 0)) refuse('An ambiguous route must retain its exact unmodified property candidate, without selecting nested routing.');
     }
 }

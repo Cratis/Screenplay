@@ -231,6 +231,8 @@ public sealed record WorkspaceConflict
     /// Gets the other owner's portable path, when two files claim the same declaration.
     /// </summary>
     public PortablePlayPath? OtherPath { get; init; }
+
+    internal ImmutableArray<IdentityMigrationIssue> IdentityMigrationIssues { get; init; } = [];
 }
 
 /// <summary>

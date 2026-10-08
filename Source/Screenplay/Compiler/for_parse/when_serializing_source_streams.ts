@@ -53,7 +53,7 @@ describe('when serializing source-stream authoring invariants', () => {
     });
     it('should retain declaration-only and unkeyed stream members exactly', () => {
         const node = parse('eventsource Account\n  description "Account"\n  id "Old"\n  stream Transactions\n    description "History"\n    id "OldStream"').value;
-        expect(toSyntaxJson(node.eventSources![0])).toEqual({ kind: 'EventSourceSyntax', description: 'Account', id: 'Old', identifier: null, name: 'Account', streams: [{ kind: 'EventStreamSyntax', description: 'History', id: 'OldStream', name: 'Transactions', streamId: null }] });
+        expect(toSyntaxJson(node.eventSources![0])).toEqual({ kind: 'EventSourceSyntax', description: 'Account', id: 'Old', identifier: null, name: 'Account', streams: [{ kind: 'EventStreamSyntax', description: 'History', id: 'OldStream', name: 'Transactions', streamId: null, streamIdParts: [] }] });
     });
     it('should not admit null or non-string new declaration names in programmatic trees', () => {
         for (const name of [null, 42]) expect(() => toSyntaxJson({ ...source, name } as unknown as EventSourceSyntax)).toThrow();

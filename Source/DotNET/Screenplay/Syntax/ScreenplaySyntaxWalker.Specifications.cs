@@ -169,6 +169,7 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         if (syntax.StreamId is { } streamId) VisitPropertyMapping(streamId);
+        foreach (var part in syntax.StreamIdParts) VisitPropertyMapping(part);
     }
 
     /// <summary>

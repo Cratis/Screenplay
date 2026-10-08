@@ -95,14 +95,14 @@ Handler commands may author routes without declaring their returned events.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0503` | Error | An event source or its source-owned stream has invalid syntax, a repeated directive or physical declaration, an invalid rename pin, or an optional, collection or known composite identifier type. Duplicate physical sources make their child ownership ambiguous. |
-| `PLAY0504` | Error or warning | A known source's stream does not resolve uniquely, or a command route or stream-id mapping is invalid, missing or incompatible. A command identifier with a different known nominal source identifier type is a warning; it is not silently retargeted. |
+| `PLAY0503` | Error | An event source or its source-owned stream has invalid syntax, a repeated directive or physical declaration, an invalid rename pin, or an optional, collection or known composite identifier type. Composite stream-id blocks also refuse fewer than two parts, duplicate names, modifiers, children, empty/repeated headers and mixed scalar/block forms. Duplicate physical sources make their child ownership ambiguous. |
+| `PLAY0504` | Error or warning | A known source's stream does not resolve uniquely, or a command route or stream-id mapping is invalid, missing or incompatible, including missing, unknown, duplicated, mismatched-shape or empty-text composite parts. A command identifier with a different known nominal source identifier type is a warning; it is not silently retargeted. |
 | `PLAY0505` | Error | An exact `stream Source.Stream` header resolves both to one source-owned stream and to a viable imported value type. Both candidates remain visible; neither is selected automatically. |
-| `PLAY0506` | Error | A known stream-id type falls outside text and UUID values and their nominal concepts, plus integer-backed concepts. Bare Int is rejected. Other types need a future portable formatting contract. Unavailable imported shapes remain unresolved. |
+| `PLAY0506` | Error | A known scalar stream-id or composite part type falls outside text and UUID values and their nominal concepts, plus integer-backed concepts. Bare Int is rejected. Other types need a future portable formatting contract. Unavailable imported shapes remain unresolved. |
 | `PLAY0507` | Information | A source or stream's rename-only `id` pin repeats its current name. New declarations omit the pin. |
-| `PLAY0547` | Error | A specification routing directive is malformed, repeated, conflicting, has invalid children, or uses `no stream` outside a `then` event. |
+| `PLAY0547` | Error | A specification routing directive or composite part block is malformed, empty, repeated, conflicting, has invalid children, or uses `no stream` outside a `then` event. |
 | `PLAY0548` | Error | A `when <Command>` occurrence declares `stream` or `no stream`; the route belongs to the command declaration. |
-| `PLAY0549` | Error | A specification stream reference is missing or ambiguous, its key mapping is missing or superfluous, or the stream id is nonliteral, empty text or incompatible. |
+| `PLAY0549` | Error | A specification stream reference is missing or ambiguous, its key mapping is missing or superfluous, or the scalar stream id or composite part is nonliteral, empty text or incompatible. Composite routes require every declared part exactly once and refuse unknown/duplicate names and mismatched scalar/block forms. |
 | `PLAY0550` | Error | A routed `given` or `when append` lacks `for`, a routed identity is not a compatible concrete literal, or a source without `identifier` has no unambiguous known producer destination type. |
 | `PLAY0551` | Error | A `then` route or destination type contradicts the command under test, which is the event's only producer in the whole model. Other producers defer the comparison. |
 
@@ -134,7 +134,7 @@ remove duplicate route headers before export.
 | `PLAY0011` | Warning | A value of an enumeration is called `validate`, which the concept body reads as an empty validate block. |
 | `PLAY0012` | Error | A concept gives the reason for an attribute it does not carry. |
 | `PLAY0013` | Error | A concept gives the reason for one attribute more than once. |
-| `PLAY0515` | Error | A concept marked `@pii` or `@sensitive` is used as a command identifier, an explicit `for` destination, or an event source identifier. The message names the attribute present. Use a surrogate `Uuid` identifier and keep personal data or operational secrets as properties. Reaction destinations also check values typed directly in the trigger clause, even for an undeclared or registered trigger. When a reaction source names both an event and a declared trigger, a protected destination in the resolved event shape or the trigger clause is rejected. |
+| `PLAY0515` | Error | A concept marked `@pii` or `@sensitive` is used as a command identifier, an explicit `for` destination, an event source identifier, a scalar stream id type, a composite stream id part type, or a command route mapping source (including nested property paths). The message names the attribute and position, never a value. A mapping using the same protected concept already reported at its resolved stream-id declaration is not reported again; a different protected source concept is still reported. Specification route literals rely on their declaration's check. Use a surrogate `Uuid` identifier and keep personal data or operational secrets as properties. Reaction destinations also check values typed directly in the trigger clause, even for an undeclared or registered trigger. When a reaction source names both an event and a declared trigger, a protected destination in the resolved event shape or the trigger clause is rejected. |
 
 ### Types
 
@@ -282,7 +282,7 @@ remove duplicate route headers before export.
 | `PLAY0523` | Error | An example supplies an undeclared current-generation property, an invalid generated fixture, or `for` on a read model. Use only the current type's allowed fixture lines. |
 | `PLAY0524` | Error | Binding an exact-shape specification step found a missing required property after expansion. The diagnostic names the step, property, and example when used. Supply the property in the example or step; no defaults are assumed. |
 | `PLAY0525` | Error | Semantic admission found a stated example value incompatible with its type, or `for` without one unambiguous required scalar destination type. Fix the value or its destination contract, even if the example is unused or that value is overridden. Partial top-level examples remain allowed. Ordinary fixture diagnostics also apply to null, nonconcrete, structured and generated values. |
-| `PLAY0526` | Error | An example states `stream`, `streamId` or `no stream`. State route metadata on the specification step, not in the reusable example. |
+| `PLAY0526` | Error | An example states `stream`, scalar or composite `streamId`, or `no stream`. State route metadata on the specification step, not in the reusable example. |
 
 ### Screens
 
@@ -774,6 +774,8 @@ A behavior is *deferred* from the backend ESM v1 profile in the same way every o
 | `PLAY0347` | Warning | Earlier alternatives provably shadow an alternative. Guards use first-match order; proof uses DNF comparison-set inclusion with a 64-disjunct expansion cap. Overlap alone is not reported. |
 | `PLAY0348` | Warning | A guarded alternative or `otherwise execute` supplies a `with` argument the chosen command does not declare, or binds a subject field whose collection cardinality differs from the command input. |
 
+Guarded-action checks `PLAY0341`–`PLAY0348` are shared by the TypeScript compiler, Monaco and VS Code. Subject and command shapes that are imported but undeclared, or ambiguous, remain unknown rather than guessed. See [Editor diagnostic support](editor-diagnostics.md) for the remaining C#-only checks.
+
 An inline `on` block is an anonymous behavior, so it has no name to report against. Diagnostics inside one cite the position and the trigger instead.
 
 ### Match validation binding
@@ -1064,14 +1066,14 @@ An ambiguous target uses `PLAY0198`, naming the equally near candidates. See [De
 
 | Code | Condition |
 | --- | --- |
-| `PLAY0503` | Invalid or duplicate source/stream declaration, including non-scalar identifier/key types |
-| `PLAY0504` | Missing or ambiguous source-owned stream, invalid key mapping, or known incompatible command identifier/key type |
+| `PLAY0503` | Invalid or duplicate source/stream declaration, including non-scalar types or invalid composite part declarations |
+| `PLAY0504` | Missing or ambiguous source-owned stream, invalid scalar/composite key mapping, or known incompatible command identifier/key type |
 | `PLAY0505` | Both the route and qualified value-property interpretations are viable; neither is selected |
-| `PLAY0506` | Known stream-id type needs an unsupported portable formatter; bare `Int` is not supported |
+| `PLAY0506` | Known scalar or composite part type needs an unsupported portable formatter; bare `Int` is not supported |
 | `PLAY0507` | Redundant rename-only stored-name pin |
-| `PLAY0547` | Invalid, duplicated, conflicting or misplaced specification routing directive |
+| `PLAY0547` | Invalid, empty, duplicated, conflicting or misplaced specification route/part block |
 | `PLAY0548` | Specification command occurrence declares routing metadata |
-| `PLAY0549` | Unresolved specification route or missing, superfluous, nonliteral, empty or incompatible stream id |
+| `PLAY0549` | Unresolved specification route or missing, unknown, duplicated, mismatched-shape, nonliteral, empty or incompatible stream id/part |
 | `PLAY0550` | Missing or incompatible routed source identity, or ambiguous producer fallback without a source identifier |
 | `PLAY0551` | Expected route contradicts its sole producer, the command under test |
 

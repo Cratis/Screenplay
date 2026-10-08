@@ -3,7 +3,7 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { TypeRefSyntax, PropertySyntax } from '../Syntax/Declarations';
-import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax } from '../Syntax/EventSources';
+import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax, EventStreamIdPartSyntax } from '../Syntax/EventSources';
 import { PropertyMappingSyntax } from '../Syntax/Expressions';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { pattern } from '../Text/patterns';
@@ -44,18 +44,33 @@ function parseEventStream(context: ParserContext, header: SourceLine): EventStre
     const name = streamHeader.exec(header.content)?.[1] ?? '';
     if (name === '') invalid(context, header, "Expected 'stream <Name>'.");
     let streamId: TypeRefSyntax | null = null;
+    let streamIdParts: EventStreamIdPartSyntax[] = [];
+    let declared = false;
+    const directiveLocations: Record<string, ReturnType<typeof locationOf>> = {};
     let description: string | null = null;
     let id: string | null = null;
     for (let child = context.peekChild(header.indent); child !== undefined; child = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
         switch (firstWord(child.content)) {
-            case 'streamId': streamId = parseType(context, child, 'streamId', streamId); break;
+            case 'streamId':
+                if (declared) {
+                    invalid(context, child, "Declare either one 'streamId <Type>' or one streamId part block.");
+                    context.skipBlock(child.indent);
+                } else if (child.content === 'streamId') {
+                    declared = true;
+                    directiveLocations.streamId = locationOf(child);
+                    streamIdParts = parseStreamIdParts(context, child);
+                } else {
+                    streamId = parseType(context, child, 'streamId', streamId);
+                    declared = streamId !== null;
+                }
+                break;
             case 'description': description = parseDescription(context, child, description, `Stream '${name}'`, true); break;
             case 'id': id = parsePin(context, child, name, id); break;
             default: invalid(context, child, 'A stream accepts description, id and streamId declarations.'); context.skipBlock(child.indent); break;
         }
     }
-    return { kind: 'EventStreamSyntax', name, streamId, description, id, location: locationOf(header) };
+    return { kind: 'EventStreamSyntax', name, streamId, streamIdParts, description, id, directiveLocations, location: locationOf(header) };
 }
 
 function parseType(context: ParserContext, line: SourceLine, keyword: string, previous: TypeRefSyntax | null): TypeRefSyntax | null {
@@ -83,18 +98,32 @@ function parsePin(context: ParserContext, line: SourceLine, name: string, previo
 
 export function parseCommandStream(context: ParserContext, header: SourceLine, candidate: PropertySyntax, ambiguous: boolean): CommandStreamSyntax {
     const [eventSource, stream] = candidate.type.name.split('.');
-    const route: CommandStreamSyntax = { kind: 'CommandStreamSyntax', eventSource, stream, streamId: null, propertyCandidate: null, referenceLocation: candidate.type.location, referenceLength: candidate.type.name.length, location: locationOf(header) };
+    const route: CommandStreamSyntax = { kind: 'CommandStreamSyntax', eventSource, stream, streamId: null, streamIdParts: [], propertyCandidate: null, referenceLocation: candidate.type.location, referenceLength: candidate.type.name.length, location: locationOf(header) };
     if (ambiguous) {
         context.error(DiagnosticCodes.AmbiguousCommandStream, `'${header.content}' has both a property type and a stream route interpretation; neither is selected.`, locationOf(header));
         // Ordinary properties are leaves; preserve deeper legacy command members in this case.
         return { ...route, propertyCandidate: candidate };
     }
     let streamId: PropertyMappingSyntax | null = null;
+    let streamIdParts: PropertyMappingSyntax[] = [];
+    let block = false;
+    const directiveLocations: Record<string, ReturnType<typeof locationOf>> = {};
     for (let child = context.peekChild(header.indent); child !== undefined; child = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
+        if (child.content === 'streamId') {
+            if (streamId !== null || block) {
+                context.error(DiagnosticCodes.InvalidCommandStream, "Declare either one 'streamId = <source>' mapping or one streamId part block.", locationOf(child));
+                context.skipBlock(child.indent);
+            } else {
+                block = true;
+                directiveLocations.streamId = locationOf(child);
+                streamIdParts = parseRouteParts(context, child, DiagnosticCodes.InvalidCommandStream);
+            }
+            continue;
+        }
         const match = /^streamId\s*=\s*(.+)$/.exec(child.content);
-        if (match === null || streamId !== null) {
-            context.error(DiagnosticCodes.InvalidCommandStream, "A command stream accepts at most one 'streamId = <source>' mapping.", locationOf(child));
+        if (match === null || streamId !== null || block) {
+            context.error(DiagnosticCodes.InvalidCommandStream, "Declare either one 'streamId = <source>' mapping or one streamId part block.", locationOf(child));
             context.skipBlock(child.indent);
         } else {
             const location = { ...locationOf(child), column: child.indent + 1 + child.content.indexOf(match[1], child.content.indexOf('=') + 1) };
@@ -102,7 +131,46 @@ export function parseCommandStream(context: ParserContext, header: SourceLine, c
             rejectChildren(context, child, DiagnosticCodes.InvalidCommandStream);
         }
     }
-    return { ...route, streamId };
+    return { ...route, streamId, streamIdParts, directiveLocations };
+}
+
+function parseStreamIdParts(context: ParserContext, header: SourceLine): EventStreamIdPartSyntax[] {
+    const parts: EventStreamIdPartSyntax[] = [];
+    const declaration = sourceStreamPattern('^([A-Za-z_]\\w*)\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)$');
+    for (let child = context.peekChild(header.indent); child !== undefined; child = context.peekChild(header.indent)) {
+        context.reader.takeSignificant();
+        const match = declaration.exec(child.content);
+        if (match === null) {
+            invalid(context, child, "Expected '<part> <Type>' without modifiers in a streamId part block.");
+            context.skipBlock(child.indent);
+            continue;
+        }
+        const type = parseTypeRef(match[2], { ...locationOf(child), column: child.indent + 1 + child.content.indexOf(match[2], match[1].length) });
+        reportLegacyOptionalSuffix(context, type, child);
+        parts.push({ kind: 'EventStreamIdPartSyntax', name: match[1], type, location: locationOf(child) });
+        rejectChildren(context, child, DiagnosticCodes.InvalidEventSourceDeclaration);
+    }
+    if (parts.length === 0) invalid(context, header, 'A streamId part block cannot be empty.');
+    return parts;
+}
+
+export function parseRouteParts(context: ParserContext, header: SourceLine, code: string): PropertyMappingSyntax[] {
+    const parts: PropertyMappingSyntax[] = [];
+    const mapping = sourceStreamPattern('^([A-Za-z_]\\w*)\\s*=(?!=|>)\\s*(.+)$');
+    for (let child = context.peekChild(header.indent); child !== undefined; child = context.peekChild(header.indent)) {
+        context.reader.takeSignificant();
+        const match = mapping.exec(child.content);
+        if (match === null) {
+            context.error(code, "Expected '<part> = <source>' in a streamId part block.", locationOf(child));
+            context.skipBlock(child.indent);
+            continue;
+        }
+        const location = { ...locationOf(child), column: child.indent + 1 + child.content.indexOf(match[2], child.content.indexOf('=') + 1) };
+        parts.push({ kind: 'PropertyMappingSyntax', property: match[1], source: parseMappingSource(match[2], location, context), location: locationOf(child) });
+        rejectChildren(context, child, code);
+    }
+    if (parts.length === 0) context.error(code, 'A streamId part block cannot be empty.', locationOf(header));
+    return parts;
 }
 
 function rejectChildren(context: ParserContext, line: SourceLine, code: string): void {

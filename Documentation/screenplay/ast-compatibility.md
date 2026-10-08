@@ -26,6 +26,10 @@ Appending a trailing optional parameter instead looks equivalent and is not. It 
 
 Authoring metadata follows this rule: `SpecificationSyntax.Description` and the `Documentation` members on modules, features, slices, commands, read models and reactions are nullable init-only properties. They appear in the syntax transport schema, not in the executable semantic model. Preserve them when rewriting a declaration.
 
+## Composite stream id members
+
+`EventStreamIdPartSyntax(Name, Type, Location)` is additive. `EventStreamSyntax.StreamIdParts` contains declarations in identity-bearing declaration order. `CommandStreamSyntax.StreamIdParts` and `SpecificationStreamSyntax.StreamIdParts` contain `PropertyMappingSyntax` in authored mapping order. These init-only collections default to empty, including old JSON omissions; existing positional constructors and scalar members are unchanged. A nonempty parts list is mutually exclusive with `StreamId`. Part names are not workspace references; part types are ordinary type references. The walker visits parts, their types and route mappings. Binding remains refused with `PLAY0268`; no ESM bytes change.
+
 ## What is not guaranteed
 
 **The positional parameter list.** Inserting a parameter, removing one, promoting an optional one to required, or appending a new one is a breaking change. The first three break source and binary; appending breaks binary only, which is the worse of the two to discover. Any of them is allowed in a major release and is enumerated in the release notes when it happens. If you construct nodes yourself, prefer named arguments and object initializers; if you consume them, prefer property access over deconstruction.
