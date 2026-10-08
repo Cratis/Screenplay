@@ -94,10 +94,13 @@ The compiler reads what an event model is made of:
 - generated command values, response contracts, fixtures and return expectations (syntax shared with C# ESM v7 admission)
 - modules, features (nested too) and slices
 - standalone and inline events with their tags, descriptions, documentation, and rename pins
-- commands with their properties, declarative `validate` rules, and productions (typed mappings and destinations included)
+- commands with their properties, declarative `validate` rules, and productions (typed mappings, destinations and `produces when` conditions included)
 - queries with their parameters
 - the events each projection block consumes
 - reaction triggers (`when`, `every`, `at`)
+- captures, with their sources, `when` conditions, mappings and appended events
+- personas, policies, seeds and declared triggers
+- projection keys and mappings, including variants
 - unique and file constraints
 - specifications with the values they state, structured values included
 - screens with their data, actions, navigation, titles, tables, summaries, sections, template slots and inline code
@@ -106,11 +109,10 @@ Systems, operations, event sources and streams remain syntax-only and unadmitted
 
 Everything else is recognized and skipped whole, without a diagnostic. That covers:
 
-- captures, reducers, forms, layouts and screen templates
+- reducers (a slice keeps only each reducer's name, read model and events, for the dependency graph), forms, layouts, behaviors and screen templates
 - the interaction a screen binds with `on` and `uses`, which it keeps only as a marker in the screen's directives
-- policies, personas, authentication, seeds and themes
-- command handler execution and production conditions; handler implementation intent retains its typed hints and selected file/code
-- projection keys and mappings
+- authentication, themes and UI profiles
+- command handler execution; handler implementation intent retains its typed hints and selected file/code
 - trigger implementation code
 
 Inside the constructs it reads, it reports the diagnostics the C# parser reports, with the same codes, lines and order.
@@ -118,6 +120,42 @@ Inside the constructs it reads, it reports the diagnostics the C# parser reports
 `ProducesSyntax.inlineEvent` preserves inline authoring structure. Use `eventDeclarations(slice)` to enumerate both standalone and command-inline events; the walker visits both, and the event model board draws them with the same slice-owned identity.
 
 Each node carries the members of its C# record that the compiler reads, under the same camelCase names `SyntaxJson` writes. A member it does not read is absent rather than empty, because an empty list would claim the document declared nothing there.
+
+## Read exact numbers
+
+A document that starts with the `numbers exact` preamble is read with exact numeric literals. `parse` records the mode on the tree as `sourceOptions`, which is `{ numericMode: 'exact' }` for such a document and `{ numericMode: 'legacy' }` for a document without a numeric preamble. A malformed preamble gives `numericMode: 'invalid'`. Projections and specifications carry the same member.
+
+In exact mode a number literal is not a JavaScript number. It becomes an `ExactNumber`, `{ literalType: 'ExactNumber', value: '12.5' }`, whose `value` is canonical fixed-point text, so no digit is rounded. Trailing fractional zeros normalize away: `parseExactNumber('12.50')` returns `'12.5'`, and `SyntaxJson` rejects non-canonical forms. Exponents are accepted. A literal that does not fit the bounded Decimal domain is reported as `PLAY0511` instead of being rounded. Without the preamble, literals stay ordinary numbers. A preamble with another spelling, a second preamble, one after the domain, imports or declarations, or a `numbers` line inside a declaration is reported with `PLAY0508`, `PLAY0509` or `PLAY0510`. The codes are listed in the [diagnostics](diagnostics.md).
+
+The preamble is syntax only. Neither compiler binds an exact-mode document yet: the C# compiler reports `PLAY0268` when one is bound.
+
+## Query dependencies
+
+`DependencyGraph.for(application)` computes how modules, features and slices depend on each other from the references a tree states explicitly. The [VS Code board's dependency map](vscode.md#dependency-map) is drawn from it. It needs no semantic binding, so it works on a tree that has errors.
+
+```typescript
+import { DependencyGraph, parse } from '@cratis/screenplay-compiler';
+
+const graph = DependencyGraph.for(parse(source).value);
+
+for (const dependency of graph.implied('feature', 'feature')) {
+    console.log(`${dependency.source.address} -> ${dependency.target.address}: ${dependency.references} references`);
+}
+```
+
+A reference becomes an edge between the slice that makes it (the consumer) and the slice that declares what it names (the producer). An edge to a read model points to the projection or reducer that builds the read model, which is not necessarily the slice that declares it. Each edge has one of these kinds: `usesFactsFrom`, `reactsTo`, `decidesFrom`, `asks`, `shows`, `verifiedWith` and `outsideTheModel`, the last for an event owned by an imported bounded context. The graph exposes:
+
+| Member | Returns |
+| --- | --- |
+| `nodes`, `edges` | The modules, features, slices and imported contexts, and the slice-to-slice edges with the evidence for each |
+| `unresolved` | References whose target no slice declares, and `unusedImports` the imports nothing uses |
+| `implied(from, to, kinds?, includeTestOnly?, evidenceLimit?)` | The edges aggregated between two levels (`slice`, `feature` or `module` as the source, plus `context` as the target), counting slice pairs and references and keeping up to `evidenceLimit` (3) sources of evidence. `verifiedWith` evidence, which comes from specifications, is left out unless `includeTestOnly` is set |
+| `cycles(level, kinds?)` | Groups of mutually dependent nodes at one level, considering only the ordering kinds `usesFactsFrom`, `reactsTo` and `decidesFrom` |
+| `siblingGroups(kinds?)` | The same mutual dependencies among the children of each container |
+| `suggestedOrder(kinds?)` | An order for each container with producers first, keeping the authored order where nothing constrains it. It is a suggestion and is never applied |
+| `traverse(address, direction, kinds?, includeTestOnly?)` | The nodes reachable from a node following `incoming` or `outgoing` edges |
+
+A query with an unknown level, direction or dependency kind, or a negative evidence limit, throws `InvalidDependencyQuery`.
 
 ## How it is kept in step with the C# compiler
 

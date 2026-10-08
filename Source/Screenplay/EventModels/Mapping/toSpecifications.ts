@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { PropertyMappingSyntax, SpecificationCallerSyntax, SpecificationEventSyntax, SpecificationSyntax } from '@cratis/screenplay-compiler';
+import { ExpressionSyntax, PropertyMappingSyntax, SpecificationCallerSyntax, SpecificationEventSyntax, SpecificationSyntax } from '@cratis/screenplay-compiler';
 import { emptyGuid } from '../Document/identity';
 import { SliceSpecificationDocument, SpecificationCallerDocument, SpecificationStepDocument } from '../Document/EventModelDocument';
 import { expressionText } from './expressionText';
@@ -37,9 +37,18 @@ export function toSpecifications(
             collapsed: false,
         };
         if (specification.givenCaller != null) document.caller = callerOf(specification.givenCaller);
+        if (specification.thenReturns != null) {
+            document.thenReturns = specification.thenReturns.kind === 'ScalarSpecificationReturnSyntax'
+                ? { value: valueOf(specification.thenReturns.value) }
+                : { fields: valuesOf(specification.thenReturns.fields) };
+        }
+        if (specification.thenAbsentReadModels?.length) {
+            document.thenAbsentReadModels = specification.thenAbsentReadModels.map(absent => ({ name: absent.name, key: valueOf(absent.key) }));
+        }
         if (specification.when !== null) {
             const when = { id: at('when', 0), name: specification.when.commandType, values: valuesOf(specification.when.values) };
             document.when = commandId === undefined ? when : { ...when, commandId };
+            if (specification.when.generatedValues?.length) document.when.generatedValues = valuesOf(specification.when.generatedValues);
         } else {
             const action = actionOf(specification);
             if (action !== undefined) document.when = { id: at('when', 0), ...action };
@@ -69,8 +78,26 @@ function specificationName(specification: SpecificationSyntax): string {
         ...(specification.whenAppended ? [{ event: specification.whenAppended, role: 'when append' }] : []),
         ...specification.thenEvents.map((event, index) => ({ event, role: `then ${index + 1}` })),
     ].filter(({ event }) => event.stream || event.noStream);
-    if (routes.length === 0) return specification.name;
-    return `${specificationTitle(specification.name)} — ${routes.map(({ event, role }) => `${role}: ${event.eventType} — ${routeDetails(event)}`).join(' | ')} | ${routeAvailability}`;
+    const details = routes.map(({ event, role }) => `${role}: ${event.eventType} — ${routeDetails(event)}`);
+    if (routes.length > 0) details.push(routeAvailability);
+    if (specification.when?.generatedValues?.length) {
+        details.push(`generated (not request inputs): ${mappingText(specification.when.generatedValues)}`);
+    }
+    const returns = specification.thenReturns;
+    if (returns != null) {
+        details.push(returns.kind === 'ScalarSpecificationReturnSyntax'
+            ? `then returns ${expressionText(returns.value)}`
+            : `then returns { ${mappingText(returns.fields)} }`);
+    }
+    for (const absent of specification.thenAbsentReadModels ?? []) {
+        details.push(`then no readmodel ${absent.name} for ${expressionText(absent.key)}`);
+    }
+    if (details.length === 0) return specification.name;
+    return `${specificationTitle(specification.name)} — ${details.join(' | ')}`;
+}
+
+function mappingText(values: readonly PropertyMappingSyntax[]): string {
+    return values.map(value => `${value.property} = ${expressionText(value.source)}`).join(', ');
 }
 
 // Match the pinned board's unexported specificationTitle before adding spaces in route summaries.
@@ -107,6 +134,9 @@ function callerOf(caller: SpecificationCallerSyntax): SpecificationCallerDocumen
 }
 
 function valuesOf(values: readonly PropertyMappingSyntax[]): Record<string, unknown> {
-    return Object.fromEntries(values.map(value => [value.property,
-        value.source.kind === 'LiteralExpressionSyntax' ? value.source.value : expressionText(value.source)]));
+    return Object.fromEntries(values.map(value => [value.property, valueOf(value.source)]));
+}
+
+function valueOf(expression: ExpressionSyntax): unknown {
+    return expression.kind === 'LiteralExpressionSyntax' ? expression.value : expressionText(expression);
 }

@@ -182,9 +182,12 @@ export interface SliceSpecificationDocument {
     id: string;
     name: string;
     given: SpecificationStepDocument[];
-    when?: { id: string; commandId?: string; name: string; values: Record<string, unknown> };
+    when?: { id: string; commandId?: string; name: string; values: Record<string, unknown>; generatedValues?: Record<string, unknown> };
     caller?: SpecificationCallerDocument;
     thenEvents: SpecificationStepDocument[];
     thenErrors: { id: string; name: string; message?: string }[];
+    // The pinned board reader ignores these additions; the header also displays their authored values.
+    thenReturns?: { value: unknown } | { fields: Record<string, unknown> };
+    thenAbsentReadModels?: { name: string; key: unknown }[];
     collapsed: boolean;
 }
