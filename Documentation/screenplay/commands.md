@@ -521,7 +521,7 @@ Both facts address the command's `requestId` event source; the contract ID remai
 
 ### Multiple unconditional events
 
-Repeat `produces` for each event; all are emitted:
+Repeat `produces` for each event; all are emitted. This excerpt illustrates the syntax, not event naming or a recommended model. `InvoiceRunningTotalUpdated` is a generic, redundant event: normally the projection derives the total from `InvoiceLineItemAdded`. A separate adjustment event is warranted only for an independent business decision, named for that decision rather than for updating a total:
 
 ```screenplay
 produces InvoiceLineItemAdded
