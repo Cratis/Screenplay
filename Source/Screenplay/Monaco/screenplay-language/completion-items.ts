@@ -12,6 +12,8 @@ export interface CompletionEntry {
     label: string;
     insertText: string;
     documentation: string;
+    sortText?: string;
+    detail?: string;
 }
 
 const fenced = (tag: string) => `\`\`\`${tag}\n\${1}\n\`\`\``;
