@@ -82,9 +82,9 @@ describe('when authoring typed examples', () => {
         const content = hover(source, 'given Fact a = 3', 'Fact')!;
         expect(content.indexOf('b = 2')).toBeLessThan(content.indexOf('a = 3'));
     });
-    it('should display parser-owned refusal expressions without claiming executable validity', () => {
+    it('should refuse effective fixture values using refusal expressions outside a branch', () => {
         const source = ['event Refused', '  reason String', 'example Refusal : Refused', '  reason = $refusal.reason', 'specification S', '  given Refusal'];
-        expect(hover(source, 'given Refusal', 'Refusal')).toContain('reason = $refusal.reason — example Refusal');
+        expect(hover(source, 'given Refusal', 'Refusal')).toContain('Invalid source; no effective values selected.');
         expect(hover(source, 'given Refusal', 'Refusal')).toContain('not execution results');
     });
     it('should preserve matching and not claim execution', () => {
