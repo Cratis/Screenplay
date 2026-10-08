@@ -11,7 +11,7 @@ using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Workspaces;
 
-sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
+internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace)
 {
     // The complete candidate must bind every original absence obligation, at its unchanged position, to the migrated
     // original target, and only members bound to the renamed declaration may change their text.

@@ -162,6 +162,14 @@ public sealed class ScreenplayWorkspace
     public WorkspaceAuthoringResult ProposeRename(WorkspaceRenameRequest request) =>
         new WorkspaceRefactoring(this).Rename(request);
 
+    /// <summary>
+    /// Proposes moving every fragment of a logical slice or feature, preserving identities and behavior.
+    /// </summary>
+    /// <param name="request">The revision-bound addresses and formatting policy.</param>
+    /// <returns>The immutable candidate and continuity report, or a bounded refusal.</returns>
+    public WorkspaceAuthoringResult ProposeMove(WorkspaceMoveRequest request) =>
+        new WorkspaceRefactoring(this).Move(request);
+
     internal static ScreenplayWorkspace CreateEmpty(ApplicationIdentity applicationIdentity, string applicationName, SemanticIdentityCatalog catalog)
     {
         var name = SemanticDocumentText.NormalizeRequiredUnicode(applicationName, "workspace application name");
