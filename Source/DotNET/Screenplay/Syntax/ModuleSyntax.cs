@@ -28,6 +28,11 @@ public record ModuleSyntax(
     IEnumerable<DialogTemplateSyntax>? DialogTemplates = null) : SyntaxNode(Location)
 {
     /// <summary>
+    /// Gets the authoring-only markdown explaining this module.
+    /// </summary>
+    public string? Documentation { get; init; }
+
+    /// <summary>
     /// Gets the module-scoped specification examples.
     /// </summary>
     public IEnumerable<SpecificationExampleSyntax> Examples { get; init; } = [];
@@ -88,6 +93,11 @@ public record FeatureSyntax(
     string? Description = null,
     IEnumerable<ContributionSyntax>? Contributions = null) : SyntaxNode(Location)
 {
+    /// <summary>
+    /// Gets the authoring-only markdown explaining this feature.
+    /// </summary>
+    public string? Documentation { get; init; }
+
     /// <summary>
     /// Gets the feature-scoped specification examples.
     /// </summary>

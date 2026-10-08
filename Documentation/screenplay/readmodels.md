@@ -4,6 +4,8 @@ A [projection](projections/index.md) says how state is built from events, and un
 
 `readmodel` gives it somewhere.
 
+A read model can also carry one nonempty fenced `markdown` `documentation` block to explain why this view has its chosen shape or excludes certain facts. It is authoring-only (`PLAY0270`), with no executable effect. See [Descriptions and documentation](slices.md#descriptions-and-documentation).
+
 ## Syntax
 
 ```screenplay

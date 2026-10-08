@@ -10,8 +10,9 @@ const provider = createTokensProvider([]);
 const rules = provider.tokenizer.eventBody as unknown as [RegExp, unknown][];
 
 describe('when highlighting event metadata', () => {
-    it.each(['id', 'documentation'])('should leave %s available as an ordinary name', word => {
-        expect(clauseKeywords).not.toContain(word);
+    it('should leave id event-specific while documenting the shared documentation directive', () => {
+        expect(clauseKeywords).not.toContain('id');
+        expect(clauseKeywords).toContain('documentation');
     });
     it('should recognize only directive-shaped metadata inside the event state', () => {
         expect(rules[1][0].test('    id "Old"')).toBe(true);

@@ -10,6 +10,7 @@ import { parseModeledMappingSource as parseMappingSource } from './ExpressionPar
 import { DayOfWeek, IntervalUnit, InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from '../Syntax/Reactions';
 import { nativePattern, pattern } from '../Text/patterns';
 import { parseDescription } from './DescriptionParser';
+import { parseDocumentation } from './DocumentationParser';
 import { collectInputUses } from './InputUses';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -36,6 +37,7 @@ export function parseReaction(context: ParserContext, line: SourceLine): Reactio
         context.error(DiagnosticCodes.InvalidReactionDeclaration, `Invalid reaction declaration '${line.content}' - expected 'reaction <Name>'`, locationOf(line));
     }
     let description: string | null = null;
+    let documentation: string | null = null;
     let where: ConditionSyntax | null = null;
     const triggers: ReactionTriggerSyntax[] = [];
     const sources = new Set<string>();
@@ -47,6 +49,10 @@ export function parseReaction(context: ParserContext, line: SourceLine): Reactio
         const keyword = firstWord(child.content);
         if (keyword === 'description') {
             description = parseDescription(context, child, description, `Reaction '${name}'`);
+            continue;
+        }
+        if (keyword === 'documentation') {
+            documentation = parseDocumentation(context, child, documentation, `Reaction '${name}'`);
             continue;
         }
         if (keyword === 'where') {
@@ -82,7 +88,7 @@ export function parseReaction(context: ParserContext, line: SourceLine): Reactio
     if (triggers.length === 0 && !reported) {
         context.error(DiagnosticCodes.ReactionWithoutTrigger, `Reaction '${name}' must declare at least one trigger - nothing sets it off`, locationOf(line));
     }
-    return { kind: 'ReactionSyntax', name, description, where, triggers, location: locationOf(line) };
+    return { kind: 'ReactionSyntax', name, description, documentation, where, triggers, location: locationOf(line) };
 }
 
 // What a trigger does - the events it produces and the commands it invokes - is read by name; its reads,

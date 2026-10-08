@@ -15,6 +15,11 @@ public sealed partial class SemanticModelBinder
 
         SemanticModule BindModule(ModuleSyntax module)
         {
+            if (module.Documentation is not null)
+            {
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Module '{module.Name}' documentation is authoring metadata.", module.Location);
+            }
+
             if (module.Description is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Module '{module.Name}' description is authoring metadata.", module.Location);
@@ -48,6 +53,11 @@ public sealed partial class SemanticModelBinder
 
         SemanticFeature BindFeature(string module, ImmutableArray<string> parentPath, FeatureSyntax feature)
         {
+            if (feature.Documentation is not null)
+            {
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Feature '{feature.Name}' documentation is authoring metadata.", feature.Location);
+            }
+
             if (feature.Description is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Feature '{feature.Name}' description is authoring metadata.", feature.Location);
@@ -68,6 +78,11 @@ public sealed partial class SemanticModelBinder
 
         SemanticSlice BindSlice(string module, ImmutableArray<string> featurePath, SliceSyntax slice)
         {
+            if (slice.Documentation is not null)
+            {
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Slice '{slice.Name}' documentation is authoring metadata.", slice.Location);
+            }
+
             if (slice.Description is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Slice '{slice.Name}' description is authoring metadata.", slice.Location);

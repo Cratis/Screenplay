@@ -62,6 +62,8 @@ command RegisterInvoice
     ```
 ````
 
+Commands also accept one nonempty fenced `markdown` `documentation` block for reasoning and assumptions. It is report-only (`PLAY0270`), with no effect on executable bytes. See [Descriptions and documentation](slices.md#descriptions-and-documentation).
+
 Command descriptions use `text` fences, not `markdown`; Markdown description fences are available only on events. Descriptions work the same on modules, features, slices, and personas — see [Descriptions](slices.md#descriptions).
 
 ## Declare an event inline
@@ -519,7 +521,7 @@ Both facts address the command's `requestId` event source; the contract ID remai
 
 ### Multiple unconditional events
 
-Repeat `produces` for each event; all are emitted:
+Repeat `produces` for each event; all are emitted. This excerpt illustrates the syntax, not event naming or a recommended model. `InvoiceRunningTotalUpdated` is a generic, redundant event: normally the projection derives the total from `InvoiceLineItemAdded`. A separate adjustment event is warranted only for an independent business decision, named for that decision rather than for updating a total:
 
 ```screenplay
 produces InvoiceLineItemAdded

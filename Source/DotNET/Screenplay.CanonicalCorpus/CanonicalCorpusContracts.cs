@@ -164,6 +164,125 @@ public sealed record CanonicalCorpusRejectionVector
 /// <summary>
 /// Represents one versioned canonical semantic conformance corpus.
 /// </summary>
+public sealed record CanonicalScreenBehaviorProbe
+{
+    /// <summary>
+    /// Gets the stable probe name.
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
+    /// Gets the user-visible behavior the probe covers.
+    /// </summary>
+    public required string Behavior { get; init; }
+
+    /// <summary>
+    /// Gets the source form that contains the authoring surface.
+    /// </summary>
+    public required string SourceForm { get; init; }
+
+    /// <summary>
+    /// Gets the authored screen or UI declaration the probe is pinned to.
+    /// </summary>
+    public required string Declaration { get; init; }
+
+    /// <summary>
+    /// Gets the syntax node kinds that must remain present for the behavior to be renderable.
+    /// </summary>
+    public ImmutableArray<string> SyntaxKinds { get; init; } = [];
+}
+
+/// <summary>
+/// Represents one canonical Stage artifact expectation.
+/// </summary>
+public sealed record CanonicalStageArtifactExpectation
+{
+    /// <summary>
+    /// Gets the portable artifact path.
+    /// </summary>
+    public required string Path { get; init; }
+
+    /// <summary>
+    /// Gets the expected SHA-256 hash encoded as lowercase hexadecimal.
+    /// </summary>
+    public required string Sha256 { get; init; }
+
+    /// <summary>
+    /// Gets the expected byte count.
+    /// </summary>
+    public required int ByteCount { get; init; }
+}
+
+/// <summary>
+/// Represents a Stage plan expectation for one profile and renderer target.
+/// </summary>
+public sealed record CanonicalStagePlanExpectation
+{
+    /// <summary>
+    /// Gets the renderer target name.
+    /// </summary>
+    public required string Target { get; init; }
+
+    /// <summary>
+    /// Gets the UI profile name.
+    /// </summary>
+    public required string Profile { get; init; }
+
+    /// <summary>
+    /// Gets the exact plan digest.
+    /// </summary>
+    public required string PlanDigest { get; init; }
+
+    /// <summary>
+    /// Gets the ordered artifact expectations for the plan.
+    /// </summary>
+    public ImmutableArray<CanonicalStageArtifactExpectation> Artifacts { get; init; } = [];
+}
+
+/// <summary>
+/// Represents a canonical screen application corpus with executable ESM and render probes.
+/// </summary>
+public sealed record CanonicalScreenCorpusVector
+{
+    /// <summary>
+    /// Gets the corpus identity.
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
+    /// Gets the application name.
+    /// </summary>
+    public required string ApplicationName { get; init; }
+
+    /// <summary>
+    /// Gets the fixed application identity.
+    /// </summary>
+    public required ApplicationIdentity ApplicationIdentity { get; init; }
+
+    /// <summary>
+    /// Gets every equivalent physical source form.
+    /// </summary>
+    public ImmutableArray<CanonicalCorpusSourceForm> SourceForms { get; init; } = [];
+
+    /// <summary>
+    /// Gets the expected executable-semantic-model refusal diagnostics while screens are authoring/rendering scope.
+    /// </summary>
+    public ImmutableArray<CanonicalCorpusDiagnosticExpectation> EsmDiagnostics { get; init; } = [];
+
+    /// <summary>
+    /// Gets the behavior probes expected from authoring and rendering hosts.
+    /// </summary>
+    public ImmutableArray<CanonicalScreenBehaviorProbe> BehaviorProbes { get; init; } = [];
+
+    /// <summary>
+    /// Gets Stage plan expectations when released renderer packages provide deterministic artifact bytes.
+    /// </summary>
+    public ImmutableArray<CanonicalStagePlanExpectation> StagePlans { get; init; } = [];
+}
+
+/// <summary>
+/// Represents one versioned canonical semantic conformance corpus.
+/// </summary>
 public sealed record CanonicalCorpusVector
 {
     /// <summary>

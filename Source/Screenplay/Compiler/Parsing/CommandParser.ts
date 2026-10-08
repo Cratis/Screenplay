@@ -18,6 +18,7 @@ import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseCommandResponse, scalarResponsePattern } from './CommandResponseParser';
 import { parseDescription } from './DescriptionParser';
+import { parseDocumentation } from './DocumentationParser';
 import { isCode, isFile, parseCode, parseFile, parseHandler, parseImplementationWrapper } from './ImplementationParser';
 import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSyntax } from '../Syntax/Implementations';
 import { parseMappingSource } from './ExpressionParser';
@@ -62,7 +63,7 @@ const opaqueDirectives = new Set(['reads', 'concurrency']);
 
 // The bare directives cannot take a type reference, so a line with property shape is a property whatever
 // keyword it starts with - 'description String' declares a property called description.
-const propertyShapedDirectives = new Set(['description', 'handler', 'concurrency']);
+const propertyShapedDirectives = new Set(['description', 'documentation', 'handler', 'concurrency']);
 
 export function parseCommand(context: ParserContext, line: SourceLine): CommandSyntax {
     // Properties are leaves, not indentation owners. Resolve ambiguous returns spelling
@@ -89,6 +90,7 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
     const referenceReads: ReadsSyntax[] = [];
     let concurrency: ConcurrencySyntax | undefined;
     let description: string | null = null;
+    let documentation: string | null = null;
     let authorize: AuthorizeSyntax | null = null;
     let handler: HandlerSyntax | null = null;
     let stream: CommandStreamSyntax | null = null;
@@ -126,6 +128,8 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
             else stream = route;
         } else if (keyword === 'description') {
             description = parseDescription(context, child, description, `Command '${name}'`);
+        } else if (keyword === 'documentation') {
+            documentation = parseDocumentation(context, child, documentation, `Command '${name}'`);
         } else if (keyword === 'authorize') {
             authorize = combineAuthorize(authorize, parseAuthorize(context, child));
         } else if (keyword === 'validate') {
@@ -179,7 +183,7 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
     if (handler !== null && produces.length > 0) {
         context.error(DiagnosticCodes.CommandWithProducesAndHandler, `Command '${name}' cannot declare both 'produces' and 'handler'`, locationOf(line));
     }
-    const syntax: CommandSyntax = { kind: 'CommandSyntax', name, description, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, handler, response, stream, streamCandidates, location: locationOf(line) };
+    const syntax: CommandSyntax = { kind: 'CommandSyntax', name, description, documentation, authorize, properties: properties.filter(property => !removed.has(property)), validations, produces, handler, response, stream, streamCandidates, location: locationOf(line) };
     commandReadSources.set(syntax, reads);
     dependencySources.set(syntax, { reads: referenceReads, concurrency });
     return syntax;

@@ -36,5 +36,6 @@
 | [0032](0032-expand-typed-specification-examples-in-the-front-end.md) | Expand typed specification examples in the front end | accepted | none | 2026-10-07 | Sindre Alstad Wilting |
 | [0033](0033-composite-event-stream-ids.md) | Declare composite event stream ids as named parts and encode them with an escaped separator | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0034](0034-sensitive-means-operational-secret.md) | Treat sensitive values as operational secrets, not personal data | accepted | implemented | 2026-10-08 | Sindre Alstad Wilting |
+| [0035](0035-keep-model-reasoning-as-report-only-metadata.md) | Keep model reasoning as report-only authoring metadata | proposed | none | — | — |
 | [0036](0036-admit-event-sources-streams-and-command-routes.md) | Admit event sources, streams and command routes into the executable model, with specification routes and composite stream ids | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0037](0037-routes-in-redelivery-locators-and-specification-examples.md) | State routes in redelivery locators and in typed specification examples with the existing route lines | accepted | none | 2026-10-08 | Sindre Alstad Wilting |

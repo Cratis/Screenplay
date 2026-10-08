@@ -88,6 +88,11 @@ public record SliceSyntax(
     public FileReferenceSyntax? File { get; init; }
 
     /// <summary>
+    /// Gets the authoring-only markdown explaining this slice.
+    /// </summary>
+    public string? Documentation { get; init; }
+
+    /// <summary>
     /// Gets the standalone operations owned by this slice.
     /// </summary>
     public IEnumerable<OperationSyntax> Operations { get; init; } = [];

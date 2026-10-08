@@ -257,6 +257,7 @@
         }
       },
       "description": "Everything related to invoicing customers.\nRegistration, lifecycle, payment tracking and collection of invoices,\nplus the self-service portal customers use to see and pay them.",
+      "documentation": "Invoicing owns billing decisions. Payment-provider facts enter through translation slices.",
       "features": [
         {
           "kind": "FeatureSyntax",
@@ -268,6 +269,7 @@
             }
           },
           "description": "Registering and managing the lifecycle of invoices",
+          "documentation": "Drafting, issuing and cancellation remain separate business decisions.",
           "features": [
             {
               "kind": "FeatureSyntax",
@@ -1493,6 +1495,7 @@
                     }
                   },
                   "description": null,
+                  "documentation": "The server creates both identities; callers supply only the customer.",
                   "handler": null,
                   "name": "StartInvoiceDraft",
                   "produces": [
@@ -1631,6 +1634,7 @@
               ],
               "constraints": [],
               "description": null,
+              "documentation": "A draft reserves identities without claiming that an invoice has been issued.",
               "events": [],
               "name": "StartInvoiceDraft",
               "operations": [],
@@ -1655,6 +1659,7 @@
               "specifications": [
                 {
                   "kind": "SpecificationSyntax",
+                  "description": "Witnesses that creating a draft returns the generated invoice and receipt identities",
                   "given": [],
                   "givenCaller": {
                     "kind": "SpecificationCallerSyntax",
@@ -6350,6 +6355,7 @@
                 {
                   "kind": "ReadModelSyntax",
                   "description": "One row per invoice in the invoice list",
+                  "documentation": "This list summarizes invoice state, not the full line-item history.",
                   "name": "InvoiceListReadModel",
                   "properties": [
                     {
@@ -11573,6 +11579,7 @@
                 {
                   "kind": "ReactionSyntax",
                   "description": "Marks an invoice paid when a payment covers what is outstanding",
+                  "documentation": "Payment recording and invoice closure are separate facts so reconciliation can be reviewed.",
                   "name": "PaymentReconciler",
                   "triggers": [
                     {

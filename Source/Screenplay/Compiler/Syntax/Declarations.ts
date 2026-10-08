@@ -74,6 +74,7 @@ export interface EventSyntax extends SyntaxNode {
 
 export interface ReadModelSyntax extends SyntaxNode {
     readonly kind: 'ReadModelSyntax';
+    readonly documentation?: string | null;
     readonly name: string;
     readonly properties: readonly PropertySyntax[];
     readonly description: string | null;

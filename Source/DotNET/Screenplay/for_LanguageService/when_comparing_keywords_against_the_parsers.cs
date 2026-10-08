@@ -25,6 +25,8 @@ public class when_comparing_keywords_against_the_parsers : Specification
     [Fact] void should_find_the_keywords_the_language_service_knows() => _known.Count.ShouldBeGreaterThan(50);
 
     [Fact] void should_carry_a_keyword_for_every_construct_the_parsers_dispatch_on() => Report().ShouldEqual(string.Empty);
+    [Fact] void should_dispatch_documentation_in_slice_bodies() => _dispatched.ShouldContain("documentation");
+    [Fact] void should_highlight_documentation_outside_events() => _known.ShouldContain("documentation");
 
     string Report() =>
         _missing.Count == 0

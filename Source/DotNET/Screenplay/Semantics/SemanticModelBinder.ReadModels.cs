@@ -13,6 +13,11 @@ public sealed partial class SemanticModelBinder
     {
         BoundReadModel BindReadModel(SemanticAddress slice, SliceSyntax owner, ReadModelSyntax readModel)
         {
+            if (readModel.Documentation is not null)
+            {
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Read model '{readModel.Name}' documentation is authoring metadata.", readModel.Location);
+            }
+
             if (readModel.Description is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Read model '{readModel.Name}' description is authoring metadata.", readModel.Location);

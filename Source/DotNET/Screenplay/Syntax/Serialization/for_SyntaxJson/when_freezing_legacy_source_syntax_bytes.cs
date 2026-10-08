@@ -26,7 +26,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "named-rule-intent" || name == "specification-examples" || name == "guarded-actions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams") continue;
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "authoring-metadata" || name == "named-rule-intent" || name == "specification-examples" || name == "guarded-actions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -39,7 +39,9 @@ public class when_freezing_legacy_source_syntax_bytes
                 _ => parsed
             };
             if (name == "invoicing" || name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleDependencies(legacy, name == "invoicing");
-            var json = SyntaxJson.Serialize(legacy);
+            // Report-only metadata has its own conformance vector. Keep existing event metadata
+            // protected, and project only the newly supported owners out of pre-metadata bytes.
+            var json = SyntaxJson.Serialize(WithoutNewAuthoringMetadata(legacy));
             var text = WithoutRuleIntent(json, json.GetRawText())
                 .Replace(",\"eventSources\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"stream\":null", string.Empty, StringComparison.Ordinal)
@@ -78,6 +80,29 @@ public class when_freezing_legacy_source_syntax_bytes
         count.ShouldEqual(16);
         Assert.False(initializing, "Review the new protected bytes and rerun without SCREENPLAY_INITIALIZE_LEGACY_SYNTAX_BYTES. Existing baselines are never overwritten.");
     }
+
+    static ApplicationSyntax WithoutNewAuthoringMetadata(ApplicationSyntax application) => application with
+    {
+        Modules = application.Modules.Select(module => module with
+        {
+            Documentation = null,
+            Features = module.Features.Select(WithoutNewAuthoringMetadata)
+        })
+    };
+
+    static FeatureSyntax WithoutNewAuthoringMetadata(FeatureSyntax feature) => feature with
+    {
+        Documentation = null,
+        Features = feature.Features.Select(WithoutNewAuthoringMetadata),
+        Slices = feature.Slices.Select(slice => slice with
+        {
+            Documentation = null,
+            Commands = slice.Commands.Select(command => command with { Documentation = null }),
+            ReadModels = (slice.ReadModels ?? []).Select(readModel => readModel with { Documentation = null }),
+            Reactions = slice.Reactions.Select(reaction => reaction with { Documentation = null }),
+            Specifications = slice.Specifications.Select(specification => specification with { Description = null })
+        })
+    };
 
     // Dependency declarations are covered by the shared vectors. Restore the embedded fixture's
     // former single-feature layout here rather than rewriting its protected pre-dependency bytes.

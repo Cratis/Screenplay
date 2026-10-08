@@ -311,6 +311,7 @@ public sealed partial class ScreenplayPrinter :
         using (writer.Indent())
         {
             WriteDescription(writer, readModel.Description, readModel);
+            WriteDocumentation(writer, readModel.Documentation, readModel);
             WriteFile(writer, readModel.File);
             WriteProperties(writer, readModel.Properties, ReservedWords.ReadModelBody);
         }
@@ -496,6 +497,7 @@ public sealed partial class ScreenplayPrinter :
     void WriteModuleBody(ScreenplayWriter writer, ModuleSyntax module)
     {
         WriteDescription(writer, module.Description, module);
+        WriteDocumentation(writer, module.Documentation, module);
         foreach (var dependency in module.DependsOn) writer.Line($"depends on {dependency.Target}", dependency);
         var members = new List<PrintableMember>();
         AddMembers(members, module.FileImports, -1, import => WriteFileImports(writer, [import]));
@@ -896,6 +898,7 @@ public sealed partial class ScreenplayPrinter :
     void WriteFeatureBody(ScreenplayWriter writer, FeatureSyntax feature)
     {
         WriteDescription(writer, feature.Description, feature);
+        WriteDocumentation(writer, feature.Documentation, feature);
         foreach (var dependency in feature.DependsOn) writer.Line($"depends on {dependency.Target}", dependency);
         var members = new List<PrintableMember>();
         AddMembers(members, feature.FileImports, -1, import => WriteFileImports(writer, [import]));
@@ -921,6 +924,7 @@ public sealed partial class ScreenplayPrinter :
         using (writer.Indent())
         {
             WriteDescription(writer, slice.Description, slice);
+            WriteDocumentation(writer, slice.Documentation, slice);
             WriteFile(writer, slice.File);
 
             var members = new List<PrintableMember>();
@@ -941,6 +945,18 @@ public sealed partial class ScreenplayPrinter :
             AddSeparatedMembers(members, writer, slice.Examples, 12, WriteSpecificationExample);
             AddSeparatedMembers(members, writer, slice.Specifications, 13, WriteSpecification);
             WriteMembers(members, slice);
+        }
+    }
+
+    void WriteDocumentation(ScreenplayWriter writer, string? documentation, SyntaxNode owner)
+    {
+        if (documentation is null) return;
+        writer.DirectiveLine("documentation", owner, "documentation");
+        using (writer.Indent())
+        {
+            writer.Line("```markdown");
+            foreach (var line in documentation.Split('\n')) writer.Line(line);
+            writer.Line("```");
         }
     }
 
