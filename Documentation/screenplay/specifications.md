@@ -131,7 +131,7 @@ Source-bound reference execution uses `SemanticSpecificationRunner.Run(compilati
 
 Examples cannot declare route lines (`stream`, `streamId`, `no stream`): `PLAY0526` asks you to state the route on the specification step, including a step referencing an example. Route support in examples is deferred to [#491](https://github.com/Cratis/Screenplay/issues/491). A payload assignment `stream = <value>` is not a route line.
 
-The effective-syntax API is .NET-only; TypeScript preserves the authored examples but does not expose an expansion API.
+TypeScript exports `expandSpecificationExamples(application)` from `@cratis/screenplay-compiler` for syntax consumers such as the event model board. It returns application syntax with resolved examples expanded into effective specification values without changing the authored application. Unlike the .NET API, it does not return provenance or resolution diagnostics, and expansion does not execute specifications.
 
 Examples cannot supply callers, clocks or whole scenarios, and cannot be used in query results, `then result`, `then returns`, trigger or capture fixtures. Composite-value examples, inheritance, named setups and scenario outlines are not supported; structured values inside an event, command or read-model example are supported. There are no implicit defaults or unused/shadowing warnings.
 
