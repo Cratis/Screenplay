@@ -6,6 +6,7 @@ import { ApplicationIndex } from './ApplicationIndex';
 import {
     CompletionEntry,
     eventSourceCompletions,
+    exampleCompletions,
     contextVariableItems,
     knownEventNames,
     knownTriggerNames,
@@ -50,7 +51,7 @@ const providerFor = (index: ApplicationIndex): vscode.CompletionItemProvider => 
         const file = index.fileOf(document.uri);
         const application = file?.application.symbolsExcept(file.path);
         const symbols = symbolsForBuffer(lines, application);
-        const responseEntries = eventSourceCompletions(lines, position.line, textBefore, symbols) ?? operationCompletions(lines, position.line, textBefore, symbols) ?? responseCompletions(lines, position.line, textBefore, symbols);
+        const responseEntries = exampleCompletions(lines, position.line, textBefore, symbols) ?? eventSourceCompletions(lines, position.line, textBefore, symbols) ?? operationCompletions(lines, position.line, textBefore, symbols) ?? responseCompletions(lines, position.line, textBefore, symbols);
         const plan = responseEntries === null ? planCompletions(lines, position.line, textBefore, symbols) : { kind: 'entries' as const, entries: responseEntries };
         if (plan.kind === 'none') return [];
         const eventNames = () => {
