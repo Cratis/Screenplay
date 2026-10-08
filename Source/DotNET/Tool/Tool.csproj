@@ -22,6 +22,7 @@
 
     <ItemGroup>
         <ProjectReference Include="../Screenplay/Screenplay.csproj" />
+        <ProjectReference Include="../Screenplay.CanonicalCorpus/Screenplay.CanonicalCorpus.csproj" Condition="'$(Configuration)'=='Debug'" />
         <ProjectReference Include="../Screenplay.Mcp/Screenplay.Mcp.csproj" />
     </ItemGroup>
 </Project>

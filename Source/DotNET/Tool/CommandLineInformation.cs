@@ -12,6 +12,7 @@ static class CommandLineInformation
 
         Usage:
           screenplay [<file.play|folder>] [--scope <Module>[.<Feature>[.<Slice>]]] [--check <name>[,<name>]|all] [--warnaserror] [--no-color]
+          screenplay test [<file.play|folder>] [--filter <specification-address>] [--format text|json]
           screenplay mcp <model-folder>
           screenplay --help
           screenplay --version
@@ -22,6 +23,8 @@ static class CommandLineInformation
         Completeness checks run only when the whole model has no errors.
         Scoped exit codes follow the reported set; a separate line shows whole-application defects.
         Exit codes: 0 clean, 1 defects (including warnings with --warnaserror), 2 could not run.
+        test runs the deterministic in-memory reference evaluator, without external services.
+        test exit codes: 0 all selected specifications passed, 1 failed, 2 could not run, 3 unsupported or unbound.
         The MCP server uses stdio and requires an existing physical directory.
         Open an empty model folder through MCP to create its first typed document.
         MCP proposals do not write files; review them before invoking apply.
@@ -37,7 +40,7 @@ static class CommandLineInformation
         }
 
         if ((arguments.Length == 1 && (arguments[0] == "--help" || arguments[0] == "-h" || arguments[0] == "help")) ||
-            (arguments.Length == 2 && arguments[0] == "mcp" && (arguments[1] == "--help" || arguments[1] == "-h")))
+            (arguments.Length == 2 && (arguments[0] == "mcp" || arguments[0] == "test") && (arguments[1] == "--help" || arguments[1] == "-h")))
         {
             output.WriteLine(Usage);
             return true;

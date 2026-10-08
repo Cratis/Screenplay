@@ -57,6 +57,7 @@ sealed class McpTools
                 "semantic-diff" => McpRevisionDiff.Read(arguments),
                 "syntax-schema" => Schema(arguments),
                 "open-workspace" => _workspaces.Open(arguments),
+                "run-specifications" => _workspaces.RunSpecifications(arguments),
                 "workspace-state" => _workspaces.State(arguments),
                 "recover-workspace" => _workspaces.Recover(arguments),
                 "propose-rename" => _workspaces.Rename(arguments),
