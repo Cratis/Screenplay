@@ -50,7 +50,7 @@ internal static class OperationValidator
                     ValidateMappings(production.Mappings, operation, command, scope, declarations, values, context, required: true);
                 }
             }
-            foreach (var production in slice.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(trigger => trigger.Produces ?? []))
+            foreach (var production in slice.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(ReactionProductions.In))
             {
                 var resolution = resolver.Resolve(production.Event, slice);
                 if (resolution.Kind == AuthoringProductionKind.Ambiguous && resolution.Candidates.Any(node => node.Kind == AuthoringProductionKind.Operation))

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Semantics;
 
@@ -31,6 +32,11 @@ public sealed class SemanticCompilation
     /// Gets the source-to-semantic map.
     /// </summary>
     public SemanticSourceMap SourceMap { get; }
+
+    /// <summary>
+    /// Gets the source-bound effective specifications and value origins. This sidecar is not part of ESM bytes.
+    /// </summary>
+    public ImmutableDictionary<SemanticId, EffectiveSpecification> SpecificationOrigins { get; private init; } = ImmutableDictionary.Create<SemanticId, EffectiveSpecification>();
 
     /// <summary>
     /// Creates a compilation after cross-checking the model, identity catalog, documents, and source map.
@@ -89,6 +95,9 @@ public sealed class SemanticCompilation
 
         return new(model, documents, validatedSourceMap);
     }
+
+    internal SemanticCompilation WithSpecificationOrigins(ImmutableDictionary<SemanticId, EffectiveSpecification> origins) =>
+        new(Model, Documents, SourceMap) { SpecificationOrigins = origins };
 }
 
 sealed class SemanticCompilationIndex

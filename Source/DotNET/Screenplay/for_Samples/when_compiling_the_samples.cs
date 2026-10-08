@@ -55,7 +55,7 @@ public partial class when_compiling_the_samples : given.the_samples
     {
         "Library: PLAY0516 Slice 'BookCatalog' uses event 'BookBorrowed'",
         "Library: PLAY0516 Slice 'BookCatalog' uses event 'BookReturned'",
-        "Invoicing: PLAY0517 'InvoiceManagement', 'Integrations'",
+        "Invoicing: PLAY0517 feature 'InvoiceManagement', feature 'Integrations'",
         "Invoicing: PLAY0516 Slice 'InvoiceDashboard' uses event 'InvoiceWrittenOff'",
         "Invoicing: PLAY0516 Slice 'CollectionsBoard' uses event 'InvoiceReminderSent'",
         "Commerce: PLAY0516 Slice 'ProductList' uses event 'ProductRegistered'",
@@ -63,8 +63,8 @@ public partial class when_compiling_the_samples : given.the_samples
         "Commerce: PLAY0516 Slice 'MyOrders' uses event 'OrderPlaced'",
         "Commerce: PLAY0516 Slice 'MyOrders' uses event 'OrderPaid'",
         "Commerce: PLAY0516 Slice 'ShipmentQueue' uses event 'ShipmentRequested'",
-        "Commerce: PLAY0517 'Shipping', 'Tracking'",
-        "Commerce: PLAY0517 'Ordering', 'Fulfillment'",
+        "Commerce: PLAY0517 feature 'Shipping', feature 'Tracking'",
+        "Commerce: PLAY0517 module 'Ordering', module 'Fulfillment'",
         "TimeTracking: PLAY0516 Slice 'PayrollRuns' uses event 'PayrollRunAcknowledged'",
         "TimeTracking: PLAY0516 Slice 'MyTimesheets' uses event 'TimesheetStarted'",
         "TimeTracking: PLAY0516 Slice 'MyTimesheets' uses event 'TimesheetSubmitted'",
@@ -147,7 +147,7 @@ public partial class when_compiling_the_samples : given.the_samples
         }
     }
 
-    [GeneratedRegex(@"Slice '[^']+' uses event '[^']+'|'Ordering', 'Fulfillment'|'Shipping', 'Tracking'|'InvoiceManagement', 'Integrations'", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"Slice '[^']+' uses event '[^']+'|(?:slice|feature|module) '[^']+'(?:, (?:slice|feature|module) '[^']+')+", RegexOptions.None, 1000)]
     private static partial Regex TimelineFinding();
 
     [GeneratedRegex(@"^\s*import\s+""", RegexOptions.Multiline, 1000)]

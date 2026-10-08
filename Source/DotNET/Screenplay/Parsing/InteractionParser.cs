@@ -244,6 +244,9 @@ internal static partial class InteractionParser
         return new(match.Groups[1].Value, arguments, line.Location);
     }
 
+    [GeneratedRegex(@"^with\s+([A-Za-z_]\w*)\s+from\s+(.+)$", RegexOptions.None, 1000)]
+    internal static partial Regex WithRegex();
+
     static void ParseParameter(ParserContext context, SourceLine line, List<BehaviorParameterSyntax> parameters)
     {
         var match = ParameterRegex().Match(line.Content);
@@ -712,9 +715,6 @@ internal static partial class InteractionParser
 
     [GeneratedRegex(@"^on\s+(success|failure|result)$", RegexOptions.None, 1000)]
     private static partial Regex ContinuationRegex();
-
-    [GeneratedRegex(@"^with\s+([A-Za-z_]\w*)\s+from\s+(.+)$", RegexOptions.None, 1000)]
-    private static partial Regex WithRegex();
 
     [GeneratedRegex(@"^execute\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
     private static partial Regex ExecuteRegex();

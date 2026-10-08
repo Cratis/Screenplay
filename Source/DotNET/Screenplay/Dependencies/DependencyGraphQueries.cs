@@ -160,6 +160,8 @@ internal sealed partial class DependencyGraph
         return DistinctNodes(nodes);
     }
 
+    internal bool IsWithin(DependencyNode node, DependencyNode scope) => node.Key == scope.Key || Ancestors(node).Any(ancestor => ancestor.Key == scope.Key);
+
     static IReadOnlyList<DependencyNode> DistinctNodes(IEnumerable<DependencyNode> nodes) => [.. nodes.DistinctBy(node => node.Key).OrderBy(node => node.Rank).ThenBy(node => node.Key, StringComparer.Ordinal)];
     static IEnumerable<string> OrderingKinds(IEnumerable<string>? kinds) => SelectedKinds(kinds ?? _orderingKinds).Where(kind => _orderingKinds.Contains(kind, StringComparer.Ordinal));
 

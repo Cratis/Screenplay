@@ -9,6 +9,10 @@ export interface BoardErrorBoundaryProps {
     readonly resetWhenChanged: unknown;
     // Puts the board back to how it is first shown, for when what it was asked to show cannot be drawn.
     readonly onReset: () => void;
+    // What is drawn, named in the failure message. Defaults to the board.
+    readonly subject?: string;
+    // The view's tools, kept in reach when drawing fails because the failed view's own toolbar goes with it.
+    readonly tools?: ReactNode;
 }
 
 interface BoardErrorBoundaryState {
@@ -31,7 +35,7 @@ export class BoardErrorBoundary extends Component<BoardErrorBoundaryProps, Board
     }
 
     override componentDidCatch(error: Error, info: ErrorInfo): void {
-        console.error('The event model board failed to draw', error, info.componentStack);
+        console.error(`The ${this.props.subject ?? 'event model board'} failed to draw`, error, info.componentStack);
     }
 
     override render() {
@@ -39,15 +43,19 @@ export class BoardErrorBoundary extends Component<BoardErrorBoundaryProps, Board
         if (error === undefined) {
             return this.props.children;
         }
+        const subject = this.props.subject ?? 'board';
         return (
+            <>
+            {this.props.tools && <div className='screenplay-dependency-map-toolbar' role='toolbar' aria-label='Model and view'>{this.props.tools}</div>}
             <div className='screenplay-mcp-board__message screenplay-mcp-board__failure'>
-                <p>The board failed to draw: {error.message}</p>
+                <p>The {subject} failed to draw: {error.message}</p>
                 <button type='button' onClick={() => {
                     this.props.onReset();
                     this.setState({ error: undefined });
-                }}>Draw the board again</button>
+                }}>Draw the {subject} again</button>
                 <pre>{error.stack}</pre>
             </div>
+            </>
         );
     }
 }

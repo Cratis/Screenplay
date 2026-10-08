@@ -119,7 +119,7 @@ internal static class TimelineOrder
                 findings.Add((first, Finding(first, false, orderedMembers, new(
                     DiagnosticSeverity.Information,
                     DiagnosticCodes.TimelineCycleGroup,
-                    $"Timeline group {string.Join(", ", orderedMembers.Select(member => $"'{member[(member.IndexOf(':') + 1)..]}'"))} uses each other's events; reordering these members cannot make every event flow left to right.",
+                    $"Timeline group {string.Join(", ", orderedMembers.Select(member => MemberLabel(member, first.Container)))} uses each other's events; reordering these members cannot make every event flow left to right.",
                     first.Location))));
             }
         }
@@ -141,6 +141,15 @@ internal static class TimelineOrder
         }
 
         return [.. findings.OrderBy(finding => finding.Edge.Consumer.Index).ThenBy(finding => finding.Edge.Location.Line).ThenBy(finding => finding.Edge.Location.Column).Select(finding => finding.Finding)];
+    }
+
+    static string MemberLabel(string member, string container)
+    {
+        var separator = member.IndexOf(':');
+        var containerKind = container == AuthoredOrder.Key([]) ? "module" : "feature";
+        var kind = member[..separator] == "slice" ? "slice" : containerKind;
+
+        return $"{kind} '{member[(separator + 1)..]}'";
     }
 
     static TimelineFinding Finding(Edge edge, bool ownSubFeature, string[] members, Diagnostic diagnostic) =>

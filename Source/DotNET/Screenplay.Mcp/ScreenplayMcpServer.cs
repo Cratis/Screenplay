@@ -11,7 +11,7 @@ public static class ScreenplayMcpServer
     /// <summary>
     /// Runs one sequential MCP connection until the input reaches its end.
     /// </summary>
-    /// <param name="root">The existing physical application directory to serve, or null to choose a root per workspace.</param>
+    /// <param name="root">The existing physical application directory to serve (including its corresponding Git worktree roots), or null to choose a root per workspace.</param>
     /// <param name="input">The reader supplying newline-delimited JSON-RPC requests.</param>
     /// <param name="output">The writer receiving only JSON-RPC responses, flushed after each response.</param>
     /// <exception cref="McpFailure">The root is rejected or a request exceeds the size limit.</exception>
@@ -19,7 +19,9 @@ public static class ScreenplayMcpServer
     /// <remarks>
     /// The caller owns both streams and their encoding; neither stream is closed by this method. A null root
     /// starts a dynamic server: open-workspace chooses the root from an explicit path, the client's roots, or
-    /// the working directory. Startup, transport, and request-size failures propagate to the caller. Request
+    /// the working directory. A supplied root admits switching only to the same relative model folder in a
+    /// registered Git worktree of its repository; switching discards outstanding proposals. Startup, transport,
+    /// and request-size failures propagate to the caller. Request
     /// errors are returned as protocol responses. No console configuration, installation, update, or network
     /// operations are performed. Only explicit apply and recovery requests mutate model files.
     /// </remarks>
