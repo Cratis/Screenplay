@@ -71,26 +71,12 @@ static class ModelTest
             // The compiler owns file/import discovery. Only its selected source set enters execution.
             var directory = isFile ? Path.GetDirectoryName(Path.GetFullPath(target))! : Path.GetFullPath(target);
             var documents = McpTestDocuments.From(snapshot, directory, out var rootDirectory);
-            var root = new McpRoot(rootDirectory);
-            var persisted = new McpManagedFiles(root).Read(McpState.FileName);
-            var name = root.ApplicationName;
+            var name = new DirectoryInfo(rootDirectory).Name;
             var identity = ApplicationIdentity.Create(name);
-            ScreenplayWorkspace workspace;
-            if (persisted is not null)
-            {
-                workspace = McpState.Deserialize(persisted).Open(root);
-            }
-            else
-            {
-                workspace = documents.Length == 0
-                    ? ScreenplayWorkspace.CreateEmpty(identity, name)
-                    : ScreenplayWorkspace.Create(identity, name, documents, SemanticIdentityCatalog.Empty(identity));
-            }
-            var selectedPaths = documents.Select(document => document.Path.Value).ToHashSet(StringComparer.Ordinal);
-            var selectedDocuments = persisted is not null
-                ? workspace.Documents.Where(document => selectedPaths.Contains(document.Path.Value)).Select(document => document.Id).ToHashSet()
-                : null;
-            var report = McpSpecificationExecution.Run(workspace, filter, documents: selectedDocuments);
+            var workspace = documents.Length == 0
+                ? ScreenplayWorkspace.CreateEmpty(identity, name)
+                : ScreenplayWorkspace.Create(identity, name, documents, SemanticIdentityCatalog.Empty(identity));
+            var report = McpSpecificationExecution.Run(workspace, filter);
             if (format == "json")
             {
                 output.WriteLine(JsonSerializer.Serialize(report, McpJson.Options));
@@ -102,7 +88,7 @@ static class ModelTest
 
             return report.Outcome switch { "passed" => 0, "failed" => 1, _ => 3 };
         }
-        catch (McpFailure failure)
+        catch (McpFailure failure) when (failure.Code == -32602)
         {
             error.WriteLine(failure.Message);
             return 2;
