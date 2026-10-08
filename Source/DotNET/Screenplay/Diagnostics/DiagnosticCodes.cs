@@ -2538,6 +2538,8 @@ public static class DiagnosticCodes
     /// An authorization refusal branch invokes an authorization-gated command without a declared identity.
     /// </summary>
     public const string AuthorizationRefusalWithoutIdentity = "PLAY0557";
+
+    /// <summary>
     /// A documentation directive requires one nonempty fenced markdown block.
     /// </summary>
     public const string InvalidDocumentation = "PLAY0558";
