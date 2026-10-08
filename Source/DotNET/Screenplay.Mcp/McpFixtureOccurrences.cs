@@ -30,6 +30,8 @@ static class McpFixtureOccurrences
             return (specification.GivenReadModels ?? []).Any(item => ReferenceEquals(item, node)) ? "givenReadModel" : "thenReadModel";
         }
 
+        if (node is SpecificationRedeliverySyntax) return "whenRedeliveredEvent";
+
         if (node is SpecificationAbsentReadModelSyntax) return "thenAbsentReadModel";
 
         return fallback;
@@ -59,6 +61,11 @@ static class McpFixtureOccurrences
         if (specification.WhenAppended is { } appended)
         {
             yield return Occurrence(appended.EventType, "Event", "whenAppendedEvent", appended, appended.Values, appended.For, appended.Stream, appended.NoStream);
+        }
+
+        if (specification.WhenRedelivered is { } redelivered)
+        {
+            yield return Occurrence(redelivered.EventType, "Event", "whenRedeliveredEvent", redelivered, redelivered.Values, redelivered.For, redelivered.Stream, redelivered.NoStream);
         }
 
         foreach (var item in specification.ThenEvents)
