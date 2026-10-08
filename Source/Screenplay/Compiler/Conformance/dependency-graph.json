@@ -1,6 +1,30 @@
 {
     "cases": [
         {
+            "name": "guarded alternatives and executable otherwise create asks edges",
+            "files": {"application.play": "module A\n  feature F\n    slice StateView Consumer\n      screen Details\n        action \"Choose\"\n          when item.ready == true execute C\n          otherwise execute D\n        action \"Hide\"\n          when item.ready == false execute C\n          otherwise hidden\nmodule B\n  feature G\n    slice StateChange Producer\n      command C\n      command D"},
+            "edges": ["A.F.Consumer|B.G.Producer|asks|actionAlternative:C,actionOtherwise:D,actionAlternative:C"],
+            "implied": ["A.F|B.G|1|3"],
+            "cycles": [],
+            "order": ["A.F.Consumer", "B.G.Producer"]
+        },
+        {
+            "name": "example backed specification references resolve to qualified typed targets",
+            "files": {"application.play": "example Prior : B.G.Producer.E\nexample Input : B.G.Producer.C\nmodule A\n  feature F\n    slice StateChange Consumer\n      specification T\n        given Prior\n        when Input\n        then Prior\nmodule B\n  feature G\n    slice StateChange Producer\n      event E\n      command C"},
+            "edges": ["A.F.Consumer|B.G.Producer|verifiedWith|givenEvent:B.G.Producer.E,whenCommand:B.G.Producer.C,thenEvent:B.G.Producer.E"],
+            "implied": [],
+            "cycles": [],
+            "order": ["A.F.Consumer", "B.G.Producer"]
+        },
+        {
+            "name": "redelivery references both the event and its reaction owner",
+            "files": {"application.play": "module A\n  feature F\n    slice Automation Consumer\n      specification T\n        when redelivered E to React\n        then no events\nmodule B\n  feature G\n    slice Automation Producer\n      event E\n      reaction React\n        when E"},
+            "edges": ["A.F.Consumer|B.G.Producer|verifiedWith|redeliveryReaction:React,whenRedeliveredEvent:E"],
+            "implied": [],
+            "cycles": [],
+            "order": ["A.F.Consumer", "B.G.Producer"]
+        },
+        {
             "name": "projection and decisions form an ordering cycle",
             "files": {"application.play": "module M\n  feature A\n    slice StateView View\n      readmodel R\n      projection R\n        from E\n  feature B\n    slice StateChange Write\n      event E\n      command C\n        reads R"},
             "edges": ["M.A.View|M.B.Write|usesFactsFrom|from:E", "M.B.Write|M.A.View|decidesFrom|reads:R"],

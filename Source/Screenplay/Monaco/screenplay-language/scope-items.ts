@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import type { CompletionEntry } from './completion-items';
+import { exampleDeclarationItems } from './example-declaration-items';
 
 const interactions = ['click', 'double click', 'select', 'submit', 'change', 'load', 'unload', 'enter', 'leave'];
 
@@ -11,6 +12,7 @@ const interactionItems: CompletionEntry[] = [
 ];
 
 export const moduleScopeItems: CompletionEntry[] = [
+    ...exampleDeclarationItems,
     { label: 'description', insertText: 'description "${1:what this module is for}"', documentation: 'A human-readable description.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'Policies that must pass for everything in the module.' },
     { label: 'depends on', insertText: 'depends on ${1:Name}', documentation: 'Declares an allowed module or feature dependency. Opts this container into independent explicit-reference checks.' },
@@ -25,6 +27,7 @@ export const moduleScopeItems: CompletionEntry[] = [
 ];
 
 export const featureScopeItems: CompletionEntry[] = [
+    ...exampleDeclarationItems,
     { label: 'description', insertText: 'description "${1:what this feature is for}"', documentation: 'A human-readable description.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'Policies that must pass for everything in the feature.' },
     { label: 'depends on', insertText: 'depends on ${1:Name}', documentation: 'Declares an allowed module or feature dependency. Sibling feature names resolve before module names.' },

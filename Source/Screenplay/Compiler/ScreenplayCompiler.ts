@@ -22,12 +22,14 @@ import { ApplicationSyntax } from './Syntax/Structure';
 import { ApplicationSyntaxVisitor } from './Syntax/Visitors';
 import { ProjectionSyntax } from './Syntax/Projections';
 import { CaptureSyntax } from './Syntax/Captures';
-import { SpecificationSyntax } from './Syntax/Specifications';
+import { SpecificationExampleSyntax, SpecificationSyntax } from './Syntax/Specifications';
 import { SyntaxNode } from './Syntax/SyntaxNode';
 import { ParserContext } from './Parsing/ParserContext';
 import { parseProjection } from './Parsing/ProjectionParser';
 import { parseCapture } from './Parsing/CaptureParser';
 import { parseSpecification } from './Parsing/SpecificationParser';
+import { parseExample } from './Parsing/SpecificationExampleParser';
+import { firstWord } from './Parsing/LineText';
 import { SourceLine, locationOf } from './Parsing/SourceLine';
 import { DiagnosticCodes } from './Diagnostics/DiagnosticCodes';
 import { timelineOrderDiagnostics } from './Files/TimelineOrder';
@@ -114,9 +116,11 @@ export function parseSpecificationSource(source: string, path?: string, language
 function parseSourceFamily<T extends SyntaxNode>(source: string, keyword: string, read: (context: ParserContext, line: SourceLine) => T, path?: string, languages?: ReadonlySet<string>): CompilationResult<readonly T[]> {
     const context = sourceContext(splitLines(source, true, path), path, languages, true);
     const value: T[] = [];
+    const examples: SpecificationExampleSyntax[] = [];
     for (let line = context.reader.peekSignificant(); line !== undefined; line = context.reader.peekSignificant()) {
         context.reader.takeSignificant();
-        if (line.content.startsWith(keyword)) value.push(read(context, line));
+        if (keyword === 'specification' && firstWord(line.content) === 'example') examples.push(parseExample(context, line));
+        else if (line.content.startsWith(keyword)) value.push(read(context, line));
         else {
             context.error(DiagnosticCodes.UnknownTopLevelConstruct, `Expected '${keyword}', got '${line.content}'`, locationOf(line));
             context.skipOpaqueBlock(line.indent);
@@ -126,5 +130,6 @@ function parseSourceFamily<T extends SyntaxNode>(source: string, keyword: string
         const code = keyword === 'projection' ? DiagnosticCodes.ProjectionDocumentWithoutProjection : keyword === 'capture' ? DiagnosticCodes.CaptureDocumentWithoutCapture : DiagnosticCodes.SpecificationDocumentWithoutSpecification;
         context.error(code, `Document must contain at least one ${keyword}`, context.start);
     }
-    return { value, diagnostics: context.diagnostics, success: !context.diagnostics.some(diagnostic => diagnostic.severity === 'error') };
+    const roots = keyword === 'specification' && examples.length > 0 ? value.map(node => ({ ...node, examples })) : value;
+    return { value: roots, diagnostics: context.diagnostics, success: !context.diagnostics.some(diagnostic => diagnostic.severity === 'error') };
 }

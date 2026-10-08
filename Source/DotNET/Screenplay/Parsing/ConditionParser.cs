@@ -24,15 +24,30 @@ internal static partial class ConditionParser
     /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
     /// <param name="text">The condition text.</param>
     /// <param name="location">The <see cref="SourceLocation"/> of the condition.</param>
+    /// <param name="strict">Whether to reject unsupported characters in a guarded action condition.</param>
     /// <returns>The parsed <see cref="ConditionSyntax"/>, or <c>null</c> when the condition is malformed.</returns>
-    public static ConditionSyntax? Parse(ParserContext context, string text, SourceLocation location) =>
-        LogicalConditionParser.Parse<ConditionSyntax>(
+    public static ConditionSyntax? Parse(ParserContext context, string text, SourceLocation location, bool strict = false)
+    {
+        var regex = (context.SourceOptions.NumericMode, strict) switch
+        {
+            (NumericMode.Exact, true) => ExactGuardTokenRegex(),
+            (NumericMode.Exact, false) => ExactTokenRegex(),
+            _ => TokenRegex()
+        };
+        if (strict && WhitespaceRegex().Replace(regex.Replace(text, string.Empty), string.Empty) is { Length: > 0 } unsupported)
+        {
+            context.Error(DiagnosticCodes.UnsupportedActionConditionOperand, $"Guarded action conditions contain unsupported character '{unsupported[0]}'", location);
+            return null;
+        }
+
+        return LogicalConditionParser.Parse<ConditionSyntax>(
             context,
-            Tokenize(text, context.SourceOptions.NumericMode),
+            [.. regex.Matches(text).Select(_ => _.Value)],
             location,
             ParseComparison,
             static (left, @operator, right, location) => new LogicalConditionSyntax(left, @operator, right, location),
             _diagnostics);
+    }
 
     static ConditionSyntax? ParseComparison(ParserContext context, IReadOnlyList<string> tokens, ref int position, SourceLocation location)
     {
@@ -94,11 +109,14 @@ internal static partial class ConditionParser
         };
     }
 
-    static List<string> Tokenize(string text, NumericMode mode) =>
-        [.. (mode == NumericMode.Exact ? ExactTokenRegex() : TokenRegex()).Matches(text).Select(_ => _.Value)];
+    [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|[\\w.$-]+", RegexOptions.None, 1000)]
+    private static partial Regex ExactGuardTokenRegex();
 
     [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?(?=$|[\\s()])|[\\w.$-]+|[^\\s]", RegexOptions.None, 1000)]
     private static partial Regex ExactTokenRegex();
+
+    [GeneratedRegex(@"\s", RegexOptions.None, 1000)]
+    private static partial Regex WhitespaceRegex();
 
     [GeneratedRegex("\"" + StringLiteral.BodyPattern + "\"|==|!=|>=|<=|>|<|\\(|\\)|[\\w.$-]+", RegexOptions.None, 1000)]
     private static partial Regex TokenRegex();

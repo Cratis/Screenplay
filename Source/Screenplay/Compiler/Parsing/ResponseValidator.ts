@@ -12,11 +12,13 @@ import { ApplicationSyntax, FeatureSyntax, SliceSyntax } from '../Syntax/Structu
 import { InputUse } from './InputUses';
 import { ParserContext } from './ParserContext';
 import { responseDateValue } from './ResponseDateValues';
+import { specificationCommandExamples } from './SpecificationCommandExamples';
 
 const primitiveTypes = new Set(['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime']);
 interface ScopedCommand { command: CommandSyntax; scope: readonly string[] }
 
 export function validateResponses(application: ApplicationSyntax, context: ParserContext, inputs: readonly InputUse[] = context.inputUses): void {
+    const effectiveCommand = specificationCommandExamples(application);
     const slices: { slice: SliceSyntax; scope: readonly string[] }[] = [];
     const collect = (feature: FeatureSyntax, parent: readonly string[]): void => {
         const scope = [...parent, feature.name];
@@ -121,7 +123,7 @@ export function validateResponses(application: ApplicationSyntax, context: Parse
         }
     }
     const validateSpecification = (specification: SpecificationSyntax, scope: readonly string[]): void => {
-        const action = specification.when;
+        const action = effectiveCommand(specification.when, scope);
         const command = action === null ? null : resolve(action.commandType, scope);
         if (action !== null && command !== null) {
             const declared = properties.get(command)!;

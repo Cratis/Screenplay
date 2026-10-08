@@ -3,7 +3,7 @@ id: 0025
 title: Allocate ESM v7 to generated values and responses, and number later versions at admission
 status: accepted
 stage: none
-decided: 2026-10-06
+decided: 2026-10-07
 decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
@@ -32,7 +32,7 @@ Fixing later slots in advance has the same defect in reverse. Any fixed number m
 
 Accepting a feature's design and numbering a release are different acts. A design can be accepted while its implementation is months away. A number is a public promise to consumers about what a released package contains. Binding the number to design acceptance is what produced the hostage problem: an accepted but unready design holds a slot nobody can ship.
 
-This record is proposed. It records no acceptance by Einar Ingebrigtsen or Sindre Alstad Wilting.
+This record was accepted by Sindre Alstad Wilting on 2026-10-07 after reviewing the amended text.
 
 ## Decision
 
@@ -66,11 +66,11 @@ This record is proposed. It records no acceptance by Einar Ingebrigtsen or Sindr
 
 **Preserved by 0025:** the v6 row and 0022; numeric mode as an independent preamble-selected mode; cumulative contracts as defined in point 6; the *Unchanged* allocation row; every decision in *Events and identity*, *Generated values and responses*, *Operations and external systems*, *Event sources, streams and concurrency*, *Implementation lifecycle*, *Reads, derived values and provisioning* and *Specification time*; Sindre Alstad Wilting's defaults; 0004's gates for every batch.
 
-### Banner to add when 0025 is accepted
+### Acceptance banner in 0023 — 2026-10-07
 
-Nothing in 0023 changes while 0025 is proposed, and no banner is added now. A banner that said 0023's allocation "has been superseded" would be false until a decider accepts this record. On acceptance, the following dated banner is inserted directly under 0023's front matter, the status stays `accepted`, and 0023's body is untouched:
+On acceptance, the following dated banner is inserted directly under 0023's front matter, the status stays `accepted`, and 0023's body is untouched:
 
-> **<acceptance date> — ESM allocation superseded in part by [decision 0025](0025-allocate-esm-v7-to-responses-and-number-later-versions-at-admission.md).** 0025 replaces the v7–v11 rows of the *ESM allocation* table and the allocation-dependent sentences in *ESM allocation*, *Default if unanswered*, *Timeline and scope* and *Verification*. ESM v7 is allocated to generated values and responses; admission remains subject to accepted 0026 and 0004's gates. Later versions, including exact numbers, are numbered at a serialized release-ready admission checkpoint instead of in a fixed order. The v6 row, numeric-mode independence, cumulative contracts as redefined in 0025 and every other section of this record remain in force.
+> **2026-10-07 — ESM allocation superseded in part by [decision 0025](0025-allocate-esm-v7-to-responses-and-number-later-versions-at-admission.md).** 0025 replaces the v7–v11 rows of the *ESM allocation* table and the allocation-dependent sentences in *ESM allocation*, *Default if unanswered*, *Timeline and scope* and *Verification*. ESM v7 is allocated to generated values and responses; admission remains subject to accepted 0026 and 0004's gates. Later versions, including exact numbers, are numbered at a serialized release-ready admission checkpoint instead of in a fixed order. The v6 row, numeric-mode independence, cumulative contracts as redefined in 0025 and every other section of this record remain in force.
 
 0023 is replaced only in part, so its `status` and front matter do not change. Acceptance also regenerates the README index, and updates the issue status blocks and product strings listed under Verification.
 
@@ -121,4 +121,4 @@ Screenplay: [#285](https://github.com/Cratis/Screenplay/issues/285), [#300](http
 
 ## Status notes
 
-**Proposed.** No decider and no acceptance date are recorded.
+**2026-10-07 — accepted.** Accepted by Sindre Alstad Wilting on 2026-10-07 after reviewing the amended text. The partial-supersession banner in 0023 records the accepted allocation; its original decision text is preserved.

@@ -103,7 +103,7 @@ internal static class SpecificationOutcomeConsistencyValidator
                         declarations.Event(named.Name, scope) == occurrence))
                     {
                         if (trigger.File is not null || trigger.Code is not null) return true;
-                        foreach (var producer in trigger.Produces ?? [])
+                        foreach (var producer in ReactionProductions.In(trigger))
                         {
                             if (declarations.Event(producer.Event, scope) is not { } produced || produced == expected) return true;
                             pending.Enqueue(produced);

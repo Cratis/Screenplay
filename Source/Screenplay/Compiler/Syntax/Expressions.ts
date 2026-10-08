@@ -3,6 +3,8 @@
 
 import { SyntaxNode } from './SyntaxNode';
 import { ExactNumber } from './ExactNumber';
+import { RefusalExpressionSyntax } from './RefusalExpressionSyntax';
+export type { RefusalExpressionSyntax } from './RefusalExpressionSyntax';
 
 // Legacy literals retain Double interpretation; Exact values use explicit canonical-string slots.
 export interface LiteralExpressionSyntax extends SyntaxNode {
@@ -90,6 +92,7 @@ export interface TemplateExpressionSyntax extends SyntaxNode {
 }
 
 export type ExpressionSyntax =
+    | RefusalExpressionSyntax
     | EventSourceIdExpressionSyntax
     | EventContextExpressionSyntax
     | CausedByExpressionSyntax
