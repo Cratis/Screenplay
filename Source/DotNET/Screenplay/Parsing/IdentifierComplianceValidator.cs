@@ -7,7 +7,7 @@ using Cratis.Screenplay.Syntax;
 namespace Cratis.Screenplay.Parsing;
 
 /// <summary>
-/// Rejects personal data and operational secrets as event source identities, which cannot be encrypted or erased.
+/// Rejects personal data and operational secrets as event source and stream identities, which cannot be encrypted or erased.
 /// </summary>
 internal static class IdentifierComplianceValidator
 {
@@ -23,7 +23,13 @@ internal static class IdentifierComplianceValidator
         foreach (var source in application.EventSources)
         {
             if (source.Identifier is { } identifier) ValidateType(identifier, identifier.Location);
+            foreach (var stream in source.Streams)
+            {
+                if (stream.StreamId is { } streamId) ValidateType(streamId, streamId.Location, "a stream id");
+                foreach (var part in stream.StreamIdParts) ValidateType(part.Type, part.Type.Location, $"a stream id part '{part.Name}'");
+            }
         }
+        var catalog = new EventSourceCatalog(application);
 
         foreach (var (slice, scope) in declarations.Slices)
         {
@@ -32,6 +38,19 @@ internal static class IdentifierComplianceValidator
                 foreach (var property in command.Properties.Where(property => property.IsIdentifier))
                 {
                     ValidateType(property.Type, property.Location);
+                }
+
+                var routes = (command.Stream is { } selected ? new[] { selected }.Concat(command.StreamCandidates) : command.StreamCandidates)
+                    .Where(route => route.PropertyCandidate is null);
+                foreach (var route in routes)
+                {
+                    var resolution = catalog.Resolve(route.EventSource, route.Stream);
+                    var stream = resolution.Kind == EventSourceResolutionKind.Unique ? resolution.Streams[0] : null;
+                    if (route.StreamId is { } mapping) ValidateMapping(command, mapping, stream?.StreamId);
+                    foreach (var part in route.StreamIdParts)
+                    {
+                        ValidateMapping(command, part, stream?.StreamIdParts.FirstOrDefault(declared => declared.Name == part.Property)?.Type);
+                    }
                 }
 
                 foreach (var production in command.Produces.Where(production => declarations.Productions.IsEventProduction(production, slice)))
@@ -71,12 +90,21 @@ internal static class IdentifierComplianceValidator
             }
         }
 
-        void ValidateType(TypeRefSyntax type, SourceLocation location)
+        void ValidateMapping(CommandSyntax command, PropertyMappingSyntax mapping, TypeRefSyntax? target)
+        {
+            if (mapping.Source is not PathExpressionSyntax path || declarations.Property(command.Properties, path.Path, out _) is not { } property) return;
+
+            // The same protected concept has already been reported at its resolved declaration.
+            if (property.Type.Name == target?.Name && (personal.Contains(property.Type.Name) || sensitive.Contains(property.Type.Name))) return;
+            ValidateType(property.Type, mapping.SourceLocation ?? path.Location, "a stream id route mapping");
+        }
+
+        void ValidateType(TypeRefSyntax type, SourceLocation location, string position = "an event source identifier")
         {
             if (personal.Contains(type.Name) || sensitive.Contains(type.Name))
             {
                 var attribute = personal.Contains(type.Name) ? "@pii" : "@sensitive";
-                context.Error(DiagnosticCodes.PiiNotSupportedOnIdentifier, $"Concept '{type.Name}' is {attribute} and cannot be an event source identifier - use a surrogate Uuid identifier and keep the {attribute} value as a property", location);
+                context.Error(DiagnosticCodes.PiiNotSupportedOnIdentifier, $"Concept '{type.Name}' is {attribute} and cannot be {position} - use a surrogate Uuid identifier and keep the {attribute} value as a property", location);
             }
         }
     }
