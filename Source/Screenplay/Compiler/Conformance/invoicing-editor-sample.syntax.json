@@ -2835,6 +2835,8 @@
                               "navigate": {
                                 "kind": "ScreenNavigateSyntax",
                                 "by": null,
+                                "parameters": [],
+                                "route": null,
                                 "screen": "InvoiceList"
                               }
                             }
@@ -5579,6 +5581,8 @@
                               "navigate": {
                                 "kind": "ScreenNavigateSyntax",
                                 "by": null,
+                                "parameters": [],
+                                "route": null,
                                 "screen": "InvoiceList"
                               }
                             }
@@ -6596,6 +6600,8 @@
                               "rowClick": {
                                 "kind": "ScreenNavigateSyntax",
                                 "by": "invoiceId",
+                                "parameters": [],
+                                "route": null,
                                 "screen": "InvoiceDetails"
                               },
                               "target": "InvoiceListReadModel"
@@ -7473,6 +7479,8 @@
                                       "rowClick": {
                                         "kind": "ScreenNavigateSyntax",
                                         "by": "invoiceId",
+                                        "parameters": [],
+                                        "route": null,
                                         "screen": "ChangeInvoiceStatusScreen"
                                       },
                                       "target": "InvoiceDetailsReadModel"
@@ -7499,6 +7507,8 @@
                                       "rowClick": {
                                         "kind": "ScreenNavigateSyntax",
                                         "by": "invoiceId",
+                                        "parameters": [],
+                                        "route": null,
                                         "screen": "CancelInvoiceScreen"
                                       },
                                       "target": "InvoiceDetailsReadModel"
@@ -7525,6 +7535,8 @@
                                       "rowClick": {
                                         "kind": "ScreenNavigateSyntax",
                                         "by": "invoiceId",
+                                        "parameters": [],
+                                        "route": null,
                                         "screen": "TagInvoiceScreen"
                                       },
                                       "target": "InvoiceDetailsReadModel"
@@ -7551,6 +7563,8 @@
                                       "rowClick": {
                                         "kind": "ScreenNavigateSyntax",
                                         "by": "invoiceId",
+                                        "parameters": [],
+                                        "route": null,
                                         "screen": "UpdateBillingContactScreen"
                                       },
                                       "target": "InvoiceDetailsReadModel"
@@ -7616,6 +7630,8 @@
                                       "rowClick": {
                                         "kind": "ScreenNavigateSyntax",
                                         "by": "invoiceId",
+                                        "parameters": [],
+                                        "route": null,
                                         "screen": "InvoiceLineDetail"
                                       },
                                       "target": "InvoiceDetailsReadModel"
@@ -8574,6 +8590,8 @@
                                   "rowClick": {
                                     "kind": "ScreenNavigateSyntax",
                                     "by": "invoiceId",
+                                    "parameters": [],
+                                    "route": null,
                                     "screen": "InvoiceDetails"
                                   },
                                   "target": "OverdueInvoicesReadModel"
@@ -9237,6 +9255,8 @@
                               "navigate": {
                                 "kind": "ScreenNavigateSyntax",
                                 "by": null,
+                                "parameters": [],
+                                "route": null,
                                 "screen": "CollectionsBoard"
                               }
                             }
@@ -9899,6 +9919,8 @@
                               "rowClick": {
                                 "kind": "ScreenNavigateSyntax",
                                 "by": "invoiceId",
+                                "parameters": [],
+                                "route": null,
                                 "screen": "RecordPaymentScreen"
                               },
                               "target": "InvoiceBalanceReadModel"
@@ -10751,6 +10773,8 @@
                               "rowClick": {
                                 "kind": "ScreenNavigateSyntax",
                                 "by": "invoiceId",
+                                "parameters": [],
+                                "route": null,
                                 "screen": "InvoiceDetails"
                               },
                               "target": "DueInvoice"
@@ -10774,6 +10798,8 @@
                                   "rowClick": {
                                     "kind": "ScreenNavigateSyntax",
                                     "by": "invoiceId",
+                                    "parameters": [],
+                                    "route": null,
                                     "screen": "RecordPaymentScreen"
                                   },
                                   "target": "DueInvoice"
@@ -10815,6 +10841,8 @@
                               "rowClick": {
                                 "kind": "ScreenNavigateSyntax",
                                 "by": "invoiceId",
+                                "parameters": [],
+                                "route": null,
                                 "screen": "InvoiceDetails"
                               },
                               "target": "OverdueInvoice"
@@ -10838,6 +10866,8 @@
                                   "rowClick": {
                                     "kind": "ScreenNavigateSyntax",
                                     "by": "invoiceId",
+                                    "parameters": [],
+                                    "route": null,
                                     "screen": "RecordPaymentScreen"
                                   },
                                   "target": "OverdueInvoice"
@@ -12287,6 +12317,8 @@
                           "rowClick": {
                             "kind": "ScreenNavigateSyntax",
                             "by": "invoiceId",
+                            "parameters": [],
+                            "route": null,
                             "screen": "RequestPaymentPlanScreen"
                           },
                           "target": "CustomerInvoiceReadModel"
@@ -12637,6 +12669,8 @@
                               "navigate": {
                                 "kind": "ScreenNavigateSyntax",
                                 "by": null,
+                                "parameters": [],
+                                "route": null,
                                 "screen": "MyInvoices"
                               }
                             }

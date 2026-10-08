@@ -167,7 +167,7 @@ internal static partial class ScreenParser
             var parameter = ParameterRegex().Match(child.Content);
             if (parameter.Success)
             {
-                parameters.Add(new(parameter.Groups[1].Value, parameter.Groups[2].Value.Trim(), child.Location));
+                parameters.Add(new(parameter.Groups[1].Value, UiBindingParser.ParseFromClause(context, parameter.Groups[2].Value, child.Location), child.Location));
                 continue;
             }
 
@@ -327,7 +327,7 @@ internal static partial class ScreenParser
             return null;
         }
 
-        string? dataContext = null;
+        UiBindingSyntax? dataContext = null;
         string? icon = null;
         var properties = new List<ComponentPropertySyntax>();
         var exposes = new List<ComponentExposedValueSyntax>();
@@ -342,7 +342,7 @@ internal static partial class ScreenParser
             switch (LineText.FirstWord(child.Content))
             {
                 case "context":
-                    dataContext = child.Content["context".Length..].Trim();
+                    dataContext = UiBindingParser.Parse(context, child.Content["context".Length..].Trim(), child.Location);
                     break;
                 case "property":
                     if (ParseComponentProperty(context, child) is { } property) properties.Add(property);
@@ -386,7 +386,7 @@ internal static partial class ScreenParser
     static ComponentPropertySyntax? ParseComponentProperty(ParserContext context, SourceLine line)
     {
         var bound = ComponentPropertyBindingRegex().Match(line.Content);
-        if (bound.Success) return new(bound.Groups[1].Value, bound.Groups[2].Value.Trim(), null, line.Location);
+        if (bound.Success) return new(bound.Groups[1].Value, UiBindingParser.ParseFromClause(context, bound.Groups[2].Value, line.Location), null, line.Location);
 
         var literal = ComponentPropertyLiteralRegex().Match(line.Content);
         if (literal.Success) return new(literal.Groups[1].Value, null, OperandText(literal, 2), line.Location);
@@ -404,7 +404,7 @@ internal static partial class ScreenParser
             return null;
         }
 
-        return new(match.Groups[1].Value, match.Groups[2].Value.Trim(), line.Location);
+        return new(match.Groups[1].Value, UiBindingParser.ParseFromClause(context, match.Groups[2].Value, line.Location), line.Location);
     }
 
     static ComponentOutletSyntax ParseComponentOutlet(ParserContext context, SourceLine line)
@@ -468,7 +468,7 @@ internal static partial class ScreenParser
             var parameter = ParameterRegex().Match(child.Content);
             if (parameter.Success)
             {
-                parameters.Add(new(parameter.Groups[1].Value, parameter.Groups[2].Value.Trim(), child.Location));
+                parameters.Add(new(parameter.Groups[1].Value, UiBindingParser.ParseFromClause(context, parameter.Groups[2].Value, child.Location), child.Location));
                 continue;
             }
 

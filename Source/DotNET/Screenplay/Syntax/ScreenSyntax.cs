@@ -179,7 +179,7 @@ public record ScreenComponentSyntax(string Component, string Name, SourceLocatio
     /// <summary>
     /// Gets the data context binding for the component.
     /// </summary>
-    public string? Context { get; init; }
+    public UiBindingSyntax? Context { get; init; }
 
     /// <summary>
     /// Gets authored property bindings and literal values.
@@ -224,7 +224,7 @@ public record ScreenComponentSyntax(string Component, string Name, SourceLocatio
 /// <param name="Binding">The binding expression, or <c>null</c> when the value is literal.</param>
 /// <param name="Value">The literal value, or <c>null</c> when the property is bound.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record ComponentPropertySyntax(string Property, string? Binding, string? Value, SourceLocation Location) : SyntaxNode(Location);
+public record ComponentPropertySyntax(string Property, UiBindingSyntax? Binding, string? Value, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents an exposed component instance value.
@@ -232,7 +232,7 @@ public record ComponentPropertySyntax(string Property, string? Binding, string? 
 /// <param name="Name">The exposed value name.</param>
 /// <param name="Binding">The binding expression that supplies the value.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record ComponentExposedValueSyntax(string Name, string Binding, SourceLocation Location) : SyntaxNode(Location);
+public record ComponentExposedValueSyntax(string Name, UiBindingSyntax Binding, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents a presentation hint for a component or toolbar item.
@@ -320,4 +320,4 @@ public record ToolbarItemSyntax(string Name, ToolbarItemKind Kind, string Target
 /// <param name="Name">The parameter name.</param>
 /// <param name="Binding">The binding expression.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record ScreenNavigationParameterSyntax(string Name, string Binding, SourceLocation Location) : SyntaxNode(Location);
+public record ScreenNavigationParameterSyntax(string Name, UiBindingSyntax Binding, SourceLocation Location) : SyntaxNode(Location);

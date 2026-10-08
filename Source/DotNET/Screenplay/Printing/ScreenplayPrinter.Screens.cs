@@ -101,8 +101,43 @@ public partial class ScreenplayPrinter
 
         foreach (var parameter in navigate.Parameters)
         {
-            writer.Line($"parameter {parameter.Name} from {parameter.Binding}", parameter);
+            writer.Line($"parameter {parameter.Name} {WriteUiBinding(parameter.Binding)}", parameter);
         }
+    }
+
+
+    string WriteUiBinding(UiBindingSyntax binding)
+    {
+        var head = binding.BindingKind switch
+        {
+            UiBindingKind.DataContext => $"from data {binding.Path}",
+            UiBindingKind.QueryResult => string.IsNullOrWhiteSpace(binding.Path) ? $"from query {binding.Query}" : $"from query {binding.Query}.{binding.Path}",
+            UiBindingKind.ComponentProperty => $"from component {binding.ComponentId}.{binding.ComponentPropertyPath ?? binding.Path}",
+            _ => binding.RawText ?? binding.Path
+        };
+
+        if (binding.Mode is not null)
+        {
+            head = $"{head} mode {(binding.Mode == UiBindingMode.TwoWay ? "twoWay" : "oneWay")}";
+        }
+
+        if (binding.NullBehavior is not null)
+        {
+            var nullBehavior = binding.NullBehavior switch
+            {
+                UiBindingNullBehavior.Clear => "clear",
+                UiBindingNullBehavior.Preserve => "preserve",
+                _ => "propagate"
+            };
+            head = $"{head} null {nullBehavior}";
+        }
+
+        if (binding.ExpectedValueType is not null)
+        {
+            head = $"{head} expected {binding.ExpectedValueType}";
+        }
+
+        return head;
     }
 
     void WriteScreenAction(ScreenplayWriter writer, ScreenActionSyntax action)
@@ -211,13 +246,13 @@ public partial class ScreenplayPrinter
         {
             if (component.Context is not null)
             {
-                writer.Line($"context {component.Context}");
+                writer.Line($"context {WriteUiBinding(component.Context)}");
             }
 
             foreach (var property in component.Properties)
             {
                 writer.Line(property.Binding is not null
-                    ? $"property {property.Property} from {property.Binding}"
+                    ? $"property {property.Property} {WriteUiBinding(property.Binding)}"
                     : $"property {property.Property} = {ScreenplaySyntaxText.LocalizableString(property.Value ?? string.Empty)}", property);
             }
 
@@ -233,7 +268,7 @@ public partial class ScreenplayPrinter
 
             foreach (var exposed in component.Exposes)
             {
-                writer.Line($"exposes {exposed.Name} from {exposed.Binding}", exposed);
+                writer.Line($"exposes {exposed.Name} {WriteUiBinding(exposed.Binding)}", exposed);
             }
 
             foreach (var outlet in component.Outlets)
@@ -289,7 +324,7 @@ public partial class ScreenplayPrinter
 
             foreach (var parameter in item.Parameters)
             {
-                writer.Line($"parameter {parameter.Name} from {parameter.Binding}", parameter);
+                writer.Line($"parameter {parameter.Name} {WriteUiBinding(parameter.Binding)}", parameter);
             }
 
             foreach (var value in item.Presentation)

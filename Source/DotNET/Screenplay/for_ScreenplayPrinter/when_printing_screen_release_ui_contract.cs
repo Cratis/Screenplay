@@ -72,14 +72,14 @@ public class when_printing_screen_release_ui_contract : given.a_printer
                     icon edit
                     presentation placement "primary"
                   item details navigate to InvoiceDetails
-                    parameter invoiceId from selectedInvoice.id
+                    parameter invoiceId from component invoices.selectedItem.id
                 component scene.web.DataGrid invoices
-                  context invoices
-                  property selectedItem from selectedInvoice
+                  context from query AllInvoices
+                  property selectedItem from component invoices.selectedItem null preserve
                   property title = "Invoices"
                   icon table
                   presentation density "compact"
-                  exposes selectedInvoice from selectedItem
+                  exposes selectedInvoice from component invoices.selectedItem
                   outlet detail
                     summary selectedInvoice
                       field invoiceId label "Invoice"
@@ -93,7 +93,8 @@ public class when_printing_screen_release_ui_contract : given.a_printer
     [Fact] void should_reparse_without_diagnostics() => _roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
     [Fact] void should_print_the_same_text_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldEqual(_roundtrip.Printed);
     [Fact] void should_preserve_component_identity() => Component.Component.ShouldEqual("scene.web.DataGrid");
-    [Fact] void should_preserve_component_property_binding() => Component.Properties.First().Binding.ShouldEqual("selectedInvoice");
+    [Fact] void should_preserve_component_property_binding() => Component.Properties.First().Binding!.BindingKind.ShouldEqual(UiBindingKind.ComponentProperty);
+    [Fact] void should_preserve_component_property_null_behavior() => Component.Properties.First().Binding!.NullBehavior.ShouldEqual(UiBindingNullBehavior.Preserve);
     [Fact] void should_preserve_component_literal_property() => Component.Properties.Last().Value.ShouldEqual("Invoices");
     [Fact] void should_preserve_component_outlet() => Component.Outlets.Single().Directives.Single().ShouldBeOfExactType<ScreenSummarySyntax>();
     [Fact] void should_preserve_toolbar_presentation() => Toolbar.Items.First().Presentation.Single().Value.ShouldEqual("primary");

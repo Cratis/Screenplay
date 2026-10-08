@@ -118,7 +118,12 @@ public abstract partial class ScreenplaySyntaxWalker
     /// Visits a <see cref="ScreenNavigateSyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="ScreenNavigateSyntax"/> to visit.</param>
-    public virtual void VisitScreenNavigate(ScreenNavigateSyntax syntax) => VisitNode(syntax);
+    public virtual void VisitScreenNavigate(ScreenNavigateSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var parameter in syntax.Parameters) VisitNode(parameter);
+        foreach (var parameter in syntax.Parameters) VisitNode(parameter.Binding);
+    }
 
     /// <summary>
     /// Visits a <see cref="ScreenTemplateReferenceSyntax"/> node and its children.
@@ -230,8 +235,17 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitScreenComponent(ScreenComponentSyntax syntax)
     {
         VisitNode(syntax);
-        foreach (var property in syntax.Properties) VisitNode(property);
-        foreach (var exposed in syntax.Exposes) VisitNode(exposed);
+        if (syntax.Context is not null) VisitNode(syntax.Context);
+        foreach (var property in syntax.Properties)
+        {
+            VisitNode(property);
+            if (property.Binding is not null) VisitNode(property.Binding);
+        }
+        foreach (var exposed in syntax.Exposes)
+        {
+            VisitNode(exposed);
+            VisitNode(exposed.Binding);
+        }
         foreach (var presentation in syntax.Presentation) VisitNode(presentation);
         foreach (var outlet in syntax.Outlets)
         {
@@ -252,7 +266,11 @@ public abstract partial class ScreenplaySyntaxWalker
         foreach (var item in syntax.Items)
         {
             VisitNode(item);
-            foreach (var parameter in item.Parameters) VisitNode(parameter);
+            foreach (var parameter in item.Parameters)
+            {
+                VisitNode(parameter);
+                VisitNode(parameter.Binding);
+            }
             foreach (var presentation in item.Presentation) VisitNode(presentation);
         }
     }

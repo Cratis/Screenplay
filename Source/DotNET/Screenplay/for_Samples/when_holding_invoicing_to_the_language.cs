@@ -49,7 +49,8 @@ public class when_holding_invoicing_to_the_language : Specification
         (typeof(TemplateAssignmentSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Hierarchical template assignments are covered by the focused round-trip spec until TypeScript conformance admits them into Samples/Invoicing."),
         (typeof(TemplateExposedValueSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Template metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
         (typeof(TemplateOutletSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Template metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
-        (typeof(ToolbarItemSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Toolbar item metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing.")
+        (typeof(ToolbarItemSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Toolbar item metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
+        (typeof(UiBindingSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Typed UI binding metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing.")
     ];
 
     // No production error/trivia SyntaxNode kinds exist today. Never use this list for authoring constructs.

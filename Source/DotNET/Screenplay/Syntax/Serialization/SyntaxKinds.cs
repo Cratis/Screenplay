@@ -223,6 +223,7 @@ internal static class SyntaxKinds
         typeof(TriggerSyntax),
         typeof(TypeRefSyntax),
         typeof(TypeSyntax),
+        typeof(UiBindingSyntax),
         typeof(UiProfileSyntax),
         typeof(UniqueEventConstraintSyntax),
         typeof(UniquePropertyConstraintSyntax),

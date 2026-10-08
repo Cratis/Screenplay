@@ -1900,6 +1900,8 @@
                               "navigate": {
                                 "kind": "ScreenNavigateSyntax",
                                 "by": null,
+                                "parameters": [],
+                                "route": null,
                                 "screen": "MyLoans"
                               }
                             }

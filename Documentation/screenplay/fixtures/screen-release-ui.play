@@ -61,14 +61,14 @@ module Sales
             icon edit
             presentation placement "primary"
           item details navigate to InvoiceDetails
-            parameter invoiceId from selectedInvoice.id
+            parameter invoiceId from component invoices.selectedItem.id
         component scene.web.DataGrid invoices
-          context invoices
-          property selectedItem from selectedInvoice
+          context from query AllInvoices
+          property selectedItem from component invoices.selectedItem null preserve
           property title = "Invoices"
           icon table
           presentation density "compact"
-          exposes selectedInvoice from selectedItem
+          exposes selectedInvoice from component invoices.selectedItem
           outlet detail
             summary selectedInvoice
               field invoiceId label "Invoice"
