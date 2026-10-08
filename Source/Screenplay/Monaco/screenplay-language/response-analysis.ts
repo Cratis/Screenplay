@@ -104,14 +104,6 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
         }
     };
     walk(parsed.value);
-    // Merging restated headers retains the first header's location. Index physical typed headers
-    // separately so the current module/feature still owns incomplete lines in a later fragment.
-    const localDependencies = parseForAuthoring(prepared.source, path, prepared.placement, false).value;
-    const remapDependencyHeaders = (node: typeof localDependencies.modules[number] | FeatureSyntax): void => {
-        walk(node.location);
-        node.features.forEach(remapDependencyHeaders);
-    };
-    localDependencies.modules.forEach(remapDependencyHeaders);
     walk(parsed.physicalEventSources);
     // Fragment wrappers must not turn an unread original root into confidence evidence.
     // Retain the parser's unknown-owner diagnostic at its original physical root location.
@@ -247,8 +239,24 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
     }
     const ambiguousCandidates = [...commands.values()].flatMap(command => command.streamCandidates ?? []).filter(candidate => candidate.propertyCandidate !== null);
     const eventSources: EventSourceAnalysis = { declarations: sourceDeclarations, routes, ambiguousCandidates, contexts: sourceContexts, targets, resolve };
-    return { commands, specifications, diagnostics, operationProductionLines, operations, eventSources, examples: exampleAnalysis(parsed.value, path, lines, range, syntheticScopes, parsed.diagnostics),
-        dependencies: dependencyTargetAnalysis(parsed.value, localDependencies, path, range, syntheticScopes) };
+    let dependencyAnalysis: ReturnType<typeof dependencyTargetAnalysis> | undefined;
+    const dependencies: ReturnType<typeof dependencyTargetAnalysis> = {
+        completions(line, qualifier, placement) {
+            if (dependencyAnalysis === undefined) {
+                // Merging restated headers retains the first header's location. Index physical typed
+                // headers only when needed, so later fragments still own their incomplete lines.
+                const localDependencies = parseForAuthoring(prepared.source, path, prepared.placement, false).value;
+                const remapDependencyHeaders = (node: typeof localDependencies.modules[number] | FeatureSyntax): void => {
+                    walk(node.location);
+                    node.features.forEach(remapDependencyHeaders);
+                };
+                localDependencies.modules.forEach(remapDependencyHeaders);
+                dependencyAnalysis = dependencyTargetAnalysis(parsed.value, localDependencies, path, range, syntheticScopes);
+            }
+            return dependencyAnalysis.completions(line, qualifier, placement);
+        },
+    };
+    return { commands, specifications, diagnostics, operationProductionLines, operations, eventSources, examples: exampleAnalysis(parsed.value, path, lines, range, syntheticScopes, parsed.diagnostics), dependencies };
 }
 
 export function responseAnalysis(lines: string[], otherSources: readonly (string | AuthoringDocument)[] = [], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis; readonly examples: ExampleAnalysis; readonly dependencies: ReturnType<typeof dependencyTargetAnalysis> } {
