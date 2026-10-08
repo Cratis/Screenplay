@@ -52,6 +52,11 @@ internal static partial class ExpressionParser
             return literal;
         }
 
+        if (text == "$refusal" || text.StartsWith("$refusal.", StringComparison.Ordinal))
+        {
+            return new RefusalExpressionSyntax(text == "$refusal" ? string.Empty : text["$refusal.".Length..], location);
+        }
+
         if (text == "$eventSourceId")
         {
             return new EventSourceIdExpressionSyntax(location);
@@ -111,6 +116,11 @@ internal static partial class ExpressionParser
     public static ExpressionSyntax ParseMappingSource(ParserContext context, string text, SourceLocation location)
     {
         text = text.Trim();
+
+        if (text == "$refusal" || text.StartsWith("$refusal.", StringComparison.Ordinal))
+        {
+            return new RefusalExpressionSyntax(text == "$refusal" ? string.Empty : text["$refusal.".Length..], location);
+        }
 
         if (text.StartsWith("$context.", StringComparison.Ordinal))
         {

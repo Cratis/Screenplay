@@ -41,6 +41,8 @@ public class PlayFileCompiler(IPlayFiles playFiles, IScreenplayCompiler compiler
     {
     }
 
+    internal AuthoredTimeline Timeline { get; private set; } = null!;
+
     /// <inheritdoc/>
     public IEnumerable<PlayFileCompilation> CompileIn(string root) =>
         [.. playFiles.FindIn(root).Select(Compile)];
@@ -91,7 +93,8 @@ public class PlayFileCompiler(IPlayFiles playFiles, IScreenplayCompiler compiler
 
     ApplicationCompilation<ApplicationSyntax> Assemble(DiskPlayDocumentSource source, IEnumerable<string> roots)
     {
-        var (documents, result) = PlayApplicationAssembly.Compile(compiler, roots, source, _languages);
+        var (documents, result) = PlayApplicationAssembly.Compile(compiler, roots, source, _languages, out var timeline);
+        Timeline = timeline;
         return new([.. documents.Select(document => new PlayFileSource(source.File(document.Path), document.Source))], result);
     }
 

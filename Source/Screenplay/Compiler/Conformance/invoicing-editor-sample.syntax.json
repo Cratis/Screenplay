@@ -253,7 +253,7 @@
         "kind": "AuthorizeSyntax",
         "requirement": {
           "kind": "PolicyReferenceSyntax",
-          "name": "IsAuthenticated"
+          "name": "IsPerson"
         }
       },
       "description": "Everything related to invoicing customers.\nRegistration, lifecycle, payment tracking and collection of invoices,\nplus the self-service portal customers use to see and pay them.",
@@ -2662,6 +2662,145 @@
                   "tags": []
                 }
               ],
+              "examples": [
+                {
+                  "kind": "SpecificationExampleSyntax",
+                  "description": null,
+                  "for": null,
+                  "generatedValues": [],
+                  "name": "AcmeInvoice",
+                  "type": "RegisterInvoice",
+                  "values": [
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "invoiceId",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                      }
+                    },
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "customerId",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      }
+                    },
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "invoiceNumber",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "INV-000123"
+                      }
+                    },
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "lines",
+                      "source": {
+                        "kind": "ListExpressionSyntax",
+                        "items": [
+                          {
+                            "kind": "ObjectExpressionSyntax",
+                            "members": [
+                              {
+                                "kind": "ObjectMemberSyntax",
+                                "name": "lineNumber",
+                                "value": {
+                                  "kind": "LiteralExpressionSyntax",
+                                  "value": 1
+                                }
+                              },
+                              {
+                                "kind": "ObjectMemberSyntax",
+                                "name": "productName",
+                                "value": {
+                                  "kind": "LiteralExpressionSyntax",
+                                  "value": "Consulting"
+                                }
+                              },
+                              {
+                                "kind": "ObjectMemberSyntax",
+                                "name": "quantity",
+                                "value": {
+                                  "kind": "LiteralExpressionSyntax",
+                                  "value": 10
+                                }
+                              },
+                              {
+                                "kind": "ObjectMemberSyntax",
+                                "name": "unitPrice",
+                                "value": {
+                                  "kind": "LiteralExpressionSyntax",
+                                  "value": 1200
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "billingContact",
+                      "source": {
+                        "kind": "ObjectExpressionSyntax",
+                        "members": [
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "name",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "Ada Lovelace"
+                            }
+                          },
+                          {
+                            "kind": "ObjectMemberSyntax",
+                            "name": "email",
+                            "value": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "ada@acme.test"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "currency",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "NOK"
+                      }
+                    },
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "paymentTerms",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "net30"
+                      }
+                    },
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "dueDate",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "2026-12-31"
+                      }
+                    },
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "isProForma",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": false
+                      }
+                    }
+                  ]
+                }
+              ],
               "name": "RegisterInvoice",
               "operations": [],
               "projections": [],
@@ -2825,138 +2964,10 @@
                   "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
-                    "commandType": "RegisterInvoice",
+                    "commandType": "AcmeInvoice",
                     "for": null,
                     "generatedValues": [],
-                    "values": [
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "invoiceId",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "customerId",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "invoiceNumber",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "INV-000123"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "lines",
-                        "source": {
-                          "kind": "ListExpressionSyntax",
-                          "items": [
-                            {
-                              "kind": "ObjectExpressionSyntax",
-                              "members": [
-                                {
-                                  "kind": "ObjectMemberSyntax",
-                                  "name": "lineNumber",
-                                  "value": {
-                                    "kind": "LiteralExpressionSyntax",
-                                    "value": 1
-                                  }
-                                },
-                                {
-                                  "kind": "ObjectMemberSyntax",
-                                  "name": "productName",
-                                  "value": {
-                                    "kind": "LiteralExpressionSyntax",
-                                    "value": "Consulting"
-                                  }
-                                },
-                                {
-                                  "kind": "ObjectMemberSyntax",
-                                  "name": "quantity",
-                                  "value": {
-                                    "kind": "LiteralExpressionSyntax",
-                                    "value": 10
-                                  }
-                                },
-                                {
-                                  "kind": "ObjectMemberSyntax",
-                                  "name": "unitPrice",
-                                  "value": {
-                                    "kind": "LiteralExpressionSyntax",
-                                    "value": 1200
-                                  }
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "billingContact",
-                        "source": {
-                          "kind": "ObjectExpressionSyntax",
-                          "members": [
-                            {
-                              "kind": "ObjectMemberSyntax",
-                              "name": "name",
-                              "value": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "Ada Lovelace"
-                              }
-                            },
-                            {
-                              "kind": "ObjectMemberSyntax",
-                              "name": "email",
-                              "value": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "ada@acme.test"
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "currency",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "NOK"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "paymentTerms",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "net30"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "dueDate",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "2026-12-31"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "isProForma",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": false
-                        }
-                      }
-                    ]
+                    "values": []
                   },
                   "whenAppended": null,
                   "whenCapture": null,
@@ -3056,24 +3067,25 @@
                   "thenReturns": null,
                   "when": {
                     "kind": "SpecificationCommandSyntax",
-                    "commandType": "RegisterInvoice",
+                    "commandType": "AcmeInvoice",
                     "for": null,
                     "generatedValues": [],
+                    "inlineProperty": "isProForma",
                     "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "isProForma",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": true
+                        }
+                      },
                       {
                         "kind": "PropertyMappingSyntax",
                         "property": "invoiceId",
                         "source": {
                           "kind": "LiteralExpressionSyntax",
                           "value": "5b1f2f7c-0f6c-4d3c-9f2f-1b1b7e0f0a11"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "customerId",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
                         }
                       },
                       {
@@ -3132,31 +3144,6 @@
                       },
                       {
                         "kind": "PropertyMappingSyntax",
-                        "property": "billingContact",
-                        "source": {
-                          "kind": "ObjectExpressionSyntax",
-                          "members": [
-                            {
-                              "kind": "ObjectMemberSyntax",
-                              "name": "name",
-                              "value": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "Ada Lovelace"
-                              }
-                            },
-                            {
-                              "kind": "ObjectMemberSyntax",
-                              "name": "email",
-                              "value": {
-                                "kind": "LiteralExpressionSyntax",
-                                "value": "ada@acme.test"
-                              }
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
                         "property": "currency",
                         "source": {
                           "kind": "LiteralExpressionSyntax",
@@ -3169,22 +3156,6 @@
                         "source": {
                           "kind": "LiteralExpressionSyntax",
                           "value": "immediate"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "dueDate",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": "2026-12-31"
-                        }
-                      },
-                      {
-                        "kind": "PropertyMappingSyntax",
-                        "property": "isProForma",
-                        "source": {
-                          "kind": "LiteralExpressionSyntax",
-                          "value": true
                         }
                       }
                     ]
@@ -3321,6 +3292,65 @@
                       "kind": "LiteralExpressionSyntax",
                       "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
                     },
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceNumber",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "INV-000123"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [],
+                    "roles": [
+                      "InvoiceManager",
+                      "Service"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RejectingAServiceRegisteringAnInvoice",
+                  "thenCompensated": [],
+                  "thenDenied": {
+                    "kind": "SpecificationDeniedSyntax"
+                  },
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RegisterInvoice",
+                    "for": null,
                     "generatedValues": [],
                     "values": [
                       {
@@ -3709,6 +3739,17 @@
                   "kind": "ScreenSyntax",
                   "directives": [
                     {
+                      "kind": "ScreenDataSyntax",
+                      "by": "invoiceId",
+                      "query": "GetInvoice",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceDetailsReadModel"
+                      }
+                    },
+                    {
                       "kind": "ScreenTemplateReferenceSyntax",
                       "name": "CommandDialog",
                       "slots": [
@@ -3726,10 +3767,37 @@
                           "kind": "ScreenSlotSyntax",
                           "directives": [
                             {
-                              "kind": "ScreenActionSyntax",
-                              "command": "CancelInvoice",
+                              "kind": "ScreenGuardedActionSyntax",
+                              "alternatives": [
+                                {
+                                  "kind": "ScreenActionAlternativeSyntax",
+                                  "arguments": [
+                                    {
+                                      "kind": "InteractionArgumentSyntax",
+                                      "binding": "item.invoiceId",
+                                      "name": "invoiceId"
+                                    }
+                                  ],
+                                  "command": "CancelInvoice",
+                                  "condition": {
+                                    "kind": "ComparisonConditionSyntax",
+                                    "left": "item.status",
+                                    "operator": "Equal",
+                                    "right": {
+                                      "kind": "LiteralExpressionSyntax",
+                                      "value": "draft"
+                                    }
+                                  }
+                                }
+                              ],
                               "label": "$strings.invoices.actions.cancel",
-                              "navigate": null
+                              "navigate": null,
+                              "otherwise": {
+                                "kind": "ScreenActionOtherwiseSyntax",
+                                "arguments": [],
+                                "command": null,
+                                "outcome": "Hidden"
+                              }
                             }
                           ],
                           "name": "actions"
@@ -6429,24 +6497,43 @@
                       "kind": "ScreenBehaviorSyntax"
                     },
                     {
-                      "kind": "ScreenActionSyntax",
-                      "command": "RegisterInvoice",
-                      "label": null,
-                      "navigate": {
-                        "kind": "ScreenNavigateSyntax",
-                        "by": null,
-                        "screen": "RegisterInvoiceScreen"
-                      }
+                      "kind": "ScreenSectionSyntax",
+                      "directives": [
+                        {
+                          "kind": "ScreenTitleSyntax",
+                          "text": "Register invoice"
+                        },
+                        {
+                          "kind": "ScreenBehaviorSyntax"
+                        }
+                      ],
+                      "name": "registerInvoiceInput"
                     },
                     {
-                      "kind": "ScreenActionSyntax",
-                      "command": "ProcessInvoiceBatch",
-                      "label": null,
-                      "navigate": {
-                        "kind": "ScreenNavigateSyntax",
-                        "by": null,
-                        "screen": "ProcessInvoiceBatchScreen"
-                      }
+                      "kind": "ScreenSectionSyntax",
+                      "directives": [
+                        {
+                          "kind": "ScreenTitleSyntax",
+                          "text": "Process a batch"
+                        },
+                        {
+                          "kind": "ScreenBehaviorSyntax"
+                        }
+                      ],
+                      "name": "processInvoiceBatchInput"
+                    },
+                    {
+                      "kind": "ScreenSectionSyntax",
+                      "directives": [
+                        {
+                          "kind": "ScreenTitleSyntax",
+                          "text": "Start invoice draft"
+                        },
+                        {
+                          "kind": "ScreenBehaviorSyntax"
+                        }
+                      ],
+                      "name": "startInvoiceDraftInput"
                     },
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
@@ -6456,14 +6543,17 @@
                           "kind": "ScreenSlotSyntax",
                           "directives": [
                             {
-                              "kind": "ScreenActionSyntax",
-                              "command": "ArchiveOldInvoices",
-                              "label": null,
-                              "navigate": {
-                                "kind": "ScreenNavigateSyntax",
-                                "by": null,
-                                "screen": "ArchiveOldInvoicesScreen"
-                              }
+                              "kind": "ScreenSectionSyntax",
+                              "directives": [
+                                {
+                                  "kind": "ScreenTitleSyntax",
+                                  "text": "Archive old invoices"
+                                },
+                                {
+                                  "kind": "ScreenBehaviorSyntax"
+                                }
+                              ],
+                              "name": "archiveOldInvoicesInput"
                             },
                             {
                               "kind": "ScreenSectionSyntax",
@@ -7365,44 +7455,108 @@
                                   "text": "Actions"
                                 },
                                 {
-                                  "kind": "ScreenActionSyntax",
-                                  "command": "ChangeInvoiceStatus",
-                                  "label": null,
-                                  "navigate": {
-                                    "kind": "ScreenNavigateSyntax",
-                                    "by": null,
-                                    "screen": "ChangeInvoiceStatusScreen"
-                                  }
+                                  "kind": "ScreenSectionSyntax",
+                                  "directives": [
+                                    {
+                                      "kind": "ScreenTitleSyntax",
+                                      "text": "Change invoice status"
+                                    },
+                                    {
+                                      "kind": "ScreenTableSyntax",
+                                      "columns": [
+                                        {
+                                          "kind": "ScreenColumnSyntax",
+                                          "label": "$strings.invoices.fields.number",
+                                          "property": "invoiceNumber"
+                                        }
+                                      ],
+                                      "rowClick": {
+                                        "kind": "ScreenNavigateSyntax",
+                                        "by": "invoiceId",
+                                        "screen": "ChangeInvoiceStatusScreen"
+                                      },
+                                      "target": "InvoiceDetailsReadModel"
+                                    }
+                                  ],
+                                  "name": "changeInvoiceStatusInput"
                                 },
                                 {
-                                  "kind": "ScreenActionSyntax",
-                                  "command": "CancelInvoice",
-                                  "label": null,
-                                  "navigate": {
-                                    "kind": "ScreenNavigateSyntax",
-                                    "by": null,
-                                    "screen": "CancelInvoiceScreen"
-                                  }
+                                  "kind": "ScreenSectionSyntax",
+                                  "directives": [
+                                    {
+                                      "kind": "ScreenTitleSyntax",
+                                      "text": "$strings.invoices.actions.cancel"
+                                    },
+                                    {
+                                      "kind": "ScreenTableSyntax",
+                                      "columns": [
+                                        {
+                                          "kind": "ScreenColumnSyntax",
+                                          "label": "$strings.invoices.fields.number",
+                                          "property": "invoiceNumber"
+                                        }
+                                      ],
+                                      "rowClick": {
+                                        "kind": "ScreenNavigateSyntax",
+                                        "by": "invoiceId",
+                                        "screen": "CancelInvoiceScreen"
+                                      },
+                                      "target": "InvoiceDetailsReadModel"
+                                    }
+                                  ],
+                                  "name": "cancelInvoiceInput"
                                 },
                                 {
-                                  "kind": "ScreenActionSyntax",
-                                  "command": "TagInvoice",
-                                  "label": null,
-                                  "navigate": {
-                                    "kind": "ScreenNavigateSyntax",
-                                    "by": null,
-                                    "screen": "TagInvoiceScreen"
-                                  }
+                                  "kind": "ScreenSectionSyntax",
+                                  "directives": [
+                                    {
+                                      "kind": "ScreenTitleSyntax",
+                                      "text": "Tag invoice"
+                                    },
+                                    {
+                                      "kind": "ScreenTableSyntax",
+                                      "columns": [
+                                        {
+                                          "kind": "ScreenColumnSyntax",
+                                          "label": "$strings.invoices.fields.number",
+                                          "property": "invoiceNumber"
+                                        }
+                                      ],
+                                      "rowClick": {
+                                        "kind": "ScreenNavigateSyntax",
+                                        "by": "invoiceId",
+                                        "screen": "TagInvoiceScreen"
+                                      },
+                                      "target": "InvoiceDetailsReadModel"
+                                    }
+                                  ],
+                                  "name": "tagInvoiceInput"
                                 },
                                 {
-                                  "kind": "ScreenActionSyntax",
-                                  "command": "UpdateBillingContact",
-                                  "label": null,
-                                  "navigate": {
-                                    "kind": "ScreenNavigateSyntax",
-                                    "by": null,
-                                    "screen": "UpdateBillingContactScreen"
-                                  }
+                                  "kind": "ScreenSectionSyntax",
+                                  "directives": [
+                                    {
+                                      "kind": "ScreenTitleSyntax",
+                                      "text": "Billing contact"
+                                    },
+                                    {
+                                      "kind": "ScreenTableSyntax",
+                                      "columns": [
+                                        {
+                                          "kind": "ScreenColumnSyntax",
+                                          "label": "$strings.invoices.fields.number",
+                                          "property": "invoiceNumber"
+                                        }
+                                      ],
+                                      "rowClick": {
+                                        "kind": "ScreenNavigateSyntax",
+                                        "by": "invoiceId",
+                                        "screen": "UpdateBillingContactScreen"
+                                      },
+                                      "target": "InvoiceDetailsReadModel"
+                                    }
+                                  ],
+                                  "name": "updateBillingContactInput"
                                 }
                               ],
                               "name": "actions"
@@ -7440,12 +7594,34 @@
                                       "property": "subtotal"
                                     }
                                   ],
-                                  "rowClick": {
-                                    "kind": "ScreenNavigateSyntax",
-                                    "by": "lineNumber",
-                                    "screen": "InvoiceLineDetail"
-                                  },
+                                  "rowClick": null,
                                   "target": "lineItems"
+                                },
+                                {
+                                  "kind": "ScreenSectionSyntax",
+                                  "directives": [
+                                    {
+                                      "kind": "ScreenTitleSyntax",
+                                      "text": "Line item details"
+                                    },
+                                    {
+                                      "kind": "ScreenTableSyntax",
+                                      "columns": [
+                                        {
+                                          "kind": "ScreenColumnSyntax",
+                                          "label": "$strings.invoices.fields.number",
+                                          "property": "invoiceNumber"
+                                        }
+                                      ],
+                                      "rowClick": {
+                                        "kind": "ScreenNavigateSyntax",
+                                        "by": "invoiceId",
+                                        "screen": "InvoiceLineDetail"
+                                      },
+                                      "target": "InvoiceDetailsReadModel"
+                                    }
+                                  ],
+                                  "name": "invoiceLineDetailInput"
                                 }
                               ],
                               "name": "lineItems"
@@ -8446,14 +8622,17 @@
                               "kind": "ScreenSectionSyntax",
                               "directives": [
                                 {
-                                  "kind": "ScreenActionSyntax",
-                                  "command": "RegisterInvoice",
-                                  "label": "$strings.invoices.actions.newInvoice",
-                                  "navigate": {
-                                    "kind": "ScreenNavigateSyntax",
-                                    "by": null,
-                                    "screen": "RegisterInvoiceScreen"
-                                  }
+                                  "kind": "ScreenSectionSyntax",
+                                  "directives": [
+                                    {
+                                      "kind": "ScreenTitleSyntax",
+                                      "text": "$strings.invoices.actions.newInvoice"
+                                    },
+                                    {
+                                      "kind": "ScreenBehaviorSyntax"
+                                    }
+                                  ],
+                                  "name": "registerInvoiceDashboardInput"
                                 }
                               ],
                               "name": "actions"
@@ -8698,6 +8877,12 @@
               "name": "IsInvoicingStaff"
             }
           },
+          "dependsOn": [
+            {
+              "kind": "DependsOnSyntax",
+              "target": "InvoiceManagement"
+            }
+          ],
           "description": "Recording what customers pay and chasing what they do not",
           "features": [],
           "fileImports": [],
@@ -9696,14 +9881,30 @@
                           "target": "InvoiceBalanceReadModel"
                         },
                         {
-                          "kind": "ScreenActionSyntax",
-                          "command": "RecordPayment",
-                          "label": null,
-                          "navigate": {
-                            "kind": "ScreenNavigateSyntax",
-                            "by": null,
-                            "screen": "RecordPaymentScreen"
-                          }
+                          "kind": "ScreenSectionSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenTitleSyntax",
+                              "text": "Record payment"
+                            },
+                            {
+                              "kind": "ScreenTableSyntax",
+                              "columns": [
+                                {
+                                  "kind": "ScreenColumnSyntax",
+                                  "label": "Outstanding",
+                                  "property": "outstanding"
+                                }
+                              ],
+                              "rowClick": {
+                                "kind": "ScreenNavigateSyntax",
+                                "by": "invoiceId",
+                                "screen": "RecordPaymentScreen"
+                              },
+                              "target": "InvoiceBalanceReadModel"
+                            }
+                          ],
+                          "name": "recordPaymentInput"
                         }
                       ],
                       "name": "balance"
@@ -10523,22 +10724,6 @@
                           "kind": "ScreenSlotSyntax",
                           "directives": [
                             {
-                              "kind": "ScreenActionSyntax",
-                              "command": "RecordPayment",
-                              "label": null,
-                              "navigate": {
-                                "kind": "ScreenNavigateSyntax",
-                                "by": null,
-                                "screen": "RecordPaymentScreen"
-                              }
-                            }
-                          ],
-                          "name": "toolbar"
-                        },
-                        {
-                          "kind": "ScreenSlotSyntax",
-                          "directives": [
-                            {
                               "kind": "ScreenDataSyntax",
                               "by": null,
                               "query": "ListDueInvoices",
@@ -10569,6 +10754,32 @@
                                 "screen": "InvoiceDetails"
                               },
                               "target": "DueInvoice"
+                            },
+                            {
+                              "kind": "ScreenSectionSyntax",
+                              "directives": [
+                                {
+                                  "kind": "ScreenTitleSyntax",
+                                  "text": "Record payment"
+                                },
+                                {
+                                  "kind": "ScreenTableSyntax",
+                                  "columns": [
+                                    {
+                                      "kind": "ScreenColumnSyntax",
+                                      "label": "Invoice",
+                                      "property": "invoiceId"
+                                    }
+                                  ],
+                                  "rowClick": {
+                                    "kind": "ScreenNavigateSyntax",
+                                    "by": "invoiceId",
+                                    "screen": "RecordPaymentScreen"
+                                  },
+                                  "target": "DueInvoice"
+                                }
+                              ],
+                              "name": "recordDuePaymentInput"
                             }
                           ],
                           "name": "due"
@@ -10607,6 +10818,32 @@
                                 "screen": "InvoiceDetails"
                               },
                               "target": "OverdueInvoice"
+                            },
+                            {
+                              "kind": "ScreenSectionSyntax",
+                              "directives": [
+                                {
+                                  "kind": "ScreenTitleSyntax",
+                                  "text": "Record payment"
+                                },
+                                {
+                                  "kind": "ScreenTableSyntax",
+                                  "columns": [
+                                    {
+                                      "kind": "ScreenColumnSyntax",
+                                      "label": "Invoice",
+                                      "property": "invoiceId"
+                                    }
+                                  ],
+                                  "rowClick": {
+                                    "kind": "ScreenNavigateSyntax",
+                                    "by": "invoiceId",
+                                    "screen": "RecordPaymentScreen"
+                                  },
+                                  "target": "OverdueInvoice"
+                                }
+                              ],
+                              "name": "recordOverduePaymentInput"
                             }
                           ],
                           "name": "overdue"
@@ -12032,14 +12269,30 @@
                       "target": "CustomerInvoiceReadModel"
                     },
                     {
-                      "kind": "ScreenActionSyntax",
-                      "command": "RequestPaymentPlan",
-                      "label": null,
-                      "navigate": {
-                        "kind": "ScreenNavigateSyntax",
-                        "by": null,
-                        "screen": "RequestPaymentPlanScreen"
-                      }
+                      "kind": "ScreenSectionSyntax",
+                      "directives": [
+                        {
+                          "kind": "ScreenTitleSyntax",
+                          "text": "Pay in installments"
+                        },
+                        {
+                          "kind": "ScreenTableSyntax",
+                          "columns": [
+                            {
+                              "kind": "ScreenColumnSyntax",
+                              "label": "Invoice",
+                              "property": "invoiceNumber"
+                            }
+                          ],
+                          "rowClick": {
+                            "kind": "ScreenNavigateSyntax",
+                            "by": "invoiceId",
+                            "screen": "RequestPaymentPlanScreen"
+                          },
+                          "target": "CustomerInvoiceReadModel"
+                        }
+                      ],
+                      "name": "requestPaymentPlanInput"
                     },
                     {
                       "kind": "ScreenBehaviorSyntax"
@@ -14876,6 +15129,7 @@
       "name": "InvoiceManager",
       "policies": [
         "IsAuthenticated",
+        "IsPerson",
         "IsInvoicingStaff",
         "CanManageInvoice"
       ]
@@ -14886,6 +15140,7 @@
       "name": "Accountant",
       "policies": [
         "IsAuthenticated",
+        "IsPerson",
         "IsInvoicingStaff",
         "CanManageInvoice",
         "IsAccountant",
@@ -14898,6 +15153,7 @@
       "name": "FinanceController",
       "policies": [
         "IsAuthenticated",
+        "IsPerson",
         "IsInvoicingStaff",
         "IsFinanceDepartment",
         "CanWriteOff"
@@ -14909,6 +15165,7 @@
       "name": "Customer",
       "policies": [
         "IsAuthenticated",
+        "IsPerson",
         "IsCustomer",
         "OwnsInvoice",
         "IsAdultCustomer",
@@ -14921,6 +15178,7 @@
       "name": "Auditor",
       "policies": [
         "IsAuthenticated",
+        "IsPerson",
         "IsAuditor"
       ]
     }

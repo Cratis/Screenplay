@@ -6,6 +6,7 @@ import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
 import { PropertySyntax, TypeRefSyntax } from '../Syntax/Declarations';
 import { ApplicationSyntax } from '../Syntax/Structure';
+import { dependencySourcesOf } from '../Syntax/DependencySources';
 import { ParserContext } from './ParserContext';
 import { uniqueByName } from './ResponseValidator';
 
@@ -46,7 +47,8 @@ export function validateIdentifierCompliance(application: ApplicationSyntax, con
             if (trigger.source.kind !== 'NamedTriggerSourceSyntax') continue;
             const resolution = resolver.resolve(trigger.source.name, slice);
             const event = resolution.declaration?.node;
-            const shapes = [event?.kind === 'EventSyntax' ? event.properties : [], ...declaredTriggers.get(trigger.source.name) ?? []];
+            const clauseData = (dependencySourcesOf(trigger).data ?? []).flatMap<PropertySyntax>(datum => datum.type === null ? [] : [{ kind: 'PropertySyntax', name: datum.name, type: datum.type, isIdentifier: false, location: datum.location }]);
+            const shapes = [event?.kind === 'EventSyntax' ? event.properties : [], clauseData, ...declaredTriggers.get(trigger.source.name) ?? []];
             for (const production of trigger.produces.filter(production => resolver.isEventProduction(production, slice))) {
                 if (production.for?.kind !== 'PathExpressionSyntax') continue;
                 // Compliance checks both shapes when event and declared-trigger resolution disagree (#439).

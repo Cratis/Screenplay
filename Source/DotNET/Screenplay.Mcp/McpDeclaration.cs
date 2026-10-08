@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
@@ -15,6 +16,8 @@ sealed record McpDeclaration(string Kind, string Name, string[] Scope, SourceLoc
     public bool IsImplicit { get; init; }
 
     internal List<SyntaxNode> Parts { get; } = [Syntax];
+
+    internal ImmutableArray<McpReadOwner> Hierarchy { get; init; } = [];
 
     internal McpReadOwner Owner => new(Kind, Name, Address, Location);
 }

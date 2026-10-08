@@ -3,7 +3,7 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import {
-    ScreenActionSyntax, ScreenCodeSyntax, ScreenColumnSyntax, ScreenDataSyntax, ScreenDirectiveSyntax, ScreenFieldSyntax,
+    ScreenActionSyntax, ScreenGuardedActionSyntax, ScreenCodeSyntax, ScreenColumnSyntax, ScreenDataSyntax, ScreenDirectiveSyntax, ScreenFieldSyntax,
     ScreenNavigateSyntax, ScreenSectionSyntax, ScreenSlotSyntax, ScreenSummarySyntax, ScreenSyntax, ScreenTableSyntax,
     ScreenTemplateReferenceSyntax, ScreenTitleSyntax,
 } from '../Syntax/Screens';
@@ -11,6 +11,7 @@ import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { pattern } from '../Text/patterns';
 import { parseFencedText } from './CodeBlockParser';
 import { isFileDirective } from './FileReferences';
+import { parseGuardedAction } from './GuardedActionParser';
 import { collectInputUses } from './InputUses';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -25,6 +26,7 @@ const header = pattern('^screen\\s+([A-Za-z_]\\w*)$');
 const data = pattern('^data\\s+([\\w.]+(?:\\[\\])?)\\s+via\\s+query\\s+(\\w+(?:\\.\\w+)*)(?:\\s+by\\s+(\\w+))?$');
 const action = pattern('^action\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
 const label = pattern(`^label\\s+${operand}$`);
+const guardedAction = pattern(`^action\\s+${operand}$`);
 const navigate = pattern('^navigate\\s+to\\s+(\\w+(?:\\.\\w+)*)(?:\\s+by\\s+(\\w+))?$');
 const slot = pattern('^[a-z_]\\w*$');
 const title = pattern(`^title\\s+${operand}$`);
@@ -113,7 +115,9 @@ function parseData(context: ParserContext, line: SourceLine): ScreenDataSyntax |
     return { kind: 'ScreenDataSyntax', type: parseTypeRef(match[1], locationOf(line)), query: match[2], by: match[3] ?? null, location: locationOf(line) };
 }
 
-function parseAction(context: ParserContext, line: SourceLine): ScreenActionSyntax | undefined {
+function parseAction(context: ParserContext, line: SourceLine): ScreenActionSyntax | ScreenGuardedActionSyntax | undefined {
+    const guarded = guardedAction.exec(line.content);
+    if (guarded !== null) return parseGuardedAction(context, line, operandText(guarded, 1), parseNavigate);
     const match = action.exec(line.content);
     if (match === null) {
         context.error(DiagnosticCodes.InvalidActionDirective, `Invalid action directive '${line.content}' - expected 'action <Command>'`, locationOf(line));

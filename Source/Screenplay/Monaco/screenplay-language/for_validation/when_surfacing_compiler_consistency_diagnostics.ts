@@ -7,6 +7,7 @@ import { validateLines } from '../validation';
 const cases = [
     { code: 'PLAY0514', source: ['module M', '  feature F', '    slice StateView S', '      event E', '      readmodel V', '        value String', '      projection P => V', '        from E', '          missing = "recorded"'] },
     { code: 'PLAY0515', source: ['concept PatientId : Uuid @pii', 'trigger External', '  patient PatientId', 'module M', '  feature F', '    slice Automation S', '      event E', '      reaction R', '        when External', '          produces E', '            for patient'] },
+    { code: 'PLAY0515', source: ['concept PatientId : Uuid @pii', 'module M', '  feature F', '    slice Automation S', '      event E', '      reaction R', '        when External', '          patient PatientId', '          produces E', '            for patient'] },
     { code: 'PLAY0166', source: ['module M', '  feature F', '    slice StateView S', '      projection P', '        remove with Missing'] },
     { code: 'PLAY0166', source: ['module M', '  feature F', '    slice Translate S', '      capture C', '        source api', '          api LegacyApi', '        key id', '        append Missing', '          when added'] },
 ];

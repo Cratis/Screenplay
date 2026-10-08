@@ -1,0 +1,287 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [
+    {
+      "kind": "EventSourceSyntax",
+      "description": null,
+      "id": null,
+      "identifier": {
+        "kind": "TypeRefSyntax",
+        "isCollection": false,
+        "isOptional": false,
+        "name": "String"
+      },
+      "name": "Account",
+      "streams": [
+        {
+          "kind": "EventStreamSyntax",
+          "description": null,
+          "id": null,
+          "name": "Events",
+          "streamId": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "String"
+          }
+        }
+      ]
+    }
+  ],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "F",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Act",
+                  "produces": [
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "Happened",
+                      "for": null,
+                      "inlineEvent": null,
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "amount"
+                          }
+                        }
+                      ],
+                      "tags": [],
+                      "when": null
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    }
+                  ],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "Happened",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "amount",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Int"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "examples": [
+                {
+                  "kind": "SpecificationExampleSyntax",
+                  "description": null,
+                  "for": null,
+                  "generatedValues": [],
+                  "name": "Fixture",
+                  "type": "Happened",
+                  "values": [
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "amount",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": {
+                          "literalType": "ExactNumber",
+                          "value": "1"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ],
+              "name": "S",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Fixture",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "account"
+                      },
+                      "inlineProperty": "amount",
+                      "stream": {
+                        "kind": "SpecificationStreamSyntax",
+                        "eventSource": "Account",
+                        "stream": "Events",
+                        "streamId": {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "streamId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "partition"
+                          }
+                        }
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "2"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaller": null,
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "Routed",
+                  "sourceOptions": {
+                    "numericMode": "exact"
+                  },
+                  "thenAbsentReadModels": [],
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Fixture",
+                      "for": null,
+                      "inlineProperty": "amount",
+                      "noStream": {
+                        "kind": "SpecificationNoStreamSyntax"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": {
+                              "literalType": "ExactNumber",
+                              "value": "3"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenQueries": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "Act",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "amount",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": {
+                            "literalType": "ExactNumber",
+                            "value": "3"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "StateChange"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "M"
+    }
+  ],
+  "personas": [],
+  "policies": [],
+  "seeds": [],
+  "sourceOptions": {
+    "numericMode": "exact"
+  },
+  "systems": [],
+  "types": []
+}

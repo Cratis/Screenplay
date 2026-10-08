@@ -48,13 +48,14 @@ public class when_dependencies_are_authoring_only
         }
         else
         {
-            var stripped = after with
-            {
-                Modules = [.. after.Modules.Select(module => module with { DependsOn = [], Features = [.. module.Features.Select(Strip)] })]
-            };
-            SyntaxJson.StructurallyEqual(before, stripped).ShouldBeTrue();
+            SyntaxJson.StructurallyEqual(Strip(before), Strip(after)).ShouldBeTrue();
         }
     }
+
+    static ApplicationSyntax Strip(ApplicationSyntax application) => application with
+    {
+        Modules = [.. application.Modules.Select(module => module with { DependsOn = [], Features = [.. module.Features.Select(Strip)] })]
+    };
 
     static FeatureSyntax Add(FeatureSyntax feature) => feature with { DependsOn = [new("OtherFeature", feature.Location)], Features = [.. feature.Features.Select(Add)] };
     static FeatureSyntax Strip(FeatureSyntax feature) => feature with { DependsOn = [], Features = [.. feature.Features.Select(Strip)] };

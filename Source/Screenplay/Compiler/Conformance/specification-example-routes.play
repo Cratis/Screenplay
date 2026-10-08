@@ -1,0 +1,29 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+numbers exact
+
+eventsource Account
+  identifier String
+  stream Events
+    streamId String
+module M
+  feature F
+    slice StateChange S
+      event Happened
+        amount Int
+      command Act
+        amount Int
+        produces Happened
+          amount = amount
+      example Fixture : Happened
+        amount = 1
+      specification Routed
+        given Fixture amount = 2
+          for "account"
+          stream Account.Events
+            streamId = "partition"
+        when Act
+          amount = 3
+        then Fixture amount = 3
+          no stream
