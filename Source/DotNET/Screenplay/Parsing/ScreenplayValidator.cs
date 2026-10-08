@@ -167,7 +167,7 @@ internal static class ScreenplayValidator
         }
 
         ValidateScreenReferences(scopedSlices, knownQueries, knownCommandDeclarations, knownScreenDeclarations, context);
-        GuardedActionValidator.Validate(declarations, context);
+        GuardedActionValidator.Validate(application, declarations, context);
         ValidateInteractions(
             application,
             scopedSlices,
@@ -1037,6 +1037,9 @@ internal static class ScreenplayValidator
                         }
 
                         break;
+                    case ScreenComponentSyntax component:
+                        ValidateAttachments(component.Behaviors, component.UsedBehaviors, scope, references, behaviors, context);
+                        break;
                 }
             }
         }
@@ -1122,6 +1125,8 @@ internal static class ScreenplayValidator
             }
 
             ValidateActions(binding.Actions, scope, references, parameters, context);
+            foreach (var alternative in binding.Alternatives) ValidateActions(alternative.Actions, scope, references, parameters, context);
+            if (binding.Otherwise is not null) ValidateActions(binding.Otherwise.Actions, scope, references, parameters, context);
         }
     }
 

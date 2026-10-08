@@ -9,15 +9,18 @@ namespace Cratis.Screenplay.Parsing;
 /// <summary>
 /// Validates the subject and input paths of guarded screen actions without guessing unknown shapes.
 /// </summary>
-internal static class GuardedActionValidator
+internal static partial class GuardedActionValidator
 {
-    internal static void Validate(ConsistencyDeclarations declarations, ParserContext context)
+    internal static void Validate(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context)
     {
+        var behaviors = application.Behaviors.Where(behavior => behavior.Name is not null)
+            .ToLookup(behavior => behavior.Name!, StringComparer.Ordinal);
+        new StructuralAttachments(behaviors, declarations, context).VisitApplication(application);
         foreach (var (slice, scope) in declarations.Slices)
         {
             foreach (var screen in slice.Screens)
             {
-                ValidateContainer(screen.Directives, [], scope, declarations, context);
+                ValidateContainer(screen.Directives, [], scope, declarations, context, behaviors);
             }
         }
     }
@@ -27,7 +30,8 @@ internal static class GuardedActionValidator
         IReadOnlyList<ScreenDataSyntax> inherited,
         DeclarationScope scope,
         ConsistencyDeclarations declarations,
-        ParserContext context)
+        ParserContext context,
+        ILookup<string, BehaviorSyntax> behaviors)
     {
         var local = directives.OfType<ScreenDataSyntax>().ToArray();
         var subjects = local.Length == 0 ? inherited : local;
@@ -38,14 +42,29 @@ internal static class GuardedActionValidator
                 case ScreenGuardedActionSyntax action:
                     ValidateAction(action, subjects, scope, declarations, context);
                     break;
+                case ScreenBehaviorSyntax attached:
+                    ValidateInteraction(attached.Behavior, subjects, scope, declarations, context);
+                    break;
+                case ScreenUsesBehaviorSyntax used:
+                    ValidateInteractionUse(used.Uses, subjects, scope, declarations, context, behaviors);
+                    break;
+                case ScreenTableSyntax table:
+                    var data = TableSubjects(table, subjects, scope, declarations);
+                    foreach (var behavior in table.Behaviors) ValidateInteraction(behavior, data, scope, declarations, context);
+                    foreach (var uses in table.UsedBehaviors) ValidateInteractionUse(uses, data, scope, declarations, context, behaviors);
+                    break;
+                case ScreenComponentSyntax component:
+                    foreach (var behavior in component.Behaviors) ValidateInteraction(behavior, subjects, scope, declarations, context);
+                    foreach (var uses in component.UsedBehaviors) ValidateInteractionUse(uses, subjects, scope, declarations, context, behaviors);
+                    break;
                 case ScreenSectionSyntax section:
-                    ValidateContainer(section.Directives, subjects, scope, declarations, context);
+                    ValidateContainer(section.Directives, subjects, scope, declarations, context, behaviors);
                     break;
                 case ScreenSlotSyntax slot:
-                    ValidateContainer(slot.Directives, subjects, scope, declarations, context);
+                    ValidateContainer(slot.Directives, subjects, scope, declarations, context, behaviors);
                     break;
                 case ScreenTemplateReferenceSyntax template:
-                    foreach (var slot in template.Slots) ValidateContainer(slot.Directives, subjects, scope, declarations, context);
+                    foreach (var slot in template.Slots) ValidateContainer(slot.Directives, subjects, scope, declarations, context, behaviors);
                     break;
             }
         }

@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.for_ScreenplayPrinter;
@@ -43,8 +44,8 @@ public class when_printing_a_behavior : given.a_printer
 
     void Because() => _roundtrip = RoundTrip(Source);
 
-    [Fact] void should_compile_without_diagnostics() => _roundtrip.Original!.Diagnostics.ShouldBeEmpty();
-    [Fact] void should_reparse_without_diagnostics() => _roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
+    [Fact] void should_report_only_the_deprecated_guard() => _roundtrip.Original!.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldContainOnly(DiagnosticCodes.LegacyInteractionWhere);
+    [Fact] void should_reparse_with_only_the_deprecated_guard() => _roundtrip.Reparsed.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldContainOnly(DiagnosticCodes.LegacyInteractionWhere);
     [Fact] void should_print_the_same_text_on_a_second_pass() => _roundtrip.PrintedAgain.ShouldEqual(_roundtrip.Printed);
     [Fact] void should_print_the_behavior_header() => _roundtrip.Printed.ShouldContain("behavior ConfirmThenExecute");
     [Fact] void should_print_the_description() => _roundtrip.Printed.ShouldContain("description \"Asks first, then does it.\"");

@@ -1342,10 +1342,13 @@ module Invoicing
               on select
                 set selectedInvoice to item.invoiceId
               on double click
-                open dialog CommandDialog
-                  with invoiceId from item.invoiceId
-                  on result
-                    refresh ListInvoices
+                when item.status == "draft"
+                  open dialog CommandDialog
+                    with invoiceId from item.invoiceId
+                    on result
+                      refresh ListInvoices
+                otherwise
+                  notify info "Only draft invoices can be edited"
         ```typescript
         export const statusLabel = (status: string) => status.toUpperCase();
         ```

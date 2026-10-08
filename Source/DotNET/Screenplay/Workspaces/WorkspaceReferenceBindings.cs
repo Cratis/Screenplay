@@ -111,6 +111,7 @@ sealed class WorkspaceReferenceBindings
                 ReadModelSyntax => WorkspaceReferenceDomain.View,
                 QuerySyntax => WorkspaceReferenceDomain.Query,
                 ScreenSyntax => WorkspaceReferenceDomain.Screen,
+                DialogTemplateSyntax => WorkspaceReferenceDomain.DialogTemplate,
                 PolicySyntax => WorkspaceReferenceDomain.Policy,
                 TriggerSyntax => WorkspaceReferenceDomain.Trigger,
                 ReactionSyntax => WorkspaceReferenceDomain.Reaction,

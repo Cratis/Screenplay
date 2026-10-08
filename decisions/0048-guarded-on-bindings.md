@@ -10,7 +10,7 @@ decider: Sindre Alstad Wilting
 applies-to:
   - Source/DotNET/Screenplay/Parsing/InteractionParser.cs
   - Source/DotNET/Screenplay/Syntax/BehaviorSyntax.cs
-  - Source/DotNET/Screenplay/Validation/GuardedAction*.cs
+  - Source/DotNET/Screenplay/Parsing/GuardedAction*.cs
   - Source/DotNET/Screenplay/Printing/ScreenplayPrinter.Interactions.cs
   - Source/DotNET/Screenplay/Workspaces/WorkspaceDiagnosticRepairs.cs
   - Source/Screenplay/Compiler/**
