@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
@@ -157,7 +158,7 @@ internal static partial class PlayFolderMerge
         return kept[0] with { Requirement = requirement, SourceComments = [.. comments] };
     }
 
-    static IEnumerable<SourceComment> CommentsOf(SyntaxNode node) => node switch
+    static ImmutableArray<SourceComment> CommentsOf(SyntaxNode node) => node switch
     {
         AuthorizeSyntax authorization => [.. authorization.SourceComments, .. CommentsOf(authorization.Requirement)],
         LogicalPolicyRequirementSyntax logical => [.. logical.SourceComments, .. CommentsOf(logical.Left), .. CommentsOf(logical.Right)],
