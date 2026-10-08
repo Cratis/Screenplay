@@ -8,11 +8,11 @@ namespace Cratis.Screenplay.for_ScreenplayCompiler;
 public class when_checking_personal_destinations_with_a_shared_source_name : given.a_compiler
 {
     [Theory]
-    [InlineData("PatientId", "Uuid", 1)]
+    [InlineData("PatientId", "Uuid", 0)]
     [InlineData("Uuid", "PatientId", 1)]
     [InlineData("PatientId", "PatientId", 1)]
     [InlineData("Uuid", "Uuid", 0)]
-    void should_check_both_shapes_without_changing_resolution(string triggerType, string eventType, int count)
+    void should_check_the_event_shape_instead_of_the_shadowed_trigger(string triggerType, string eventType, int count)
     {
         var result = _compiler.Compile($$"""
             concept PatientId : Uuid @pii

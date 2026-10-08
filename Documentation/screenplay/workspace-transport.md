@@ -74,6 +74,29 @@ escaping, base64, duplicate or unknown members, missing fields, duplicate
 document identities/keys/paths, unsupported versions, invalid encodings, and
 inconsistent identities or revisions.
 
+## Numeric mode restoration
+
+Numeric mode is derived from each document's exact source bytes, not from a new
+envelope field. A leading top-level `numbers exact` preamble selects Exact mode;
+its absence retains Legacy mode. The version 1 workspace envelope does not carry
+`sourceOptions`, `numericMode` or `ExactNumber` values separately. SyntaxJSON is a
+different transport: its [typed source options and literal envelopes](ast-authoring.md#exact-numeric-source-authoring-phase-a)
+carry mode and canonical numeric strings explicitly.
+
+Deserialization reparses each physical document before merging. Declaration-bearing
+files must agree on mode; imports do not pass a parent's mode to an unmarked child.
+An unmarked import-only barrel is neutral, while a marked barrel asserts agreement.
+Source bytes retain the preamble and authored number spelling, even when the parsed
+`ExactNumber` value has different canonical fixed-point text. Replacing a preamble
+or number spelling changes the workspace revision like any other source-byte edit.
+
+Phase A supports Exact parsing, typed authoring, printing and workspace restoration,
+not execution. A restored Exact workspace remains authorable but has unsuccessful
+executable compilation with `PLAY0268`; transport success does not imply ESM
+admission. MCP fixture-value reads encountering exact numbers, including nested
+values, explicitly refuse with `ExactNumberFixtureTransportUnsupported` until a
+lossless fixture transport is available.
+
 ## Compilation and revisions
 
 A structurally valid workspace with unbindable source remains editable:

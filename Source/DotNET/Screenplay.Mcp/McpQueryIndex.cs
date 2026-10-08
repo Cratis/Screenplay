@@ -11,6 +11,7 @@ sealed class McpQueryIndex
     readonly Dictionary<(string Name, string Scope), List<McpDeclaration>> _suffixes = [];
     readonly Dictionary<(string Kind, string Address), McpDeclaration[]> _addresses;
     readonly McpProductionInventory _productions;
+    readonly HashSet<string> _imports;
     readonly ILookup<string, McpDeclaration> _sources;
     readonly ILookup<string, McpDeclaration> _streams;
     readonly ILookup<string, McpDeclaration> _sourceValueTypes;
@@ -23,11 +24,12 @@ sealed class McpQueryIndex
     readonly Dictionary<string, List<McpReference>> _outgoingByAddress = new(StringComparer.Ordinal);
     readonly List<McpQueryIndexResolution> _resolvedReferences = [];
 
-    internal McpQueryIndex(IEnumerable<McpDeclaration> declarations, IEnumerable<McpReference> references, McpProductionInventory productions)
+    internal McpQueryIndex(IEnumerable<McpDeclaration> declarations, IEnumerable<McpReference> references, McpProductionInventory productions, IEnumerable<string> imports)
     {
         var declared = declarations.ToArray();
         _addresses = declared.GroupBy(declaration => (declaration.Kind, declaration.Address)).ToDictionary(group => group.Key, group => group.ToArray());
         _productions = productions;
+        _imports = imports.ToHashSet(StringComparer.Ordinal);
         _sources = declared.Where(declaration => declaration.Kind == "EventSource" && declaration.Scope.Length == 0).ToLookup(declaration => declaration.Name, StringComparer.Ordinal);
         _streams = declared.Where(declaration => declaration.Kind == "EventStream" && declaration.Scope.Length == 1).ToLookup(declaration => declaration.Address, StringComparer.Ordinal);
         _sourceValueTypes = declared.Where(declaration => (declaration.Kind == "Concept" || declaration.Kind == "Type") && declaration.Scope.Length == 0).ToLookup(declaration => declaration.Name, StringComparer.Ordinal);
@@ -142,6 +144,12 @@ sealed class McpQueryIndex
             return sources.Length > 0 ? sources : [.. _sourceValueTypes[reference.Name]];
         }
         if (reference.Kinds.Contains("EventStream", StringComparer.Ordinal)) return [.. _streams[reference.Name]];
+        if (reference.Kinds.Contains("Event", StringComparer.Ordinal) && reference.Kinds.Contains("Trigger", StringComparer.Ordinal))
+        {
+            var events = ResolveName(reference with { Kinds = ["Event"] });
+            if (events.Length > 0 || _imports.Contains(reference.Name)) return events;
+            return ResolveName(reference with { Kinds = ["Trigger"] });
+        }
         var segments = reference.Name.Split('.', StringSplitOptions.RemoveEmptyEntries);
         if (segments.Length == 0)
         {

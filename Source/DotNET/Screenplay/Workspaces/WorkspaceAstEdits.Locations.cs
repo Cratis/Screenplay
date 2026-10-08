@@ -231,7 +231,7 @@ internal sealed partial class WorkspaceAstEdits
             _parsedAutoMapModes[json] = mode;
         }
 
-        if (node.Location.Line > 1)
+        if (AuthoredPositions.IsSourcePosition(node.Location))
         {
             _sourceLocations[json] = node.Location;
         }

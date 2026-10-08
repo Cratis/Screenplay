@@ -137,6 +137,7 @@
     "kind": "DomainSyntax",
     "name": "Sales"
   },
+  "eventSources": [],
   "fileImports": [],
   "imports": [
     {
@@ -323,6 +324,8 @@
                         }
                       ],
                       "response": null,
+                      "stream": null,
+                      "streamCandidates": [],
                       "validations": [
                         {
                           "kind": "DeclarativeValidateSyntax",
@@ -614,6 +617,8 @@
                         }
                       ],
                       "response": null,
+                      "stream": null,
+                      "streamCandidates": [],
                       "validations": [
                         {
                           "kind": "DeclarativeValidateSyntax",
@@ -1160,6 +1165,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -2085,6 +2092,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -2443,6 +2452,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -2845,6 +2856,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -3020,6 +3033,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": [
                     {
                       "kind": "DeclarativeValidateSyntax",
@@ -5408,7 +5423,24 @@
               "screens": [],
               "specifications": [],
               "type": "Automation"
-            },
+            }
+          ]
+        },
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "dependsOn": [
+            {
+              "kind": "DependsOnSyntax",
+              "target": "InvoiceManagement"
+            }
+          ],
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Payments",
+          "slices": [
             {
               "kind": "SliceSyntax",
               "captures": [],

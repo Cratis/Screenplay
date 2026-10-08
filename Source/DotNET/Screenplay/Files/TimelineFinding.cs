@@ -6,7 +6,7 @@ using Cratis.Screenplay.Diagnostics;
 namespace Cratis.Screenplay.Files;
 
 /// <summary>
-/// An event-flow edge, or a group that suppresses its internal edges, together with its unchanged diagnostic.
+/// An event-flow or read-model decision edge, or a group that suppresses its internal edges, with its diagnostic.
 /// </summary>
 internal sealed record TimelineFinding(
     Diagnostic Diagnostic,
@@ -19,7 +19,16 @@ internal sealed record TimelineFinding(
     bool OwnSubFeature,
     string[] Members)
 {
-    internal string Key => Diagnostic.Code == DiagnosticCodes.TimelineCycleGroup
-        ? AuthoredOrder.Key([Diagnostic.Code, Container, .. Members.Order(StringComparer.Ordinal)])
-        : AuthoredOrder.Key([Diagnostic.Code, AuthoredOrder.Key(ConsumerScope), Event.ToUpperInvariant()]);
+    internal bool ReadModel { get; init; }
+
+    internal string Key
+    {
+        get
+        {
+            if (Diagnostic.Code == DiagnosticCodes.TimelineCycleGroup) return AuthoredOrder.Key([Diagnostic.Code, Container, .. Members.Order(StringComparer.Ordinal)]);
+            if (ReadModel) return AuthoredOrder.Key([Diagnostic.Code, AuthoredOrder.Key(ConsumerScope), "ReadModel", Event.ToUpperInvariant()]);
+
+            return AuthoredOrder.Key([Diagnostic.Code, AuthoredOrder.Key(ConsumerScope), Event.ToUpperInvariant()]);
+        }
+    }
 }

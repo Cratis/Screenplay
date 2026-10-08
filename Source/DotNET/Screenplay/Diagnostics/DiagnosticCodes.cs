@@ -2320,12 +2320,14 @@ public static class DiagnosticCodes
     public const string IncompatibleNumericSource = "PLAY0513";
 
     /// <summary>
-    /// A slice uses an event produced by a slice drawn after it on the timeline.
+    /// A slice uses an event or reads a read model from a slice drawn after it on the timeline.
+    /// Reads built from events produced on the reader's side of the lowest common container are excluded.
     /// </summary>
     public const string EventFromLaterSlice = "PLAY0516";
 
     /// <summary>
-    /// A timeline group uses each other's events and cannot be ordered left to right.
+    /// A timeline group depends on each other's events or non-feedback read models;
+    /// reordering cannot make every dependency flow left to right.
     /// </summary>
     public const string TimelineCycleGroup = "PLAY0517";
 

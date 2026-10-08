@@ -730,10 +730,37 @@
             "diagnostics": []
         },
         {
-            "name": "A shared source name checks personal trigger data even when event data is a surrogate",
+            "name": "A shared source name uses surrogate event data instead of personal trigger data",
             "validate": true,
             "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event External", "        patient Uuid", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
+            "diagnostics": []
+        },
+        {
+            "name": "A shared source name with surrogate clause data ignores personal shadowed trigger data",
+            "validate": true,
+            "registeredTriggers": ["External"],
+            "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event External", "        patient Uuid", "      event Recorded", "      reaction R", "        when External", "          patient Uuid", "          produces Recorded", "            for patient"],
+            "diagnostics": []
+        },
+        {
+            "name": "A shared source name still checks personal clause data alongside surrogate event data",
+            "validate": true,
+            "registeredTriggers": ["External"],
+            "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient Uuid", "module M", "  feature F", "    slice Automation S", "      event External", "        patient Uuid", "      event Recorded", "      reaction R", "        when External", "          patient PatientId", "          produces Recorded", "            for patient"],
             "diagnostics": ["PLAY0515@14"]
+        },
+        {
+            "name": "A shared source name still checks personal event data alongside surrogate clause data",
+            "validate": true,
+            "registeredTriggers": ["External"],
+            "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient Uuid", "module M", "  feature F", "    slice Automation S", "      event External", "        patient PatientId", "      event Recorded", "      reaction R", "        when External", "          patient Uuid", "          produces Recorded", "            for patient"],
+            "diagnostics": ["PLAY0515@14"]
+        },
+        {
+            "name": "An imported event shadows personal declared trigger values without claiming a shape",
+            "validate": true,
+            "source": ["import Outside.External", "concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
+            "diagnostics": []
         },
         {
             "name": "A shared source name checks personal event data even when trigger data is a surrogate",
@@ -946,6 +973,188 @@
             "diagnostics": ["PLAY0517@7"]
         },
         {
+            "name": "Reads use the earliest duplicate slice owner for feedback exclusion",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange Read", "      event E", "      command C", "        reads Items", "    slice StateView Build", "      readmodel Items", "    slice StateView Build", "      projection Other", "        from E"],
+            "diagnostics": ["PLAY0517@6"]
+        },
+        {
+            "name": "Feature feedback consumes a sibling slice's declared event",
+            "validate": true,
+            "source": ["module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event E", "  feature Reporting", "    slice StateView Build", "      projection P => Items", "        from E"],
+            "diagnostics": []
+        },
+        {
+            "name": "Nested feature feedback consumes facts from the reader's whole side",
+            "validate": true,
+            "source": ["module M", "  feature Recording", "    feature Decisions", "      slice StateChange Read", "        command C", "          reads Items", "    feature Facts", "      slice StateChange Write", "        event E", "  feature Reporting", "    slice StateView Build", "      reducer P => Items", "        on E"],
+            "diagnostics": []
+        },
+        {
+            "name": "Module feedback consumes facts from another feature on the reader's side",
+            "validate": true,
+            "source": ["module Recording", "  feature Decisions", "    slice StateChange Read", "      command C", "        reads Items", "  feature Facts", "    slice StateChange Write", "      event E", "module Reporting", "  feature Views", "    slice StateView Build", "      projection P => Items", "        from E"],
+            "diagnostics": []
+        },
+        {
+            "name": "Command produces an imported undeclared feedback event",
+            "validate": true,
+            "source": ["import External.E", "module M", "  feature F", "    slice StateChange Read", "      command C", "        reads Items", "        produces E", "    slice StateView Build", "      projection P => Items", "        from E"],
+            "diagnostics": []
+        },
+        {
+            "name": "Reaction produces an imported undeclared feedback event",
+            "validate": true,
+            "source": ["import External.E", "module M", "  feature F", "    slice Automation Read", "      reaction R", "        every 15 minutes", "          reads Items", "          produces E", "    slice StateView Build", "      reducer P => Items", "        on E"],
+            "diagnostics": []
+        },
+        {
+            "name": "A sibling command's imported production counts at the feature boundary",
+            "validate": true,
+            "source": ["import External.E", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      command W", "        produces E", "  feature Reporting", "    slice StateView Build", "      reducer P => Items", "        on E"],
+            "diagnostics": []
+        },
+        {
+            "name": "Feedback exclusion keeps the original backward event edge across features",
+            "validate": true,
+            "source": ["module M", "  feature Reporting", "    slice StateView Build", "      reducer P => Items", "        on E", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event E"],
+            "diagnostics": ["PLAY0516@5"]
+        },
+        {
+            "name": "A builder's foreign facts do not exclude non feedback reads",
+            "validate": true,
+            "source": ["module M", "  feature Recording", "    slice StateChange Read", "      event Own", "      command C", "        reads Items", "  feature Reporting", "    slice StateView Build", "      event E", "      reducer P => Items", "        on E"],
+            "diagnostics": ["PLAY0516@6"]
+        },
+        {
+            "name": "Same feature sibling facts do not belong to the reading slice's side",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event E", "    slice StateView Build", "      projection P => Items", "        from E"],
+            "diagnostics": ["PLAY0516@5"]
+        },
+        {
+            "name": "Any consumed fact from the reader's side in the read model's builder is feedback",
+            "validate": true,
+            "source": ["import External.Foreign", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event Own", "  feature Reporting", "    slice StateView Build", "      projection P => Items", "        from Foreign", "        from own"],
+            "diagnostics": []
+        },
+        {
+            "name": "An unrelated projection consuming reader facts does not exclude the read edge",
+            "validate": true,
+            "source": ["import External.Foreign", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event Own", "  feature Reporting", "    slice StateView Build", "      projection P => Items", "        from Foreign", "      projection Other => OtherItems", "        from Own"],
+            "diagnostics": ["PLAY0517@6"]
+        },
+        {
+            "name": "An unrelated reducer consuming reader facts does not exclude the read edge",
+            "validate": true,
+            "source": ["import External.Foreign", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event Own", "  feature Reporting", "    slice StateView Build", "      reducer P => Items", "        on Foreign", "      reducer Other => OtherItems", "        on Own"],
+            "diagnostics": ["PLAY0517@6"]
+        },
+        {
+            "name": "An unrelated projection does not exclude reads resolved through a variant",
+            "validate": true,
+            "source": ["import External.Foreign", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event Own", "  feature Reporting", "    slice StateView Build", "      projection P", "        variant Items", "          enters on Foreign", "          from Foreign", "      projection Other => OtherItems", "        from Own"],
+            "diagnostics": ["PLAY0517@6"]
+        },
+        {
+            "name": "The read model's variant consuming reader facts excludes feedback",
+            "validate": true,
+            "source": ["import External.Foreign", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event Own", "  feature Reporting", "    slice StateView Build", "      projection P", "        variant Items", "          enters on Own", "          from Own", "        variant OtherItems", "          enters on Foreign", "          from Foreign"],
+            "diagnostics": []
+        },
+        {
+            "name": "Shared projection blocks contribute feedback to the read model's variant",
+            "validate": true,
+            "source": ["import External.Foreign", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event Own", "  feature Reporting", "    slice StateView Build", "      projection P", "        from Own", "        variant Items", "          enters on Foreign", "          from Foreign"],
+            "diagnostics": []
+        },
+        {
+            "name": "A matching variant projection retains feedback from transitions to another variant",
+            "validate": true,
+            "source": ["import External.Foreign", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event Own", "  feature Reporting", "    slice StateView Build", "      projection P", "        variant Items", "          enters on Foreign", "          from Foreign", "        variant OtherItems", "          enters on Own", "          from Own"],
+            "diagnostics": []
+        },
+        {
+            "name": "Unknown imported shapes with a produced feedback event stay undecided",
+            "validate": true,
+            "source": ["import External.Payload", "import External.Kind", "import External.Identity", "import External.ImportedEvent", "type Row", "  id Uuid", "  note String", "module Local", "  feature Entries", "    slice StateChange Record", "      command RecordEntry", "        payload Payload", "        kind Kind", "        id Uuid", "        validate", "          payload.unknown not empty", "        reads View by id", "        produces ImportedEvent", "          absent = payload.unknown", "      specification UnknownShapes", "        when RecordEntry", "          kind = Anything", "        then ImportedEvent", "          absent = \"not statically known\"", "    slice StateView Browse", "      readmodel View", "        rows Row[]", "      projection Entries => View", "        children rows identified by id", "          from ImportedEvent", "      query Lookup => View", "        by identity Identity"],
+            "diagnostics": []
+        },
+        {
+            "name": "Feedback preserves a reducer backward event edge when its reader is later",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView Build", "      reducer R => Items", "        on E", "    slice StateChange Read", "      event E", "      command C", "        reads Items"],
+            "diagnostics": ["PLAY0516@5"]
+        },
+        {
+            "name": "Reads resolve projection variants",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateView Build", "      event E", "      projection P", "        variant Items", "          enters on E", "          from E"],
+            "diagnostics": ["PLAY0516@5"]
+        },
+        {
+            "name": "Reads report the own sub feature note without grouping",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange Read", "      command C", "        reads Items", "    feature Child", "      slice StateView Build", "        readmodel Items"],
+            "diagnostics": ["PLAY0516@5"]
+        },
+        {
+            "name": "Reducers use later events at the first rule",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView View", "      reducer R => Items", "        on E", "        on E", "    slice StateChange Write", "      event E"],
+            "diagnostics": ["PLAY0516@5"]
+        },
+        {
+            "name": "Reads prefer a later builder over an earlier declaration",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange Shape", "      readmodel Items", "    slice StateChange Read", "      command C", "        reads Items as first", "        reads Items as second", "    slice StateView Build", "      event E", "      projection P => Items", "        from E"],
+            "diagnostics": ["PLAY0516@7"]
+        },
+        {
+            "name": "Reactions read later reducer builders",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Automation Read", "      reaction R", "        every 15 minutes", "          reads Items", "    slice StateView Build", "      event E", "      reducer P => Items", "        on E"],
+            "diagnostics": ["PLAY0516@6"]
+        },
+        {
+            "name": "Feedback reads do not create a projection cycle group",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange Read", "      event E", "      command C", "        reads Items", "    slice StateView Build", "      readmodel Items", "      projection P => Items", "        from E"],
+            "diagnostics": []
+        },
+        {
+            "name": "Sigma feedback in the read model's reducer excludes reads at the feature boundary",
+            "validate": true,
+            "source": ["import External.EςX", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event EΣX", "  feature Reporting", "    slice StateView Build", "      reducer R => Items", "        on EςX"],
+            "diagnostics": []
+        },
+        {
+            "name": "Sigma reducer references deduplicate using ordinal case insensitive matching",
+            "validate": true,
+            "source": ["import External.EςX", "import External.EσX", "module M", "  feature F", "    slice StateView View", "      reducer R => Items", "        on EςX", "        on EσX", "        on EΣX", "    slice StateChange Write", "      event EΣX"],
+            "diagnostics": ["PLAY0516@7"],
+            "messages": ["Slice 'View' uses event 'EςX' produced by slice 'Write' drawn after it. Consider drawing the producer before the consumer."]
+        },
+        {
+            "name": "Feedback reads do not create a reducer cycle group",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange Read", "      event E", "      command C", "        reads Items", "    slice StateView Build", "      readmodel Items", "      reducer P => Items", "        on E"],
+            "diagnostics": []
+        },
+        {
+            "name": "Non feedback reads form a sibling cycle group",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange A", "      readmodel Left", "      command C", "        reads Right", "    slice StateChange B", "      readmodel Right", "      command D", "        reads Left"],
+            "diagnostics": ["PLAY0517@6"],
+            "messages": ["Timeline group slice 'A', slice 'B' depend on each other's events or read models; reordering these members cannot make every dependency flow left to right."]
+        },
+        {
+            "name": "Events and read models with the same name remain distinct",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Automation Read", "      command C", "        reads Items", "      reducer R => Other", "        on Items", "    slice StateView Build", "      readmodel Items", "    slice StateChange Write", "      event Items"],
+            "diagnostics": ["PLAY0516@5", "PLAY0516@7"]
+        },
+        {
             "name": "A slice and its same named sibling feature are distinct timeline children",
             "validate": true,
             "source": ["module M", "  feature F", "    slice StateView Child", "      projection P", "        from E", "    feature Child", "      slice StateChange Write", "        event E"],
@@ -956,7 +1165,7 @@
             "validate": true,
             "source": ["module M", "  feature F", "    slice StateView Child", "      event Own", "      projection P", "        from E", "    feature Child", "      slice StateView Write", "        event E", "        projection Other", "          from Own"],
             "diagnostics": ["PLAY0517@6"],
-            "messages": ["Timeline group slice 'Child', feature 'Child' uses each other's events; reordering these members cannot make every event flow left to right."]
+            "messages": ["Timeline group slice 'Child', feature 'Child' depend on each other's events or read models; reordering these members cannot make every dependency flow left to right."]
         },
         {
             "name": "A three-member cycle suppresses only its internal backward edges",
@@ -994,7 +1203,7 @@
             "validate": true,
             "source": ["module M", "  feature F", "    slice StateView First", "      event Own", "      projection P", "        from EςX", "    slice StateView Second", "      event EΣX", "      projection Other", "        from Own"],
             "diagnostics": ["PLAY0517@6"],
-            "messages": ["Timeline group slice 'First', slice 'Second' uses each other's events; reordering these members cannot make every event flow left to right."]
+            "messages": ["Timeline group slice 'First', slice 'Second' depend on each other's events or read models; reordering these members cannot make every dependency flow left to right."]
         },
         {
             "name": "A state view uses an event from its right once at its first reference",
@@ -1013,7 +1222,7 @@
             "validate": true,
             "source": ["module A", "  feature F", "    slice StateView ViewA", "      event EA", "      projection PA", "        from EB", "module B", "  feature F", "    slice StateView ViewB", "      event EB", "      projection PB", "        from EA"],
             "diagnostics": ["PLAY0517@6"],
-            "messages": ["Timeline group module 'A', module 'B' uses each other's events; reordering these members cannot make every event flow left to right."]
+            "messages": ["Timeline group module 'A', module 'B' depend on each other's events or read models; reordering these members cannot make every dependency flow left to right."]
         },
         {
             "name": "Parent slices precede sub features irrespective of text order",
