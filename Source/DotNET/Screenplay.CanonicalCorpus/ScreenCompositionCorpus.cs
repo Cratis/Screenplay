@@ -80,7 +80,182 @@ public static class ScreenCompositionCorpus
                 Probe("toolbar-dialog-url-surfaces", "Navigation contribution, dialog template and dialog-opening interaction stay authored in the corpus.", "single", "contribute to Navigation; dialog template EditDialog", ["ContributionSyntax", "DialogTemplateSyntax", "OpenDialogActionSyntax"]),
                 Probe("package-icon-style-contract", "The desktop UI profile pins package resolution inputs for render hosts.", "single", "ui profile Desktop", ["UiProfileSyntax", "LayoutSyntax"])
             ],
-            StagePlans = []
+            TypedSourceCases =
+            [
+                new CanonicalTypedScreenSourceCase
+                {
+                    Name = "screen-release-ui-positive",
+                    Document = Document("screen-release-ui-positive", "positive/ScreenReleaseUi.play", $"{Prefix}.positive.ScreenReleaseUi.play.txt"),
+                    Requires = "Screenplay PR #553 typed screen authoring syntax",
+                    PendingReason = "Current origin/main has not merged the typed screen binding/component/toolbar/icon authoring parser yet.",
+                    ExpectedSyntaxKinds =
+                    [
+                        "TemplateAssignmentSyntax",
+                        "ScreenComponentSyntax",
+                        "ScreenToolbarSyntax",
+                        "ScreenComponentBindingSyntax",
+                        "FormColumnsSyntax",
+                        "UiProfileSyntax"
+                    ]
+                }
+            ],
+            BehaviorExpectations =
+            [
+                Behavior(
+                    "selection-details",
+                    "browser",
+                    "A work item list is rendered with two rows and no selected item.",
+                    "Select the row with workItemId 3fa85f64-5717-4562-b3fc-2c963f66afa6.",
+                    "The details outlet renders WorkItemDetails and routes the selected workItemId into GetWorkItem.",
+                    [
+                        Assertion("selection.workItemId", "equals", "3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                        Assertion("queries.GetWorkItem.arguments.workItemId", "equals", "3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                        Assertion("outlets.detail.screen", "equals", "WorkItemDetails")
+                    ]),
+                Behavior(
+                    "query-rebind-clear",
+                    "browser",
+                    "WorkItemDetails is showing an existing selection.",
+                    "Clear the selection through the toolbar navigation item.",
+                    "The details query is not invoked with a stale workItemId and the empty master/detail outlet is shown.",
+                    [
+                        Assertion("selection.workItemId", "isNull", string.Empty),
+                        Assertion("queries.GetWorkItem.calls", "equals", "0"),
+                        Assertion("outlets.detail.screen", "equals", "WorkItemList.emptyState")
+                    ]),
+                Behavior(
+                    "native-form-validation-submit",
+                    "browser",
+                    "CreateWorkItemForm is opened from the create toolbar item.",
+                    "Submit once with an empty title, then with a valid title and priority.",
+                    "Native command-form validation blocks the invalid submit and the valid submit executes CreateWorkItem once before navigating to WorkItemDetails.",
+                    [
+                        Assertion("forms.CreateWorkItem.invalidSubmits", "equals", "1"),
+                        Assertion("commands.CreateWorkItem.executions", "equals", "1"),
+                        Assertion("navigation.currentScreen", "equals", "WorkItemDetails")
+                    ]),
+                Behavior(
+                    "dialog-outlet-deep-link",
+                    "browser",
+                    "WorkItemDetails is opened from a deep link route.",
+                    "Open the rename action, save the dialog, and follow the details deep link.",
+                    "The dialog uses EditWorkItemDialog, writes through the detail outlet and preserves the authored route parameter.",
+                    [
+                        Assertion("dialogs.current.template", "equals", "EditWorkItemDialog"),
+                        Assertion("outlets.actions.component", "equals", "scene.web.CommandForm"),
+                        Assertion("routes.current", "equals", "work-items/{workItemId}")
+                    ]),
+                Behavior(
+                    "package-rendering",
+                    "stage",
+                    "The Web profile resolves scene.web and workspace.icons.",
+                    "Render the package-backed DataGrid and DetailsPanel components.",
+                    "The host resolves package components, icons and presentation hints without falling back to core placeholders.",
+                    [
+                        Assertion("packages.components.scene.web.DataGrid", "exists", "true"),
+                        Assertion("icons.workspace.icons.save", "exists", "true"),
+                        Assertion("fallbacks.placeholderComponents", "equals", "0")
+                    ]),
+                Behavior(
+                    "protected-business-semantics",
+                    "compiler",
+                    "The UI corpus is compiled for backend ESM admission.",
+                    "Compile the current source forms.",
+                    "The compiler fails closed with pinned UI/query diagnostics and produces no artifact paths.",
+                    [
+                        Assertion("diagnostics.codes", "contains", "PLAY0268"),
+                        Assertion("diagnostics.codes", "contains", "PLAY0269"),
+                        Assertion("artifactPaths.count", "equals", "0")
+                    ])
+            ],
+            McpEditExpectations =
+            [
+                Mcp(
+                    "mcp-edit-component-binding",
+                    "replace property selectedItem from component workItems.selectedItem null clear",
+                    "component scene.web.DataGrid workItems",
+                    [
+                        Assertion("proposal.validation", "equals", "Authoring"),
+                        Assertion("binding.invalidRawTextPreserved", "equals", "true"),
+                        Assertion("identities.changed", "equals", "0")
+                    ]),
+                Mcp(
+                    "mcp-edit-dialog-action",
+                    "add dialog toolbar submit action",
+                    "screen RenameWorkItemDialog",
+                    [
+                        Assertion("proposal.droppedComments", "equals", "0"),
+                        Assertion("target.template", "equals", "EditWorkItemDialog"),
+                        Assertion("source.roundTrips", "equals", "true")
+                    ])
+            ],
+            Harnesses =
+            [
+                Harness(
+                    "browser-runtime",
+                    "Scene browser",
+                    "screenplay-conformance browser --vector screen-composition/v1 --profile Web",
+                    "Scene >=4.10, Stage >=4.40, Screenplay >= PR553 release",
+                    "Final released package vector not pinned yet.",
+                    [
+                        Assertion("behaviors.selection-details", "passes", "true"),
+                        Assertion("behaviors.native-form-validation-submit", "passes", "true"),
+                        Assertion("behaviors.dialog-outlet-deep-link", "passes", "true")
+                    ]),
+                Harness(
+                    "mcp-authoring",
+                    "Screenplay MCP",
+                    "screenplay-conformance mcp --vector screen-composition/v1 --source-case screen-release-ui-positive",
+                    "Screenplay >= PR553 release",
+                    "Typed syntax branch is still open.",
+                    [
+                        Assertion("mcp.mcp-edit-component-binding", "passes", "true"),
+                        Assertion("mcp.mcp-edit-dialog-action", "passes", "true")
+                    ]),
+                Harness(
+                    "cli-stage-parity",
+                    "Cratis CLI and Stage",
+                    "cratis stage render --profile Web --screenplay screen-composition/v1",
+                    "Stage/CLI final screens release vector",
+                    "Exact CLI profile flags and Stage plan schema are pending from stage-cli.",
+                    [
+                        Assertion("sceneJson.matchesLiveStage", "equals", "true"),
+                        Assertion("routes.commands.CreateWorkItem", "exists", "true"),
+                        Assertion("bindings.generated", "contains", "workItemId")
+                    ]),
+                Harness(
+                    "studio-roundtrip",
+                    "Studio",
+                    "studio-conformance import-edit-export --vector screen-composition/v1",
+                    "Studio final screens release",
+                    "Studio production authoring entry point is still being wired.",
+                    [
+                        Assertion("export.bytesRoundTrip", "equals", "true"),
+                        Assertion("designer.componentBindingPreserved", "equals", "true"),
+                        Assertion("play.deepLinkPreserved", "equals", "true")
+                    ])
+            ],
+            StagePlans =
+            [
+                new CanonicalStagePlanExpectation
+                {
+                    Target = "scene-web",
+                    Profile = "Web",
+                    PlanDigest = "pending:stage-scene-web-plan-v1",
+                    RequiredVersionVector = "Screenplay PR #553 release + Stage final screens release + Scene final screens release + CLI final screens release",
+                    PendingReason = "The exact released Stage plan JSON schema, artifact paths and hashes are not published yet.",
+                    Artifacts = [],
+                    Assertions =
+                    [
+                        Assertion("plan.profile", "equals", "Web"),
+                        Assertion("plan.scene.documents", "contains", "scene.json"),
+                        Assertion("plan.routes.commands", "contains", "CreateWorkItem"),
+                        Assertion("plan.routes.queries", "contains", "GetWorkItem"),
+                        Assertion("plan.nativeForms", "contains", "CreateWorkItemForm"),
+                        Assertion("plan.packageFallbacks", "equals", "0")
+                    ]
+                }
+            ]
         };
     }
 
@@ -116,6 +291,43 @@ public static class ScreenCompositionCorpus
         SourceForm = sourceForm,
         Declaration = declaration,
         SyntaxKinds = syntaxKinds
+    };
+
+    static CanonicalScreenBehaviorExpectation Behavior(string name, string category, string given, string when, string then, ImmutableArray<CanonicalScreenAssertion> assertions) => new()
+    {
+        Name = name,
+        Category = category,
+        SourceCase = "screen-release-ui-positive",
+        Given = given,
+        When = when,
+        Then = then,
+        Assertions = assertions
+    };
+
+    static CanonicalMcpEditExpectation Mcp(string name, string operation, string targetDeclaration, ImmutableArray<CanonicalScreenAssertion> assertions) => new()
+    {
+        Name = name,
+        SourceCase = "screen-release-ui-positive",
+        Operation = operation,
+        TargetDeclaration = targetDeclaration,
+        Assertions = assertions
+    };
+
+    static CanonicalScreenHarnessExpectation Harness(string name, string host, string entryPoint, string requiredVersionVector, string pendingReason, ImmutableArray<CanonicalScreenAssertion> assertions) => new()
+    {
+        Name = name,
+        Host = host,
+        EntryPoint = entryPoint,
+        RequiredVersionVector = requiredVersionVector,
+        PendingReason = pendingReason,
+        Assertions = assertions
+    };
+
+    static CanonicalScreenAssertion Assertion(string path, string operation, string value) => new()
+    {
+        Path = path,
+        Operation = operation,
+        Value = value
     };
 
     static CanonicalCorpusDocument Document(string stableKey, string path, string resource) => new()
