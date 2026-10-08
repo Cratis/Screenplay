@@ -77,7 +77,7 @@ function eventsOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): E
         constraintsByEvent.set(name, rules);
     }
     const declared = eventDeclarations(slice).filter(event => event.name.trim().length > 0).map(event => withConstraints({
-        id: owners.idFor(event.name) ?? scope.idOf('event', event.name),
+        id: scope.idOf('event', event.name),
         name: event.name,
         schema: owners.schemas.forProperties(event.properties),
     }, constraintsByEvent.get(event.name.toLowerCase()) ?? []));

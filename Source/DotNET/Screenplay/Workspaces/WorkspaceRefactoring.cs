@@ -163,10 +163,10 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             throw new InvalidWorkspaceAuthoring("Constraint names are executable identity: renaming starts an empty constraint index and changes default rejection messages. Safe rename cannot preserve this contract; use explicit coordinated typed edits.");
         }
 
-        if (target is null || (target.Address is null && target.Node is not SpecificationExampleSyntax) ||
-            (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or SpecificationExampleSyntax or SpecificationSyntax or ReactionSyntax)))
+        if (target is null || (target.Address is null && target.Node is not (SpecificationExampleSyntax or EventSourceSyntax or EventStreamSyntax)) ||
+            (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or SpecificationExampleSyntax or SpecificationSyntax or ReactionSyntax or EventSourceSyntax or EventStreamSyntax)))
         {
-            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property, command, event, read model, query, module, feature, slice, example, specification, or reaction declaration handle.");
+            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property, command, event, read model, query, module, feature, slice, example, specification, reaction, event source, or stream declaration handle.");
         }
 
         if (WorkspaceReferenceBindings.Name(target.Node) != request.ExpectedName || !Identifier(request.NewName))
@@ -190,6 +190,24 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             entry.Node is ReactionSyntax && WorkspaceReferenceBindings.Name(entry.Node) == request.NewName))
         {
             throw new InvalidWorkspaceAuthoring($"The owning slice already declares {target.Kind} '{request.NewName}'.");
+        }
+
+        var eventSource = target.Node as EventSourceSyntax ?? (target.Node is EventStreamSyntax && target.Parent is { } sourceParent ? index.Find(sourceParent)?.Node as EventSourceSyntax : null);
+        if (eventSource is not null && index.Entries.Count(entry => entry.Node is EventSourceSyntax source && source.Name == eventSource.Name) > 1)
+        {
+            throw new InvalidWorkspaceAuthoring($"Event source '{eventSource.Name}' has more than one physical declaration. Rename requires one physical source and stream.");
+        }
+
+        if (target.Node is EventSourceSyntax && index.Entries.Any(entry =>
+            entry.Handle != target.Handle && entry.Node is EventSourceSyntax source && source.Name == request.NewName))
+        {
+            throw new InvalidWorkspaceAuthoring($"The application already declares event source '{request.NewName}'.");
+        }
+
+        if (target.Node is EventStreamSyntax && index.Entries.Any(entry =>
+            entry.Handle != target.Handle && entry.Parent == target.Parent && entry.Node is EventStreamSyntax stream && stream.Name == request.NewName))
+        {
+            throw new InvalidWorkspaceAuthoring($"Event source '{eventSource!.Name}' already declares stream '{request.NewName}'.");
         }
 
         bool IsTarget(WorkspaceSyntaxEntry entry) => target.Address is { } address ? address.Equals(entry.Address) : target.Handle == entry.Handle;

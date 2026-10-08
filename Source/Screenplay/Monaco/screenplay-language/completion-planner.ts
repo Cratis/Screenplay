@@ -5,6 +5,7 @@ import { enclosingChain, enclosingHeaders, fenceMap, indentOf, nearestEnclosingL
 import { refusalContext } from './refusal-context';
 import { namedRuleContext } from './named-rule-context';
 import { responseCompletions } from './response-completions';
+import { dependencyTargetCompletions } from './dependency-completions';
 import { exampleCompletions } from './example-authoring';
 import { DocumentSymbols, scanDocument } from './symbols';
 import { structureCompletion } from './structure-completions';
@@ -171,6 +172,8 @@ export function planCompletions(
     if (fences[lineIndex] || withoutComment(textBefore).length < textBefore.length) return { kind: 'none' };
     const responseEntries = exampleCompletions(lines, lineIndex, textBefore) ?? responseCompletions(lines, lineIndex, textBefore, scanDocument(lines));
     if (responseEntries !== null) return { kind: 'entries', entries: responseEntries };
+    const dependencyEntries = dependencyTargetCompletions(lines, lineIndex, textBefore, symbols);
+    if (dependencyEntries !== null) return { kind: 'entries', entries: dependencyEntries };
 
     // Inside the quotes of a file import, what is wanted is a path - replacing what has been typed so far.
     const importPath = textBefore.match(/^\s*import\s+"([^"]*)$/);

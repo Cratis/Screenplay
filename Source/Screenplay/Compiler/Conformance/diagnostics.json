@@ -48,6 +48,91 @@
         { "name": "Examples refuse composite stream blocks without cascading", "source": ["example X : E", "  stream A.S", "    streamId", "      one = \"a\"", "      two = \"b\""], "diagnostics": ["PLAY0526@2"] },
         { "name": "Examples refuse standalone composite stream id headers", "source": ["example X : E", "  streamId", "    one = \"a\"", "    two = \"b\""], "diagnostics": ["PLAY0526@2"] },
         {
+            "name": "An ungated command in a repeated module has no callerless authorization warning or crash",
+            "validate": true,
+            "source": ["module M", "  feature A", "module M", "  feature B", "    slice Automation S", "      event Approved", "      command Claim", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by authorization", "              acknowledge"],
+            "diagnostics": []
+        },
+        {
+            "name": "An ungated command in a repeated feature does not inherit the other feature gate",
+            "validate": true,
+            "source": ["policy Access", "  require authenticated", "module M", "  feature F", "    authorize Access", "  feature F", "    slice Automation S", "      event Approved", "      command Claim", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by authorization", "              acknowledge"],
+            "diagnostics": []
+        },
+        {
+            "name": "An ungated nested command in a repeated feature has no callerless authorization warning or crash",
+            "validate": true,
+            "source": ["module M", "  feature F", "    feature Other", "  feature F", "    feature Claims", "      slice Automation S", "        event Approved", "        command Claim", "        reaction R", "          when Approved", "            invokes Claim", "              on refused by authorization", "                acknowledge"],
+            "diagnostics": []
+        },
+        {
+            "name": "An invocation without refusal branches in a repeated module does not crash",
+            "validate": true,
+            "source": ["module M", "  feature A", "module M", "  feature B", "    slice Automation S", "      event Approved", "      command Claim", "      reaction R", "        when Approved", "          invokes Claim"],
+            "diagnostics": []
+        },
+        {
+            "name": "An invocation without refusal branches in a nested repeated feature does not crash",
+            "validate": true,
+            "source": ["module M", "  feature F", "    feature Other", "  feature F", "    feature Claims", "      slice Automation S", "        event Approved", "        command Claim", "        reaction R", "          when Approved", "            invokes Claim"],
+            "diagnostics": []
+        },
+        {
+            "name": "An imported command without a declared authorization shape has no callerless authorization warning",
+            "validate": true,
+            "source": ["import External.Claims.Claim", "module M", "  feature F", "    slice Automation S", "      event Approved", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by authorization", "              acknowledge"],
+            "diagnostics": []
+        },
+        {
+            "name": "An ambiguous bare command name has no callerless authorization warning",
+            "validate": true,
+            "source": ["policy Access", "  require authenticated", "module M", "  feature F", "    slice StateChange First", "      command Claim", "        authorize Access", "    slice StateChange Second", "      command Claim", "        authorize Access", "    slice Automation S", "      event Approved", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by authorization", "              acknowledge"],
+            "diagnostics": []
+        },
+        {
+            "name": "An authorization refusal without an identity warns for a gated command",
+            "validate": true,
+            "source": ["policy Access", "  require not role \"Blocked\"", "module M", "  feature F", "    slice Automation S", "      event Approved", "      command Claim", "        authorize Access", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by authorization", "              acknowledge"],
+            "diagnostics": ["PLAY0557@12"],
+            "messages": ["Command 'Claim' is authorization-gated, but this invocation has no declared identity. This authorization refusal branch always fires in the reference runner because there is no caller; Arc runs reactor commands as the system. Declare an invoking identity once supported (#383)."]
+        },
+        {
+            "name": "An authorization refusal inherits the invoked command module gate",
+            "validate": true,
+            "source": ["policy Access", "  require authenticated", "module M", "  authorize Access", "  feature F", "    slice StateChange Commands", "      command Claim", "module N", "  feature G", "    slice Automation Reactions", "      event Approved", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by authorization", "              acknowledge"],
+            "diagnostics": ["PLAY0557@15"]
+        },
+        {
+            "name": "An authorization refusal inherits an ancestor feature gate",
+            "validate": true,
+            "source": ["policy Access", "  require authenticated", "module M", "  feature F", "    authorize Access", "    feature Nested", "      slice Automation S", "        event Approved", "        command Claim", "        reaction R", "          when Approved", "            invokes Claim", "              on refused by authorization", "                acknowledge"],
+            "diagnostics": ["PLAY0557@13"]
+        },
+        {
+            "name": "An authorization refusal does not inherit the reaction module gate",
+            "validate": true,
+            "source": ["policy Access", "  require authenticated", "module M", "  feature F", "    slice StateChange Commands", "      command Claim", "module N", "  authorize Access", "  feature G", "    slice Automation Reactions", "      event Approved", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by authorization", "              acknowledge"],
+            "diagnostics": []
+        },
+        {
+            "name": "An ungated command has no callerless authorization warning",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Automation S", "      event Approved", "      command Claim", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by authorization", "              acknowledge"],
+            "diagnostics": []
+        },
+        {
+            "name": "Validation and constraint branches on a gated command have no callerless authorization warning",
+            "validate": true,
+            "source": ["policy Access", "  require authenticated", "module M", "  feature F", "    slice Automation S", "      event Approved", "      command Claim", "        authorize Access", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by validation", "              acknowledge", "            on refused by constraint", "              acknowledge"],
+            "diagnostics": []
+        },
+        {
+            "name": "An ungated local command shadows a gated command in another slice",
+            "validate": true,
+            "source": ["policy Access", "  require authenticated", "module M", "  feature F", "    slice StateChange Remote", "      command Claim", "        authorize Access", "    slice Automation Local", "      event Approved", "      command Claim", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by authorization", "              acknowledge"],
+            "diagnostics": []
+        },
+        {
             "name": "A unique constraint rejects a missing direct event field",
             "validate": true,
             "source": ["module M", "  feature F", "    slice StateChange S", "      event E", "        value String", "      constraint UniqueValue", "        unique missing, value on E"],
@@ -980,9 +1065,27 @@
             "diagnostics": []
         },
         {
-            "name": "Sensitive classification is not redefined by the identifier check",
+            "name": "Sensitive concepts cannot identify commands",
             "validate": true,
             "source": ["concept PatientId : Uuid @sensitive", "module M", "  feature F", "    slice StateChange S", "      command C", "        id PatientId identifier"],
+            "diagnostics": ["PLAY0515@6"]
+        },
+        {
+            "name": "Sensitive concepts cannot supply explicit event source destinations",
+            "validate": true,
+            "source": ["concept PatientId : Uuid @sensitive", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        patient PatientId", "        produces E", "          for patient"],
+            "diagnostics": ["PLAY0515@9"]
+        },
+        {
+            "name": "Sensitive concepts cannot identify event sources",
+            "validate": true,
+            "source": ["concept PatientId : Uuid @sensitive", "eventsource Patients", "  identifier PatientId"],
+            "diagnostics": ["PLAY0515@3"]
+        },
+        {
+            "name": "Combined personal and sensitive concepts remain ordinary values",
+            "validate": true,
+            "source": ["concept PatientId : Uuid", "concept NationalId : String @pii @sensitive", "module M", "  feature F", "    slice StateChange S", "      command C", "        id PatientId identifier", "        nationalId NationalId"],
             "diagnostics": []
         },
         {

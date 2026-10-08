@@ -134,7 +134,7 @@ remove duplicate route headers before export.
 | `PLAY0011` | Warning | A value of an enumeration is called `validate`, which the concept body reads as an empty validate block. |
 | `PLAY0012` | Error | A concept gives the reason for an attribute it does not carry. |
 | `PLAY0013` | Error | A concept gives the reason for one attribute more than once. |
-| `PLAY0515` | Error | A concept marked `@pii` is used as a command identifier, an explicit `for` destination, or an event source identifier. Use a surrogate `Uuid` identifier and keep personal data as a property. Reaction destinations also check values typed directly in the trigger clause, even for an undeclared or registered trigger. When a reaction source names both an event and a declared trigger, a personal destination under any of these shapes is rejected. |
+| `PLAY0515` | Error | A concept marked `@pii` or `@sensitive` is used as a command identifier, an explicit `for` destination, or an event source identifier. The message names the attribute present. Use a surrogate `Uuid` identifier and keep personal data or operational secrets as properties. Reaction destinations also check values typed directly in the trigger clause, even for an undeclared or registered trigger. When a reaction source names both an event and a declared trigger, a protected destination in the resolved event shape or the trigger clause is rejected. |
 
 ### Types
 
@@ -881,6 +881,7 @@ Refusal branches, `$refusal` values, redelivery and `then no events` are syntax-
 | `PLAY0540` | Warning | A refusal branch is shadowed by an earlier selector, or its declared constraint targets none of the invoked command's events. Bare refusal covers validation and constraints, not authorization. |
 | `PLAY0541` | Error | A `$refusal` value is outside a branch's event mapping, has an unknown member, uses `constraint` outside a constraint selector, or targets an incompatible property type. The values `reason`, `constraint` and `message` are String values. |
 | `PLAY0542` | Error | A named constraint in a refusal selector does not resolve to a declared constraint. |
+| `PLAY0557` | Warning | An `on refused by authorization` branch invokes a command gated by its own, feature or module authorization without a declared invoking identity. With no caller the reference runner always refuses the command, while Arc runs reactor commands as the system. Declare an invoking identity once [#383](https://github.com/Cratis/Screenplay/issues/383) supports it; identity syntax is not available yet. |
 | `PLAY0543` | Error | `when redelivered <Event> to <Reaction>` is malformed, or its values and optional `for` locator identify zero or several given event occurrences. |
 | `PLAY0544` | Error | The redelivery reaction is unknown or ambiguous, or has no event trigger on the stated event. |
 | `PLAY0545` | Error | `then no events` is malformed, repeated, has child mappings, follows `when append`, or accompanies event, event-order, error or denial expectations. Use one leaf assertion after a non-append action; read-model, query and response assertions may accompany it. |

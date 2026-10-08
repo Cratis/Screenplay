@@ -50,7 +50,7 @@ export class DeclaredDependencies {
         // Both twins use syntax order, not authored import ranks.
         const graph = DependencyGraph.for(application, new Map());
         const nodes = graph.nodes.filter(node => node.kind === 'module' || node.kind === 'feature');
-        const targets = nodes.map(node => ({ name: node.scope.at(-1)!, scope: node.scope.slice(0, -1) }));
+        const targets = DeclaredDependencyTargets.containersOf(application);
         const resolve = (target: string, scope: readonly string[]) => {
             const resolved = DeclaredDependencyTargets.resolve(target, scope, targets).resolved;
             return resolved && [...resolved.scope, resolved.name].join('.');

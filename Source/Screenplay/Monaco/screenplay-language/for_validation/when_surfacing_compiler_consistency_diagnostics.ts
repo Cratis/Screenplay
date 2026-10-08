@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { validateLines } from '../validation';
 
 const cases = [
+    { code: 'PLAY0515', source: ['concept SecretId : Uuid @sensitive', 'module M', '  feature F', '    slice StateChange S', '      command C', '        id SecretId identifier'] },
     { code: 'PLAY0514', source: ['module M', '  feature F', '    slice StateView S', '      event E', '      readmodel V', '        value String', '      projection P => V', '        from E', '          missing = "recorded"'] },
     { code: 'PLAY0515', source: ['concept PatientId : Uuid @pii', 'trigger External', '  patient PatientId', 'module M', '  feature F', '    slice Automation S', '      event E', '      reaction R', '        when External', '          produces E', '            for patient'] },
     { code: 'PLAY0515', source: ['concept PatientId : Uuid @pii', 'module M', '  feature F', '    slice Automation S', '      event E', '      reaction R', '        when External', '          patient PatientId', '          produces E', '            for patient'] },

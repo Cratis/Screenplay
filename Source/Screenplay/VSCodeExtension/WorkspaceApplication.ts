@@ -44,6 +44,7 @@ const surfacedCodes = new Set<string>([
     DiagnosticCodes.UnknownEvent,
     DiagnosticCodes.UnknownReadModelProperty,
     DiagnosticCodes.PiiNotSupportedOnIdentifier,
+    DiagnosticCodes.AuthorizationRefusalWithoutIdentity,
     DiagnosticCodes.InvalidEventSourceDeclaration,
     DiagnosticCodes.InvalidCommandStream,
     DiagnosticCodes.InvalidSpecificationStream,

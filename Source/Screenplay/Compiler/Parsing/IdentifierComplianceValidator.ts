@@ -12,6 +12,7 @@ import { uniqueByName } from './ResponseValidator';
 
 export function validateIdentifierCompliance(application: ApplicationSyntax, context: ParserContext): void {
     const personal = new Set(application.concepts.filter(concept => concept.attributes.some(attribute => attribute.name === 'pii')).map(concept => concept.name));
+    const sensitive = new Set(application.concepts.filter(concept => concept.attributes.some(attribute => attribute.name === 'sensitive')).map(concept => concept.name));
     const types = uniqueByName(application.types);
     const resolver = new AuthoringProductionResolver(application);
     const imports = new Set(application.imports.map(imported => imported.qualifiedName.split('.').at(-1)!));
@@ -22,7 +23,10 @@ export function validateIdentifierCompliance(application: ApplicationSyntax, con
         declaredTriggers.set(declared.name, shapes);
     }
     const validate = (type: TypeRefSyntax, location: SourceLocation): void => {
-        if (personal.has(type.name)) context.error(DiagnosticCodes.PiiNotSupportedOnIdentifier, `Concept '${type.name}' is @pii and cannot be an event source identifier - use a surrogate Uuid identifier and keep the @pii value as a property`, location);
+        if (personal.has(type.name) || sensitive.has(type.name)) {
+            const attribute = personal.has(type.name) ? '@pii' : '@sensitive';
+            context.error(DiagnosticCodes.PiiNotSupportedOnIdentifier, `Concept '${type.name}' is ${attribute} and cannot be an event source identifier - use a surrogate Uuid identifier and keep the ${attribute} value as a property`, location);
+        }
     };
     const property = (properties: readonly PropertySyntax[], path: string): PropertySyntax | null => {
         const [name, ...rest] = path.split('.');
@@ -57,7 +61,7 @@ export function validateIdentifierCompliance(application: ApplicationSyntax, con
                 if (production.for?.kind !== 'PathExpressionSyntax') continue;
                 // Check clause-local types alongside the occurrence selected by event-first reaction resolution.
                 const path = production.for.path;
-                const entry = shapes.map(properties => property(properties, path)).find(entry => entry !== null && personal.has(entry.type.name));
+                const entry = shapes.map(properties => property(properties, path)).find(entry => entry !== null && (personal.has(entry.type.name) || sensitive.has(entry.type.name)));
                 if (entry != null) validate(entry.type, production.for.location);
             }
         }

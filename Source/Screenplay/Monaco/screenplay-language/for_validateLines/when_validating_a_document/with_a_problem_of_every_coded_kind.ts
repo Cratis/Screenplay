@@ -102,6 +102,22 @@ describe('when validating a document with a problem of every coded kind', () => 
         issues.push(...validateLines(['module M'], { compilerDiagnostics: nativeOnly.map(code => ({ code, severity: 'warning', message: 'C# finding', location: { line: 1, column: 1 } })) }));
         const routes = ['PLAY0547', 'PLAY0548', 'PLAY0549', 'PLAY0550', 'PLAY0551'].map(code => vectors.cases.find(vector => vector.diagnostics.some(diagnostic => diagnostic.startsWith(code + '@')))!.source);
         issues.push(...routes.flatMap(lines => validateLines(lines, { compilerDiagnostics: parse(lines.join('\n')).diagnostics })));
+        const authorizationRefusal = [
+            'policy Access',
+            '  require authenticated',
+            'module M',
+            '  feature F',
+            '    slice Automation S',
+            '      event Approved',
+            '      command Claim',
+            '        authorize Access',
+            '      reaction R',
+            '        when Approved',
+            '          invokes Claim',
+            '            on refused by authorization',
+            '              acknowledge',
+        ];
+        issues.push(...validateLines(authorizationRefusal));
         // Timeline findings come from the compiler, which reads the whole document's order.
         const timelines = [
             ['module M', '  feature F', '    slice StateView View', '      projection P', '        from E', '    slice StateChange Write', '      event E'],

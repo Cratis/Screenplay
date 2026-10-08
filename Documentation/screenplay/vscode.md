@@ -74,6 +74,7 @@ Completion in the text editor offers only what the block under the cursor can ho
 
 - A `slice` offers the members of its type: a `StateChange` slice, a `StateView` slice, an `Automation` slice and a `Translate` slice each get their own list.
 - A module offers, among others, `feature`, `screen`, `form`, `contribute`, `import` and `depends on`; a feature offers its slices, nested features, `contribute` and `depends on`.
+- After `depends on `, completion offers sibling features first, then the siblings of enclosing features, root modules and qualified paths to features elsewhere. It excludes self, ancestors, descendants and targets already declared by that container, including declarations in other workspace files. After a qualifier such as `Timesheets.`, it inserts only the feature name. Each suggestion describes the target's full address and its relation to the current container.
 - `readmodel`, `reducer`, `form`, `contribute`, `behavior`, `persona`, `authentication`, `seed`, `theme`, `ui profile`, `layout`, and screen and dialog templates offer their own members.
 - At the top level, `domain` and `authentication` are not offered again once the document declares them.
 
