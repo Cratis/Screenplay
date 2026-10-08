@@ -2,7 +2,7 @@
 
 The C# compiler is the authority on Screenplay, but not everything that reads a `.play` document runs .NET. An editor extension, a web page or a build script written in TypeScript needs the same syntax tree without starting a process. `@cratis/screenplay-compiler` parses `.play` documents in TypeScript into the syntax tree the C# compiler produces, for the constructs that describe an event model. The [VS Code extension](vscode.md) uses it to draw the event model board.
 
-It parses and checks inline-event declaration collisions and destination consistency; it does not bind an executable model. General reference resolution and the remaining semantic checks the C# compiler runs after parsing are not part of it. A document the C# compiler rejects for a semantic reason is one this compiler reads without complaint, so keep the C# compiler, or the [CLI](tool.md), as the gate.
+It parses and checks inline-event declaration collisions and destination consistency; it does not bind an executable model. General reference resolution and the remaining semantic checks the C# compiler runs after parsing are not part of it. A document the C# compiler rejects for a semantic reason is one this compiler reads without complaint, so keep the C# compiler, or the [CLI](tool.md), as the gate. [Editor diagnostic support](editor-diagnostics.md) describes the validation boundary and which checks each surface runs.
 
 ## Parse a document
 
@@ -115,7 +115,7 @@ Everything else is recognized and skipped whole, without a diagnostic. That cove
 - command handler execution; handler implementation intent retains its typed hints and selected file/code
 - trigger implementation code
 
-Inside the constructs it reads, it reports the diagnostics the C# parser reports, with the same codes, lines and order.
+For the syntax and authoring checks it supports, it uses the C# diagnostic codes, lines and order. [Editor diagnostic support](editor-diagnostics.md) lists the shared checks, C#-only scoped/semantic/completeness checks and the deliberate legacy absence-assertion exception.
 
 `ProducesSyntax.inlineEvent` preserves inline authoring structure. Use `eventDeclarations(slice)` to enumerate both standalone and command-inline events; the walker visits both, and the event model board draws them with the same slice-owned identity.
 

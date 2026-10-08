@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { Diagnostic } from './Diagnostics/Diagnostic';
+import { productionDestinationDiagnostics } from './Diagnostics/ProductionDestinationDiagnostics';
+import { validateConstraintProperties } from './Parsing/ConstraintPropertyValidator';
 import { validateDependencyDeclarations } from './Dependencies/DeclaredDependencyTargets';
 import { DeclaredDependencies } from './Dependencies/DeclaredDependencies';
 import { documentPlacement, PlayPlacement } from './Files/PlayPlacement';
@@ -62,6 +64,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
     // Folder assembly validates declaration-dependent contracts once against the merged inventory.
     if (validateResponseContracts) {
         validateInlineEvents(value, context);
+        validateConstraintProperties(value, context);
         validateOperations(value, context);
         validateResponses(value, context);
         validateEventSources(value, context);
@@ -69,6 +72,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateIdentifierCompliance(value, context);
         value = validateDependencyDeclarations(value, context);
         DeclaredDependencies.validate(value, context);
+        for (const diagnostic of productionDestinationDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);
         for (const diagnostic of timelineOrderDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);
     }
     return {
