@@ -423,14 +423,110 @@
             "diagnostics": ["PLAY0499@8"]
         },
         {
+            "name": "Shadowed authorization refusals retain the identity warning in branch order",
+            "validate": true,
+            "source": ["policy Access", "  require authenticated", "module M", "  feature F", "    slice Automation S", "      event Approved", "      command Claim", "        authorize Access", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by authorization", "              acknowledge", "            on refused by authorization", "              acknowledge"],
+            "diagnostics": ["PLAY0557@12", "PLAY0540@14", "PLAY0557@14"]
+        },
+        {
+            "name": "An earlier refusal selector covers validation",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Automation S", "      event Approved", "      command Claim", "      reaction Claimer", "        when Approved", "          invokes Claim", "            on refused", "              acknowledge", "            on refused by validation", "              acknowledge"],
+            "diagnostics": ["PLAY0540@11"],
+            "messages": ["This refusal selector is covered by an earlier branch; the first matching branch wins."]
+        },
+        {
+            "name": "Bare refusal does not cover authorization",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Automation S", "      event Approved", "      command Claim", "      reaction Claimer", "        when Approved", "          invokes Claim", "            on refused", "              acknowledge", "            on refused by authorization", "              acknowledge"],
+            "diagnostics": []
+        },
+        {
+            "name": "A known refusal constraint can target no produced event",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Automation S", "      event Approved", "      event Claimed", "      command Claim", "        produces Claimed", "      constraint Other", "        unique event Approved", "      reaction Claimer", "        when Approved", "          invokes Claim", "            on refused by constraint Other", "              acknowledge"],
+            "diagnostics": ["PLAY0540@13"],
+            "messages": ["Constraint 'Other' targets none of the events produced by 'Claim'."]
+        },
+        {
+            "name": "A refusal constraint must resolve",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Automation S", "      event Approved", "      command Claim", "      reaction Claimer", "        when Approved", "          invokes Claim", "            on refused by constraint Missing", "              acknowledge"],
+            "diagnostics": ["PLAY0542@9"],
+            "messages": ["Unknown or ambiguous refusal constraint 'Missing'."]
+        },
+        {
+            "name": "Refusal values belong only to branch event mappings",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange S", "      event Claimed", "        reason String", "      command Claim", "        produces Claimed", "          reason = $refusal.reason"],
+            "diagnostics": ["PLAY0541@8"],
+            "messages": ["'$refusal.reason' is only available in a refusal branch's event mapping; constraint requires 'by constraint'."]
+        },
+        {
+            "name": "Refusal values remain out of scope in expanded typed fixtures",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Automation S", "      event Refused", "        reason String", "      example Prior : Refused", "        reason = $refusal.reason", "      specification Recovery", "        given Prior", "        when append Refused", "          reason = \"known\"", "        then Refused", "          reason = \"known\""],
+            "diagnostics": ["PLAY0541@7", "PLAY0541@7"],
+            "messages": ["'$refusal.reason' is only available in a refusal branch's event mapping; constraint requires 'by constraint'.", "'$refusal.reason' is only available in a refusal branch's event mapping; constraint requires 'by constraint'."]
+        },
+        {
+            "name": "Refusal constraint values require a constraint selector",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Automation S", "      event Approved", "      event Refused", "        reason String", "      command Claim", "      reaction Claimer", "        when Approved", "          invokes Claim", "            on refused", "              produces Refused", "                reason = $refusal.constraint"],
+            "diagnostics": ["PLAY0541@13"],
+            "messages": ["'$refusal.constraint' is only available in a refusal branch's event mapping; constraint requires 'by constraint'."]
+        },
+        {
+            "name": "Refusal values are String values",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Automation S", "      event Approved", "      event Refused", "        reason Int", "      command Claim", "      reaction Claimer", "        when Approved", "          invokes Claim", "            on refused", "              produces Refused", "                reason = $refusal.reason"],
+            "diagnostics": ["PLAY0541@13"],
+            "messages": ["'$refusal.reason' is a String value, incompatible with 'Int'."]
+        },
+        {
+            "name": "Refusal values cannot select the branch destination",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Automation S", "      event Approved", "      event Refused", "      command Claim", "      reaction Claimer", "        when Approved", "          invokes Claim", "            on refused", "              produces Refused", "                for $refusal.reason"],
+            "diagnostics": ["PLAY0541@12"],
+            "messages": ["'$refusal.reason' is only available in a refusal branch's event mapping; constraint requires 'by constraint'."]
+        },
+        {
+            "name": "Redelivery must name an event observer",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Automation S", "      event Approved", "      event Other", "      reaction Claimer", "        when Other", "      specification Recovery", "        given Approved", "        when redelivered Approved to Claimer", "        then no events"],
+            "diagnostics": ["PLAY0544@10"],
+            "messages": ["Reaction 'Claimer' must resolve unambiguously and observe event 'Approved'."]
+        },
+        {
+            "name": "Redelivery cannot name an unknown reaction",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Automation S", "      event Approved", "      specification Recovery", "        given Approved", "        when redelivered Approved to Missing", "        then no events"],
+            "diagnostics": ["PLAY0544@7"],
+            "messages": ["Reaction 'Missing' must resolve unambiguously and observe event 'Approved'."]
+        },
+        {
+            "name": "Redelivery must locate one given occurrence",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Automation S", "      event Approved", "      reaction Claimer", "        when Approved", "      specification Recovery", "        given Approved", "        given Approved", "        when redelivered Approved to Claimer", "        then no events"],
+            "diagnostics": ["PLAY0543@10"],
+            "messages": ["Redelivery of 'Approved' matches 2 given occurrences; use 'for' or values to identify exactly one."]
+        },
+        {
+            "name": "Redelivery does not invent an unspecified given destination",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice Automation S", "      event Approved", "      reaction Claimer", "        when Approved", "      specification Recovery", "        given Approved", "        when redelivered Approved to Claimer", "          for \"invoice-1\"", "        then no events"],
+            "diagnostics": ["PLAY0543@9"],
+            "messages": ["Cannot locate redelivery of 'Approved' uniquely: a given source or locator value is not decidable; state explicit concrete 'for' and values."]
+        },
+        {
             "name": "Redelivery requires a named reaction",
             "source": ["module M", "  feature F", "    slice Automation S", "      specification Recovery", "        when redelivered Approved"],
             "diagnostics": ["PLAY0543@5"]
         },
         {
             "name": "Redelivery participates in the single action rule",
-            "source": ["module M", "  feature F", "    slice Automation S", "      specification Recovery", "        when redelivered Approved to Claimer", "        when Claim"],
-            "diagnostics": ["PLAY0097@6"]
+            "source": ["module M", "  feature F", "    slice Automation S", "      event Approved", "      reaction Claimer", "        when Approved", "      specification Recovery", "        given Approved", "        when redelivered Approved to Claimer", "        when Claim"],
+            "diagnostics": ["PLAY0097@10"]
         },
         {
             "name": "An append action cannot assert no events",

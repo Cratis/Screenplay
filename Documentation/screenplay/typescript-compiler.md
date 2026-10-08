@@ -97,7 +97,8 @@ The compiler reads what an event model is made of:
 - commands with their properties, declarative `validate` rules, and productions (typed mappings, destinations and `produces when` conditions included)
 - queries with their parameters
 - the events each projection block consumes
-- reaction triggers (`when`, `every`, `at`)
+- reaction triggers (`when`, `every`, `at`), invocation refusal branches and their scoped selector/value checks
+- redelivery specifications, including observer resolution and unique given-occurrence matching (syntax-only)
 - captures, with their sources, `when` conditions, mappings and appended events
 - personas, policies, seeds and declared triggers
 - projection keys and mappings, including variants
