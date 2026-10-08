@@ -10,7 +10,7 @@ export const handlerIntentDocs = {
 };
 
 export const keywordDocs: Record<string, string> = {
-    example: 'One typed, possibly partial fixture: `example <Name> : <EventOrCommandOrReadModel>`. Use its name in a matching specification step; assignments override example values without changing matching or supplying defaults.',
+    example: 'One typed, possibly partial fixture: `example <Name> : <EventOrCommandOrReadModel>`. Use its name in a matching specification step; assignments override example values without changing matching or supplying defaults. Event examples may carry stream or no stream; a step replaces that route as a whole.',
     domain: 'The domain the file belongs to — optional, at most one per file, before everything else.',
     import: 'Imports a type from another module by its qualified name — `import Module.Type` — making it available by its short name; or, quoted, other `.play` files by path or glob — `import "Orders/**/*.play"`, relative to this file\'s folder. Written inside a module or feature, a file import places the imported files there: their top level is that module\'s or feature\'s body.',
     concept: 'A formalized value type wrapping a primitive. Attributes such as `@pii` travel with every usage, optionally with a `<attribute> reason "..."` line saying why.',
@@ -48,7 +48,7 @@ export const keywordDocs: Record<string, string> = {
     acknowledge: 'A refusal branch acknowledges alone, or produces events instead. Syntax-only, not yet executable (PLAY0268).',
     validation: 'In `on refused by validation`, selects property, concept and require refusals. Syntax-only, not yet executable (PLAY0268).',
     authorization: 'In `on refused by authorization`, explicitly selects unauthorized results, never Unsupported. Syntax-only, not yet executable (PLAY0268).',
-    redelivered: '`when redelivered <Event> to <Reaction>` selects exactly one given occurrence by optional for and stated values, without appending it again. Syntax-only, not yet executable (PLAY0268).',
+    redelivered: '`when redelivered <Event> to <Reaction>` selects exactly one effective given occurrence by optional for, stated values and stream or no stream, without appending it again. Syntax-only, not yet executable (PLAY0268).',
     invokes: 'A command a reaction hands on. A command is asked for, not produced — it may still be rejected.',
     screen: 'A UI declaration. Supports intent, structure, and layout-with-code levels, or a full file reference.',
     constraint: 'A server-side rule enforced in the Chronicle kernel before events are committed.',

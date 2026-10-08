@@ -62,7 +62,10 @@
                     {
                       "kind": "ProducesSyntax",
                       "event": "Happened",
-                      "for": null,
+                      "for": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "id"
+                      },
                       "inlineEvent": null,
                       "inlineOperation": null,
                       "mappings": [
@@ -80,6 +83,18 @@
                     }
                   ],
                   "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": true,
+                      "name": "id",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
                     {
                       "kind": "PropertySyntax",
                       "isGenerated": false,
@@ -131,9 +146,26 @@
                 {
                   "kind": "SpecificationExampleSyntax",
                   "description": null,
-                  "for": null,
+                  "for": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": "account"
+                  },
                   "generatedValues": [],
                   "name": "Fixture",
+                  "stream": {
+                    "kind": "SpecificationStreamSyntax",
+                    "eventSource": "Account",
+                    "stream": "Events",
+                    "streamId": {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "streamId",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "inherited"
+                      }
+                    },
+                    "streamIdParts": []
+                  },
                   "type": "Happened",
                   "values": [
                     {
@@ -144,6 +176,68 @@
                         "value": {
                           "literalType": "ExactNumber",
                           "value": "1"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "SpecificationExampleSyntax",
+                  "description": null,
+                  "for": null,
+                  "generatedValues": [],
+                  "name": "Unrouted",
+                  "noStream": {
+                    "kind": "SpecificationNoStreamSyntax"
+                  },
+                  "type": "Happened",
+                  "values": [
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "amount",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": {
+                          "literalType": "ExactNumber",
+                          "value": "3"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "SpecificationExampleSyntax",
+                  "description": null,
+                  "for": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": "unused"
+                  },
+                  "generatedValues": [],
+                  "name": "Unused",
+                  "stream": {
+                    "kind": "SpecificationStreamSyntax",
+                    "eventSource": "Account",
+                    "stream": "Events",
+                    "streamId": {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "streamId",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "unused"
+                      }
+                    },
+                    "streamIdParts": []
+                  },
+                  "type": "Happened",
+                  "values": [
+                    {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "amount",
+                      "source": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": {
+                          "literalType": "ExactNumber",
+                          "value": "0"
                         }
                       }
                     }
@@ -161,6 +255,12 @@
                 {
                   "kind": "SpecificationSyntax",
                   "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Fixture",
+                      "for": null,
+                      "values": []
+                    },
                     {
                       "kind": "SpecificationEventSyntax",
                       "eventType": "Fixture",
@@ -248,6 +348,102 @@
                     "for": null,
                     "generatedValues": [],
                     "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "id",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "account"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "amount",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": {
+                            "literalType": "ExactNumber",
+                            "value": "3"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Unrouted",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "account"
+                      },
+                      "stream": {
+                        "kind": "SpecificationStreamSyntax",
+                        "eventSource": "Account",
+                        "stream": "Events",
+                        "streamId": {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "streamId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "replacement"
+                          }
+                        },
+                        "streamIdParts": []
+                      },
+                      "values": []
+                    }
+                  ],
+                  "givenCaller": null,
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "Replacing_no_stream",
+                  "sourceOptions": {
+                    "numericMode": "exact"
+                  },
+                  "thenAbsentReadModels": [],
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Unrouted",
+                      "for": null,
+                      "values": []
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenQueries": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "Act",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "id",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "account"
+                        }
+                      },
                       {
                         "kind": "PropertyMappingSyntax",
                         "property": "amount",

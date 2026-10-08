@@ -3,6 +3,11 @@
 
 // Legacy numeric mode lets binding report the reaction's own admission issue (#433).
 
+eventsource Invoice
+  identifier String
+  stream Ledger
+    streamId String
+
 module Billing
   feature Claims
     slice Automation Handling
@@ -44,4 +49,31 @@ module Billing
         when redelivered Approved to Claimer
           for "invoice-1"
           invoice = "invoice-1"
+        then no events
+      specification Routed_recovery
+        given Approved
+          for "invoice-1"
+          stream Invoice.Ledger
+            streamId = "september"
+          invoice = "invoice-1"
+        given Approved
+          for "invoice-1"
+          stream Invoice.Ledger
+            streamId = "october"
+          invoice = "invoice-1"
+        when redelivered Approved to Claimer
+          stream Invoice.Ledger
+            streamId = "september"
+        then no events
+      specification Unrouted_recovery
+        given Approved
+          for "invoice-1"
+          stream Invoice.Ledger
+            streamId = "september"
+          invoice = "invoice-1"
+        given Approved
+          for "invoice-1"
+          invoice = "invoice-1"
+        when redelivered Approved to Claimer
+          no stream
         then no events

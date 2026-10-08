@@ -43,7 +43,21 @@ public sealed record EffectiveSpecificationValue(string Property, ExpressionSynt
 /// <param name="Effective">The expanded step.</param>
 /// <param name="Example">The resolved example, if used.</param>
 /// <param name="Values">Effective values and their provenance.</param>
-public sealed record EffectiveSpecificationStep(string Role, SyntaxNode Authored, SyntaxNode Effective, SpecificationExampleSyntax? Example, IReadOnlyList<EffectiveSpecificationValue> Values);
+public sealed record EffectiveSpecificationStep(string Role, SyntaxNode Authored, SyntaxNode Effective, SpecificationExampleSyntax? Example, IReadOnlyList<EffectiveSpecificationValue> Values)
+{
+    /// <summary>
+    /// Gets the effective route and its source provenance, absent when no route was stated.
+    /// </summary>
+    public EffectiveSpecificationRoute? Route { get; init; }
+}
+
+/// <summary>
+/// One effective route, replaced as a whole when overridden.
+/// </summary>
+/// <param name="Value">The effective stream or no-stream node.</param>
+/// <param name="Origin">How the route was supplied.</param>
+/// <param name="OverriddenValue">The example route replaced by the step, if any.</param>
+public sealed record EffectiveSpecificationRoute(SyntaxNode Value, SpecificationValueOrigin Origin, SyntaxNode? OverriddenValue);
 
 /// <summary>
 /// A specification expanded without changing the authored syntax or matching rules.

@@ -2,7 +2,35 @@
   "kind": "ApplicationSyntax",
   "concepts": [],
   "domain": null,
-  "eventSources": [],
+  "eventSources": [
+    {
+      "kind": "EventSourceSyntax",
+      "description": null,
+      "id": null,
+      "identifier": {
+        "kind": "TypeRefSyntax",
+        "isCollection": false,
+        "isOptional": false,
+        "name": "String"
+      },
+      "name": "Invoice",
+      "streams": [
+        {
+          "kind": "EventStreamSyntax",
+          "description": null,
+          "id": null,
+          "name": "Ledger",
+          "streamId": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "String"
+          },
+          "streamIdParts": []
+        }
+      ]
+    }
+  ],
   "fileImports": [],
   "imports": [],
   "modules": [
@@ -328,6 +356,205 @@
                         }
                       }
                     ]
+                  },
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Approved",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "invoice-1"
+                      },
+                      "stream": {
+                        "kind": "SpecificationStreamSyntax",
+                        "eventSource": "Invoice",
+                        "stream": "Ledger",
+                        "streamId": {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "streamId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "september"
+                          }
+                        },
+                        "streamIdParts": []
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoice",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "invoice-1"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Approved",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "invoice-1"
+                      },
+                      "stream": {
+                        "kind": "SpecificationStreamSyntax",
+                        "eventSource": "Invoice",
+                        "stream": "Ledger",
+                        "streamId": {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "streamId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "october"
+                          }
+                        },
+                        "streamIdParts": []
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoice",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "invoice-1"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "Routed_recovery",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoEvents": true,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenRedelivered": {
+                    "kind": "SpecificationRedeliverySyntax",
+                    "eventType": "Approved",
+                    "for": null,
+                    "reaction": "Claimer",
+                    "stream": {
+                      "kind": "SpecificationStreamSyntax",
+                      "eventSource": "Invoice",
+                      "stream": "Ledger",
+                      "streamId": {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "streamId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "september"
+                        }
+                      },
+                      "streamIdParts": []
+                    },
+                    "values": []
+                  },
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Approved",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "invoice-1"
+                      },
+                      "stream": {
+                        "kind": "SpecificationStreamSyntax",
+                        "eventSource": "Invoice",
+                        "stream": "Ledger",
+                        "streamId": {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "streamId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "september"
+                          }
+                        },
+                        "streamIdParts": []
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoice",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "invoice-1"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "Approved",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "invoice-1"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoice",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "invoice-1"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "Unrouted_recovery",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoEvents": true,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenRedelivered": {
+                    "kind": "SpecificationRedeliverySyntax",
+                    "eventType": "Approved",
+                    "for": null,
+                    "noStream": {
+                      "kind": "SpecificationNoStreamSyntax"
+                    },
+                    "reaction": "Claimer",
+                    "values": []
                   },
                   "whenTrigger": null
                 }

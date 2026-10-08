@@ -60,13 +60,13 @@ results; use the specification runner to check them.
 
 Typed examples show their effective values: inherited event, command and
 read-model fields are expanded, and a value stated on the step overrides the
-example's value. Event links point to the example's underlying event declaration,
+example's value. Event routes are inherited or replaced as a whole. Event links point to the example's underlying event declaration,
 not the example name. Inherited `generated` fixtures remain separate from request
 inputs. Headers show given and expected read-model values, retaining `exactly`
 where it is stated.
 
-A `when redelivered` action shows the event, target reaction and optional `for`
-selector, with its payload values on the action card. It does not become an
+A `when redelivered` action shows the event, target reaction, optional `for`
+selector and `stream` or `no stream` route, with its payload values on the action card. It does not become an
 append or another command. Refusal outcomes retain their ordinary presentation:
 `then error` carries a validation or constraint refusal message, `then denied`
 is an authorization denial, and expected refusal facts remain event cards.

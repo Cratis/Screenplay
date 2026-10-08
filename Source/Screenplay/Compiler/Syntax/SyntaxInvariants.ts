@@ -126,7 +126,7 @@ function validateSourceStream(node: SyntaxNode): void {
             if (rejected.propertyCandidate !== null) for (let index = 0; index < command.properties.length; index++) if (command.properties[index] === rejected.propertyCandidate) refuse('An ambiguous property is owned only by its stream candidate.');
         }
     }
-    if (node.kind === 'SpecificationEventSyntax') {
+    if (node.kind === 'SpecificationEventSyntax' || node.kind === 'SpecificationExampleSyntax' || node.kind === 'SpecificationRedeliverySyntax') {
         const occurrence = node as SpecificationEventSyntax;
         if (occurrence.stream != null && occurrence.noStream != null) refuse('An event occurrence cannot declare both stream and no stream.');
         if (occurrence.stream != null && !hasKind(occurrence.stream, 'SpecificationStreamSyntax')) refuse('A specification stream requires a specification stream node.');

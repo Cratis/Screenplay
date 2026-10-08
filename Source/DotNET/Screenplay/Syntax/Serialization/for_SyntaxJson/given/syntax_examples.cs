@@ -39,6 +39,8 @@ internal static class syntax_examples
             EventStreamSyntax stream => stream with { StreamId = null, StreamIdParts = stream.StreamIdParts.Select(part => part with { Type = part.Type with { IsCollection = false, IsOptional = false } }) },
             EventStreamIdPartSyntax part => part with { Type = part.Type with { IsCollection = false, IsOptional = false } },
             SpecificationEventSyntax occurrence => occurrence with { NoStream = null },
+            SpecificationExampleSyntax example => example with { NoStream = null },
+            SpecificationRedeliverySyntax locator => locator with { NoStream = null },
             SpecificationStreamSyntax route => route with { StreamId = null },
             CommandStreamSyntax route => route with { PropertyCandidate = null, StreamId = null },
             HandlerSyntax handler => handler with { Code = null },
