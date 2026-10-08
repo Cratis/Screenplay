@@ -41,9 +41,7 @@ internal static partial class SourceOptionsParser
                 continue;
             }
 
-            if (line.Content.StartsWith("```", StringComparison.Ordinal) &&
-                (line.Content == "```" || line.Content == "```text" || line.Content == "```markdown" ||
-                 (languages ?? ScreenplayLanguageRegistry.Default).InlineLanguages.Contains(line.Content[3..])))
+            if (CodeBlockParser.IsOpeningFence(line, languages ?? ScreenplayLanguageRegistry.Default))
             {
                 inFence = true;
             }

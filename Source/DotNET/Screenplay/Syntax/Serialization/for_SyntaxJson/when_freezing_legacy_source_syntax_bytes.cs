@@ -4,6 +4,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Syntax.Serialization.for_SyntaxJson;
 
@@ -23,20 +24,33 @@ public class when_freezing_legacy_source_syntax_bytes
             var parsed = compiler.Parse(File.ReadAllText(Path.Combine(root, document.GetProperty("path").GetString()!))).Value!;
             var name = document.GetProperty("name").GetString()!;
 
-            // New named-rule vectors have their own full conformance assertions, not a pre-intent baseline.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "named-rule-intent" || name == "declared-dependencies") continue;
+            // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "named-rule-intent" || name == "specification-examples" || name == "guarded-actions" || name == "no-events" || name == "declared-dependencies") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
-            // Invoicing is a living sample. Its intentional v7 additions have full shared conformance
-            // vectors; remove only those additions here so the pre-v7 native bytes stay frozen.
-            var legacy = name == "invoicing-sample" || name == "invoicing-editor-sample" ? WithoutV7SampleAdditions(parsed) : parsed;
+            // Invoicing is a living sample. Its v7, policy-negation, examples, pre-input navigation and
+            // guarded actions have full shared vectors; project only those additions out of frozen legacy bytes.
+            var legacy = name switch
+            {
+                "invoicing-sample" or "invoicing-editor-sample" => WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(parsed))),
+                "library-sample" => WithoutLibraryForms(parsed),
+                _ => parsed
+            };
             var json = SyntaxJson.Serialize(legacy);
             var text = WithoutRuleIntent(json, json.GetRawText())
                 .Replace(",\"eventSources\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"stream\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"noStream\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"streamCandidates\":[]", string.Empty, StringComparison.Ordinal);
+
+            // Only the two living samples author the additive no-event assertion. Its own conformance
+            // vector protects it; removing that member here keeps all pre-feature bytes frozen.
+            if (name == "invoicing-sample" || name == "invoicing-editor-sample")
+            {
+                text = text.Replace(",\"thenNoEvents\":true", string.Empty, StringComparison.Ordinal);
+            }
+
             var actual = Encoding.UTF8.GetBytes(text);
             var path = Path.Combine(folder, "LegacySyntax", document.GetProperty("name").GetString() + ".json");
             if (initializing && !File.Exists(path))
@@ -45,7 +59,9 @@ public class when_freezing_legacy_source_syntax_bytes
                 File.WriteAllBytes(path, actual);
             }
 
-            File.ReadAllBytes(path).SequenceEqual(actual).ShouldBeTrue();
+            var expected = File.ReadAllBytes(path);
+            var difference = expected.Zip(actual).TakeWhile(pair => pair.First == pair.Second).Count();
+            Assert.True(expected.SequenceEqual(actual), $"Legacy syntax bytes changed for '{name}' at byte {difference}. Expected: {Encoding.UTF8.GetString(expected.AsSpan(difference, Math.Min(200, expected.Length - difference)))}. Actual: {Encoding.UTF8.GetString(actual.AsSpan(difference, Math.Min(200, actual.Length - difference)))}.");
             count++;
         }
 
@@ -53,21 +69,150 @@ public class when_freezing_legacy_source_syntax_bytes
         Assert.False(initializing, "Review the new protected bytes and rerun without SCREENPLAY_INITIALIZE_LEGACY_SYNTAX_BYTES. Existing baselines are never overwritten.");
     }
 
-    static ApplicationSyntax WithoutV7SampleAdditions(ApplicationSyntax application) => application with
+    static ApplicationSyntax WithoutSampleExamples(ApplicationSyntax application)
+    {
+        var expanded = SpecificationExamples.Expand(application);
+        expanded.Diagnostics.ShouldBeEmpty();
+
+        return application with
+        {
+            Modules = application.Modules.Select(module => module with
+            {
+                Features = module.Features.Select(feature => feature with
+                {
+                    Slices = feature.Slices.Select(slice => slice.Name == "RegisterInvoice" ? slice with
+                    {
+                        Examples = [],
+                        Specifications = slice.Specifications.Select(specification => specification.When?.CommandType == "AcmeInvoice" ? specification with
+                        {
+                            When = expanded.Specifications.Single(item => ReferenceEquals(item.Authored, specification)).Effective.When! with
+                            {
+                                CommandType = "RegisterInvoice",
+                                InlineProperty = null,
+                                Values = expanded.Specifications.Single(item => ReferenceEquals(item.Authored, specification)).Effective.When!.Values.OrderBy(value => slice.Commands.Single(command => command.Name == "RegisterInvoice").Properties.Select(property => property.Name).ToList().IndexOf(value.Property))
+                            }
+                        } : specification)
+                    } : slice)
+                })
+            })
+        };
+    }
+
+    static ApplicationSyntax WithoutSampleAdditions(ApplicationSyntax application) => application with
     {
         Concepts = application.Concepts.Where(concept => concept.Name != "InvoiceReceiptId"),
+        Policies = application.Policies.Where(policy => policy.Name != "IsPerson"),
+        Personas = application.Personas.Select(persona => persona with { Policies = persona.Policies.Where(policy => policy != "IsPerson") }),
+        Modules = application.Modules.Select(module => module with
+        {
+            Authorize = module.Authorize is { Requirement: PolicyReferenceSyntax reference } authorize && reference.Name == "IsPerson"
+                ? authorize with { Requirement = reference with { Name = "IsAuthenticated" } }
+                : module.Authorize,
+            Forms = module.Forms?.Select(form => form.Name == "RecordPaymentForm" ? form with { Populate = new FormPopulateFromItemSyntax(form.Location) } : form),
+            Features = module.Features.Select(feature => feature.Name == "InvoiceManagement" ? feature with
+            {
+                Slices = feature.Slices.Where(slice => slice.Name != "StartInvoiceDraft").Select(slice => slice.Name switch
+                {
+                    "CancelInvoice" => slice with
+                    {
+                        Commands = slice.Commands.Select(command => command.Name == "CancelInvoice" ? command with { Response = null } : command),
+                        Specifications = slice.Specifications.Select(specification => specification.Name == "CancellingAnInvoiceWithARefund" ? specification with { ThenReturns = null } : specification)
+                    },
+                    "RegisterInvoice" => slice with
+                    {
+                        Specifications = slice.Specifications.Where(specification => specification.Name != "RejectingAServiceRegisteringAnInvoice")
+                    },
+                    _ => slice
+                })
+            } : feature).Select(feature => feature with
+            {
+                Slices = feature.Slices.Select(slice => slice with
+                {
+                    Screens = slice.Screens.Select(screen => screen with { Directives = WithoutSampleInputNavigation(RestoreCollectionsToolbar(screen)) })
+                })
+            })
+        })
+    };
+
+    // Current shared vectors protect the pre-input click paths. Reconstruct only the historical
+    // action-navigation directives and omit the new draft entry point for the frozen legacy sample.
+    static IEnumerable<ScreenDirectiveSyntax> WithoutSampleInputNavigation(IEnumerable<ScreenDirectiveSyntax> directives) =>
+        directives.Where(directive => directive is not ScreenSectionSyntax { Name: "startInvoiceDraftInput" or "recordDuePaymentInput" or "recordOverduePaymentInput" or "invoiceLineDetailInput" }).Select(directive => directive switch
+        {
+            ScreenSectionSyntax section when LegacyInputCommand(section.Name) is { } command =>
+                new ScreenActionSyntax(command, section.Name == "registerInvoiceDashboardInput" ? "$strings.invoices.actions.newInvoice" : null, new ScreenNavigateSyntax(command + "Screen", null, section.Location), section.Location),
+            ScreenSectionSyntax section => section with { Directives = WithoutSampleInputNavigation(section.Directives) },
+            ScreenTableSyntax { Target: "lineItems" } table => table with { RowClick = new ScreenNavigateSyntax("InvoiceLineDetail", "lineNumber", table.Location) },
+            ScreenTemplateReferenceSyntax template => template with
+            {
+                Slots = template.Slots.Select(slot => slot with { Directives = WithoutSampleInputNavigation(slot.Directives) })
+            },
+            _ => directive
+        });
+
+    // Payments now start from the due/overdue rows. Restore only the former toolbar for the
+    // frozen baseline; the current vectors protect identity-carrying rows and query population.
+    static IEnumerable<ScreenDirectiveSyntax> RestoreCollectionsToolbar(ScreenSyntax screen) => screen.Name == "CollectionsBoard"
+        ? screen.Directives.Select(directive => directive is ScreenTemplateReferenceSyntax template ? template with
+        {
+            Slots = new[]
+            {
+                new ScreenSlotSyntax("toolbar", [new ScreenActionSyntax("RecordPayment", null, new ScreenNavigateSyntax("RecordPaymentScreen", null, template.Location), template.Location)], template.Location)
+            }.Concat(template.Slots)
+        } : directive)
+        : screen.Directives;
+
+    static string? LegacyInputCommand(string section) => section switch
+    {
+        "registerInvoiceInput" or "registerInvoiceDashboardInput" => "RegisterInvoice",
+        "changeInvoiceStatusInput" => "ChangeInvoiceStatus",
+        "recordPaymentInput" => "RecordPayment",
+        "processInvoiceBatchInput" => "ProcessInvoiceBatch",
+        "archiveOldInvoicesInput" => "ArchiveOldInvoices",
+        "cancelInvoiceInput" => "CancelInvoice",
+        "tagInvoiceInput" => "TagInvoice",
+        "updateBillingContactInput" => "UpdateBillingContact",
+        "requestPaymentPlanInput" => "RequestPaymentPlan",
+        _ => null
+    };
+
+    // Library's discovered command forms are protected by its current shared vector.
+    // Keep its pre-completeness bytes frozen without rewriting the historical baseline.
+    static ApplicationSyntax WithoutLibraryForms(ApplicationSyntax application) => application with
+    {
+        Modules = application.Modules.Select(module => module with
+        {
+            Forms = module.Forms?.Where(form => form.Name is not ("AddBookInput" or "BorrowBookInput" or "ReturnBookInput"))
+        })
+    };
+
+    static ApplicationSyntax WithoutGuardedSampleAction(ApplicationSyntax application) => application with
+    {
         Modules = application.Modules.Select(module => module with
         {
             Features = module.Features.Select(feature => feature.Name == "InvoiceManagement" ? feature with
             {
-                Slices = feature.Slices.Where(slice => slice.Name != "StartInvoiceDraft").Select(slice => slice.Name == "CancelInvoice" ? slice with
+                Slices = feature.Slices.Select(slice => slice.Name == "CancelInvoice" ? slice with
                 {
-                    Commands = slice.Commands.Select(command => command.Name == "CancelInvoice" ? command with { Response = null } : command),
-                    Specifications = slice.Specifications.Select(specification => specification.Name == "CancellingAnInvoiceWithARefund" ? specification with { ThenReturns = null } : specification)
+                    Screens = slice.Screens.Select(screen => screen.Name == "CancelInvoiceScreen" ? screen with
+                    {
+                        Directives = RestorePlainSampleAction(screen.Directives.Where(directive => directive is not ScreenDataSyntax))
+                    } : screen)
                 } : slice)
             } : feature)
         })
     };
+
+    static IEnumerable<ScreenDirectiveSyntax> RestorePlainSampleAction(IEnumerable<ScreenDirectiveSyntax> directives) => directives.Select(directive => directive switch
+    {
+        ScreenGuardedActionSyntax { Label: "$strings.invoices.actions.cancel" } guarded => new ScreenActionSyntax("CancelInvoice", guarded.Label, guarded.Navigate, guarded.Location),
+        ScreenSectionSyntax section => section with { Directives = RestorePlainSampleAction(section.Directives) },
+        ScreenTemplateReferenceSyntax template => template with
+        {
+            Slots = template.Slots.Select(slot => slot with { Directives = RestorePlainSampleAction(slot.Directives) })
+        },
+        _ => directive
+    });
 
     // The additive rule wrapper is protected by the named-rule corpus. Project it out only for these
     // pre-intent baselines, using raw slices so every numeric token and preexisting member stays untouched.

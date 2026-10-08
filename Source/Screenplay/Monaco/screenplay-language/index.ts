@@ -129,6 +129,7 @@ export { cdl } from './sub-languages/cdl';
 export { screenplayDarkThemeName } from './themes/screenplay-dark';
 export { screenplayLightThemeName } from './themes/screenplay-light';
 export { enclosingChain, fenceMap, firstWord, indentOf, withoutComment } from './document-context';
+export { exampleCompletions, exampleHover } from './example-authoring';
 export {
     fileReferenceKeyword,
     fileReferenceOn,

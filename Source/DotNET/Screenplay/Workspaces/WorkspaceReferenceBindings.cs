@@ -80,6 +80,7 @@ sealed class WorkspaceReferenceBindings
         foreach (var primitive in ConceptSyntax.PrimitiveTypes)
         {
             yield return new($"primitive:{primitive}", primitive, new([]), WorkspaceReferenceDomain.Type, null);
+            yield return new($"primitive:{primitive}", primitive, new([]), WorkspaceReferenceDomain.Fixture, null);
         }
 
         foreach (var entry in index.Entries)
@@ -90,6 +91,11 @@ sealed class WorkspaceReferenceBindings
                 candidate.Generation > historical.Generation))
             {
                 continue;
+            }
+
+            if (entry.Node is SpecificationExampleSyntax or ConceptSyntax or TypeSyntax or EventSyntax or CommandSyntax or ReadModelSyntax)
+            {
+                yield return new(Key(entry), Name(entry.Node)!, Scope(entry, index), WorkspaceReferenceDomain.Fixture, entry);
             }
 
             WorkspaceReferenceDomain? domain = entry.Node switch
@@ -107,6 +113,8 @@ sealed class WorkspaceReferenceBindings
                 ScreenSyntax => WorkspaceReferenceDomain.Screen,
                 PolicySyntax => WorkspaceReferenceDomain.Policy,
                 TriggerSyntax => WorkspaceReferenceDomain.Trigger,
+                ReactionSyntax => WorkspaceReferenceDomain.Reaction,
+                ConstraintSyntax when entry.Parent is { } constraintParent && index.Find(constraintParent)?.Node is SliceSyntax => WorkspaceReferenceDomain.Constraint,
                 PropertySyntax when entry.Parent is { } parent && index.Find(parent)?.Node is TypeSyntax => WorkspaceReferenceDomain.Property,
                 _ => null
             };
@@ -147,7 +155,7 @@ sealed class WorkspaceReferenceBindings
 
     static bool AdmitsImports(WorkspaceReferenceMember reference) => reference.Domain switch
     {
-        WorkspaceReferenceDomain.Type or WorkspaceReferenceDomain.Event or WorkspaceReferenceDomain.View or WorkspaceReferenceDomain.Trigger => true,
+        WorkspaceReferenceDomain.Type or WorkspaceReferenceDomain.Event or WorkspaceReferenceDomain.View or WorkspaceReferenceDomain.Trigger or WorkspaceReferenceDomain.Fixture or WorkspaceReferenceDomain.Reaction or WorkspaceReferenceDomain.Constraint => true,
         WorkspaceReferenceDomain.Command => reference.Entry.Node is InvokesSyntax,
         _ => false
     };
@@ -197,7 +205,8 @@ sealed class WorkspaceReferenceBindings
         }
 
         if (reference.Text.Contains('.') && (domain is WorkspaceReferenceDomain.Type or WorkspaceReferenceDomain.Policy or WorkspaceReferenceDomain.Trigger ||
-            (domain == WorkspaceReferenceDomain.Event && reference.Entry.Node is not SpecificationEventSyntax) ||
+            (domain == WorkspaceReferenceDomain.Event && reference.Entry.Node is not (SpecificationEventSyntax or SpecificationRedeliverySyntax) &&
+                !(reference.Entry.Node is ProducesSyntax && reference.Entry.Parent is { } productionParent && _index.Find(productionParent)?.Node is InvocationRefusalSyntax)) ||
             reference.Entry.Node is InvokesSyntax or ReadsSyntax or ProjectionSyntax or ReducerSyntax))
         {
             return new(reference, null, "compiler-resolution-disagreement");

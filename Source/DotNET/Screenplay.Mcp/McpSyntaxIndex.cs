@@ -14,10 +14,13 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     readonly List<McpDeclaration> _declarations = [];
     readonly List<McpReference> _references = [];
     readonly List<string> _scope = [];
+    readonly List<McpReadOwner> _hierarchy = [];
     readonly McpReadOwnership _ownership = new();
     readonly Dictionary<SyntaxNode, McpDeclaration> _owners = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<(string Kind, string Name, string Scope), McpDeclaration> _scaffolds = [];
     McpQueryIndex _queries = null!;
+    bool _inRefusal;
+    ConstraintSyntax? _constraint;
 
     internal EventSourceReadConfidence? SourceConfidence { get; set; }
 
@@ -53,28 +56,51 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     /// <inheritdoc/>
     public override void VisitModule(ModuleSyntax syntax)
     {
-        Declare("Module", syntax.Name, syntax, syntax.Description);
+        var declaration = Declare("Module", syntax.Name, syntax, syntax.Description);
+        _hierarchy.Add(declaration.Owner);
         _scope.Add(syntax.Name);
         base.VisitModule(syntax);
         _scope.RemoveAt(_scope.Count - 1);
+        _hierarchy.RemoveAt(_hierarchy.Count - 1);
     }
 
     /// <inheritdoc/>
     public override void VisitFeature(FeatureSyntax syntax)
     {
-        Declare("Feature", syntax.Name, syntax, syntax.Description);
+        var declaration = Declare("Feature", syntax.Name, syntax, syntax.Description);
+        _hierarchy.Add(declaration.Owner);
         _scope.Add(syntax.Name);
         base.VisitFeature(syntax);
         _scope.RemoveAt(_scope.Count - 1);
+        _hierarchy.RemoveAt(_hierarchy.Count - 1);
     }
 
     /// <inheritdoc/>
     public override void VisitSlice(SliceSyntax syntax)
     {
-        Declare("Slice", syntax.Name, syntax, syntax.Description, new { syntaxOnly = Readiness.SyntaxOnly(syntax), executionReadiness = Readiness.ExecutionReadiness(syntax) });
+        var declaration = Declare("Slice", syntax.Name, syntax, syntax.Description, new { syntaxOnly = Readiness.SyntaxOnly(syntax), executionReadiness = Readiness.ExecutionReadiness(syntax) });
+        _hierarchy.Add(declaration.Owner);
         _scope.Add(syntax.Name);
         base.VisitSlice(syntax);
         _scope.RemoveAt(_scope.Count - 1);
+        _hierarchy.RemoveAt(_hierarchy.Count - 1);
+    }
+
+    /// <inheritdoc/>
+    public override void VisitConstraint(ConstraintSyntax syntax)
+    {
+        var previous = _constraint;
+        _constraint ??= syntax;
+        base.VisitConstraint(syntax);
+        _constraint = previous;
+    }
+
+    /// <inheritdoc/>
+    public override void VisitInvocationRefusal(InvocationRefusalSyntax syntax)
+    {
+        _inRefusal = true;
+        base.VisitInvocationRefusal(syntax);
+        _inRefusal = false;
     }
 
     /// <inheritdoc/>
@@ -106,7 +132,10 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
             case ProjectionSyntax value: Declare("Projection", value.Name, value); break;
             case ReducerSyntax value: Declare("Reducer", value.Name, value); break;
             case CaptureSyntax value: Declare("Capture", value.Name, value); break;
-            case ConstraintSyntax value: Declare("Constraint", value.Name, value); break;
+            case ConstraintSyntax value when ReferenceEquals(value, _constraint): Declare("Constraint", value.Name, value); break;
+            case SpecificationExampleSyntax value:
+                Declare("Example", value.Name, value, value.Description, new { value.Type, value.Values, value.For, value.GeneratedValues });
+                break;
             case SpecificationSyntax value:
                 Declare("Specification", value.Name, value, details: new
                 {
@@ -129,7 +158,13 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         var owner = owningSyntax is null ? null : _owners.GetValueOrDefault(owningSyntax);
         foreach (var reference in McpReferenceKinds.For(node, owningSyntax))
         {
-            var role = owner?.Syntax is SpecificationSyntax specification ? McpFixtureOccurrences.Role(specification, node, reference.Role) : reference.Role;
+            var refusalProduction = _inRefusal && node is ProducesSyntax;
+            var role = (refusalProduction, owner?.Syntax) switch
+            {
+                (true, _) => "refusalProduces",
+                (_, SpecificationSyntax specification) => McpFixtureOccurrences.Role(specification, node, reference.Role),
+                _ => reference.Role
+            };
             _references.Add(new(reference.Name, reference.Kinds, [.. _scope], ReferenceLocation(node), role, owner?.Owner)
             {
                 UseProductionCandidates = node is ProducesSyntax or SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax,
@@ -169,7 +204,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         for (var index = 0; index < _references.Count; index++)
         {
             var reference = _references[index];
-            if (reference.Role != "produces") continue;
+            if (reference.Role is not ("produces" or "refusalProduces")) continue;
             var targets = productions.ResolveReference(reference.Name, reference.Scope);
             _references[index] = reference with { Kinds = targets is [var target] ? [target.Kind] : ["Event", "Operation"] };
         }
@@ -205,7 +240,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         _ => node.Location
     };
 
-    void Declare(string kind, string name, SyntaxNode node, string? description = null, object? details = null)
+    McpDeclaration Declare(string kind, string name, SyntaxNode node, string? description = null, object? details = null)
     {
         var key = (kind, name, McpQueryIndex.ScopeKey(_scope));
         var isScaffold = kind == "Module" || kind == "Feature";
@@ -213,15 +248,17 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         {
             scaffold.Parts.Add(node);
             _owners[node] = scaffold;
-            return;
+            return scaffold;
         }
 
-        var declaration = new McpDeclaration(kind, name, [.. _scope], node.Location, description, details, node);
+        var declaration = new McpDeclaration(kind, name, [.. _scope], node.Location, description, details, node) { Hierarchy = [.. _hierarchy] };
         _declarations.Add(declaration);
         _owners[node] = declaration;
         if (isScaffold)
         {
             _scaffolds.Add(key, declaration);
         }
+
+        return declaration;
     }
 }

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using Cratis.Screenplay.Printing;
 
 namespace Cratis.Screenplay.Semantics.Execution;
 
@@ -49,6 +50,35 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
     public SemanticSpecificationRunner()
         : this(new SemanticEvaluator())
     {
+    }
+
+    /// <summary>
+    /// Executes a source-bound specification and enriches failures with its effective fixture values and origins.
+    /// </summary>
+    /// <param name="compilation">The validated source compilation owning both the ESM and its provenance sidecar.</param>
+    /// <param name="specification">The specification semantic identity.</param>
+    /// <returns>The reference execution, or a failed unsupported result when plan admission fails.</returns>
+    public SemanticSpecificationRun Run(SemanticCompilation compilation, SemanticId specification)
+    {
+        var admitted = SemanticExecutionPlan.Compile(compilation.Model);
+        if (admitted.Plan is not { } plan)
+        {
+            var details = string.Join("; ", admitted.Issues.Select(issue => issue.Details));
+            var unsupported = new SemanticUnsupported(SemanticWorld.Empty, SemanticExecutionCapability.Specification, details);
+            return new(specification, false, unsupported, [details]);
+        }
+
+        var run = Run(plan, specification);
+        if (run.Passed || !compilation.SpecificationOrigins.TryGetValue(specification, out var origin) ||
+            !origin.Steps.Any(step => step.Example is not null))
+        {
+            return run;
+        }
+
+        var fixtures = origin.Steps.SelectMany(step => step.Values.Select(value =>
+            $"{step.Role}{(step.Example is null ? string.Empty : $" {step.Example.Name}")}: {value.Property} = {ScreenplaySyntaxText.Expression(value.Value)} ({value.Origin.ToString().ToLowerInvariant()}{(value.OverriddenValue is null ? string.Empty : $", replaces {ScreenplaySyntaxText.Expression(value.OverriddenValue)}")})"));
+        var provenance = $"Effective fixtures: {string.Join("; ", fixtures)}.";
+        return run with { Failures = [.. run.Failures.Select(failure => $"{failure} {provenance}")] };
     }
 
     /// <inheritdoc/>

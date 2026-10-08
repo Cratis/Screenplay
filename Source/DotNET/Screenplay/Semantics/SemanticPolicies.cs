@@ -26,6 +26,12 @@ public sealed record SemanticPolicy(string Name, SemanticPolicyCondition Conditi
 /// <summary>Represents a portable authorization condition or an opaque implementation attachment.</summary>
 public abstract record SemanticPolicyCondition;
 
+/// <summary>
+/// Negates a portable policy condition.
+/// </summary>
+/// <param name="Operand">The condition to negate.</param>
+public sealed record SemanticNotPolicyCondition(SemanticPolicyCondition Operand) : SemanticPolicyCondition;
+
 /// <summary>Represents a policy predicate supplied by a target provider rather than the reference executor.</summary>
 /// <param name="RequirementId">The stable identity of the policy implementation requirement.</param>
 public sealed record SemanticOpaquePolicyCondition(string RequirementId) : SemanticPolicyCondition;

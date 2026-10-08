@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Projections;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Dependencies;
 
@@ -25,6 +26,7 @@ internal sealed partial class DependencyGraph
 
     DependencyGraph(ApplicationSyntax application, IReadOnlyDictionary<string, int>? ranks)
     {
+        application = SpecificationExamples.Expand(application).Application;
         OrderSource = ranks is { Count: > 0 } ? "authored" : "syntax";
         ranks ??= new Dictionary<string, int>();
         _children[_root.Key] = [];
@@ -49,11 +51,15 @@ internal sealed partial class DependencyGraph
         {
             if (!inventory.TryGetValue((kind, name), out var owners)) inventory[(kind, name)] = owners = [];
             if (!owners.Contains(node)) owners.Add(node);
+            var qualified = string.Join('.', node.Scope.Append(name));
+            if (!inventory.TryGetValue((kind, qualified), out var scopedOwners)) inventory[(kind, qualified)] = scopedOwners = [];
+            if (!scopedOwners.Contains(node)) scopedOwners.Add(node);
         }
         foreach (var (node, slice) in _slices)
         {
             foreach (var value in EventDeclarations.In(slice)) Declare(declarations, "Event", value.Name, node);
             foreach (var value in slice.Commands) Declare(declarations, "Command", value.Name, node);
+            foreach (var value in slice.Reactions) Declare(declarations, "Reaction", value.Name, node);
             foreach (var value in slice.Queries) Declare(declarations, "Query", value.Name, node);
             foreach (var value in slice.Screens) Declare(declarations, "Screen", value.Name, node);
             foreach (var value in slice.ReadModels ?? []) Declare(declarations, "ReadModel", value.Name, node);

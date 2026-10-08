@@ -185,6 +185,8 @@ is `PreserveTrivia`: verified identifier patches leave comments, line endings,
 BOM and unrelated text intact. Event renames update typed consumers, including
 constraint `released by` references and screen/behavior `on event` triggers.
 
+Examples and specifications are also rename targets. Renaming an example updates only the steps resolved to that declaration, including qualified names and `when append`; same-named examples in other scopes remain unchanged. Renaming its underlying event, command or read model updates the example's type reference. Renaming a composite-type property updates structured keys in example bodies and step overrides. Examples remain front-end syntax and receive no ESM identity. Use `find-fixtures` to inspect effective values and origins before editing an example shared by several specifications.
+
 The planner coordinates logical fragments, repairs proven typed references and
 preserves assigned descendant/event identities. It refuses ambiguous targets,
 name capture, opaque impact and unsupported spans. Do not treat a refusal as

@@ -52,7 +52,7 @@ internal static class IdentifierComplianceValidator
                         .Select(datum => datum.Type is { } type ? new PropertySyntax(datum.Name, type, datum.Location) : null)
                         .OfType<PropertySyntax>()));
                 }
-                foreach (var production in (trigger.Produces ?? []).Where(production => declarations.Productions.IsEventProduction(production, slice)))
+                foreach (var production in ReactionProductions.In(trigger).Where(production => declarations.Productions.IsEventProduction(production, slice)))
                 {
                     if (production.For is not PathExpressionSyntax path) continue;
 

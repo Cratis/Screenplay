@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { authoredOrderKey, authoredOrderOf } from '../Files/AuthoredOrder';
+import { expandSpecificationExamples } from '../Parsing/SpecificationCommandExamples';
 import { dependencySourcesOf } from '../Syntax/DependencySources';
 import { eventDeclarations } from '../Syntax/EventDeclarations';
 import { ProjectionBlockSyntax, ProjectionVariantSyntax } from '../Syntax/Projections';
@@ -46,6 +47,7 @@ export class DependencyGraph {
     get nodes(): readonly DependencyNode[] { return this.modelNodes; }
 
     private constructor(application: ApplicationSyntax, ranks: ReadonlyMap<string, number>) {
+        application = expandSpecificationExamples(application);
         this.orderSource = ranks.size > 0 ? 'authored' : 'syntax';
         this.children.set(this.root.key, []);
         const ordered = <T extends { name: string }>(items: readonly T[], parent: DependencyNode): T[] => items
@@ -67,10 +69,15 @@ export class DependencyGraph {
             if (!inventory.has(key)) inventory.set(key, []);
             const owners = inventory.get(key)!;
             if (!owners.includes(node)) owners.push(node);
+            const qualified = declarationKey(kind, [...node.scope, name].join('.'));
+            if (!inventory.has(qualified)) inventory.set(qualified, []);
+            const scopedOwners = inventory.get(qualified)!;
+            if (!scopedOwners.includes(node)) scopedOwners.push(node);
         };
         for (const { node, syntax } of this.slices) {
             for (const event of eventDeclarations(syntax)) declare(declarations, 'Event', event.name, node);
             for (const command of syntax.commands) declare(declarations, 'Command', command.name, node);
+            for (const reaction of syntax.reactions) declare(declarations, 'Reaction', reaction.name, node);
             for (const query of syntax.queries) declare(declarations, 'Query', query.name, node);
             for (const screen of syntax.screens) declare(declarations, 'Screen', screen.name, node);
             for (const readModel of syntax.readModels) declare(declarations, 'ReadModel', readModel.name, node);
