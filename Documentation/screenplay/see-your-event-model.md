@@ -55,10 +55,26 @@ Specification headers also show deterministic `generated` fixtures, labeled
 **not request inputs**, scalar or record `then returns` assertions, and every
 `then no readmodel ... for ...` absence assertion with its key. These summaries
 keep response expectations and missing read-model instances visible without
-turning them into event cards or command inputs. Specifications without routes,
-generated fixtures, return assertions or absence assertions keep their titles.
-Like the rest of the board, these are authored expectations, not test results;
-use the specification runner to check them.
+turning them into event cards or command inputs. Like the rest of the board, these are specification expectations, not test
+results; use the specification runner to check them.
+
+Typed examples show their effective values: inherited event, command and
+read-model fields are expanded, and a value stated on the step overrides the
+example's value. Event links point to the example's underlying event declaration,
+not the example name. Inherited `generated` fixtures remain separate from request
+inputs. Headers show given and expected read-model values, retaining `exactly`
+where it is stated.
+
+A `when redelivered` action shows the event, target reaction and optional `for`
+selector, with its payload values on the action card. It does not become an
+append or another command. Refusal outcomes retain their ordinary presentation:
+`then error` carries a validation or constraint refusal message, `then denied`
+is an authorization denial, and expected refusal facts remain event cards.
+An explicit `then no events` appears in the header rather than as a fabricated
+event or error. Redelivery and no-event expectations are labeled
+**Syntax-only (PLAY0268)**: drawing them does not make them executable or prove
+once-only delivery. See [redelivery specifications](specifications.md#redelivery-specifications-syntax-only).
+Specifications without these header details keep their titles.
 
 ## Ask for the board in an AI chat
 
