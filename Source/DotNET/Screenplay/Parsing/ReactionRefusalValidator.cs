@@ -14,10 +14,14 @@ internal static class ReactionRefusalValidator
     internal static void Validate(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context)
     {
         new ValueWalker(application, declarations, context).VisitApplication(application);
+        Dictionary<CommandSyntax, bool>? authorizationGates = null;
         foreach (var (slice, scope) in declarations.Slices)
         {
             foreach (var invocation in slice.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(trigger => trigger.Invokes ?? []))
             {
+                var command = declarations.Resolve(invocation.Command, scope, owner => owner.Commands, node => node.Name);
+                var authorizationGated = invocation.OnRefused.Any(branch => branch.Selector == "authorization") &&
+                    command is { } invokedCommand && (authorizationGates ??= CollectAuthorizationGates(application))[invokedCommand.Node];
                 var earlier = new List<InvocationRefusalSyntax>();
                 foreach (var branch in invocation.OnRefused)
                 {
@@ -27,6 +31,14 @@ internal static class ReactionRefusalValidator
                     }
 
                     earlier.Add(branch);
+                    if (branch.Selector == "authorization" && InvocationHasNoDeclaredIdentity() && authorizationGated)
+                    {
+                        context.Warning(
+                            DiagnosticCodes.AuthorizationRefusalWithoutIdentity,
+                            $"Command '{invocation.Command}' is authorization-gated, but this invocation has no declared identity. This authorization refusal branch always fires in the reference runner because there is no caller; Arc runs reactor commands as the system. Declare an invoking identity once supported (#383).",
+                            branch.Location);
+                    }
+
                     if (branch.Constraint is not { } name) continue;
                     var constraint = declarations.Resolve(name, scope, owner => owner.Constraints, node => node.Name);
                     if (constraint is not { } resolved)
@@ -35,7 +47,6 @@ internal static class ReactionRefusalValidator
                         continue;
                     }
 
-                    var command = declarations.Resolve(invocation.Command, scope, owner => owner.Commands, node => node.Name);
                     if (command is not { } invoked || invoked.Node.Handler is not null) continue;
                     var rules = new[] { resolved.Node }.Concat(resolved.Node.AdditionalRules).ToArray();
                     if (rules.Any(rule => rule is FileConstraintSyntax)) continue;
@@ -62,6 +73,31 @@ internal static class ReactionRefusalValidator
                     (declarations.Resolve(left, scope, owner => owner.Constraints, node => node.Name) is { } first &&
                     declarations.Resolve(right, scope, owner => owner.Constraints, node => node.Name) is { } second && ReferenceEquals(first.Node, second.Node));
             }
+        }
+    }
+
+    // Invocations have no identity declaration until #383; keep that decision separate from authorization gating.
+    static bool InvocationHasNoDeclaredIdentity() => true;
+
+    static Dictionary<CommandSyntax, bool> CollectAuthorizationGates(ApplicationSyntax application)
+    {
+        var gates = new Dictionary<CommandSyntax, bool>(ReferenceEqualityComparer.Instance);
+        foreach (var module in application.Modules)
+        {
+            foreach (var feature in module.Features) Collect(feature, module.Authorize is not null);
+        }
+
+        return gates;
+
+        void Collect(FeatureSyntax feature, bool inherited)
+        {
+            var gated = inherited || feature.Authorize is not null;
+            foreach (var command in feature.Slices.SelectMany(slice => slice.Commands))
+            {
+                gates[command] = gated || command.Authorize is not null;
+            }
+
+            foreach (var child in feature.Features) Collect(child, gated);
         }
     }
 

@@ -11,7 +11,7 @@ namespace Cratis.Screenplay.Mcp;
 /// <summary>
 /// Selects source diagnostics using the same physical declaration and dependency index as MCP navigation.
 /// </summary>
-static class ScopedDiagnostics
+public static partial class ScopedDiagnostics
 {
     /// <summary>
     /// Compiles the complete source set and selects a named scope and its direct dependent declarations.
@@ -29,13 +29,21 @@ static class ScopedDiagnostics
 
     internal static ScopedDiagnosticResult? Select(McpSnapshot snapshot, string scope, IEnumerable<Diagnostic> additional, out string? scopeError)
     {
+        var result = SelectScope(snapshot, scope, additional, out var error);
+        scopeError = error?.Message;
+
+        return result;
+    }
+
+    static ScopedDiagnosticResult? SelectScope(McpSnapshot snapshot, string scope, IEnumerable<Diagnostic> additional, out ScopeSelectionError? scopeError)
+    {
         var declarations = snapshot.Index.Declarations.ToArray();
         var matches = declarations.Where(declaration =>
             (declaration.Kind == "Module" || declaration.Kind == "Feature" || declaration.Kind == "Slice") && declaration.Address == scope).ToArray();
         scopeError = matches.Length switch
         {
-            0 => $"Unknown scope '{scope}'. Expected a module, feature or slice address.",
-            > 1 => $"Ambiguous scope '{scope}'. Expected exactly one module, feature or slice.",
+            0 => new(ScopeSelectionErrorKind.UnknownScope, $"Unknown scope '{scope}'. Expected a module, feature or slice address."),
+            > 1 => new(ScopeSelectionErrorKind.AmbiguousScope, $"Ambiguous scope '{scope}'. Expected exactly one module, feature or slice."),
             _ => null
         };
         if (string.IsNullOrWhiteSpace(scope) || scopeError is not null)
@@ -75,7 +83,8 @@ static class ScopedDiagnostics
         var lines = snapshot.Sources.ToDictionary(source => source.Key, source => SourceLineSplitter.Split(source.Value, path: source.Key), StringComparer.Ordinal);
         var ranges = declarations.SelectMany(declaration => declaration.Locations.Select(location => Range(declaration, location, lines, snapshot.Languages)))
             .Where(range => range is not null).OfType<DeclarationRange>().ToArray();
-        var diagnostics = snapshot.Compilation.Diagnostics.Concat(additional).Where(diagnostic =>
+        var wholeDiagnostics = snapshot.Compilation.Diagnostics.Concat(additional).ToImmutableArray();
+        var diagnostics = wholeDiagnostics.Where(diagnostic =>
         {
             var owner = ranges.Where(range => range.Contains(diagnostic.Location))
                 .OrderByDescending(range => range.Start.Line).ThenByDescending(range => range.Start.Column).FirstOrDefault();
@@ -104,7 +113,9 @@ static class ScopedDiagnostics
             [.. affected],
             new(unresolvedEvents.Length, unresolvedEventScopes),
             possiblyAffected,
-            McpReferenceKinds.Coverage);
+            McpReferenceKinds.Coverage,
+            wholeDiagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error),
+            wholeDiagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Warning));
     }
 
     static bool Within(IEnumerable<string> segments, string scope) => string.Join('.', segments) is var address &&

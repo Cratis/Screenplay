@@ -11,6 +11,7 @@ public class when_discovering_and_enforcing_typed_batch_operations : given.an_au
     JsonElement _tools;
     JsonElement _strict;
     JsonElement _ast;
+    JsonElement _source;
     JsonElement _syntax;
     readonly List<JsonElement> _rejections = [];
     byte[] _original = [];
@@ -27,6 +28,7 @@ public class when_discovering_and_enforcing_typed_batch_operations : given.an_au
         _tools = listed.RootElement.GetProperty("result").GetProperty("tools").Clone();
         _strict = Schema("propose").GetProperty("properties").GetProperty("operations").GetProperty("items").GetProperty("oneOf");
         _ast = Schema("propose-ast").GetProperty("properties").GetProperty("operations").GetProperty("items").GetProperty("oneOf");
+        _source = Schema("propose-source").GetProperty("properties").GetProperty("documents").GetProperty("items").GetProperty("oneOf");
         _syntax = Result("syntax-schema", new { kind = "CommandSyntax" });
         var opened = Open();
         var revision = opened.GetProperty("revision").GetString();
@@ -59,10 +61,13 @@ public class when_discovering_and_enforcing_typed_batch_operations : given.an_au
     void should_advertise_all_public_tools() => _tools.EnumerateArray().Select(tool => tool.GetProperty("name").GetString()).ShouldContainOnly(
         ["repair-capabilities", "describe-application", "find-declaration", "search-declarations", "declaration-details", "dependencies", "dependency-graph", "find-references",
         "find-fixtures", "find-assertion-gaps", "merged-document", "read-document", "diagnostics", "recommend-layout", "syntax-schema",
-        "open-workspace", "workspace-state", "recover-workspace", "propose-rename", "read-workspace", "read-ast", "propose", "propose-extract-inline-event", "propose-repair", "propose-ast",
+        "open-workspace", "workspace-state", "recover-workspace", "propose-rename", "read-workspace", "read-ast", "propose", "propose-extract-inline-event", "propose-repair", "propose-ast", "propose-source",
         "expand-layout", "read-proposal", "export-workspace", "discard-proposal", "apply"]);
     [Fact] void should_advertise_only_supported_extraction_formatting() => Schema("propose-extract-inline-event").GetProperty("properties").GetProperty("formatting")
         .GetProperty("enum").EnumerateArray().Select(value => value.GetString()).ToArray().ShouldEqual(["CanonicalizeTouchedDocuments"]);
+    [Fact] void should_advertise_all_five_source_document_operation_shapes() => Names(_source).ShouldContainOnly("create-document", "replace-document", "move-document", "rename-document-key", "remove-document");
+    [Fact] void should_advertise_source_strings_instead_of_nodes() => _source.EnumerateArray().Where(shape => NamesOf(shape) == "create-document" || NamesOf(shape) == "replace-document").All(shape => shape.GetProperty("properties").GetProperty("source").GetProperty("type").GetString() == "string" && !shape.GetProperty("properties").TryGetProperty("node", out _)).ShouldBeTrue();
+    [Fact] void should_forbid_unknown_source_document_fields() => _source.EnumerateArray().All(shape => !shape.GetProperty("additionalProperties").GetBoolean()).ShouldBeTrue();
     [Fact] void should_advertise_all_six_strict_document_operation_shapes() => Names(_strict).ShouldContainOnly("update-slice-description", "move-document", "rename-document-key", "add-document", "replace-document", "remove-document");
     [Fact] void should_advertise_all_four_typed_ast_operation_shapes() => Names(_ast).ShouldContainOnly("add", "replace", "remove", "move");
     [Fact] void should_forbid_unknown_members_in_every_operation_shape() => _strict.EnumerateArray().Concat(_ast.EnumerateArray()).All(shape => !shape.GetProperty("additionalProperties").GetBoolean()).ShouldBeTrue();

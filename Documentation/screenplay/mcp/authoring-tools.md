@@ -27,6 +27,66 @@ For an existing application, call `read-workspace` with `view: "documents"` and
 Use `describe-application` for the logical hierarchy rather than reconstructing
 it from directory names.
 
+## Choose a proposal tool
+
+| Tool | Use it for | Validation |
+| --- | --- | --- |
+| `propose-source` | Whole `.play` text documents, including syntax-only language constructs | `Authoring` by default; optional `Executable` |
+| `propose-ast` | Focused typed node edits using `read-ast` handles, or typed whole documents | `Authoring` by default; optional `Executable` |
+| `propose` | Exact byte replacements and legacy whole-document operations | Executable-only |
+
+All three return proposals to review with `read-proposal` before explicit `apply`.
+Acceptance never writes files or executes specifications.
+
+### Propose whole source documents
+
+Send `propose-source` with `expectedRevision`, `expectedCatalogRevision`, explicit
+`formatting` consent and a `documents` array. For example, this array creates a
+valid source-only model without building typed JSON:
+
+```json
+[
+  {
+    "operation": "create-document",
+    "stableKey": "application",
+    "path": "application.play",
+    "source": "concept Month : Int\neventsource Account\n  stream Transactions\n    streamId Month\n"
+  }
+]
+```
+
+Use `formatting: "CanonicalizeTouchedDocuments"`. `validation` defaults to
+`"Authoring"`; this example is accepted with `executableReady: false`, while
+`"Executable"` rejects it with `PLAY0268`. `referencePolicy` defaults to `"Safe"`;
+`"Draft"` reports deliberate unresolved reference debt without waiving parsing or
+identity continuity.
+
+The document operations use the same names as `propose-ast.documents`:
+
+| Operation | Fields in addition to `operation` |
+| --- | --- |
+| `create-document` | `path`, `stableKey`, `source`; optional `encoding`: `Utf8` (default) or `Utf8WithBom` |
+| `replace-document` | `documentId`, `source` |
+| `remove-document` | `documentId` |
+| `move-document` | `documentId`, `path` |
+| `rename-document-key` | `documentId`, `stableKey` |
+
+`source` is a UTF-8 text string, not base64 or a typed `node`. There is no node
+`operations` array on this tool. Each document may be targeted once per batch.
+Parsing resolves imports and fragment placement against the complete final document
+set, including unchanged files. You can create a barrel and its imported fragments
+in one proposal, in either array order. A parse failure returns `success: false`,
+`failureKind: "SourceParseFailed"` and located `authoringDiagnostics`, with no
+`proposalId`. Fix the text and make a new proposal.
+
+Whole-source replacement uses the same typed authoring transaction and continuity
+rules as `propose-ast`: existing IDs survive unchanged addresses; removing assigned
+declarations requires explicit `retiredSemanticAddresses` and, for event contracts,
+`retiredEventAddresses`. Renames require coordinated `semanticRenames` and
+`eventRenames`. Replacement preserves the document's encoding policy, but printing
+may normalize whitespace. Review exact before/after bytes, dropped comments and
+`introducedExecutableErrors` before applying.
+
 ## Inspect inline event declarations
 
 An event declared with `produces event` appears as an `Event` in declaration queries at its **slice-owned** address, not beneath the command. `declaration-details` exposes its typed properties and authoring documentation; the command's `produces` view retains `InlineEvent`. Reference queries include `declares` relationships from the command and slice, alongside the command's `produces` relationship. The visualization counts and draws the event like a standalone declaration. Workspace syntax entries assign the event and its properties the same stable addresses and catalog identities as their standalone equivalents in that slice. Event and containing-slice rename proposals preserve those assignments.
@@ -166,7 +226,8 @@ operation in `propose-ast`:
 If a document has parser errors, it has no editable occurrence handles. Retrieve
 its document ID through `read-workspace`, construct a valid `ApplicationSyntax`,
 and use a `replace-document` entry in `propose-ast.documents` with `documentId`
-and `node`. This preserves its identity without a text patch.
+and `node`, or supply corrected `.play` text as `source` in `propose-source.documents`.
+Both preserve its document identity without a text patch.
 
 Use `add` with a parent handle and typed member such as `events` to add an element.
 Use `remove` for a selected occurrence and `move` for a different existing parent

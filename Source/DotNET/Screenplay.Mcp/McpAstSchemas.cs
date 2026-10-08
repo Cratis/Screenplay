@@ -36,11 +36,11 @@ static class McpAstSchemas
             Operation("move", new() { ["target"] = Handle(), ["expected"] = Node(), ["parent"] = Handle(), ["expectedParent"] = Node(), ["member"] = String(), ["index"] = Integer() }, "target", "parent", "member"))
     };
 
-    internal static JsonObject Documents() => new()
+    internal static JsonObject Documents(bool source = false) => new()
     {
         ["oneOf"] = new JsonArray(
-            Operation("create-document", new() { ["stableKey"] = String(), ["path"] = String(), ["node"] = Node(), ["encoding"] = Choice("Utf8", "Utf8WithBom") }, "stableKey", "path", "node"),
-            Operation("replace-document", new() { ["documentId"] = String(), ["node"] = Node() }, "documentId", "node"),
+            Operation("create-document", new() { ["stableKey"] = String(), ["path"] = String(), [source ? "source" : "node"] = source ? String() : Node(), ["encoding"] = Choice("Utf8", "Utf8WithBom") }, "stableKey", "path", source ? "source" : "node"),
+            Operation("replace-document", new() { ["documentId"] = String(), [source ? "source" : "node"] = source ? String() : Node() }, "documentId", source ? "source" : "node"),
             Operation("move-document", new() { ["documentId"] = String(), ["path"] = String() }, "documentId", "path"),
             Operation("rename-document-key", new() { ["documentId"] = String(), ["stableKey"] = String() }, "documentId", "stableKey"),
             Operation("remove-document", new() { ["documentId"] = String() }, "documentId"))

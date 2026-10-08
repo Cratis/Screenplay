@@ -12,6 +12,8 @@ import { CommandStreamCandidates } from '../Parsing/CommandStreamCandidates';
 import { validateEventSources } from '../Parsing/EventSourceValidator';
 import { validateProjectionTargets } from '../Parsing/ProjectionTargetValidator';
 import { validateIdentifierCompliance } from '../Parsing/IdentifierComplianceValidator';
+import { validateReactionRefusals } from '../Parsing/ReactionRefusalValidator';
+import { validateSpecificationRedelivery } from '../Parsing/SpecificationRedeliveryValidator';
 import { splitLines } from '../Parsing/SourceLineSplitter';
 import { ParserContext } from '../Parsing/ParserContext';
 import { validateResponses } from '../Parsing/ResponseValidator';
@@ -80,6 +82,8 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     validateResponses(merged.value, context, parsed.flatMap(document => document.inputUses));
     validateProjectionTargets(merged.value, context);
     validateIdentifierCompliance(merged.value, context);
+    validateReactionRefusals(merged.value, context);
+    validateSpecificationRedelivery(merged.value, context);
     const value = validateDependencyDeclarations(merged.value, context);
     DeclaredDependencies.validate(value, context);
     for (const diagnostic of productionDestinationDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);

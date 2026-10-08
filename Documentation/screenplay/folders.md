@@ -391,7 +391,7 @@ Merging follows a single rule: **the documents of a folder are one document**. F
 
 | Declaration | What the merge does |
 |---|---|
-| `module`, `feature` | **Combined by name.** Every file naming `module Invoicing` is talking about the same module. This is what lets a slice live in its own file and still belong to its feature. |
+| `module`, `feature` | **Combined by name.** Every file naming `module Invoicing` is talking about the same module. This is what lets a slice live in its own file and still belong to its feature. Header comments from every file survive, including identical text in different files. The owner file's trailing header comment stays inline; printing places the other header comments above the combined header in file-path order, then source order within each file. |
 | `slice`, `screen template`, `dialog template`, `form` | Accumulated. A second file declaring one that already exists in the same owner is an error. |
 | `contribute` on a module or feature | Accumulated under that owner. Several contributions may target the same contribution point. |
 | `authorize` on a module or feature | Distinct gates in different files accumulate with AND in file-path order; no file can silently override another's gate. An identical gate repeated in another file is kept once with a `PLAY0394` warning. Expansion writes the gate only in its owner's file and strips it from restated headers. Command and query authorization is additionally AND-composed with every enclosing feature and module gate. |

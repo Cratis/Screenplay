@@ -77,7 +77,7 @@ static class McpToolSchemas
         "limit" => Limit(tool == "export-workspace" || tool == "read-proposal" || tool == "read-document" || tool == "merged-document" || tool == "workspace-state" || tool == "read-workspace" ? 192 * 1024 : 200),
         "operations" when tool == "propose-ast" => McpAstSchemas.Array(McpAstSchemas.Operations()),
         "operations" => McpAstSchemas.Array(JsonNode.Parse(McpWorkspaceOperations.Schema.GetRawText())!),
-        "documents" => McpAstSchemas.Array(McpAstSchemas.Documents()),
+        "documents" => McpAstSchemas.Array(McpAstSchemas.Documents(tool == "propose-source")),
         "sketch" => McpVisualization.SketchSchema(),
         "target" or "subject" => McpAstSchemas.Handle(),
         "semanticRenames" or "eventRenames" => McpAstSchemas.Array(Rename()),

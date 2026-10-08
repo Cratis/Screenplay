@@ -17,6 +17,8 @@ import { CommandStreamCandidates } from './Parsing/CommandStreamCandidates';
 import { validateEventSources } from './Parsing/EventSourceValidator';
 import { validateProjectionTargets } from './Parsing/ProjectionTargetValidator';
 import { validateIdentifierCompliance } from './Parsing/IdentifierComplianceValidator';
+import { validateReactionRefusals } from './Parsing/ReactionRefusalValidator';
+import { validateSpecificationRedelivery } from './Parsing/SpecificationRedeliveryValidator';
 import { parseApplication } from './Parsing/ScreenplayParser';
 import { splitLines } from './Parsing/SourceLineSplitter';
 import { PropertySyntax } from './Syntax/Declarations';
@@ -70,6 +72,8 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateEventSources(value, context);
         validateProjectionTargets(value, context);
         validateIdentifierCompliance(value, context);
+        validateReactionRefusals(value, context);
+        validateSpecificationRedelivery(value, context);
         value = validateDependencyDeclarations(value, context);
         DeclaredDependencies.validate(value, context);
         for (const diagnostic of productionDestinationDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);
