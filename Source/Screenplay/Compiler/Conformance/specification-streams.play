@@ -18,26 +18,6 @@ module Banking
       event Recorded
         stream Int
         streamId Int
-      specification CompositeHistory
-        given Recorded
-          for "other"
-          stream Account.Composite
-            streamId
-              stream = 202610
-              streamId = "period"
-          streamId = 6
-        when append Recorded
-          for "other"
-          stream Account.Composite
-            streamId
-              streamId = "period"
-              stream = 202610
-          stream = 5
-        then Recorded
-          stream Account.Composite
-            streamId
-              stream = 202610
-              streamId = "period"
       specification ReadingHistory
         given Recorded
           stream Account.Transactions
@@ -58,3 +38,23 @@ module Banking
           streamId = 8
         then Recorded
           stream = 9
+      specification CompositeHistory
+        given Recorded
+          for "other"
+          stream Account.Composite
+            streamId
+              stream = 202610
+              streamId = "period"
+          streamId = 6
+        when append Recorded
+          for "other"
+          stream Account.Composite
+            streamId
+              streamId = "period"
+              stream = 202610
+          stream = 5
+        then Recorded
+          stream Account.Composite
+            streamId
+              stream = 202610
+              streamId = "period"

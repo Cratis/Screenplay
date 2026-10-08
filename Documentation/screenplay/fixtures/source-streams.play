@@ -23,6 +23,7 @@ module Banking
           streamId = month
         produces event Deposited
           amount Decimal = amount
+    slice StateChange Book
       command BookEntry
         accountId AccountId identifier
         month Month
