@@ -18,11 +18,12 @@ internal sealed class SliceReferences : ScreenplaySyntaxWalker
         ["from"] = "usesFactsFrom", ["join"] = "usesFactsFrom", ["remove"] = "usesFactsFrom", ["removeViaJoin"] = "usesFactsFrom",
         ["clear"] = "usesFactsFrom", ["entersOn"] = "usesFactsFrom", ["reduces"] = "usesFactsFrom", ["uniqueEvent"] = "usesFactsFrom",
         ["uniqueProperty"] = "usesFactsFrom", ["concurrency"] = "usesFactsFrom", ["trigger"] = "reactsTo", ["reads"] = "decidesFrom",
-        ["invokes"] = "asks", ["action"] = "asks", ["formCommand"] = "asks", ["dataQuery"] = "shows", ["populate"] = "shows", ["navigate"] = "shows",
+        ["invokes"] = "asks", ["action"] = "asks", ["actionAlternative"] = "asks", ["actionOtherwise"] = "asks", ["formCommand"] = "asks", ["dataQuery"] = "shows", ["populate"] = "shows", ["navigate"] = "shows",
+        ["whenRedeliveredEvent"] = "verifiedWith", ["redeliveryReaction"] = "verifiedWith", ["refusalConstraint"] = null, ["refusalProduces"] = null,
         ["specificationEvent"] = "verifiedWith", ["givenEvent"] = "verifiedWith", ["whenAppendedEvent"] = "verifiedWith", ["thenEvent"] = "verifiedWith", ["whenCommand"] = "verifiedWith",
-        ["declares"] = null, ["uses"] = null, ["commandEventSource"] = null, ["commandStream"] = null, ["thenOperation"] = null,
+        ["declares"] = null, ["uses"] = null, ["commandEventSource"] = null, ["commandStream"] = null, ["specificationEventSource"] = null, ["specificationStream"] = null, ["thenOperation"] = null,
         ["givenOperationFailure"] = null, ["thenCompensated"] = null, ["produces"] = null, ["authorizes"] = null, ["queryResult"] = null,
-        ["dataReadModel"] = null, ["type"] = null, ["contributes"] = null, ["template"] = null, ["specificationReadModel"] = null,
+        ["dataReadModel"] = null, ["type"] = null, ["exampleType"] = null, ["contributes"] = null, ["template"] = null, ["specificationReadModel"] = null,
         ["thenAbsentReadModel"] = null, ["thenReadModel"] = null, ["givenReadModel"] = null, ["thenQuery"] = null,
         ["compositeKeyType"] = null, ["builds"] = null, ["buildsVariant"] = null, ["appends"] = null, ["seed"] = null
     };
@@ -71,6 +72,8 @@ internal sealed class SliceReferences : ScreenplaySyntaxWalker
             ReadsSyntax value => Reference(value.ReadModel, "ReadModel", "reads", node),
             InvokesSyntax value => Reference(value.Command, "Command", "invokes", node),
             ScreenActionSyntax value => Reference(value.Command, "Command", "action", node),
+            ScreenActionAlternativeSyntax value => Reference(value.Command, "Command", "actionAlternative", node),
+            ScreenActionOtherwiseSyntax { Command: { } command } => Reference(command, "Command", "actionOtherwise", node),
             FormSyntax value => Reference(value.For, "Command", "formCommand", node),
             ScreenDataSyntax value => Reference(value.Query, "Query", "dataQuery", node),
             FormPopulateViaQuerySyntax value => Reference(value.Query, "Query", "populate", node),
@@ -80,6 +83,11 @@ internal sealed class SliceReferences : ScreenplaySyntaxWalker
             _ => null
         };
         if (reference is not null) _references.Add(reference);
+        if (node is SpecificationRedeliverySyntax redelivery)
+        {
+            _references.Add(Reference(redelivery.EventType, "Event", "whenRedeliveredEvent", node));
+            _references.Add(Reference(redelivery.Reaction, "Reaction", "redeliveryReaction", node));
+        }
         if (node is ConcurrencySyntax concurrency)
         {
             _references.AddRange(concurrency.EventTypes.Select(name => Reference(name, "Event", "concurrency", node)));

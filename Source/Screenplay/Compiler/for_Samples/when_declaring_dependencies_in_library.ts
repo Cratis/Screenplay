@@ -23,7 +23,8 @@ describe('when declaring dependencies in library', () => {
 
     it('should parse the added declarations', () => declared.value.modules.flatMap(module => module.features).find(feature => feature.name === 'Loans')!.dependsOn!.map(dependency => dependency.target).should.deep.equal(['Catalog', 'Members']));
     it('should preserve sample syntax modulo the authoring declarations', () => JSON.stringify(toSyntaxJson(stripped)).should.equal(JSON.stringify(toSyntaxJson(baseline.value))));
-    it('should add no diagnostics for valid sibling targets', () => declared.diagnostics.map(diagnostic => [diagnostic.code, diagnostic.message]).should.deep.equal(baseline.diagnostics.map(diagnostic => [diagnostic.code, diagnostic.message])));
+    it('should preserve existing compiled diagnostics', () => declared.diagnostics.filter(diagnostic => diagnostic.code !== 'PLAY0553').map(diagnostic => [diagnostic.code, diagnostic.message]).should.deep.equal(baseline.diagnostics.map(diagnostic => [diagnostic.code, diagnostic.message])));
+    it('should report the unused members declaration', () => declared.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0553').map(diagnostic => diagnostic.message).should.deep.equal(["Dependency 'Members' on 'Lending.Loans' is not used by any counted explicit reference"]));
     it('should omit empty dependency collections', () => JSON.stringify(toSyntaxJson(baseline.value)).should.not.contain('dependsOn'));
     it('should carry authored targets on wire', () => JSON.stringify(toSyntaxJson(declared.value)).should.contain('"kind":"DependsOnSyntax","target":"Catalog"'));
 });

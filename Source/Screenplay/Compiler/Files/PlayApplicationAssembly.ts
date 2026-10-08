@@ -3,6 +3,7 @@
 
 import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { validateDependencyDeclarations } from '../Dependencies/DeclaredDependencyTargets';
+import { DeclaredDependencies } from '../Dependencies/DeclaredDependencies';
 import { validateInlineEvents } from '../Parsing/InlineEventValidator';
 import { LineReader } from '../Parsing/LineReader';
 import { CommandStreamCandidates } from '../Parsing/CommandStreamCandidates';
@@ -77,6 +78,7 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     validateProjectionTargets(merged.value, context);
     validateIdentifierCompliance(merged.value, context);
     const value = validateDependencyDeclarations(merged.value, context);
+    DeclaredDependencies.validate(value, context);
     const existing = merged.diagnostics;
     const reported = new Set(existing.map(diagnosticKey));
     const all = [...existing, ...context.diagnostics.filter(diagnostic => !reported.has(diagnosticKey(diagnostic)))];

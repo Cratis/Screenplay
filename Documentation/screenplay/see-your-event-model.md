@@ -42,6 +42,15 @@ You have succeeded when you can find `PlaceOrder`, the `OrderPlaced` event it
 produces, and the specifications below the slice. The text remains the source of
 truth. See [VS Code extension](vscode.md) for editor associations and folder rules.
 
+Explicit specification routes appear in the specification header, labeled by
+`given`, `when append` or `then` occurrence. The summary retains `for`,
+`stream Source.Stream`, scalar `streamId` values and `no stream` assertions,
+including when event cards show the linked event's current name instead of the
+step's name. Headers wrap so long route summaries remain readable. Payload values
+and event links stay unchanged. This is routing
+intent only: specification routes remain syntax-only (`PLAY0268`), not executable
+route assertions. Specifications without routing statements keep their titles.
+
 ## Ask for the board in an AI chat
 
 Install the standalone tool if you do not already have it:

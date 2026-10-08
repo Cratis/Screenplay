@@ -15,7 +15,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 
 Document       = [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl
                | PersonaDecl | AuthenticationDecl | TriggerDecl | ThemeDecl
-               | LayoutDecl | UiProfileDecl | BehaviorDecl | SystemDecl | EventSourceDecl | Module | SeedDecl } ;
+               | LayoutDecl | UiProfileDecl | BehaviorDecl | SystemDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
 (* At most one domain and authentication block. Put domain first; the compiler
    reports PLAY0004 when it follows another application declaration. *)
@@ -238,6 +238,7 @@ Module         = "module", Ident, NL,
                    | ContributionDecl
                    | InteractionBinding
                    | UsesBehaviorDecl
+                   | ExampleDecl
                    | Feature },
                  DEDENT ;
 
@@ -402,6 +403,7 @@ Feature        = "feature", Ident, NL,
                    | FileImport
                    | Feature
                    | SliceDecl
+                   | ExampleDecl
                    | ContributionDecl
                    | InteractionBinding
                    | UsesBehaviorDecl },
@@ -425,6 +427,7 @@ SliceBody      = EventDecl
                | ReducerDecl
                | CaptureDecl
                | SpecificationDecl
+               | ExampleDecl
                | ReactionDecl
                | ScreenDecl
                | ConstraintDecl ;
@@ -837,28 +840,40 @@ CDLBody        = (* Change Data Capture Language grammar - covers source/key/map
 (* Specifications — Given/When/Then sub-language                   *)
 (* -------------------------------------------------------------- *)
 
+ExampleDecl    = "example", Ident, ":", QualifiedName, NL,
+                 [ INDENT, { DescriptionDecl | SpecificationEventSource | PropertyMapping | GeneratedFixture }, DEDENT ] ;
+
+(* One typed fixture, never a caller, clock or sequence of steps. Its underlying
+   declaration is an event, command or read model, not another example. Examples
+   may be declared at document, module, feature or slice scope, and alongside
+   specifications in a standalone specification document. *)
+
+InlineFixtureAssignment = Path, "=", ConcreteValue ;
+
 SpecificationDecl = "specification", Ident, NL,
                  INDENT, [ FileDirective ], { SpecificationGiven | SpecificationWhen | SpecificationThen }, DEDENT ;
 
 SpecificationGiven = OperationFailureFixture
                | "given", "caller", NL,
                  [ INDENT, { "authenticated", NL | "role", StringLiteral, NL | "claim", StringLiteral, "=", StringLiteral, NL }, DEDENT ]
-               | "given", "readmodel", Ident, NL,
+               | "given", "readmodel", QualifiedName, [ InlineFixtureAssignment ], NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "given", "clock", StringLiteral, NL
                | "given", "capture", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
-               | "given", Ident, NL,
+               | "given", QualifiedName, [ InlineFixtureAssignment ], NL,
                  [ INDENT, { SpecificationEventSource | SpecificationStream | PropertyMapping }, DEDENT ] ;
 
 (* "given clock" states the ISO 8601 instant the scenario happens at - the
    occurrence time of everything it does. "given capture" states an earlier record
    of a capture's source, so a value transition has something to transition from. *)
 
-SpecificationWhen = "when", Ident, NL,
+SpecificationWhen = "when", QualifiedName, [ InlineFixtureAssignment ], NL,
                  [ INDENT, { SpecificationEventSource | PropertyMapping | GeneratedFixture }, DEDENT ]
-               | "when", "append", Ident, NL,
+               | "when", "append", QualifiedName, [ InlineFixtureAssignment ], NL,
                  [ INDENT, { SpecificationEventSource | SpecificationStream | PropertyMapping }, DEDENT ]
+               | "when", "redelivered", QualifiedName, "to", QualifiedName, NL,
+                 [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ]
                | "when", "clock", StringLiteral, NL
                | "when", "trigger", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
@@ -896,7 +911,7 @@ CompensationExpectation = "then", "compensated", QualifiedName, NL ;
 SpecificationThen = ReturnExpectation
                | OperationExpectation
                | CompensationExpectation
-               | "then", "readmodel", Ident, [ "exactly" ], NL,
+               | "then", "readmodel", QualifiedName, [ "exactly" ], [ InlineFixtureAssignment ], NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "then", "no", "readmodel", Ident, "for", Expression, NL
                | "then", "query", QualifiedName, [ "exactly" ], NL,
@@ -904,10 +919,11 @@ SpecificationThen = ReturnExpectation
                | "then", "result", [ "exactly" ], NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
                | "then", "no", "result", NL
+               | "then", "no", "events", NL
                | "then", "error", [ StringLiteral ], NL
                | "then", "denied", NL
                | "then", "events", "in", "any", "order", NL
-               | "then", Ident, NL,
+               | "then", QualifiedName, [ InlineFixtureAssignment ], NL,
                  [ INDENT, { SpecificationEventSource | SpecificationStream | SpecificationNoStream | PropertyMapping }, DEDENT ] ;
 
 SpecificationEventSource = "for", Expression, NL ;
@@ -1041,7 +1057,21 @@ TriggerDecl    = "trigger", Ident, NL,
                  INDENT, { DescriptionDecl | FileDirective | TriggerValue }, DEDENT ;
 
 InvokesDecl    = "invokes", Ident, NL,
-                 [ INDENT, { PropertyMapping }, DEDENT ] ;
+                 [ INDENT, { PropertyMapping | RefusalBranch }, DEDENT ] ;
+RefusalBranch  = "on", "refused",
+                 [ "by", ( "validation" | "authorization" | "constraint", [ QualifiedName ] ) ], NL,
+                 INDENT, ( "acknowledge", NL | ProducesDecl, { ProducesDecl } ), DEDENT ;
+RefusalValue   = "$refusal.", ( "reason" | "constraint" | "message" ) ;
+
+(* Refusal branches and values, "when redelivered" and "then no events" are syntax-only:
+   binding refuses them with PLAY0268. No executable admission is claimed.
+   Branches are ordered; bare refusal excludes authorization. RefusalValue is
+   a String source only in branch event mappings; constraint requires a
+   "by constraint" selector. Branches cannot produce operations or inline events.
+   Redelivery names one compatible event-trigger reaction and locates exactly
+   one given event by optional "for" and all stated values, without appending it.
+   "then no events" is a leaf for non-append actions awaiting admission; it cannot
+   accompany events, event-order, error or denial expectations. *)
 
 (* What the reaction sets off. Plain "produces" has the same form as on a command;
    InlineEventProduction is not allowed inside reactions.
@@ -1082,7 +1112,19 @@ DataDecl       = "data", RequiredTypeRef, "via", "query", QualifiedName,
                  [ "by", Ident ], NL ;
 
 ActionDecl     = "action", QualifiedName, NL,
-                 [ INDENT, { ActionOption }, DEDENT ] ;
+                 [ INDENT, { ActionOption }, DEDENT ]
+               | "action", LocalizableString, NL,
+                 INDENT, { ActionAlternative | ActionOtherwise | NavigateDecl }, DEDENT ;
+
+ActionAlternative = "when", Condition, "execute", QualifiedName, NL,
+                    [ INDENT, { InteractionArgument }, DEDENT ] ;
+ActionOtherwise   = "otherwise", "hidden", NL
+                  | "otherwise", "execute", QualifiedName, NL,
+                    [ INDENT, { InteractionArgument }, DEDENT ] ;
+(* A guarded action requires at least one alternative; otherwise is optional,
+   occurs once after all alternatives, and hidden has no arguments. At most one
+   navigate is allowed. Conditions compare item.<field>[.<field>...] to literals;
+   ordering requires numbers, contains / starts with require strings. *)
 
 ActionOption   = NavigateDecl
                | "label", LocalizableString, NL ;
