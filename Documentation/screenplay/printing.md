@@ -99,8 +99,9 @@ a file does:
   When modules or features repeat an identical `authorize` gate across files, merging
   keeps one requirement and the duplicate-gate warning. Printing and collapsing the
   folder to a single document retain every gate's comments, including repeated text.
-  Comments stay together in file-path order, then source order within each file.
-  Trailing comments on gates merged across files become separate lines above the gate.
+  When gates are merged across files, the comments on every `authorize` line of every
+  gate, including trailing comments, become separate lines directly above the merged
+  gate: in file-path order, then source order within each file.
   Repeated projection `automap` settings warn (`PLAY0452`):
   the last setting wins, but printing keeps each authored line and its comments until
   a typed edit changes the mode. Then only the edited setting prints: its comment

@@ -28,10 +28,7 @@ public sealed partial class ScreenplayPrinter
         var trailing = new Dictionary<int, List<(string Text, bool Relocated)>>();
         var parents = new Dictionary<SyntaxNode, SyntaxNode>(ReferenceEqualityComparer.Instance);
         CollectParents(root, parents);
-
-        // Authorization comments may come from several files. Their list already preserves file
-        // and source order; sorting their file-local line numbers would splice explanations together.
-        foreach (var (owner, comment) in comments.OrderBy(entry => entry.Owner is AuthorizeSyntax ? entry.Owner.Location.Line : entry.Comment.Line))
+        foreach (var (owner, comment) in comments.OrderBy(entry => entry.Comment.Line))
         {
             var printedOwner = owner;
             while (!writer.Anchors.ContainsKey(printedOwner) && parents.TryGetValue(printedOwner, out var parent))
