@@ -920,6 +920,8 @@ These codes cover [inline command events](commands.md#declare-an-event-inline) a
 | `PLAY0475` | Error | An inline event declares `generation` in its header or body. Extract it before evolving generations. |
 | `PLAY0476` | Error | A production supplies unescaped system-assigned `namespace`, `sequence`, `correlation`, `causation`, `causedBy`, or `occurred`, or an inline event supplies `origin`. |
 | `PLAY0477` | Error | Event documentation is not one nonempty fenced Markdown block, or is repeated. |
+| `PLAY0558` | Error | Module, feature, slice, command, read-model or reaction documentation is not one nonempty fenced Markdown block, or is repeated. |
+| `PLAY0559` | Warning | Files give different documentation for one module or feature. The first documentation is kept. |
 
 Malformed typed mappings and duplicate destinations retain `PLAY0044` and `PLAY0193`. Descriptions retain their existing diagnostics. Event descriptions, documentation, and rename pins are authoring-only metadata (`PLAY0270`); none changes canonical ESM bytes.
 

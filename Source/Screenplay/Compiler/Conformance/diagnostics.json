@@ -210,6 +210,21 @@
             "diagnostics": []
         },
         {
+            "name": "New documentation owners require markdown fences, never bare properties",
+            "source": ["module M", "  documentation", "  feature F", "    documentation", "    slice StateChange S", "      documentation", "      command C", "        documentation", "      readmodel V", "        documentation", "      reaction R", "        documentation", "        when E"],
+            "diagnostics": ["PLAY0558@2", "PLAY0558@4", "PLAY0558@6", "PLAY0558@8", "PLAY0558@10", "PLAY0558@12"]
+        },
+        {
+            "name": "Documentation rejects empty, wrong-language and duplicate blocks",
+            "source": ["module M", "  documentation", "    ```markdown", "    ```", "  documentation", "    ```text", "    Wrong language", "    ```", "  documentation", "    ```markdown", "    First", "    ```", "  documentation", "    ```markdown", "    Second", "    ```"],
+            "diagnostics": ["PLAY0558@2", "PLAY0558@5", "PLAY0558@13"]
+        },
+        {
+            "name": "Specification descriptions keep the existing duplicate-description diagnostic",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      specification Case", "        description \"First\"", "        description \"Second\""],
+            "diagnostics": ["PLAY0147@6"]
+        },
+        {
             "name": "A unique constraint rejects a missing direct event field",
             "validate": true,
             "source": ["module M", "  feature F", "    slice StateChange S", "      event E", "        value String", "      constraint UniqueValue", "        unique missing, value on E"],

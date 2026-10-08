@@ -49,7 +49,7 @@ const primitiveTypes = ['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'Dat
 const opaqueTopLevel = new Set(['policy', 'authentication', 'seed', 'ui', 'theme', 'trigger', 'layout', 'behavior']);
 
 // What belongs in a module or feature body; at the top level of a whole document it gets a hint saying so.
-const bodyKeywords = new Set(['slice', 'feature', 'description', 'authorize', 'screen', 'dialog', 'form', 'contribute', 'on', 'uses']);
+const bodyKeywords = new Set(['slice', 'feature', 'description', 'documentation', 'authorize', 'screen', 'dialog', 'form', 'contribute', 'on', 'uses']);
 
 // Parses one document into its application syntax - the port of the C# ScreenplayParser. The placement says
 // where the document's top level belongs: the application, unless an import placed it in a module or feature.

@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { documentationItem } from './documentation-item';
+
 import { eventContextPaths } from './event-context';
 import { exampleDeclarationItems } from './example-declaration-items';
 
@@ -77,6 +79,7 @@ export const typeItems: CompletionEntry[] = [
 ];
 
 export const sliceItems: CompletionEntry[] = [
+    documentationItem,
     ...exampleDeclarationItems,
     { label: 'operation', insertText: 'operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type}', documentation: 'Reusable slice-owned operation intent; not admitted by any supported executable model (ESM) version yet.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
@@ -96,6 +99,7 @@ export const sliceItems: CompletionEntry[] = [
 ];
 
 export const commandItems: CompletionEntry[] = [
+    documentationItem,
     { label: 'property', insertText: '${1:property} ${2:Type}', documentation: 'An input of the command — a name and a type reference.' },
     { label: 'produces operation', insertText: 'produces operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type} = ${5:source}', documentation: 'Declares ordered operation intent; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
     { label: 'returns property', insertText: 'returns @${1:property}', documentation: 'Scalar response from a direct command property, only on acceptance. Executable as ESM v7.' },
@@ -166,6 +170,7 @@ export const constraintItems: CompletionEntry[] = [
 ];
 
 export const reactionItems: CompletionEntry[] = [
+    documentationItem,
     { label: 'description', insertText: 'description "${1:what this reaction does}"', documentation: 'What the reaction does — a complete statement of intent before any code exists.' },
     { label: 'when', insertText: 'when ${1:Trigger}', documentation: 'An event, a declared trigger or a host signal that sets the reaction off. A trigger needs no body.' },
     { label: 'every', insertText: 'every ${1:15} ${2|seconds,minutes,hours,days|}', documentation: 'Runs the reaction on an interval.' },
@@ -203,6 +208,7 @@ export const triggerItems: CompletionEntry[] = [
 ];
 
 export const specificationItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:rule or case witnessed}"', documentation: 'Authoring-only description of what this scenario demonstrates.' },
     { label: 'when redelivered', insertText: 'when redelivered ${1:Event} to ${2:Reaction}\n    for ${3:value}', documentation: `Selects exactly one given event occurrence for one event-trigger reaction; does not append it again. ${refusalAvailability}` },
     { label: 'given operation fails', insertText: 'given operation ${1:Name} fails', documentation: 'Failure fixture leaf; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
     { label: 'then operation', insertText: 'then operation ${1:Name}\n    ${2:input} = ${3:value}', documentation: 'Partial requested-operation assertion; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
@@ -368,5 +374,5 @@ const sliceMembers: Record<string, readonly string[]> = {
 
 export function sliceItemsFor(sliceType: string | undefined): CompletionEntry[] {
     const members = sliceType ? sliceMembers[sliceType] : undefined;
-    return members ? sliceItems.filter(item => item.label === 'example' || members.includes(item.label)) : sliceItems;
+    return members ? sliceItems.filter(item => item.label === 'example' || item.label === 'documentation' || members.includes(item.label)) : sliceItems;
 }

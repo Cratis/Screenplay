@@ -23,7 +23,13 @@ public record ReactionSyntax(
     IEnumerable<ReactionTriggerSyntax> Triggers,
     SourceLocation Location,
     string? Description = null,
-    ConditionSyntax? Where = null) : SyntaxNode(Location);
+    ConditionSyntax? Where = null) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the authoring-only markdown explaining this reaction.
+    /// </summary>
+    public string? Documentation { get; init; }
+}
 
 /// <summary>
 /// Represents one trigger clause within a reaction - what sets it off, and what it does when set off.

@@ -138,6 +138,7 @@ export interface SpecificationCallerClaimSyntax extends SyntaxNode {
 // A specification of a slice.
 export interface SpecificationSyntax extends SyntaxNode {
     readonly kind: 'SpecificationSyntax';
+    readonly description?: string | null;
     readonly examples?: readonly SpecificationExampleSyntax[];
     readonly sourceOptions?: SourceOptions;
     readonly name: string;

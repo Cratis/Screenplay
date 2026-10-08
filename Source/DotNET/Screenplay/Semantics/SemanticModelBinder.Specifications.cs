@@ -34,6 +34,11 @@ public sealed partial class SemanticModelBinder
             Dictionary<string, SemanticCommand> commands)
         {
             var origin = expansion.Specifications.SingleOrDefault(item => ReferenceEquals(item.Effective, specification));
+            if (specification.Description is not null)
+            {
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Specification '{specification.Name}' description is authoring metadata.", specification.Location);
+            }
+
             if (specification.File is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Specification '{specification.Name}' file reference is realization provenance.", specification.File.Location);

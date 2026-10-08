@@ -22,7 +22,7 @@ describe('when highlighting inline events', () => {
         expect(new RegExp(block.patterns[0].match).test('    id "Old"')).toBe(true);
         expect(new RegExp(block.patterns[0].match).test('    id String')).toBe(false);
         expect(new RegExp(block.patterns[0].match).test('    name String = id')).toBe(false);
-        expect(new RegExp(grammar.repository['description-block'].begin).test('  documentation')).toBe(false);
+        expect(new RegExp(grammar.repository['description-block'].begin).test('  documentation')).toBe(true);
     });
     it('should scope a trailing documentation comment as a comment', () => {
         const block = grammar.repository['event-description-block'];
