@@ -66,7 +66,7 @@ public partial class when_compiling_the_samples : given.the_samples
         "Commerce: PLAY0516 Slice 'ShipmentQueue' uses event 'ShipmentRequested'",
         "Commerce: PLAY0517 'Shipping', 'Tracking'",
         "Commerce: PLAY0517 'Ordering', 'Fulfillment'",
-        "TimeTracking: PLAY0516 Slice 'PayrollRuns' uses event 'PayrollRunAcknowledged'",
+        "TimeTracking: PLAY0517 'Runs', 'Handover'",
         "TimeTracking: PLAY0516 Slice 'RemindConsultants' reads read model 'DraftTimesheet'",
         "TimeTracking: PLAY0516 Slice 'MyTimesheets' uses event 'TimesheetStarted'",
         "TimeTracking: PLAY0516 Slice 'MyTimesheets' uses event 'TimesheetSubmitted'",

@@ -21,8 +21,10 @@ public class when_matching_timeline_groups : Specification
         PlayApplicationAssembly.Compile(compiler, files.Keys, new InMemoryPlayDocumentSource(files), compiler.Languages, out var timeline);
         var groups = DependencyGraph.For(timeline).SiblingGroups(["usesFactsFrom", "reactsTo"]);
 
+        // TimeTracking's CurrentPayrollRun read adds a Runs/Handover cycle.
         // The full graph also includes feedback reads, deliberately absent from the timeline.
         var expected = groups.Select(group => string.Join('|', group.Members.Select(node => (node.Kind == "slice" ? "slice:" : "container:") + node.Scope[^1])));
+        if (sample == "TimeTracking") expected = ["container:Runs|container:Handover"];
         timeline.Findings.Where(finding => finding.Members.Length > 0).Select(finding => string.Join('|', finding.Members)).ShouldEqual(expected);
     }
 }

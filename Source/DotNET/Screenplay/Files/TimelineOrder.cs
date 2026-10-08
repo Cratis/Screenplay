@@ -89,13 +89,14 @@ internal static class TimelineOrder
                 }
 
                 // At the lowest common container, facts from anywhere inside the reader's
-                // child are feedback. Exclude this read before SCC grouping, not just emission.
+                // child are feedback only for builders of the read model being read.
+                // Exclude this read before SCC grouping, not just emission.
                 if (readModel)
                 {
                     var side = consumer.Identity.Take(common + 1).ToArray();
                     var produced = slices.Where(slice => slice.Identity.Take(side.Length).SequenceEqual(side))
                         .SelectMany(slice => slice.Produced).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                    if (SliceReferences.In(producer.Syntax).Any(value => value.Timeline && value.Kind == "usesFactsFrom" &&
+                    if (SliceReferences.BuildingReadModel(producer.Syntax, reference.Name).Any(value => value.Timeline && value.Kind == "usesFactsFrom" &&
                         value.TargetKind == "Event" && produced.Contains(value.Name)))
                     {
                         continue;

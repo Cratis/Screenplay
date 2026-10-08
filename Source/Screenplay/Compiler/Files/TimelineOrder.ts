@@ -5,7 +5,7 @@ import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { eventDeclarations } from '../Syntax/EventDeclarations';
-import { sliceReferences } from '../Dependencies/SliceReferences';
+import { buildingReadModelReferences, sliceReferences } from '../Dependencies/SliceReferences';
 import { DependencyGraph } from '../Dependencies/DependencyGraph';
 import { stronglyConnectedGroups } from '../Dependencies/StronglyConnectedGroups';
 import { ApplicationSyntax, FeatureSyntax, SliceSyntax } from '../Syntax/Structure';
@@ -74,12 +74,13 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
             let common = 0;
             while (common < consumer.scope.length && common < producer.scope.length && consumer.identity[common] === producer.identity[common]) common++;
             if (common === consumer.scope.length || common === producer.scope.length) continue;
-            // At the lowest common container, the reader's whole child supplies feedback.
+            // At the lowest common container, the reader's whole child supplies feedback
+            // only for builders of the read model being read.
             // Exclude this read before SCC grouping, not just backward-edge emission.
             if (reference.readModel) {
                 const side = consumer.identity.slice(0, common + 1);
                 const facts = new Set(slices.filter(slice => side.every((name, index) => slice.identity[index] === name)).flatMap(slice => [...produced.get(slice)!]));
-                if (sliceReferences(producer.syntax).references.some(value => value.timeline && value.kind === 'usesFactsFrom' && value.targetKind === 'Event' && facts.has(value.name.toLowerCase()))) continue;
+                if (buildingReadModelReferences(producer.syntax, reference.event).some(value => value.timeline && value.kind === 'usesFactsFrom' && value.targetKind === 'Event' && facts.has(value.name.toLowerCase()))) continue;
             }
             edges.push({ ...reference, consumer, producer, container: authoredOrderKey(consumer.identity.slice(0, common)), left: consumer.identity[common], right: producer.identity[common] });
         }
