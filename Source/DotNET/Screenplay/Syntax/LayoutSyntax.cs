@@ -179,7 +179,6 @@ public record DialogTemplateSyntax(
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record SlotSyntax(string Name, string? Contributes, SourceLocation Location) : SyntaxNode(Location);
 
-
 /// <summary>
 /// Represents a template value exposed to descendants or package consumers.
 /// </summary>

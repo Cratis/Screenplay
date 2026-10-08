@@ -13,10 +13,15 @@ internal static partial class UiBindingParser
     {
         var trimmed = text.Trim();
         var first = trimmed.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
-        return first is "data" or "query" or "component"
+        return IsTypedBindingSource(first)
             ? Parse(context, $"from {trimmed}", location)
             : Parse(context, trimmed, location);
     }
+
+    static bool IsTypedBindingSource(string? source) =>
+        string.Equals(source, "data", StringComparison.Ordinal) ||
+        string.Equals(source, "query", StringComparison.Ordinal) ||
+        string.Equals(source, "component", StringComparison.Ordinal);
 
     public static UiBindingSyntax Parse(ParserContext context, string text, SourceLocation location)
     {

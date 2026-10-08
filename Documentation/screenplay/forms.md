@@ -13,12 +13,18 @@ form <Name> for <Command>
   field <property> [from <source>|compose using <Callback>] [label "<text>"]
   ...
 
+  columns auto
+  # -- or --
+  columns manual
+    column <property> [label "<text>"]
+
   on submit navigate to <Screen> [by <param>]
 ```
 
 - `form <Name> for <Command>` - top level, alongside `screen template` and `feature`, inside a `module`. A module can declare more than one; each name must be unique.
 - `populate` - where the form's initial values come from. At most one per form, and optional - a form with no `populate` starts empty.
 - `field` - binds one of the command's properties to the form. Zero or more.
+- `columns` - how a renderer should arrange command fields. `columns auto` lets the package infer columns, while `columns manual` lists the command properties in display order. At most one per form.
 - `on submit` - what happens after a successful submit. At most one per form, and optional - a form with no `on submit` stays on the current screen.
 
 ## Example
@@ -31,6 +37,11 @@ form RegisterInvoiceForm for RegisterInvoice
   field dueDate label "Due date"
   field totalAmount from calculatedTotal
   field lineItems compose using BuildLineItems
+
+  columns manual
+    column customerName label "Customer"
+    column dueDate label "Due date"
+    column totalAmount
 
   on submit navigate to InvoiceList by invoiceId
 ```
@@ -55,6 +66,24 @@ A bare `field <property>` binds straight to the command property of the same nam
 | `field <property> compose using <Callback>` | Computes the value from a callback instead of binding it directly. |
 
 `from` and `compose using` are mutually exclusive on one field; either may still carry a `label`. A field's `label` accepts an unquoted `$strings.<key>` token in place of a literal, the same as everywhere else in the document - see [Internationalization](internationalization.md).
+
+## Columns
+
+Use `columns auto` when the native command form runtime should derive the layout from the command and package defaults. Use `columns manual` when the business order matters or the screen needs deterministic columns across packages.
+
+```screenplay
+form RegisterInvoiceForm for RegisterInvoice
+  field customerName
+  field dueDate
+  field totalAmount
+
+  columns manual
+    column customerName label "Customer"
+    column dueDate label "Due date"
+    column totalAmount
+```
+
+A manual column names a command property already present in the form. The compiler preserves the column order and labels for renderers; a renderer that cannot honor manual columns must diagnose that mismatch instead of silently reverting to an automatic layout.
 
 ## Submitting
 

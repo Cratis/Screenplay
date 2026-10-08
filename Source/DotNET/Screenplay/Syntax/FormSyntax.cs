@@ -6,6 +6,27 @@ using Cratis.Screenplay.Diagnostics;
 namespace Cratis.Screenplay.Syntax;
 
 /// <summary>
+/// Defines how a command-bound form arranges command properties into columns.
+/// </summary>
+public enum FormColumnMode
+{
+    /// <summary>
+    /// The form does not declare a column mode.
+    /// </summary>
+    Unspecified = 0,
+
+    /// <summary>
+    /// Columns are inferred from the command and package defaults.
+    /// </summary>
+    Auto = 1,
+
+    /// <summary>
+    /// Columns are authored explicitly.
+    /// </summary>
+    Manual = 2
+}
+
+/// <summary>
 /// Represents a top level <c>form &lt;Name&gt; for &lt;Command&gt;</c> block - a named, command-bound input
 /// surface that a build renders wherever that command is invoked.
 /// </summary>
@@ -80,28 +101,6 @@ public record FormPopulateFromItemSyntax(SourceLocation Location) : FormPopulate
 /// <param name="ComposeUsing">The optional callback that computes the property's value.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record FormFieldSyntax(string Property, string? Label, string? From, string? ComposeUsing, SourceLocation Location) : SyntaxNode(Location);
-
-
-/// <summary>
-/// Defines how a command-bound form arranges command properties into columns.
-/// </summary>
-public enum FormColumnMode
-{
-    /// <summary>
-    /// The form does not declare a column mode.
-    /// </summary>
-    Unspecified = 0,
-
-    /// <summary>
-    /// Columns are inferred from the command and package defaults.
-    /// </summary>
-    Auto = 1,
-
-    /// <summary>
-    /// Columns are authored explicitly.
-    /// </summary>
-    Manual = 2
-}
 
 /// <summary>
 /// Represents a manually authored form column.

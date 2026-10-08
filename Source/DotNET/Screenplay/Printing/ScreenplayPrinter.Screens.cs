@@ -105,9 +105,13 @@ public partial class ScreenplayPrinter
         }
     }
 
-
     string WriteUiBinding(UiBindingSyntax binding)
     {
+        if (binding.RawText is not null)
+        {
+            return binding.RawText;
+        }
+
         var head = binding.BindingKind switch
         {
             UiBindingKind.DataContext => $"from data {binding.Path}",
@@ -236,8 +240,6 @@ public partial class ScreenplayPrinter
         }
     }
 
-
-
     void WriteScreenComponent(ScreenplayWriter writer, ScreenComponentSyntax component)
     {
         using var anchor = writer.Anchor(component);
@@ -251,9 +253,11 @@ public partial class ScreenplayPrinter
 
             foreach (var property in component.Properties)
             {
-                writer.Line(property.Binding is not null
-                    ? $"property {property.Property} {WriteUiBinding(property.Binding)}"
-                    : $"property {property.Property} = {ScreenplaySyntaxText.LocalizableString(property.Value ?? string.Empty)}", property);
+                writer.Line(
+                    property.Binding is not null
+                        ? $"property {property.Property} {WriteUiBinding(property.Binding)}"
+                        : $"property {property.Property} = {ScreenplaySyntaxText.LocalizableString(property.Value ?? string.Empty)}",
+                    property);
             }
 
             if (component.Icon is not null)

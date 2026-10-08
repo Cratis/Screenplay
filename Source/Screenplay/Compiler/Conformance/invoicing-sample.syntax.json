@@ -6507,6 +6507,119 @@
                       "kind": "ScreenBehaviorSyntax"
                     },
                     {
+                      "kind": "ScreenToolbarSyntax",
+                      "items": [
+                        {
+                          "kind": "ToolbarItemSyntax",
+                          "icon": "add",
+                          "label": "Register invoice",
+                          "name": "register",
+                          "parameters": [],
+                          "presentation": [],
+                          "syntaxKind": "Navigate",
+                          "target": "RegisterInvoiceScreen"
+                        },
+                        {
+                          "kind": "ToolbarItemSyntax",
+                          "icon": "batch",
+                          "label": "Process batch",
+                          "name": "batch",
+                          "parameters": [
+                            {
+                              "kind": "ScreenNavigationParameterSyntax",
+                              "binding": {
+                                "kind": "UiBindingSyntax",
+                                "bindingKind": "ComponentProperty",
+                                "componentId": "invoiceGrid",
+                                "componentPropertyPath": "selected.invoiceId",
+                                "expectedValueType": null,
+                                "mode": null,
+                                "nullBehavior": null,
+                                "path": "selected.invoiceId",
+                                "query": null,
+                                "rawText": null
+                              },
+                              "name": "invoiceId"
+                            }
+                          ],
+                          "presentation": [
+                            {
+                              "kind": "PresentationValueSyntax",
+                              "name": "placement",
+                              "value": "secondary"
+                            }
+                          ],
+                          "syntaxKind": "Navigate",
+                          "target": "ProcessInvoiceBatchScreen"
+                        }
+                      ],
+                      "name": "invoiceActions"
+                    },
+                    {
+                      "kind": "ScreenComponentSyntax",
+                      "component": "Cratis.Components.DataGrid",
+                      "context": {
+                        "kind": "UiBindingSyntax",
+                        "bindingKind": "QueryResult",
+                        "componentId": null,
+                        "componentPropertyPath": null,
+                        "expectedValueType": null,
+                        "mode": null,
+                        "nullBehavior": null,
+                        "path": "",
+                        "query": "ListInvoices",
+                        "rawText": null
+                      },
+                      "exposes": [
+                        {
+                          "kind": "ComponentExposedValueSyntax",
+                          "binding": {
+                            "kind": "UiBindingSyntax",
+                            "bindingKind": "ComponentProperty",
+                            "componentId": "invoiceGrid",
+                            "componentPropertyPath": "selected",
+                            "expectedValueType": null,
+                            "mode": null,
+                            "nullBehavior": null,
+                            "path": "selected",
+                            "query": null,
+                            "rawText": null
+                          },
+                          "name": "selectedInvoice"
+                        }
+                      ],
+                      "icon": "invoice",
+                      "name": "invoiceGrid",
+                      "outlets": [
+                        {
+                          "kind": "ComponentOutletSyntax",
+                          "directives": [
+                            {
+                              "kind": "ScreenSummarySyntax",
+                              "fields": [
+                                {
+                                  "kind": "ScreenFieldSyntax",
+                                  "label": "$strings.invoices.fields.number",
+                                  "property": "invoiceNumber"
+                                }
+                              ],
+                              "target": "selectedInvoice"
+                            }
+                          ],
+                          "name": "detail"
+                        }
+                      ],
+                      "presentation": [],
+                      "properties": [
+                        {
+                          "kind": "ComponentPropertySyntax",
+                          "binding": null,
+                          "property": "title",
+                          "value": "Invoices"
+                        }
+                      ]
+                    },
+                    {
                       "kind": "ScreenSectionSyntax",
                       "directives": [
                         {

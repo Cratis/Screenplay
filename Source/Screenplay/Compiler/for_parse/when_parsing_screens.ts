@@ -214,7 +214,7 @@ describe('when parsing screen release navigation and diagnostics', () => {
 
     it('should read navigation route metadata', () => navigateDirective.route!.should.equal('/invoices/{invoiceId}'));
     it('should read navigation parameters as data bindings', () => navigateDirective.parameters[0].binding.path.should.equal('selected.id'));
-    it('should read dialog toolbar items', () => toolbarDirective.items[0].itemKind.should.equal('Dialog'));
+    it('should read dialog toolbar items', () => toolbarDirective.items[0].syntaxKind.should.equal('Dialog'));
     it('should report invalid toolbar and component children', () => result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0103', 'PLAY0103', 'PLAY0103']));
 });
 

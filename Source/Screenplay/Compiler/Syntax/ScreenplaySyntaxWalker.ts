@@ -500,6 +500,12 @@ export abstract class ScreenplaySyntaxWalker {
             case 'ScreenActionSyntax':
                 if (syntax.navigate !== null) this.visitScreenDirective(syntax.navigate);
                 break;
+            case 'ScreenNavigateSyntax':
+                syntax.parameters.forEach(parameter => {
+                    this.visitNode(parameter);
+                    this.visitNode(parameter.binding);
+                });
+                break;
             case 'ScreenTemplateReferenceSyntax':
                 syntax.slots.forEach(slot => {
                     this.visitNode(slot);
@@ -515,6 +521,32 @@ export abstract class ScreenplaySyntaxWalker {
                 break;
             case 'ScreenSummarySyntax':
                 syntax.fields.forEach(node => this.visitNode(node));
+                break;
+            case 'ScreenComponentSyntax':
+                if (syntax.context !== null) this.visitNode(syntax.context);
+                syntax.properties.forEach(property => {
+                    this.visitNode(property);
+                    if (property.binding !== null) this.visitNode(property.binding);
+                });
+                syntax.exposes.forEach(exposed => {
+                    this.visitNode(exposed);
+                    this.visitNode(exposed.binding);
+                });
+                syntax.presentation.forEach(node => this.visitNode(node));
+                syntax.outlets.forEach(outlet => {
+                    this.visitNode(outlet);
+                    outlet.directives.forEach(node => this.visitScreenDirective(node));
+                });
+                break;
+            case 'ScreenToolbarSyntax':
+                syntax.items.forEach(item => {
+                    this.visitNode(item);
+                    item.parameters.forEach(parameter => {
+                        this.visitNode(parameter);
+                        this.visitNode(parameter.binding);
+                    });
+                    item.presentation.forEach(node => this.visitNode(node));
+                });
                 break;
             case 'ScreenCodeSyntax':
                 this.visitNode(syntax.code);

@@ -316,7 +316,6 @@ internal static partial class ScreenParser
         return new(target, fields, line.Location);
     }
 
-
     static ScreenComponentSyntax? ParseComponent(ParserContext context, SourceLine line)
     {
         var match = ComponentRegex().Match(line.Content);

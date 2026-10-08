@@ -19,6 +19,7 @@ public class when_holding_invoicing_to_the_language : Specification
 {
     static readonly (string Construct, int Issue, (string Path, Type[] Nodes)[] Fixtures)[] Preview =
     [
+
         // The larger exact-numbers transport vector intentionally has unresolved declarations and warnings.
         ("`numbers exact`", 285, [("Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play", [])]),
         ("`eventsource`, `stream`, command routes", 302,
@@ -38,19 +39,9 @@ public class when_holding_invoicing_to_the_language : Specification
     [
         (typeof(FileImportSyntax), "Samples/Commerce/application.play", "Composition is shown by Commerce, not a single-document application."),
         (typeof(FileConstraintSyntax), "Source/DotNET/Screenplay/for_ScreenplayCompiler/invoicing.play", "Legacy file constraints warn with PLAY0396; with_a_file pins the warning, so they cannot enter warning-free Samples."),
-        (typeof(ComponentExposedValueSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "The screen-release package component contract is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
-        (typeof(ComponentOutletSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "The screen-release package component contract is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
-        (typeof(ComponentPropertySyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "The screen-release package component contract is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
-        (typeof(FormColumnSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Manual form columns are covered by the focused round-trip spec until TypeScript conformance admits them into Samples/Invoicing."),
-        (typeof(PresentationValueSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Toolbar and component presentation metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
-        (typeof(ScreenComponentSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "The screen-release package component contract is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
-        (typeof(ScreenNavigationParameterSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Parameterized screen navigation is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
-        (typeof(ScreenToolbarSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Toolbar items are covered by the focused round-trip spec until TypeScript conformance admits them into Samples/Invoicing."),
         (typeof(TemplateAssignmentSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Hierarchical template assignments are covered by the focused round-trip spec until TypeScript conformance admits them into Samples/Invoicing."),
         (typeof(TemplateExposedValueSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Template metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
         (typeof(TemplateOutletSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Template metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
-        (typeof(ToolbarItemSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Toolbar item metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing."),
-        (typeof(UiBindingSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Typed UI binding metadata is covered by the focused round-trip spec until TypeScript conformance admits it into Samples/Invoicing.")
     ];
 
     // No production error/trivia SyntaxNode kinds exist today. Never use this list for authoring constructs.

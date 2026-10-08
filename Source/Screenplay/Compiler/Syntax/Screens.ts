@@ -189,7 +189,7 @@ export type ToolbarItemKind = 'Unknown' | 'Action' | 'Navigate' | 'Dialog';
 export interface ToolbarItemSyntax extends SyntaxNode {
     readonly kind: 'ToolbarItemSyntax';
     readonly name: string;
-    readonly itemKind: ToolbarItemKind;
+    readonly syntaxKind: ToolbarItemKind;
     readonly target: string;
     readonly label: string | null;
     readonly icon: string | null;

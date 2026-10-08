@@ -570,8 +570,6 @@ public sealed partial class ScreenplayPrinter :
         }
     }
 
-
-
     void WriteFormColumns(ScreenplayWriter writer, FormSyntax form)
     {
         if (form.ColumnMode == FormColumnMode.Unspecified)
@@ -673,8 +671,6 @@ public sealed partial class ScreenplayPrinter :
         }
     }
 
-
-
     void WriteTemplateMetadata(
         ScreenplayWriter writer,
         string? category,
@@ -694,9 +690,11 @@ public sealed partial class ScreenplayPrinter :
 
         foreach (var exposed in exposes)
         {
-            writer.Line(exposed.Type is null
-                ? $"exposes {exposed.Name}"
-                : $"exposes {exposed.Name} {ScreenplaySyntaxText.TypeRef(exposed.Type)}", exposed);
+            writer.Line(
+                exposed.Type is null
+                    ? $"exposes {exposed.Name}"
+                    : $"exposes {exposed.Name} {ScreenplaySyntaxText.TypeRef(exposed.Type)}",
+                exposed);
         }
 
         foreach (var outlet in outlets)

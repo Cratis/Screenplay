@@ -120,6 +120,61 @@ Widgets:
 | `table <name>` | `column <property> [label "<text>"]` rows and `on row-click navigate to <Screen> [by <param>]` |
 | `summary <ReadModel>` | `field <property> label "<text>"` rows |
 | `title "<text>"` | A section title |
+| `toolbar <name>` | `item` actions, navigation entries and dialog entries with labels, icons, parameters and presentation hints |
+| `component <Package.Component> <name>` | A package component instance with typed bindings, literal properties, presentation hints, outputs and recursive outlets |
+
+## Package components and typed bindings
+
+Use `component` when a package supplies the widget, but the authored screen still needs a lossless Screenplay representation for Studio, Stage and MCP tools.
+
+```screenplay
+screen BrowseInvoices
+  data InvoiceList via query AllInvoices
+
+  toolbar main
+    item edit action EditInvoice
+      label "Edit"
+      icon edit
+      presentation placement "primary"
+    item details navigate to InvoiceDetails
+      parameter invoiceId from component invoices.selectedItem.id
+
+  component scene.web.DataGrid invoices
+    context from query AllInvoices.items
+    property selectedItem from component invoices.selectedItem null preserve
+    property title = "Invoices"
+    icon table
+    presentation density "compact"
+    exposes selectedInvoice from component invoices.selectedItem
+    outlet detail
+      summary selectedInvoice
+        field invoiceId label "Invoice"
+```
+
+Bindings are typed. A legacy bare binding such as `context selectedInvoice` is still accepted and lowers to `from data selectedInvoice`.
+
+| Source | Syntax | Meaning |
+| --- | --- | --- |
+| Data context | `from data <path>` | Reads from the inherited data context for the element. |
+| Query result | `from query <QueryName>[.<path>]` | Reads from the latest result of a named screen query. |
+| Component output | `from component <stableInstanceId>.<outputPath>` | Reads an exposed value from another stable component instance. |
+| Literal | `property <name> = "value"` | Assigns a literal property value, not a binding. |
+
+A binding may carry `mode oneWay`, `mode twoWay`, `null propagate`, `null clear`, `null preserve` and `expected <Type>`. Unsupported modifiers, malformed query bindings and malformed component bindings are reported as diagnostics and the raw authored text is preserved in the AST so an authoring tool can show and repair it. The compiler does not guess Stage-specific prefixes or reinterpret an invalid string.
+
+These nodes are authoring syntax. The compilers preserve them, the MCP schema exposes them, and Stage decides whether a package/profile combination can execute them. An older renderer must reject unsupported components, packages or binding kinds explicitly instead of silently dropping the modeled UI.
+
+## Navigation metadata
+
+A navigation can carry an authored route and named parameters without turning a screen into a router implementation:
+
+```screenplay
+navigate to InvoiceDetails
+  route "/invoices/{invoiceId}"
+  parameter invoiceId from data selectedInvoice.invoiceId
+```
+
+Toolbar navigation items use the same parameter binding syntax. Route strings and parameter bindings are preserved through parser, printer, JSON schema and MCP edit cycles.
 
 ## Level 3 — Template with inline code
 

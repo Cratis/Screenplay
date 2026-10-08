@@ -375,8 +375,8 @@ function parseToolbarItem(context: ParserContext, line: SourceLine): ToolbarItem
         }
         parsePresentationValue(context, child, presentationValues);
     }
-    const itemKind: ToolbarItemKind = match[2] === 'navigate' ? 'Navigate' : match[2] === 'dialog' ? 'Dialog' : 'Action';
-    return { kind: 'ToolbarItemSyntax', name: match[1], itemKind, target: match[3], label: itemLabel, icon, parameters, presentation: presentationValues, location: locationOf(line) };
+    const syntaxKind: ToolbarItemKind = match[2] === 'navigate' ? 'Navigate' : match[2] === 'dialog' ? 'Dialog' : 'Action';
+    return { kind: 'ToolbarItemSyntax', name: match[1], syntaxKind, target: match[3], label: itemLabel, icon, parameters, presentation: presentationValues, location: locationOf(line) };
 }
 
 function parseUiBindingValue(context: ParserContext, text: string, line: SourceLine) {

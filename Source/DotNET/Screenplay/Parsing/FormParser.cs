@@ -143,8 +143,6 @@ internal static partial class FormParser
         return new(match.Groups[1].Value, label, from, composeUsing, line.Location);
     }
 
-
-
     static FormColumnMode? ParseColumns(ParserContext context, SourceLine line, List<FormColumnSyntax> columns)
     {
         if (ColumnsAutoRegex().IsMatch(line.Content))

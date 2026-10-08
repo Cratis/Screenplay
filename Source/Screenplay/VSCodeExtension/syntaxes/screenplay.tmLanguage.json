@@ -301,7 +301,7 @@
                     "name": "keyword.operator.logical.screenplay"
                 },
                 {
-                    "match": "\\b(authorize|validate|produces|reads|as|handler|performer|observable|identifier|reason|from|require|when|given|then|arguments|result|error|template|data|component|context|property|literal|icons|packages|outlet|toolbar|item|presentation|exposes|mode|oneWay|twoWay|null|propagate|clear|preserve|expected|action|otherwise|hidden|execute|with|contains|starts|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|released|ignore|casing|file|rule|message|severity|information|warning|matches|all|max|min|length|today|not|no|empty|and|or|authenticated|role|claim|subject|event|query|layout|translate|key|description|concurrency|eventSource|sourceType|streamType|streamId|tag|for|readmodel|provider|nested|exclude|literal|automap)\\b",
+                    "match": "\\b(authorize|validate|produces|reads|as|handler|performer|observable|identifier|reason|from|require|when|given|then|arguments|result|error|template|data|component|context|property|literal|icons|packages|outlet|toolbar|presentation|exposes|mode|oneWay|twoWay|null|propagate|clear|preserve|expected|action|otherwise|hidden|execute|with|contains|starts|section|navigate|to|by|via|filter|on|label|column|field|table|summary|title|unique|released|ignore|casing|file|rule|message|severity|information|warning|matches|all|max|min|length|today|not|no|empty|and|or|authenticated|role|claim|subject|event|query|layout|translate|key|description|concurrency|eventSource|sourceType|streamType|streamId|tag|for|readmodel|provider|nested|exclude|literal|automap)\\b",
                     "name": "keyword.other.screenplay"
                 }
             ]

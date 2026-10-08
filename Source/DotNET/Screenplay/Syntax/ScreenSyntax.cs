@@ -6,6 +6,32 @@ using Cratis.Screenplay.Diagnostics;
 namespace Cratis.Screenplay.Syntax;
 
 /// <summary>
+/// Represents what a toolbar item activates.
+/// </summary>
+public enum ToolbarItemKind
+{
+    /// <summary>
+    /// The item target is unknown.
+    /// </summary>
+    Unknown = 0,
+
+    /// <summary>
+    /// The item executes a command or behavior.
+    /// </summary>
+    Action = 1,
+
+    /// <summary>
+    /// The item navigates to a screen.
+    /// </summary>
+    Navigate = 2,
+
+    /// <summary>
+    /// The item opens a dialog template.
+    /// </summary>
+    Dialog = 3
+}
+
+/// <summary>
 /// Represents a <c>screen</c> declaration - the user interface of a slice.
 /// </summary>
 /// <param name="Name">The name of the screen.</param>
@@ -257,32 +283,6 @@ public record ComponentOutletSyntax(string Name, IEnumerable<ScreenDirectiveSynt
 /// <param name="Items">The toolbar items.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record ScreenToolbarSyntax(string Name, IEnumerable<ToolbarItemSyntax> Items, SourceLocation Location) : ScreenDirectiveSyntax(Location);
-
-/// <summary>
-/// Represents what a toolbar item activates.
-/// </summary>
-public enum ToolbarItemKind
-{
-    /// <summary>
-    /// The item target is unknown.
-    /// </summary>
-    Unknown = 0,
-
-    /// <summary>
-    /// The item executes a command or behavior.
-    /// </summary>
-    Action = 1,
-
-    /// <summary>
-    /// The item navigates to a screen.
-    /// </summary>
-    Navigate = 2,
-
-    /// <summary>
-    /// The item opens a dialog template.
-    /// </summary>
-    Dialog = 3
-}
 
 /// <summary>
 /// Represents one toolbar item.

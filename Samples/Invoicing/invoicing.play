@@ -303,6 +303,8 @@ ui profile Desktop
   packages
     Cratis.Components
     Cratis.Components.Charts
+  icons
+    Cratis.Icons
   layout AppShell
   theme Nordic
 
@@ -311,6 +313,8 @@ ui profile Mobile
   target size compact
   packages
     Cratis.Components
+  icons
+    Cratis.Icons
   layout PortalShell
   theme NordicDark
 
@@ -447,6 +451,12 @@ module Invoicing
     field paymentTerms
     field dueDate        label "Due date"
     field isProForma     label "Pro forma"
+
+    columns manual
+      column invoiceNumber  label $strings.invoices.fields.number
+      column customerId     label "Customer"
+      column dueDate        label "Due date"
+      column currency       label "Currency"
 
     on submit navigate to InvoiceDetails by invoiceId
 
@@ -1282,6 +1292,23 @@ module Invoicing
           refresh ListInvoices
         on interval 30 seconds
           refresh ListInvoices
+        toolbar invoiceActions
+          item register navigate to RegisterInvoiceScreen
+            label "Register invoice"
+            icon add
+          item batch navigate to ProcessInvoiceBatchScreen
+            label "Process batch"
+            icon batch
+            parameter invoiceId from component invoiceGrid.selected.invoiceId
+            presentation placement "secondary"
+        component Cratis.Components.DataGrid invoiceGrid
+          context from query ListInvoices
+          property title = "Invoices"
+          icon invoice
+          exposes selectedInvoice from component invoiceGrid.selected
+          outlet detail
+            summary selectedInvoice
+              field invoiceNumber label $strings.invoices.fields.number
         section registerInvoiceInput
           title "Register invoice"
           on click
