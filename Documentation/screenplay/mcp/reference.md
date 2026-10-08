@@ -226,7 +226,7 @@ Use `dependencies` for a declaration's scoped indexed references instead.
 | `view` | String | `edges` | `edges`, `cycles`, `order`, `unresolved`, `declarations` |
 | `from` | String | `module` | `slice`, `feature`, `module` |
 | `to` | String | `module` | `slice`, `feature`, `module`, `context` |
-| `scope` | String | Whole application | Exact module, feature, slice or context address; includes descendants |
+| `scope` | String | Whole application | Exact, unambiguous module, feature, slice or context address; includes descendants |
 | `direction` | String | `outgoing` | `outgoing` filters consuming nodes; `incoming` filters producing nodes in the edges view |
 | `kinds` | String array | All kinds except test-only references | Any subset of the kinds below |
 | `includeTestOnly` | Boolean | `false` | Allows specification references, including imported specification facts |
@@ -242,7 +242,10 @@ fallbacks), `shows` (queries and screen navigation),
 `verifiedWith` (specification events and commands), and `outsideTheModel`
 (imported event contracts without a local producer). References to shared
 application types, concepts, policies and triggers are excluded and counted.
-Unresolved graph references never become edges.
+Unresolved graph references never become edges. Reference capture for `reads`,
+concurrency dimensions and event lists, and reducer headers and rules follows
+.NET's UTF-16 identifier recognition: supplementary-plane letters are not word
+characters in these declarations and do not create captured names.
 
 `view: "declarations"` pages opted-in containers in syntax order. Each item has a `container`, header `location`, `declarations` (target text, resolved address, location and status `used`, `provisional`, `unused` or `invalid`) and counted `edges` grouped by consumer, producer, kind, coverage status and covering declarations. An edge is `declared`, `provisional` or `undeclared`, with its `coveringDeclarations` and an `evidence` array of reference names, roles, locations and ambiguous alternatives. `evidenceLimit` bounds that array per edge (default `3`, maximum `20`); `evidenceCount` stays complete and `evidenceTruncated` reports omitted references. A limit of `0` returns counts and coverage without evidence. Ambiguous ownership is always provisional, even when no declaration covers a candidate; it never raises an undeclared warning. A declaration used by certain evidence remains `used` even if other evidence is ambiguous.
 
@@ -277,7 +280,11 @@ mixed levels. Same-level cycle items contain ordered `members`. The `order` view
 pages per-container `container`, suggested `children` and `changed`, independently
 of from/to levels. The `unresolved` view pages consumer, kind, role, name and
 location. Scope filters cycle members, order containers or unresolved consumers;
-direction applies only to edges. Coverage also lists unused imports.
+direction applies only to edges. Scope resolves to one node before filtering its
+actual descendants. An unknown address or an address shared by different node kinds
+(for example, a slice and its sibling feature) returns JSON-RPC `-32602`. For an
+ambiguous address, use an unambiguous ancestor or descendant scope, or omit scope.
+Coverage also lists unused imports.
 
 Cycles and order use only `usesFactsFrom`, `reactsTo` and `decidesFrom`. After
 removing internal cycle edges, the suggestion puts producers first, with authored

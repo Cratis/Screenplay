@@ -62,6 +62,31 @@ public class and_the_finding_is_timeline_order : for_McpAuthoringWorkflow.given.
     }
 
     [Fact]
+    void should_preview_a_source_only_model_in_a_fresh_folder()
+    {
+        var source = when_reading_timeline_repairs.Source.Replace("Items optional", "Items[]", StringComparison.Ordinal).Replace("        by id Uuid\n", string.Empty, StringComparison.Ordinal);
+        var path = Path.Combine(RootPath, "application.play");
+        File.WriteAllText(path, source);
+        Initialize();
+        var opened = Open();
+        var repair = Page("repairs", opened.GetProperty("revision").GetString()!).EnumerateArray().Single();
+        var proposal = Result("propose-repair", new
+        {
+            expectedRevision = opened.GetProperty("revision").GetString(),
+            expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            diagnosticCode = "PLAY0516",
+            subject = repair.GetProperty("subject"),
+            formatting = "CanonicalizeTouchedDocuments"
+        });
+        var candidate = Candidate(proposal);
+        candidate.Compilation.Value.ShouldBeNull();
+        candidate.IdentityCatalog.Documents.ShouldEqual(candidate.Documents.Select(document => new DocumentIdentityAssignment(document.StableKey, document.Id, SemanticIdentityOrigin.Persisted)));
+        candidate.Compilation.Diagnostics.Where(diagnostic => diagnostic.Code == "PLAY0516").ShouldBeEmpty();
+        File.ReadAllText(path).ShouldEqual(source);
+        File.Exists(Path.Combine(RootPath, ".screenplay", "identities.json")).ShouldBeFalse();
+    }
+
+    [Fact]
     void should_keep_the_pinned_path_unsupported()
     {
         File.WriteAllText(Path.Combine(RootPath, "application.play"), when_reading_timeline_repairs.Source);
