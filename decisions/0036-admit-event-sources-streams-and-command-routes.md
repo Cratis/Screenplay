@@ -223,7 +223,7 @@ Until each consumer admits the version, it refuses it explicitly.
 
 1. **Runtime meaning.** Specs cite the Chronicle and Arc sources above. The Chronicle conformance issue exists. Stage pins the precedence case from j.
 2. **Canonical form.** A golden on top of v7 covers:
-   - keyed, unkeyed and composite streams;
+   - keyed and unkeyed streams, and composite streams (if 0033's part joins);
    - pinned sources and streams, and a source without an identifier type;
    - UUID-, text- and integer-keyed routes, with integers adjacent to both bounds;
    - a literal stream id, and a command with both `response` and `route`;
@@ -233,9 +233,9 @@ Until each consumer admits the version, it refuses it explicitly.
    - a reaction-invoked routed command, and a reaction's direct production staying unrouted;
    - `Rejected(Contract)` for each formatting failure, with cascade facts kept;
    - precedence against authorization, validation and requirements;
-   - routed `given` history with no producer, and with a conflicting producer;
-   - `then` route, stream-id and `unrouted` comparison;
-   - a composite `then` that differs in one part, and one that passes with a UUID in another case (if 0033's part joins);
+   - routed `given` history with no producer, and with a conflicting producer (if 0031's part joins);
+   - `then` route, stream-id and `unrouted` comparison (if 0031's part joins);
+   - a composite `then` that differs in one part, and one that passes with a UUID in another case (if both 0031's and 0033's parts join);
    - an any-order case where greedy matching fails but an assignment exists, passing only at this version (if 0031's part joins).
 
    Items marked "if … joins" are required only for a part that joins. A part that misses the claim needs a corpus vector showing it is still refused with PLAY0268.

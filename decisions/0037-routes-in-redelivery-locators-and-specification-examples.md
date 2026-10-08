@@ -37,7 +37,7 @@ Decision [0031](0031-event-source-and-stream-in-specifications.md) lets a specif
 - Expansion merges values and `for` only (`SpecificationExamples.cs:279-288`).
 - MCP `find-fixtures` reports every route row as `authored` and says "Examples never contribute routes" (`McpFixtureQueries.cs:17,95-107`).
 
-**Execution.** The admission of routes, decision [0036](0036-admit-event-sources-streams-and-command-routes.md), lists both as non-goals unless their own decision is accepted before its claim.
+**Execution.** Decision [0036](0036-admit-event-sources-streams-and-command-routes.md), which admits routes, qualifies both. Example routes become executable wherever specification routes are admitted. Locator routes also need 0030's separate redelivery admission.
 
 ## Decision
 
@@ -142,7 +142,11 @@ specification Moving_a_deposit
   - `no stream` on `given` or `when append`;
   - the effective `for` against the effective route (PLAY0550);
   - a contradiction with the command under test (PLAY0551, `then` only).
-- **No duplicates.** An inherited route's location still points at the example, so a declaration error is reported once however many steps use the example. A route that every step overrides is still checked at the example.
+- **No duplicates.**
+  - An inherited route's location still points at the example, so a declaration error is reported once however many steps use the example.
+  - A `for` and route pair inherited unchanged reuses the declaration result and adds no step diagnostic.
+  - Contextual PLAY0550 reports only pairs an override makes newly incompatible.
+  - A route that every step overrides is still checked at the example.
 - **Both compilers.** The validators in both get an origin-aware pass over effective steps, instead of validating only the expanded syntax.
 
 **Origin reporting**
@@ -227,6 +231,7 @@ Two givens on different streams can never be told apart by a redelivery locator,
   - an example's `for` checked against its route when the example is unused, when its event has no producer, and when a producer has a different type;
   - a step whose route moves the example to another source, so its `for` is checked again;
   - an example used by several steps, reporting its declaration error once;
+  - an invalid `for` and route pair inherited unchanged by several steps, reported once at the example;
   - an invalid example route that every step overrides, still reported at the example;
   - a `given` replacing an inherited `no stream`, and a `then` replacing an inherited route with `no stream`.
 - **MCP**: `find-fixtures` origin rows, and the readiness case for examples.
