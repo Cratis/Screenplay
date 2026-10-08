@@ -72,9 +72,19 @@ test('none without a comment reason fails, including a reason only in the body',
     assert.equal((await verify({ labels: none, comments: ['Corpus impact: none -   ', 'Corpus impact: none - ---'] })).code, 1);
 });
 
-test('none rejects deferred reasons', async () => {
-    for (const reason of ['will do later', 'follow-up', 'followup', 'TBD', 'todo']) {
-        assert.equal((await verify({ labels: none, comments: [`Corpus impact: none - ${reason}`] })).code, 1, reason);
+test('none accepts hyphen, en dash, em dash and colon separators case-insensitively', async () => {
+    for (const separator of ['-', '–', '—', ':']) {
+        const result = await verify({ labels: none, comments: [`cOrPuS iMpAcT: NoNe${separator} internal refactor, no behavior change`] });
+        assert.equal(result.code, 0, separator);
+        assert.equal(result.evidence, 'internal refactor, no behavior change');
+    }
+});
+
+test('none rejects empty, non-letter and deferred reasons with every separator', async () => {
+    for (const separator of ['-', '–', '—', ':']) {
+        for (const reason of ['', '   ', '---', 'will do later', 'follow-up', 'followup', 'TBD', 'todo']) {
+            assert.equal((await verify({ labels: none, comments: [`Corpus impact: none ${separator} ${reason}`] })).code, 1, `${separator} ${reason}`);
+        }
     }
 });
 
@@ -153,8 +163,34 @@ test('GraphQL adapter pages cross-references on the live PR', async () => {
     assert.deepEqual(cursors, [null, 'next']);
 });
 
-test('API cannot-run errors are not policy failures; only an issue 404 means nonexistent', async () => {
-    assert.equal(await githubApi('token', async () => response({}, 404)).issueExists(529), false);
+test('issue adapter treats 404 and 410 as missing and accepts a transferred issue', async () => {
+    for (const status of [404, 410]) {
+        assert.equal(await githubApi('token', async () => response({}, status)).issueExists(529), false, status);
+    }
+    assert.equal(await githubApi('token', async () => response({ message: 'Moved Permanently' }, 301)).issueExists(529), true);
+});
+
+test('runner distinguishes missing, transferred and failed issue lookups', async () => {
+    for (const [status, expected] of [[404, 1], [410, 1], [301, 0], [200, 0], [302, 2], [400, 2], [401, 2], [403, 2], [429, 2], [500, 2]]) {
+        const code = await run({
+            env: { GITHUB_REPOSITORY: repository, PR_NUMBER: '495', GITHUB_TOKEN: 'token' },
+            fetchApi: async url => {
+                if (url.endsWith('/pulls/495')) return response({ draft: false, user: { login: 'woksin' }, changed_files: 1, labels: tracked, body: 'Cratis/AI#529' });
+                if (url.includes('/files?')) return response([languageFile]);
+                if (url.includes('/comments?')) return response([]);
+                if (url.endsWith('/Cratis/AI/issues/529')) return response({ message: 'Issue lookup' }, status);
+                if (url.endsWith('/graphql')) return response({ data: { repository: { pullRequest: { timelineItems: {
+                    nodes: [], pageInfo: { hasNextPage: false }
+                } } } } });
+                throw new Error(`Unexpected API read ${url}`);
+            },
+            log() {}
+        });
+        assert.equal(code, expected, status);
+    }
+});
+
+test('API cannot-run errors are not policy failures', async () => {
     for (const status of [403, 429, 500]) {
         await assert.rejects(githubApi('token', async () => response({}, status)).issueExists(529), /GitHub API/);
     }

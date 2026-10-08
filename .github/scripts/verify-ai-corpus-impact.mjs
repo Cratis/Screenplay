@@ -18,7 +18,7 @@ function references(text) {
 function noImpactReason(comments) {
     for (const comment of comments) {
         for (const line of String(comment.body ?? '').split(/\r?\n/)) {
-            const match = /^Corpus impact: none -\s*(.*)$/i.exec(line.trim());
+            const match = /^Corpus impact:\s*none\s*[-–—:]\s*(.*)$/i.exec(line.trim());
             const reason = match?.[1].trim();
             if (reason && /\p{L}/u.test(reason) && !/later|follow-?up|TBD|todo/i.test(reason)) {
                 return reason;
@@ -106,8 +106,9 @@ export function githubApi(token, fetchApi = fetch) {
             ...(body ? { body: JSON.stringify(body) } : {}),
             signal: AbortSignal.timeout(15000)
         });
-        if (allowMissing && response.status === 404) return null;
-        if (!response.ok) throw new Error(`GitHub API ${endpoint} returned HTTP ${response.status}.`);
+        if (allowMissing && [404, 410].includes(response.status)) return null;
+        // Fetch follows redirects by default; a surfaced 301 also identifies an existing, transferred issue.
+        if (!response.ok && !(allowMissing && response.status === 301)) throw new Error(`GitHub API ${endpoint} returned HTTP ${response.status}.`);
         return response.json();
     }
 

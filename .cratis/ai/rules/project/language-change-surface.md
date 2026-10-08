@@ -11,8 +11,16 @@ documentation and the samples. A change to the language reaches all of them in t
 This applies to any change that alters what a `.play` author can write, what the tools report about it or what
 it means: constructs, keywords, grammar, diagnostics, executable-model admission, printer output, repairs,
 rename, MCP tools and descriptions, CLI commands, editor features, deprecations, removals and bug fixes that
-change what compiles. It covers code under `Source/DotNET/Screenplay*`, `Source/DotNET/Tool` and
-`Source/Screenplay`, and the language documentation.
+change what compiles. The corpus impact gate covers files under these exact roots:
+
+- `Source/DotNET/Screenplay/`, `Source/DotNET/Screenplay.Mcp/`, `Source/DotNET/Tool/` and
+  `Source/DotNET/Screenplay.CanonicalCorpus/`.
+- `Source/Screenplay/Compiler/`, `Source/Screenplay/Monaco/`, `Source/Screenplay/VSCodeExtension/`,
+  `Source/Screenplay/EventModels/` and `Source/Screenplay/McpApp/`.
+- `Documentation/screenplay/` and `Samples/`.
+
+Paths containing a component starting with `for_` or ending with `.Specs` are excluded. For renames,
+the gate checks both the previous and current paths.
 
 Load the `screenplay-language-change` skill before starting and follow its checklist. The non-negotiables:
 

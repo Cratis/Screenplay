@@ -33,6 +33,9 @@ jobs:
         with:
           node-version: 23.x
 
+      - name: Test corpus impact verifier
+        run: node --test .github/scripts/tests/*.test.mjs
+
       - name: Verify corpus impact
         env:
           GITHUB_TOKEN: ${{ github.token }}
