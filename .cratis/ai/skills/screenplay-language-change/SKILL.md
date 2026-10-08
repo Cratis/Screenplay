@@ -108,11 +108,17 @@ Mirror CI (`.github/workflows/dotnet-build.yml`, `javascript-build.yml`). Run ea
 only the affected ones while iterating; run the full set before reporting done.
 
 ```bash
-dotnet test --configuration Debug                       # compiler, MCP, Tool, samples, documentation specs
 yarn                                                    # once
 yarn workspaces foreach -Rt --from @cratis/screenplay-mcp-app run build   # MCP packing needs the board page
-yarn build && yarn compile && yarn lint:ci && yarn test # every TypeScript workspace
-dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj --configuration Release
+dotnet test --configuration Debug                       # compiler, MCP, Tool, samples, documentation specs
+dotnet build --configuration Release -p:Version=9999.0.0   # whole solution, CI warning settings
+dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj --configuration Release --no-build --no-restore
+dotnet pack --no-build --configuration Release -o ./Artifacts/NuGet -p:Version=9999.0.0
+python3 Source/DotNET/Screenplay.Contexts/verify-package.py ./Artifacts/NuGet 9999.0.0
+yarn build                                              # then, each as its own phase:
+yarn compile
+yarn lint:ci
+yarn test
 dotnet run --project Source/DotNET/Tool -- --warnaserror Samples/Invoicing
 ```
 
@@ -122,7 +128,7 @@ Tick each before reporting a language change complete. "N/A" needs a reason you 
 
 - [ ] Syntax tree, parser, walker and AST schema updated; schema and collection goldens regenerated and reviewed.
 - [ ] Diagnostic code added in C#, TypeScript and Monaco lists; listed in `Documentation/screenplay/diagnostics.md`.
-- [ ] Binder, validators and ESM admission updated, or the construct is refused with `PLAY0268` and documented.
+- [ ] Binder, validators and ESM admission updated, or the construct is refused by an explicit binder disposition with a specification, and documented.
 - [ ] ESM goldens regenerated when serialized bytes changed; `Screenplay.CanonicalCorpus` checked.
 - [ ] Printer prints the construct and the round-trip specs hold.
 - [ ] Folder merge, layout, repairs, rename and reference evaluator updated or ruled out.
@@ -135,6 +141,6 @@ Tick each before reporting a language change complete. "N/A" needs a reason you 
 - [ ] `Samples/Invoicing` (and any natural sample) uses the construct; sample READMEs current.
 - [ ] Decision record written or updated when the change is a ruling.
 - [ ] cspell lists updated for new words.
-- [ ] `dotnet test` and the TypeScript gates in section 6 pass.
+- [ ] Every section 6 phase passes, as CI runs it: `dotnet test` (Debug), Release build, CanonicalVectors Release tests, `dotnet pack` with `verify-package.py`, and `yarn build`, `compile`, `lint:ci`, `test`.
 - [ ] Issues opened or linked for every affected repository, `Cratis/AI` first.
 - [ ] Pull request comment states `Corpus impact: ...`; the pull request body is release-note only.

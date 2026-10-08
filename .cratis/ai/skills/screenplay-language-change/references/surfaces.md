@@ -68,10 +68,13 @@ Review the diff, then rerun without the variable.
 
 ### 5. Binder, semantic validators, ESM admission
 
-- Paths: `Semantics/SemanticModelBinder.*.cs`, `SemanticModelValidator.*.cs`, `SemanticValueValidator.cs`,
+- Paths: `Languages/ScreenplayLanguageRegistry.cs` (built-in triggers and inline-code languages; keep aligned
+  with editors and downstream consumers), `Semantics/SemanticModelBinder.*.cs`, `SemanticModelValidator.*.cs`, `SemanticValueValidator.cs`,
   `SemanticModelCompiler.cs`.
-- Change: bind the construct into the semantic model, or leave it syntax-only so executable validation
-  refuses it with `PLAY0268`. Say which in the documentation page and in the MCP descriptions (surface 13).
+- Change: bind the construct into the semantic model, or give it an explicit disposition in the binder
+  (leaving it unbound does not by itself produce `PLAY0268`; the binder enumerates dispositions). Add a
+  specification that pins the admission or refusal. Distinguish unsupported behavior (`PLAY0268`) from
+  deferred or report-only syntax (`PLAY0269`/`PLAY0270`). Say which in the documentation page and in the MCP descriptions (surface 13).
 - Verify: `Semantics/for_SemanticModelBinder`, `for_SemanticModelCompiler`, `for_SemanticCompilation`,
   `for_Compatibility`.
 
@@ -131,6 +134,12 @@ Review the diff, then rerun without the variable.
 ## TypeScript workspaces
 
 ### 12. Dependency graph and event model board
+
+- C# paths: `Source/DotNET/Screenplay/Dependencies/` (`SliceReferences.cs`, `DependencyGraph.cs`,
+  `DeclaredDependencies.cs`, `DeclaredDependencyTargets.cs`) drive C# diagnostics and MCP dependency results
+  independently of the TypeScript graph. A new construct that references a slice, event or read model needs
+  its reference classification updated there, with specs in `for_SliceReferences`, `for_DependencyGraph`,
+  `for_DeclaredDependencies`, `for_DeclaredDependencyTargets`.
 
 - Paths: `Source/Screenplay/EventModels/` (`Mapping/to*.ts`, `Mapping/EventModelDocumentVisitor.ts`,
   `Dependencies/`, `Schemas/`, `Document/`), `Source/Screenplay/Compiler/Dependencies/`,
