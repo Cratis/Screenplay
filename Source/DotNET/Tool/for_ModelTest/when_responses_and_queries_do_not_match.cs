@@ -18,7 +18,7 @@ public class when_responses_and_queries_do_not_match : given.a_model
     {
         ModelTest.Run([Root, "--filter", $"M.F.{slice}.Wrong", "--format", "json"], Output, Error).ShouldEqual(1);
         using var document = JsonDocument.Parse(Output.ToString());
-        var failures = document.RootElement.GetProperty("results")[0].GetProperty("failures").EnumerateArray().Select(value => value.GetString()!).ToArray();
+        var failures = document.RootElement.GetProperty("results")[0].GetProperty("failures").EnumerateArray().Select(value => value.GetString()).ToArray();
         failures.Single(value => value.StartsWith($"Expected {label}:", StringComparison.Ordinal)).ShouldContain("different");
         failures.Single(value => value.StartsWith($"Actual {label}:", StringComparison.Ordinal)).ShouldContain("hello");
     }

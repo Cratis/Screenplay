@@ -62,13 +62,18 @@ public static class response_scenarios
                   greeting = "different"
             slice StateView Query
               readmodel Greeting
+                id String
                 name String
-              query All => Greeting[]
+              query ById => Greeting optional
+                by id String
               specification Wrong
                 given readmodel Greeting
+                  id = "greeting"
                   name = "hello"
-                when query All
+                when query ById
+                  id = "greeting"
                 then result
+                  id = "greeting"
                   name = "different"
         """;
 }

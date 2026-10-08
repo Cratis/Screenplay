@@ -2,14 +2,16 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
 
+[SuppressMessage("Usage", "MA0182", Justification = "Used by the friend CLI assembly to adapt its discovered sources.")]
 static class McpTestDocuments
 {
-    internal static ImmutableArray<WorkspaceDocument> From(McpSnapshot snapshot, string directory)
+    internal static ImmutableArray<WorkspaceDocument> From(McpSnapshot snapshot, string directory, out string rootDirectory)
     {
         var basePath = Path.GetFullPath(directory);
         var paths = snapshot.Sources.Keys.ToDictionary(path => path, path => Path.GetFullPath(Path.Combine(basePath, path)), StringComparer.Ordinal);
@@ -19,6 +21,7 @@ static class McpTestDocuments
             root = Path.GetDirectoryName(root)!;
         }
 
+        rootDirectory = root;
         var prefix = Path.GetRelativePath(root, basePath).Replace('\\', '/');
         return [.. snapshot.Sources.OrderBy(source => source.Key, StringComparer.Ordinal).Select(source =>
         {

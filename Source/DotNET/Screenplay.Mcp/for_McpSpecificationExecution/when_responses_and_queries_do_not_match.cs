@@ -15,7 +15,7 @@ public class when_responses_and_queries_do_not_match : given.a_model
     {
         var report = Call("run-specifications", new { specification = $"M.F.{slice}.Wrong" }).GetProperty("result").GetProperty("structuredContent");
         report.GetProperty("outcome").GetString().ShouldEqual("failed");
-        var failures = report.GetProperty("page").GetProperty("items")[0].GetProperty("failures").EnumerateArray().Select(value => value.GetString()!).ToArray();
+        var failures = report.GetProperty("page").GetProperty("items")[0].GetProperty("failures").EnumerateArray().Select(value => value.GetString()).ToArray();
         failures.Single(value => value.StartsWith($"Expected {label}:", StringComparison.Ordinal)).ShouldContain("different");
         failures.Single(value => value.StartsWith($"Actual {label}:", StringComparison.Ordinal)).ShouldContain("hello");
     }
