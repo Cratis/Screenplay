@@ -1,6 +1,16 @@
 {
     "description": "Guarded syntax-only fixtures use an external data shape so subject validation stays unknown. Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
+        { "name": "Routed command identifier mismatches are errors", "validate": true, "source": ["concept Id : Uuid", "eventsource A", "  identifier Id", "  stream S", "module M", "  feature F", "    slice StateChange S", "      command C", "        id Uuid identifier", "        stream A.S", "        produces event Recorded"], "diagnostics": ["PLAY0504@9"], "messages": ["Command identifier 'id' does not have the source's nominal identifier type 'Id'. The stream does not supply a destination."] },
+        { "name": "Routed explicit production destinations must match the source", "validate": true, "source": ["concept Id : Uuid", "eventsource A", "  identifier Id", "  stream S", "module M", "  feature F", "    slice StateChange S", "      command C", "        other String", "        stream A.S", "        produces event Recorded", "          for other"], "diagnostics": ["PLAY0504@12"], "messages": ["Command production destination does not have the source's nominal identifier type 'Id'. The stream does not supply a destination."] },
+        { "name": "Routed matching destinations remain accepted", "validate": true, "source": ["concept Id : Uuid", "eventsource A", "  identifier Id", "  stream S", "module M", "  feature F", "    slice StateChange S", "      command C", "        id Id identifier", "        stream A.S", "        produces event Recorded", "          for id"], "diagnostics": [] },
+        { "name": "Scalar command stream ids refuse empty text", "validate": true, "source": ["eventsource A", "  stream S", "    streamId String", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId = \"\""], "diagnostics": ["PLAY0504@9"], "messages": ["A stream id text literal cannot be empty."] },
+        { "name": "Command stream ids refuse non-NFC composite parts", "validate": true, "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId", "            one = \"e\u0301\"", "            two = \"b\""], "diagnostics": ["PLAY0504@12"], "messages": ["A stream id text literal must be Unicode NFC."] },
+        { "name": "Command stream ids refuse Double integers above the safe bound", "validate": true, "source": ["concept Key : Int", "eventsource A", "  stream S", "    streamId Key", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId = 9007199254740992"], "diagnostics": ["PLAY0504@10"], "messages": ["A stream id integer literal must be between -9007199254740991 and 9007199254740991 in Double numeric mode."] },
+        { "name": "Given stream ids refuse non-NFC literals", "validate": true, "source": ["eventsource A", "  identifier String", "  stream S", "    streamId String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        given E", "          for \"id\"", "          stream A.S", "            streamId = \"e\u0301\""], "diagnostics": ["PLAY0549@13"], "messages": ["A stream id text literal must be Unicode NFC."] },
+        { "name": "Then stream ids refuse non-NFC literals", "validate": true, "source": ["eventsource A", "  identifier String", "  stream S", "    streamId String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId = \"e\u0301\""], "diagnostics": ["PLAY0549@12"], "messages": ["A stream id text literal must be Unicode NFC."] },
+        { "name": "Given stream ids refuse Double integers below the safe bound", "validate": true, "source": ["concept Key : Int", "eventsource A", "  identifier String", "  stream S", "    streamId Key", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        given E", "          for \"id\"", "          stream A.S", "            streamId = -9007199254740992"], "diagnostics": ["PLAY0549@14"], "messages": ["A stream id integer literal must be between -9007199254740991 and 9007199254740991 in Double numeric mode."] },
+        { "name": "Then stream ids refuse Double integers above the safe bound", "validate": true, "source": ["concept Key : Int", "eventsource A", "  identifier String", "  stream S", "    streamId Key", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId = 9007199254740992"], "diagnostics": ["PLAY0549@13"], "messages": ["A stream id integer literal must be between -9007199254740991 and 9007199254740991 in Double numeric mode."] },
         { "name": "Personal concepts cannot declare scalar stream ids", "validate": true, "source": ["concept Personal : String @pii", "eventsource A", "  stream S", "    streamId Personal"], "diagnostics": ["PLAY0515@4"], "messages": ["Concept 'Personal' is @pii and cannot be a stream id - use a surrogate Uuid identifier and keep the @pii value as a property"] },
         { "name": "Sensitive concepts cannot declare composite stream id parts", "validate": true, "source": ["concept Secret : String @sensitive", "eventsource A", "  stream S", "    streamId", "      owner Secret", "      period String"], "diagnostics": ["PLAY0515@5"], "messages": ["Concept 'Secret' is @sensitive and cannot be a stream id part 'owner' - use a surrogate Uuid identifier and keep the @sensitive value as a property"] },
         { "name": "Personal command paths cannot feed scalar stream id mappings", "validate": true, "source": ["concept Personal : String @pii", "eventsource A", "  stream S", "    streamId String", "module M", "  feature F", "    slice StateChange S", "      command C", "        personal Personal", "        stream A.S", "          streamId = personal"], "diagnostics": ["PLAY0504@11", "PLAY0515@11"], "messages": ["Stream id source 'personal' is absent or incompatible with nominal type 'String'.", "Concept 'Personal' is @pii and cannot be a stream id route mapping - use a surrogate Uuid identifier and keep the @pii value as a property"] },
@@ -198,6 +208,21 @@
             "validate": true,
             "source": ["policy Access", "  require authenticated", "module M", "  feature F", "    slice StateChange Remote", "      command Claim", "        authorize Access", "    slice Automation Local", "      event Approved", "      command Claim", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by authorization", "              acknowledge"],
             "diagnostics": []
+        },
+        {
+            "name": "New documentation owners require markdown fences, never bare properties",
+            "source": ["module M", "  documentation", "  feature F", "    documentation", "    slice StateChange S", "      documentation", "      command C", "        documentation", "      readmodel V", "        documentation", "      reaction R", "        documentation", "        when E"],
+            "diagnostics": ["PLAY0558@2", "PLAY0558@4", "PLAY0558@6", "PLAY0558@8", "PLAY0558@10", "PLAY0558@12"]
+        },
+        {
+            "name": "Documentation rejects empty, wrong-language and duplicate blocks",
+            "source": ["module M", "  documentation", "    ```markdown", "    ```", "  documentation", "    ```text", "    Wrong language", "    ```", "  documentation", "    ```markdown", "    First", "    ```", "  documentation", "    ```markdown", "    Second", "    ```"],
+            "diagnostics": ["PLAY0558@2", "PLAY0558@5", "PLAY0558@13"]
+        },
+        {
+            "name": "Specification descriptions keep the existing duplicate-description diagnostic",
+            "source": ["module M", "  feature F", "    slice StateChange S", "      specification Case", "        description \"First\"", "        description \"Second\""],
+            "diagnostics": ["PLAY0147@6"]
         },
         {
             "name": "A unique constraint rejects a missing direct event field",
@@ -679,7 +704,7 @@
             "name": "Legacy integer stream ids retain all integral digits",
             "validate": true,
             "source": ["concept Key : Int", "eventsource Account", "  identifier String", "  stream Profile", "    streamId Key", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        stream Account.Profile", "          streamId = 10000000000000000", "        produces E", "          for id", "      specification X", "        when C", "          id = \"other\"", "        then E", "          stream Account.Profile", "            streamId = 10000000000000002"],
-            "diagnostics": ["PLAY0551@20"]
+            "diagnostics": ["PLAY0504@13", "PLAY0549@21"]
         },
         {
             "name": "Integer concept stream ids refuse different literals",
@@ -697,7 +722,7 @@
             "name": "Exclusive destination and source identifier concepts differ nominally",
             "validate": true,
             "source": ["concept SourceId : Uuid", "concept CommandId : Uuid", "eventsource Account", "  identifier SourceId", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id CommandId identifier", "        stream Account.Profile", "        produces E", "          for id", "      specification X", "        when C", "          id = \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"", "        then E", "          for \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"", "          stream Account.Profile"],
-            "diagnostics": ["PLAY0504@11", "PLAY0551@20"]
+            "diagnostics": ["PLAY0504@11", "PLAY0504@14", "PLAY0551@20"]
         },
         {
             "name": "Unknown destination type defers nominal contradiction",
@@ -719,7 +744,7 @@
             "name": "One command can produce the expected event with either destination type",
             "validate": true,
             "source": ["eventsource Account", "  identifier String", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id String identifier", "        external Uuid", "        stream Account.Profile", "        produces E", "          for id", "        produces E", "          for external", "      specification X", "        when C", "          id = \"other\"", "          external = \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"", "        then E", "          for \"other\"", "          stream Account.Profile"],
-            "diagnostics": []
+            "diagnostics": ["PLAY0504@15"]
         },
         {
             "name": "Source identifier fallback follows composite command destination paths",
@@ -749,7 +774,7 @@
             "name": "Exclusive command destination contradicts routed expectation identity",
             "validate": true,
             "source": ["eventsource Account", "  identifier String", "  stream Profile", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        id Int identifier", "        stream Account.Profile", "        produces E", "          for id", "      specification X", "        when C", "          id = 4", "        then E", "          for \"other\"", "          stream Account.Profile"],
-            "diagnostics": ["PLAY0504@9", "PLAY0551@18"]
+            "diagnostics": ["PLAY0504@9", "PLAY0504@12", "PLAY0551@18"]
         },
         {
             "name": "Malformed specification route is refused",

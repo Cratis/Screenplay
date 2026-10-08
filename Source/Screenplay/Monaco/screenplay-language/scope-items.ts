@@ -3,6 +3,7 @@
 
 import type { CompletionEntry } from './completion-items';
 import { exampleDeclarationItems } from './example-declaration-items';
+import { documentationItem } from './documentation-item';
 
 const interactions = ['click', 'double click', 'select', 'submit', 'change', 'load', 'unload', 'enter', 'leave'];
 
@@ -12,6 +13,7 @@ const interactionItems: CompletionEntry[] = [
 ];
 
 export const moduleScopeItems: CompletionEntry[] = [
+    documentationItem,
     ...exampleDeclarationItems,
     { label: 'description', insertText: 'description "${1:what this module is for}"', documentation: 'A human-readable description.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'Policies that must pass for everything in the module.' },
@@ -27,6 +29,7 @@ export const moduleScopeItems: CompletionEntry[] = [
 ];
 
 export const featureScopeItems: CompletionEntry[] = [
+    documentationItem,
     ...exampleDeclarationItems,
     { label: 'description', insertText: 'description "${1:what this feature is for}"', documentation: 'A human-readable description.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'Policies that must pass for everything in the feature.' },
@@ -42,6 +45,7 @@ export const featureScopeItems: CompletionEntry[] = [
 ];
 
 export const readModelItems: CompletionEntry[] = [
+    documentationItem,
     { label: 'description', insertText: 'description "${1:what one instance holds}"', documentation: 'A human-readable description.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the file this read model is realized by.' },
     { label: 'property', insertText: '${1:property} ${2:Type}', documentation: 'A property of the read model — a name and a type reference.' },

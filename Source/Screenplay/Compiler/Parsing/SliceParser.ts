@@ -20,6 +20,7 @@ import { captureReducer } from './DependencySourceParser';
 import { parseConstraint } from './ConstraintParser';
 import { parseEvent, parseReadModel } from './DeclarationParsers';
 import { parseDescription } from './DescriptionParser';
+import { parseDocumentation } from './DocumentationParser';
 import { isFileDirective } from './FileReferences';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -56,6 +57,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     const previous = context.scope;
     context.scope = [...previous, name];
     let description: string | null = null;
+    let documentation: string | null = null;
     const events: EventSyntax[] = [];
     const operations: OperationSyntax[] = [];
     const commands: CommandSyntax[] = [];
@@ -77,6 +79,8 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
         const keyword = firstWord(child.content);
         if (keyword === 'description') {
             description = parseDescription(context, child, description, `Slice '${name}'`);
+        } else if (keyword === 'documentation') {
+            documentation = parseDocumentation(context, child, documentation, `Slice '${name}'`);
         } else if (keyword === 'operation') {
             operations.push(parseOperation(context, child).operation);
         } else if (keyword === 'event') {
@@ -111,7 +115,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     }
     context.scope = previous;
     const syntax: SliceSyntax = {
-        kind: 'SliceSyntax', type, name, description, examples, events, operations, commands, queries, projections, captures, reactions, constraints, specifications, readModels, screens,
+        kind: 'SliceSyntax', type, name, description, documentation, examples, events, operations, commands, queries, projections, captures, reactions, constraints, specifications, readModels, screens,
         location: locationOf(line),
     };
     dependencySources.set(syntax, { reducers });

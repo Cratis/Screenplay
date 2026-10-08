@@ -18,7 +18,7 @@ function playFiles(folder: string): string[] {
 const roots = playFiles(corpus).filter(path => basename(path) === 'application.play');
 
 describe('when mapping import-less canonical corpus layouts', () => {
-    it('should exercise all five folder-style roots', () => roots.length.should.equal(5));
+    it('should exercise all six folder-style roots', () => roots.length.should.equal(6));
     for (const root of roots) {
         it(`should preserve the entire board for ${relative(corpus, root)}`, () => {
             discoverImports(readFileSync(root, 'utf8')).should.deep.equal([]);

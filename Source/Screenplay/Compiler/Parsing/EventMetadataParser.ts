@@ -4,7 +4,7 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { pattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
-import { parseFencedText } from './CodeBlockParser';
+import { parseDocumentation } from './DocumentationParser';
 import { parseDescription } from './DescriptionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
@@ -36,20 +36,9 @@ export class EventMetadataParser {
             case 'description':
                 this.value.description = parseDescription(context, line, this.value.description, `Event '${this.name}'`, true);
                 return true;
-            case 'documentation': {
-                if (line.content !== 'documentation' || context.peekChild(line.indent)?.content !== '```markdown') {
-                    context.error(DiagnosticCodes.InvalidEventDocumentation, `Event '${this.name}' documentation requires a fenced markdown block`, location);
-                    context.skipOpaqueBlock(line.indent);
-                    return true;
-                }
-                const text = parseFencedText(context, 'markdown', line);
-                if (text === null || text.trim().length === 0 || this.value.documentation !== null) {
-                    context.error(DiagnosticCodes.InvalidEventDocumentation, `Event '${this.name}' accepts one nonempty documentation block`, location);
-                } else {
-                    this.value.documentation = text;
-                }
+            case 'documentation':
+                this.value.documentation = parseDocumentation(context, line, this.value.documentation, `Event '${this.name}'`, DiagnosticCodes.InvalidEventDocumentation);
                 return true;
-            }
             default:
                 return false;
         }

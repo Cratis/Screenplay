@@ -1,7 +1,23 @@
 module Projects
+  documentation
+    ```markdown
+    Projects owns naming decisions.
+    ```
   feature Naming
+    documentation
+      ```markdown
+      Renaming retains the project identity.
+      ```
     slice StateChange Rename
+      documentation
+        ```markdown
+        A rename changes the name, not the event source.
+        ```
       command Rename
+        documentation
+          ```markdown
+          The caller supplies the existing project identifier.
+          ```
         projectId Uuid identifier
         name String
         produces event Renamed

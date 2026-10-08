@@ -40,6 +40,7 @@ export { toSyntaxJson } from './SyntaxJson';
 export type { SyntaxJsonValue } from './SyntaxJson';
 export * from './StrictSyntaxJson';
 export * from './ExactNumber';
+export * from './StreamIdFormatter';
 export * from './ExactMathFacts';
 export { exactSourceOptions, legacySourceOptions } from './SourceOptions';
 export type { NumericMode, SourceOptions } from './SourceOptions';

@@ -1,9 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Globalization;
-using System.Numerics;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
 
@@ -51,7 +50,7 @@ internal static class SpecificationStreamValidator
                         var stream = resolution.Streams[0];
                         if (stream.StreamIdParts.Any())
                         {
-                            EventSourceValidator.ValidateParts(stream, route.StreamIdParts, route.StreamId is not null, route.Location, DiagnosticCodes.InvalidSpecificationStreamRoute, context, (mapping, target) => ValidateLiteral(mapping, target, values, context));
+                            EventSourceValidator.ValidateParts(stream, route.StreamIdParts, route.StreamId is not null, route.Location, DiagnosticCodes.InvalidSpecificationStreamRoute, context, (mapping, target) => ValidateLiteral(mapping, target, application, values, context));
                         }
                         else if (route.StreamIdParts.Any())
                         {
@@ -63,7 +62,7 @@ internal static class SpecificationStreamValidator
                             {
                                 context.Error(DiagnosticCodes.InvalidSpecificationStreamRoute, stream.StreamId is null ? "An unkeyed stream cannot take a streamId mapping." : "This keyed stream requires a streamId mapping.", route.Location);
                             }
-                            if (route.StreamId is { } mapping) ValidateLiteral(mapping, stream.StreamId, values, context);
+                            if (route.StreamId is { } mapping) ValidateLiteral(mapping, stream.StreamId, application, values, context);
                         }
                         identifier = source.Identifier;
                         if (identifier is null)
@@ -105,9 +104,14 @@ internal static class SpecificationStreamValidator
         }
     }
 
-    static void ValidateLiteral(PropertyMappingSyntax mapping, TypeRefSyntax? target, ResponseValueTypes values, ParserContext context)
+    static void ValidateLiteral(PropertyMappingSyntax mapping, TypeRefSyntax? target, ApplicationSyntax application, ResponseValueTypes values, ParserContext context)
     {
-        if (mapping.Source is (not LiteralExpressionSyntax { Value: not null }) or LiteralExpressionSyntax { Value: "" } || (target is not null && !values.Compatible(mapping.Source, target)))
+        EventSourceValidator.FormatLiteral(mapping.Source, target, application, out var failure);
+        if (failure != StreamIdFormatFailure.None)
+        {
+            context.Error(DiagnosticCodes.InvalidSpecificationStreamRoute, SemanticStreamIdFormatter.FailureMessage(failure), mapping.Source.Location);
+        }
+        else if (mapping.Source is not LiteralExpressionSyntax { Value: not null } || (target is not null && !values.Compatible(mapping.Source, target)))
         {
             context.Error(DiagnosticCodes.InvalidSpecificationStreamRoute, "A specification stream id needs a nonempty concrete scalar literal compatible with the stream's declared type.", mapping.Source.Location);
         }
@@ -123,7 +127,7 @@ internal static class SpecificationStreamValidator
                 foreach (var produced in productions)
                 {
                     if (declarations.Event(produced.Event, scope) is not { } @event) continue;
-                    yield return new(@event, command, DestinationType(command, produced, productions, declarations));
+                    yield return new(@event, command, CommandDestinationTypes.DestinationType(command, produced, productions, declarations));
                 }
             }
 
@@ -178,52 +182,9 @@ internal static class SpecificationStreamValidator
     static string? FormatStreamId(ExpressionSyntax? expression, TypeRefSyntax type, ApplicationSyntax application, ResponseValueTypes values)
     {
         if (expression is not LiteralExpressionSyntax literal || !values.Compatible(literal, type)) return null;
-        var concepts = application.Concepts.Where(concept => concept.Name == type.Name).ToArray();
-        var primitive = concepts is [var concept] ? concept.Type : type.Name;
-        if (concepts.Length > 1) return null;
+        if (EventSourceValidator.Primitive(type, application) is not ("String" or "Uuid" or "Int")) return null;
 
-        return (primitive, literal.Value) switch
-        {
-            ("String", string text) => text,
-            ("Uuid", string text) when Guid.TryParse(text, out var uuid) => uuid.ToString("D", CultureInfo.InvariantCulture),
-            ("Int", ExactNumber exact) => exact.CanonicalText,
-            ("Int", double number) => new BigInteger(number).ToString(CultureInfo.InvariantCulture),
-            _ => null
-        };
-    }
-
-    static TypeRefSyntax? DestinationType(CommandSyntax command, ProducesSyntax produced, ProducesSyntax[] productions, ConsistencyDeclarations declarations)
-    {
-        if (produced.For is PathExpressionSyntax path) return PathType(command, path.Path, declarations);
-        if (produced.For is not null) return null;
-        var identifier = command.Properties.FirstOrDefault(property => property.IsIdentifier)?.Name;
-        if (productions.Any(sibling => sibling.For is not null && (sibling.For is not PathExpressionSyntax destination || destination.Path != identifier)) ||
-            (productions.Any(sibling => sibling.InlineEvent is not null && sibling.For is null) && productions.Any(sibling => sibling.InlineEvent is null && sibling.For is null)))
-        {
-            return null;
-        }
-        if (produced.InlineEvent is null)
-        {
-            return productions.Any(sibling => sibling.For is not null || sibling.InlineEvent is not null) ? null : new("Uuid", false, false, produced.Location);
-        }
-
-        return command.Properties.Where(property => property.IsIdentifier && !property.Type.IsOptional && !property.Type.IsCollection).ToArray() is [var property] ? property.Type : null;
-    }
-
-    static TypeRefSyntax? PathType(CommandSyntax command, string path, ConsistencyDeclarations declarations)
-    {
-        var type = declarations.Property(command.Properties, path, out _)?.Type;
-        if (type is null) return null;
-        var segments = path.Split('.');
-        for (var depth = 1; depth < segments.Length; depth++)
-        {
-            if (declarations.Property(command.Properties, string.Join('.', segments.Take(depth)), out _) is { } parent)
-            {
-                type = type with { IsCollection = type.IsCollection || parent.Type.IsCollection, IsOptional = type.IsOptional || parent.Type.IsOptional };
-            }
-        }
-
-        return type;
+        return EventSourceValidator.FormatLiteral(literal, type, application, out _);
     }
 
     sealed record Producer(EventSyntax Event, CommandSyntax? Command, TypeRefSyntax? Type);

@@ -28,6 +28,11 @@ public record SpecificationSyntax(
     IEnumerable<SpecificationReadModelSyntax>? ThenReadModels = null) : SyntaxNode(Location), ISourceSyntax
 {
     /// <summary>
+    /// Gets the authoring-only description of the rule or case this specification witnesses.
+    /// </summary>
+    public string? Description { get; init; }
+
+    /// <summary>
     /// Gets the immutable options retained when this specification is extracted as a document.
     /// </summary>
     public SourceOptions SourceOptions { get; init; } = SourceOptions.Legacy;

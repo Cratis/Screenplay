@@ -7,13 +7,28 @@ import { PropertySyntax, TypeRefSyntax } from '../Syntax/Declarations';
 import { EventSourceCatalog } from '../Syntax/EventSourceCatalog';
 import { EventSourceResolutionKind } from '../Syntax/EventSources';
 import { ApplicationSyntax } from '../Syntax/Structure';
-import { PropertyMappingSyntax } from '../Syntax/Expressions';
+import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
+import { StreamIdFormatResult, streamIdFailureMessage, tryFormatInteger, tryFormatText, tryFormatUuidText } from '../Syntax/StreamIdFormatter';
+import { commandDestinationType } from './CommandDestinationTypes';
 import { validateStreamIdParts } from './CompositeStreamIdValidator';
 import { ParserContext } from './ParserContext';
 import { compatibleValue, uniqueByName } from './ResponseValidator';
 import { validateSpecificationStreams } from './SpecificationStreamValidator';
 
 const primitives = new Set(['String', 'Uuid', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime']);
+
+export function formatStreamIdLiteral(expression: ExpressionSyntax | null | undefined, type: TypeRefSyntax | null, application: ApplicationSyntax): StreamIdFormatResult | null {
+    if (expression?.kind !== 'LiteralExpressionSyntax') return null;
+    const value = expression.value;
+    const primitive = type === null ? null : uniqueByName(application.concepts).get(type.name)?.type ?? type.name;
+    if (typeof value === 'string') return primitive === 'Uuid' ? tryFormatUuidText(value) : tryFormatText(value);
+    if (typeof value === 'number') return tryFormatInteger(value);
+    if (typeof value === 'object' && value !== null && value.literalType === 'ExactNumber') {
+        if (value.value.includes('.')) return tryFormatInteger(NaN);
+        return tryFormatInteger(BigInt(value.value), false);
+    }
+    return null;
+}
 
 export function validateEventSources(application: ApplicationSyntax, context: ParserContext): void {
     const concepts = uniqueByName(application.concepts);
@@ -68,7 +83,8 @@ export function validateEventSources(application: ApplicationSyntax, context: Pa
         return resolved.property === null ? resolved : { property: { ...resolved.property, type: { ...resolved.property.type, isCollection: property.type.isCollection || resolved.property.type.isCollection, isOptional: property.type.isOptional || resolved.property.type.isOptional } }, missing: false };
     };
     const catalog = new EventSourceCatalog(application);
-    for (const { slice } of new AuthoringProductionResolver(application).slices) for (const command of slice.commands) {
+    const resolver = new AuthoringProductionResolver(application);
+    for (const { slice } of resolver.slices) for (const command of slice.commands) {
         const route = command.stream;
         if (route == null || route.propertyCandidate !== null) continue;
         const resolution = catalog.resolve(route.eventSource, route.stream);
@@ -81,23 +97,32 @@ export function validateEventSources(application: ApplicationSyntax, context: Pa
         const stream = resolution.streams[0];
         const identifiers = command.properties.filter(property => property.isIdentifier);
         if (source.identifier !== null && identifiers.length === 1 && compatible(identifiers[0].type, source.identifier) === false)
-            context.warning(DiagnosticCodes.InvalidCommandStream, `Command identifier '${identifiers[0].name}' does not have the source's nominal identifier type '${source.identifier.name}'. The stream does not supply a destination.`, identifiers[0].location);
+            context.error(DiagnosticCodes.InvalidCommandStream, `Command identifier '${identifiers[0].name}' does not have the source's nominal identifier type '${source.identifier.name}'. The stream does not supply a destination.`, identifiers[0].location);
+        for (const produced of command.produces.filter(produced => resolver.isEventProduction(produced, slice))) {
+            if (source.identifier === null) continue;
+            const destination = commandDestinationType(command, produced, application, { resolver, slice });
+            if (destination === null) continue;
+            if (produced.for === null && produced.inlineEvent !== null && identifiers.length === 1 && compatible(identifiers[0].type, source.identifier) === false) continue;
+            const allocated = produced.for === null && produced.inlineEvent === null && !command.properties.some(property => property.isGenerated && property.isIdentifier);
+            const primitive = concepts.get(source.identifier.name)?.type ?? (primitives.has(source.identifier.name) ? source.identifier.name : null);
+            const matches = allocated ? primitive === null ? null : primitive === 'Uuid' : compatible(destination, source.identifier);
+            if (matches === false) context.error(DiagnosticCodes.InvalidCommandStream, `Command production destination does not have the source's nominal identifier type '${source.identifier.name}'. The stream does not supply a destination.`, produced.for?.location ?? produced.location);
+        }
         const validateMapping = (mapping: PropertyMappingSyntax, target: TypeRefSyntax): void => {
             const expression = mapping.source;
             if (expression.kind === 'PathExpressionSyntax') {
                 const resolved = pathProperty(command.properties, expression.path);
                 if (resolved.missing || resolved.property !== null && compatible(resolved.property.type, target) === false)
                     context.error(DiagnosticCodes.InvalidCommandStream, `Stream id source '${expression.path}' is absent or incompatible with nominal type '${target.name}'.`, expression.location);
-            } else if (expression.kind === 'LiteralExpressionSyntax' && !compatibleValue(expression, target, concepts, compositeProperties))
-                context.error(DiagnosticCodes.InvalidCommandStream, `Stream id value is incompatible with nominal type '${target.name}'.`, expression.location);
-            else if (['RawExpressionSyntax', 'ObjectExpressionSyntax', 'ListExpressionSyntax'].includes(expression.kind) || expression.kind === 'LiteralExpressionSyntax' && expression.value === null)
+            } else if (expression.kind === 'LiteralExpressionSyntax' && expression.value !== null) {
+                const formatted = formatStreamIdLiteral(expression, target, application);
+                if (formatted?.failure != null) context.error(DiagnosticCodes.InvalidCommandStream, streamIdFailureMessage(formatted.failure), expression.location);
+                else if (!compatibleValue(expression, target, concepts, compositeProperties)) context.error(DiagnosticCodes.InvalidCommandStream, `Stream id value is incompatible with nominal type '${target.name}'.`, expression.location);
+            } else if (['RawExpressionSyntax', 'ObjectExpressionSyntax', 'ListExpressionSyntax'].includes(expression.kind) || expression.kind === 'LiteralExpressionSyntax' && expression.value === null)
                 context.error(DiagnosticCodes.InvalidCommandStream, 'A stream id needs a scalar value source, not a raw expression, collection or absence.', expression.location);
         };
         if (stream.streamIdParts.length > 0) {
-            validateStreamIdParts(stream, route.streamIdParts, route.streamId !== null, route.location, DiagnosticCodes.InvalidCommandStream, context, (mapping, target) => {
-                validateMapping(mapping, target);
-                if (mapping.source.kind === 'LiteralExpressionSyntax' && mapping.source.value === '') context.error(DiagnosticCodes.InvalidCommandStream, 'A composite stream id part cannot be empty text.', mapping.source.location);
-            });
+            validateStreamIdParts(stream, route.streamIdParts, route.streamId !== null, route.location, DiagnosticCodes.InvalidCommandStream, context, validateMapping);
             continue;
         }
         if (route.streamIdParts.length > 0) {

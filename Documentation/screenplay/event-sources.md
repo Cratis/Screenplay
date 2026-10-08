@@ -75,19 +75,19 @@ module Banking
           month Month = month
 ```
 
-A scalar keyed stream requires `streamId = <value>`; a composite stream requires the named part block. The forms cannot substitute for each other, and an unkeyed stream accepts neither. Known command paths must match the declared nominal type and be nonoptional scalars. Scalar literal values are checked against known types, but are not converted or executed.
+A scalar keyed stream requires `streamId = <value>`; a composite stream requires the named part block. The forms cannot substitute for each other, and an unkeyed stream accepts neither. Known command paths must match the declared nominal type and be nonoptional scalars. Scalar literals and composite literal parts are checked against known types through the shared stream-id formatter. Text must be nonempty, Unicode NFC and free of lone UTF-16 surrogates; whitespace is accepted. Double-mode integer literals must be within ±9007199254740991. Exact-mode integers have no formatter bound. Invalid values are refused, never normalized or rounded.
 
-`stream Account.Transactions` classifies the command's events. It does **not** supply `for`, change plain-production allocation, or override inline-production destination rules. A handler command may author a route even when its returned events are unavailable statically. The existing prohibition on combining `handler` and `produces` is unchanged.
+`stream Account.Transactions` classifies the command's events. It does **not** supply `for`, change plain-production allocation, or override inline-production destination rules. A routed command's identifier and each known production destination type must match the source's nominal identifier type; a mismatch is a `PLAY0504` error. An allocated destination uses the generated identifier's type when declared, otherwise the source identifier must be UUID-backed. A handler command may author a route even when its returned events are unavailable statically. The existing prohibition on combining `handler` and `produces` is unchanged.
 
 ## Canonical stored encoding
 
-This is the **normative contract for future executable admission**, not a formatter executed by this authoring surface. Binding still refuses routes with `PLAY0268`.
+This is the **normative contract for future executable admission**. The shared formatter checks authored literals and canonical comparison now, but binding still refuses routes with `PLAY0268`; no routed execution is admitted.
 
-1. Format each part: text unchanged and ordinal (no normalization), UUID lowercase and hyphenated, integer invariant decimal with no fraction or exponent and `0`, never `-0`.
+1. Format each part: nonempty, well-formed Unicode NFC text unchanged and ordinal (non-NFC text is refused, never normalized), UUID lowercase and hyphenated, integer invariant decimal with no fraction or exponent and `0`, never `-0`.
 2. Escape `%` as `%25`, then `|` as `%7C`. Only those two escapes are defined, with uppercase hex.
 3. Join with `|` in declaration order. For example, the account/month fixture encodes as `3fa85f64-5717-4562-b3fc-2c963f66afa6|202610`; a text part `a|b%` encodes as `a%7Cb%25`.
 
-Decode by splitting on literal `|` first, checking the declared arity, decoding each component exactly once (only `%25` and `%7C`), then checking canonical scalar spelling. Wrong arity, lowercase or unknown escapes, a trailing `%` and noncanonical scalar spelling are refused, never repaired. Generic URL decoding and decoding before splitting are incorrect. Lone UTF-16 surrogates are refused at literal binding or atomically at execution; runtime integer bounds follow the admitting execution contract.
+Decode by splitting on literal `|` first, checking the declared arity, decoding each component exactly once (only `%25` and `%7C`), then checking canonical scalar spelling. Wrong arity, lowercase or unknown escapes, a trailing `%` and noncanonical scalar spelling are refused, never repaired. Generic URL decoding and decoding before splitting are incorrect. Lone UTF-16 surrogates and non-NFC text are refused in authored literals. Double-mode integer literals are bounded to ±9007199254740991. Runtime formatting and its failure phase follow the admitting execution contract.
 
 Collision freedom holds within one declared schema, not across schemas or scalar ids. A scalar `"a|b"` can equal the encoding of composite parts `"a"` and `"b"`. Route identity includes source type, stream type and encoded id, with `for` independent; providers must disclose which dimensions they filter and never assume global stream-id uniqueness.
 

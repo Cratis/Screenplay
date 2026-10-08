@@ -66,10 +66,10 @@ describe('when authoring source-owned streams', () => {
         expect(parse(source.replace('month Month', 'month Int') + route).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0504');
     });
     it('should keep unavailable imported shapes unresolved', () => expect(parse('import Contracts.Unknown\neventsource A\n  identifier Unknown\n  stream S\n    streamId Unknown').diagnostics).toEqual([]));
-    it('should retain a source identifier mismatch as an authoring warning', () => {
+    it('should refuse a source identifier mismatch as an authoring error', () => {
         const parsed = parse(prefix.replace('id AccountId identifier', 'id Uuid identifier') + route);
-        expect(parsed.success).toBe(true);
-        expect(parsed.diagnostics.some(diagnostic => diagnostic.code === 'PLAY0504' && diagnostic.severity === 'warning')).toBe(true);
+        expect(parsed.success).toBe(false);
+        expect(parsed.diagnostics.some(diagnostic => diagnostic.code === 'PLAY0504' && diagnostic.severity === 'error')).toBe(true);
     });
     it('should allow handler authoring without statically produced events and keep the old handler ban', () => {
         expect(parse(prefix + route + '        handler\n          file C.cs').success).toBe(true);

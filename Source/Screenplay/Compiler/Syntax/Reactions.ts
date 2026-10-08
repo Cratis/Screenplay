@@ -72,6 +72,7 @@ export interface ReactionTriggerSyntax extends SyntaxNode {
 
 export interface ReactionSyntax extends SyntaxNode {
     readonly kind: 'ReactionSyntax';
+    readonly documentation?: string | null;
     readonly name: string;
     readonly where?: ConditionSyntax | null;
     readonly description: string | null;
