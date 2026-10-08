@@ -24,6 +24,9 @@ enum WorkspaceReferenceDomain
     System,
     EventSource,
     EventStream,
+    Fixture,
+    Reaction,
+    Constraint,
     Container
 }
 
@@ -76,7 +79,8 @@ static class WorkspaceReferenceMembers
 
     internal static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> Members(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index)
     {
-        if (entry.Node is ProducesSyntax production && index.OwningSlice(entry) is { } slice && !index.Productions.IsEventProduction(production, slice))
+        var parent = entry.Parent is { } handle ? index.Find(handle) : null;
+        if (entry.Node is ProducesSyntax production && parent?.Node is not InvocationRefusalSyntax && index.OwningSlice(entry) is { } slice && !index.Productions.IsEventProduction(production, slice))
             return [("event", WorkspaceReferenceDomain.Operation)];
 
         return EventMembers(entry.Node).Concat(OtherMembers(entry, index));
@@ -92,7 +96,8 @@ static class WorkspaceReferenceMembers
         ConstraintSyntax => [("releasedBy", WorkspaceReferenceDomain.Event)],
         ProducesSyntax or SeedEventSyntax or EventSpecSyntax or JoinEventSyntax or ClearWithSyntax or RemoveWithSyntax or
             RemoveViaJoinSyntax or ProjectionEntersOnSyntax or CaptureAppendSyntax or ReducerRuleSyntax => [("event", WorkspaceReferenceDomain.Event)],
-        SpecificationEventSyntax => [("eventType", WorkspaceReferenceDomain.Event)],
+        SpecificationEventSyntax => [("eventType", WorkspaceReferenceDomain.Fixture)],
+        SpecificationRedeliverySyntax => [("eventType", WorkspaceReferenceDomain.Event)],
         EventInteractionTriggerSyntax => [("eventName", WorkspaceReferenceDomain.Event)],
         ConcurrencySyntax => [("eventTypes", WorkspaceReferenceDomain.Event)],
         NamedTriggerSourceSyntax => [("name", WorkspaceReferenceDomain.Trigger)],
@@ -105,16 +110,20 @@ static class WorkspaceReferenceMembers
         SpecificationStreamSyntax => [("eventSource", WorkspaceReferenceDomain.EventSource), ("stream", WorkspaceReferenceDomain.EventStream)],
         CommandStreamSyntax { PropertyCandidate: null } => [("eventSource", WorkspaceReferenceDomain.EventSource), ("stream", WorkspaceReferenceDomain.EventStream)],
         OperationSyntax => [("uses", WorkspaceReferenceDomain.System)],
+        InvocationRefusalSyntax => [("constraint", WorkspaceReferenceDomain.Constraint)],
+        SpecificationRedeliverySyntax => [("reaction", WorkspaceReferenceDomain.Reaction)],
         SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax => [("operation", WorkspaceReferenceDomain.Operation)],
         ObjectMemberSyntax => [("name", WorkspaceReferenceDomain.Property)],
         TypeRefSyntax => [("name", entry.Parent is { } parent && index.Find(parent)?.Node is QuerySyntax or ScreenDataSyntax
             ? WorkspaceReferenceDomain.View : WorkspaceReferenceDomain.Type)],
         CompositeKeySyntax => [("type", WorkspaceReferenceDomain.Type)],
-        SpecificationCommandSyntax => [("commandType", WorkspaceReferenceDomain.Command)],
-        InvokesSyntax or ScreenActionSyntax => [("command", WorkspaceReferenceDomain.Command)],
+        SpecificationExampleSyntax => [("type", WorkspaceReferenceDomain.Fixture)],
+        SpecificationCommandSyntax => [("commandType", WorkspaceReferenceDomain.Fixture)],
+        InvokesSyntax or ScreenActionSyntax or ScreenActionAlternativeSyntax or ScreenActionOtherwiseSyntax => [("command", WorkspaceReferenceDomain.Command)],
         FormSyntax => [("for", WorkspaceReferenceDomain.Command)],
         ReadsSyntax or ProjectionSyntax or ReducerSyntax => [("readModel", WorkspaceReferenceDomain.View)],
-        SpecificationReadModelSyntax or SpecificationAbsentReadModelSyntax => [("name", WorkspaceReferenceDomain.View)],
+        SpecificationReadModelSyntax => [("name", WorkspaceReferenceDomain.Fixture)],
+        SpecificationAbsentReadModelSyntax => [("name", WorkspaceReferenceDomain.View)],
         ScreenDataSyntax or FormPopulateViaQuerySyntax or SpecificationQuerySyntax => [("query", WorkspaceReferenceDomain.Query)],
         ScreenNavigateSyntax => [("screen", WorkspaceReferenceDomain.Screen)],
         PolicyReferenceSyntax => [("name", WorkspaceReferenceDomain.Policy)],

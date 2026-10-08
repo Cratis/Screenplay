@@ -45,6 +45,9 @@ public abstract partial class ScreenplaySyntaxWalker
             case ScreenActionSyntax action:
                 VisitScreenAction(action);
                 break;
+            case ScreenGuardedActionSyntax guarded:
+                VisitScreenGuardedAction(guarded);
+                break;
             case ScreenNavigateSyntax navigate:
                 VisitScreenNavigate(navigate);
                 break;

@@ -88,6 +88,8 @@
   href: ast-authoring.md
 - name: Diagnostics
   href: diagnostics.md
+- name: Completeness checks
+  href: completeness.md
 - name: Printing and generating
   href: printing.md
 - name: Interoperability and extensions

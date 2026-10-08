@@ -41,7 +41,7 @@ public class when_reads_and_reducers_use_later_slices : Specification
     {
         var result = Parse("module M\n  feature F\n    slice StateChange A\n      readmodel Left\n      command C\n        reads Right\n    slice StateChange B\n      readmodel Right\n      command D\n        reads Left");
         result.Diagnostics.Select(diagnostic => $"{diagnostic.Code}@{diagnostic.Location.Line}").ShouldEqual(["PLAY0517@6"]);
-        result.Diagnostics.Single().Message.ShouldEqual("Timeline group 'A', 'B' depend on each other's events or read models; reordering these members cannot make every dependency flow left to right.");
+        result.Diagnostics.Single().Message.ShouldEqual("Timeline group slice 'A', slice 'B' depend on each other's events or read models; reordering these members cannot make every dependency flow left to right.");
     }
 
     [Fact]

@@ -10,6 +10,7 @@ import { DependencyGraph } from '../Dependencies/DependencyGraph';
 import { stronglyConnectedGroups } from '../Dependencies/StronglyConnectedGroups';
 import { ApplicationSyntax, FeatureSyntax, SliceSyntax } from '../Syntax/Structure';
 import { authoredOrderKey, authoredOrderOf } from './AuthoredOrder';
+import { ordinalIgnoreCaseKey } from '../Text/ordinalIgnoreCaseKey';
 
 interface Slice {
     syntax: SliceSyntax;
@@ -36,14 +37,15 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
         for (const child of ordered(module.features, [module.name])) feature(child, [module.name]);
     }
     const produced = new Map(slices.map(slice => [slice, new Set([
-        ...eventDeclarations(slice.syntax).map(event => event.name.toLowerCase()),
-        ...slice.syntax.commands.flatMap(command => command.produces.map(value => value.event.toLowerCase())),
-        ...slice.syntax.reactions.flatMap(reaction => reaction.triggers.flatMap(trigger => trigger.produces.map(value => value.event.toLowerCase()))),
+        ...eventDeclarations(slice.syntax).map(event => ordinalIgnoreCaseKey(event.name)),
+        ...slice.syntax.commands.flatMap(command => command.produces.map(value => ordinalIgnoreCaseKey(value.event))),
+        ...slice.syntax.reactions.flatMap(reaction => reaction.triggers.flatMap(trigger => trigger.produces.map(value => ordinalIgnoreCaseKey(value.event)))),
     ])]));
     const producers = new Map<string, Slice>();
     for (const slice of slices) {
         for (const event of eventDeclarations(slice.syntax)) {
-            if (!producers.has(event.name.toLowerCase())) producers.set(event.name.toLowerCase(), slice);
+            const name = ordinalIgnoreCaseKey(event.name);
+            if (!producers.has(name)) producers.set(name, slice);
         }
     }
     // Use decidesFrom resolution, including builder preference and declaration fallback.
@@ -65,11 +67,11 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
         const references = sliceReferences(consumer.syntax).references.filter(reference => reference.timeline)
             .map(reference => ({ event: reference.name, location: reference.location, readModel: reference.targetKind === 'ReadModel' }));
         for (const reference of references) {
-            const name = reference.event.toLowerCase();
+            const name = ordinalIgnoreCaseKey(reference.event);
             const key = `${reference.readModel ? 'ReadModel' : 'Event'}:${name}`;
             if (seen.has(key)) continue;
             seen.add(key);
-            const producer = reference.readModel ? readers.get(authoredOrderKey([...consumer.scope, name])) : producers.get(name);
+            const producer = reference.readModel ? readers.get(authoredOrderKey([...consumer.scope, reference.event.toLowerCase()])) : producers.get(name);
             if (producer === undefined || producer === consumer) continue;
             let common = 0;
             while (common < consumer.scope.length && common < producer.scope.length && consumer.identity[common] === producer.identity[common]) common++;
@@ -80,7 +82,7 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
             if (reference.readModel) {
                 const side = consumer.identity.slice(0, common + 1);
                 const facts = new Set(slices.filter(slice => side.every((name, index) => slice.identity[index] === name)).flatMap(slice => [...produced.get(slice)!]));
-                if (buildingReadModelReferences(producer.syntax, reference.event).some(value => value.timeline && value.kind === 'usesFactsFrom' && value.targetKind === 'Event' && facts.has(value.name.toLowerCase()))) continue;
+                if (buildingReadModelReferences(producer.syntax, reference.event).some(value => value.timeline && value.kind === 'usesFactsFrom' && value.targetKind === 'Event' && facts.has(ordinalIgnoreCaseKey(value.name)))) continue;
             }
             edges.push({ ...reference, consumer, producer, container: authoredOrderKey(consumer.identity.slice(0, common)), left: consumer.identity[common], right: producer.identity[common] });
         }
@@ -107,7 +109,7 @@ export function timelineOrderDiagnostics(application: ApplicationSyntax): Diagno
                 return slice.identity[scope.length] === member;
             }).map(slice => slice.index));
             group.sort((left, right) => memberIndex(left) - memberIndex(right));
-            findings.push({ edge: first, diagnostic: { severity: 'information', code: DiagnosticCodes.TimelineCycleGroup, message: `Timeline group ${group.map(member => `'${member.slice(member.indexOf(':') + 1)}'`).join(', ')} depend on each other's events or read models; reordering these members cannot make every dependency flow left to right.`, location: first.location } });
+            findings.push({ edge: first, diagnostic: { severity: 'information', code: DiagnosticCodes.TimelineCycleGroup, message: `Timeline group ${group.map(member => `${member.startsWith('slice:') ? 'slice' : container === authoredOrderKey([]) ? 'module' : 'feature'} '${member.slice(member.indexOf(':') + 1)}'`).join(', ')} depend on each other's events or read models; reordering these members cannot make every dependency flow left to right.`, location: first.location } });
         }
     }
     for (const edge of edges) {

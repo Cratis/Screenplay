@@ -8,9 +8,9 @@ import { TypeRefSyntax } from '../Syntax/Declarations';
 import { dependencySourcesOf, ConcurrencySyntax, FormPopulateViaQuerySyntax, FormSyntax, ReadsSyntax, ReducerRuleSyntax } from '../Syntax/DependencySources';
 import { EventSpecSyntax, JoinEventSyntax, ProjectionSyntax, ProjectionBlockSyntax, ProjectionVariantSyntax, ProjectionEntersOnSyntax, RemoveWithSyntax, RemoveViaJoinSyntax, ClearWithSyntax } from '../Syntax/Projections';
 import { InvokesSyntax, NamedTriggerSourceSyntax, ReactionTriggerSyntax } from '../Syntax/Reactions';
-import { ScreenActionSyntax, ScreenDataSyntax, ScreenNavigateSyntax } from '../Syntax/Screens';
+import { ScreenActionAlternativeSyntax, ScreenActionOtherwiseSyntax, ScreenActionSyntax, ScreenDataSyntax, ScreenNavigateSyntax } from '../Syntax/Screens';
 import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
-import { SpecificationSyntax, SpecificationEventSyntax, SpecificationCommandSyntax } from '../Syntax/Specifications';
+import { SpecificationSyntax, SpecificationEventSyntax, SpecificationCommandSyntax, SpecificationRedeliverySyntax } from '../Syntax/Specifications';
 import { SliceSyntax } from '../Syntax/Structure';
 import { SyntaxNode } from '../Syntax/SyntaxNode';
 import type { DependencyKind, SliceReference, SharedReference, CollectedSliceReferences } from './index';
@@ -19,11 +19,12 @@ export const referenceClassifications: Readonly<Record<string, DependencyKind | 
     from: 'usesFactsFrom', join: 'usesFactsFrom', remove: 'usesFactsFrom', removeViaJoin: 'usesFactsFrom',
     clear: 'usesFactsFrom', entersOn: 'usesFactsFrom', reduces: 'usesFactsFrom', uniqueEvent: 'usesFactsFrom',
     uniqueProperty: 'usesFactsFrom', concurrency: 'usesFactsFrom', trigger: 'reactsTo', reads: 'decidesFrom',
-    invokes: 'asks', action: 'asks', formCommand: 'asks', dataQuery: 'shows', populate: 'shows', navigate: 'shows',
+    invokes: 'asks', action: 'asks', actionAlternative: 'asks', actionOtherwise: 'asks', formCommand: 'asks', dataQuery: 'shows', populate: 'shows', navigate: 'shows',
+    whenRedeliveredEvent: 'verifiedWith', redeliveryReaction: 'verifiedWith', refusalConstraint: null, refusalProduces: null,
     specificationEvent: 'verifiedWith', givenEvent: 'verifiedWith', whenAppendedEvent: 'verifiedWith', thenEvent: 'verifiedWith', whenCommand: 'verifiedWith',
-    declares: null, uses: null, commandEventSource: null, commandStream: null, thenOperation: null,
+    declares: null, uses: null, commandEventSource: null, commandStream: null, specificationEventSource: null, specificationStream: null, thenOperation: null,
     givenOperationFailure: null, thenCompensated: null, produces: null, authorizes: null, queryResult: null,
-    dataReadModel: null, type: null, contributes: null, template: null, specificationReadModel: null,
+    dataReadModel: null, type: null, exampleType: null, contributes: null, template: null, specificationReadModel: null,
     thenAbsentReadModel: null, thenReadModel: null, givenReadModel: null, thenQuery: null,
     compositeKeyType: null, builds: null, buildsVariant: null, appends: null, seed: null,
 };
@@ -110,12 +111,24 @@ export class SliceReferenceCollector extends ScreenplaySyntaxWalker {
             case 'ReadsSyntax': add((node as ReadsSyntax).readModel, 'ReadModel', 'reads'); break;
             case 'InvokesSyntax': add((node as InvokesSyntax).command, 'Command', 'invokes'); break;
             case 'ScreenActionSyntax': add((node as ScreenActionSyntax).command, 'Command', 'action'); break;
+            case 'ScreenActionAlternativeSyntax': add((node as ScreenActionAlternativeSyntax).command, 'Command', 'actionAlternative'); break;
+            case 'ScreenActionOtherwiseSyntax': {
+                const command = (node as ScreenActionOtherwiseSyntax).command;
+                if (command !== null) add(command, 'Command', 'actionOtherwise');
+                break;
+            }
             case 'FormSyntax': add((node as FormSyntax).for, 'Command', 'formCommand'); break;
             case 'ScreenDataSyntax': add((node as ScreenDataSyntax).query, 'Query', 'dataQuery'); break;
             case 'FormPopulateViaQuerySyntax': add((node as FormPopulateViaQuerySyntax).query, 'Query', 'populate'); break;
             case 'ScreenNavigateSyntax': add((node as ScreenNavigateSyntax).screen, 'Screen', 'navigate'); break;
             case 'SpecificationEventSyntax': add((node as SpecificationEventSyntax).eventType, 'Event', this.specification?.given.includes(node as SpecificationEventSyntax) === true ? 'givenEvent' : this.specification?.whenAppended === node ? 'whenAppendedEvent' : 'thenEvent'); break;
             case 'SpecificationCommandSyntax': add((node as SpecificationCommandSyntax).commandType, 'Command', 'whenCommand'); break;
+            case 'SpecificationRedeliverySyntax': {
+                const redelivery = node as SpecificationRedeliverySyntax;
+                add(redelivery.eventType, 'Event', 'whenRedeliveredEvent');
+                add(redelivery.reaction, 'Reaction', 'redeliveryReaction');
+                break;
+            }
             case 'ConcurrencySyntax': (node as ConcurrencySyntax).eventTypes.forEach(name => add(name, 'Event', 'concurrency')); break;
         }
     }

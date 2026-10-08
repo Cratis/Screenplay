@@ -13,9 +13,11 @@ import { ApplicationSyntax } from '../Syntax/Structure';
 import { ParserContext } from './ParserContext';
 import { commandReadSources } from './CommandReadSources';
 import { compatibleValue, uniqueByName } from './ResponseValidator';
+import { specificationCommandExamples } from './SpecificationCommandExamples';
 
 export function validateOperations(application: ApplicationSyntax, context: ParserContext): void {
     const resolver = new AuthoringProductionResolver(application);
+    const effectiveCommand = specificationCommandExamples(application);
     const concepts = uniqueByName(application.concepts);
     const composites = new Map([...uniqueByName(application.types)].map(([name, type]) => [name, uniqueByName(type.properties)]));
     const known = new Set(['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime', ...concepts.keys(), ...composites.keys()]);
@@ -158,7 +160,7 @@ export function validateOperations(application: ApplicationSyntax, context: Pars
         for (const specification of slice.specifications) {
             const steps = [...specification.givenOperationFailures ?? [], ...specification.thenOperations ?? [], ...specification.thenCompensated ?? []];
             if (steps.length === 0) continue;
-            const command = resolveCommand(specification.when?.commandType ?? '', scope);
+            const command = resolveCommand(effectiveCommand(specification.when, scope)?.commandType ?? '', scope);
             if (command === null || specification.whenAppended !== null || specification.whenQuery !== null || specification.whenTrigger !== null || specification.whenClock !== null || specification.whenCapture !== null)
                 context.error(DiagnosticCodes.InvalidOperationSpecification, 'Operation fixtures and assertions require a declared command action.', specification.location);
             const duplicates = new Map<SyntaxNode, Set<string>>();

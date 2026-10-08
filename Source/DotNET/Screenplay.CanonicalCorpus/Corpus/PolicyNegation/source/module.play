@@ -1,0 +1,39 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+module Portal
+  feature Reports
+    slice StateChange FileReport
+      command FileReport
+        reportId Uuid identifier
+        authorize PersonOnly
+        produces event ReportFiled
+      specification PersonAllowed
+        given caller
+          authenticated
+          role "Accountant"
+        when FileReport
+          reportId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        then ReportFiled
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+      specification ServiceRoleDenied
+        given caller
+          authenticated
+          role "Accountant"
+          role "Service"
+        when FileReport
+          reportId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        then denied
+      specification ServiceClaimDenied
+        given caller
+          authenticated
+          claim "actorKind" = "service"
+        when FileReport
+          reportId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        then denied
+      specification UnauthenticatedDenied
+        given caller
+          role "Accountant"
+        when FileReport
+          reportId = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        then denied

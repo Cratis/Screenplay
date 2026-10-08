@@ -14,9 +14,9 @@ static class McpFixtureQueries
         snapshot.Compilation.Success,
         snapshot.SourceRevision,
         snapshot.Compilation.Diagnostics,
-        coverage = "Specification property assignments, explicit destinations and authored event routes only. Values are syntax, not evaluated expressions. Types resolve only direct fields of an unambiguous local declaration; nested paths, imports and implicit view shapes have no inferred type.",
+        coverage = "Effective specification property assignments and explicit destinations, with authored/example/override origins, and authored event routes. Examples never contribute routes. Values are syntax, not evaluated expressions. Types resolve only direct fields of an unambiguous local declaration; nested paths, imports and implicit view shapes have no inferred type.",
         page = McpReadPage<McpFixtureValue>.Create(
-            McpFixtureOccurrences.All(snapshot.Index).SelectMany(occurrence => Values(snapshot.Index, occurrence)),
+            McpFixtureOccurrences.All(snapshot.Index, snapshot.Compilation.Value).SelectMany(occurrence => Values(snapshot.Index, occurrence)),
             item => (specification is null || item.Specification.Address == specification) &&
                 (role is null || item.Role == role) && (property is null || item.Property == property) &&
                 (value is null || Convert.ToString(item.Value, CultureInfo.InvariantCulture) == value) &&
@@ -68,7 +68,10 @@ static class McpFixtureQueries
                 McpFixtureTypes.For(index, occurrence, mapping.Property),
                 mapping.Source.GetType().Name,
                 Value(mapping.Source),
-                mapping.Location);
+                mapping.Location,
+                Origin(occurrence, mapping.Property)?.Origin.ToString().ToLowerInvariant() ?? "authored",
+                occurrence.Step?.Example?.Name,
+                Origin(occurrence, mapping.Property)?.OverriddenValue is { } replaced ? Value(replaced) : null);
         }
 
         if (occurrence.For is { } destination)
@@ -83,23 +86,29 @@ static class McpFixtureQueries
                 null,
                 destination.GetType().Name,
                 Value(destination),
-                destination.Location);
+                destination.Location,
+                Origin(occurrence, "for")?.Origin.ToString().ToLowerInvariant() ?? "authored",
+                occurrence.Step?.Example?.Name,
+                Origin(occurrence, "for")?.OverriddenValue is { } replaced ? Value(replaced) : null);
         }
 
         if (occurrence.Stream is { } stream)
         {
-            yield return new(occurrence.Specification, $"{occurrence.Role}Stream", occurrence.Ordinal, occurrence.Reference.Name, candidates, "stream", null, nameof(SpecificationStreamSyntax), $"{stream.EventSource}.{stream.Stream}", stream.ReferenceLocation);
+            yield return new(occurrence.Specification, $"{occurrence.Role}Stream", occurrence.Ordinal, occurrence.Reference.Name, candidates, "stream", null, nameof(SpecificationStreamSyntax), $"{stream.EventSource}.{stream.Stream}", stream.ReferenceLocation, "authored", null, null);
             if (stream.StreamId is { } streamId)
             {
-                yield return new(occurrence.Specification, $"{occurrence.Role}StreamId", occurrence.Ordinal, occurrence.Reference.Name, candidates, "streamId", null, streamId.Source.GetType().Name, Value(streamId.Source), streamId.Location);
+                yield return new(occurrence.Specification, $"{occurrence.Role}StreamId", occurrence.Ordinal, occurrence.Reference.Name, candidates, "streamId", null, streamId.Source.GetType().Name, Value(streamId.Source), streamId.Location, "authored", null, null);
             }
         }
 
         if (occurrence.NoStream is { } noStream)
         {
-            yield return new(occurrence.Specification, $"{occurrence.Role}NoStream", occurrence.Ordinal, occurrence.Reference.Name, candidates, "no stream", null, nameof(SpecificationNoStreamSyntax), true, noStream.Location);
+            yield return new(occurrence.Specification, $"{occurrence.Role}NoStream", occurrence.Ordinal, occurrence.Reference.Name, candidates, "no stream", null, nameof(SpecificationNoStreamSyntax), true, noStream.Location, "authored", null, null);
         }
     }
+
+    static EffectiveSpecificationValue? Origin(McpFixtureOccurrence occurrence, string property) =>
+        occurrence.Step?.Values.SingleOrDefault(value => value.Property == (occurrence.Role == "generatedValues" ? "generated " + property : property));
 
     static object? Value(ExpressionSyntax expression) => expression switch
     {

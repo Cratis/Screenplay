@@ -74,12 +74,12 @@ Commerce/
       HandleReturnedParcels.play    Automation on a trigger: a returned parcel is recorded
 ```
 
-The largest file has 122 lines.
+The largest file has 123 lines.
 
 ## What else it shows
 
 - **Cross-file resolution.** `OrderPaid` is declared in `Payments`, projected in `Orders` and `Support`, and reacted to in `Shipping`. The storefront search navigates to the checkout screen in another module.
-- **Contributions.** The layout's `navigation contributes Navigation` slot collects one `contribute to Navigation` entry from each feature file.
+- **Contributions.** The layout's `navigation contributes Navigation` slot collects one `contribute to Navigation` entry from each feature file. Click sections open the registration and checkout screens before their commands run. Cancellation row clicks in the customer's order list and the support detail view carry `orderId` to the cancellation screen. In the catalog's "Discontinue product" table, a row click carries `productId` to the command screen, whose discovered form collects the reason; the issuing action returns to the catalog afterward. Action navigation is a post-success destination, never the command's own input screen.
 - **Layered authorization.** Module, feature and command or query gates are combined with AND. Every persona lists the policies it holds, so each screen goes to the right persona:
 
   | Persona | Screens |
@@ -89,6 +89,7 @@ The largest file has 122 lines.
   | WarehouseClerk | ShipmentQueue, DispatchShipmentScreen |
   | SupportAgent | OrderDetails, OrderDetail, CancelOrderScreen |
 
+- **Typed specification examples.** `AdasBasket` in `PlaceOrder.play` shares the checkout input across acceptance, empty-basket rejection and authorization denial. `when AdasBasket lines = []` overrides only the basket; the structured shipping address remains explicit in the example.
 - **Every way to state a scenario.**
   - State changes use `given caller`, `when <Command>` and `then <Event>`, plus `then error` and `then denied` specifications.
   - Projected views use `when append` with `then readmodel` and `then query`.

@@ -9,6 +9,7 @@ namespace Cratis.Screenplay.Mcp;
 sealed class McpAuthoringReadiness(ApplicationSyntax application)
 {
     readonly AuthoringProductionResolver _productions = new(application);
+    readonly EffectiveSpecificationApplication _effective = SpecificationExamples.Expand(application);
     readonly Dictionary<SyntaxNode, SliceSyntax> _owners = Owners(application);
     readonly Dictionary<SyntaxNode, bool> _operations = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<SliceSyntax, string[]> _scopes = Scopes(application);
@@ -72,6 +73,24 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
 
     static IEnumerable<string> Feature(bool present, string feature) => present ? [feature] : [];
 
+    static bool ReactionRefusals(SyntaxNode node)
+    {
+        var walker = new RefusalReadinessWalker();
+        switch (node)
+        {
+            case ApplicationSyntax application: walker.VisitApplication(application); break;
+            case SliceSyntax slice: walker.VisitSlice(slice); break;
+            case ReactionSyntax reaction: walker.VisitReaction(reaction); break;
+            case ReactionTriggerSyntax trigger: walker.VisitReactionTrigger(trigger); break;
+            case InvokesSyntax invocation: walker.VisitInvokes(invocation); break;
+            case CommandSyntax command: walker.VisitCommand(command); break;
+            case SpecificationSyntax specification: walker.VisitSpecification(specification); break;
+            default: walker.VisitNode(node); break;
+        }
+
+        return walker.Unadmitted;
+    }
+
     bool GeneratedConceptRules(CommandSyntax command) => command.Properties
         .Where(property => property.IsGenerated)
         .SelectMany(property => application.Concepts.Where(concept => concept.Name == property.Type.Name))
@@ -90,11 +109,12 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
                 .Concat(Feature(command.Handler is not null, "command handlers"))
                 .Concat(Feature(GeneratedConceptRules(command), "generated properties on concepts with validation rules")),
             SpecificationSyntax specification =>
-                Feature(
+                Feature(specification.ThenNoEvents, "explicit no-event assertions (#433)")
+                .Concat(Feature(
                     specification.Given.Concat(specification.ThenEvents)
                         .Concat(specification.WhenAppended is { } appended ? [appended] : [])
                         .Any(occurrence => occurrence.Stream is not null || occurrence.NoStream is not null),
-                    "specification event routes (#457)")
+                    "specification event routes (#457)"))
                 .Concat(ActionCommands(specification).SelectMany(entry => UnadmittedFeatures(entry.Command))),
             SliceSyntax slice => slice.Commands.Cast<SyntaxNode>().Concat(slice.Specifications).SelectMany(UnadmittedFeatures),
             ApplicationSyntax => Feature(application.EventSources.Any(), streams)
@@ -102,7 +122,8 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
             _ => []
         };
 
-        return [.. LocalFeatures().Concat(Feature(Operations(node), "operations and systems (#301)"))
+        return [.. LocalFeatures().Concat(Feature(ReactionRefusals(node), "reaction refusal handling and redelivery (#433)"))
+            .Concat(Feature(Operations(node), "operations and systems (#301)"))
             .Concat(Feature(application.SourceOptions.NumericMode == NumericMode.Exact, "exact numbers (#285)"))
             .Distinct(StringComparer.Ordinal)
             .OrderBy(feature => feature switch
@@ -133,8 +154,9 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
 
             return [];
         }
-        var candidates = Candidates(specification.When.CommandType);
-        if (candidates.Length == 0 && _imports[specification.When.CommandType].ToArray() is [var imported]) candidates = Candidates(imported.QualifiedName);
+        var command = _effective.Specifications.FirstOrDefault(value => ReferenceEquals(value.Authored, specification))?.Effective.When?.CommandType ?? specification.When.CommandType;
+        var candidates = Candidates(command);
+        if (candidates.Length == 0 && _imports[command].ToArray() is [var imported]) candidates = Candidates(imported.QualifiedName);
 
         return candidates;
     }
@@ -154,5 +176,15 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
         _operations[node] = result;
 
         return result;
+    }
+
+    sealed class RefusalReadinessWalker : ScreenplaySyntaxWalker
+    {
+        internal bool Unadmitted { get; private set; }
+
+        public override void VisitNode(SyntaxNode node)
+        {
+            if (node is InvocationRefusalSyntax or RefusalExpressionSyntax or SpecificationRedeliverySyntax) Unadmitted = true;
+        }
     }
 }
