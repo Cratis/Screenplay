@@ -28,7 +28,7 @@ static class McpAstOperations
     internal static ImmutableArray<WorkspaceOperation> Documents(JsonElement arguments) =>
         [.. Values(arguments, "documents").Select(Document)];
 
-    static WorkspaceAstOperation ReadOperation(JsonElement value, WorkspaceSyntaxIndex index)
+    internal static WorkspaceAstOperation ReadOperation(JsonElement value, WorkspaceSyntaxIndex index)
     {
         var operation = McpJson.RequiredString(value, "operation");
         var fields = operation switch
@@ -61,7 +61,7 @@ static class McpAstOperations
         };
     }
 
-    static WorkspaceOperation Document(JsonElement value)
+    internal static WorkspaceOperation Document(JsonElement value)
     {
         var operation = McpJson.RequiredString(value, "operation");
         var fields = operation switch
@@ -99,7 +99,7 @@ static class McpAstOperations
         };
     }
 
-    static JsonElement.ArrayEnumerator Values(JsonElement arguments, string name)
+    internal static JsonElement.ArrayEnumerator Values(JsonElement arguments, string name)
     {
         if (!arguments.TryGetProperty(name, out var values))
         {

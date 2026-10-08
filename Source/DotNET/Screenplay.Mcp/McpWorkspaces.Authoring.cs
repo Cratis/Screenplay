@@ -3,9 +3,9 @@
 
 using System.Collections.Immutable;
 using System.Text.Json;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Semantics;
-using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
@@ -56,7 +56,7 @@ internal sealed partial class McpWorkspaces
         return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation, request.ReferencePolicy), arguments) : Rejected(result);
     }
 
-    internal object ProposeAst(JsonElement arguments, bool layout = false)
+    internal object ProposeAst(JsonElement arguments, bool layout = false, bool source = false)
     {
         var workspace = Current();
         _ = McpJson.RequiredString(arguments, "formatting");
@@ -77,12 +77,30 @@ internal sealed partial class McpWorkspaces
 
         Root.Verify(workspace);
         var index = McpWorkspaceAnalysis.For(workspace).Syntax;
-        var edits = layout ? LayoutOperations(workspace, index, McpJson.OptionalString(arguments, "layout") ?? "slice")
-            : (McpAstOperations.Read(arguments, index), McpAstOperations.Documents(arguments));
+        (ImmutableArray<WorkspaceAstOperation> Nodes, ImmutableArray<WorkspaceOperation> Documents) edits = ([], []);
+        if (layout)
+        {
+            edits = LayoutOperations(workspace, index, McpJson.OptionalString(arguments, "layout") ?? "slice");
+        }
+        else if (!source)
+        {
+            edits = (McpAstOperations.Read(arguments, index), McpAstOperations.Documents(arguments));
+        }
+
+        if (source)
+        {
+            var parsed = McpSourceDocuments.Parse(workspace, McpSourceDocuments.Read(arguments));
+            if (parsed.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error))
+            {
+                return McpJson.ToolResult(new { success = false, failureKind = "SourceParseFailed", authoringDiagnostics = parsed.Diagnostics }, true);
+            }
+
+            edits.Documents = parsed.Documents;
+        }
         request = request with
         {
-            Operations = edits.Item1,
-            Documents = edits.Item2,
+            Operations = edits.Nodes,
+            Documents = edits.Documents,
             SemanticRenames = McpIdentityChanges.SemanticRenames(arguments),
             EventRenames = McpIdentityChanges.EventRenames(arguments),
             RetiredSemanticAddresses = McpIdentityChanges.RetiredSemanticAddresses(arguments),
@@ -117,36 +135,16 @@ internal sealed partial class McpWorkspaces
     {
         var nodes = ImmutableArray.CreateBuilder<WorkspaceAstOperation>();
         var documents = ImmutableArray.CreateBuilder<WorkspaceOperation>();
-        var operations = McpLayout.Expand(workspace, layout);
-        var sources = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (var operation in operations)
-        {
-            if (operation is ReplaceWorkspaceDocument replace)
-            {
-                var original = workspace.Documents.Single(document => document.Id == replace.Document);
-                sources.Add(original.Path.Value, WorkspaceDocument.Create(original.Id, original.StableKey, original.Path, replace.Bytes.AsSpan()).Text);
-            }
-            else if (operation is AddWorkspaceDocument add)
-            {
-                sources.Add(add.Path.Value, WorkspaceDocument.Create(add.StableKey, add.Path, add.Bytes.AsSpan()).Text);
-            }
-        }
+        var parsed = McpSourceDocuments.Parse(workspace, McpLayout.Expand(workspace, layout), generatedLayout: true);
 
-        var (placed, diagnostics) = PlayImports.Resolve(sources.Keys, new InMemoryPlayDocumentSource(sources));
-        if (diagnostics.Any(diagnostic => diagnostic.Severity == Diagnostics.DiagnosticSeverity.Error))
-        {
-            throw new McpFailure("Generated layout imports could not be resolved.");
-        }
-
-        var placements = placed.ToDictionary(document => document.Path, document => document.Placement, StringComparer.Ordinal);
-        foreach (var operation in operations)
+        foreach (var operation in parsed.Documents)
         {
             switch (operation)
             {
-                case ReplaceWorkspaceDocument replace:
+                case ReplaceWorkspaceSyntaxDocument replace:
                     var entry = index.Entries.Single(item => item.Handle.Document == replace.Document && item.Handle.Path.Length == 0);
                     var original = workspace.Documents.Single(document => document.Id == replace.Document);
-                    var syntax = Parse(WorkspaceDocument.Create(original.Id, original.StableKey, original.Path, replace.Bytes.AsSpan()), placements[original.Path.Value]);
+                    var syntax = replace.Syntax;
                     if (original.Path.Value == PlayFileWriter.RootFileName)
                     {
                         // The root's imported declarations and comments have been redistributed across
@@ -158,9 +156,8 @@ internal sealed partial class McpWorkspaces
                         nodes.Add(new ReplaceWorkspaceNode(entry.Handle, entry.Node, syntax));
                     }
                     break;
-                case AddWorkspaceDocument add:
-                    var document = WorkspaceDocument.Create(add.StableKey, add.Path, add.Bytes.AsSpan());
-                    documents.Add(new CreateWorkspaceSyntaxDocument(add.StableKey, add.Path, Parse(document, placements[document.Path.Value]), document.Encoding));
+                case CreateWorkspaceSyntaxDocument create:
+                    documents.Add(create);
                     break;
                 default:
                     documents.Add(operation);
@@ -169,11 +166,5 @@ internal sealed partial class McpWorkspaces
         }
 
         return (nodes.ToImmutable(), documents.ToImmutable());
-    }
-
-    static ApplicationSyntax Parse(WorkspaceDocument document, PlayPlacement placement)
-    {
-        var parsed = new ScreenplayCompiler().Parse(document.Text, document.Path.Value, placement);
-        return parsed.Success ? parsed.Value! : throw new McpFailure($"Generated layout document '{document.Path}' could not be parsed.");
     }
 }
