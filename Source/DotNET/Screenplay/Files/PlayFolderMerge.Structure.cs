@@ -38,7 +38,7 @@ internal static partial class PlayFolderMerge
         {
             IsPlacement = false,
             FileImports = [.. parts.SelectMany(part => part.FileImports)],
-            SourceComments = CombineHeaderComments(parts, parts[0].Location.Line),
+            SourceComments = CombineHeaderComments(parts, parts[0]),
             Examples = [.. parts.SelectMany(part => part.Examples)],
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"module '{group.Key}'", context),
             Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"module '{group.Key}'", context),
@@ -89,7 +89,7 @@ internal static partial class PlayFolderMerge
         {
             IsPlacement = false,
             FileImports = [.. parts.SelectMany(part => part.FileImports)],
-            SourceComments = CombineHeaderComments(parts, parts[0].Location.Line),
+            SourceComments = CombineHeaderComments(parts, parts[0]),
             Examples = [.. parts.SelectMany(part => part.Examples)],
             Description = FirstDescription(parts.Select(part => (part.Description, part.Location)), $"feature '{group.Key}'", context),
             Authorize = CombineAuthorization(parts.Select(part => part.Authorize), $"feature '{group.Key}'", context),
@@ -160,14 +160,20 @@ internal static partial class PlayFolderMerge
         return kept[0] with { Requirement = requirement, SourceComments = [.. comments] };
     }
 
-    // Identical comments in different files are separate occurrences. Header comments move above the
-    // combined declaration, in file then source order, just as authorization comments do. Give them
-    // one line so the printer cannot interleave file-local positions; retain directive and end anchors.
-    static ImmutableArray<SourceComment> CombineHeaderComments(IEnumerable<SyntaxNode> parts, int line) =>
+    // Identical comments in different files are separate occurrences. Other parts' header comments move
+    // above the combined declaration in file then source order; the owner's trailing comment stays inline.
+    // Give header comments one line so the printer cannot interleave file-local positions; retain directive
+    // and end anchors.
+    static ImmutableArray<SourceComment> CombineHeaderComments(IEnumerable<SyntaxNode> parts, SyntaxNode owner) =>
         [.. parts.OrderBy(part => part.Location.Path, StringComparer.Ordinal)
             .SelectMany(part => part.SourceComments.OrderBy(comment => comment.Line)
                 .Select(comment => comment.AnchorLine == part.Location.Line
-                    ? comment with { Line = line, Placement = SourceCommentPlacement.Leading, AnchorLine = line }
+                    ? comment with
+                    {
+                        Line = owner.Location.Line,
+                        Placement = ReferenceEquals(part, owner) ? comment.Placement : SourceCommentPlacement.Leading,
+                        AnchorLine = owner.Location.Line
+                    }
                     : comment))];
 
     static ImmutableArray<SourceComment> CommentsOf(SyntaxNode node) => node switch
