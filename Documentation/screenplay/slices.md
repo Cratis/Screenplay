@@ -71,9 +71,29 @@ slice <SliceType> <Name>
 
 The optional `file` line names the repository relative file this declaration is realized by, so a document can be navigated back to the code it describes. It is additive - it never stands in for any part of the declaration. See [File references](file-references.md).
 
+## Descriptions and documentation
+
+Use `description` for a human-readable summary. On a [specification](specifications.md), it names the rule or case that scenario witnesses. Use `documentation` for longer reasoning: assumptions, boundaries and rejected alternatives that should stay with the model.
+
+Modules, features, slices, commands, events, read models and reactions accept one nonempty `documentation` block with a `markdown` fence. It belongs directly in the declaration body, not under a reaction trigger. A bare `documentation` line never declares a property; `documentation String` still declares a typed property where properties are allowed.
+
+````screenplay
+module Invoicing
+  description "Bills customers"
+  documentation
+    ```markdown
+    ## Boundary
+    Invoicing records billing decisions. Delivery is a separate workflow.
+    ```
+````
+
+Both fields are report-only authoring metadata (`PLAY0270`), not executable conditions. They do not add executable-model bytes or require a new ESM version. The printer keeps them on their owning declaration, and MCP `declaration-details` includes both fields in its summary wherever supported. In a folder model, the first module or feature documentation is kept; identical copies are accepted, while conflicting copies warn with `PLAY0559`.
+
+Malformed, empty or repeated documentation on these new owners reports `PLAY0558`; events retain `PLAY0477`. Other kinds, including projections and screens, do not accept documentation. These diagnostics have no automatic repair: choose the text to retain, the correct fence language or the owning file explicitly.
+
 ## Descriptions
 
-Modules, features, slices, [personas](personas.md), and [commands](commands.md) take an optional `description` as their first body line — a human-readable summary consumers such as Prologue surface when presenting the model. At most one per declaration.
+Modules, features, slices, [personas](personas.md), [commands](commands.md), [read models](readmodels.md), [reactions](reactions.md), and [specifications](specifications.md) take an optional `description` as their first body line — a human-readable summary consumers such as Prologue surface when presenting the model. At most one per declaration.
 
 ```screenplay
 module Invoicing

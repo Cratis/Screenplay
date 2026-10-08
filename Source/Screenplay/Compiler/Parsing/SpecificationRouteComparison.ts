@@ -4,7 +4,7 @@
 import { TypeRefSyntax } from '../Syntax/Declarations';
 import { EventSourceCatalog } from '../Syntax/EventSourceCatalog';
 import { EventSourceResolutionKind } from '../Syntax/EventSources';
-import { canonicalExactText } from '../Syntax/ExactMathFacts';
+import { formatStreamIdLiteral } from './EventSourceValidator';
 import { ExpressionSyntax } from '../Syntax/Expressions';
 import { SpecificationStreamSyntax, SpecificationNoStreamSyntax } from '../Syntax/Specifications';
 import { ApplicationSyntax } from '../Syntax/Structure';
@@ -16,17 +16,7 @@ export function formatSpecificationStreamId(expression: ExpressionSyntax | null 
     const properties = new Map([...composites].map(([name, type]) => [name, uniqueByName(type.properties)]));
     if (expression?.kind !== 'LiteralExpressionSyntax' || !compatibleValue(expression, type, concepts, properties)) return null;
     const primitive = concepts.get(type.name)?.type ?? type.name;
-    const value = expression.value;
-    if (primitive === 'String' && typeof value === 'string') return value;
-    if (primitive === 'Uuid' && typeof value === 'string') {
-        const hex = value.replace(/[{}()-]/g, '').toLowerCase();
-        return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-    }
-    if (primitive === 'Int') {
-        if (typeof value === 'number') return BigInt(value).toString();
-        if (typeof value === 'object' && value !== null && value.literalType === 'ExactNumber') return canonicalExactText(value);
-    }
-    return null;
+    return ['String', 'Uuid', 'Int'].includes(primitive) ? formatStreamIdLiteral(expression, type, application)?.value ?? null : null;
 }
 
 export function matchesSpecificationRoute(given: SpecificationStreamSyntax | null | undefined, expected: SpecificationStreamSyntax | null | undefined, noStream: SpecificationNoStreamSyntax | null | undefined, application: ApplicationSyntax): boolean | null {

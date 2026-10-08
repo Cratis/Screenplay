@@ -8,8 +8,10 @@ import { EventSyntax, TypeRefSyntax } from '../Syntax/Declarations';
 import { EventSourceCatalog } from '../Syntax/EventSourceCatalog';
 import { EventSourceResolutionKind } from '../Syntax/EventSources';
 import { formatSpecificationStreamId } from './SpecificationRouteComparison';
+import { streamIdFailureMessage } from '../Syntax/StreamIdFormatter';
 import { ExpressionSyntax } from '../Syntax/Expressions';
-import { implicitDestination } from '../Syntax/ProductionDestinations';
+import { commandDestinationType } from './CommandDestinationTypes';
+import { formatStreamIdLiteral } from './EventSourceValidator';
 import { ApplicationSyntax } from '../Syntax/Structure';
 import { PropertyMappingSyntax } from '../Syntax/Expressions';
 import { validateStreamIdParts } from './CompositeStreamIdValidator';
@@ -28,7 +30,7 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
     const declarationSteps = new Set<SpecificationEventSyntax>();
     const exampleSpecifications = examples.flatMap(entry => {
         if (entry.kind !== 'event') {
-            if (entry.example.stream != null || entry.example.noStream != null)
+            if ((entry.kind === 'command' || entry.kind === 'readmodel') && (entry.example.stream != null || entry.example.noStream != null))
                 context.error(DiagnosticCodes.InvalidSpecificationExampleBody, "only event examples carry routes; a command's route comes from its declaration, and read models have none", (entry.example.stream ?? entry.example.noStream)!.location);
             return [];
         }
@@ -45,22 +47,6 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
     const nominallyCompatible = (source: TypeRefSyntax, target: TypeRefSyntax): boolean | null => known.has(source.name) && known.has(target.name)
         ? source.name === target.name && source.isCollection === target.isCollection && (!source.isOptional || target.isOptional) : null;
     const formatStreamId = (expression: ExpressionSyntax | null | undefined, type: TypeRefSyntax): string | null => formatSpecificationStreamId(expression, type, application);
-    const pathType = (command: CommandSyntax, path: string): TypeRefSyntax | null => {
-        let fields = command.properties;
-        let result: TypeRefSyntax | null = null;
-        let optional = false;
-        let collection = false;
-        for (const segment of path.split('.')) {
-            const matches = fields.filter(field => field.name === segment);
-            if (matches.length !== 1) return null;
-            const type = matches[0].type;
-            optional ||= type.isOptional;
-            collection ||= type.isCollection;
-            result = { ...type, isOptional: optional, isCollection: collection };
-            fields = composites.get(type.name)?.properties ?? [];
-        }
-        return result;
-    };
     const eventOf = (reference: string, slice: typeof resolver.slices[number]['slice']): EventSyntax | null => {
         const declared = resolver.resolve(reference, slice).declaration;
         return declared?.node.kind === 'EventSyntax' ? declared.node : null;
@@ -71,10 +57,7 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
             if (!resolver.isEventProduction(produced, slice)) continue;
             const event = eventOf(produced.event, slice);
             if (event === null) continue;
-            const destination = produced.for?.kind === 'PathExpressionSyntax' ? produced.for.path : implicitDestination(command, produced, { resolver, slice });
-            const type = destination === 'new event source'
-                ? { kind: 'TypeRefSyntax' as const, name: 'Uuid', isOptional: false, isCollection: false, location: produced.location }
-                : destination === undefined ? null : pathType(command, destination);
+            const type = commandDestinationType(command, produced, application, { resolver, slice });
             producers.push({ event, command, type });
         }
         for (const produced of slice.reactions.flatMap(reaction => reaction.triggers).flatMap(trigger => trigger.produces)) {
@@ -86,7 +69,11 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
             if (event !== null) producers.push({ event, command: null, type: null });
         }
     }
-    for (const { slice, scope } of resolver.slices) for (const specification of [...slice.specifications, ...exampleSpecifications.filter(entry => entry.scope.join('.') === scope.join('.')).map(entry => entry.specification)]) {
+    const validationSpecifications = [
+        ...exampleSpecifications.flatMap(entry => resolver.slices.filter(owner => owner.scope.join('.') === entry.scope.join('.')).map(({ slice, scope }) => ({ slice, scope, specification: entry.specification }))),
+        ...resolver.slices.flatMap(({ slice, scope }) => slice.specifications.map(specification => ({ slice, scope, specification })))
+    ];
+    for (const { slice, scope, specification } of validationSpecifications) {
         const commands = resolver.slices.flatMap(entry => entry.slice.commands.map(command => ({ command, scope: entry.scope })));
         const parts = specification.when?.commandType.split('.') ?? [];
         const qualifiers = parts.slice(0, -1);
@@ -125,7 +112,9 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
                 const stream = resolution.streams[0];
                 const validateLiteral = (mapping: PropertyMappingSyntax, target: TypeRefSyntax | null): void => {
                     const value = mapping.source;
-                    if (value.kind !== 'LiteralExpressionSyntax' || value.value === null || value.value === '' || target !== null && !compatible(value, target))
+                    const formatted = formatStreamIdLiteral(value, target, application);
+                    if (formatted?.failure != null) context.error(DiagnosticCodes.InvalidSpecificationStreamRoute, streamIdFailureMessage(formatted.failure), value.location);
+                    else if (value.kind !== 'LiteralExpressionSyntax' || value.value === null || target !== null && !compatible(value, target))
                         context.error(DiagnosticCodes.InvalidSpecificationStreamRoute, "A specification stream id needs a nonempty concrete scalar literal compatible with the stream's declared type.", value.location);
                 };
                 if (!validateRoute) { /* The authored example's route is checked once at its declaration. */ }
@@ -153,7 +142,8 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
                         const types = eventProducers.map(producer => producer.type);
                         const distinct = new Set(types.filter(type => type !== null).map(type => `${type.name}:${type.isOptional}:${type.isCollection}`));
                         const priorIdentifier = prior.sources[0].identifier ?? (types.length > 0 && !types.some(type => type === null) && distinct.size === 1 ? types[0] : null);
-                        inheritedIdentityIsInvalid = node.for.kind !== 'LiteralExpressionSyntax' || node.for.value === null || priorIdentifier !== null && (priorIdentifier.isCollection || priorIdentifier.isOptional || !compatible(node.for, priorIdentifier));
+                        if (priorIdentifier !== null)
+                            inheritedIdentityIsInvalid = node.for.kind !== 'LiteralExpressionSyntax' || node.for.value === null || priorIdentifier.isCollection || priorIdentifier.isOptional || !compatible(node.for, priorIdentifier);
                     }
                 }
                 if (required && node.for === null)

@@ -1,0 +1,52 @@
+module Billing
+  description "Billing context"
+  documentation
+    ```markdown
+    # Boundary
+    Billing owns invoice decisions, not delivery.
+    ```
+  feature Invoices
+    documentation
+      ```markdown
+      Keep drafts separate from issued invoices.
+      ```
+    slice StateChange IssueInvoice
+      documentation
+        ```markdown
+        ## Assumption
+        The invoice identity belongs to the caller.
+        ```
+      command IssueInvoice
+        documentation String
+        documentation
+          ```markdown
+          Issuing records a fact; delivery is a separate decision.
+          ```
+        invoiceId Uuid identifier
+        produces event InvoiceIssued
+          note String = documentation
+      readmodel InvoiceStatus
+        documentation String
+        documentation
+          ```markdown
+          This view answers whether issuance happened, not delivery.
+          ```
+      reaction ObserveIssuance
+        documentation
+          ```markdown
+          A reaction observes issuance without changing its meaning.
+          ```
+        when InvoiceIssued
+      specification IssuingAnInvoice
+        description "Witnesses that issuing records the supplied note"
+        when IssueInvoice
+          invoiceId = "6db4f402-d7d0-4a5c-9065-cf71c1df5c24"
+          documentation = "input"
+        then InvoiceIssued
+          note = "input"
+      specification ExplainingTheCase
+        description
+          ```text
+          This example explains a case over multiple lines.
+          It is not an executable condition.
+          ```

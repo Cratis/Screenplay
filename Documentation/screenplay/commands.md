@@ -62,6 +62,8 @@ command RegisterInvoice
     ```
 ````
 
+Commands also accept one nonempty fenced `markdown` `documentation` block for reasoning and assumptions. It is report-only (`PLAY0270`), with no effect on executable bytes. See [Descriptions and documentation](slices.md#descriptions-and-documentation).
+
 Command descriptions use `text` fences, not `markdown`; Markdown description fences are available only on events. Descriptions work the same on modules, features, slices, and personas — see [Descriptions](slices.md#descriptions).
 
 ## Declare an event inline
@@ -90,7 +92,7 @@ The unescaped directives `namespace`, `sequence`, `correlation`, `causation`, `c
 
 ## Command stream routing (syntax-only)
 
-Use `stream Source.Stream` to select a declared [event source and stream](event-sources.md). Map a scalar keyed stream with nested `streamId = <value>`. For a composite stream, nest a bare `streamId` header and one `<part> = <source>` mapping for every declared part, exactly once. Mapping order is free; the printer retains it. Each source is a nominally compatible nonoptional command path or scalar literal; empty text parts are refused. Scalar and composite mapping forms cannot substitute for one another. This route never supplies the event's `for` destination and does not change plain-production allocation or inline defaults. Handler commands may author routing without statically declared events; `handler` with `produces` is still prohibited.
+Use `stream Source.Stream` to select a declared [event source and stream](event-sources.md). Map a scalar keyed stream with nested `streamId = <value>`. For a composite stream, nest a bare `streamId` header and one `<part> = <source>` mapping for every declared part, exactly once. Mapping order is free; the printer retains it. Each source is a nominally compatible nonoptional command path or scalar literal. Literals are checked like any stream id: text must be non-empty, well-formed and NFC, and an integer must lie within ±(2^53−1) in the default Double numeric mode. The command's identifier and each event's destination must have the source's identifier type, otherwise `PLAY0504` is an error. Scalar and composite mapping forms cannot substitute for one another. This route never supplies the event's `for` destination and does not change plain-production allocation or inline defaults. Handler commands may author routing without statically declared events; `handler` with `produces` is still prohibited.
 
 Both viable stream/property interpretations remain blocking `PLAY0505` candidates, never a guessed route. Source/stream declarations and routed commands are not admitted by any supported executable model (ESM) version yet (`PLAY0268`). Per-production overrides, reaction/reducer filters and new concurrency flags are not supported. The board shows only the authored route and readable key expression in existing command details.
 

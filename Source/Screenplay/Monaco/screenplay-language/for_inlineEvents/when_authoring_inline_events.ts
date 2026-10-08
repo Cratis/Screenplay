@@ -136,14 +136,14 @@ describe('when authoring inline events', () => {
         expect(destinationHints(fenced)).toEqual([]);
         expect(validateLines(fenced).filter(issue => issue.code?.startsWith('PLAY047'))).toEqual([]);
     });
-    it('should show metadata hover only on event directives', () => {
+    it('should keep id hover event-specific while sharing documentation hover', () => {
         expect(hoverContent(['event Done', '  id "Old"'], 1, 'id', 3, 5)).toContain('rename');
         expect(hoverContent(['event Done', '  documentation'], 1, 'documentation', 3, 16)).not.toBeNull();
         for (const line of ['  id String', '  key id', '  name String = id', '  id String = name']) {
             const start = line.indexOf('id') + 1;
             expect(hoverContent(['event Done', line], 1, 'id', start, start + 2)).toBeNull();
         }
-        expect(hoverContent(['command Done', '  documentation'], 1, 'documentation', 3, 16)).toBeNull();
+        expect(hoverContent(['command Done', '  documentation'], 1, 'documentation', 3, 16)).toContain('command');
     });
     it('should retain standalone property-shaped id and documentation names', () => expect(scanDocument(['event Done', '  id String', '  documentation String']).events[0].properties.map(property => property.name)).toEqual(['id', 'documentation']));
 });

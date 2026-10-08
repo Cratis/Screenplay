@@ -16,6 +16,8 @@ internal static class SyntaxJsonWriter
         foreach (var member in descriptor.Members)
         {
             var value = member.Property.GetValue(node);
+            if (member.Name == "documentation" && node is not EventSyntax && value is null) continue;
+            if (node is Specifications.SpecificationSyntax && member.Name == "description" && value is null) continue;
             if (member.Type == typeof(SourceOptions) && Equals(value, SourceOptions.Legacy)) continue;
             if (member.Name == "examples" && value is IEnumerable examples && !examples.Cast<object>().Any()) continue;
             if (member.Name == "inlineProperty" && value is null) continue;

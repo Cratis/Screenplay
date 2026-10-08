@@ -44,6 +44,7 @@ public partial class ScreenplayPrinter
         writer.Line($"specification {specification.Name}");
         using (writer.Indent())
         {
+            WriteDescription(writer, specification.Description, specification);
             WriteFile(writer, specification.File);
 
             if (specification.GivenCaller is { } caller)

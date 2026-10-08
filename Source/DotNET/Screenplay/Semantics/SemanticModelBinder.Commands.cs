@@ -16,6 +16,11 @@ public sealed partial class SemanticModelBinder
             CommandSyntax command,
             Dictionary<string, BoundEvent> events)
         {
+            if (command.Documentation is not null)
+            {
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Command '{command.Name}' documentation is authoring metadata.", command.Location);
+            }
+
             if (command.Description is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Command '{command.Name}' description is authoring metadata.", command.Location);
