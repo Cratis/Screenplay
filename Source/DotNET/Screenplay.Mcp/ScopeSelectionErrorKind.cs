@@ -16,5 +16,15 @@ public enum ScopeSelectionErrorKind
     /// <summary>
     /// More than one module, feature or slice has the requested address.
     /// </summary>
-    AmbiguousScope
+    AmbiguousScope,
+
+    /// <summary>
+    /// The path does not exist or is a file without the .play extension.
+    /// </summary>
+    InvalidPath,
+
+    /// <summary>
+    /// Reading the application failed because of an I/O or permission error.
+    /// </summary>
+    UnreadablePath
 }

@@ -148,7 +148,7 @@ To use the same scoped validation as `screenplay --scope` and MCP `diagnostics`,
 dotnet add package Cratis.Screenplay.Mcp
 ```
 
-Pass all application sources, keyed by application-relative path, the case-sensitive scope address, and the [completeness checks](completeness.md) you want. This excerpt assumes `sources` is an `IReadOnlyDictionary<string, string>` containing the whole application, including imported documents:
+Pass all application sources, keyed by application-relative path (every key is a compilation root), the case-sensitive scope address, and the [completeness checks](completeness.md) you want. This excerpt assumes `sources` is an `IReadOnlyDictionary<string, string>` containing the whole application, including imported documents:
 
 ```csharp
 using Cratis.Screenplay.Completeness;
@@ -169,6 +169,8 @@ Console.WriteLine($"Scope: {scopedErrors} error(s); whole application: {result.W
 
 The immutable `ScopedDiagnosticResult` contains `Scope`, `Diagnostics`, `DeclarationCount`, `DependentDeclarationCount`, `AffectedScopes`, `UnresolvedEventConsumers` (`ReferenceCount` and `Scopes`), `PossiblyAffectedReferenceCount`, `DependencyCoverage`, `WholeApplicationErrorCount` and `WholeApplicationWarningCount`. An empty scope address in an affected or unresolved-consumer list denotes an application-level declaration. Whole-application counts include requested completeness findings, which run only when the whole application has no source errors. Use `CompletenessChecks.None` to omit them.
 
-The [scoped selection rules above](#check-one-part-of-the-application) apply unchanged: direct dependents only, uncertainty reported separately, and a clean scoped result is not a whole-application or executable-model verdict. The API reads the supplied sources, not the filesystem, and starts a fresh analysis for each call.
+You can pass a path instead of `sources`: the `TryValidate(string path, ...)` overload follows the tool's file and folder semantics, including imports and file encodings, and returns `InvalidPath` for a missing path or a non-`.play` file, or `UnreadablePath` for I/O and permission failures, rather than throwing.
+
+The [scoped selection rules above](#check-one-part-of-the-application) apply unchanged: direct dependents only, uncertainty reported separately, and a clean scoped result is not a whole-application or executable-model verdict. Both overloads start a fresh analysis for each call; the dictionary overload reads only the supplied sources.
 
 To go the other way - turn a syntax tree back into `.play` text, or generate Screenplay from a model - see [Printing and generating](printing.md).

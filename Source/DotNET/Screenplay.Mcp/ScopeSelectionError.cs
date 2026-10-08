@@ -4,7 +4,7 @@
 namespace Cratis.Screenplay.Mcp;
 
 /// <summary>
-/// Represents an anticipated failure to select exactly one module, feature or slice.
+/// Represents an anticipated failure to read an application or select exactly one module, feature or slice.
 /// </summary>
 /// <param name="Kind">The reason selection failed.</param>
 /// <param name="Message">The explanation suitable for reporting to the caller.</param>
