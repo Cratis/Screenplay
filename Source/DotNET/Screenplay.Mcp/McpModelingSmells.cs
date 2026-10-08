@@ -58,7 +58,8 @@ static class McpModelingSmells
         }
         foreach (var command in selected.Where(declaration => declaration.Syntax is CommandSyntax))
         {
-            if (_commandPrefixes.Any(prefix => command.Name.StartsWith(prefix, StringComparison.Ordinal)))
+            if (_commandPrefixes.Any(prefix => command.Name.StartsWith(prefix, StringComparison.Ordinal) &&
+                (command.Name.Length == prefix.Length || char.IsUpper(command.Name[prefix.Length]))))
             {
                 Add("SMELL002", command, $"Does '{command.Name}' express a business decision rather than a generic edit or technical operation?");
             }

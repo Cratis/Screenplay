@@ -217,7 +217,7 @@ Optional `scope` must name exactly one module, feature or slice; unknown/ambiguo
 | Rule ID | Review question prompted by |
 | --- | --- |
 | `SMELL001` | Event name ending in `Updated`, `Changed`, `Edited`, `Saved`, `Modified`, `Deleted`, `Synced` or `Received` |
-| `SMELL002` | Command name starting with `Update`, `Edit`, `Save`, `Set`, `Manage`, `Get`, `Load` or `Fetch` |
+| `SMELL002` | Command name starting with the PascalCase word `Update`, `Edit`, `Save`, `Set`, `Manage`, `Get`, `Load` or `Fetch` (not longer words such as `Settle`) |
 | `SMELL003` | Nonempty event property set identical to another event produced by a different command |
 | `SMELL004` | Command producing more distinct resolved events than `eventFanOutThreshold` |
 | `SMELL005` | Read-model property fed by more distinct resolved events than `propertyFanInThreshold` |
