@@ -8,7 +8,10 @@ import { ScreenGuardedActionSyntax } from '../Syntax/Screens';
 import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
 import { SyntaxNode } from '../Syntax/SyntaxNode';
 import { ApplicationSyntax } from '../Syntax/Structure';
-import { a_parsed_document } from './given/a_parsed_document';
+import { a_parsed_document as parseDocument } from './given/a_parsed_document';
+
+// Syntax fixtures leave the external subject shape unknown; validation has its own conformance cases.
+const a_parsed_document = (...lines: string[]) => parseDocument(...lines, '        data ExternalItem via query ExternalDetails');
 
 class RecordingWalker extends ScreenplaySyntaxWalker {
     readonly kinds: string[] = [];
