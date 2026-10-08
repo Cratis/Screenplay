@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Semantics.Serialization;
 
 namespace Cratis.Screenplay.Workspaces;
@@ -85,6 +86,27 @@ internal static class WorkspaceRepairVerification
     internal static bool SameModel(ScreenplayWorkspace before, ScreenplayWorkspace after) =>
         before.Compilation.Value is { } original && after.Compilation.Value is { } candidate &&
         SemanticModelSerializer.Serialize(original.Model).AsSpan().SequenceEqual(SemanticModelSerializer.Serialize(candidate.Model));
+
+    internal static bool KeepsCatalog(ScreenplayWorkspace before, ScreenplayWorkspace after)
+    {
+        var catalog = before.IdentityCatalog;
+        if (catalog.Revision == after.IdentityCatalog.Revision)
+        {
+            return true;
+        }
+
+        // Authoring establishes missing document assignments after failed ESM admission. Permit only
+        // those exact existing IDs; every prior assignment, origin and event revision must remain intact.
+        var established = SemanticIdentityCatalog.Create(
+            catalog.Application,
+            [.. catalog.Documents, .. before.Documents
+                .Where(document => !catalog.Documents.Any(assignment => assignment.Key == document.StableKey))
+                .Select(document => new DocumentIdentityAssignment(document.StableKey, document.Id, SemanticIdentityOrigin.Persisted))],
+            catalog.Semantics,
+            catalog.EventContracts);
+
+        return established.Revision == after.IdentityCatalog.Revision;
+    }
 
     static bool SameComments(WorkspaceWritePlan plan)
     {
