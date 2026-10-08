@@ -35,10 +35,13 @@ public class and_the_reference_is_reads_or_a_reducer : given.a_timeline
     }
 
     [Fact]
-    void should_refuse_a_reads_move_that_would_establish_new_document_identity()
+    void should_offer_a_reads_move_in_a_fresh_workspace_and_assign_only_the_existing_document_identity()
     {
         var workspace = Create(("root.play", "module M\n  feature F\n    slice StateChange Consumer\n      command C\n        reads Items\n    slice StateView Producer\n      readmodel Items\n"));
         var diagnostic = workspace.Compilation.Diagnostics.Single(value => value.Code == DiagnosticCodes.EventFromLaterSlice);
-        WorkspaceDiagnosticRepairs.Find(workspace, workspace.Revision, diagnostic).ShouldBeEmpty();
+        var repair = WorkspaceDiagnosticRepairs.Find(workspace, workspace.Revision, diagnostic).Single();
+        var proposal = Propose(workspace, repair);
+        proposal.Conflicts.ShouldBeEmpty();
+        proposal.Workspace!.IdentityCatalog.Documents.ShouldEqual(workspace.Documents.Select(document => new DocumentIdentityAssignment(document.StableKey, document.Id, SemanticIdentityOrigin.Persisted)));
     }
 }

@@ -1069,7 +1069,7 @@
             "validate": true,
             "source": ["module M", "  feature F", "    slice StateView Child", "      event Own", "      projection P", "        from E", "    feature Child", "      slice StateView Write", "        event E", "        projection Other", "          from Own"],
             "diagnostics": ["PLAY0517@6"],
-            "messages": ["Timeline group slice 'Child', feature 'Child' uses each other's events; reordering these members cannot make every event flow left to right."]
+            "messages": ["Timeline group slice 'Child', feature 'Child' depend on each other's events or read models; reordering these members cannot make every dependency flow left to right."]
         },
         {
             "name": "A three-member cycle suppresses only its internal backward edges",
@@ -1107,7 +1107,7 @@
             "validate": true,
             "source": ["module M", "  feature F", "    slice StateView First", "      event Own", "      projection P", "        from EςX", "    slice StateView Second", "      event EΣX", "      projection Other", "        from Own"],
             "diagnostics": ["PLAY0517@6"],
-            "messages": ["Timeline group slice 'First', slice 'Second' uses each other's events; reordering these members cannot make every event flow left to right."]
+            "messages": ["Timeline group slice 'First', slice 'Second' depend on each other's events or read models; reordering these members cannot make every dependency flow left to right."]
         },
         {
             "name": "A state view uses an event from its right once at its first reference",
@@ -1126,7 +1126,7 @@
             "validate": true,
             "source": ["module A", "  feature F", "    slice StateView ViewA", "      event EA", "      projection PA", "        from EB", "module B", "  feature F", "    slice StateView ViewB", "      event EB", "      projection PB", "        from EA"],
             "diagnostics": ["PLAY0517@6"],
-            "messages": ["Timeline group module 'A', module 'B' uses each other's events; reordering these members cannot make every event flow left to right."]
+            "messages": ["Timeline group module 'A', module 'B' depend on each other's events or read models; reordering these members cannot make every dependency flow left to right."]
         },
         {
             "name": "Parent slices precede sub features irrespective of text order",
