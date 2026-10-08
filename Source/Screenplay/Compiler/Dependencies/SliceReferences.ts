@@ -6,7 +6,7 @@ import { CommandSyntax } from '../Syntax/Commands';
 import { ConstraintSyntax } from '../Syntax/Constraints';
 import { TypeRefSyntax } from '../Syntax/Declarations';
 import { dependencySourcesOf, ConcurrencySyntax, FormPopulateViaQuerySyntax, FormSyntax, ReadsSyntax, ReducerRuleSyntax } from '../Syntax/DependencySources';
-import { EventSpecSyntax, JoinEventSyntax, ProjectionSyntax, ProjectionEntersOnSyntax, RemoveWithSyntax, RemoveViaJoinSyntax, ClearWithSyntax } from '../Syntax/Projections';
+import { EventSpecSyntax, JoinEventSyntax, ProjectionSyntax, ProjectionBlockSyntax, ProjectionVariantSyntax, ProjectionEntersOnSyntax, RemoveWithSyntax, RemoveViaJoinSyntax, ClearWithSyntax } from '../Syntax/Projections';
 import { InvokesSyntax, NamedTriggerSourceSyntax, ReactionTriggerSyntax } from '../Syntax/Reactions';
 import { ScreenActionAlternativeSyntax, ScreenActionOtherwiseSyntax, ScreenActionSyntax, ScreenDataSyntax, ScreenNavigateSyntax } from '../Syntax/Screens';
 import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
@@ -35,11 +35,26 @@ export function sliceReferences(slice: SliceSyntax): CollectedSliceReferences {
     return { references: collector.references.sort((left, right) => left.location.line - right.location.line || left.location.column - right.location.column), shared: collector.shared };
 }
 
+export function buildingReadModelReferences(slice: SliceSyntax, readModel: string): readonly SliceReference[] {
+    const collector = new SliceReferenceCollector(readModel);
+    slice.projections.forEach(projection => collector.visitProjection(projection));
+    dependencySourcesOf(slice).reducers?.filter(reducer => reducer.readModel.toLowerCase() === readModel.toLowerCase()).forEach(reducer => collector.visitReducer(reducer));
+    return collector.references;
+}
+
+function variants(blocks: readonly ProjectionBlockSyntax[]): ProjectionVariantSyntax[] {
+    return blocks.flatMap(block => block.kind === 'ProjectionVariantSyntax' ? [block, ...variants(block.blocks)] : block.kind === 'ChildrenSyntax' || block.kind === 'NestedSyntax' ? variants(block.blocks) : []);
+}
+
 export class SliceReferenceCollector extends ScreenplaySyntaxWalker {
     readonly references: SliceReference[] = [];
     readonly shared: SharedReference[] = [];
     private specification?: SpecificationSyntax;
     private projection = false;
+
+    constructor(private readonly readModel?: string) { super(); }
+
+    private matches(name: string): boolean { return name.toLowerCase() === this.readModel?.toLowerCase(); }
 
     override visitSlice(syntax: SliceSyntax): void {
         super.visitSlice(syntax);
@@ -59,6 +74,10 @@ export class SliceReferenceCollector extends ScreenplaySyntaxWalker {
         super.visitReactionTrigger(syntax);
     }
     override visitProjection(syntax: ProjectionSyntax): void {
+        if (this.readModel !== undefined) {
+            const found = variants(syntax.blocks);
+            if (found.length === 0 ? !this.matches(syntax.readModel ?? syntax.name) : !found.some(variant => this.matches(variant.name))) return;
+        }
         this.projection = true;
         super.visitProjection(syntax);
         this.projection = false;

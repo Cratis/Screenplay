@@ -11,7 +11,7 @@ namespace Cratis.Screenplay.Dependencies;
 /// <summary>
 /// Collects explicit slice references without resolving names or interpreting code and expressions.
 /// </summary>
-internal sealed class SliceReferences : ScreenplaySyntaxWalker
+internal sealed class SliceReferences(string? readModel = null) : ScreenplaySyntaxWalker
 {
     internal static readonly IReadOnlyDictionary<string, string?> Classifications = new Dictionary<string, string?>(StringComparer.Ordinal)
     {
@@ -39,6 +39,12 @@ internal sealed class SliceReferences : ScreenplaySyntaxWalker
     /// <inheritdoc/>
     public override void VisitProjection(ProjectionSyntax syntax)
     {
+        if (readModel is not null)
+        {
+            var variants = Variants(syntax.Blocks).ToArray();
+            if (variants.Length == 0 ? !Matches(syntax.ReadModel ?? syntax.Name) : !variants.Any(variant => Matches(variant.Name))) return;
+        }
+
         _projection = true;
         base.VisitProjection(syntax);
         _projection = false;
@@ -104,6 +110,25 @@ internal sealed class SliceReferences : ScreenplaySyntaxWalker
 
         return collector.References;
     }
+
+    internal static IReadOnlyList<SliceReference> BuildingReadModel(SliceSyntax slice, string readModel)
+    {
+        var collector = new SliceReferences(readModel);
+        foreach (var projection in slice.Projections) collector.VisitProjection(projection);
+        foreach (var reducer in (slice.Reducers ?? []).Where(reducer => collector.Matches(reducer.ReadModel))) collector.VisitReducer(reducer);
+
+        return collector.References;
+    }
+
+    static IEnumerable<ProjectionVariantSyntax> Variants(IEnumerable<ProjectionBlockSyntax> blocks) => blocks.SelectMany(block => block switch
+    {
+        ProjectionVariantSyntax variant => new[] { variant }.Concat(Variants(variant.Blocks)),
+        ChildrenSyntax children => Variants(children.Blocks),
+        NestedSyntax nested => Variants(nested.Blocks),
+        _ => []
+    });
+
+    bool Matches(string name) => string.Equals(name, readModel, StringComparison.OrdinalIgnoreCase);
 
     string EventRole(SyntaxNode node)
     {

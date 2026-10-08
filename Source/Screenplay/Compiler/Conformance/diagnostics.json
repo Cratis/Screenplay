@@ -951,9 +951,45 @@
             "diagnostics": ["PLAY0516@5"]
         },
         {
-            "name": "Any builder consumed fact from the reader's side is feedback",
+            "name": "Any consumed fact from the reader's side in the read model's builder is feedback",
             "validate": true,
             "source": ["import External.Foreign", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event Own", "  feature Reporting", "    slice StateView Build", "      projection P => Items", "        from Foreign", "        from own"],
+            "diagnostics": []
+        },
+        {
+            "name": "An unrelated projection consuming reader facts does not exclude the read edge",
+            "validate": true,
+            "source": ["import External.Foreign", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event Own", "  feature Reporting", "    slice StateView Build", "      projection P => Items", "        from Foreign", "      projection Other => OtherItems", "        from Own"],
+            "diagnostics": ["PLAY0517@6"]
+        },
+        {
+            "name": "An unrelated reducer consuming reader facts does not exclude the read edge",
+            "validate": true,
+            "source": ["import External.Foreign", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event Own", "  feature Reporting", "    slice StateView Build", "      reducer P => Items", "        on Foreign", "      reducer Other => OtherItems", "        on Own"],
+            "diagnostics": ["PLAY0517@6"]
+        },
+        {
+            "name": "An unrelated projection does not exclude reads resolved through a variant",
+            "validate": true,
+            "source": ["import External.Foreign", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event Own", "  feature Reporting", "    slice StateView Build", "      projection P", "        variant Items", "          enters on Foreign", "          from Foreign", "      projection Other => OtherItems", "        from Own"],
+            "diagnostics": ["PLAY0517@6"]
+        },
+        {
+            "name": "The read model's variant consuming reader facts excludes feedback",
+            "validate": true,
+            "source": ["import External.Foreign", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event Own", "  feature Reporting", "    slice StateView Build", "      projection P", "        variant Items", "          enters on Own", "          from Own", "        variant OtherItems", "          enters on Foreign", "          from Foreign"],
+            "diagnostics": []
+        },
+        {
+            "name": "Shared projection blocks contribute feedback to the read model's variant",
+            "validate": true,
+            "source": ["import External.Foreign", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event Own", "  feature Reporting", "    slice StateView Build", "      projection P", "        from Own", "        variant Items", "          enters on Foreign", "          from Foreign"],
+            "diagnostics": []
+        },
+        {
+            "name": "A matching variant projection retains feedback from transitions to another variant",
+            "validate": true,
+            "source": ["import External.Foreign", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event Own", "  feature Reporting", "    slice StateView Build", "      projection P", "        variant Items", "          enters on Foreign", "          from Foreign", "        variant OtherItems", "          enters on Own", "          from Own"],
             "diagnostics": []
         },
         {
