@@ -44,7 +44,7 @@ truth. See [VS Code extension](vscode.md) for editor associations and folder rul
 
 Explicit specification routes appear in the specification header, labeled by
 `given`, `when append` or `then` occurrence. The summary retains `for`,
-`stream Source.Stream`, scalar `streamId` values and `no stream` assertions,
+`stream Source.Stream`, scalar `streamId` values, named composite part mappings in authored order and `no stream` assertions,
 including when event cards show the linked event's current name instead of the
 step's name. Headers wrap so long route summaries remain readable. Payload values
 and event links stay unchanged. This is routing

@@ -86,8 +86,14 @@ EventSourceDecl = "eventsource", Ident, NL,
                             | SourceIdentifierDecl | EventStreamDecl }, DEDENT ] ;
 SourceIdentifierDecl = "identifier", QualifiedName, NL ;
 EventStreamDecl = "stream", Ident, NL,
-                  [ INDENT, { EventDescriptionDecl | EventIdDecl | StreamIdentifierDecl }, DEDENT ] ;
+                  [ INDENT, { EventDescriptionDecl | EventIdDecl | StreamIdentifierDecl | StreamIdPartsDecl }, DEDENT ] ;
 StreamIdentifierDecl = "streamId", QualifiedName, NL ;
+StreamIdPartsDecl = "streamId", NL, INDENT, StreamIdPart, StreamIdPart, { StreamIdPart }, DEDENT ;
+StreamIdPart = Ident, QualifiedName, NL ;
+(* Parts have exact unique names and nonoptional scalar stream-id types, with no
+   modifiers or children. Scalar and composite key forms are mutually exclusive.
+   Declaration order is identity-bearing; changing a stored schema needs a new
+   stream identity or a validated migration. *)
 
 (* Sources belong to the application; streams belong to their physical parent.
    A duplicate parent makes its children's ownership ambiguous. Identifier and
@@ -533,7 +539,11 @@ CommandDecl    = "command", Ident, NL,
    block; repeated authorize lines combine with and in authored order. *)
 
 CommandStreamDecl = "stream", Ident, ".", Ident, NL,
-                    [ INDENT, "streamId", "=", MappingSource, NL, DEDENT ] ;
+                    [ INDENT, ( "streamId", "=", MappingSource, NL | CommandStreamIdParts ), DEDENT ] ;
+CommandStreamIdParts = "streamId", NL, INDENT, { CommandStreamIdPart }, DEDENT ;
+CommandStreamIdPart = Ident, "=", MappingSource, NL ;
+(* A composite route maps every declared part exactly once, in any authored order.
+   Part sources follow the scalar route rules; empty text parts are refused. *)
 
 (* At most one authored command route, including on a handler command. It selects
    classification, not the identity destination supplied by for. Resolve exact
@@ -949,11 +959,15 @@ SpecificationThen = ReturnExpectation
 
 SpecificationEventSource = "for", Expression, NL ;
 SpecificationStream = "stream", Ident, ".", Ident, NL,
-                 [ INDENT, "streamId", "=", ConcreteValue, NL, DEDENT ] ;
+                 [ INDENT, ( "streamId", "=", ConcreteValue, NL | SpecificationStreamIdParts ), DEDENT ] ;
+SpecificationStreamIdParts = "streamId", NL, INDENT, { SpecificationStreamIdPart }, DEDENT ;
+SpecificationStreamIdPart = Ident, "=", ConcreteValue, NL ;
 SpecificationNoStream = "no", "stream", NL ;
 (* A route occurs at most once. Only then accepts no stream. Routed given and
    when append require for; then may omit it. streamId is required exactly for
-   keyed streams, is a concrete compatible scalar and cannot be empty text.
+   scalar keyed streams. Composite streams instead require every declared named
+   part exactly once, each a compatible concrete literal; neither form substitutes
+   for the other. Empty text is refused, but whitespace is accepted.
    Routing lines under when Command are refused. All routes are syntax-only:
    binding reports PLAY0268 until an executable model version admits them. *)
 
