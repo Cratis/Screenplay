@@ -123,9 +123,9 @@ Each node carries the members of its C# record that the compiler reads, under th
 
 ## Read exact numbers
 
-A document that starts with the `numbers exact` preamble is read with exact numeric literals. `parse` records the mode on the tree as `sourceOptions`, which is `{ numericMode: 'exact' }` for such a document and `{ numericMode: 'legacy' }` for every other. Projections and specifications carry the same member.
+A document that starts with the `numbers exact` preamble is read with exact numeric literals. `parse` records the mode on the tree as `sourceOptions`, which is `{ numericMode: 'exact' }` for such a document and `{ numericMode: 'legacy' }` for a document without a numeric preamble. A malformed preamble gives `numericMode: 'invalid'`. Projections and specifications carry the same member.
 
-In exact mode a number literal is not a JavaScript number. It becomes an `ExactNumber`, `{ literalType: 'ExactNumber', value: '12.50' }`, whose `value` is canonical fixed-point text, so no digit is rounded. Exponents are accepted. A literal that does not fit the bounded Decimal domain is reported as `PLAY0511` instead of being rounded. Without the preamble, literals stay ordinary numbers. A preamble with another spelling, a second preamble, one after the domain, imports or declarations, or a `numbers` line inside a declaration is reported with `PLAY0508`, `PLAY0509` or `PLAY0510`. The codes are listed in the [diagnostics](diagnostics.md).
+In exact mode a number literal is not a JavaScript number. It becomes an `ExactNumber`, `{ literalType: 'ExactNumber', value: '12.5' }`, whose `value` is canonical fixed-point text, so no digit is rounded. Trailing fractional zeros normalize away: `parseExactNumber('12.50')` returns `'12.5'`, and `SyntaxJson` rejects non-canonical forms. Exponents are accepted. A literal that does not fit the bounded Decimal domain is reported as `PLAY0511` instead of being rounded. Without the preamble, literals stay ordinary numbers. A preamble with another spelling, a second preamble, one after the domain, imports or declarations, or a `numbers` line inside a declaration is reported with `PLAY0508`, `PLAY0509` or `PLAY0510`. The codes are listed in the [diagnostics](diagnostics.md).
 
 The preamble is syntax only. Neither compiler binds an exact-mode document yet: the C# compiler reports `PLAY0268` when one is bound.
 
@@ -143,7 +143,7 @@ for (const dependency of graph.implied('feature', 'feature')) {
 }
 ```
 
-A reference becomes an edge between the slice that makes it (the consumer) and the slice that declares what it names (the producer). Each edge has one of these kinds: `usesFactsFrom`, `reactsTo`, `decidesFrom`, `asks`, `shows`, `verifiedWith` and `outsideTheModel`, the last for an event owned by an imported bounded context. The graph exposes:
+A reference becomes an edge between the slice that makes it (the consumer) and the slice that declares what it names (the producer). An edge to a read model points to the projection or reducer that builds the read model, which is not necessarily the slice that declares it. Each edge has one of these kinds: `usesFactsFrom`, `reactsTo`, `decidesFrom`, `asks`, `shows`, `verifiedWith` and `outsideTheModel`, the last for an event owned by an imported bounded context. The graph exposes:
 
 | Member | Returns |
 | --- | --- |
@@ -155,7 +155,7 @@ A reference becomes an edge between the slice that makes it (the consumer) and t
 | `suggestedOrder(kinds?)` | An order for each container with producers first, keeping the authored order where nothing constrains it. It is a suggestion and is never applied |
 | `traverse(address, direction, kinds?, includeTestOnly?)` | The nodes reachable from a node following `incoming` or `outgoing` edges |
 
-A query with an unknown level, direction or a negative evidence limit throws `InvalidDependencyQuery`.
+A query with an unknown level, direction or dependency kind, or a negative evidence limit, throws `InvalidDependencyQuery`.
 
 ## How it is kept in step with the C# compiler
 

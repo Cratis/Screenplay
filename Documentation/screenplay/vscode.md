@@ -89,7 +89,7 @@ Pressing Enter after a block header indents one level, so the suggestion starts 
 
 ### Ghost text for structure
 
-On an empty line inside a block that has no content yet, both editors show the structure the block most obviously needs as ghost text. Press Tab to accept it:
+On an empty line inside a block whose next structure is missing, both editors show the structure the block most obviously needs as ghost text. Press Tab to accept it:
 
 | Block | Suggestion |
 | --- | --- |
