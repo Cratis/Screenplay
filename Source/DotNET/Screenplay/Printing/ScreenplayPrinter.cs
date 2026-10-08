@@ -818,9 +818,9 @@ public sealed partial class ScreenplayPrinter :
         AddMembers(members, feature.Behaviors, 1, behavior => WriteAttachedBehavior(writer, behavior));
         AddMembers(members, feature.UsedBehaviors, 2, uses => WriteUsesBehavior(writer, uses));
         AddSeparatedMembers(members, writer, feature.Examples, 3, WriteSpecificationExample);
-        AddSeparatedMembers(members, writer, feature.Features, 3, WriteFeature);
-        AddSeparatedMembers(members, writer, feature.Slices, 4, WriteSlice);
-        AddSeparatedMembers(members, writer, feature.Contributions ?? [], 5, WriteContribution);
+        AddSeparatedMembers(members, writer, feature.Features, 4, WriteFeature);
+        AddSeparatedMembers(members, writer, feature.Slices, 5, WriteSlice);
+        AddSeparatedMembers(members, writer, feature.Contributions ?? [], 6, WriteContribution);
         WriteMembers(members, feature);
     }
 
@@ -836,19 +836,19 @@ public sealed partial class ScreenplayPrinter :
             var members = new List<PrintableMember>();
             AddSeparatedMembers(members, writer, slice.Commands, 0, WriteCommand);
             AddSeparatedMembers(members, writer, slice.Events, 1, WriteEvent);
-            AddSeparatedMembers(members, writer, slice.Operations, 1, WriteOperation);
-            AddSeparatedMembers(members, writer, slice.Constraints, 2, WriteConstraint);
-            AddSeparatedMembers(members, writer, slice.Queries, 3, WriteQuery);
+            AddSeparatedMembers(members, writer, slice.Operations, 2, WriteOperation);
+            AddSeparatedMembers(members, writer, slice.Constraints, 3, WriteConstraint);
+            AddSeparatedMembers(members, writer, slice.Queries, 4, WriteQuery);
 
             // A read model comes before whatever builds it - the shape first, then where it comes from.
-            AddSeparatedMembers(members, writer, slice.ReadModels ?? [], 4, WriteReadModel);
-            AddSeparatedMembers(members, writer, slice.Projections, 5, WriteProjection);
-            AddSeparatedMembers(members, writer, slice.Reducers ?? [], 6, WriteReducer);
-            AddSeparatedMembers(members, writer, slice.Captures, 7, WriteCapture);
-            AddSeparatedMembers(members, writer, slice.Reactions, 8, WriteReaction);
-            AddSeparatedMembers(members, writer, slice.Screens, 9, WriteScreen);
-            AddSeparatedMembers(members, writer, slice.Examples, 10, WriteSpecificationExample);
-            AddSeparatedMembers(members, writer, slice.Specifications, 11, WriteSpecification);
+            AddSeparatedMembers(members, writer, slice.ReadModels ?? [], 5, WriteReadModel);
+            AddSeparatedMembers(members, writer, slice.Projections, 6, WriteProjection);
+            AddSeparatedMembers(members, writer, slice.Reducers ?? [], 7, WriteReducer);
+            AddSeparatedMembers(members, writer, slice.Captures, 8, WriteCapture);
+            AddSeparatedMembers(members, writer, slice.Reactions, 9, WriteReaction);
+            AddSeparatedMembers(members, writer, slice.Screens, 10, WriteScreen);
+            AddSeparatedMembers(members, writer, slice.Examples, 11, WriteSpecificationExample);
+            AddSeparatedMembers(members, writer, slice.Specifications, 12, WriteSpecification);
             WriteMembers(members, slice);
         }
     }
