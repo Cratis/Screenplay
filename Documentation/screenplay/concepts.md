@@ -1,6 +1,6 @@
 # Concepts
 
-Concepts are formalized value types that wrap a primitive. They give every domain value a precise, strongly-typed name — you never pass a raw `Uuid` or `String` around — and they are where compliance is declared. Attributes control compliance behavior: Chronicle applies `@pii` and `@sensitive` rules automatically wherever the concept is used.
+Concepts are formalized value types that wrap a primitive. They give every domain value a precise, strongly-typed name — you never pass a raw `Uuid` or `String` around — and they are where compliance is declared. Attributes declare the protection a concept needs: `@pii` marks personal data; `@sensitive` marks an operational secret, encrypted at rest without erasure and withheld from the causation chain. C# providers map these to Chronicle and Arc attributes as described below.
 
 A concept names one primitive value. For a shape made of several — the child records events carry — see [Types](types.md).
 
@@ -30,13 +30,26 @@ The optional `file` line names the repository relative file this declaration is 
 | Attribute | Meaning |
 | --- | --- |
 | `@pii` | The value is personally identifiable information. Chronicle manages it and can erase it for GDPR compliance. |
-| `@sensitive` | The value is sensitive and handled under Chronicle's sensitivity rules. |
+| `@sensitive` | Operational secret, not personal data: encrypted at rest without erasure and withheld from the causation chain. |
+
+C# providers render these attributes on the concept:
+
+| Screenplay | C# attributes |
+| --- | --- |
+| `@sensitive` | `[Encrypted]` + `[NotAudited]` |
+| `@pii` | `[PII]` |
+| `@pii @sensitive` | `[PII]` only |
+
+`[NotAudited]` alone leaves event values in plaintext; `[Encrypted]` alone does not withhold command inputs from Arc's causation chain. `[PII]` already withholds the value, and Chronicle refuses `[PII]` combined with `[Encrypted]` (`CHR0053`). Encryption uses `[Encrypted]`'s default scope; Screenplay has no encryption-scope syntax. Stage v4.29.0 implements this mapping ([Stage #197](https://github.com/Cratis/Stage/issues/197)).
+
+Compliance attributes are not admitted by the executable semantic model: binding a concept with either marker reports `PLAY0268`. The mapping above describes C# provider rendering, not reference execution.
 
 ## Examples
 
 ```screenplay
 concept InvoiceId        : Uuid
 concept EmailAddress     : String   @pii
+concept ApiKey           : String   @sensitive
 concept NationalIdNumber : String   @pii @sensitive
 concept DateOfBirth      : Date     @pii
 ```
@@ -125,16 +138,16 @@ The executable semantic model enforces portable concept rules on **command input
 
 In the compiled syntax tree the implied subject is represented by the well-known property name `value` — the `ValidationRuleSyntax.ConceptValue` constant — so consumers can treat concept rules and command rules uniformly.
 
-## Identifiers cannot be personal data
+## Identifiers cannot be personal data or operational secrets
 
-An event source identifier cannot be encrypted or erased. A concept marked `@pii` cannot be used as a command `identifier`, as an explicit `for` destination, or as an `eventsource` identifier (`PLAY0515`, mirroring Chronicle `CHR0034`). Use a surrogate `Uuid` concept for identity and keep the personal value in an ordinary property:
+An event source identifier cannot be encrypted or erased. A concept marked `@pii` or `@sensitive` cannot be used as a command `identifier`, as an explicit `for` destination, or as an `eventsource` identifier (`PLAY0515`, mirroring Chronicle `CHR0034` for `[PII]` and `CHR0052` for `[Encrypted]`). Use a surrogate `Uuid` concept for identity and keep the personal value or operational secret in an ordinary property:
 
 ```screenplay
 concept PatientId : Uuid
 concept NationalId : String @pii
 ```
 
-The meaning and target mapping of `@sensitive` remain under review in [issue #384](https://github.com/Cratis/Screenplay/issues/384); this identifier check does not redefine it.
+The meaning and C# provider mapping are recorded in [decision 0033](https://github.com/Cratis/Screenplay/blob/main/decisions/0033-sensitive-means-operational-secret.md).
 
 ## Attribute inheritance
 

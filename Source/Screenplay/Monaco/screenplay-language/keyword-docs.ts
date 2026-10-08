@@ -153,7 +153,7 @@ export const specificationKeywordDocs: Record<string, string> = {
 
 export const attributeDocs: Record<string, string> = {
     pii: '`@pii` — the value is personally identifiable information; Chronicle manages and erases it automatically wherever the concept is used. Add `pii reason "..."` in the concept body to record why.',
-    sensitive: '`@sensitive` — the value is sensitive; Chronicle applies its sensitivity rules automatically wherever the concept is used. Add `sensitive reason "..."` in the concept body to record why.',
+    sensitive: '`@sensitive` — Operational secret, not personal data: encrypted at rest without erasure and withheld from the causation chain. C# providers render `[Encrypted]` + `[NotAudited]`, or `[PII]` only when combined with `@pii`. Cannot be used as identity (PLAY0515). Add `sensitive reason "..."` in the concept body to record why.',
 };
 
 export const contextVariableDocs: Record<string, string> = {
