@@ -10,7 +10,7 @@ living reference for the language, so they must say what the language says today
 | Sample | Shows |
 | --- | --- |
 | `Samples/Library` | The smallest useful application in one file - where a newcomer starts. |
-| `Samples/Invoicing` | Every construct the language has, in one document, with its `.strings` files - except the preview constructs listed below. |
+| `Samples/Invoicing` | Every single-document, warning-free construct, with its `.strings` files - except the preview constructs listed below. |
 | `Samples/Commerce` | Focused files composed with explicit imports at every level: a root that reads like a table of contents, a file per module and feature that imports its own folder, and one file per slice with nothing above it. |
 | `Samples/TimeTracking` | Focused files composed from one root glob: module files declare their features inline and import each feature's step files, one slice per file. |
 
@@ -52,8 +52,10 @@ outside `Samples/` so Invoicing continues to exercise its individual binding dis
 | refusals, redelivery, `then no events` | #433 | `Source/Screenplay/Compiler/Conformance/reaction-refusals-redelivery.play`, `Source/Screenplay/Compiler/Conformance/no-events.play` |
 
 `for_Samples/when_holding_invoicing_to_the_language` reflects over concrete syntax nodes and requires every
-kind missing from Invoicing to be classified exactly once as Preview, CoveredElsewhere (a concrete, tested
-location), or Infrastructure (error/trivia nodes only). Newly covered kinds must leave those lists. It checks
+kind missing from Invoicing to be classified exactly once as Preview, CoveredElsewhere (composition in a
+multi-file sample or legacy syntax pinned by a warning spec, with a concrete, tested location), or Infrastructure
+(error/trivia nodes only). `FileImportSyntax` is demonstrated by Commerce; `FileConstraintSyntax` stays in the
+legacy compiler fixture because it warns with `PLAY0396`. Newly covered kinds must leave those lists. It checks
 preview fixture compilation, node presence and issue-specific binding refusal, and holds this table to the
 Preview list. Exact numeric mode is checked separately because it is a document option, not a syntax node.
 

@@ -1912,6 +1912,7 @@ module Invoicing
 
   feature Payments
     description "Recording what customers pay and chasing what they do not"
+    depends on InvoiceManagement
     authorize IsInvoicingStaff
 
     contribute to Navigation

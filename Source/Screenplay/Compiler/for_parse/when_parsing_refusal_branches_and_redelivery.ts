@@ -34,7 +34,11 @@ describe('when parsing refusal branches and redelivery', () => {
         const branches = slice(application()).reactions[0].triggers[0].invokes[0].onRefused!;
         branches.map(branch => branch.selector).should.deep.equal(['constraint', 'validation', 'constraint', 'authorization', 'any']);
         branches[0].constraint!.should.equal('Handling.UniqueClaim');
+        branches[0].produces[0].event.should.equal('Refused');
         branches[0].produces[0].mappings.map(mapping => mapping.source.kind).should.deep.equal(['RefusalExpressionSyntax', 'RefusalExpressionSyntax', 'RefusalExpressionSyntax']);
+        expect(branches[0].produces[0].mappings.map(mapping => mapping.source)).toMatchObject([
+            { member: 'reason' }, { member: 'constraint' }, { member: 'message' }
+        ]);
         branches[1].acknowledge.should.be.true;
     });
 
@@ -63,7 +67,7 @@ describe('when parsing refusal branches and redelivery', () => {
     });
 
     it('should preserve legacy bytes for absent branches and redelivery', () => {
-        const value = parse(source.replace('numbers exact\n', '').replace(/ {12}on refused[^]*? {6}specification/, '      specification').replace(/ {8}when redelivered[^]*? {8}then no events/, '        when Claim')).value;
+        const value = parse(source.replace(/ {12}on refused[^]*? {6}specification/, '      specification').replace(/ {8}when redelivered[^]*? {8}then no events/, '        when Claim')).value;
         expect(toSyntaxJson(slice(value).reactions[0].triggers[0].invokes[0])).not.toHaveProperty('onRefused');
         expect(toSyntaxJson(slice(value).specifications[0])).not.toHaveProperty('whenRedelivered');
     });

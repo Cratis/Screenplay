@@ -37,8 +37,7 @@ public class when_holding_invoicing_to_the_language : Specification
     static readonly (Type Node, string Path, string Reason)[] CoveredElsewhere =
     [
         (typeof(FileImportSyntax), "Samples/Commerce/application.play", "Composition is shown by Commerce, not a single-document application."),
-        (typeof(FileConstraintSyntax), "Source/DotNET/Screenplay/for_ScreenplayCompiler/invoicing.play", "Legacy file constraints warn with PLAY0396; with_a_file pins the warning, so they cannot enter warning-free Samples."),
-        (typeof(DependsOnSyntax), "Source/Screenplay/Compiler/Conformance/declared-dependencies.play", "Pending Invoicing coverage on fix/495-a1-depends-on; the conformance fixture already tests this authoring form.")
+        (typeof(FileConstraintSyntax), "Source/DotNET/Screenplay/for_ScreenplayCompiler/invoicing.play", "Legacy file constraints warn with PLAY0396; with_a_file pins the warning, so they cannot enter warning-free Samples.")
     ];
 
     // No production error/trivia SyntaxNode kinds exist today. Never use this list for authoring constructs.

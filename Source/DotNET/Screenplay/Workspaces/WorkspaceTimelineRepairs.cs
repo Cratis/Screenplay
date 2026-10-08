@@ -32,7 +32,7 @@ internal static class WorkspaceTimelineRepairs
             Subject(index, finding)?.Handle == repair.Subject);
         var recipe = finding is null ? null : Recipe(index, finding);
         if (recipe is null || !WorkspaceTimelineContentProof.Preserves(before, after, recipe.Pins) ||
-            before.IdentityCatalog.Revision != after.IdentityCatalog.Revision || before.Compilation.Success != result.ExecutableReady ||
+            !WorkspaceRepairVerification.KeepsCatalog(before, after) || before.Compilation.Success != result.ExecutableReady ||
             !before.Documents.Select(document => (document.Id, document.StableKey, document.Path)).SequenceEqual(after.Documents.Select(document => (document.Id, document.StableKey, document.Path))))
         {
             return false;
