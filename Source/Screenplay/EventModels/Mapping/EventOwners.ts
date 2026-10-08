@@ -48,10 +48,13 @@ export class EventOwners {
     }
 
     #own(scope: SliceScope, slice: SliceSyntax): void {
-        eventDeclarations(slice).filter(event => event.name.trim().length > 0 && !this.#owned.has(event.name.toLowerCase()))
-            .forEach((event: EventSyntax) => this.#owned.set(event.name.toLowerCase(), {
-                id: scope.idOf('event', event.name),
-                schema: this.schemas.forProperties(event.properties),
-            }));
+        eventDeclarations(slice).filter(event => event.name.trim().length > 0)
+            .forEach((event: EventSyntax) => {
+                const owned = { id: scope.idOf('event', event.name), schema: this.schemas.forProperties(event.properties) };
+                const name = event.name.toLowerCase();
+                if (!this.#owned.has(name)) this.#owned.set(name, owned);
+                // Effective examples name their underlying declaration by its full scope.
+                this.#owned.set(`${scope.path.replace(/[\/#]/g, '.')}.${event.name}`.toLowerCase(), owned);
+            });
     }
 }
