@@ -31,6 +31,10 @@ eventsource Account
   stream Transactions
     description "Account activity for one month"
     streamId Month
+  stream Ledger
+    streamId
+      account AccountId
+      month Month
 
 module Banking
   feature Deposits
@@ -43,6 +47,16 @@ module Banking
           streamId = month
         produces event Deposited
           amount Decimal = amount
+      command BookEntry
+        accountId AccountId identifier
+        month Month
+        stream Account.Ledger
+          streamId
+            month = month
+            account = accountId
+        produces event EntryBooked
+          for accountId
+          month Month = month
 ```
 
 A keyed stream requires `streamId = <value>`; an unkeyed stream cannot take that mapping. Known command paths must match the declared nominal type and be nonoptional scalars. Scalar literal values are checked against known types, but are not converted or executed.

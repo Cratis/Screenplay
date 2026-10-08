@@ -22,7 +22,7 @@ public class when_holding_invoicing_to_the_language : Specification
         // The larger exact-numbers transport vector intentionally has unresolved declarations and warnings.
         ("`numbers exact`", 285, [("Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play", [])]),
         ("`eventsource`, `stream`, command routes", 302,
-            [("Documentation/screenplay/fixtures/source-streams.play", [typeof(EventSourceSyntax), typeof(EventStreamSyntax), typeof(CommandStreamSyntax)])]),
+            [("Documentation/screenplay/fixtures/source-streams.play", [typeof(EventSourceSyntax), typeof(EventStreamSyntax), typeof(EventStreamIdPartSyntax), typeof(CommandStreamSyntax)])]),
         ("specification `stream`/`streamId`/`no stream`", 457,
             [("Source/Screenplay/Compiler/Conformance/specification-streams.play", [typeof(SpecificationStreamSyntax), typeof(SpecificationNoStreamSyntax)])]),
         ("`system`, `operation`, operation specifications", 301,

@@ -222,6 +222,7 @@ public partial class ScreenplayPrinter
                 using (writer.Indent())
                 {
                     if (route.StreamId is { } streamId) writer.Line($"streamId = {writer.Expression(streamId.Source)}", streamId);
+                    WriteStreamIdParts(writer, route, route.StreamIdParts);
                 }
             }
             if (@event.NoStream is { } noStream) writer.Line("no stream", noStream);

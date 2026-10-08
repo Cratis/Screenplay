@@ -817,13 +817,29 @@ internal static partial class SpecificationParser
     static SpecificationStreamSyntax ParseSpecificationStream(ParserContext context, SourceLine header, Match route)
     {
         PropertyMappingSyntax? streamId = null;
+        var parts = new List<PropertyMappingSyntax>();
+        var locations = new Dictionary<string, SourceLocation>();
         while (context.TryPeekChild(header.Indent, out var child))
         {
             context.Reader.TakeSignificant();
-            var mapping = SpecificationStreamIdRegex().Match(child.Content);
-            if (!mapping.Success || streamId is not null)
+            if (child.Content == "streamId")
             {
-                context.Error(DiagnosticCodes.InvalidSpecificationStream, "A specification stream accepts at most one 'streamId = <literal>' mapping.", child.Location);
+                if (streamId is not null || locations.ContainsKey("streamId"))
+                {
+                    context.Error(DiagnosticCodes.InvalidSpecificationStream, "Declare either one 'streamId = <literal>' mapping or one streamId part block.", child.Location);
+                    context.SkipBlock(child.Indent);
+                }
+                else
+                {
+                    locations["streamId"] = child.Location;
+                    parts = EventSourceParser.ParseRouteParts(context, child, DiagnosticCodes.InvalidSpecificationStream);
+                }
+                continue;
+            }
+            var mapping = SpecificationStreamIdRegex().Match(child.Content);
+            if (!mapping.Success || streamId is not null || locations.ContainsKey("streamId"))
+            {
+                context.Error(DiagnosticCodes.InvalidSpecificationStream, "Declare either one 'streamId = <literal>' mapping or one streamId part block.", child.Location);
                 context.SkipBlock(child.Indent);
                 continue;
             }
@@ -834,6 +850,8 @@ internal static partial class SpecificationParser
         return new(route.Groups[1].Value, route.Groups[2].Value, header.Location)
         {
             StreamId = streamId,
+            StreamIdParts = parts,
+            DirectiveLocations = locations,
             ReferenceLocation = header.LocationAt(route.Groups[1].Index),
             ReferenceLength = route.Groups[1].Length + 1 + route.Groups[2].Length
         };

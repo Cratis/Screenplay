@@ -66,6 +66,7 @@ internal static class SyntaxKinds
         typeof(EventInteractionTriggerSyntax),
         typeof(EventSourceIdExpressionSyntax),
         typeof(EventSourceSyntax),
+        typeof(EventStreamIdPartSyntax),
         typeof(EventStreamSyntax),
         typeof(EventSpecSyntax),
         typeof(EventSyntax),

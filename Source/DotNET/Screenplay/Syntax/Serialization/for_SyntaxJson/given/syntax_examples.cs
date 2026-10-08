@@ -36,10 +36,11 @@ internal static class syntax_examples
         {
             ValidationRuleSyntax rule => rule with { Rule = ValidationRuleKind.Rule, Value = new PathExpressionSyntax("ExamplePredicate", rule.Location), Code = null },
             EventSourceSyntax source => source with { Identifier = source.Identifier is null ? null : source.Identifier with { IsCollection = false, IsOptional = false } },
-            EventStreamSyntax stream => stream with { StreamId = stream.StreamId is null ? null : stream.StreamId with { IsCollection = false, IsOptional = false } },
+            EventStreamSyntax stream => stream with { StreamId = null, StreamIdParts = stream.StreamIdParts.Select(part => part with { Type = part.Type with { IsCollection = false, IsOptional = false } }) },
+            EventStreamIdPartSyntax part => part with { Type = part.Type with { IsCollection = false, IsOptional = false } },
             SpecificationEventSyntax occurrence => occurrence with { NoStream = null },
-            SpecificationStreamSyntax route => route with { StreamId = route.StreamId is null ? null : route.StreamId with { Property = "streamId" } },
-            CommandStreamSyntax route => route with { PropertyCandidate = null, StreamId = route.StreamId is null ? null : route.StreamId with { Property = "streamId" } },
+            SpecificationStreamSyntax route => route with { StreamId = null },
+            CommandStreamSyntax route => route with { PropertyCandidate = null, StreamId = null },
             HandlerSyntax handler => handler with { Code = null },
             OperationPhaseSyntax phase => phase with { Code = null },
             ProducesSyntax { InlineOperation: { } operation } production => production with

@@ -10,6 +10,7 @@ public class when_rejecting_syntax_only_streams : given.a_semantic_binder
 {
     [Theory]
     [InlineData("eventsource Account")]
+    [InlineData("eventsource Account\n  stream Ledger\n    streamId\n      account String\n      period String\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        stream Account.Ledger\n          streamId\n            period = \"2026-10\"\n            account = \"a\"")]
     [InlineData("eventsource Account\n  stream Transactions")]
     [InlineData("eventsource Account\n  stream Transactions\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        stream Account.Transactions")]
     [InlineData("eventsource Account\n  stream Transactions\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        stream Account.Transactions\n        handler\n          file Unknown.cs")]

@@ -21,7 +21,18 @@ internal static class EventSourceValidator
             {
                 context.Error(DiagnosticCodes.InvalidEventSourceDeclaration, $"Stream '{source.Name}.{duplicate.Name}' has multiple declarations under this source.", duplicate.Location);
             }
-            foreach (var stream in source.Streams) ValidateType(stream.StreamId, true, application, context);
+            foreach (var stream in source.Streams)
+            {
+                ValidateType(stream.StreamId, true, application, context);
+                var parts = stream.StreamIdParts.ToArray();
+                if (parts.Length == 0) continue;
+                if (parts.Length < 2) context.Error(DiagnosticCodes.InvalidEventSourceDeclaration, "A composite stream id requires at least two named parts.", stream.DirectiveLocations.GetValueOrDefault("streamId", stream.Location));
+                foreach (var duplicate in parts.GroupBy(part => part.Name, StringComparer.Ordinal).SelectMany(group => group.Skip(1)))
+                {
+                    context.Error(DiagnosticCodes.InvalidEventSourceDeclaration, $"Stream id part '{duplicate.Name}' is declared more than once.", duplicate.Location);
+                }
+                foreach (var part in parts) ValidateType(part.Type, true, application, context);
+            }
         }
 
         var catalog = new EventSourceCatalog(application);
@@ -41,11 +52,55 @@ internal static class EventSourceValidator
             {
                 context.Warning(DiagnosticCodes.InvalidCommandStream, $"Command identifier '{identifier.Name}' does not have the source's nominal identifier type '{expected.Name}'. The stream does not supply a destination.", identifier.Location);
             }
+            if (stream.StreamIdParts.Any())
+            {
+                ValidateParts(
+                    stream,
+                    route.StreamIdParts,
+                    route.StreamId is not null,
+                    route.Location,
+                    DiagnosticCodes.InvalidCommandStream,
+                    context,
+                    (mapping, target) =>
+                    {
+                        ValidateMapping(command, mapping, target, declarations, values, context);
+                        if (mapping.Source is LiteralExpressionSyntax { Value: "" }) context.Error(DiagnosticCodes.InvalidCommandStream, "A composite stream id part cannot be empty text.", mapping.Source.Location);
+                    });
+                continue;
+            }
+            if (route.StreamIdParts.Any())
+            {
+                context.Error(DiagnosticCodes.InvalidCommandStream, "A streamId part block requires a composite stream.", route.Location);
+                continue;
+            }
             if ((stream.StreamId is null && route.StreamId is not null) || (stream.StreamId is not null && route.StreamId is null))
             {
                 context.Error(DiagnosticCodes.InvalidCommandStream, stream.StreamId is null ? "An unkeyed stream cannot take a streamId mapping." : "This keyed stream requires a streamId mapping.", route.Location);
             }
             if (stream.StreamId is { } target && route.StreamId is { } mapping) ValidateMapping(command, mapping, target, declarations, values, context);
+        }
+    }
+
+    internal static void ValidateParts(EventStreamSyntax stream, IEnumerable<PropertyMappingSyntax> mappings, bool scalar, SourceLocation location, string code, ParserContext context, Action<PropertyMappingSyntax, TypeRefSyntax> validate)
+    {
+        if (scalar)
+        {
+            context.Error(code, "A composite stream requires a streamId part block, not a scalar mapping.", location);
+            return;
+        }
+        var parts = stream.StreamIdParts.ToArray();
+        var mapped = mappings.ToArray();
+        foreach (var part in parts.Where(part => !mapped.Any(mapping => mapping.Property == part.Name)))
+        {
+            context.Error(code, $"Stream id part '{part.Name}' requires a mapping.", location);
+        }
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var mapping in mapped)
+        {
+            var part = parts.FirstOrDefault(part => part.Name == mapping.Property);
+            if (part is null) context.Error(code, $"Unknown stream id part '{mapping.Property}'.", mapping.Location);
+            else if (!names.Add(mapping.Property)) context.Error(code, $"Stream id part '{mapping.Property}' is mapped more than once.", mapping.Location);
+            else validate(mapping, part.Type);
         }
     }
 
