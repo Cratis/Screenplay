@@ -48,12 +48,11 @@ export function validateEventSources(application: ApplicationSyntax, context: Pa
             const parts = stream.streamIdParts;
             if (parts.length > 0) {
                 if (parts.length < 2) context.error(DiagnosticCodes.InvalidEventSourceDeclaration, 'A composite stream id requires at least two named parts.', stream.directiveLocations?.streamId ?? stream.location);
-                const names = new Set<string>();
-                for (const part of parts) {
-                    if (names.has(part.name)) context.error(DiagnosticCodes.InvalidEventSourceDeclaration, `Stream id part '${part.name}' is declared more than once.`, part.location);
-                    names.add(part.name);
-                    validateType(part.type, true);
+                for (const name of new Set(parts.map(part => part.name))) {
+                    for (const duplicate of parts.filter(part => part.name === name).slice(1))
+                        context.error(DiagnosticCodes.InvalidEventSourceDeclaration, `Stream id part '${duplicate.name}' is declared more than once.`, duplicate.location);
                 }
+                for (const part of parts) validateType(part.type, true);
             }
         }
     }
