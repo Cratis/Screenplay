@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using System.Text.Json;
+using Cratis.Screenplay.Completeness;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Semantics.Serialization;
@@ -26,8 +27,10 @@ internal sealed partial class McpWorkspaces
             }
 
             var source = McpWorkspaceAnalysis.For(workspace).Source;
-            var selection = ScopedDiagnostics.Select(source, scope, out var scopeError)
-                ?? throw new McpFailure(scopeError!, -32602);
+            if (!ScopedDiagnostics.TryValidate(source, scope, CompletenessChecks.None, out var selection, out var scopeError))
+            {
+                throw new McpFailure(scopeError.Message, -32602);
+            }
             return McpJson.ToolResult(new
             {
                 workspace = McpWorkspaceTransport.Describe(workspace),
