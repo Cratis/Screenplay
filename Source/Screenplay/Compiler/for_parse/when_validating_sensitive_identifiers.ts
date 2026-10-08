@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { describe, expect, it } from 'vitest';
+import { describe, it } from 'vitest';
 import { parse } from '../ScreenplayCompiler';
 
 const message = "Concept 'SecretId' is @sensitive and cannot be an event source identifier - use a surrogate Uuid identifier and keep the @sensitive value as a property";
@@ -17,18 +17,19 @@ describe('when validating sensitive identifiers', () => {
         ['declared trigger destination', ['trigger External', '  secret SecretId', 'module M', '  feature F', '    slice Automation S', '      event Recorded', '      reaction R', '        when External', '          produces Recorded', '            for secret'], 11],
     ])('should reject a sensitive %s', (_, source, line) => {
         const result = parse(['concept SecretId : Uuid @sensitive', ...source as string[]].join('\n'));
-        expect(result.diagnostics).toHaveLength(1);
-        expect(result.diagnostics[0]).toMatchObject({ code: 'PLAY0515', message, location: { line } });
+        result.diagnostics.should.have.lengthOf(1);
+        const diagnostic = result.diagnostics[0];
+        ({ code: diagnostic.code, message: diagnostic.message, line: diagnostic.location.line }).should.deep.equal({ code: 'PLAY0515', message, line });
     });
 
     it.each(['@pii @sensitive', '@sensitive @pii'])('should reject combined classifications once for %s', attributes => {
         const result = parse(`concept SecretId : Uuid ${attributes}\neventsource Secrets\n  identifier SecretId`);
-        expect(result.diagnostics).toHaveLength(1);
-        expect(result.diagnostics[0].message).toBe(message.replaceAll('@sensitive', '@pii'));
+        result.diagnostics.should.have.lengthOf(1);
+        result.diagnostics[0].message.should.equal(message.replaceAll('@sensitive', '@pii'));
     });
 
     it('should keep protected values as ordinary properties', () => {
         const source = ['concept Secret : String @sensitive', 'concept Personal : String @pii @sensitive', 'module M', '  feature F', '    slice StateChange S', '      command C', '        id Uuid identifier', '        secret Secret', '        personal Personal'];
-        expect(parse(source.join('\n')).diagnostics).toEqual([]);
+        parse(source.join('\n')).diagnostics.should.deep.equal([]);
     });
 });
