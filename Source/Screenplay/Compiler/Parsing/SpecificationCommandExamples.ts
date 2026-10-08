@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { dependencySources, dependencySourcesOf } from '../Syntax/DependencySources';
 import { eventDeclarations } from '../Syntax/EventDeclarations';
 import { PropertyMappingSyntax } from '../Syntax/Expressions';
 import { SpecificationCommandSyntax, SpecificationEventSyntax, SpecificationReadModelSyntax } from '../Syntax/Specifications';
@@ -90,7 +91,7 @@ export function expandSpecificationExamples(application: ApplicationSyntax): App
             features: features(feature.features, scope),
             slices: feature.slices.map(slice => {
                 const scope = [...parent, feature.name, slice.name];
-                return { ...slice, specifications: slice.specifications.map(specification => ({
+                const expanded = { ...slice, specifications: slice.specifications.map(specification => ({
                     ...specification,
                     given: specification.given.map(step => effective.event(step, scope)),
                     givenReadModels: specification.givenReadModels.map(step => effective.readModel(step, scope)),
@@ -99,6 +100,8 @@ export function expandSpecificationExamples(application: ApplicationSyntax): App
                     thenEvents: specification.thenEvents.map(step => effective.event(step, scope)),
                     thenReadModels: specification.thenReadModels.map(step => effective.readModel(step, scope)),
                 })) };
+                dependencySources.set(expanded, dependencySourcesOf(slice));
+                return expanded;
             }),
         };
     });
