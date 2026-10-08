@@ -1,7 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
 namespace Cratis.Screenplay.for_ScreenplayCompiler;
@@ -49,7 +48,5 @@ public class when_consistency_depends_on_unknown_shapes : given.a_compiler
     void Because() => _result = _compiler.Compile(Source);
 
     [Fact] void should_succeed() => _result.Success.ShouldBeTrue();
-    [Fact] void should_leave_unknown_property_paths_read_types_enum_values_and_automap_sources_undecided() => _result.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldEqual([DiagnosticCodes.EventFromLaterSlice]);
-    [Fact] void should_keep_the_read_dependency_informational() => _result.Diagnostics.Single().Severity.ShouldEqual(DiagnosticSeverity.Information);
-    [Fact] void should_report_the_read_reference() => _result.Diagnostics.Single().Location.Line.ShouldEqual(17);
+    [Fact] void should_leave_unknown_property_paths_read_types_enum_values_and_automap_sources_undecided() => _result.Diagnostics.ShouldBeEmpty();
 }

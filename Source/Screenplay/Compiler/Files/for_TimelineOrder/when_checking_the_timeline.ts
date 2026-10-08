@@ -33,6 +33,9 @@ for (const test of cases) {
             const result = parse(test.source);
             result.diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`).should.deep.equal(test.expected);
             result.diagnostics.every(diagnostic => diagnostic.severity === 'information').should.be.true;
+            for (const group of result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0517')) {
+                group.message.should.contain("depend on each other's events or read models; reordering these members cannot make every dependency flow left to right.");
+            }
             result.success.should.be.true;
         });
     });

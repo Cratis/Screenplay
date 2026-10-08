@@ -897,6 +897,72 @@
             "diagnostics": ["PLAY0517@6"]
         },
         {
+            "name": "Feature feedback consumes a sibling slice's declared event",
+            "validate": true,
+            "source": ["module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event E", "  feature Reporting", "    slice StateView Build", "      projection P => Items", "        from E"],
+            "diagnostics": []
+        },
+        {
+            "name": "Nested feature feedback consumes facts from the reader's whole side",
+            "validate": true,
+            "source": ["module M", "  feature Recording", "    feature Decisions", "      slice StateChange Read", "        command C", "          reads Items", "    feature Facts", "      slice StateChange Write", "        event E", "  feature Reporting", "    slice StateView Build", "      reducer P => Items", "        on E"],
+            "diagnostics": []
+        },
+        {
+            "name": "Module feedback consumes facts from another feature on the reader's side",
+            "validate": true,
+            "source": ["module Recording", "  feature Decisions", "    slice StateChange Read", "      command C", "        reads Items", "  feature Facts", "    slice StateChange Write", "      event E", "module Reporting", "  feature Views", "    slice StateView Build", "      projection P => Items", "        from E"],
+            "diagnostics": []
+        },
+        {
+            "name": "Command produces an imported undeclared feedback event",
+            "validate": true,
+            "source": ["import External.E", "module M", "  feature F", "    slice StateChange Read", "      command C", "        reads Items", "        produces E", "    slice StateView Build", "      projection P => Items", "        from E"],
+            "diagnostics": []
+        },
+        {
+            "name": "Reaction produces an imported undeclared feedback event",
+            "validate": true,
+            "source": ["import External.E", "module M", "  feature F", "    slice Automation Read", "      reaction R", "        every 15 minutes", "          reads Items", "          produces E", "    slice StateView Build", "      reducer P => Items", "        on E"],
+            "diagnostics": []
+        },
+        {
+            "name": "A sibling command's imported production counts at the feature boundary",
+            "validate": true,
+            "source": ["import External.E", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      command W", "        produces E", "  feature Reporting", "    slice StateView Build", "      reducer P => Items", "        on E"],
+            "diagnostics": []
+        },
+        {
+            "name": "Feedback exclusion keeps the original backward event edge across features",
+            "validate": true,
+            "source": ["module M", "  feature Reporting", "    slice StateView Build", "      reducer P => Items", "        on E", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event E"],
+            "diagnostics": ["PLAY0516@5"]
+        },
+        {
+            "name": "A builder's foreign facts do not exclude non feedback reads",
+            "validate": true,
+            "source": ["module M", "  feature Recording", "    slice StateChange Read", "      event Own", "      command C", "        reads Items", "  feature Reporting", "    slice StateView Build", "      event E", "      reducer P => Items", "        on E"],
+            "diagnostics": ["PLAY0516@6"]
+        },
+        {
+            "name": "Same feature sibling facts do not belong to the reading slice's side",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event E", "    slice StateView Build", "      projection P => Items", "        from E"],
+            "diagnostics": ["PLAY0516@5"]
+        },
+        {
+            "name": "Any builder consumed fact from the reader's side is feedback",
+            "validate": true,
+            "source": ["import External.Foreign", "module M", "  feature Recording", "    slice StateChange Read", "      command C", "        reads Items", "    slice StateChange Write", "      event Own", "  feature Reporting", "    slice StateView Build", "      projection P => Items", "        from Foreign", "        from own"],
+            "diagnostics": []
+        },
+        {
+            "name": "Unknown imported shapes with a produced feedback event stay undecided",
+            "validate": true,
+            "source": ["import External.Payload", "import External.Kind", "import External.Identity", "import External.ImportedEvent", "type Row", "  id Uuid", "  note String", "module Local", "  feature Entries", "    slice StateChange Record", "      command RecordEntry", "        payload Payload", "        kind Kind", "        id Uuid", "        validate", "          payload.unknown not empty", "        reads View by id", "        produces ImportedEvent", "          absent = payload.unknown", "      specification UnknownShapes", "        when RecordEntry", "          kind = Anything", "        then ImportedEvent", "          absent = \"not statically known\"", "    slice StateView Browse", "      readmodel View", "        rows Row[]", "      projection Entries => View", "        children rows identified by id", "          from ImportedEvent", "      query Lookup => View", "        by identity Identity"],
+            "diagnostics": []
+        },
+        {
             "name": "Feedback preserves a reducer backward event edge when its reader is later",
             "validate": true,
             "source": ["module M", "  feature F", "    slice StateView Build", "      reducer R => Items", "        on E", "    slice StateChange Read", "      event E", "      command C", "        reads Items"],
