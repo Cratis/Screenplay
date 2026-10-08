@@ -26,6 +26,8 @@ Screenplay records personal-data and operational-secret markers with free-text r
 
 This record amends the surface names and encryption-scope deferral of [0034](0034-sensitive-means-operational-secret.md), preserving its mapping and identity restrictions. [0008](0008-one-data-subject-per-event.md) continues to govern subject lineage. Report-only processing declarations follow the metadata approach described in [0035](0035-keep-model-reasoning-as-report-only-metadata.md).
 
+**2026-10-08 clarification:** [0047](0047-data-subject-mark-on-event-properties.md) separately governs the trailing `subject` role on an event property. The prohibition on property/type-level markers here concerns value classification (`pii`/`secret`), not that event-property role. `secret scope subject` denotes encryption scope, not an event's subject selection. Phase 1 here does not implement or admit event subject roles.
+
 ## Decision
 
 1. Markers are bare suffix keywords after a concept's primitive type. `pii` is canonical: personal data (GDPR Art. 4(1)); renders Chronicle `[PII]`. `personal` is an alias without a diagnostic; the printer writes `pii`. `secret` is canonical for an operational secret. `@pii`, `sensitive` and `@sensitive` remain accepted with one Information diagnostic per line and per-line/whole-document repair. Unknown markers are errors. AST wire names remain `pii` and `sensitive`; additive syntax members use binary-safe init properties.
