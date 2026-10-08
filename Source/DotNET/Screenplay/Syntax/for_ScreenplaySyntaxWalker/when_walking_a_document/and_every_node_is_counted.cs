@@ -11,7 +11,7 @@ public class and_every_node_is_counted : given.the_invoicing_document
     void Establish()
     {
         _walker = new();
-        _expected = given.SyntaxNodes.Under(_document);
+        _expected = global::Cratis.Screenplay.given.SyntaxNodes.Under(_document);
     }
 
     void Because() => _walker.VisitApplication(_document);

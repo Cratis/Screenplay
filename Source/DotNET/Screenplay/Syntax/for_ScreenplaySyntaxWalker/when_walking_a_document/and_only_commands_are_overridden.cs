@@ -11,7 +11,7 @@ public class and_only_commands_are_overridden : given.the_invoicing_document
     void Establish()
     {
         _walker = new();
-        _expected = [.. given.SyntaxNodes.Under(_document).OfType<CommandSyntax>()];
+        _expected = [.. global::Cratis.Screenplay.given.SyntaxNodes.Under(_document).OfType<CommandSyntax>()];
     }
 
     void Because() => _walker.VisitApplication(_document);
