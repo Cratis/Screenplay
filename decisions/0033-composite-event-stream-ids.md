@@ -216,7 +216,7 @@ Executable admission follows 0031's rule: it joins #407's ESM version if the evi
 
 - **`|` with `%` escaping of exactly two characters.** Chosen.
   - It is injective within a schema, never equals the empty or `"Default"` id, and leaves single-component values unescaped and readable.
-  - Values that contain no `%` or `|`, which covers UUIDs and integers, appear verbatim in stores and logs.
+  - Canonical formatted parts that contain neither `%` nor `|`, which covers UUIDs and integers, are unchanged by identity escaping. Transport and logging may still escape them on their own.
 - **A canonical JSON array of already formatted strings.** A credible alternative. Formatting each part first removes the number-formatting concern, but JSON string escaping of control characters and non-ASCII text must then be pinned exactly across runtimes. It is also noisier in stores and logs. Not chosen, but not rejected as unsound.
 - **Length-prefixed parts** (`5:p-1|7:2026-10`). Rejected: injective, but hard to read in stores and logs.
 - **A plain join.** Rejected: it repeats Chronicle's colliding constraint behaviour.
