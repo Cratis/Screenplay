@@ -42,6 +42,18 @@ internal static partial class EventSourceInvariants
                 Name(stream.Name);
                 Pin(stream.Id);
                 Scalar(stream.StreamId);
+                if (stream.StreamIdParts is null) throw new InvalidSyntaxJson("Stream id parts must be a collection.");
+                if (stream.StreamId is not null && stream.StreamIdParts.Any()) throw new InvalidSyntaxJson("A stream cannot declare both scalar and composite stream ids.");
+                foreach (var part in stream.StreamIdParts)
+                {
+                    if (part is null) throw new InvalidSyntaxJson("Stream id parts cannot contain null.");
+                    Validate(part);
+                }
+                break;
+            case EventStreamIdPartSyntax part:
+                Name(part.Name);
+                if (part.Type is null) throw new InvalidSyntaxJson("A stream id part requires a type.");
+                Scalar(part.Type);
                 break;
             case SpecificationEventSyntax occurrence:
                 if (occurrence.Stream is not null && occurrence.NoStream is not null) throw new InvalidSyntaxJson("An event occurrence cannot declare both stream and no stream.");
@@ -50,16 +62,29 @@ internal static partial class EventSourceInvariants
                 Name(specificationRoute.EventSource);
                 Name(specificationRoute.Stream);
                 if (specificationRoute.StreamId is { Property: not "streamId" }) throw new InvalidSyntaxJson("A specification stream maps only streamId.");
+                Mappings(specificationRoute.StreamId, specificationRoute.StreamIdParts);
                 break;
             case CommandStreamSyntax route:
                 Name(route.EventSource);
                 Name(route.Stream);
                 if (route.StreamId is { Property: not "streamId" }) throw new InvalidSyntaxJson("A command stream maps only streamId.");
-                if (route.PropertyCandidate is { } candidate && (candidate.Name != "stream" || candidate.Type.Name != $"{route.EventSource}.{route.Stream}" || candidate.Type.IsCollection || candidate.Type.IsOptional || candidate.IsGenerated || candidate.IsIdentifier || route.StreamId is not null))
+                Mappings(route.StreamId, route.StreamIdParts);
+                if (route.PropertyCandidate is { } candidate && (candidate.Name != "stream" || candidate.Type.Name != $"{route.EventSource}.{route.Stream}" || candidate.Type.IsCollection || candidate.Type.IsOptional || candidate.IsGenerated || candidate.IsIdentifier || route.StreamId is not null || route.StreamIdParts.Any()))
                 {
                     throw new InvalidSyntaxJson("An ambiguous route must retain its exact unmodified property candidate, without selecting nested routing.");
                 }
                 break;
+        }
+    }
+
+    static void Mappings(PropertyMappingSyntax? scalar, IEnumerable<PropertyMappingSyntax> parts)
+    {
+        if (parts is null) throw new InvalidSyntaxJson("Stream id part mappings must be a collection.");
+        if (scalar is not null && parts.Any()) throw new InvalidSyntaxJson("A route cannot map both scalar and composite stream ids.");
+        foreach (var part in parts)
+        {
+            if (part is null) throw new InvalidSyntaxJson("Stream id part mappings cannot contain null.");
+            Name(part.Property);
         }
     }
 

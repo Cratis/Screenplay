@@ -7,6 +7,8 @@ import { PropertySyntax, TypeRefSyntax } from '../Syntax/Declarations';
 import { EventSourceCatalog } from '../Syntax/EventSourceCatalog';
 import { EventSourceResolutionKind } from '../Syntax/EventSources';
 import { ApplicationSyntax } from '../Syntax/Structure';
+import { PropertyMappingSyntax } from '../Syntax/Expressions';
+import { validateStreamIdParts } from './CompositeStreamIdValidator';
 import { ParserContext } from './ParserContext';
 import { compatibleValue, uniqueByName } from './ResponseValidator';
 import { validateSpecificationStreams } from './SpecificationStreamValidator';
@@ -43,6 +45,15 @@ export function validateEventSources(application: ApplicationSyntax, context: Pa
             if (streams.has(stream.name)) context.error(DiagnosticCodes.InvalidEventSourceDeclaration, `Stream '${source.name}.${stream.name}' has multiple declarations under this source.`, stream.location);
             streams.add(stream.name);
             validateType(stream.streamId, true);
+            const parts = stream.streamIdParts;
+            if (parts.length > 0) {
+                if (parts.length < 2) context.error(DiagnosticCodes.InvalidEventSourceDeclaration, 'A composite stream id requires at least two named parts.', stream.directiveLocations?.streamId ?? stream.location);
+                for (const name of new Set(parts.map(part => part.name))) {
+                    for (const duplicate of parts.filter(part => part.name === name).slice(1))
+                        context.error(DiagnosticCodes.InvalidEventSourceDeclaration, `Stream id part '${duplicate.name}' is declared more than once.`, duplicate.location);
+                }
+                for (const part of parts) validateType(part.type, true);
+            }
         }
     }
     const pathProperty = (properties: readonly PropertySyntax[] | null, path: string): { property: PropertySyntax | null; missing: boolean } => {
@@ -71,18 +82,32 @@ export function validateEventSources(application: ApplicationSyntax, context: Pa
         const identifiers = command.properties.filter(property => property.isIdentifier);
         if (source.identifier !== null && identifiers.length === 1 && compatible(identifiers[0].type, source.identifier) === false)
             context.warning(DiagnosticCodes.InvalidCommandStream, `Command identifier '${identifiers[0].name}' does not have the source's nominal identifier type '${source.identifier.name}'. The stream does not supply a destination.`, identifiers[0].location);
+        const validateMapping = (mapping: PropertyMappingSyntax, target: TypeRefSyntax): void => {
+            const expression = mapping.source;
+            if (expression.kind === 'PathExpressionSyntax') {
+                const resolved = pathProperty(command.properties, expression.path);
+                if (resolved.missing || resolved.property !== null && compatible(resolved.property.type, target) === false)
+                    context.error(DiagnosticCodes.InvalidCommandStream, `Stream id source '${expression.path}' is absent or incompatible with nominal type '${target.name}'.`, expression.location);
+            } else if (expression.kind === 'LiteralExpressionSyntax' && !compatibleValue(expression, target, concepts, compositeProperties))
+                context.error(DiagnosticCodes.InvalidCommandStream, `Stream id value is incompatible with nominal type '${target.name}'.`, expression.location);
+            else if (['RawExpressionSyntax', 'ObjectExpressionSyntax', 'ListExpressionSyntax'].includes(expression.kind) || expression.kind === 'LiteralExpressionSyntax' && expression.value === null)
+                context.error(DiagnosticCodes.InvalidCommandStream, 'A stream id needs a scalar value source, not a raw expression, collection or absence.', expression.location);
+        };
+        if (stream.streamIdParts.length > 0) {
+            validateStreamIdParts(stream, route.streamIdParts, route.streamId !== null, route.location, DiagnosticCodes.InvalidCommandStream, context, (mapping, target) => {
+                validateMapping(mapping, target);
+                if (mapping.source.kind === 'LiteralExpressionSyntax' && mapping.source.value === '') context.error(DiagnosticCodes.InvalidCommandStream, 'A composite stream id part cannot be empty text.', mapping.source.location);
+            });
+            continue;
+        }
+        if (route.streamIdParts.length > 0) {
+            context.error(DiagnosticCodes.InvalidCommandStream, 'A streamId part block requires a composite stream.', route.location);
+            continue;
+        }
         if (stream.streamId === null && route.streamId !== null || stream.streamId !== null && route.streamId === null)
             context.error(DiagnosticCodes.InvalidCommandStream, stream.streamId === null ? 'An unkeyed stream cannot take a streamId mapping.' : 'This keyed stream requires a streamId mapping.', route.location);
         if (stream.streamId === null || route.streamId === null) continue;
-        const expression = route.streamId.source;
-        if (expression.kind === 'PathExpressionSyntax') {
-            const resolved = pathProperty(command.properties, expression.path);
-            if (resolved.missing || resolved.property !== null && compatible(resolved.property.type, stream.streamId) === false)
-                context.error(DiagnosticCodes.InvalidCommandStream, `Stream id source '${expression.path}' is absent or incompatible with nominal type '${stream.streamId.name}'.`, expression.location);
-        } else if (expression.kind === 'LiteralExpressionSyntax' && !compatibleValue(expression, stream.streamId, concepts, compositeProperties))
-            context.error(DiagnosticCodes.InvalidCommandStream, `Stream id value is incompatible with nominal type '${stream.streamId.name}'.`, expression.location);
-        else if (['RawExpressionSyntax', 'ObjectExpressionSyntax', 'ListExpressionSyntax'].includes(expression.kind) || expression.kind === 'LiteralExpressionSyntax' && expression.value === null)
-            context.error(DiagnosticCodes.InvalidCommandStream, 'A stream id needs a scalar value source, not a raw expression, collection or absence.', expression.location);
+        validateMapping(route.streamId, stream.streamId);
     }
     validateSpecificationStreams(application, context);
 }

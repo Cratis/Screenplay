@@ -61,6 +61,14 @@ public sealed partial class ScreenplayPrinter
             WriteDescription(writer, stream.Description, stream);
             if (stream.Id is not null) writer.DirectiveLine($"id {StringLiteral.Quote(stream.Id)}", stream, "id");
             if (stream.StreamId is not null) writer.DirectiveLine($"streamId {ScreenplaySyntaxText.TypeRef(stream.StreamId)}", stream, "streamId");
+            if (stream.StreamIdParts.Any())
+            {
+                writer.DirectiveLine("streamId", stream, "streamId");
+                using (writer.Indent())
+                {
+                    foreach (var part in stream.StreamIdParts) writer.Line($"{part.Name} {ScreenplaySyntaxText.TypeRef(part.Type)}", part);
+                }
+            }
         }
     }
 
@@ -73,6 +81,17 @@ public sealed partial class ScreenplayPrinter
         using (writer.Indent())
         {
             if (route.StreamId is { } mapping) writer.Line($"streamId = {writer.Expression(mapping.Source)}", mapping);
+            WriteStreamIdParts(writer, route, route.StreamIdParts);
+        }
+    }
+
+    void WriteStreamIdParts(ScreenplayWriter writer, SyntaxNode route, IEnumerable<PropertyMappingSyntax> parts)
+    {
+        if (!parts.Any()) return;
+        writer.DirectiveLine("streamId", route, "streamId");
+        using (writer.Indent())
+        {
+            foreach (var part in parts) writer.Line($"{part.Property} = {writer.Expression(part.Source)}", part);
         }
     }
 }

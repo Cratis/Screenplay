@@ -8,6 +8,8 @@ export interface AuthoredStream {
     readonly name: string;
     readonly location: AnalysisLocation;
     readonly streamId: AnalysisType | null;
+    readonly streamIdParts: readonly { readonly name: string; readonly type: AnalysisType; readonly location: AnalysisLocation }[];
+    readonly directiveLocations?: Readonly<Record<string, AnalysisLocation>>;
     readonly description: string | null;
     readonly id: string | null;
 }

@@ -155,7 +155,7 @@ static class WorkspaceAuthoringReferences
             if (candidates is not [var selected]) continue;
             var intended = command with
             {
-                Stream = selected with { PropertyCandidate = null, StreamId = route.StreamId },
+                Stream = selected with { PropertyCandidate = null, StreamId = route.StreamId, StreamIdParts = route.StreamIdParts },
                 StreamCandidates = [.. command.StreamCandidates.Where(candidate => !ReferenceEquals(candidate, selected))]
             };
             if (!SyntaxJson.StructurallyEqual(intended, replacement)) continue;

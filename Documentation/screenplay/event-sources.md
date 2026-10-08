@@ -11,15 +11,30 @@ Name the business classification of an event source and its streams, then refere
 | Source name | Yes | Exact, case-sensitive application-owned name |
 | `identifier Type` | No | Nonoptional scalar identifier type; not a destination value |
 | `stream Name` | No; repeatable | A source-owned stream declaration |
-| Stream `streamId Type` | No | Nonoptional scalar key type; omission declares an unkeyed stream |
+| Stream `streamId Type` | No | Nonoptional scalar key type; omission of both key forms declares an unkeyed stream |
+| Stream `streamId` block | No | Two or more named scalar parts, in identity-bearing declaration order |
 | `description` | No | Quoted text or an existing text/Markdown description fence |
 | `id "OldName"` | No | Retains an old stored name during a deliberate rename |
 
 Known stream-id types are `String`, `Uuid`, their nominal concepts and integer-backed concepts. Bare `Int`, enums, optional values, collections and other known value types are rejected. An imported type with an unavailable shape remains unresolved; tooling does not guess its primitive. Supported value types describe future portable formatting, not a formatter executed by this authoring increment.
 
+## Composite stream ids
+
+Use a `streamId` block when one stream is keyed by several values, rather than inventing a joined command property. Each child declares `<part> <Type>`. A stream declares either the scalar type or the block, never both.
+
+- Declare at least two parts. Names are exact, case-sensitive and unique.
+- Each part uses the scalar stream-id subset above. No optional or collection types, composite `type`s, enums, modifiers or children.
+- A command route maps every declared part exactly once as `<part> = <source>` under its own `streamId` header. Sources are nominally compatible nonoptional command property paths or scalar literals. Unknown and duplicate parts are refused.
+- A [specification route](specifications.md#event-routes-syntax-only) uses the same named mappings with concrete literals only. Empty text parts are refused; whitespace is not empty.
+- Mapping order is authored presentation, not identity. Declaration order determines stored identity. Neither form supplies the event source id: `for` remains independent, even when a part has the same name or value.
+
+**Evolution rule:** changing the key schema of a stream with stored events requires a new stored stream identity (a new stream name or its own `id` pin), or an explicit validated migration. Adding, removing or reordering parts, changing a part type, or switching between scalar and composite can split or alias existing ids. Renaming a part preserves stored ids only when its position, type and every mapping keep their meaning. Part-name rename is not supported by the authoring tools.
+
+**Legacy hand-joined ids stay scalar.** An existing text id such as `"p-1:2026-10"` passes through unchanged. Screenplay never splits it or guesses parts; migration is explicit.
+
 ## Reference a stream from a command
 
-This complete [authoring fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/source-streams.play) declares a keyed stream and maps the command's month to it:
+This complete [authoring fixture](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/fixtures/source-streams.play) declares scalar and composite keyed streams and maps command properties to them:
 
 ```screenplay
 concept AccountId : Uuid
@@ -31,6 +46,10 @@ eventsource Account
   stream Transactions
     description "Account activity for one month"
     streamId Month
+  stream Ledger
+    streamId
+      account AccountId
+      month Month
 
 module Banking
   feature Deposits
@@ -43,11 +62,36 @@ module Banking
           streamId = month
         produces event Deposited
           amount Decimal = amount
+    slice StateChange Book
+      command BookEntry
+        accountId AccountId identifier
+        month Month
+        stream Account.Ledger
+          streamId
+            month = month
+            account = accountId
+        produces event EntryBooked
+          for accountId
+          month Month = month
 ```
 
-A keyed stream requires `streamId = <value>`; an unkeyed stream cannot take that mapping. Known command paths must match the declared nominal type and be nonoptional scalars. Scalar literal values are checked against known types, but are not converted or executed.
+A scalar keyed stream requires `streamId = <value>`; a composite stream requires the named part block. The forms cannot substitute for each other, and an unkeyed stream accepts neither. Known command paths must match the declared nominal type and be nonoptional scalars. Scalar literal values are checked against known types, but are not converted or executed.
 
 `stream Account.Transactions` classifies the command's events. It does **not** supply `for`, change plain-production allocation, or override inline-production destination rules. A handler command may author a route even when its returned events are unavailable statically. The existing prohibition on combining `handler` and `produces` is unchanged.
+
+## Canonical stored encoding
+
+This is the **normative contract for future executable admission**, not a formatter executed by this authoring surface. Binding still refuses routes with `PLAY0268`.
+
+1. Format each part: text unchanged and ordinal (no normalization), UUID lowercase and hyphenated, integer invariant decimal with no fraction or exponent and `0`, never `-0`.
+2. Escape `%` as `%25`, then `|` as `%7C`. Only those two escapes are defined, with uppercase hex.
+3. Join with `|` in declaration order. For example, the account/month fixture encodes as `3fa85f64-5717-4562-b3fc-2c963f66afa6|202610`; a text part `a|b%` encodes as `a%7Cb%25`.
+
+Decode by splitting on literal `|` first, checking the declared arity, decoding each component exactly once (only `%25` and `%7C`), then checking canonical scalar spelling. Wrong arity, lowercase or unknown escapes, a trailing `%` and noncanonical scalar spelling are refused, never repaired. Generic URL decoding and decoding before splitting are incorrect. Lone UTF-16 surrogates are refused at literal binding or atomically at execution; runtime integer bounds follow the admitting execution contract.
+
+Collision freedom holds within one declared schema, not across schemas or scalar ids. A scalar `"a|b"` can equal the encoding of composite parts `"a"` and `"b"`. Route identity includes source type, stream type and encoded id, with `for` independent; providers must disclose which dimensions they filter and never assume global stream-id uniqueness.
+
+This is stored identity encoding, not transport or log escaping. Parts can contain Unicode, control characters, `/`, `?` or `#`; transport and logging must escape separately while preserving the identity bytes. The encoding is reversible and offers no confidentiality or erasure protection. Use non-sensitive surrogate identifiers. Formatting and decoding diagnostics must not disclose part values; `PLAY0515` rejects `@pii` and `@sensitive` concepts as scalar stream-id types, composite part types, and command route mapping sources, including nested property paths. Use a non-protected surrogate instead of personal data or an operational secret. A mapping using the same protected concept already rejected at its resolved declaration does not repeat that error; a different protected source concept is reported separately. Specification routes state literals, so their declaration check supplies the protection. This authoring rule implements [#525](https://github.com/Cratis/Screenplay/issues/525); it does not admit routing into an executable model.
 
 ## Ambiguity and ownership
 

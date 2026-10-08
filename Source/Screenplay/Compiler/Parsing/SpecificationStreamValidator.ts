@@ -11,6 +11,8 @@ import { canonicalExactText } from '../Syntax/ExactMathFacts';
 import { ExpressionSyntax } from '../Syntax/Expressions';
 import { implicitDestination } from '../Syntax/ProductionDestinations';
 import { ApplicationSyntax } from '../Syntax/Structure';
+import { PropertyMappingSyntax } from '../Syntax/Expressions';
+import { validateStreamIdParts } from './CompositeStreamIdValidator';
 import { ParserContext } from './ParserContext';
 import { compatibleValue, uniqueByName } from './ResponseValidator';
 import { expandSpecificationExamples } from './SpecificationCommandExamples';
@@ -115,12 +117,19 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
                 }
                 const source = resolution.sources[0];
                 const stream = resolution.streams[0];
-                if ((stream.streamId === null) !== (route.streamId === null))
-                    context.error(DiagnosticCodes.InvalidSpecificationStreamRoute, stream.streamId === null ? 'An unkeyed stream cannot take a streamId mapping.' : 'This keyed stream requires a streamId mapping.', route.location);
-                if (route.streamId !== null) {
-                    const value = route.streamId.source;
-                    if (value.kind !== 'LiteralExpressionSyntax' || value.value === null || value.value === '' || stream.streamId !== null && !compatible(value, stream.streamId))
+                const validateLiteral = (mapping: PropertyMappingSyntax, target: TypeRefSyntax | null): void => {
+                    const value = mapping.source;
+                    if (value.kind !== 'LiteralExpressionSyntax' || value.value === null || value.value === '' || target !== null && !compatible(value, target))
                         context.error(DiagnosticCodes.InvalidSpecificationStreamRoute, "A specification stream id needs a nonempty concrete scalar literal compatible with the stream's declared type.", value.location);
+                };
+                if (stream.streamIdParts.length > 0)
+                    validateStreamIdParts(stream, route.streamIdParts, route.streamId !== null, route.location, DiagnosticCodes.InvalidSpecificationStreamRoute, context, validateLiteral);
+                else if (route.streamIdParts.length > 0)
+                    context.error(DiagnosticCodes.InvalidSpecificationStreamRoute, 'A streamId part block requires a composite stream.', route.location);
+                else {
+                    if ((stream.streamId === null) !== (route.streamId === null))
+                        context.error(DiagnosticCodes.InvalidSpecificationStreamRoute, stream.streamId === null ? 'An unkeyed stream cannot take a streamId mapping.' : 'This keyed stream requires a streamId mapping.', route.location);
+                    if (route.streamId !== null) validateLiteral(route.streamId, stream.streamId);
                 }
                 identifier = source.identifier;
                 if (identifier === null) {
@@ -140,10 +149,21 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
             let contradicts = node.noStream != null ? commandRoute != null : commandRoute == null || commandRoute.eventSource !== node.stream!.eventSource || commandRoute.stream !== node.stream!.stream;
             if (!contradicts && node.stream != null && commandRoute != null) {
                 const resolution = catalog.resolve(node.stream.eventSource, node.stream.stream);
-                const type = resolution.kind === EventSourceResolutionKind.Unique ? resolution.streams[0].streamId : null;
-                if (type !== null) {
-                    const actualId = formatStreamId(commandRoute.streamId?.source, type);
-                    const expectedId = formatStreamId(node.stream.streamId?.source, type);
+                const stream = resolution.kind === EventSourceResolutionKind.Unique ? resolution.streams[0] : null;
+                if (stream !== null && stream.streamIdParts.length > 0) {
+                    if (commandRoute.streamId === null && node.stream.streamId === null && commandRoute.streamIdParts.length > 0 && node.stream.streamIdParts.length > 0) {
+                        for (const part of stream.streamIdParts) {
+                            const actual = commandRoute.streamIdParts.filter(mapping => mapping.property === part.name);
+                            const expected = node.stream.streamIdParts.filter(mapping => mapping.property === part.name);
+                            if (actual.length !== 1 || expected.length !== 1) continue;
+                            const actualId = formatStreamId(actual[0].source, part.type);
+                            const expectedId = formatStreamId(expected[0].source, part.type);
+                            if (actualId !== null && expectedId !== null && actualId !== expectedId) contradicts = true;
+                        }
+                    }
+                } else if (stream?.streamId != null && commandRoute.streamIdParts.length === 0 && node.stream.streamIdParts.length === 0) {
+                    const actualId = formatStreamId(commandRoute.streamId?.source, stream.streamId);
+                    const expectedId = formatStreamId(node.stream.streamId?.source, stream.streamId);
                     if (actualId !== null && expectedId !== null && actualId !== expectedId) contradicts = true;
                 }
             }

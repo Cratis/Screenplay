@@ -32,7 +32,7 @@ describe('when serializing specification stream invariants', () => {
     it('should refuse a stream metadata node of the wrong kind', () => (() => toSyntaxJson({ ...occurrence, stream: noStream } as unknown as SpecificationEventSyntax)).should.throw(InvalidSyntaxJson));
     it('should refuse an unrouted metadata node of the wrong kind', () => (() => toSyntaxJson({ ...occurrence, stream: undefined, noStream: route } as unknown as SpecificationEventSyntax)).should.throw(InvalidSyntaxJson));
     it('should refuse route mappings that target payload', () => (() => toSyntaxJson({ ...route, streamId: { ...route.streamId!, property: 'payload' } })).should.throw(InvalidSyntaxJson));
-    it('should preserve the stream id and omit source spans', () => [toSyntaxJson(route)].should.deep.equal([{ kind: 'SpecificationStreamSyntax', eventSource: 'Account', stream: 'Profile', streamId: { kind: 'PropertyMappingSyntax', property: 'streamId', source: { kind: 'LiteralExpressionSyntax', value: 'key' } } }]));
+    it('should preserve the stream id and omit source spans', () => [toSyntaxJson(route)].should.deep.equal([{ kind: 'SpecificationStreamSyntax', eventSource: 'Account', stream: 'Profile', streamIdParts: [], streamId: { kind: 'PropertyMappingSyntax', property: 'streamId', source: { kind: 'LiteralExpressionSyntax', value: 'key' } } }]));
 });
 
 describe('when walking specification streams', () => {

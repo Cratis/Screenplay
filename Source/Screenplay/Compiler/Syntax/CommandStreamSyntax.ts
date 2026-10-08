@@ -12,6 +12,7 @@ export interface CommandStreamSyntax extends SyntaxNode {
     readonly eventSource: string;
     readonly stream: string;
     readonly streamId: PropertyMappingSyntax | null;
+    readonly streamIdParts: PropertyMappingSyntax[];
     readonly propertyCandidate: PropertySyntax | null;
     readonly referenceLocation?: SourceLocation;
     readonly referenceLength?: number;

@@ -28,7 +28,7 @@ export function eventSourceDetails(source: AuthoredEventSource, stream?: Authore
     return [`**${stream ? `stream ${source.name}.${stream.name}` : `eventsource ${source.name}`}**`,
         stream?.description ?? source.description ?? '',
         source.identifier ? `Identifier type: ${typeReferenceText(source.identifier)}` : 'No identifier type declared.',
-        stream ? stream.streamId ? `Stream id type: ${typeReferenceText(stream.streamId)}` : 'Unkeyed stream.' : source.streams.map(stream => `${stream.name}${stream.streamId ? ` — ${typeReferenceText(stream.streamId)}` : ' — unkeyed'}`).join('\n'),
+        stream ? stream.streamIdParts.length > 0 ? `Stream id parts: ${stream.streamIdParts.map(part => `${part.name} ${typeReferenceText(part.type)}`).join(', ')}` : stream.streamId ? `Stream id type: ${typeReferenceText(stream.streamId)}` : 'Unkeyed stream.' : source.streams.map(stream => `${stream.name}${stream.streamIdParts.length > 0 ? ` — ${stream.streamIdParts.map(part => `${part.name} ${typeReferenceText(part.type)}`).join(', ')}` : stream.streamId ? ` — ${typeReferenceText(stream.streamId)}` : ' — unkeyed'}`).join('\n'),
         (stream?.id ?? (!stream ? source.id : null)) ? 'Stored-name pin (rename-only metadata; not a semantic ID).' : '', eventSourceAvailability].filter(Boolean).join('\n\n');
 }
 
@@ -69,6 +69,13 @@ export function eventSourceHover(lines: string[], line: number, start: number, e
         return `Assert an unrouted event; omitting a route on then leaves it unasserted. ${specificationRouteAvailability}`;
     if (context?.event && context.route?.streamId?.location.line === line + 1 && start === context.route.streamId.location.column && end === start + 8)
         return `Concrete literal stream id, not a command property mapping. ${specificationRouteAvailability}`;
+    const blockLocation = context?.route?.directiveLocations?.streamId ?? context?.stream?.directiveLocations?.streamId;
+    if (blockLocation?.line === line + 1 && start === blockLocation.column && end === start + 8)
+        return `Composite stream id: named parts, not a pre-joined value. ${context?.event ? specificationRouteAvailability : eventSourceAvailability}`;
+    for (const part of context?.route?.streamIdParts ?? []) {
+        if (part.location.line === line + 1 && start === part.location.column && end === start + part.property.length)
+            return `Authored stream id part **${part.property}**. ${context?.event ? `Concrete literal. ${specificationRouteAvailability}` : eventSourceAvailability}`;
+    }
     const declaration = context?.stream ?? context?.source;
     if (declaration) {
         const name = eventSourceIdentifier(declaration.location, declaration.name, lines.join('\n'));
@@ -77,8 +84,8 @@ export function eventSourceHover(lines: string[], line: number, start: number, e
             return eventSourceDetails(context.source, context.stream) + (confidence.state === 'unique' ? '' : `\n\nPhysical ownership: ${confidence.state}. ${confidence.reasons.join(' ')}`);
         }
     }
-    if (context?.route?.streamId && context.command) {
-        const mapping = context.route.streamId;
+    const mapping = context?.route ? [context.route.streamId, ...context.route.streamIdParts].find(mapping => mapping?.location.line === line + 1) : undefined;
+    if (mapping && context?.command) {
         if (mapping.location.line === line + 1 && start === mapping.location.column && end === start + 8)
             return `Authored stream id mapping. ${eventSourceAvailability}`;
         const expression = mapping.source as { kind?: string; path?: string; location?: { line: number; column: number } };
@@ -106,9 +113,19 @@ export function eventSourceHover(lines: string[], line: number, start: number, e
     }
     if (context?.source && /^\s*id\s+"/.test(withoutComment(lines[line] ?? '')) && start === indentOf(lines[line]) + 1 && end === start + 2)
         return `Stored-name pin: rename-only metadata, not a semantic identity or an automatic refactor. ${eventSourceAvailability}`;
-    const type = context?.stream?.streamId ?? context?.source?.identifier;
+    const type = context?.stream?.streamIdParts.find(part => part.type.location?.line === line + 1)?.type ?? context?.stream?.streamId ?? context?.source?.identifier;
     if (type && type.location?.line === line + 1 && start >= type.location.column && end <= type.location.column + type.name.length)
         return `${typeReferenceText(type)} — authored ${context?.stream ? 'stream id' : 'identifier'} type. ${eventSourceAvailability}`;
+    return null;
+}
+
+function streamIdHeader(lines: string[], line: number, owner: number): number | null {
+    const indent = indentOf(lines[line] ?? '');
+    for (let index = line - 1; index > owner; index--) {
+        const text = withoutComment(lines[index]);
+        if (!text.trim() || indentOf(text) >= indent) continue;
+        return text.trim() === 'streamId' ? index : null;
+    }
     return null;
 }
 
@@ -118,6 +135,43 @@ export function eventSourceCompletions(lines: string[], line: number, before: st
     const analysis = analyzeEventSources(lines, symbols);
     const context = analysis.contexts.get(line);
     const indent = before.trim() ? indentOf(lines[line]) : before.length;
+    if (context?.route && indent > indentOf(lines[context.route.location.line - 1])) {
+        const stream = analysis.resolve(context.route.eventSource, context.route.stream).stream;
+        if (stream?.streamIdParts.length) {
+            const typed = responseAnalysis(lines, symbols.authoringDocuments ?? symbols.authoringSources?.filter(source => source !== lines.join('\n')) ?? [], symbols.authoringPlacement, symbols.authoringPath, symbols.authoringPlacementResolved);
+            const literal = (name: string) => {
+                const primitive = typed.operations.concepts.find(concept => concept.name === name)?.type ?? name;
+                return primitive === 'Int' ? '0' : primitive === 'Uuid' ? '"00000000-0000-0000-0000-000000000000"' : '"${1:value}"';
+            };
+            if (streamIdHeader(lines, line, context.route.location.line - 1) !== null) {
+                const mapping = sourceStreamPattern('^\\s*([A-Za-z_]\\w*)\\s*=(?!=|>)\\s*([\\w.]*)$').exec(before);
+                if (mapping) {
+                    const part = stream.streamIdParts.find(part => part.name === mapping[1]);
+                    if (!part) return [];
+                    if (context.event) return [{ label: part.name, insertText: literal(part.type.name), documentation: specificationRouteAvailability }];
+                    if (!context.command) return [];
+                    const concepts = typed.operations.concepts.filter(concept => concept.name === part.type.name);
+                    if (part.type.isOptional || part.type.isCollection || !(['String', 'Uuid'].includes(part.type.name) || concepts.length === 1 && ['String', 'Uuid', 'Int'].includes(concepts[0].type) && concepts[0].values.length === 0)) return [];
+                    const path = mapping[2].split('.');
+                    let properties = context.command.properties;
+                    for (const segment of path.slice(0, -1)) {
+                        const fields = properties.filter(property => property.name === segment && !property.type.isOptional && !property.type.isCollection);
+                        if (fields.length !== 1) return [];
+                        const types = typed.operations.types.filter(type => type.name === fields[0].type.name);
+                        if (types.length !== 1) return [];
+                        properties = types[0].properties.map(property => ({ ...property, isIdentifier: false }));
+                    }
+                    return properties.filter(property => isSourceStreamName(property.name) && property.type.name === part.type.name && !property.type.isOptional && !property.type.isCollection)
+                        .map(property => ({ label: property.name, insertText: property.name, documentation: `${typeReferenceText(property.type)} — command source for authored stream id. ${eventSourceAvailability}` }));
+                }
+                const mapped = new Set(context.route.streamIdParts.filter(part => part.location.line !== line + 1).map(part => part.property));
+                return stream.streamIdParts.filter(part => !mapped.has(part.name) && part.name.startsWith(before.trim()))
+                    .map(part => ({ label: part.name, insertText: `${part.name} = ${context.event ? literal(part.type.name) : ''}`, documentation: context.event ? specificationRouteAvailability : eventSourceAvailability }));
+            }
+            if (/^\s*(?:streamId)?$/.test(before)) return [{ label: 'streamId parts', insertText: `streamId\n${stream.streamIdParts.map((part, index) => `  ${part.name} = ${context.event ? literal(part.type.name) : `\${${index + 1}:source}`}`).join('\n')}`, documentation: context.event ? specificationRouteAvailability : eventSourceAvailability }];
+            return [];
+        }
+    }
     if (context?.event && indent > indentOf(lines[context.event.location.line - 1])) {
         if (context.route && indent > indentOf(lines[context.route.location.line - 1])) {
             const target = analysis.resolve(context.route.eventSource, context.route.stream).stream?.streamId;
@@ -178,14 +232,16 @@ export function eventSourceCompletions(lines: string[], line: number, before: st
     }
     if (context?.source && indent > indentOf(lines[context.source.location.line - 1])) {
         const ownsStream = context.stream && indent > indentOf(lines[context.stream.location.line - 1]);
-        if ((ownsStream ? streamTypePrefix : identifierTypePrefix).test(before)) {
+        const partType = ownsStream && streamIdHeader(lines, line, context.stream!.location.line - 1) !== null && sourceStreamPattern('^\\s*[A-Za-z_]\\w*\\s+[\\w.]*$').test(before);
+        if (partType || (ownsStream ? streamTypePrefix : identifierTypePrefix).test(before)) {
             const typed = responseAnalysis(lines, symbols.authoringDocuments ?? [], symbols.authoringPlacement, symbols.authoringPath);
-            const streamId = /^\s*streamId\b/.test(before);
+            const streamId = partType || /^\s*streamId\b/.test(before);
             return [...(streamId ? ['String', 'Uuid'] : ['String', 'Uuid', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime']), ...typed.operations.concepts.filter(concept => !streamId || ['String', 'Uuid', 'Int'].includes(concept.type) && concept.values.length === 0).map(concept => concept.name)]
                 .filter(isSourceStreamTypeName).map(name => ({ label: name, insertText: name, documentation: eventSourceAvailability }));
         }
         if (/^\s*$/.test(before)) return ownsStream ? [
             { label: 'streamId', insertText: 'streamId ${1:Type}', documentation: eventSourceAvailability },
+            { label: 'streamId parts', insertText: 'streamId\n  ${1:first} ${2:Type}\n  ${3:second} ${4:Type}', documentation: eventSourceAvailability },
             { label: 'description', insertText: 'description "${1:Description}"', documentation: 'Authored description.' }
         ] : [
             { label: 'identifier', insertText: 'identifier ${1:Type}', documentation: eventSourceAvailability },

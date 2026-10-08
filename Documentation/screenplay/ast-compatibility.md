@@ -24,6 +24,10 @@ That shape is stable. Nodes will stay records, stay immutable, and keep deriving
 
 Appending a trailing optional parameter instead looks equivalent and is not. It is source compatible and *binary* breaking: the compiler emits a different primary constructor and a different `Deconstruct`, so an assembly built against the previous version calls a member that no longer exists and fails at run time with a missing method - with no error at compile time anywhere. It has shipped once, `Cratis.Arc.Screenplay` built against 1.5.2 breaking against 1.7.0 exactly this way. Package validation now fails the build that would repeat it, so the guarantee is enforced rather than intended.
 
+## Composite stream id members
+
+`EventStreamIdPartSyntax(Name, Type, Location)` is additive. `EventStreamSyntax.StreamIdParts` contains declarations in identity-bearing declaration order. `CommandStreamSyntax.StreamIdParts` and `SpecificationStreamSyntax.StreamIdParts` contain `PropertyMappingSyntax` in authored mapping order. These init-only collections default to empty, including old JSON omissions; existing positional constructors and scalar members are unchanged. A nonempty parts list is mutually exclusive with `StreamId`. Part names are not workspace references; part types are ordinary type references. The walker visits parts, their types and route mappings. Binding remains refused with `PLAY0268`; no ESM bytes change.
+
 ## What is not guaranteed
 
 **The positional parameter list.** Inserting a parameter, removing one, promoting an optional one to required, or appending a new one is a breaking change. The first three break source and binary; appending breaks binary only, which is the worse of the two to discover. Any of them is allowed in a major release and is enumerated in the release notes when it happens. If you construct nodes yourself, prefer named arguments and object initializers; if you consume them, prefer property access over deconstruction.

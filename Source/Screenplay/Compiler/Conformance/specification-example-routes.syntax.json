@@ -25,7 +25,8 @@
             "isCollection": false,
             "isOptional": false,
             "name": "String"
-          }
+          },
+          "streamIdParts": []
         }
       ]
     }
@@ -179,7 +180,8 @@
                             "kind": "LiteralExpressionSyntax",
                             "value": "partition"
                           }
-                        }
+                        },
+                        "streamIdParts": []
                       },
                       "values": [
                         {

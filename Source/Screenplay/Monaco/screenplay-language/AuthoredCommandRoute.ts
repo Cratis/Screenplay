@@ -10,5 +10,7 @@ export interface AuthoredCommandRoute {
     readonly referenceLocation?: AnalysisLocation;
     readonly referenceLength?: number;
     readonly streamId: { readonly location: AnalysisLocation; readonly source: unknown } | null;
+    readonly streamIdParts: readonly { readonly property: string; readonly location: AnalysisLocation; readonly source: unknown }[];
+    readonly directiveLocations?: Readonly<Record<string, AnalysisLocation>>;
     readonly propertyCandidate?: unknown;
 }

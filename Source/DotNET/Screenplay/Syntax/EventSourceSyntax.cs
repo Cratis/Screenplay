@@ -27,14 +27,25 @@ public record EventSourceSyntax(string Name, SourceLocation Location) : SyntaxNo
 }
 
 /// <summary>
+/// Represents one named, scalar part of a composite stream id.
+/// </summary>
+/// <param name="Name">The exact part name.</param>
+/// <param name="Type">The nonoptional scalar value type.</param>
+/// <param name="Location">The part declaration location.</param>
+public record EventStreamIdPartSyntax(string Name, TypeRefSyntax Type, SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
 /// Represents a stream owned by one event source declaration.
 /// </summary>
 /// <param name="Name">The authored name within its source.</param>
 /// <param name="Location">The declaration location.</param>
 public record EventStreamSyntax(string Name, SourceLocation Location) : SyntaxNode(Location)
 {
-    /// <summary>Gets the optional stream id value type; absence denotes an unkeyed stream.</summary>
+    /// <summary>Gets the optional scalar stream id value type.</summary>
     public TypeRefSyntax? StreamId { get; init; }
+
+    /// <summary>Gets the composite stream id parts in declaration order.</summary>
+    public IEnumerable<EventStreamIdPartSyntax> StreamIdParts { get; init; } = [];
 
     /// <summary>Gets the optional description.</summary>
     public string? Description { get; init; }
@@ -53,6 +64,9 @@ public record CommandStreamSyntax(string EventSource, string Stream, SourceLocat
 {
     /// <summary>Gets the optional authored stream id mapping.</summary>
     public PropertyMappingSyntax? StreamId { get; init; }
+
+    /// <summary>Gets the named composite part mappings in authored order.</summary>
+    public IEnumerable<PropertyMappingSyntax> StreamIdParts { get; init; } = [];
 
     /// <summary>Gets the parser-owned start of the qualified route reference.</summary>
     public SourceLocation ReferenceLocation { get; init; } = Location;
