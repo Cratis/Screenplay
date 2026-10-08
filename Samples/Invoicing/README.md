@@ -1,7 +1,8 @@
 # Invoicing
 
 An invoicing system for a finance department and its customers, written as one Screenplay document that uses
-every construct the language has. When you want to know how something is written, find it in the table below and
+every construct except the [preview constructs](../../.cratis/ai/rules/project/samples.md#preview-constructs).
+When you want to know how something is written, find it in the table below and
 jump to the slice that uses it.
 
 ```text
@@ -60,7 +61,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | `behavior` with `description`, typed and untyped `parameter`s, `order`, `confirm` and nested continuations | Behaviors |
 | module `description` (fenced), `authorize`, `on event`, `contribute to` | `module Invoicing` |
 | `screen template` with `fits slot`, `flow` with `grid`/`span`, `freeform` with `variant`/`place … hidden`, a `contributes` slot; `dialog template` with `on leave` | `module Invoicing` |
-| `form` with `populate via query`, `populate from item`, `field … label/from/compose using`, `on submit navigate`, `on change` | `module Invoicing` |
+| `form` with `populate via query`, `populate from item`, `field … label/from/compose using`, `on submit navigate`, `on change` | `module Invoicing`; `TagInvoiceForm` reuses the selected row |
 | feature `authorize`, `depends on`, `uses` with arguments, `on <ApplicationTrigger>`, nested features, feature `contribute to` | InvoiceManagement, Adjustments, Payments, Integrations |
 | slice `description`, `file` | RegisterInvoice |
 | `generated identifier`, `generated`, record `returns` with inferred/explicit types, `when … for`, generation fixtures and `then returns`; scalar `returns` and `then returns` | StartInvoiceDraft; CancelInvoice |
@@ -115,7 +116,10 @@ The cancellation row-click in `InvoiceDetails` opens `CancelInvoiceScreen` with 
 
 ## Parsed is not executable
 
-This document is a showcase of the language, not of what runs today. It compiles with no diagnostics, but much
+This document is a showcase of the language, not of what runs today. The
+[preview constructs](../../.cratis/ai/rules/project/samples.md#preview-constructs) stay in dedicated fixtures
+because they refuse the whole model before binding. Other syntax kinds covered by focused, tested fixtures
+are pinned in `when_holding_invoicing_to_the_language`. This document compiles with no errors or warnings, but much
 of it is outside what the executable semantic model admits: imported events, reducers, performers, list
 queries, handlers, command `reads`, `@pii` concepts and code policies among them. Clocks, triggers, captures and
 reactions are admitted as ESM v6 by
