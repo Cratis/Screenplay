@@ -2,7 +2,7 @@
 id: 0039
 title: Publish a machine-readable Screenplay contract
 status: accepted
-stage: none
+stage: implemented
 class: contract
 reversibility: costly
 decided: 2026-10-08
@@ -28,7 +28,7 @@ Publish schema-version 1 JSON through `screenplay contract` and an MCP-independe
 
 Each construct has `parseStatus: accepted` and an admission entry per ESM schema version: `esmVersion`, `status` (`admitted`, `refused`, `conditional`), `diagnostic`, `issue`, and `condition` only for conditional admission. Minimum versions and refusal diagnostics are obtained by compiling and binding representative source probes. Where the binder cannot expose a complete construct-level rule mechanically, one explicit probe table supplies the condition and source examples. Specs hold the table to actual binding behavior, and require a probe for every dispatched construct. Metadata that binds but is not carried into the backend ESM is refused with its report-only/deferred diagnostic, not advertised as executable.
 
-Diagnostic titles are the C# `DiagnosticCodes` XML summaries, not documentation or Monaco copy. Severity is derived from C# emission sites; indirect emission sites have explicit, checked severity entries. The primary severity is the highest emitted severity and `severities` preserves all possible severities. Historically retired codes are recorded explicitly in code, retaining their original title and severity. An unused but still declared code is not retired. Missing titles or severities fail generation/specs rather than silently defaulting to an error.
+Diagnostic titles are the C# `DiagnosticCodes` XML summaries, not documentation or Monaco copy. Severity is derived from C# emission sites, including the named helpers used for indirect emissions; reserved catalog entries explicitly retain their original severity. The primary severity is the highest emitted severity and `severities` preserves all possible severities. Historically retired codes are recorded explicitly in code, retaining their original title and severity. An unused but still declared code is not retired. Missing titles or severities fail generation/specs rather than silently defaulting to an error.
 
 A checked-in golden captures the entire generated document. Regeneration is an explicit CLI command; normal specs only compare. Release builds publish the generated document as an asset and package content. Cross-repository dispatch uses an appropriately scoped publishing credential and fails if notification fails.
 

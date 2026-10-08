@@ -117,6 +117,41 @@ The report includes `sourceRevision`, `outcome`, `discovered`, `selected`, `exec
 | `2` | Invalid arguments, selection or input, or the command could not run |
 | `3` | The model did not bind, or nothing failed but reference execution was unsupported |
 
+## Export the language and tool contract
+
+To check tooling or AI guidance against the installed Screenplay release, export its machine-readable contract:
+
+```bash
+screenplay contract
+screenplay contract --output screenplay-contract.json
+```
+
+Without `--output`, the command writes one JSON document to stdout. With it, the command writes UTF-8 JSON to the given file (overwriting an existing file); its parent directory must exist. No model directory, MCP connection or external service is needed. Exit code `0` means the document was written; `2` means invalid arguments, an unclassified contract fact or a write failure.
+
+The document has `schemaVersion: 1` and contains:
+
+- `keywords`, derived from parser keyword dispatch, and `topLevelConstructs`, accepted at the application document root.
+- `constructs`, including container and slice declarations, with `parseStatus: accepted` and an `admission` entry for each supported ESM schema version. `admitted` means the construct has backend executable meaning; `refused` also covers authoring/UI metadata that is not carried into the backend model; `conditional` includes a short `condition`. `diagnostic` is the refusal/disposition PLAY code, or `null` where none is raised; `issue` is the tracking URL when the binder names one. Parsing alone is not executable admission.
+- `diagnostics`: every C# `DiagnosticCodes` entry, its catalog-summary `title`, primary `severity`, all emitted `severities`, and `retired` flag. The primary severity is the highest possible severity; some codes vary by context. Reserved but unretired entries remain listed.
+- `mcpTools`: every tool, including `run-specifications` and the optional board tool, with `requiredParameters`, `optionalParameters` and its complete `inputSchema`. Conditional requirements remain in the schema; an optional parameter may be required for a particular view.
+- `cliCommands`, including the default check command (empty name), usage, options and information-command aliases.
+- `esmVersions`, with schema versions and supported language/semantic version pairs. Construct admission describes the portable backend model, not renderer or reference-evaluator capability.
+
+The release asset is named `screenplay-contract.json`; the same generated document is included at the root of the `Cratis.Screenplay.Tool` NuGet package. Consumers should check the schema version before comparing facts.
+
+For a library call, reference `Cratis.Screenplay.Contracts` and use `Cratis.Screenplay.Contracts.ScreenplayContract.Write(TextWriter)` or `Serialize()`. Neither entry point opens an MCP server or reads a model from disk.
+
+### Regenerate the contract golden
+
+From a Screenplay source checkout, regenerate the checked-in golden after an intentional language or tool change:
+
+```bash
+dotnet run --project Source/DotNET/Tool -- contract --output Source/DotNET/Screenplay.Contracts/Golden/screenplay-contract.json
+dotnet test Source/DotNET/Screenplay.Contracts/Screenplay.Contracts.csproj --configuration Debug
+```
+
+Review the JSON diff. Ordinary specs compare the generated document with the golden and never rewrite it. Admission probes bind representative source against the real binder; updating the golden cannot hide a probe that no longer parses or agrees with the declared disposition. A new conditional rule needs an example and condition in the admission probe table.
+
 ## Use the compiler as a library
 
 The `Cratis.Screenplay` NuGet package provides parsing, the syntax tree, diagnostics, file discovery and formatting:
