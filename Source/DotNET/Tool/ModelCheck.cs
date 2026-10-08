@@ -84,10 +84,9 @@ static class ModelCheck
         IEnumerable<Diagnostic> diagnostics = wholeDiagnostics;
         if (scope is not null)
         {
-            var selection = ScopedDiagnostics.Select(snapshot, scope, additional, out var scopeError);
-            if (selection is null)
+            if (!ScopedDiagnostics.TryValidate(snapshot, scope, checks, out var selection, out var scopeError))
             {
-                error.WriteLine(scopeError);
+                error.WriteLine(scopeError.Message);
                 return 2;
             }
 
@@ -97,8 +96,8 @@ static class ModelCheck
             output.WriteLine($"Unresolved event consumers (cannot be attributed to a scope): {selection.UnresolvedEventConsumers.ReferenceCount} reference(s) in {(selection.UnresolvedEventConsumers.Scopes.Length == 0 ? "none" : string.Join(", ", selection.UnresolvedEventConsumers.Scopes.Select(consumerScope => consumerScope.Length == 0 ? "<application>" : consumerScope)))}");
             output.WriteLine($"Possibly affected: {selection.PossiblyAffectedReferenceCount} other unresolved reference(s) outside the reported declarations");
             output.WriteLine($"Dependency coverage: {selection.DependencyCoverage}");
-            var wholeErrors = wholeDiagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-            var wholeWarnings = wholeDiagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Warning);
+            var wholeErrors = selection.WholeApplicationErrorCount;
+            var wholeWarnings = selection.WholeApplicationWarningCount;
             var wholeSummary = $"Whole application: {wholeErrors} error(s), {wholeWarnings} warning(s) ({wholeDiagnostics.Length - diagnostics.Count()} outside the reported set)";
             var wholeFailed = !compilation.Success || (warnAsError && wholeWarnings > 0);
             output.WriteLine(useColors && wholeFailed ? $"\e[31m{wholeSummary}\e[0m" : wholeSummary);

@@ -30,6 +30,29 @@ An intentional edit to a valid reference target is different from an untouched
 reference silently changing meaning. Acceptance never proves business correctness
 or executes specifications.
 
+### MCP whole-source authoring
+
+The MCP `propose-source` tool accepts whole `.play` strings and parses them into
+`ApplicationSyntax` server-side. It uses `ProposeAuthoring`, not the strict
+executable-only `Propose` path. Choose it instead of `propose-ast` when you have
+whole source documents rather than focused typed-node edits.
+
+Its `documents` array reuses the typed tool's `create-document`, `replace-document`,
+`remove-document`, `move-document` and `rename-document-key` operations, substituting
+`source` for `node` on create/replace. Creation requires `path` and `stableKey`,
+with optional `encoding` (`Utf8` or `Utf8WithBom`); replacement requires `documentId`
+and retains the existing encoding. Parse/import placement is resolved over the
+complete post-operation set before building typed document operations. Parse errors
+return `SourceParseFailed` and located `authoringDiagnostics`, without retaining a
+proposal. No new library raw-text authoring contract is introduced.
+
+Both tools require workspace/catalog revisions and explicit formatting consent,
+default to `Authoring` and `Safe`, and enforce the same migrations, retirements and
+identity continuity. Syntax-only source can be accepted while `Executable` refuses
+with `PLAY0268`. Review dropped comments, exact before/after bytes and executable
+diagnostics with `read-proposal` before explicit `apply`. For arguments and an
+example see [MCP authoring tools](mcp/authoring-tools.md#propose-whole-source-documents).
+
 ## Handler intent edits
 
 `HandlerSyntax.Implementation` is a nullable init-only member; existing positional constructors and deconstruction are unchanged. `ImplementationSyntax` holds ordered `ImplementationHintSyntax` children, each with `text` and its own source/comment anchor. It stores no payload or lifecycle state. The handler's existing `file`/`code` is the only payload; structural paths remain `handler.file`/`handler.code` even when printing nests them under the wrapper.

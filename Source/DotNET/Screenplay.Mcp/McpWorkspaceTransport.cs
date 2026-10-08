@@ -101,7 +101,7 @@ static class McpWorkspaceTransport
         string? note = null;
         if (empty)
         {
-            note = "An empty workspace is a valid starting point; create the first document with propose-ast.";
+            note = "An empty workspace is a valid starting point; create the first document with propose-source or propose-ast.";
         }
         else if (authoringAccepted && !workspace.Compilation.Success)
         {

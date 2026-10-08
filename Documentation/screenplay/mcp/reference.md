@@ -336,6 +336,7 @@ is canonicalized.
 | `read-ast` | `expectedRevision` | documentId, path, kind, name, semanticId, view, includeContent, offset, limit |
 | `propose` | Expected workspace/catalog revisions, operations | Explicit migrations/retirements, includeContent; legacy single-operation form supported |
 | `propose-ast` | Expected revisions, formatting | operations, documents, validation, referencePolicy, migrations/retirements, includeContent |
+| `propose-source` | `expectedRevision`, `expectedCatalogRevision`, `formatting`, `documents` | validation (`Authoring` default or `Executable`), referencePolicy (`Safe` default or `Draft`), semanticRenames, eventRenames, retiredSemanticAddresses, retiredEventAddresses, includeContent |
 | `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | `pinRepairEvidence`, `expectedRepairEvidenceRevision`, includeContent; use the discovered `requiredFormatting`. `PLAY0479` supports `PreserveTrivia` or explicit `CanonicalizeTouchedDocuments`; other repairs require `CanonicalizeTouchedDocuments` |
 | `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent, `eventNeverPersisted` (boolean, default false) |
 | `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
@@ -355,6 +356,22 @@ no ordering root, expansion uses path order and discloses this in the existing
 proposal `review` text. Imported children retain their parent-relative positions
 among other container members on collapse, and header comments stay with their
 physical declarations. Order does not change executable-model bytes or identities.
+
+Use `propose-source` for whole `.play` text, `propose-ast` for typed node/document
+edits, and `propose` for executable-only exact byte operations. The two authoring
+tools require explicit formatting consent and share identity continuity, reference
+policy and proposal review. `propose-source.documents` accepts `create-document`
+(`path`, `stableKey`, `source`, optional `encoding`: `Utf8` or `Utf8WithBom`),
+`replace-document` (`documentId`, `source`), `remove-document` (`documentId`),
+`move-document` (`documentId`, `path`) and `rename-document-key` (`documentId`,
+`stableKey`). It accepts no node `operations`. Each document is targeted at most
+once per batch. Source is parsed with final-set import placement and then passed
+to the typed authoring transaction. Parse/import errors return `SourceParseFailed`
+with located `authoringDiagnostics` and no proposal ID; other validation failures
+use the ordinary authoring rejection. Accepted source-only models can report
+`executableReady: false`; `Executable` never falls back to `Authoring`. Review
+with `read-proposal`, including exact bytes, dropped comments and introduced
+executable errors, before `apply`. See [whole-source authoring](authoring-tools.md#propose-whole-source-documents).
 
 `tools/list` supplies nested argument schemas. Revisions, IDs and handles come
 from the server; do not infer them from names or line numbers.
