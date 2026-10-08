@@ -392,8 +392,8 @@ internal static partial class SpecificationParser
             return null;
         }
 
-        var body = ParseValuesWithEventSource(context, line);
-        return new(match.Groups[1].Value, match.Groups[2].Value, body.Values, line.Location) { For = body.For };
+        var body = ParseValuesWithEventSource(context, line, eventKeyword: "when redelivered");
+        return new(match.Groups[1].Value, match.Groups[2].Value, body.Values, line.Location) { For = body.For, Stream = body.Stream, NoStream = body.NoStream };
     }
 
     [GeneratedRegex(@"^when\s+redelivered\b", RegexOptions.None, 1000)]
@@ -770,7 +770,7 @@ internal static partial class SpecificationParser
                     context.SkipBlock(child.Indent);
                     continue;
                 }
-                if (child.Content == "no stream" && eventKeyword == "then")
+                if (child.Content == "no stream" && (eventKeyword == "then" || eventKeyword == "when redelivered"))
                 {
                     noStream = new(child.Location);
                     hasRoute = true;

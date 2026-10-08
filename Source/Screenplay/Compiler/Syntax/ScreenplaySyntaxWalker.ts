@@ -580,6 +580,8 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitSpecificationRedelivery(syntax: SpecificationRedeliverySyntax): void {
         this.visitNode(syntax);
+        if (syntax.stream != null) this.visitSpecificationStream(syntax.stream);
+        if (syntax.noStream != null) this.visitNode(syntax.noStream);
         syntax.values.forEach(node => this.visitPropertyMapping(node));
         if (syntax.for !== null) this.visitExpression(syntax.for);
     }
@@ -610,6 +612,8 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitSpecificationExample(syntax: SpecificationExampleSyntax): void {
         this.visitNode(syntax);
+        if (syntax.stream != null) this.visitSpecificationStream(syntax.stream);
+        if (syntax.noStream != null) this.visitNode(syntax.noStream);
         if (syntax.for !== null) this.visitExpression(syntax.for);
         syntax.values.forEach(node => this.visitPropertyMapping(node));
         syntax.generatedValues.forEach(node => this.visitPropertyMapping(node));

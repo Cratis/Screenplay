@@ -12,7 +12,7 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static class SpecificationRedeliveryValidator
 {
-    internal static void Validate(ConsistencyDeclarations declarations, ParserContext context)
+    internal static void Validate(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context)
     {
         foreach (var (slice, scope) in declarations.Slices)
         {
@@ -30,21 +30,21 @@ internal static class SpecificationRedeliveryValidator
 
                 SpecificationValueConsistencyValidator.ValidateValues(action.Values, @event.Properties, declarations, context);
                 var candidates = specification.Given.Where(given => ReferenceEquals(declarations.Event(given.EventType, scope), @event))
-                    .Select(given => Matches(given, action, @event, declarations)).ToArray();
+                    .Select(given => Matches(given, action, @event, declarations, application)).ToArray();
                 var matches = candidates.Count(match => match == true);
-                if (matches < 2 && candidates.Any(match => match is null))
+                if (candidates.Any(match => match is null))
                 {
-                    context.Error(DiagnosticCodes.UnmatchedRedeliveredOccurrence, $"Cannot locate redelivery of '{action.EventType}' uniquely: a given source or locator value is not decidable; state explicit concrete 'for' and values.", action.Location);
+                    context.Error(DiagnosticCodes.UnmatchedRedeliveredOccurrence, $"Cannot locate redelivery of '{action.EventType}' uniquely: a given source or locator value is not decidable; use 'for', values, 'stream' or 'no stream'.", action.Location);
                 }
                 else if (matches != 1)
                 {
-                    context.Error(DiagnosticCodes.UnmatchedRedeliveredOccurrence, $"Redelivery of '{action.EventType}' matches {matches} given occurrences; use 'for' or values to identify exactly one.", action.Location);
+                    context.Error(DiagnosticCodes.UnmatchedRedeliveredOccurrence, $"Redelivery of '{action.EventType}' matches {matches} given occurrences; use 'for', values, 'stream' or 'no stream' to identify exactly one.", action.Location);
                 }
             }
         }
     }
 
-    static bool? Matches(SpecificationEventSyntax given, SpecificationRedeliverySyntax action, EventSyntax @event, ConsistencyDeclarations declarations)
+    static bool? Matches(SpecificationEventSyntax given, SpecificationRedeliverySyntax action, EventSyntax @event, ConsistencyDeclarations declarations, ApplicationSyntax application)
     {
         // Binding retains a null source for a given without 'for'; the producer supplies its type,
         // not a concrete identity. Do not invent a destination or count an undecidable locator as zero.
@@ -57,6 +57,7 @@ internal static class SpecificationRedeliveryValidator
                 : null);
         }
 
+        comparisons.Add(SpecificationRouteComparison.Matches(given.Stream, action.Stream, action.NoStream, application));
         if (comparisons.Contains(false)) return false;
 
         return comparisons.Contains(null) ? null : true;

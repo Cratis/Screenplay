@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { ExpressionSyntax, PropertyMappingSyntax } from './Expressions';
+import { SpecificationStreamSyntax, SpecificationNoStreamSyntax } from './Specifications';
 import { SyntaxNode } from './SyntaxNode';
 
 // One named, possibly partial typed instance; expanded before binding, never carried in the ESM.
@@ -13,4 +14,6 @@ export interface SpecificationExampleSyntax extends SyntaxNode {
     readonly for: ExpressionSyntax | null;
     readonly generatedValues: readonly PropertyMappingSyntax[];
     readonly description: string | null;
+    readonly stream?: SpecificationStreamSyntax | null;
+    readonly noStream?: SpecificationNoStreamSyntax | null;
 }

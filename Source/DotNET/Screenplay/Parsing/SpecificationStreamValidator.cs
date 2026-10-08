@@ -11,96 +11,85 @@ namespace Cratis.Screenplay.Parsing;
 
 internal static class SpecificationStreamValidator
 {
-    internal static void Validate(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context)
+    internal static void Validate(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context, EffectiveSpecificationApplication expansion)
     {
-        if (!declarations.Slices.SelectMany(entry => entry.Slice.Specifications).Any(specification => specification.Given.Concat(specification.ThenEvents)
-            .Concat(specification.WhenAppended is { } appended ? [appended] : []).Any(node => node.Stream is not null || node.NoStream is not null)))
-        {
-            return;
-        }
         var catalog = new EventSourceCatalog(application);
         var values = new ResponseValueTypes(application);
         var producers = Producers(declarations).ToArray();
-        foreach (var (slice, scope) in declarations.Slices)
+        foreach (var occurrence in SpecificationRouteOccurrence.In(declarations, expansion))
         {
-            foreach (var specification in slice.Specifications)
+            var node = occurrence.Node;
+            var command = occurrence.Command;
+            if (node.Stream is null && node.NoStream is null) continue;
+            if (occurrence.Required && node.NoStream is { } noStream)
             {
-                var command = specification.When is { } action
-                    ? declarations.Resolve(action.CommandType, scope, owner => owner.Commands, item => item.Name)?.Node : null;
-                foreach (var (node, required, expected) in specification.Given.Select(node => (node, true, false))
-                    .Concat(specification.WhenAppended is { } appended ? [(appended, true, false)] : [])
-                    .Concat(specification.ThenEvents.Select(node => (node, false, true))))
+                occurrence.ContextualError(context, DiagnosticCodes.InvalidSpecificationStream, "Expected 'stream Source.Stream', or 'no stream' on a then event.", noStream.Location);
+            }
+            TypeRefSyntax? identifier = null;
+            var eventProducers = producers.Where(producer => ReferenceEquals(producer.Event, occurrence.Event)).ToArray();
+            if (node.Stream is { } route)
+            {
+                var resolution = catalog.Resolve(route.EventSource, route.Stream);
+                if (resolution.Kind != EventSourceResolutionKind.Unique)
                 {
-                    if (node.Stream is null && node.NoStream is null) continue;
-                    if (required && node.NoStream is { } noStream)
+                    if (occurrence.ValidateRoute) context.Error(DiagnosticCodes.InvalidSpecificationStreamRoute, $"Stream '{route.EventSource}.{route.Stream}' is {resolution.Kind}; routing requires one physical source and stream.", route.Location);
+                    continue;
+                }
+                var source = resolution.Sources[0];
+                var stream = resolution.Streams[0];
+                if (occurrence.ValidateRoute)
+                {
+                    if (stream.StreamIdParts.Any())
                     {
-                        context.Error(DiagnosticCodes.InvalidSpecificationStream, "Expected 'stream Source.Stream', or 'no stream' on a then event.", noStream.Location);
+                        EventSourceValidator.ValidateParts(stream, route.StreamIdParts, route.StreamId is not null, route.Location, DiagnosticCodes.InvalidSpecificationStreamRoute, context, (mapping, target) => ValidateLiteral(mapping, target, values, context));
                     }
-                    TypeRefSyntax? identifier = null;
-                    var @event = declarations.Event(node.EventType, scope);
-                    var eventProducers = producers.Where(producer => ReferenceEquals(producer.Event, @event)).ToArray();
-                    if (node.Stream is { } route)
+                    else if (route.StreamIdParts.Any())
                     {
-                        var resolution = catalog.Resolve(route.EventSource, route.Stream);
-                        if (resolution.Kind != EventSourceResolutionKind.Unique)
-                        {
-                            context.Error(DiagnosticCodes.InvalidSpecificationStreamRoute, $"Stream '{route.EventSource}.{route.Stream}' is {resolution.Kind}; routing requires one physical source and stream.", route.Location);
-                            continue;
-                        }
-                        var source = resolution.Sources[0];
-                        var stream = resolution.Streams[0];
-                        if (stream.StreamIdParts.Any())
-                        {
-                            EventSourceValidator.ValidateParts(stream, route.StreamIdParts, route.StreamId is not null, route.Location, DiagnosticCodes.InvalidSpecificationStreamRoute, context, (mapping, target) => ValidateLiteral(mapping, target, values, context));
-                        }
-                        else if (route.StreamIdParts.Any())
-                        {
-                            context.Error(DiagnosticCodes.InvalidSpecificationStreamRoute, "A streamId part block requires a composite stream.", route.Location);
-                        }
-                        else
-                        {
-                            if ((stream.StreamId is null) != (route.StreamId is null))
-                            {
-                                context.Error(DiagnosticCodes.InvalidSpecificationStreamRoute, stream.StreamId is null ? "An unkeyed stream cannot take a streamId mapping." : "This keyed stream requires a streamId mapping.", route.Location);
-                            }
-                            if (route.StreamId is { } mapping) ValidateLiteral(mapping, stream.StreamId, values, context);
-                        }
-                        identifier = source.Identifier;
-                        if (identifier is null)
-                        {
-                            var types = eventProducers.Select(producer => producer.Type).ToArray();
-                            var distinct = types.OfType<TypeRefSyntax>().Select(type => (type.Name, type.IsOptional, type.IsCollection)).Distinct().ToArray();
-                            if (types.Length == 0 || types.Any(type => type is null) || distinct.Length != 1)
-                            {
-                                context.Error(DiagnosticCodes.InvalidSpecificationStreamEventSource, $"Declare an identifier on source '{source.Name}'; the event's producers do not supply one unambiguous destination type.", route.Location);
-                            }
-                            else
-                            {
-                                identifier = types[0];
-                            }
-                        }
-                        if (required && node.For is null)
-                        {
-                            context.Error(DiagnosticCodes.InvalidSpecificationStreamEventSource, "A routed given or when append event requires 'for <literal>'.", route.Location);
-                        }
-                        else if (node.For is { } identity && (identity is not LiteralExpressionSyntax { Value: not null } || (identifier is { } type &&
-                            (type.IsCollection || type.IsOptional || !values.Compatible(identity, type)))))
-                        {
-                            context.Error(DiagnosticCodes.InvalidSpecificationStreamEventSource, "A routed event's for value must be a concrete literal compatible with the source's identifier type.", identity.Location);
-                        }
+                        context.Error(DiagnosticCodes.InvalidSpecificationStreamRoute, "A streamId part block requires a composite stream.", route.Location);
                     }
-                    if (!expected || command is null || eventProducers.Length == 0 || eventProducers.Any(producer => !ReferenceEquals(producer.Command, command))) continue;
-                    var contradicts = Contradicts(node, command.Stream, catalog, application, values);
-                    if (node.For is LiteralExpressionSyntax identityValue && eventProducers.All(producer => producer.Type is { } type &&
-                        (identifier is not null ? declarations.Compatible(type, identifier) == false : !values.Compatible(identityValue, type))))
+                    else
                     {
-                        contradicts = true;
-                    }
-                    if (contradicts)
-                    {
-                        context.Error(DiagnosticCodes.SpecificationStreamContradictsCommand, "The expected event route contradicts its only producer, the command under test.", node.Stream?.Location ?? node.NoStream!.Location);
+                        if ((stream.StreamId is null) != (route.StreamId is null))
+                        {
+                            context.Error(DiagnosticCodes.InvalidSpecificationStreamRoute, stream.StreamId is null ? "An unkeyed stream cannot take a streamId mapping." : "This keyed stream requires a streamId mapping.", route.Location);
+                        }
+                        if (route.StreamId is { } mapping) ValidateLiteral(mapping, stream.StreamId, values, context);
                     }
                 }
+                identifier = source.Identifier;
+                if (identifier is null)
+                {
+                    var types = eventProducers.Select(producer => producer.Type).ToArray();
+                    var distinct = types.OfType<TypeRefSyntax>().Select(type => (type.Name, type.IsOptional, type.IsCollection)).Distinct().ToArray();
+                    if (types.Length == 0 || types.Any(type => type is null) || distinct.Length != 1)
+                    {
+                        if (occurrence.ValidateRoute) context.Error(DiagnosticCodes.InvalidSpecificationStreamEventSource, $"Declare an identifier on source '{source.Name}'; the event's producers do not supply one unambiguous destination type.", route.Location);
+                    }
+                    else
+                    {
+                        identifier = types[0];
+                    }
+                }
+                if (occurrence.Required && node.For is null)
+                {
+                    occurrence.ContextualError(context, DiagnosticCodes.InvalidSpecificationStreamEventSource, "A routed given or when append event requires 'for <literal>'.", route.Location);
+                }
+                else if (occurrence.ValidateFor && node.For is { } identity && (identity is not LiteralExpressionSyntax { Value: not null } || (identifier is { } type &&
+                    (type.IsCollection || type.IsOptional || !values.Compatible(identity, type)))))
+                {
+                    occurrence.ContextualError(context, DiagnosticCodes.InvalidSpecificationStreamEventSource, "A routed event's for value must be a concrete literal compatible with the source's identifier type.", identity.Location);
+                }
+            }
+            if (!occurrence.Expected || command is null || eventProducers.Length == 0 || eventProducers.Any(producer => !ReferenceEquals(producer.Command, command))) continue;
+            var contradicts = Contradicts(node, command.Stream, catalog, application, values);
+            if (node.For is LiteralExpressionSyntax identityValue && eventProducers.All(producer => producer.Type is { } type &&
+                (identifier is not null ? declarations.Compatible(type, identifier) == false : !values.Compatible(identityValue, type))))
+            {
+                contradicts = true;
+            }
+            if (contradicts)
+            {
+                occurrence.ContextualError(context, DiagnosticCodes.SpecificationStreamContradictsCommand, "The expected event route contradicts its only producer, the command under test.", node.Stream?.Location ?? node.NoStream!.Location);
             }
         }
     }
@@ -175,7 +164,7 @@ internal static class SpecificationStreamValidator
 
     // Only known portable scalar types prove equality. Paths and unavailable imported types defer
     // to execution; a UUID's authored case, hyphens and wrappers are not part of its stream identity.
-    static string? FormatStreamId(ExpressionSyntax? expression, TypeRefSyntax type, ApplicationSyntax application, ResponseValueTypes values)
+    internal static string? FormatStreamId(ExpressionSyntax? expression, TypeRefSyntax type, ApplicationSyntax application, ResponseValueTypes values)
     {
         if (expression is not LiteralExpressionSyntax literal || !values.Compatible(literal, type)) return null;
         var concepts = application.Concepts.Where(concept => concept.Name == type.Name).ToArray();
