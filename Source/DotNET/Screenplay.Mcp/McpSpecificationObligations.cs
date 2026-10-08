@@ -4,6 +4,7 @@
 using System.Text.Json;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Mcp;
@@ -102,10 +103,17 @@ static class McpSpecificationObligations
         foreach (var projection in selected.Where(declaration => declaration.Kind == "Projection"))
         {
             var models = index.Outgoing(projection.Owner).Where(reference => reference.Role == "builds" || reference.Role == "buildsVariant").SelectMany(index.Resolve).Where(declaration => declaration.Kind == "ReadModel").ToArray();
-            foreach (var removal in index.Outgoing(projection.Owner).Where(reference => reference.Role == "remove"))
+            foreach (var (removal, path, variant) in Removals(((ProjectionSyntax)projection.Syntax).Blocks))
             {
-                var events = index.Resolve(removal);
-                Add("SPEC007", projection, removal.Location, removal.Name, "A removal specification asserting an absent instance after the removal event", (spec, value) => events is [var @event] && DrivesEvent(index, spec, value, @event) && value.ThenAbsentReadModels.Any(view => models.Any(model => McpReviewSelection.Resolves(index, spec, view.Name, "ReadModel", model))));
+                var events = index.Resolve(new(removal.Event, ["Event"], projection.Scope, removal.Location, "remove", projection.Owner));
+                var affected = variant is null ? models : [.. models.Where(model => McpReviewSelection.Resolves(index, projection, variant, "ReadModel", model))];
+                var description = path.Length == 0
+                    ? "A removal specification asserting an absent instance of the affected view after the removal event"
+                    : $"A removal specification asserting the affected view's '{path}' collection or nested state after the removal event";
+                Add("SPEC007", projection, removal.Location, removal.Event, description, (spec, value) => events is [var @event] && DrivesEvent(index, spec, value, @event) &&
+                    (path.Length == 0
+                        ? value.ThenAbsentReadModels.Any(view => affected.Any(model => McpReviewSelection.Resolves(index, spec, view.Name, "ReadModel", model)))
+                        : (value.ThenReadModels ?? []).Any(view => affected.Any(model => McpReviewSelection.Resolves(index, spec, view.Name, "ReadModel", model)) && view.Properties.Any(property => AssertsPath(property, path)))));
             }
         }
         foreach (var reaction in selected.Where(declaration => declaration.Syntax is ReactionSyntax))
@@ -130,6 +138,38 @@ static class McpSpecificationObligations
 
         return McpReviewSelection.Page(snapshot, items, arguments, "Authored specification presence only, not execution or full behavioral coverage. Rules with explicit messages match exact then error text; unidentifiable rejection rules remain info/unmet. Matching specification lists are capped at 20; declaration-details pages the full inventory. Ambiguous references never establish a match.");
     }
+
+    static IEnumerable<(RemoveWithSyntax Removal, string Path, string? Variant)> Removals(IEnumerable<ProjectionBlockSyntax> blocks, string path = "", string? variant = null)
+    {
+        foreach (var block in blocks)
+        {
+            switch (block)
+            {
+                case RemoveWithSyntax removal:
+                    yield return (removal, path, variant);
+                    break;
+                case ChildrenSyntax children:
+                    foreach (var removal in Removals(children.Blocks, path.Length == 0 ? children.Property : path + "." + children.Property, variant)) yield return removal;
+                    break;
+                case NestedSyntax nested:
+                    foreach (var removal in Removals(nested.Blocks, path.Length == 0 ? nested.Property : path + "." + nested.Property, variant)) yield return removal;
+                    break;
+                case ProjectionVariantSyntax value:
+                    foreach (var removal in Removals(value.Blocks, path, value.Name)) yield return removal;
+                    break;
+            }
+        }
+    }
+
+    static bool AssertsPath(PropertyMappingSyntax mapping, string path) => mapping.Property == path ||
+        (path.StartsWith(mapping.Property + ".", StringComparison.Ordinal) && AssertsPath(mapping.Source, path[(mapping.Property.Length + 1)..]));
+
+    static bool AssertsPath(ExpressionSyntax expression, string path) => expression switch
+    {
+        ObjectExpressionSyntax value => value.Members.Any(member => AssertsPath(new PropertyMappingSyntax(member.Name, member.Value, member.Location), path)),
+        ListExpressionSyntax value => value.Items.Any(item => AssertsPath(item, path)),
+        _ => false
+    };
 
     static bool Authorized(McpSyntaxIndex index, McpReadOwner owner) => index.Find(owner.Address, owner.Kind).Any(declaration => declaration.Syntax switch
     {
