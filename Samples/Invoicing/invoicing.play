@@ -57,17 +57,17 @@ concept IsProForma    : Bool
 concept InvoiceDate   : Date
 concept OccurredAt    : DateTime
 
-concept PersonName : String @pii
+concept PersonName : String pii
   pii reason "The name of the person to contact about an invoice. Needed to reach them about billing; lawful basis: contract performance. Lives under the customer's subject and is erasable with their key."
 
-concept BankAccount : String @pii @sensitive
+concept BankAccount : String pii secret
   pii reason "Refund payout account. Remits money back to the customer; lawful basis: contract performance / legal obligation. Personal only for sole-proprietor customers."
-  sensitive reason "Fraud-sensitive - a leaked account number enables direct financial harm, so it is never rendered in full and never leaves the payout path."
+  secret reason "Fraud-sensitive - a leaked account number enables direct financial harm, so it is never rendered in full and never leaves the payout path."
   validate
     rule BeAValidIban message $strings.validation.bankAccount.invalid
       file Validations/BeAValidIban.cs
 
-concept EmailAddress : String @pii
+concept EmailAddress : String pii
   pii reason "Billing contact address. Delivers invoices and payment reminders; lawful basis: contract performance. Under the customer's subject, erasable with their key."
   validate
     not empty                                 message "Email is required"
@@ -77,6 +77,18 @@ concept EmailAddress : String @pii
       string email = context.Value;
       return !email.EndsWith("@example.com", StringComparison.OrdinalIgnoreCase);
       ```
+
+// Classification vocabulary for provider-specific billing integrations. These
+// concepts do not change the invoice workflow; their markers remain syntax-only.
+concept BillingApiKey : String secret
+  secret scope namespace
+  secret reason "Credential shared by the billing integration within one tenant."
+concept MedicalBillingNote : String pii
+  pii special health
+  pii reason "A medical invoice note can reveal the patient's health."
+concept FraudConvictionNote : String pii
+  pii criminal
+  pii reason "An invoice fraud review can record a customer's criminal conviction."
 
 concept DiscountPercentage : Decimal
   validate

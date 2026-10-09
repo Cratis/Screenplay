@@ -132,9 +132,17 @@ remove duplicate route headers before export.
 | `PLAY0009` | Error | A value of an enumeration concept is not an identifier. |
 | `PLAY0010` | Error | A line in a concept body opens with a word a concept declares nothing by. |
 | `PLAY0011` | Warning | A value of an enumeration is called `validate`, which the concept body reads as an empty validate block. |
-| `PLAY0012` | Error | A concept gives the reason for an attribute it does not carry. |
+| `PLAY0012` | Error | A concept gives a reason, scope or personal-data qualifier for a marker it does not carry. |
 | `PLAY0013` | Error | A concept gives the reason for one attribute more than once. |
-| `PLAY0515` | Error | A concept marked `@pii` or `@sensitive` is used as a command identifier, an explicit `for` destination, an event source identifier, a scalar stream id type, a composite stream id part type, or a command route mapping source (including nested property paths). The message names the attribute and position, never a value. A mapping using the same protected concept already reported at its resolved stream-id declaration is not reported again; a different protected source concept is still reported. Specification route literals rely on their declaration's check. Use a surrogate `Uuid` identifier and keep personal data or operational secrets as properties. Reaction destinations also check values typed directly in the trigger clause, even for an undeclared or registered trigger. When a reaction source names both an event and a declared trigger, a protected destination in the resolved event shape or the trigger clause is rejected. |
+| `PLAY0515` | Error | A concept marked `pii` or `secret` is used as a command identifier, an explicit `for` destination, an event source identifier, a scalar stream id type, a composite stream id part type, or a command route mapping source (including nested property paths). The message names the attribute and position, never a value. A mapping using the same protected concept already reported at its resolved stream-id declaration is not reported again; a different protected source concept is still reported. Specification route literals rely on their declaration's check. Use a surrogate `Uuid` identifier and keep personal data or operational secrets as properties. Reaction destinations also check values typed directly in the trigger clause, even for an undeclared or registered trigger. When a reaction source names both an event and a declared trigger, a protected destination in the resolved event shape or the trigger clause is rejected. |
+
+| `PLAY0560` | Information | Legacy `@pii`, `sensitive` or `@sensitive` spelling. Use bare `pii`/`secret`; per-line and document repairs preserve notes and trivia. |
+| `PLAY0561` | Error | Unknown concept compliance marker; expected `pii`, `personal` or `secret`. |
+| `PLAY0562` | Error | Scope belongs to `secret` and must be `subject`, `namespace` or `global`. |
+| `PLAY0563` | Error | A concept declares secret scope more than once. |
+| `PLAY0564` | Warning | Explicit secret scope on `pii secret` is ignored because only Chronicle `[PII]` renders. |
+| `PLAY0565` | Error | Invalid personal-data qualifier or unknown Art. 9(1) category. |
+| `PLAY0566` | Error | A concept declares more than one `pii special` category. |
 
 ### Types
 
