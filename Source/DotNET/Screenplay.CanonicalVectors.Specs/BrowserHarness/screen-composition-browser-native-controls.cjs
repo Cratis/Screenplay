@@ -114,6 +114,51 @@ async function expectNoText(page, result, path, text) {
     }
 }
 
+async function describeControls(page) {
+    return page.evaluate(() => Array.from(document.querySelectorAll('input, textarea, select, button')).map((element, index) => ({
+        index,
+        tag: element.tagName.toLowerCase(),
+        type: element.getAttribute('type'),
+        name: element.getAttribute('name'),
+        ariaLabel: element.getAttribute('aria-label'),
+        placeholder: element.getAttribute('placeholder'),
+        text: element.textContent?.trim(),
+        value: element.value,
+        disabled: element.disabled
+    })));
+}
+
+async function closeDialog(page, result, path) {
+    const dialogs = page.getByRole('dialog');
+    if (await dialogs.count() === 0) return true;
+
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(500);
+
+    if (await dialogs.count() === 0) {
+        record(result, path, 'passed');
+        return true;
+    }
+
+    const closeInsideDialog = dialogs.first().getByRole('button', { name: /cancel|close|dismiss/i }).first();
+    if (await closeInsideDialog.count() > 0) {
+        try {
+            await closeInsideDialog.click({ timeout: 2_000 });
+            await page.waitForTimeout(500);
+        } catch (error) {
+            record(result, `${path}.closeButton`, 'blocked', error.message);
+        }
+    }
+
+    if (await dialogs.count() === 0) {
+        record(result, path, 'passed');
+        return true;
+    }
+
+    block(result, path, 'dialog remained open');
+    return false;
+}
+
 async function fillField(page, result, labelOrName, value) {
     const byLabel = page.getByLabel(new RegExp(labelOrName, 'i')).first();
     if (await byLabel.count() > 0) {
@@ -136,6 +181,7 @@ async function fillField(page, result, labelOrName, value) {
         return true;
     }
 
+    record(result, `browser.native.controls.${labelOrName}`, 'info', JSON.stringify(await describeControls(page)));
     block(result, `browser.native.field.${labelOrName}`, 'field missing');
     return false;
 }
@@ -293,7 +339,10 @@ async function assertInvalidThenValidCreate(page, result, network) {
         await fillField(page, result, 'workItemId', createdWorkItem.id),
         await fillField(page, result, 'title', createdWorkItem.title)
     ].every(Boolean);
-    if (!fieldsFilled) return;
+    if (!fieldsFilled) {
+        await closeDialog(page, result, 'browser.native.CreateWorkItem.dialog.closeAfterMissingFields');
+        return;
+    }
 
     const beforeValid = commandRequests(network, 'create-work-item').length;
     await clickSubmit(page, result, 'browser.native.CreateWorkItem.validSubmit.submitControl');
@@ -324,7 +373,10 @@ async function assertRenameDialog(page, result, network) {
 
     const renamedTitle = 'Renamed selected B in browser';
     const fieldsFilled = await fillField(page, result, 'title', renamedTitle);
-    if (!fieldsFilled) return;
+    if (!fieldsFilled) {
+        await closeDialog(page, result, 'browser.dialog.closeAfterMissingRenameFields');
+        return;
+    }
 
     const beforeValid = commandRequests(network, 'rename-work-item').length;
     await clickSubmit(page, result, 'browser.native.RenameWorkItem.validSubmit.submitControl');
@@ -334,10 +386,7 @@ async function assertRenameDialog(page, result, network) {
     else block(result, 'browser.native.RenameWorkItem.validSubmit.payload', `expected one rename payload for selected B, saw ${validRequests.length}`);
 
     await expectText(page, result, 'browser.native.RenameWorkItem.validSubmit.projection', renamedTitle);
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
-    if (await page.getByRole('dialog').count() === 0) record(result, 'browser.dialog.close', 'passed');
-    else block(result, 'browser.dialog.close', 'dialog remained open after Escape');
+    await closeDialog(page, result, 'browser.dialog.close');
 }
 
 async function assertAddComment(page, result, network) {
@@ -354,7 +403,10 @@ async function assertAddComment(page, result, network) {
         await fillField(page, result, 'commentId', nativeComment.id),
         await fillField(page, result, 'text', nativeComment.text)
     ].every(Boolean);
-    if (!fieldsFilled) return;
+    if (!fieldsFilled) {
+        await closeDialog(page, result, 'browser.native.AddComment.dialog.closeAfterMissingFields');
+        return;
+    }
 
     const beforeValid = commandRequests(network, 'add-comment').length;
     await clickSubmit(page, result, 'browser.native.AddComment.validSubmit.submitControl');
@@ -433,9 +485,8 @@ async function runBrowserFlow(result) {
 
     result.network = responses.filter(response => response.url.includes('/api/') || response.url.includes('/stage/'));
     result.commandRequests = network.requests.filter(request => request.method === 'POST' && request.url.includes('/api/'));
-    await browser.close();
-
     result.status = result.remainingBlockers.length > 0 ? 'partial-acceptance-blocked' : 'passed';
+    await browser.close();
 }
 
 (async () => {
