@@ -61,6 +61,11 @@ static class McpFixtureOccurrences
             yield return Occurrence(appended.EventType, "Event", "whenAppendedEvent", appended, appended.Values, appended.For, appended.Stream, appended.NoStream);
         }
 
+        if (specification.WhenRedelivered is { } redelivered)
+        {
+            yield return Occurrence(redelivered.EventType, "Event", "whenRedeliveredEvent", redelivered, redelivered.Values, redelivered.For, redelivered.Stream, redelivered.NoStream);
+        }
+
         foreach (var item in specification.ThenEvents)
         {
             yield return Occurrence(item.EventType, "Event", "thenEvent", item, item.Values, item.For, item.Stream, item.NoStream);

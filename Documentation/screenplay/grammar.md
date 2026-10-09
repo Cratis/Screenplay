@@ -288,7 +288,11 @@ BehaviorDecl   = "behavior", Ident, NL,
                    | "order", SignedInteger, NL | InteractionBinding }, DEDENT ] ;
 
 InteractionBinding = "on", InteractionTrigger, NL,
-                 INDENT, { "where", BindingText, NL | InteractionAction }, DEDENT ;
+                 INDENT, ( InteractionPlainBody | InteractionChoiceBody ), DEDENT ;
+InteractionPlainBody = { "where", BindingText, NL | InteractionAction } ;
+InteractionChoiceBody = InteractionAlternative, { InteractionAlternative }, [ InteractionOtherwise ] ;
+InteractionAlternative = "when", Condition, NL, INDENT, InteractionAction, { InteractionAction }, DEDENT ;
+InteractionOtherwise = "otherwise", NL, INDENT, InteractionAction, { InteractionAction }, DEDENT ;
 
 UsesBehaviorDecl = "uses", Ident, NL,
                  [ INDENT, { Ident, BehaviorArgument, NL }, DEDENT ] ;
@@ -317,8 +321,11 @@ InteractionContinuation = "on", ( "success" | "failure" | "result" ), NL,
                           INDENT, { InteractionAction }, DEDENT ;
 BindingText    = ? nonempty remainder of the line, stored verbatim ? ;
 
-(* A binding needs at least one action and at most one where guard. Guards,
-   set values and argument bindings are opaque text, not Condition operands.
+(* A plain binding needs at least one action and at most one where guard. Choices
+   are only valid on click/double click/select, use strict item Condition operands,
+   and cannot mix with plain actions or where. Otherwise is optional and final.
+   Item-trigger where is deprecated (Warning if strict, Information otherwise);
+   other triggers keep opaque where. Set values and arguments remain opaque text.
    on success/failure are allowed only on execute, refresh, confirm, open dialog
    and raise; on result only on open dialog. Continuations nest up to 16 action
    levels. An interval below 5 seconds warns. See interactions.md. *)
@@ -873,7 +880,7 @@ CDLBody        = (* Change Data Capture Language grammar - covers source/key/map
 (* -------------------------------------------------------------- *)
 
 ExampleDecl    = "example", Ident, ":", QualifiedName, NL,
-                 [ INDENT, { DescriptionDecl | SpecificationEventSource | PropertyMapping | GeneratedFixture }, DEDENT ] ;
+                 [ INDENT, { DescriptionDecl | SpecificationEventSource | SpecificationStream | SpecificationNoStream | PropertyMapping | GeneratedFixture }, DEDENT ] ;
 
 (* One typed fixture, never a caller, clock or sequence of steps. Its underlying
    declaration is an event, command or read model, not another example. Examples
@@ -905,7 +912,7 @@ SpecificationWhen = "when", QualifiedName, [ InlineFixtureAssignment ], NL,
                | "when", "append", QualifiedName, [ InlineFixtureAssignment ], NL,
                  [ INDENT, { SpecificationEventSource | SpecificationStream | PropertyMapping }, DEDENT ]
                | "when", "redelivered", QualifiedName, "to", QualifiedName, NL,
-                 [ INDENT, { SpecificationEventSource | PropertyMapping }, DEDENT ]
+                 [ INDENT, { SpecificationEventSource | SpecificationStream | SpecificationNoStream | PropertyMapping }, DEDENT ]
                | "when", "clock", StringLiteral, NL
                | "when", "trigger", Ident, NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]
@@ -964,8 +971,10 @@ SpecificationStream = "stream", Ident, ".", Ident, NL,
 SpecificationStreamIdParts = "streamId", NL, INDENT, { SpecificationStreamIdPart }, DEDENT ;
 SpecificationStreamIdPart = Ident, "=", ConcreteValue, NL ;
 SpecificationNoStream = "no", "stream", NL ;
-(* A route occurs at most once. Only then accepts no stream. Routed given and
-   when append require for; then may omit it. streamId is required exactly for
+(* A route occurs at most once. Then, redelivery locators and event examples
+   accept no stream. Only event examples carry routes; steps replace inherited
+   routes as a whole. Routed given and when append require for; then and
+   redelivery locators may omit it. streamId is required exactly for
    scalar keyed streams. Composite streams instead require every declared named
    part exactly once, each a compatible concrete literal; neither form substitutes
    for the other. Empty text is refused, but whitespace is accepted.

@@ -1,0 +1,203 @@
+theme WorkspaceTheme
+  compatible with core
+  compatible with scene.web
+  compatible with Cratis.Components
+
+layout ApplicationShell
+  category application
+  type masterDetail
+  exposes selectedWorkItem WorkItemId
+  outlet details
+  navigation contributes Navigation
+  content
+
+ui profile Web
+  target platform web
+  target size expanded
+  theme WorkspaceTheme
+  layout ApplicationShell
+
+  packages
+    core
+    scene.web
+    Cratis.Components
+
+  icons
+    scene.icons
+    workspace.icons
+
+template ApplicationShell
+
+concept WorkItemId : Uuid
+concept CommentId : Uuid
+concept WorkStatus : Enum
+  open
+  closed
+
+module Workspaces
+  template WorkspaceFeatureShell
+
+  screen template WorkspaceFeatureShell
+    fits slot content
+    category feature
+    type masterDetail
+    exposes selectedWorkItem WorkItemId
+    outlet detail
+    list
+    detail
+
+  dialog template EditWorkItemDialog
+    category dialog
+    type commandForm
+    exposes submittedWorkItem WorkItemId
+    body
+    actions
+
+  form CreateWorkItemForm for CreateWorkItem
+    field workItemId
+    field title label "Title"
+    field priority label "Priority"
+    columns auto
+    on submit navigate to WorkItemDetails by workItemId
+
+  form RenameWorkItemForm for RenameWorkItem
+    populate from item
+    field workItemId
+    field title label "New title"
+    columns manual
+      column title label "Title"
+    on submit navigate to WorkItemDetails by workItemId
+
+  feature Tracking
+    template WorkspaceFeatureShell
+
+    contribute to Navigation
+      navigate to WorkItemList
+      label "Work items"
+      order 10
+
+    slice StateChange CreateWorkItem
+      command CreateWorkItem
+        workItemId WorkItemId identifier
+        title String
+        priority Int
+        produces WorkItemCreated
+          for workItemId
+          title = title
+          priority = priority
+          status = "open"
+
+      event WorkItemCreated
+        title String
+        priority Int
+        status WorkStatus
+
+    slice StateChange RenameWorkItem
+      command RenameWorkItem
+        workItemId WorkItemId identifier
+        title String
+        produces WorkItemRenamed
+          for workItemId
+          title = title
+
+      event WorkItemRenamed
+        title String
+
+    slice StateChange CloseWorkItem
+      command CloseWorkItem
+        workItemId WorkItemId identifier
+        produces WorkItemClosed
+          for workItemId
+          status = "closed"
+
+      event WorkItemClosed
+        status WorkStatus
+
+    slice StateView WorkItemList
+      template WorkspaceFeatureShell
+
+      readmodel WorkItemSummary
+        workItemId WorkItemId
+        title String
+        priority Int
+        status WorkStatus
+
+      query AllWorkItems => WorkItemSummary[]
+      query WorkItemById => WorkItemSummary optional
+        by workItemId WorkItemId
+
+      screen WorkItemList
+        data WorkItemSummary[] via query AllWorkItems
+        toolbar main
+          item create action CreateWorkItem
+            label "New work item"
+            icon add
+            presentation placement "primary"
+          item refresh navigate to WorkItemList
+            label "Clear selection"
+            icon clear
+            presentation route "work-items"
+        component scene.web.DataGrid workItems
+          context from query AllWorkItems
+          property selectedItem from component workItems.selectedItem null clear
+          property title = "Work items"
+          icon table
+          presentation density "compact"
+          exposes selectedWorkItem from component workItems.selectedItem.workItemId
+          outlet detail
+            summary selectedWorkItem
+              field title label "Title"
+              field status label "Status"
+
+    slice StateView WorkItemDetails
+      template WorkspaceFeatureShell
+
+      readmodel WorkItemDetails
+        workItemId WorkItemId
+        title String
+        priority Int
+        status WorkStatus
+
+      query GetWorkItem => WorkItemDetails optional
+        by workItemId WorkItemId
+
+      screen WorkItemDetails
+        data WorkItemDetails via query GetWorkItem by workItemId
+        toolbar detail
+          item rename action RenameWorkItem
+            label "Rename"
+            icon edit
+            presentation dialog "EditWorkItemDialog"
+          item close action CloseWorkItem
+            label "Close"
+            icon close
+            presentation confirm "Close this work item?"
+          item deepLink navigate to WorkItemDetails
+            parameter workItemId from data.workItemId
+        component scene.web.DetailsPanel details
+          context from data workItemId
+          property title from data.title
+          property status from data.status
+          icon file
+          presentation route "work-items/{workItemId}"
+          outlet actions
+            component scene.web.CommandForm renameForm
+              context from data workItemId
+              property initialTitle from data title null preserve
+              exposes submittedWorkItem from data.workItemId
+
+    slice StateView WorkItemDialog
+      screen RenameWorkItemDialog
+        template EditWorkItemDialog
+          body
+            component scene.web.CommandForm renameWorkItem
+              context from data workItemId
+              property workItemId from data workItemId
+              property title from data title null preserve
+          actions
+            toolbar dialogActions
+              item submit action RenameWorkItem
+                label "Save"
+                icon save
+              item cancel navigate to WorkItemDetails
+                parameter workItemId from data.workItemId

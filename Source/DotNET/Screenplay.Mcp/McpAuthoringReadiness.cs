@@ -86,6 +86,7 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
             case InvokesSyntax invocation: walker.VisitInvokes(invocation); break;
             case CommandSyntax command: walker.VisitCommand(command); break;
             case SpecificationSyntax specification: walker.VisitSpecification(specification); break;
+            case SpecificationExampleSyntax example: walker.VisitSpecificationExample(example); break;
             default: walker.VisitNode(node); break;
         }
 
@@ -117,6 +118,7 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
             CommandStreamSyntax route => RouteFeatures(route),
             SpecificationStreamSyntax route => FixtureFeatures(route, null),
             SpecificationNoStreamSyntax unrouted => FixtureFeatures(null, unrouted),
+            SpecificationExampleSyntax example => FixtureFeatures(example.Stream, example.NoStream),
             CommandSyntax command =>
                 (command.Stream is { } route ? RouteFeatures(route) : [])
                 .Concat(Feature(command.Handler is not null, "command handlers"))
@@ -126,10 +128,12 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
                 .Concat(specification.Given.Concat(specification.ThenEvents)
                     .Concat(specification.WhenAppended is { } appended ? [appended] : [])
                     .SelectMany(occurrence => FixtureFeatures(occurrence.Stream, occurrence.NoStream)))
+                .Concat(Feature(!SemanticModelBinder.SpecificationRoutesJoin && HasSpecificationRoute(specification), "specification event routes (#457)"))
                 .Concat(ActionCommands(specification).SelectMany(entry => UnadmittedFeatures(entry.Command))),
-            SliceSyntax slice => slice.Commands.Cast<SyntaxNode>().Concat(slice.Specifications).SelectMany(UnadmittedFeatures),
+            SliceSyntax slice => slice.Commands.Cast<SyntaxNode>().Concat(slice.Specifications).Concat(slice.Examples).SelectMany(UnadmittedFeatures),
             ApplicationSyntax => application.EventSources.SelectMany(UnadmittedFeatures)
-                .Concat(_owners.Keys.OfType<SliceSyntax>().SelectMany(UnadmittedFeatures)),
+                .Concat(_owners.Keys.OfType<SliceSyntax>().SelectMany(UnadmittedFeatures))
+                .Concat(_effective.ResolvedExamples.Select(example => example.Example).SelectMany(UnadmittedFeatures)),
             _ => []
         };
 
@@ -144,6 +148,15 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
                 streams => 3,
                 _ => 4
             })];
+    }
+
+    bool HasSpecificationRoute(SpecificationSyntax specification)
+    {
+        var effective = _effective.Specifications.FirstOrDefault(pair => ReferenceEquals(pair.Authored, specification))?.Effective ?? specification;
+
+        return effective.Given.Concat(effective.ThenEvents).Concat(effective.WhenAppended is { } appended ? [appended] : [])
+            .Any(occurrence => occurrence.Stream is not null || occurrence.NoStream is not null) ||
+            (effective.WhenRedelivered is { } locator && (locator.Stream is not null || locator.NoStream is not null));
     }
 
     (CommandSyntax Command, string[] Scope)[] ActionCommands(SpecificationSyntax specification)

@@ -110,7 +110,7 @@ public sealed class WorkspaceSyntaxIndex
 
     /// <summary>
     /// Gets parser diagnostics. Erroneous documents are not indexed as editable syntax except
-    /// fully retained command stream/property ambiguity candidates.
+    /// fully retained command stream/property ambiguity candidates and repairable one-line interaction alternatives.
     /// </summary>
     public ImmutableArray<Diagnostic> Diagnostics { get; }
 
@@ -161,7 +161,7 @@ public sealed class WorkspaceSyntaxIndex
             if (!placement.IsPlacementResolved) continue;
             var parsed = compiler.ParseWithCandidates(document.Text, document.Path.Value, placement.Placement, candidates);
             diagnostics.AddRange(parsed.Diagnostics);
-            if (parsed.Value is not null && (parsed.Success || parsed.Diagnostics.All(diagnostic => diagnostic.Severity != DiagnosticSeverity.Error || diagnostic.Code == DiagnosticCodes.AmbiguousCommandStream)))
+            if (parsed.Value is not null && (parsed.Success || parsed.Diagnostics.All(diagnostic => diagnostic.Severity != DiagnosticSeverity.Error || diagnostic.Code == DiagnosticCodes.AmbiguousCommandStream || diagnostic.Code == DiagnosticCodes.InlineInteractionAlternative)))
             {
                 Visit(parsed.Value, new(workspace.Revision, document.Id, string.Empty), null, null, null, [], workspace.IdentityCatalog.Application, semantics, events, entries);
             }

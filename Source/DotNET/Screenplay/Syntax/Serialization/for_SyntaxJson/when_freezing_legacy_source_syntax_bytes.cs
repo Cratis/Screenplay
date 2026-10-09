@@ -26,7 +26,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "authoring-metadata" || name == "named-rule-intent" || name == "specification-examples" || name == "guarded-actions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams") continue;
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "authoring-metadata" || name == "named-rule-intent" || name == "specification-examples" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -39,6 +39,7 @@ public class when_freezing_legacy_source_syntax_bytes
                 _ => parsed
             };
             if (name == "invoicing" || name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleDependencies(legacy, name == "invoicing");
+
             // Report-only metadata has its own conformance vector. Keep existing event metadata
             // protected, and project only the newly supported owners out of pre-metadata bytes.
             var json = SyntaxJson.Serialize(WithoutNewAuthoringMetadata(legacy));
@@ -46,7 +47,15 @@ public class when_freezing_legacy_source_syntax_bytes
                 .Replace(",\"eventSources\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"stream\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"noStream\":null", string.Empty, StringComparison.Ordinal)
-                .Replace(",\"streamCandidates\":[]", string.Empty, StringComparison.Ordinal);
+                .Replace(",\"streamCandidates\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"templates\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"parameters\":[],\"route\":null", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"columnMode\":\"Unspecified\",\"columns\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"icons\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"category\":null", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"templateType\":null", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"exposes\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"outlets\":[]", string.Empty, StringComparison.Ordinal);
 
             // Only the two living samples author the additive no-event assertion. Its own conformance
             // vector protects it; removing that member here keeps all pre-feature bytes frozen.
@@ -75,6 +84,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
     static ApplicationSyntax WithoutNewAuthoringMetadata(ApplicationSyntax application) => application with
     {
+        UiProfiles = application.UiProfiles?.Select(profile => profile with { Icons = [] }),
         Modules = application.Modules.Select(module => module with
         {
             Documentation = null,
@@ -153,7 +163,12 @@ public class when_freezing_legacy_source_syntax_bytes
                 : module.Authorize,
 
             // The samples-policy coverage spec protects TagInvoiceForm's newly restored item population.
-            Forms = module.Forms?.Where(form => form.Name != "TagInvoiceForm").Select(form => form.Name == "RecordPaymentForm" ? form with { Populate = new FormPopulateFromItemSyntax(form.Location) } : form),
+            Forms = module.Forms?.Where(form => form.Name != "TagInvoiceForm").Select(form =>
+                (form.Name == "RecordPaymentForm" ? form with { Populate = new FormPopulateFromItemSyntax(form.Location) } : form) with
+                {
+                    ColumnMode = FormColumnMode.Unspecified,
+                    Columns = []
+                }),
             Features = module.Features.Select(feature => feature.Name == "InvoiceManagement" ? feature with
             {
                 Slices = feature.Slices.Where(slice => slice.Name != "StartInvoiceDraft").Select(slice => slice.Name switch
@@ -182,12 +197,26 @@ public class when_freezing_legacy_source_syntax_bytes
     // Current shared vectors protect the pre-input click paths. Reconstruct only the historical
     // action-navigation directives and omit the new draft entry point for the frozen legacy sample.
     static IEnumerable<ScreenDirectiveSyntax> WithoutSampleInputNavigation(IEnumerable<ScreenDirectiveSyntax> directives) =>
-        directives.Where(directive => directive is not ScreenSectionSyntax { Name: "startInvoiceDraftInput" or "recordDuePaymentInput" or "recordOverduePaymentInput" or "invoiceLineDetailInput" }).Select(directive => directive switch
+        directives.Where(directive => directive is not ScreenSectionSyntax { Name: "startInvoiceDraftInput" or "recordDuePaymentInput" or "recordOverduePaymentInput" or "invoiceLineDetailInput" } and not ScreenToolbarSyntax and not ScreenComponentSyntax).Select(directive => directive switch
         {
             ScreenSectionSyntax section when LegacyInputCommand(section.Name) is { } command =>
                 new ScreenActionSyntax(command, section.Name == "registerInvoiceDashboardInput" ? "$strings.invoices.actions.newInvoice" : null, new ScreenNavigateSyntax(command + "Screen", null, section.Location), section.Location),
             ScreenSectionSyntax section => section with { Directives = WithoutSampleInputNavigation(section.Directives) },
             ScreenTableSyntax { Target: "lineItems" } table => table with { RowClick = new ScreenNavigateSyntax("InvoiceLineDetail", "lineNumber", table.Location) },
+            // The living sample now guards editing by draft status; retain the pre-feature plain
+            // action list only in frozen bytes. Current vectors and native interaction specs cover it.
+            ScreenTableSyntax table => table with
+            {
+                Behaviors = table.Behaviors.Select(behavior => behavior with
+                {
+                    Bindings = behavior.Bindings.Select(binding => binding.Alternatives.Any() ? binding with
+                    {
+                        Actions = binding.Alternatives.First().Actions,
+                        Alternatives = [],
+                        Otherwise = null
+                    } : binding)
+                })
+            },
             ScreenTemplateReferenceSyntax template => template with
             {
                 Slots = template.Slots.Select(slot => slot with { Directives = WithoutSampleInputNavigation(slot.Directives) })

@@ -78,7 +78,7 @@ function parseArguments(context: ParserContext, line: SourceLine): InteractionAr
     return args;
 }
 
-function validateCondition(context: ParserContext, condition: ConditionSyntax): void {
+export function validateCondition(context: ParserContext, condition: ConditionSyntax): void {
     if (condition.kind === 'LogicalConditionSyntax') {
         validateCondition(context, condition.left);
         validateCondition(context, condition.right);

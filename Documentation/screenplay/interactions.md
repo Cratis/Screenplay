@@ -25,7 +25,7 @@ Three words carry the whole idea:
 | **Action** | What happens — `execute`, `navigate to`, `open dialog`, `refresh`, and the rest of a closed set. |
 | **Behavior** | A bundle of trigger-to-action bindings, attached to something. |
 
-For one labeled button that selects a command from the current item's state, use a [guarded screen action](screens.md#one-action-several-commands). That structured `when … execute` condition is separate from an interaction binding's `where` text, which remains opaque. Guarded choices inside `on` blocks are not supported.
+For one labeled button that selects a command from the current item's state, use a [guarded screen action](screens.md#one-action-several-commands). For a gesture that chooses a whole action list, use block-form alternatives below.
 
 ## Write it inline, or name it
 
@@ -80,6 +80,31 @@ An interaction trigger is never declared. It exists only as the `on` clause of a
 The last two rows are the bridge to the backend vocabulary, and the reason this page distinguishes two kinds of trigger.
 
 > **`trigger` still means one thing.** A declared `trigger <Name>` is an *application trigger* - a signal with a payload shape that a `reaction ... when` consumes. See [Triggers](triggers.md). What starts an interaction is the anonymous `on` clause above. The built-in kinds (`click`, `submit`, `enter`, and their siblings) are reserved **inside an `on` clause only**; an identifier of the same name anywhere else in a document is just an identifier. Declaring an application trigger named after one of them is an error, because `on <Name>` would then mean the interaction and never the trigger.
+
+## Choose an action list by item state
+
+`on click`, `on double click` and `on select` can choose one whole action list:
+
+```screenplay
+table Invoices
+  column status
+  on double click
+    when item.status == "draft"
+      open dialog InvoiceDetails
+        with invoiceId from item.invoiceId
+    otherwise
+      notify info "Only draft invoices can be edited"
+```
+
+Use exactly the [guarded action condition grammar](screens.md#one-action-several-commands): `item.<path>` compared with a literal, combined with `and`, `or` and parentheses. Each `when` and the optional final `otherwise` contains a non-empty indented list. At least one `when` is required. Plain actions and `where` cannot mix with alternatives. The one-line `when … execute …` spelling belongs to labeled actions, not interactions.
+
+The first matching branch runs once against the rendered item when the gesture occurs: no refetch first, no re-evaluation while the list runs. No match runs the fallback if present, otherwise nothing. No subject runs nothing, **including fallback**. Failure, denial or unavailable commands never fall through; commands still enforce their own rules. This differs from a labeled action's click-time refresh check because the interaction displays no choice beforehand.
+
+A table's click or double click uses the activated row; `select` uses the newly selected item. Clearing selection runs nothing. Other elements use the nearest enclosing container's single item or selected row, with the same sibling precedence as guarded actions. Named behaviors are checked at each `uses` site. A component's context binding or `selectedItem` does not supply a subject in this version; unresolved or equally near data subjects produce PLAY0346.
+
+`on submit` has no alternatives: `item` means populated data, not submitted form values. Event, change, interval and application triggers also have no alternatives. The one-line `on row-click navigate to … by …` stays unchanged.
+
+Opaque `where` is deprecated **only** on click, double click and select (PLAY0564). A strict item condition produces a warning and a C# typed repair to one `when` block with no fallback; repairs require individual review and refuse comment loss. Other guard text produces Information without a repair. Event/change/application `where` remains opaque and unchanged. TypeScript reports the same diagnostics but does not offer these repairs.
 
 ## Actions
 
@@ -185,6 +210,8 @@ The full list, with codes, is in [Diagnostics](diagnostics.md).
 ## What this is not
 
 Interaction is a closed vocabulary, deliberately. It is not a scripting language: conditions use the existing expression grammar, and actions are a fixed, resolvable set. Validation stays modeled on the command — the UI surfaces it rather than restating it. Animation, visual states, drag-and-drop and keyboard maps are not part of it.
+
+The event model board draws the containing table or screen as a static prototype; it does not execute gesture action lists or invent a button for each branch. Runtime support belongs to renderers, which must reject alternatives they cannot realize.
 
 Interaction constructs are deferred from the backend ESM v1 profile, the same way `screen`, `layout` and `ui profile` are, and report `PLAY0269`. Deferred does not mean dropped: the syntax tree, the printer and the semantic model carry every construct in full, and a target that cannot realize one reports it.
 

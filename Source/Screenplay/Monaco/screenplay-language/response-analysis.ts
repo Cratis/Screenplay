@@ -1,8 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, Diagnostic, EventSourceReadConfidence, FeatureSyntax, OperationSyntax, parseForAuthoring, parsePlacedDocuments, SpecificationEventSyntax, SpecificationSyntax } from '@cratis/screenplay-compiler';
+import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, Diagnostic, EventSourceReadConfidence, FeatureSyntax, OperationSyntax, parseForAuthoring, parsePlacedDocuments, SpecificationSyntax } from '@cratis/screenplay-compiler';
 import { fenceMap, indentOf, withoutComment } from './document-context';
+import { AuthoredSpecificationEvent } from './AuthoredSpecificationEvent';
 import { ResponseAnalysis } from './ResponseAnalysis';
 import { ExampleAnalysis } from './ExampleAnalysis';
 import { exampleAnalysis } from './example-analysis';
@@ -211,7 +212,7 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
     const targets = sourceDeclarations.flatMap(source => {
         return source.streams.filter(stream => resolve(source.name, stream.name).state === 'unique' && !importedTypeReferences.has(`${source.name}.${stream.name}`)).map(stream => ({ name: `${source.name}.${stream.name}`, source, stream }));
     });
-    const sourceContexts = new Map<number, { command?: CommandSyntax; event?: SpecificationEventSyntax; expectation?: boolean; route?: AuthoredCommandRoute; source?: typeof sourceDeclarations[number]; stream?: typeof sourceDeclarations[number]['streams'][number] }>();
+    const sourceContexts = new Map<number, { command?: CommandSyntax; event?: AuthoredSpecificationEvent; expectation?: boolean; route?: AuthoredCommandRoute; source?: typeof sourceDeclarations[number]; stream?: typeof sourceDeclarations[number]['streams'][number] }>();
     const routes: AuthoredCommandRoute[] = [];
     for (const command of commands.values()) {
         for (const line of range(command.location.line - 1)) sourceContexts.set(line, { command });
@@ -223,14 +224,22 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
             for (const line of range(command.stream.location.line - 1)) sourceContexts.set(line, { command, route: command.stream });
         }
     }
-    for (const specification of specifications.values()) {
-        for (const event of [...specification.given, ...(specification.whenAppended ? [specification.whenAppended] : []), ...specification.thenEvents]) {
-            const context = { event, expectation: specification.thenEvents.includes(event) };
-            for (const line of range(event.location.line - 1)) sourceContexts.set(line, context);
-            if (event.stream) {
-                routes.push(event.stream);
-                for (const line of range(event.stream.location.line - 1)) sourceContexts.set(line, { ...context, route: event.stream });
-            }
+    const examples = exampleAnalysis(parsed.value, path, lines, range, syntheticScopes, parsed.diagnostics);
+    const routeOwners = [
+        ...[...specifications.values()].flatMap(specification => [
+            ...specification.given.map(event => ({ event, expectation: false })),
+            ...(specification.whenAppended ? [{ event: specification.whenAppended, expectation: false }] : []),
+            ...specification.thenEvents.map(event => ({ event, expectation: true })),
+            ...(specification.whenRedelivered ? [{ event: specification.whenRedelivered, expectation: true }] : [])
+        ]),
+        ...(examples.eventExamples ?? []).map(event => ({ event, expectation: true }))
+    ];
+    for (const context of routeOwners) {
+        const event = context.event;
+        for (const line of range(event.location.line - 1)) sourceContexts.set(line, context);
+        if (event.stream) {
+            routes.push(event.stream);
+            for (const line of range(event.stream.location.line - 1)) sourceContexts.set(line, { ...context, route: event.stream });
         }
     }
     for (const source of sourceDeclarations.filter(source => source.location.path === path)) {
@@ -256,7 +265,7 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
             return dependencyAnalysis.completions(line, qualifier, placement);
         },
     };
-    return { commands, specifications, diagnostics, operationProductionLines, operations, eventSources, examples: exampleAnalysis(parsed.value, path, lines, range, syntheticScopes, parsed.diagnostics), dependencies };
+    return { commands, specifications, diagnostics, operationProductionLines, operations, eventSources, examples, dependencies };
 }
 
 export function responseAnalysis(lines: string[], otherSources: readonly (string | AuthoringDocument)[] = [], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis; readonly examples: ExampleAnalysis; readonly dependencies: ReturnType<typeof dependencyTargetAnalysis> } {

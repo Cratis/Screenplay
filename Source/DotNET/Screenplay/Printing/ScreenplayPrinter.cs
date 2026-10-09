@@ -173,6 +173,12 @@ public sealed partial class ScreenplayPrinter :
             WriteUiProfile(writer, uiProfile);
         }
 
+        foreach (var template in application.Templates)
+        {
+            writer.Blank();
+            WriteTemplateAssignment(writer, template);
+        }
+
         foreach (var example in application.Examples)
         {
             writer.Blank();
@@ -232,6 +238,20 @@ public sealed partial class ScreenplayPrinter :
                     for (var index = 0; index < packages.Count; index++)
                     {
                         writer.DirectiveLine(packages[index], uiProfile, DirectiveLocationKeys.ForValue("package", packages, index));
+                    }
+                }
+            }
+
+            var icons = uiProfile.Icons.ToList();
+            if (icons.Count > 0)
+            {
+                writer.Blank();
+                writer.DirectiveLine("icons", uiProfile, "icons");
+                using (writer.Indent())
+                {
+                    for (var index = 0; index < icons.Count; index++)
+                    {
+                        writer.DirectiveLine(icons[index], uiProfile, DirectiveLocationKeys.ForValue("icon", icons, index));
                     }
                 }
             }
@@ -488,14 +508,17 @@ public sealed partial class ScreenplayPrinter :
 
         AddMembers(members, module.Behaviors, 1, behavior => WriteAttachedBehavior(writer, behavior));
         AddMembers(members, module.UsedBehaviors, 2, uses => WriteUsesBehavior(writer, uses));
-        AddSeparatedMembers(members, writer, module.ScreenTemplates, 3, WriteScreenTemplate);
-        AddSeparatedMembers(members, writer, module.DialogTemplates ?? [], 4, WriteDialogTemplate);
-        AddSeparatedMembers(members, writer, module.Forms ?? [], 5, WriteForm);
-        AddSeparatedMembers(members, writer, module.Contributions ?? [], 6, WriteContribution);
-        AddSeparatedMembers(members, writer, module.Examples, 7, WriteSpecificationExample);
-        AddSeparatedMembers(members, writer, module.Features, 8, WriteFeature);
+        AddMembers(members, module.Templates, 3, template => WriteTemplateAssignment(writer, template));
+        AddSeparatedMembers(members, writer, module.ScreenTemplates, 4, WriteScreenTemplate);
+        AddSeparatedMembers(members, writer, module.DialogTemplates ?? [], 5, WriteDialogTemplate);
+        AddSeparatedMembers(members, writer, module.Forms ?? [], 6, WriteForm);
+        AddSeparatedMembers(members, writer, module.Contributions ?? [], 7, WriteContribution);
+        AddSeparatedMembers(members, writer, module.Examples, 8, WriteSpecificationExample);
+        AddSeparatedMembers(members, writer, module.Features, 9, WriteFeature);
         WriteMembers(members, module);
     }
+
+    void WriteTemplateAssignment(ScreenplayWriter writer, TemplateAssignmentSyntax template) => writer.Line($"template {template.Name}", template);
 
     void WriteContribution(ScreenplayWriter writer, ContributionSyntax contribution)
     {
@@ -536,12 +559,41 @@ public sealed partial class ScreenplayPrinter :
                 writer.Line(WriteFormField(field), field);
             }
 
+            WriteFormColumns(writer, form);
+
             if (form.OnSubmit is not null)
             {
                 writer.Line($"on submit {WriteScreenNavigate(form.OnSubmit)}", form.OnSubmit);
             }
 
             WriteAttachments(writer, form.Behaviors, form.UsedBehaviors);
+        }
+    }
+
+    void WriteFormColumns(ScreenplayWriter writer, FormSyntax form)
+    {
+        if (form.ColumnMode == FormColumnMode.Unspecified)
+        {
+            return;
+        }
+
+        if (form.ColumnMode == FormColumnMode.Auto)
+        {
+            writer.Line("columns auto", form);
+            return;
+        }
+
+        writer.Line("columns manual", form);
+        using (writer.Indent())
+        {
+            foreach (var column in form.Columns)
+            {
+                writer.Line(
+                    column.Label is null
+                        ? $"column {column.Property}"
+                        : $"column {column.Property} label {ScreenplaySyntaxText.LocalizableString(column.Label)}",
+                    column);
+            }
         }
     }
 
@@ -580,6 +632,7 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"layout {layout.Name}");
         using (writer.Indent())
         {
+            WriteTemplateMetadata(writer, layout.Category, layout.TemplateType, layout.Exposes, layout.Outlets);
             WriteSlots(writer, layout.Slots);
             WriteArrangement(writer, layout.Arrangement);
             WriteAttachments(writer, layout.Behaviors, layout.UsedBehaviors);
@@ -598,6 +651,7 @@ public sealed partial class ScreenplayPrinter :
                 writer.Blank();
             }
 
+            WriteTemplateMetadata(writer, template.Category, template.TemplateType, template.Exposes, template.Outlets);
             WriteSlots(writer, template.Slots);
             WriteArrangement(writer, template.Arrangement);
             WriteAttachments(writer, template.Behaviors, template.UsedBehaviors);
@@ -610,9 +664,42 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"dialog template {template.Name}");
         using (writer.Indent())
         {
+            WriteTemplateMetadata(writer, template.Category, template.TemplateType, template.Exposes, template.Outlets);
             WriteSlots(writer, template.Slots);
             WriteArrangement(writer, template.Arrangement);
             WriteAttachments(writer, template.Behaviors, template.UsedBehaviors);
+        }
+    }
+
+    void WriteTemplateMetadata(
+        ScreenplayWriter writer,
+        string? category,
+        string? templateType,
+        IEnumerable<TemplateExposedValueSyntax> exposes,
+        IEnumerable<TemplateOutletSyntax> outlets)
+    {
+        if (category is not null)
+        {
+            writer.Line($"category {category}");
+        }
+
+        if (templateType is not null)
+        {
+            writer.Line($"type {templateType}");
+        }
+
+        foreach (var exposed in exposes)
+        {
+            writer.Line(
+                exposed.Type is null
+                    ? $"exposes {exposed.Name}"
+                    : $"exposes {exposed.Name} {ScreenplaySyntaxText.TypeRef(exposed.Type)}",
+                exposed);
+        }
+
+        foreach (var outlet in outlets)
+        {
+            writer.Line($"outlet {outlet.Name}", outlet);
         }
     }
 
@@ -820,10 +907,11 @@ public sealed partial class ScreenplayPrinter :
 
         AddMembers(members, feature.Behaviors, 1, behavior => WriteAttachedBehavior(writer, behavior));
         AddMembers(members, feature.UsedBehaviors, 2, uses => WriteUsesBehavior(writer, uses));
-        AddSeparatedMembers(members, writer, feature.Examples, 3, WriteSpecificationExample);
-        AddSeparatedMembers(members, writer, feature.Features, 4, WriteFeature);
-        AddSeparatedMembers(members, writer, feature.Slices, 5, WriteSlice);
-        AddSeparatedMembers(members, writer, feature.Contributions ?? [], 6, WriteContribution);
+        AddMembers(members, feature.Templates, 3, template => WriteTemplateAssignment(writer, template));
+        AddSeparatedMembers(members, writer, feature.Examples, 4, WriteSpecificationExample);
+        AddSeparatedMembers(members, writer, feature.Features, 5, WriteFeature);
+        AddSeparatedMembers(members, writer, feature.Slices, 6, WriteSlice);
+        AddSeparatedMembers(members, writer, feature.Contributions ?? [], 7, WriteContribution);
         WriteMembers(members, feature);
     }
 
@@ -850,9 +938,10 @@ public sealed partial class ScreenplayPrinter :
             AddSeparatedMembers(members, writer, slice.Reducers ?? [], 7, WriteReducer);
             AddSeparatedMembers(members, writer, slice.Captures, 8, WriteCapture);
             AddSeparatedMembers(members, writer, slice.Reactions, 9, WriteReaction);
-            AddSeparatedMembers(members, writer, slice.Screens, 10, WriteScreen);
-            AddSeparatedMembers(members, writer, slice.Examples, 11, WriteSpecificationExample);
-            AddSeparatedMembers(members, writer, slice.Specifications, 12, WriteSpecification);
+            AddMembers(members, slice.Templates, 10, template => WriteTemplateAssignment(writer, template));
+            AddSeparatedMembers(members, writer, slice.Screens, 11, WriteScreen);
+            AddSeparatedMembers(members, writer, slice.Examples, 12, WriteSpecificationExample);
+            AddSeparatedMembers(members, writer, slice.Specifications, 13, WriteSpecification);
             WriteMembers(members, slice);
         }
     }

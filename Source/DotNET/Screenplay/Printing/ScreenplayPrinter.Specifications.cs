@@ -110,6 +110,7 @@ public partial class ScreenplayPrinter
                 using (writer.Indent())
                 {
                     WriteSpecificationEventSource(writer, redelivered.For);
+                    WriteSpecificationRoute(writer, redelivered.Stream, redelivered.NoStream);
                     WriteSpecificationValues(writer, redelivered.Values);
                 }
             }
@@ -217,18 +218,23 @@ public partial class ScreenplayPrinter
         using (writer.Indent())
         {
             WriteSpecificationEventSource(writer, @event.For);
-            if (@event.Stream is { } route)
-            {
-                writer.Line($"stream {route.EventSource}.{route.Stream}", route);
-                using (writer.Indent())
-                {
-                    if (route.StreamId is { } streamId) writer.Line($"streamId = {writer.Expression(streamId.Source)}", streamId);
-                    WriteStreamIdParts(writer, route, route.StreamIdParts);
-                }
-            }
-            if (@event.NoStream is { } noStream) writer.Line("no stream", noStream);
+            WriteSpecificationRoute(writer, @event.Stream, @event.NoStream);
             WriteSpecificationValues(writer, @event.Values.Where(value => value.Property != @event.InlineProperty));
         }
+    }
+
+    void WriteSpecificationRoute(ScreenplayWriter writer, SpecificationStreamSyntax? route, SpecificationNoStreamSyntax? noStream)
+    {
+        if (route is not null)
+        {
+            writer.Line($"stream {route.EventSource}.{route.Stream}", route);
+            using (writer.Indent())
+            {
+                if (route.StreamId is { } streamId) writer.Line($"streamId = {writer.Expression(streamId.Source)}", streamId);
+                WriteStreamIdParts(writer, route, route.StreamIdParts);
+            }
+        }
+        if (noStream is not null) writer.Line("no stream", noStream);
     }
 
     void WriteSpecificationReadModel(ScreenplayWriter writer, string keyword, SpecificationReadModelSyntax readModel)

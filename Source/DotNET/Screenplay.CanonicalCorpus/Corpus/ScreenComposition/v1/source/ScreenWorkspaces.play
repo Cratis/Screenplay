@@ -186,6 +186,12 @@ module Workspaces
               column title label "Title"
               column status label "Status"
               on row-click navigate to WorkItemDetails by workItemId
+              on double click
+                when item.status == "open"
+                  navigate to WorkItemDetails
+                    with workItemId from item.workItemId
+                otherwise
+                  notify info "This work item is closed"
           details
             section emptyState
               title "Select a work item"

@@ -22,4 +22,14 @@ public record SpecificationRedeliverySyntax(
     /// Gets the optional event-source identity narrowing the given occurrence.
     /// </summary>
     public ExpressionSyntax? For { get; init; }
+
+    /// <summary>
+    /// Gets the optional route narrowing the given occurrence.
+    /// </summary>
+    public SpecificationStreamSyntax? Stream { get; init; }
+
+    /// <summary>
+    /// Gets the assertion selecting an unrouted given occurrence.
+    /// </summary>
+    public SpecificationNoStreamSyntax? NoStream { get; init; }
 }

@@ -21,7 +21,10 @@ internal static class SyntaxJsonWriter
             if (member.Type == typeof(SourceOptions) && Equals(value, SourceOptions.Legacy)) continue;
             if (member.Name == "examples" && value is IEnumerable examples && !examples.Cast<object>().Any()) continue;
             if (member.Name == "inlineProperty" && value is null) continue;
+            if (node is Specifications.SpecificationExampleSyntax or Specifications.SpecificationRedeliverySyntax && (member.Name == "stream" || member.Name == "noStream") && value is null) continue;
             if (node is Specifications.SpecificationSyntax && member.Name == "thenNoEvents" && Equals(value, false)) continue;
+            if (node is InteractionBindingSyntax binding && member.Name == "alternatives" && !binding.Alternatives.Any()) continue;
+            if (node is InteractionBindingSyntax && member.Name == "otherwise" && value is null) continue;
             if (node is InvokesSyntax invocation && member.Name == "onRefused" && !invocation.OnRefused.Any()) continue;
             if (node is Specifications.SpecificationSyntax && member.Name == "whenRedelivered" && value is null) continue;
             if (member.Name == "dependsOn" && member.ElementType == typeof(DependsOnSyntax) && value is IEnumerable<DependsOnSyntax> dependencies && !dependencies.Any()) continue;

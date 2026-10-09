@@ -27,8 +27,12 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact] void should_reverse_document_order_in_the_reordered_form() => _corpus.SourceForms[2].Documents.Select(document => document.StableKey).ShouldEqual(_corpus.SourceForms[1].Documents.Reverse().Select(document => document.StableKey));
     [Fact] void should_relocate_every_document_in_the_relocated_form() => _corpus.SourceForms[3].Documents.All(document => document.DisplayPath.StartsWith("Archive/", StringComparison.Ordinal)).ShouldBeTrue();
     [Fact] void should_parse_every_source_document_without_authoring_diagnostics() => _corpus.SourceForms.SelectMany(form => form.Documents).All(document => Parse(document.Text).Success).ShouldBeTrue();
-    [Fact] void should_pin_the_screen_behavior_probes() => _corpus.BehaviorProbes.Select(probe => probe.Name).ShouldEqual("master-detail-selection", "query-rebind", "auto-manual-command-forms", "recursive-nested-hierarchy", "toolbar-dialog-url-surfaces", "package-icon-style-contract");
-    [Fact] void should_leave_stage_artifact_bytes_unclaimed_until_stage_publishes_the_plan_schema() => _corpus.StagePlans.ShouldBeEmpty();
+    [Fact] void should_pin_the_screen_behavior_probes() => _corpus.BehaviorProbes.Select(probe => probe.Name).ShouldEqual("master-detail-selection", "guarded-gesture", "query-rebind", "auto-manual-command-forms", "recursive-nested-hierarchy", "toolbar-dialog-url-surfaces", "package-icon-style-contract");
+    [Fact] void should_publish_the_positive_typed_source_case() => _corpus.TypedSourceCases.Select(sourceCase => sourceCase.Name).ShouldEqual("screen-release-ui-positive");
+    [Fact] void should_publish_real_behavior_expectations() => _corpus.BehaviorExpectations.Select(expectation => expectation.Name).ShouldEqual("selection-details", "query-rebind-clear", "native-form-validation-submit", "dialog-outlet-deep-link", "package-rendering", "protected-business-semantics");
+    [Fact] void should_publish_mcp_edit_invariants() => _corpus.McpEditExpectations.Select(expectation => expectation.Name).ShouldEqual("mcp-edit-component-binding", "mcp-edit-dialog-action");
+    [Fact] void should_publish_harness_entry_points() => _corpus.Harnesses.Select(harness => harness.Name).ShouldEqual("browser-runtime", "mcp-authoring", "cli-stage-parity", "studio-roundtrip");
+    [Fact] void should_publish_pending_stage_plan_assertions_without_claiming_artifact_bytes() => _corpus.StagePlans.Single().PendingReason.ShouldNotBeNull();
 
     [Fact]
     void should_fail_backend_esm_admission_with_the_expected_diagnostics()
@@ -58,6 +62,100 @@ public class when_loading_the_v1_screen_corpus : Specification
         }
     }
 
+    [Fact]
+    void should_keep_the_positive_source_grounded_in_the_typed_screen_contract()
+    {
+        var source = _corpus.TypedSourceCases.Single();
+        source.PendingReason.ShouldBeNull();
+        source.Requires.ShouldEqual("Screenplay v4.96.0 typed screen authoring syntax");
+        source.Document.Text.Contains("component scene.web.DataGrid workItems", StringComparison.Ordinal).ShouldBeTrue();
+        source.Document.Text.Contains("property selectedItem from component workItems.selectedItem null clear", StringComparison.Ordinal).ShouldBeTrue();
+        source.Document.Text.Contains("columns manual", StringComparison.Ordinal).ShouldBeTrue();
+        source.Document.Text.Contains("icons", StringComparison.Ordinal).ShouldBeTrue();
+        source.ExpectedSyntaxKinds.ShouldContain("ScreenComponentSyntax");
+    }
+
+    [Fact]
+    void should_give_every_behavior_expectation_machine_checkable_assertions()
+    {
+        foreach (var expectation in _corpus.BehaviorExpectations)
+        {
+            expectation.SourceCase.ShouldEqual("screen-release-ui-positive");
+            expectation.Assertions.ShouldNotBeEmpty();
+        }
+    }
+
+    [Fact]
+    void should_give_every_mcp_edit_invariant_machine_checkable_assertions()
+    {
+        foreach (var expectation in _corpus.McpEditExpectations)
+        {
+            expectation.SourceCase.ShouldEqual("screen-release-ui-positive");
+            expectation.Assertions.ShouldNotBeEmpty();
+        }
+    }
+
+    [Fact]
+    void should_give_every_harness_a_real_entry_point_and_assertions()
+    {
+        foreach (var harness in _corpus.Harnesses)
+        {
+            harness.EntryPoint.ShouldNotBeEmpty();
+            harness.RequiredVersionVector.ShouldNotBeEmpty();
+            harness.Assertions.ShouldNotBeEmpty();
+        }
+    }
+
+    [Fact]
+    void should_mark_only_browser_cli_and_studio_harnesses_pending_on_external_releases()
+    {
+        _corpus.Harnesses.Single(harness => harness.Name == "mcp-authoring").PendingReason.ShouldBeNull();
+        _corpus.Harnesses.Where(harness => harness.Name != "mcp-authoring").All(harness => harness.PendingReason is not null).ShouldBeTrue();
+    }
+
+    [Fact]
+    void should_keep_stage_plan_pending_but_assertable()
+    {
+        var plan = _corpus.StagePlans.Single();
+        plan.PlanDigest.StartsWith("pending:", StringComparison.Ordinal).ShouldBeTrue();
+        plan.Artifacts.ShouldBeEmpty();
+        plan.Assertions.Select(assertion => assertion.Path).ShouldContain("plan.nativeForms");
+        plan.Assertions.Select(assertion => assertion.Path).ShouldContain("plan.packageFallbacks");
+    }
+
+    [Fact]
+    void should_parse_the_positive_typed_screen_source_without_authoring_diagnostics()
+    {
+        var sourceCase = _corpus.TypedSourceCases.Single();
+        sourceCase.PendingReason.ShouldBeNull();
+        var parsed = Parse(sourceCase.Document.Text);
+        var syntaxKinds = SyntaxKinds(parsed.Value!);
+        foreach (var kind in sourceCase.ExpectedSyntaxKinds)
+        {
+            syntaxKinds.ShouldContain(kind);
+        }
+    }
+
+    [Fact]
+    void should_admit_the_positive_typed_screen_source_shape()
+    {
+        var application = Parse(_corpus.TypedSourceCases.Single().Document.Text).Value!;
+        var module = application.Modules.Single();
+        var feature = module.Features.Single();
+        var listSlice = feature.Slices.Single(slice => slice.Name == "WorkItemList");
+        var detailSlice = feature.Slices.Single(slice => slice.Name == "WorkItemDetails");
+        var dialogSlice = feature.Slices.Single(slice => slice.Name == "WorkItemDialog");
+        application.Templates.Single().Name.ShouldEqual("ApplicationShell");
+        module.Templates.Single().Name.ShouldEqual("WorkspaceFeatureShell");
+        feature.Templates.Single().Name.ShouldEqual("WorkspaceFeatureShell");
+        listSlice.Templates.Single().Name.ShouldEqual("WorkspaceFeatureShell");
+        module.Forms.Single(form => form.Name == "RenameWorkItemForm").Columns.Single().Property.ShouldEqual("title");
+        listSlice.Screens.Single().Directives.OfType<ScreenToolbarSyntax>().Single().Items.Select(item => item.Name).ShouldEqual("create", "refresh");
+        listSlice.Screens.Single().Directives.OfType<ScreenComponentSyntax>().Single().Properties.Single(property => property.Property == "selectedItem").Binding!.NullBehavior.ShouldEqual(UiBindingNullBehavior.Clear);
+        detailSlice.Screens.Single().Directives.OfType<ScreenComponentSyntax>().Single().Outlets.Single().Name.ShouldEqual("actions");
+        dialogSlice.Screens.Single().Directives.OfType<ScreenTemplateReferenceSyntax>().Single().Name.ShouldEqual("EditWorkItemDialog");
+    }
+
     static IEnumerable<Diagnostic> CompileForExecutableModel(CanonicalCorpusSourceForm form)
     {
         var catalog = SemanticIdentityCatalogSerializer.Deserialize(form.IdentityCatalogBytes.AsSpan());
@@ -70,8 +168,13 @@ public class when_loading_the_v1_screen_corpus : Specification
     static string[] SyntaxKinds(string source)
     {
         var parsed = Parse(source);
+        return SyntaxKinds(parsed.Value!);
+    }
+
+    static string[] SyntaxKinds(ApplicationSyntax application)
+    {
         var collector = new NodeKindCollector();
-        collector.VisitApplication(parsed.Value!);
+        collector.VisitApplication(application);
         return [.. collector.Kinds];
     }
 

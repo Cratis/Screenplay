@@ -3775,6 +3775,8 @@
                               "navigate": {
                                 "kind": "ScreenNavigateSyntax",
                                 "by": null,
+                                "parameters": [],
+                                "route": null,
                                 "screen": "InvoiceList"
                               }
                             }
@@ -3811,6 +3813,8 @@
                       "navigate": {
                         "kind": "ScreenNavigateSyntax",
                         "by": null,
+                        "parameters": [],
+                        "route": null,
                         "screen": "RegisterInvoiceScreen"
                       }
                     },
@@ -4451,6 +4455,8 @@
                                   "rowClick": {
                                     "kind": "ScreenNavigateSyntax",
                                     "by": "lineNumber",
+                                    "parameters": [],
+                                    "route": null,
                                     "screen": "InvoiceLineDetail"
                                   },
                                   "target": "lineItems"
@@ -5176,6 +5182,8 @@
                                   "rowClick": {
                                     "kind": "ScreenNavigateSyntax",
                                     "by": "invoiceId",
+                                    "parameters": [],
+                                    "route": null,
                                     "screen": "InvoiceDetails"
                                   },
                                   "target": "OverdueInvoicesReadModel"
@@ -5230,6 +5238,8 @@
                                   "navigate": {
                                     "kind": "ScreenNavigateSyntax",
                                     "by": null,
+                                    "parameters": [],
+                                    "route": null,
                                     "screen": "RegisterInvoiceScreen"
                                   }
                                 }

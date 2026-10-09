@@ -199,6 +199,166 @@ public sealed record CanonicalScreenBehaviorProbe
 }
 
 /// <summary>
+/// Represents one positive typed-screen authoring source case.
+/// </summary>
+public sealed record CanonicalTypedScreenSourceCase
+{
+    /// <summary>
+    /// Gets the stable case name.
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
+    /// Gets the positive source document.
+    /// </summary>
+    public required CanonicalCorpusDocument Document { get; init; }
+
+    /// <summary>
+    /// Gets the branch or feature set required before this source parses in this repository.
+    /// </summary>
+    public required string Requires { get; init; }
+
+    /// <summary>
+    /// Gets why the case is pending in the current released compiler, or <c>null</c> when it runs here.
+    /// </summary>
+    public string? PendingReason { get; init; }
+
+    /// <summary>
+    /// Gets the typed syntax node kinds expected once the required authoring syntax is available.
+    /// </summary>
+    public ImmutableArray<string> ExpectedSyntaxKinds { get; init; } = [];
+}
+
+/// <summary>
+/// Represents an executable assertion made by a screen behavior harness.
+/// </summary>
+public sealed record CanonicalScreenAssertion
+{
+    /// <summary>
+    /// Gets the subject path inside the harness output.
+    /// </summary>
+    public required string Path { get; init; }
+
+    /// <summary>
+    /// Gets the comparison operation.
+    /// </summary>
+    public required string Operation { get; init; }
+
+    /// <summary>
+    /// Gets the expected value.
+    /// </summary>
+    public required string Value { get; init; }
+}
+
+/// <summary>
+/// Represents one expected behavior for a screen corpus harness.
+/// </summary>
+public sealed record CanonicalScreenBehaviorExpectation
+{
+    /// <summary>
+    /// Gets the stable expectation name.
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
+    /// Gets the harness category.
+    /// </summary>
+    public required string Category { get; init; }
+
+    /// <summary>
+    /// Gets the positive source case the behavior belongs to.
+    /// </summary>
+    public required string SourceCase { get; init; }
+
+    /// <summary>
+    /// Gets the precondition under test.
+    /// </summary>
+    public required string Given { get; init; }
+
+    /// <summary>
+    /// Gets the user or tool action under test.
+    /// </summary>
+    public required string When { get; init; }
+
+    /// <summary>
+    /// Gets the expected observable outcome.
+    /// </summary>
+    public required string Then { get; init; }
+
+    /// <summary>
+    /// Gets machine-checkable assertions for the behavior.
+    /// </summary>
+    public ImmutableArray<CanonicalScreenAssertion> Assertions { get; init; } = [];
+}
+
+/// <summary>
+/// Represents one MCP authoring edit invariant for the screen corpus.
+/// </summary>
+public sealed record CanonicalMcpEditExpectation
+{
+    /// <summary>
+    /// Gets the stable edit expectation name.
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
+    /// Gets the positive source case the edit applies to.
+    /// </summary>
+    public required string SourceCase { get; init; }
+
+    /// <summary>
+    /// Gets the authored operation under test.
+    /// </summary>
+    public required string Operation { get; init; }
+
+    /// <summary>
+    /// Gets the declaration the edit targets.
+    /// </summary>
+    public required string TargetDeclaration { get; init; }
+
+    /// <summary>
+    /// Gets invariants that must survive the edit.
+    /// </summary>
+    public ImmutableArray<CanonicalScreenAssertion> Assertions { get; init; } = [];
+}
+
+/// <summary>
+/// Represents one pending or executable harness entry point for released screen parity checks.
+/// </summary>
+public sealed record CanonicalScreenHarnessExpectation
+{
+    /// <summary>
+    /// Gets the stable harness name.
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
+    /// Gets the host that executes the harness.
+    /// </summary>
+    public required string Host { get; init; }
+
+    /// <summary>
+    /// Gets the command, endpoint, or test entry point.
+    /// </summary>
+    public required string EntryPoint { get; init; }
+
+    /// <summary>
+    /// Gets the exact dependency vector required for a non-pending run.
+    /// </summary>
+    public required string RequiredVersionVector { get; init; }
+
+    /// <summary>
+    /// Gets why the harness is pending, or <c>null</c> when the current repository runs it.
+    /// </summary>
+    public string? PendingReason { get; init; }
+
+    /// <summary>
+    /// Gets machine-checkable assertions the harness must evaluate.
+    /// </summary>
+    public ImmutableArray<CanonicalScreenAssertion> Assertions { get; init; } = [];
+}
+
+/// <summary>
 /// Represents one canonical Stage artifact expectation.
 /// </summary>
 public sealed record CanonicalStageArtifactExpectation
@@ -235,14 +395,29 @@ public sealed record CanonicalStagePlanExpectation
     public required string Profile { get; init; }
 
     /// <summary>
-    /// Gets the exact plan digest.
+    /// Gets the exact plan digest, or a <c>pending:</c> marker until the released planner schema is available.
     /// </summary>
     public required string PlanDigest { get; init; }
+
+    /// <summary>
+    /// Gets the exact dependency vector required before this plan can assert artifact bytes.
+    /// </summary>
+    public string? RequiredVersionVector { get; init; }
+
+    /// <summary>
+    /// Gets why the plan is pending, or <c>null</c> when <see cref="PlanDigest"/> names exact released bytes.
+    /// </summary>
+    public string? PendingReason { get; init; }
 
     /// <summary>
     /// Gets the ordered artifact expectations for the plan.
     /// </summary>
     public ImmutableArray<CanonicalStageArtifactExpectation> Artifacts { get; init; } = [];
+
+    /// <summary>
+    /// Gets machine-checkable plan assertions that do not depend on final artifact bytes.
+    /// </summary>
+    public ImmutableArray<CanonicalScreenAssertion> Assertions { get; init; } = [];
 }
 
 /// <summary>
@@ -279,6 +454,26 @@ public sealed record CanonicalScreenCorpusVector
     /// Gets the behavior probes expected from authoring and rendering hosts.
     /// </summary>
     public ImmutableArray<CanonicalScreenBehaviorProbe> BehaviorProbes { get; init; } = [];
+
+    /// <summary>
+    /// Gets positive typed-screen source cases that become executable when their required authoring syntax is available.
+    /// </summary>
+    public ImmutableArray<CanonicalTypedScreenSourceCase> TypedSourceCases { get; init; } = [];
+
+    /// <summary>
+    /// Gets behavior expectations that browser, CLI, Studio and Stage harnesses must assert.
+    /// </summary>
+    public ImmutableArray<CanonicalScreenBehaviorExpectation> BehaviorExpectations { get; init; } = [];
+
+    /// <summary>
+    /// Gets MCP edit invariants for authoring tools.
+    /// </summary>
+    public ImmutableArray<CanonicalMcpEditExpectation> McpEditExpectations { get; init; } = [];
+
+    /// <summary>
+    /// Gets released-version harness entry points.
+    /// </summary>
+    public ImmutableArray<CanonicalScreenHarnessExpectation> Harnesses { get; init; } = [];
 
     /// <summary>
     /// Gets Stage plan expectations when released renderer packages provide deterministic artifact bytes.

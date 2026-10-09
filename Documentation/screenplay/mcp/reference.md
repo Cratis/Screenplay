@@ -171,6 +171,7 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `dependency-graph` | Optional view, from/to levels, scope, direction, kinds, includeTestOnly, evidenceLimit | Inferred slice/container/context edges, ordering cycles, story-order suggestions, unresolved references or checked dependency declarations |
 | `find-fixtures` | Specification address, role, property, value, scope/document | Paged effective assignments with type, value, location and authored/example/override origin, including `when append` event payloads (`whenAppendedEvent`) and `for` destinations (`whenAppendedEventDestination`) |
 | `find-assertion-gaps` | Optional scope/document | Slices without specifications declaring a `then` assertion, including `then denied` |
+| `run-specifications` | Optional exact specification address or semantic id, scope, offset, limit, expectedSourceRevision | Deterministic reference execution with passed, failed and unsupported results |
 | `find-specification-obligations` | Optional module/feature/slice scope, document | Per-declaration specification obligations with met/unmet status and matching specification owners |
 | `find-modeling-smells` | Optional scope/document, eventFanOutThreshold/propertyFanInThreshold | Information-level modeling questions; no compiler diagnostics |
 | `diagnostics` | Optional `checks` (comma-separated names, codes, or `all`), `scope`, document | Paged diagnostics, severity counts, scoped declaration counts and affected scopes |
@@ -246,10 +247,10 @@ field-name lookup. Assertion presence is not runtime coverage; no tool executes
 specifications. Compact specification summaries include `thenDenied` independently of
 error counts and `whenAppendedEvent` independently of the `when` command. Appended
 event references and dependencies carry the `whenAppendedEvent` role, not
-`thenEvent`. Fixture roles are `givenEvent`, `whenAppendedEvent`, `thenEvent`,
+`thenEvent`. Fixture roles are `givenEvent`, `whenAppendedEvent`, `whenRedeliveredEvent`, `thenEvent`,
 `whenCommand`, `givenReadModel`, `thenReadModel`, `queryArguments`, and
 `queryResult`; each role also has a `…Destination` form for explicit `for`
-destinations. Event roles additionally expose `…Stream` (`property: "stream"`, qualified source/stream text), `…StreamId` (`property: "streamId"`, literal value), and `…NoStream` (`property: "no stream"`, `value: true`) rows when authored. They share the occurrence ordinal with its payload and destination; a payload property named `stream` or `streamId` remains a separate ordinary event-role row. Composite routes expose one `…StreamIdPart` row per authored mapping, with `property` equal to the part name and its literal `value`, in authored order. Stream inventory and declaration summaries expose `streamIdParts` as ordered name/type declarations. Parts have AST handles but no declaration or semantic identity; typed proposals edit the three `streamIdParts` collections through `syntax-schema` and `propose-ast`. Missing routing lines produce no route rows, not default or inferred routing. `no stream` is legal only on `then` events. Route rows describe syntax only: specification routes remain refused by executable-model binding with `PLAY0268` (#457).
+destinations. Event roles additionally expose `…Stream` (`property: "stream"`, qualified source/stream text), `…StreamId` (`property: "streamId"`, literal value), and `…NoStream` (`property: "no stream"`, `value: true`) rows from effective routes. Route, id, part and no-stream rows carry the route's authored/example/override origin and the example name. A whole-route replacement reports `overriddenValue` once, on the stream or no-stream row, as the replaced route's authored text. They share the occurrence ordinal with its payload and destination; a payload property named `stream` or `streamId` remains a separate ordinary event-role row. Composite routes expose one `…StreamIdPart` row per authored mapping, with `property` equal to the part name and its literal `value`, in authored order. Stream inventory and declaration summaries expose `streamIdParts` as ordered name/type declarations. Parts have AST handles but no declaration or semantic identity; typed proposals edit the three `streamIdParts` collections through `syntax-schema` and `propose-ast`. Missing routing lines produce no route rows, not default or inferred routing. `no stream` is legal on `then` events, redelivery locators and event example declarations; it is refused on effective `given` and `when append` steps. Route rows describe syntax only: specification routes remain refused by executable-model binding with `PLAY0268` (#457).
 
 ## Dependency graph
 
@@ -363,6 +364,26 @@ silently truncated.
 byte pages. Offsets/limits count **decoded bytes**, not characters or base64 text.
 Original-document reads preserve comments, BOM and line endings; merged source
 is canonicalized.
+
+## Execute specifications
+
+`run-specifications` is read-only. It executes the current model's scenarios through the existing in-memory reference evaluator, without opening proposals, writing files, executing attached code or contacting external services. An opened workspace keeps its identities; reopen it after source edits. Without an opened workspace, the tool reads the current root and its persisted identity state.
+
+All arguments are optional:
+
+| Argument | Type | Meaning |
+|---|---|---|
+| `specification` | string | Exact, case-sensitive dotted module/feature/slice/specification address, or semantic id |
+| `scope` | string | Case-sensitive dotted module, feature or slice prefix; selects descendant specifications |
+| `offset` | integer | Result offset, default `0` |
+| `limit` | integer | Page size, default `50`, range `1`–`200` |
+| `expectedSourceRevision` | string | Pin from the first response; required for nonzero offsets |
+
+A selection matching no specification is invalid parameters, not a pass. If both selectors are supplied, their intersection is used. Results are sorted by address. Counts and the overall outcome cover the complete selection, not just the returned page. Continue using `page.nextOffset` and pin `sourceRevision`; changed source refuses continuation. Responses exceeding the server's byte budget refuse rather than truncate.
+
+The response contains `sourceRevision`, `outcome`, `discovered` (all specifications), `selected`, `executed`, `passed`, `failed`, `unsupported`, `executableDiagnostics`, `planIssues` and `page`. `executed` excludes unsupported scenarios. Each page item contains `address`, `semanticId`, `outcome` (`passed`, `failed`, `unsupported`), `executionOutcome`, comparison `failures`, and nullable `capability` and `reason`. `executionOutcome` is the evaluator's normalized result, so an expected rejection or denial can pass. Unsupported scenarios name the blocking capability and declared reason. A plan-admission failure returns its typed `planIssues` and marks selected scenarios unsupported.
+
+An unbound model returns `outcome: "unbound"`, executable diagnostics and `page: null`, never an empty passing list. Failed, unsupported and unbound responses set `isError: true`; failed takes precedence over unsupported in the overall outcome. Failures include expected and actual facts, read models, scalar or record command responses and query results, with effective fixture provenance for example-based scenarios. A bound model with zero specifications has zero discovered: a pass is not a coverage verdict. See [`screenplay test`](../tool.md#run-the-models-specifications) for the same evaluator from the command line.
 
 ## Workspace tools
 
@@ -502,8 +523,8 @@ no open workspace. Its `structuredContent` identifies
 The [narrow response schema](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/mcp/repair-capabilities-v1.schema.json) covers capabilities,
 evidence metadata and the failure discriminator, not every MCP feature.
 
-The initial contract advertises `PLAY0166` and `PLAY0478` through `propose-repair`,
-with `CanonicalizeTouchedDocuments` and optional evidence pinning v1. Existing
+The contract advertises `PLAY0166`, `PLAY0478`, `PLAY0563` and `PLAY0564` through `propose-repair`. Guarded interaction repairs (`PLAY0563`/`PLAY0564`) require individual review and canonical formatting, refuse trailing-comment relocation, and do not support pinned evidence. The original `PLAY0166`/`PLAY0478` actions retain
+`CanonicalizeTouchedDocuments` and optional evidence pinning v1. Existing
 repairs outside this contract remain available to legacy clients. Feature support
 comes from negotiation, not a CLI version or an ESM version. Initialize with MCP
 `2025-06-18`, send `notifications/initialized`, check `tools/list`, then read the

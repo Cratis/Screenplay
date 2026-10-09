@@ -69,6 +69,11 @@ public record ModuleSyntax(
     /// the module, so its top level is the module's body.
     /// </summary>
     public bool IsPlacement { get; init; }
+
+    /// <summary>
+    /// Gets module-scoped template assignments inherited by child features and slices unless overridden.
+    /// </summary>
+    public IEnumerable<TemplateAssignmentSyntax> Templates { get; init; } = [];
 }
 
 /// <summary>
@@ -130,4 +135,9 @@ public record FeatureSyntax(
     /// the feature, so its top level is the feature's body.
     /// </summary>
     public bool IsPlacement { get; init; }
+
+    /// <summary>
+    /// Gets feature-scoped template assignments inherited by child features and slices unless overridden.
+    /// </summary>
+    public IEnumerable<TemplateAssignmentSyntax> Templates { get; init; } = [];
 }

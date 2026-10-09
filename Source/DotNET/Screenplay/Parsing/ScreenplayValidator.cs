@@ -134,7 +134,7 @@ internal static class ScreenplayValidator
         var declarations = new ConsistencyDeclarations(application, scopedSlices);
         ValidateAdditionalEventReferences(application, declarations, knownEvents, context);
         EventSourceValidator.Validate(application, declarations, context);
-        SpecificationStreamValidator.Validate(application, declarations, context);
+        SpecificationStreamValidator.Validate(application, declarations, context, expansion);
         OperationValidator.Validate(application, declarations, context);
         ImportValidator.Validate(application, declarations, context);
         CommandConsistencyValidator.Validate(declarations, context);
@@ -149,7 +149,7 @@ internal static class ScreenplayValidator
         SpecificationOutcomeConsistencyValidator.Validate(declarations, context);
         SpecificationActionValidator.Validate(application, declarations, context);
         ReactionRefusalValidator.Validate(application, declarations, context);
-        SpecificationRedeliveryValidator.Validate(declarations, context);
+        SpecificationRedeliveryValidator.Validate(application, declarations, context);
         var knownQueries = scopedSlices.SelectMany(entry => entry.Slice.Queries.Select(query => new Declaration(query.Name, entry.Scope))).ToList();
         var knownScreenDeclarations = scopedSlices.SelectMany(entry => entry.Slice.Screens.Select(screen => new Declaration(screen.Name, entry.Scope))).ToList();
         ValidateSpecificationQueries(scopedSlices, knownQueries, context);
@@ -167,7 +167,7 @@ internal static class ScreenplayValidator
         }
 
         ValidateScreenReferences(scopedSlices, knownQueries, knownCommandDeclarations, knownScreenDeclarations, context);
-        GuardedActionValidator.Validate(declarations, context);
+        GuardedActionValidator.Validate(application, declarations, context);
         ValidateInteractions(
             application,
             scopedSlices,
@@ -1037,6 +1037,19 @@ internal static class ScreenplayValidator
                         }
 
                         break;
+                    case ScreenComponentSyntax component:
+                        // Preserve plain component interactions' existing reference-validation behavior.
+                        foreach (var behavior in component.Behaviors)
+                        {
+                            ValidateBindings(behavior.Bindings.Where(binding => binding.Alternatives.Any()), scope, references, _noParameters, context);
+                        }
+
+                        foreach (var uses in component.UsedBehaviors.Where(uses => behaviors.TryGetValue(uses.Behavior, out var behavior) && behavior.Bindings.Any(binding => binding.Alternatives.Any())))
+                        {
+                            ValidateUses(uses, behaviors, context);
+                        }
+
+                        break;
                 }
             }
         }
@@ -1122,6 +1135,8 @@ internal static class ScreenplayValidator
             }
 
             ValidateActions(binding.Actions, scope, references, parameters, context);
+            foreach (var alternative in binding.Alternatives) ValidateActions(alternative.Actions, scope, references, parameters, context);
+            if (binding.Otherwise is not null) ValidateActions(binding.Otherwise.Actions, scope, references, parameters, context);
         }
     }
 
