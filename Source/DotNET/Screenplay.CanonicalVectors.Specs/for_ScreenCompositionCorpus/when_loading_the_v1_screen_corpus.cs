@@ -32,6 +32,7 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact] void should_publish_real_behavior_expectations() => _corpus.BehaviorExpectations.Select(expectation => expectation.Name).ShouldEqual("selection-details", "query-rebind-clear", "native-form-validation-submit", "dialog-outlet-deep-link", "package-rendering", "browser-control-behavior", "protected-business-semantics");
     [Fact] void should_publish_mcp_edit_invariants() => _corpus.McpEditExpectations.Select(expectation => expectation.Name).ShouldEqual("mcp-edit-component-binding", "mcp-edit-dialog-action", "mcp-folder-master-detail-edit", "mcp-folder-dialog-routing-edit");
     [Fact] void should_publish_harness_entry_points() => _corpus.Harnesses.Select(harness => harness.Name).ShouldEqual("browser-runtime", "mcp-authoring", "mcp-folder-authoring", "cli-stage-parity", "studio-roundtrip");
+    [Fact] void should_publish_working_branch_harness_entry_points() => _corpus.WorkingBranchHarnesses.Select(harness => harness.Name).ShouldEqual("stage-pr260-screen-plan", "studio-pr1615-transport", "studio-pr1617-native-play", "scene-form-geometry", "browser-native-controls", "mcp-revision-edit-transcript");
     [Fact] void should_publish_pending_stage_plan_assertions_without_claiming_artifact_bytes() => _corpus.StagePlans.Single().PendingReason.ShouldNotBeNull();
 
     [Fact]
@@ -140,6 +141,25 @@ public class when_loading_the_v1_screen_corpus : Specification
     }
 
     [Fact]
+    void should_pin_exact_working_branch_heads()
+    {
+        ShouldHaveWorkingBranch("stage-pr260-screen-plan", "https://github.com/Cratis/Stage/pull/260", "release/screens-stage-screenplay-4.105-20261009", "cc73c85740c025951004711483ecd6fd2b1e0723", "passed");
+        ShouldHaveWorkingBranch("studio-pr1615-transport", "https://github.com/Cratis/Studio/pull/1615", "release/screens-studio-transport-20261009", "307243caf43571101ef06d0064c38ee82fb4ab92", "passed");
+        ShouldHaveWorkingBranch("studio-pr1617-native-play", "https://github.com/Cratis/Studio/pull/1617", "release/screens-studio-native-nav-play-20261009", "3600c8b432ec4a16bd58aafcbc323899e12d7275", "passed-partial");
+        ShouldHaveWorkingBranch("scene-form-geometry", "local branch release/screens-scene-form-geometry-20261009 (no PR found)", "release/screens-scene-form-geometry-20261009", "5a612dc64b9254ee57779c3b8b7c98380307f9e5", "passed-partial");
+        ShouldHaveWorkingBranch("mcp-revision-edit-transcript", "https://github.com/Cratis/Screenplay/pull/578", "release/screens-esm-query-shapes-20261009", "4b6c59bcb76cb4503771d4179a259bed017f0730", "passed-typed-source-only");
+    }
+
+    [Fact]
+    void should_pin_working_branch_full_app_assertions()
+    {
+        ShouldHaveWorkingBranchAssertions("stage-pr260-screen-plan", "backend.queries", "backend.queryArguments", "scene.folder.findings", "scene.folder.navigation", "scene.typed.binding.selectedItem.nullBehavior", "scene.typed.toolbar.icons");
+        ShouldHaveWorkingBranchAssertions("studio-pr1617-native-play", "studio.production.save", "studio.exportImport.roundTrip", "studio.play.deepLinks", "studio.nativeMetadata");
+        ShouldHaveWorkingBranchAssertions("browser-native-controls", "browser.masterDetail.selection", "browser.queryRebind.staleArguments", "browser.nativeValidation.invalidSubmitBlocked", "browser.dialog.escapeCloses", "browser.deepLinks.workItemId", "browser.packageFallbacks", "browser.missingIconFallbacks");
+        ShouldHaveWorkingBranchAssertions("mcp-revision-edit-transcript", "mcp.revision.expectedRevision", "mcp.proposal.droppedComments", "mcp.identityContinuity.changed", "mcp.folderTranscript");
+    }
+
+    [Fact]
     void should_keep_stage_plan_pending_but_assertable()
     {
         var plan = _corpus.StagePlans.Single();
@@ -215,6 +235,25 @@ public class when_loading_the_v1_screen_corpus : Specification
     void ShouldHaveHarnessAssertions(string harnessName, params string[] paths)
     {
         var assertionPaths = _corpus.Harnesses.Single(harness => harness.Name == harnessName).Assertions.Select(assertion => assertion.Path);
+        foreach (var path in paths)
+        {
+            assertionPaths.ShouldContain(path);
+        }
+    }
+
+    void ShouldHaveWorkingBranch(string harnessName, string pullRequest, string branch, string commit, string status)
+    {
+        var harness = _corpus.WorkingBranchHarnesses.Single(harness => harness.Name == harnessName);
+        harness.PullRequest.ShouldEqual(pullRequest);
+        harness.Branch.ShouldEqual(branch);
+        harness.Commit.ShouldEqual(commit);
+        harness.Status.ShouldEqual(status);
+        harness.ReleaseSwitch.ShouldNotBeEmpty();
+    }
+
+    void ShouldHaveWorkingBranchAssertions(string harnessName, params string[] paths)
+    {
+        var assertionPaths = _corpus.WorkingBranchHarnesses.Single(harness => harness.Name == harnessName).Assertions.Select(assertion => assertion.Path);
         foreach (var path in paths)
         {
             assertionPaths.ShouldContain(path);

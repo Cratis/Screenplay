@@ -331,6 +331,124 @@ public static class ScreenCompositionCorpus
                         Assertion("play.deepLinkPreserved", "equals", "true")
                     ])
             ],
+            WorkingBranchHarnesses =
+            [
+                WorkingBranch(
+                    "stage-pr260-screen-plan",
+                    "Stage",
+                    "Cratis/Stage",
+                    "https://github.com/Cratis/Stage/pull/260",
+                    "release/screens-stage-screenplay-4.105-20261009",
+                    "cc73c85740c025951004711483ecd6fd2b1e0723",
+                    "dotnet test Source/Rendering.Cratis/Rendering.Cratis.csproj --filter FullyQualifiedName~when_planning_the_screen_composition_corpus",
+                    "Replace the branch checkout with the released Stage package/CLI once PR #260 publishes; keep these assertions and clear working-branch status only after the released render produces equivalent outcomes.",
+                    "passed",
+                    null,
+                    [
+                        Assertion("working.stage.specs.passed", "equals", "19"),
+                        Assertion("backend.plan.diagnostics", "equals", "0"),
+                        Assertion("backend.queries", "contains", "AllWorkItems"),
+                        Assertion("backend.queries", "contains", "CommentsForWorkItem"),
+                        Assertion("backend.queryArguments", "contains", "workItemId"),
+                        Assertion("scene.folder.findings", "equals", "0"),
+                        Assertion("scene.folder.navigation", "contains", "Navigation"),
+                        Assertion("scene.typed.grid", "equals", "scene.web.DataGrid"),
+                        Assertion("scene.typed.binding.selectedItem.kind", "equals", "ComponentProperty"),
+                        Assertion("scene.typed.binding.selectedItem.nullBehavior", "equals", "Clear"),
+                        Assertion("scene.typed.exposes", "contains", "selectedWorkItem"),
+                        Assertion("scene.typed.toolbar.icons", "contains", "add")
+                    ]),
+                WorkingBranch(
+                    "studio-pr1615-transport",
+                    "Studio",
+                    "Cratis/Studio",
+                    "https://github.com/Cratis/Studio/pull/1615",
+                    "release/screens-studio-transport-20261009",
+                    "307243caf43571101ef06d0064c38ee82fb4ab92",
+                    "dotnet test Source/Mcp/Mcp.csproj --filter FullyQualifiedName~Screenplay",
+                    "Use the released Studio build that contains PR #1615's typed transport contract, then run the same MCP transport transcript against release artifacts.",
+                    "passed",
+                    null,
+                    [
+                        Assertion("working.studio.transport.specs.passed", "equals", "8"),
+                        Assertion("transport.sceneDocument", "preserves", "typed metadata"),
+                        Assertion("transport.fallbackOpaqueReferences", "refuses", "Play/static generation"),
+                        Assertion("mcp.session.boundary", "equals", "one event model per session")
+                    ]),
+                WorkingBranch(
+                    "studio-pr1617-native-play",
+                    "Studio",
+                    "Cratis/Studio",
+                    "https://github.com/Cratis/Studio/pull/1617",
+                    "release/screens-studio-native-nav-play-20261009",
+                    "3600c8b432ec4a16bd58aafcbc323899e12d7275",
+                    "dotnet test Source/Mcp/Mcp.csproj --filter FullyQualifiedName~Screenplay",
+                    "Use the released Studio build that includes PR #1617, then run production save/export/import/Play over the folder source and require byte-preserving metadata round-trip.",
+                    "passed-partial",
+                    "The MCP session specs pass, but no production save/export/import/Play browser automation endpoint exists in this repository checkout for the full folder app.",
+                    [
+                        Assertion("working.studio.native.specs.passed", "equals", "8"),
+                        Assertion("studio.production.save", "pending", "true"),
+                        Assertion("studio.exportImport.roundTrip", "pending", "true"),
+                        Assertion("studio.play.deepLinks", "pending", "true"),
+                        Assertion("studio.nativeMetadata", "mustPreserve", "navigation,toolbar,dialog,outlets,bindings")
+                    ]),
+                WorkingBranch(
+                    "scene-form-geometry",
+                    "Scene",
+                    "Cratis/Scene",
+                    "local branch release/screens-scene-form-geometry-20261009 (no PR found)",
+                    "release/screens-scene-form-geometry-20261009",
+                    "5a612dc64b9254ee57779c3b8b7c98380307f9e5",
+                    "dotnet test Source/DotNET/Model.Specs/Model.Specs.csproj --filter FullyQualifiedName~Form",
+                    "Replace the local branch with the published Scene package that carries form geometry, then run the browser native-control harness against that package.",
+                    "passed-partial",
+                    "Model form-geometry specs pass, but native browser control execution is still blocked by the missing released Scene form-geometry package and browser harness endpoint.",
+                    [
+                        Assertion("working.scene.form.specs.passed", "equals", "9"),
+                        Assertion("scene.form.geometry", "preserves", "columns,widths,field order"),
+                        Assertion("browser.native.controls", "pending", "true"),
+                        Assertion("browser.focus.lifecycle", "pending", "true")
+                    ]),
+                WorkingBranch(
+                    "browser-native-controls",
+                    "Browser",
+                    "Cratis/Stage+Cratis/Scene",
+                    "Stage PR #260 + Scene form-geometry branch",
+                    "release/screens-stage-screenplay-4.105-20261009 + release/screens-scene-form-geometry-20261009",
+                    "cc73c85740c025951004711483ecd6fd2b1e0723 + 5a612dc64b9254ee57779c3b8b7c98380307f9e5",
+                    "screenplay-conformance browser --vector screen-composition/v1 --source-form folder --profile Desktop",
+                    "Switch to released Stage, Scene and CLI packages, then remove the working-branch composite and run the same browser harness against package versions.",
+                    "pending",
+                    "Docker is available locally, but no released or working-branch browser conformance runner/native screens runtime endpoint is available to execute the folder corpus end to end.",
+                    [
+                        Assertion("browser.masterDetail.selection", "mustPass", "true"),
+                        Assertion("browser.queryRebind.staleArguments", "equals", "0"),
+                        Assertion("browser.nativeValidation.invalidSubmitBlocked", "equals", "1"),
+                        Assertion("browser.dialog.escapeCloses", "equals", "true"),
+                        Assertion("browser.deepLinks.workItemId", "preserves", "true"),
+                        Assertion("browser.packageFallbacks", "equals", "0"),
+                        Assertion("browser.missingIconFallbacks", "equals", "0")
+                    ]),
+                WorkingBranch(
+                    "mcp-revision-edit-transcript",
+                    "Screenplay MCP",
+                    "Cratis/Screenplay",
+                    "https://github.com/Cratis/Screenplay/pull/578",
+                    "release/screens-esm-query-shapes-20261009",
+                    "4b6c59bcb76cb4503771d4179a259bed017f0730",
+                    "dotnet test Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj --filter FullyQualifiedName~when_authoring_screen_release_ui_from_an_empty_folder",
+                    "Use the released Screenplay MCP package after the current branch publishes, then run the same transcript through Studio's production MCP bridge.",
+                    "passed-typed-source-only",
+                    "The typed-source MCP transcript passes in Screenplay; the multi-document folder revision edit transcript through Studio remains pending.",
+                    [
+                        Assertion("mcp.typedTranscript.specs.passed", "equals", "6"),
+                        Assertion("mcp.revision.expectedRevision", "mustMatch", "true"),
+                        Assertion("mcp.proposal.droppedComments", "equals", "0"),
+                        Assertion("mcp.identityContinuity.changed", "equals", "0"),
+                        Assertion("mcp.folderTranscript", "pending", "true")
+                    ])
+            ],
             StagePlans =
             [
                 new CanonicalStagePlanExpectation
@@ -429,6 +547,21 @@ public static class ScreenCompositionCorpus
         Host = host,
         EntryPoint = entryPoint,
         RequiredVersionVector = requiredVersionVector,
+        PendingReason = pendingReason,
+        Assertions = assertions
+    };
+
+    static CanonicalWorkingBranchHarnessExpectation WorkingBranch(string name, string host, string repository, string pullRequest, string branch, string commit, string entryPoint, string releaseSwitch, string status, string? pendingReason, ImmutableArray<CanonicalScreenAssertion> assertions) => new()
+    {
+        Name = name,
+        Host = host,
+        Repository = repository,
+        PullRequest = pullRequest,
+        Branch = branch,
+        Commit = commit,
+        EntryPoint = entryPoint,
+        ReleaseSwitch = releaseSwitch,
+        Status = status,
         PendingReason = pendingReason,
         Assertions = assertions
     };
