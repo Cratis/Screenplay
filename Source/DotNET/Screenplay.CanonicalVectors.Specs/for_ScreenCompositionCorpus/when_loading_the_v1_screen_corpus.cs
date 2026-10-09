@@ -33,7 +33,7 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact] void should_publish_mcp_edit_invariants() => _corpus.McpEditExpectations.Select(expectation => expectation.Name).ShouldEqual("mcp-edit-component-binding", "mcp-edit-dialog-action", "mcp-folder-master-detail-edit", "mcp-folder-dialog-routing-edit");
     [Fact] void should_publish_harness_entry_points() => _corpus.Harnesses.Select(harness => harness.Name).ShouldEqual("browser-runtime", "mcp-authoring", "mcp-folder-authoring", "cli-stage-parity", "studio-roundtrip");
     [Fact] void should_publish_working_branch_harness_entry_points() => _corpus.WorkingBranchHarnesses.Select(harness => harness.Name).ShouldEqual("stage-pr260-screen-plan", "studio-pr1615-transport", "studio-pr1617-native-play", "scene-form-geometry", "browser-native-controls", "mcp-revision-edit-transcript");
-    [Fact] void should_publish_released_vector_results() => _corpus.ReleasedVectorResults.Select(result => result.Name).ShouldEqual("cli-stage-render-3.40.0-4.49.1", "cratis-run-stage-4.49.1", "mcp-released-typed-transcript", "studio-0.136.3-production-play");
+    [Fact] void should_publish_released_vector_results() => _corpus.ReleasedVectorResults.Select(result => result.Name).ShouldEqual("cli-stage-render-3.40.1-4.49.1", "cratis-run-stage-4.49.1", "mcp-released-typed-transcript", "studio-0.136.3-production-play");
     [Fact] void should_publish_pending_stage_plan_assertions_without_claiming_artifact_bytes() => _corpus.StagePlans.Single().PendingReason.ShouldNotBeNull();
 
     [Fact]
@@ -166,7 +166,7 @@ public class when_loading_the_v1_screen_corpus : Specification
         var plan = _corpus.StagePlans.Single();
         plan.PlanDigest.StartsWith("released:scene-sha256:", StringComparison.Ordinal).ShouldBeTrue();
         plan.Artifacts.ShouldBeEmpty();
-        plan.ObservedRefusalCodes.ShouldEqual("PLAY0269");
+        plan.ObservedRefusalCodes.ShouldEqual("PLAY0269", "STAGE-SCENE-ACTION-001", "STAGE-SCENE-INTERACTION-001");
         plan.Assertions.Select(assertion => assertion.Path).ShouldContain("source.form");
         plan.Assertions.Select(assertion => assertion.Path).ShouldContain("plan.nativeForms");
         plan.Assertions.Select(assertion => assertion.Path).ShouldContain("plan.dialogs");
@@ -174,19 +174,19 @@ public class when_loading_the_v1_screen_corpus : Specification
     }
 
     [Fact]
-    void should_record_the_released_vector_stage_red_evidence_in_the_pending_reason()
+    void should_record_the_released_vector_stage_pending_warnings_in_the_pending_reason()
     {
         var plan = _corpus.StagePlans.Single();
-        plan.PendingReason!.ShouldContain("CLI 3.40.0");
+        plan.PendingReason!.ShouldContain("CLI 3.40.1");
         plan.PendingReason.ShouldContain("Stage 4.49.1");
-        plan.PendingReason.ShouldContain("37 artifacts");
-        plan.PendingReason.ShouldContain("not the authored full app");
+        plan.PendingReason.ShouldContain("authored Scene composition");
+        plan.PendingReason.ShouldContain("STAGE-SCENE-ACTION-001");
     }
 
     [Fact]
     void should_pin_released_stage_render_results()
     {
-        ShouldHaveReleasedVector("cli-stage-render-3.40.0-4.49.1", "red-full-app", "released.cli.version", "released.stage.version", "released.screenplay.bundle", "released.screenplay.latest", "render.artifacts", "render.semanticRevision", "render.shaMismatches", "render.diagnostics.codes", "scene.screens", "scene.commandForms", "bindings.queries", "fullApp.Navigation", "fullApp.EditDialog", "fullApp.DesktopProfile");
+        ShouldHaveReleasedVector("cli-stage-render-3.40.1-4.49.1", "passed-authored-scene-with-guarded-warnings", "released.cli.version", "released.stage.version", "released.screenplay.bundle", "released.screenplay.corpus", "render.artifacts", "render.semanticRevision", "render.shaMismatches", "render.warningCodes", "scene.screens", "scene.layouts", "scene.screenTemplates", "scene.dialogTemplates", "scene.uiProfiles", "scene.WorkItemList.data", "scene.WorkItemDetails.data", "scene.CommentThread.data", "bindings.queries", "guarded.Close", "guarded.WorkItemList.doubleClick");
     }
 
     [Fact]
