@@ -64,6 +64,8 @@ describe('when using persona callers', () => {
         const result = expandEffectiveSpecificationExamples(application).specifications[0];
         expect(result.effective.givenCaller?.roles).toEqual(['A']);
         expect(result.effective.givenCallerPersona).toBeUndefined();
+        expect(result.steps[0].effective).toBe(result.effective.givenCaller);
+        expect(result.effective.givenCaller?.location).toEqual(result.authored.givenCallerPersona?.location);
         expect(result.steps[0].values[0]).toMatchObject({ origin: 'persona', persona: 'Person', policy: 'Member' });
     });
 });

@@ -38,7 +38,7 @@ static class McpFixtureOccurrences
     internal static IEnumerable<McpFixtureOccurrence> All(McpSyntaxIndex index, ApplicationSyntax? application)
     {
         var expanded = application is null ? null : SpecificationExamples.Expand(application);
-        if (expanded?.Diagnostics.Any(diagnostic => diagnostic.Severity == Diagnostics.DiagnosticSeverity.Error) == true)
+        if (expanded?.Diagnostics.Any(diagnostic => diagnostic.Severity == Diagnostics.DiagnosticSeverity.Error && diagnostic.Code != Diagnostics.DiagnosticCodes.UnsynthesizablePersonaCaller) == true)
         {
             throw new McpFailure($"SpecificationExampleExpansionFailed: fixture values cannot be reported while example resolution has errors. {string.Join("; ", expanded.Diagnostics.Select(diagnostic => diagnostic.Message))}");
         }

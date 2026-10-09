@@ -123,13 +123,14 @@ export function expandEffectiveSpecificationExamples(application: ApplicationSyn
                     };
                     const persona = application.personas.find(persona => persona.name === specification.givenCallerPersona?.name);
                     const caller = persona === undefined ? null : synthesizePersonaCaller(persona, application);
-                    if (caller?.caller != null) {
-                        steps.push({ role: 'given caller', authored: specification.givenCallerPersona!, effective: caller.caller, example: null, route: null,
-                            values: caller.contributions.map(atom => ({ property: atom.type ?? atom.kind, value: { kind: 'LiteralExpressionSyntax', value: atom.kind === 'authenticated' ? true : atom.value, location: atom.location }, origin: 'persona', overriddenValue: null, persona: persona!.name, policy: atom.policy })) });
+                    const synthesizedCaller = caller?.caller == null ? null : { ...caller.caller, location: specification.givenCallerPersona!.location };
+                    if (synthesizedCaller !== null) {
+                        steps.push({ role: 'given caller', authored: specification.givenCallerPersona!, effective: synthesizedCaller, example: null, route: null,
+                            values: caller!.contributions.map(atom => ({ property: atom.type ?? atom.kind, value: { kind: 'LiteralExpressionSyntax', value: atom.kind === 'authenticated' ? true : atom.value, location: atom.location }, origin: 'persona', overriddenValue: null, persona: persona!.name, policy: atom.policy })) });
                     }
                     const result = {
                         ...specification,
-                        ...(caller?.caller == null ? {} : { givenCaller: { ...caller.caller, location: specification.givenCallerPersona!.location }, givenCallerPersona: undefined }),
+                        ...(synthesizedCaller === null ? {} : { givenCaller: synthesizedCaller, givenCallerPersona: undefined }),
                         given: specification.given.map(step => event(step, 'given')),
                         givenReadModels: specification.givenReadModels.map(step => effective.readModel(step, scope)),
                         when: effective.command(specification.when, scope),
