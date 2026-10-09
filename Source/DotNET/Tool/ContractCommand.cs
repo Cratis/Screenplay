@@ -12,7 +12,7 @@ static class ContractCommand
     {
         if (args.Length != 0 && (args.Length != 2 || args[0] != CliCommandCatalog.Output.Name || !CliCommandCatalog.Contract.Options.Contains(CliCommandCatalog.Output) || string.IsNullOrWhiteSpace(args[1]) || args[1].StartsWith('-')))
         {
-            error.WriteLine("Usage: screenplay contract [--output <path>]");
+            error.WriteLine($"Usage: {CliCommandCatalog.Contract.Usage}");
             return 2;
         }
 

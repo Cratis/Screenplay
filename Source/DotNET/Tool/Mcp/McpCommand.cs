@@ -15,7 +15,7 @@ static class McpCommand
         var runWithoutRoot = arguments.Length == 1 && arguments[0] == CliCommandCatalog.Mcp.Name;
         if (arguments.Length != 2 && !createRoot && !runWithoutRoot)
         {
-            Console.Error.WriteLine("Usage: screenplay mcp [<root-directory>] | --create-root <directory>");
+            Console.Error.WriteLine($"Usage: {CliCommandCatalog.Mcp.Usage}");
             return 2;
         }
 
