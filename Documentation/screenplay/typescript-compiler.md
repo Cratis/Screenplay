@@ -108,7 +108,7 @@ The compiler reads what an event model is made of:
 - specifications with the values they state, structured values included
 - screens with their data, actions, navigation, titles, tables, summaries, sections, template slots and inline code
 
-Systems, operations, event sources and streams remain syntax-only and unadmitted. Generated values and responses are admitted as ESM v7 by the C# binder and reference runner. The TypeScript compiler has no ESM binder or executor; its syntax validation is not proof of semantic admission, fixture completeness or execution. Pre-generation references (`PLAY0273`) and generated concepts with rules (`PLAY0268`) are C# semantic checks, not additional TypeScript syntax rules.
+Systems and operations remain syntax-only and unadmitted. Event sources, streams, command and specification routes, and composite stream ids are admitted by the event routes ESM version in the C# binder and reference runner. Generated values and responses are admitted as ESM v7. The TypeScript compiler has no ESM binder or executor; its syntax validation is not proof of semantic admission, fixture completeness or execution. Pre-generation references (`PLAY0273`) and generated concepts with rules (`PLAY0268`) are C# semantic checks, not additional TypeScript syntax rules.
 
 Everything else is recognized and skipped whole, without a diagnostic. That covers:
 

@@ -10,6 +10,9 @@ public class and_routes_are_stated : given.a_semantic_binder
     CompilationResult<SemanticCompilation> _result;
 
     void Because() => _result = Bind("""
+        eventsource Account
+          identifier String
+          stream Profile
         module M
           feature F
             slice StateView S
@@ -25,6 +28,13 @@ public class and_routes_are_stated : given.a_semantic_binder
                   no stream
         """);
 
-    [Fact] void should_refuse_all_three_route_nodes() => _result.Diagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("#457", StringComparison.Ordinal)).ShouldEqual(3);
-    [Fact] void should_not_bind() => _result.Success.ShouldBeFalse();
+    [Fact] void should_bind_all_three_route_nodes()
+    {
+        var specification = _result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Specifications.Single();
+        specification.GivenEvents.Single().Route.ShouldNotBeNull();
+        specification.WhenAppended!.Route.ShouldNotBeNull();
+        specification.ThenEvents.Single().Unrouted.ShouldBeTrue();
+        _result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax).ShouldBeFalse();
+    }
+    [Fact] void should_bind() => _result.Success.ShouldBeTrue();
 }
