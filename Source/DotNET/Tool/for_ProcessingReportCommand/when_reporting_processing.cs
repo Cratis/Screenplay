@@ -10,7 +10,10 @@ public class when_reporting_processing : for_ModelCheck.given.a_model
     void Establish() => File.WriteAllText(Path.Combine(Root, "application.play"), """
         purpose Billing
           description "Issue invoices"
-          basis contract
+          basis contract "Bokføringsloven § 13"
+          subjects ansatt, søker
+          recipient "Customer's bank <Nord>"
+          transfer "Norge" safeguard "Søknad"
         concept Name : String pii
         module M
           purpose Billing
@@ -45,6 +48,20 @@ public class when_reporting_processing : for_ModelCheck.given.a_model
         ProcessingReportCommand.Run(["processing", Root, "--format", "csv", "--controller-contact", "Contact, \"A\"\nSecond line"], Output, Error).ShouldEqual(0);
         Output.ToString().ShouldContain("\"Contact, \"\"A\"\"\nSecond line\"");
         Output.ToString().ShouldContain("\"Generated from declarations in this model. Not legal advice.\"");
+    }
+
+    [Theory]
+    [InlineData("json")]
+    [InlineData("markdown")]
+    [InlineData("csv")]
+    void should_keep_unicode_readable_in_every_format(string format)
+    {
+        ProcessingReportCommand.Run(["processing", Root, "--format", format], Output, Error).ShouldEqual(0);
+        Output.ToString().ShouldContain("Bokføringsloven § 13");
+        Output.ToString().ShouldContain("søker");
+        Output.ToString().ShouldContain("Søknad");
+        Output.ToString().ShouldContain("Customer's bank");
+        Output.ToString().ShouldContain(format == "markdown" ? "&lt;Nord&gt;" : "<Nord>");
     }
 
     [Theory]

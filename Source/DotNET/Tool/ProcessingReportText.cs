@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using Cratis.Screenplay.Processing;
 
@@ -8,7 +9,10 @@ namespace Cratis.Screenplay.Tool;
 
 static class ProcessingReportText
 {
-    static readonly JsonSerializerOptions _json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true };
+    // These reports are standalone text, never HTML-embedded. Markdown escapes HTML and CSV quotes cells.
+    // Keep Norwegian names and legal references readable without relaxing either output boundary.
+    static readonly JsonSerializerOptions _cells = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+    static readonly JsonSerializerOptions _json = new(_cells) { WriteIndented = true };
     static readonly string[] _columns = ["Purpose", "Description", "Basis", "Basis reference", "Interest", "Condition", "Condition reference", "Authorization", "Subjects", "Recipients", "Transfers", "Retention", "Erasure exception", "Personal data categories", "Special categories", "Criminal data", "Declared security measures", "DPIA prompt", "Findings", "Covered slices", "Controller name", "Controller contact", "Notice"];
 
     internal static void Write(ProcessingRecord report, string format, TextWriter output)
@@ -41,9 +45,9 @@ static class ProcessingReportText
     [
         row.Purpose, row.Description ?? string.Empty, row.Basis ?? string.Empty, row.BasisReference ?? string.Empty, row.Interest ?? string.Empty,
         row.Condition ?? string.Empty, row.ConditionReference ?? string.Empty, row.Authorization ?? string.Empty,
-        JsonSerializer.Serialize(row.Subjects), JsonSerializer.Serialize(row.Recipients), JsonSerializer.Serialize(row.Transfers, _json), row.Retention ?? string.Empty, row.ErasureException ?? string.Empty,
-        JsonSerializer.Serialize(row.Categories), JsonSerializer.Serialize(row.SpecialCategories), row.CriminalData ? "true" : "false", JsonSerializer.Serialize(row.SecurityMeasures), row.DpiaPrompt ?? string.Empty,
-        JsonSerializer.Serialize(row.Findings), JsonSerializer.Serialize(row.CoveredSlices), report.ControllerName ?? string.Empty, report.ControllerContact ?? string.Empty, report.Notice
+        JsonSerializer.Serialize(row.Subjects, _cells), JsonSerializer.Serialize(row.Recipients, _cells), JsonSerializer.Serialize(row.Transfers, _cells), row.Retention ?? string.Empty, row.ErasureException ?? string.Empty,
+        JsonSerializer.Serialize(row.Categories, _cells), JsonSerializer.Serialize(row.SpecialCategories, _cells), row.CriminalData ? "true" : "false", JsonSerializer.Serialize(row.SecurityMeasures, _cells), row.DpiaPrompt ?? string.Empty,
+        JsonSerializer.Serialize(row.Findings, _cells), JsonSerializer.Serialize(row.CoveredSlices, _cells), report.ControllerName ?? string.Empty, report.ControllerContact ?? string.Empty, report.Notice
     ];
 
     static string Csv(string value) => '"' + value.Replace("\"", "\"\"", StringComparison.Ordinal) + '"';
