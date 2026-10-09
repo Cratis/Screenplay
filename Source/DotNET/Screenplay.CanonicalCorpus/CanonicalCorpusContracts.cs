@@ -384,6 +384,47 @@ public sealed record CanonicalWorkingBranchHarnessExpectation
 }
 
 /// <summary>
+/// Represents one executed released-vector harness result.
+/// </summary>
+public sealed record CanonicalReleasedVectorHarnessResult
+{
+    /// <summary>
+    /// Gets the stable result name.
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
+    /// Gets the host or product that executed the result.
+    /// </summary>
+    public required string Host { get; init; }
+
+    /// <summary>
+    /// Gets the exact released version vector.
+    /// </summary>
+    public required string VersionVector { get; init; }
+
+    /// <summary>
+    /// Gets the command, endpoint, or transcript entry point that was executed.
+    /// </summary>
+    public required string EntryPoint { get; init; }
+
+    /// <summary>
+    /// Gets the observed status for this released-vector result.
+    /// </summary>
+    public required string Status { get; init; }
+
+    /// <summary>
+    /// Gets the exact blocker or red evidence when the full assertion set did not pass.
+    /// </summary>
+    public string? PendingReason { get; init; }
+
+    /// <summary>
+    /// Gets machine-checkable assertions observed or required for this released vector.
+    /// </summary>
+    public ImmutableArray<CanonicalScreenAssertion> Assertions { get; init; } = [];
+}
+
+/// <summary>
 /// Represents one pending or executable harness entry point for released screen parity checks.
 /// </summary>
 public sealed record CanonicalScreenHarnessExpectation
@@ -616,6 +657,11 @@ public sealed record CanonicalScreenCorpusVector
     /// Gets working-branch harness entry points that run before the final released packages publish.
     /// </summary>
     public ImmutableArray<CanonicalWorkingBranchHarnessExpectation> WorkingBranchHarnesses { get; init; } = [];
+
+    /// <summary>
+    /// Gets exact released-vector results for the screen corpus.
+    /// </summary>
+    public ImmutableArray<CanonicalReleasedVectorHarnessResult> ReleasedVectorResults { get; init; } = [];
 
     /// <summary>
     /// Gets Stage plan expectations when released renderer packages provide deterministic artifact bytes.
