@@ -15448,6 +15448,154 @@
                 }
               ],
               "type": "Translate"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": "Publishes each invoice that is sent as one public contract",
+              "direction": "Outbound",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "InvoiceSentPublished",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "sentAt",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "DateTime"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "channel",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": [],
+                  "visibility": "Public"
+                }
+              ],
+              "name": "InvoiceSentPublication",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "InvoiceSent"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "channel"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "InvoiceSentPublisher",
+                  "readModel": "InvoiceSentPublished",
+                  "sequence": null
+                }
+              ],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "PublishingASentInvoice",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "InvoiceSentPublished",
+                      "for": null,
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "sentAt",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-09-01T09:00:00Z"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "channel",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "sent"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": {
+                    "kind": "SpecificationEventSyntax",
+                    "eventType": "InvoiceSent",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                    },
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "sentAt",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-09-01T09:00:00Z"
+                        }
+                      }
+                    ]
+                  },
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                }
+              ],
+              "type": "Translate"
             }
           ]
         }

@@ -7,6 +7,7 @@ using Cratis.Screenplay.for_Documentation.given;
 using Cratis.Screenplay.given;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Specifications;
 using Cratis.Screenplay.Workspaces;
 
@@ -24,10 +25,6 @@ public class when_holding_invoicing_to_the_language : Specification
         ("`numbers exact`", 285, [("Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play", [])]),
         ("`system`, `operation`, operation specifications", 301,
             [("Documentation/screenplay/fixtures/operations.play", [typeof(SystemSyntax), typeof(OperationSyntax), typeof(OperationPhaseSyntax), typeof(SpecificationOperationFailureSyntax), typeof(SpecificationOperationSyntax), typeof(SpecificationCompensatedSyntax)])]),
-        ("`direction inbound`/`outbound` on a Translate slice", 480, [("Source/Screenplay/Compiler/Conformance/event-translations.play", [])]),
-        ("`public event` and event or import origins (`from \"store\"`)", 481, [("Source/Screenplay/Compiler/Conformance/event-translations.play", [])]),
-        ("event-target `projection`/`reducer` in outbound translations", 482, [("Source/Screenplay/Compiler/Conformance/event-translations.play", [])]),
-        ("`source events` capture in inbound translations", 483, [("Source/Screenplay/Compiler/Conformance/event-translations.play", [])]),
         ("refusals, redelivery, `then no events`", 433,
             [
                 ("Source/Screenplay/Compiler/Conformance/reaction-refusals-redelivery.play", [typeof(InvocationRefusalSyntax), typeof(RefusalExpressionSyntax), typeof(SpecificationRedeliverySyntax)]),
@@ -59,6 +56,7 @@ public class when_holding_invoicing_to_the_language : Specification
     ApplicationSyntax _invoicing;
     ApplicationSyntax _exact;
     string[] _documentedPreview;
+    ApplicationSyntax _dispatches;
 
     void Because()
     {
@@ -122,9 +120,13 @@ public class when_holding_invoicing_to_the_language : Specification
             }
             else if (!workspace.Compilation.Success || workspace.Compilation.Value!.Model.SemanticVersion != SemanticVersion.V8)
             {
-                _elsewhereFindings.Add($"{admitted.Path}: must bind at ESM v8");
+                _elsewhereFindings.Add($"{admitted.Path}: must bind at its claimed ESM version");
             }
         }
+
+        // A placed slice file has no module or feature of its own; give it the ones a root import would.
+        var placed = File.ReadAllLines(Path.Combine(root, "Samples/Commerce/Fulfillment/Tracking/ReceiveCarrierDispatches.play"));
+        _dispatches = compiler.Parse("module Fulfillment\n  feature Tracking\n" + string.Join('\n', placed.Select(line => line.Length == 0 ? line : "    " + line))).Value!;
 
         foreach (var elsewhere in CoveredElsewhere)
         {
@@ -147,6 +149,14 @@ public class when_holding_invoicing_to_the_language : Specification
     [Fact] void should_classify_each_missing_kind_once() => Classified.GroupBy(type => type).Where(group => group.Count() != 1).Select(group => group.Key.Name).ShouldBeEmpty();
     [Fact] void should_keep_each_preview_fixture_clean_present_and_refused_for_its_own_issue() => string.Join('\n', _fixtureFindings).ShouldEqual(string.Empty);
     [Fact] void should_keep_each_elsewhere_exception_at_its_tested_location() => string.Join('\n', _elsewhereFindings).ShouldEqual(string.Empty);
+    [Fact] void should_show_an_outbound_translation_with_a_public_event_and_an_event_target_in_invoicing() =>
+        SyntaxNodes.Under(_invoicing).OfType<SliceSyntax>().Any(slice => slice.Direction == TranslationDirection.Outbound &&
+            SyntaxNodes.Under(slice).OfType<EventSyntax>().Any(@event => @event.Visibility == EventVisibility.Public && @event.Origin is null &&
+                slice.Projections.Any(projection => projection.ReadModel == @event.Name))).ShouldBeTrue();
+    [Fact] void should_show_an_inbound_translation_with_an_origin_and_a_source_events_capture_in_commerce() =>
+        SyntaxNodes.Under(_dispatches).OfType<SliceSyntax>().Any(slice => slice.Direction == TranslationDirection.Inbound &&
+            SyntaxNodes.Under(slice).OfType<EventSyntax>().Any(@event => @event.Origin == "carrier") &&
+            slice.Captures.Any(capture => capture.Source is { } source && CaptureEventsSource.IsEvents(source))).ShouldBeTrue();
     [Fact] void should_keep_explicit_no_event_assertions_out_of_invoicing() => SyntaxNodes.Under(_invoicing).OfType<SpecificationSyntax>().Any(specification => specification.ThenNoEvents).ShouldBeFalse();
     [Fact] void should_keep_exact_numeric_mode_out_of_invoicing() => _invoicing.SourceOptions.NumericMode.ShouldEqual(NumericMode.Legacy);
     [Fact] void should_demonstrate_exact_numeric_mode_in_its_preview_fixture() => _exact.SourceOptions.NumericMode.ShouldEqual(NumericMode.Exact);

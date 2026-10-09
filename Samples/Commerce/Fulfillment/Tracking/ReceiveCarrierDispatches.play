@@ -1,0 +1,36 @@
+slice Translate ReceiveCarrierDispatches
+  description "Records on the order that the carrier announced it dispatched the parcel"
+  direction inbound
+
+  // An inbound translation consumes the public events another application
+  // publishes. The origin names that application; it is not a file path.
+  event ParcelDispatchAnnounced from "carrier"
+    orderId        OrderId
+    trackingNumber TrackingNumber
+
+  event CarrierDispatchRecorded
+    orderId        OrderId
+    trackingNumber TrackingNumber
+    recordedAt     DateTime
+
+  capture CarrierDispatchFeed
+    source events
+      from ParcelDispatchAnnounced
+    key orderId
+    append CarrierDispatchRecorded
+      orderId        = $.orderId
+      trackingNumber = $.trackingNumber
+      recordedAt     = $context.occurred
+
+  // The reference runner has no outside records to present to a capture over
+  // events, so it reports this specification as Unsupported rather than guessing.
+  specification RecordingAnAnnouncedDispatch
+    given clock "2026-10-02T12:00:00Z"
+    when capture CarrierDispatchFeed
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      trackingNumber = "PN00012345NO"
+    then CarrierDispatchRecorded
+      for "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      orderId        = "0e7d9b1a-3c5f-4a2e-8d6b-7c9e1f2a3b01"
+      trackingNumber = "PN00012345NO"
+      recordedAt     = "2026-10-02T12:00:00Z"

@@ -30,7 +30,7 @@ The optional `file` line names the repository relative file this declaration is 
 
 For an existing catalog, advance a contract only with `SemanticIdentityCatalog.PlanEventRevisionAdvancement(previous, expectedRevision, documentKeys, semanticAddresses, eventAddresses, advancements)`. Supply the complete current addresses and an explicit `(event address, new revision)` advancement. The plan checks the exact previous catalog revision, retains the contract id, carries generation-1 property IDs to revision-qualified addresses, and refuses backward or stale advancement. A fresh compile can bootstrap all property identities for each declared revision and record revision N in its returned `SemanticCompilation.Documents.IdentityCatalog`; persist that catalog before subsequent edits. Workspace transactions can supply the same explicit advancement through `WorkspaceTransactionRequest.EventRevisionAdvancements`, checked against `ExpectedCatalogRevision`. Newly introduced events receive their declared revision without an advancement. Declaring fewer generations than a persisted catalog records fails binding.
 
-## Public contracts and origin (source only)
+## Public contracts and origin
 
 Unmarked events remain private local facts. Mark a local contract `public event Shipped`.
 An event from another application uses `event Dispatched from "Fulfillment"`; an origin implies
@@ -41,11 +41,8 @@ use the ordinary [string escaping rules](grammar.md). When combining origin and 
 write the generation first: `public event Dispatched generation 1 from "Fulfillment"`.
 
 The C# and TypeScript parsers, printers, typed AST JSON, authoring workspace, Monaco, VS Code and the event model
-board preserve these fields. Source acceptance is **not execution support**: public visibility or any origin refuses
-semantic compilation with `PLAY0268` naming #481, rather than silently returning a local-event
-ESM. No ESM version is allocated, so Stage and renderers do not realize these contracts yet; do not treat this as a
-runnable example. See [decision 0049](https://github.com/Cratis/Screenplay/blob/main/decisions/0049-public-events-and-translation-direction.md)
-(proposed) for why the origin is a quoted store name and how direction defaults.
+board preserve these fields. A model that uses public visibility or an origin selects **ESM v9** (claimed and unreleased, see [interoperability](interoperability.md)); models that use neither keep their existing version and canonical bytes. The executable model records each event's visibility and origin, and the reference evaluator publishes a public event as a recorded fact when its outbound projection or reducer fires. It does not deliver to another application. An imported public event (one with an origin) declares its shape locally; public or foreign imports that cannot supply a local shape still refuse with `PLAY0268`. Stage and renderers do not realize these contracts yet. See [decision 0049](https://github.com/Cratis/Screenplay/blob/main/decisions/0049-public-events-and-translation-direction.md)
+(accepted ruling) and [decision 0051](https://github.com/Cratis/Screenplay/blob/main/decisions/0051-admit-public-events-as-esm-v9.md) (proposed; acceptance is a human verdict) for why the origin is a quoted store name and how direction defaults.
 Inline `produces event` keeps its existing syntax; use a standalone declaration for these fields.
 
 The assembled model (C# and TypeScript compilers, both editors) validates contract usage, not just headers. Commands cannot publish public events.
@@ -55,7 +52,7 @@ local events. Other slices cannot consume foreign contracts. A translation decla
 must state its direction; legacy translations without public metadata retain their historical inbound behavior.
 An outbound slice publishes its public event with a [projection or reducer that targets it](projections/index.md#projecting-to-an-event)
 or a reaction; an inbound slice consumes foreign public events with [`source events`](captures.md#capturing-from-public-events)
-or a reaction. Both forms are source-only for now and refuse semantic compilation with `PLAY0268`.
+or a reaction. Both forms select ESM v9 when bound.
 Qualified references and imports use declaration scope, not a name-based guess. See
 [Public event boundary diagnostics](diagnostics.md#public-event-boundaries) for the codes and current construct limits.
 

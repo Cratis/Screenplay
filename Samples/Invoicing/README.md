@@ -39,7 +39,7 @@ slice: the module's `authorize`, each enclosing feature's, and the slice's comma
 | Payments | RecordPayment | InvoiceBalances, InvoiceAging, CollectionsBoard, ExchangeRates | ReconcilePayments, ChaseOverdueInvoices | PaymentProviderSync |
 | CustomerPortal | RequestPaymentPlan | MyInvoices, CreditStatus | | |
 | Auditing | | CancelledInvoices, SystemActivity | | |
-| Integrations (› Notifications) | | | NotifyCustomerOnInvoiceRegistered, DetectOverdueInvoices, SyncBillingDirectory | LegacyInvoiceSync |
+| Integrations (› Notifications) | | | NotifyCustomerOnInvoiceRegistered, DetectOverdueInvoices, SyncBillingDirectory | LegacyInvoiceSync, InvoiceSentPublication |
 
 Every slice has Given/When/Then specifications, and every state change and state view slice has a screen.
 Click sections and row-click links on the lists, details, dashboards and customer portal open the registration, draft, status,
@@ -90,6 +90,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | guarded screen action: label header, `when item.status … execute`, explicit `with … from` and `otherwise hidden` | CancelInvoiceScreen — cancellation is offered only for a draft |
 | interactions: `on load`, `enter`, `click`, `double click`, `select`, `submit`, `change`, `leave`, `interval`, `event … where`; `execute`, `navigate to`/`back`, `open dialog … with … from`, `close dialog`, `refresh`, `set`, `notify`, `confirm`, `raise`; `on success`/`failure`/`result` | InvoiceList, InvoiceLineDetail, ChangeInvoiceStatus, CollectionsBoard, behaviors |
 | `reaction` with `when` an event, `Startup`, a declared trigger; `every`; `at`, `at … on Monday`, `at … on day 1`; trigger values, `reads`, `produces`, `invokes`, `where`, inline and `file` bodies | Automation and Translate slices |
+| `direction outbound`, a `public event`, and an event-target `projection` that folds private events into it | InvoiceSentPublication; the inbound half (`direction inbound`, an event `from "origin"`, `source events`) is in the Commerce sample's ReceiveCarrierDispatches, because Invoicing's `all` projection would consume any foreign event |
 | `capture` with `source`, `key`, `map`/`translate`/`split`/templates, `append` with `tag` and every `when` form, `children`, `nested` | LegacyInvoiceSync |
 | `specification` with `file`, `given caller`, `given clock`, `given <Event> for`, `given readmodel`, `given capture`, `when <Command> for`, `when append`, `when clock`, `when trigger`, `when capture`, `when query`, `then events in any order`, `then <Event> for`, `then readmodel exactly`, `then no readmodel`, `then query` with `arguments`/`result`, `then result exactly`, `then no result`, `then error` with and without a message, `then denied` | throughout |
 | `example` with structured values, indented and inline overrides | RegisterInvoice: `AcmeInvoice` supplies repeated command inputs without hiding the caller or outcome |

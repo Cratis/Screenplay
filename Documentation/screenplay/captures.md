@@ -77,7 +77,7 @@ slice Translate TrackShipments
         orderId = $.orderId
 ```
 
-Every `from` event must be a public event with an origin, an `append` event must be a private event of this application, and `source events` belongs only to an explicitly inbound slice (`PLAY0610`, `PLAY0612`, `PLAY0616`, `PLAY0619`, `PLAY0620`). The form parses, prints and is checked by both editors, but it is not part of any executable model version yet: binding refuses it with `PLAY0268` (#483). Rename follows a `from` line; see the [diagnostics](diagnostics.md) for the full list.
+Every `from` event must be a public event with an origin, an `append` event must be a private event of this application, and `source events` belongs only to an explicitly inbound slice (`PLAY0610`, `PLAY0612`, `PLAY0616`, `PLAY0619`, `PLAY0620`). The form selects ESM v9 and binds to an executable capture over events. The reference evaluator has no outside records to present to such a capture, so a `when capture` specification over events reports a typed Unsupported outcome instead of passing or failing. Rename follows a `from` line; see the [diagnostics](diagnostics.md) for the full list.
 
 ## The CDL vocabulary at a glance
 

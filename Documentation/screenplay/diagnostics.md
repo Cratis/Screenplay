@@ -602,7 +602,7 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 ### Public event boundaries
 
 These whole-model C# checks run after file assembly and also on programmatic syntax passed to the semantic binder.
-Public metadata and explicit direction still refuse executable admission with `PLAY0268`; these checks do not enable execution.
+Public metadata and explicit direction select ESM v9 once these checks pass; a model that fails them never binds.
 Unknown and ambiguous references retain `PLAY0166` and `PLAY0198`, rather than being guessed private/local.
 Private origins continue to use the existing invalid event/import declaration diagnostics.
 
@@ -630,8 +630,7 @@ A projection or reducer whose `=>` target resolves to an event (and not to a dec
 projection: its target counts as an output of the slice and its `from`/`on` events as inputs, so `PLAY0609`, `PLAY0611`,
 `PLAY0613` and `PLAY0617` apply to it, and `PLAY0618` reports one outside an explicit outbound translation. Each
 `from <Event>` under `source events` counts as an input of the capture, so `PLAY0610`, `PLAY0614` and `PLAY0616` apply,
-and `PLAY0619` reports `source events` outside an explicit inbound translation. Both forms parse and print but are
-refused for execution with `PLAY0268` naming #482 (event-target projections and reducers) or #483 (`source events`): no executable model version admits them yet.
+and `PLAY0619` reports `source events` outside an explicit inbound translation. Both forms bind and select ESM v9.
 Existing syntax restrictions remain: qualified reaction triggers do not parse, and qualified event productions
 still report `PLAY0497`. Programmatic qualified references are resolved and checked, not treated as private.
 The TypeScript compiler and both editors report the same codes (see [editor diagnostics](editor-diagnostics.md)).

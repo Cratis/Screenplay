@@ -68,25 +68,36 @@ public class when_translating_through_events : given.a_compiler
     }
 
     [Fact]
-    void should_refuse_admission_of_events_source_with_an_explicit_unsupported_diagnostic()
+    void should_admit_an_events_source_over_a_locally_declared_foreign_event()
     {
-        var result = _compiler.Compile(Contracts + "    slice Translate Track\n      direction inbound\n      event Received\n      capture Feed\n        source events\n          from Arrived\n        key id\n        append Received\n");
-        var bound = Bind(result.Value!);
-        bound.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("#483")).ShouldBeTrue();
+        const string Source = "module Sales\n  feature Orders\n    slice Translate Track\n      direction inbound\n      event Arrived from \"other/store\"\n        id String\n      event Received\n        id String\n      capture Feed\n        source events\n          from Arrived\n        key id\n        append Received\n          id = $.id\n";
+        var bound = Bind(_compiler.Compile(Source).Value!, Source);
+        Assert.True(bound.Success, string.Join('\n', bound.Diagnostics.Select(diagnostic => diagnostic.Message)));
+        bound.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V9);
     }
 
     [Fact]
-    void should_refuse_admission_of_event_target_projection_with_an_explicit_unsupported_diagnostic()
+    void should_refuse_an_events_source_over_an_event_that_has_no_local_shape()
     {
-        var result = _compiler.Compile(Contracts + Outbound);
+        var result = _compiler.Compile(Contracts + "    slice Translate Track\n      direction inbound\n      event Received\n      capture Feed\n        source events\n          from Arrived\n        key id\n        append Received\n");
         var bound = Bind(result.Value!);
-        bound.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("#482")).ShouldBeTrue();
+        bound.Success.ShouldBeFalse();
+        bound.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("no local shape")).ShouldBeTrue();
     }
 
-    static CompilationResult<SemanticCompilation> Bind(ApplicationSyntax application)
+    [Fact]
+    void should_admit_an_event_target_projection_in_an_outbound_translation()
+    {
+        const string Source = "module Sales\n  feature Orders\n    slice StateChange Facts\n      event Changed\n        id String\n    slice Translate Publish\n      direction outbound\n      public event Published\n        id String\n      projection Publisher => Published\n        from Changed\n";
+        var bound = Bind(_compiler.Compile(Source).Value!, Source);
+        Assert.True(bound.Success, string.Join('\n', bound.Diagnostics.Select(diagnostic => diagnostic.Message)));
+        bound.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V9);
+    }
+
+    static CompilationResult<SemanticCompilation> Bind(ApplicationSyntax application, string source = Contracts)
     {
         var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Sales"));
-        var document = SemanticSourceDocument.Create(catalog.ResolveDocument("application"), "application", "application.play", Contracts);
+        var document = SemanticSourceDocument.Create(catalog.ResolveDocument("application"), "application", "application.play", source);
         return new SemanticModelBinder().Bind("Sales", application, SemanticDocumentSet.Create([document], catalog));
     }
 }
