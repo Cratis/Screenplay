@@ -121,7 +121,9 @@
       "retention": "Until the relationship ends",
       "subjects": [
         "customer",
-        "customerContact"
+        "customerContact",
+        "ansatt",
+        "søker"
       ],
       "transfers": [
         {

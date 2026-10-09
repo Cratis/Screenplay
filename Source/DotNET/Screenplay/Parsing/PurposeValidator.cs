@@ -10,10 +10,10 @@ internal static class PurposeValidator
 {
     internal static void Validate(ApplicationSyntax application, ParserContext context)
     {
-        var known = application.Purposes.Select(purpose => purpose.Name).ToHashSet(StringComparer.Ordinal);
-        foreach (var duplicate in application.Purposes.GroupBy(purpose => purpose.Name, StringComparer.Ordinal).SelectMany(group => group.Skip(1)))
+        var known = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var purpose in application.Purposes)
         {
-            context.Error(DiagnosticCodes.DuplicatePurposeDeclaration, $"Duplicate purpose '{duplicate.Name}' - a purpose is declared once", duplicate.Location);
+            if (!known.Add(purpose.Name)) context.Error(DiagnosticCodes.DuplicatePurposeDeclaration, $"Duplicate purpose '{purpose.Name}' - a purpose is declared once", purpose.Location);
         }
 
         foreach (var purpose in application.Purposes)

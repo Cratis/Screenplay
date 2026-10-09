@@ -11,6 +11,8 @@ export function validatePurposes(application: ApplicationSyntax, context: Parser
     for (const purpose of application.purposes ?? []) {
         if (known.has(purpose.name)) context.error(DiagnosticCodes.DuplicatePurposeDeclaration, `Duplicate purpose '${purpose.name}' - a purpose is declared once`, purpose.location);
         known.add(purpose.name);
+    }
+    for (const purpose of application.purposes ?? []) {
         if (purpose.interest !== null && purpose.basis !== 'legitimateInterests') context.warning(DiagnosticCodes.PurposeInterestMismatch, `Purpose '${purpose.name}' declares an interest without basis legitimateInterests`, purpose.location);
         else if (purpose.basis === 'legitimateInterests' && !purpose.interest?.trim()) context.warning(DiagnosticCodes.PurposeInterestMismatch, `Purpose '${purpose.name}' with basis legitimateInterests has no interest statement (Art. 13(1)(d))`, purpose.location);
     }

@@ -71,6 +71,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
     let value = parseApplication(context, lines, placement);
     // Folder assembly validates declaration-dependent contracts once against the merged inventory.
     if (validateResponseContracts) {
+        validatePurposes(value, context);
         validateInlineEvents(value, context);
         validateConstraintProperties(value, context);
         validateOperations(value, context);
@@ -85,7 +86,6 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateSpecificationRedelivery(value, context);
         validateGuardedActions(value, context);
         validatePersonaCallers(value, context);
-        validatePurposes(value, context);
         value = validateDependencyDeclarations(value, context);
         DeclaredDependencies.validate(value, context);
         for (const diagnostic of productionDestinationDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);

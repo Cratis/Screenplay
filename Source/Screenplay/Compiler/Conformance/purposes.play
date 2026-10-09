@@ -4,7 +4,7 @@
 purpose Billing
   description "Issue invoices"
   basis contract "Customer agreement"
-  subjects customer, customerContact
+  subjects customer, customerContact, ansatt, søker
   retention "Until the relationship ends"
   recipient "Payment provider"
   recipient "Accountant"

@@ -54,8 +54,9 @@ export function collectInputUses(context: ParserContext, header: SourceLine): vo
     const lines = [header];
     for (let child = context.peekChild(header.indent); child !== undefined; child = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
+        while (owners.length > 0 && owners[owners.length - 1].indent >= child.indent) owners.pop();
         if (form.test(header.content) && firstWord(child.content) === 'description' && owners.at(-1)?.kind === 'form') {
-            formDescription = parseDescription(context, child, formDescription, `Form '${header.content.split(/\s+/)[1]}'`);
+            formDescription = parseDescription(context, child, formDescription, `Form '${header.content.split(pattern('\\s+'))[1]}'`);
         } else if (child.content.startsWith('```')) context.skipFencedBody();
         else {
             lines.push(child);

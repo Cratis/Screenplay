@@ -21,7 +21,7 @@ beforeAll(async () => {
 
 describe('when highlighting processing purposes', () => {
     it.each(['basis contract', 'authorization "National law"', 'transfer "Country" safeguard "Clauses"', 'erasure exception legalObligation'])('should highlight purpose fields in %s', field => {
-        const state = grammar.tokenizeLine('purpose Billing', INITIAL).ruleStack;
+        const state = grammar.tokenizeLine('purpose Søknad', INITIAL).ruleStack;
         const tokens = grammar.tokenizeLine(`  ${field}`, state).tokens;
         expect(tokens.find(token => token.startIndex <= 2 && token.endIndex > 2)?.scopes).toContain('keyword.other.screenplay');
     });

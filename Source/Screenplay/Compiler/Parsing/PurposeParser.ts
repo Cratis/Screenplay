@@ -14,6 +14,8 @@ const header = pattern('^purpose\\s+([A-Za-z_]\\w*)$');
 const vocabulary = pattern(`^(basis|condition)\\s+(\\w+)(?:\\s+"(${stringBodyPattern})")?$`);
 const textField = pattern(`^(interest|authorization|retention|recipient)\\s+"(${stringBodyPattern})"$`);
 const transfer = pattern(`^transfer\\s+"(${stringBodyPattern})"\\s+safeguard\\s+"(${stringBodyPattern})"$`);
+const identifier = pattern('^[A-Za-z_]\\w*$');
+const erasure = pattern('^erasure\\s+exception\\s+(\\w+)$');
 const bases = ['consent', 'contract', 'legalObligation', 'vitalInterests', 'publicTask', 'legitimateInterests'];
 const conditions = ['explicitConsent', 'employmentLaw', 'vitalInterests', 'notForProfit', 'madePublic', 'legalClaims', 'substantialPublicInterest', 'healthCare', 'publicHealth', 'research'];
 const exceptions = ['expression', 'legalObligation', 'publicTask', 'publicHealth', 'archiving', 'legalClaims'];
@@ -50,10 +52,10 @@ export function parsePurpose(context: ParserContext, line: SourceLine): PurposeS
             else purpose = { ...purpose, [keyword]: unescapeString(match[2]) };
         } else if (keyword === 'subjects') {
             const subjects = child.content.slice('subjects'.length).split(',').map(value => value.trim());
-            if (subjects.every(value => /^[A-Za-z_]\w*$/.test(value))) purpose = { ...purpose, subjects: [...new Set(subjects)] };
+            if (subjects.every(value => identifier.test(value))) purpose = { ...purpose, subjects: [...new Set(subjects)] };
             else context.error(DiagnosticCodes.InvalidPurposeDeclaration, `Invalid purpose subjects '${child.content}' - expected comma-separated identifiers`, locationOf(child));
         } else if (keyword === 'erasure') {
-            const match = /^erasure\s+exception\s+(\w+)$/.exec(child.content);
+            const match = erasure.exec(child.content);
             if (match !== null && exceptions.includes(match[1])) purpose = { ...purpose, erasureException: match[1] };
             else context.error(DiagnosticCodes.InvalidPurposeVocabulary, `Invalid erasure exception '${child.content}' - expected 'erasure exception ${exceptions.join('|')}'`, locationOf(child));
         } else if (keyword === 'transfer') {
