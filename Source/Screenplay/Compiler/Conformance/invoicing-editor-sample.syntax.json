@@ -166,6 +166,48 @@
     },
     {
       "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "sensitive",
+          "reason": "Credential shared by the billing integration within one tenant.",
+          "scope": "namespace"
+        }
+      ],
+      "name": "BillingApiKey",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "pii",
+          "reason": "A medical invoice note can reveal the patient's health.",
+          "specialCategory": "health"
+        }
+      ],
+      "name": "MedicalBillingNote",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "criminal": true,
+          "name": "pii",
+          "reason": "An invoice fraud review can record a customer's criminal conviction."
+        }
+      ],
+      "name": "FraudConvictionNote",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
       "attributes": [],
       "name": "DiscountPercentage",
       "type": "Decimal",

@@ -6,12 +6,12 @@ import { recordAuthoredDocument } from '../Syntax/SourceOptions';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { describePlacement, documentPlacement, isDocumentPlacement, PlayPlacement } from '../Files/PlayPlacement';
 import { PersonaSyntax } from '../Syntax/Authorization';
-import { ConceptAttributeSyntax, ConceptSyntax, DomainSyntax, ImportSyntax, TypeSyntax } from '../Syntax/Declarations';
+import { ConceptSyntax, DomainSyntax, ImportSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { SpecificationExampleSyntax } from '../Syntax/Specifications';
 import { ApplicationSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax } from '../Syntax/Structure';
 import { parseTriggerDeclaration } from './TriggerDataParser';
 import { pattern } from '../Text/patterns';
-import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
+import { parseComplianceDirective, parseComplianceMarkers } from './ConceptComplianceParser';
 import { parseType } from './DeclarationParsers';
 import { ValidateSyntax } from '../Syntax/Commands';
 import { parseValidate } from './CommandParser';
@@ -36,9 +36,8 @@ import { locationOf, SourceLine, startOf } from './SourceLine';
 
 const domainPattern = pattern('^domain\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)$');
 const importPattern = pattern('^import\\s+([\\w.]+)$');
-const conceptPattern = pattern('^concept\\s+(\\w+)\\s*:\\s*(\\w+)((?:\\s+@\\w+)*)$');
+const conceptPattern = pattern('^concept\\s+(\\w+)\\s*:\\s*(\\w+)((?:\\s+@?\\w+)*)$');
 const enumValuePattern = pattern('^@?[a-z_]\\w*$');
-const attributeReasonPattern = pattern(`^([a-z_]\\w*)\\s+reason\\s+"(${stringBodyPattern})"$`);
 const personaPattern = pattern('^persona\\s+([A-Za-z_]\\w*)$');
 const personaPolicyPattern = pattern('^policy\\s+([A-Za-z_]\\w*)$');
 const tabIndentPattern = /^[ ]*\t/;
@@ -233,20 +232,14 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
         return { kind: 'ConceptSyntax', name: firstWord(line.content), type: '', attributes: [], values: [], location: locationOf(line) };
     }
     const [, name, type, attributeText] = match;
-    const attributes: ConceptAttributeSyntax[] = attributeText.split(' ').filter(attribute => attribute.length > 0)
-        .map(attribute => ({ kind: 'ConceptAttributeSyntax', name: attribute.replace(/^@+/, ''), reason: null, location: locationOf(line) }));
+    const attributes = parseComplianceMarkers(context, line, attributeText);
     if (type !== 'Enum' && !primitiveTypes.includes(type)) {
         context.error(DiagnosticCodes.UnknownPrimitiveType, `Unknown primitive type '${type}' - expected ${primitiveTypes.join(', ')} or Enum`, locationOf(line));
     }
-    const attributeIndices = new Map<string, number>();
-    attributes.forEach((attribute, index) => {
-        if (!attributeIndices.has(attribute.name)) attributeIndices.set(attribute.name, index);
-    });
     const values: string[] = [];
     const validations: ValidateSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
-        const reason = attributeReasonPattern.exec(child.content);
         if (isFileDirective(child)) {
             continue;
         } else if (firstWord(child.content) === 'validate') {
@@ -257,8 +250,8 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
             }
             const parsed = parseValidate(context, child, 'concept');
             if (parsed !== undefined) validations.push(parsed);
-        } else if (reason !== null) {
-            applyAttributeReason(context, child, name, attributes, attributeIndices, reason[1], unescapeString(reason[2]));
+        } else if (parseComplianceDirective(context, child, name, attributes)) {
+            // Compliance directives are modeled by their original concept marker.
         } else if (type === 'Enum' && enumValuePattern.test(child.content)) {
             values.push(unescapeIdentifier(child.content));
         } else if (type === 'Enum') {
@@ -269,18 +262,6 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
         }
     }
     return { kind: 'ConceptSyntax', name, type, attributes, values, validations, location: locationOf(line) };
-}
-
-function applyAttributeReason(context: ParserContext, line: SourceLine, concept: string, attributes: ConceptAttributeSyntax[], indices: ReadonlyMap<string, number>, attribute: string, reason: string): void {
-    const index = indices.get(attribute);
-    if (index === undefined) {
-        context.error(DiagnosticCodes.AttributeReasonWithoutAttribute,
-            `Concept '${concept}' declares a reason for '${attribute}' without the attribute - write 'concept ${concept} : <Type> @${attribute}'`, locationOf(line));
-    } else if (attributes[index].reason !== null) {
-        context.error(DiagnosticCodes.DuplicateAttributeReason, `Concept '${concept}' already declares a reason for '${attribute}' - at most one is allowed`, locationOf(line));
-    } else {
-        attributes[index] = { ...attributes[index], reason };
-    }
 }
 
 // 'persona <Name>' with an optional description and the policies it holds - the port of the C# ParsePersona.

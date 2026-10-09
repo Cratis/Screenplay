@@ -109,11 +109,17 @@ StreamIdPart = Ident, QualifiedName, NL ;
 (* -------------------------------------------------------------- *)
 
 ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL,
-                   [ INDENT, { FileDirective | AttributeReason | ConceptValidate }, DEDENT ]
+                   [ INDENT, { FileDirective | AttributeReason | ComplianceSetting | ConceptValidate }, DEDENT ]
                | "concept", Ident, ":", "Enum", { Attribute }, NL,
-                   INDENT, { FileDirective | AttributeReason | [ "@" ], LowerIdent, NL | ConceptValidate }, DEDENT ;
+                   INDENT, { FileDirective | AttributeReason | ComplianceSetting | [ "@" ], LowerIdent, NL | ConceptValidate }, DEDENT ;
 
 AttributeReason = AttributeName, "reason", StringLiteral, NL ;
+ComplianceSetting = ( "pii" | "personal" ), "special", SpecialCategory, NL
+                  | ( "pii" | "personal" ), "criminal", NL
+                  | "secret", "scope", ( "subject" | "namespace" | "global" ), NL ;
+SpecialCategory = "racialOrEthnicOrigin" | "politicalOpinions"
+                | "religiousOrPhilosophicalBeliefs" | "tradeUnionMembership"
+                | "genetic" | "biometric" | "health" | "sexLifeOrSexualOrientation" ;
 
 ConceptValidate = "validate", NL,
                    INDENT, ( { ConceptRule } | InlineBlock ), DEDENT ;
@@ -124,8 +130,13 @@ ConceptRule    = RuleOp, [ "severity", ValidationSeverity ], [ "message", Locali
 PrimitiveType  = "Uuid" | "String" | "Int" | "Decimal" | "Bool"
                | "Date" | "DateTime" ;
 
-Attribute      = "@", AttributeName ;
-AttributeName  = "pii" | "sensitive" ;
+Attribute      = AttributeName | "@pii" | "@sensitive" ;
+AttributeName  = "pii" | "personal" | "secret" | "sensitive" ;
+(* pii is canonical; personal is a diagnostic-free alias. sensitive, @sensitive
+   and @pii are legacy spellings (PLAY0565); printing and repair use pii/secret.
+   Settings accept these legacy spellings too. Unknown markers are errors.
+   special/criminal require pii; one special and one scope at most. Markers and
+   settings remain refused at binding (PLAY0268), not executable protection. *)
 
 (* -------------------------------------------------------------- *)
 (* Composite value types                                           *)

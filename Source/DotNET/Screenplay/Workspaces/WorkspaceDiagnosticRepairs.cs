@@ -154,6 +154,15 @@ public static class WorkspaceDiagnosticRepairs
     public static ImmutableArray<WorkspaceDiagnosticRepair> FindDocumentOptionality(WorkspaceSyntaxIndex index, WorkspaceNodeHandle subject) =>
         WorkspaceOptionalityRepairs.ForDocument(index, subject, true);
 
+    /// <summary>
+    /// Finds a verified document-wide compliance spelling migration.
+    /// </summary>
+    /// <param name="index">The original occurrence index.</param>
+    /// <param name="subject">The revision-bound document root.</param>
+    /// <returns>A proposal preserving all concept notes and trivia, or none.</returns>
+    public static ImmutableArray<WorkspaceDiagnosticRepair> FindDocumentCompliance(WorkspaceSyntaxIndex index, WorkspaceNodeHandle subject) =>
+        WorkspaceComplianceRepairs.ForDocument(index, subject, true);
+
     static ImmutableArray<WorkspaceDiagnosticRepair> Find(WorkspaceSyntaxIndex index, WorkspaceRevision revision, Diagnostic diagnostic, bool verifyRepair)
     {
         ArgumentNullException.ThrowIfNull(index);
@@ -177,6 +186,11 @@ public static class WorkspaceDiagnosticRepairs
         if (diagnostic.Code == DiagnosticCodes.EventFromLaterSlice)
         {
             return WorkspaceTimelineRepairs.Find(index, revision, diagnostic, verifyRepair);
+        }
+
+        if (diagnostic.Code == DiagnosticCodes.LegacyComplianceMarker)
+        {
+            return WorkspaceComplianceRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
         if (diagnostic.Code == DiagnosticCodes.LegacyOptionalSuffix)
@@ -219,6 +233,11 @@ public static class WorkspaceDiagnosticRepairs
             return [];
         }
 
+        if (code == DiagnosticCodes.LegacyComplianceMarker && entry.Node is ApplicationSyntax)
+        {
+            return WorkspaceComplianceRepairs.ForDocument(index, subject, false);
+        }
+
         if (code == DiagnosticCodes.LegacyOptionalSuffix && entry.Node is ApplicationSyntax)
         {
             return WorkspaceOptionalityRepairs.ForDocument(index, subject, false);
@@ -228,6 +247,7 @@ public static class WorkspaceDiagnosticRepairs
         // every plain production in a workspace, but only the selected occurrence is relevant.
         return index.RepairableDiagnostics.Where(diagnostic => diagnostic.Code == code && (diagnostic.Location == entry.Location ||
             (code == DiagnosticCodes.RedundantEventId && entry.Node.DirectiveLocations.GetValueOrDefault("id") == diagnostic.Location) ||
+            (code == DiagnosticCodes.LegacyComplianceMarker && entry.Node.DirectiveLocations.Values.Contains(diagnostic.Location)) ||
             (code == DiagnosticCodes.LegacyInteractionWhere && entry.Node.DirectiveLocations.GetValueOrDefault("where") == diagnostic.Location)))
             .SelectMany(diagnostic => Find(index, revision, diagnostic, false))
             .Where(repair => repair.Subject == subject);
@@ -249,6 +269,7 @@ public static class WorkspaceDiagnosticRepairs
         {
             return candidate.Operations.Zip(selected.Operations).All(pair => (pair.First, pair.Second) switch
             {
+                (MigrateComplianceMarkerSpelling left, MigrateComplianceMarkerSpelling right) => left.Target == right.Target && left.Line == right.Line && SyntaxJson.StructurallyEqual(left.Expected, right.Expected),
                 (MigrateOptionalTypeSpelling left, MigrateOptionalTypeSpelling right) => left.Target == right.Target && SyntaxJson.StructurallyEqual(left.Expected, right.Expected),
                 (AddWorkspaceNode left, AddWorkspaceNode right) => left.Parent == right.Parent && left.Member == right.Member && left.Index == right.Index &&
                     SyntaxJson.StructurallyEqual(left.ExpectedParent, right.ExpectedParent) && SyntaxJson.StructurallyEqual(left.Node, right.Node),
@@ -268,7 +289,7 @@ public static class WorkspaceDiagnosticRepairs
 
     static bool PermitsFormatting(string code, WorkspaceAuthoringFormatting formatting) =>
         formatting == WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments ||
-        (code == DiagnosticCodes.LegacyOptionalSuffix && formatting == WorkspaceAuthoringFormatting.PreserveTrivia);
+        ((code == DiagnosticCodes.LegacyOptionalSuffix || code == DiagnosticCodes.LegacyComplianceMarker) && formatting == WorkspaceAuthoringFormatting.PreserveTrivia);
 
     static WorkspaceAuthoringResult Refuse(WorkspaceConflictKind kind, string message) => new()
     {

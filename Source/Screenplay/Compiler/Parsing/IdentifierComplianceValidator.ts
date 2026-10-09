@@ -26,7 +26,7 @@ export function validateIdentifierCompliance(application: ApplicationSyntax, con
     }
     const validate = (type: TypeRefSyntax, location: SourceLocation, position = 'an event source identifier'): void => {
         if (personal.has(type.name) || sensitive.has(type.name)) {
-            const attribute = personal.has(type.name) ? '@pii' : '@sensitive';
+            const attribute = personal.has(type.name) ? 'pii' : 'secret';
             context.error(DiagnosticCodes.PiiNotSupportedOnIdentifier, `Concept '${type.name}' is ${attribute} and cannot be ${position} - use a surrogate Uuid identifier and keep the ${attribute} value as a property`, location);
         }
     };
