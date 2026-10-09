@@ -184,7 +184,6 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var eventSources = BindEventSources(concepts);
             var modules = AttachAutomation([.. syntax.Modules.Select(BindModule)]);
             var policies = BindPolicies();
-            ValidateExampleAdmission(concepts, types, modules);
             var application = new SemanticApplication(
                 applicationId,
                 applicationName,
@@ -196,6 +195,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 Triggers = triggers,
                 EventSources = eventSources
             };
+            ValidateExampleAdmission(application);
             application = BindRoutedFixtureSources(application);
             UsesEventRoutes = SemanticEventRouting.Uses(application);
 
