@@ -8,6 +8,7 @@ import { commentStart, splitLines } from '../Parsing/SourceLineSplitter';
 import { parseForAuthoring } from '../ScreenplayCompiler';
 import { EventSyntax } from '../Syntax/Declarations';
 import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
+import { pattern } from '../Text/patterns';
 import { QuickFixCandidate } from './QuickFixCandidate';
 
 export interface QuickFixEdit {
@@ -30,7 +31,7 @@ export interface QuickFixOptions {
 }
 
 export function isQuickFixDiagnostic(code: unknown): code is string {
-    return code === DiagnosticCodes.LegacyOptionalSuffix || code === DiagnosticCodes.RedundantEventId;
+    return code === DiagnosticCodes.LegacyOptionalSuffix || code === DiagnosticCodes.LegacyComplianceMarker || code === DiagnosticCodes.RedundantEventId;
 }
 
 // Diagnostics point at the complete type, not at the suffix. Never derive edits from message text.
@@ -70,6 +71,9 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
         const length = legacyOptionalTypeLength(line.raw, diagnostic);
         if (length > 0) {
             byLine.set(line.number, { line: line.number, fix: { diagnosticCode: diagnostic.code, title: "Use 'optional' instead of '?'", scope: 'occurrence', edits: [{ start: line.startOffset + diagnostic.location.column + length - 2, length: 1, text: ' optional' }] } });
+        } else if (diagnostic.code === DiagnosticCodes.LegacyComplianceMarker) {
+            const edit = complianceMarkerEdit(line.raw, line.startOffset);
+            if (edit !== undefined) byLine.set(line.number, { line: line.number, fix: { diagnosticCode: diagnostic.code, title: 'Use bare pii and secret compliance markers', scope: 'occurrence', edits: [edit] } });
         } else if (diagnostic.code === DiagnosticCodes.RedundantEventId && commentStart(line.raw) < 0) {
             const declaration = events.get(line.number);
             if (declaration?.id !== declaration?.name || declaration === undefined) continue;
@@ -77,12 +81,12 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
                 change: { node: declaration, replacement: { ...declaration, id: null } as EventSyntax } });
         }
     }
-    const optional = [...byLine.values()].filter(candidate => candidate.fix.diagnosticCode === DiagnosticCodes.LegacyOptionalSuffix);
+    const spellingCodes = [DiagnosticCodes.LegacyOptionalSuffix, DiagnosticCodes.LegacyComplianceMarker];
     const syntax = verificationShape(original);
     const verified = new Map<number, QuickFix | undefined>();
     let rangeVerdicts: Map<number, QuickFix> | undefined;
-    let documentChecked = false;
-    let documentFix: QuickFix | undefined;
+    const documentChecked = new Set<string>();
+    const documentFixes = new Map<string, QuickFix>();
     const verify = (fix: QuickFix, change?: QuickFixCandidate['change']): QuickFix | undefined => {
         const candidate = applyQuickFixEdits(source, fix.edits);
         if (candidate === undefined) return undefined;
@@ -92,11 +96,16 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
     };
     return (line, diagnosticCode) => {
         const requests = typeof line === 'number' || line === undefined ? undefined : line;
-        const includeDocument = requests === undefined ? diagnosticCode === undefined || diagnosticCode === DiagnosticCodes.LegacyOptionalSuffix : requests.some(request => request.diagnosticCode === DiagnosticCodes.LegacyOptionalSuffix);
-        if (includeDocument && !documentChecked) {
-            if (optional.length > 0) documentFix = verify({ diagnosticCode: DiagnosticCodes.LegacyOptionalSuffix, title: "Use 'optional' throughout this document", scope: 'document', edits: optional.flatMap(candidate => candidate.fix.edits) });
-            documentChecked = true;
+        const selectedCodes = spellingCodes.filter(code => requests === undefined ? diagnosticCode === undefined || diagnosticCode === code : requests.some(request => request.diagnosticCode === code));
+        for (const code of selectedCodes.filter(code => !documentChecked.has(code))) {
+            const candidates = [...byLine.values()].filter(candidate => candidate.fix.diagnosticCode === code);
+            if (candidates.length > 0) {
+                const fix = verify({ diagnosticCode: code, title: code === DiagnosticCodes.LegacyOptionalSuffix ? "Use 'optional' throughout this document" : 'Use bare pii and secret throughout this document', scope: 'document', edits: candidates.flatMap(candidate => candidate.fix.edits) });
+                if (fix !== undefined) documentFixes.set(code, fix);
+            }
+            documentChecked.add(code);
         }
+        const documents = selectedCodes.flatMap(code => documentFixes.has(code) ? [documentFixes.get(code)!] : []);
         if (requests !== undefined) {
             if (rangeVerdicts === undefined) {
                 rangeVerdicts = new Map();
@@ -125,7 +134,7 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
                 const fix = rangeVerdicts.get(request.line);
                 if (fix?.diagnosticCode === request.diagnosticCode) selected.set(request.line, fix);
             }
-            return [...selected.values(), ...(includeDocument && documentFix !== undefined ? [documentFix] : [])];
+            return [...selected.values(), ...documents];
         }
         const occurrenceLine = typeof line === 'number' ? line : undefined;
         const selected = occurrenceLine === undefined ? undefined : byLine.get(occurrenceLine);
@@ -137,8 +146,20 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
             }
             occurrenceFix = verified.get(occurrenceLine);
         }
-        return [occurrenceFix, includeDocument ? documentFix : undefined].filter((fix): fix is QuickFix => fix !== undefined);
+        return [...(occurrenceFix === undefined ? [] : [occurrenceFix]), ...documents];
     };
+}
+
+function complianceMarkerEdit(raw: string, startOffset: number): QuickFixEdit | undefined {
+    // Restrict rewriting to the suffix or leading directive marker, never comments or quoted reasons.
+    const header = pattern('^(\\s*concept\\s+\\w+\\s*:\\s*\\w+)((?:[^\\S\\r\\n]+@?\\w+)*)').exec(raw);
+    if (header !== null) {
+        const suffix = header[2];
+        const text = suffix.replace(/@pii\b|@?sensitive\b/g, marker => marker === '@pii' ? 'pii' : 'secret');
+        return text === suffix ? undefined : { start: startOffset + header[1].length, length: suffix.length, text };
+    }
+    const directive = pattern('^(\\s*)(@pii|@?sensitive)\\b').exec(raw);
+    return directive === null ? undefined : { start: startOffset + directive[1].length, length: directive[2].length, text: directive[2] === '@pii' ? 'pii' : 'secret' };
 }
 
 function verificationShape(parsed: ReturnType<typeof parseForAuthoring>, changes: readonly NonNullable<QuickFixCandidate['change']>[] = []): string {

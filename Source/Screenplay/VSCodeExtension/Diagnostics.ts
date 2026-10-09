@@ -26,7 +26,7 @@ function toDiagnostic(issue: ValidationIssue): vscode.Diagnostic {
     if (issue.code) {
         diagnostic.code = issue.code;
     }
-    if (issue.code === DiagnosticCodes.LegacyOptionalSuffix) diagnostic.tags = [vscode.DiagnosticTag.Deprecated];
+    if (issue.code === DiagnosticCodes.LegacyOptionalSuffix || issue.code === DiagnosticCodes.LegacyComplianceMarker) diagnostic.tags = [vscode.DiagnosticTag.Deprecated];
 
     return diagnostic;
 }
@@ -40,7 +40,7 @@ function fromCompiler(document: vscode.TextDocument, compiled: CompilerDiagnosti
     const diagnostic = new vscode.Diagnostic(range, compiled.message, severity);
     diagnostic.source = languageId;
     diagnostic.code = compiled.code;
-    if (compiled.code === DiagnosticCodes.LegacyOptionalSuffix) diagnostic.tags = [vscode.DiagnosticTag.Deprecated];
+    if (compiled.code === DiagnosticCodes.LegacyOptionalSuffix || compiled.code === DiagnosticCodes.LegacyComplianceMarker) diagnostic.tags = [vscode.DiagnosticTag.Deprecated];
     return diagnostic;
 }
 

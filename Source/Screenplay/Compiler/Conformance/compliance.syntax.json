@@ -1,0 +1,153 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "pii",
+          "reason": "A personal name"
+        }
+      ],
+      "name": "Name",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "criminal": true,
+          "name": "pii",
+          "reason": null,
+          "specialCategory": "health"
+        }
+      ],
+      "name": "MedicalNote",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "sensitive",
+          "reason": "Integration credential",
+          "scope": "namespace"
+        }
+      ],
+      "name": "Credential",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "sensitive",
+          "reason": null
+        }
+      ],
+      "name": "DefaultScope",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "sensitive",
+          "reason": null,
+          "scope": "subject"
+        }
+      ],
+      "name": "SubjectScope",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "sensitive",
+          "reason": null,
+          "scope": "global"
+        }
+      ],
+      "name": "GlobalScope",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "pii",
+          "reason": null
+        },
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "sensitive",
+          "reason": null
+        }
+      ],
+      "name": "Combined",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "pii",
+          "reason": "Legacy form, note unchanged"
+        }
+      ],
+      "name": "LegacyPersonal",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "sensitive",
+          "reason": "Keep @pii and sensitive in this quoted note"
+        }
+      ],
+      "name": "LegacySecret",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "sensitive",
+          "reason": null
+        }
+      ],
+      "name": "BareLegacySecret",
+      "type": "String",
+      "values": []
+    }
+  ],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

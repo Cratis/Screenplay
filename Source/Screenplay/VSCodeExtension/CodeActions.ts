@@ -8,6 +8,8 @@ import { ApplicationIndex } from './ApplicationIndex';
 
 const applyCommand = 'screenplay.applyQuickFix';
 const migrateOptional = vscode.CodeActionKind.Source.append('screenplay.migrateOptional');
+const migrateCompliance = vscode.CodeActionKind.Source.append('screenplay.migrateCompliance');
+const migrationKind = (code: string) => code === DiagnosticCodes.LegacyComplianceMarker ? migrateCompliance : migrateOptional;
 
 interface PendingQuickFix {
     readonly uri: vscode.Uri;
@@ -19,7 +21,7 @@ export function registerCodeActions(context: vscode.ExtensionContext, index: App
     const cache = new WeakMap<vscode.TextDocument, { version: number; placement: string; fixes: ReturnType<typeof prepareQuickFixes> }>();
     context.subscriptions.push(vscode.languages.registerCodeActionsProvider(languageId, {
         provideCodeActions(document, range, request, token) {
-            const migrationRequested = request.only?.contains(migrateOptional) === true;
+            const migrationRequested = [migrateOptional, migrateCompliance].some(kind => request.only?.contains(kind) === true);
             const migrationOnly = migrationRequested && !request.only?.contains(vscode.CodeActionKind.QuickFix);
             if (request.only !== undefined && !migrationRequested && !request.only.contains(vscode.CodeActionKind.QuickFix)) return [];
             const diagnostics = request.diagnostics.filter(diagnostic => {
@@ -40,17 +42,17 @@ export function registerCodeActions(context: vscode.ExtensionContext, index: App
                 line: diagnostic.range.start.line + 1,
                 diagnosticCode: String(typeof diagnostic.code === 'object' ? diagnostic.code.value : diagnostic.code),
             }))).filter(fix => fix.scope === 'occurrence');
-            const requested = [...occurrences, ...(request.only === undefined || migrationRequested ? analysis.fixes(undefined, DiagnosticCodes.LegacyOptionalSuffix) : [])];
-            const fixes = requested.filter(fix => request.only === undefined || request.only.contains(fix.scope === 'document' ? migrateOptional : vscode.CodeActionKind.QuickFix));
+            const requested = [...occurrences, ...(request.only === undefined || migrationRequested ? [DiagnosticCodes.LegacyOptionalSuffix, DiagnosticCodes.LegacyComplianceMarker].flatMap(code => analysis.fixes(undefined, code)) : [])];
+            const fixes = requested.filter(fix => request.only === undefined || request.only.contains(fix.scope === 'document' ? migrationKind(fix.diagnosticCode) : vscode.CodeActionKind.QuickFix));
             if (token.isCancellationRequested || document.version !== version) return [];
             return fixes.map(fix => {
-                const action = new vscode.CodeAction(fix.title, fix.scope === 'document' ? migrateOptional : vscode.CodeActionKind.QuickFix);
+                const action = new vscode.CodeAction(fix.title, fix.scope === 'document' ? migrationKind(fix.diagnosticCode) : vscode.CodeActionKind.QuickFix);
                 action.isPreferred = fix.scope === 'occurrence';
                 action.command = { command: applyCommand, title: fix.title, arguments: [{ uri: document.uri, version, fix } satisfies PendingQuickFix] };
                 return action;
             });
         },
-    }, { providedCodeActionKinds: [vscode.CodeActionKind.QuickFix, migrateOptional] }));
+    }, { providedCodeActionKinds: [vscode.CodeActionKind.QuickFix, migrateOptional, migrateCompliance] }));
 
     // An explicit action is the only write boundary. Never apply offsets from an older dirty buffer.
     context.subscriptions.push(vscode.commands.registerCommand(applyCommand, async (pending: PendingQuickFix) => {

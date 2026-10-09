@@ -6,28 +6,42 @@ using Cratis.Screenplay.Diagnostics;
 namespace Cratis.Screenplay.Syntax;
 
 /// <summary>
-/// Represents an attribute applied to a concept, such as <c>@pii</c>, together with the optional
+/// Represents an attribute applied to a concept, such as <c>pii</c>, together with the optional
 /// documented reason for it.
 /// </summary>
 /// <param name="Name">The name of the attribute, without the <c>@</c> prefix.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 /// <param name="Reason">The optional reason declared with <c>&lt;attribute&gt; reason "&lt;text&gt;"</c> in the concept body.</param>
 /// <remarks>
-/// The marker says a value is personal data; the reason says why - the purpose, the lawful basis and
-/// whose subject it lives under. A compliance reader needs both, so the reason travels with the concept
-/// rather than being lost between the source system and the document.
+/// The marker classifies the value; the reason remains a free-text concept note, not a lawful basis.
+/// Additive members use init properties, following the binary-safe pattern documented on ConceptSyntax.File.
 /// </remarks>
 public record ConceptAttributeSyntax(string Name, SourceLocation Location, string? Reason = null) : SyntaxNode(Location)
 {
     /// <summary>
-    /// The <c>@pii</c> attribute - the value is personally identifiable information.
+    /// The <c>pii</c> marker - personal data (GDPR Art. 4(1)); renders Chronicle [PII].
     /// </summary>
     public const string Pii = "pii";
 
     /// <summary>
-    /// The <c>@sensitive</c> attribute - the value is sensitive.
+    /// The <c>secret</c> marker - an operational secret. Its wire name remains sensitive.
     /// </summary>
     public const string Sensitive = "sensitive";
+
+    /// <summary>
+    /// Gets the explicitly declared secret encryption scope, or null for Chronicle's default.
+    /// </summary>
+    public string? Scope { get; init; }
+
+    /// <summary>
+    /// Gets the GDPR Art. 9(1) special category, when declared.
+    /// </summary>
+    public string? SpecialCategory { get; init; }
+
+    /// <summary>
+    /// Gets whether the personal data relates to criminal convictions and offenses (GDPR Art. 10).
+    /// </summary>
+    public bool Criminal { get; init; }
 }
 
 /// <summary>
@@ -35,7 +49,7 @@ public record ConceptAttributeSyntax(string Name, SourceLocation Location, strin
 /// </summary>
 /// <param name="Name">The name of the concept.</param>
 /// <param name="Type">The primitive type of the concept, or <c>Enum</c> for enumeration concepts.</param>
-/// <param name="Attributes">The <see cref="ConceptAttributeSyntax">attributes</see> applied to the concept, such as <c>@pii</c> and <c>@sensitive</c>.</param>
+/// <param name="Attributes">The <see cref="ConceptAttributeSyntax">attributes</see> applied to the concept, such as <c>pii</c> and <c>secret</c>.</param>
 /// <param name="Values">The values of the concept when it is an enumeration, empty otherwise.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 /// <param name="Validations">The <see cref="ValidateSyntax">validation blocks</see> for the concept. Rules use

@@ -369,7 +369,7 @@ internal sealed partial class McpWorkspaces
             "diagnostics" => McpWorkspaceAnalysis.For(workspace).Source.Compilation.Diagnostics,
             "repairs" => syntax!.RepairableDiagnostics.SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(syntax, workspace.Revision, diagnostic)
                     .Select(repair => (Repair: repair, diagnostic.Location)))
-                .Concat(syntax.Entries.Where(entry => entry.Node is ApplicationSyntax).SelectMany(entry => WorkspaceDiagnosticRepairs.FindDocumentOptionality(syntax, entry.Handle)
+                .Concat(syntax.Entries.Where(entry => entry.Node is ApplicationSyntax).SelectMany(entry => WorkspaceDiagnosticRepairs.FindDocumentOptionality(syntax, entry.Handle).Concat(WorkspaceDiagnosticRepairs.FindDocumentCompliance(syntax, entry.Handle))
                     .Select(repair => (Repair: repair, entry.Location))))
                 .Select(item => (object)new
                 {

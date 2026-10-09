@@ -58,7 +58,7 @@ public class when_an_event_and_trigger_share_a_name : given.a_compiler
     void should_check_clause_local_types_without_borrowing_the_shadowed_trigger_shape(string triggerType, string eventType, string clauseType, int errors)
     {
         var result = _compiler.Compile($$"""
-            concept PatientId : Uuid @pii
+            concept PatientId : Uuid pii
             trigger External
               patient {{triggerType}}
             module M
@@ -82,7 +82,7 @@ public class when_an_event_and_trigger_share_a_name : given.a_compiler
     void should_check_personal_trigger_values_when_the_event_shape_is_ambiguous()
     {
         var result = _compiler.Compile("""
-            concept PatientId : Uuid @pii
+            concept PatientId : Uuid pii
             trigger Changed
               patient PatientId
             module M
@@ -109,7 +109,7 @@ public class when_an_event_and_trigger_share_a_name : given.a_compiler
     {
         var result = _compiler.Compile("""
             import External.Changed
-            concept PatientId : Uuid @pii
+            concept PatientId : Uuid pii
             trigger Changed
               triggerValue String
               patient PatientId

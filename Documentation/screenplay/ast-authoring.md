@@ -188,6 +188,7 @@ is rejected rather than silently becoming a different hierarchy.
 | `RemoveWorkspaceNode` | Target handle and expected node |
 | `MoveWorkspaceNode` | Target/expectation and destination parent/expectation/member/index |
 | `MigrateOptionalTypeSpelling` | Original type handle and expected `TypeRefSyntax`; the compiler derives the spelling change |
+| `MigrateComplianceMarkerSpelling` | Original concept handle, expected `ConceptSyntax`, and original source line carrying legacy compliance spelling |
 
 All handles and expectations address the **base snapshot**. Multiple disjoint
 edits to the same document compose in memory; intermediate states do not need
@@ -201,6 +202,15 @@ Do not mix spelling migrations with other edits to the same document. Explicit
 `CanonicalizeTouchedDocuments` consent opts into reprinting instead. Discover a
 single occurrence with `WorkspaceDiagnosticRepairs.Find`, or a whole document with
 `FindDocumentOptionality` and its root handle; preview either through `ProposeRepair`.
+
+`PLAY0565` repairs use `MigrateComplianceMarkerSpelling` to replace legacy `@pii`,
+`sensitive` and `@sensitive` with bare `pii` and `secret`. With `PreserveTrivia`,
+the repair changes only the marker spelling, preserving quoted reasons, comments,
+spacing and line endings. The candidate is reparsed and must preserve its syntax
+structure while removing the selected diagnostics. Discover a single line with
+`WorkspaceDiagnosticRepairs.Find`, or every legacy line in a document with
+`FindDocumentCompliance` and its root handle; preview either through `ProposeRepair`.
+The same formatting consent and restriction on mixing spelling migrations apply.
 
 Overlapping subtree edits, incompatible slots, moving a node into itself and
 conflicting insertion boundaries are rejected. Replace one containing subtree

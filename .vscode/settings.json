@@ -53,6 +53,11 @@
     "typescript.tsdk": "./node_modules/typescript/lib",
     "npm.packageManager": "yarn",
     "cSpell.words": [
+        "racialOrEthnicOrigin",
+        "politicalOpinions",
+        "religiousOrPhilosophicalBeliefs",
+        "tradeUnionMembership",
+        "sexLifeOrSexualOrientation",
         "appsettings",
         "ASPNETCORE",
         "Autofac",

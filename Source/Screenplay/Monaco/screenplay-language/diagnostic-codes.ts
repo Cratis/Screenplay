@@ -10,6 +10,16 @@
 // and those stay codeless deliberately: minting a PLAY number for something no compiler run can emit
 // would make the catalogue describe two different tools.
 export const diagnosticCodes = {
+    unknownConceptDirective: 'PLAY0010',
+    attributeReasonWithoutAttribute: 'PLAY0012',
+    duplicateAttributeReason: 'PLAY0013',
+    legacyComplianceMarker: 'PLAY0565',
+    unknownComplianceMarker: 'PLAY0566',
+    invalidSecretScope: 'PLAY0567',
+    duplicateSecretScope: 'PLAY0568',
+    secretScopeIgnoredForPii: 'PLAY0569',
+    invalidPersonalDataQualifier: 'PLAY0570',
+    duplicateSpecialCategory: 'PLAY0571',
     // Supplied compiler diagnostics are preserved, even for checks only the C# tool can run.
     // See Documentation/screenplay/editor-diagnostics.md for the validation boundary.
     conflictingScreenDataBinding: 'PLAY0530',

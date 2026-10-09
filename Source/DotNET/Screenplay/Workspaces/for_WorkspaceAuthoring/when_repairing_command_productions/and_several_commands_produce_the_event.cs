@@ -37,7 +37,7 @@ public class and_several_commands_produce_the_event : given.a_command_production
     [Fact]
     void should_preserve_concept_compliance_markings()
     {
-        Create(Source.Replace("concept ProjectName : String", "concept ProjectName : String @pii", StringComparison.Ordinal));
+        Create(Source.Replace("concept ProjectName : String", "concept ProjectName : String pii", StringComparison.Ordinal));
         Repair = Find(DiagnosticCodes.UnknownEvent);
         Result = WorkspaceDiagnosticRepairs.ProposeRepair(Workspace, Repair, Request());
         Result.Accepted.ShouldBeTrue();

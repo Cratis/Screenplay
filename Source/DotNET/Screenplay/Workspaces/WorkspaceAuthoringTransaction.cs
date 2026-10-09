@@ -116,8 +116,14 @@ sealed class WorkspaceAuthoringTransaction(
             throw new InvalidWorkspaceAuthoring("Optionality migrations require a target and expected type.");
         }
 
+        if (request.Operations.OfType<MigrateComplianceMarkerSpelling>().Any(operation => operation.Target is null || operation.Expected is null))
+        {
+            throw new InvalidWorkspaceAuthoring("Compliance migrations require a target and expected concept.");
+        }
+
         var spellingMigrations = request.Operations.OfType<MigrateOptionalTypeSpelling>().GroupBy(operation => operation.Target.Document).ToArray();
-        edits.Prepare([.. request.Operations.Where(operation => operation is not MigrateOptionalTypeSpelling)]);
+        var complianceMigrations = request.Operations.OfType<MigrateComplianceMarkerSpelling>().GroupBy(operation => operation.Target.Document).ToArray();
+        edits.Prepare([.. request.Operations.Where(operation => operation is not (MigrateOptionalTypeSpelling or MigrateComplianceMarkerSpelling))]);
         var candidates = workspace.Documents.ToDictionary(document => document.Id);
         var documentRenames = ImmutableArray.CreateBuilder<DocumentIdentityRename>();
         var retiredDocuments = ImmutableArray.CreateBuilder<string>();
@@ -174,6 +180,16 @@ sealed class WorkspaceAuthoringTransaction(
             }
 
             candidates[spellings.Key] = WorkspaceOptionalityRepairs.Print(index, document, [.. spellings], request.Formatting, _diagnostics);
+        }
+
+        foreach (var spellings in complianceMigrations)
+        {
+            if (edits.Touched.Contains(spellings.Key) || targeted.Contains(spellings.Key) || spellingMigrations.Any(group => group.Key == spellings.Key) || !candidates.TryGetValue(spellings.Key, out var document))
+            {
+                throw new InvalidWorkspaceAuthoring("A compliance migration requires an existing document not targeted by another edit.");
+            }
+
+            candidates[spellings.Key] = WorkspaceComplianceRepairs.Print(index, document, [.. spellings], request.Formatting, _diagnostics);
         }
 
         edits.ValidateFragmentRenames(replacements);

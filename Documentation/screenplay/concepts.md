@@ -1,6 +1,6 @@
 # Concepts
 
-Concepts are formalized value types that wrap a primitive. They give every domain value a precise, strongly-typed name — you never pass a raw `Uuid` or `String` around — and they are where compliance is declared. Attributes declare the protection a concept needs: `@pii` marks personal data; `@sensitive` marks an operational secret, encrypted at rest without erasure and withheld from the causation chain. C# providers map these to Chronicle and Arc attributes as described below.
+Concepts are formalized value types that wrap a primitive. They give every domain value a precise, strongly-typed name — you never pass a raw `Uuid` or `String` around — and they are where compliance is declared. Bare markers declare the protection a concept needs: `pii` marks personal data (GDPR Art. 4(1)); `secret` marks an operational secret, encrypted at rest without erasure and withheld from the causation chain. C# providers map these to Chronicle and Arc attributes as described below.
 
 A concept names one primitive value. For a shape made of several — the child records events carry — see [Types](types.md).
 
@@ -29,18 +29,19 @@ The optional `file` line names the repository relative file this declaration is 
 
 | Attribute | Meaning |
 | --- | --- |
-| `@pii` | The value is personally identifiable information. Chronicle manages it and can erase it for GDPR compliance. |
-| `@sensitive` | Operational secret, not personal data: encrypted at rest without erasure and withheld from the causation chain. |
+| `pii` | Personal data (GDPR Art. 4(1)); renders Chronicle `[PII]`. |
+| `personal` | Alias of `pii`, accepted without a diagnostic; canonical printing writes `pii`. |
+| `secret` | Operational secret, not personal data: encrypted at rest without erasure and withheld from the causation chain. |
 
 C# providers render these attributes on the concept:
 
 | Screenplay | C# attributes |
 | --- | --- |
-| `@sensitive` | `[Encrypted]` + `[NotAudited]` |
-| `@pii` | `[PII]` |
-| `@pii @sensitive` | `[PII]` only |
+| `secret` | `[Encrypted]` + `[NotAudited]` |
+| `pii` | `[PII]` |
+| `pii secret` | `[PII]` only |
 
-`[NotAudited]` alone leaves event values in plaintext; `[Encrypted]` alone does not withhold command inputs from Arc's causation chain. `[PII]` already withholds the value, and Chronicle refuses `[PII]` combined with `[Encrypted]` (`CHR0053`). Encryption uses `[Encrypted]`'s default scope; Screenplay has no encryption-scope syntax. Stage v4.29.0 implements this mapping ([Stage #197](https://github.com/Cratis/Stage/issues/197)).
+`[NotAudited]` alone leaves event values in plaintext; `[Encrypted]` alone does not withhold command inputs from Arc's causation chain. `[PII]` already withholds the value, and Chronicle refuses `[PII]` combined with `[Encrypted]` (`CHR0053`). An omitted scope retains Chronicle's Subject default. Explicit `secret scope subject|namespace|global` records the requested scope; changing it for concepts used by persisted events requires a new event generation. Stage v4.29.0 implements this mapping ([Stage #197](https://github.com/Cratis/Stage/issues/197)).
 
 Compliance attributes are not admitted by the executable semantic model: binding a concept with either marker reports `PLAY0268`. The mapping above describes C# provider rendering, not reference execution.
 
@@ -48,25 +49,47 @@ Compliance attributes are not admitted by the executable semantic model: binding
 
 ```screenplay
 concept InvoiceId        : Uuid
-concept EmailAddress     : String   @pii
-concept ApiKey           : String   @sensitive
-concept NationalIdNumber : String   @pii @sensitive
-concept DateOfBirth      : Date     @pii
+concept EmailAddress     : String   pii
+concept ApiKey           : String   secret
+concept NationalIdNumber : String   pii secret
+concept DateOfBirth      : Date     pii
 ```
 
 ## Why a value is personal data
 
-The marker says a value *is* personal data. It does not say **why** — the purpose it is kept for, the lawful basis, whose subject it lives under, whether it is erasable. That is exactly what a compliance reader opens a Screenplay to find, and Screenplay's stated goal is that concepts carry compliance, not just the flag.
+The marker classifies the value. A `reason` is a free-text concept note, not a machine-checked lawful basis, purpose or retention policy. Existing notes remain unchanged during migration; the compiler never guesses their legal meaning.
 
 An indented `<attribute> reason "<text>"` line records it:
 
 ```screenplay
-concept BankAccount : String @pii @sensitive
+concept BankAccount : String pii secret
   pii reason "Partner payout bank account - financial data. Remits self-billing payments; lawful basis: contract performance / legal obligation. Personal only for sole-proprietor partners."
-  sensitive reason "Fraud-sensitive - a leaked account number enables direct financial harm, so it never leaves the payout path."
+  secret reason "Fraud-sensitive - a leaked account number enables direct financial harm, so it never leaves the payout path."
 ```
 
-Each attribute the concept declares may carry at most one reason, and a reason may only be given for an attribute the concept actually declares — `sensitive reason "…"` on a concept that is only `@pii` is a compile error. A reason is optional throughout: a bare `@pii` stays valid and prints on one line.
+Each attribute the concept declares may carry at most one reason, and a reason may only be given for an attribute the concept actually declares — `secret reason "…"` on a concept that is only `pii` is a compile error. A reason is optional throughout: bare `pii` stays valid and prints on one line.
+
+## Scope and personal-data qualifiers
+
+```screenplay
+concept PartnerApiKey : String secret
+  secret scope namespace
+  secret reason "Credential for the partner API"
+concept MedicalNote : String personal
+  personal special health
+concept ConvictionNote : String pii
+  pii criminal
+```
+
+Scope has the closed values `subject`, `namespace`, `global`. Scope on `pii`, duplicate scope and unknown scope values are errors. Scope on `pii secret` warns: only `[PII]` renders, so the explicit secret scope is ignored.
+
+`pii special` records one GDPR Art. 9(1) category: `racialOrEthnicOrigin`, `politicalOpinions`, `religiousOrPhilosophicalBeliefs`, `tradeUnionMembership`, `genetic`, `biometric`, `health` or `sexLifeOrSexualOrientation`. `pii criminal` records Art. 10 criminal conviction/offense data; it may coexist with `special`. Qualifiers require the personal-data marker; more than one `special` or an unknown category is an error. The `personal` alias works on all personal-data body lines too.
+
+These facts remain syntax-only: binding reports `PLAY0268`, including scopes and qualifiers. They do not promise lawful processing, retention enforcement or reference execution. Provider support for newly declared details and scope must be checked separately.
+
+## Legacy spelling
+
+`@pii`, `sensitive` and `@sensitive` are deprecated but accepted with one `PLAY0565` Information diagnostic per line. Repairs migrate one line or the whole document to bare `pii`/`secret`, preserving comments and quoted notes. Unknown markers such as `@encrypted` are errors (`PLAY0566`). No classification marker may be placed on a property or composite type. The event-property `subject` role is a separate design under [decision 0047](https://github.com/Cratis/Screenplay/blob/main/decisions/0047-data-subject-mark-on-event-properties.md); `secret scope subject` selects encryption scope, not that event role.
 
 ## Enum concepts
 
@@ -91,7 +114,7 @@ concept PaymentTerms : Enum
 A concept can declare validation rules in an optional indented body — business rules that travel with the value everywhere it appears. The rules use the same shapes as command validation (see [Commands](commands.md)): declarative `validate` blocks and imperative `validate` blocks with a ` ```csharp ` fence. The one difference is that the rules omit the property subject — the concept's own value is implied.
 
 ````screenplay
-concept EmailAddress : String @pii
+concept EmailAddress : String pii
   validate
     not empty          message "Email is required"
     matches email      severity warning message "Must be a valid email address"
@@ -140,17 +163,17 @@ In the compiled syntax tree the implied subject is represented by the well-known
 
 ## Identifiers cannot be personal data or operational secrets
 
-An event source identifier cannot be encrypted or erased. A concept marked `@pii` or `@sensitive` cannot be used as a command `identifier`, as an explicit `for` destination, or as an `eventsource` identifier (`PLAY0515`, mirroring Chronicle `CHR0034` for `[PII]` and `CHR0052` for `[Encrypted]`). Use a surrogate `Uuid` concept for identity and keep the personal value or operational secret in an ordinary property:
+An event source identifier cannot be encrypted or erased. A concept marked `pii` or `secret` cannot be used as a command `identifier`, as an explicit `for` destination, or as an `eventsource` identifier (`PLAY0515`, mirroring Chronicle `CHR0034` for `[PII]` and `CHR0052` for `[Encrypted]`). Use a surrogate `Uuid` concept for identity and keep the personal value or operational secret in an ordinary property:
 
 ```screenplay
 concept PatientId : Uuid
-concept NationalId : String @pii
+concept NationalId : String pii
 ```
 
-The meaning and C# provider mapping are recorded in [decision 0034](https://github.com/Cratis/Screenplay/blob/main/decisions/0034-sensitive-means-operational-secret.md).
+The mapping follows [decision 0034](https://github.com/Cratis/Screenplay/blob/main/decisions/0034-sensitive-means-operational-secret.md); names, scope and qualifiers follow [decision 0041](https://github.com/Cratis/Screenplay/blob/main/decisions/0041-personal-data-secrets-and-processing-purposes.md). Processing-purpose declarations, purpose coverage checks and a processing record are later phases, not available language features.
 
 ## Attribute inheritance
 
-When a concept is used as a property type on a command or event, its attributes are inherited — you never annotate at the property level. Declaring `EmailAddress` as `@pii` once means every event property, command property, and read model field typed as `EmailAddress` is treated as PII automatically.
+When a concept is used as a property type on a command or event, its attributes are inherited — you never annotate at the property level. Declaring `EmailAddress` as `pii` once means every event property, command property, and read model field typed as `EmailAddress` is treated as PII automatically.
 
-This holds through composite [types](types.md) too: a `@pii` concept inside a `type` is personal data wherever that type is used.
+This holds through composite [types](types.md) too: a `pii` concept inside a `type` is personal data wherever that type is used.

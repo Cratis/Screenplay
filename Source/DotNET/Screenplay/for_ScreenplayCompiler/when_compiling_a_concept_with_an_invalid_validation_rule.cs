@@ -10,7 +10,7 @@ public class when_compiling_a_concept_with_an_invalid_validation_rule : given.a_
 {
     const string Source =
         """
-        concept EmailAddress : String @pii
+        concept EmailAddress : String pii
           validate
             wibble 42
             not empty  message "Email is required"

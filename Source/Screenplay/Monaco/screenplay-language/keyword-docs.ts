@@ -13,9 +13,9 @@ export const keywordDocs: Record<string, string> = {
     example: 'One typed, possibly partial fixture: `example <Name> : <EventOrCommandOrReadModel>`. Use its name in a matching specification step; assignments override example values without changing matching or supplying defaults. Event examples may carry stream or no stream; a step replaces that route as a whole.',
     domain: 'The domain the file belongs to — optional, at most one per file, before everything else.',
     import: 'Imports a type from another module by its qualified name — `import Module.Type` — making it available by its short name; or, quoted, other `.play` files by path or glob — `import "Orders/**/*.play"`, relative to this file\'s folder. Written inside a module or feature, a file import places the imported files there: their top level is that module\'s or feature\'s body.',
-    concept: 'A formalized value type wrapping a primitive. Attributes such as `@pii` travel with every usage, optionally with a `<attribute> reason "..."` line saying why.',
+    concept: 'A formalized value type wrapping a primitive. Bare pii and secret markers travel with every usage, with optional concept notes and qualifiers.',
     type: 'A composite value type — a named shape built from several properties, referenced by events, commands and other types the same way a concept is.',
-    reason: 'Records why a concept attribute applies — the purpose, the lawful basis, whose subject the value lives under. Written as `pii reason "..."` in the concept body.',
+    reason: 'A free-text concept note, not a lawful basis. Written as pii reason "..." or secret reason "..."; migration preserves it verbatim.',
     optional: 'Allows a value to be absent. Write it after the type: `note String optional` or `lines InvoiceLine[] optional`. The collection itself may be absent; its items keep their declared type.',
     identifier: 'Marks the command property a runtime resolves the event source id from. At most one per command; without it a new Uuid is generated.',
     policy: 'A named authorization rule referenced by commands and queries. Multiple policies AND together.',
@@ -152,8 +152,10 @@ export const specificationKeywordDocs: Record<string, string> = {
 };
 
 export const attributeDocs: Record<string, string> = {
-    pii: '`@pii` — the value is personally identifiable information; C# providers render `[PII]`, so Chronicle manages it and can erase it for GDPR compliance wherever the concept is used. Add `pii reason "..."` in the concept body to record why.',
-    sensitive: '`@sensitive` — Operational secret, not personal data: encrypted at rest without erasure and withheld from the causation chain. C# providers render `[Encrypted]` + `[NotAudited]`, or `[PII]` only when combined with `@pii`. Cannot be used as identity (PLAY0515). Add `sensitive reason "..."` in the concept body to record why.',
+    pii: 'personal data (GDPR Art. 4(1)); renders Chronicle [PII]. Bare suffix marker; @pii is deprecated (PLAY0565). Not admitted by the executable model (PLAY0268).',
+    personal: 'Alias of pii: personal data (GDPR Art. 4(1)); renders Chronicle [PII]. No diagnostic; canonical printing writes pii.',
+    secret: 'Operational secret, not personal data: encrypted at rest without erasure and withheld from causation. Provider mapping: [Encrypted] + [NotAudited], or [PII] only with pii. Cannot be identity (PLAY0515). Not admitted by the executable model (PLAY0268).',
+    sensitive: 'Deprecated spelling of secret (PLAY0565); repair to bare secret. Operational secret, not GDPR Art. 9 special-category data.',
 };
 
 export const contextVariableDocs: Record<string, string> = {
