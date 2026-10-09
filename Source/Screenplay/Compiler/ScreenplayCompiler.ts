@@ -12,6 +12,7 @@ import { documentPlacement, PlayPlacement } from './Files/PlayPlacement';
 import { DiscoveredImport, discoverImports as discoverImportsIn } from './Parsing/ImportDiscovery';
 import { InputUse } from './Parsing/InputUses';
 import { validateResponses } from './Parsing/ResponseValidator';
+import { validatePublicEventUsage } from './Parsing/PublicEventUsageValidator';
 import { sourceContext } from './Parsing/SourceOptionsParser';
 import { validateInlineEvents } from './Parsing/InlineEventValidator';
 import { validateOperations } from './Parsing/OperationValidator';
@@ -75,6 +76,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateInlineEvents(value, context);
         validateConstraintProperties(value, context);
         validateOperations(value, context);
+        validatePublicEventUsage(value, context);
         validateSpecificationCases(value, context);
         const effective = expandSpecificationExamples(value);
         validateResponses(effective, context);
@@ -98,6 +100,13 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         inputUses: context.inputUses,
         success: !context.diagnostics.some(diagnostic => diagnostic.severity === 'error'),
     };
+}
+
+/** Checks public boundaries on programmatically authored or decoded assembled syntax. */
+export function publicEventDiagnostics(application: ApplicationSyntax): readonly Diagnostic[] {
+    const context = sourceContext([], application.location.path);
+    validatePublicEventUsage(application, context);
+    return context.diagnostics;
 }
 
 // Parses a document and hands its syntax tree to a visitor - the counterpart of the C#

@@ -3,6 +3,8 @@
 
 export * from './SyntaxNode';
 export * from './Declarations';
+export * from './EventVisibility';
+export * from './TranslationDirection';
 export * from './EventDeclarations';
 export * from './EventSources';
 export * from './EventSourceCatalog';
@@ -31,6 +33,8 @@ export * from './FormPopulateViaQuerySyntax';
 export * from './FormPopulateFromItemSyntax';
 export * from './TriggerDataSyntax';
 export * from './Captures';
+export * from './CaptureEventsSource';
+export { dependencySourcesOf } from './DependencySources';
 export * from './Authorization';
 export * from './Constraints';
 export * from './Specifications';

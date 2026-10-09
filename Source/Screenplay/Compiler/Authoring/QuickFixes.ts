@@ -7,6 +7,8 @@ import { PlayPlacement } from '../Files/PlayPlacement';
 import { commentStart, splitLines } from '../Parsing/SourceLineSplitter';
 import { parseForAuthoring } from '../ScreenplayCompiler';
 import { EventSyntax } from '../Syntax/Declarations';
+import { SliceSyntax } from '../Syntax/Structure';
+import { TranslationDirection } from '../Syntax/TranslationDirection';
 import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
 import { pattern } from '../Text/patterns';
 import { QuickFixCandidate } from './QuickFixCandidate';
@@ -31,7 +33,7 @@ export interface QuickFixOptions {
 }
 
 export function isQuickFixDiagnostic(code: unknown): code is string {
-    return code === DiagnosticCodes.LegacyOptionalSuffix || code === DiagnosticCodes.LegacyComplianceMarker || code === DiagnosticCodes.RedundantEventId;
+    return code === DiagnosticCodes.LegacyOptionalSuffix || code === DiagnosticCodes.LegacyComplianceMarker || code === DiagnosticCodes.RedundantEventId || code === DiagnosticCodes.PublicTranslationRequiresDirection;
 }
 
 // Diagnostics point at the complete type, not at the suffix. Never derive edits from message text.
@@ -49,12 +51,19 @@ export function findQuickFixes(source: string, options: QuickFixOptions = {}): Q
 // together once per version, rather than reparsing N times for N intersecting markers.
 export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions, 'placement'> = {}): (line?: number | readonly { line: number; diagnosticCode: string }[], diagnosticCode?: string) => QuickFix[] {
     const original = parseForAuthoring(source, undefined, options.placement);
-    if (!original.success) return () => [];
+    // PLAY0614 and the public-event boundary errors that follow from a missing direction are errors the repair itself removes,
+    // so a document whose only errors are public-event boundary errors stays repairable.
+    const publicEventCodes: ReadonlySet<string> = new Set(Array.from({ length: 14 }, (_, index) => `PLAY0${607 + index}`));
+    const acceptable = (parsed: ReturnType<typeof parseForAuthoring>): boolean => parsed.success || parsed.diagnostics.every(diagnostic => diagnostic.severity !== 'error' || publicEventCodes.has(diagnostic.code));
+    const errorCodes = (parsed: ReturnType<typeof parseForAuthoring>): Set<string> => new Set(parsed.diagnostics.filter(diagnostic => diagnostic.severity === 'error').map(diagnostic => diagnostic.code));
+    if (!acceptable(original)) return () => [];
     const lines = splitLines(source);
     const eventsByLine = new Map<number, EventSyntax>();
+    const slicesByLine = new Map<number, SliceSyntax>();
     // Index inline and standalone declarations once, without scanning the tree per diagnostic.
     const walker = new class extends ScreenplaySyntaxWalker {
         override visitEvent(event: EventSyntax): void { eventsByLine.set(event.location.line, event); }
+        override visitSlice(slice: SliceSyntax): void { slicesByLine.set(slice.location.line, slice); super.visitSlice(slice); }
     }();
     walker.visitApplication(original.value);
     const counts = new Map<string, number>();
@@ -74,6 +83,26 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
         } else if (diagnostic.code === DiagnosticCodes.LegacyComplianceMarker) {
             const edit = complianceMarkerEdit(line.raw, line.startOffset);
             if (edit !== undefined) byLine.set(line.number, { line: line.number, fix: { diagnosticCode: diagnostic.code, title: 'Use bare pii and secret compliance markers', scope: 'occurrence', edits: [edit] } });
+        } else if (diagnostic.code === DiagnosticCodes.PublicTranslationRequiresDirection) {
+            // PLAY0614 is only reported on the declaration line of a Translate slice that has no direction.
+            const slice = slicesByLine.get(line.number)!;
+            // Offer a direction only when exactly one is consistent with the slice: the other would add errors.
+            const indent = /^\s*/.exec(line.raw)![0];
+            const ending = source.includes('\r\n') ? '\r\n' : '\n';
+            const candidates = [TranslationDirection.Inbound, TranslationDirection.Outbound].map(direction => ({ direction, text: `${ending}${indent}  direction ${direction === TranslationDirection.Inbound ? 'inbound' : 'outbound'}` }))
+                .filter(candidate => {
+                    // The insertion point is the end of an existing line, so the edit is always in bounds.
+                    const edited = applyQuickFixEdits(source, [{ start: line.startOffset + line.raw.length, length: 0, text: candidate.text }])!;
+                    const parsed = parseForAuthoring(edited, undefined, options.placement);
+                    const originalCodes = errorCodes(original);
+                    // Valid when the missing-direction error is gone and the direction introduces no kind of error the document lacked.
+                    return acceptable(parsed) && ![...errorCodes(parsed)].some(code => code === DiagnosticCodes.PublicTranslationRequiresDirection || !originalCodes.has(code));
+                });
+            if (candidates.length === 1) {
+                const [{ direction, text }] = candidates;
+                byLine.set(line.number, { line: line.number, fix: { diagnosticCode: diagnostic.code, title: `Declare 'direction ${direction === TranslationDirection.Inbound ? 'inbound' : 'outbound'}'`, scope: 'occurrence', edits: [{ start: line.startOffset + line.raw.length, length: 0, text }] },
+                    change: { node: slice, replacement: { ...slice, direction } as SliceSyntax } });
+            }
         } else if (diagnostic.code === DiagnosticCodes.RedundantEventId && commentStart(line.raw) < 0) {
             const declaration = events.get(line.number);
             if (declaration?.id !== declaration?.name || declaration === undefined) continue;
@@ -91,7 +120,7 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
         const candidate = applyQuickFixEdits(source, fix.edits);
         if (candidate === undefined) return undefined;
         const parsed = parseForAuthoring(candidate, undefined, options.placement);
-        if (!parsed.success || verificationShape(parsed) !== (change === undefined ? syntax : verificationShape(original, [change]))) return undefined;
+        if (!acceptable(parsed) || verificationShape(parsed) !== (change === undefined ? syntax : verificationShape(original, [change]))) return undefined;
         return parsed.diagnostics.filter(diagnostic => diagnostic.code === fix.diagnosticCode).length === (counts.get(fix.diagnosticCode) ?? 0) - fix.edits.length ? fix : undefined;
     };
     return (line, diagnosticCode) => {
@@ -118,7 +147,7 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
                 if (edits.length > 0 && candidateSource !== undefined) {
                     const parsed = parseForAuthoring(candidateSource, undefined, options.placement);
                     const changes = candidates.flatMap(candidate => candidate.change === undefined ? [] : [candidate.change]);
-                    if (parsed.success && verificationShape(parsed) === verificationShape(original, changes)) {
+                    if (acceptable(parsed) && verificationShape(parsed) === verificationShape(original, changes)) {
                         const remaining = new Map<string, number>();
                         const removed = new Map<string, number>();
                         for (const diagnostic of parsed.diagnostics) remaining.set(diagnostic.code, (remaining.get(diagnostic.code) ?? 0) + 1);

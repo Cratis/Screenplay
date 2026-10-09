@@ -4,6 +4,7 @@
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Text;
 
 namespace Cratis.Screenplay.Parsing;
 
@@ -23,7 +24,14 @@ internal static partial class EventParser
         var name = HeaderRegex().Match(header.Content);
         if (!name.Success)
         {
-            context.Error(DiagnosticCodes.InvalidEventDeclaration, $"Invalid event declaration '{header.Content}' - expected 'event <Name> [generation <N>]'", header.Location);
+            context.Error(DiagnosticCodes.InvalidEventDeclaration, $"Invalid event declaration '{header.Content}' - expected '[public] event <Name> [generation <N>] [from \"<origin>\"]'",  header.Location);
+        }
+
+        var origin = name.Groups["origin"].Success ? StringLiteral.Unescape(name.Groups["origin"].Value) : null;
+        var visibility = name.Groups["public"].Success || origin is not null ? EventVisibility.Public : EventVisibility.Private;
+        if (origin is not null && string.IsNullOrWhiteSpace(origin))
+        {
+            context.Error(DiagnosticCodes.InvalidEventDeclaration, "An event origin must be a nonblank quoted string", header.Location);
         }
 
         var hasGenerationMarker = name.Groups[2].Success;
@@ -70,7 +78,7 @@ internal static partial class EventParser
             }
         }
 
-        return metadata.Apply(new(name.Groups[1].Value, properties, header.Location, tags) { File = file, Generation = generation, HasGenerationMarker = hasGenerationMarker, DirectiveLocations = directiveLocations });
+        return metadata.Apply(new(name.Groups[1].Value, properties, header.Location, tags) { File = file, Visibility = visibility, Origin = origin, Generation = generation, HasGenerationMarker = hasGenerationMarker, DirectiveLocations = directiveLocations });
     }
 
     /// <summary>
@@ -97,7 +105,7 @@ internal static partial class EventParser
             line.Location);
     }
 
-    [GeneratedRegex(@"^event\s+([A-Za-z_]\w*)(?:\s+generation\s+([0-9]+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(?:(?<public>public)\s+)?event\s+([A-Za-z_]\w*)(?:\s+generation\s+([0-9]+))?(?:\s+from\s+""(?<origin>" + StringLiteral.BodyPattern + @")"")?$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
 
     [GeneratedRegex(@"^[A-Z]\w*(?:\[\])?(?:\?|\s+optional)?$", RegexOptions.None, 1000)]

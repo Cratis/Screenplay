@@ -19,6 +19,8 @@ applies-to:
   - Documentation/screenplay/reactions.md
 ---
 
+> **2026-10-09 - clarification.** The "outbox side (publishing to another application)" listed as out of scope below is now addressed by proposed [decision 0049](0049-public-events-and-translation-direction.md) (public events, quoted origin, translation direction). The choices recorded here are unchanged; 0049 does not supersede this record.
+
 ## Context
 
 [#73](https://github.com/Cratis/Screenplay/issues/73) asks how a model states that an occurrence comes from another application, and how it becomes a local fact, without observer, sequence, subscription or transport vocabulary. Its criteria require that the source occurrence and the translated local fact stay distinct. The triage left three choices open: where the origin lives, whether the source name is resolved or opaque, and whether translation is a construct of its own or a reaction that produces.

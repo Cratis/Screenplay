@@ -27,7 +27,7 @@ static class WorkspaceOpaqueText
         CodeBlockSyntax code => [code.Language, code.Code],
         ImportSyntax import => [import.QualifiedName],
         FileReferenceSyntax file => [file.Path],
-        CaptureSourceSyntax source => [source.Kind, .. source.Settings.SelectMany(setting => new[] { setting.Name, setting.Value })],
+        CaptureSourceSyntax source => [source.Kind, .. source.Settings.SelectMany(setting => CaptureEventsSource.IsEvents(source) && setting.Name == CaptureEventsSource.FromSetting ? [setting.Name] : new[] { setting.Name, setting.Value })],
         CaptureWhenSyntax { Expression: not null } trigger => [trigger.Expression, trigger.FromValue ?? string.Empty, trigger.ToValue ?? string.Empty],
         FormFieldSyntax { ComposeUsing: not null } field => [field.ComposeUsing, field.From ?? string.Empty, field.Label ?? string.Empty],
         _ => null

@@ -98,8 +98,12 @@ public partial class ScreenplayPrinter
 
     void WriteEvent(ScreenplayWriter writer, EventSyntax @event)
     {
+        ImplementationInvariants.Validate(@event);
         using var anchor = writer.Anchor(@event);
-        writer.Line(@event.HasGenerationMarker || @event.Generation != 1 ? $"event {@event.Name} generation {@event.Generation}" : $"event {@event.Name}");
+        var visibility = @event.Visibility == EventVisibility.Public ? "public " : string.Empty;
+        var generation = @event.HasGenerationMarker || @event.Generation != 1 ? $" generation {@event.Generation}" : string.Empty;
+        var origin = @event.Origin is null ? string.Empty : $" from {StringLiteral.Quote(@event.Origin)}";
+        writer.Line($"{visibility}event {@event.Name}{generation}{origin}");
         using (writer.Indent())
         {
             WriteEventMetadata(writer, @event);
@@ -444,6 +448,11 @@ public partial class ScreenplayPrinter
 
         if (produces.InlineEvent is { } inline)
         {
+            if (inline.Visibility != EventVisibility.Private || inline.Origin is not null)
+            {
+                throw new UnsupportedSyntaxForPrinting("inline event public visibility or origin", inline.Name);
+            }
+
             writer.Line($"produces event {inline.Name}");
             using (writer.Indent())
             {

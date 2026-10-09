@@ -7,6 +7,7 @@ import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax, EventStreamI
 import { PropertyMappingSyntax } from './Expressions';
 import { HandlerSyntax, ImplementationSyntax, ImplementationHintSyntax } from './Implementations';
 import { InvalidSyntaxJson } from './InvalidSyntaxJson';
+import { publicEventMetadataError } from './PublicEventInvariants';
 import { OperationPhaseSyntax } from './Operations';
 import { ProducesSyntax } from './Reactions';
 import { SyntaxNode } from './SyntaxNode';
@@ -28,6 +29,8 @@ const collection = (value: unknown, kind: string, message: string): void => {
 // The native ImplementationInvariants / OperationInvariants / EventSourceInvariants contracts.
 // Shared by the isolated strict reader and the writer, without pulling the transport schema into Monaco.
 export function validateSyntaxInvariants(node: SyntaxNode): void {
+    const metadataError = publicEventMetadataError(node);
+    if (metadataError !== undefined) refuse(metadataError);
     if (node.kind === 'ConceptSyntax') {
         const concept = node as ConceptSyntax;
         for (const validation of concept.validations ?? []) {

@@ -8,6 +8,23 @@ import { analyzeOperations, DocumentSymbols, importablePaths, mergeSymbols, scan
 // imports resolve, and whether it holds what the module or feature it is placed in can. An import with the
 // wrong shape is left out - the editor reports that itself, as it is typed.
 const surfacedCodes = new Set<string>([
+    DiagnosticCodes.InvalidEventDeclaration,
+    DiagnosticCodes.InvalidImportDeclaration,
+    DiagnosticCodes.InvalidSliceDeclaration,
+    DiagnosticCodes.CommandProducesPublicEvent,
+    DiagnosticCodes.PublicEventRequiresOutboundTranslation,
+    DiagnosticCodes.OutboundPublicEventCount,
+    DiagnosticCodes.ForeignPublicEventConsumer,
+    DiagnosticCodes.OutboundTranslationInput,
+    DiagnosticCodes.InboundTranslationOutput,
+    DiagnosticCodes.ForeignPublicEventProduced,
+    DiagnosticCodes.PublicTranslationRequiresDirection,
+    DiagnosticCodes.TranslationConstructDirection,
+    DiagnosticCodes.InboundTranslationInput,
+    DiagnosticCodes.OutboundTranslationOutput,
+    DiagnosticCodes.EventTargetOutsideOutboundTranslation,
+    DiagnosticCodes.EventsSourceOutsideInboundTranslation,
+    DiagnosticCodes.InvalidCaptureEventsSource,
     DiagnosticCodes.InvalidAbsentReadModelStep,
     DiagnosticCodes.UnknownConstraintProperty,
     DiagnosticCodes.OmittedProductionDestination,
@@ -162,7 +179,17 @@ export class WorkspaceApplication {
     // What compiling the application reports in a file about its imports and its placement.
     diagnosticsFor(path: string): Diagnostic[] {
         const key = normalizePlayPath(path);
-        return this.#compiled().diagnostics.filter(diagnostic => diagnostic.location.path === key && surfacedCodes.has(diagnostic.code));
+        const unknownEventLines = new Set<number>();
+        return this.#compiled().diagnostics.filter(diagnostic => {
+            if (diagnostic.location.path !== key || !surfacedCodes.has(diagnostic.code)) return false;
+            // Contract classification and legacy capture validation can flag the same unresolved append.
+            // Keep one editor finding without altering either compiler's diagnostic stream.
+            if (diagnostic.code === 'PLAY0166') {
+                if (unknownEventLines.has(diagnostic.location.line)) return false;
+                unknownEventLines.add(diagnostic.location.line);
+            }
+            return true;
+        });
     }
 
     // Where the imports of the application place a file - undefined when the application does not hold it.

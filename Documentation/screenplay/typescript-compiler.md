@@ -4,7 +4,7 @@ Quoted and fenced descriptions on concepts, policies, constraints, projection he
 
 The C# compiler is the authority on Screenplay, but not everything that reads a `.play` document runs .NET. An editor extension, a web page or a build script written in TypeScript needs the same syntax tree without starting a process. `@cratis/screenplay-compiler` parses `.play` documents in TypeScript into the syntax tree the C# compiler produces, for the constructs that describe an event model. The [VS Code extension](vscode.md) uses it to draw the event model board.
 
-It parses and checks inline-event declaration collisions and destination consistency; it does not bind an executable model. General reference resolution and the remaining semantic checks the C# compiler runs after parsing are not part of it. A document the C# compiler rejects for a semantic reason is one this compiler reads without complaint, so keep the C# compiler, or the [CLI](tool.md), as the gate. [Editor diagnostic support](editor-diagnostics.md) describes the validation boundary and which checks each surface runs.
+It parses and checks inline-event declaration collisions and destination consistency; it does not bind an executable model. Public/private event boundaries are checked against scoped declarations in the assembled application, including imported contracts and seed appends. General reference resolution and the remaining semantic checks the C# compiler runs after parsing are not part of it. A document the C# compiler rejects for a semantic reason is one this compiler reads without complaint, so keep the C# compiler, or the [CLI](tool.md), as the gate. [Editor diagnostic support](editor-diagnostics.md) describes the validation boundary and which checks each surface runs.
 
 ## Parse a document
 
@@ -38,6 +38,8 @@ const result = parseFolder([
 ```
 
 The compiler reads no files itself. You pass each document's path, relative to the folder, and its text, so the same call works in Node, in a browser and in an editor whose open files have unsaved changes.
+
+For an assembled tree authored programmatically or decoded from AST JSON, `publicEventDiagnostics(application)` returns public metadata and usage diagnostics with the same codes, messages, severities and locations. It checks operational edges, not specification fixtures. Projection `all` subscribes to every declared event and public import; `every` only maps existing inputs. Unknown and ambiguous references are not classified as private. Event-target projections and reducers (`=>` resolving to an event) and `source events` captures need no AST member: the collector reads the projection target and the capture source's `from` settings (`consumedEvents`), so `PLAY0618`–`PLAY0620` and the input/output checks apply to them exactly as in the C# compiler. Validation does not change semantic admission.
 
 ## Turn the tree into your own artifacts
 
@@ -98,6 +100,7 @@ The compiler reads what an event model is made of:
 - fenced Markdown documentation on modules, features, slices, commands, read models and reactions, and quoted or fenced-text specification descriptions (report-only authoring metadata)
 - guarded screen actions with nearest-subject field paths, command input properties and collection cardinality, and provable alternative shadowing (PLAY0345–PLAY0348)
 - standalone and inline events with their tags, descriptions, documentation, and rename pins
+- standalone public-event visibility, opaque event/import origins, and optional inbound/outbound Translate direction (syntax-only)
 - commands with their properties, declarative `validate` rules, and productions (typed mappings, destinations and `produces when` conditions included)
 - queries with their parameters
 - the events each projection block consumes
@@ -121,6 +124,8 @@ Everything else is recognized and skipped whole, without a diagnostic. That cove
 - trigger implementation code
 
 For the syntax and authoring checks it supports, it uses the C# diagnostic codes, lines and order. [Editor diagnostic support](editor-diagnostics.md) lists the shared checks, C#-only scoped/semantic/completeness checks and the deliberate legacy absence-assertion exception.
+
+Public-event metadata uses the C# AST members: `EventSyntax.visibility` and `ImportSyntax.visibility` (`Private` by default), nullable `origin`, and nullable `SliceSyntax.direction` (`Inbound` or `Outbound`, only on Translate slices). Origins are nonblank opaque strings, never filesystem imports or declaration references. An origin requires public visibility; a public contract import requires an origin. Default metadata is omitted from structural JSON so legacy bytes stay unchanged. Typed authoring rejects inconsistent metadata before writing it. The board document retains nondefault metadata on declared events and slices; it does not infer delivery behavior. The C# binder explicitly refuses nondefault metadata with `PLAY0268`; TypeScript has no executable binder or canonical `.play` printer.
 
 `ProducesSyntax.inlineEvent` preserves inline authoring structure. Use `eventDeclarations(slice)` to enumerate both standalone and command-inline events; the walker visits both, and the event model board draws them with the same slice-owned identity.
 

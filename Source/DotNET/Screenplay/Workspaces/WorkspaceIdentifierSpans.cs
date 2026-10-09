@@ -31,7 +31,7 @@ internal static partial class WorkspaceIdentifierSpans
             (DependsOnSyntax, "target") => keyword == "depends",
             (SliceSyntax, "name") => keyword == "slice",
             (CommandSyntax, "name") => keyword == "command",
-            (EventSyntax, "name") => keyword == "event" || (keyword == "produces" && line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).ElementAtOrDefault(1) == "event"),
+            (EventSyntax, "name") => keyword == "event" || keyword == "public" || (keyword == "produces" && line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).ElementAtOrDefault(1) == "event"),
             (ReadModelSyntax, "name") => keyword == "readmodel",
             (QuerySyntax, "name") => keyword == "query",
             (ReactionSyntax, "name") => keyword == "reaction",
@@ -47,6 +47,7 @@ internal static partial class WorkspaceIdentifierSpans
             (ProducesSyntax, "event") => keyword == "produces",
             (SeedEventSyntax, "event") => keyword == "event" || keyword == "append",
             (CaptureAppendSyntax, "event") => keyword == "append",
+            (CaptureSourceSettingSyntax, "value") => keyword == "from",
             (EventSpecSyntax, "event") => keyword == "from",
             (JoinEventSyntax, "event") => keyword == "with",
             (ClearWithSyntax, "event") => keyword == "clear",
@@ -84,6 +85,13 @@ internal static partial class WorkspaceIdentifierSpans
 
     internal static IEnumerable<(int Offset, int Length)> Find(SyntaxNode node, string member, string line, string expected)
     {
+        if (node is EventSyntax && member == "name")
+        {
+            var match = EventHeaderRegex().Match(line);
+            var group = match.Groups["name"];
+            return match.Success && group.Value == expected ? [(group.Index, group.Length)] : [];
+        }
+
         if (node is CaseValueExpressionSyntax && member == "parameter")
         {
             return Find(line, $"case.{expected}").Select(span => (span.Offset + 5, span.Length - 5));
@@ -148,6 +156,9 @@ internal static partial class WorkspaceIdentifierSpans
             }
         }
     }
+
+    [GeneratedRegex(@"^(?:(?:public\s+)?event|produces\s+event)\s+(?<name>[A-Za-z_]\w*)", RegexOptions.None, 1000)]
+    private static partial Regex EventHeaderRegex();
 
     [GeneratedRegex(@"^when\s+redelivered\s+(?<eventType>[A-Za-z_]\w*(?:\.\w+)*)\s+to\s+(?<reaction>[A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
     private static partial Regex RedeliveryRegex();

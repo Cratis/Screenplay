@@ -1,0 +1,217 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": {
+    "kind": "DomainSyntax",
+    "name": "Contracts"
+  },
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [
+    {
+      "kind": "ImportSyntax",
+      "origin": "shipping",
+      "qualifiedName": "Shipping.ShipmentDispatched",
+      "visibility": "Public"
+    }
+  ],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Translation",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "direction": "Outbound",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "OrderPacked",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "orderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": []
+                },
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "OrderShipped",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "orderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": [],
+                  "visibility": "Public"
+                }
+              ],
+              "name": "PublishOrderShipped",
+              "operations": [],
+              "projections": [
+                {
+                  "kind": "ProjectionSyntax",
+                  "autoMap": "Inherit",
+                  "blocks": [
+                    {
+                      "kind": "FromSyntax",
+                      "events": [
+                        {
+                          "kind": "EventSpecSyntax",
+                          "event": "OrderPacked"
+                        }
+                      ],
+                      "mappings": [
+                        {
+                          "kind": "SetMappingSyntax",
+                          "property": "status"
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "OrderShippedPublisher",
+                  "readModel": "OrderShipped",
+                  "sequence": null
+                }
+              ],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "Translate"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [
+                {
+                  "kind": "CaptureSyntax",
+                  "appends": [
+                    {
+                      "kind": "CaptureAppendSyntax",
+                      "event": "OrderDispatched"
+                    }
+                  ],
+                  "children": [],
+                  "key": "orderId",
+                  "name": "ShipmentTracking",
+                  "nested": [],
+                  "source": {
+                    "kind": "CaptureSourceSyntax",
+                    "settings": [
+                      {
+                        "kind": "CaptureSourceSettingSyntax",
+                        "name": "from",
+                        "value": "ShipmentDispatched"
+                      }
+                    ],
+                    "syntaxKind": "events"
+                  }
+                }
+              ],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "direction": "Inbound",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "OrderDispatched",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "orderId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "TrackShipments",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "Translate"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Integration"
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

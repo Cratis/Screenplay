@@ -5,7 +5,7 @@ Events are immutable, past-tense facts — the record of something that happened
 ## Syntax
 
 ```screenplay
-event <Name> [generation <N>]
+[public] event <Name> [generation <N>] [from "<origin>"]
   [file <path>]
   [description "<text>"]
   [documentation <fenced markdown>]
@@ -29,6 +29,35 @@ event ProjectRegistered generation 2
 The optional `file` line names the repository relative file this declaration is realized by, so a document can be navigated back to the code it describes. It is additive - it never stands in for any part of the declaration. See [File references](file-references.md).
 
 For an existing catalog, advance a contract only with `SemanticIdentityCatalog.PlanEventRevisionAdvancement(previous, expectedRevision, documentKeys, semanticAddresses, eventAddresses, advancements)`. Supply the complete current addresses and an explicit `(event address, new revision)` advancement. The plan checks the exact previous catalog revision, retains the contract id, carries generation-1 property IDs to revision-qualified addresses, and refuses backward or stale advancement. A fresh compile can bootstrap all property identities for each declared revision and record revision N in its returned `SemanticCompilation.Documents.IdentityCatalog`; persist that catalog before subsequent edits. Workspace transactions can supply the same explicit advancement through `WorkspaceTransactionRequest.EventRevisionAdvancements`, checked against `ExpectedCatalogRevision`. Newly introduced events receive their declared revision without an advancement. Declaring fewer generations than a persisted catalog records fails binding.
+
+## Public contracts and origin (source only)
+
+Unmarked events remain private local facts. Mark a local contract `public event Shipped`.
+An event from another application uses `event Dispatched from "Fulfillment"`; an origin implies
+public visibility, so `public event Dispatched from "Fulfillment"` means the same thing.
+The origin is an opaque, nonblank string. It is never resolved as a declaration or filesystem
+path, and renaming a declaration never rewrites it. Quotes, backslashes and control characters
+use the ordinary [string escaping rules](grammar.md). When combining origin and generation,
+write the generation first: `public event Dispatched generation 1 from "Fulfillment"`.
+
+The C# and TypeScript parsers, printers, typed AST JSON, authoring workspace, Monaco, VS Code and the event model
+board preserve these fields. Source acceptance is **not execution support**: public visibility or any origin refuses
+semantic compilation with `PLAY0268` naming #481, rather than silently returning a local-event
+ESM. No ESM version is allocated, so Stage and renderers do not realize these contracts yet; do not treat this as a
+runnable example. See [decision 0049](https://github.com/Cratis/Screenplay/blob/main/decisions/0049-public-events-and-translation-direction.md)
+(proposed) for why the origin is a quoted store name and how direction defaults.
+Inline `produces event` keeps its existing syntax; use a standalone declaration for these fields.
+
+The assembled model (C# and TypeScript compilers, both editors) validates contract usage, not just headers. Commands cannot publish public events.
+An explicitly outbound Translate slice consumes private local events and produces exactly one local public
+contract type. An explicitly inbound Translate slice consumes foreign public contracts and produces private
+local events. Other slices cannot consume foreign contracts. A translation declaring or using public metadata
+must state its direction; legacy translations without public metadata retain their historical inbound behavior.
+An outbound slice publishes its public event with a [projection or reducer that targets it](projections/index.md#projecting-to-an-event)
+or a reaction; an inbound slice consumes foreign public events with [`source events`](captures.md#capturing-from-public-events)
+or a reaction. Both forms are source-only for now and refuse semantic compilation with `PLAY0268`.
+Qualified references and imports use declaration scope, not a name-based guess. See
+[Public event boundary diagnostics](diagnostics.md#public-event-boundaries) for the codes and current construct limits.
 
 ## Example
 

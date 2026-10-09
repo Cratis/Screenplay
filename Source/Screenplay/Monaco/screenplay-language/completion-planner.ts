@@ -81,6 +81,7 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
             return items.typeItems;
         case 'command':
             return items.commandItems;
+        case 'public':
         case 'event':
             return items.eventItems;
         case 'readmodel':
@@ -248,7 +249,7 @@ export function planCompletions(
     if (ruleContext === 'implementation') return { kind: 'entries', entries: items.namedRuleImplementationItems };
     if (ruleContext === 'rule') return { kind: 'entries', entries: items.commandRuleItems };
 
-    const propertyOwner = ['event', 'command', 'type', 'readmodel', 'trigger', 'when', 'every', 'at'].includes(chain[0]) ||
+    const propertyOwner = ['public', 'event', 'command', 'type', 'readmodel', 'trigger', 'when', 'every', 'at'].includes(chain[0]) ||
         (chain[0] === 'produces' && /^produces\s+event\b/.test(nearestEnclosingLine(lines, fences, lineIndex, effectiveIndent) ?? ''));
     const propertyName = textBefore.trimStart().split(/\s+/)[0];
     const reservedProperty = (chain[0] === 'command' && ['reads', 'authorize', 'produces'].includes(propertyName)) ||

@@ -49,6 +49,10 @@ outside `Samples/` so Invoicing continues to exercise its individual binding dis
 | `eventsource`, `stream`, command routes | #302 | `Documentation/screenplay/fixtures/source-streams.play` |
 | specification `stream`/`streamId`/`no stream` | #457 | `Source/Screenplay/Compiler/Conformance/specification-streams.play` |
 | `system`, `operation`, operation specifications | #301 | `Documentation/screenplay/fixtures/operations.play` |
+| `direction inbound`/`outbound` on a Translate slice | #480 | `Source/Screenplay/Compiler/Conformance/event-translations.play` |
+| `public event` and event or import origins (`from "store"`) | #481 | `Source/Screenplay/Compiler/Conformance/event-translations.play` |
+| event-target `projection`/`reducer` in outbound translations | #482 | `Source/Screenplay/Compiler/Conformance/event-translations.play` |
+| `source events` capture in inbound translations | #483 | `Source/Screenplay/Compiler/Conformance/event-translations.play` |
 | refusals, redelivery, `then no events` | #433 | `Source/Screenplay/Compiler/Conformance/reaction-refusals-redelivery.play`, `Source/Screenplay/Compiler/Conformance/no-events.play` |
 
 `for_Samples/when_holding_invoicing_to_the_language` reflects over concrete syntax nodes and requires every

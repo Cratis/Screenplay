@@ -2789,4 +2789,74 @@ public static class DiagnosticCodes
     /// The subject property modifier is duplicated or is not last in modifier order.
     /// </summary>
     public const string InvalidSubjectModifierOrder = "PLAY0595";
+
+    /// <summary>
+    /// A command produces a public event.
+    /// </summary>
+    public const string CommandProducesPublicEvent = "PLAY0607";
+
+    /// <summary>
+    /// A local public event is produced outside an explicit outbound translation.
+    /// </summary>
+    public const string PublicEventRequiresOutboundTranslation = "PLAY0608";
+
+    /// <summary>
+    /// An outbound translation does not produce exactly one local public event type.
+    /// </summary>
+    public const string OutboundPublicEventCount = "PLAY0609";
+
+    /// <summary>
+    /// A foreign public event is consumed outside an explicit inbound translation.
+    /// </summary>
+    public const string ForeignPublicEventConsumer = "PLAY0610";
+
+    /// <summary>
+    /// An outbound translation consumes an event that is not private and local.
+    /// </summary>
+    public const string OutboundTranslationInput = "PLAY0611";
+
+    /// <summary>
+    /// An inbound translation produces an event that is not private and local.
+    /// </summary>
+    public const string InboundTranslationOutput = "PLAY0612";
+
+    /// <summary>
+    /// A foreign public event is produced locally.
+    /// </summary>
+    public const string ForeignPublicEventProduced = "PLAY0613";
+
+    /// <summary>
+    /// A translation using public events omits explicit direction.
+    /// </summary>
+    public const string PublicTranslationRequiresDirection = "PLAY0614";
+
+    /// <summary>
+    /// A translation construct does not fit its direction.
+    /// </summary>
+    public const string TranslationConstructDirection = "PLAY0615";
+
+    /// <summary>
+    /// An explicitly inbound translation consumes an event that is not public and foreign.
+    /// </summary>
+    public const string InboundTranslationInput = "PLAY0616";
+
+    /// <summary>
+    /// An outbound translation produces a private event.
+    /// </summary>
+    public const string OutboundTranslationOutput = "PLAY0617";
+
+    /// <summary>
+    /// A projection or reducer targets an event outside an explicitly outbound Translate slice.
+    /// </summary>
+    public const string EventTargetOutsideOutboundTranslation = "PLAY0618";
+
+    /// <summary>
+    /// A capture reads <c>source events</c> outside an explicitly inbound Translate slice.
+    /// </summary>
+    public const string EventsSourceOutsideInboundTranslation = "PLAY0619";
+
+    /// <summary>
+    /// A <c>source events</c> block does not consist of one or more <c>from &lt;Event&gt;</c> lines.
+    /// </summary>
+    public const string InvalidCaptureEventsSource = "PLAY0620";
 }

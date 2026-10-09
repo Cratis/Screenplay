@@ -1,0 +1,18 @@
+domain Contracts
+import Billing.InvoiceIssued from "billing"
+import Billing.LocalFact
+module Integration
+    feature Publishing
+        slice Translate PublishInvoice
+            direction outbound
+            public event InvoicePublished generation 2
+                number String
+            event ExternalInvoice from "billing"
+                number String
+        slice Translate ReceiveInvoice
+            direction inbound
+            public event InvoiceReceived generation 1 from "billing\"contracts\\v1"
+                number String
+        slice StateChange RegisterInvoice
+            event InvoiceRegistered
+                number String

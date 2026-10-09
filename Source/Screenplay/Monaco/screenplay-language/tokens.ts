@@ -60,6 +60,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
         root: [
             [new RegExp(`^(\\s*)(example)(\\s+)([A-Z][${bmpWordCharacters}]*)(\\s*)(:)(\\s*)([A-Z][${bmpWordCharacters}.]*)(?=\\s*(?://.*)?$)`),
                 ['white', 'keyword', 'white', 'type.identifier', 'white', 'operator', 'white', 'type.identifier']],
+            [/^(\s*)(direction)(\s+)(inbound|outbound)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'keyword']],
             [new RegExp(`^()(purpose)(\\s+)([A-Za-z_][${bmpWordCharacters}]*)(?=\\s*(?://.*)?$)`), ['white', 'keyword', 'white', { token: 'type.identifier', next: '@purposeBody.$1' }]],
             [/^(\s*)(parameter)(\s+)([a-z_]\w*)(\s+)([\w.]+(?:\[\])?(?:\s+optional)?)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'identifier', 'white', 'type.identifier']],
             [/^(\s*)(case)(\s+)([A-Za-z_]\w*)(?=\s*(?:[a-z_]\w*\s*=|\/\/|$))/, ['white', 'keyword', 'white', 'type.identifier']],
@@ -115,9 +116,9 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             // A quoted import names .play files rather than a qualified name - the path reads as a link.
             [/^(\s*)(import)(\s+)("[^"\\]*")/, ['white', 'keyword', 'white', 'string.link']],
             // Retain the header indent so event metadata stops at the enclosing block boundary.
-            [/^(\s*)((?:produces\s+)?event)(\s+)([A-Za-z_]\w*)(\s+)(generation)(\s+)(\d+)(?=\s*(?:\/\/.*)?$)/,
+            [/^(\s*)((?:(?:produces|public)\s+)?event)(\s+)([A-Za-z_]\w*)(\s+)(generation)(\s+)(\d+)(?=\s*(?:from\s+"(?:[^"\\]|\\.)*"\s*)?(?:\/\/.*)?$)/,
                 ['white', 'keyword', 'white', 'type.identifier', 'white', 'keyword', 'white', { token: 'number', next: '@eventBody.$1' }]],
-            [/^(\s*)((?:produces\s+)?event)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/,
+            [/^(\s*)((?:(?:produces|public)\s+)?event)(\s+)([A-Za-z_]\w*)(?=\s*(?:from\s+"(?:[^"\\]|\\.)*"\s*)?(?:\/\/.*)?$)/,
                 ['white', 'keyword', 'white', { token: 'type.identifier', next: '@eventBody.$1' }]],
             // A tagged opening fence carries the embedded language; legacy tag lines still highlight.
             ...codeBlockTags.map(
