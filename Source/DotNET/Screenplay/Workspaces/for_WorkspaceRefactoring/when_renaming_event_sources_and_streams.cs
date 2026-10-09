@@ -61,7 +61,7 @@ public class when_renaming_event_sources_and_streams
         nodes.OfType<CommandStreamSyntax>().Select(route => route.EventSource).ShouldContainOnly("Customer", "Other");
         nodes.OfType<EventStreamSyntax>().All(stream => stream.Id is null).ShouldBeTrue();
         nodes.OfType<EventSourceSyntax>().All(source => source.Id is null).ShouldBeTrue();
-        result.Workspace!.IdentityCatalog.Revision.ShouldEqual(workspace.IdentityCatalog.Revision);
+        CatalogContinuity(workspace, result.Workspace!);
         if (formatting == WorkspaceAuthoringFormatting.PreserveTrivia)
         {
             result.Workspace.Documents.Single().Text.ShouldEqual(Source.Replace("eventsource Account", "eventsource Customer", StringComparison.Ordinal).Replace("stream Account.Profile", "stream Customer.Profile", StringComparison.Ordinal));
@@ -95,7 +95,7 @@ public class when_renaming_event_sources_and_streams
         nodes.OfType<CommandStreamSyntax>().Single(route => route.EventSource == "Other").Stream.ShouldEqual("Profile");
         nodes.OfType<EventSourceSyntax>().Single(source => source.Name == "Other").Streams.Single().Name.ShouldEqual("Profile");
         nodes.OfType<SpecificationStreamSyntax>().All(route => route.Stream == "Details").ShouldBeTrue();
-        result.Workspace!.IdentityCatalog.Revision.ShouldEqual(workspace.IdentityCatalog.Revision);
+        CatalogContinuity(workspace, result.Workspace!);
         if (formatting == WorkspaceAuthoringFormatting.PreserveTrivia)
         {
             result.Workspace.Documents.Single().Text.ShouldEqual(Source.Replace("eventsource Account\n  identifier String\n  stream Profile", "eventsource Account\n  identifier String\n  stream Details", StringComparison.Ordinal).Replace("stream Account.Profile", "stream Account.Details", StringComparison.Ordinal));
@@ -139,7 +139,7 @@ public class when_renaming_event_sources_and_streams
         var nodes = Nodes(streamResult);
         nodes.OfType<EventSourceSyntax>().Single(item => item.Name == "StoredAccount").Id.ShouldEqual("StoredAccount");
         nodes.OfType<EventSourceSyntax>().Single(item => item.Name == "StoredAccount").Streams.Single().Id.ShouldEqual("StoredProfile");
-        streamResult.Workspace!.IdentityCatalog.Revision.ShouldEqual(workspace.IdentityCatalog.Revision);
+        CatalogContinuity(workspace, streamResult.Workspace!);
         streamResult.Workspace.Documents.Single().Text.Split('\n').Where(line => line.TrimStart().StartsWith("id \"", StringComparison.Ordinal)).ShouldContainOnly([.. source.Split('\n').Where(line => line.TrimStart().StartsWith("id \"", StringComparison.Ordinal))]);
         streamResult.AuthoringDiagnostics.Any(diagnostic => diagnostic.Code == "PLAY0507").ShouldBeTrue();
     }
@@ -197,6 +197,16 @@ public class when_renaming_event_sources_and_streams
             ? Rename<EventStreamSyntax>(workspace, "Profile", "Details", formatting)
             : Rename<EventSourceSyntax>(workspace, "Account", "Customer", formatting);
         Rejected(result, "binding");
+    }
+
+    static void CatalogContinuity(ScreenplayWorkspace before, ScreenplayWorkspace after)
+    {
+        // Names are catalog addresses, not stored-name pins: migrate addresses while preserving
+        // every assigned ID, even when the pin keeps the stored route unchanged.
+        Assert.NotEqual(before.IdentityCatalog.Revision, after.IdentityCatalog.Revision);
+        after.IdentityCatalog.Semantics.Select(assignment => assignment.Id).ShouldContainOnly(before.IdentityCatalog.Semantics.Select(assignment => assignment.Id));
+        after.IdentityCatalog.Documents.ShouldContainOnly(before.IdentityCatalog.Documents);
+        after.IdentityCatalog.EventContracts.ShouldContainOnly(before.IdentityCatalog.EventContracts);
     }
 
     static ScreenplayWorkspace Workspace(params string[] sources)
