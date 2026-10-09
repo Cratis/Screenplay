@@ -142,7 +142,7 @@ for other slice types. Both compilers' printers, typed JSON and the authoring wo
 explicit value, and Monaco and VS Code complete and validate it. Any explicit direction currently refuses semantic
 compilation with `PLAY0268` naming #480. This allocates no ESM version and implements
 no publishing, subscription, delivery or Stage behavior. Public/private usage constraints and translation
-cardinality are checked by `PLAY0596`-`PLAY0609` ([diagnostics](diagnostics.md#public-event-boundaries)); `PLAY0603`
+cardinality are checked by `PLAY0607`-`PLAY0620` ([diagnostics](diagnostics.md#public-event-boundaries)); `PLAY0614`
 has an editor and MCP repair that declares the one consistent direction.
 
 An outbound slice publishes its one public event with a `projection`/`reducer` whose `=>`

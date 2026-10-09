@@ -209,7 +209,7 @@ EventsSource = "source", "events", NL,
                DEDENT ;
 ```
 
-The parser reports `PLAY0609` for an empty block, any other setting, an invalid name or a repeated event. The assembled model additionally requires an explicitly inbound Translate slice (`PLAY0608`) whose consumed events are foreign public events (`PLAY0599`, `PLAY0605`) and whose `append` events are private local events (`PLAY0601`). The form parses and prints, but no executable model version admits it yet, so semantic compilation refuses it with `PLAY0268` (#483).
+The parser reports `PLAY0620` for an empty block, any other setting, an invalid name or a repeated event. The assembled model additionally requires an explicitly inbound Translate slice (`PLAY0619`) whose consumed events are foreign public events (`PLAY0610`, `PLAY0616`) and whose `append` events are private local events (`PLAY0612`). The form parses and prints, but no executable model version admits it yet, so semantic compilation refuses it with `PLAY0268` (#483).
 
 ### Key Directive
 

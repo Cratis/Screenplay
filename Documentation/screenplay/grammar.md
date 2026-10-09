@@ -494,7 +494,7 @@ ReducerRule    = "on", Ident, NL,
 
 (* In an explicitly outbound Translate slice the "=>" target of a projection or
    reducer may name the slice's public event instead of a read model; resolution,
-   not the parser, decides which (PLAY0607). The source-only form is refused for
+   not the parser, decides which (PLAY0618). The source-only form is refused for
    execution with PLAY0268 (#482). *)
 
 (* A read model declares what it is, never what composes it. Whatever builds it
@@ -894,7 +894,7 @@ CaptureDecl    = "capture", Ident, NL,
                  INDENT, CDLBody, DEDENT ;
 
 (* "source events" with one or more "from <Event>" lines reads the public events of
-   another application in an explicitly inbound Translate slice (PLAY0608, PLAY0609);
+   another application in an explicitly inbound Translate slice (PLAY0619, PLAY0620);
    it is refused for execution with PLAY0268 (#483). *)
 
 CDLBody        = (* Change Data Capture Language grammar - covers source/key/map

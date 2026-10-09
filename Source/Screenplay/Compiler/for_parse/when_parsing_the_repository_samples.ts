@@ -55,7 +55,7 @@ describe('when parsing the repository samples', () => {
             `${join(eventRoutes, 'specifications/source/module.play')}:50 PLAY0549 Stream 'Account.Notes' is NotFound; routing requires one physical source and stream.`,
             `${generatedInputSource}:10 PLAY0485 Generated property 'projectId' cannot be supplied as request or form input.`,
             // The metadata-only fixture deliberately declares no operational public output.
-            `${join(repository, 'Source/Screenplay/Compiler/Conformance/public-events.play')}:6 PLAY0598 Outbound Translate slice 'PublishInvoice' must produce exactly one local public event type; found 0.`
+            `${join(repository, 'Source/Screenplay/Compiler/Conformance/public-events.play')}:6 PLAY0609 Outbound Translate slice 'PublishInvoice' must produce exactly one local public event type; found 0.`
         ]);
     });
 });

@@ -584,42 +584,42 @@ Private origins continue to use the existing invalid event/import declaration di
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0596` | Error | A command produces a public event. Move publication to an outbound Translate slice. |
-| `PLAY0597` | Error | A local public event is produced outside an explicitly outbound Translate slice. |
-| `PLAY0598` | Error | An outbound Translate slice produces zero or multiple distinct local public event types. Repeated productions of the same type count once. |
-| `PLAY0599` | Error | A foreign public event is consumed outside an explicitly inbound Translate slice. |
-| `PLAY0600` | Error | An outbound translation consumes a public or foreign event rather than a private local event. |
-| `PLAY0601` | Error | An inbound translation produces a public or foreign event rather than a private local event. |
-| `PLAY0602` | Error | A foreign public event is produced locally. Translate it to a private event instead. |
-| `PLAY0603` | Error | A Translate slice declares or uses public event metadata without explicit direction. Legacy translations without public metadata remain historically inbound. C# and the editors repair it when exactly one direction fits. |
-| `PLAY0604` | Error | An outbound translation contains an external-data capture instead of consuming private local events. |
-| `PLAY0605` | Error | An explicitly inbound translation consumes a private or local event instead of a foreign public event. |
-| `PLAY0606` | Error | An outbound translation produces a private event instead of its one local public event. |
-| `PLAY0607` | Error | A projection or reducer targets an event (`projection X => SomeEvent`) outside an explicitly outbound Translate slice. |
-| `PLAY0608` | Error | A capture reads `source events` outside an explicitly inbound Translate slice. |
-| `PLAY0609` | Error | A `source events` block has no `from <Event>` line, a line that is not `from <Event>`, an invalid event name or a repeated event. |
+| `PLAY0607` | Error | A command produces a public event. Move publication to an outbound Translate slice. |
+| `PLAY0608` | Error | A local public event is produced outside an explicitly outbound Translate slice. |
+| `PLAY0609` | Error | An outbound Translate slice produces zero or multiple distinct local public event types. Repeated productions of the same type count once. |
+| `PLAY0610` | Error | A foreign public event is consumed outside an explicitly inbound Translate slice. |
+| `PLAY0611` | Error | An outbound translation consumes a public or foreign event rather than a private local event. |
+| `PLAY0612` | Error | An inbound translation produces a public or foreign event rather than a private local event. |
+| `PLAY0613` | Error | A foreign public event is produced locally. Translate it to a private event instead. |
+| `PLAY0614` | Error | A Translate slice declares or uses public event metadata without explicit direction. Legacy translations without public metadata remain historically inbound. C# and the editors repair it when exactly one direction fits. |
+| `PLAY0615` | Error | An outbound translation contains an external-data capture instead of consuming private local events. |
+| `PLAY0616` | Error | An explicitly inbound translation consumes a private or local event instead of a foreign public event. |
+| `PLAY0617` | Error | An outbound translation produces a private event instead of its one local public event. |
+| `PLAY0618` | Error | A projection or reducer targets an event (`projection X => SomeEvent`) outside an explicitly outbound Translate slice. |
+| `PLAY0619` | Error | A capture reads `source events` outside an explicitly inbound Translate slice. |
+| `PLAY0620` | Error | A `source events` block has no `from <Event>` line, a line that is not `from <Event>`, an invalid event name or a repeated event. |
 
 The operational edges checked are seed appends, command and reaction productions (including refusal branches), capture appends,
 projection event sources and joins/removals, reducers and constraints. Projection `all` includes every declared
 contract; `every` only maps the projection's existing inputs. Specification fixtures are not operational edges.
 A projection or reducer whose `=>` target resolves to an event (and not to a declared read model) is an event-target
-projection: its target counts as an output of the slice and its `from`/`on` events as inputs, so `PLAY0598`, `PLAY0600`,
-`PLAY0602` and `PLAY0606` apply to it, and `PLAY0607` reports one outside an explicit outbound translation. Each
-`from <Event>` under `source events` counts as an input of the capture, so `PLAY0599`, `PLAY0603` and `PLAY0605` apply,
-and `PLAY0608` reports `source events` outside an explicit inbound translation. Both forms parse and print but are
+projection: its target counts as an output of the slice and its `from`/`on` events as inputs, so `PLAY0609`, `PLAY0611`,
+`PLAY0613` and `PLAY0617` apply to it, and `PLAY0618` reports one outside an explicit outbound translation. Each
+`from <Event>` under `source events` counts as an input of the capture, so `PLAY0610`, `PLAY0614` and `PLAY0616` apply,
+and `PLAY0619` reports `source events` outside an explicit inbound translation. Both forms parse and print but are
 refused for execution with `PLAY0268` naming #482 (event-target projections and reducers) or #483 (`source events`): no executable model version admits them yet.
 Existing syntax restrictions remain: qualified reaction triggers do not parse, and qualified event productions
 still report `PLAY0497`. Programmatic qualified references are resolved and checked, not treated as private.
 The TypeScript compiler and both editors report the same codes (see [editor diagnostics](editor-diagnostics.md)).
 
-Repairs: only `PLAY0603` has one. It declares `direction inbound` or `direction outbound` on the slice, and is offered
+Repairs: only `PLAY0614` has one. It declares `direction inbound` or `direction outbound` on the slice, and is offered
 only when exactly one direction is consistent with the slice's events and constructs (C# `propose-repair` and
 `read-workspace` view `repairs` over MCP; the TypeScript quick fix in Monaco and VS Code). Every other code in this
 section has no automatic repair because each one is a contract decision for the author, not a spelling:
-`PLAY0596`, `PLAY0597`, `PLAY0602` and `PLAY0606` would change which events a slice publishes or produces;
-`PLAY0598`, `PLAY0600`, `PLAY0601` and `PLAY0605` would change which events a translation consumes or produces, or its
-direction; `PLAY0599`, `PLAY0604`, `PLAY0607` and `PLAY0608` would move a construct between slices or change its direction;
-`PLAY0609` is malformed `source events` input with no single intended correction.
+`PLAY0607`, `PLAY0608`, `PLAY0613` and `PLAY0617` would change which events a slice publishes or produces;
+`PLAY0609`, `PLAY0611`, `PLAY0612` and `PLAY0616` would change which events a translation consumes or produces, or its
+direction; `PLAY0610`, `PLAY0615`, `PLAY0618` and `PLAY0619` would move a construct between slices or change its direction;
+`PLAY0620` is malformed `source events` input with no single intended correction.
 
 ### Triggers
 

@@ -21,7 +21,7 @@ const document = (...body: string[]) => a_parsed_document('module Integration', 
 describe('when authoring public event metadata', () => {
     it('should preserve opaque origins and explicit generation markers', () => {
         const result = a_parsed_document('import Billing.Issued from "billing/Issued.play"', 'module Integration', '    feature Contracts', '        slice Translate Publish', '            direction outbound', '            public\tevent Issued generation 1 from "billing\\"contracts\\\\v1"', '                number String');
-        result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0598']);
+        result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0609']);
         const slice = result.value.modules[0].features[0].slices[0];
         [slice.direction, slice.events[0].visibility, slice.events[0].origin, slice.events[0].generation, slice.events[0].hasGenerationMarker].should.deep.equal([TranslationDirection.Outbound, EventVisibility.Public, 'billing"contracts\\v1', 1, true]);
         [result.value.imports[0].visibility, result.value.imports[0].origin].should.deep.equal([EventVisibility.Public, 'billing/Issued.play']);
@@ -77,7 +77,7 @@ describe('when authoring public event metadata', () => {
             (() => toSyntaxJson(node)).should.throw(InvalidSyntaxJson);
         }
         const result = a_parsed_document('import Billing.Issued from " "', 'module M', '  feature F', '    slice Translate S', '      public event E from " "');
-        result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0005', 'PLAY0018', 'PLAY0005', 'PLAY0018', 'PLAY0603']);
+        result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0005', 'PLAY0018', 'PLAY0005', 'PLAY0018', 'PLAY0614']);
         const application = document('slice Translate S', '    event E').value;
         const module = application.modules[0];
         const feature = module.features[0];

@@ -108,7 +108,7 @@ slice Translate PublishOrderShipped
       status = "shipped"
 ```
 
-The target is an event when `=>` names a declared event and no `readmodel` of that name. Its `from` and `on` events must be private local events (`PLAY0600`), the target must be the slice's one local public event (`PLAY0598`, `PLAY0602`, `PLAY0606`), and the form is an error anywhere but an explicitly outbound translation (`PLAY0607`). It parses, prints and is validated by both compilers and editors, but no executable model version admits it yet: binding refuses it with `PLAY0268` naming #482 (the required `direction outbound` is itself refused, #480). Renaming the event refuses while a `=>` target names it.
+The target is an event when `=>` names a declared event and no `readmodel` of that name. Its `from` and `on` events must be private local events (`PLAY0611`), the target must be the slice's one local public event (`PLAY0609`, `PLAY0613`, `PLAY0617`), and the form is an error anywhere but an explicitly outbound translation (`PLAY0618`). It parses, prints and is validated by both compilers and editors, but no executable model version admits it yet: binding refuses it with `PLAY0268` naming #482 (the required `direction outbound` is itself refused, #480). Renaming the event refuses while a `=>` target names it.
 
 ## Topics
 

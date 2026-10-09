@@ -51,7 +51,7 @@ export function findQuickFixes(source: string, options: QuickFixOptions = {}): Q
 // together once per version, rather than reparsing N times for N intersecting markers.
 export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions, 'placement'> = {}): (line?: number | readonly { line: number; diagnosticCode: string }[], diagnosticCode?: string) => QuickFix[] {
     const original = parseForAuthoring(source, undefined, options.placement);
-    // PLAY0603 and the public-event boundary errors that follow from a missing direction are errors the repair itself removes,
+    // PLAY0614 and the public-event boundary errors that follow from a missing direction are errors the repair itself removes,
     // so a document whose only errors are public-event boundary errors stays repairable.
     const publicEventCodes: ReadonlySet<string> = new Set(Array.from({ length: 14 }, (_, index) => `PLAY0${596 + index}`));
     const acceptable = (parsed: ReturnType<typeof parseForAuthoring>): boolean => parsed.success || parsed.diagnostics.every(diagnostic => diagnostic.severity !== 'error' || publicEventCodes.has(diagnostic.code));
@@ -84,7 +84,7 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
             const edit = complianceMarkerEdit(line.raw, line.startOffset);
             if (edit !== undefined) byLine.set(line.number, { line: line.number, fix: { diagnosticCode: diagnostic.code, title: 'Use bare pii and secret compliance markers', scope: 'occurrence', edits: [edit] } });
         } else if (diagnostic.code === DiagnosticCodes.PublicTranslationRequiresDirection) {
-            // PLAY0603 is only reported on the declaration line of a Translate slice that has no direction.
+            // PLAY0614 is only reported on the declaration line of a Translate slice that has no direction.
             const slice = slicesByLine.get(line.number)!;
             // Offer a direction only when exactly one is consistent with the slice: the other would add errors.
             const indent = /^\s*/.exec(line.raw)![0];

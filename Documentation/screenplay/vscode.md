@@ -41,7 +41,7 @@ The board leaves generated values out of command request schemas and lists gener
 
 Monaco and VS Code recognize standalone `public event` declarations and `event Name from "origin"`. Origins are opaque contract metadata, not links to files. Public events retain event-body completion, and event hover includes visibility and origin. Translate slices offer `direction inbound` or `direction outbound`; other slice types do not offer direction. Invalid headers and directions use the existing compiler diagnostics (`PLAY0005`, `PLAY0018`, `PLAY0027`). TextMate highlighting keeps public-event metadata and event-body directives distinct from property-shaped names.
 
-Both editors validate public/private operational event boundaries (`PLAY0596`–`PLAY0609`) against the assembled model, including imported files and unsaved buffers. Public translations require explicit direction; outbound translations must produce exactly one local public event type. Unresolved or ambiguous references remain unclassified.
+Both editors validate public/private operational event boundaries (`PLAY0607`–`PLAY0620`) against the assembled model, including imported files and unsaved buffers. Public translations require explicit direction; outbound translations must produce exactly one local public event type. Unresolved or ambiguous references remain unclassified.
 
 This is authoring support, not transport or execution support. The board document preserves nondefault metadata without inferring delivery guarantees. The C# binder refuses these declarations with `PLAY0268`. See [events](events.md) and [imports](imports.md) for the contracts.
 

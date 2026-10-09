@@ -8,7 +8,7 @@ using Cratis.Screenplay.Syntax;
 namespace Cratis.Screenplay.Workspaces;
 
 /// <summary>
-/// Proposes the explicit translation direction a Translate slice using public events must declare (PLAY0603),
+/// Proposes the explicit translation direction a Translate slice using public events must declare (PLAY0614),
 /// only when exactly one direction is consistent with the slice's events and constructs.
 /// </summary>
 internal static class WorkspaceTranslationRepairs
