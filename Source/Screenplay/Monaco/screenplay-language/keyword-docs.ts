@@ -15,9 +15,9 @@ export const keywordDocs: Record<string, string> = {
     example: 'One typed, possibly partial fixture: `example <Name> : <EventOrCommandOrReadModel>`. Use its name in a matching specification step; assignments override example values without changing matching or supplying defaults. Event examples may carry stream or no stream; a step replaces that route as a whole.',
     domain: 'The domain the file belongs to — optional, at most one per file, before everything else.',
     import: 'Imports a type from another module by its qualified name — `import Module.Type` — making it available by its short name; or, quoted, other `.play` files by path or glob — `import "Orders/**/*.play"`, relative to this file\'s folder. Written inside a module or feature, a file import places the imported files there: their top level is that module\'s or feature\'s body.',
-    concept: 'A formalized value type wrapping a primitive. Attributes such as `@pii` travel with every usage, optionally with a `<attribute> reason "..."` line saying why.',
+    concept: 'A formalized value type wrapping a primitive. Bare pii and secret markers travel with every usage, with optional concept notes and qualifiers.',
     type: 'A composite value type — a named shape built from several properties, referenced by events, commands and other types the same way a concept is.',
-    reason: 'Records why a concept attribute applies — the purpose, the lawful basis, whose subject the value lives under. Written as `pii reason "..."` in the concept body.',
+    reason: 'A free-text concept note, not a lawful basis. Written as pii reason "..." or secret reason "..."; migration preserves it verbatim.',
     optional: 'Allows a value to be absent. Write it after the type: `note String optional` or `lines InvoiceLine[] optional`. The collection itself may be absent; its items keep their declared type.',
     identifier: 'Marks the command property a runtime resolves the event source id from. At most one per command; without it a new Uuid is generated.',
     policy: 'A named authorization rule referenced by commands and queries. Multiple policies AND together.',
@@ -60,7 +60,7 @@ export const keywordDocs: Record<string, string> = {
     reads: 'Declares a view consulted by a command or reaction trigger: `reads <View> [as <alias>] [by <value>]`. A reaction `by` names a value taken by its trigger; clock triggers cannot use `by`. Repeated views require unique aliases. Runtime binding is not yet supported for command or reaction reads.',
     as: 'Names an instance of a view in a command or reaction trigger reads declaration, for example `reads Account as source by sourceId`.',
     handler: 'A fully imperative command implementation — a `file <Path>` reference or an inline `csharp` block, instead of `produces`.',
-    when: 'Guards a produced event or a capture append with a condition. In a labeled screen action, `when item.<field> == <literal> execute <Command>` selects the first matching alternative.',
+    when: 'Guards a produced event or a capture append with a condition. In a labeled screen action, `when item.<field> == <literal> execute <Command>` selects the first matching command. Inside on click, double click or select, block-form `when <condition>` selects one whole action list at gesture time.',
     rule: 'Names a predicate. Bare, it states that a constraint exists without expressing what it computes — nothing resolves the name. Optionally followed by an indented `file <Path>` reference or inline `csharp` block giving it a body.',
     require: 'A policy condition: `authenticated`, `role "..."`, or `claim "..." matches ...`. Unary `not` negates a condition or group; precedence is not, and, or.',
     authenticated: 'Requires an authenticated caller.',
@@ -69,7 +69,7 @@ export const keywordDocs: Record<string, string> = {
     subject: 'The subject (identity) of the caller.',
     data: 'Binds a read model to a screen through a query.',
     action: 'Makes a command available on a screen. `action "Label"` declares one button with ordered `when … execute` alternatives over the nearest data item or selected row. No subject hides it; commands still enforce authorization and validation.',
-    otherwise: 'The last fallback of a guarded action: `otherwise hidden` (the default) or `otherwise execute <Command>`. Authorization never falls through to a different alternative.',
+    otherwise: 'The final fallback of a guarded action: `otherwise hidden` or `otherwise execute <Command>`. In an item interaction, bare `otherwise` opens a fallback action list. No subject runs nothing, including fallback; authorization never falls through.',
     hidden: 'Hides a guarded action when no condition matches. Without a subject the action is always hidden, even with an execute fallback.',
     execute: 'Executes a command. A guarded screen action selects it by the first matching condition; explicit `with … from` bindings precede same-name item fields, its declared form and renderer input.',
     navigate: 'Navigates to a screen, optionally passing a parameter with `by`.',
@@ -157,8 +157,10 @@ export const specificationKeywordDocs: Record<string, string> = {
 };
 
 export const attributeDocs: Record<string, string> = {
-    pii: '`@pii` — the value is personally identifiable information; C# providers render `[PII]`, so Chronicle manages it and can erase it for GDPR compliance wherever the concept is used. Add `pii reason "..."` in the concept body to record why.',
-    sensitive: '`@sensitive` — Operational secret, not personal data: encrypted at rest without erasure and withheld from the causation chain. C# providers render `[Encrypted]` + `[NotAudited]`, or `[PII]` only when combined with `@pii`. Cannot be used as identity (PLAY0515). Add `sensitive reason "..."` in the concept body to record why.',
+    pii: 'personal data (GDPR Art. 4(1)); renders Chronicle [PII]. Bare suffix marker; @pii is deprecated (PLAY0565). Not admitted by the executable model (PLAY0268).',
+    personal: 'Alias of pii: personal data (GDPR Art. 4(1)); renders Chronicle [PII]. No diagnostic; canonical printing writes pii.',
+    secret: 'Operational secret, not personal data: encrypted at rest without erasure and withheld from causation. Provider mapping: [Encrypted] + [NotAudited], or [PII] only with pii. Cannot be identity (PLAY0515). Not admitted by the executable model (PLAY0268).',
+    sensitive: 'Deprecated spelling of secret (PLAY0565); repair to bare secret. Operational secret, not GDPR Art. 9 special-category data.',
 };
 
 export const contextVariableDocs: Record<string, string> = {

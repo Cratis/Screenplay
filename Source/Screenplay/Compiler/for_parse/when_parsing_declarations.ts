@@ -12,7 +12,7 @@ describe('when parsing declarations', () => {
 
     beforeEach(() => {
         result = a_parsed_document(
-            'concept Email : String @pii',
+            'concept Email : String pii',
             '  pii reason "Identifies a person"',
             'concept Status : Enum',
             '  active',

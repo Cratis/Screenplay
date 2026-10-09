@@ -34,6 +34,12 @@ describe('when parsing specification cases', () => {
         result.diagnostics.should.deep.equal([]);
         expandEffectiveSpecificationExamples(result.value).specifications[0].effective.thenErrors[0].name!.should.equal('$strings.small');
     });
+    it('should report an incompatible concrete value at its named case', () => {
+        const result = parse(source.replace('case Small amount = 10', 'case Small amount = "ten"'));
+        const diagnostics = result.diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0583');
+        diagnostics.should.have.lengthOf(1);
+        diagnostics[0].message.should.equal("Case 'Small' parameter 'amount' requires a concrete value of type 'Int'.");
+    });
     it.each([
         ['parameter amount', 'PLAY0577'],
         ['case Bad invalid', 'PLAY0578'],

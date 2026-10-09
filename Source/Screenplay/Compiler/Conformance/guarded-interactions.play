@@ -1,0 +1,20 @@
+module Work
+  feature Items
+    slice StateView Details
+      readmodel Item
+        status String
+      query Items => Item[]
+      command Retry
+      screen Details
+        data Item[] via query Items
+        table Item
+          column status
+          on double click
+            when item.status == "failed"
+              confirm "Retry?"
+                on success
+                  execute Retry
+            when item.status == "open"
+              navigate to Details
+            otherwise
+              notify info "Closed"

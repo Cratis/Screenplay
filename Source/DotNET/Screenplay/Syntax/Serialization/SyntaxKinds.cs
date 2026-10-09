@@ -101,6 +101,8 @@ internal static class SyntaxKinds
         typeof(SpecificationCompensatedSyntax),
         typeof(ImportSyntax),
         typeof(IncrementMappingSyntax),
+        typeof(InteractionAlternativeSyntax),
+        typeof(InteractionOtherwiseSyntax),
         typeof(InteractionArgumentSyntax),
         typeof(InteractionBindingSyntax),
         typeof(IntervalInteractionTriggerSyntax),

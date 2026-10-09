@@ -16,28 +16,28 @@ public class when_checking_sensitive_destinations : given.a_compiler
     [InlineData("trigger External\n  secret SecretId\nmodule M\n  feature F\n    slice Automation S\n      event Recorded\n      reaction R\n        when External\n          produces Recorded\n            for secret", 11)]
     public void should_reject_sensitive_event_source_destinations(string source, int line)
     {
-        var result = _compiler.Compile("concept SecretId : Uuid @sensitive\n" + source);
+        var result = _compiler.Compile("concept SecretId : Uuid secret\n" + source);
         var diagnostic = result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.PiiNotSupportedOnIdentifier);
         diagnostic.Code.ShouldEqual(DiagnosticCodes.PiiNotSupportedOnIdentifier);
         diagnostic.Location.Line.ShouldEqual(line);
-        diagnostic.Message.ShouldEqual("Concept 'SecretId' is @sensitive and cannot be an event source identifier - use a surrogate Uuid identifier and keep the @sensitive value as a property");
+        diagnostic.Message.ShouldEqual("Concept 'SecretId' is secret and cannot be an event source identifier - use a surrogate Uuid identifier and keep the secret value as a property");
     }
 
     [Theory]
-    [InlineData("@pii @sensitive")]
-    [InlineData("@sensitive @pii")]
+    [InlineData("pii secret")]
+    [InlineData("secret pii")]
     public void should_reject_combined_classifications_once(string attributes)
     {
         var result = _compiler.Compile($"concept SecretId : Uuid {attributes}\neventsource Secrets\n  identifier SecretId");
-        result.Diagnostics.Single().Message.ShouldEqual("Concept 'SecretId' is @pii and cannot be an event source identifier - use a surrogate Uuid identifier and keep the @pii value as a property");
+        result.Diagnostics.Single().Message.ShouldEqual("Concept 'SecretId' is pii and cannot be an event source identifier - use a surrogate Uuid identifier and keep the pii value as a property");
     }
 
     [Fact]
     public void should_keep_protected_values_as_ordinary_properties()
     {
         var result = _compiler.Compile("""
-            concept Secret : String @sensitive
-            concept Personal : String @pii @sensitive
+            concept Secret : String secret
+            concept Personal : String pii secret
             module M
               feature F
                 slice StateChange S

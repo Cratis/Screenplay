@@ -30,7 +30,7 @@ export const topLevelItems: CompletionEntry[] = [
     { label: 'import "…"', insertText: 'import "${1:**/*.play}"', documentation: 'Imports other `.play` files by path or glob, relative to this file\'s folder, as whole documents of the application.' },
     { label: 'concept', insertText: 'concept ${1:Name} : ${2|Uuid,String,Int,Decimal,Bool,Date,DateTime|}', documentation: 'Declares a formalized value type wrapping a primitive.' },
     { label: 'concept (enum)', insertText: 'concept ${1:Name} : Enum\n    ${2:value}', documentation: 'Declares an enumeration concept with a fixed set of values.' },
-    { label: 'concept (@pii with reason)', insertText: 'concept ${1:Name} : ${2|String,Uuid,Int,Decimal,Bool,Date,DateTime|} @pii\n    pii reason "${3:why this is personal data, its purpose and lawful basis}"', documentation: 'Declares a personal-data concept together with the reason it is personal data.' },
+    { label: 'concept (pii with reason)', insertText: 'concept ${1:Name} : ${2|String,Uuid,Int,Decimal,Bool,Date,DateTime|} pii\n    pii reason "${3:why this value is personal data}"', documentation: 'Declares a personal-data concept together with the reason it is personal data.' },
     { label: 'type', insertText: 'type ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares a composite value type — a named shape built from several properties.' },
     { label: 'policy', insertText: 'policy ${1:Name}\n    require ${2:authenticated}', documentation: 'Declares a named authorization rule for commands and queries.' },
     { label: 'module', insertText: 'module ${1:Name}\n    ', documentation: 'Declares the top-level namespace — maps to a bounded context.' },
@@ -67,8 +67,11 @@ export const operationPhaseItems: CompletionEntry[] = [
 
 export const conceptItems: CompletionEntry[] = [
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
-    { label: 'pii reason', insertText: 'pii reason "${1:why this is personal data, its purpose and lawful basis}"', documentation: 'Records why the `@pii` marker applies — purpose, lawful basis, whose subject it lives under.' },
-    { label: 'sensitive reason', insertText: 'sensitive reason "${1:why this value is sensitive}"', documentation: 'Records why the `@sensitive` marker applies.' },
+    { label: 'pii reason', insertText: 'pii reason "${1:why this value is personal data}"', documentation: 'A free-text concept note, not a lawful basis.' },
+    { label: 'secret reason', insertText: 'secret reason "${1:why this value is an operational secret}"', documentation: 'Records why the secret marker applies.' },
+    { label: 'secret scope', insertText: 'secret scope ${1|subject,namespace,global|}', documentation: 'Explicit encryption scope; omitted scope keeps Chronicle’s Subject default.' },
+    { label: 'pii special', insertText: 'pii special ${1|racialOrEthnicOrigin,politicalOpinions,religiousOrPhilosophicalBeliefs,tradeUnionMembership,genetic,biometric,health,sexLifeOrSexualOrientation|}', documentation: 'GDPR Art. 9(1) special category of personal data.' },
+    { label: 'pii criminal', insertText: 'pii criminal', documentation: 'Personal data relating to criminal convictions and offenses (GDPR Art. 10).' },
     { label: 'validate', insertText: 'validate\n    ${1:not empty} message "${2:message}"', documentation: 'Validation rules that travel with the value everywhere it appears.' },
 ];
 
@@ -331,6 +334,21 @@ export const guardedActionItems: CompletionEntry[] = [
     { label: 'otherwise hidden', insertText: 'otherwise hidden', documentation: 'Hides the action when no alternative matches; also the default.' },
     { label: 'otherwise execute', insertText: 'otherwise execute ${1:CommandName}', documentation: 'Selects a fallback command when no alternative matches and a subject exists.' },
     ...actionItems.filter(item => item.label !== 'label'),
+];
+
+export const interactionActionItems: CompletionEntry[] = [
+    { label: 'execute', insertText: 'execute ${1:CommandName}', documentation: 'Executes a command; denial never selects another alternative.' },
+    { label: 'navigate to', insertText: 'navigate to ${1:ScreenName}', documentation: 'Navigates to the named screen.' },
+    { label: 'open dialog', insertText: 'open dialog ${1:DialogTemplate}', documentation: 'Opens a dialog.' },
+    { label: 'notify', insertText: 'notify info "${1:Message}"', documentation: 'Displays a message.' },
+    { label: 'confirm', insertText: 'confirm "${1:Message}"\n    on success\n        execute ${2:CommandName}', documentation: 'Asks before continuing.' },
+    { label: 'refresh', insertText: 'refresh ${1:QueryName}', documentation: 'Refreshes a query-backed element.' },
+];
+
+export const interactionChoiceItems: CompletionEntry[] = [
+    { label: 'when …', insertText: 'when item.${1:status} == "${2:open}"\n    execute ${3:CommandName}', documentation: 'Selects a whole action list once against the rendered subject at gesture time.' },
+    { label: 'otherwise', insertText: 'otherwise\n    notify info "${1:Message}"', documentation: 'Final fallback list; without a subject nothing runs, including fallback.' },
+    ...interactionActionItems,
 ];
 
 export const actionArgumentItems: CompletionEntry[] = [

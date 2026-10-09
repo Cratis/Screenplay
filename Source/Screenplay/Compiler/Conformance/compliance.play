@@ -1,0 +1,22 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+concept Name : String pii
+  pii reason "A personal name"
+concept MedicalNote : String personal
+  personal special health
+  personal criminal
+concept Credential : String secret
+  secret scope namespace
+  secret reason "Integration credential"
+concept DefaultScope : String secret
+concept SubjectScope : String secret
+  secret scope subject
+concept GlobalScope : String secret
+  secret scope global
+concept Combined : String pii secret
+concept LegacyPersonal : String @pii
+  pii reason "Legacy form, note unchanged"
+concept LegacySecret : String @sensitive
+  sensitive reason "Keep @pii and sensitive in this quoted note"
+concept BareLegacySecret : String sensitive

@@ -111,6 +111,7 @@ sealed class WorkspaceReferenceBindings
                 ReadModelSyntax => WorkspaceReferenceDomain.View,
                 QuerySyntax => WorkspaceReferenceDomain.Query,
                 ScreenSyntax => WorkspaceReferenceDomain.Screen,
+                DialogTemplateSyntax => WorkspaceReferenceDomain.DialogTemplate,
                 PolicySyntax => WorkspaceReferenceDomain.Policy,
                 PersonaSyntax => WorkspaceReferenceDomain.Persona,
                 SpecificationParameterSyntax => WorkspaceReferenceDomain.SpecificationParameter,
@@ -158,7 +159,8 @@ sealed class WorkspaceReferenceBindings
 
     static bool AdmitsImports(WorkspaceReferenceMember reference) => reference.Domain switch
     {
-        WorkspaceReferenceDomain.Type or WorkspaceReferenceDomain.Event or WorkspaceReferenceDomain.View or WorkspaceReferenceDomain.Trigger or WorkspaceReferenceDomain.Fixture or WorkspaceReferenceDomain.Reaction or WorkspaceReferenceDomain.Constraint => true,
+        WorkspaceReferenceDomain.Type or WorkspaceReferenceDomain.Event or WorkspaceReferenceDomain.View or WorkspaceReferenceDomain.Fixture or WorkspaceReferenceDomain.Reaction or WorkspaceReferenceDomain.Constraint => true,
+        WorkspaceReferenceDomain.Trigger => reference.Entry.Node is NamedTriggerSourceSyntax,
         WorkspaceReferenceDomain.Command => reference.Entry.Node is InvokesSyntax,
         _ => false
     };
@@ -221,7 +223,7 @@ sealed class WorkspaceReferenceBindings
         var imports = AdmitsImports(reference) ? _imports.GetValueOrDefault(reference.Text) ?? [] : [];
 
         // A reaction names an event (including an import) before a declared trigger.
-        if (domain == WorkspaceReferenceDomain.Trigger)
+        if (domain == WorkspaceReferenceDomain.Trigger && reference.Entry.Node is NamedTriggerSourceSyntax)
         {
             var events = _byName.GetValueOrDefault((WorkspaceReferenceDomain.Event, name)) ?? [];
             if (events.Length > 0 || imports.Length > 0) declarations = events;

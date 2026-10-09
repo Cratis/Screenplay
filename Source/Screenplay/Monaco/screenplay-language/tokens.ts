@@ -63,6 +63,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/^(\s*)(parameter)(\s+)([a-z_]\w*)(\s+)([\w.]+(?:\[\])?(?:\s+optional)?)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'identifier', 'white', 'type.identifier']],
             [/^(\s*)(case)(\s+)([A-Za-z_]\w*)(?=\s*(?:[a-z_]\w*\s*=|\/\/|$))/, ['white', 'keyword', 'white', 'type.identifier']],
             [/\b(case)(\.)([a-z_]\w*)\b/, ['keyword', 'delimiter', 'identifier']],
+            [/^(\s*)(concept)(\s+)([^\s:]+)(\s*:\s*)(\w+)((?:\s+(?:@?pii|personal|@?sensitive|secret))*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier', 'operator', { token: 'type.identifier', next: '@conceptBody.$1' }, 'keyword']],
             [/^(numbers)([ \t]+)(exact)(?=[ \t]*(?:(?:\/\/|#).*)?$)/, ['keyword', 'white', 'keyword']],
             [/^(eventsource)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
             [/^(system)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
@@ -181,7 +182,15 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
 
         interactionBody: [
             [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(otherwise)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword']],
+            [/^(\s*)(when)(\s+)(?=item\.|\()/, ['white', 'keyword', 'white']],
             [/^(\s*)(execute)(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
+            { include: '@root' },
+        ],
+
+        conceptBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(@?pii|personal|@?sensitive|secret)(\s+)(reason|scope|special|criminal)\b/, ['white', 'keyword', 'white', 'keyword']],
             { include: '@root' },
         ],
 

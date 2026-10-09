@@ -54,9 +54,15 @@ export function hoverContent(
     };
     const before = line.charAt(startColumn - 2);
 
-    if (before === '@') {
+    const complianceHeader = /^\s*concept\s+[^\s:]+\s*:\s*\w+\s+/.exec(line);
+    const complianceBody = enclosingChain(lines, fences, lineIndex, indentOf(line))[0] === 'concept' && /^\s*(?:@?pii|personal|@?sensitive|secret)\s+(?:reason|scope|special|criminal)\b/.test(line);
+    if ((complianceHeader !== null && startColumn - 1 >= complianceHeader[0].length - 1) || complianceBody) {
         const doc = attributeDocs[word];
         if (doc) return doc;
+        if (word === 'special') return 'GDPR Art. 9(1) special category; requires pii. At most one category per concept.';
+        if (word === 'criminal') return 'Personal data relating to criminal convictions and offenses (GDPR Art. 10); requires pii.';
+        if (/^\s*(?:secret|sensitive|@sensitive)\s+scope\s+/.test(line) && ['subject', 'namespace', 'global'].includes(word)) return `**${word}** — Secret encryption scope${word === 'subject' ? ' per data subject' : word === 'namespace' ? ' per tenant namespace' : ' shared globally'}. Not an event-property subject role.`;
+        if (word === 'scope') return 'Secret encryption scope: subject, namespace or global. Omitted scope keeps Chronicle’s Subject default; pii secret renders only [PII].';
     }
     if (before === '$' || before === '.') {
         const variable = line.substring(0, endColumn - 1).match(/\$[\w.]*$/)?.[0];

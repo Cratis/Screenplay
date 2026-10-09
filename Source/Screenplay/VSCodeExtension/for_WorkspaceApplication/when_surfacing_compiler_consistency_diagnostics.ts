@@ -18,7 +18,7 @@ describe('when surfacing compiler consistency diagnostics across files', () => {
     it.each(cases)('should surface $code once in an imported fragment', ({ code, source }) => {
         const application = new WorkspaceApplication();
         application.set('application.play', 'import "types.play"\nmodule M\n  feature F\n    import "slice.play"');
-        application.set('types.play', 'concept PatientId : Uuid @pii\nconcept SecretId : Uuid @sensitive\ntrigger External\n  patient PatientId');
+        application.set('types.play', 'concept PatientId : Uuid pii\nconcept SecretId : Uuid secret\ntrigger External\n  patient PatientId');
         application.set('slice.play', source.join('\n'));
         const diagnostics = application.diagnosticsFor('slice.play');
         expect(diagnostics.filter(diagnostic => diagnostic.code === code)).toHaveLength(1);

@@ -170,6 +170,16 @@ export function planCompletions(
 ): CompletionPlan {
     const fences = fenceMap(lines);
     if (fences[lineIndex] || withoutComment(textBefore).length < textBefore.length) return { kind: 'none' };
+    if (/^\s*concept\s+[\p{L}\p{Mn}\p{Nd}\p{Pc}]+\s*:\s*\w+\s+(?:(?:pii|personal|secret)\s+)*\w*$/u.test(textBefore)) {
+        return { kind: 'entries', entries: ['pii', 'secret'].filter(marker => !new RegExp(`\\b${marker}\\b`).test(textBefore)).map(marker => ({ label: marker, insertText: marker, documentation: marker === 'pii' ? 'personal data (GDPR Art. 4(1)); renders Chronicle [PII]' : 'Operational secret; renders [Encrypted] + [NotAudited].' })) };
+    }
+    const inConcept = enclosingChain(lines, fences, lineIndex, indentOf(textBefore))[0] === 'concept';
+    if (inConcept && /^\s*(?:secret|sensitive|@sensitive)\s+scope\s+\w*$/.test(textBefore)) {
+        return { kind: 'entries', entries: ['subject', 'namespace', 'global'].map(scope => ({ label: scope, insertText: scope, documentation: 'Explicit secret encryption scope.' })) };
+    }
+    if (inConcept && /^\s*(?:pii|personal|@pii)\s+special\s+\w*$/.test(textBefore)) {
+        return { kind: 'entries', entries: ['racialOrEthnicOrigin', 'politicalOpinions', 'religiousOrPhilosophicalBeliefs', 'tradeUnionMembership', 'genetic', 'biometric', 'health', 'sexLifeOrSexualOrientation'].map(category => ({ label: category, insertText: category, documentation: 'GDPR Art. 9(1) special category.' })) };
+    }
     const responseEntries = exampleCompletions(lines, lineIndex, textBefore) ?? responseCompletions(lines, lineIndex, textBefore, scanDocument(lines));
     if (responseEntries !== null) return { kind: 'entries', entries: responseEntries };
     const dependencyEntries = dependencyTargetCompletions(lines, lineIndex, textBefore, symbols);
@@ -215,6 +225,19 @@ export function planCompletions(
                 const parent = nearestEnclosingLine(lines, fences, lineIndex, effectiveIndent) ?? '';
                 return { kind: 'entries', entries: /\bexecute\s+[\w.]+$/.test(parent) ? items.actionArgumentItems : [] };
             }
+        }
+    }
+    if (['on', 'when', 'otherwise'].includes(chain[0])) {
+        let parentIndent = effectiveIndent;
+        for (let index = lineIndex - 1; index >= 0; index--) {
+            if (fences[index]) continue;
+            const parent = withoutComment(lines[index]);
+            if (parent.trim().length === 0 || indentOf(parent) >= parentIndent) continue;
+            parentIndent = indentOf(parent);
+            if (/^\s*on\s+(?:click|double click|select)\s*$/.test(parent)) {
+                return { kind: 'entries', entries: chain[0] === 'on' ? items.interactionChoiceItems : items.interactionActionItems };
+            }
+            if (/^\s*(?:screen|behavior|specification|reaction)\b/.test(parent)) break;
         }
     }
     if (chain[0] === 'on' && refusal !== undefined) return { kind: 'entries', entries: items.refusalItems };

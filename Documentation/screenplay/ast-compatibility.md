@@ -28,6 +28,10 @@ Authoring metadata follows this rule: `SpecificationSyntax.Description` and the 
 
 `SpecificationSyntax.GivenCallerPersona` is an additive init-only reference with a name and location, distinct from `GivenCaller`. It is omitted from syntax JSON when absent, preserving untouched documents' bytes. A reader that predates the persona member must reject the new member rather than silently interpret an unauthenticated caller. Effective syntax expands the reference and carries `SpecificationValueOrigin.Persona` with persona and policy provenance; it adds no ESM member or version.
 
+## Compliance marker members
+
+`ConceptAttributeSyntax.Name` keeps the wire values `pii` and `sensitive`, even though source uses canonical `pii`/`secret` and accepts the `personal` alias. `Scope`, `SpecialCategory` and `Criminal` are additive init-only properties. Old JSON omissions default to null/null/false; writers omit those defaults to preserve existing syntax bytes. Preserve explicitly declared values when rewriting a concept. These members add no executable bytes: compliance markers remain refused with `PLAY0268`.
+
 ## Composite stream id members
 
 `EventStreamIdPartSyntax(Name, Type, Location)` is additive. `EventStreamSyntax.StreamIdParts` contains declarations in identity-bearing declaration order. `CommandStreamSyntax.StreamIdParts` and `SpecificationStreamSyntax.StreamIdParts` contain `PropertyMappingSyntax` in authored mapping order. These init-only collections default to empty, including old JSON omissions; existing positional constructors and scalar members are unchanged. A nonempty parts list is mutually exclusive with `StreamId`. Part names are not workspace references; part types are ordinary type references. The walker visits parts, their types and route mappings. Binding remains refused with `PLAY0268`; no ESM bytes change.

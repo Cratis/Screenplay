@@ -51,11 +51,34 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         VisitInteractionTrigger(syntax.Trigger);
+        foreach (var alternative in syntax.Alternatives) VisitInteractionAlternative(alternative);
+        if (syntax.Otherwise is not null) VisitInteractionOtherwise(syntax.Otherwise);
 
         foreach (var action in syntax.Actions)
         {
             VisitInteractionAction(action);
         }
+    }
+
+    /// <summary>
+    /// Visits an <see cref="InteractionAlternativeSyntax"/> and its condition and actions.
+    /// </summary>
+    /// <param name="syntax">The alternative.</param>
+    public virtual void VisitInteractionAlternative(InteractionAlternativeSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitCondition(syntax.Condition);
+        foreach (var action in syntax.Actions) VisitInteractionAction(action);
+    }
+
+    /// <summary>
+    /// Visits an <see cref="InteractionOtherwiseSyntax"/> and its actions.
+    /// </summary>
+    /// <param name="syntax">The fallback.</param>
+    public virtual void VisitInteractionOtherwise(InteractionOtherwiseSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var action in syntax.Actions) VisitInteractionAction(action);
     }
 
     /// <summary>

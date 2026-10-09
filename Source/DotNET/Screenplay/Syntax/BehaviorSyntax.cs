@@ -144,7 +144,18 @@ public record InteractionBindingSyntax(
     InteractionTriggerSyntax Trigger,
     string? Condition,
     IEnumerable<InteractionActionSyntax> Actions,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the ordered, first-match alternatives selecting a whole action list.
+    /// </summary>
+    public IEnumerable<InteractionAlternativeSyntax> Alternatives { get; init; } = [];
+
+    /// <summary>
+    /// Gets the optional action list run when a subject exists and no alternative matches.
+    /// </summary>
+    public InteractionOtherwiseSyntax? Otherwise { get; init; }
+}
 
 /// <summary>
 /// Represents what starts an interaction.

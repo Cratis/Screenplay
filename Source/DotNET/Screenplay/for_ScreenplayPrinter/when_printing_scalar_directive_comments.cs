@@ -6,7 +6,7 @@ namespace Cratis.Screenplay.for_ScreenplayPrinter;
 public class when_printing_scalar_directive_comments : given.a_printer
 {
     const string Source = """
-        concept State : Enum @pii
+        concept State : Enum pii
           // why this value is personal
           pii reason "Account status" // reason note
           // current state
