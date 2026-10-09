@@ -57,7 +57,7 @@ describe('when validating assembled public contracts', () => {
     });
     it('should ignore public events mentioned only in specifications', () => {
         const result = parse(contracts + '    slice Translate Legacy\n      specification Fixture\n        given Arrived\n        when append Published\n        then Published\n');
-        result.diagnostics.filter(diagnostic => /^PLAY059[6-9]$|^PLAY060[0-6]$/.test(diagnostic.code)).should.deep.equal([]);
+        result.diagnostics.filter(diagnostic => /^PLAY060[7-9]$|^PLAY061[0-7]$/.test(diagnostic.code)).should.deep.equal([]);
     });
     it('should resolve nested scopes and qualified local imports before public import metadata', () => {
         const result = compileApplication(new Map([
