@@ -1,0 +1,18 @@
+concept CustomerId : Uuid
+concept CustomerNumber : Int
+module Billing
+  feature Contact
+    slice StateChange ChangeContact
+      event ContactChanged
+        subject String
+        customerId CustomerId subject
+      event NumberChanged generation 1
+        customerNumber CustomerNumber subject
+      event NumberChanged generation 2
+        customerNumber CustomerNumber subject
+        note String optional
+      command CorrectContact
+        accountId Uuid identifier
+        customerId CustomerId
+        produces event ContactCorrected
+          customerId CustomerId subject = customerId

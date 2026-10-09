@@ -14,6 +14,7 @@ import { CommandStreamCandidates } from '../Parsing/CommandStreamCandidates';
 import { validateEventSources } from '../Parsing/EventSourceValidator';
 import { validateProjectionTargets } from '../Parsing/ProjectionTargetValidator';
 import { validateIdentifierCompliance } from '../Parsing/IdentifierComplianceValidator';
+import { validateEventSubjects } from '../Parsing/EventSubjectValidator';
 import { validateReactionRefusals } from '../Parsing/ReactionRefusalValidator';
 import { validateSpecificationRedelivery } from '../Parsing/SpecificationRedeliveryValidator';
 import { validateGuardedActions } from '../Parsing/GuardedActionValidator';
@@ -88,6 +89,7 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     validateResponses(effective, context, parsed.flatMap(document => document.inputUses));
     validateProjectionTargets(merged.value, context);
     validateIdentifierCompliance(effective, context);
+    validateEventSubjects(merged.value, context);
     validateReactionRefusals(merged.value, context);
     validateSpecificationRedelivery(merged.value, context);
     validateGuardedActions(merged.value, context);

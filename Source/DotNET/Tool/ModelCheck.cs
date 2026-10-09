@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Completeness;
+using Cratis.Screenplay.Contracts;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Mcp;
 
@@ -17,7 +18,13 @@ static class ModelCheck
         for (var index = 0; index < args.Length; index++)
         {
             var argument = args[index];
-            if (argument == "--scope")
+            if (argument.StartsWith('-') && !CliCommandCatalog.Check.Options.Any(option => option.Name == argument))
+            {
+                error.WriteLine($"Unexpected argument '{argument}'.");
+                return 2;
+            }
+
+            if (argument == CliCommandCatalog.Scope.Name)
             {
                 if (scope is not null || index + 1 == args.Length || args[index + 1].StartsWith('-') || string.IsNullOrWhiteSpace(args[index + 1]))
                 {
@@ -27,7 +34,7 @@ static class ModelCheck
 
                 scope = args[++index];
             }
-            else if (argument == "--check")
+            else if (argument == CliCommandCatalog.Checks.Name)
             {
                 if (index + 1 == args.Length || !CompletenessChecks.TryParse(args[++index], out var selected))
                 {
@@ -37,7 +44,7 @@ static class ModelCheck
 
                 checks = new(checks.Selected.Union(selected.Selected));
             }
-            else if (argument is not "--no-color" and not "--warnaserror")
+            else if (argument != CliCommandCatalog.NoColor.Name && argument != CliCommandCatalog.WarnAsError.Name)
             {
                 if (argument.StartsWith('-') || target is not null)
                 {
@@ -65,7 +72,7 @@ static class ModelCheck
 
         try
         {
-            return Check(target, isFile, scope, checks, args.Contains("--warnaserror"), output, error, useColors && !args.Contains("--no-color"));
+            return Check(target, isFile, scope, checks, args.Contains(CliCommandCatalog.WarnAsError.Name), output, error, useColors && !args.Contains(CliCommandCatalog.NoColor.Name));
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {

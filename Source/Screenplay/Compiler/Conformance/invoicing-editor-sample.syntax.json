@@ -1558,6 +1558,7 @@
                             "kind": "PropertySyntax",
                             "isGenerated": false,
                             "isIdentifier": false,
+                            "isSubject": true,
                             "name": "customerId",
                             "type": {
                               "kind": "TypeRefSyntax",

@@ -12,6 +12,8 @@ namespace Cratis.Screenplay.CanonicalCorpus;
 public static class ScreenCompositionCorpus
 {
     const string Prefix = "Cratis.Screenplay.CanonicalCorpus.Corpus.ScreenComposition.v1";
+    const string FolderSourceCase = "screen-composition/v1/source/folder";
+    const string TypedScreenSourceCase = "screen-release-ui-positive";
 
     /// <summary>
     /// Gets the canonical screen composition corpus.
@@ -103,57 +105,101 @@ public static class ScreenCompositionCorpus
                 Behavior(
                     "selection-details",
                     "browser",
-                    "A work item list is rendered with two rows and no selected item.",
-                    "Select the row with workItemId 3fa85f64-5717-4562-b3fc-2c963f66afa6.",
-                    "The details outlet renders WorkItemDetails and routes the selected workItemId into GetWorkItem.",
+                    "The folder source renders WorkItemList through the MasterDetail template with two rows and no selected item.",
+                    "Select the row with workItemId 3fa85f64-5717-4562-b3fc-2c963f66afa6 by pointer or keyboard activation.",
+                    "The selected identity becomes the route parameter, GetWorkItem is invoked with that identity and the details slot renders WorkItemDetails.",
                     [
+                        Assertion("source.form", "equals", FolderSourceCase),
+                        Assertion("screens.WorkItemList.template", "equals", "MasterDetail"),
+                        Assertion("screens.WorkItemList.list.query", "equals", "AllWorkItems"),
+                        Assertion("screens.WorkItemList.list.table.columns", "equals", "title,status"),
+                        Assertion("screens.WorkItemList.list.rowClick", "equals", "navigate WorkItemDetails by workItemId"),
                         Assertion("selection.workItemId", "equals", "3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                        Assertion("routes.parameters.workItemId", "equals", "3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                         Assertion("queries.GetWorkItem.arguments.workItemId", "equals", "3fa85f64-5717-4562-b3fc-2c963f66afa6"),
-                        Assertion("outlets.detail.screen", "equals", "WorkItemDetails")
+                        Assertion("outlets.details.screen", "equals", "WorkItemDetails")
                     ]),
                 Behavior(
                     "query-rebind-clear",
                     "browser",
-                    "WorkItemDetails is showing an existing selection.",
-                    "Clear the selection through the toolbar navigation item.",
-                    "The details query is not invoked with a stale workItemId and the empty master/detail outlet is shown.",
+                    "WorkItemDetails is showing an existing selection from the folder source.",
+                    "Navigate back to WorkItemList without a selected workItemId.",
+                    "The details query is not invoked with a stale workItemId, the comments query is cleared, and the empty master/detail outlet is shown.",
                     [
+                        Assertion("source.form", "equals", FolderSourceCase),
                         Assertion("selection.workItemId", "isNull", string.Empty),
                         Assertion("queries.GetWorkItem.calls", "equals", "0"),
-                        Assertion("outlets.detail.screen", "equals", "WorkItemList.emptyState")
+                        Assertion("queries.GetWorkItem.staleArguments", "equals", "0"),
+                        Assertion("queries.CommentsForWorkItem.calls", "equals", "0"),
+                        Assertion("outlets.details.screen", "equals", "WorkItemList.emptyState"),
+                        Assertion("sections.emptyState.title", "equals", "Select a work item")
                     ]),
                 Behavior(
                     "native-form-validation-submit",
                     "browser",
-                    "CreateWorkItemForm is opened from the create toolbar item.",
-                    "Submit once with an empty title, then with a valid title and priority.",
-                    "Native command-form validation blocks the invalid submit and the valid submit executes CreateWorkItem once before navigating to WorkItemDetails.",
+                    "CreateWorkItemForm from the folder source is opened from the WorkItemList empty-state action.",
+                    "Submit once with an empty title, then with title 'Design master detail' and a generated workItemId.",
+                    "Native command-form validation blocks the invalid submit and the valid submit executes CreateWorkItem once before following the authored navigation.",
                     [
+                        Assertion("source.form", "equals", FolderSourceCase),
+                        Assertion("forms.CreateWorkItemForm.command", "equals", "CreateWorkItem"),
+                        Assertion("forms.CreateWorkItemForm.fields", "equals", "workItemId,title"),
+                        Assertion("forms.CreateWorkItemForm.submitNavigation", "equals", "WorkItemList by workItemId"),
                         Assertion("forms.CreateWorkItem.invalidSubmits", "equals", "1"),
                         Assertion("commands.CreateWorkItem.executions", "equals", "1"),
-                        Assertion("navigation.currentScreen", "equals", "WorkItemDetails")
+                        Assertion("commands.CreateWorkItem.arguments.title", "equals", "Design master detail"),
+                        Assertion("navigation.currentScreen", "equals", "WorkItemList")
                     ]),
                 Behavior(
                     "dialog-outlet-deep-link",
                     "browser",
-                    "WorkItemDetails is opened from a deep link route.",
-                    "Open the rename action, save the dialog, and follow the details deep link.",
-                    "The dialog uses EditWorkItemDialog, writes through the detail outlet and preserves the authored route parameter.",
+                    "WorkItemDetails and CommentThread are opened from a deep link route with workItemId set.",
+                    "Open the rename action, open the comments dialog, save, and follow the details deep link.",
+                    "Dialog and outlet routing use the authored templates, preserve the route parameter and refresh CommentsForWorkItem after the dialog result.",
                     [
-                        Assertion("dialogs.current.template", "equals", "EditWorkItemDialog"),
-                        Assertion("outlets.actions.component", "equals", "scene.web.CommandForm"),
-                        Assertion("routes.current", "equals", "work-items/{workItemId}")
+                        Assertion("source.form", "equals", FolderSourceCase),
+                        Assertion("dialogs.EditDialog.slots", "equals", "body,actions"),
+                        Assertion("forms.RenameWorkItemForm.populateFrom", "equals", "item"),
+                        Assertion("forms.RenameWorkItemForm.submitNavigation", "equals", "WorkItemDetails by workItemId"),
+                        Assertion("screens.CommentThread.dialog", "equals", "EditDialog"),
+                        Assertion("dialogs.EditDialog.with.workItemId", "equals", "item.workItemId"),
+                        Assertion("dialogs.EditDialog.onResult", "equals", "refresh CommentsForWorkItem"),
+                        Assertion("routes.current", "equals", "work-items/{workItemId}"),
+                        Assertion("routes.parameters.workItemId", "equals", "3fa85f64-5717-4562-b3fc-2c963f66afa6")
                     ]),
                 Behavior(
                     "package-rendering",
                     "stage",
-                    "The Web profile resolves scene.web and workspace.icons.",
-                    "Render the package-backed DataGrid and DetailsPanel components.",
-                    "The host resolves package components, icons and presentation hints without falling back to core placeholders.",
+                    "The folder source's Desktop ui profile targets web with AppShell and core plus Cratis.Components packages.",
+                    "Render the MasterDetail screen, tables, forms, topbar, navigation and content slots.",
+                    "The host resolves the package-backed controls from the authored profile and produces no placeholder fallbacks or missing-icon fallbacks.",
                     [
-                        Assertion("packages.components.scene.web.DataGrid", "exists", "true"),
-                        Assertion("icons.workspace.icons.save", "exists", "true"),
-                        Assertion("fallbacks.placeholderComponents", "equals", "0")
+                        Assertion("source.form", "equals", FolderSourceCase),
+                        Assertion("uiProfiles.Desktop.platform", "equals", "web"),
+                        Assertion("uiProfiles.Desktop.size", "equals", "expanded"),
+                        Assertion("uiProfiles.Desktop.layout", "equals", "AppShell"),
+                        Assertion("uiProfiles.Desktop.packages", "equals", "core,Cratis.Components"),
+                        Assertion("layouts.AppShell.slots", "equals", "topbar,navigation,content"),
+                        Assertion("layouts.MasterDetail.slots", "equals", "list,details"),
+                        Assertion("icons.authored.count", "equals", "0"),
+                        Assertion("fallbacks.placeholderComponents", "equals", "0"),
+                        Assertion("fallbacks.missingIcons", "equals", "0")
+                    ]),
+                Behavior(
+                    "browser-control-behavior",
+                    "browser",
+                    "The folder source is rendered in an expanded web profile with navigation, list and details controls visible.",
+                    "Use keyboard focus to activate the Navigation contribution, select a table row, open and close the EditDialog, then use browser back.",
+                    "Control state follows authored navigation and focus returns to the details summary without losing the selected workItemId.",
+                    [
+                        Assertion("source.form", "equals", FolderSourceCase),
+                        Assertion("navigation.Navigation.items", "contains", "Work items"),
+                        Assertion("navigation.Navigation.order.WorkItemList", "equals", "10"),
+                        Assertion("controls.table.rowActivation.keyboard", "equals", "navigate WorkItemDetails by workItemId"),
+                        Assertion("controls.dialog.escapeCloses", "equals", "true"),
+                        Assertion("controls.focus.afterDialogClose", "equals", "WorkItemDetails.summary"),
+                        Assertion("browser.history.back", "equals", "WorkItemList"),
+                        Assertion("browser.history.forward", "equals", "WorkItemDetails")
                     ]),
                 Behavior(
                     "protected-business-semantics",
@@ -162,6 +208,7 @@ public static class ScreenCompositionCorpus
                     "Compile the current source forms.",
                     "The compiler fails closed with pinned UI/query diagnostics and produces no artifact paths.",
                     [
+                        Assertion("source.form", "equals", FolderSourceCase),
                         Assertion("diagnostics.codes", "contains", "PLAY0268"),
                         Assertion("diagnostics.codes", "contains", "PLAY0269"),
                         Assertion("artifactPaths.count", "equals", "0")
@@ -174,6 +221,7 @@ public static class ScreenCompositionCorpus
                     "replace property selectedItem from component workItems.selectedItem null clear",
                     "component scene.web.DataGrid workItems",
                     [
+                        Assertion("source.case", "equals", TypedScreenSourceCase),
                         Assertion("proposal.validation", "equals", "Authoring"),
                         Assertion("binding.invalidRawTextPreserved", "equals", "true"),
                         Assertion("identities.changed", "equals", "0")
@@ -183,23 +231,55 @@ public static class ScreenCompositionCorpus
                     "add dialog toolbar submit action",
                     "screen RenameWorkItemDialog",
                     [
+                        Assertion("source.case", "equals", TypedScreenSourceCase),
                         Assertion("proposal.droppedComments", "equals", "0"),
                         Assertion("target.template", "equals", "EditWorkItemDialog"),
                         Assertion("source.roundTrips", "equals", "true")
-                    ])
+                    ]),
+                Mcp(
+                    "mcp-folder-master-detail-edit",
+                    "open folder source form, add a harmless details-section action and round-trip the import graph",
+                    "screen WorkItemDetails",
+                    [
+                        Assertion("source.form", "equals", FolderSourceCase),
+                        Assertion("documents.stableKeys.count", "equals", "10"),
+                        Assertion("imports.reachableFromRoot", "equals", "true"),
+                        Assertion("proposal.validation", "equals", "Authoring"),
+                        Assertion("screens.WorkItemDetails.template", "equals", "MasterDetail"),
+                        Assertion("queries.GetWorkItem.binding", "equals", "workItemId"),
+                        Assertion("identities.changed", "equals", "0")
+                    ],
+                    FolderSourceCase),
+                Mcp(
+                    "mcp-folder-dialog-routing-edit",
+                    "open folder source form, edit CommentThread dialog routing and verify route/result bindings survive",
+                    "screen CommentThread",
+                    [
+                        Assertion("source.form", "equals", FolderSourceCase),
+                        Assertion("target.dialog", "equals", "EditDialog"),
+                        Assertion("target.with.workItemId", "equals", "item.workItemId"),
+                        Assertion("target.onResult", "equals", "refresh CommentsForWorkItem"),
+                        Assertion("proposal.droppedComments", "equals", "0"),
+                        Assertion("source.roundTrips", "equals", "true")
+                    ],
+                    FolderSourceCase)
             ],
             Harnesses =
             [
                 Harness(
                     "browser-runtime",
                     "Scene browser",
-                    "screenplay-conformance browser --vector screen-composition/v1 --profile Web",
-                    "Scene >=4.10, Stage >=4.40, Screenplay >= PR553 release",
-                    "Final released package vector not pinned yet.",
+                    "screenplay-conformance browser --vector screen-composition/v1 --source-form folder --profile Desktop",
+                    "Scene browser harness for Stage/Scene native screens runtime",
+                    "Docker server is available locally, but no released browser conformance runner/native screens runtime endpoint currently executes the folder corpus end to end.",
                     [
+                        Assertion("source.form", "equals", FolderSourceCase),
                         Assertion("behaviors.selection-details", "passes", "true"),
+                        Assertion("behaviors.query-rebind-clear", "passes", "true"),
                         Assertion("behaviors.native-form-validation-submit", "passes", "true"),
-                        Assertion("behaviors.dialog-outlet-deep-link", "passes", "true")
+                        Assertion("behaviors.dialog-outlet-deep-link", "passes", "true"),
+                        Assertion("behaviors.package-rendering", "passes", "true"),
+                        Assertion("behaviors.browser-control-behavior", "passes", "true")
                     ]),
                 Harness(
                     "mcp-authoring",
@@ -208,29 +288,50 @@ public static class ScreenCompositionCorpus
                     "Screenplay >=4.96.0",
                     null,
                     [
+                        Assertion("source.case", "equals", TypedScreenSourceCase),
                         Assertion("mcp.mcp-edit-component-binding", "passes", "true"),
                         Assertion("mcp.mcp-edit-dialog-action", "passes", "true")
                     ]),
                 Harness(
+                    "mcp-folder-authoring",
+                    "Screenplay MCP",
+                    "screenplay-conformance mcp --vector screen-composition/v1 --source-form folder",
+                    "Screenplay MCP multi-document authoring harness for the folder corpus",
+                    "The current repository executes the typed source MCP harness; the real folder import/edit/export MCP harness is authored here but not wired as a live spec yet.",
+                    [
+                        Assertion("source.form", "equals", FolderSourceCase),
+                        Assertion("mcp.mcp-folder-master-detail-edit", "passes", "true"),
+                        Assertion("mcp.mcp-folder-dialog-routing-edit", "passes", "true")
+                    ]),
+                Harness(
                     "cli-stage-parity",
                     "Cratis CLI and Stage",
-                    "cratis stage render --profile Web --screenplay screen-composition/v1",
-                    "Stage/CLI final screens release vector",
-                    "Exact CLI profile flags and Stage plan schema are pending from stage-cli.",
+                    "cratis render <folder-fixture> --target cratis --destination <out> --name Workspaces -y",
+                    "Screenplay CLI with bundled compiler >= 4.94.0 + Stage screens ESM vertical",
+                    "Executed on CLI 3.39.0 + Stage 4.43.0: planning this corpus publishes zero artifacts because the bundled compiler 4.93.0 cannot parse the screens authoring syntax and the renderer's ESM vertical refuses observable list queries (PLAY0268). Executed parity evidence exists for the legacy RegisterProject vector only; it is not a substitute for screens acceptance.",
                     [
+                        Assertion("source.form", "equals", FolderSourceCase),
+                        Assertion("stage.refusalCodes", "equals", "PLAY0025,PLAY0103,PLAY0207,PLAY0210,PLAY0029,PLAY0268"),
+                        Assertion("stage.artifactPaths.count", "equals", "0"),
                         Assertion("sceneJson.matchesLiveStage", "equals", "true"),
                         Assertion("routes.commands.CreateWorkItem", "exists", "true"),
+                        Assertion("routes.queries.GetWorkItem", "exists", "true"),
+                        Assertion("routes.queries.CommentsForWorkItem", "exists", "true"),
                         Assertion("bindings.generated", "contains", "workItemId")
                     ]),
                 Harness(
                     "studio-roundtrip",
                     "Studio",
-                    "studio-conformance import-edit-export --vector screen-composition/v1",
-                    "Studio final screens release",
-                    "Studio production authoring entry point is still being wired.",
+                    "studio-conformance import-edit-export --vector screen-composition/v1 --source-form folder",
+                    "Studio production authoring/import-edit-export automation entry point + workspace export format contract",
+                    "Studio production authoring/import-edit-export automation entry point and workspace export format contract are not published yet.",
                     [
+                        Assertion("source.form", "equals", FolderSourceCase),
                         Assertion("export.bytesRoundTrip", "equals", "true"),
-                        Assertion("designer.componentBindingPreserved", "equals", "true"),
+                        Assertion("designer.masterDetailPreserved", "equals", "true"),
+                        Assertion("designer.queryBindingsPreserved", "equals", "true"),
+                        Assertion("designer.dialogRoutingPreserved", "equals", "true"),
+                        Assertion("designer.packageProfilePreserved", "equals", "true"),
                         Assertion("play.deepLinkPreserved", "equals", "true")
                     ])
             ],
@@ -241,17 +342,31 @@ public static class ScreenCompositionCorpus
                     Target = "scene-web",
                     Profile = "Web",
                     PlanDigest = "pending:stage-scene-web-plan-v1",
-                    RequiredVersionVector = "Screenplay PR #553 release + Stage final screens release + Scene final screens release + CLI final screens release",
-                    PendingReason = "The exact released Stage plan JSON schema, artifact paths and hashes are not published yet.",
+                    RequiredVersionVector = "Screenplay CLI whose bundled compiler is >= the screens authoring syntax release (4.94.0), plus Stage final screens release",
+                    PendingReason = "Executed on CLI 3.39.0 + cratis/stage:4.43.0: the bundled compiler 4.93.0 predates the screens authoring syntax and rejects template category/type/exposes/outlet slots (PLAY0025), screen toolbar and component directives (PLAY0103), ui profile icons (PLAY0207), form columns (PLAY0210) and slice templates (PLAY0029); the pre-4.94 corpus form parses but planning refuses its observable list queries (PLAY0268) and publishes zero artifacts. Red vectors preserved; no expectation was regenerated to force green.",
                     Artifacts = [],
+                    ObservedRefusalCodes = ["PLAY0025", "PLAY0103", "PLAY0207", "PLAY0210", "PLAY0029", "PLAY0268"],
                     Assertions =
                     [
-                        Assertion("plan.profile", "equals", "Web"),
+                        Assertion("source.form", "equals", FolderSourceCase),
+                        Assertion("plan.profile", "equals", "Desktop"),
                         Assertion("plan.scene.documents", "contains", "scene.json"),
+                        Assertion("plan.layout", "contains", "AppShell"),
+                        Assertion("plan.templates", "contains", "MasterDetail"),
                         Assertion("plan.routes.commands", "contains", "CreateWorkItem"),
+                        Assertion("plan.routes.commands", "contains", "RenameWorkItem"),
+                        Assertion("plan.routes.commands", "contains", "CloseWorkItem"),
+                        Assertion("plan.routes.commands", "contains", "AddComment"),
+                        Assertion("plan.routes.queries", "contains", "AllWorkItems"),
                         Assertion("plan.routes.queries", "contains", "GetWorkItem"),
+                        Assertion("plan.routes.queries", "contains", "CommentsForWorkItem"),
                         Assertion("plan.nativeForms", "contains", "CreateWorkItemForm"),
-                        Assertion("plan.packageFallbacks", "equals", "0")
+                        Assertion("plan.nativeForms", "contains", "RenameWorkItemForm"),
+                        Assertion("plan.navigation", "contains", "Work items"),
+                        Assertion("plan.dialogs", "contains", "EditDialog"),
+                        Assertion("plan.packages", "equals", "core,Cratis.Components"),
+                        Assertion("plan.packageFallbacks", "equals", "0"),
+                        Assertion("plan.missingIconFallbacks", "equals", "0")
                     ]
                 }
             ]
@@ -296,17 +411,17 @@ public static class ScreenCompositionCorpus
     {
         Name = name,
         Category = category,
-        SourceCase = "screen-release-ui-positive",
+        SourceCase = FolderSourceCase,
         Given = given,
         When = when,
         Then = then,
         Assertions = assertions
     };
 
-    static CanonicalMcpEditExpectation Mcp(string name, string operation, string targetDeclaration, ImmutableArray<CanonicalScreenAssertion> assertions) => new()
+    static CanonicalMcpEditExpectation Mcp(string name, string operation, string targetDeclaration, ImmutableArray<CanonicalScreenAssertion> assertions, string sourceCase = TypedScreenSourceCase) => new()
     {
         Name = name,
-        SourceCase = "screen-release-ui-positive",
+        SourceCase = sourceCase,
         Operation = operation,
         TargetDeclaration = targetDeclaration,
         Assertions = assertions

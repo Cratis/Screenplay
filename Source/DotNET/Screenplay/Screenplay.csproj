@@ -10,6 +10,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" />
+        <ProjectReference Include="../Screenplay.ContractCatalog/Screenplay.ContractCatalog.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" SetTargetFramework="TargetFramework=net10.0" />
         <ProjectReference Include="../Screenplay.Contexts/Screenplay.Contexts.csproj" />
         <InternalsVisibleTo Include="Cratis.Screenplay.Mcp" />
     </ItemGroup>

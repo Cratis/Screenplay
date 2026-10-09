@@ -13,6 +13,7 @@
         <EmbeddedResource Include="Corpus/**/*.play" />
         <EmbeddedResource Include="Corpus/**/*.json" />
         <EmbeddedResource Include="Corpus/**/*.txt" />
+        <EmbeddedResource Include="Corpus/**/*.ts" />
         <ProjectReference Include="../Screenplay/Screenplay.csproj" />
     </ItemGroup>
 </Project>

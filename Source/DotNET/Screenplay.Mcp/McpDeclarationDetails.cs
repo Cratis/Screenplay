@@ -23,6 +23,7 @@ static class McpDeclarationDetails
                 executionReadiness = readiness.ExecutionReadiness(declaration.Syntax),
                 eventCount = declaration.Syntax is SliceSyntax eventOwner ? EventDeclarations.In(eventOwner).Count() : 0,
                 eventId = (declaration.Syntax as EventSyntax)?.Id,
+                subject = Subject(declaration.Syntax),
                 description = declaration.Syntax.GetType().GetProperty("Description")?.GetValue(declaration.Syntax) as string,
                 documentation = declaration.Syntax.GetType().GetProperty("Documentation")?.GetValue(declaration.Syntax) as string,
                 uses = (declaration.Syntax as OperationSyntax)?.Uses,
@@ -54,6 +55,7 @@ static class McpDeclarationDetails
                     property.Type.IsOptional,
                     property.IsIdentifier,
                     property.IsGenerated,
+                    property.IsSubject,
                     property.Location
                 },
                 arguments,
@@ -172,6 +174,14 @@ static class McpDeclarationDetails
             }
         }
         return matches.Length == 1 ? matches[0] : throw new McpFailure($"Declaration target must identify exactly one logical declaration; found {matches.Length}.");
+    }
+
+    static object? Subject(SyntaxNode node)
+    {
+        if (node is not EventSyntax @event) return null;
+        var property = @event.Properties.FirstOrDefault(property => property.IsSubject);
+
+        return property is null ? new { source = "eventSource" } : new { source = "property", property = property.Name };
     }
 
     static IEnumerable<string> Views(SyntaxNode node) => node switch

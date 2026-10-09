@@ -145,6 +145,7 @@ internal static class ScreenplayValidator
         ProjectionVariantValidator.Validate(declarations, context);
         ProjectionTargetValidator.Validate(declarations, context);
         IdentifierComplianceValidator.Validate(application, declarations, context);
+        EventSubjectValidator.Validate(application, declarations, context);
         SpecificationValueConsistencyValidator.Validate(declarations, context);
         SpecificationOutcomeConsistencyValidator.Validate(declarations, context);
         SpecificationActionValidator.Validate(application, declarations, context);
