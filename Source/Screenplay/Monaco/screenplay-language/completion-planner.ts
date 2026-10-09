@@ -217,6 +217,19 @@ export function planCompletions(
             }
         }
     }
+    if (['on', 'when', 'otherwise'].includes(chain[0])) {
+        let parentIndent = effectiveIndent;
+        for (let index = lineIndex - 1; index >= 0; index--) {
+            if (fences[index]) continue;
+            const parent = withoutComment(lines[index]);
+            if (parent.trim().length === 0 || indentOf(parent) >= parentIndent) continue;
+            parentIndent = indentOf(parent);
+            if (/^\s*on\s+(?:click|double click|select)\s*$/.test(parent)) {
+                return { kind: 'entries', entries: chain[0] === 'on' ? items.interactionChoiceItems : items.interactionActionItems };
+            }
+            if (/^\s*(?:screen|behavior|specification|reaction)\b/.test(parent)) break;
+        }
+    }
     if (chain[0] === 'on' && refusal !== undefined) return { kind: 'entries', entries: items.refusalItems };
     const ruleContext = namedRuleContext(lines, lineIndex, effectiveIndent);
     if (ruleContext === 'implementation') return { kind: 'entries', entries: items.namedRuleImplementationItems };

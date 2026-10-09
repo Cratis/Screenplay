@@ -287,7 +287,11 @@ BehaviorDecl   = "behavior", Ident, NL,
                    | "order", SignedInteger, NL | InteractionBinding }, DEDENT ] ;
 
 InteractionBinding = "on", InteractionTrigger, NL,
-                 INDENT, { "where", BindingText, NL | InteractionAction }, DEDENT ;
+                 INDENT, ( InteractionPlainBody | InteractionChoiceBody ), DEDENT ;
+InteractionPlainBody = { "where", BindingText, NL | InteractionAction } ;
+InteractionChoiceBody = InteractionAlternative, { InteractionAlternative }, [ InteractionOtherwise ] ;
+InteractionAlternative = "when", Condition, NL, INDENT, InteractionAction, { InteractionAction }, DEDENT ;
+InteractionOtherwise = "otherwise", NL, INDENT, InteractionAction, { InteractionAction }, DEDENT ;
 
 UsesBehaviorDecl = "uses", Ident, NL,
                  [ INDENT, { Ident, BehaviorArgument, NL }, DEDENT ] ;
@@ -316,8 +320,11 @@ InteractionContinuation = "on", ( "success" | "failure" | "result" ), NL,
                           INDENT, { InteractionAction }, DEDENT ;
 BindingText    = ? nonempty remainder of the line, stored verbatim ? ;
 
-(* A binding needs at least one action and at most one where guard. Guards,
-   set values and argument bindings are opaque text, not Condition operands.
+(* A plain binding needs at least one action and at most one where guard. Choices
+   are only valid on click/double click/select, use strict item Condition operands,
+   and cannot mix with plain actions or where. Otherwise is optional and final.
+   Item-trigger where is deprecated (Warning if strict, Information otherwise);
+   other triggers keep opaque where. Set values and arguments remain opaque text.
    on success/failure are allowed only on execute, refresh, confirm, open dialog
    and raise; on result only on open dialog. Continuations nest up to 16 action
    levels. An interval below 5 seconds warns. See interactions.md. *)

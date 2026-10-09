@@ -1087,6 +1087,18 @@ Valid [source/stream authoring](event-sources.md) is not admitted by any support
 
 See [Policies](policies.md#portable-evaluation) for three-valued evaluation and the distinction between a missing caller claim and a missing comparison target.
 
+### Guarded interaction alternatives
+
+| Code | Severity | Reported when |
+| --- | --- | --- |
+| `PLAY0560` | Error | Alternatives occur on a trigger other than click, double click or select. Submit and non-item triggers have no structured subject in this version. |
+| `PLAY0561` | Error | A binding mixes alternatives with plain actions or an opaque `where` guard. |
+| `PLAY0562` | Error | A `when` or `otherwise` branch has no actions. |
+| `PLAY0563` | Error | An interaction uses the labeled-action one-line `when … execute …` spelling. C# offers a typed block-form repair. |
+| `PLAY0564` | Warning / Information | Opaque `where` on click, double click or select is deprecated. A strict item condition warns and has a C# typed repair; other text is Information without a repair. Other triggers are unchanged. |
+
+Both compilers check these forms. Repairs require individual review (`CanFixAll: false`) and refuse trailing-comment relocation or comment loss. Conditions reuse PLAY0344–PLAY0348; fallback ordering uses PLAY0343 and missing alternatives uses PLAY0342. See [Interactions](interactions.md#choose-an-action-list-by-item-state). Interactions still report PLAY0269 at ESM binding; syntax support is not runtime admission.
+
 ## Retired codes
 
 A retired code stays out of use forever.

@@ -2554,4 +2554,29 @@ public static class DiagnosticCodes
     /// Files give conflicting documentation for the same module or feature.
     /// </summary>
     public const string ConflictingDocumentationAcrossFiles = "PLAY0559";
+
+    /// <summary>
+    /// Interaction alternatives require a click, double click or select trigger.
+    /// </summary>
+    public const string UnsupportedInteractionAlternatives = "PLAY0560";
+
+    /// <summary>
+    /// Interaction alternatives cannot mix with plain actions or an opaque guard.
+    /// </summary>
+    public const string MixedInteractionAlternatives = "PLAY0561";
+
+    /// <summary>
+    /// An interaction alternative or fallback has no actions.
+    /// </summary>
+    public const string InteractionAlternativeWithoutActions = "PLAY0562";
+
+    /// <summary>
+    /// An interaction alternative uses the label-headed one-line spelling instead of a block.
+    /// </summary>
+    public const string InlineInteractionAlternative = "PLAY0563";
+
+    /// <summary>
+    /// An item interaction uses a deprecated opaque where guard.
+    /// </summary>
+    public const string LegacyInteractionWhere = "PLAY0564";
 }
