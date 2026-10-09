@@ -349,10 +349,12 @@ sealed class WorkspaceAuthoringTransaction(
         }
 
         // Move lineage comes from retained JSON objects, never a positional guess after reparenting.
+        var previousOccurrences = movedOccurrences is null ? null : before.Entries.ToDictionary(entry => (entry.Handle.Document, entry.Handle.Path));
+        var candidateOccurrences = movedOccurrences is null ? null : after.Entries.ToDictionary(entry => (entry.Handle.Document, entry.Handle.Path));
         foreach (var (original, current) in movedOccurrences ?? new Dictionary<(DocumentId Document, string Path), (DocumentId Document, string Path)>())
         {
-            var previous = before.Entries.Single(entry => entry.Handle.Document == original.Document && entry.Handle.Path == original.Path);
-            var candidateEntry = after.Entries.SingleOrDefault(entry => entry.Handle.Document == current.Document && entry.Handle.Path == current.Path);
+            var previous = previousOccurrences![original];
+            var candidateEntry = candidateOccurrences!.GetValueOrDefault(current);
             if (candidateEntry?.Kind != previous.Kind)
             {
                 throw new InvalidWorkspaceAuthoring("A generated move changed an occurrence kind or lost its source correspondence.");

@@ -9,7 +9,6 @@ using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Semantics.Serialization;
 using Cratis.Screenplay.Syntax;
-using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Workspaces;
 
@@ -46,23 +45,36 @@ internal sealed partial class WorkspaceRefactoring
         array.Remove(node);
     }
 
-    static string NodePath(JsonNode node)
+    static Dictionary<JsonNode, (DocumentId Document, string Path)> NodeLocations(Dictionary<DocumentId, JsonNode> roots)
     {
-        var parts = new List<string>();
-        while (node.Parent is { } parent)
+        var locations = new Dictionary<JsonNode, (DocumentId Document, string Path)>(ReferenceEqualityComparer.Instance);
+        void Visit(JsonNode node, DocumentId document, string path)
         {
-            parts.Add(parent is JsonArray array ? array.IndexOf(node).ToString(System.Globalization.CultureInfo.InvariantCulture) : ((JsonObject)parent).Single(pair => ReferenceEquals(pair.Value, node)).Key);
-            node = parent;
+            locations.Add(node, (document, path));
+            if (node is JsonObject value)
+            {
+                foreach (var pair in value.Where(pair => pair.Value is not null)) Visit(pair.Value!, document, path + "/" + pair.Key);
+            }
+            else if (node is JsonArray children)
+            {
+                for (var index = 0; index < children.Count; index++)
+                {
+                    if (children[index] is { } child) Visit(child, document, path + "/" + index.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                }
+            }
         }
-        parts.Reverse();
-        return parts.Count == 0 ? string.Empty : "/" + string.Join('/', parts);
+        foreach (var (document, root) in roots) Visit(root, document, string.Empty);
+        return locations;
     }
 
-    static JsonNode Destination(JsonNode root, SemanticAddress address, bool placement)
+    static JsonNode Destination(JsonNode root, SemanticAddress address, IReadOnlyList<string> placementScope)
     {
         var current = root;
+        var scope = new List<string>();
         foreach (var part in address.Parts.Skip(1))
         {
+            scope.Add(part.Key);
+            var placement = scope.Count <= placementScope.Count && scope.SequenceEqual(placementScope.Take(scope.Count));
             var member = part.Kind == SemanticAddressPartKind.Module ? "modules" : "features";
             var children = (JsonArray)current[member]!;
             var next = children.FirstOrDefault(child => child!["name"]!.GetValue<string>() == part.Key);
@@ -115,8 +127,51 @@ internal sealed partial class WorkspaceRefactoring
 
     static ApplicationSyntax Merged(WorkspaceSyntaxIndex index) => PlayFolderMerge.Merge([.. index.Entries.Where(entry => entry.Parent is null).Select(entry => new CompilationResult<ApplicationSyntax>((ApplicationSyntax)entry.Node, []))]).Value ?? throw new InvalidWorkspaceAuthoring("Logical fragments cannot be merged for continuity validation.");
 
-    static Dictionary<string, string> InheritedBehavior(WorkspaceSyntaxIndex index)
+    static Dictionary<string, string> InheritedBehavior(WorkspaceSyntaxIndex index, WorkspaceMoveRequest? migration = null)
     {
+        var bindings = new WorkspaceReferenceBindings(index, includeInteractions: true);
+        var targets = new Dictionary<SyntaxNode, List<string>>(ReferenceEqualityComparer.Instance);
+        var attachments = new Dictionary<SyntaxNode, JsonNode>(ReferenceEqualityComparer.Instance);
+        foreach (var binding in bindings.Bindings.Where(binding => binding.Reference.Entry.Node is InteractionActionSyntax or BehaviorArgumentSyntax))
+        {
+            var ownerEntry = WorkspaceReferenceMembers.Parents(binding.Reference.Entry, index).First(entry => entry.Node is BehaviorSyntax or UsesBehaviorSyntax);
+            var owner = ownerEntry.Node;
+            if (!targets.TryGetValue(owner, out var values)) targets[owner] = values = [];
+            var target = binding.Target;
+            var path = target is null ? binding.Reference.Text : string.Join('.', target.Scope.Segments.Append(target.Name));
+            if (migration is not null && target?.Entry is not null)
+            {
+                var prefix = string.Join('.', migration.Target.Parts.Skip(1).Select(part => part.Key));
+                var replacement = string.Join('.', MovedAddress(migration.Target, migration).Parts.Skip(1).Select(part => part.Key));
+                if (path.StartsWith(prefix + ".", StringComparison.Ordinal))
+                {
+                    path = replacement + path[prefix.Length..];
+                    var reference = binding.Reference;
+                    if (reference.Text.Contains('.'))
+                    {
+                        if (!attachments.TryGetValue(owner, out var attachment)) attachments[owner] = attachment = WorkspaceSyntaxMutation.Json(owner);
+                        var referenceNode = WorkspaceSyntaxMutation.At(attachment, reference.Entry.Handle.Path[ownerEntry.Handle.Path.Length..]);
+                        if (reference.Index is { } position) referenceNode[reference.Member]![position] = path;
+                        else referenceNode[reference.Member] = path;
+                    }
+                }
+            }
+            values.Add($"{binding.Reference.Domain}:{binding.Outcome}:{path}");
+        }
+        var named = index.Entries.Select(entry => entry.Node).OfType<BehaviorSyntax>().Where(behavior => behavior.Name is not null)
+            .GroupBy(behavior => behavior.Name!).ToDictionary(group => group.Key, group => group.ToArray(), StringComparer.Ordinal);
+        string Fingerprint(SyntaxNode node)
+        {
+            var resolved = targets.GetValueOrDefault(node) ?? [];
+            if (node is UsesBehaviorSyntax uses)
+            {
+                if (!named.TryGetValue(uses.Behavior, out var declarations) || declarations.Length != 1)
+                    throw new InvalidWorkspaceAuthoring($"Inherited interaction behavior '{uses.Behavior}' cannot be resolved uniquely for move continuity.");
+                resolved = [.. resolved, .. targets.GetValueOrDefault(declarations[0]) ?? []];
+            }
+            var attachment = (attachments.GetValueOrDefault(node) ?? WorkspaceSyntaxMutation.Json(node)).ToJsonString(new() { MaxDepth = 256 });
+            return attachment + "|targets:" + string.Join(',', resolved);
+        }
         var merged = WorkspaceSyntaxIndex.ForSyntax(Merged(index), index.Workspace.IdentityCatalog);
         var byHandle = merged.ToDictionary(entry => entry.Handle);
         var result = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -134,7 +189,7 @@ internal sealed partial class WorkspaceRefactoring
             string[] members = entry.Node is ScreenSyntax ? ["Behaviors", "UsedBehaviors"] : ["Authorize"];
             var values = ancestors.SelectMany(node => members.Select(member => node.GetType().GetProperty(member)?.GetValue(node)))
                 .SelectMany(BehaviorNodes)
-                .Select(node => SyntaxJson.Serialize(node).GetRawText());
+                .Select(Fingerprint);
             var scope = ancestors.Where(node => node is ModuleSyntax or FeatureSyntax or SliceSyntax).Select(WorkspaceReferenceBindings.Name);
             result[$"{entry.Kind}:{string.Join('.', scope.Append(WorkspaceReferenceBindings.Name(entry.Node)))}"] = string.Join('|', values);
         }
@@ -150,7 +205,7 @@ internal sealed partial class WorkspaceRefactoring
 
     static void RequireInheritedBehavior(WorkspaceSyntaxIndex before, WorkspaceSyntaxIndex after, WorkspaceMoveRequest request)
     {
-        var previous = InheritedBehavior(before);
+        var previous = InheritedBehavior(before, request);
         var current = InheritedBehavior(after);
         var prefix = string.Join('.', request.Target.Parts.Skip(1).Select(part => part.Key));
         var replacement = string.Join('.', MovedAddress(request.Target, request).Parts.Skip(1).Select(part => part.Key));
@@ -188,7 +243,7 @@ internal sealed partial class WorkspaceRefactoring
         var collision = index.Entries.FirstOrDefault(entry => currentAddress.Equals(entry.Address));
         if (collision is not null) throw new InvalidWorkspaceAuthoring($"Destination collision with '{MoveAddress(collision.Address)}' at '{Position(workspace.Documents, collision)}'.");
 
-        var bindings = new WorkspaceReferenceBindings(index);
+        var bindings = new WorkspaceReferenceBindings(index, includeInteractions: true);
         bindings.RequireNoCollisions();
         var roots = index.Entries.Where(entry => entry.Parent is null).ToDictionary(entry => entry.Handle.Document, entry => WorkspaceSyntaxMutation.Json(entry.Node));
         var nodes = index.Entries.ToDictionary(entry => entry.Handle, entry => WorkspaceSyntaxMutation.At(roots[entry.Handle.Document], entry.Handle.Path));
@@ -217,11 +272,14 @@ internal sealed partial class WorkspaceRefactoring
             touched.Add(reference.Entry.Handle.Document);
         }
 
-        ReparentImports(index, request, fragments, destinations, roots, nodes, touched);
+        var placements = ReparentImports(index, request, fragments, destinations, roots, nodes, touched);
         foreach (var fragment in fragments)
         {
             var node = nodes[fragment.Handle];
-            var placement = Ancestors(fragment, index).Any(ancestor => ancestor.Node is ModuleSyntax { IsPlacement: true } or FeatureSyntax { IsPlacement: true });
+            var document = workspace.Documents.Single(document => document.Id == fragment.Handle.Document);
+            var placement = placements.GetValueOrDefault(document.Id) ?? index.Placement(document).Scope;
+            if (!request.NewParent.Parts.Skip(1).Select(part => part.Key).Take(placement.Count).SequenceEqual(placement))
+                throw new InvalidWorkspaceAuthoring($"Document '{document.Path}' remains placed at '{string.Join('.', placement)}', outside destination '{MoveAddress(request.NewParent)}'.");
             Detach(node);
             var parentFragment = destinations.FirstOrDefault(destination => destination.Handle.Document == fragment.Handle.Document);
             var destination = parentFragment is null ? Destination(roots[fragment.Handle.Document], request.NewParent, placement) : nodes[parentFragment.Handle];
@@ -239,14 +297,11 @@ internal sealed partial class WorkspaceRefactoring
         var operations = touched.Select(document => (WorkspaceOperation)new ReplaceWorkspaceSyntaxDocument(document, WorkspaceSyntaxMutation.Syntax(roots[document]))).ToImmutableArray();
         var semanticRenames = workspace.IdentityCatalog.Semantics.Where(assignment => migrations.ContainsKey(assignment.Address)).Select(assignment => new SemanticIdentityRename(assignment.Address, migrations[assignment.Address])).ToImmutableArray();
         var eventRenames = workspace.IdentityCatalog.EventContracts.Where(assignment => migrations.ContainsKey(assignment.Address)).Select(assignment => new EventContractIdentityRename(assignment.Address, migrations[assignment.Address])).ToImmutableArray();
+        var locations = NodeLocations(roots);
         var lineage = new Dictionary<(DocumentId Document, string Path), (DocumentId Document, string Path)>();
-        foreach (var entry in index.Entries)
+        foreach (var entry in index.Entries.Where(entry => touched.Contains(entry.Handle.Document)))
         {
-            var node = nodes[entry.Handle];
-            var root = node;
-            while (root.Parent is not null) root = root.Parent;
-            var currentDocument = roots.FirstOrDefault(pair => ReferenceEquals(pair.Value, root));
-            if (currentDocument.Value is not null) lineage[(entry.Handle.Document, entry.Handle.Path)] = (currentDocument.Key, NodePath(node));
+            if (locations.TryGetValue(nodes[entry.Handle], out var location)) lineage[(entry.Handle.Document, entry.Handle.Path)] = location;
         }
         var result = new WorkspaceAuthoringTransaction(workspace, migrations, movedOccurrences: lineage).Propose(new()
         {
@@ -260,9 +315,9 @@ internal sealed partial class WorkspaceRefactoring
         });
         if (!result.Accepted) return result;
         var candidateIndex = WorkspaceSyntaxIndex.Create(result.Workspace!);
-        var candidateBindings = new WorkspaceReferenceBindings(candidateIndex);
+        var candidateBindings = new WorkspaceReferenceBindings(candidateIndex, includeInteractions: true);
         candidateBindings.RequireNoCollisions();
-        RequireMoveReferences(index, candidateIndex, bindings, candidateBindings, roots, nodes, migrations);
+        RequireMoveReferences(candidateIndex, bindings, candidateBindings, locations, nodes, migrations);
         foreach (var container in index.Entries.Where(entry => entry.Node is ModuleSyntax or FeatureSyntax).Select(entry => entry.Address!).Distinct())
         {
             var expected = migrations.GetValueOrDefault(container) ?? container;
@@ -285,7 +340,7 @@ internal sealed partial class WorkspaceRefactoring
         };
     }
 
-    void ReparentImports(
+    Dictionary<DocumentId, IReadOnlyList<string>> ReparentImports(
         WorkspaceSyntaxIndex index,
         WorkspaceMoveRequest request,
         WorkspaceSyntaxEntry[] fragments,
@@ -294,6 +349,7 @@ internal sealed partial class WorkspaceRefactoring
         Dictionary<WorkspaceNodeHandle, JsonNode> nodes,
         HashSet<DocumentId> touched)
     {
+        var placements = new Dictionary<DocumentId, IReadOnlyList<string>>();
         foreach (var entry in index.Entries.Where(entry => entry.Node is FileImportSyntax))
         {
             if (Ancestors(entry, index).Any(ancestor => request.Target.Equals(ancestor.Address))) continue;
@@ -304,12 +360,12 @@ internal sealed partial class WorkspaceRefactoring
             var import = (FileImportSyntax)entry.Node;
             var pattern = PlayGlob.Resolve(importer.Path.Value, import.Pattern);
             var matched = workspace.Documents.Where(document => document.Id != importer.Id && PlayGlob.IsMatch(pattern, document.Path.Value)).ToArray();
-            var affected = matched.Where(document => fragments.Any(fragment => fragment.Handle.Document == document.Id &&
-                Ancestors(fragment, index).Any(ancestor => ancestor.Node is ModuleSyntax { IsPlacement: true } or FeatureSyntax { IsPlacement: true }))).ToArray();
+            var affected = matched.Where(document => index.Placement(document).Scope.SequenceEqual(oldParent) &&
+                fragments.Any(fragment => fragment.Handle.Document == document.Id)).ToArray();
             if (affected.Length == 0) continue;
             if (PlayGlob.HasWildcard(import.Pattern)) throw new InvalidWorkspaceAuthoring($"Import '{import.Pattern}' at '{importer.Path}' is a glob placing moved fragments; literal-path imports are required. Matched addresses: {string.Join(", ", matched.Select(document => document.Path.Value))}.");
             if (matched.Length != 1 || index.Entries.Any(candidate => candidate.Handle.Document == matched[0].Id && candidate.Address is not null &&
-                candidate.Node is not (ApplicationSyntax or ModuleSyntax or FeatureSyntax) && !Within(candidate.Address, request.Target)))
+                candidate.Node is not (ApplicationSyntax or ModuleSyntax { IsPlacement: true } or FeatureSyntax { IsPlacement: true }) && !Within(candidate.Address, request.Target)))
             {
                 throw new InvalidWorkspaceAuthoring($"Import '{import.Pattern}' also places declarations outside '{MoveAddress(request.Target)}'.");
             }
@@ -325,32 +381,30 @@ internal sealed partial class WorkspaceRefactoring
             ((JsonArray)nodes[destination.Handle]["fileImports"]!).Add(node);
             touched.Add(entry.Handle.Document);
             touched.Add(destination.Handle.Document);
+            placements[matched[0].Id] = [.. request.NewParent.Parts.Skip(1).Select(part => part.Key)];
         }
+        return placements;
     }
 
     void RequireMoveReferences(
-        WorkspaceSyntaxIndex before,
         WorkspaceSyntaxIndex after,
         WorkspaceReferenceBindings previous,
         WorkspaceReferenceBindings current,
-        Dictionary<DocumentId, JsonNode> roots,
+        Dictionary<JsonNode, (DocumentId Document, string Path)> locations,
         Dictionary<WorkspaceNodeHandle, JsonNode> nodes,
         Dictionary<SemanticAddress, SemanticAddress> migrations)
     {
         var entries = after.Entries.ToDictionary(entry => (entry.Handle.Document, entry.Handle.Path));
         WorkspaceSyntaxEntry? Counterpart(WorkspaceSyntaxEntry original)
         {
-            var node = nodes[original.Handle];
-            var root = node;
-            while (root.Parent is not null) root = root.Parent;
-            var document = roots.FirstOrDefault(pair => ReferenceEquals(pair.Value, root));
-            return document.Value is null ? null : entries.GetValueOrDefault((document.Key, NodePath(node)));
+            return locations.TryGetValue(nodes[original.Handle], out var location) ? entries.GetValueOrDefault(location) : null;
         }
+        var currentByOccurrence = current.Bindings.ToDictionary(binding => (binding.Reference.Entry.Handle, binding.Reference.Member, binding.Reference.Index));
         var remaining = current.Bindings.Select(binding => binding.Reference.Key).ToHashSet(StringComparer.Ordinal);
         foreach (var binding in previous.Bindings)
         {
             var occurrence = Counterpart(binding.Reference.Entry);
-            var candidate = current.Bindings.SingleOrDefault(other => other.Reference.Entry.Handle == occurrence?.Handle && other.Reference.Member == binding.Reference.Member && other.Reference.Index == binding.Reference.Index);
+            var candidate = occurrence is null ? null : currentByOccurrence.GetValueOrDefault((occurrence.Handle, binding.Reference.Member, binding.Reference.Index));
             if (candidate is not null) remaining.Remove(candidate.Reference.Key);
             var originalTarget = binding.Target?.Entry;
             var expected = originalTarget?.Address is { } address ? migrations.GetValueOrDefault(address) ?? address : null;

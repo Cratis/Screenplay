@@ -77,6 +77,49 @@ static class WorkspaceReferenceMembers
         }
     }
 
+    // Move-only operands: parameters are bound at their uses site, never as declaration names.
+    internal static IEnumerable<WorkspaceReferenceMember> Interactions(WorkspaceSyntaxIndex index)
+    {
+        var parameters = new Dictionary<(string Behavior, string Parameter), HashSet<WorkspaceReferenceDomain>>();
+        foreach (var entry in index.Entries)
+        {
+            var operand = entry.Node switch
+            {
+                ExecuteCommandActionSyntax execute => new WorkspaceReferenceMember(entry, "command", null, execute.Command, WorkspaceReferenceDomain.Command),
+                NavigateActionSyntax navigate => new WorkspaceReferenceMember(entry, "screen", null, navigate.Screen, WorkspaceReferenceDomain.Screen),
+                RefreshQueryActionSyntax refresh => new WorkspaceReferenceMember(entry, "query", null, refresh.Query, WorkspaceReferenceDomain.Query),
+                _ => null
+            };
+            if (operand is null) continue;
+            var behavior = Parents(entry, index).Select(parent => parent.Node).OfType<BehaviorSyntax>().FirstOrDefault();
+            if (behavior?.Name is { } name && behavior.Parameters.Any(parameter => parameter.Name == operand.Text))
+            {
+                var key = (name, operand.Text);
+                if (!parameters.TryGetValue(key, out var domains)) parameters[key] = domains = [];
+                domains.Add(operand.Domain);
+                continue;
+            }
+            yield return operand;
+        }
+        foreach (var entry in index.Entries.Where(entry => entry.Node is BehaviorArgumentSyntax))
+        {
+            var argument = (BehaviorArgumentSyntax)entry.Node;
+            var uses = Parents(entry, index).Select(parent => parent.Node).OfType<UsesBehaviorSyntax>().First();
+            if (!parameters.TryGetValue((uses.Behavior, argument.Name), out var domains)) continue;
+            if (domains.Count != 1) throw new InvalidWorkspaceAuthoring($"Interaction argument '{uses.Behavior}.{argument.Name}' at '{entry.Handle}' has multiple target domains; its move continuity cannot be proven.");
+            yield return new(entry, "value", null, argument.Value, domains.Single());
+        }
+    }
+
+    internal static IEnumerable<WorkspaceSyntaxEntry> Parents(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index)
+    {
+        while (entry.Parent is { } handle && index.Find(handle) is { } parent)
+        {
+            yield return parent;
+            entry = parent;
+        }
+    }
+
     internal static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> Members(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index)
     {
         var parent = entry.Parent is { } handle ? index.Find(handle) : null;

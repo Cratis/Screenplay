@@ -662,17 +662,25 @@ The first release moves a Slice to a Feature or a Feature to a Module or Feature
 Moving modules or declarations between slices is not offered. Every assigned
 subtree declaration gets an automatic semantic migration and every affected event
 contract an event migration. Event names and identity pins do not change. Qualified
-typed references, including container `depends on` references, are repaired.
+typed references, including container `depends on` references and interaction
+`navigate to`, `execute` and `refresh` operands, are repaired. Named-behavior
+parameter operands stay unchanged; their declaration-valued `uses` arguments are
+bound and repaired at the attachment's scope. Arguments used for multiple target
+domains refuse with the behavior and parameter named.
 
 No-op moves, collisions, capture or ambiguous references, descendant destinations,
 disallowed parent kinds and any identity loss refuse with structured conflicts.
-Inherited `authorize` and screen `on`/`uses` bindings must not change. When the
+Inherited `authorize` and screen `on`/`uses` bindings must not change. Interaction
+continuity compares resolved targets as well as attachment text, so identical
+attachments that resolve to different screens, commands or queries refuse. When the
 original model is executable, the candidate executable model is compared by
 preserved identity, allowing only container ownership changes; differences refuse.
 Authoring-only source still has inherited binding and reference continuity checked.
 
 Split subtrees move all fragments together. Inline and restated-header fragments
-remain in their documents. Literal placing imports move to one authored destination
+remain in their documents. Restated headers outside the file's import-placement
+scope remain authored headers; only the actual placement scope is header-less.
+Literal placing imports that directly own the moved fragment move to one authored destination
 (or a single own-named file for a split destination); placing globs and ambiguous
 split destinations refuse. An empty metadata-free wrapper fragment can be removed,
 but the old logical parent remains. Files are never relocated; `expand-layout` is
