@@ -79,11 +79,21 @@ internal static partial class ScreenplayParser
                 case "import":
                     if (ImportRegex().Match(line.Content) is { Success: true } import)
                     {
-                        imports.Add(new(import.Groups[1].Value, line.Location));
+                        var origin = import.Groups["origin"].Success ? StringLiteral.Unescape(import.Groups["origin"].Value) : null;
+                        if (origin is not null && string.IsNullOrWhiteSpace(origin))
+                        {
+                            context.Error(DiagnosticCodes.InvalidImportDeclaration, "An import origin must be a nonblank quoted string", line.Location);
+                        }
+
+                        imports.Add(new(import.Groups[1].Value, line.Location)
+                        {
+                            Origin = origin,
+                            Visibility = origin is null ? EventVisibility.Private : EventVisibility.Public
+                        });
                     }
                     else
                     {
-                        context.Error(DiagnosticCodes.InvalidImportDeclaration, $"Invalid import '{line.Content}' - expected 'import <Qualified.Name>'", line.Location);
+                        context.Error(DiagnosticCodes.InvalidImportDeclaration, $"Invalid import '{line.Content}' - expected 'import <Qualified.Name> [from \"<origin>\"]'", line.Location);
                     }
 
                     break;
@@ -583,7 +593,7 @@ internal static partial class ScreenplayParser
     [GeneratedRegex(@"^domain\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)$", RegexOptions.None, 1000)]
     private static partial Regex DomainRegex();
 
-    [GeneratedRegex(@"^import\s+([\w.]+)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^import\s+([\w.]+)(?:\s+from\s+""(?<origin>" + StringLiteral.BodyPattern + @")"")?$", RegexOptions.None, 1000)]
     private static partial Regex ImportRegex();
 
     [GeneratedRegex(@"^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@?\w+)*)$", RegexOptions.None, 1000)]

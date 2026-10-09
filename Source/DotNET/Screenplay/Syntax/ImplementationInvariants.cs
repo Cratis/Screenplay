@@ -13,6 +13,10 @@ internal static partial class ImplementationInvariants
     {
         OperationInvariants.Validate(node);
         EventSourceInvariants.Validate(node);
+        if (PublicEventInvariants.Error(node) is { } publicEventError)
+        {
+            throw new InvalidSyntaxJson(publicEventError);
+        }
 
         // Legacy structural trees remain transportable. Authoring also requires exact print/parse fidelity.
         // The new wrapper must never silently pick a payload, including before that admission step.

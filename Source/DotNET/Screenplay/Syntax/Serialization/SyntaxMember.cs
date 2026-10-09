@@ -26,7 +26,8 @@ internal sealed class SyntaxMember(PropertyInfo property, ParameterInfo? paramet
         !(Property.DeclaringType == typeof(PropertySyntax) && Property.Name == nameof(PropertySyntax.IsGenerated)) &&
         !(Property.DeclaringType == typeof(Specifications.SpecificationSyntax) && Property.Name == nameof(Specifications.SpecificationSyntax.ThenNoEvents)) &&
         !(Property.DeclaringType == typeof(EventSyntax) &&
-          (Property.Name == nameof(EventSyntax.Generation) || Property.Name == nameof(EventSyntax.HasGenerationMarker)));
+          (Property.Name == nameof(EventSyntax.Generation) || Property.Name == nameof(EventSyntax.HasGenerationMarker) || Property.Name == nameof(EventSyntax.Visibility))) &&
+        !(Property.DeclaringType == typeof(ImportSyntax) && Property.Name == nameof(ImportSyntax.Visibility));
 
     internal object? MissingValue
     {
@@ -42,6 +43,8 @@ internal sealed class SyntaxMember(PropertyInfo property, ParameterInfo? paramet
             }
 
             if (Property.DeclaringType == typeof(PropertySyntax) && Property.Name == nameof(PropertySyntax.IsGenerated)) return false;
+
+            if (Property.Name == nameof(EventSyntax.Visibility) && Property.DeclaringType is { } owner && (owner == typeof(EventSyntax) || owner == typeof(ImportSyntax))) return EventVisibility.Private;
 
             if (Property.DeclaringType == typeof(EventSyntax))
             {

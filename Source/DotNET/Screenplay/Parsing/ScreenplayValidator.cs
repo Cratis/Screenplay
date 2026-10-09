@@ -31,6 +31,7 @@ internal static class ScreenplayValidator
     public static ApplicationSyntax Validate(ApplicationSyntax application, ParserContext context, bool allowUnresolvedPersonaPolicies = false)
     {
         foreach (var error in SourceNumericModes.Errors(application)) context.Add(error);
+        new PublicEventMetadataValidator(context).VisitApplication(application);
         var authored = application;
         var expansion = SpecificationExamples.Expand(application);
         if (!expansion.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)) application = expansion.Application;
@@ -132,6 +133,7 @@ internal static class ScreenplayValidator
 
         var scopedSlices = ScopedSlices(application).ToList();
         var declarations = new ConsistencyDeclarations(application, scopedSlices);
+        PublicEventUsageValidator.Validate(application, context);
         ValidateAdditionalEventReferences(application, declarations, knownEvents, context);
         EventSourceValidator.Validate(application, declarations, context);
         SpecificationStreamValidator.Validate(application, declarations, context, expansion);

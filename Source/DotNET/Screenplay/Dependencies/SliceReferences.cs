@@ -3,6 +3,7 @@
 
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Specifications;
 
@@ -25,7 +26,10 @@ internal sealed class SliceReferences(string? readModel = null) : ScreenplaySynt
         ["givenOperationFailure"] = null, ["thenCompensated"] = null, ["produces"] = null, ["authorizes"] = null, ["queryResult"] = null,
         ["dataReadModel"] = null, ["type"] = null, ["exampleType"] = null, ["contributes"] = null, ["template"] = null, ["specificationReadModel"] = null,
         ["thenAbsentReadModel"] = null, ["thenReadModel"] = null, ["givenReadModel"] = null, ["thenQuery"] = null,
-        ["compositeKeyType"] = null, ["builds"] = null, ["buildsVariant"] = null, ["appends"] = null, ["seed"] = null
+        ["compositeKeyType"] = null, ["builds"] = null, ["buildsVariant"] = null, ["appends"] = null, ["seed"] = null,
+
+        // A consumed public event is produced by another application, so it has no producing slice to depend on here.
+        ["sourceEvent"] = null
     };
     readonly List<SliceReference> _references = [];
     readonly List<(string Kind, string Name)> _shared = [];
@@ -56,6 +60,13 @@ internal sealed class SliceReferences(string? readModel = null) : ScreenplaySynt
         _specification = syntax;
         base.VisitSpecification(syntax);
         _specification = null;
+    }
+
+    /// <inheritdoc/>
+    public override void VisitCaptureSource(CaptureSourceSyntax syntax)
+    {
+        foreach (var consumed in CaptureEventsSource.Events(syntax)) _references.Add(Reference(consumed.Value, "Event", "sourceEvent", consumed));
+        base.VisitCaptureSource(syntax);
     }
 
     /// <inheritdoc/>

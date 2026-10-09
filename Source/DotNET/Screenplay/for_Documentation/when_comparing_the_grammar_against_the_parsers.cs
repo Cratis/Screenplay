@@ -25,6 +25,7 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
             ["documentation"] = ("DocumentationDecl", "slices.md"),
             ["depends"] = ("DependsOnDecl", "slices.md"),
             ["dialog"] = ("DialogTemplateDecl", "templates.md"),
+            ["direction"] = ("TranslationDirectionDecl", "slices.md"),
             ["domain"] = ("DomainDecl", "domain.md"),
             ["event"] = ("EventDecl", "events.md"),
             ["eventsource"] = ("EventSourceDecl", "grammar.md"),
@@ -39,6 +40,7 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
             ["persona"] = ("PersonaDecl", "personas.md"),
             ["policy"] = ("PolicyDecl", "policies.md"),
             ["projection"] = ("ProjectionDecl", "projections/index.md"),
+            ["public"] = ("EventDecl", "events.md"),
             ["query"] = ("QueryDecl", "queries.md"),
             ["reaction"] = ("ReactionDecl", "reactions.md"),
             ["readmodel"] = ("ReadModelDecl", "readmodels.md"),
@@ -70,7 +72,7 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
         AddCases(document, "switch (LineText.FirstWord(line.Content))", "static void AddLayout", "document", _dispatched);
         AddCases(module, "switch (LineText.FirstWord(line.Content))", "public ModuleSyntax Build", "module", _dispatched);
         AddCases(feature, "switch (LineText.FirstWord(line.Content))", "public FeatureSyntax Build", "feature", _dispatched);
-        AddCases(slices, "switch (LineText.FirstWord(line.Content))", "return new(type, name", "slice", _dispatched);
+        AddCases(slices, "switch (FirstSliceWord(line.Content))", "return new(type, name", "slice", _dispatched);
     }
 
     void Because()

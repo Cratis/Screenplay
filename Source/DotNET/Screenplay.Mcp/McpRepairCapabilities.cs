@@ -7,7 +7,7 @@ namespace Cratis.Screenplay.Mcp;
 
 static class McpRepairCapabilities
 {
-    static readonly string[] _actions = ["PLAY0166", "PLAY0478", "PLAY0563", "PLAY0564"];
+    static readonly string[] _actions = ["PLAY0166", "PLAY0478", "PLAY0563", "PLAY0564", "PLAY0603"];
 
     internal static object Read() => McpJson.ToolResult(new
     {

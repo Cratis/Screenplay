@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Semantics;
@@ -16,6 +18,13 @@ public sealed partial class SemanticModelBinder
     {
         var walker = new CommandProductionAdmissionWalker();
         walker.VisitApplication(syntax);
+        foreach (var target in PublicEventUsageValidator.EventTargets(syntax))
+        {
+            walker.Diagnostics.Add(Diagnostic.Error(
+                DiagnosticCodes.UnsupportedSemanticSyntax,
+                "A projection or reducer that targets an event is accepted in source only, not admitted by any supported executable model (ESM) version yet (#482).",
+                target.Location));
+        }
 
         return walker.Diagnostics;
     }
@@ -26,6 +35,31 @@ public sealed partial class SemanticModelBinder
 
         public override void VisitNode(SyntaxNode node)
         {
+            if (node is EventSyntax { Visibility: not EventVisibility.Private } or EventSyntax { Origin: not null } or
+                ImportSyntax { Visibility: not EventVisibility.Private } or ImportSyntax { Origin: not null })
+            {
+                Diagnostics.Add(Diagnostic.Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    "Public event visibility and opaque event/import origins are accepted in source only, not admitted by any supported executable model (ESM) version yet (#481).",
+                    node.Location));
+            }
+
+            if (node is SliceSyntax { Direction: not null })
+            {
+                Diagnostics.Add(Diagnostic.Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    "Explicit Translate direction is accepted in source only, not admitted by any supported executable model (ESM) version yet (#480). Legacy directionless translations remain inbound.",
+                    node.DirectiveLocations.GetValueOrDefault("direction", node.Location)));
+            }
+
+            if (node is CaptureSourceSyntax source && CaptureEventsSource.IsEvents(source))
+            {
+                Diagnostics.Add(Diagnostic.Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    "Capture 'source events' is accepted in source only, not admitted by any supported executable model (ESM) version yet (#483).",
+                    node.Location));
+            }
+
             if (node is InvocationRefusalSyntax or RefusalExpressionSyntax or SpecificationRedeliverySyntax)
             {
                 Diagnostics.Add(Diagnostic.Error(

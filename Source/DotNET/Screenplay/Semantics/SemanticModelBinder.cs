@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
 
@@ -30,6 +31,17 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         }
 
         var admission = CommandProductionAdmission(syntax);
+
+        // Public-event boundaries can only be violated by a model the admission walk already refused; a model that uses none
+        // of them is not walked again, so programmatically built syntax the binder reports itself is not visited twice.
+        if (admission.Count > 0)
+        {
+            var publicEvents = ParserContext.ForDiagnostics();
+            new PublicEventMetadataValidator(publicEvents).VisitApplication(syntax);
+            PublicEventUsageValidator.Validate(syntax, publicEvents);
+            admission.AddRange(publicEvents.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+        }
+
         if (admission.Count > 0)
         {
             return CompilationResult<SemanticCompilation>.Failed(admission);

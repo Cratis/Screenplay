@@ -96,7 +96,9 @@ public sealed partial class ScreenplayPrinter :
 
         foreach (var import in application.Imports)
         {
-            writer.Line($"import {import.QualifiedName}", import);
+            ImplementationInvariants.Validate(import);
+            var origin = import.Origin is null ? string.Empty : $" from {StringLiteral.Quote(import.Origin)}";
+            writer.Line($"import {import.QualifiedName}{origin}", import);
         }
 
         WriteFileImports(writer, application.FileImports);
@@ -924,10 +926,16 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteSlice(ScreenplayWriter writer, SliceSyntax slice)
     {
+        ImplementationInvariants.Validate(slice);
         using var anchor = writer.Anchor(slice);
         writer.Line($"slice {slice.Type} {slice.Name}");
         using (writer.Indent())
         {
+            if (slice.Direction is { } direction)
+            {
+                writer.DirectiveLine($"direction {direction.ToString().ToLowerInvariant()}", slice, "direction");
+            }
+
             WriteDescription(writer, slice.Description, slice);
             WriteDocumentation(writer, slice.Documentation, slice);
             WriteFile(writer, slice.File);

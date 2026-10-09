@@ -35,7 +35,7 @@ public record CaptureSyntax(
 /// <summary>
 /// Represents the <c>source</c> of a capture, with its settings.
 /// </summary>
-/// <param name="Kind">The kind of source, such as <c>api</c>, <c>webhook</c> or <c>message</c>.</param>
+/// <param name="Kind">The kind of source, such as <c>api</c>, <c>webhook</c>, <c>message</c> or <c>events</c> (see <see cref="CaptureEventsSource"/>).</param>
 /// <param name="Settings">The <see cref="CaptureSourceSettingSyntax">settings</see> of the source.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record CaptureSourceSyntax(string Kind, IEnumerable<CaptureSourceSettingSyntax> Settings, SourceLocation Location) : SyntaxNode(Location);
