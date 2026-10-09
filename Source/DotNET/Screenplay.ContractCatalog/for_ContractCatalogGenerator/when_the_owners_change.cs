@@ -60,10 +60,23 @@ public class when_the_owners_change
         Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Id == "SPCON001");
     }
 
-    static GeneratorDriverRunResult Generate(string source)
+    [Theory]
+    [InlineData("Source/for_Compiler/when_testing.cs")]
+    [InlineData("Source\\for_Compiler\\when_testing.cs")]
+    [InlineData("Source/obj/Generated.cs")]
+    [InlineData("Source\\obj\\Generated.cs")]
+    public void should_exclude_specifications_and_build_outputs_on_every_platform(string path)
+    {
+        var fixture = CSharpSyntaxTree.ParseText("class Fixture { void Test() => Cratis.Screenplay.Diagnostics.Diagnostic.Warning(Cratis.Screenplay.Diagnostics.DiagnosticCodes.Reserved); }", path: path);
+        var result = Generate(Catalog, fixture);
+        Assert.Empty(result.Diagnostics);
+        Assert.Equal(Generate(Catalog).GeneratedTrees.Single().GetText().ToString(), result.GeneratedTrees.Single().GetText().ToString());
+    }
+
+    static GeneratorDriverRunResult Generate(string source, SyntaxTree? fixture = null)
     {
         var references = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")).Split(Path.PathSeparator).Select(path => MetadataReference.CreateFromFile(path));
-        var compilation = CSharpCompilation.Create("ContractProbe", [CSharpSyntaxTree.ParseText(source)], references, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var compilation = CSharpCompilation.Create("ContractProbe", fixture is null ? [CSharpSyntaxTree.ParseText(source)] : [CSharpSyntaxTree.ParseText(source), fixture], references, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         GeneratorDriver driver = CSharpGeneratorDriver.Create(new ContractCatalogGenerator());
         return driver.RunGenerators(compilation).GetRunResult();
     }

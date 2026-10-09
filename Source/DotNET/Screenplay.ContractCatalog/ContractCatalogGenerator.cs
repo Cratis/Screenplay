@@ -24,7 +24,7 @@ public sealed class ContractCatalogGenerator : ISourceGenerator
     public void Execute(GeneratorExecutionContext context)
     {
         var compilation = context.Compilation;
-        var trees = compilation.SyntaxTrees.Where(tree => !tree.FilePath.Contains("/for_", StringComparison.Ordinal) && !tree.FilePath.Contains("/obj/", StringComparison.Ordinal)).ToArray();
+        var trees = compilation.SyntaxTrees.Where(tree => !tree.FilePath.Replace('\\', '/').Contains("/for_", StringComparison.Ordinal) && !tree.FilePath.Replace('\\', '/').Contains("/obj/", StringComparison.Ordinal)).ToArray();
         var keywords = new SortedSet<string>(StringComparer.Ordinal);
         var constructs = new SortedSet<string>(StringComparer.Ordinal);
         var roots = new SortedSet<string>(StringComparer.Ordinal);
