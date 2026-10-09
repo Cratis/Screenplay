@@ -26,7 +26,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "authoring-metadata" || name == "named-rule-intent" || name == "specification-examples" || name == "guarded-actions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams") continue;
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "authoring-metadata" || name == "named-rule-intent" || name == "specification-examples" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -203,6 +203,20 @@ public class when_freezing_legacy_source_syntax_bytes
                 new ScreenActionSyntax(command, section.Name == "registerInvoiceDashboardInput" ? "$strings.invoices.actions.newInvoice" : null, new ScreenNavigateSyntax(command + "Screen", null, section.Location), section.Location),
             ScreenSectionSyntax section => section with { Directives = WithoutSampleInputNavigation(section.Directives) },
             ScreenTableSyntax { Target: "lineItems" } table => table with { RowClick = new ScreenNavigateSyntax("InvoiceLineDetail", "lineNumber", table.Location) },
+            // The living sample now guards editing by draft status; retain the pre-feature plain
+            // action list only in frozen bytes. Current vectors and native interaction specs cover it.
+            ScreenTableSyntax table => table with
+            {
+                Behaviors = table.Behaviors.Select(behavior => behavior with
+                {
+                    Bindings = behavior.Bindings.Select(binding => binding.Alternatives.Any() ? binding with
+                    {
+                        Actions = binding.Alternatives.First().Actions,
+                        Alternatives = [],
+                        Otherwise = null
+                    } : binding)
+                })
+            },
             ScreenTemplateReferenceSyntax template => template with
             {
                 Slots = template.Slots.Select(slot => slot with { Directives = WithoutSampleInputNavigation(slot.Directives) })

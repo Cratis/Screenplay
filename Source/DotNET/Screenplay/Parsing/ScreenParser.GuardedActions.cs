@@ -10,6 +10,8 @@ namespace Cratis.Screenplay.Parsing;
 
 internal static partial class ScreenParser
 {
+    internal static void ValidateGuardedCondition(ParserContext context, ConditionSyntax condition) => ValidateActionCondition(context, condition);
+
     static ScreenGuardedActionSyntax ParseGuardedAction(ParserContext context, SourceLine line, string label)
     {
         var alternatives = new List<ScreenActionAlternativeSyntax>();

@@ -17,6 +17,7 @@ enum WorkspaceReferenceDomain
     View,
     Query,
     Screen,
+    DialogTemplate,
     Policy,
     Trigger,
     Property,
@@ -48,6 +49,7 @@ static class WorkspaceReferenceMembers
                 var value = property.GetValue(entry.Node);
                 if (value is string text && text.Length > 0)
                 {
+                    if (IsBehaviorParameter(entry, index, text)) continue;
                     var owner = domain switch
                     {
                         WorkspaceReferenceDomain.Property => WorkspaceStructuredReferences.Owner(entry, index),
@@ -104,6 +106,20 @@ static class WorkspaceReferenceMembers
         _ => []
     };
 
+    static bool IsBehaviorParameter(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index, string text)
+    {
+        if (entry.Node is not InteractionActionSyntax) return false;
+        for (var parent = entry.Parent; parent is not null; parent = index.Find(parent)?.Parent)
+        {
+            if (index.Find(parent)?.Node is BehaviorSyntax { Name: not null } behavior)
+            {
+                return behavior.Parameters.Any(parameter => parameter.Name == text);
+            }
+        }
+
+        return false;
+    }
+
     static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> OtherMembers(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index) => entry.Node switch
     {
         DependsOnSyntax => [("target", WorkspaceReferenceDomain.Container)],
@@ -119,13 +135,16 @@ static class WorkspaceReferenceMembers
         CompositeKeySyntax => [("type", WorkspaceReferenceDomain.Type)],
         SpecificationExampleSyntax => [("type", WorkspaceReferenceDomain.Fixture)],
         SpecificationCommandSyntax => [("commandType", WorkspaceReferenceDomain.Fixture)],
-        InvokesSyntax or ScreenActionSyntax or ScreenActionAlternativeSyntax or ScreenActionOtherwiseSyntax => [("command", WorkspaceReferenceDomain.Command)],
+        InvokesSyntax or ScreenActionSyntax or ScreenActionAlternativeSyntax or ScreenActionOtherwiseSyntax or ExecuteCommandActionSyntax => [("command", WorkspaceReferenceDomain.Command)],
         FormSyntax => [("for", WorkspaceReferenceDomain.Command)],
         ReadsSyntax or ProjectionSyntax or ReducerSyntax => [("readModel", WorkspaceReferenceDomain.View)],
         SpecificationReadModelSyntax => [("name", WorkspaceReferenceDomain.Fixture)],
         SpecificationAbsentReadModelSyntax => [("name", WorkspaceReferenceDomain.View)],
         ScreenDataSyntax or FormPopulateViaQuerySyntax or SpecificationQuerySyntax => [("query", WorkspaceReferenceDomain.Query)],
-        ScreenNavigateSyntax => [("screen", WorkspaceReferenceDomain.Screen)],
+        ScreenNavigateSyntax or NavigateActionSyntax => [("screen", WorkspaceReferenceDomain.Screen)],
+        OpenDialogActionSyntax => [("dialogTemplate", WorkspaceReferenceDomain.DialogTemplate)],
+        RefreshQueryActionSyntax => [("query", WorkspaceReferenceDomain.Query)],
+        RaiseTriggerActionSyntax => [("trigger", WorkspaceReferenceDomain.Trigger)],
         PolicyReferenceSyntax => [("name", WorkspaceReferenceDomain.Policy)],
         PersonaSyntax => [("policies", WorkspaceReferenceDomain.Policy)],
         _ => []

@@ -297,6 +297,10 @@
                     "name": "keyword.other.screenplay"
                 },
                 {
+                    "match": "^\\s*(notify|confirm)(?=\\s+(?:info\\b|warning\\b|error\\b|\"|\\$strings\\.))",
+                    "captures": { "1": { "name": "keyword.control.screenplay" } }
+                },
+                {
                     "match": "\\bnot\\b(?=\\s+(?:role\\b|claim\\b|authenticated\\b|not\\b|\\())",
                     "name": "keyword.operator.logical.screenplay"
                 },
