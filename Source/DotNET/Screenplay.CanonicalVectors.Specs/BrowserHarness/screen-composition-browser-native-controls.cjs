@@ -187,8 +187,16 @@ async function fillField(page, result, labelOrName, value) {
 }
 
 async function clickSubmit(page, result, path) {
-    const submit = page.getByRole('button', { name: /create|rename|add|submit|save/i }).filter({ hasNotText: /close|cancel/i }).last();
+    const dialogs = page.getByRole('dialog');
+    const searchRoot = await dialogs.count() > 0 ? dialogs.first() : page;
+    let submit = searchRoot.getByRole('button', { name: /create|rename|add|submit|save/i }).filter({ hasNotText: /close|cancel/i }).last();
+
+    if (await submit.count() === 0 && searchRoot !== page) {
+        submit = searchRoot.getByRole('button').filter({ hasNotText: /close|cancel/i }).last();
+    }
+
     if (await submit.count() === 0) {
+        record(result, `${path}.controls`, 'info', JSON.stringify(await describeControls(page)));
         block(result, path, 'submit control missing');
         return false;
     }
@@ -250,6 +258,41 @@ async function seedData(result) {
         await postJson('/api/workspaces/tracking/add-comment/add-comment', { commentId: item.commentId, workItemId: item.id, text: item.comment });
         record(result, `browser.seed.AddComment.${item.commentId}`, 'passed', item.comment);
     }
+}
+
+function collectSceneIds(value, ids = []) {
+    if (Array.isArray(value)) {
+        for (const item of value) collectSceneIds(item, ids);
+        return ids;
+    }
+
+    if (value && typeof value === 'object') {
+        if (typeof value.id === 'string') ids.push(value.id);
+        if (typeof value.stableId === 'string') ids.push(value.stableId);
+        for (const child of Object.values(value)) collectSceneIds(child, ids);
+    }
+
+    return ids;
+}
+
+async function assertSceneIdentifierFidelity(result) {
+    const response = await fetch(`${baseUrl}/stage/scene`);
+    if (!response.ok) {
+        block(result, 'browser.scene.identifierFidelity.fetch', `/stage/scene returned ${response.status}`);
+        return;
+    }
+
+    const scene = await response.json();
+    const ids = [...new Set(collectSceneIds(scene))];
+    const punctuationIds = ids.filter(id => id.includes('.') || id.includes(':'));
+    const dottedIds = ids.filter(id => id.includes('.'));
+    record(result, 'browser.scene.identifierFidelity.ids', 'info', punctuationIds.join(','));
+
+    if (punctuationIds.length > 0) record(result, 'browser.scene.identifierFidelity.punctuation', 'passed', punctuationIds.join(','));
+    else block(result, 'browser.scene.identifierFidelity.punctuation', 'no punctuation-bearing stable ids found in /stage/scene');
+
+    if (dottedIds.length > 0) record(result, 'browser.scene.identifierFidelity.dotted', 'passed', dottedIds.join(','));
+    else record(result, 'browser.scene.identifierFidelity.dotted', 'pending', 'rerun after Stage/CLI vector includes dotted stable ids');
 }
 
 async function assertTwoItemSelectionLifecycle(page, result, network) {
@@ -474,6 +517,7 @@ async function runBrowserFlow(result) {
         return;
     }
 
+    await assertSceneIdentifierFidelity(result);
     await seedData(result);
     await assertTwoItemSelectionLifecycle(page, result, network);
     await assertInvalidThenValidCreate(page, result, network);
