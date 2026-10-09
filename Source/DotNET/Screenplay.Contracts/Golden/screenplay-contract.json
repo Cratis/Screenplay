@@ -3734,10 +3734,6 @@
             {
               "code": "PLAY0268",
               "severity": "error"
-            },
-            {
-              "code": "PLAY0268",
-              "severity": "error"
             }
           ],
           "admission": [
@@ -11375,6 +11371,72 @@
         "error"
       ],
       "title": "A concept declares more than one special category.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0590",
+      "name": "DuplicateEventSubject",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An event marks more than one property as its data subject.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0591",
+      "name": "InvalidSubjectType",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A subject property has an optional, collection, composite or unsupported identity type.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0592",
+      "name": "ProtectedSubjectType",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A subject property uses a personal data or secret concept rather than a surrogate identity.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0593",
+      "name": "InvalidSubjectOwner",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A subject modifier is used on a command, type or response instead of an event.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0594",
+      "name": "ReadModelSubjectNotSupported",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A read model subject modifier is not yet supported.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0595",
+      "name": "InvalidSubjectModifierOrder",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "The subject property modifier is duplicated or is not last in modifier order.",
       "reserved": false,
       "retired": false
     }

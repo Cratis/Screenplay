@@ -17,7 +17,7 @@ public class when_using_invalid_query_contracts : a_valid_semantic_model
     {
         var slice = _application.Modules.Single().Features.Single().Slices.Single(_ => _.Queries.Length > 0);
         var query = slice.Queries.Single();
-        _cardinality = Validate(query with { Cardinality = SemanticQueryCardinality.Many });
+        _cardinality = Validate(query with { Argument = null, KeyProperty = null });
         _type = Validate(query with
         {
             Argument = query.Argument with { Type = SemanticTypeReference.ForConcept(_projectNameConceptId) }
@@ -29,7 +29,7 @@ public class when_using_invalid_query_contracts : a_valid_semantic_model
             ReplaceSlice(slice with { Queries = [replacement] })));
     }
 
-    [Fact] void should_reject_incompatible_cardinality() => _cardinality.ShouldBeOfExactType<InvalidSemanticContract>();
+    [Fact] void should_reject_an_unkeyed_optional_query() => _cardinality.ShouldBeOfExactType<InvalidSemanticContract>();
     [Fact] void should_reject_an_incompatible_argument_type() => _type.ShouldBeOfExactType<InvalidSemanticContract>();
 }
 #endif
