@@ -213,6 +213,57 @@ public sealed class SemanticExecutionPlan
             []);
     }
 
+    internal SemanticEventRoute? FormatFixtureRoute(SemanticFixtureRoute? fixture)
+    {
+        if (fixture is null) return null;
+        var (source, stream) = SemanticEventRouting.Resolve(Model.Application, fixture.Source, fixture.Stream);
+        if (!SemanticEventRouting.TryFormat(source, stream, fixture.StreamId, fixture.StreamIdParts, Model.Application.Concepts, out var route, out var failure))
+        {
+            throw new InvalidSemanticContract(SemanticStreamIdFormatter.FailureMessage(failure));
+        }
+
+        return route;
+    }
+
+    internal SemanticTypeReference RoutedFactSourceType(SemanticFact fact)
+    {
+        if (!Model.SemanticVersion.IsAtLeast(SemanticVersion.V8) || fact.Context is null)
+        {
+            throw new InvalidSemanticContract("Fact event route requires admitted routes and a typed event source.");
+        }
+
+        var route = fact.Route!;
+        var sources = Model.Application.EventSources.Where(source => string.Equals(source.SourceKind, route.SourceKind, StringComparison.Ordinal)).ToArray();
+        if (sources.Length != 1)
+        {
+            throw new InvalidSemanticContract("Fact event route requires one declared stored source name.");
+        }
+        var streams = sources[0].Streams.Where(stream => string.Equals(stream.StreamKind, route.StreamKind, StringComparison.Ordinal)).ToArray();
+        if (streams.Length != 1)
+        {
+            throw new InvalidSemanticContract("Fact event route requires one stream belonging to its stored source.");
+        }
+        var stream = streams[0];
+        if (stream.StreamIdType is not null || !stream.StreamIdParts.IsDefaultOrEmpty)
+        {
+            if (route.StreamId is null)
+            {
+                throw new InvalidSemanticContract("A keyed fact event route requires a stream identity.");
+            }
+            if (!SemanticEventRouting.TryDecode(stream, route.StreamId, Model.Application.Concepts, out _, out var failure))
+            {
+                throw new InvalidSemanticContract(SemanticStreamIdFormatter.FailureMessage(failure));
+            }
+        }
+        else if (route.StreamId is not null)
+        {
+            throw new InvalidSemanticContract("An unkeyed fact event route cannot carry a stream identity.");
+        }
+
+        return SemanticEventRouting.FixtureSourceType(Model.Application, new(sources[0].Id, stream.Id), fact.EventContract, out _)
+            ?? throw new InvalidSemanticContract("A routed fact needs an identifier on its source or one unambiguous producer destination type.");
+    }
+
     // A containment level or slice member this walk does not know would be skipped silently, so
     // for_SemanticExecutionPlan/when_inspecting_the_containment_it_traverses holds the ESM shape against it.
     static IEnumerable<SemanticSlice> AllSlices(SemanticApplication application) =>

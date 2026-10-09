@@ -1,17 +1,17 @@
 // Personal data, and why it is kept. The marker says a value is personal; the
 // reason says what a compliance reader needs to know about it.
 
-concept ConsultantName : String @pii
+concept ConsultantName : String pii
   pii reason "The consultant's full name. Shown on timesheets and payroll lines so the right person is paid; lawful basis: employment contract. Erased with the consultant's key once the retention period has passed."
 
-concept EmailAddress : String @pii
+concept EmailAddress : String pii
   pii reason "The consultant's work address. Used for timesheet reminders; lawful basis: employment contract. Erased with the consultant's key."
   validate
     matches email  message "Must be a valid email address"
 
-concept PayrollNumber : String @pii @sensitive
+concept PayrollNumber : String pii secret
   pii reason "Links a consultant to their record at the external payroll provider; lawful basis: legal obligation (salary reporting)."
-  sensitive reason "A payroll number together with a name is enough to request salary statements, so it is only ever shown to payroll officers."
+  secret reason "A payroll number together with a name is enough to request salary statements, so it is only ever shown to payroll officers."
   validate
     matches "^PR-[0-9]{5}$"  message "A payroll number looks like PR-00000"
 

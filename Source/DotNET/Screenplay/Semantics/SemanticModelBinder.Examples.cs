@@ -1,7 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
@@ -14,13 +13,13 @@ public sealed partial class SemanticModelBinder
     {
         readonly Dictionary<CommandSyntax, SemanticCommand> _exampleCommands = new(ReferenceEqualityComparer.Instance);
 
-        void ValidateExampleAdmission(ImmutableArray<SemanticConcept> concepts, ImmutableArray<SemanticCompositeType> types, ImmutableArray<SemanticModule> modules)
+        void ValidateExampleAdmission(SemanticApplication application)
         {
             if (expansion.ResolvedExamples.Count == 0) return;
 
             // Admission is independent of use: an override must not conceal a malformed example value.
             // Validate only stated properties; top-level partial examples are not complete instances.
-            var validator = new SemanticValueValidator(concepts.ToDictionary(concept => concept.Id), types.ToDictionary(type => type.Id));
+            var validator = new SemanticValueValidator(application.Concepts.ToDictionary(concept => concept.Id), application.Types.ToDictionary(type => type.Id));
             var slices = syntax.Modules.SelectMany(module => module.Features).SelectMany(AllSlices).ToArray();
             foreach (var resolved in expansion.ResolvedExamples)
             {
@@ -40,6 +39,14 @@ public sealed partial class SemanticModelBinder
                     var identifier = bound?.Properties.SingleOrDefault(property => property.IsIdentifier);
                     destinationType = bound?.Destination?.Type ?? identifier?.Type;
                     generatedDestination = identifier?.IsGenerated == true;
+                }
+                else if (example.Stream is { } route)
+                {
+                    var target = ResolveRoute(route.EventSource, route.Stream, route.Location);
+                    var eventContract = _eventDeclarations[(EventSyntax)resolved.Type].Contract.Id;
+                    destinationType = target is { } resolvedRoute
+                        ? SemanticEventRouting.FixtureSourceType(application, new(resolvedRoute.Source.Id, resolvedRoute.Stream.Id), eventContract, out _)
+                        : null;
                 }
                 else
                 {

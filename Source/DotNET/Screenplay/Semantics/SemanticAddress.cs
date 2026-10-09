@@ -99,7 +99,17 @@ public enum SemanticKind
     /// <summary>
     /// A capture.
     /// </summary>
-    Capture = 16
+    Capture = 16,
+
+    /// <summary>
+    /// An application event source.
+    /// </summary>
+    EventSource = 17,
+
+    /// <summary>
+    /// An event stream owned by a source.
+    /// </summary>
+    EventStream = 18
 }
 
 /// <summary>
@@ -215,7 +225,7 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
     /// <summary>
     /// Gets the member owner's semantic kind, or <see cref="SemanticKind.Unknown"/> for a non-member address.
     /// </summary>
-    public SemanticKind OwnerKind => Kind is SemanticKind.Property or SemanticKind.QueryArgument ? ParseOwnerKind(Parts[^2]) : SemanticKind.Unknown;
+    public SemanticKind OwnerKind => Kind is SemanticKind.Property or SemanticKind.QueryArgument or SemanticKind.EventStream ? ParseOwnerKind(Parts[^2]) : SemanticKind.Unknown;
 
     /// <summary>
     /// Creates an application address.
@@ -293,6 +303,32 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
     /// <returns>The composite-type address.</returns>
     public static SemanticAddress ForCompositeType(ApplicationIdentity application, string name) =>
         BuildApplicationDeclaration(SemanticKind.CompositeType, application, name);
+
+    /// <summary>
+    /// Creates an application event-source address.
+    /// </summary>
+    /// <param name="application">The application identity.</param>
+    /// <param name="name">The source name.</param>
+    /// <returns>The event-source address.</returns>
+    public static SemanticAddress ForEventSource(ApplicationIdentity application, string name) =>
+        BuildApplicationDeclaration(SemanticKind.EventSource, application, name);
+
+    /// <summary>
+    /// Creates a stream address owned by an event source.
+    /// </summary>
+    /// <param name="source">The owning event-source address.</param>
+    /// <param name="name">The stream name.</param>
+    /// <returns>The event-stream address.</returns>
+    /// <exception cref="InvalidSemanticContract">The owner is not an event source.</exception>
+    public static SemanticAddress ForEventStream(SemanticAddress source, string name)
+    {
+        if (source is null || source.Kind != SemanticKind.EventSource)
+        {
+            throw new InvalidSemanticContract("An event-stream address requires an event-source owner.");
+        }
+
+        return Build(SemanticKind.EventStream, [.. source.Parts, OwnerKindPart(source.Kind), Part(SemanticAddressPartKind.Member, name)]);
+    }
 
     /// <summary>
     /// Creates a command address in a slice.
@@ -494,11 +530,13 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
             SemanticKind.Module => Matches(parts, SemanticAddressPartKind.Application, SemanticAddressPartKind.Module),
             SemanticKind.Feature => IsFeature(parts),
             SemanticKind.Slice => IsSlice(parts),
-            SemanticKind.Concept or SemanticKind.CompositeType or SemanticKind.Trigger => Matches(parts, SemanticAddressPartKind.Application, SemanticAddressPartKind.Declaration),
+            SemanticKind.Concept or SemanticKind.CompositeType or SemanticKind.Trigger or SemanticKind.EventSource => Matches(parts, SemanticAddressPartKind.Application, SemanticAddressPartKind.Declaration),
             SemanticKind.Command or SemanticKind.EventContract or SemanticKind.ReadModel or SemanticKind.Projection or SemanticKind.Query or SemanticKind.Specification or
                 SemanticKind.Reaction or SemanticKind.Capture => IsSliceDeclaration(parts),
             SemanticKind.Property => IsProperty(parts),
             SemanticKind.QueryArgument => IsQueryArgument(parts),
+            SemanticKind.EventStream => Matches(parts, SemanticAddressPartKind.Application, SemanticAddressPartKind.Declaration, SemanticAddressPartKind.OwnerKind, SemanticAddressPartKind.Member) &&
+                TryParseOwnerKind(parts[^2], out var ownerKind) && ownerKind == SemanticKind.EventSource,
             _ => false
         };
         if (!legal)
@@ -586,7 +624,7 @@ public sealed class SemanticAddress : IEquatable<SemanticAddress>
         }
 
         ownerKind = (SemanticKind)value;
-        return ownerKind is SemanticKind.CompositeType or SemanticKind.Trigger or SemanticKind.Command or SemanticKind.EventContract or SemanticKind.ReadModel or SemanticKind.Query;
+        return ownerKind is SemanticKind.CompositeType or SemanticKind.Trigger or SemanticKind.Command or SemanticKind.EventContract or SemanticKind.ReadModel or SemanticKind.Query or SemanticKind.EventSource;
     }
 
     static SemanticAddressPart Part(SemanticAddressPartKind kind, string key) => SemanticAddressPart.Create(kind, key);

@@ -1,0 +1,61 @@
+module M
+  feature F
+    slice StateChange S
+      command Book
+        id String identifier
+        project Uuid
+        period String
+        stream Account.Ledger
+          streamId
+            period = period
+            project = project
+        produces event Booked
+          value String = "other"
+      readmodel Snapshot
+        id String
+        value String
+      query SnapshotById => Snapshot?
+        by id String
+      projection SnapshotProjection => Snapshot
+        from Booked
+          value = value
+      specification CommandParts
+        given Booked
+          for "other"
+          stream Account.Ledger
+            streamId
+              period = "before"
+              project = "3FA85F64-5717-4562-B3FC-2C963F66AFA6"
+          value = "before"
+        when Book
+          id = "other"
+          project = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          period = "a|b%"
+        then Booked
+          stream Account.Ledger
+            streamId
+              period = "a|b%"
+              project = "3FA85F64-5717-4562-B3FC-2C963F66AFA6"
+          value = "other"
+      specification AppendParts
+        when append Booked
+          for "other"
+          stream Account.Ledger
+            streamId
+              period = "%7C"
+              project = "3FA85F64-5717-4562-B3FC-2C963F66AFA6"
+          value = "other"
+        then readmodel Snapshot
+          id = "other"
+          value = "other"
+      specification DifferentPart
+        when Book
+          id = "other"
+          project = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          period = "one"
+        then Booked
+          stream Account.Ledger
+            streamId
+              project = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+              period = "two"
+          value = "other"

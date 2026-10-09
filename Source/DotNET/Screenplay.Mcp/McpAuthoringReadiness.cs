@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
 
@@ -100,24 +101,37 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
 
     string[] UnadmittedFeatures(SyntaxNode node)
     {
-        const string streams = "event sources, streams and routes (#302)";
+        const string streams = "property-path stream id mappings (#407)";
+        IEnumerable<string> RouteFeatures(CommandStreamSyntax route) => Feature(
+            new[] { route.StreamId?.Source }.Concat(route.StreamIdParts.Select(part => part.Source))
+                .Any(source => source is PathExpressionSyntax path && path.Path.Contains('.', StringComparison.Ordinal)),
+            streams)
+            .Concat(Feature(!SemanticModelBinder.CompositeStreamIdsJoin && route.StreamIdParts.Any(), "composite stream ids (#462)"));
+        IEnumerable<string> FixtureFeatures(SpecificationStreamSyntax? route, SpecificationNoStreamSyntax? unrouted) =>
+            Feature(!SemanticModelBinder.SpecificationRoutesJoin && (route is not null || unrouted is not null), "specification event routes (#457)")
+                .Concat(Feature(!SemanticModelBinder.CompositeStreamIdsJoin && route?.StreamIdParts.Any() == true, "composite stream ids (#462)"));
         IEnumerable<string> LocalFeatures() => node switch
         {
-            EventSourceSyntax or EventStreamSyntax or EventStreamIdPartSyntax or CommandStreamSyntax => [streams],
-            SpecificationStreamSyntax or SpecificationNoStreamSyntax => ["specification event routes (#457)"],
-            SpecificationExampleSyntax example => Feature(example.Stream is not null || example.NoStream is not null, "specification event routes (#457)"),
+            EventSourceSyntax source => source.Streams.SelectMany(UnadmittedFeatures),
+            EventStreamSyntax stream => Feature(!SemanticModelBinder.CompositeStreamIdsJoin && stream.StreamIdParts.Any(), "composite stream ids (#462)"),
+            EventStreamIdPartSyntax => Feature(!SemanticModelBinder.CompositeStreamIdsJoin, "composite stream ids (#462)"),
+            CommandStreamSyntax route => RouteFeatures(route),
+            SpecificationStreamSyntax route => FixtureFeatures(route, null),
+            SpecificationNoStreamSyntax unrouted => FixtureFeatures(null, unrouted),
+            SpecificationExampleSyntax example => FixtureFeatures(example.Stream, example.NoStream),
             CommandSyntax command =>
-                Feature(command.Stream is not null || command.StreamCandidates.Any(), streams)
+                (command.Stream is { } route ? RouteFeatures(route) : [])
                 .Concat(Feature(command.Handler is not null, "command handlers"))
                 .Concat(Feature(GeneratedConceptRules(command), "generated properties on concepts with validation rules")),
             SpecificationSyntax specification =>
                 Feature(specification.ThenNoEvents, "explicit no-event assertions (#433)")
-                .Concat(Feature(
-                    HasSpecificationRoute(specification),
-                    "specification event routes (#457)"))
+                .Concat(specification.Given.Concat(specification.ThenEvents)
+                    .Concat(specification.WhenAppended is { } appended ? [appended] : [])
+                    .SelectMany(occurrence => FixtureFeatures(occurrence.Stream, occurrence.NoStream)))
+                .Concat(Feature(!SemanticModelBinder.SpecificationRoutesJoin && HasSpecificationRoute(specification), "specification event routes (#457)"))
                 .Concat(ActionCommands(specification).SelectMany(entry => UnadmittedFeatures(entry.Command))),
             SliceSyntax slice => slice.Commands.Cast<SyntaxNode>().Concat(slice.Specifications).Concat(slice.Examples).SelectMany(UnadmittedFeatures),
-            ApplicationSyntax => Feature(application.EventSources.Any(), streams)
+            ApplicationSyntax => application.EventSources.SelectMany(UnadmittedFeatures)
                 .Concat(_owners.Keys.OfType<SliceSyntax>().SelectMany(UnadmittedFeatures))
                 .Concat(_effective.ResolvedExamples.Select(example => example.Example).SelectMany(UnadmittedFeatures)),
             _ => []

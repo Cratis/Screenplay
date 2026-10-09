@@ -25,10 +25,10 @@ concept Quantity : Int
   validate
     min 1  message "Order at least one of each item"
 
-concept PersonName : String @pii
+concept PersonName : String pii
   pii reason "The name a parcel is addressed to. Needed to deliver the order; lawful basis: contract performance. Lives under the customer's subject and is erasable with their key."
 
-concept StreetAddress : String @pii
+concept StreetAddress : String pii
   pii reason "Where a parcel is delivered. Needed to deliver the order; lawful basis: contract performance. Lives under the customer's subject and is erasable with their key."
 
 concept OrderStatus : Enum

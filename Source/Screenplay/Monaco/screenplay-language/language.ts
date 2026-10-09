@@ -208,7 +208,7 @@ export const sliceTypes = ['StateChange', 'StateView', 'Automation', 'Translate'
 
 export const primitiveTypes = ['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime'];
 
-export const conceptAttributes = ['@pii', '@sensitive'];
+export const conceptAttributes = ['pii', 'personal', 'secret'];
 
 // The lines that open a block with a body of their own. A line that is complete as written - a `domain`, a
 // `concept` or `query` with nothing under it, a `produces` of an existing event - is not one.

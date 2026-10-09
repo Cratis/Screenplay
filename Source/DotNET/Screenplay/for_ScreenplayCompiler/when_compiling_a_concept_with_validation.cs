@@ -9,7 +9,7 @@ public class when_compiling_a_concept_with_validation : given.a_compiler
 {
     const string Source =
         """
-        concept EmailAddress : String @pii
+        concept EmailAddress : String pii
           validate
             not empty          message "Email is required"
             matches "^.+@.+$"  message "Must be a valid email address"

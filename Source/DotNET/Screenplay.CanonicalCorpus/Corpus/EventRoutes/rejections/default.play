@@ -1,0 +1,3 @@
+eventsource Account
+  id "Default"
+  stream All

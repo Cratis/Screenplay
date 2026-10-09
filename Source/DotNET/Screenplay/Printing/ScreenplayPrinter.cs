@@ -381,10 +381,10 @@ public sealed partial class ScreenplayPrinter :
     {
         using var anchor = writer.Anchor(concept);
         var attributes = concept.Attributes.ToList();
-        writer.Line($"concept {concept.Name} : {concept.Type}{string.Concat(attributes.Select(attribute => $" @{attribute.Name}"))}");
+        writer.Line($"concept {concept.Name} : {concept.Type}{string.Concat(attributes.Select(attribute => $" {Parsing.ConceptComplianceParser.CanonicalName(attribute.Name)}"))}");
         var validations = concept.Validations?.ToList() ?? [];
         var reasoned = attributes.Where(attribute => attribute.Reason is not null).ToList();
-        if (!concept.IsEnum && validations.Count == 0 && reasoned.Count == 0 && concept.File is null)
+        if (!concept.IsEnum && validations.Count == 0 && reasoned.Count == 0 && concept.File is null && !attributes.Exists(attribute => attribute.Scope is not null || attribute.SpecialCategory is not null || attribute.Criminal))
         {
             return;
         }
@@ -395,7 +395,14 @@ public sealed partial class ScreenplayPrinter :
 
             foreach (var attribute in reasoned)
             {
-                writer.DirectiveLine($"{attribute.Name} reason {StringLiteral.Quote(attribute.Reason!)}", concept, $"reason:{attribute.Name}");
+                writer.DirectiveLine($"{Parsing.ConceptComplianceParser.CanonicalName(attribute.Name)} reason {StringLiteral.Quote(attribute.Reason!)}", concept, $"reason:{attribute.Name}");
+            }
+
+            foreach (var attribute in attributes)
+            {
+                if (attribute.Scope is not null) writer.DirectiveLine($"secret scope {attribute.Scope}", concept, "scope:sensitive");
+                if (attribute.SpecialCategory is not null) writer.DirectiveLine($"pii special {attribute.SpecialCategory}", concept, "special:pii");
+                if (attribute.Criminal) writer.DirectiveLine("pii criminal", concept, "criminal:pii");
             }
 
             if (concept.IsEnum)

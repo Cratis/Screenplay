@@ -16,12 +16,12 @@ public class when_source_stream_authoring_coexists_with_v6 : given.a_semantic_bi
     }
 
     [Fact]
-    void should_not_admit_a_declaration_only_source_as_v6()
+    void should_select_event_routes_for_a_declaration_only_source_beside_automation()
     {
         var result = Bind("eventsource Account\n  stream Transactions\n" + Automation);
-        result.Success.ShouldBeFalse();
-        result.Value.ShouldBeNull();
-        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("not admitted by any supported executable model (ESM) version yet (#302)", StringComparison.Ordinal)).ShouldBeTrue();
+        result.Success.ShouldBeTrue();
+        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
+        result.Value.Model.Application.EventSources.Single().Streams.Single().Name.ShouldEqual("Transactions");
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public class when_source_stream_authoring_coexists_with_v6 : given.a_semantic_bi
         var result = Bind(source);
         result.Success.ShouldBeFalse();
         result.Value.ShouldBeNull();
-        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("not admitted by any supported executable model (ESM) version yet (#302)", StringComparison.Ordinal)).ShouldBeTrue();
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("handler", StringComparison.OrdinalIgnoreCase)).ShouldBeTrue();
     }
 
     [Fact]
@@ -46,6 +46,6 @@ public class when_source_stream_authoring_coexists_with_v6 : given.a_semantic_bi
         var result = Bind(source);
         result.Success.ShouldBeFalse();
         result.Value.ShouldBeNull();
-        result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("not admitted by any supported executable model (ESM) version yet (#302)", StringComparison.Ordinal)).ShouldBeTrue();
+        Assert.True(result.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268"), string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Code + " " + diagnostic.Message)));
     }
 }

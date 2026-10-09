@@ -37,11 +37,11 @@ The editor recognizes [generated command values and response contracts](commands
 
 The board leaves generated values out of command request schemas and lists generated values and returns in command details. It does not create response events or emit official response types. TextMate highlighting treats ambiguous two-token `returns` lines conservatively; `returns @name` makes response intent explicit.
 
-## Event source and stream authoring (syntax-only)
+## Event source and stream authoring
 
 Monaco and VS Code use typed source declarations and command routes from the complete input, including current unsaved buffers. They offer exact `Source.Stream` references and proven compatible command sources for `streamId`, with nominal types preserved. Composite `streamId` blocks offer scalar-subset declaration types, unmapped route part names, compatible command paths and specification literal snippets. Hover exposes declared parts, part types and mapping sources. Contextual highlighting distinguishes the header from part names, including parts named `streamId` or `stream`. Source/stream hover describes authored identifier/key types; contextual tokens do not globally reserve property names. Navigation requires a unique physical source and stream plus authoritative placement, and points to the actual identifier in its original document. Duplicate parents, competing value-type interpretations, comments and fences do not become guessed links.
 
-Routing is not admitted by any supported executable model (ESM) version yet (`PLAY0268`). Existing command details show the authored stream and readable key expression, never inferred effective destinations, new event cards or successful execution states. No source/stream automatic rename, routing quick fix or inferred-routing inlay is provided. See [the source/stream support matrix](event-sources.md#tooling-support).
+The C# binder and reference runner admit routing in executable semantic model (ESM) v8, including specification routes and composite stream ids. Editor validation and the board do not execute routes. Existing command details show the authored stream and readable key expression, never inferred effective destinations, new event cards or successful execution states. No source/stream automatic rename, routing quick fix or inferred-routing inlay is provided. See [the source/stream support matrix](event-sources.md#tooling-support).
 
 ## Operation and system intent (syntax-only)
 
@@ -200,6 +200,17 @@ The fixes change only the spelling, retaining comments and spacing. They reparse
 the current buffer and verify that its meaning is unchanged before offering edits.
 Nothing is saved automatically. Stale buffer versions are refused. Monaco provides
 the same verified fixes; neither editor needs a .NET process.
+
+## Compliance marker quick fixes
+
+Legacy `@pii`, `sensitive` and `@sensitive` spellings receive information diagnostic
+`PLAY0565`, marked deprecated. Use the per-line lightbulb action **Use bare pii and
+secret compliance markers**, or **Use bare pii and secret throughout this document**
+(`source.screenplay.migrateCompliance`) to migrate every legacy line in the buffer.
+The repairs preserve quoted reasons, comments, spacing and line endings, and verify
+that reparsing preserves the syntax and removes the selected diagnostics. Nothing
+is saved automatically, and stale buffer versions are refused. Monaco offers the
+same verified actions without a .NET process.
 
 ## Event quick fixes
 

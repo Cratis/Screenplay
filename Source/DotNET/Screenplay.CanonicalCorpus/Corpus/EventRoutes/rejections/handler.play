@@ -1,0 +1,11 @@
+eventsource Account
+  stream All
+module M
+  feature F
+    slice StateChange S
+      command C
+        stream Account.All
+        handler
+          ```csharp
+          return null;
+          ```

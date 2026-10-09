@@ -11,7 +11,7 @@ public class when_exposing_composite_stream_ids : given.an_authoring_connection
     const string Source = "eventsource A\n  stream S\n    streamId\n      one String\n      two Uuid\n";
 
     [Fact]
-    void should_expose_declared_parts_in_order_without_execution()
+    void should_expose_declared_parts_in_order_with_execution()
     {
         File.WriteAllText(Path.Combine(RootPath, "application.play"), Source);
         Initialize();
@@ -21,13 +21,13 @@ public class when_exposing_composite_stream_ids : given.an_authoring_connection
         parts[0].GetProperty("name").GetString().ShouldEqual("one");
         parts[1].GetProperty("name").GetString().ShouldEqual("two");
         parts[1].GetProperty("type").GetProperty("name").GetString().ShouldEqual("Uuid");
-        stream.GetProperty("executionAvailable").GetBoolean().ShouldBeFalse();
+        stream.GetProperty("executionAvailable").GetBoolean().ShouldBeTrue();
         var details = Result("declaration-details", new { address = "A.S", kind = "EventStream" });
         details.GetRawText().ShouldContain("streamIdParts");
     }
 
     [Fact]
-    void should_add_a_part_through_the_typed_collection_and_retain_admission_refusal()
+    void should_add_a_part_through_the_typed_collection_and_retain_admission()
     {
         File.WriteAllText(Path.Combine(RootPath, "application.play"), Source);
         Initialize();
@@ -43,6 +43,7 @@ public class when_exposing_composite_stream_ids : given.an_authoring_connection
         proposal.GetProperty("success").GetBoolean().ShouldBeTrue();
         var candidate = Candidate(proposal);
         WorkspaceSyntaxIndex.Create(candidate).Entries.Select(entry => entry.Node).OfType<EventStreamIdPartSyntax>().Count().ShouldEqual(3);
-        candidate.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268").ShouldBeTrue();
+        candidate.Compilation.Success.ShouldBeTrue();
+        candidate.Compilation.Value!.Model.Application.EventSources.Single().Streams.Single().StreamIdParts.Select(part => part.Name).ShouldEqual(new[] { "one", "two", "three" });
     }
 }

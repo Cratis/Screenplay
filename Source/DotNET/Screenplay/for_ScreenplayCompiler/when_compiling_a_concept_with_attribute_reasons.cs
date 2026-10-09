@@ -9,11 +9,11 @@ public class when_compiling_a_concept_with_attribute_reasons : given.a_compiler
 {
     const string Source =
         """
-        concept BankAccount : String @pii @sensitive
+        concept BankAccount : String pii secret
           pii reason "Payout account - lawful basis: contract performance"
-          sensitive reason "Fraud sensitive - never rendered in full"
+          secret reason "Fraud sensitive - never rendered in full"
 
-        concept EmailAddress : String @pii
+        concept EmailAddress : String pii
           pii reason "Billing contact address"
           validate
             not empty  message "Email is required"

@@ -12,7 +12,7 @@ public class when_exposing_source_stream_authoring : given.an_authoring_connecti
     const string Source = "concept Month : Int\neventsource Account\n  description \"Customer account\"\n  stream Transactions\n    streamId Month\nmodule Banking\n  feature Deposits\n    slice StateChange Deposit\n      command Deposit\n        month Month\n        stream Account.Transactions\n          streamId = month\n";
 
     [Fact]
-    void should_page_source_and_stream_keys_without_enrolling_semantic_ids()
+    void should_page_source_and_stream_keys_with_admitted_semantic_ids()
     {
         Start(Source);
         var opened = Open();
@@ -20,22 +20,50 @@ public class when_exposing_source_stream_authoring : given.an_authoring_connecti
         foreach (var view in new[] { "event-sources", "event-streams", "command-routes" })
         {
             var result = Result("read-workspace", new { expectedRevision = revision, view });
-            result.GetProperty("executionReadiness").GetString().ShouldContain("(#302)");
+            result.GetProperty("executionReadiness").GetString().ShouldBeNull();
             var page = result.GetProperty("page");
             page.GetProperty("totalCount").GetInt32().ShouldEqual(1);
-            page.GetProperty("items")[0].GetProperty("executionReadiness").GetString().ShouldContain("(#302)");
-            page.GetRawText().ShouldNotContain("semanticId");
+            page.GetProperty("items")[0].GetProperty("executionAvailable").GetBoolean().ShouldBeTrue();
+            page.GetProperty("items")[0].GetProperty("executionReadiness").GetString().ShouldBeNull();
             page.GetRawText().ShouldNotContain("requirementId");
         }
-        Page("event-source-diagnostics", revision).EnumerateArray().Any(diagnostic => diagnostic.GetProperty("code").GetString() == "PLAY0268").ShouldBeTrue();
+        Page("event-source-diagnostics", revision).EnumerateArray().Any(diagnostic => diagnostic.GetProperty("code").GetString() == "PLAY0268").ShouldBeFalse();
         var stream = Page("event-streams", revision)[0];
         stream.GetProperty("scope")[0].GetString().ShouldEqual("Account");
         var details = Result("read-workspace", new { expectedRevision = revision, view = "event-stream-details", authoringKey = stream.GetProperty("authoringKey").GetString() });
-        details.GetProperty("executionAvailable").GetBoolean().ShouldBeFalse();
-        details.GetProperty("executionReadiness").GetString().ShouldContain("Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302)");
+        details.GetProperty("executionAvailable").GetBoolean().ShouldBeTrue();
+        details.GetProperty("executionReadiness").GetString().ShouldBeNull();
         var source = Node("EventSourceSyntax", revision);
-        source.GetProperty("semanticId").ValueKind.ShouldEqual(JsonValueKind.Null);
+        source.GetProperty("semanticId").GetString().ShouldNotBeEmpty();
         source.GetProperty("node").GetProperty("streams")[0].GetProperty("streamId").GetProperty("name").GetString().ShouldEqual("Month");
+    }
+
+    [Fact]
+    void should_report_indexed_sources_streams_and_route_details_as_admitted()
+    {
+        Start(Source);
+        Open();
+        foreach (var kind in new[] { "EventSource", "EventStream" })
+        {
+            var name = kind == "EventSource" ? "Account" : "Transactions";
+            var indexed = Result("find-declaration", new { name, kind, includeContent = true }).GetProperty("matches")[0].GetProperty("details");
+            indexed.GetProperty("syntaxOnly").GetBoolean().ShouldBeFalse();
+            indexed.GetProperty("executionReadiness").GetString().ShouldBeNull();
+        }
+        var route = Result("declaration-details", new { address = "Banking.Deposits.Deposit.Deposit", kind = "Command", view = "route" }).GetProperty("details");
+        route.GetProperty("executionAvailable").GetBoolean().ShouldBeTrue();
+        route.GetProperty("executionReadiness").GetString().ShouldBeNull();
+    }
+
+    [Fact]
+    void should_keep_unadmitted_route_details_unavailable()
+    {
+        Start(Source.Replace("        month Month", "        input Period", StringComparison.Ordinal)
+            .Replace("streamId = month", "streamId = input.month", StringComparison.Ordinal) + "type Period\n  month Month\n");
+        Open();
+        var route = Result("declaration-details", new { address = "Banking.Deposits.Deposit.Deposit", kind = "Command", view = "route" }).GetProperty("details");
+        route.GetProperty("executionAvailable").GetBoolean().ShouldBeFalse();
+        route.GetProperty("executionReadiness").GetString()!.ShouldContain("property-path stream id mappings (#407)");
     }
 
     [Fact]
@@ -63,7 +91,7 @@ public class when_exposing_source_stream_authoring : given.an_authoring_connecti
     }
 
     [Fact]
-    void should_round_trip_typed_route_replacement_preserving_comments_and_unavailability()
+    void should_round_trip_typed_route_replacement_preserving_comments_and_admission()
     {
         Start(Source.Replace("        month Month", "        // keep the author's intent\n        month Month", StringComparison.Ordinal));
         var opened = Open();
@@ -78,7 +106,7 @@ public class when_exposing_source_stream_authoring : given.an_authoring_connecti
             operations = new[] { new { operation = "replace", target = route.GetProperty("handle"), node } }
         });
         proposal.GetProperty("success").GetBoolean().ShouldBeTrue();
-        Candidate(proposal).Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268").ShouldBeTrue();
+        Candidate(proposal).Compilation.Success.ShouldBeTrue();
         Apply(opened, proposal);
         File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldContain("// keep the author's intent");
         File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldContain("streamId = 7");
@@ -124,7 +152,11 @@ public class when_exposing_source_stream_authoring : given.an_authoring_connecti
         var replaced = Edit(opened, new { operation = "replace", target = stream.GetProperty("handle"), node = new { kind = "EventStreamSyntax", name = "Ledger", description = "Additional ledger" } });
         opened = Apply(opened, replaced).GetProperty("workspace");
         var source = Result("read-ast", new { expectedRevision = opened.GetProperty("revision").GetString(), kind = "EventSourceSyntax", name = "Additional", includeContent = true }).GetProperty("page").GetProperty("items")[0];
-        var removed = Edit(opened, new { operation = "remove", target = source.GetProperty("handle") });
+        var retired = Page("semantics", opened.GetProperty("revision").GetString()).EnumerateArray()
+            .Where(assignment => assignment.GetProperty("address").GetProperty("parts").EnumerateArray().Any(part => part.GetProperty("key").GetString() == "Additional"))
+            .Select(assignment => assignment.GetProperty("address")).ToArray();
+        retired.Length.ShouldEqual(2);
+        var removed = Edit(opened, new { operation = "remove", target = source.GetProperty("handle") }, retired);
         Apply(opened, removed).GetProperty("success").GetBoolean().ShouldBeTrue();
         File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldNotContain("Additional");
     }
@@ -153,10 +185,11 @@ public class when_exposing_source_stream_authoring : given.an_authoring_connecti
         File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldEqual(source);
     }
 
-    JsonElement Edit(JsonElement opened, object operation) => Result("propose-ast", new
+    JsonElement Edit(JsonElement opened, object operation, JsonElement[]? retiredSemanticAddresses = null) => Result("propose-ast", new
     {
         expectedRevision = opened.GetProperty("revision").GetString(), expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
-        validation = "Authoring", formatting = "CanonicalizeTouchedDocuments", operations = new[] { operation }
+        validation = "Authoring", formatting = "CanonicalizeTouchedDocuments", operations = new[] { operation },
+        retiredSemanticAddresses = retiredSemanticAddresses ?? []
     });
 
     [Fact]

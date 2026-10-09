@@ -15,7 +15,7 @@ public class when_checking_personal_destinations_with_a_shared_source_name : giv
     void should_check_the_event_shape_instead_of_the_shadowed_trigger(string triggerType, string eventType, int count)
     {
         var result = _compiler.Compile($$"""
-            concept PatientId : Uuid @pii
+            concept PatientId : Uuid pii
             trigger External
               patient {{triggerType}}
             module M

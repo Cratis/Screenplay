@@ -24,13 +24,13 @@ export { exampleDeclarationItems } from './example-declaration-items';
 
 export const topLevelItems: CompletionEntry[] = [
     ...exampleDeclarationItems,
-    { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
+    { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams, admitted by ESM v8. Pin the stored name before renaming a source with stored events; Default is reserved.' },
     { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system; not admitted by any supported executable model (ESM) version yet.' },
     { label: 'import', insertText: 'import ${1:Module}.${2:Type}', documentation: 'Imports a type from another module by its qualified name.' },
     { label: 'import "…"', insertText: 'import "${1:**/*.play}"', documentation: 'Imports other `.play` files by path or glob, relative to this file\'s folder, as whole documents of the application.' },
     { label: 'concept', insertText: 'concept ${1:Name} : ${2|Uuid,String,Int,Decimal,Bool,Date,DateTime|}', documentation: 'Declares a formalized value type wrapping a primitive.' },
     { label: 'concept (enum)', insertText: 'concept ${1:Name} : Enum\n    ${2:value}', documentation: 'Declares an enumeration concept with a fixed set of values.' },
-    { label: 'concept (@pii with reason)', insertText: 'concept ${1:Name} : ${2|String,Uuid,Int,Decimal,Bool,Date,DateTime|} @pii\n    pii reason "${3:why this is personal data, its purpose and lawful basis}"', documentation: 'Declares a personal-data concept together with the reason it is personal data.' },
+    { label: 'concept (pii with reason)', insertText: 'concept ${1:Name} : ${2|String,Uuid,Int,Decimal,Bool,Date,DateTime|} pii\n    pii reason "${3:why this value is personal data}"', documentation: 'Declares a personal-data concept together with the reason it is personal data.' },
     { label: 'type', insertText: 'type ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares a composite value type — a named shape built from several properties.' },
     { label: 'policy', insertText: 'policy ${1:Name}\n    require ${2:authenticated}', documentation: 'Declares a named authorization rule for commands and queries.' },
     { label: 'module', insertText: 'module ${1:Name}\n    ', documentation: 'Declares the top-level namespace — maps to a bounded context.' },
@@ -67,8 +67,11 @@ export const operationPhaseItems: CompletionEntry[] = [
 
 export const conceptItems: CompletionEntry[] = [
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
-    { label: 'pii reason', insertText: 'pii reason "${1:why this is personal data, its purpose and lawful basis}"', documentation: 'Records why the `@pii` marker applies — purpose, lawful basis, whose subject it lives under.' },
-    { label: 'sensitive reason', insertText: 'sensitive reason "${1:why this value is sensitive}"', documentation: 'Records why the `@sensitive` marker applies.' },
+    { label: 'pii reason', insertText: 'pii reason "${1:why this value is personal data}"', documentation: 'A free-text concept note, not a lawful basis.' },
+    { label: 'secret reason', insertText: 'secret reason "${1:why this value is an operational secret}"', documentation: 'Records why the secret marker applies.' },
+    { label: 'secret scope', insertText: 'secret scope ${1|subject,namespace,global|}', documentation: 'Explicit encryption scope; omitted scope keeps Chronicle’s Subject default.' },
+    { label: 'pii special', insertText: 'pii special ${1|racialOrEthnicOrigin,politicalOpinions,religiousOrPhilosophicalBeliefs,tradeUnionMembership,genetic,biometric,health,sexLifeOrSexualOrientation|}', documentation: 'GDPR Art. 9(1) special category of personal data.' },
+    { label: 'pii criminal', insertText: 'pii criminal', documentation: 'Personal data relating to criminal convictions and offenses (GDPR Art. 10).' },
     { label: 'validate', insertText: 'validate\n    ${1:not empty} message "${2:message}"', documentation: 'Validation rules that travel with the value everywhere it appears.' },
 ];
 

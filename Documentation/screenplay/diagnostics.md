@@ -88,8 +88,10 @@ conditions are reported without a code until the compiler checks them too.
 
 ### Event sources and command streams
 
-Event-source declarations and command stream routes are authoring-only. Binding any of them reports
-`PLAY0268`: these constructs are not admitted by any supported executable model (ESM) version yet.
+Event-source declarations and command stream routes are admitted by ESM v8.
+Property-path mappings and handler commands remain refused with `PLAY0268`. Binding reports `PLAY0273`
+for generated mappings, stored-name collisions (including pin-versus-name), the reserved stored source name
+`Default`, or a routed fixture whose source identifier type cannot be resolved.
 A stream reference selects a classification, never the identity destination supplied by `for`.
 Handler commands may author routes without declaring their returned events.
 
@@ -132,9 +134,16 @@ remove duplicate route headers before export.
 | `PLAY0009` | Error | A value of an enumeration concept is not an identifier. |
 | `PLAY0010` | Error | A line in a concept body opens with a word a concept declares nothing by. |
 | `PLAY0011` | Warning | A value of an enumeration is called `validate`, which the concept body reads as an empty validate block. |
-| `PLAY0012` | Error | A concept gives the reason for an attribute it does not carry. |
+| `PLAY0012` | Error | A concept gives a reason, scope or personal-data qualifier for a marker it does not carry. |
 | `PLAY0013` | Error | A concept gives the reason for one attribute more than once. |
-| `PLAY0515` | Error | A concept marked `@pii` or `@sensitive` is used as a command identifier, an explicit `for` destination, an event source identifier, a scalar stream id type, a composite stream id part type, or a command route mapping source (including nested property paths). The message names the attribute and position, never a value. A mapping using the same protected concept already reported at its resolved stream-id declaration is not reported again; a different protected source concept is still reported. Specification route literals rely on their declaration's check. Use a surrogate `Uuid` identifier and keep personal data or operational secrets as properties. Reaction destinations also check values typed directly in the trigger clause, even for an undeclared or registered trigger. When a reaction source names both an event and a declared trigger, a protected destination in the resolved event shape or the trigger clause is rejected. |
+| `PLAY0515` | Error | A concept marked `pii` or `secret` is used as a command identifier, an explicit `for` destination, an event source identifier, a scalar stream id type, a composite stream id part type, or a command route mapping source (including nested property paths). The message names the attribute and position, never a value. A mapping using the same protected concept already reported at its resolved stream-id declaration is not reported again; a different protected source concept is still reported. Specification route literals rely on their declaration's check. Use a surrogate `Uuid` identifier and keep personal data or operational secrets as properties. Reaction destinations also check values typed directly in the trigger clause, even for an undeclared or registered trigger. When a reaction source names both an event and a declared trigger, a protected destination in the resolved event shape or the trigger clause is rejected. |
+| `PLAY0565` | Information | Legacy `@pii`, `sensitive` or `@sensitive` spelling. Use bare `pii`/`secret`; per-line and document repairs preserve notes and trivia. |
+| `PLAY0566` | Error | Unknown concept compliance marker; expected `pii`, `personal` or `secret`. |
+| `PLAY0567` | Error | Scope belongs to `secret` and must be `subject`, `namespace` or `global`. |
+| `PLAY0568` | Error | A concept declares secret scope more than once. |
+| `PLAY0569` | Warning | Explicit secret scope on `pii secret` is ignored because only Chronicle `[PII]` renders. |
+| `PLAY0570` | Error | Invalid personal-data qualifier or unknown Art. 9(1) category. |
+| `PLAY0571` | Error | A concept declares more than one `pii special` category. |
 
 ### Types
 
@@ -1077,7 +1086,7 @@ An ambiguous target uses `PLAY0198`, naming the equally near candidates. See [De
 | `PLAY0550` | Missing or incompatible routed source identity, or ambiguous producer fallback without a source identifier |
 | `PLAY0551` | Expected route contradicts its sole producer, the command under test |
 
-Valid [source/stream authoring](event-sources.md) is not admitted by any supported executable model (ESM) version yet; executable binding refuses it with `PLAY0268`. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
+Valid [source/stream authoring](event-sources.md) selects ESM v8. Executable mappings use direct required, non-collection, non-generated command properties or literals; property paths and handler commands still fail with `PLAY0268`. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
 
 ### Negated claim targets
 

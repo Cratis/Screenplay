@@ -27,8 +27,14 @@ static class WorkspaceSyntaxAddresses
                 ModuleSyntax module when member == "modules" => SemanticAddress.ForModule(application, module.Name),
                 ConceptSyntax concept when member == "concepts" => SemanticAddress.ForConcept(application, concept.Name),
                 TypeSyntax type when member == "types" => SemanticAddress.ForCompositeType(application, type.Name),
+                EventSourceSyntax source when member == "eventSources" => SemanticAddress.ForEventSource(application, source.Name),
                 _ => null
             };
+        }
+
+        if (node is EventStreamSyntax stream && member == "streams" && owner?.Kind == SemanticKind.EventSource)
+        {
+            return SemanticAddress.ForEventStream(owner, stream.Name);
         }
 
         var moduleName = ancestors.Select(entry => entry.Node).OfType<ModuleSyntax>().FirstOrDefault()?.Name;

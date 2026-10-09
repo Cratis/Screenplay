@@ -11,7 +11,7 @@ public class when_compiling_a_personal_identifier : given.a_compiler
     CompilationResult<ApplicationSyntax> _result;
 
     void Because() => _result = _compiler.Compile("""
-        concept PatientId : Uuid @pii
+        concept PatientId : Uuid pii
         module Patients
           feature Registration
             slice StateChange Register
@@ -23,5 +23,5 @@ public class when_compiling_a_personal_identifier : given.a_compiler
     [Fact] void should_use_a_stable_error() => _result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.PiiNotSupportedOnIdentifier);
     [Fact] void should_report_error_severity() => _result.Diagnostics.Single().Severity.ShouldEqual(DiagnosticSeverity.Error);
     [Fact] void should_locate_the_identifier() => _result.Diagnostics.Single().Location.Line.ShouldEqual(6);
-    [Fact] void should_explain_the_surrogate_remedy() => _result.Diagnostics.Single().Message.ShouldEqual("Concept 'PatientId' is @pii and cannot be an event source identifier - use a surrogate Uuid identifier and keep the @pii value as a property");
+    [Fact] void should_explain_the_surrogate_remedy() => _result.Diagnostics.Single().Message.ShouldEqual("Concept 'PatientId' is pii and cannot be an event source identifier - use a surrogate Uuid identifier and keep the pii value as a property");
 }
