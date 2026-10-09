@@ -10,7 +10,7 @@ static class ContractCommand
 {
     internal static int Run(string[] args, TextWriter output, TextWriter error)
     {
-        if (args.Length != 0 && (args.Length != 2 || args[0] != "--output" || string.IsNullOrWhiteSpace(args[1]) || args[1].StartsWith('-')))
+        if (args.Length != 0 && (args.Length != 2 || args[0] != CliCommandCatalog.Output.Name || !CliCommandCatalog.Contract.Options.Contains(CliCommandCatalog.Output) || string.IsNullOrWhiteSpace(args[1]) || args[1].StartsWith('-')))
         {
             error.WriteLine("Usage: screenplay contract [--output <path>]");
             return 2;

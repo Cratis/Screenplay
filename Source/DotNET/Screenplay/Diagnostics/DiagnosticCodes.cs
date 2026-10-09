@@ -687,6 +687,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// A setting of a provider is not <c>&lt;name&gt; &lt;value&gt;</c>.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error)]
     public const string InvalidProviderSetting = "PLAY0127";
 
     // Event seeding.
@@ -753,6 +754,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// A line in a reaction trigger body opens with a word a trigger declares nothing by.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error)]
     public const string UnknownReactionTriggerDirective = "PLAY0139";
 
     // Validation rules.
@@ -954,6 +956,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// No longer reported. Repeated reads without aliases are reported as <c>PLAY0410</c>. Retained for compatibility.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error, retired: true)]
     public const string DuplicateReads = "PLAY0176";
 
     /// <summary>
@@ -1463,6 +1466,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// Source syntax requires an explicit reviewed semantic migration before binding.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error)]
     public const string SemanticMigrationRequired = "PLAY0272";
 
     /// <summary>
@@ -1495,6 +1499,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// A variant declares no <c>enters on</c> event, so nothing ever activates it.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error)]
     public const string ProjectionVariantWithoutEntersOn = "PLAY0278";
 
     /// <summary>
@@ -1510,6 +1515,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// Two variants of the same projection declare the same name.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error)]
     public const string DuplicateProjectionVariantName = "PLAY0281";
 
     /// <summary>

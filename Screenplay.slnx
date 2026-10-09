@@ -7,5 +7,6 @@
         <Project Path="Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj" />
         <Project Path="Source/DotNET/Tool/Tool.csproj" />
         <Project Path="Source/DotNET/Screenplay.Contracts/Screenplay.Contracts.csproj" />
+        <Project Path="Source/DotNET/Screenplay.ContractCatalog/Screenplay.ContractCatalog.csproj" />
     </Folder>
 </Solution>

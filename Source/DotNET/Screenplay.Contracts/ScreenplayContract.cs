@@ -14,8 +14,6 @@ namespace Cratis.Screenplay.Contracts;
 /// </summary>
 public static partial class ScreenplayContract
 {
-    static readonly string[] _constructParsers = ["ScreenplayParser", "SliceParser", "ModuleBody", "FeatureBody"];
-
     /// <summary>
     /// Writes one deterministic schema-version 1 JSON document, followed by a newline.
     /// </summary>
@@ -30,14 +28,9 @@ public static partial class ScreenplayContract
     /// <exception cref="InvalidScreenplayContract">An owning catalog cannot be classified completely.</exception>
     public static string Serialize()
     {
-        var parsers = ContractSources.All.Where(entry => entry.Key.StartsWith("compiler/Parsing/", StringComparison.Ordinal)).ToArray();
-        var preambles = ContractSources.Matches(ContractSources.Get("compiler/Parsing/SourceOptionsParser.cs"), "LineText.FirstWord\\([^)]*\\) == \"([a-z][a-zA-Z]*)\"").ToArray();
-        var keywords = parsers.SelectMany(entry => ContractSources.Matches(entry.Value, "case \"([a-z][a-zA-Z]*)\"")).Concat(preambles).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray();
-        var dispatch = _constructParsers.SelectMany(name => ContractSources.Matches(ContractSources.Get($"compiler/Parsing/{name}.cs"), "case \"([a-z][a-zA-Z]*)\"")).Concat(preambles);
-        var clauses = new[] { "description", "documentation", "depends", "authorize", "on", "uses" };
-        var constructs = dispatch.Except(clauses, StringComparer.Ordinal).Distinct(StringComparer.Ordinal).ToArray();
-        var rootDispatch = ContractSources.Get("compiler/Parsing/ScreenplayParser.cs").Split("default:", StringSplitOptions.None)[0];
-        var topLevel = ContractSources.Matches(rootDispatch, "case \"([a-z][a-zA-Z]*)\"").Concat(preambles).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal);
+        var keywords = CompilerContractCatalog.Keywords;
+        var constructs = CompilerContractCatalog.Constructs;
+        var topLevel = CompilerContractCatalog.TopLevelConstructs;
         var versions = SupportedVersions();
         var tools = new JsonArray();
         foreach (var tool in McpContract.DescribeTools().OrderBy(tool => tool!["name"]!.GetValue<string>(), StringComparer.Ordinal))
@@ -93,27 +86,16 @@ public static partial class ScreenplayContract
 
     internal static JsonArray CliCommands()
     {
-        var usage = ContractSources.Get("cli/CommandLineInformation.cs");
-        var lines = CliUsageRegex().Matches(usage);
         var result = new JsonArray();
-        foreach (Match line in lines)
+        foreach (var command in CliCommandCatalog.All)
         {
-            var syntax = line.Groups[1].Value.Trim();
-            var first = syntax.Split(' ')[0];
-            var name = first.StartsWith('[') ? string.Empty : first;
-            var options = ContractSources.Matches(syntax, "(--[a-z][a-z-]*)").Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal);
-            result.Add(new JsonObject { ["name"] = name, ["usage"] = $"screenplay {syntax}", ["options"] = Strings(options) });
-        }
-
-        // Information aliases are owned by TryPrint, not manually repeated in this contract.
-        var commandNames = result.Select(command => command!["name"]!.GetValue<string>()).Where(name => !name.StartsWith('-')).ToHashSet(StringComparer.Ordinal);
-        var information = usage.Split("internal static bool TryPrint", StringSplitOptions.None)[1];
-        foreach (var branch in information.Split("return true;", StringSplitOptions.None).SkipLast(1))
-        {
-            var aliases = ContractSources.Matches(branch, "arguments\\[[01]\\] == \"([^\"]+)\"").Except(commandNames, StringComparer.Ordinal).Distinct(StringComparer.Ordinal).ToArray();
-            if (aliases.Length == 0) throw new InvalidScreenplayContract("An information-command branch lacks recognizable argument dispatch.");
-            var name = aliases.FirstOrDefault(alias => !alias.StartsWith('-')) ?? aliases[0];
-            result.Add(new JsonObject { ["name"] = name, ["aliases"] = Strings(aliases.Where(alias => alias != name).Order(StringComparer.Ordinal)) });
+            result.Add(new JsonObject
+            {
+                ["name"] = command.Name,
+                ["usage"] = command.Usage,
+                ["options"] = Strings(command.Options.Select(option => option.Name).Order(StringComparer.Ordinal)),
+                ["aliases"] = Strings(command.Aliases.Order(StringComparer.Ordinal))
+            });
         }
 
         return result;
@@ -123,7 +105,4 @@ public static partial class ScreenplayContract
 
     [GeneratedRegex(@"^EsmSchemaV\d+Support$", RegexOptions.None, 2000)]
     private static partial Regex SchemaSupportRegex();
-
-    [GeneratedRegex(@"(?m)^\s+screenplay ([^\r\n]+)", RegexOptions.None, 2000)]
-    private static partial Regex CliUsageRegex();
 }

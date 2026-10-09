@@ -1,0 +1,274 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Globalization;
+using System.Text;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+
+namespace Cratis.Screenplay.ContractCatalog;
+
+/// <summary>
+/// Builds contract metadata from the compiler's bound C# syntax, in the same compilation as its owners.
+/// </summary>
+[Generator]
+public sealed class ContractCatalogGenerator : ISourceGenerator
+{
+    /// <inheritdoc/>
+    public void Initialize(GeneratorInitializationContext context)
+    {
+    }
+
+    /// <inheritdoc/>
+    public void Execute(GeneratorExecutionContext context)
+    {
+        var compilation = context.Compilation;
+        var trees = compilation.SyntaxTrees.Where(tree => !tree.FilePath.Contains("/for_", StringComparison.Ordinal) && !tree.FilePath.Contains("/obj/", StringComparison.Ordinal)).ToArray();
+        var keywords = new SortedSet<string>(StringComparer.Ordinal);
+        var constructs = new SortedSet<string>(StringComparer.Ordinal);
+        var roots = new SortedSet<string>(StringComparer.Ordinal);
+        var clauses = new HashSet<string>(["description", "documentation", "depends", "authorize", "on", "uses"], StringComparer.Ordinal);
+        foreach (var tree in trees)
+        {
+            var model = compilation.GetSemanticModel(tree);
+            foreach (var methodDeclaration in tree.GetRoot().DescendantNodes().OfType<MethodDeclarationSyntax>())
+            {
+                var method = model.GetDeclaredSymbol(methodDeclaration);
+                if (method is null) continue;
+                var namespaceName = method.ContainingNamespace.ToDisplayString();
+                if (namespaceName != "Cratis.Screenplay.Parsing" && namespaceName != "Cratis.Screenplay.Text") continue;
+                foreach (var attribute in method.GetAttributes().Where(attribute => attribute.AttributeClass?.ToDisplayString() == "System.Text.RegularExpressions.GeneratedRegexAttribute"))
+                {
+                    keywords.UnionWith(RegexLiterals((string)attribute.ConstructorArguments[0].Value!).Where(IsKeyword));
+                }
+            }
+            foreach (var literal in tree.GetRoot().DescendantNodes().OfType<LiteralExpressionSyntax>())
+            {
+                if (literal.Token.Value is not string word || (!IsKeyword(word) && !(IsDispatch(literal) && word.All(character => char.IsLetter(character) || character == ' ')))) continue;
+                var owner = literal.Ancestors().OfType<TypeDeclarationSyntax>().FirstOrDefault();
+                var type = owner is null ? null : model.GetDeclaredSymbol(owner);
+                if (type?.ContainingNamespace.ToDisplayString() != "Cratis.Screenplay.Parsing" && type?.Name != "ReservedWords") continue;
+                if (!IsDispatch(literal) && !literal.Ancestors().Any(node => node is InitializerExpressionSyntax or CollectionExpressionSyntax)) continue;
+                keywords.UnionWith(word.Split(' ').Where(IsKeyword));
+                var method = literal.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault()?.Identifier.ValueText;
+                if (IsKeyword(word) && IsDispatch(literal) && ((type.Name == "ScreenplayParser" && method == "Parse") || ((type.Name == "SliceParser" || type.Name == "ModuleBody" || type.Name == "FeatureBody") && (method == "Parse" || method == "TryParse"))))
+                {
+                    if (!clauses.Contains(word)) constructs.Add(word);
+                    if (type.Name == "ScreenplayParser") roots.Add(word);
+                }
+                if (type.Name == "SourceOptionsParser" && literal.Ancestors().OfType<BinaryExpressionSyntax>().Any(binary => binary.DescendantNodes().OfType<InvocationExpressionSyntax>().Any(invocation => invocation.Expression is MemberAccessExpressionSyntax member && member.Name.Identifier.ValueText == "FirstWord")))
+                {
+                    constructs.Add(word);
+                    roots.Add(word);
+                }
+            }
+        }
+
+        var codes = compilation.GetTypeByMetadataName("Cratis.Screenplay.Diagnostics.DiagnosticCodes")!;
+        var fields = codes.GetMembers().OfType<IFieldSymbol>().Where(field => field.HasConstantValue).ToArray();
+        var declaration = fields[0].DeclaringSyntaxReferences[0].SyntaxTree;
+        var documented = CSharpSyntaxTree.ParseText(declaration.GetText(), ((CSharpParseOptions)declaration.Options).WithDocumentationMode(DocumentationMode.Parse));
+        var titles = documented.GetRoot().DescendantNodes().OfType<FieldDeclarationSyntax>().ToDictionary(field => field.Declaration.Variables.Single().Identifier.ValueText, CatalogTitle, StringComparer.Ordinal);
+        var flow = new DiagnosticFlow(compilation, trees, fields);
+        flow.Resolve();
+        var output = new StringBuilder("// <auto-generated/>\nnamespace Cratis.Screenplay;\npublic static class CompilerContractCatalog\n{\n");
+        WriteWords(output, "Keywords", keywords);
+        WriteWords(output, "Constructs", constructs);
+        WriteWords(output, "TopLevelConstructs", roots);
+        output.AppendLine("public static System.Collections.Generic.IReadOnlyList<DiagnosticFact> Diagnostics { get; } = new DiagnosticFact[] {");
+        foreach (var field in fields.OrderBy(field => (string)field.ConstantValue!, StringComparer.Ordinal))
+        {
+            var title = titles[field.Name];
+            var reservation = field.GetAttributes().SingleOrDefault(attribute => attribute.AttributeClass?.Name == "DiagnosticReservationAttribute");
+            var severities = flow.Severities[field];
+            if (reservation is not null && severities.Count > 0) context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("SPCON001", "Reserved diagnostic is emitted", "Reserved diagnostic {0} is emitted; remove its reservation", "Contract", DiagnosticSeverity.Error, true), field.Locations[0], field.Name));
+            if (reservation is null && severities.Count == 0) context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor("SPCON002", "Unclassified diagnostic", "Diagnostic {0} has no emission or reservation", "Contract", DiagnosticSeverity.Error, true), field.Locations[0], field.Name));
+            var retired = reservation?.ConstructorArguments[1].Value is true;
+            if (reservation is not null) severities.Add(Convert.ToInt32(reservation.ConstructorArguments[0].Value, CultureInfo.InvariantCulture));
+            output.Append("new(").Append(Quote((string)field.ConstantValue!)).Append(", ").Append(Quote(field.Name)).Append(", ").Append(Quote(title)).Append(", new Cratis.Screenplay.Diagnostics.DiagnosticSeverity[] {")
+                .AppendJoin(',', severities.OrderDescending().Select(value => "(Cratis.Screenplay.Diagnostics.DiagnosticSeverity)" + value.ToString(CultureInfo.InvariantCulture))).Append("}, ").Append(reservation is null ? "false" : "true").Append(", ").Append(retired ? "true" : "false").AppendLine("),");
+        }
+        output.AppendLine("};\npublic sealed record DiagnosticFact(string Code, string Name, string Title, System.Collections.Generic.IReadOnlyList<Cratis.Screenplay.Diagnostics.DiagnosticSeverity> Severities, bool Reserved, bool Retired);\n}");
+        context.AddSource("CompilerContractCatalog.g.cs", output.ToString());
+    }
+
+    static bool IsKeyword(string word) => word.Length > 0 && char.IsLower(word[0]) && word.All(char.IsLetter);
+
+    // Read terminals of the owning regex grammar, not words in C# source, group names or character classes.
+    static List<string> RegexLiterals(string pattern)
+    {
+        var literal = new StringBuilder();
+        var result = new List<string>();
+        void Flush()
+        {
+            if (literal.Length > 0) result.Add(literal.ToString());
+            literal.Clear();
+        }
+        for (var index = 0; index < pattern.Length; index++)
+        {
+            var character = pattern[index];
+            if (character == '\\')
+            {
+                var escaped = pattern[++index];
+                if (char.IsLetterOrDigit(escaped))
+                {
+                    Flush();
+                    if (escaped is 'p' or 'P' && index + 1 < pattern.Length && pattern[index + 1] == '{') while (++index < pattern.Length && pattern[index] != '}') { }
+                    if (escaped == 'k' && index + 1 < pattern.Length && pattern[index + 1] == '<') while (++index < pattern.Length && pattern[index] != '>') { }
+                }
+                else
+                {
+                    literal.Append(escaped);
+                }
+
+                continue;
+            }
+            if (character == '[')
+            {
+                Flush();
+                while (++index < pattern.Length)
+                {
+                    if (pattern[index] == '\\') index++;
+                    else if (pattern[index] == ']') break;
+                }
+                continue;
+            }
+            if (character == '(' && index + 1 < pattern.Length && pattern[index + 1] == '?')
+            {
+                Flush();
+                index += 2;
+                if (pattern[index] == '<' && pattern[index + 1] is not ('=' or '!'))
+                {
+                    while (++index < pattern.Length && pattern[index] != '>') { }
+                }
+                else if (pattern[index] == '\'')
+                {
+                    while (++index < pattern.Length && pattern[index] != '\'') { }
+                }
+                else if (char.IsLetter(pattern[index]) || pattern[index] == '-')
+                {
+                    while (index < pattern.Length && pattern[index] is not (':' or ')')) index++;
+                }
+                continue;
+            }
+            if (character == '{')
+            {
+                Flush();
+                while (++index < pattern.Length && pattern[index] != '}') { }
+                continue;
+            }
+            if (character is '(' or ')' or '|' or '*' or '+' or '?' or '.' or '^' or '$' || char.IsWhiteSpace(character)) Flush();
+            else literal.Append(character);
+        }
+        Flush();
+
+        return result;
+    }
+
+    static bool IsDispatch(LiteralExpressionSyntax literal) => literal.Ancestors().TakeWhile(node => node is not StatementSyntax and not MemberDeclarationSyntax).Any(node => node is ConstantPatternSyntax or CaseSwitchLabelSyntax || (node is BinaryExpressionSyntax binary && (binary.IsKind(SyntaxKind.EqualsExpression) || binary.IsKind(SyntaxKind.NotEqualsExpression))) || (node is InvocationExpressionSyntax invocation && invocation.Expression is MemberAccessExpressionSyntax member && (member.Name.Identifier.ValueText == "Equals" || member.Name.Identifier.ValueText == "StartsWith" || member.Name.Identifier.ValueText == "Contains")));
+
+    static string CatalogTitle(FieldDeclarationSyntax field)
+    {
+        var summary = field.GetLeadingTrivia().Select(trivia => trivia.GetStructure()).OfType<DocumentationCommentTriviaSyntax>().SelectMany(documentation => documentation.Content).OfType<XmlElementSyntax>().Single(element => element.StartTag.Name.LocalName.ValueText == "summary");
+        return string.Join(' ', XmlText(summary).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+    }
+
+    static string XmlText(XmlNodeSyntax node) => node switch
+    {
+        XmlTextSyntax text => string.Concat(text.TextTokens.Select(token => token.ValueText)),
+        XmlElementSyntax element => string.Concat(element.Content.Select(XmlText)),
+        XmlEmptyElementSyntax empty => empty.Attributes.OfType<XmlCrefAttributeSyntax>().SingleOrDefault()?.Cref.ToString() ?? string.Empty,
+        _ => string.Empty
+    };
+
+    static string Quote(string value) => SymbolDisplay.FormatLiteral(value, true);
+
+    static void WriteWords(StringBuilder output, string name, IEnumerable<string> values) => output.Append("public static System.Collections.Generic.IReadOnlyList<string> ").Append(name).Append(" { get; } = new string[] {").AppendJoin(',', values.Select(Quote)).AppendLine("};");
+
+    sealed class DiagnosticFlow(Compilation compilation, SyntaxTree[] trees, IFieldSymbol[] fields)
+    {
+        readonly Dictionary<ISymbol, HashSet<ISymbol>> _edges = new(SymbolEqualityComparer.Default);
+        readonly Dictionary<ISymbol, HashSet<IFieldSymbol>> _values = new(SymbolEqualityComparer.Default);
+        readonly List<(ISymbol[] Sources, int Severity)> _emissions = [];
+
+        internal Dictionary<IFieldSymbol, SortedSet<int>> Severities { get; } = fields.ToDictionary(field => field, _ => new SortedSet<int>());
+
+        internal void Resolve()
+        {
+            foreach (var tree in trees)
+            {
+                var model = compilation.GetSemanticModel(tree);
+                foreach (var node in tree.GetRoot().DescendantNodes())
+                {
+                    if (node is ParameterSyntax parameterDeclaration && parameterDeclaration.Default is not null) Link(model.GetDeclaredSymbol(parameterDeclaration), Symbols(model, parameterDeclaration.Default.Value));
+                    if (node is VariableDeclaratorSyntax variable && variable.Initializer is not null) Link(model.GetDeclaredSymbol(variable), Symbols(model, variable.Initializer.Value));
+                    if (node is AssignmentExpressionSyntax assignment) Link(model.GetSymbolInfo(assignment.Left).Symbol, Symbols(model, assignment.Right));
+                    if (node is InvocationExpressionSyntax or BaseObjectCreationExpressionSyntax)
+                    {
+                        var arguments = node switch { InvocationExpressionSyntax invocation => invocation.ArgumentList.Arguments, BaseObjectCreationExpressionSyntax creation => creation.ArgumentList?.Arguments ?? default, _ => default };
+                        if (model.GetSymbolInfo(node).Symbol is not IMethodSymbol method) continue;
+                        for (var index = 0; index < arguments.Count && index < method.Parameters.Length; index++)
+                        {
+                            var argument = arguments[index];
+                            var parameter = argument.NameColon is { } named ? method.Parameters.SingleOrDefault(parameter => parameter.Name == named.Name.Identifier.ValueText) : method.Parameters[index];
+                            var sources = Symbols(model, argument.Expression);
+                            Link(parameter, sources);
+                            if (method.MethodKind == MethodKind.Constructor && parameter is not null) Link(method.ContainingType.GetMembers(parameter.Name).OfType<IPropertySymbol>().FirstOrDefault(), sources);
+                        }
+                        if ((method.Name == "Error" || method.Name == "Warning" || method.Name == "Information") && (method.ContainingNamespace.ToDisplayString() == "Cratis.Screenplay.Diagnostics" || method.ContainingNamespace.ToDisplayString() == "Cratis.Screenplay.Parsing") && arguments.Count > 0)
+                        {
+                            var emittedSeverity = (int)compilation.GetTypeByMetadataName("Cratis.Screenplay.Diagnostics.DiagnosticSeverity")!.GetMembers(method.Name).OfType<IFieldSymbol>().Single().ConstantValue!;
+                            _emissions.Add((Symbols(model, arguments[0].Expression), emittedSeverity));
+                        }
+                        if (method.MethodKind == MethodKind.Constructor && method.ContainingType.ToDisplayString() == "Cratis.Screenplay.Diagnostics.Diagnostic" && arguments.Count > 1 && model.GetConstantValue(arguments[0].Expression) is { HasValue: true, Value: int severity })
+                        {
+                            _emissions.Add((Symbols(model, arguments[1].Expression), severity));
+                        }
+                    }
+                }
+            }
+            var queue = new Queue<ISymbol>();
+            foreach (var field in fields)
+            {
+                _values[field] = [field];
+                queue.Enqueue(field);
+            }
+            while (queue.TryDequeue(out var source))
+            {
+                if (!_edges.TryGetValue(source, out var targets)) continue;
+                foreach (var target in targets)
+                {
+                    if (!_values.TryGetValue(target, out var values)) _values[target] = values = [];
+                    var count = values.Count;
+                    values.UnionWith(_values[source]);
+                    if (values.Count != count) queue.Enqueue(target);
+                }
+            }
+            foreach (var (sources, severity) in _emissions)
+            {
+                foreach (var source in sources)
+                {
+                    if (_values.TryGetValue(source, out var values))
+                    {
+                        foreach (var field in values) Severities[field].Add(severity);
+                    }
+                }
+            }
+        }
+
+        static ISymbol[] Symbols(SemanticModel model, SyntaxNode node) => [.. node.DescendantNodesAndSelf().Where(expression => expression is IdentifierNameSyntax or MemberAccessExpressionSyntax).Select(expression => model.GetSymbolInfo(expression).Symbol?.OriginalDefinition).Where(symbol => symbol is IFieldSymbol or ILocalSymbol or IParameterSymbol or IPropertySymbol).Cast<ISymbol>().Distinct(SymbolEqualityComparer.Default)];
+
+        void Link(ISymbol? target, ISymbol[] sources)
+        {
+            var type = target switch { IParameterSymbol parameter => parameter.Type, ILocalSymbol local => local.Type, IFieldSymbol field => field.Type, IPropertySymbol property => property.Type, _ => null };
+            if (type?.SpecialType != SpecialType.System_String) return;
+            target = target!.OriginalDefinition;
+            foreach (var source in sources)
+            {
+                if (!_edges.TryGetValue(source, out var targets)) _edges[source] = targets = new(SymbolEqualityComparer.Default);
+                targets.Add(target);
+            }
+        }
+    }
+}

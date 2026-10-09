@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.Json;
+using Cratis.Screenplay.Contracts;
 using Cratis.Screenplay.Mcp;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Workspaces;
@@ -19,17 +20,23 @@ static class ModelTest
         for (var index = 0; index < args.Length; index++)
         {
             var argument = args[index];
-            if (argument == "--filter" || argument == "--format")
+            if (argument.StartsWith('-') && !CliCommandCatalog.Test.Options.Any(option => option.Name == argument))
+            {
+                error.WriteLine($"Unexpected argument '{argument}'.");
+                return 2;
+            }
+
+            if (argument == CliCommandCatalog.Filter.Name || argument == CliCommandCatalog.Format.Name)
             {
                 if (index + 1 == args.Length || args[index + 1].StartsWith('-') || string.IsNullOrWhiteSpace(args[index + 1]) ||
-                    (argument == "--filter" && filter is not null) || (argument == "--format" && hasFormat))
+                    (argument == CliCommandCatalog.Filter.Name && filter is not null) || (argument == CliCommandCatalog.Format.Name && hasFormat))
                 {
                     error.WriteLine($"{argument} requires one value and cannot be repeated.");
                     return 2;
                 }
 
                 var value = args[++index];
-                if (argument == "--filter")
+                if (argument == CliCommandCatalog.Filter.Name)
                 {
                     filter = value;
                 }
