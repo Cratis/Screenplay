@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Globalization;
+using Cratis.Screenplay.Printing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
 
@@ -14,9 +15,9 @@ static class McpFixtureQueries
         snapshot.Compilation.Success,
         snapshot.SourceRevision,
         snapshot.Compilation.Diagnostics,
-        coverage = "Effective specification property assignments and explicit destinations, with authored/example/override origins, and authored event routes. Examples never contribute routes. Values are syntax, not evaluated expressions. Types resolve only direct fields of an unambiguous local declaration; nested paths, imports and implicit view shapes have no inferred type.",
+        coverage = "Effective specification property assignments and explicit destinations, and event routes with authored/example/override origins, including whenRedeliveredEvent locators. Values are syntax, not evaluated expressions. Types resolve only direct fields of an unambiguous local declaration; nested paths, imports and implicit view shapes have no inferred type.",
         page = McpReadPage<McpFixtureValue>.Create(
-            McpFixtureOccurrences.All(snapshot.Index, snapshot.Compilation.Value).SelectMany(occurrence => Values(snapshot.Index, occurrence)),
+            McpFixtureOccurrences.All(snapshot.Index, snapshot.Compilation.Value).SelectMany(occurrence => Values(snapshot.Index, occurrence, snapshot.Compilation.Value)),
             item => (specification is null || item.Specification.Address == specification) &&
                 (role is null || item.Role == role) && (property is null || item.Property == property) &&
                 (value is null || Convert.ToString(item.Value, CultureInfo.InvariantCulture) == value) &&
@@ -53,7 +54,7 @@ static class McpFixtureQueries
     static bool HasAssertions(SpecificationSyntax specification) => specification.ThenReturns is not null || specification.ThenDenied is not null || specification.ThenEvents.Any() || specification.ThenErrors.Any() ||
         (specification.ThenReadModels?.Any() ?? false) || specification.ThenAbsentReadModels.Any() || specification.ThenQueries.Any();
 
-    static IEnumerable<McpFixtureValue> Values(McpSyntaxIndex index, McpFixtureOccurrence occurrence)
+    static IEnumerable<McpFixtureValue> Values(McpSyntaxIndex index, McpFixtureOccurrence occurrence, ApplicationSyntax? application)
     {
         var candidates = index.Resolve(occurrence.Reference).Select(declaration => declaration.Owner).ToArray();
         foreach (var mapping in occurrence.Values)
@@ -92,23 +93,47 @@ static class McpFixtureQueries
                 Origin(occurrence, "for")?.OverriddenValue is { } replaced ? Value(replaced) : null);
         }
 
+        var routeOrigin = occurrence.Step?.Route?.Origin.ToString().ToLowerInvariant() ?? "authored";
+        var routeExample = occurrence.Step?.Example?.Name;
+        var replacedRoute = occurrence.Step?.Route?.OverriddenValue is { } replacedRouteValue ? RouteText(replacedRouteValue, application) : null;
         if (occurrence.Stream is { } stream)
         {
-            yield return new(occurrence.Specification, $"{occurrence.Role}Stream", occurrence.Ordinal, occurrence.Reference.Name, candidates, "stream", null, nameof(SpecificationStreamSyntax), $"{stream.EventSource}.{stream.Stream}", stream.ReferenceLocation, "authored", null, null);
+            yield return new(occurrence.Specification, $"{occurrence.Role}Stream", occurrence.Ordinal, occurrence.Reference.Name, candidates, "stream", null, nameof(SpecificationStreamSyntax), $"{stream.EventSource}.{stream.Stream}", stream.ReferenceLocation, routeOrigin, routeExample, replacedRoute);
             if (stream.StreamId is { } streamId)
             {
-                yield return new(occurrence.Specification, $"{occurrence.Role}StreamId", occurrence.Ordinal, occurrence.Reference.Name, candidates, "streamId", null, streamId.Source.GetType().Name, Value(streamId.Source), streamId.Location, "authored", null, null);
+                yield return new(occurrence.Specification, $"{occurrence.Role}StreamId", occurrence.Ordinal, occurrence.Reference.Name, candidates, "streamId", null, streamId.Source.GetType().Name, Value(streamId.Source), streamId.Location, routeOrigin, routeExample, null);
             }
             foreach (var part in stream.StreamIdParts)
             {
-                yield return new(occurrence.Specification, $"{occurrence.Role}StreamIdPart", occurrence.Ordinal, occurrence.Reference.Name, candidates, part.Property, null, part.Source.GetType().Name, Value(part.Source), part.Location, "authored", null, null);
+                yield return new(occurrence.Specification, $"{occurrence.Role}StreamIdPart", occurrence.Ordinal, occurrence.Reference.Name, candidates, part.Property, null, part.Source.GetType().Name, Value(part.Source), part.Location, routeOrigin, routeExample, null);
             }
         }
 
         if (occurrence.NoStream is { } noStream)
         {
-            yield return new(occurrence.Specification, $"{occurrence.Role}NoStream", occurrence.Ordinal, occurrence.Reference.Name, candidates, "no stream", null, nameof(SpecificationNoStreamSyntax), true, noStream.Location, "authored", null, null);
+            yield return new(occurrence.Specification, $"{occurrence.Role}NoStream", occurrence.Ordinal, occurrence.Reference.Name, candidates, "no stream", null, nameof(SpecificationNoStreamSyntax), true, noStream.Location, routeOrigin, routeExample, replacedRoute);
         }
+    }
+
+    static string RouteText(SyntaxNode route, ApplicationSyntax? application)
+    {
+        if (route is SpecificationNoStreamSyntax) return "no stream";
+        if (route is not SpecificationStreamSyntax stream) return string.Empty;
+        var text = $"{stream.EventSource}.{stream.Stream}";
+        if (stream.StreamId is { } id) return $"{text} streamId = {ScreenplaySyntaxText.ResponseValue(id.Source)}";
+        var parts = stream.StreamIdParts;
+        var resolution = application is null ? null : new EventSourceCatalog(application).Resolve(stream.EventSource, stream.Stream);
+        if (resolution?.Kind == EventSourceResolutionKind.Unique)
+        {
+            var declarations = resolution.Streams[0].StreamIdParts.ToArray();
+            var authored = parts.ToArray();
+            if (declarations.Length == authored.Length && declarations.All(declaration => authored.Count(part => part.Property == declaration.Name) == 1))
+            {
+                parts = [.. declarations.Select(declaration => authored.Single(part => part.Property == declaration.Name))];
+            }
+        }
+
+        return parts.Any() ? text + " streamId " + string.Join(", ", parts.Select(part => $"{part.Property} = {ScreenplaySyntaxText.ResponseValue(part.Source)}")) : text;
     }
 
     static EffectiveSpecificationValue? Origin(McpFixtureOccurrence occurrence, string property) =>

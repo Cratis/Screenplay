@@ -23,6 +23,7 @@ public sealed partial class ScreenplayPrinter
         {
             WriteDescription(writer, example.Description, example);
             WriteSpecificationEventSource(writer, example.For);
+            WriteSpecificationRoute(writer, example.Stream, example.NoStream);
             WriteSpecificationValues(writer, example.Values);
             foreach (var fixture in example.GeneratedValues)
             {

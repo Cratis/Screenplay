@@ -12,8 +12,11 @@ describe('when surfacing example route diagnostics', () => {
         const vector = vectors.cases.find(vector => vector.name === 'Routed given and append inherit an example destination and producer type')!;
         validateLines(vector.source).filter(issue => /^PLAY054[7-9]$|^PLAY055[01]$/.test(issue.code ?? '')).should.deep.equal([]);
     });
-    it.each(['stream Account.Events', 'streamId = "partition"', 'no stream'])('should surface the invalid example body for %s', route => {
-        const issues = validateLines(['example Fixture : Happened', `  ${route}`, '  amount = 1']);
+    it('should retain a top-level streamId payload in an event example', () => {
+        validateLines(['event Happened', '  streamId String', 'example Fixture : Happened', '  streamId = "partition"']).filter(issue => issue.code === 'PLAY0526').should.deep.equal([]);
+    });
+    it.each(['stream Account.Events', 'no stream'])('should surface the invalid command example route for %s', route => {
+        const issues = validateLines(['command C', '  amount Int', 'example Fixture : C', `  ${route}`, '  amount = 1']);
         issues.filter(issue => issue.code === 'PLAY0526').should.have.lengthOf(1);
     });
 });

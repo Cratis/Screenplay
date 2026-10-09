@@ -2378,7 +2378,7 @@ public static class DiagnosticCodes
     public const string UnadmittedSpecificationExampleValue = "PLAY0525";
 
     /// <summary>
-    /// A typed specification example declares route metadata instead of stating it on a step.
+    /// A command or read-model example declares a route; only event examples carry routes.
     /// </summary>
     public const string InvalidSpecificationExampleBody = "PLAY0526";
 

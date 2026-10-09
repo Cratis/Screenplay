@@ -58,6 +58,12 @@ internal static partial class EventSourceInvariants
             case SpecificationEventSyntax occurrence:
                 if (occurrence.Stream is not null && occurrence.NoStream is not null) throw new InvalidSyntaxJson("An event occurrence cannot declare both stream and no stream.");
                 break;
+            case SpecificationExampleSyntax example:
+                if (example.Stream is not null && example.NoStream is not null) throw new InvalidSyntaxJson("An event occurrence cannot declare both stream and no stream.");
+                break;
+            case SpecificationRedeliverySyntax locator:
+                if (locator.Stream is not null && locator.NoStream is not null) throw new InvalidSyntaxJson("An event occurrence cannot declare both stream and no stream.");
+                break;
             case SpecificationStreamSyntax specificationRoute:
                 Name(specificationRoute.EventSource);
                 Name(specificationRoute.Stream);
