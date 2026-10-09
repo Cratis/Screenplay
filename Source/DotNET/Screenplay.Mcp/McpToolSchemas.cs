@@ -88,6 +88,8 @@ static class McpToolSchemas
         "operations" => McpAstSchemas.Array(JsonNode.Parse(McpWorkspaceOperations.Schema.GetRawText())!),
         "documents" => McpAstSchemas.Array(McpAstSchemas.Documents(tool == "propose-source")),
         "sketch" => McpVisualization.SketchSchema(),
+        "target" or "newParent" when tool == "propose-move" => Address(),
+        "targetHandle" or "newParentHandle" => McpAstSchemas.Handle(),
         "target" or "subject" => McpAstSchemas.Handle(),
         "semanticRenames" or "eventRenames" => McpAstSchemas.Array(Rename()),
         "retiredSemanticAddresses" or "retiredEventAddresses" => McpAstSchemas.Array(Address()),
