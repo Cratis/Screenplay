@@ -20,6 +20,7 @@ const primitives = new Set(['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 
 export function validateSpecificationCases(application: ApplicationSyntax, context: ParserContext, standaloneSpecifications?: readonly SpecificationSyntax[]): void {
     const declarations = new RefusalDeclarations(application);
     const examples = specificationExamples(application);
+    const knownType = (name: string) => primitives.has(name) || declarations.concepts.has(name) || declarations.types.has(name);
     const composites = new Map([...declarations.types].map(([name, type]) => [name, new Map(type.properties.map(property => [property.name, property]))]));
     const owners = standaloneSpecifications === undefined ? declarations.slices : [{ scope: [], slice: {
         kind: 'SliceSyntax' as const, type: 'StateChange' as const, name: '', description: null, location: application.location,
@@ -37,7 +38,7 @@ export function validateSpecificationCases(application: ApplicationSyntax, conte
                 if ((names.get(`${specification.name}_${row.name}`) ?? 0) > 1) context.error(DiagnosticCodes.SpecificationCaseNameCollision, `Case '${row.name}' derives specification '${specification.name}_${row.name}', which collides in this ${standaloneSpecifications === undefined ? 'slice' : 'document'}.`, row.location);
             }
             for (const parameter of specification.parameters ?? []) {
-                if (!primitives.has(parameter.type.name) && !declarations.concepts.has(parameter.type.name) && !declarations.types.has(parameter.type.name)) context.error(DiagnosticCodes.IncompatibleSpecificationParameterType, `Parameter '${parameter.name}' has unknown type '${parameter.type.name}'.`, parameter.type.location);
+                if (standaloneSpecifications === undefined && !knownType(parameter.type.name)) context.error(DiagnosticCodes.IncompatibleSpecificationParameterType, `Parameter '${parameter.name}' has unknown type '${parameter.type.name}'.`, parameter.type.location);
                 for (const row of specification.cases ?? []) {
                     for (const assignment of row.values.filter(value => value.property === parameter.name)) {
                         if (!compatibleValue(assignment.source, parameter.type, declarations.concepts, composites)) context.error(DiagnosticCodes.InvalidSpecificationCaseValue, `Case '${row.name}' parameter '${parameter.name}' requires a concrete value of type '${parameter.type.name}'.`, assignment.source.location);
@@ -49,6 +50,7 @@ export function validateSpecificationCases(application: ApplicationSyntax, conte
                 const parameter = specification.parameters?.find(parameter => parameter.name === expression.parameter);
                 if (parameter === undefined) return;
                 if (parameter.type.isOptional && !target.isOptional) context.error(DiagnosticCodes.OptionalSpecificationParameterTarget, `Optional parameter '${parameter.name}' cannot supply required target '${property}'.`, expression.location);
+                if (standaloneSpecifications !== undefined && (!knownType(parameter.type.name) || !knownType(target.name))) return;
                 const sourceConcept = declarations.concepts.get(parameter.type.name);
                 const targetConcept = declarations.concepts.get(target.name);
                 const compatible = parameter.type.name === target.name || sourceConcept?.type !== 'Enum' && sourceConcept?.type === target.name || targetConcept?.type !== 'Enum' && targetConcept?.type === parameter.type.name;

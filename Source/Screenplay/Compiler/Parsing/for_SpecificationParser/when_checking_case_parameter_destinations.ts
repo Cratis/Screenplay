@@ -62,6 +62,20 @@ describe('when checking case parameter destinations', () => {
         typeDiagnostics(source + history).should.deep.equal([]);
     });
     it('should leave an undeclared event destination unknown', () => typeDiagnostics(declarations + append.replaceAll('Received', 'Unknown')).should.deep.equal([]));
+    it.each([['Amount', '1'], ['Detail', '{"value":1}'], ['Status', '"future"']])('should defer unavailable standalone type %s', (type, value) => {
+        const result = parseSpecificationSource(`specification Recording\n  parameter amount ${type}\n  case One amount = ${value}\n  when Record amount = case.amount`);
+        result.success.should.equal(true);
+        result.diagnostics.should.deep.equal([]);
+    });
+    it('should defer unknown concept compatibility with an intrinsic String target', () => {
+        parseSpecificationSource('specification Rejecting\n  parameter reason Message\n  case One reason = "rejected"\n  then error case.reason').diagnostics.should.deep.equal([]);
+    });
+    it.each([['Int', '"bad"'], ['Detail[]', '1'], ['Detail', 'null']])('should keep standalone primitive and value shape checks for %s', (type, value) => {
+        parseSpecificationSource(`specification Recording\n  parameter amount ${type}\n  case One amount = ${value}\n  when Record amount = case.amount`).diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0583']);
+    });
+    it('should still reject undeclared parameter types in a complete application', () => {
+        parse('module M\n  feature F\n    slice StateChange S\n      specification Recording\n        parameter amount Amount\n        case One amount = 1\n        when Record amount = case.amount').diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0587']);
+    });
     it('should check standalone error parameter types', () => {
         parseSpecificationSource('specification Rejecting\n  parameter reason Int\n  case One reason = 1\n  then error case.reason').diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0587']);
     });

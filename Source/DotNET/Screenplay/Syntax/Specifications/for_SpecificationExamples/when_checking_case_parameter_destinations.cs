@@ -85,5 +85,46 @@ public class when_checking_case_parameter_destinations : Specification
         SpecificationExamples.ExpandAll(specification, application, []).Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.IncompatibleSpecificationParameterType);
     }
 
+    [Theory]
+    [InlineData("Amount", "1")]
+    [InlineData("Detail", "{\"value\":1}")]
+    [InlineData("Status", "\"future\"")]
+    void should_defer_unavailable_standalone_parameter_types(string type, string value)
+    {
+        var source = $"specification Recording\n  parameter amount {type}\n  case One amount = {value}\n  when Record amount = case.amount";
+        var compiler = new ScreenplayCompiler();
+        var parsed = compiler.CompileSpecification(source);
+        parsed.Diagnostics.ShouldBeEmpty();
+        SpecificationExamples.ExpandAll(parsed.Value, compiler.Parse(string.Empty).Value, []).Diagnostics.ShouldBeEmpty();
+    }
+
+    [Fact]
+    void should_defer_unknown_concept_compatibility_with_an_intrinsic_string_target()
+    {
+        var compiler = new ScreenplayCompiler();
+        var parsed = compiler.CompileSpecification("specification Rejecting\n  parameter reason Message\n  case One reason = \"rejected\"\n  then error case.reason");
+        parsed.Diagnostics.ShouldBeEmpty();
+        SpecificationExamples.ExpandAll(parsed.Value, compiler.Parse(string.Empty).Value, []).Diagnostics.ShouldBeEmpty();
+    }
+
+    [Theory]
+    [InlineData("Int", "\"bad\"")]
+    [InlineData("Detail[]", "1")]
+    [InlineData("Detail", "null")]
+    void should_keep_standalone_primitive_and_value_shape_checks(string type, string value)
+    {
+        var compiler = new ScreenplayCompiler();
+        var parsed = compiler.CompileSpecification($"specification Recording\n  parameter amount {type}\n  case One amount = {value}\n  when Record amount = case.amount");
+        SpecificationExamples.ExpandAll(parsed.Value, compiler.Parse(string.Empty).Value, []).Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.InvalidSpecificationCaseValue);
+    }
+
+    [Fact]
+    void should_validate_standalone_types_when_their_declarations_are_supplied()
+    {
+        var compiler = new ScreenplayCompiler();
+        var parsed = compiler.CompileSpecification("specification Recording\n  parameter amount Amount\n  case One amount = \"bad\"\n  when Record amount = case.amount");
+        SpecificationExamples.ExpandAll(parsed.Value, compiler.Parse("concept Amount : Int").Value, []).Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.InvalidSpecificationCaseValue);
+    }
+
     static Diagnostic[] TypeDiagnostics(string source) => new ScreenplayCompiler().Compile(source).Diagnostics.Where(diagnostic => diagnostic.Code is DiagnosticCodes.IncompatibleSpecificationParameterType or DiagnosticCodes.OptionalSpecificationParameterTarget).ToArray();
 }

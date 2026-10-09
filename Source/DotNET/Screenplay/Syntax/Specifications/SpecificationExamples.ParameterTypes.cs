@@ -13,12 +13,12 @@ public static partial class SpecificationExamples
         static TypeRefSyntax? UniqueDestinationType(IEnumerable<TypeRefSyntax> types) =>
             types.DistinctBy(type => (type.Name, type.IsOptional, type.IsCollection)).ToArray() is [var type] ? type : null;
 
-        void ValidateParameterReferences(SpecificationSyntax specification, DeclarationScope scope)
+        void ValidateParameterReferences(SpecificationSyntax specification, DeclarationScope scope, bool standalone)
         {
             var values = new ResponseValueTypes(_application);
             foreach (var parameter in specification.Parameters)
             {
-                if (!ConceptSyntax.PrimitiveTypes.Contains(parameter.Type.Name) && !_application.Concepts.Any(concept => concept.Name == parameter.Type.Name) && !(_application.Types ?? []).Any(type => type.Name == parameter.Type.Name))
+                if (!standalone && !ParameterTypeIsKnown(parameter.Type.Name))
                 {
                     _context.Error(DiagnosticCodes.IncompatibleSpecificationParameterType, $"Parameter '{parameter.Name}' has unknown type '{parameter.Type.Name}'.", parameter.Type.Location);
                 }
@@ -42,6 +42,7 @@ public static partial class SpecificationExamples
                     {
                         _context.Error(DiagnosticCodes.OptionalSpecificationParameterTarget, $"Optional parameter '{parameter.Name}' cannot supply required target '{assignment.Property}'.", reference.Location);
                     }
+                    if (standalone && (!ParameterTypeIsKnown(parameter.Type.Name) || !ParameterTypeIsKnown(target.Name))) continue;
                     var sourceConcept = _application.Concepts.SingleOrDefault(concept => concept.Name == parameter.Type.Name);
                     var targetConcept = _application.Concepts.SingleOrDefault(concept => concept.Name == target.Name);
                     var compatible = parameter.Type.Name == target.Name || (sourceConcept is { IsEnum: false } && sourceConcept.Type == target.Name) || (targetConcept is { IsEnum: false } && targetConcept.Type == parameter.Type.Name);
@@ -52,6 +53,8 @@ public static partial class SpecificationExamples
                 }
             }
         }
+
+        bool ParameterTypeIsKnown(string name) => ConceptSyntax.PrimitiveTypes.Contains(name) || _application.Concepts.Any(concept => concept.Name == name) || (_application.Types ?? []).Any(type => type.Name == name);
 
         TypeRefSyntax? ParameterTarget(SpecificationSyntax specification, SyntaxNode node, string role, PropertyMappingSyntax assignment, DeclarationScope scope)
         {

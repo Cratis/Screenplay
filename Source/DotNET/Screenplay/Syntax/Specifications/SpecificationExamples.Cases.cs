@@ -25,7 +25,7 @@ public static partial class SpecificationExamples
             return specifications;
         }
 
-        IEnumerable<SpecificationSyntax> ExpandSpecifications(SpecificationSyntax specification, DeclarationScope scope)
+        IEnumerable<SpecificationSyntax> ExpandSpecifications(SpecificationSyntax specification, DeclarationScope scope, bool standalone = false)
         {
             var expanded = ExpandSpecification(specification, scope);
             if (!specification.Parameters.Any() && !specification.Cases.Any())
@@ -34,7 +34,7 @@ public static partial class SpecificationExamples
                 yield return expanded.Effective;
                 yield break;
             }
-            ValidateParameterReferences(expanded.Effective, scope);
+            ValidateParameterReferences(expanded.Effective, scope, standalone);
             foreach (var row in specification.Cases)
             {
                 var substitution = new CaseSubstitution(row);

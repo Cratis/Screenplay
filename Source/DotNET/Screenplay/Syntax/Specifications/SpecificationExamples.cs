@@ -98,7 +98,7 @@ public static partial class SpecificationExamples
         {
             foreach (var entry in _entries.Where(entry => entry.Node is SpecificationExampleSyntax)) ValidateExample(entry);
             SpecificationParser.ValidateTable(specification, _context);
-            _ = ExpandSpecifications(specification, scope).ToArray();
+            _ = ExpandSpecifications(specification, scope, standalone: true).ToArray();
 
             return new(_specifications, _context.Diagnostics);
         }

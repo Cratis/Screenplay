@@ -16,9 +16,10 @@ describe('when mapping specification cases', () => {
     it('should draw independent cards named from case provenance in case order', () => {
         const document = toEventModelDocument(parse(source).value, 'Cases');
         const specifications = document.collections[0].modules[0].features[0].slices[0].specifications;
-        specifications.map(specification => specification.name).should.deep.equal(['Recording — Small', 'Recording — Large', 'Rejecting — Empty']);
+        specifications.map(specification => specification.name).should.deep.equal(['Recording — Small', 'Recording — amountTooLow', 'Recording — Large', 'Rejecting — Empty']);
         specifications[0].when!.values.should.deep.equal({ amount: 10 });
-        specifications[1].when!.values.should.deep.equal({ amount: 100 });
-        (specifications[0].id === specifications[1].id).should.equal(false);
+        specifications[1].when!.values.should.deep.equal({ amount: 0 });
+        specifications[2].when!.values.should.deep.equal({ amount: 100 });
+        new Set(specifications.map(specification => specification.id)).size.should.equal(4);
     });
 });
