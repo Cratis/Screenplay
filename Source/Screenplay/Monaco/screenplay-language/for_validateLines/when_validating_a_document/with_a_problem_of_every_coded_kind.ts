@@ -140,7 +140,7 @@ describe('when validating a document with a problem of every coded kind', () => 
         const reported = new Set(issues.map((issue) => issue.code));
         // Keep the old constant in the exported API, but admitted v7 responses no longer emit it.
         Object.values(diagnosticCodes).filter(code => code !== diagnosticCodes.unavailableResponseExecution)
-            .forEach((code) => reported.has(code).should.be.true);
+            .forEach((code) => reported.has(code).should.equal(true, `Missing diagnostic ${code}`));
         reported.has(diagnosticCodes.unavailableResponseExecution).should.be.false;
     });
 });
