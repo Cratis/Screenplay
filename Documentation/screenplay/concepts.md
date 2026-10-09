@@ -113,7 +113,7 @@ Declaring a qualifier records the author's statement on the concept. It does not
 
 See [Processing purposes](purposes.md) for the checks and the record, and [Diagnostics](diagnostics.md) for the codes. The qualifiers are not legal advice: they say what the author declared, not whether processing is lawful.
 
-Qualifiers require the personal-data marker; more than one `special` or an unknown category is an error (`PLAY0570`). The `personal` alias works on all personal-data body lines too.
+Qualifiers require the personal-data marker, and an unknown category is an error (`PLAY0570`); more than one `special` line is an error too (`PLAY0571`). The `personal` alias works on all personal-data body lines too.
 
 These facts remain syntax-only: binding reports `PLAY0268`, including scopes and qualifiers. They do not promise lawful processing, retention enforcement or reference execution. Provider support for newly declared details and scope must be checked separately.
 
