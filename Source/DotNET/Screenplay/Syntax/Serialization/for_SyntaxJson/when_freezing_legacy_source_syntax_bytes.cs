@@ -26,7 +26,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "authoring-metadata" || name == "compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams") continue;
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -68,7 +68,8 @@ public class when_freezing_legacy_source_syntax_bytes
             // vector protects it; removing that member here keeps all pre-feature bytes frozen.
             if (name == "invoicing-sample" || name == "invoicing-editor-sample")
             {
-                text = text.Replace(",\"thenNoEvents\":true", string.Empty, StringComparison.Ordinal);
+                text = text.Replace(",\"thenNoEvents\":true", string.Empty, StringComparison.Ordinal)
+                    .Replace(",\"isSubject\":true", string.Empty, StringComparison.Ordinal);
             }
 
             var actual = Encoding.UTF8.GetBytes(text);

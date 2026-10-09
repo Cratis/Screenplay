@@ -301,7 +301,6 @@ export function scanDocument(lines: string[]): DocumentSymbols {
                     sourceType: sourceTypeAt(lines[property.type.location.line - 1], property.type.location.column),
                     isIdentifier: property.isIdentifier || /\sidentifier\s*$/.test(lines[property.location.line - 1]),
                     ...(property.isGenerated ? { isGenerated: true } : {}),
-                    ...(property.isSubject ? { isSubject: true } : {}),
                     line: property.location.line - 1,
                 })),
                 response: command.response,

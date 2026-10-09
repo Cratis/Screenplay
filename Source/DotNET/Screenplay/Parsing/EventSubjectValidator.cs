@@ -63,7 +63,11 @@ internal static class EventSubjectValidator
                 context.Error(DiagnosticCodes.InvalidSubjectType, "Subjects support String, Uuid and their concepts, plus Int-backed concepts; bare Int, enums, Decimal, Bool, Date and DateTime are refused.", property.Location);
             }
 
-            // Unknown/imported shapes retain the ordinary property unknown-type disposition.
+            // Missing unimported shapes already receive the ordinary property unknown-type warning.
+            if (concepts.Length == 0 && EventSourceValidator.Primitive(type, application) is null && application.Imports.Any(import => import.Name == type.Name || import.QualifiedName == type.Name))
+            {
+                context.Warning(DiagnosticCodes.UnknownType, $"Unknown type shape '{type.Name}' for subject property '{property.Name}'; imported subject identity rules cannot be verified.", property.Location);
+            }
         }
     }
 }

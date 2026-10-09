@@ -11,7 +11,7 @@ event <Name> [generation <N>]
   [documentation <fenced markdown>]
   [id "<old-name>"]             // only after renaming a persisted event
   [tag <value>]*
-  <property> <Type>
+  <property> <Type> [subject]
   ...
 ```
 
@@ -85,6 +85,32 @@ Property-shaped lines remain properties: `id String`, `description String`, and 
 | --- | --- | --- |
 | Collection | `<Type>[]` | `lines InvoiceLine[]` |
 | Optional | `<Type> optional` | `note String optional` |
+
+## Data subject
+
+An event has one data subject, defaulting to its event source. When it records data about someone else, mark the property identifying that person with trailing `subject`:
+
+```screenplay
+concept CustomerId : Uuid
+module Billing
+  feature Contact
+    slice StateChange ChangeContact
+      event CustomerContactChanged
+        customerId CustomerId subject
+        note String
+```
+
+The modifier is last, after any other property modifiers; in an inline event it precedes the mapping `=`. A property named `subject` or of type `subject` remains a property, not a modifier. Each event generation chooses its mark independently. Two marks are errors on each extra property, naming the first; choosing the subject has no automatic repair. The compiler cannot detect subtler mixing of several people's data and must not guess the subject.
+
+Allowed targets are required scalar `String`, `Uuid`, concepts over either, and `Int`-backed concepts, matching the stream-id type set. Bare `Int`, enums, collections, composite types, optional values, `Decimal`, `Bool`, `Date` and `DateTime` (including concepts over them) are refused. Concepts marked `pii` or `secret`, including their aliases and legacy spellings, cannot be subjects: `EventContext.Subject` is stored in plaintext. Use a surrogate identity. Unavailable imported shapes remain unresolved with an unknown-type warning rather than guessed.
+
+An empty `String` value cannot be caught at compile time and Chronicle falls back to the event source; consider `not empty` validation on the identity concept. Equal identity strings across entity kinds share one subject, so favor `Uuid` identities.
+
+**Phase 1 is report-only lineage metadata.** Binding reports `PLAY0270`; canonical executable-model bytes and revision are identical to the unmarked model. No C# `[Subject]` provider output, projection lineage propagation, erasure, export or redaction is promised. Executable admission is a separate phase. The event context's existing `$eventContext.subject` means the event source unless a subject was supplied; this phase does not change its runtime value. `pii` and `secret` concepts still refuse executable binding with `PLAY0268`.
+
+`subject` is refused on commands, composite types, operation inputs and response fields (decision 0008). Read model marks are **not yet supported**; support and Chronicle's reserved `_subject`, `__subject` and `__subjects` names are tracked in [#559](https://github.com/Cratis/Screenplay/issues/559). `secret scope subject` selects encryption scope; policy `matches subject` means the thing acted on, not the caller (`$context.causedBy.subject`).
+
+MCP `declaration-details` event summaries expose `subject: { "source": "eventSource" }` by default, or `{ "source": "property", "property": "customerId" }`. The properties view exposes `isSubject`; `syntax-schema` exposes the optional `PropertySyntax.isSubject` flag, omitted from structural JSON when false. Rename, move and inline extraction preserve the flag.
 
 ## Tags
 

@@ -37,6 +37,8 @@ export function validateEventSubjects(application: ApplicationSyntax, context: P
                 if (concepts.some(concept => concept.attributes.some(attribute => ['pii', 'sensitive'].includes(attribute.name))))
                     context.error(DiagnosticCodes.ProtectedSubjectType, `Subject concept '${type.name}' is pii or secret. EventContext.Subject is stored in plaintext; use a surrogate Uuid identity.`, property.location);
                 const primitive = concepts.length === 1 ? concepts[0].type : concepts.length === 0 && ['String', 'Uuid', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime'].includes(type.name) ? type.name : null;
+                if (concepts.length === 0 && primitive === null && application.imports.some(imported => imported.qualifiedName === type.name || imported.qualifiedName.split('.').at(-1) === type.name))
+                    context.warning(DiagnosticCodes.UnknownType, `Unknown type shape '${type.name}' for subject property '${property.name}'; imported subject identity rules cannot be verified.`, property.location);
                 if (concepts.some(concept => concept.type === 'Enum') || primitive !== null && !supportsStreamIdentity(type, application))
                     context.error(DiagnosticCodes.InvalidSubjectType, 'Subjects support String, Uuid and their concepts, plus Int-backed concepts; bare Int, enums, Decimal, Bool, Date and DateTime are refused.', property.location);
             }

@@ -5,6 +5,8 @@ description: Typed syntax serialization, original-document node handles, atomic 
 
 ## Authoring metadata
 
+`PropertySyntax.isSubject` is an optional Boolean, defaulting to false and omitted from structural JSON when false. On an event property it records the event's one data-subject identity; it survives typed rename, move and inline extraction. Binding reports `PLAY0270` without changing ESM bytes. Other owners and invalid target types are refused; see [Data subject](events.md#data-subject).
+
 Use nullable `description` on `SpecificationSyntax` and nullable `documentation` on `ModuleSyntax`, `FeatureSyntax`, `SliceSyntax`, `CommandSyntax`, `ReadModelSyntax` and `ReactionSyntax`. `EventSyntax` retains its existing fields. The typed AST carries the text without changing executable semantics; preserve these members during replacements. MCP `declaration-details` includes both fields in the summary for supporting kinds. See [Descriptions and documentation](slices.md#descriptions-and-documentation) for the source forms.
 
 ## Validation contracts
