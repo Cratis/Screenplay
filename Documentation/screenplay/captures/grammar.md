@@ -197,6 +197,20 @@ source webhook
   path /invoices
 ```
 
+### Events source
+
+`source events` is the one source kind with its own grammar: instead of free-form settings it takes one or more `from <Event>` lines, each naming a public event of another application. The captured item is the incoming event's content, and `$context` is its event context.
+
+```ebnf
+EventsSource = "source", "events", NL,
+               INDENT,
+                 "from", QualifiedName, NL,
+                 { "from", QualifiedName, NL },
+               DEDENT ;
+```
+
+The parser reports `PLAY0609` for an empty block, any other setting, an invalid name or a repeated event. The assembled model additionally requires an explicitly inbound Translate slice (`PLAY0608`) whose consumed events are foreign public events (`PLAY0599`, `PLAY0605`) and whose `append` events are private local events (`PLAY0601`). The form parses and prints, but no executable model version admits it yet, so semantic compilation refuses it with `PLAY0268` (#483).
+
 ### Key Directive
 
 Names the source property identifying an instance:

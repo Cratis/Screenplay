@@ -37,6 +37,14 @@ The editor recognizes [generated command values and response contracts](commands
 
 The board leaves generated values out of command request schemas and lists generated values and returns in command details. It does not create response events or emit official response types. TextMate highlighting treats ambiguous two-token `returns` lines conservatively; `returns @name` makes response intent explicit.
 
+## Public-event authoring (syntax-only)
+
+Monaco and VS Code recognize standalone `public event` declarations and `event Name from "origin"`. Origins are opaque contract metadata, not links to files. Public events retain event-body completion, and event hover includes visibility and origin. Translate slices offer `direction inbound` or `direction outbound`; other slice types do not offer direction. Invalid headers and directions use the existing compiler diagnostics (`PLAY0005`, `PLAY0018`, `PLAY0027`). TextMate highlighting keeps public-event metadata and event-body directives distinct from property-shaped names.
+
+Both editors validate public/private operational event boundaries (`PLAY0596`–`PLAY0609`) against the assembled model, including imported files and unsaved buffers. Public translations require explicit direction; outbound translations must produce exactly one local public event type. Unresolved or ambiguous references remain unclassified.
+
+This is authoring support, not transport or execution support. The board document preserves nondefault metadata without inferring delivery guarantees. The C# binder refuses these declarations with `PLAY0268`. See [events](events.md) and [imports](imports.md) for the contracts.
+
 ## Event source and stream authoring
 
 Monaco and VS Code use typed source declarations and command routes from the complete input, including current unsaved buffers. They offer exact `Source.Stream` references and proven compatible command sources for `streamId`, with nominal types preserved. Composite `streamId` blocks offer scalar-subset declaration types, unmapped route part names, compatible command paths and specification literal snippets. Hover exposes declared parts, part types and mapping sources. Contextual highlighting distinguishes the header from part names, including parts named `streamId` or `stream`. Source/stream hover describes authored identifier/key types; contextual tokens do not globally reserve property names. Navigation requires a unique physical source and stream plus authoritative placement, and points to the actual identifier in its original document. Duplicate parents, competing value-type interpretations, comments and fences do not become guessed links.

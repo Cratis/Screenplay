@@ -83,7 +83,7 @@ conditions are reported without a code until the compiler checks them too.
 | `PLAY0002` | Error | A `domain` line is not `domain <Qualified.Name>`. |
 | `PLAY0003` | Error | A document declares a domain more than once, and a document has at most one. |
 | `PLAY0004` | Error | `domain` is declared after another construct, and it names what the whole document is about. |
-| `PLAY0005` | Error | An `import` line is not `import <Qualified.Name>`. |
+| `PLAY0005` | Error | An `import` line is not `import <Qualified.Name> [from "<origin>"]`, or its origin metadata is invalid. |
 | `PLAY0006` | Warning | A line is indented with tabs, and Screenplay decides nesting from spaces. |
 
 ### Event sources and command streams
@@ -158,7 +158,7 @@ remove duplicate route headers before export.
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0018` | Error | An `event` line is not `event <Name> [generation <N>]`. |
+| `PLAY0018` | Error | An `event` line is not `[public] event <Name> [generation <N>] [from "<origin>"]`, or its visibility/origin metadata is invalid. |
 | `PLAY0019` | Error | A property of an event is marked as the identifier, and an event never carries its event source id. |
 | `PLAY0020` | Warning | A property called `tag` is read by the event body as a static tag rather than as a property. |
 | `PLAY0446` | Error | An event generation is zero, exceeds the 32-bit generation range, or uses Chronicle's reserved unspecified value (4294967295). |
@@ -175,7 +175,7 @@ remove duplicate route headers before export.
 | `PLAY0024` | Error | A line in a feature body opens with a word a feature declares nothing by. |
 | `PLAY0025` | Error | A slot declared by a layout, screen template or dialog template is not an identifier optionally followed by `contributes`. |
 | `PLAY0026` | Error | A line in a layout, screen template or dialog template body opens a block none of them declares anything by. |
-| `PLAY0027` | Error | A `slice` line is not `slice <Type> <Name>`. |
+| `PLAY0027` | Error | A `slice` line is not `slice <Type> <Name>`, or direction is malformed, repeated or declared outside Translate. Legacy directionless translations remain accepted. |
 | `PLAY0028` | Error | A slice is declared with a type the language does not have. |
 | `PLAY0029` | Warning | A line in a slice body opens with a word a slice declares nothing by. |
 
@@ -574,6 +574,52 @@ remove duplicate route headers before export.
 | `PLAY0242` | Error | A `place` line is not `place <Slot> hidden` or `place <Slot> at x,y size w,h`. |
 | `PLAY0243` | Error | A `variant` places (or hides) the same slot more than once. |
 | `PLAY0244` | Warning | A `freeform` arrangement's `variant` does not mention (place or hide) a slot another variant of the same arrangement places. |
+
+### Public event boundaries
+
+These whole-model C# checks run after file assembly and also on programmatic syntax passed to the semantic binder.
+Public metadata and explicit direction still refuse executable admission with `PLAY0268`; these checks do not enable execution.
+Unknown and ambiguous references retain `PLAY0166` and `PLAY0198`, rather than being guessed private/local.
+Private origins continue to use the existing invalid event/import declaration diagnostics.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0596` | Error | A command produces a public event. Move publication to an outbound Translate slice. |
+| `PLAY0597` | Error | A local public event is produced outside an explicitly outbound Translate slice. |
+| `PLAY0598` | Error | An outbound Translate slice produces zero or multiple distinct local public event types. Repeated productions of the same type count once. |
+| `PLAY0599` | Error | A foreign public event is consumed outside an explicitly inbound Translate slice. |
+| `PLAY0600` | Error | An outbound translation consumes a public or foreign event rather than a private local event. |
+| `PLAY0601` | Error | An inbound translation produces a public or foreign event rather than a private local event. |
+| `PLAY0602` | Error | A foreign public event is produced locally. Translate it to a private event instead. |
+| `PLAY0603` | Error | A Translate slice declares or uses public event metadata without explicit direction. Legacy translations without public metadata remain historically inbound. C# and the editors repair it when exactly one direction fits. |
+| `PLAY0604` | Error | An outbound translation contains an external-data capture instead of consuming private local events. |
+| `PLAY0605` | Error | An explicitly inbound translation consumes a private or local event instead of a foreign public event. |
+| `PLAY0606` | Error | An outbound translation produces a private event instead of its one local public event. |
+| `PLAY0607` | Error | A projection or reducer targets an event (`projection X => SomeEvent`) outside an explicitly outbound Translate slice. |
+| `PLAY0608` | Error | A capture reads `source events` outside an explicitly inbound Translate slice. |
+| `PLAY0609` | Error | A `source events` block has no `from <Event>` line, a line that is not `from <Event>`, an invalid event name or a repeated event. |
+
+The operational edges checked are seed appends, command and reaction productions (including refusal branches), capture appends,
+projection event sources and joins/removals, reducers and constraints. Projection `all` includes every declared
+contract; `every` only maps the projection's existing inputs. Specification fixtures are not operational edges.
+A projection or reducer whose `=>` target resolves to an event (and not to a declared read model) is an event-target
+projection: its target counts as an output of the slice and its `from`/`on` events as inputs, so `PLAY0598`, `PLAY0600`,
+`PLAY0602` and `PLAY0606` apply to it, and `PLAY0607` reports one outside an explicit outbound translation. Each
+`from <Event>` under `source events` counts as an input of the capture, so `PLAY0599`, `PLAY0603` and `PLAY0605` apply,
+and `PLAY0608` reports `source events` outside an explicit inbound translation. Both forms parse and print but are
+refused for execution with `PLAY0268` naming #482 (event-target projections and reducers) or #483 (`source events`): no executable model version admits them yet.
+Existing syntax restrictions remain: qualified reaction triggers do not parse, and qualified event productions
+still report `PLAY0497`. Programmatic qualified references are resolved and checked, not treated as private.
+The TypeScript compiler and both editors report the same codes (see [editor diagnostics](editor-diagnostics.md)).
+
+Repairs: only `PLAY0603` has one. It declares `direction inbound` or `direction outbound` on the slice, and is offered
+only when exactly one direction is consistent with the slice's events and constructs (C# `propose-repair` and
+`read-workspace` view `repairs` over MCP; the TypeScript quick fix in Monaco and VS Code). Every other code in this
+section has no automatic repair because each one is a contract decision for the author, not a spelling:
+`PLAY0596`, `PLAY0597`, `PLAY0602` and `PLAY0606` would change which events a slice publishes or produces;
+`PLAY0598`, `PLAY0600`, `PLAY0601` and `PLAY0605` would change which events a translation consumes or produces, or its
+direction; `PLAY0599`, `PLAY0604`, `PLAY0607` and `PLAY0608` would move a construct between slices or change its direction;
+`PLAY0609` is malformed `source events` input with no single intended correction.
 
 ### Triggers
 
