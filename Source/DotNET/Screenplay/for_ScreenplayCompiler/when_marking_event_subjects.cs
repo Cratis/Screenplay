@@ -74,6 +74,28 @@ public class when_marking_event_subjects : given.a_compiler
         result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.InvalidSubjectOwner);
     }
 
+    [Theory]
+    [InlineData("trigger T\n  customerId Uuid subject")]
+    [InlineData("trigger T\n  customerId Uuid\nmodule M\n  feature F\n    slice Automation S\n      reaction R\n        when T\n          customerId Uuid subject")]
+    void should_refuse_trigger_and_reaction_data(string source)
+    {
+        var result = _compiler.Compile(source);
+        result.Success.ShouldBeFalse();
+        result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.InvalidSubjectOwner);
+        result.Diagnostics.Single().Message.ShouldContain("not trigger or reaction data properties (decision 0008");
+    }
+
+    [Fact]
+    void should_keep_subject_as_a_trigger_property_name() => _compiler.Compile("trigger T\n  subject Uuid").Diagnostics.ShouldBeEmpty();
+
+    [Fact]
+    void should_already_refuse_subject_on_query_arguments() =>
+        _compiler.Parse(Prefix + "      query Q => String\n        by customerId Uuid subject").Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidQueryParameter).ShouldBeTrue();
+
+    [Fact]
+    void should_already_refuse_property_shapes_in_captures() =>
+        _compiler.Parse(Prefix + "      capture Import\n        customerId Uuid subject").Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnknownCaptureDirective).ShouldBeTrue();
+
     [Fact]
     void should_refuse_type_properties() => _compiler.Compile("type T\n  key String subject").Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidSubjectOwner).ShouldBeTrue();
 

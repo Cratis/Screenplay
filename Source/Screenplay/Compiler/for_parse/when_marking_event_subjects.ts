@@ -26,6 +26,19 @@ describe('when marking event subjects', () => {
         const result = parse('system Mailer\n' + prefix + '      operation Send\n        uses Mailer\n        customerId Uuid subject\n        execute');
         result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal([DiagnosticCodes.InvalidSubjectOwner]);
     });
+    it.each([
+        'trigger T\n  customerId Uuid subject',
+        'trigger T\n  customerId Uuid\nmodule M\n  feature F\n    slice Automation S\n      reaction R\n        when T\n          customerId Uuid subject',
+    ])('should refuse subject on trigger or reaction data in %s', source => {
+        const result = parse(source);
+        result.success.should.be.false;
+        result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal([DiagnosticCodes.InvalidSubjectOwner]);
+        result.diagnostics[0].message.should.contain('not trigger or reaction data properties (decision 0008');
+    });
+    it('should keep subject as a trigger property name', () => parse('trigger T\n  subject Uuid').diagnostics.should.be.empty);
+    it('should already refuse subject on query arguments', () => {
+        parse(prefix + '      query Q => String\n        by customerId Uuid subject').diagnostics.some(diagnostic => diagnostic.code === DiagnosticCodes.InvalidQueryParameter).should.be.true;
+    });
     it('should report each extra mark naming the first', () => {
         const result = parse(prefix + '      event Changed\n        customerId Uuid subject\n        personId Uuid subject\n        employeeId String subject');
         result.diagnostics.filter(diagnostic => diagnostic.code === DiagnosticCodes.DuplicateEventSubject).map(diagnostic => diagnostic.message.includes('customerId')).should.deep.equal([true, true]);

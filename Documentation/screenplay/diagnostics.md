@@ -147,7 +147,7 @@ remove duplicate route headers before export.
 | `PLAY0590` | Error | An event marks more than one data-subject property; each extra mark names the first. Choose one; no automatic repair is safe. |
 | `PLAY0591` | Error | A subject must be a required scalar String, Uuid or their concepts, or an Int-backed concept. Optional values, collections, composites, bare Int, enums, Decimal, Bool, Date and DateTime are refused. |
 | `PLAY0592` | Error | A subject concept is pii or secret; EventContext.Subject is plaintext. Use a surrogate identity. |
-| `PLAY0593` | Error | The subject modifier belongs only to event properties, not commands, types or response fields (decision 0008). |
+| `PLAY0593` | Error | The subject modifier belongs only to event properties, not commands, types, operation inputs, trigger or reaction data or response fields (decision 0008). |
 | `PLAY0594` | Error | Read model subjects are not yet supported; #559 covers the mark and Chronicle's reserved _subject, __subject and __subjects names. |
 | `PLAY0595` | Error | Subject is duplicated or out of modifier order. Write each modifier once: Type optional generated identifier subject. |
 

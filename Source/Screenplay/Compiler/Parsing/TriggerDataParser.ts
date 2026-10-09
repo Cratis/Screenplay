@@ -19,6 +19,7 @@ export function parseTriggerData(context: ParserContext, line: SourceLine): void
     const property = parseProperty(context, line);
     if (property !== undefined) {
         if (property.isGenerated) context.error(DiagnosticCodes.GeneratedPropertyOutsideCommand, 'Generated properties can only be declared on commands.', property.location);
+        if (property.isSubject) context.error(DiagnosticCodes.InvalidSubjectOwner, 'The subject modifier is only valid on event properties, not trigger or reaction data properties (decision 0008: one data subject per event).', property.location);
         context.triggerData.push(property);
         return;
     }

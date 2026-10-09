@@ -94,6 +94,7 @@ internal static partial class TriggerParser
         if (PropertyLineParser.Parse(context, line) is { } property)
         {
             if (property.IsGenerated) context.Error(DiagnosticCodes.GeneratedPropertyOutsideCommand, "Generated properties can only be declared on commands.", property.Location);
+            if (property.IsSubject) context.Error(DiagnosticCodes.InvalidSubjectOwner, "The subject modifier is only valid on event properties, not trigger or reaction data properties (decision 0008: one data subject per event).", property.Location);
             return new(property.Name, property.Type, line.Location);
         }
 

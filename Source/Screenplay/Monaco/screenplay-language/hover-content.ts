@@ -95,7 +95,7 @@ export function hoverContent(
         if (subjectPrefix && (ownerChain[0] === 'event' || /^produces\s+event\s+/.test(enclosingHeaders(source, fences, lineIndex, indentOf(line))[0] ?? ''))) {
             return '**subject** — This event property identifies its one data subject instead of the event source (decision 0008). Required scalar String, Uuid or their concepts, or an Int-backed concept; never pii or secret. Report-only lineage metadata (PLAY0270); no ESM bytes or provider output yet.';
         }
-        if (/^\s*require\s+(?:not\s+)?claim\s+"(?:[^"\\]|\\.)*"\s+matches\s+$/.test(prefix) && ownerChain.includes('policy')) return `**subject** — ${keywordDocs.subject}`;
+        if (/\bclaim\s+"(?:[^"\\]|\\.)*"\s+matches\s+$/.test(prefix) && ownerChain.includes('policy')) return `**subject** — ${keywordDocs.subject}`;
         return null;
     }
     if (word === 'optional' && (followsPropertyType || followsQueryType)) {
