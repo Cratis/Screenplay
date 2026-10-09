@@ -157,7 +157,13 @@ public class when_proposing_whole_source : given.an_authoring_connection
         Apply(opened, Result("propose-source", Arguments(opened, new { operation = "rename-document-key", documentId = id, stableKey = "sources" })));
         opened = Open();
         Page("documents", opened.GetProperty("revision").GetString()).EnumerateArray().Single(document => document.GetProperty("path").GetString() == "sources.play").GetProperty("documentId").GetString().ShouldEqual(id);
-        Apply(opened, Result("propose-source", Arguments(opened, new { operation = "remove-document", documentId = id })));
+        var removal = (Dictionary<string, object?>)Arguments(opened, new { operation = "remove-document", documentId = id });
+        var retired = Page("semantics", opened.GetProperty("revision").GetString()).EnumerateArray()
+            .Where(assignment => assignment.GetProperty("address").GetProperty("parts").EnumerateArray().Any(part => part.GetProperty("key").GetString() == "Month" || part.GetProperty("key").GetString() == "Account"))
+            .Select(assignment => assignment.GetProperty("address")).ToArray();
+        retired.Length.ShouldEqual(3);
+        removal["retiredSemanticAddresses"] = retired;
+        Apply(opened, Result("propose-source", removal));
         File.Exists(Path.Combine(RootPath, "sources.play")).ShouldBeFalse();
         File.Exists(Path.Combine(RootPath, "streams.play")).ShouldBeFalse();
     }

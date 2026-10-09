@@ -140,7 +140,7 @@ function specificationTitle(name: string): string {
 
 // Card names are plain text, not HTML. The header also carries these details because an owned
 // event's current name takes precedence over the step name on the board.
-const routeAvailability = 'Syntax-only (PLAY0268) (#457); the board displays routing intent, not an executable route assertion.';
+const routeAvailability = 'Admitted by the event routes executable model; the board displays authored routing, not a specification execution result.';
 
 function factName(event: SpecificationEventSyntax): string {
     if (!event.stream && !event.noStream) return event.eventType;

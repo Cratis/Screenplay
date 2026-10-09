@@ -24,7 +24,7 @@ export { exampleDeclarationItems } from './example-declaration-items';
 
 export const topLevelItems: CompletionEntry[] = [
     ...exampleDeclarationItems,
-    { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
+    { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams, admitted by the event routes executable model. Pin the stored name before renaming a source with stored events; Default is reserved.' },
     { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system; not admitted by any supported executable model (ESM) version yet.' },
     { label: 'import', insertText: 'import ${1:Module}.${2:Type}', documentation: 'Imports a type from another module by its qualified name.' },
     { label: 'import "…"', insertText: 'import "${1:**/*.play}"', documentation: 'Imports other `.play` files by path or glob, relative to this file\'s folder, as whole documents of the application.' },

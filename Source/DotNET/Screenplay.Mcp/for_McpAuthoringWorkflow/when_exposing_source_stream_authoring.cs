@@ -124,7 +124,11 @@ public class when_exposing_source_stream_authoring : given.an_authoring_connecti
         var replaced = Edit(opened, new { operation = "replace", target = stream.GetProperty("handle"), node = new { kind = "EventStreamSyntax", name = "Ledger", description = "Additional ledger" } });
         opened = Apply(opened, replaced).GetProperty("workspace");
         var source = Result("read-ast", new { expectedRevision = opened.GetProperty("revision").GetString(), kind = "EventSourceSyntax", name = "Additional", includeContent = true }).GetProperty("page").GetProperty("items")[0];
-        var removed = Edit(opened, new { operation = "remove", target = source.GetProperty("handle") });
+        var retired = Page("semantics", opened.GetProperty("revision").GetString()).EnumerateArray()
+            .Where(assignment => assignment.GetProperty("address").GetProperty("parts").EnumerateArray().Any(part => part.GetProperty("key").GetString() == "Additional"))
+            .Select(assignment => assignment.GetProperty("address")).ToArray();
+        retired.Length.ShouldEqual(2);
+        var removed = Edit(opened, new { operation = "remove", target = source.GetProperty("handle") }, retired);
         Apply(opened, removed).GetProperty("success").GetBoolean().ShouldBeTrue();
         File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldNotContain("Additional");
     }
@@ -153,10 +157,11 @@ public class when_exposing_source_stream_authoring : given.an_authoring_connecti
         File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldEqual(source);
     }
 
-    JsonElement Edit(JsonElement opened, object operation) => Result("propose-ast", new
+    JsonElement Edit(JsonElement opened, object operation, JsonElement[]? retiredSemanticAddresses = null) => Result("propose-ast", new
     {
         expectedRevision = opened.GetProperty("revision").GetString(), expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
-        validation = "Authoring", formatting = "CanonicalizeTouchedDocuments", operations = new[] { operation }
+        validation = "Authoring", formatting = "CanonicalizeTouchedDocuments", operations = new[] { operation },
+        retiredSemanticAddresses = retiredSemanticAddresses ?? []
     });
 
     [Fact]
