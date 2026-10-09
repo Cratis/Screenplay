@@ -1,0 +1,5 @@
+eventsource Account
+  identifier String
+  stream All
+  stream Notes
+    streamId String

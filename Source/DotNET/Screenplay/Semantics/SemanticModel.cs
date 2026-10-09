@@ -96,6 +96,11 @@ public sealed record SemanticApplication(
     /// Gets the application triggers the document declares; empty for models before ESM v6.
     /// </summary>
     public ImmutableArray<SemanticApplicationTrigger> Triggers { get; init; } = [];
+
+    /// <summary>
+    /// Gets the declared event sources, or an empty collection for models without event routes.
+    /// </summary>
+    public ImmutableArray<SemanticEventSource> EventSources { get; init; } = [];
 }
 
 /// <summary>

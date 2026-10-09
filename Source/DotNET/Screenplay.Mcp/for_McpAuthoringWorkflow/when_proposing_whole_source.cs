@@ -10,15 +10,15 @@ public class when_proposing_whole_source : given.an_authoring_connection
     const string Streams = "concept Month : Int\neventsource Account\n  stream Transactions\n    streamId Month\n";
 
     [Fact]
-    void should_create_syntax_only_source_with_authoring_validation_by_default()
+    void should_create_admitted_source_with_authoring_validation_by_default()
     {
         File.Delete(Path.Combine(RootPath, "application.play"));
         Initialize();
         var opened = Open();
         var proposal = Result("propose-source", Arguments(opened, new { operation = "create-document", path = "application.play", stableKey = "application", source = Streams }));
         proposal.GetProperty("success").GetBoolean().ShouldBeTrue();
-        proposal.GetProperty("after").GetProperty("executableReady").GetBoolean().ShouldBeFalse();
-        proposal.GetProperty("introducedExecutableErrors").GetRawText().ShouldContain("PLAY0268");
+        proposal.GetProperty("after").GetProperty("executableReady").GetBoolean().ShouldBeTrue();
+        proposal.GetProperty("introducedExecutableErrors").GetArrayLength().ShouldEqual(0);
         var review = Result("read-proposal", new { proposalId = proposal.GetProperty("proposalId").GetString(), view = "changes" });
         review.GetRawText().ShouldContain("application.play");
         File.Exists(Path.Combine(RootPath, "application.play")).ShouldBeFalse();
@@ -27,13 +27,14 @@ public class when_proposing_whole_source : given.an_authoring_connection
     }
 
     [Fact]
-    void should_refuse_syntax_only_source_under_executable_validation()
+    void should_accept_admitted_source_under_executable_validation()
     {
         Initialize();
         var opened = Open();
-        var refused = Failure(Arguments(opened, new { operation = "create-document", path = "streams.play", stableKey = "streams", source = Streams }, "Executable"));
-        refused.GetProperty("executableDiagnostics").GetRawText().ShouldContain("PLAY0268");
-        refused.TryGetProperty("proposalId", out _).ShouldBeFalse();
+        var proposal = Result("propose-source", Arguments(opened, new { operation = "create-document", path = "streams.play", stableKey = "streams", source = Streams }, "Executable"));
+        proposal.GetProperty("success").GetBoolean().ShouldBeTrue();
+        Candidate(proposal).Compilation.Success.ShouldBeTrue();
+        proposal.GetProperty("proposalId").GetString().ShouldNotBeEmpty();
     }
 
     [Fact]
@@ -110,7 +111,7 @@ public class when_proposing_whole_source : given.an_authoring_connection
         Initialize();
         var opened = Open();
         var proposal = Result("propose-source", Arguments(opened, new { operation = "create-document", path = "deposits.play", stableKey = "deposits", source = "module Banking\n  feature Deposits\n    slice StateChange Deposit\n      command Deposit\n        month Month\n        stream Account.Transactions\n          streamId = month\n" }));
-        Candidate(proposal).Compilation.Success.ShouldBeFalse();
+        Candidate(proposal).Compilation.Success.ShouldBeTrue();
         Apply(opened, proposal);
         Node("CommandStreamSyntax", Open().GetProperty("revision").GetString()).GetProperty("node").GetProperty("stream").GetString().ShouldEqual("Transactions");
     }
@@ -156,7 +157,13 @@ public class when_proposing_whole_source : given.an_authoring_connection
         Apply(opened, Result("propose-source", Arguments(opened, new { operation = "rename-document-key", documentId = id, stableKey = "sources" })));
         opened = Open();
         Page("documents", opened.GetProperty("revision").GetString()).EnumerateArray().Single(document => document.GetProperty("path").GetString() == "sources.play").GetProperty("documentId").GetString().ShouldEqual(id);
-        Apply(opened, Result("propose-source", Arguments(opened, new { operation = "remove-document", documentId = id })));
+        var removal = (Dictionary<string, object?>)Arguments(opened, new { operation = "remove-document", documentId = id });
+        var retired = Page("semantics", opened.GetProperty("revision").GetString()).EnumerateArray()
+            .Where(assignment => assignment.GetProperty("address").GetProperty("parts").EnumerateArray().Any(part => part.GetProperty("key").GetString() == "Month" || part.GetProperty("key").GetString() == "Account"))
+            .Select(assignment => assignment.GetProperty("address")).ToArray();
+        retired.Length.ShouldEqual(3);
+        removal["retiredSemanticAddresses"] = retired;
+        Apply(opened, Result("propose-source", removal));
         File.Exists(Path.Combine(RootPath, "sources.play")).ShouldBeFalse();
         File.Exists(Path.Combine(RootPath, "streams.play")).ShouldBeFalse();
     }

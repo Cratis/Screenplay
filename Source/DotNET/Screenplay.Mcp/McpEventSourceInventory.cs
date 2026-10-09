@@ -27,6 +27,8 @@ sealed class McpEventSourceInventory
 
     internal WorkspacePhysicalReadView View { get; }
 
+    McpAuthoringReadiness Readiness => McpWorkspaceAnalysis.For(_workspace).Source.Index.Readiness;
+
     internal string? Key(WorkspaceSyntaxEntry entry) => View.HasResolvedPlacement(entry) && Name(entry).Length > 0 ? JsonSerializer.Serialize(new
     {
         application = _workspace.IdentityCatalog.Application.ToString(), kind = Kind(entry), scope = Scope(entry), name = Name(entry)
@@ -40,7 +42,7 @@ sealed class McpEventSourceInventory
 
     internal object Summary(WorkspaceSyntaxEntry entry) => new
     {
-        authoringKey = Key(entry), keyKind = "logical-authoring-only", kind = Kind(entry), name = Name(entry), scope = Scope(entry),
+        authoringKey = Key(entry), keyKind = "logical-authoring-only", semanticId = SemanticIdentity(entry), kind = Kind(entry), name = Name(entry), scope = Scope(entry),
         handle = McpAstHandles.Describe(entry.Handle), entry.Location, ownership = Ownership(entry), confidenceReasons = Confidence(entry).Reasons,
         placementResolved = View.HasResolvedPlacement(entry), inventoryComplete = View.IsComplete, readOnly = true,
         identifier = (entry.Node as EventSourceSyntax)?.Identifier, streamId = (entry.Node as EventStreamSyntax)?.StreamId,
@@ -48,7 +50,7 @@ sealed class McpEventSourceInventory
         id = Inline(Pin(entry)),
         description = Inline(Description(entry)),
         metadata = Metadata(entry),
-        syntaxOnly = true, executionAvailable = false, executionReadiness = "Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302). Pins are rename-only authored metadata, not semantic identities."
+        syntaxOnly = Readiness.SyntaxOnly(entry.Node), executionAvailable = _workspace.Compilation.Success, executionReadiness = Readiness.ExecutionReadiness(entry.Node)
     };
 
     internal IEnumerable<object> Details(WorkspaceSyntaxEntry entry)
@@ -78,7 +80,7 @@ sealed class McpEventSourceInventory
                 kind = "command-route", command = command.Name, scope = Scope(entry), handle = McpAstHandles.Describe(entry.Handle),
                 authoredRoute = command.Stream, ambiguousStreamCandidates = command.StreamCandidates,
                 placementResolved = View.HasResolvedPlacement(entry), inventoryComplete = View.IsComplete,
-                syntaxOnly = true, executionAvailable = false, executionReadiness = "Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302). Authored routing does not infer identity destinations."
+                syntaxOnly = Readiness.SyntaxOnly(command), executionAvailable = _workspace.Compilation.Success, executionReadiness = Readiness.ExecutionReadiness(command)
             };
         }
     }
@@ -98,6 +100,13 @@ sealed class McpEventSourceInventory
 
     static string Kind(WorkspaceSyntaxEntry entry) => entry.Node is EventSourceSyntax ? "EventSource" : "EventStream";
     static string Name(WorkspaceSyntaxEntry entry) => entry.Node is EventSourceSyntax source ? source.Name : ((EventStreamSyntax)entry.Node).Name;
+
+    string? SemanticIdentity(WorkspaceSyntaxEntry entry)
+    {
+        if (!View.HasResolvedPlacement(entry) || Confidence(entry).State != "unique") return null;
+
+        return _workspace.IdentityCatalog.Semantics.FirstOrDefault(assignment => assignment.Address.Equals(entry.Address))?.Id.ToString();
+    }
 
     string Ownership(WorkspaceSyntaxEntry entry)
     {

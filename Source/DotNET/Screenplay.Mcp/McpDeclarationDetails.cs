@@ -119,7 +119,7 @@ static class McpDeclarationDetails
             "dependencies" when declaration.Syntax is ModuleSyntax module => McpPaging.Page(module.DependsOn, arguments, snapshot.SourceRevision),
             "dependencies" when declaration.Syntax is FeatureSyntax feature => McpPaging.Page(feature.DependsOn, arguments, snapshot.SourceRevision),
             "streams" when declaration.Syntax is EventSourceSyntax source => McpPaging.Page(source.Streams, arguments, snapshot.SourceRevision),
-            "route" when declaration.Syntax is CommandSyntax routed => new { authoredRoute = routed.Stream, ambiguousStreamCandidates = routed.StreamCandidates, executionAvailable = false, executionReadiness = readiness.ExecutionReadiness(routed) },
+            "route" when declaration.Syntax is CommandSyntax routed => new { authoredRoute = routed.Stream, ambiguousStreamCandidates = routed.StreamCandidates, executionAvailable = snapshot.Compilation.Success && !readiness.SyntaxOnly(routed), executionReadiness = readiness.ExecutionReadiness(routed) },
             "response" when declaration.Syntax is CommandSyntax responseOwner => Response(responseOwner, readiness),
             "produces" when declaration.Syntax is CommandSyntax command => McpPaging.Page(command.Produces, arguments, snapshot.SourceRevision),
             "values" when declaration.Syntax is ConceptSyntax concept => McpPaging.Page(concept.Values, arguments, snapshot.SourceRevision),

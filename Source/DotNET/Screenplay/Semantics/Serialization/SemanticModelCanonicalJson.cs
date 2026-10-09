@@ -96,6 +96,7 @@ public static partial class SemanticModelCanonicalJson
         WriteArray(writer, "modules", application.Modules.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, module) => WriteModule(output, module, version));
         if (!application.Policies.IsDefaultOrEmpty) WriteArray(writer, "policies", application.Policies.OrderBy(_ => _.Name, StringComparer.Ordinal), WritePolicy);
         if (!application.Triggers.IsDefaultOrEmpty) WriteArray(writer, "triggers", application.Triggers.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteTrigger);
+        if (!application.EventSources.IsDefaultOrEmpty) WriteArray(writer, "eventSources", application.EventSources.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteEventSourceDeclaration);
         writer.WriteEndObject();
     }
 
@@ -288,6 +289,7 @@ public static partial class SemanticModelCanonicalJson
             writer.WritePropertyName("response");
             WriteResponse(writer, command.Response);
         }
+        if (command.Route is not null) WriteCommandRoute(writer, command.Route);
         writer.WriteEndObject();
     }
 
@@ -430,6 +432,7 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteString("eventContract", value.EventContract.ToString());
         WriteArray(writer, "values", value.Values.OrderBy(_ => _.TargetProperty.ToString(), StringComparer.Ordinal), WritePropertyValue);
         if (value.EventSource is not null) WriteEventSource(writer, value.EventSource);
+        if (value.Route is not null) WriteFixtureRoute(writer, value.Route);
         writer.WriteEndObject();
     }
 
@@ -439,6 +442,8 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteString("eventContract", value.EventContract.ToString());
         WriteArray(writer, "values", value.Values.OrderBy(_ => _.TargetProperty.ToString(), StringComparer.Ordinal), WritePropertyValue);
         if (value.EventSource is not null) WriteEventSource(writer, value.EventSource);
+        if (value.Route is not null) WriteFixtureRoute(writer, value.Route);
+        if (value.Unrouted) writer.WriteBoolean("unrouted", true);
         writer.WriteEndObject();
     }
 

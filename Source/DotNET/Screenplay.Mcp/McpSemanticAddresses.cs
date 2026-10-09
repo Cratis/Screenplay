@@ -43,7 +43,7 @@ static class McpSemanticAddresses
             throw new McpFailure("An address starts with its application identity.", -32602);
         }
 
-        if (kind is SemanticKind.Property or SemanticKind.QueryArgument)
+        if (kind is SemanticKind.Property or SemanticKind.QueryArgument or SemanticKind.EventStream)
         {
             if (parts.Length < 3 || parts[^2].Kind != SemanticAddressPartKind.OwnerKind ||
                 !Enum.TryParse<SemanticKind>(parts[^2].Key, out var ownerKind) || !Enum.IsDefined(ownerKind))
@@ -68,9 +68,12 @@ static class McpSemanticAddresses
             }
 
             var owner = Build(ownerKind, parts[..^2]);
-            return kind == SemanticKind.Property
-                ? SemanticAddress.ForProperty(owner, parts[^1].Key)
-                : SemanticAddress.ForQueryArgument(owner, parts[^1].Key);
+            return kind switch
+            {
+                SemanticKind.Property => SemanticAddress.ForProperty(owner, parts[^1].Key),
+                SemanticKind.EventStream => SemanticAddress.ForEventStream(owner, parts[^1].Key),
+                _ => SemanticAddress.ForQueryArgument(owner, parts[^1].Key)
+            };
         }
 
         var application = ApplicationIdentity.Parse(parts[0].Key);
@@ -79,12 +82,13 @@ static class McpSemanticAddresses
             return SemanticAddress.ForApplication(application);
         }
 
-        if (kind is SemanticKind.Concept or SemanticKind.CompositeType or SemanticKind.Trigger)
+        if (kind is SemanticKind.Concept or SemanticKind.CompositeType or SemanticKind.Trigger or SemanticKind.EventSource)
         {
             return kind switch
             {
                 SemanticKind.Concept => SemanticAddress.ForConcept(application, parts[^1].Key),
                 SemanticKind.CompositeType => SemanticAddress.ForCompositeType(application, parts[^1].Key),
+                SemanticKind.EventSource => SemanticAddress.ForEventSource(application, parts[^1].Key),
                 _ => SemanticAddress.ForTrigger(application, parts[^1].Key)
             };
         }

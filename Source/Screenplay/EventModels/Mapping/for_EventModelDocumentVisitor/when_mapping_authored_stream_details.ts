@@ -15,7 +15,8 @@ describe('when mapping authored stream details', () => {
         const slice = board(fixture);
         expect(slice.command?.logicDescription).toContain('Authored stream: Account.Transactions');
         expect(slice.command?.logicDescription).toContain('Stream id: month');
-        expect(slice.command?.logicDescription).toContain('not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302)');
+        expect(slice.command?.logicDescription).toContain('Admitted by ESM v8');
+        expect(slice.command?.logicDescription).not.toContain('Syntax-only');
         expect(slice.command?.logicDescription).not.toContain('PathExpressionSyntax');
         expect(slice.events.map(event => event.name)).toEqual(['Deposited']);
         expect(slice.specifications).toEqual([]);
@@ -37,6 +38,10 @@ describe('when mapping authored stream details', () => {
         expect(details).toContain('Stream id: "&lt;Monthly &amp; Annual&gt;"');
         expect(details).not.toContain('LiteralExpressionSyntax');
         expect(details).not.toContain('<Monthly');
+    });
+    it('should disclose property paths as outside executable admission', () => {
+        const nested = 'type Period\n  month Month\n' + fixture.replace('        month Month\n', '        period Period\n').replace('streamId = month', 'streamId = period.month');
+        expect(board(nested).command?.logicDescription).toContain('Property paths remain unadmitted (PLAY0268)');
     });
     it('should not turn a viable property interpretation into a selected route', () => {
         const ambiguous = 'import Account.Transactions\ntype Transactions\n  value String\n' + fixture.replace('          streamId = month\n', '');

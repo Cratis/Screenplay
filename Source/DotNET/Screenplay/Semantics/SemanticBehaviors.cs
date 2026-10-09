@@ -334,6 +334,11 @@ public sealed record SemanticCommand(
     /// </summary>
     public SemanticCommandResponse? Response { get; init; }
 
+    /// <summary>
+    /// Gets the route shared by the command's facts, or null for an unrouted command.
+    /// </summary>
+    public SemanticCommandRoute? Route { get; init; }
+
     /// <summary>Opaque whole-command code validation attachments in authored order; each yields zero or more rejection messages.</summary>
     public ImmutableArray<SemanticCodeValidation> CodeValidations { get; init; } = [];
 

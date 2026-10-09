@@ -149,8 +149,8 @@ internal sealed partial class McpWorkspaces
 
             return McpJson.ToolResult(new
             {
-                workspace = McpWorkspaceTransport.Describe(workspace), view, syntaxOnly = true,
-                executionAvailable = false, executionReadiness = "Not admitted by any supported executable model (ESM) version yet (PLAY0268) (#302).",
+                workspace = McpWorkspaceTransport.Describe(workspace), view, syntaxOnly = analysis.Source.Index.Readiness.ModelSyntaxOnly,
+                executionAvailable = workspace.Compilation.Success, executionReadiness = analysis.Source.Index.Readiness.ModelExecutionReadiness,
                 inventoryComplete = inventory.View.IsComplete,
                 authoringDiagnosticsCount = inventory.View.Diagnostics.Length,
                 authoringDiagnosticsView = "event-source-diagnostics",

@@ -18,6 +18,16 @@ public sealed record SemanticSpecificationEvent(
     /// Gets the exact typed event source asserted for this occurrence; <see langword="null"/> is retained for semantic-v1 compatibility only.
     /// </summary>
     public SemanticEventSourceIdentity? EventSource { get; init; }
+
+    /// <summary>
+    /// Gets the explicit occurrence route, or null when no route is stated.
+    /// </summary>
+    public SemanticFixtureRoute? Route { get; init; }
+
+    /// <summary>
+    /// Gets whether a then-event explicitly requires an unrouted fact.
+    /// </summary>
+    public bool Unrouted { get; init; }
 }
 
 /// <summary>
@@ -29,6 +39,11 @@ public sealed record SemanticSpecificationAppend(SemanticId EventContract, Immut
 {
     /// <summary>Gets the typed source for the occurrence, when explicitly asserted.</summary>
     public SemanticEventSourceIdentity? EventSource { get; init; }
+
+    /// <summary>
+    /// Gets the explicit route of the appended occurrence, or null for an unrouted append.
+    /// </summary>
+    public SemanticFixtureRoute? Route { get; init; }
 }
 
 /// <summary>
