@@ -12979,6 +12979,42 @@
       }
     },
     {
+      "name": "processing-record",
+      "requiredParameters": [],
+      "optionalParameters": [
+        "controllerContact",
+        "controllerName",
+        "expectedSourceRevision",
+        "limit",
+        "offset"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "controllerName": {
+            "type": "string"
+          },
+          "controllerContact": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200
+          },
+          "expectedSourceRevision": {
+            "type": "string"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "propose",
       "requiredParameters": [
         "expectedCatalogRevision",
@@ -16368,6 +16404,16 @@
       "usage": "screenplay contract [--output \u003Cpath\u003E]",
       "options": [
         "--output"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "report",
+      "usage": "screenplay report processing [\u003Cfile.play|folder\u003E] [--format json|markdown|csv] [--controller-name \u003Cname\u003E] [--controller-contact \u003Ccontact\u003E]",
+      "options": [
+        "--controller-contact",
+        "--controller-name",
+        "--format"
       ],
       "aliases": []
     },

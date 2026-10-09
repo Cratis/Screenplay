@@ -78,4 +78,22 @@ These are prompts to investigate, not a legal verdict. Ordinary compilation does
 
 MCP `declaration-details` includes direct purpose references in container summaries and purpose fields in a purpose summary. Purpose rename is not a dedicated typed refactoring; edit its declaration and references together in a revision-bound AST proposal.
 
+## Record of processing
+
+Generate a controller inventory from the model with the [installed CLI](tool.md):
+
+```bash
+screenplay report processing Samples/Invoicing --format markdown --controller-name "Example controller" --controller-contact "privacy@example.test"
+screenplay report processing Samples/Invoicing --format json
+screenplay report processing Samples/Invoicing --format csv
+```
+
+The default is Markdown. JSON has report-level `notice`, `coverage`, controller fields and `rows`. CSV is a regular quoted table with one data row per purpose; collection-valued cells are JSON, and controller fields and the exact notice repeat in each data row. Markdown places the notice above the table. An unused purpose still has a row with empty derived categories and slice coverage; zero purposes means zero rows, not a compliance verdict.
+
+Each row includes declared descriptions, basis/reference, legitimate interest, condition/reference, authorization, subject categories, recipients, transfers/safeguards, retention and erasure exception. Derived columns contain reachable personal-data concept names, special categories, criminal-data presence, marker-declared security mappings and qualified covered slice addresses. Imports, opaque code and runtime protection are not inferred.
+
+Special-category or criminal data prompts you to assess DPIA requirements. Art. 35(3)(b) concerns large-scale processing; the model does not declare scale. An erasure exception combined with reachable `pii` produces a finding: Chronicle's per-subject crypto-shredding also destroys data kept for that purpose. The report does not choose a retention strategy or implement a legal hold.
+
+MCP `processing-record` returns the same facts as revision-bound, count/byte-bounded row pages. Supply optional `controllerName` and `controllerContact`; they are not inferred from the domain or module name. Continue with `offset` and `expectedSourceRevision` from the first response, repeating controller inputs if needed. Invalid source prevents report generation; executable binding is not required. See [MCP reference](mcp/reference.md).
+
 Move purpose, basis and retention prose out of concept reasons by hand. Repairs never guess legal content. Concept reasons keep only why a value identifies a person or is an operational secret. See [Concepts](concepts.md) and [decision 0041](https://github.com/Cratis/Screenplay/blob/main/decisions/0041-personal-data-secrets-and-processing-purposes.md).
