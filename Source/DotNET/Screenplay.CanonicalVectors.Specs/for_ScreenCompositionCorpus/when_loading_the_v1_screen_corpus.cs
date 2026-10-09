@@ -29,9 +29,9 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact] void should_parse_every_source_document_without_authoring_diagnostics() => _corpus.SourceForms.SelectMany(form => form.Documents).All(document => Parse(document.Text).Success).ShouldBeTrue();
     [Fact] void should_pin_the_screen_behavior_probes() => _corpus.BehaviorProbes.Select(probe => probe.Name).ShouldEqual("master-detail-selection", "query-rebind", "auto-manual-command-forms", "recursive-nested-hierarchy", "toolbar-dialog-url-surfaces", "package-icon-style-contract");
     [Fact] void should_publish_the_positive_typed_source_case() => _corpus.TypedSourceCases.Select(sourceCase => sourceCase.Name).ShouldEqual("screen-release-ui-positive");
-    [Fact] void should_publish_real_behavior_expectations() => _corpus.BehaviorExpectations.Select(expectation => expectation.Name).ShouldEqual("selection-details", "query-rebind-clear", "native-form-validation-submit", "dialog-outlet-deep-link", "package-rendering", "protected-business-semantics");
-    [Fact] void should_publish_mcp_edit_invariants() => _corpus.McpEditExpectations.Select(expectation => expectation.Name).ShouldEqual("mcp-edit-component-binding", "mcp-edit-dialog-action");
-    [Fact] void should_publish_harness_entry_points() => _corpus.Harnesses.Select(harness => harness.Name).ShouldEqual("browser-runtime", "mcp-authoring", "cli-stage-parity", "studio-roundtrip");
+    [Fact] void should_publish_real_behavior_expectations() => _corpus.BehaviorExpectations.Select(expectation => expectation.Name).ShouldEqual("selection-details", "query-rebind-clear", "native-form-validation-submit", "dialog-outlet-deep-link", "package-rendering", "browser-control-behavior", "protected-business-semantics");
+    [Fact] void should_publish_mcp_edit_invariants() => _corpus.McpEditExpectations.Select(expectation => expectation.Name).ShouldEqual("mcp-edit-component-binding", "mcp-edit-dialog-action", "mcp-folder-master-detail-edit", "mcp-folder-dialog-routing-edit");
+    [Fact] void should_publish_harness_entry_points() => _corpus.Harnesses.Select(harness => harness.Name).ShouldEqual("browser-runtime", "mcp-authoring", "mcp-folder-authoring", "cli-stage-parity", "studio-roundtrip");
     [Fact] void should_publish_pending_stage_plan_assertions_without_claiming_artifact_bytes() => _corpus.StagePlans.Single().PendingReason.ShouldNotBeNull();
 
     [Fact]
@@ -80,7 +80,7 @@ public class when_loading_the_v1_screen_corpus : Specification
     {
         foreach (var expectation in _corpus.BehaviorExpectations)
         {
-            expectation.SourceCase.ShouldEqual("screen-release-ui-positive");
+            expectation.SourceCase.ShouldEqual("screen-composition/v1/source/folder");
             expectation.Assertions.ShouldNotBeEmpty();
         }
     }
@@ -90,7 +90,7 @@ public class when_loading_the_v1_screen_corpus : Specification
     {
         foreach (var expectation in _corpus.McpEditExpectations)
         {
-            expectation.SourceCase.ShouldEqual("screen-release-ui-positive");
+            ((string[])["screen-release-ui-positive", "screen-composition/v1/source/folder"]).ShouldContain(expectation.SourceCase);
             expectation.Assertions.ShouldNotBeEmpty();
         }
     }
@@ -107,6 +107,32 @@ public class when_loading_the_v1_screen_corpus : Specification
     }
 
     [Fact]
+    void should_pin_folder_master_detail_query_and_native_form_assertions()
+    {
+        ShouldHaveBehaviorAssertions("selection-details", "source.form", "screens.WorkItemList.template", "screens.WorkItemList.list.query", "screens.WorkItemList.list.rowClick", "queries.GetWorkItem.arguments.workItemId", "outlets.details.screen");
+        ShouldHaveBehaviorAssertions("query-rebind-clear", "source.form", "queries.GetWorkItem.staleArguments", "queries.CommentsForWorkItem.calls", "sections.emptyState.title");
+        ShouldHaveBehaviorAssertions("native-form-validation-submit", "source.form", "forms.CreateWorkItemForm.command", "forms.CreateWorkItemForm.fields", "forms.CreateWorkItemForm.submitNavigation", "commands.CreateWorkItem.arguments.title");
+    }
+
+    [Fact]
+    void should_pin_folder_navigation_dialog_package_and_browser_control_assertions()
+    {
+        ShouldHaveBehaviorAssertions("dialog-outlet-deep-link", "source.form", "dialogs.EditDialog.slots", "forms.RenameWorkItemForm.populateFrom", "screens.CommentThread.dialog", "dialogs.EditDialog.onResult", "routes.parameters.workItemId");
+        ShouldHaveBehaviorAssertions("package-rendering", "source.form", "uiProfiles.Desktop.platform", "uiProfiles.Desktop.layout", "uiProfiles.Desktop.packages", "layouts.AppShell.slots", "layouts.MasterDetail.slots", "icons.authored.count", "fallbacks.placeholderComponents");
+        ShouldHaveBehaviorAssertions("browser-control-behavior", "source.form", "navigation.Navigation.items", "controls.table.rowActivation.keyboard", "controls.dialog.escapeCloses", "controls.focus.afterDialogClose", "browser.history.back", "browser.history.forward");
+    }
+
+    [Fact]
+    void should_pin_folder_mcp_and_harness_assertions()
+    {
+        ShouldHaveMcpAssertions("mcp-folder-master-detail-edit", "source.form", "documents.stableKeys.count", "imports.reachableFromRoot", "screens.WorkItemDetails.template", "queries.GetWorkItem.binding");
+        ShouldHaveMcpAssertions("mcp-folder-dialog-routing-edit", "source.form", "target.dialog", "target.with.workItemId", "target.onResult", "source.roundTrips");
+        ShouldHaveHarnessAssertions("browser-runtime", "source.form", "behaviors.selection-details", "behaviors.browser-control-behavior");
+        ShouldHaveHarnessAssertions("mcp-folder-authoring", "source.form", "mcp.mcp-folder-master-detail-edit", "mcp.mcp-folder-dialog-routing-edit");
+        ShouldHaveHarnessAssertions("studio-roundtrip", "source.form", "designer.masterDetailPreserved", "designer.dialogRoutingPreserved", "designer.packageProfilePreserved");
+    }
+
+    [Fact]
     void should_mark_only_browser_cli_and_studio_harnesses_pending_on_external_releases()
     {
         _corpus.Harnesses.Single(harness => harness.Name == "mcp-authoring").PendingReason.ShouldBeNull();
@@ -119,8 +145,20 @@ public class when_loading_the_v1_screen_corpus : Specification
         var plan = _corpus.StagePlans.Single();
         plan.PlanDigest.StartsWith("pending:", StringComparison.Ordinal).ShouldBeTrue();
         plan.Artifacts.ShouldBeEmpty();
+        plan.ObservedRefusalCodes.ShouldEqual("PLAY0025", "PLAY0103", "PLAY0207", "PLAY0210", "PLAY0029", "PLAY0268");
+        plan.Assertions.Select(assertion => assertion.Path).ShouldContain("source.form");
         plan.Assertions.Select(assertion => assertion.Path).ShouldContain("plan.nativeForms");
+        plan.Assertions.Select(assertion => assertion.Path).ShouldContain("plan.dialogs");
         plan.Assertions.Select(assertion => assertion.Path).ShouldContain("plan.packageFallbacks");
+    }
+
+    [Fact]
+    void should_record_the_released_toolchain_refusals_in_the_pending_reason()
+    {
+        var plan = _corpus.StagePlans.Single();
+        plan.PendingReason!.ShouldContain("CLI 3.39.0");
+        plan.PendingReason.ShouldContain("4.43.0");
+        plan.PendingReason.ShouldContain("zero artifacts");
     }
 
     [Fact]
@@ -154,6 +192,33 @@ public class when_loading_the_v1_screen_corpus : Specification
         listSlice.Screens.Single().Directives.OfType<ScreenComponentSyntax>().Single().Properties.Single(property => property.Property == "selectedItem").Binding!.NullBehavior.ShouldEqual(UiBindingNullBehavior.Clear);
         detailSlice.Screens.Single().Directives.OfType<ScreenComponentSyntax>().Single().Outlets.Single().Name.ShouldEqual("actions");
         dialogSlice.Screens.Single().Directives.OfType<ScreenTemplateReferenceSyntax>().Single().Name.ShouldEqual("EditWorkItemDialog");
+    }
+
+    void ShouldHaveBehaviorAssertions(string expectationName, params string[] paths)
+    {
+        var assertionPaths = _corpus.BehaviorExpectations.Single(expectation => expectation.Name == expectationName).Assertions.Select(assertion => assertion.Path);
+        foreach (var path in paths)
+        {
+            assertionPaths.ShouldContain(path);
+        }
+    }
+
+    void ShouldHaveMcpAssertions(string expectationName, params string[] paths)
+    {
+        var assertionPaths = _corpus.McpEditExpectations.Single(expectation => expectation.Name == expectationName).Assertions.Select(assertion => assertion.Path);
+        foreach (var path in paths)
+        {
+            assertionPaths.ShouldContain(path);
+        }
+    }
+
+    void ShouldHaveHarnessAssertions(string harnessName, params string[] paths)
+    {
+        var assertionPaths = _corpus.Harnesses.Single(harness => harness.Name == harnessName).Assertions.Select(assertion => assertion.Path);
+        foreach (var path in paths)
+        {
+            assertionPaths.ShouldContain(path);
+        }
     }
 
     static IEnumerable<Diagnostic> CompileForExecutableModel(CanonicalCorpusSourceForm form)

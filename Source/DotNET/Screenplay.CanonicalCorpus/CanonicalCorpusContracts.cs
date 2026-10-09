@@ -412,6 +412,82 @@ public sealed record CanonicalStagePlanExpectation
     /// Gets machine-checkable plan assertions that do not depend on final artifact bytes.
     /// </summary>
     public ImmutableArray<CanonicalScreenAssertion> Assertions { get; init; } = [];
+
+    /// <summary>
+    /// Gets diagnostic codes a released toolchain produced when planning this corpus, recording why the plan is pending.
+    /// </summary>
+    public ImmutableArray<string> ObservedRefusalCodes { get; init; } = [];
+}
+
+/// <summary>
+/// Represents an executed Stage render of one canonical corpus source form on an exact released toolchain vector.
+/// </summary>
+public sealed record CanonicalStageExecutionVector
+{
+    /// <summary>
+    /// Gets the stable execution vector name.
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
+    /// Gets the application name used for the render.
+    /// </summary>
+    public required string ApplicationName { get; init; }
+
+    /// <summary>
+    /// Gets the renderer target name.
+    /// </summary>
+    public required string Target { get; init; }
+
+    /// <summary>
+    /// Gets the released target version reported by the renderer.
+    /// </summary>
+    public required string TargetVersion { get; init; }
+
+    /// <summary>
+    /// Gets the released renderer implementation name.
+    /// </summary>
+    public required string Renderer { get; init; }
+
+    /// <summary>
+    /// Gets the released renderer version.
+    /// </summary>
+    public required string RendererVersion { get; init; }
+
+    /// <summary>
+    /// Gets the exact semantic revision the render was planned from; must equal the corpus's pinned revision.
+    /// </summary>
+    public required string SemanticRevision { get; init; }
+
+    /// <summary>
+    /// Gets the exact released toolchain versions the render ran on.
+    /// </summary>
+    public required string VersionVector { get; init; }
+
+    /// <summary>
+    /// Gets the pinned <c>.cratis-render.json</c> manifest produced by the render.
+    /// </summary>
+    public required CanonicalCorpusDocument Manifest { get; init; }
+
+    /// <summary>
+    /// Gets the pinned <c>scene.json</c> plan produced by the render.
+    /// </summary>
+    public required CanonicalCorpusDocument ScenePlan { get; init; }
+
+    /// <summary>
+    /// Gets the pinned generated typed-binding module produced by the render.
+    /// </summary>
+    public required CanonicalCorpusDocument Bindings { get; init; }
+
+    /// <summary>
+    /// Gets the ordered artifact expectations captured from the render manifest.
+    /// </summary>
+    public ImmutableArray<CanonicalStageArtifactExpectation> Artifacts { get; init; } = [];
+
+    /// <summary>
+    /// Gets machine-checkable assertions the executed plan must satisfy.
+    /// </summary>
+    public ImmutableArray<CanonicalScreenAssertion> Assertions { get; init; } = [];
 }
 
 /// <summary>
