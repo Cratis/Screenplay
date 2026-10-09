@@ -113,7 +113,7 @@ Generic source details, dependency resolution and editor navigation share physic
 
 Generic `EventSource`/`EventStream` declaration queries and dependencies include source identifier/stream-id type references and separate `commandEventSource`/`commandStream` links. Stream references accept exactly `Source.Stream`, not arbitrary suffixes. Combined type/declaration collisions remain blocking and are not navigated confidently.
 
-For edits, read the actual `read-ast` handles and `syntax-schema` kinds, then use Authoring Add/Replace/Remove with preview and explicit apply. The member paths and candidate-selection rules are in [AST authoring](../ast-authoring.md#source-and-stream-edits-syntax-only). Use `propose-rename` for source and stream renames with bound command and specification route repair. Catalog identities are enrolled and migrate atomically with source/stream renames; automatic routing quick fixes remain unavailable. Property-path routes and handler commands still refuse with `PLAY0268`. Executable validation requires every construct in the workspace to bind.
+For edits, read the actual `read-ast` handles and `syntax-schema` kinds, then use Authoring Add/Replace/Remove with preview and explicit apply. The member paths and candidate-selection rules are in [AST authoring](../ast-authoring.md#source-and-stream-edits). Use `propose-rename` for source and stream renames with bound command and specification route repair. Catalog identities are enrolled and migrate atomically with source/stream renames; automatic routing quick fixes remain unavailable. Property-path routes and handler commands still refuse with `PLAY0268`. Executable validation requires every construct in the workspace to bind.
 
 ## Operation and system intent
 
