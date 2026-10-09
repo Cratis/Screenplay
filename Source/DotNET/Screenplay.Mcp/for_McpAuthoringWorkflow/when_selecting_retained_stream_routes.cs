@@ -62,12 +62,18 @@ public class when_selecting_retained_stream_routes : given.an_authoring_connecti
         var candidate = Candidate(proposal);
         candidate.IdentityCatalog.Application.ShouldEqual(before.IdentityCatalog.Application);
         candidate.Documents.Single().Id.ShouldEqual(before.Documents.Single().Id);
-        candidate.IdentityCatalog.Semantics.ShouldEqual(before.IdentityCatalog.Semantics);
+        foreach (var assignment in before.IdentityCatalog.Semantics)
+        {
+            candidate.IdentityCatalog.ResolveSemantic(assignment.Address).ShouldEqual(assignment.Id);
+        }
+        candidate.IdentityCatalog.Semantics.ShouldNotBeEmpty();
         candidate.IdentityCatalog.EventContracts.ShouldEqual(before.IdentityCatalog.EventContracts);
         candidate.Documents.Single().Text.ShouldContain("StoredAccount");
         candidate.Documents.Single().Text.ShouldContain("StoredTransactions");
-        candidate.Compilation.Success.ShouldBeFalse();
-        candidate.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268").ShouldBeTrue();
+        candidate.Compilation.Success.ShouldBeTrue();
+        var source = candidate.Compilation.Value!.Model.Application.EventSources.Single();
+        source.SourceKind.ShouldEqual("StoredAccount");
+        source.Streams.Single(stream => stream.Name == "Transactions").StreamKind.ShouldEqual("StoredTransactions");
         var stale = Call("apply", new
         {
             expectedRevision = candidate.Revision.ToString(), expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),

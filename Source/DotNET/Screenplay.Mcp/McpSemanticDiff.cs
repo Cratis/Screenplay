@@ -90,7 +90,7 @@ static class McpSemanticDiff
             foreach (var member in left.Keys.Union(right.Keys).Where(member => left.GetValueOrDefault(member) != right.GetValueOrDefault(member)).Order(StringComparer.Ordinal))
             {
                 var outcome = address.Kind == SemanticKind.Specification && member.StartsWith("then", StringComparison.Ordinal);
-                Add(new(outcome ? "specifications" : "members", MemberChange(member, left.GetValueOrDefault(member), right.GetValueOrDefault(member), outcome), id, kind, previous, next, member, BeforeHash: Hash(left.GetValueOrDefault(member)), AfterHash: Hash(right.GetValueOrDefault(member))));
+                Add(new(outcome ? "specifications" : "members", MemberChange(member, left.GetValueOrDefault(member), right.GetValueOrDefault(member), outcome), id, kind, previous, next, member, BeforeHash: Hash(left.GetValueOrDefault(member)), AfterHash: Hash(right.GetValueOrDefault(member)), ContractBreaking: (member == "streamId" || member == "streamIdParts") && StreamSchemaChanged(oldNodes, newNodes) ? true : null));
             }
         }
 
@@ -119,7 +119,7 @@ static class McpSemanticDiff
             foreach (var member in left.Keys.Union(right.Keys).Where(member => left.GetValueOrDefault(member) != right.GetValueOrDefault(member)).Order(StringComparer.Ordinal))
             {
                 var outcome = kind == "Specification" && member.StartsWith("then", StringComparison.Ordinal);
-                changes.Add(new(outcome ? "specifications" : "members", MemberChange(member, left.GetValueOrDefault(member), right.GetValueOrDefault(member), outcome), null, kind, previous, next, member, BeforeHash: Hash(left.GetValueOrDefault(member)), AfterHash: Hash(right.GetValueOrDefault(member))));
+                changes.Add(new(outcome ? "specifications" : "members", MemberChange(member, left.GetValueOrDefault(member), right.GetValueOrDefault(member), outcome), null, kind, previous, next, member, BeforeHash: Hash(left.GetValueOrDefault(member)), AfterHash: Hash(right.GetValueOrDefault(member)), ContractBreaking: (member == "streamId" || member == "streamIdParts") && StreamSchemaChanged(old?.Select(value => value.Syntax) ?? [], current?.Select(value => value.Syntax) ?? []) ? true : null));
             }
             if (changes.Count > start) changes.AddRange(before.AuthoringDependants(key, "before").Concat(after.AuthoringDependants(key, "after")));
         }
@@ -217,6 +217,32 @@ static class McpSemanticDiff
         .Where(property => !_ignoredMembers.Contains(property.Name, StringComparer.Ordinal) && (!(node is ApplicationSyntax or ModuleSyntax or FeatureSyntax or SliceSyntax) || !_hierarchyChildren.Contains(property.Name, StringComparer.Ordinal)))
         .Select(property => new KeyValuePair<string, string>(node is EventSyntax @event ? $"generation:{@event.Generation}/{property.Name}" : property.Name, Normalize(property.Value))))
         .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
+
+    static bool StreamSchemaChanged(IEnumerable<SyntaxNode> before, IEnumerable<SyntaxNode> after)
+    {
+        var previous = before.OfType<EventStreamSyntax>().ToArray();
+        var current = after.OfType<EventStreamSyntax>().ToArray();
+        if (previous.Length != 1 || current.Length != 1) return false;
+        static string Schema(EventStreamSyntax stream)
+        {
+            if (stream.StreamId is { } scalar) return $"scalar:{SyntaxJson.Serialize(scalar).GetRawText()}";
+
+            return stream.StreamIdParts.Any()
+                ? $"composite:{string.Join('|', stream.StreamIdParts.Select(part => SyntaxJson.Serialize(part.Type).GetRawText()))}"
+                : "unkeyed";
+        }
+
+        if (Schema(previous[0]) != Schema(current[0])) return true;
+        var previousParts = previous[0].StreamIdParts.ToArray();
+        var currentParts = current[0].StreamIdParts.ToArray();
+        for (var index = 0; index < previousParts.Length; index++)
+        {
+            var position = Array.FindIndex(currentParts, part => part.Name == previousParts[index].Name);
+            if (position >= 0 && position != index) return true;
+        }
+
+        return false;
+    }
 
     static string MemberChange(string member, string? before, string? after, bool outcome)
     {

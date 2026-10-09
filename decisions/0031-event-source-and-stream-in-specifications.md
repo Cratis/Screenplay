@@ -235,3 +235,7 @@ The decider delegated this verdict to the orchestrating agent on 2026-10-07; the
 4. **How is `for` typed?** By the named source's identifier, refused only when the command under test contradicts it: routing belongs to occurrences, not event types.
 5. **Composite stream ids?** Deferred to #462 with its own decision; #457 delivers scalar ids, and specifications will mirror #462's route parts with literals: routes cannot compose ids yet, and opaque text ids stay valid.
 6. **Which ESM version?** #407's if both meet the admission evidence together, otherwise the next claimed one, no number now: consumers bump once when possible and #407 is never delayed.
+
+## Status notes
+
+**2026-10-09.** The executable half of this decision joined claimed ESM v8 under [0036](0036-admit-event-sources-streams-and-command-routes.md).

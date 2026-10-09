@@ -1,0 +1,11 @@
+eventsource Account
+  identifier Uuid
+  stream All
+module M
+  feature F
+    slice StateChange S
+      command C
+        id String identifier
+        stream Account.All
+        produces event E
+          value String = "payload"

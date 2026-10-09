@@ -34,7 +34,7 @@ Authoring metadata follows this rule: `SpecificationSyntax.Description` and the 
 
 ## Composite stream id members
 
-`EventStreamIdPartSyntax(Name, Type, Location)` is additive. `EventStreamSyntax.StreamIdParts` contains declarations in identity-bearing declaration order. `CommandStreamSyntax.StreamIdParts` and `SpecificationStreamSyntax.StreamIdParts` contain `PropertyMappingSyntax` in authored mapping order. These init-only collections default to empty, including old JSON omissions; existing positional constructors and scalar members are unchanged. A nonempty parts list is mutually exclusive with `StreamId`. Part names are not workspace references; part types are ordinary type references. The walker visits parts, their types and route mappings. Binding remains refused with `PLAY0268`; no ESM bytes change.
+`EventStreamIdPartSyntax(Name, Type, Location)` is additive. `EventStreamSyntax.StreamIdParts` contains declarations in identity-bearing declaration order. `CommandStreamSyntax.StreamIdParts` and `SpecificationStreamSyntax.StreamIdParts` contain `PropertyMappingSyntax` in authored mapping order. These init-only collections default to empty, including old JSON omissions; existing positional constructors and scalar members are unchanged. A nonempty parts list is mutually exclusive with `StreamId`. Part names are not workspace references; part types are ordinary type references. The walker visits parts, their types and route mappings. Composite stream ids are admitted by ESM v8. Models using them select that version; models without sources or routes retain their existing ESM version and bytes.
 
 ## What is not guaranteed
 

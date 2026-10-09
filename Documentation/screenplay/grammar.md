@@ -2,7 +2,7 @@
 
 > Systems, operations, operation phases and their specification forms below are syntax-only authoring. These constructs are not admitted by any supported executable model (ESM) version yet (`PLAY0268`); see [Operations and external systems](operations.md). A phase source or wrapper is not an admitted executable implementation role.
 
-> [Event sources, source-owned streams and command stream routes](event-sources.md) are authoring-only. These constructs are not admitted by any supported executable model (ESM) version yet; binding reports `PLAY0268`. Per-event overrides, observer filters, new concurrency flags, occurrence time and constraint scopes are not part of this increment.
+> [Event sources, source-owned streams and command stream routes](event-sources.md), specification routes and composite stream ids are admitted by executable semantic model (ESM) v8. Command mappings may read direct, required, non-collection, non-generated inputs or literals; property paths and handler routes remain refused with `PLAY0268`. Per-event overrides, observer filters, new concurrency flags, occurrence time and constraint scopes are not part of this increment.
 
 The Screenplay syntax reference in EBNF. `INDENT`/`DEDENT` represent indented bodies: parsers read lines at greater indentation until the body ends. PDL and CDL have their own [sub-grammars](sub-languages.md). The C# compiler validates the full language; the TypeScript compiler models a subset and recognizes the remaining shipped constructs as opaque bodies.
 
@@ -78,7 +78,7 @@ SystemDecl     = "system", Ident, NL,
    these constructs are not admitted by any supported ESM version yet. *)
 
 (* -------------------------------------------------------------- *)
-(* Event sources and streams — syntax-only                         *)
+(* Event sources and streams — ESM v8                              *)
 (* -------------------------------------------------------------- *)
 
 EventSourceDecl = "eventsource", Ident, NL,
@@ -100,9 +100,10 @@ StreamIdPart = Ident, QualifiedName, NL ;
    stream-id types are nonoptional scalars. Known stream-id types are limited to
    text and UUID values and their nominal concepts, plus integer-backed concepts;
    bare Int is rejected and unavailable imported shapes remain unresolved.
-   No formatter is executed. Description, rename-only id and identifier/streamId
-   directives appear at most once per declaration.
-   Pins retain old stored names only, not semantic ids. *)
+   The shared formatter checks route literals and encodes executed routes.
+   Description, id and identifier/streamId directives appear at most once per
+   declaration. Pins retain stored names; catalog addresses supply semantic ids.
+   Description is report-only metadata. *)
 
 (* -------------------------------------------------------------- *)
 (* Concepts                                                        *)
@@ -997,8 +998,10 @@ SpecificationNoStream = "no", "stream", NL ;
    scalar keyed streams. Composite streams instead require every declared named
    part exactly once, each a compatible concrete literal; neither form substitutes
    for the other. Empty text is refused, but whitespace is accepted.
-   Routing lines under when Command are refused. All routes are syntax-only:
-   binding reports PLAY0268 until an executable model version admits them. *)
+   Routing lines under when Command are refused. Fixture routes and no stream
+   assertions are admitted by ESM v8. Routed fixtures use
+   their source's identifier type, with an unambiguous producer-type fallback.
+   Redelivery remains refused with PLAY0268. *)
 
 SpecificationQueryDirective = "arguments", NL,
                  [ INDENT, { PropertyMapping }, DEDENT ]

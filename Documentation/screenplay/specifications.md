@@ -207,9 +207,9 @@ Examples cannot supply callers, clocks or whole scenarios, and cannot be used in
 
 Assign a property only once within each fixture or step. An inline assignment repeated in the indented body reports `PLAY0519`; a malformed example header reports `PLAY0518`. A declaration does not supply implicit defaults or change the step's matching mode. Unlike `seed`, an example declares specification data, not events to append when the application starts.
 
-## Event routes (syntax-only)
+## Event routes
 
-> Specification event routes are authoring syntax. Binding refuses `stream` and `no stream` with `PLAY0268`: they are not admitted by any supported executable model (ESM) version yet. They do not select an executable version or change reference-runner behavior today.
+Specification `stream` and `no stream` statements select executable semantic model **v8**. The reference runner places routed history and appended facts, and compares explicitly stated routes. Specifications without these statements keep their existing semantics.
 
 An event occurrence in `given`, `when append` or `then` can name a source-owned stream:
 
@@ -239,17 +239,19 @@ module Accounts
           amount = 40
 ```
 
-The example states route intent, not a passing executable scenario. `Account` declares an `identifier String`, a keyed `Transactions` stream with `streamId String`, and an unkeyed `Profile` stream. `Source.Stream` resolves by exact names against the complete compilation input; ambiguity is refused rather than guessed.
+The example seeds routed history, appends an unrouted fact and asserts that its route is absent. `Account` declares an `identifier String`, a keyed `Transactions` stream with `streamId String`, and an unkeyed `Profile` stream. `Source.Stream` resolves by exact names against the complete compilation input; ambiguity is refused rather than guessed.
 
 - Put `stream`, `for` and payload lines in any order. An occurrence takes at most one `stream` or `no stream`, once. The printer places the route after `for` and before payload.
 - A scalar keyed stream requires exactly one nested `streamId = <literal>` of its declared type. A composite stream instead requires a bare `streamId` header with every declared `<part> = <literal>` exactly once; unknown and duplicate parts are refused. Scalar and composite forms cannot substitute for each other; an unkeyed stream accepts neither. Text must be nonempty, well-formed Unicode NFC; non-NFC text and lone UTF-16 surrogates are refused, never repaired. Whitespace is accepted. Double-mode integer literals must be within ±9007199254740991; exact-mode integers have no formatter bound. These checks use the shared stream-id formatter for both scalar ids and composite parts. Text such as `"p-1:2026-10"` remains an opaque scalar id, never inferred parts.
-- Composite contradiction checks compare each part by name under the same resolved stream using its canonical scalar formatting, not authored spelling or mapping order. UUID case variants compare equal; a difference in any known canonical part proves a contradiction. Command paths and unavailable imported types defer to execution. The future executable comparison uses the same rule as the [canonical encoding contract](event-sources.md#canonical-stored-encoding).
+- Composite contradiction checks compare each part by name under the same resolved stream using its canonical scalar formatting, not authored spelling or mapping order. UUID case variants compare equal; a difference in any known canonical part proves a contradiction. Command paths and unavailable imported types defer to execution. The executable comparison uses the same rule as the [canonical encoding contract](event-sources.md#canonical-stored-encoding).
 - Routed `given` and `when append` require a concrete `for` literal of the named source's `identifier` type. A routed `then` may omit `for`. A source with no identifier needs exactly one known destination type across all event producers; otherwise declare an identifier on the source. The prebinding check conservatively refuses fallback when a reaction, capture or other producer's destination cannot be determined from syntax.
 - Routes belong to occurrences, not event types. Another producer with a different destination does not invalidate history on a source with its own identifier. An expected route or `for` type is refused only if it contradicts the command under test and that command is the event's only producer in the whole model; other producers defer the comparison.
 - `then`, redelivery locators and event examples accept `no stream`, asserting or selecting an unrouted occurrence. A `then` without either routing line leaves the route unspecified. `given` and `when append` without a route remain unrouted. `when <Command>` refuses both lines: its route belongs to the command declaration. Read-model and query steps do not take routes.
 - `stream = 5` and `streamId = 6` remain payload mappings at event level. Only the nested scalar mapping or named part block is route metadata. Source-only routes have no spelling yet.
 
-See [event sources](event-sources.md) for source and stream declarations and [diagnostics](diagnostics.md) for `PLAY0547`–`PLAY0551`. Specifications without these new lines keep their existing diagnostics and executable semantics. Renaming an event preserves its occurrence routing metadata. Renaming event-source or stream declarations is not supported yet; route references are typed in preparation for [#467](https://github.com/Cratis/Screenplay/issues/467).
+See [event sources](event-sources.md) for source and stream declarations and [diagnostics](diagnostics.md) for `PLAY0547`–`PLAY0551`. Specifications without these new lines keep their existing diagnostics and executable semantics. Renaming an event preserves its occurrence routing metadata. MCP `propose-rename` repairs command and specification routes and migrates source/stream catalog entries atomically. Pin a stored name before renaming a declaration with stored events; an unpinned rename changes the stored route classification.
+
+At ESM v8, `then events in any order` finds a one-to-one assignment between expectations and facts, so a wildcard expectation cannot steal the only fact matching an exact routed expectation. Earlier versions retain their existing greedy comparison. An explicit `no stream` requires an absent route, not a route filled with Chronicle defaults. Route comparisons do not change projections, constraint scope or query behavior.
 
 ## Rejections
 

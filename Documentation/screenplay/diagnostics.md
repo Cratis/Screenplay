@@ -88,8 +88,10 @@ conditions are reported without a code until the compiler checks them too.
 
 ### Event sources and command streams
 
-Event-source declarations and command stream routes are authoring-only. Binding any of them reports
-`PLAY0268`: these constructs are not admitted by any supported executable model (ESM) version yet.
+Event-source declarations and command stream routes are admitted by ESM v8.
+Property-path mappings and handler commands remain refused with `PLAY0268`. Binding reports `PLAY0273`
+for generated mappings, stored-name collisions (including pin-versus-name), the reserved stored source name
+`Default`, or a routed fixture whose source identifier type cannot be resolved.
 A stream reference selects a classification, never the identity destination supplied by `for`.
 Handler commands may author routes without declaring their returned events.
 
@@ -1089,7 +1091,7 @@ An ambiguous target uses `PLAY0198`, naming the equally near candidates. See [De
 | `PLAY0550` | Missing or incompatible routed source identity, or ambiguous producer fallback without a source identifier |
 | `PLAY0551` | Expected route contradicts its sole producer, the command under test |
 
-Valid [source/stream authoring](event-sources.md) is not admitted by any supported executable model (ESM) version yet; executable binding refuses it with `PLAY0268`. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
+Valid [source/stream authoring](event-sources.md) selects ESM v8. Executable mappings use direct required, non-collection, non-generated command properties or literals; property paths and handler commands still fail with `PLAY0268`. Editors and MCP preserve original source evidence; unknown imported type shapes are not guessed. There is no new routing or source-pin quick fix. Existing `PLAY0470`/`PLAY0478` repairs still refuse when executable before/after routing proof is unavailable.
 
 ### Negated claim targets
 

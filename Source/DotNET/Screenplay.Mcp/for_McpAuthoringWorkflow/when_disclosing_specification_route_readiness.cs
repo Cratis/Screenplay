@@ -22,9 +22,9 @@ public class when_disclosing_specification_route_readiness : Specification
 
     void Because() => _readiness = new(_application);
 
-    [Fact] void should_disclose_the_specification_as_syntax_only() => _readiness.SyntaxOnly(_specification).ShouldBeTrue();
-    [Fact] void should_name_the_unadmitted_route_on_the_specification() => _readiness.ExecutionReadiness(_specification).ShouldContain("specification event routes (#457)");
-    [Fact] void should_disclose_the_slice_as_syntax_only() => _readiness.SyntaxOnly(_slice).ShouldBeTrue();
-    [Fact] void should_disclose_the_model_as_syntax_only() => _readiness.ModelSyntaxOnly.ShouldBeTrue();
-    [Fact] void should_name_the_unadmitted_route_on_the_model() => _readiness.ModelExecutionReadiness.ShouldContain("specification event routes (#457)");
+    [Fact] void should_disclose_the_specification_as_admitted() => _readiness.SyntaxOnly(_specification).ShouldBeFalse();
+    [Fact] void should_have_no_unadmitted_route_on_the_specification() => _readiness.ExecutionReadiness(_specification).ShouldBeNull();
+    [Fact] void should_disclose_the_slice_as_admitted() => _readiness.SyntaxOnly(_slice).ShouldBeFalse();
+    [Fact] void should_disclose_the_model_as_admitted() => _readiness.ModelSyntaxOnly.ShouldBeFalse();
+    [Fact] void should_have_no_unadmitted_route_on_the_model() => _readiness.ModelExecutionReadiness.ShouldBeNull();
 }

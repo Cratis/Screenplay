@@ -33,7 +33,11 @@ describe('when authoring example and redelivery routes', () => {
         const lines = (prefix + parent + '\n' + indent + 'stream A.S').split('\n');
         const last = lines.at(-1)!;
         const start = last.indexOf('A.S') + 1;
-        expect(eventSourceHover(lines, lines.length - 1, start, start + 3)).toContain('Specification event routes are syntax-only');
+        const hover = eventSourceHover(lines, lines.length - 1, start, start + 3);
+        expect(hover).toContain('Specification event routes, including example routes, are admitted in executable semantic model (ESM) v8');
+        expect(hover).toContain('Redelivery remains unadmitted (PLAY0268) (#433)');
+        expect(hover).not.toContain('syntax-only');
+        expect(hover).not.toContain('#457');
     });
 
     it('should not offer routes in a command example', () => {

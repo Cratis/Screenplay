@@ -64,7 +64,8 @@ internal static class SemanticScenario
                         {
                             Context = appended.EventSource is null ? null : new(appended.EventSource),
                             Tags = plan.Events[appended.EventContract].Tags,
-                            Occurred = clock
+                            Occurred = clock,
+                            Route = plan.FormatFixtureRoute(appended.Route)
                         },
                         clock);
                     break;

@@ -1,0 +1,9 @@
+eventsource Account
+  stream Notes
+    streamId String
+module M
+  feature F
+    slice StateChange S
+      command C
+        stream Account.Notes
+          streamId = "é"

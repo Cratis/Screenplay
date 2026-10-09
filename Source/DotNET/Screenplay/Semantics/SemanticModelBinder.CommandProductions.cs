@@ -9,6 +9,9 @@ namespace Cratis.Screenplay.Semantics;
 
 public sealed partial class SemanticModelBinder
 {
+    internal const bool SpecificationRoutesJoin = true;
+    internal const bool CompositeStreamIdsJoin = true;
+
     static List<Diagnostic> CommandProductionAdmission(ApplicationSyntax syntax)
     {
         var walker = new CommandProductionAdmissionWalker();
@@ -39,18 +42,20 @@ public sealed partial class SemanticModelBinder
                     specification.DirectiveLocations.GetValueOrDefault("then no events", specification.Location)));
             }
 
-            if (node is SpecificationStreamSyntax or SpecificationNoStreamSyntax)
+            if (!SpecificationRoutesJoin && (node is SpecificationStreamSyntax or SpecificationNoStreamSyntax))
             {
                 Diagnostics.Add(Diagnostic.Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
                     "Specification event routes are not admitted by any supported executable model (ESM) version yet (#457).",
                     node.Location));
             }
-            if (node is EventSourceSyntax or EventStreamSyntax or CommandStreamSyntax)
+            if (!CompositeStreamIdsJoin && ((node is EventStreamSyntax declaration && declaration.StreamIdParts.Any()) ||
+                (node is CommandStreamSyntax route && route.StreamIdParts.Any()) ||
+                (node is SpecificationStreamSyntax fixture && fixture.StreamIdParts.Any())))
             {
                 Diagnostics.Add(Diagnostic.Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
-                    "Event sources, streams and routes are not admitted by any supported executable model (ESM) version yet (#302).",
+                    "Composite stream ids are not admitted by any supported executable model (ESM) version yet (#462).",
                     node.Location));
             }
             if (node is SystemSyntax or OperationSyntax or OperationPhaseSyntax or SpecificationOperationFailureSyntax or SpecificationOperationSyntax or SpecificationCompensatedSyntax)

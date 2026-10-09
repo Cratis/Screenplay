@@ -6,13 +6,14 @@ namespace Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow;
 public class when_examining_unused_routed_examples
 {
     [Fact]
-    void should_report_the_examples_own_route_as_unadmitted()
+    void should_report_the_examples_own_route_as_admitted()
     {
         var application = new ScreenplayCompiler().Compile("eventsource A\n  identifier String\n  stream S\nmodule M\n  feature F\n    slice StateChange S\n      event E\n      example Unused : E\n        stream A.S").Value!;
         var example = application.Modules.Single().Features.Single().Slices.Single().Examples.Single();
         var readiness = new McpAuthoringReadiness(application);
-        readiness.SyntaxOnly(example).ShouldBeTrue();
-        readiness.ExecutionReadiness(example)!.ShouldContain("PLAY0268");
-        readiness.ExecutionReadiness(example)!.ShouldContain("specification event routes (#457)");
+        readiness.SyntaxOnly(example).ShouldBeFalse();
+        readiness.ExecutionReadiness(example).ShouldBeNull();
+        readiness.ModelSyntaxOnly.ShouldBeFalse();
+        readiness.ModelExecutionReadiness.ShouldBeNull();
     }
 }

@@ -117,8 +117,8 @@ public sealed partial class SemanticModelBinder
                 .Where(_ => _ is not null)
                 .Select(_ => _!)
                 .ToImmutableArray();
-            var when = specification.When is null ? null : BindSpecificationCommand(specification.When, command!);
-            var thenEvents = specification.ThenEvents.Select(value => BindSpecificationEvent(value, commands)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
+            var when = specification.When is null ? null : BindRoutedSpecificationCommand(specification.When, command!);
+            var thenEvents = specification.ThenEvents.Select(value => BindSpecificationEvent(value, commands, expectedFact: true)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             var thenReadModels = (specification.ThenReadModels ?? [])
                 .Select(value => BindReadModelState(value.Name, value.Properties, value.Location, value.Exactly))
                 .Where(_ => _ is not null)
@@ -204,11 +204,19 @@ public sealed partial class SemanticModelBinder
         SemanticSpecificationAppend? BindSpecificationAppend(SpecificationEventSyntax value, Dictionary<string, SemanticCommand> commands)
         {
             var bound = BindSpecificationEvent(value, commands, historicalFact: false);
-            return bound is null ? null : new(bound.EventContract, bound.Values) { EventSource = bound.EventSource };
+            return bound is null ? null : new(bound.EventContract, bound.Values) { EventSource = bound.EventSource, Route = bound.Route };
         }
 
-        SemanticSpecificationEvent? BindSpecificationEvent(SpecificationEventSyntax value, Dictionary<string, SemanticCommand> commands, bool historicalFact = false)
+        SemanticSpecificationEvent? BindSpecificationEvent(SpecificationEventSyntax value, Dictionary<string, SemanticCommand> commands, bool historicalFact = false, bool expectedFact = false)
         {
+            if (value.NoStream is not null && (!expectedFact || value.Stream is not null))
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, "'no stream' is only valid on a then event and cannot accompany a route.", value.NoStream.Location);
+            }
+            if (!expectedFact && value.Stream is not null && value.For is null)
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, "A routed given or when append event requires 'for <literal>'.", value.Stream.Location);
+            }
             if (!_events.TryGetValue(ShortName(value.EventType), out var @event))
             {
                 Error(DiagnosticCodes.InvalidSemanticBinding, $"Specification event '{value.EventType}' is unresolved.", value.Location);
@@ -254,7 +262,9 @@ public sealed partial class SemanticModelBinder
                 @event.Contract.Id,
                 BindPropertyValues(value.Values, @event.Properties, "specification event"))
             {
-                EventSource = value.For is null ? null : BindEventSource(value.For, type)
+                EventSource = value.Stream is not null || value.For is null ? null : BindEventSource(value.For, type),
+                Route = BindFixtureRoute(value),
+                Unrouted = value.NoStream is not null
             };
         }
 
