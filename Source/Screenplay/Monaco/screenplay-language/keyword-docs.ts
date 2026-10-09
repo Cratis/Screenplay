@@ -198,3 +198,16 @@ export const contextVariableDocs: Record<string, string> = {
     // Every $eventContext path the event-context catalog lists, for projections.
     ...Object.fromEntries(eventContextPaths.map((path) => [`$eventContext.${path.path}`, path.description])),
 };
+
+// One-sentence descriptions of the `pii special` categories (GDPR Art. 9(1)) and `pii criminal` (Art. 10).
+// The same sentences appear in Documentation/screenplay/concepts.md.
+export const specialCategoryDocs: Record<string, string> = {
+    racialOrEthnicOrigin: 'Data revealing a person\'s racial or ethnic origin (GDPR Art. 9(1)).',
+    politicalOpinions: 'Data revealing a person\'s political opinions (GDPR Art. 9(1)).',
+    religiousOrPhilosophicalBeliefs: 'Data revealing a person\'s religious or philosophical beliefs (GDPR Art. 9(1)).',
+    tradeUnionMembership: 'Data revealing whether a person belongs to a trade union (GDPR Art. 9(1)).',
+    genetic: 'Data about inherited or acquired genetic characteristics that gives unique information about a person\'s physiology or health (GDPR Art. 9(1), Art. 4(13)).',
+    biometric: 'Data from technical processing of physical, physiological or behavioral characteristics, special only when processed to uniquely identify a person (GDPR Art. 9(1), Art. 4(14)).',
+    health: 'Data about a person\'s physical or mental health, including health care services, that reveals their health status (GDPR Art. 9(1), Art. 4(15)).',
+    sexLifeOrSexualOrientation: 'Data concerning a person\'s sex life or sexual orientation (GDPR Art. 9(1)).'
+};

@@ -87,7 +87,33 @@ concept ConvictionNote : String pii
 
 Scope has the closed values `subject`, `namespace`, `global`. Scope on `pii`, duplicate scope and unknown scope values are errors. Scope on `pii secret` warns: only `[PII]` renders, so the explicit secret scope is ignored.
 
-`pii special` records one GDPR Art. 9(1) category: `racialOrEthnicOrigin`, `politicalOpinions`, `religiousOrPhilosophicalBeliefs`, `tradeUnionMembership`, `genetic`, `biometric`, `health` or `sexLifeOrSexualOrientation`. `pii criminal` records Art. 10 criminal conviction/offense data; it may coexist with `special`. Qualifiers require the personal-data marker; more than one `special` or an unknown category is an error. The `personal` alias works on all personal-data body lines too.
+### Personal-data qualifiers
+
+A `pii` concept can carry two qualifiers that record why the value needs more care than ordinary personal data. `pii special <category>` names one category of [GDPR Art. 9(1)](https://gdpr-info.eu/art-9-gdpr/); `pii criminal` marks data covered by [Art. 10](https://gdpr-info.eu/art-10-gdpr/). The two may appear together on one concept. The official regulation text is [Regulation (EU) 2016/679 on EUR-Lex](https://eur-lex.europa.eu/eli/reg/2016/679/oj).
+
+| Keyword | GDPR category | What it covers | Example value |
+| --- | --- | --- | --- |
+| `pii special racialOrEthnicOrigin` | Art. 9(1) | Data revealing a person's racial or ethnic origin. | A self-declared ethnicity |
+| `pii special politicalOpinions` | Art. 9(1) | Data revealing a person's political opinions. | A party membership note |
+| `pii special religiousOrPhilosophicalBeliefs` | Art. 9(1) | Data revealing a person's religious or philosophical beliefs. | A religion field on a profile |
+| `pii special tradeUnionMembership` | Art. 9(1) | Data revealing whether a person belongs to a trade union. | A union membership number |
+| `pii special genetic` | Art. 9(1), [Art. 4(13)](https://gdpr-info.eu/art-4-gdpr/) | Data about inherited or acquired genetic characteristics that gives unique information about a person's physiology or health, typically from a biological sample. | A DNA test result |
+| `pii special biometric` | Art. 9(1), [Art. 4(14)](https://gdpr-info.eu/art-4-gdpr/) | Data from technical processing of a person's physical, physiological or behavioral characteristics, special only when processed to uniquely identify that person. | A fingerprint template used to sign in |
+| `pii special health` | Art. 9(1), [Art. 4(15)](https://gdpr-info.eu/art-4-gdpr/) | Data about a person's physical or mental health, including health care services, that reveals information about their health status. | A diagnosis in a medical note |
+| `pii special sexLifeOrSexualOrientation` | Art. 9(1) | Data concerning a person's sex life or sexual orientation. | A stated sexual orientation |
+| `pii criminal` | Art. 10 | Personal data relating to criminal convictions and offenses or related security measures. | A conviction record |
+
+A photograph is not biometric data by itself; a face template used to identify someone is.
+
+Declaring a qualifier records the author's statement on the concept. It does not change how the value is validated or stored. What it does:
+
+- Providers that support it render the qualifier into the C# compliance details of the concept.
+- The opt-in `--check purposes` asks for an Art. 9(2) `condition` on purposes that cover special-category data, and for an `authorization` on purposes that cover criminal data (`PLAY0603`, `PLAY0604`).
+- The record of processing flags these concepts and prompts for a data protection impact assessment, as [Art. 35(3)(b)](https://gdpr-info.eu/art-35-gdpr/) can require for large-scale processing of such data.
+
+See [Processing purposes](purposes.md) for the checks and the record, and [Diagnostics](diagnostics.md) for the codes. The qualifiers are not legal advice: they say what the author declared, not whether processing is lawful.
+
+Qualifiers require the personal-data marker; more than one `special` or an unknown category is an error (`PLAY0570`). The `personal` alias works on all personal-data body lines too.
 
 These facts remain syntax-only: binding reports `PLAY0268`, including scopes and qualifiers. They do not promise lawful processing, retention enforcement or reference execution. Provider support for newly declared details and scope must be checked separately.
 
