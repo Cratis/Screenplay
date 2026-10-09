@@ -452,17 +452,17 @@ public static class ScreenCompositionCorpus
             ReleasedVectorResults =
             [
                 ReleasedVector(
-                    "cli-stage-render-3.40.1-4.49.1",
+                    "cli-stage-render-3.40.2-4.49.2",
                     "Cratis CLI and Stage",
-                    "CLI 3.40.1 (73275160cd7b0f0d3acb9cbf8061a84a07c37da7) + Stage 4.49.1 (209a2f0edf6a03954ea925fec460a828e7c391ee, cratis/stage:4.49.1) + bundled Screenplay 4.105.0 (9f3738f6cea34fc594eed705d7bb694404f0cbbc) + Scene 4.12.0 (921720db4a9a6b20c7f45ad8820ea2858c398992) + corpus release Screenplay 4.108.0 (678d4a10b65b46a9635abd6f3fe142b0d35d9014)",
-                    "cratis render Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ScreenComposition/v1/source/folder --target cratis --destination .ai-work/stage-render-screen-r8/out --name Workspaces -y -o plain",
+                    "CLI 3.40.2 (70cd950b2b465b06cdb85d9d0045b7150018cac9) + Stage 4.49.2 (0e1ac3eceff0c8d3b0c4193f7042c64830cdbf41, cratis/stage:4.49.2) + bundled Screenplay 4.105.0 (9f3738f6cea34fc594eed705d7bb694404f0cbbc) + Scene 4.12.0 (921720db4a9a6b20c7f45ad8820ea2858c398992) + corpus release Screenplay 4.111.0 (5bedf429b052a743df08b752dfe2bf8de5e07966)",
+                    "cratis render Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ScreenComposition/v1/source/folder --target cratis --destination .ai-work/stage-render-screen-r10/out --name Workspaces -y -o plain",
                     "passed-authored-scene-with-guarded-warnings",
                     "Render succeeds and emits the authored Scene composition surface. Two guarded-action/interaction warnings remain because pinned Scene packages cannot safely execute the guarded Close action and double-click interaction yet; browser-native behavior remains pending.",
                     [
-                        Assertion("released.cli.version", "equals", "3.40.1"),
-                        Assertion("released.stage.version", "equals", "4.49.1"),
+                        Assertion("released.cli.version", "equals", "3.40.2"),
+                        Assertion("released.stage.version", "equals", "4.49.2"),
                         Assertion("released.screenplay.bundle", "equals", "4.105.0"),
-                        Assertion("released.screenplay.corpus", "equals", "4.108.0"),
+                        Assertion("released.screenplay.corpus", "equals", "4.111.0"),
                         Assertion("released.scene.version", "equals", "4.12.0"),
                         Assertion("render.exitCode", "equals", "0"),
                         Assertion("render.documents", "equals", "10"),
@@ -471,7 +471,7 @@ public static class ScreenCompositionCorpus
                         Assertion("render.manifest.sha256", "equals", "affab2d33fe332f0bf02770f25d4851503be089df0606a496f5bb62cc65cac4b"),
                         Assertion("render.scene.sha256", "equals", "9faaceecf9d496d2561875b80733700593d159bdb162526a08b24d6e6cf63e82"),
                         Assertion("render.bindings.sha256", "equals", "b76082ae4439f1a177a6577a6d7fcf36db84d54d5c7839bc4b6409af4c07a302"),
-                        Assertion("render.log.sha256", "equals", "05f88524fed611b1940dd3ce6c2903429062514ba2f038b6b851794b00db1295"),
+                        Assertion("render.log.sha256", "equals", "1aa5d3dc837e162bba18b5ee6af5183a7eac78d7f19009570370b20049731fe8"),
                         Assertion("render.shaMismatches", "equals", "0"),
                         Assertion("render.warningCodes", "equals", "STAGE-SCENE-ACTION-001,STAGE-SCENE-INTERACTION-001"),
                         Assertion("render.warningCount", "equals", "2"),
@@ -520,7 +520,7 @@ public static class ScreenCompositionCorpus
                     "The committed browser harness starts cratis run, loads Chromium, verifies /stage/routes, /stage/scene and /stage/locales, seeds the released command APIs, and proves list display, selection/clear, details/comment query display and profile/menu rendering. Native command buttons remain disabled with 'This command is not exposed as an API yet', so native validation/submission, dialog/deep-link command flows and guarded actions stay pending.",
                     [
                         Assertion("browser.harness.implemented", "equals", "true"),
-                        Assertion("browser.result.sha256", "equals", "545baf0ff11c12edf16fd69b394a9ba37bf0d9d8f1e862e54b6d07839ce9d29f"),
+                        Assertion("browser.result.sha256", "equals", "f73644861a11c1ed197c8b006e107c5f9e543d5ae44a3d2c7e0e1fa1f2363f4d"),
                         Assertion("browser.runtime.shell", "loads", "true"),
                         Assertion("browser.endpoint./stage/routes", "equals", "200"),
                         Assertion("browser.endpoint./stage/scene", "equals", "200"),
@@ -539,8 +539,12 @@ public static class ScreenCompositionCorpus
                         Assertion("browser.packageProfile.themeDark", "equals", "Scene Default Dark"),
                         Assertion("browser.navigation.menu.CommentThread", "passes", "true"),
                         Assertion("browser.native.CreateWorkItem", "blocked-disabled", "This command is not exposed as an API yet"),
+                        Assertion("browser.native.CreateWorkItem.invalidSubmit", "pending", "button disabled"),
+                        Assertion("browser.native.CreateWorkItem.validSubmit", "pending", "button disabled"),
                         Assertion("browser.native.RenameWorkItem", "blocked-disabled", "This command is not exposed as an API yet"),
+                        Assertion("browser.native.RenameWorkItem.validSubmit", "pending", "button disabled"),
                         Assertion("browser.native.AddComment", "blocked-disabled", "This command is not exposed as an API yet"),
+                        Assertion("browser.native.AddComment.validSubmit", "pending", "button disabled"),
                         Assertion("browser.dialog.deepLink", "pending", "native command actions disabled"),
                         Assertion("browser.guarded.Close", "pending", "STAGE-SCENE-ACTION-001"),
                         Assertion("browser.guarded.doubleClick", "pending", "STAGE-SCENE-INTERACTION-001")
@@ -548,29 +552,32 @@ public static class ScreenCompositionCorpus
                 ReleasedVector(
                     "mcp-released-typed-transcript",
                     "Screenplay MCP",
-                    "Screenplay source includes v4.108.0 and PR #586; CLI bundle is 4.105.0; Studio-compatible folder transcript still pending.",
-                    "dotnet test Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj --filter FullyQualifiedName~when_authoring_screen_release_ui_from_an_empty_folder",
-                    "passed-typed-source-only",
-                    "The released-compatible typed-source MCP transcript passes. The folder-source multi-document revision edit transcript through Studio is still pending because Studio v0.136.3 production deployment is blocked and no production MCP bridge route is available.",
+                    "Screenplay source includes v4.111.0 and PR #589; CLI bundle is 4.105.0; Studio-compatible folder transcript still pending.",
+                    "dotnet test Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj --filter FullyQualifiedName~when_authoring_screen_release_ui_from_an_empty_folder; SCREENPLAY_MCP_RESULT=.ai-work/mcp-revision-transcript-r12.json node Source/DotNET/Screenplay.CanonicalVectors.Specs/BrowserHarness/screen-composition-mcp-revision-transcript.cjs",
+                    "passed-typed-source-only-folder-script-blocked",
+                    "The released-compatible typed-source MCP transcript passes. The folder-source multi-document revision edit transcript has a committed harness entry point, but it still blocks honestly because no Studio-compatible MCP bridge endpoint or transcript client is available.",
                     [
                         Assertion("mcp.typedTranscript.specs.passed", "equals", "6"),
                         Assertion("mcp.proposal.droppedComments", "equals", "0"),
                         Assertion("mcp.identityContinuity.changed", "equals", "0"),
-                        Assertion("mcp.folderTranscript", "pending", "true")
+                        Assertion("mcp.folderHarness.implemented", "equals", "true"),
+                        Assertion("mcp.folderHarness.status", "blocked", "blocked-missing-mcp-endpoint"),
+                        Assertion("mcp.folderTranscript", "pending", "SCREENPLAY_MCP_ENDPOINT")
                     ]),
                 ReleasedVector(
                     "studio-0.136.3-production-play",
                     "Studio",
                     "Studio 0.136.3 (732048d6f038e6f33ff9b6cde47372f8bad2ce9e)",
-                    "Studio production save/export/import/Play over screen-composition/v1/source/folder",
-                    "blocked",
-                    "Release tag v0.136.3 exists, but the production deploy step failed on a Pulumi lock; production save/export/import/Play route is unavailable, so deploy proof remains pending.",
+                    "NODE_PATH=/Users/einari/.npm/_npx/e41f203b7505f1fb/node_modules SCREENPLAY_STUDIO_RESULT=.ai-work/studio-production-play-r12.json node Source/DotNET/Screenplay.CanonicalVectors.Specs/BrowserHarness/screen-composition-studio-production-play.cjs",
+                    "blocked-missing-studio-url",
+                    "Release tag v0.136.3 exists, but the production deploy step failed on a Pulumi lock. The committed production DOM harness blocks until a release-artifact URL is supplied; save/export/import/Play route proof remains pending.",
                     [
                         Assertion("studio.release.version", "equals", "0.136.3"),
                         Assertion("studio.release.commit", "equals", "732048d6f038e6f33ff9b6cde47372f8bad2ce9e"),
+                        Assertion("studio.harness.implemented", "equals", "true"),
                         Assertion("studio.productionDeploy", "blocked", "Pulumi lock"),
-                        Assertion("studio.saveExportImport", "pending", "true"),
-                        Assertion("studio.play.deepLinks", "pending", "true")
+                        Assertion("studio.saveExportImport", "pending", "SCREENPLAY_STUDIO_URL"),
+                        Assertion("studio.play.deepLinks", "pending", "SCREENPLAY_STUDIO_URL")
                     ])
             ],
             StagePlans =
@@ -580,8 +587,8 @@ public static class ScreenCompositionCorpus
                     Target = "scene-web",
                     Profile = "Web",
                     PlanDigest = "released:scene-sha256:9faaceecf9d496d2561875b80733700593d159bdb162526a08b24d6e6cf63e82",
-                    RequiredVersionVector = "CLI 3.40.1 + Stage 4.49.1 + bundled Screenplay 4.105.0 + Scene 4.12.0",
-                    PendingReason = "Executed on the exact released vector: CLI 3.40.1 + Stage 4.49.1 + bundled Screenplay 4.105.0 + Scene 4.12.0. Rendering succeeds and emits the authored Scene composition. Browser/native execution remains pending because the released harness has no browser endpoint, and guarded Close/double-click behavior remains warned by STAGE-SCENE-ACTION-001 and STAGE-SCENE-INTERACTION-001.",
+                    RequiredVersionVector = "CLI 3.40.2 + Stage 4.49.2 + bundled Screenplay 4.105.0 + Scene 4.12.0",
+                    PendingReason = "Executed on the exact released vector: CLI 3.40.2 + Stage 4.49.2 + bundled Screenplay 4.105.0 + Scene 4.12.0. Rendering succeeds and emits the authored Scene composition, and browser execution proves routes, list/details/comment data, selection, menu and theme rendering. Native command submit, dialog/deep-link command flows and guarded Close/double-click behavior remain pending because command buttons are still disabled and guarded behavior is still warned by STAGE-SCENE-ACTION-001 and STAGE-SCENE-INTERACTION-001.",
                     Artifacts = [],
                     ObservedRefusalCodes = ["PLAY0269", "STAGE-SCENE-ACTION-001", "STAGE-SCENE-INTERACTION-001"],
                     Assertions =

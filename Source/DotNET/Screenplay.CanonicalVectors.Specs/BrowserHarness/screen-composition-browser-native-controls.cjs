@@ -14,7 +14,9 @@ const baseUrl = `http://localhost:${port}`;
 const resultPath = process.env.SCREENPLAY_BROWSER_RESULT ?? `${root}/.ai-work/browser-native-controls-result.json`;
 
 const workItemId = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+const secondWorkItemId = '22222222-2222-2222-2222-222222222222';
 const commentId = '11111111-1111-1111-1111-111111111111';
+const secondCommentId = '22222222-2222-2222-2222-222222222223';
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -73,17 +75,52 @@ async function expectText(page, result, path, text) {
     record(result, path, 'passed', text);
 }
 
+async function fillField(page, labelOrName, value) {
+    const byLabel = page.getByLabel(new RegExp(labelOrName, 'i')).first();
+    if (await byLabel.count() > 0) {
+        await byLabel.fill(value);
+        return true;
+    }
+
+    const byName = page.locator(`input[name="${labelOrName}"], textarea[name="${labelOrName}"]`).first();
+    if (await byName.count() > 0) {
+        await byName.fill(value);
+        return true;
+    }
+
+    const byPlaceholder = page.getByPlaceholder(new RegExp(labelOrName, 'i')).first();
+    if (await byPlaceholder.count() > 0) {
+        await byPlaceholder.fill(value);
+        return true;
+    }
+
+    return false;
+}
+
+async function clickSubmit(page) {
+    const submit = page.getByRole('button', { name: /create|rename|add|submit|save/i }).filter({ hasNotText: /close|cancel/i }).first();
+    if (await submit.count() === 0) return false;
+    await submit.click();
+    return true;
+}
+
 async function recordNativeButton(page, result, label, path) {
     const button = page.getByRole('button', { name: new RegExp(label, 'i') }).first();
     if (await button.count() === 0) {
         record(result, path, 'missing');
         result.remainingBlockers.push(`${label}: missing`);
-        return;
+        return { state: 'missing' };
     }
+
     const disabled = await button.isDisabled();
     const title = await button.getAttribute('title');
     record(result, path, disabled ? 'blocked-disabled' : 'passed', title ?? '');
-    if (disabled) result.remainingBlockers.push(`${label}: ${title ?? 'disabled'}`);
+    if (disabled) {
+        result.remainingBlockers.push(`${label}: ${title ?? 'disabled'}`);
+        return { state: 'disabled', title };
+    }
+
+    return { state: 'enabled', button };
 }
 
 async function endpointStatus(responses, endpoint) {
@@ -94,6 +131,54 @@ async function endpointStatus(responses, endpoint) {
         await sleep(100);
     }
     return 'missing';
+}
+
+async function assertInvalidThenValidCreate(page, result) {
+    const button = await recordNativeButton(page, result, 'CreateWorkItem', 'browser.native.CreateWorkItem');
+    if (button.state !== 'enabled') {
+        record(result, 'browser.native.CreateWorkItem.invalidSubmit', 'pending', 'button disabled');
+        record(result, 'browser.native.CreateWorkItem.validSubmit', 'pending', 'button disabled');
+        return;
+    }
+
+    await button.button.click();
+    await page.waitForTimeout(500);
+    await clickSubmit(page);
+    await expectText(page, result, 'browser.native.CreateWorkItem.invalidSubmit', 'required');
+    await fillField(page, 'workItemId', secondWorkItemId);
+    await fillField(page, 'title', 'Browser-created work item');
+    await clickSubmit(page);
+    await expectText(page, result, 'browser.native.CreateWorkItem.validSubmit', 'Browser-created work item');
+}
+
+async function assertRenameDialog(page, result) {
+    const button = await recordNativeButton(page, result, 'Rename', 'browser.native.RenameWorkItem');
+    if (button.state !== 'enabled') {
+        record(result, 'browser.native.RenameWorkItem.validSubmit', 'pending', 'button disabled');
+        record(result, 'browser.dialog.deepLink', 'pending', 'native command actions disabled');
+        return;
+    }
+
+    await button.button.click();
+    await page.waitForTimeout(500);
+    await fillField(page, 'title', 'Renamed in browser');
+    await clickSubmit(page);
+    await expectText(page, result, 'browser.native.RenameWorkItem.validSubmit', 'Renamed in browser');
+}
+
+async function assertAddComment(page, result) {
+    const button = await recordNativeButton(page, result, 'AddComment', 'browser.native.AddComment');
+    if (button.state !== 'enabled') {
+        record(result, 'browser.native.AddComment.validSubmit', 'pending', 'button disabled');
+        return;
+    }
+
+    await button.button.click();
+    await page.waitForTimeout(500);
+    await fillField(page, 'commentId', secondCommentId);
+    await fillField(page, 'text', 'Added through native browser form');
+    await clickSubmit(page);
+    await expectText(page, result, 'browser.native.AddComment.validSubmit', 'Added through native browser form');
 }
 
 async function runBrowserFlow(result) {
@@ -129,7 +214,7 @@ async function runBrowserFlow(result) {
     await expectText(page, result, 'browser.navigation.WorkItemList', 'WorkItemList');
     await expectText(page, result, 'browser.query.AllWorkItems.title', 'Design master detail');
     await expectText(page, result, 'browser.query.AllWorkItems.status', 'open');
-    await recordNativeButton(page, result, 'CreateWorkItem', 'browser.native.CreateWorkItem');
+    await assertInvalidThenValidCreate(page, result);
     await page.getByText('Design master detail', { exact: false }).first().click();
     await expectText(page, result, 'browser.masterDetail.selection', 'Clear selection');
     await page.getByText('Clear selection', { exact: true }).click();
@@ -146,8 +231,8 @@ async function runBrowserFlow(result) {
     await expectText(page, result, 'browser.navigation.themeDark', 'Scene Default Dark');
     await expectText(page, result, 'browser.navigation.menu.CommentThread', 'CommentThread');
 
-    await recordNativeButton(page, result, 'Rename', 'browser.native.RenameWorkItem');
-    await recordNativeButton(page, result, 'AddComment', 'browser.native.AddComment');
+    await assertRenameDialog(page, result);
+    await assertAddComment(page, result);
 
     result.network = responses.filter(response => response.url.includes('/api/') || response.url.includes('/stage/'));
     await browser.close();

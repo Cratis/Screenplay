@@ -33,7 +33,7 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact] void should_publish_mcp_edit_invariants() => _corpus.McpEditExpectations.Select(expectation => expectation.Name).ShouldEqual("mcp-edit-component-binding", "mcp-edit-dialog-action", "mcp-folder-master-detail-edit", "mcp-folder-dialog-routing-edit");
     [Fact] void should_publish_harness_entry_points() => _corpus.Harnesses.Select(harness => harness.Name).ShouldEqual("browser-runtime", "mcp-authoring", "mcp-folder-authoring", "cli-stage-parity", "studio-roundtrip");
     [Fact] void should_publish_working_branch_harness_entry_points() => _corpus.WorkingBranchHarnesses.Select(harness => harness.Name).ShouldEqual("stage-pr260-screen-plan", "studio-pr1615-transport", "studio-pr1617-native-play", "scene-form-geometry", "browser-native-controls", "mcp-revision-edit-transcript");
-    [Fact] void should_publish_released_vector_results() => _corpus.ReleasedVectorResults.Select(result => result.Name).ShouldEqual("cli-stage-render-3.40.1-4.49.1", "cratis-run-stage-4.49.1", "browser-native-controls-runtime", "mcp-released-typed-transcript", "studio-0.136.3-production-play");
+    [Fact] void should_publish_released_vector_results() => _corpus.ReleasedVectorResults.Select(result => result.Name).ShouldEqual("cli-stage-render-3.40.2-4.49.2", "cratis-run-stage-4.49.1", "browser-native-controls-runtime", "mcp-released-typed-transcript", "studio-0.136.3-production-play");
     [Fact] void should_publish_pending_stage_plan_assertions_without_claiming_artifact_bytes() => _corpus.StagePlans.Single().PendingReason.ShouldNotBeNull();
 
     [Fact]
@@ -177,8 +177,8 @@ public class when_loading_the_v1_screen_corpus : Specification
     void should_record_the_released_vector_stage_pending_warnings_in_the_pending_reason()
     {
         var plan = _corpus.StagePlans.Single();
-        plan.PendingReason!.ShouldContain("CLI 3.40.1");
-        plan.PendingReason.ShouldContain("Stage 4.49.1");
+        plan.PendingReason!.ShouldContain("CLI 3.40.2");
+        plan.PendingReason.ShouldContain("Stage 4.49.2");
         plan.PendingReason.ShouldContain("authored Scene composition");
         plan.PendingReason.ShouldContain("STAGE-SCENE-ACTION-001");
     }
@@ -186,16 +186,16 @@ public class when_loading_the_v1_screen_corpus : Specification
     [Fact]
     void should_pin_released_stage_render_results()
     {
-        ShouldHaveReleasedVector("cli-stage-render-3.40.1-4.49.1", "passed-authored-scene-with-guarded-warnings", "released.cli.version", "released.stage.version", "released.screenplay.bundle", "released.screenplay.corpus", "render.artifacts", "render.semanticRevision", "render.shaMismatches", "render.warningCodes", "scene.screens", "scene.layouts", "scene.screenTemplates", "scene.dialogTemplates", "scene.uiProfiles", "scene.WorkItemList.data", "scene.WorkItemDetails.data", "scene.CommentThread.data", "bindings.queries", "guarded.Close", "guarded.WorkItemList.doubleClick");
+        ShouldHaveReleasedVector("cli-stage-render-3.40.2-4.49.2", "passed-authored-scene-with-guarded-warnings", "released.cli.version", "released.stage.version", "released.screenplay.bundle", "released.screenplay.corpus", "render.artifacts", "render.semanticRevision", "render.shaMismatches", "render.warningCodes", "scene.screens", "scene.layouts", "scene.screenTemplates", "scene.dialogTemplates", "scene.uiProfiles", "scene.WorkItemList.data", "scene.WorkItemDetails.data", "scene.CommentThread.data", "bindings.queries", "guarded.Close", "guarded.WorkItemList.doubleClick");
     }
 
     [Fact]
     void should_pin_released_run_mcp_and_studio_results()
     {
         ShouldHaveReleasedVector("cratis-run-stage-4.49.1", "passed-sandbox-started", "run.stage.image", "run.ready", "run.index.status", "browser.masterDetail.selection", "browser.nativeValidation.submit", "browser.dialog.deepLink");
-        ShouldHaveReleasedVector("browser-native-controls-runtime", "partial-native-actions-disabled", "browser.harness.implemented", "browser.runtime.shell", "browser.endpoint./stage/routes", "browser.endpoint./stage/scene", "browser.endpoint./stage/locales", "browser.seed.CreateWorkItem", "browser.seed.AddComment", "browser.navigation.WorkItemList", "browser.query.AllWorkItems.title", "browser.query.AllWorkItems.status", "browser.masterDetail.selection", "browser.queryRebind.clearSelection", "browser.navigation.WorkItemDetails", "browser.query.WorkItemDetails.title", "browser.query.CommentsForWorkItem.text", "browser.packageProfile.themeLight", "browser.navigation.menu.CommentThread", "browser.native.CreateWorkItem", "browser.native.RenameWorkItem", "browser.native.AddComment", "browser.dialog.deepLink");
-        ShouldHaveReleasedVector("mcp-released-typed-transcript", "passed-typed-source-only", "mcp.typedTranscript.specs.passed", "mcp.proposal.droppedComments", "mcp.identityContinuity.changed", "mcp.folderTranscript");
-        ShouldHaveReleasedVector("studio-0.136.3-production-play", "blocked", "studio.release.version", "studio.release.commit", "studio.productionDeploy", "studio.saveExportImport", "studio.play.deepLinks");
+        ShouldHaveReleasedVector("browser-native-controls-runtime", "partial-native-actions-disabled", "browser.harness.implemented", "browser.runtime.shell", "browser.endpoint./stage/routes", "browser.endpoint./stage/scene", "browser.endpoint./stage/locales", "browser.seed.CreateWorkItem", "browser.seed.AddComment", "browser.navigation.WorkItemList", "browser.query.AllWorkItems.title", "browser.query.AllWorkItems.status", "browser.masterDetail.selection", "browser.queryRebind.clearSelection", "browser.navigation.WorkItemDetails", "browser.query.WorkItemDetails.title", "browser.query.CommentsForWorkItem.text", "browser.packageProfile.themeLight", "browser.navigation.menu.CommentThread", "browser.native.CreateWorkItem", "browser.native.CreateWorkItem.invalidSubmit", "browser.native.CreateWorkItem.validSubmit", "browser.native.RenameWorkItem", "browser.native.RenameWorkItem.validSubmit", "browser.native.AddComment", "browser.native.AddComment.validSubmit", "browser.dialog.deepLink");
+        ShouldHaveReleasedVector("mcp-released-typed-transcript", "passed-typed-source-only-folder-script-blocked", "mcp.typedTranscript.specs.passed", "mcp.proposal.droppedComments", "mcp.identityContinuity.changed", "mcp.folderHarness.implemented", "mcp.folderHarness.status", "mcp.folderTranscript");
+        ShouldHaveReleasedVector("studio-0.136.3-production-play", "blocked-missing-studio-url", "studio.release.version", "studio.release.commit", "studio.harness.implemented", "studio.productionDeploy", "studio.saveExportImport", "studio.play.deepLinks");
     }
 
     [Fact]
