@@ -21,7 +21,7 @@ public class when_preserving_pre_event_routes_corpora : Specification
                 var compiled = new SemanticModelCompiler().Compile(corpus.ApplicationName, SemanticDocumentSet.Create([.. documents], catalog));
                 Assert.True(compiled.Success, string.Join(';', compiled.Diagnostics.Select(diagnostic => diagnostic.Message)));
                 var model = compiled.Value!.Model;
-                model.SemanticVersion.IsAtLeast(EventRoutesVersion.Semantic).ShouldBeFalse();
+                model.SemanticVersion.IsAtLeast(SemanticVersion.V8).ShouldBeFalse();
                 model.Application.EventSources.ShouldBeEmpty();
                 model.Revision.ShouldEqual(corpus.SemanticRevision);
                 SemanticModelSerializer.Serialize(model).SequenceEqual(corpus.EsmBytes).ShouldBeTrue();

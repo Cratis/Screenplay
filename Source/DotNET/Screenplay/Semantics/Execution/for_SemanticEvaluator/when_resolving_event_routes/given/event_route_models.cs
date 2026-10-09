@@ -62,8 +62,8 @@ public class event_route_models : Specification
             EventSources = legacy ? [] : [source ?? Source],
             Policies = [new("Authenticated", new SemanticAuthenticatedCondition())]
         };
-        var model = ExecutableSemanticModel.Create(legacy ? LanguageVersion.V7 : EventRoutesVersion.Language,
-            legacy ? SemanticVersion.V7 : EventRoutesVersion.Semantic, application);
+        var model = ExecutableSemanticModel.Create(legacy ? LanguageVersion.V7 : LanguageVersion.V8,
+            legacy ? SemanticVersion.V7 : SemanticVersion.V8, application);
 
         return SemanticExecutionPlan.Compile(model).Plan!;
     }

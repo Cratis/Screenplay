@@ -16,7 +16,7 @@ public class when_validating_programmatic_event_routes : Specification
             Features = application.Modules[0].Features.SetItem(application.Modules[0].Features.Length - 1, application.Modules[0].Features[^1] with { Slices = [slice] })
         })
     };
-    internal static ExecutableSemanticModel Create(SemanticApplication application) => ExecutableSemanticModel.Create(EventRoutesVersion.Language, EventRoutesVersion.Semantic, application);
+    internal static ExecutableSemanticModel Create(SemanticApplication application) => ExecutableSemanticModel.Create(LanguageVersion.V8, SemanticVersion.V8, application);
 
     [Fact]
     void should_accept_routes_and_history_without_a_producer() => Create(Application).Application.EventSources.Length.ShouldEqual(2);

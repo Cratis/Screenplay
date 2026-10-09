@@ -227,7 +227,7 @@ public sealed class SemanticExecutionPlan
 
     internal SemanticTypeReference RoutedFactSourceType(SemanticFact fact)
     {
-        if (!Model.SemanticVersion.IsAtLeast(EventRoutesVersion.Semantic) || fact.Context is null)
+        if (!Model.SemanticVersion.IsAtLeast(SemanticVersion.V8) || fact.Context is null)
         {
             throw new InvalidSemanticContract("Fact event route requires admitted routes and a typed event source.");
         }

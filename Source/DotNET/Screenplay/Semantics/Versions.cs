@@ -43,6 +43,11 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V7 = new(7, 0);
 
     /// <summary>
+    /// The language version for event sources, streams, command routes and specification routes.
+    /// </summary>
+    public static readonly LanguageVersion V8 = new(8, 0);
+
+    /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
     /// <param name="value">The value to parse.</param>
@@ -106,6 +111,11 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// The semantic version for generated command values, responses and policy negation.
     /// </summary>
     public static readonly SemanticVersion V7 = new(7, 0);
+
+    /// <summary>
+    /// The semantic version for event sources, streams, command routes and specification routes.
+    /// </summary>
+    public static readonly SemanticVersion V8 = new(8, 0);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.
@@ -381,35 +391,19 @@ public static class EsmSchemaV7Support
 }
 
 /// <summary>
-/// Defines the provisional version pair for the event routes admission batch.
+/// Defines version pairs admitted by ESM schema v8.
 /// </summary>
-public static class EventRoutesVersion
-{
-    /// <summary>
-    /// Gets the language version for event routes.
-    /// </summary>
-    public static LanguageVersion Language { get; } = new(8, 0);
-
-    /// <summary>
-    /// Gets the semantic version for event routes.
-    /// </summary>
-    public static SemanticVersion Semantic { get; } = new(8, 0);
-}
-
-/// <summary>
-/// Defines version pairs supported by the event routes admission batch.
-/// </summary>
-public static class EsmSchemaEventRoutesSupport
+public static class EsmSchemaV8Support
 {
     /// <summary>
     /// Gets the supported language versions.
     /// </summary>
-    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [.. EsmSchemaV7Support.LanguageVersions, EventRoutesVersion.Language];
+    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [.. EsmSchemaV7Support.LanguageVersions, LanguageVersion.V8];
 
     /// <summary>
     /// Gets the supported semantic versions.
     /// </summary>
-    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [.. EsmSchemaV7Support.SemanticVersions, EventRoutesVersion.Semantic];
+    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [.. EsmSchemaV7Support.SemanticVersions, SemanticVersion.V8];
 
     /// <summary>
     /// Determines whether the exact pair is supported.
@@ -419,7 +413,7 @@ public static class EsmSchemaEventRoutesSupport
     /// <returns>Whether the pair has defined meaning.</returns>
     public static bool Supports(LanguageVersion languageVersion, SemanticVersion semanticVersion) =>
         EsmSchemaV7Support.Supports(languageVersion, semanticVersion) ||
-        (languageVersion == EventRoutesVersion.Language && semanticVersion == EventRoutesVersion.Semantic);
+        (languageVersion == LanguageVersion.V8 && semanticVersion == SemanticVersion.V8);
 
     /// <summary>
     /// Rejects unsupported version pairs.
@@ -431,7 +425,7 @@ public static class EsmSchemaEventRoutesSupport
     {
         if (!Supports(languageVersion, semanticVersion))
         {
-            throw new InvalidSemanticContract($"The ESM event routes contract does not declare language version '{languageVersion}' and semantic version '{semanticVersion}'.");
+            throw new InvalidSemanticContract($"The ESM schema-v8 contract does not declare language version '{languageVersion}' and semantic version '{semanticVersion}'.");
         }
     }
 }
@@ -442,7 +436,7 @@ static class VersionParser
     {
         if (!TryParse(value, out LanguageVersion version))
         {
-            throw new InvalidSemanticContract($"'{value}' is not a canonical language version supported by ESM schema v1, v2, v3, v4, v5, v6 or v7.");
+            throw new InvalidSemanticContract($"'{value}' is not a canonical language version supported by ESM schema v1, v2, v3, v4, v5, v6, v7 or v8.");
         }
 
         return version;
@@ -452,7 +446,7 @@ static class VersionParser
     {
         if (!TryParse(value, out SemanticVersion version))
         {
-            throw new InvalidSemanticContract($"'{value}' is not a canonical semantic version supported by ESM schema v1, v2, v3, v4, v5, v6 or v7.");
+            throw new InvalidSemanticContract($"'{value}' is not a canonical semantic version supported by ESM schema v1, v2, v3, v4, v5, v6, v7 or v8.");
         }
 
         return version;
@@ -462,7 +456,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaEventRoutesSupport.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaV8Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -475,7 +469,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaEventRoutesSupport.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaV8Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

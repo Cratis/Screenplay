@@ -21,22 +21,22 @@ public static class EventRoutesCorpus
     /// <summary>
     /// Gets the scalar command-route vector, including bound-adjacent inputs and literals.
     /// </summary>
-    public static CanonicalCorpusVector Scalar => Vector("scalar");
+    public static CanonicalCorpusVector V8 => Vector("scalar");
 
     /// <summary>
     /// Gets the specification-route joining vector.
     /// </summary>
-    public static CanonicalCorpusVector Specifications => Vector("specifications");
+    public static CanonicalCorpusVector SpecificationsV8 => Vector("specifications");
 
     /// <summary>
     /// Gets the composite specification vector, requiring both joining parts.
     /// </summary>
-    public static CanonicalCorpusVector Composites => Vector("composites");
+    public static CanonicalCorpusVector CompositesV8 => Vector("composites");
 
     /// <summary>
     /// Gets composite command routes and outcomes without depending on specification-route admission.
     /// </summary>
-    public static CanonicalCorpusVector CompositeCommands => Vector("composite-commands");
+    public static CanonicalCorpusVector CompositeCommandsV8 => Vector("composite-commands");
 
     /// <summary>
     /// Gets the vector keys without loading their expected bytes.
@@ -71,7 +71,7 @@ public static class EventRoutesCorpus
     /// <returns>The pinned rejection vector.</returns>
     public static CanonicalCorpusRejectionVector Rejection(string key) => new()
     {
-        Name = $"event-routes/rejections/{key}",
+        Name = $"event-routes/v8/rejections/{key}",
         ApplicationName = "EventRoutes",
         ApplicationIdentity = ApplicationIdentity.Create("EventRoutes"),
         SourceForm = RejectionSource(key),
@@ -92,12 +92,12 @@ public static class EventRoutesCorpus
 
     static CanonicalCorpusVector Vector(string key) => new()
     {
-        Name = $"event-routes/{key}",
+        Name = $"event-routes/v8/{key}",
         ApplicationName = "EventRoutes",
         ApplicationIdentity = ApplicationIdentity.Create("EventRoutes"),
         RuntimeStreamId = "other",
         SourceForms = SourceForms(key),
-        EsmBytes = Resource($"{key}.expected.esm-event-routes.json"),
+        EsmBytes = Resource($"{key}.expected.esm-v8.json"),
         SemanticRevision = SemanticRevision.Parse(Encoding.UTF8.GetString(Resource($"{key}.expected.semantic-revision.txt").AsSpan()).Trim()),
         SpecificationExpectations = Expectations(key)
     };

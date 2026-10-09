@@ -27,7 +27,7 @@ public class when_compiling_the_source_stream_fixture : Specification
     [Fact] void should_admit_the_executable_fixture() => _workspace.Compilation.Success.ShouldBeTrue();
     [Fact] void should_select_event_routes_and_bind_both_stream_shapes()
     {
-        _workspace.Compilation.Value!.Model.SemanticVersion.ShouldEqual(EventRoutesVersion.Semantic);
+        _workspace.Compilation.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
         var streams = _workspace.Compilation.Value.Model.Application.EventSources.Single().Streams;
         streams.Single(stream => stream.Name == "Transactions").StreamIdType.ShouldNotBeNull();
         streams.Single(stream => stream.Name == "Ledger").StreamIdParts.Select(part => part.Name).ShouldEqual(new[] { "account", "month" });

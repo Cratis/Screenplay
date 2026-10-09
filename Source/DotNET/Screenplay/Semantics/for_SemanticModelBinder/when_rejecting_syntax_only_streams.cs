@@ -18,7 +18,7 @@ public class when_rejecting_syntax_only_streams : given.a_semantic_binder
         var result = Bind(source + "\n");
         Assert.True(result.Success, string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
         result.Diagnostics.ShouldBeEmpty();
-        result.Value!.Model.SemanticVersion.ShouldEqual(EventRoutesVersion.Semantic);
+        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
         var account = result.Value.Model.Application.EventSources.Single();
         var address = SemanticAddress.ForEventSource(_applicationIdentity, account.Name);
         result.Value.Documents.IdentityCatalog.ResolveSemantic(address).ShouldEqual(account.Id);
@@ -62,7 +62,7 @@ public class when_rejecting_syntax_only_streams : given.a_semantic_binder
         Assert.True(result.Success == declaration, string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
         if (declaration)
         {
-            result.Value!.Model.SemanticVersion.ShouldEqual(EventRoutesVersion.Semantic);
+            result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
             result.Value.Model.Application.EventSources.Single().Streams.Single().Name.ShouldEqual("Transactions");
             result.Diagnostics.ShouldBeEmpty();
         }

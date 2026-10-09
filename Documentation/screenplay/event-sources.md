@@ -1,6 +1,6 @@
 # Event sources and streams
 
-Name the business classification of an event source and its streams, then reference a stream from a command. The **event routes** executable model admits source declarations, scalar and composite command routes, and specification routes. Models without these constructs keep their existing versions, canonical bytes and outcomes. Renderers and other consumers must explicitly admit the contract; a package update alone is not routing support.
+Name the business classification of an event source and its streams, then reference a stream from a command. Executable semantic model **v8** admits source declarations, scalar and composite command routes, and specification routes. Models without these constructs keep their existing versions, canonical bytes and outcomes. Renderers and other consumers must explicitly admit the contract; a package update alone is not routing support.
 
 ## Declare a source and its streams
 

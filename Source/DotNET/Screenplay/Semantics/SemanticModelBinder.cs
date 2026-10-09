@@ -58,8 +58,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var semanticVersion = SemanticVersion.V1;
             if (context.UsesEventRoutes)
             {
-                languageVersion = EventRoutesVersion.Language;
-                semanticVersion = EventRoutesVersion.Semantic;
+                languageVersion = LanguageVersion.V8;
+                semanticVersion = SemanticVersion.V8;
             }
             else if (context.UsesV7)
             {

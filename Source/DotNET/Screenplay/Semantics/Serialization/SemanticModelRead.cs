@@ -33,7 +33,7 @@ internal static partial class SemanticModelRead
                 case "modules": modules = Array(ref reader, (ref Utf8JsonReader item) => Module(ref item, schemaVersion), property); break;
                 case "policies": policies = Array(ref reader, Policy, property); break;
                 case "triggers" when schemaVersion >= 6: triggers = Array(ref reader, Trigger, property); break;
-                case "eventSources" when schemaVersion >= EventRoutesVersion.Language.Major:
+                case "eventSources" when schemaVersion >= LanguageVersion.V8.Major:
                     eventSources = Array(ref reader, EventSourceDeclaration, property);
                     Required(!eventSources.IsEmpty, "event sources");
                     break;
@@ -410,7 +410,7 @@ internal static partial class SemanticModelRead
                 case "authorization": RequiredToken(ref reader, JsonTokenType.StartObject, property); authorization = Authorization(ref reader); break;
                 case "destination": RequiredToken(ref reader, JsonTokenType.StartObject, property); destination = StateChangeDestination(ref reader); break;
                 case "response" when schemaVersion >= 7: RequiredToken(ref reader, JsonTokenType.StartObject, property); response = Response(ref reader); break;
-                case "route" when schemaVersion >= EventRoutesVersion.Language.Major: RequiredToken(ref reader, JsonTokenType.StartObject, property); route = CommandRoute(ref reader); break;
+                case "route" when schemaVersion >= LanguageVersion.V8.Major: RequiredToken(ref reader, JsonTokenType.StartObject, property); route = CommandRoute(ref reader); break;
                 default: throw Unknown(property, "command");
             }
         }
@@ -704,8 +704,8 @@ internal static partial class SemanticModelRead
                 case "eventContract": eventContract = SemanticId.Parse(String(ref reader, property)); break;
                 case "values": values = Array(ref reader, PropertyValue, property); break;
                 case "eventSource": RequiredToken(ref reader, JsonTokenType.StartObject, property); eventSource = EventSource(ref reader); break;
-                case "route" when schemaVersion >= EventRoutesVersion.Language.Major: RequiredToken(ref reader, JsonTokenType.StartObject, property); route = FixtureRoute(ref reader); break;
-                case "unrouted" when then && schemaVersion >= EventRoutesVersion.Language.Major:
+                case "route" when schemaVersion >= LanguageVersion.V8.Major: RequiredToken(ref reader, JsonTokenType.StartObject, property); route = FixtureRoute(ref reader); break;
+                case "unrouted" when then && schemaVersion >= LanguageVersion.V8.Major:
                     unrouted = Boolean(ref reader, property);
                     Required(unrouted, "unrouted assertion");
                     break;

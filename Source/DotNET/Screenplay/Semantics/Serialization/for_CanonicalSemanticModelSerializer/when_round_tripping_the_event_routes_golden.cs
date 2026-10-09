@@ -12,14 +12,14 @@ public class when_round_tripping_the_event_routes_golden : Specification
     [Fact]
     void should_pin_bytes_revision_and_member_order()
     {
-        var model = canonical_serialization_golden_vectors.CreateEventRoutesModel();
+        var model = canonical_serialization_golden_vectors.CreateSemanticModelV8();
         var bytes = SemanticModelSerializer.Serialize(model);
         if (Environment.GetEnvironmentVariable("SCREENPLAY_REGENERATE_EVENT_ROUTES") == "1")
         {
             File.WriteAllBytes(GoldenPath(), bytes);
-            throw new GoldenVectorsRegenerated("Event routes golden regenerated. Review, rebuild and rerun without SCREENPLAY_REGENERATE_EVENT_ROUTES.");
+            throw new GoldenVectorsRegenerated("ESM v8 golden regenerated. Review, rebuild and rerun without SCREENPLAY_REGENERATE_EVENT_ROUTES.");
         }
-        bytes.SequenceEqual(canonical_serialization_golden_vectors.EventRoutesBytes).ShouldBeTrue();
+        bytes.SequenceEqual(canonical_serialization_golden_vectors.EsmV8Bytes).ShouldBeTrue();
         var roundTrip = SemanticModelSerializer.Deserialize(bytes);
         roundTrip.Revision.ShouldEqual(model.Revision);
         SemanticModelSerializer.Serialize(roundTrip).SequenceEqual(bytes).ShouldBeTrue();
@@ -31,5 +31,5 @@ public class when_round_tripping_the_event_routes_golden : Specification
         foreach (var integer in new[] { "9007199254740991", "9007199254740990", "-9007199254740991", "-9007199254740990" }) text.Contains(integer, StringComparison.Ordinal).ShouldBeTrue();
     }
 
-    static string GoldenPath([CallerFilePath] string file = "") => Path.GetFullPath(Path.Combine(Path.GetDirectoryName(file)!, "..", "Golden", "event-routes-esm.json"));
+    static string GoldenPath([CallerFilePath] string file = "") => Path.GetFullPath(Path.Combine(Path.GetDirectoryName(file)!, "..", "Golden", "full-esm-v8.json"));
 }

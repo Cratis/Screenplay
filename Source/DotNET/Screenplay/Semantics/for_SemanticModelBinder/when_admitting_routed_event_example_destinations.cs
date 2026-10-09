@@ -23,7 +23,7 @@ public class when_admitting_routed_event_example_destinations : given.a_semantic
     {
         var result = Bind(Source);
         Assert.True(result.Success, string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
-        result.Value!.Model.SemanticVersion.ShouldEqual(EventRoutesVersion.Semantic);
+        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
     }
 
     [Fact]

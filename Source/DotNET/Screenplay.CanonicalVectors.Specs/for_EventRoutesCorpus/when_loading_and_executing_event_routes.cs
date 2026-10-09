@@ -21,14 +21,14 @@ public class when_loading_and_executing_event_routes : Specification
     void should_pin_bytes_catalogs_revisions_and_outcomes_across_four_forms(string key)
     {
         if (Environment.GetEnvironmentVariable("SCREENPLAY_REGENERATE_EVENT_ROUTES_CORPUS") == "1") Regenerate(key);
-        var corpus = key switch { "scalar" => EventRoutesCorpus.Scalar, "specifications" => EventRoutesCorpus.Specifications, "composite-commands" => EventRoutesCorpus.CompositeCommands, _ => EventRoutesCorpus.Composites };
+        var corpus = key switch { "scalar" => EventRoutesCorpus.V8, "specifications" => EventRoutesCorpus.SpecificationsV8, "composite-commands" => EventRoutesCorpus.CompositeCommandsV8, _ => EventRoutesCorpus.CompositesV8 };
         corpus.SourceForms.Length.ShouldEqual(4);
         foreach (var form in corpus.SourceForms)
         {
             var compilation = Compile(form);
             var model = compilation.Model;
-            model.LanguageVersion.ShouldEqual(EventRoutesVersion.Language);
-            model.SemanticVersion.ShouldEqual(EventRoutesVersion.Semantic);
+            model.LanguageVersion.ShouldEqual(LanguageVersion.V8);
+            model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
             SemanticModelSerializer.Serialize(model).SequenceEqual(corpus.EsmBytes).ShouldBeTrue();
             model.Revision.ShouldEqual(corpus.SemanticRevision);
             var catalog = SemanticIdentityCatalogSerializer.Deserialize(form.IdentityCatalogBytes.AsSpan());
@@ -145,10 +145,10 @@ public class when_loading_and_executing_event_routes : Specification
             File.WriteAllBytes(Path.Combine(expected, $"identity-catalog-{form.Name}.json"), bytes);
             var pinned = Compile(form with { IdentityCatalogBytes = [.. bytes] });
             SemanticModelSerializer.Serialize(pinned.Model).SequenceEqual(SemanticModelSerializer.Serialize(compilation.Model)).ShouldBeTrue();
-            File.WriteAllBytes(Path.Combine(expected, "esm-event-routes.json"), SemanticModelSerializer.Serialize(pinned.Model));
+            File.WriteAllBytes(Path.Combine(expected, "esm-v8.json"), SemanticModelSerializer.Serialize(pinned.Model));
             File.WriteAllText(Path.Combine(expected, "semantic-revision.txt"), $"{pinned.Model.Revision}\n", new UTF8Encoding(false));
         }
-        Assert.Fail("Event-routes corpus regenerated; review, rebuild and rerun without SCREENPLAY_REGENERATE_EVENT_ROUTES_CORPUS.");
+        Assert.Fail("ESM v8 event-routes corpus regenerated; review, rebuild and rerun without SCREENPLAY_REGENERATE_EVENT_ROUTES_CORPUS.");
     }
 
     static string Root([CallerFilePath] string path = "")

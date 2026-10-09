@@ -21,11 +21,10 @@ function complete(source: string, marker: string, application = mergeSymbols()) 
 }
 
 describe('when authoring source streams', () => {
-    it('should describe the event routes admission without assigning a public version number', () => {
+    it('should describe the event routes admission as ESM v8', () => {
         const description = topLevelItems.find(item => item.label === 'eventsource')!.documentation;
-        expect(description).toContain('event routes executable model');
+        expect(description).toContain('ESM v8');
         expect(description).not.toContain('not admitted');
-        expect(description).not.toMatch(/ESM v\d/);
     });
     it('should retain application declarations around isolated command fragments', () => {
         const analysis = analyzeEventSources(source.split('\n'));
@@ -55,7 +54,7 @@ describe('when authoring source streams', () => {
         expect(eventSourceHover(lines, line, start, start + 5)).toContain('Command source for authored stream id');
         const hover = eventSourceHover(lines, line, 5, 13);
         expect(hover).toContain('Authored stream id mapping');
-        expect(hover).toContain('admitted in the event routes executable model');
+        expect(hover).toContain('admitted in executable semantic model (ESM) v8');
         expect(hover).not.toContain('Syntax-only');
         expect(hover).not.toContain('#302');
     });

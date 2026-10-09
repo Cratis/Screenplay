@@ -156,7 +156,7 @@ Assign a property only once within each fixture or step. An inline assignment re
 
 ## Event routes
 
-Specification `stream` and `no stream` statements select the **event routes** executable model. The reference runner places routed history and appended facts, and compares explicitly stated routes. Specifications without these statements keep their existing semantics.
+Specification `stream` and `no stream` statements select executable semantic model **v8**. The reference runner places routed history and appended facts, and compares explicitly stated routes. Specifications without these statements keep their existing semantics.
 
 An event occurrence in `given`, `when append` or `then` can name a source-owned stream:
 
@@ -198,7 +198,7 @@ The example seeds routed history, appends an unrouted fact and asserts that its 
 
 See [event sources](event-sources.md) for source and stream declarations and [diagnostics](diagnostics.md) for `PLAY0547`–`PLAY0551`. Specifications without these new lines keep their existing diagnostics and executable semantics. Renaming an event preserves its occurrence routing metadata. MCP `propose-rename` repairs command and specification routes and migrates source/stream catalog entries atomically. Pin a stored name before renaming a declaration with stored events; an unpinned rename changes the stored route classification.
 
-At the event routes version, `then events in any order` finds a one-to-one assignment between expectations and facts, so a wildcard expectation cannot steal the only fact matching an exact routed expectation. Earlier versions retain their existing greedy comparison. An explicit `no stream` requires an absent route, not a route filled with Chronicle defaults. Route comparisons do not change projections, constraint scope or query behavior.
+At ESM v8, `then events in any order` finds a one-to-one assignment between expectations and facts, so a wildcard expectation cannot steal the only fact matching an exact routed expectation. Earlier versions retain their existing greedy comparison. An explicit `no stream` requires an absent route, not a route filled with Chronicle defaults. Route comparisons do not change projections, constraint scope or query behavior.
 
 ## Rejections
 

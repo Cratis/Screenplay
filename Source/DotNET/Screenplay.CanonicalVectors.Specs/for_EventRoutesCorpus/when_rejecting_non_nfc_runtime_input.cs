@@ -12,7 +12,7 @@ public class when_rejecting_non_nfc_runtime_input : Specification
     [Fact]
     void should_refuse_without_normalizing_allocating_or_appending()
     {
-        foreach (var form in EventRoutesCorpus.Scalar.SourceForms)
+        foreach (var form in EventRoutesCorpus.V8.SourceForms)
         {
             var model = when_loading_and_executing_event_routes.Compile(form).Model;
             var command = model.Application.Modules.Single().Features.Single().Slices.Single().Commands.Single(command => command.Name == "Text");

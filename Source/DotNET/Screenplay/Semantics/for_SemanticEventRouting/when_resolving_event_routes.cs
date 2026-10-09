@@ -188,13 +188,13 @@ public class when_resolving_event_routes : Specification
         foreach (var language in EsmSchemaV7Support.LanguageVersions)
         {
             var semantic = new SemanticVersion(language.Major, language.Minor);
-            EsmSchemaEventRoutesSupport.Supports(language, semantic).ShouldBeTrue();
+            EsmSchemaV8Support.Supports(language, semantic).ShouldBeTrue();
         }
-        EsmSchemaEventRoutesSupport.Supports(EventRoutesVersion.Language, EventRoutesVersion.Semantic).ShouldBeTrue();
-        LanguageVersion.Parse(EventRoutesVersion.Language.ToString()).ShouldEqual(EventRoutesVersion.Language);
-        SemanticVersion.Parse(EventRoutesVersion.Semantic.ToString()).ShouldEqual(EventRoutesVersion.Semantic);
-        EsmSchemaEventRoutesSupport.Supports(LanguageVersion.V7, EventRoutesVersion.Semantic).ShouldBeFalse();
-        EsmSchemaV7Support.Supports(EventRoutesVersion.Language, EventRoutesVersion.Semantic).ShouldBeFalse();
+        EsmSchemaV8Support.Supports(LanguageVersion.V8, SemanticVersion.V8).ShouldBeTrue();
+        LanguageVersion.Parse(LanguageVersion.V8.ToString()).ShouldEqual(LanguageVersion.V8);
+        SemanticVersion.Parse(SemanticVersion.V8.ToString()).ShouldEqual(SemanticVersion.V8);
+        EsmSchemaV8Support.Supports(LanguageVersion.V7, SemanticVersion.V8).ShouldBeFalse();
+        EsmSchemaV7Support.Supports(LanguageVersion.V8, SemanticVersion.V8).ShouldBeFalse();
     }
 
     static SemanticApplication WithAutomation(SemanticApplication app, ImmutableArray<SemanticReaction> reactions, ImmutableArray<SemanticCapture> captures)

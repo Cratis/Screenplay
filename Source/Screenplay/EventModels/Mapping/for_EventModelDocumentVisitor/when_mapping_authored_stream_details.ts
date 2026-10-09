@@ -15,7 +15,7 @@ describe('when mapping authored stream details', () => {
         const slice = board(fixture);
         expect(slice.command?.logicDescription).toContain('Authored stream: Account.Transactions');
         expect(slice.command?.logicDescription).toContain('Stream id: month');
-        expect(slice.command?.logicDescription).toContain('Admitted by the event routes executable model');
+        expect(slice.command?.logicDescription).toContain('Admitted by ESM v8');
         expect(slice.command?.logicDescription).not.toContain('Syntax-only');
         expect(slice.command?.logicDescription).not.toContain('PathExpressionSyntax');
         expect(slice.events.map(event => event.name)).toEqual(['Deposited']);

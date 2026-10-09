@@ -353,7 +353,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         }
 
         var routes = expected.Select(value => plan.FormatFixtureRoute(value.Route)).ToArray();
-        if (inAnyOrder && plan.Model.SemanticVersion.IsAtLeast(EventRoutesVersion.Semantic))
+        if (inAnyOrder && plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V8))
         {
             // Augmenting paths reassign earlier wildcard matches instead of consuming an exact match greedily.
             var assignments = Enumerable.Repeat(-1, actual.Length).ToArray();

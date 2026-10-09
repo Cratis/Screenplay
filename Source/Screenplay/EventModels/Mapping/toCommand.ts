@@ -73,7 +73,7 @@ function routeDetails(command: CommandSyntax): string {
         command.handler ? 'Command handlers remain unadmitted (PLAY0268).' :
             [route.streamId?.source, ...route.streamIdParts.map(part => part.source)].some(source => source?.kind === 'PathExpressionSyntax' && source.path.includes('.')) ?
                 'Property paths remain unadmitted (PLAY0268).' :
-                'Admitted by the event routes executable model: direct required, non-generated properties or literals. Other unadmitted constructs still prevent binding.',
+                'Admitted by ESM v8: direct required, non-generated properties or literals. Other unadmitted constructs still prevent binding.',
         'This classification does not supply an identity destination.'
     ].filter(Boolean).join('\n'));
 }

@@ -116,9 +116,9 @@ public class when_holding_invoicing_to_the_language : Specification
                     _elsewhereFindings.Add($"{admitted.Path}: only incomplete payloads, not route admission, may block binding: {string.Join(';', workspace.Compilation.Diagnostics.Select(diagnostic => diagnostic.Code + " " + diagnostic.Message))}");
                 }
             }
-            else if (!workspace.Compilation.Success || workspace.Compilation.Value!.Model.SemanticVersion != EventRoutesVersion.Semantic)
+            else if (!workspace.Compilation.Success || workspace.Compilation.Value!.Model.SemanticVersion != SemanticVersion.V8)
             {
-                _elsewhereFindings.Add($"{admitted.Path}: must bind at the event routes version");
+                _elsewhereFindings.Add($"{admitted.Path}: must bind at ESM v8");
             }
         }
 

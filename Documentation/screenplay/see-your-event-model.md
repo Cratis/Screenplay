@@ -48,8 +48,7 @@ Explicit specification routes appear in the specification header, labeled by
 including when event cards show the linked event's current name instead of the
 step's name. Headers wrap so long route summaries remain readable. Payload values
 and event links stay unchanged. The board shows authored expectations, not test
-results. The reference runner checks these route assertions in the event routes
-ESM version; drawing them alone does not prove they pass.
+results. The reference runner checks these route assertions in ESM v8; drawing them alone does not prove they pass.
 
 Specification headers also show deterministic `generated` fixtures, labeled
 **not request inputs**, scalar or record `then returns` assertions, and every

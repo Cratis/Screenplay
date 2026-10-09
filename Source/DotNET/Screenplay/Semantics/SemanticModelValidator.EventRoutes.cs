@@ -10,13 +10,13 @@ internal static partial class SemanticModelValidator
     static void ValidateEventRoutesVersion(SemanticApplication application, SemanticVersion version)
     {
         var uses = SemanticEventRouting.Uses(application);
-        if (version == EventRoutesVersion.Semantic && !uses)
+        if (version == SemanticVersion.V8 && !uses)
         {
             throw new InvalidSemanticContract("An event routes model must declare an event source, command route or specification route.");
         }
-        if (!version.IsAtLeast(EventRoutesVersion.Semantic) && uses)
+        if (!version.IsAtLeast(SemanticVersion.V8) && uses)
         {
-            throw new InvalidSemanticContract("Event sources and routes require the event routes version.");
+            throw new InvalidSemanticContract("Event sources and routes require ESM v8.");
         }
     }
 

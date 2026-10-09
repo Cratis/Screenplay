@@ -2,7 +2,7 @@
 
 > Systems, operations, operation phases and their specification forms below are syntax-only authoring. These constructs are not admitted by any supported executable model (ESM) version yet (`PLAY0268`); see [Operations and external systems](operations.md). A phase source or wrapper is not an admitted executable implementation role.
 
-> [Event sources, source-owned streams and command stream routes](event-sources.md), specification routes and composite stream ids are admitted by the event routes executable model (ESM) version. Command mappings may read direct, required, non-collection, non-generated inputs or literals; property paths and handler routes remain refused with `PLAY0268`. Per-event overrides, observer filters, new concurrency flags, occurrence time and constraint scopes are not part of this increment.
+> [Event sources, source-owned streams and command stream routes](event-sources.md), specification routes and composite stream ids are admitted by executable semantic model (ESM) v8. Command mappings may read direct, required, non-collection, non-generated inputs or literals; property paths and handler routes remain refused with `PLAY0268`. Per-event overrides, observer filters, new concurrency flags, occurrence time and constraint scopes are not part of this increment.
 
 The Screenplay syntax reference in EBNF. `INDENT`/`DEDENT` represent indented bodies: parsers read lines at greater indentation until the body ends. PDL and CDL have their own [sub-grammars](sub-languages.md). The C# compiler validates the full language; the TypeScript compiler models a subset and recognizes the remaining shipped constructs as opaque bodies.
 
@@ -78,7 +78,7 @@ SystemDecl     = "system", Ident, NL,
    these constructs are not admitted by any supported ESM version yet. *)
 
 (* -------------------------------------------------------------- *)
-(* Event sources and streams — event routes ESM                    *)
+(* Event sources and streams — ESM v8                              *)
 (* -------------------------------------------------------------- *)
 
 EventSourceDecl = "eventsource", Ident, NL,
@@ -990,7 +990,7 @@ SpecificationNoStream = "no", "stream", NL ;
    part exactly once, each a compatible concrete literal; neither form substitutes
    for the other. Empty text is refused, but whitespace is accepted.
    Routing lines under when Command are refused. Fixture routes and no stream
-   assertions are admitted by the event routes ESM version. Routed fixtures use
+   assertions are admitted by ESM v8. Routed fixtures use
    their source's identifier type, with an unambiguous producer-type fallback.
    Redelivery remains refused with PLAY0268. *)
 

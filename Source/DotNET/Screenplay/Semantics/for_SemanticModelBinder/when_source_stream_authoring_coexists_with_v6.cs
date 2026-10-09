@@ -20,7 +20,7 @@ public class when_source_stream_authoring_coexists_with_v6 : given.a_semantic_bi
     {
         var result = Bind("eventsource Account\n  stream Transactions\n" + Automation);
         result.Success.ShouldBeTrue();
-        result.Value!.Model.SemanticVersion.ShouldEqual(EventRoutesVersion.Semantic);
+        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
         result.Value.Model.Application.EventSources.Single().Streams.Single().Name.ShouldEqual("Transactions");
     }
 

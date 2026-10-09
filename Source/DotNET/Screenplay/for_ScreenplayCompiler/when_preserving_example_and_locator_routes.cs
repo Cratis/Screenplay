@@ -74,6 +74,6 @@ public class when_preserving_example_and_locator_routes
         var workspace = ScreenplayWorkspace.Create("A", [document], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("A")));
         workspace.Compilation.Diagnostics.ShouldBeEmpty();
         workspace.Compilation.Success.ShouldBeTrue();
-        workspace.Compilation.Value!.Model.SemanticVersion.ShouldEqual(EventRoutesVersion.Semantic);
+        workspace.Compilation.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
     }
 }

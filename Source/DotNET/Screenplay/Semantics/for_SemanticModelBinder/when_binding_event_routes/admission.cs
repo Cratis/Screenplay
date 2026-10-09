@@ -77,8 +77,8 @@ public class admission : given.a_semantic_binder
     [Fact]
     void should_select_the_event_routes_version_only_when_used()
     {
-        Bind(Prefix + Command).Value!.Model.SemanticVersion.ShouldEqual(EventRoutesVersion.Semantic);
-        Bind("eventsource Account\n  stream All\n").Value!.Model.SemanticVersion.ShouldEqual(EventRoutesVersion.Semantic);
+        Bind(Prefix + Command).Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
+        Bind("eventsource Account\n  stream All\n").Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
         Bind("module M\n  feature F\n    slice StateChange S\n      command C\n        value String\n").Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V1);
     }
 

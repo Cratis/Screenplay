@@ -9,7 +9,7 @@ namespace Cratis.Screenplay.Semantics.Serialization.for_CanonicalSemanticModelSe
 
 public class when_reading_malformed_event_route_members : Specification
 {
-    internal static JsonNode Root() => JsonNode.Parse(SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateEventRoutesModel()))!;
+    internal static JsonNode Root() => JsonNode.Parse(SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV8()))!;
     internal static JsonNode Source(JsonNode root) => root["application"]["eventSources"].AsArray().OfType<JsonNode>().Single(source => source["name"].GetValue<string>() == "RenamedProject");
     internal static JsonNode Slice(JsonNode root) => Slices(root).Single(slice => slice["name"].GetValue<string>() == "EventRoutes");
     internal static JsonNode Command(JsonNode root) => Slice(root)["commands"].AsArray().OfType<JsonNode>().Single(command => command["name"].GetValue<string>() == "Route9100");

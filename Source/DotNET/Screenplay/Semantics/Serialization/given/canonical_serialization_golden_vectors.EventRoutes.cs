@@ -8,10 +8,10 @@ namespace Cratis.Screenplay.Semantics.Serialization.given;
 
 public static partial class canonical_serialization_golden_vectors
 {
-    public static byte[] EventRoutesBytes => ReadResource("Cratis.Screenplay.Semantics.Serialization.Golden.event-routes-esm.json");
+    public static byte[] EsmV8Bytes => ReadResource("Cratis.Screenplay.Semantics.Serialization.Golden.full-esm-v8.json");
 
-    public static ExecutableSemanticModel CreateEventRoutesModel() =>
-        ExecutableSemanticModel.Create(EventRoutesVersion.Language, EventRoutesVersion.Semantic, CreateEventRoutesApplication());
+    public static ExecutableSemanticModel CreateSemanticModelV8() =>
+        ExecutableSemanticModel.Create(LanguageVersion.V8, SemanticVersion.V8, CreateEventRoutesApplication());
 
     public static SemanticApplication CreateEventRoutesApplication()
     {

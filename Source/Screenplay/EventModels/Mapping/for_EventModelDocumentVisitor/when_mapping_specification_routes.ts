@@ -26,7 +26,7 @@ describe('when mapping specification routes', () => {
         specification.thenEvents[0].name.should.contain('streamId = 202610');
         specification.thenEvents[1].name.should.contain('no stream');
         specification.thenEvents[2].name.should.equal('Recorded');
-        specification.given[0].name.should.contain('Admitted by the event routes executable model');
+        specification.given[0].name.should.contain('Admitted by ESM v8');
         specification.given[0].name.should.not.contain('PLAY0268');
     });
     it('should render every route in the header even when given and then events are owned', () => {
@@ -47,7 +47,7 @@ describe('when mapping specification routes', () => {
         markup.should.contain('then 1: Recorded');
         markup.should.contain('stream Account.Partitioned; streamId = 202610');
         markup.should.contain('then 2: Recorded — no stream');
-        markup.should.contain('Admitted by the event routes executable model');
+        markup.should.contain('Admitted by ESM v8');
         markup.should.not.contain('PLAY0268');
     });
     it.each([
