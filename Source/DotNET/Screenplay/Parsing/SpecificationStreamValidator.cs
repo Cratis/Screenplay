@@ -14,6 +14,25 @@ internal static class SpecificationStreamValidator
 
     internal static void Validate(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context, EffectiveSpecificationApplication expansion)
     {
+        var rows = expansion.Specifications.Where(specification => specification.Case is not null).Select(specification => specification.Case!).ToArray();
+        if (rows.Length == 0)
+        {
+            ValidateRoutes(application, declarations, context, expansion);
+            return;
+        }
+        var sink = ParserContext.ForDiagnostics();
+        ValidateRoutes(application, declarations, sink, expansion);
+        var reported = new HashSet<SourceLocation>();
+        foreach (var diagnostic in sink.Diagnostics.DistinctBy(diagnostic => (diagnostic.Code, diagnostic.Location, diagnostic.Message)))
+        {
+            var row = diagnostic.Code == DiagnosticCodes.InvalidSpecificationStreamRoute ? rows.FirstOrDefault(row => row.Values.Any(value => value.Source.Location == diagnostic.Location)) : null;
+            if (row is null) context.Add(diagnostic);
+            else if (reported.Add(diagnostic.Location)) context.Add(diagnostic with { Message = $"Case '{row.Name}': {diagnostic.Message}" });
+        }
+    }
+
+    static void ValidateRoutes(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context, EffectiveSpecificationApplication expansion)
+    {
         var catalog = new EventSourceCatalog(application);
         var values = new ResponseValueTypes(application);
         var producers = Producers(declarations).ToArray();

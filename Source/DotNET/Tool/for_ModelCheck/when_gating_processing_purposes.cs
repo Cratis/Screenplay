@@ -19,5 +19,5 @@ public class when_gating_processing_purposes : given.a_model
     void Because() => _exitCode = ModelCheck.Run([Root, "--check", "purposes", "--warnaserror"], Output, Error);
 
     [Fact] void should_fail_on_the_uncovered_personal_data_prompt() => _exitCode.ShouldEqual(1);
-    [Fact] void should_report_the_stable_code() => Output.ToString().ShouldContain("PLAY0578");
+    [Fact] void should_report_the_stable_code() => Output.ToString().ShouldContain("PLAY0602");
 }

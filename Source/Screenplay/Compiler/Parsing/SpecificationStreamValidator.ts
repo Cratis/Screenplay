@@ -16,6 +16,7 @@ import { ApplicationSyntax } from '../Syntax/Structure';
 import { PropertyMappingSyntax } from '../Syntax/Expressions';
 import { validateStreamIdParts } from './CompositeStreamIdValidator';
 import { ParserContext } from './ParserContext';
+import { LineReader } from './LineReader';
 import { compatibleValue, uniqueByName } from './ResponseValidator';
 import { expandEffectiveSpecificationExamples, specificationExamples } from './SpecificationCommandExamples';
 import { SpecificationEventSyntax } from '../Syntax/Specifications';
@@ -23,6 +24,27 @@ import { SpecificationEventSyntax } from '../Syntax/Specifications';
 interface Producer { event: EventSyntax; command: CommandSyntax | null; type: TypeRefSyntax | null }
 
 export function validateSpecificationStreams(application: ApplicationSyntax, context: ParserContext): void {
+    const rows = new AuthoringProductionResolver(application).slices.flatMap(({ slice }) => slice.specifications.flatMap(specification => specification.cases ?? []));
+    if (rows.length === 0) return validateRoutes(application, context);
+    const sink = new ParserContext(new LineReader([]));
+    validateRoutes(application, sink);
+    const reported = new Set<string>();
+    const distinct = new Set<string>();
+    for (const diagnostic of sink.diagnostics) {
+        const key = JSON.stringify([diagnostic.code, diagnostic.location.path, diagnostic.location.line, diagnostic.location.column, diagnostic.message]);
+        if (distinct.has(key)) continue;
+        distinct.add(key);
+        const row = diagnostic.code === DiagnosticCodes.InvalidSpecificationStreamRoute ? rows.find(row => row.values.some(value => value.source.location.line === diagnostic.location.line && value.source.location.column === diagnostic.location.column && value.source.location.path === diagnostic.location.path)) : undefined;
+        if (row === undefined) context.error(diagnostic.code, diagnostic.message, diagnostic.location);
+        else {
+            const key = JSON.stringify(diagnostic.location);
+            if (!reported.has(key)) context.error(diagnostic.code, `Case '${row.name}': ${diagnostic.message}`, diagnostic.location);
+            reported.add(key);
+        }
+    }
+}
+
+function validateRoutes(application: ApplicationSyntax, context: ParserContext): void {
     const examples = specificationExamples(application).resolvedExamples;
     const expansion = expandEffectiveSpecificationExamples(application);
     application = expansion.application;

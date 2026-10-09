@@ -61,6 +61,9 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [new RegExp(`^(\\s*)(example)(\\s+)([A-Z][${bmpWordCharacters}]*)(\\s*)(:)(\\s*)([A-Z][${bmpWordCharacters}.]*)(?=\\s*(?://.*)?$)`),
                 ['white', 'keyword', 'white', 'type.identifier', 'white', 'operator', 'white', 'type.identifier']],
             [/^()(purpose)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', { token: 'type.identifier', next: '@purposeBody.$1' }]],
+            [/^(\s*)(parameter)(\s+)([a-z_]\w*)(\s+)([\w.]+(?:\[\])?(?:\s+optional)?)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'identifier', 'white', 'type.identifier']],
+            [/^(\s*)(case)(\s+)([A-Za-z_]\w*)(?=\s*(?:[a-z_]\w*\s*=|\/\/|$))/, ['white', 'keyword', 'white', 'type.identifier']],
+            [/\b(case)(\.)([a-z_]\w*)\b/, ['keyword', 'delimiter', 'identifier']],
             [/^(\s*)(concept)(\s+)([^\s:]+)(\s*:\s*)(\w+)((?:\s+(?:@?pii|personal|@?sensitive|secret))*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier', 'operator', { token: 'type.identifier', next: '@conceptBody.$1' }, 'keyword']],
             [/^(numbers)([ \t]+)(exact)(?=[ \t]*(?:(?:\/\/|#).*)?$)/, ['keyword', 'white', 'keyword']],
             [/^(eventsource)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
@@ -87,6 +90,8 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
                 ['identifier', 'type.identifier', 'white', 'keyword']],
             [/^(\s*query\s+[A-Za-z_]\w*\s*=>\s*(?!observable\s+optional\s*(?:\/\/.*)?$)(?:observable\s+)?)([\w.]+(?:\[\])?)(\s+)(optional)\b(?=\s*(?:\/\/.*)?$)/,
                 ['keyword', 'type.identifier', 'white', 'keyword']],
+            [new RegExp(`^(\\s*)(given)(\\s+)(caller)(\\s+)(as)(\\s+)([A-Za-z_][${bmpWordCharacters}]*)(?=\\s*(?://.*)?$)`),
+                ['white', 'keyword', 'white', 'keyword', 'white', 'keyword', 'white', 'type.identifier']],
             // A specification's clock, trigger, capture and query steps - matched before a sub-language keyword
             // can claim 'capture' and read the rest of the specification as change data capture.
             [/^(\s*)(given|when)(\s+)(clock|capture|trigger|query)\b/, ['white', 'keyword', 'white', 'keyword']],

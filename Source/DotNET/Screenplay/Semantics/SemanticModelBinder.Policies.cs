@@ -3,7 +3,9 @@
 
 using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Semantics.Execution;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Semantics;
 
@@ -29,6 +31,25 @@ public sealed partial class SemanticModelBinder
             NotPolicyConditionSyntax not => PolicyUsesSubject(not.Operand),
             _ => false
         };
+
+        void VerifyPersonaCallers(ImmutableArray<SemanticPolicy> policies)
+        {
+            foreach (var specification in expansion.Specifications.Where(specification => specification.Authored.GivenCallerPersona is not null))
+            {
+                var reference = specification.Authored.GivenCallerPersona!;
+                var persona = syntax.Personas!.Single(persona => persona.Name == reference.Name);
+                var fixture = specification.Effective.GivenCaller!;
+                var caller = new SemanticCaller(fixture.Authenticated, [.. fixture.Roles], [.. fixture.Claims.Select(claim => new SemanticCallerClaim(claim.Type, claim.Value))]);
+                foreach (var name in persona.Policies)
+                {
+                    var policy = policies.FirstOrDefault(policy => policy.Name == name);
+                    if (policy is null || policy.Condition is SemanticOpaquePolicyCondition || !SemanticPolicyEvaluation.AllowsCaller(policy.Condition, caller))
+                    {
+                        Error(DiagnosticCodes.UnsynthesizablePersonaCaller, $"Persona '{persona.Name}' caller does not satisfy policy '{name}'; use an explicit 'given caller'.", reference.Location);
+                    }
+                }
+            }
+        }
 
         ImmutableArray<SemanticPolicy> BindPolicies() => [.. syntax.Policies.Select(policy =>
         {

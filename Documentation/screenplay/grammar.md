@@ -924,9 +924,18 @@ ExampleDecl    = "example", Ident, ":", QualifiedName, NL,
 InlineFixtureAssignment = Path, "=", ConcreteValue ;
 
 SpecificationDecl = "specification", Ident, NL,
-                 INDENT, { DescriptionDecl | FileDirective | SpecificationGiven | SpecificationWhen | SpecificationThen }, DEDENT ;
+                 INDENT, { DescriptionDecl | FileDirective | SpecificationParameter | SpecificationCase | SpecificationGiven | SpecificationWhen | SpecificationThen }, DEDENT ;
+
+SpecificationParameter = "parameter", PropertyName, TypeRef, NL ;
+SpecificationCase = "case", Ident, [ Path, "=", ConcreteValue ], NL,
+                    [ INDENT, { Path, "=", ConcreteValue, NL }, DEDENT ] ;
+CaseValue = "case.", PropertyName ;
+(* CaseValue occupies a whole specification value position, including then error.
+   Every case assigns every typed parameter once. Callers, clocks, redelivery
+   locators, example bodies and structured-literal members exclude CaseValue. *)
 
 SpecificationGiven = OperationFailureFixture
+               | "given", "caller", "as", Ident, NL
                | "given", "caller", NL,
                  [ INDENT, { "authenticated", NL | "role", StringLiteral, NL | "claim", StringLiteral, "=", StringLiteral, NL }, DEDENT ]
                | "given", "readmodel", QualifiedName, [ InlineFixtureAssignment ], NL,

@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { ExpressionSyntax, PropertyMappingSyntax, SpecificationCallerSyntax, SpecificationEventSyntax, SpecificationRedeliverySyntax, SpecificationSyntax } from '@cratis/screenplay-compiler';
+import { specificationCaseOrigins, ExpressionSyntax, PropertyMappingSyntax, SpecificationCallerSyntax, SpecificationEventSyntax, SpecificationRedeliverySyntax, SpecificationSyntax } from '@cratis/screenplay-compiler';
 import { emptyGuid } from '../Document/identity';
 import { SliceSpecificationDocument, SpecificationCallerDocument, SpecificationStepDocument } from '../Document/EventModelDocument';
 import { expressionText } from './expressionText';
@@ -86,6 +86,8 @@ function actionOf(specification: SpecificationSyntax): { name: string; values: R
 // event cards can override step names, so carry every explicit route there as well, labeled by
 // role and occurrence. Keep links and payloads intact; this is display-only, not executable routing.
 function specificationName(specification: SpecificationSyntax): string {
+    const origin = specificationCaseOrigins.get(specification);
+    const title = origin === undefined ? specification.name : `${origin.table} — ${origin.case}`;
     const routes = [
         ...specification.given.map((event, index) => ({ event, role: `given ${index + 1}` })),
         ...(specification.whenAppended ? [{ event: specification.whenAppended, role: 'when append' }] : []),
@@ -116,8 +118,8 @@ function specificationName(specification: SpecificationSyntax): string {
     for (const absent of specification.thenAbsentReadModels ?? []) {
         details.push(`then no readmodel ${absent.name} for ${expressionText(absent.key)}`);
     }
-    if (details.length === 0) return specification.name;
-    return `${specificationTitle(specification.name)} — ${details.join(' | ')}`;
+    if (details.length === 0) return title;
+    return `${origin === undefined ? specificationTitle(title) : title} — ${details.join(' | ')}`;
 }
 
 function redeliveryText(action: SpecificationRedeliverySyntax): string {

@@ -49,6 +49,11 @@ static class WorkspaceSyntaxAddresses
             return SemanticAddress.ForSlice(application, moduleName, features, slice.Name);
         }
 
+        if (node is SpecificationCaseSyntax row && parent?.Node is SpecificationSyntax table && ancestors.LastOrDefault(entry => entry.Node is SliceSyntax)?.Address is { } tableSlice)
+        {
+            return SemanticAddress.ForSpecification(tableSlice, $"{table.Name}_{row.Name}");
+        }
+
         // Inline declaration placement is authoring structure, not event contract ownership.
         if (node is EventSyntax inlineEvent && member == "inlineEvent" && parent?.Node is ProducesSyntax &&
             ancestors.LastOrDefault(entry => entry.Node is SliceSyntax)?.Address is { } sliceAddress)
@@ -66,7 +71,7 @@ static class WorkspaceSyntaxAddresses
                 ProjectionSyntax projection when member == "projections" => SemanticAddress.ForProjection(owner, projection.Name),
                 ReactionSyntax reaction when member == "reactions" => SemanticAddress.ForReaction(owner, reaction.Name),
                 QuerySyntax query when member == "queries" => SemanticAddress.ForQuery(owner, query.Name),
-                SpecificationSyntax specification when member == "specifications" => SemanticAddress.ForSpecification(owner, specification.Name),
+                SpecificationSyntax specification when member == "specifications" && !specification.Cases.Any() => SemanticAddress.ForSpecification(owner, specification.Name),
                 _ => null
             };
         }
@@ -102,6 +107,7 @@ static class WorkspaceSyntaxAddresses
             .Select(group => group.OrderByDescending(entry => ((EventSyntax)entry.Node).Generation).First().Handle)
             .ToHashSet();
         var groups = entries.Where(entry => entry.Address is not null &&
+                (entry.Node is not SpecificationSyntax specification || !specification.Cases.Any()) &&
                 (entry.Node is not EventSyntax || currentEvents.Contains(entry.Handle)))
             .GroupBy(entry => entry.Address!);
         foreach (var group in groups.Where(group => group.Count() > 1 && group.Key.Kind is not (SemanticKind.Application or SemanticKind.Module or SemanticKind.Feature)))

@@ -17,6 +17,7 @@ static class ContractAdmission
     internal const string ReadModel = "      readmodel View\n        value String\n";
     internal const string KeyedQuery = "      query ByValue => View optional\n        by value String\n";
     internal const string Projection = "      projection View => View\n        from Recorded\n          value = value\n";
+    internal const string PersonaCallerContext = "policy Member\n  require authenticated and role \"member\"\npersona Accountant\n  policy Member\n" + Slice + Event + "      command Record\n        value String\n        authorize Member\n        produces Recorded\n          value = value\n";
 
     // Sources describe observable grammar forms, never expected admission, diagnostic or version facts.
     // Every published condition is a binding result for one of these sources, not a prose promise.
@@ -70,7 +71,14 @@ static class ContractAdmission
         new("readmodel", Slice + Event + ReadModel + Projection + KeyedQuery, [Slice + ReadModel]),
         new("reducer", Slice + Event + ReadModel + KeyedQuery + "      reducer View => View\n        on Recorded\n          ```csharp\n          return context.State;\n          ```\n", [Slice + Event + ReadModel + "      reducer View => View\n        on Recorded\n"]),
         new("screen", Slice + "      screen Screen\n"),
-        new("specification", Slice + Event + Command + "      specification Records\n        when Record\n          value = \"test\"\n        then Recorded\n          value = \"test\"\n"),
+        new(
+            "specification",
+            Slice + Event + Command + "      specification Records\n        when Record\n          value = \"test\"\n        then Recorded\n          value = \"test\"\n",
+            [
+                PersonaCallerContext + "      specification RecordsAsPersona\n        given caller as Accountant\n        when Record\n          value = \"test\"\n        then Recorded\n          value = \"test\"\n",
+                Slice + Event + Command + "      specification RecordsCases\n        parameter value String\n        case One value = \"one\"\n        case Two value = \"two\"\n        when Record value = case.value\n        then Recorded value = case.value\n"
+            ],
+            VariantBaselines: [PersonaCallerContext, null]),
         new("dialog", "module M\n  dialog template Dialog\n    body\n    actions\n"),
         new("form", Slice + Event + Command + "  form Input for Record\n    field value\n"),
         new("contribute", "layout Shell\n  navigation contributes Navigation\n  content\nmodule M\n  contribute to Navigation\n    navigate to Screen\n  feature F\n    slice StateView S\n      screen Screen\n")
@@ -83,7 +91,7 @@ static class ContractAdmission
         {
             var probe = Probes.SingleOrDefault(probe => probe.Keyword == keyword) ?? throw new InvalidScreenplayContract($"Construct '{keyword}' lacks an admission probe.");
             var sources = new[] { probe.Source }.Concat(probe.Variants ?? []).ToArray();
-            var bound = sources.Select((source, index) => Observe($"{keyword}[{index}]", source, index == 0 ? probe.Imported : null, index == 0 ? probe.Baseline : null)).ToArray();
+            var bound = sources.Select((source, index) => Observe($"{keyword}[{index}]", source, index == 0 ? probe.Imported : null, index == 0 ? probe.Baseline : probe.VariantBaselines?.ElementAtOrDefault(index - 1))).ToArray();
             var cases = new JsonArray();
             for (var index = 0; index < sources.Length; index++)
             {
@@ -168,6 +176,6 @@ static class ContractAdmission
         ["issue"] = ContractSources.Matches(observation.Diagnostic?.Message ?? string.Empty, @"\(#(\d+)\)").Select(number => $"https://github.com/Cratis/Screenplay/issues/{number}").FirstOrDefault()
     };
 
-    internal sealed record Probe(string Keyword, string Source, string[]? Variants = null, string? Baseline = null, string? Imported = null);
+    internal sealed record Probe(string Keyword, string Source, string[]? Variants = null, string? Baseline = null, string? Imported = null, string?[]? VariantBaselines = null);
     internal sealed record Observation(SemanticVersion? Minimum, Diagnostic? Diagnostic, bool MetadataOnly, Diagnostic[] Diagnostics);
 }

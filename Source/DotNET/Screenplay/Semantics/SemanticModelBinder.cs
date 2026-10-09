@@ -43,7 +43,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
         syntax = expansion.Application;
         var steps = new Dictionary<SyntaxNode, EffectiveSpecificationStep>(ReferenceEqualityComparer.Instance);
-        foreach (var step in expansion.Specifications.SelectMany(specification => specification.Steps)) steps.Add(step.Effective, step);
+        foreach (var step in expansion.Specifications.SelectMany(specification => specification.Steps)) steps.TryAdd(step.Effective, step);
         var context = new BindingContext(applicationName, syntax, documents, steps, expansion);
         try
         {
@@ -186,6 +186,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var eventSources = BindEventSources(concepts);
             var modules = AttachAutomation([.. syntax.Modules.Select(BindModule)]);
             var policies = BindPolicies();
+            VerifyPersonaCallers(policies);
             var application = new SemanticApplication(
                 applicationId,
                 applicationName,
@@ -204,8 +205,12 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             return application;
         }
 
-        internal void Error(string code, string message, SourceLocation location) =>
+        internal void Error(string code, string message, SourceLocation location)
+        {
+            var caseValue = expansion.Specifications.Where(specification => specification.Case is not null).SelectMany(specification => specification.Case!.Values.Select(value => (specification.Case.Name, Value: value))).FirstOrDefault(value => value.Value.Source.Location.Line > 1 && value.Value.Source.Location == location);
+            if (caseValue.Value is not null && !message.StartsWith("Case '", StringComparison.Ordinal)) message = $"Case '{caseValue.Name}' parameter '{caseValue.Value.Property}': {message}";
             _diagnostics.Add(Diagnostic.Error(code, message, location));
+        }
 
         static SemanticModule PromoteV2Destinations(SemanticModule module) =>
             module with { Features = [.. module.Features.Select(PromoteV2Destinations)] };

@@ -21,12 +21,12 @@ public class when_freezing_legacy_source_syntax_bytes
         var count = 0;
         foreach (var document in manifest.RootElement.GetProperty("documents").EnumerateArray())
         {
-            var parsed = compiler.Parse(File.ReadAllText(Path.Combine(root, document.GetProperty("path").GetString()!))).Value!;
-            var name = document.GetProperty("name").GetString()!;
+            var parsed = compiler.Parse(File.ReadAllText(Path.Combine(root, document.GetProperty("path").GetString()))).Value;
+            var name = document.GetProperty("name").GetString();
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams") continue;
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -76,7 +76,7 @@ public class when_freezing_legacy_source_syntax_bytes
             var path = Path.Combine(folder, "LegacySyntax", document.GetProperty("name").GetString() + ".json");
             if (initializing && !File.Exists(path))
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
                 File.WriteAllBytes(path, actual);
             }
 
@@ -106,8 +106,7 @@ public class when_freezing_legacy_source_syntax_bytes
         })
     };
 
-    // The living sample moved processing prose into declarations. Freeze its pre-purpose reasons,
-    // while the ordinary conformance vectors assert the current text verbatim.
+    // Restore only the living sample's moved processing prose; current conformance covers its new text.
     static string? LegacyReason(string concept, string marker, string? reason) => (concept, marker, reason) switch
     {
         ("PersonName", "pii", "The name identifies the person to contact about an invoice.") => "The name of the person to contact about an invoice. Needed to reach them about billing; lawful basis: contract performance. Lives under the customer's subject and is erasable with their key.",
@@ -164,11 +163,11 @@ public class when_freezing_legacy_source_syntax_bytes
                         Examples = [],
                         Specifications = slice.Specifications.Select(specification => specification.When?.CommandType == "AcmeInvoice" ? specification with
                         {
-                            When = expanded.Specifications.Single(item => ReferenceEquals(item.Authored, specification)).Effective.When! with
+                            When = expanded.Specifications.Single(item => ReferenceEquals(item.Authored, specification)).Effective.When with
                             {
                                 CommandType = "RegisterInvoice",
                                 InlineProperty = null,
-                                Values = expanded.Specifications.Single(item => ReferenceEquals(item.Authored, specification)).Effective.When!.Values.OrderBy(value => slice.Commands.Single(command => command.Name == "RegisterInvoice").Properties.Select(property => property.Name).ToList().IndexOf(value.Property))
+                                Values = expanded.Specifications.Single(item => ReferenceEquals(item.Authored, specification)).Effective.When.Values.OrderBy(value => slice.Commands.Single(command => command.Name == "RegisterInvoice").Properties.Select(property => property.Name).ToList().IndexOf(value.Property))
                             }
                         } : specification)
                     } : slice)
@@ -181,7 +180,7 @@ public class when_freezing_legacy_source_syntax_bytes
     {
         Concepts = application.Concepts.Where(concept => concept.Name != "InvoiceReceiptId"),
         Policies = application.Policies.Where(policy => policy.Name != "IsPerson"),
-        Personas = application.Personas.Select(persona => persona with { Policies = persona.Policies.Where(policy => policy != "IsPerson") }),
+        Personas = application.Personas.Where(persona => persona.Name != "InvoiceDraftCreator").Select(persona => persona with { Policies = persona.Policies.Where(policy => policy != "IsPerson") }),
         Modules = application.Modules.Select(module => module with
         {
             Authorize = module.Authorize is { Requirement: PolicyReferenceSyntax reference } authorize && reference.Name == "IsPerson"
@@ -340,6 +339,6 @@ public class when_freezing_legacy_source_syntax_bytes
         var directory = Directory.GetParent(path);
         while (directory is not null && !Directory.Exists(Path.Combine(directory.FullName, "Documentation"))) directory = directory.Parent;
 
-        return directory!.FullName;
+        return directory.FullName;
     }
 }

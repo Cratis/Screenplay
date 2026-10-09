@@ -15,6 +15,8 @@ sealed record McpDeclaration(string Kind, string Name, string[] Scope, SourceLoc
 
     public bool IsImplicit { get; init; }
 
+    public string? Case { get; init; }
+
     internal List<SyntaxNode> Parts { get; } = [Syntax];
 
     internal ImmutableArray<McpReadOwner> Hierarchy { get; init; } = [];

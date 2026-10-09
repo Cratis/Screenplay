@@ -104,6 +104,18 @@ Discover `CommandSyntax.response`, `RecordCommandResponseSyntax.fields`, `Scalar
 
 Workspace and catalog revisions, expected nodes, preview and explicit acceptance still apply. Inspect `read-proposal` before `apply`; discovery and preview never write. Generated values, responses, fixtures and return expectations are admitted as ESM v7. Response-only commands report `syntaxOnly: false` and null `executionReadiness`; a command that also uses operations, handlers, exact numeric mode or generated properties on concepts with validation rules remains unadmitted. Null readiness is not proof that the whole application binds or that reference execution has every generation fixture. Canonical `executable-model` byte pages include `generated`, `response`, `generatedValues` and `thenReturns` when present. Pin `expectedModelRevision` and `expectedAttachmentManifestRevision` on continuation; stale revisions refuse without a page. Form response scopes and an official renderer response type remain downstream work. Inline-event extraction can prove its executable-byte invariant for admitted response-bearing commands; other refusal and comment-preservation rules still apply. Rename with `PreserveTrivia` to retain response comments; canonical rename can refuse a proposal that would drop comments. See the [response contract](../commands.md#generated-values-and-responses).
 
+## Persona specification callers
+
+`declaration-details` for `kind: "Persona"`, `view: "caller"` returns `caller`, policy `contributions` (kind, value, optional claim type, policy and location), and `refusal`. The caller is always authenticated. Refusal carries a policy, location and reason: `negation`, `nonLiteralClaim`, `roleClaim`, `opaqueImplementation`, `unresolvedPolicy` or `noPolicies`. A required role-URI claim refuses synthesis; an `or` skips alternatives requiring it. See [persona callers](../personas.md#persona-callers-in-specifications).
+
+`find-fixtures` reports `role: "givenCaller"`, `origin: "persona"`, and the supplying `persona` and `policy` for synthesized caller atoms. `find-references` and rename index `given caller as` as a persona reference. `diagnostics` accepts `checks: "personas"` for opt-in coverage warnings and ambiguity information; it never runs this check implicitly.
+
+## Specification tables
+
+A specification summary includes typed `parameters` and `caseCount`. Its paged `cases` view returns `name`, `effectiveName`, `effectiveAddress`, `location` and `values`. Searching specifications lists an authored table once; resolving a derived address returns the table with `case` set.
+
+`find-fixtures` accepts a table or derived `specification` address and an optional `case` name. Effective values add `table`, `case`, `origin: "case"` and `caseParameter`. Parameter references are available through `find-references`; table, case and parameter renames update their references and derived identities. A table address in `run-specifications` scope selects every row; a derived address selects one. Failure keys use derived addresses and source-bound failure messages name the case.
+
 ## Typed specification examples
 
 Use `kind: "Example"` with `search-declarations`, `declaration-details`, `find-references` and `dependencies`. Example details report the authored underlying type and destination, with paged `values` and `generatedValues` views. Specification references point to the example; the example's `exampleType` dependency points to its underlying event, command or read model.

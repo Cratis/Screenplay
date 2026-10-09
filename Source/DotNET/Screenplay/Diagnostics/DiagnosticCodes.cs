@@ -2556,6 +2556,96 @@ public static class DiagnosticCodes
     public const string ConflictingDocumentationAcrossFiles = "PLAY0559";
 
     /// <summary>
+    /// A persona caller reference is malformed, has a body, or names an unknown persona.
+    /// </summary>
+    public const string InvalidSpecificationCallerPersona = "PLAY0572";
+
+    /// <summary>
+    /// A persona cannot synthesize a portable specification caller.
+    /// </summary>
+    public const string UnsynthesizablePersonaCaller = "PLAY0573";
+
+    /// <summary>
+    /// None of a persona's policies gates an application entry point.
+    /// </summary>
+    public const string PersonaWithoutGate = "PLAY0574";
+
+    /// <summary>
+    /// Every synthesizable persona is definitely denied by an effective gate.
+    /// </summary>
+    public const string GateWithoutPersona = "PLAY0575";
+
+    /// <summary>
+    /// Required atoms do not pin a persona's buildable alternatives.
+    /// </summary>
+    public const string AmbiguousPersonaCaller = "PLAY0576";
+
+    /// <summary>
+    /// A specification parameter requires a name and a property-line type.
+    /// </summary>
+    public const string InvalidSpecificationParameter = "PLAY0577";
+
+    /// <summary>
+    /// A case requires an identifier and concrete assignments.
+    /// </summary>
+    public const string InvalidSpecificationCase = "PLAY0578";
+
+    /// <summary>
+    /// A specification repeats a parameter name.
+    /// </summary>
+    public const string DuplicateSpecificationParameter = "PLAY0579";
+
+    /// <summary>
+    /// A specification repeats a case name.
+    /// </summary>
+    public const string DuplicateSpecificationCase = "PLAY0580";
+
+    /// <summary>
+    /// A table requires both parameters and cases.
+    /// </summary>
+    public const string IncompleteSpecificationTable = "PLAY0581";
+
+    /// <summary>
+    /// A case must assign every declared parameter exactly once.
+    /// </summary>
+    public const string InvalidSpecificationCaseAssignment = "PLAY0582";
+
+    /// <summary>
+    /// A case value is not concrete or cannot be normalized to its parameter type.
+    /// </summary>
+    public const string InvalidSpecificationCaseValue = "PLAY0583";
+
+    /// <summary>
+    /// A case reference is unknown or used outside an allowed table value position.
+    /// </summary>
+    public const string InvalidSpecificationCaseReference = "PLAY0584";
+
+    /// <summary>
+    /// An optional parameter supplies a required target.
+    /// </summary>
+    public const string OptionalSpecificationParameterTarget = "PLAY0585";
+
+    /// <summary>
+    /// An expanded specification name collides in its owning scope.
+    /// </summary>
+    public const string SpecificationCaseNameCollision = "PLAY0586";
+
+    /// <summary>
+    /// A parameter and its target have incompatible types.
+    /// </summary>
+    public const string IncompatibleSpecificationParameterType = "PLAY0587";
+
+    /// <summary>
+    /// A declared table parameter is never referenced.
+    /// </summary>
+    public const string UnusedSpecificationParameter = "PLAY0588";
+
+    /// <summary>
+    /// The singular expansion API cannot represent a specification table.
+    /// </summary>
+    public const string SingularSpecificationTableExpansion = "PLAY0589";
+
+    /// <summary>
     /// A legacy compliance marker spelling should be migrated to bare pii or secret.
     /// </summary>
     public const string LegacyComplianceMarker = "PLAY0565";
@@ -2593,57 +2683,57 @@ public static class DiagnosticCodes
     /// <summary>
     /// A purpose declaration or field has invalid syntax.
     /// </summary>
-    public const string InvalidPurposeDeclaration = "PLAY0572";
+    public const string InvalidPurposeDeclaration = "PLAY0596";
 
     /// <summary>
     /// A purpose uses a value outside a statutory vocabulary.
     /// </summary>
-    public const string InvalidPurposeVocabulary = "PLAY0573";
+    public const string InvalidPurposeVocabulary = "PLAY0597";
 
     /// <summary>
     /// A purpose repeats a singleton field.
     /// </summary>
-    public const string DuplicatePurposeField = "PLAY0574";
+    public const string DuplicatePurposeField = "PLAY0598";
 
     /// <summary>
     /// A purpose name is declared more than once.
     /// </summary>
-    public const string DuplicatePurposeDeclaration = "PLAY0575";
+    public const string DuplicatePurposeDeclaration = "PLAY0599";
 
     /// <summary>
     /// A purpose reference does not resolve.
     /// </summary>
-    public const string UnknownPurpose = "PLAY0576";
+    public const string UnknownPurpose = "PLAY0600";
 
     /// <summary>
     /// A legitimate-interest statement and basis do not agree.
     /// </summary>
-    public const string PurposeInterestMismatch = "PLAY0577";
+    public const string PurposeInterestMismatch = "PLAY0601";
 
     /// <summary>
     /// An opt-in check found personal data without purpose coverage.
     /// </summary>
-    public const string PersonalDataWithoutPurpose = "PLAY0578";
+    public const string PersonalDataWithoutPurpose = "PLAY0602";
 
     /// <summary>
     /// An opt-in check found special data without a processing condition.
     /// </summary>
-    public const string SpecialDataWithoutCondition = "PLAY0579";
+    public const string SpecialDataWithoutCondition = "PLAY0603";
 
     /// <summary>
     /// An opt-in check found criminal data without authorization.
     /// </summary>
-    public const string CriminalDataWithoutAuthorization = "PLAY0580";
+    public const string CriminalDataWithoutAuthorization = "PLAY0604";
 
     /// <summary>
     /// An opt-in check found a purpose without a lawful basis.
     /// </summary>
-    public const string PurposeWithoutBasis = "PLAY0581";
+    public const string PurposeWithoutBasis = "PLAY0605";
 
     /// <summary>
     /// An opt-in check found an unreferenced purpose.
     /// </summary>
-    public const string UnusedPurpose = "PLAY0582";
+    public const string UnusedPurpose = "PLAY0606";
 
     /// <summary>
     /// Interaction alternatives require a click, double click or select trigger.

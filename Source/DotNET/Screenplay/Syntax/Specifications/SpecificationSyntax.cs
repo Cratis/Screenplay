@@ -43,6 +43,16 @@ public record SpecificationSyntax(
     public IEnumerable<SpecificationExampleSyntax> Examples { get; init; } = [];
 
     /// <summary>
+    /// Gets the typed parameters of this specification table.
+    /// </summary>
+    public IEnumerable<SpecificationParameterSyntax> Parameters { get; init; } = [];
+
+    /// <summary>
+    /// Gets the named cases, in expansion order.
+    /// </summary>
+    public IEnumerable<SpecificationCaseSyntax> Cases { get; init; } = [];
+
+    /// <summary>
     /// Gets the <see cref="FileReferenceSyntax"/> naming the file the specification is realized by,
     /// and <c>null</c> when the document does not name one.
     /// </summary>
@@ -70,6 +80,11 @@ public record SpecificationSyntax(
 
     /// <summary>Gets the explicit caller fixture, or null when no identity context was authored.</summary>
     public SpecificationCallerSyntax? GivenCaller { get; init; }
+
+    /// <summary>
+    /// Gets the persona reference used instead of an explicit caller fixture.
+    /// </summary>
+    public SpecificationCallerPersonaSyntax? GivenCallerPersona { get; init; }
 
     /// <summary>Gets whether this scenario explicitly expects an authorization denial.</summary>
     public SpecificationDeniedSyntax? ThenDenied { get; init; }
@@ -344,4 +359,10 @@ public record SpecificationNoResultSyntax(SourceLocation Location) : SyntaxNode(
 /// does not name". Most recovered specifications are the second kind, and an empty string would read as a
 /// reason left blank rather than one never stated.
 /// </remarks>
-public record SpecificationErrorSyntax(string? Name, SourceLocation Location) : SyntaxNode(Location);
+public record SpecificationErrorSyntax(string? Name, SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the String parameter supplying the expected rejection message.
+    /// </summary>
+    public CaseValueExpressionSyntax? CaseValue { get; init; }
+}

@@ -8,11 +8,11 @@ import { mergeDocuments } from '../../Files/PlayFolderMerge';
 describe('when parsing purposes', () => {
     it('should diagnose malformed headers, fields and references', () => {
         const result = parse('purpose 42\n  unknown thing\n  retention notQuoted\nmodule M\n  purpose 42');
-        expect(result.diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PLAY0572', 'PLAY0572', 'PLAY0572', 'PLAY0572']);
+        expect(result.diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PLAY0596', 'PLAY0596', 'PLAY0596', 'PLAY0596']);
     });
     it('should warn on an interest not supported by its basis', () => {
         const result = parse('purpose P\n  basis contract\n  interest "Prevent fraud"');
-        expect(result.diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PLAY0577']);
+        expect(result.diagnostics.map(diagnostic => diagnostic.code)).toEqual(['PLAY0601']);
     });
     it('should merge references in placed module and feature files once', () => {
         const declared = parse('purpose Billing\n  basis consent', 'root.play');

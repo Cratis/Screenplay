@@ -18,6 +18,7 @@ Processing purposes are declared at the top level: Billing covers the module, Bo
 
 | Persona | Holds | Sees the screens of |
 | --- | --- | --- |
+| `InvoiceDraftCreator` | `IsAuthenticated`, `CanManageInvoice` | a focused authenticated draft-creation specification witness; broader screen roles remain below |
 | `InvoiceManager` | `IsAuthenticated`, `IsPerson`, `IsInvoicingStaff`, `CanManageInvoice` | StartInvoiceDraft, RegisterInvoice, CancelInvoice, TagInvoice, UpdateBillingContact, InvoiceList, InvoiceDetails |
 | `Accountant` | the above, plus `IsAccountant`, `IsFinanceDepartment` | everything the invoice manager sees, plus ChangeInvoiceStatus, ProcessInvoiceBatch, ArchiveOldInvoices, InvoiceLineReport, InvoiceDashboard, ApplyDiscount, RecordPayment, InvoiceBalances, InvoiceAging, CollectionsBoard, ExchangeRates |
 | `FinanceController` | `IsAuthenticated`, `IsPerson`, `IsInvoicingStaff`, `IsFinanceDepartment`, `CanWriteOff` | WriteOffInvoice |
@@ -59,7 +60,8 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | `concept` of every primitive, `Enum`, `pii`/`secret` with reasons, secret scope and personal-data special/criminal qualifiers, `file`, concept `validate` with `matches email`, `rule` with a `file` and an inline body, `severity` | Concepts |
 | `type` with `description`, `file`, optional and collection properties | Composite value types |
 | `policy` with `require` (`authenticated`, `role`, `claim … matches` a literal, `subject` or `$context` path, `not`/`and`/`or`/parentheses, continuation lines), inline ```` ```csharp ```` and `file` bodies | Authorization |
-| `persona` with single-line and fenced descriptions | Authorization |
+| Typed specification `parameter`, named `case` and `case.<parameter>` values | StartingDraftsForCustomers |
+| `persona` with single-line and fenced descriptions; `given caller as` with a deterministic authenticated witness | Authorization; StartingAnInvoiceDraft |
 | `authentication` with named providers | Authorization |
 | `trigger` with `description`, `file`, typed and untyped values | Triggers |
 | `theme`, two `layout`s with `arrangement flow`, `when width compact`, `gap`; two `ui profile`s | Look and shell |
