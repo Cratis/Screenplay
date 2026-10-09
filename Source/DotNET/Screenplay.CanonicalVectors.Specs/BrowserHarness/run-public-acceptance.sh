@@ -41,6 +41,11 @@ if ! NODE_PATH="$node_path" node -e "require('playwright')" >/dev/null 2>&1; the
     exit 2
 fi
 
+if ! node "${harness}/screen-composition-browser-native-controls.cjs" --self-test; then
+    echo "run-public-acceptance: the browser harness self-test failed; its results cannot be trusted" >&2
+    exit 2
+fi
+
 port="${SCREENPLAY_ACCEPTANCE_PORT:-19180}"
 workbench_port=$((port + 16000))
 results=".ai-work/acceptance/cli-${cli_version}-$(date -u +%Y%m%dT%H%M%SZ)"
