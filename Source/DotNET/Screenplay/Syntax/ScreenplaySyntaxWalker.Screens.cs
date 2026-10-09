@@ -235,16 +235,17 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitScreenComponent(ScreenComponentSyntax syntax)
     {
         VisitNode(syntax);
-        if (syntax.Context is not null) VisitNode(syntax.Context);
+        if (syntax.Context is not null) VisitUiBinding(syntax.Context);
         foreach (var property in syntax.Properties)
         {
             VisitNode(property);
-            if (property.Binding is not null) VisitNode(property.Binding);
+            if (property.Binding is not null) VisitUiBinding(property.Binding);
+            if (property.Value is not null) VisitExpression(property.Value);
         }
         foreach (var exposed in syntax.Exposes)
         {
             VisitNode(exposed);
-            VisitNode(exposed.Binding);
+            VisitUiBinding(exposed.Binding);
         }
         foreach (var presentation in syntax.Presentation) VisitNode(presentation);
         foreach (var outlet in syntax.Outlets)
@@ -254,6 +255,16 @@ public abstract partial class ScreenplaySyntaxWalker
         }
         foreach (var behavior in syntax.Behaviors) VisitBehavior(behavior);
         foreach (var uses in syntax.UsedBehaviors) VisitUsesBehavior(uses);
+    }
+
+    /// <summary>
+    /// Visits a <see cref="UiBindingSyntax"/> node and its literal value.
+    /// </summary>
+    /// <param name="syntax">The <see cref="UiBindingSyntax"/> to visit.</param>
+    public virtual void VisitUiBinding(UiBindingSyntax syntax)
+    {
+        VisitNode(syntax);
+        if (syntax.Literal is not null) VisitExpression(syntax.Literal);
     }
 
     /// <summary>
@@ -269,7 +280,7 @@ public abstract partial class ScreenplaySyntaxWalker
             foreach (var parameter in item.Parameters)
             {
                 VisitNode(parameter);
-                VisitNode(parameter.Binding);
+                VisitUiBinding(parameter.Binding);
             }
             foreach (var presentation in item.Presentation) VisitNode(presentation);
         }

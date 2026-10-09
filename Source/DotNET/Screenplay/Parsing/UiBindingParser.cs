@@ -28,10 +28,22 @@ internal static partial class UiBindingParser
         }
 
         var body = trimmed["from ".Length..].Trim();
+        if (body.StartsWith("literal ", StringComparison.Ordinal))
+        {
+            var literalHead = LiteralBindingHeadRegex().Match(body);
+            if (!literalHead.Success)
+            {
+                context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid UI binding '{trimmed}' - expected 'from literal <value>'", location);
+                return Create(UiBindingKind.Invalid, body, location, trimmed) with { RawText = trimmed };
+            }
+
+            return ParseModifiers(context, ParseLiteral(context, literalHead.Groups[1].Value, location, trimmed), literalHead.Groups[2].Value, location);
+        }
+
         var head = BindingHeadRegex().Match(body);
         if (!head.Success)
         {
-            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid UI binding '{trimmed}' - expected 'from data <path>', 'from query <Query>[.<path>]' or 'from component <id>.<path>'", location);
+            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid UI binding '{trimmed}' - expected 'from data <path>', 'from query <Query>[.<path>]', 'from component <id>.<path>' or 'from literal <value>'", location);
             return Create(UiBindingKind.Invalid, body, location, trimmed) with { RawText = trimmed };
         }
 
@@ -52,7 +64,8 @@ internal static partial class UiBindingParser
     static bool IsTypedBindingSource(string? source) =>
         string.Equals(source, "data", StringComparison.Ordinal) ||
         string.Equals(source, "query", StringComparison.Ordinal) ||
-        string.Equals(source, "component", StringComparison.Ordinal);
+        string.Equals(source, "component", StringComparison.Ordinal) ||
+        string.Equals(source, "literal", StringComparison.Ordinal);
 
     static UiBindingSyntax ParseQuery(ParserContext context, string expression, SourceLocation location, string raw)
     {
@@ -73,7 +86,12 @@ internal static partial class UiBindingParser
         var match = RequiredQualifiedPathRegex().Match(expression);
         if (!match.Success)
         {
-            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid component binding '{raw}' - expected 'from component <stableInstanceId>.<outputPath>'.", location);
+            match = QuotedComponentPathRegex().Match(expression);
+        }
+
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid component binding '{raw}' - expected 'from component <stableInstanceId>.<outputPath>' or 'from component \"<stableInstanceId>\".<outputPath>'.", location);
             return Create(UiBindingKind.Invalid, expression, location, raw) with { RawText = raw };
         }
 
@@ -83,6 +101,12 @@ internal static partial class UiBindingParser
             ComponentId = match.Groups[1].Value,
             ComponentPropertyPath = path
         };
+    }
+
+    static UiBindingSyntax ParseLiteral(ParserContext context, string expression, SourceLocation location, string raw)
+    {
+        var value = ExpressionParser.ParseMappingSource(context, expression, location);
+        return Create(UiBindingKind.Literal, string.Empty, location, raw) with { Literal = value };
     }
 
     static UiBindingSyntax ParseModifiers(ParserContext context, UiBindingSyntax binding, string modifiers, SourceLocation location)
@@ -135,11 +159,17 @@ internal static partial class UiBindingParser
     [GeneratedRegex(@"^(data|query|component)\s+(\S+)(.*)$", RegexOptions.None, 1000)]
     private static partial Regex BindingHeadRegex();
 
+    [GeneratedRegex(@"^literal\s+(.+?)(?:\s+(mode\s+.+|null\s+.+|expected\s+.+))?$", RegexOptions.None, 1000)]
+    private static partial Regex LiteralBindingHeadRegex();
+
     [GeneratedRegex(@"^([A-Za-z_]\w*)(?:\.(.+))?$", RegexOptions.None, 1000)]
     private static partial Regex QualifiedPathRegex();
 
     [GeneratedRegex(@"^([A-Za-z_]\w*)\.(.+)$", RegexOptions.None, 1000)]
     private static partial Regex RequiredQualifiedPathRegex();
+
+    [GeneratedRegex("^\\\"(" + Cratis.Screenplay.Text.StringLiteral.BodyPattern + ")\\\"\\.(.+)$", RegexOptions.None, 1000)]
+    private static partial Regex QuotedComponentPathRegex();
 
     [GeneratedRegex(@"^mode\s+(oneWay|twoWay)\b(.*)$", RegexOptions.None, 1000)]
     private static partial Regex ModeRegex();

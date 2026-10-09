@@ -6701,6 +6701,7 @@
                                 "componentId": "invoiceGrid",
                                 "componentPropertyPath": "selected.invoiceId",
                                 "expectedValueType": null,
+                                "literal": null,
                                 "mode": null,
                                 "nullBehavior": null,
                                 "path": "selected.invoiceId",
@@ -6732,6 +6733,7 @@
                         "componentId": null,
                         "componentPropertyPath": null,
                         "expectedValueType": null,
+                        "literal": null,
                         "mode": null,
                         "nullBehavior": null,
                         "path": "",
@@ -6747,6 +6749,7 @@
                             "componentId": "invoiceGrid",
                             "componentPropertyPath": "selected",
                             "expectedValueType": null,
+                            "literal": null,
                             "mode": null,
                             "nullBehavior": null,
                             "path": "selected",
@@ -6783,9 +6786,13 @@
                           "kind": "ComponentPropertySyntax",
                           "binding": null,
                           "property": "title",
-                          "value": "Invoices"
+                          "value": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Invoices"
+                          }
                         }
-                      ]
+                      ],
+                      "stableId": null
                     },
                     {
                       "kind": "ScreenSectionSyntax",

@@ -112,6 +112,11 @@ internal static class syntax_examples
             return 2u;
         }
 
+        if (type == typeof(double))
+        {
+            return 1.5d;
+        }
+
         if (type == typeof(TimeOnly))
         {
             return new TimeOnly(12, 34, 56);

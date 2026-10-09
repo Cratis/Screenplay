@@ -95,6 +95,11 @@ internal static class SyntaxSchemaWriter
             return new Dictionary<string, object?> { ["type"] = "integer", ["minimum"] = 0, ["maximum"] = uint.MaxValue };
         }
 
+        if (type == typeof(double))
+        {
+            return Type("number");
+        }
+
         if (type == typeof(object))
         {
             return SyntaxLiterals.Schema();

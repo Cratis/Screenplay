@@ -209,6 +209,11 @@ public record ScreenUsesBehaviorSyntax(UsesBehaviorSyntax Uses, SourceLocation L
 public record ScreenComponentSyntax(string Component, string Name, SourceLocation Location) : ScreenDirectiveSyntax(Location)
 {
     /// <summary>
+    /// Gets the exact stable id used by renderers and component bindings, or <c>null</c> when <see cref="Name"/> is the stable id.
+    /// </summary>
+    public string? StableId { get; init; }
+
+    /// <summary>
     /// Gets the data context binding for the component.
     /// </summary>
     public UiBindingSyntax? Context { get; init; }
@@ -256,7 +261,7 @@ public record ScreenComponentSyntax(string Component, string Name, SourceLocatio
 /// <param name="Binding">The binding expression, or <c>null</c> when the value is literal.</param>
 /// <param name="Value">The literal value, or <c>null</c> when the property is bound.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
-public record ComponentPropertySyntax(string Property, UiBindingSyntax? Binding, string? Value, SourceLocation Location) : SyntaxNode(Location);
+public record ComponentPropertySyntax(string Property, UiBindingSyntax? Binding, ExpressionSyntax? Value, SourceLocation Location) : SyntaxNode(Location);
 
 /// <summary>
 /// Represents an exposed component instance value.
