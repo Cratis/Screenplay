@@ -414,6 +414,16 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitFormField(field);
         }
 
+        foreach (var column in syntax.Columns)
+        {
+            VisitFormColumn(column);
+        }
+
+        if (syntax.Layout is not null)
+        {
+            VisitCommandFormLayout(syntax.Layout);
+        }
+
         if (syntax.OnSubmit is not null)
         {
             VisitScreenNavigate(syntax.OnSubmit);
@@ -433,6 +443,53 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="FormFieldSyntax"/> to visit.</param>
     public virtual void VisitFormField(FormFieldSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a <see cref="FormColumnSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="FormColumnSyntax"/> to visit.</param>
+    public virtual void VisitFormColumn(FormColumnSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a <see cref="CommandFormLayoutSyntax"/> node and its children.
+    /// </summary>
+    /// <param name="syntax">The <see cref="CommandFormLayoutSyntax"/> to visit.</param>
+    public virtual void VisitCommandFormLayout(CommandFormLayoutSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var column in syntax.Columns) VisitFormLayoutColumn(column);
+        if (syntax.ColumnGap is not null) VisitFormWidth(syntax.ColumnGap);
+        if (syntax.RowGap is not null) VisitFormWidth(syntax.RowGap);
+        foreach (var placement in syntax.Placements) VisitFormFieldPlacement(placement);
+    }
+
+    /// <summary>
+    /// Visits a <see cref="FormLayoutColumnSyntax"/> node and its widths.
+    /// </summary>
+    /// <param name="syntax">The <see cref="FormLayoutColumnSyntax"/> to visit.</param>
+    public virtual void VisitFormLayoutColumn(FormLayoutColumnSyntax syntax)
+    {
+        VisitNode(syntax);
+        if (syntax.Width is not null) VisitFormWidth(syntax.Width);
+        if (syntax.MinWidth is not null) VisitFormWidth(syntax.MinWidth);
+        if (syntax.MaxWidth is not null) VisitFormWidth(syntax.MaxWidth);
+    }
+
+    /// <summary>
+    /// Visits a <see cref="FormFieldPlacementSyntax"/> node and its widths.
+    /// </summary>
+    /// <param name="syntax">The <see cref="FormFieldPlacementSyntax"/> to visit.</param>
+    public virtual void VisitFormFieldPlacement(FormFieldPlacementSyntax syntax)
+    {
+        VisitNode(syntax);
+        if (syntax.Width is not null) VisitFormWidth(syntax.Width);
+    }
+
+    /// <summary>
+    /// Visits a <see cref="FormWidthSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="FormWidthSyntax"/> to visit.</param>
+    public virtual void VisitFormWidth(FormWidthSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="ContributionSyntax"/> node and its children.

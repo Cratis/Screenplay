@@ -6,6 +6,27 @@ using Cratis.Screenplay.Diagnostics;
 namespace Cratis.Screenplay.Syntax;
 
 /// <summary>
+/// Defines how a command form's fields are generated.
+/// </summary>
+public enum FormGenerationMode
+{
+    /// <summary>
+    /// The form does not declare a generation mode.
+    /// </summary>
+    Unspecified = 0,
+
+    /// <summary>
+    /// Generate fields from command metadata.
+    /// </summary>
+    Auto = 1,
+
+    /// <summary>
+    /// Use authored fields.
+    /// </summary>
+    Manual = 2
+}
+
+/// <summary>
 /// Defines how a command-bound form arranges command properties into columns.
 /// </summary>
 public enum FormColumnMode
@@ -24,6 +45,32 @@ public enum FormColumnMode
     /// Columns are authored explicitly.
     /// </summary>
     Manual = 2
+}
+
+/// <summary>
+/// Defines the Scene command-form width unit.
+/// </summary>
+public enum FormWidthUnitSyntax
+{
+    /// <summary>
+    /// A CSS-style fractional unit.
+    /// </summary>
+    Fraction = 0,
+
+    /// <summary>
+    /// Pixels.
+    /// </summary>
+    Pixels = 1,
+
+    /// <summary>
+    /// Percent.
+    /// </summary>
+    Percent = 2,
+
+    /// <summary>
+    /// Automatic width.
+    /// </summary>
+    Auto = 3
 }
 
 /// <summary>
@@ -71,9 +118,19 @@ public record FormSyntax(
     public FormColumnMode ColumnMode { get; init; } = FormColumnMode.Unspecified;
 
     /// <summary>
+    /// Gets how the form's fields are generated.
+    /// </summary>
+    public FormGenerationMode GenerationMode { get; init; } = FormGenerationMode.Unspecified;
+
+    /// <summary>
     /// Gets the manually authored columns when <see cref="ColumnMode"/> is <see cref="FormColumnMode.Manual"/>.
     /// </summary>
     public IEnumerable<FormColumnSyntax> Columns { get; init; } = [];
+
+    /// <summary>
+    /// Gets the platform-neutral Scene command-form geometry.
+    /// </summary>
+    public CommandFormLayoutSyntax? Layout { get; init; }
 }
 
 /// <summary>
@@ -114,3 +171,48 @@ public record FormFieldSyntax(string Property, string? Label, string? From, stri
 /// <param name="Label">The optional display label.</param>
 /// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
 public record FormColumnSyntax(string Property, string? Label, SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
+/// Represents a Scene 4.12 command-form layout block.
+/// </summary>
+/// <param name="Columns">The authored columns.</param>
+/// <param name="Placements">The authored field placements.</param>
+/// <param name="ColumnGap">The optional column gap.</param>
+/// <param name="RowGap">The optional row gap.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in source text.</param>
+public record CommandFormLayoutSyntax(
+    IEnumerable<FormLayoutColumnSyntax> Columns,
+    IEnumerable<FormFieldPlacementSyntax> Placements,
+    FormWidthSyntax? ColumnGap,
+    FormWidthSyntax? RowGap,
+    SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
+/// Represents one Scene command-form layout column.
+/// </summary>
+/// <param name="Index">The one-based column index.</param>
+/// <param name="Width">The optional authored width.</param>
+/// <param name="MinWidth">The optional minimum width.</param>
+/// <param name="MaxWidth">The optional maximum width.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in source text.</param>
+public record FormLayoutColumnSyntax(int Index, FormWidthSyntax? Width, FormWidthSyntax? MinWidth, FormWidthSyntax? MaxWidth, SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
+/// Represents one Scene command-form field placement.
+/// </summary>
+/// <param name="Field">The command field.</param>
+/// <param name="Row">The one-based row.</param>
+/// <param name="Column">The one-based column.</param>
+/// <param name="RowSpan">The optional row span.</param>
+/// <param name="ColumnSpan">The optional column span.</param>
+/// <param name="Width">The optional field width.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in source text.</param>
+public record FormFieldPlacementSyntax(string Field, int Row, int Column, int? RowSpan, int? ColumnSpan, FormWidthSyntax? Width, SourceLocation Location) : SyntaxNode(Location);
+
+/// <summary>
+/// Represents a Scene command-form width value.
+/// </summary>
+/// <param name="Unit">The width unit.</param>
+/// <param name="Value">The numeric value for fraction, pixel and percent widths; <c>null</c> for auto.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in source text.</param>
+public record FormWidthSyntax(FormWidthUnitSyntax Unit, double? Value, SourceLocation Location) : SyntaxNode(Location);

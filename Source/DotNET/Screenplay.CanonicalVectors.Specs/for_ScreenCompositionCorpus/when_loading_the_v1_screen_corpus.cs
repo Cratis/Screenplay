@@ -71,10 +71,12 @@ public class when_loading_the_v1_screen_corpus : Specification
         source.PendingReason.ShouldBeNull();
         source.Requires.ShouldEqual("Screenplay v4.96.0 typed screen authoring syntax");
         source.Document.Text.Contains("component scene.web.DataGrid workItems", StringComparison.Ordinal).ShouldBeTrue();
-        source.Document.Text.Contains("property selectedItem from component workItems.selectedItem null clear", StringComparison.Ordinal).ShouldBeTrue();
-        source.Document.Text.Contains("columns manual", StringComparison.Ordinal).ShouldBeTrue();
+        source.Document.Text.Contains("id \"work-items:list\"", StringComparison.Ordinal).ShouldBeTrue();
+        source.Document.Text.Contains("property selectedItem from component \"work-items:list\".selectedItem null clear", StringComparison.Ordinal).ShouldBeTrue();
+        source.Document.Text.Contains("property pageSize = 25", StringComparison.Ordinal).ShouldBeTrue();
+        source.Document.Text.Contains("layout", StringComparison.Ordinal).ShouldBeTrue();
         source.Document.Text.Contains("icons", StringComparison.Ordinal).ShouldBeTrue();
-        source.ExpectedSyntaxKinds.ShouldContain("ScreenComponentSyntax");
+        source.ExpectedSyntaxKinds.ShouldContain("CommandFormLayoutSyntax");
     }
 
     [Fact]

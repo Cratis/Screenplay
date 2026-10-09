@@ -28,7 +28,12 @@ public enum UiBindingKind
     /// <summary>
     /// The binding reads from another component's exposed property.
     /// </summary>
-    ComponentProperty = 3
+    ComponentProperty = 3,
+
+    /// <summary>
+    /// The binding supplies a literal value.
+    /// </summary>
+    Literal = 4
 }
 
 /// <summary>
@@ -105,6 +110,11 @@ public record UiBindingSyntax(UiBindingKind BindingKind, string Path, SourceLoca
     /// Gets the expected value type used by downstream validation.
     /// </summary>
     public string? ExpectedValueType { get; init; }
+
+    /// <summary>
+    /// Gets the literal value when <see cref="BindingKind"/> is <see cref="UiBindingKind.Literal"/>.
+    /// </summary>
+    public ExpressionSyntax? Literal { get; init; }
 
     /// <summary>
     /// Gets the raw authored binding text for invalid bindings.

@@ -58,6 +58,7 @@ public class when_freezing_legacy_source_syntax_bytes
                 .Replace(",\"templates\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"parameters\":[],\"route\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"columnMode\":\"Unspecified\",\"columns\":[]", string.Empty, StringComparison.Ordinal)
+                .Replace(",\"generationMode\":\"Unspecified\",\"layout\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"icons\":[]", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"category\":null", string.Empty, StringComparison.Ordinal)
                 .Replace(",\"templateType\":null", string.Empty, StringComparison.Ordinal)
@@ -198,7 +199,9 @@ public class when_freezing_legacy_source_syntax_bytes
                 (form.Name == "RecordPaymentForm" ? form with { Populate = new FormPopulateFromItemSyntax(form.Location) } : form) with
                 {
                     ColumnMode = FormColumnMode.Unspecified,
-                    Columns = []
+                    GenerationMode = FormGenerationMode.Unspecified,
+                    Columns = [],
+                    Layout = null
                 }),
             Features = module.Features.Select(feature => feature.Name == "InvoiceManagement" ? feature with
             {

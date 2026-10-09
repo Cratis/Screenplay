@@ -102,17 +102,18 @@ public partial class ScreenplayPrinter
 
         foreach (var parameter in navigate.Parameters)
         {
-            writer.Line($"parameter {parameter.Name} {WriteUiBinding(parameter.Binding)}", parameter);
+            writer.Line($"parameter {parameter.Name} {WriteUiBinding(writer, parameter.Binding)}", parameter);
         }
     }
 
-    string WriteUiBinding(UiBindingSyntax binding)
+    string WriteUiBinding(ScreenplayWriter writer, UiBindingSyntax binding)
     {
         var head = binding.BindingKind switch
         {
             UiBindingKind.DataContext => $"from data {binding.Path}",
             UiBindingKind.QueryResult => string.IsNullOrWhiteSpace(binding.Path) ? $"from query {binding.Query}" : $"from query {binding.Query}.{binding.Path}",
-            UiBindingKind.ComponentProperty => $"from component {binding.ComponentId}.{binding.ComponentPropertyPath ?? binding.Path}",
+            UiBindingKind.ComponentProperty => $"from component {WriteStableComponentId(binding.ComponentId)}.{binding.ComponentPropertyPath ?? binding.Path}",
+            UiBindingKind.Literal => $"from literal {writer.Expression(binding.Literal ?? new LiteralExpressionSyntax(null, binding.Location))}",
             _ => binding.RawText ?? binding.Path
         };
 
@@ -242,17 +243,22 @@ public partial class ScreenplayPrinter
         writer.Line($"component {component.Component} {component.Name}");
         using (writer.Indent())
         {
+            if (component.StableId is not null)
+            {
+                writer.Line($"id {ScreenplaySyntaxText.LocalizableString(component.StableId)}");
+            }
+
             if (component.Context is not null)
             {
-                writer.Line($"context {WriteUiBinding(component.Context)}");
+                writer.Line($"context {WriteUiBinding(writer, component.Context)}");
             }
 
             foreach (var property in component.Properties)
             {
                 writer.Line(
                     property.Binding is not null
-                        ? $"property {property.Property} {WriteUiBinding(property.Binding)}"
-                        : $"property {property.Property} = {ScreenplaySyntaxText.LocalizableString(property.Value ?? string.Empty)}",
+                        ? $"property {property.Property} {WriteUiBinding(writer, property.Binding)}"
+                        : $"property {property.Property} = {writer.Expression(property.Value ?? new LiteralExpressionSyntax(null, property.Location))}",
                     property);
             }
 
@@ -268,7 +274,7 @@ public partial class ScreenplayPrinter
 
             foreach (var exposed in component.Exposes)
             {
-                writer.Line($"exposes {exposed.Name} {WriteUiBinding(exposed.Binding)}", exposed);
+                writer.Line($"exposes {exposed.Name} {WriteUiBinding(writer, exposed.Binding)}", exposed);
             }
 
             foreach (var outlet in component.Outlets)
@@ -286,6 +292,21 @@ public partial class ScreenplayPrinter
             WriteAttachments(writer, component.Behaviors, component.UsedBehaviors);
         }
     }
+
+    string WriteStableComponentId(string? componentId)
+    {
+        if (string.IsNullOrWhiteSpace(componentId))
+        {
+            return string.Empty;
+        }
+
+        return IsIdentifier(componentId) ? componentId : ScreenplaySyntaxText.LocalizableString(componentId);
+    }
+
+    bool IsIdentifier(string text) =>
+        text.Length > 0 &&
+        (char.IsLetter(text[0]) || text[0] == '_') &&
+        text.All(character => char.IsLetterOrDigit(character) || character == '_');
 
     void WriteScreenToolbar(ScreenplayWriter writer, ScreenToolbarSyntax toolbar)
     {
@@ -324,7 +345,7 @@ public partial class ScreenplayPrinter
 
             foreach (var parameter in item.Parameters)
             {
-                writer.Line($"parameter {parameter.Name} {WriteUiBinding(parameter.Binding)}", parameter);
+                writer.Line($"parameter {parameter.Name} {WriteUiBinding(writer, parameter.Binding)}", parameter);
             }
 
             foreach (var value in item.Presentation)

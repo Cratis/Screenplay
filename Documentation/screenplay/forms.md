@@ -12,6 +12,8 @@ form <Name> for <Command>
   # -- or --
   populate from item
 
+  generation auto|manual
+
   field <property> [from <source>|compose using <Callback>] [label "<text>"]
   ...
 
@@ -20,13 +22,21 @@ form <Name> for <Command>
   columns manual
     column <property> [label "<text>"]
 
+  layout
+    column <index> [width <width>] [min <width>] [max <width>]
+    columnGap <width>
+    rowGap <width>
+    place <field> row <row> column <column> [rowSpan <n>] [columnSpan <n>] [width <width>]
+
   on submit navigate to <Screen> [by <param>]
 ```
 
 - `form <Name> for <Command>` - top level, alongside `screen template` and `feature`, inside a `module`. A module can declare more than one; each name must be unique.
 - `populate` - where the form's initial values come from. At most one per form, and optional - a form with no `populate` starts empty.
+- `generation` - preserves Scene's `FormGenerationMode`: `auto` means generate fields from command metadata, while `manual` means the authored fields are the contract. At most one per form.
 - `field` - binds one of the command's properties to the form. Zero or more.
-- `columns` - how a renderer should arrange command fields. `columns auto` lets the package infer columns, while `columns manual` lists the command properties in display order. At most one per form.
+- `columns` - the legacy display-order hint. `columns auto` lets the package infer columns, while `columns manual` lists the command properties in display order. At most one per form.
+- `layout` - Scene 4.12 command-form geometry: authored columns, field placements and gaps. It is independent of `generation` and does not reinterpret `compose using` as layout metadata.
 - `on submit` - what happens after a successful submit. At most one per form, and optional - a form with no `on submit` stays on the current screen.
 
 ## Example
@@ -40,10 +50,20 @@ form RegisterInvoiceForm for RegisterInvoice
   field totalAmount from calculatedTotal
   field lineItems compose using BuildLineItems
 
+  generation manual
   columns manual
     column customerName label "Customer"
     column dueDate label "Due date"
     column totalAmount
+
+  layout
+    column 1 width 1fr min 240px max 50%
+    column 2 width 2fr
+    columnGap 24px
+    rowGap 16px
+    place customerName row 1 column 1 width auto
+    place dueDate row 1 column 2 width 100%
+    place totalAmount row 2 column 1 columnSpan 2
 
   on submit navigate to InvoiceList by invoiceId
 ```
@@ -69,9 +89,9 @@ A bare `field <property>` binds straight to the command property of the same nam
 
 `from` and `compose using` are mutually exclusive on one field; either may still carry a `label`. A field's `label` accepts an unquoted `$strings.<key>` token in place of a literal, the same as everywhere else in the document - see [Internationalization](internationalization.md).
 
-## Columns
+## Columns and layout
 
-Use `columns auto` when the native command form runtime should derive the layout from the command and package defaults. Use `columns manual` when the business order matters or the screen needs deterministic columns across packages.
+Use `columns auto` when the native command form runtime should derive the display order from the command and package defaults. Use `columns manual` when the business order matters or the screen needs deterministic columns across packages.
 
 ```screenplay
 form RegisterInvoiceForm for RegisterInvoice
@@ -86,6 +106,27 @@ form RegisterInvoiceForm for RegisterInvoice
 ```
 
 A manual column names a command property already present in the form. The compiler preserves the column order and labels for renderers; a renderer that cannot honor manual columns must diagnose that mismatch instead of silently reverting to an automatic layout.
+
+`layout` carries the richer Scene 4.12 geometry contract. Widths use the same units as Scene: `auto`, fractional units such as `1fr`, pixels such as `240px`, and percentages such as `50%`. Column indexes, rows and columns are one-based for authored stability. `rowSpan` and `columnSpan` are optional positive integers.
+
+```screenplay
+form RegisterInvoiceForm for RegisterInvoice
+  generation manual
+  field customerName
+  field dueDate
+  field totalAmount
+
+  layout
+    column 1 width 1fr min 240px max 50%
+    column 2 width 2fr
+    columnGap 24px
+    rowGap 16px
+    place customerName row 1 column 1 width auto
+    place dueDate row 1 column 2 width 100%
+    place totalAmount row 2 column 1 columnSpan 2
+```
+
+`compose using` remains a value-composition hook only. Do not use it to smuggle width, row or placement metadata; renderers consume `layout` for geometry.
 
 ## Submitting
 

@@ -3,9 +3,10 @@
 
 import { ConditionSyntax } from './Conditions';
 import { TypeRefSyntax } from './Declarations';
+import { ExpressionSyntax } from './Expressions';
 import { SyntaxNode } from './SyntaxNode';
 
-export type UiBindingKind = 'Invalid' | 'DataContext' | 'QueryResult' | 'ComponentProperty';
+export type UiBindingKind = 'Invalid' | 'DataContext' | 'QueryResult' | 'ComponentProperty' | 'Literal';
 export type UiBindingMode = 'OneWay' | 'TwoWay';
 export type UiBindingNullBehavior = 'Propagate' | 'Clear' | 'Preserve';
 
@@ -19,6 +20,7 @@ export interface UiBindingSyntax extends SyntaxNode {
     readonly mode: UiBindingMode | null;
     readonly nullBehavior: UiBindingNullBehavior | null;
     readonly expectedValueType: string | null;
+    readonly literal: ExpressionSyntax | null;
     readonly rawText: string | null;
 }
 
@@ -152,7 +154,7 @@ export interface ComponentPropertySyntax extends SyntaxNode {
     readonly kind: 'ComponentPropertySyntax';
     readonly property: string;
     readonly binding: UiBindingSyntax | null;
-    readonly value: string | null;
+    readonly value: ExpressionSyntax | null;
 }
 
 export interface ComponentExposedValueSyntax extends SyntaxNode {
@@ -177,6 +179,7 @@ export interface ScreenComponentSyntax extends SyntaxNode {
     readonly kind: 'ScreenComponentSyntax';
     readonly component: string;
     readonly name: string;
+    readonly stableId: string | null;
     readonly context: UiBindingSyntax | null;
     readonly properties: readonly ComponentPropertySyntax[];
     readonly exposes: readonly ComponentExposedValueSyntax[];
