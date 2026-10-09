@@ -187,8 +187,16 @@ async function fillField(page, result, labelOrName, value) {
 }
 
 async function clickSubmit(page, result, path) {
-    const submit = page.getByRole('button', { name: /create|rename|add|submit|save/i }).filter({ hasNotText: /close|cancel/i }).last();
+    const dialogs = page.getByRole('dialog');
+    const searchRoot = await dialogs.count() > 0 ? dialogs.first() : page;
+    let submit = searchRoot.getByRole('button', { name: /create|rename|add|submit|save/i }).filter({ hasNotText: /close|cancel/i }).last();
+
+    if (await submit.count() === 0 && searchRoot !== page) {
+        submit = searchRoot.getByRole('button').filter({ hasNotText: /close|cancel/i }).last();
+    }
+
     if (await submit.count() === 0) {
+        record(result, `${path}.controls`, 'info', JSON.stringify(await describeControls(page)));
         block(result, path, 'submit control missing');
         return false;
     }
