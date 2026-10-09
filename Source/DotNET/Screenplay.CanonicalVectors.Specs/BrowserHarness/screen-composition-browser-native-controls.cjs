@@ -1,16 +1,20 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-const { spawn } = require('node:child_process');
+const { execFileSync, spawn } = require('node:child_process');
 const { writeFileSync } = require('node:fs');
-const { chromium } = require('playwright');
 
 const root = process.cwd();
 const source = `${root}/Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ScreenComposition/v1/source/folder`;
 const port = Number(process.env.SCREENPLAY_BROWSER_PORT ?? '19109');
 const workbenchPort = Number(process.env.SCREENPLAY_BROWSER_WORKBENCH_PORT ?? '35109');
-const tag = process.env.SCREENPLAY_STAGE_TAG ?? '4.49.2';
-const nextTag = process.env.SCREENPLAY_NEXT_STAGE_TAG ?? '4.49.4';
+// Unset (or 'cli-default') runs the Stage image the installed CLI defaults to, so a CLI release that moves its default
+// Stage version is rerun without editing this harness. An explicit tag pins a specific image instead.
+const requestedTag = process.env.SCREENPLAY_STAGE_TAG && process.env.SCREENPLAY_STAGE_TAG !== 'cli-default' ? process.env.SCREENPLAY_STAGE_TAG : null;
+const tag = requestedTag ?? 'cli-default';
+const nextTag = process.env.SCREENPLAY_NEXT_STAGE_TAG ?? tag;
+const expectedCliVersion = process.env.SCREENPLAY_EXPECTED_CLI_VERSION ?? null;
+const expectedStageTag = process.env.SCREENPLAY_EXPECTED_STAGE_TAG ?? null;
 const baseUrl = `http://localhost:${port}`;
 const resultPath = process.env.SCREENPLAY_BROWSER_RESULT ?? `${root}/.ai-work/browser-native-controls-result.json`;
 
@@ -55,15 +59,70 @@ async function waitForReady(process) {
 }
 
 function startRuntime() {
+    const tagArguments = requestedTag ? ['--tag', requestedTag] : [];
     return spawn('cratis', [
         'run',
         source,
-        '--tag', tag,
+        ...tagArguments,
         '--port', String(port),
         '--workbench-port', String(workbenchPort),
         '--yes',
         '--verbose'
     ], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
+}
+
+function readCommand(command, args) {
+    try {
+        return execFileSync(command, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+    } catch {
+        return null;
+    }
+}
+
+// The container cratis run starts for this harness is found by its published port and confirmed by its mount of this
+// corpus folder, so cleanup can never remove a container another process owns.
+function findStageContainer() {
+    const listing = readCommand('docker', ['ps', '-a', '--filter', `publish=${port}`, '--format', '{{.ID}} {{.Image}}']);
+    if (!listing) return null;
+
+    for (const line of listing.split('\n').filter(Boolean)) {
+        const [id, image] = line.split(' ');
+        const mounts = readCommand('docker', ['inspect', '-f', '{{range .Mounts}}{{.Source}} {{end}}', id]) ?? '';
+        if (mounts.includes(source)) return { id, image };
+    }
+
+    return null;
+}
+
+function recordVector(result) {
+    const cliVersion = readCommand('cratis', ['--version']);
+    const container = findStageContainer();
+    const stageImage = container?.image ?? null;
+    const stageTag = stageImage?.split(':')[1] ?? null;
+    result.vector = {
+        cliPath: readCommand('which', ['cratis']),
+        cliVersion,
+        requestedStageTag: requestedTag,
+        stageImage,
+        stageTag
+    };
+    result.stageTag = stageTag ?? tag;
+
+    if (stageImage) record(result, 'vector.stageImage', 'info', stageImage);
+    else block(result, 'vector.stageImage', `no Stage container published on port ${port} mounts ${source}`);
+
+    if (expectedCliVersion && cliVersion !== expectedCliVersion) block(result, 'vector.cliVersion', `expected ${expectedCliVersion}, found ${cliVersion}`);
+    else record(result, 'vector.cliVersion', 'info', cliVersion);
+
+    if (expectedStageTag && stageTag !== expectedStageTag) block(result, 'vector.stageTag', `expected ${expectedStageTag}, found ${stageTag}`);
+    else record(result, 'vector.stageTag', 'info', stageTag);
+
+    return container;
+}
+
+function removeStageContainer(container) {
+    if (!container) return;
+    readCommand('docker', ['rm', '-f', container.id]);
 }
 
 async function stopRuntime(process) {
@@ -159,8 +218,15 @@ async function closeDialog(page, result, path) {
     return false;
 }
 
+// A command property is labelled by its name or by its words (commentId is shown as "Comment Id"). The pattern still
+// names one field: "Work Item Id" never matches commentId.
+function fieldLabelPattern(name) {
+    const words = name.replace(/([a-z0-9])([A-Z])/g, '$1 $2').split(' ');
+    return new RegExp(words.join('\\s*'), 'i');
+}
+
 async function fillField(page, result, labelOrName, value) {
-    const byLabel = page.getByLabel(new RegExp(labelOrName, 'i')).first();
+    const byLabel = page.getByLabel(fieldLabelPattern(labelOrName)).first();
     if (await byLabel.count() > 0) {
         await byLabel.fill(value);
         record(result, `browser.native.field.${labelOrName}`, 'passed', 'label');
@@ -174,7 +240,7 @@ async function fillField(page, result, labelOrName, value) {
         return true;
     }
 
-    const byPlaceholder = page.getByPlaceholder(new RegExp(labelOrName, 'i')).first();
+    const byPlaceholder = page.getByPlaceholder(fieldLabelPattern(labelOrName)).first();
     if (await byPlaceholder.count() > 0) {
         await byPlaceholder.fill(value);
         record(result, `browser.native.field.${labelOrName}`, 'passed', 'placeholder');
@@ -240,6 +306,75 @@ function commandRequests(network, commandName) {
 function requestContainsWorkItem(request, workItem) {
     const body = typeof request.postData === 'string' ? request.postData : '';
     return request.url.includes(workItem.id) || body.includes(workItem.id) || body.includes(workItem.title);
+}
+
+// A row is found by the title the projection currently shows: after a rename, the original title no longer exists.
+function titleCandidates(item) {
+    return [...new Set([item.currentTitle, item.title].filter(Boolean))];
+}
+
+function hashRoute(url) {
+    try {
+        return new URL(url).hash.split('?')[0];
+    } catch {
+        return '';
+    }
+}
+
+async function selectWorkItem(page, result, path, item) {
+    for (const title of titleCandidates(item)) {
+        const row = page.getByText(title, { exact: false }).first();
+        if (await row.count() === 0) continue;
+
+        await row.click();
+        await page.waitForTimeout(1_000);
+        record(result, path, 'passed', `${title} -> ${page.url()}`);
+        return true;
+    }
+
+    block(result, path, `no row shows ${titleCandidates(item).join(' or ')}`);
+    return false;
+}
+
+// Reach a screen the way a user would: an authored navigation entry first, then browser history. A direct URL is used only
+// when neither exists, and that is recorded so the run shows the screen was not reachable through the UI.
+async function navigateByUi(page, result, path, screen) {
+    const target = `#/${screen}`;
+    const entries = [
+        ['navigation link', page.getByRole('link', { name: screen, exact: true })],
+        ['navigation menu item', page.getByRole('menuitem', { name: screen, exact: true })],
+        ['navigation button', page.getByRole('button', { name: screen, exact: true })],
+        ['navigation text', page.getByRole('navigation').getByText(screen, { exact: true })]
+    ];
+
+    for (const [method, entry] of entries) {
+        if (await entry.count() === 0 || !await entry.first().isVisible()) continue;
+
+        await entry.first().click();
+        await page.waitForTimeout(1_500);
+        if (hashRoute(page.url()) === target) {
+            record(result, path, 'passed', `${method}: ${page.url()}`);
+            return;
+        }
+    }
+
+    // goBack resolves to null for same-document hash changes, so an unchanged URL is what marks the start of history.
+    for (let step = 0; step < 8 && hashRoute(page.url()) !== target && page.url().startsWith(baseUrl); step++) {
+        const before = page.url();
+        await page.goBack({ waitUntil: 'domcontentloaded', timeout: 10_000 }).catch(() => null);
+        await page.waitForTimeout(500);
+        if (page.url() === before) break;
+    }
+
+    if (hashRoute(page.url()) === target) {
+        record(result, path, 'passed', `history back: ${page.url()}`);
+        return;
+    }
+
+    const navigationControls = await page.evaluate(() => Array.from(document.querySelectorAll('a, [role="menuitem"], nav button')).map(element => element.textContent?.trim()).filter(Boolean));
+    await page.goto(`${baseUrl}/${target}`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    await page.waitForTimeout(2_000);
+    record(result, path, 'info', `url fallback; no UI path to ${screen} among ${JSON.stringify(navigationControls)}`);
 }
 
 async function sectionText(page, heading) {
@@ -428,20 +563,34 @@ async function assertRenameDialog(page, result, network) {
     if (validRequests.length === 1 && requestContainsWorkItem(validRequests[0], { id: workItemB.id, title: renamedTitle })) record(result, 'browser.native.RenameWorkItem.validSubmit.payload', 'passed', validRequests[0].postData ?? validRequests[0].url);
     else block(result, 'browser.native.RenameWorkItem.validSubmit.payload', `expected one rename payload for selected B, saw ${validRequests.length}`);
 
-    await expectText(page, result, 'browser.native.RenameWorkItem.validSubmit.projection', renamedTitle);
+    if (await expectText(page, result, 'browser.native.RenameWorkItem.validSubmit.projection', renamedTitle)) workItemB.currentTitle = renamedTitle;
     await closeDialog(page, result, 'browser.dialog.close');
 }
 
 async function assertAddComment(page, result, network) {
-    await page.getByText(workItemB.title, { exact: false }).first().click();
+    if (!await selectWorkItem(page, result, 'browser.native.AddComment.selectB', workItemB)) {
+        record(result, 'browser.native.AddComment.invalidSubmit.zeroRequests', 'pending', 'row B could not be selected');
+        record(result, 'browser.native.AddComment.validSubmit.payload', 'pending', 'row B could not be selected');
+        return;
+    }
+
     const button = await recordNativeButton(page, result, 'AddComment', 'browser.native.AddComment.control');
     if (button.state !== 'enabled') {
+        record(result, 'browser.native.AddComment.invalidSubmit.zeroRequests', 'pending', 'button disabled');
         record(result, 'browser.native.AddComment.validSubmit.payload', 'pending', 'button disabled');
         return;
     }
 
     await button.button.click();
     await page.waitForTimeout(500);
+    const beforeInvalid = commandRequests(network, 'add-comment').length;
+    await clickSubmit(page, result, 'browser.native.AddComment.invalidSubmit.submitControl');
+    await page.waitForTimeout(1_000);
+    const afterInvalid = commandRequests(network, 'add-comment').length;
+    if (afterInvalid === beforeInvalid) record(result, 'browser.native.AddComment.invalidSubmit.zeroRequests', 'passed');
+    else block(result, 'browser.native.AddComment.invalidSubmit.zeroRequests', `expected zero command requests, saw ${afterInvalid - beforeInvalid}`);
+    await expectText(page, result, 'browser.native.AddComment.invalidSubmit.validation', 'required');
+
     const fieldsFilled = [
         await fillField(page, result, 'commentId', nativeComment.id),
         await fillField(page, result, 'text', nativeComment.text)
@@ -493,6 +642,7 @@ async function assertNavigationAndAssets(page, result) {
 }
 
 async function runBrowserFlow(result) {
+    const { chromium } = require('playwright');
     const browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
     const responses = [];
@@ -520,6 +670,7 @@ async function runBrowserFlow(result) {
     await assertSceneIdentifierFidelity(result);
     await seedData(result);
     await assertTwoItemSelectionLifecycle(page, result, network);
+    await navigateByUi(page, result, 'browser.navigation.ui.WorkItemList', 'WorkItemList');
     await assertInvalidThenValidCreate(page, result, network);
     await page.goto(`${baseUrl}/#/WorkItemDetails`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
     await page.waitForTimeout(2_000);
@@ -533,7 +684,42 @@ async function runBrowserFlow(result) {
     await browser.close();
 }
 
-(async () => {
+// Checks the helpers the browser flow relies on, each against a planted wrong answer, without starting a runtime.
+function selfTest() {
+    const renamed = 'Renamed selected B in browser';
+    const commentQueryForB = { method: 'GET', url: `${baseUrl}/api/workspaces/tracking/all-comment-views?workItemId=${workItemB.id}` };
+    const renamePost = { method: 'POST', url: `${baseUrl}/api/workspaces/tracking/rename-work-item/rename-work-item`, postData: JSON.stringify({ workItemId: workItemB.id, title: renamed }) };
+    const requests = [
+        { method: 'GET', url: `${baseUrl}/api/workspaces/tracking/add-comment/add-comment` },
+        { method: 'POST', url: `${baseUrl}/api/workspaces/tracking/create-work-item/create-work-item`, postData: '{}' },
+        { method: 'POST', url: `${baseUrl}/api/workspaces/tracking/add-comment/add-comment`, postData: '{}' }
+    ];
+    const scene = { id: 'Workspaces.Tracking.contribution[0]', children: [{ stableId: 'CommentThread.1-section:table' }, { id: 'WorkItemList' }] };
+    const checks = [
+        ['a query carrying B identity matches B', requestContainsWorkItem(commentQueryForB, workItemB), true],
+        ['a query carrying B identity does not match A', requestContainsWorkItem(commentQueryForB, workItemA), false],
+        ['a rename payload matches the renamed B', requestContainsWorkItem(renamePost, { id: workItemB.id, title: renamed }), true],
+        ['only POSTs count as command requests', commandRequests({ requests }, 'add-comment').length, 1],
+        ['a create POST is not an add-comment request', commandRequests({ requests }, 'create-work-item').length, 1],
+        ['scene ids keep dots, brackets and colons', collectSceneIds(scene), ['Workspaces.Tracking.contribution[0]', 'CommentThread.1-section:table', 'WorkItemList']],
+        ['an unrenamed row is found by its title', titleCandidates({ title: workItemB.title }), [workItemB.title]],
+        ['a renamed row is found by its new title first', titleCandidates({ title: workItemB.title, currentTitle: renamed }), [renamed, workItemB.title]],
+        ['a route with parameters is still the details screen', hashRoute(`${baseUrl}/#/WorkItemDetails?workItemId=${workItemB.id}`), '#/WorkItemDetails'],
+        ['the details screen is not the list screen', hashRoute(`${baseUrl}/#/WorkItemDetails`) === '#/WorkItemList', false],
+        ['commentId matches the Comment Id label', fieldLabelPattern('commentId').test('Comment Id'), true],
+        ['commentId matches an unspaced commentId label', fieldLabelPattern('commentId').test('commentId'), true],
+        ['commentId does not match the Work Item Id label', fieldLabelPattern('commentId').test('Work Item Id'), false],
+        ['workItemId does not match the Comment Id label', fieldLabelPattern('workItemId').test('Comment Id'), false]
+    ];
+
+    const failures = checks.filter(([, actual, expected]) => JSON.stringify(actual) !== JSON.stringify(expected));
+    for (const [name, actual, expected] of failures) console.log(`FAIL ${name}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+    console.log(`self-test: ${checks.length - failures.length} of ${checks.length} checks passed`);
+    process.exit(failures.length === 0 ? 0 : 1);
+}
+
+if (process.argv.includes('--self-test')) selfTest();
+else (async () => {
     const runtime = startRuntime();
     const logs = [];
     runtime.stdout.on('data', data => logs.push(data.toString()));
@@ -550,8 +736,10 @@ async function runBrowserFlow(result) {
         assertions: []
     };
 
+    let container = null;
     try {
         await waitForReady(runtime);
+        container = recordVector(result);
         await runBrowserFlow(result);
     } catch (error) {
         result.status = 'failed';
@@ -560,6 +748,7 @@ async function runBrowserFlow(result) {
         result.runtimeLogTail = logs.join('').split('\n').slice(-80);
         writeFileSync(resultPath, `${JSON.stringify(result, null, 2)}\n`);
         await stopRuntime(runtime);
+        removeStageContainer(container ?? findStageContainer());
     }
 
     console.log(JSON.stringify(result, null, 2));
