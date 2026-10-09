@@ -8,6 +8,7 @@ import { commentStart, splitLines } from '../Parsing/SourceLineSplitter';
 import { parseForAuthoring } from '../ScreenplayCompiler';
 import { EventSyntax } from '../Syntax/Declarations';
 import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
+import { pattern } from '../Text/patterns';
 import { QuickFixCandidate } from './QuickFixCandidate';
 
 export interface QuickFixEdit {
@@ -151,13 +152,13 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
 
 function complianceMarkerEdit(raw: string, startOffset: number): QuickFixEdit | undefined {
     // Restrict rewriting to the suffix or leading directive marker, never comments or quoted reasons.
-    const header = /^(\s*concept\s+\w+\s*:\s*\w+)((?:[^\S\r\n]+@?\w+)*)/.exec(raw);
+    const header = pattern('^(\\s*concept\\s+\\w+\\s*:\\s*\\w+)((?:[^\\S\\r\\n]+@?\\w+)*)').exec(raw);
     if (header !== null) {
         const suffix = header[2];
         const text = suffix.replace(/@pii\b|@?sensitive\b/g, marker => marker === '@pii' ? 'pii' : 'secret');
         return text === suffix ? undefined : { start: startOffset + header[1].length, length: suffix.length, text };
     }
-    const directive = /^(\s*)(@pii|@?sensitive)\b/.exec(raw);
+    const directive = pattern('^(\\s*)(@pii|@?sensitive)\\b').exec(raw);
     return directive === null ? undefined : { start: startOffset + directive[1].length, length: directive[2].length, text: directive[2] === '@pii' ? 'pii' : 'secret' };
 }
 

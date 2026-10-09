@@ -170,7 +170,7 @@ export function planCompletions(
 ): CompletionPlan {
     const fences = fenceMap(lines);
     if (fences[lineIndex] || withoutComment(textBefore).length < textBefore.length) return { kind: 'none' };
-    if (/^\s*concept\s+\w+\s*:\s*\w+\s+(?:(?:pii|personal|secret)\s+)*\w*$/.test(textBefore)) {
+    if (/^\s*concept\s+[\p{L}\p{Mn}\p{Nd}\p{Pc}]+\s*:\s*\w+\s+(?:(?:pii|personal|secret)\s+)*\w*$/u.test(textBefore)) {
         return { kind: 'entries', entries: ['pii', 'secret'].filter(marker => !new RegExp(`\\b${marker}\\b`).test(textBefore)).map(marker => ({ label: marker, insertText: marker, documentation: marker === 'pii' ? 'personal data (GDPR Art. 4(1)); renders Chronicle [PII]' : 'Operational secret; renders [Encrypted] + [NotAudited].' })) };
     }
     const inConcept = enclosingChain(lines, fences, lineIndex, indentOf(textBefore))[0] === 'concept';

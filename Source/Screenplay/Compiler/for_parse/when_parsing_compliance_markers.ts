@@ -70,6 +70,23 @@ describe('when migrating compliance spellings', () => {
         const occurrence = fixes.find(fix => fix.scope === 'occurrence')!;
         expect(code(applyQuickFixEdits(source, occurrence.edits)!)).toEqual(['PLAY0560']);
     });
+    it.each(['Café', 'Kunde_Ø', 'Cafe\u0301', '客户'])('should migrate only the selected header of Unicode concept %s', name => {
+        const unicodeSource = source.replace('concept Value', `concept ${name}`);
+        const fixes = findQuickFixes(unicodeSource, { line: 2, diagnosticCode: DiagnosticCodes.LegacyComplianceMarker });
+        const occurrence = fixes.find(fix => fix.scope === 'occurrence')!;
+        const repaired = applyQuickFixEdits(unicodeSource, occurrence.edits)!;
+        expect(repaired).toBe(unicodeSource.replace('String @pii @sensitive', 'String pii secret'));
+        expect(code(repaired)).toEqual(['PLAY0560']);
+    });
+    it.each(['Café', 'Kunde_Ø', 'Cafe\u0301', '客户'])('should remove every legacy diagnostic for Unicode concept %s without changing reasons or trivia', name => {
+        const unicodeSource = source.replace('concept Value', `concept ${name}`);
+        const document = findQuickFixes(unicodeSource).find(fix => fix.scope === 'document')!;
+        const repaired = applyQuickFixEdits(unicodeSource, document.edits)!;
+        expect(document.edits).toHaveLength(2);
+        expect(repaired).toBe(unicodeSource.replace('String @pii @sensitive', 'String pii secret').replace('  sensitive reason', '  secret reason'));
+        expect(code(repaired)).toEqual([]);
+        expect(toSyntaxJson(parseForAuthoring(repaired).value)).toEqual(toSyntaxJson(parseForAuthoring(unicodeSource).value));
+    });
     it('should expose the reason line separately in a range request', () => {
         const fixes = findQuickFixes(source);
         expect(fixes).toHaveLength(1);

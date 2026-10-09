@@ -55,6 +55,38 @@ public class when_migrating_compliance_spelling : Specification
         result.Workspace!.Documents.Single().Text.ShouldEqual(Source.Replace("  sensitive reason", "  secret reason", StringComparison.Ordinal));
     }
 
+    [Theory]
+    [InlineData("Café", false)]
+    [InlineData("Kunde_Ø", false)]
+    [InlineData("Cafe\u0301", false)]
+    [InlineData("客户", false)]
+    [InlineData("Café", true)]
+    [InlineData("Kunde_Ø", true)]
+    [InlineData("Cafe\u0301", true)]
+    [InlineData("客户", true)]
+    void should_migrate_unicode_concept_names_without_changing_notes_or_trivia(string name, bool wholeDocument)
+    {
+        var source = Source.Replace("concept Value", $"concept {name}", StringComparison.Ordinal);
+        var document = WorkspaceDocument.Create("unicode", PortablePlayPath.Parse("unicode.play"), Encoding.UTF8.GetBytes(source));
+        var workspace = ScreenplayWorkspace.Create("Model", [document], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Model")));
+        var index = WorkspaceSyntaxIndex.Create(workspace);
+        var root = index.Entries.Single(entry => entry.Node is ApplicationSyntax).Handle;
+        var repair = wholeDocument
+            ? WorkspaceDiagnosticRepairs.FindDocumentCompliance(index, root).Single()
+            : WorkspaceDiagnosticRepairs.Find(index, workspace.Revision, index.Diagnostics.First(value => value.Code == DiagnosticCodes.LegacyComplianceMarker)).Single();
+        var request = Request() with { ExpectedRevision = workspace.Revision, ExpectedCatalogRevision = workspace.IdentityCatalog.Revision };
+        var result = WorkspaceDiagnosticRepairs.ProposeRepair(workspace, repair, request);
+        var expected = source.Replace("String @pii @sensitive", "String pii secret", StringComparison.Ordinal);
+        if (wholeDocument)
+        {
+            expected = expected.Replace("  sensitive reason", "  secret reason", StringComparison.Ordinal);
+        }
+
+        result.Accepted.ShouldBeTrue();
+        result.Workspace!.Documents.Single().Text.ShouldEqual(expected);
+        result.AuthoringDiagnostics.Count(value => value.Code == DiagnosticCodes.LegacyComplianceMarker).ShouldEqual(wholeDocument ? 0 : 1);
+    }
+
     [Fact]
     void should_refuse_a_forged_line()
     {

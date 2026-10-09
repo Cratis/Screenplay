@@ -22,6 +22,10 @@ describe('when editing compliance markers', () => {
         const categories = planCompletions(['concept Note : String pii', '  pii special '], 1, '  pii special ');
         expect(categories.kind === 'entries' && categories.entries.some(entry => entry.label === 'health')).toBe(true);
     });
+    it.each(['Café', 'Kunde_Ø', 'Cafe\u0301', '客户'])('should complete canonical suffixes for Unicode concept %s', name => {
+        const header = `concept ${name} : String `;
+        expect(planCompletions([header], 0, header)).toMatchObject({ kind: 'entries', entries: [{ label: 'pii' }, { label: 'secret' }] });
+    });
     it('should describe canonical markers, aliases and qualifiers', () => {
         expect(hover('concept Value : String pii', 'pii')).toContain('personal data (GDPR Art. 4(1)); renders Chronicle [PII]');
         expect(hover('concept Value : String personal', 'personal')).toContain('Alias of pii');
@@ -39,7 +43,7 @@ describe('when editing compliance markers', () => {
         expect(validateLines(['concept Value : String personal'])).toEqual([]);
     });
     it('should offer line and whole-document migrations pinned to the buffer version', async () => {
-        const source = 'concept Value : String @pii @sensitive\n  sensitive reason "Keep @pii in this note"';
+        const source = 'concept Café : String @pii @sensitive\n  sensitive reason "Keep @pii in this note"';
         const model = {
             uri: { toString: () => 'file:///model.play' },
             getValue: () => source,

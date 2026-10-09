@@ -201,6 +201,17 @@ the current buffer and verify that its meaning is unchanged before offering edit
 Nothing is saved automatically. Stale buffer versions are refused. Monaco provides
 the same verified fixes; neither editor needs a .NET process.
 
+## Compliance marker quick fixes
+
+Legacy `@pii`, `sensitive` and `@sensitive` spellings receive information diagnostic
+`PLAY0560`, marked deprecated. Use the per-line lightbulb action **Use bare pii and
+secret compliance markers**, or **Use bare pii and secret throughout this document**
+(`source.screenplay.migrateCompliance`) to migrate every legacy line in the buffer.
+The repairs preserve quoted reasons, comments, spacing and line endings, and verify
+that reparsing preserves the syntax and removes the selected diagnostics. Nothing
+is saved automatically, and stale buffer versions are refused. Monaco offers the
+same verified actions without a .NET process.
+
 ## Event quick fixes
 
 The lightbulb in VS Code and Monaco also offers this occurrence-only action:
