@@ -118,6 +118,7 @@ function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJ
             if (value.kind === 'ConceptAttributeSyntax' && (member === 'scope' || member === 'specialCategory') && memberValue == null) continue;
             if (value.kind === 'ConceptAttributeSyntax' && member === 'criminal' && memberValue === false) continue;
             if (value.kind === 'PropertySyntax' && member === 'isSubject' && memberValue === false) continue;
+            if (member === 'description' && memberValue == null && ['ConceptSyntax', 'PolicySyntax', 'FileConstraintSyntax', 'UniqueEventConstraintSyntax', 'UniquePropertyConstraintSyntax', 'ProjectionSyntax', 'ScreenSyntax', 'FormSyntax'].includes(value.kind)) continue;
             if (member === 'documentation' && value.kind !== 'EventSyntax' && memberValue == null) continue;
             if (value.kind === 'SpecificationSyntax' && member === 'description' && memberValue == null) continue;
             if (member === 'dependsOn' && (value.kind === 'ModuleSyntax' || value.kind === 'FeatureSyntax') && Array.isArray(memberValue) && memberValue.length === 0) continue;

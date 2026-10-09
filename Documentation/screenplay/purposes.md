@@ -6,8 +6,6 @@ description: Declare processing purposes and inspect personal-data coverage with
 <!-- Copyright (c) Cratis. All rights reserved. -->
 <!-- Licensed under the MIT license. See LICENSE file in the project root for full license information. -->
 
-# Processing purposes
-
 Declare why you process personal data once, then reference that purpose on the modules, features and slices that process it. A concept's `pii` marker describes the value wherever it appears; a purpose records the controller's declarations about a particular use.
 
 ```screenplay

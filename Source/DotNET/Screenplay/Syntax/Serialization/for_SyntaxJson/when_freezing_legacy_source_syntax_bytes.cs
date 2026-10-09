@@ -26,7 +26,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams") continue;
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -93,8 +93,10 @@ public class when_freezing_legacy_source_syntax_bytes
     static ApplicationSyntax WithoutNewAuthoringMetadata(ApplicationSyntax application) => application with
     {
         Purposes = [],
+        Policies = application.Policies.Select(policy => policy with { Description = null }),
         Concepts = application.Concepts.Select(concept => concept with
         {
+            Description = null,
             Attributes = concept.Attributes.Select(attribute => attribute with { Reason = LegacyReason(concept.Name, attribute.Name, attribute.Reason) })
         }),
         UiProfiles = application.UiProfiles?.Select(profile => profile with { Icons = [] }),
@@ -102,6 +104,7 @@ public class when_freezing_legacy_source_syntax_bytes
         {
             Documentation = null,
             Purposes = [],
+            Forms = module.Forms?.Select(form => form with { Description = null }),
             Features = module.Features.Select(WithoutNewAuthoringMetadata)
         })
     };
@@ -124,6 +127,9 @@ public class when_freezing_legacy_source_syntax_bytes
         {
             Documentation = null,
             Purposes = [],
+            Constraints = slice.Constraints.Select(constraint => constraint with { Description = null }),
+            Projections = slice.Projections.Select(projection => projection with { Description = null }),
+            Screens = slice.Screens.Select(screen => screen with { Description = null }),
             Commands = slice.Commands.Select(command => command with { Documentation = null }),
             ReadModels = (slice.ReadModels ?? []).Select(readModel => readModel with { Documentation = null }),
             Reactions = slice.Reactions.Select(reaction => reaction with { Documentation = null }),

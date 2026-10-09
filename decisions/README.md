@@ -41,7 +41,7 @@
 | [0037](0037-routes-in-redelivery-locators-and-specification-examples.md) | State routes in redelivery locators and in typed specification examples with the existing route lines | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0038](0038-move-logical-subtrees-with-identity-continuity.md) | Move logical slices and features across parents with identity and behavior continuity | accepted | none | 2026-10-08 | Sindre Alstad Wilting (delegated to the implementing agent's recommendation) |
 | [0039](0039-publish-a-machine-readable-screenplay-contract.md) | Publish a machine-readable Screenplay contract | accepted | implemented | 2026-10-08 | Sindre Alstad Wilting (delegated to the implementing agent's recommendation) |
-| [0040](0040-description-on-concepts-rules-and-ui.md) | Accept body-line descriptions on concepts, policies, constraints, projections, screens and forms | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
+| [0040](0040-description-on-concepts-rules-and-ui.md) | Accept body-line descriptions on concepts, policies, constraints, projections, screens and forms | accepted | implemented | 2026-10-08 | Sindre Alstad Wilting |
 | [0041](0041-personal-data-secrets-and-processing-purposes.md) | Mark personal data and secrets on concepts, and declare processing purposes once | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0042](0042-persona-callers-in-specifications.md) | Expand persona callers in specifications and check persona coverage on request | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0043](0043-reaction-identity-runs-as.md) | Declare the system identity under which a reaction's invoked commands run | accepted | none | 2026-10-08 | Sindre Alstad Wilting |

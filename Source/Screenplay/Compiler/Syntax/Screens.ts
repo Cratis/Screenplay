@@ -25,6 +25,7 @@ export interface UiBindingSyntax extends SyntaxNode {
 // 'screen <Name>' - the intent level directives a screen is made of. A 'file <path>' screen is recognized
 // but its reference is not modeled, so it reads as a screen without directives.
 export interface ScreenSyntax extends SyntaxNode {
+    readonly description?: string | null;
     readonly kind: 'ScreenSyntax';
     readonly name: string;
     readonly directives: readonly ScreenDirectiveSyntax[];

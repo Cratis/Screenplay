@@ -14,6 +14,7 @@ public sealed partial class SemanticModelBinder
     {
         IEnumerable<SemanticProjection> BindProjections(SemanticAddress slice, ProjectionSyntax projection)
         {
+            if (projection.Description is not null) Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Projection '{projection.Name}' description is authoring metadata.", projection.Location);
             var variants = projection.Blocks.OfType<ProjectionVariantSyntax>().ToArray();
             if (variants.Length == 0)
             {

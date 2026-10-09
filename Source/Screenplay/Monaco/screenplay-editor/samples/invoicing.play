@@ -61,6 +61,7 @@ purpose PaymentDisputes
 // ------------------------------------------------------------
 
 concept InvoiceId : Uuid
+  description "The stable identity of one invoice"
   // 'file' on a declaration says which file realizes it - realization metadata,
   // never a replacement for the declaration itself.
   file Concepts/InvoiceId.cs
@@ -187,6 +188,7 @@ type InstallmentPlan
 // ------------------------------------------------------------
 
 policy IsAuthenticated
+  description "Only signed-in callers may enter the invoicing workflow"
   require authenticated
 
 policy IsPerson
@@ -488,6 +490,7 @@ module Invoicing
   // A form is the input surface of a command - discovered wherever the command
   // is invoked, never named by the screen that invokes it.
   form RegisterInvoiceForm for RegisterInvoice
+    description "Gather the customer, terms and lines needed to issue an invoice"
     field invoiceNumber  label $strings.invoices.fields.number
     field customerId     label "Customer"
     field lines          compose using BuildInvoiceLines
@@ -734,6 +737,7 @@ module Invoicing
         dueDate      Date
 
       constraint UniqueInvoiceNumber
+        description "An invoice number belongs to only one invoice"
         unique invoiceNumber on InvoiceRegistered
         released by InvoiceCancelled
         ignore casing
@@ -743,6 +747,7 @@ module Invoicing
         unique event InvoiceRegistered
 
       screen RegisterInvoiceScreen
+        description "Issue an invoice for the customer's delivered work"
         template CommandDialog
           body
             title $strings.invoices.register.title
@@ -1317,6 +1322,7 @@ module Invoicing
         authorize CanManageInvoice
 
       projection InvoiceList => InvoiceListReadModel
+        description "Build the finance team's searchable invoice list"
         every
           lastActivityAt = $eventContext.occurred
         from InvoiceRegistered

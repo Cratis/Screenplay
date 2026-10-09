@@ -390,13 +390,14 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"concept {concept.Name} : {concept.Type}{string.Concat(attributes.Select(attribute => $" {Parsing.ConceptComplianceParser.CanonicalName(attribute.Name)}"))}");
         var validations = concept.Validations?.ToList() ?? [];
         var reasoned = attributes.Where(attribute => attribute.Reason is not null).ToList();
-        if (!concept.IsEnum && validations.Count == 0 && reasoned.Count == 0 && concept.File is null && !attributes.Exists(attribute => attribute.Scope is not null || attribute.SpecialCategory is not null || attribute.Criminal))
+        if (!concept.IsEnum && validations.Count == 0 && reasoned.Count == 0 && concept.Description is null && concept.File is null && !attributes.Exists(attribute => attribute.Scope is not null || attribute.SpecialCategory is not null || attribute.Criminal))
         {
             return;
         }
 
         using (writer.Indent())
         {
+            WriteDescription(writer, concept.Description, concept);
             WriteFile(writer, concept.File);
 
             foreach (var attribute in reasoned)
@@ -445,6 +446,7 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"policy {policy.Name}");
         using (writer.Indent())
         {
+            WriteDescription(writer, policy.Description, policy);
             if (policy.Condition is not null)
             {
                 writer.Line($"require {ScreenplaySyntaxText.PolicyCondition(policy.Condition)}", policy.Condition);
@@ -563,6 +565,7 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"form {form.Name} for {form.For}");
         using (writer.Indent())
         {
+            WriteDescription(writer, form.Description, form);
             if (form.Populate is not null)
             {
                 writer.Line(WriteFormPopulate(form.Populate), form.Populate);

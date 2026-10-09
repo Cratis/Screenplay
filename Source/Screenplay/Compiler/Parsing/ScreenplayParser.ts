@@ -244,10 +244,13 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
         context.error(DiagnosticCodes.UnknownPrimitiveType, `Unknown primitive type '${type}' - expected ${primitiveTypes.join(', ')} or Enum`, locationOf(line));
     }
     const values: string[] = [];
+    let description: string | null = null;
     const validations: ValidateSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
-        if (isFileDirective(child)) {
+        if (firstWord(child.content) === 'description' && (type !== 'Enum' || child.content !== 'description' || context.peekChild(child.indent)?.content.startsWith('```') === true)) {
+            description = parseDescription(context, child, description, `Concept '${name}'`);
+        } else if (isFileDirective(child)) {
             continue;
         } else if (firstWord(child.content) === 'validate') {
             if (type === 'Enum' && child.content === 'validate' && context.peekChild(child.indent) === undefined) {
@@ -268,7 +271,7 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
             context.skipBlock(child.indent);
         }
     }
-    return { kind: 'ConceptSyntax', name, type, attributes, values, validations, location: locationOf(line) };
+    return { kind: 'ConceptSyntax', name, type, attributes, values, validations, description, location: locationOf(line) };
 }
 
 // 'persona <Name>' with an optional description and the policies it holds - the port of the C# ParsePersona.

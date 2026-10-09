@@ -1,5 +1,7 @@
 # Forms
 
+A form accepts one quoted or fenced-text `description` body line. It prints first before `populate` and fields, as report-only authoring metadata rather than a localizable UI label. Individual fields do not gain descriptions. Markdown `documentation` is not supported here.
+
 A screen's `action` directive exposes a command, but says nothing about how a user enters the data that command needs. Naming every field on the screen that invokes it would tie one input surface to one place it can be invoked from - a `form` is that input surface, declared once and reused wherever its command is.
 
 ## Syntax

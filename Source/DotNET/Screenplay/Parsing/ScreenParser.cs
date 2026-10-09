@@ -28,12 +28,14 @@ internal static partial class ScreenParser
         }
 
         FileReferenceSyntax? file = null;
+        string? description = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
         var directives = new List<ScreenDirectiveSyntax>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
+            if (DescriptionParser.TryParse(context, line, ref description, $"Screen '{name.Groups[1].Value}'", directiveLocations)) continue;
             if (FileReferenceParser.IsDirective(line))
             {
                 file = FileReferenceParser.ParseReplacing(context, line, file, directiveLocations);
@@ -44,7 +46,7 @@ internal static partial class ScreenParser
             }
         }
 
-        return new(name.Groups[1].Value, file, directives, header.Location) { DirectiveLocations = directiveLocations };
+        return new(name.Groups[1].Value, file, directives, header.Location) { Description = description, DirectiveLocations = directiveLocations };
     }
 
     static ScreenDirectiveSyntax? ParseDirective(ParserContext context, SourceLine line)

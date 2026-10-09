@@ -25,7 +25,7 @@ static class ContractAdmission
     [
         new("authentication", "authentication\n  provider GitHub\n"),
         new("behavior", "behavior B\n  parameter command\n"),
-        new("concept", "concept Value : String\n", ["concept Value : String @pii\n  pii reason \"Personal data\"\n", "concept Value : String\n  validate csharp\n    ```csharp\n    return true;\n    ```\n"]),
+        new("concept", "concept Value : String\n", ["concept Value : String\n  description \"Value intent\"\n", "concept Value : String @pii\n  pii reason \"Personal data\"\n", "concept Value : String\n  validate csharp\n    ```csharp\n    return true;\n    ```\n"]),
         new("domain", "domain Example\n"),
         new("eventsource", "concept Id : Uuid\neventsource Record\n  identifier Id\n"),
         new("example", Slice + Event + Command + "      example Input : Record\n        value = \"test\"\n      specification Example\n        when Input\n        then Recorded\n          value = \"test\"\n"),
@@ -34,7 +34,7 @@ static class ContractAdmission
         new("module", Slice),
         new("numbers", "numbers exact\n"),
         new("persona", "persona Person\n"),
-        new("policy", "policy Allowed\n  require authenticated\n", ["policy Allowed\n  require not authenticated\n", "policy Allowed\n  ```csharp\n  return true;\n  ```\n"]),
+        new("policy", "policy Allowed\n  require authenticated\n", ["policy Allowed\n  description \"Policy intent\"\n  require authenticated\n", "policy Allowed\n  require not authenticated\n", "policy Allowed\n  ```csharp\n  return true;\n  ```\n"]),
         new("purpose", "purpose Billing\n  basis contract\n" + Slice.Replace("module M\n", "module M\n  purpose Billing\n", StringComparison.Ordinal), Baseline: Slice),
         new("seed", Slice + Event + "seed\n  for \"test\"\n    Recorded\n      value = \"test\"\n"),
         new("system", "system External\n"),
@@ -56,7 +56,7 @@ static class ContractAdmission
                 "concept Id : Uuid\n" + Slice + "      command Record\n        id Id\n        returns id\n",
                 "system Outside\n" + Slice + "      operation External\n        uses Outside\n        execute\n          implementation\n            hint \"External work\"\n      command Run\n        produces External\n"
             ]),
-        new("constraint", Slice + Event + "      constraint Unique\n        unique value on Recorded\n"),
+        new("constraint", Slice + Event + "      constraint Unique\n        unique value on Recorded\n", [Slice + Event + "      constraint Unique\n        description \"Constraint intent\"\n        unique value on Recorded\n"]),
         new(
             "event",
             Slice + Event,
@@ -65,12 +65,12 @@ static class ContractAdmission
                 Slice + "      event Recorded generation 1\n        value String\n      event Recorded generation 2\n        value String\n" + Command + "      specification Historical\n        given Recorded\n          value = \"previous\"\n        when Record\n          value = \"test\"\n        then Recorded\n          value = \"test\"\n"
             ]),
         new("operation", "system Outside\n" + Slice + "      operation External\n        uses Outside\n        execute\n          implementation\n            hint \"External work\"\n"),
-        new("projection", Slice + Event + ReadModel + Projection + KeyedQuery),
+        new("projection", Slice + Event + ReadModel + Projection + KeyedQuery, [Slice + Event + ReadModel + Projection.Replace("      projection View => View\n", "      projection View => View\n        description \"Projection intent\"\n", StringComparison.Ordinal) + KeyedQuery]),
         new("query", Slice + Event + ReadModel + Projection + KeyedQuery, [Slice + ReadModel + "      query All => View[]\n"]),
         new("reaction", Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      reaction FollowUp\n        when Recorded\n          value\n          produces FollowedUp\n            value = value\n      event FollowedUp\n        value String\n"),
         new("readmodel", Slice + Event + ReadModel + Projection + KeyedQuery, [Slice + ReadModel]),
         new("reducer", Slice + Event + ReadModel + KeyedQuery + "      reducer View => View\n        on Recorded\n          ```csharp\n          return context.State;\n          ```\n", [Slice + Event + ReadModel + "      reducer View => View\n        on Recorded\n"]),
-        new("screen", Slice + "      screen Screen\n"),
+        new("screen", Slice + "      screen Screen\n", [Slice + "      screen Screen\n        description \"Screen intent\"\n"]),
         new(
             "specification",
             Slice + Event + Command + "      specification Records\n        when Record\n          value = \"test\"\n        then Recorded\n          value = \"test\"\n",
@@ -80,7 +80,7 @@ static class ContractAdmission
             ],
             VariantBaselines: [PersonaCallerContext, null]),
         new("dialog", "module M\n  dialog template Dialog\n    body\n    actions\n"),
-        new("form", Slice + Event + Command + "  form Input for Record\n    field value\n"),
+        new("form", Slice + Event + Command + "  form Input for Record\n    field value\n", [Slice + Event + Command + "  form Input for Record\n    description \"Form intent\"\n    field value\n"]),
         new("contribute", "layout Shell\n  navigation contributes Navigation\n  content\nmodule M\n  contribute to Navigation\n    navigate to Screen\n  feature F\n    slice StateView S\n      screen Screen\n")
     ];
 

@@ -4,6 +4,7 @@
     {
       "kind": "ConceptSyntax",
       "attributes": [],
+      "description": "The stable identity of one invoice",
       "name": "InvoiceId",
       "type": "Uuid",
       "values": []
@@ -2412,6 +2413,7 @@
                   "kind": "UniquePropertyConstraintSyntax",
                   "additionalProperties": [],
                   "additionalRules": [],
+                  "description": "An invoice number belongs to only one invoice",
                   "event": "InvoiceRegistered",
                   "ignoreCasing": true,
                   "message": "$strings.invoices.validation.numberTaken",
@@ -2979,6 +2981,7 @@
               "screens": [
                 {
                   "kind": "ScreenSyntax",
+                  "description": "Issue an invoice for the customer's delivered work",
                   "directives": [
                     {
                       "kind": "ScreenTemplateReferenceSyntax",
@@ -6423,6 +6426,7 @@
                       "event": "InvoiceCancelled"
                     }
                   ],
+                  "description": "Build the finance team's searchable invoice list",
                   "name": "InvoiceList",
                   "readModel": "InvoiceListReadModel",
                   "sequence": null

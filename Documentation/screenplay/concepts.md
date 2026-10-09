@@ -55,6 +55,10 @@ concept NationalIdNumber : String   pii secret
 concept DateOfBirth      : Date     pii
 ```
 
+## Describe the value
+
+A concept accepts one indented `description "…"` or fenced-text description. It prints first, before `file`, classification and validation lines; a one-line concept gains a body. This is report-only authoring metadata (`PLAY0270`), not a compliance reason or an executable rule. In an enum, bare `description` without a child fence stays a value and prints as `@description`. Markdown `documentation` is not supported here.
+
 ## Why a value is personal data
 
 The marker classifies the value. A `reason` is a free-text concept note, not a machine-checked lawful basis, purpose or retention policy. Existing notes remain unchanged during migration; the compiler never guesses their legal meaning. Declare [processing purposes](purposes.md), basis and retention separately and reference them on the slices that use the value.

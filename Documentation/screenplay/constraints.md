@@ -1,5 +1,7 @@
 # Constraints
 
+One quoted or fenced-text `description` body line records authoring intent (`PLAY0270`). It prints first, before rules or `file`; it neither supplies a rule nor counts as a file constraint's declarative option. It is distinct from `message` and is not localizable. Markdown `documentation` is not supported here.
+
 Chronicle checks unique constraints before an append commits. The two declarative `unique` forms describe the constraints Chronicle can enforce. A `file` form names a hand-written Chronicle `IConstraint` class, but it cannot add an arbitrary append-time rule.
 
 ## Syntax

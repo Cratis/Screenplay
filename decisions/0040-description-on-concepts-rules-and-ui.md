@@ -2,7 +2,7 @@
 id: 0040
 title: Accept body-line descriptions on concepts, policies, constraints, projections, screens and forms
 status: accepted
-stage: none
+stage: implemented
 class: contract
 reversibility: costly
 decided: 2026-10-08

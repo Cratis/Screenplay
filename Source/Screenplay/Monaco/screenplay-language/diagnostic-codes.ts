@@ -10,6 +10,9 @@
 // and those stay codeless deliberately: minting a PLAY number for something no compiler run can emit
 // would make the catalogue describe two different tools.
 export const diagnosticCodes = {
+    invalidDescription: 'PLAY0145',
+    emptyDescription: 'PLAY0146',
+    duplicateDescription: 'PLAY0147',
     unknownConceptDirective: 'PLAY0010',
     attributeReasonWithoutAttribute: 'PLAY0012',
     duplicateAttributeReason: 'PLAY0013',

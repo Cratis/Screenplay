@@ -68,6 +68,7 @@ export const operationPhaseItems: CompletionEntry[] = [
 ];
 
 export const conceptItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:what this value represents}"', documentation: 'Report-only authoring description; not a validation or compliance note.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
     { label: 'pii reason', insertText: 'pii reason "${1:why this value is personal data}"', documentation: 'A free-text concept note, not a lawful basis.' },
     { label: 'secret reason', insertText: 'secret reason "${1:why this value is an operational secret}"', documentation: 'Records why the secret marker applies.' },
@@ -170,6 +171,7 @@ export const performerItems: CompletionEntry[] = [
 ];
 
 export const constraintItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:invariant intent}"', documentation: 'Report-only description, distinct from the violation message.' },
     { label: 'unique', insertText: 'unique ${1:property} on ${2:EventType}', documentation: 'Enforces a unique property value across an event type.' },
     { label: 'unique event', insertText: 'unique event ${1:EventType}', documentation: 'Enforces that the event type occurs at most once per event source.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Delegates the constraint to a custom C# implementation.' },
@@ -292,6 +294,7 @@ export const ruleItems: CompletionEntry[] = [
 ];
 
 export const policyItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:authorization intent}"', documentation: 'Report-only description; does not supply an implementation.' },
     { label: 'require authenticated', insertText: 'require authenticated', documentation: 'Requires an authenticated caller.' },
     { label: 'require role', insertText: 'require role "${1:role}"', documentation: 'Requires the caller to have a role.' },
     { label: 'require not role', insertText: 'require not role "${1:role}"', documentation: 'Excludes callers with a role. Add authenticated to require a signed-in caller.' },
@@ -313,6 +316,7 @@ export const validateItems: CompletionEntry[] = [
 ];
 
 export const screenItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:screen intent}"', documentation: 'Report-only description, not a localizable screen title.' },
     { label: 'data', insertText: 'data ${1:ReadModel} via query ${2:QueryName}', documentation: 'Binds a read model to the screen through a query.' },
     { label: 'action', insertText: 'action ${1:CommandName}', documentation: 'Makes a command available as an action on the screen.' },
     { label: 'action "…"', insertText: 'action "${1:Label}"\n    when item.${2:status} == "${3:open}" execute ${4:CommandName}\n    otherwise hidden', documentation: 'One labeled button selecting the first matching command; hidden without a subject or match.' },

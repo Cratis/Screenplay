@@ -53,6 +53,7 @@ public sealed partial class SemanticModelBinder
 
         ImmutableArray<SemanticPolicy> BindPolicies() => [.. syntax.Policies.Select(policy =>
         {
+            if (policy.Description is not null) Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Policy '{policy.Name}' description is authoring metadata.", policy.Location);
             if (policy.Condition is not null && (policy.Code is not null || policy.File is not null))
             {
                 Error(DiagnosticCodes.MixedPolicyImplementation, $"Policy '{policy.Name}' cannot combine 'require' with a file or inline code block", policy.Location);

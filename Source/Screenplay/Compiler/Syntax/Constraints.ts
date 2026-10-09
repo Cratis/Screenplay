@@ -9,6 +9,7 @@ export interface FileReferenceSyntax extends SyntaxNode {
 }
 
 interface ConstraintMembers extends SyntaxNode {
+    readonly description?: string | null;
     readonly name: string;
     readonly additionalRules: readonly ConstraintSyntax[];
     readonly releasedBy: readonly string[];

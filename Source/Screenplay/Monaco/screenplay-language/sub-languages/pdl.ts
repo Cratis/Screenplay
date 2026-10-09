@@ -8,11 +8,12 @@ import { SubLanguageDefinition } from '../sub-language-registry';
 export const pdl: SubLanguageDefinition = {
     tokens: [
         [
-            /\b(?:from|every|all|nested|join|children|identified|by|key|parent|with|remove|via|clear|on|sequence|automap|no|exclude|literal|set|increment|decrement|add|subtract|count)\b/,
+            /\b(?:description|from|every|all|nested|join|children|identified|by|key|parent|with|remove|via|clear|on|sequence|automap|no|exclude|literal|set|increment|decrement|add|subtract|count)\b/,
             'keyword',
         ],
     ],
     completions: [
+        { label: 'description', insertText: 'description "${1:builder intent}"', documentation: 'Report-only description on a projection header, not on its nested blocks or variants.' },
         {
             label: 'key',
             insertText: 'key ${1:property}',
@@ -60,6 +61,7 @@ export const pdl: SubLanguageDefinition = {
         },
     ],
     hovers: {
+        description: 'Report-only projection-header description, as quoted or fenced text; adds no executable bytes.',
         from: 'PDL — maps properties from an event onto the read model.',
         every: 'PDL — applies property mappings for every event type in the projection.',
         join: 'PDL — joins related state onto the read model by a key property.',
