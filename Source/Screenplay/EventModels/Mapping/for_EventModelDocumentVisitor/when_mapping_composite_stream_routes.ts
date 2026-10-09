@@ -21,6 +21,7 @@ describe('when mapping composite stream routes', () => {
         const slice = toEventModelDocument(parse(source).value, 'Test').collections[0].modules[0].features[0].slices[0];
         expect(slice.specifications[0].thenEvents[0].name).toContain('streamId period = "2026-10", projectId = "p"');
         expect(slice.specifications[0].name).toContain('streamId period = "2026-10", projectId = "p"');
-        expect(slice.specifications[0].name).toContain('PLAY0268');
+        expect(slice.specifications[0].name).toContain('Admitted by the event routes executable model');
+        expect(slice.specifications[0].name).not.toContain('PLAY0268');
     });
 });
