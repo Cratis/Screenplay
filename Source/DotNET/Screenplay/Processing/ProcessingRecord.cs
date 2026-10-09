@@ -35,8 +35,10 @@ public sealed record ProcessingRecord(string? ControllerName, string? Controller
     public static ProcessingRecord Create(ApplicationSyntax application, string? controllerName = null, string? controllerContact = null)
     {
         var addresses = new Dictionary<SliceSyntax, string>(ReferenceEqualityComparer.Instance);
-        foreach (var entry in ScreenplayValidator.ScopedSlices(application)) addresses.Add(entry.Slice, string.Join('.', entry.Scope.Segments));
-        var coverage = PurposeCoverage.Slices(application).Select(entry => new CoveredSlice(entry.Slice, entry.Purposes, [.. PurposeCoverage.Concepts(application, entry.Slice)])).ToArray();
+        var scopes = ScreenplayValidator.ScopedSlices(application).ToArray();
+        foreach (var entry in scopes) addresses.Add(entry.Slice, string.Join('.', entry.Scope.Segments));
+        var conceptsIn = PurposeCoverage.ConceptResolver(application, scopes);
+        var coverage = PurposeCoverage.Slices(application).Select(entry => new CoveredSlice(entry.Slice, entry.Purposes, [.. conceptsIn(entry.Slice)])).ToArray();
         var rows = application.Purposes.Select(purpose => Row(purpose, [.. coverage.Where(entry => entry.Purposes.Any(reference => reference.Name == purpose.Name))], addresses)).ToArray();
 
         return new(controllerName, controllerContact, rows);

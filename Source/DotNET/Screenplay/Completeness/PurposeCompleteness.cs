@@ -21,9 +21,10 @@ internal static class PurposeCompleteness
             if (!referenced.Contains(purpose.Name)) yield return Diagnostic.Warning(DiagnosticCodes.UnusedPurpose, $"Purpose '{purpose.Name}' is declared but never referenced", purpose.Location);
         }
 
+        var conceptsIn = PurposeCoverage.ConceptResolver(application);
         foreach (var (slice, purposes) in coverage)
         {
-            var concepts = PurposeCoverage.Concepts(application, slice).Where(concept => concept.Attributes.Any(attribute => attribute.Name == "pii")).ToArray();
+            var concepts = conceptsIn(slice).Where(concept => concept.Attributes.Any(attribute => attribute.Name == "pii")).ToArray();
             if (concepts.Length == 0) continue;
             var covered = application.Purposes.Where(purpose => purposes.Any(reference => reference.Name == purpose.Name)).ToArray();
             if (covered.Length == 0) yield return Diagnostic.Warning(DiagnosticCodes.PersonalDataWithoutPurpose, $"Slice '{slice.Name}' carries pii concepts but has no declared purpose in scope", slice.Location);

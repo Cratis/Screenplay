@@ -25,21 +25,33 @@ public static class PurposeCoverage
     /// <param name="application">The merged application.</param>
     /// <param name="slice">The slice to inspect.</param>
     /// <returns>The distinct concepts reachable through command, event, read-model and query fields.</returns>
-    public static IEnumerable<ConceptSyntax> Concepts(ApplicationSyntax application, SliceSyntax slice)
+    public static IEnumerable<ConceptSyntax> Concepts(ApplicationSyntax application, SliceSyntax slice) => ConceptResolver(application)(slice);
+
+    internal static Func<SliceSyntax, IEnumerable<ConceptSyntax>> ConceptResolver(ApplicationSyntax application, IReadOnlyList<(SliceSyntax Slice, DeclarationScope Scope)>? scopes = null)
+    {
+        scopes ??= [.. ScreenplayValidator.ScopedSlices(application)];
+        var declarations = new ConsistencyDeclarations(application, scopes);
+        var types = (application.Types ?? []).GroupBy(type => type.Name).ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+        var scopeBySlice = new Dictionary<SliceSyntax, DeclarationScope>(ReferenceEqualityComparer.Instance);
+        foreach (var entry in scopes) scopeBySlice.Add(entry.Slice, entry.Scope);
+
+        return slice => Concepts(application, slice, declarations, types, scopeBySlice.GetValueOrDefault(slice));
+    }
+
+    static IEnumerable<ConceptSyntax> Concepts(ApplicationSyntax application, SliceSyntax slice, ConsistencyDeclarations declarations, Dictionary<string, TypeSyntax> types, DeclarationScope? scope)
     {
         var visitor = new FieldTypes();
         foreach (var command in slice.Commands) visitor.VisitCommand(command);
         foreach (var declaration in slice.Events) visitor.VisitEvent(declaration);
         foreach (var readModel in slice.ReadModels ?? []) visitor.VisitReadModel(readModel);
         foreach (var query in slice.Queries) visitor.VisitQuery(query);
-        var scopes = ScreenplayValidator.ScopedSlices(application).ToArray();
-        var declarations = new ConsistencyDeclarations(application, scopes);
-        foreach (var entry in scopes.Where(entry => ReferenceEquals(entry.Slice, slice)))
+        if (scope is not null)
         {
-            foreach (var property in slice.Queries.SelectMany(query => declarations.ViewProperties(query.ReturnType.Name, entry.Scope) ?? [])) visitor.VisitProperty(property);
+            var views = slice.Queries.Select(query => query.ReturnType.Name)
+                .Concat(slice.Commands.SelectMany(command => command.Reads ?? []).Select(reads => reads.ReadModel));
+            foreach (var property in views.SelectMany(view => declarations.ViewProperties(view, scope) ?? [])) visitor.VisitProperty(property);
         }
 
-        var types = (application.Types ?? []).GroupBy(type => type.Name).ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
         var names = visitor.Names;
         var pending = new Queue<string>(names);
         while (pending.TryDequeue(out var name))
