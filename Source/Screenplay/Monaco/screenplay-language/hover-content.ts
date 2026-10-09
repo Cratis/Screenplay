@@ -9,7 +9,7 @@ import { exampleHover } from './example-authoring';
 import { operationHover } from './operation-authoring';
 import { DocumentSymbols } from './symbols';
 import { responseAnalysis, responseAvailability } from './response-analysis';
-import { enclosingChain, fenceMap, indentOf, withoutComment } from './document-context';
+import { enclosingChain, enclosingHeaders, fenceMap, indentOf, withoutComment } from './document-context';
 import { directBody, propertyTypeReference, scanDocument } from './symbols';
 import { typeReferenceText } from './TypeReferenceSymbol';
 import { eventAnalysisSource } from './event-analysis-source';
@@ -89,6 +89,16 @@ export function hoverContent(
         : /^\s*@?[a-z_]\w*\s+[\w.]+(?:\[\])?\s+$/.test(prefix);
     const followsQueryType = /^\s*query\s+\w+\s*=>\s*(?:observable\s+)?[\w.]+(?:\[\])?\s+$/.test(prefix) &&
         !/^\s*query\s+\w+\s*=>\s*observable\s+$/.test(prefix);
+    if (word === 'subject') {
+        const source = eventAnalysisSource(lines);
+        const subjectPrefix = /^\s*@?[a-z_]\w*\s+[\w.]+(?:\[\])?(?:\?|\s+optional)?(?:\s+generated)?(?:\s+identifier)?\s+$/.test(prefix);
+        const ownerChain = enclosingChain(source, fences, lineIndex, indentOf(line));
+        if (subjectPrefix && (ownerChain[0] === 'event' || /^produces\s+event\s+/.test(enclosingHeaders(source, fences, lineIndex, indentOf(line))[0] ?? ''))) {
+            return '**subject** — This event property identifies its one data subject instead of the event source (decision 0008). Required scalar String, Uuid or their concepts, or an Int-backed concept; never pii or secret. Report-only lineage metadata (PLAY0270); no ESM bytes or provider output yet.';
+        }
+        if (/\bclaim\s+"(?:[^"\\]|\\.)*"\s+matches\s+$/.test(prefix) && ownerChain.includes('policy')) return `**subject** — ${keywordDocs.subject}`;
+        return null;
+    }
     if (word === 'optional' && (followsPropertyType || followsQueryType)) {
         return `**optional** — ${keywordDocs.optional}`;
     }
@@ -162,7 +172,7 @@ export function hoverContent(
             .sort((left, right) => (right.generation ?? 1) - (left.generation ?? 1))[0];
     if (event) {
         const properties = event.properties
-            .map((property) => `${property.name} ${typeReferenceText(propertyTypeReference(property))}`)
+            .map((property) => `${property.name} ${typeReferenceText(propertyTypeReference(property))}${property.isSubject ? ' subject' : ''}`)
             .join('\n');
         return `\`\`\`screenplay\nevent ${event.name}${event.generation !== undefined ? ` generation ${event.generation}` : ''}\n${properties}\n\`\`\``;
     }

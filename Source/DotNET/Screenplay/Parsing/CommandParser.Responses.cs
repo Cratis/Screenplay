@@ -37,7 +37,15 @@ internal static partial class CommandParser
             var field = ResponseFieldRegex().Match(child.Content);
             if (!field.Success)
             {
-                context.Error(DiagnosticCodes.InvalidCommandResponse, "Expected '<field> [<Type>] = <property>' in a response block.", child.Location);
+                var propertyText = child.Content.Split('=', 2)[0].TrimEnd();
+                if (PropertyLineParser.TryParse(child with { Content = propertyText }) is { IsSubject: true })
+                {
+                    context.Error(DiagnosticCodes.InvalidSubjectOwner, "The subject modifier is only valid on event properties, not response fields (decision 0008: one data subject per event).", child.Location);
+                }
+                else
+                {
+                    context.Error(DiagnosticCodes.InvalidCommandResponse, "Expected '<field> [<Type>] = <property>' in a response block.", child.Location);
+                }
                 context.SkipBlock(child.Indent);
                 continue;
             }

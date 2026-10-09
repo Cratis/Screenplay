@@ -149,6 +149,8 @@ command ArchiveOldInvoices
   olderThan Date
 ```
 
+The trailing `subject` role belongs only to [event properties](events.md#data-subject), including inline events before `=`. Commands and response fields refuse it (decision 0008); it is report-only metadata and does not promise provider output.
+
 **At most one property per command** may be the identifier; a second one is a compile error, because there is no sensible way to choose between them. The modifier belongs to commands only — an event never carries its own event source id (it is implicit in the event context), so `identifier` on an event property is an error too.
 
 ## What the command reads

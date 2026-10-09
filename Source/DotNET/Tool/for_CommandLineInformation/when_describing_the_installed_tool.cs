@@ -23,7 +23,7 @@ public class when_describing_the_installed_tool : Specification
     }
 
     [Fact] void should_handle_help_without_opening_a_model() => _handledHelp.ShouldBeTrue();
-    [Fact] void should_describe_the_stdio_command() => _help.Contains("screenplay mcp <model-folder>", StringComparison.Ordinal).ShouldBeTrue();
+    [Fact] void should_describe_the_stdio_command() => _help.Contains("screenplay mcp [<root-directory>] | --create-root <directory>", StringComparison.Ordinal).ShouldBeTrue();
     [Fact] void should_report_an_installed_version() => _handledVersion.ShouldBeTrue();
     [Fact] void should_emit_a_version_value() => _version.Trim().ShouldNotBeEmpty();
     [Fact] void should_not_intercept_server_startup() => _handledServer.ShouldBeFalse();

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text;
+using Cratis.Screenplay.Contracts;
 using Cratis.Screenplay.Mcp;
 
 namespace Cratis.Screenplay.Tool.Mcp;
@@ -10,11 +11,11 @@ static class McpCommand
 {
     internal static int Run(string[] arguments)
     {
-        var createRoot = arguments is ["mcp", "--create-root", _];
-        var runWithoutRoot = arguments is ["mcp"];
+        var createRoot = arguments.Length == 3 && arguments[0] == CliCommandCatalog.Mcp.Name && arguments[1] == CliCommandCatalog.CreateRoot.Name && CliCommandCatalog.Mcp.Options.Contains(CliCommandCatalog.CreateRoot);
+        var runWithoutRoot = arguments.Length == 1 && arguments[0] == CliCommandCatalog.Mcp.Name;
         if (arguments.Length != 2 && !createRoot && !runWithoutRoot)
         {
-            Console.Error.WriteLine("Usage: screenplay mcp [<root-directory>] | --create-root <directory>");
+            Console.Error.WriteLine($"Usage: {CliCommandCatalog.Mcp.Usage}");
             return 2;
         }
 

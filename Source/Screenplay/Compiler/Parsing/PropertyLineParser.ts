@@ -9,8 +9,8 @@ import { ParserContext } from './ParserContext';
 import { unescapeIdentifier } from './LineText';
 import { locationOf, SourceLine } from './SourceLine';
 
-const propertyPattern = pattern('^(@?[a-z_]\\w*)\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)(?:\\s+(generated))?(?:\\s+(identifier))?$');
-const invalidGeneratedModifiers = pattern('^@?[a-z_]\\w*\\s+[\\w.]+(?:\\[\\])?\\??\\s+((?:optional|generated|identifier)(?:\\s+(?:optional|generated|identifier))*)$');
+const propertyPattern = pattern('^(@?[a-z_]\\w*)\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)(?:\\s+(generated))?(?:\\s+(identifier))?(?:\\s+(subject))?$');
+const invalidGeneratedModifiers = pattern('^@?[a-z_]\\w*\\s+[\\w.]+(?:\\[\\])?\\??\\s+((?:optional|generated|identifier|subject)(?:\\s+(?:optional|generated|identifier|subject))*)$');
 const reversedModifiers = pattern('^@?[a-z_]\\w*\\s+[\\w.]+(?:\\[\\])?\\s+identifier\\s+optional(?:\\s*=.*)?$');
 
 // A '<name> <Type>[[]][?] [identifier]' line, or undefined when the line does not have that shape.
@@ -27,6 +27,7 @@ export function tryParseProperty(line: SourceLine): PropertySyntax | undefined {
         isGenerated: match[3] !== undefined,
         nameWasEscaped: match[1].startsWith('@'),
         isIdentifier: match[4] !== undefined,
+        ...(match[5] !== undefined ? { isSubject: true } : {}),
         location,
     };
 }
@@ -67,6 +68,11 @@ export function reportLegacyOptionalSuffix(context: ParserContext, type: TypeRef
 }
 
 export function reportInvalidModifierOrder(context: ParserContext, line: SourceLine): boolean {
+    const subjectModifiers = invalidGeneratedModifiers.exec(line.content);
+    if (subjectModifiers !== null && subjectModifiers[1].split(/\s+/).includes('subject')) {
+        context.error(DiagnosticCodes.InvalidSubjectModifierOrder, "Write each modifier once in order: '<name> <Type> optional generated identifier subject'.", locationOf(line));
+        return true;
+    }
     if (reversedModifiers.test(line.content)) {
         context.error(DiagnosticCodes.InvalidOptionalModifierOrder, "Write 'optional' before 'identifier': '<name> <Type> optional identifier'.", locationOf(line));
         return true;

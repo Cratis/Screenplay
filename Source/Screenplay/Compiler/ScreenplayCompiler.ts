@@ -17,6 +17,7 @@ import { CommandStreamCandidates } from './Parsing/CommandStreamCandidates';
 import { validateEventSources } from './Parsing/EventSourceValidator';
 import { validateProjectionTargets } from './Parsing/ProjectionTargetValidator';
 import { validateIdentifierCompliance } from './Parsing/IdentifierComplianceValidator';
+import { validateEventSubjects } from './Parsing/EventSubjectValidator';
 import { validateReactionRefusals } from './Parsing/ReactionRefusalValidator';
 import { validateSpecificationRedelivery } from './Parsing/SpecificationRedeliveryValidator';
 import { validateGuardedActions } from './Parsing/GuardedActionValidator';
@@ -74,6 +75,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateEventSources(value, context);
         validateProjectionTargets(value, context);
         validateIdentifierCompliance(value, context);
+        validateEventSubjects(value, context);
         validateReactionRefusals(value, context);
         validateSpecificationRedelivery(value, context);
         validateGuardedActions(value, context);

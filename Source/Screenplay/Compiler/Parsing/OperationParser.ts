@@ -68,6 +68,7 @@ export function parseOperation(context: ParserContext, header: SourceLine, inlin
         if (!usesPattern.test(line.content) && tryParseProperty(propertyLine) !== undefined) {
             const property = parseProperty(context, propertyLine)!;
             if (inline && typed === null) context.error(DiagnosticCodes.InvalidOperationMapping, "An inline operation input requires '<property> <Type> = <source>'.", locationOf(line));
+            if (property.isSubject) context.error(DiagnosticCodes.InvalidSubjectOwner, 'The subject modifier is only valid on event properties, not operation inputs (decision 0008: one data subject per event).', locationOf(line));
             if (property.isIdentifier || property.isGenerated) context.error(DiagnosticCodes.InvalidOperationDeclaration, 'Operation inputs cannot be identifier or generated properties.', locationOf(line));
             if (names.has(property.name)) context.error(DiagnosticCodes.DuplicateDeclaration, `Operation '${name}' already declares input '${property.name}'.`, locationOf(line));
             names.add(property.name);

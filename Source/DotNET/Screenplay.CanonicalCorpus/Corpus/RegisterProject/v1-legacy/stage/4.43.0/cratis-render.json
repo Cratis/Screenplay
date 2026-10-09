@@ -1,0 +1,124 @@
+{
+  "schemaVersion": "1",
+  "artifactPlanSchemaVersion": "1",
+  "semanticRevision": "rev1:ebe0c17eebc8aa64c573afe1ee639298e2874dd33406b8a9a663dd70aad820e4",
+  "target": "cratis",
+  "targetVersion": "22.50.5",
+  "renderer": "Cratis.Stage.Rendering.Cratis",
+  "rendererVersion": "1",
+  "applicationName": "Projects",
+  "artifacts": [
+    {
+      "path": ".frontend/index.css",
+      "sha256": "c43098e7d8431ead00fe49644e97b14cbdb4e97a994850e810acb8a801bc24b2"
+    },
+    {
+      "path": ".frontend/index.html",
+      "sha256": "9001e43194105a4b49a847bc562647c454a931a6575646d9e5235a6c061160b0"
+    },
+    {
+      "path": ".frontend/main.tsx",
+      "sha256": "e22844dd5715b58b06cb63cfd4a3fd6a610aebeaf623f0e60e4c0e7f02943ef6"
+    },
+    {
+      "path": ".frontend/tsconfig.json",
+      "sha256": "8188daef31c13c81639fd8e50c46f580322575bb5f34d033b486df2a14366e21"
+    },
+    {
+      "path": ".frontend/tsconfig.node.json",
+      "sha256": "3b2517722082109462da51cbd66142f937bfcbf3f7ce89aeab9991ff12140342"
+    },
+    {
+      "path": ".frontend/vite.config.ts",
+      "sha256": "54adb7473f5e230c9ded78b7549357a6e7abb4a547cf11d6094d2742df4002e5"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "74a92d28e98b0f259cc5b02bf9eac97fe103b30a10746f0315fba7fa0bfb0df9"
+    },
+    {
+      "path": "Common/ProjectId.cs",
+      "sha256": "679cf35bd307d4aec2353c2457c76c6b2e29edbab60212aa2f59cb98da82f1eb"
+    },
+    {
+      "path": "Common/ProjectName.cs",
+      "sha256": "11b0f6bf30644aeef78c920f76921848e1df10b94a1f7139a7c6b58afe5aae2b"
+    },
+    {
+      "path": "Directory.Build.props",
+      "sha256": "17284cb74605517cbec8a8153505da71a685b28694b67b5ef80608cd79b1c0ea"
+    },
+    {
+      "path": "Directory.Build.targets",
+      "sha256": "17284cb74605517cbec8a8153505da71a685b28694b67b5ef80608cd79b1c0ea"
+    },
+    {
+      "path": "Directory.Packages.props",
+      "sha256": "af799a176bf7be0de5e660924f4bde3444170788e9633399a1f65f0b72c9602f"
+    },
+    {
+      "path": "GeneratedPolicyRegistration.cs",
+      "sha256": "b57e45477a56d13da38a2ae0403485fc42a8c3ad475915f22e978179f4d9ee04"
+    },
+    {
+      "path": "Program.cs",
+      "sha256": "11c06f1db1225ad04204050bcd4d1a4cb3ca0f92fa5e9f838f4186d33bf89c6c"
+    },
+    {
+      "path": "Projects.csproj",
+      "sha256": "de903e5b8123792cd04e0c96dd3bbe25c9af53862aa33741297ace222c1d1295"
+    },
+    {
+      "path": "Projects.slnx",
+      "sha256": "db5c02ba1f186365950aa69c76412f2f175514175748ae5f2f3e94afb7bdabc5"
+    },
+    {
+      "path": "Projects/Registration/ProjectLookup/ProjectLookup.cs",
+      "sha256": "f52fbb0c9741f3dc969aff3a0a5383b04359598f153cdffb7a8ea94722097049"
+    },
+    {
+      "path": "Projects/Registration/RegisterProject/RegisterProject.cs",
+      "sha256": "40dd2ea586581626b38ee1bfbf1e0b437250197b3bdd3b9bec6226b420b0d900"
+    },
+    {
+      "path": "Projects/Registration/RegisterProject/when_registering_aproject.cs",
+      "sha256": "d363026e9d56b3b6276c94af3b813ad9a03bc724553ba50ff45bc2a2fbf3ff14"
+    },
+    {
+      "path": "Projects/Registration/RegisterProject/when_registering_aproject_is_projected.cs",
+      "sha256": "2e8880f847912d7bebe6fc307ce79c0a1180cc1f104c25f626b91ce28bbf7566"
+    },
+    {
+      "path": "Projects/Registration/RegisterProject/when_registering_aproject_is_queried.cs",
+      "sha256": "de23bc497ced0307ce971c9e41113019d59289a5078d1ebc8cbc3008c8cff30c"
+    },
+    {
+      "path": "Projects/Registration/RegisterProject/when_rejecting_an_empty_project_name.cs",
+      "sha256": "79c9f5738df7b298e55214d17f1c73bc13e9c0747250c0830adba6f11795ffdc"
+    },
+    {
+      "path": "appsettings.json",
+      "sha256": "fab4d53ed0e88ffa0ad0dbbea7022a0c5fd88fde0c60048b1e6d7b8caeae04ac"
+    },
+    {
+      "path": "docker-compose.yml",
+      "sha256": "d780b4894c6936918f81d04adeef5444c3a7b589883a5fefb06762a6308f2222"
+    },
+    {
+      "path": "package.json",
+      "sha256": "4379a8e8f08e8b173693678f4ba988e7da708791ecb1ac42492d1da7e24df329"
+    },
+    {
+      "path": "scene.json",
+      "sha256": "4823dc11c628f99a3ead73006dc330bc9f54409b0cf05d60c58379cdc16a5396"
+    },
+    {
+      "path": "src/bindings.ts",
+      "sha256": "4823d01d04ac795068ac52d87afc3e7be57c826dda63b005f1c3e7a057196f2f"
+    },
+    {
+      "path": "tsconfig.json",
+      "sha256": "d52a81eda975fa981b1cda931dfec65026821a2a753f29e643e5247bb0a312bb"
+    }
+  ]
+}

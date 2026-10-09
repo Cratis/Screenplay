@@ -12,7 +12,7 @@ public class when_extracting_an_inline_event : given.an_authoring_connection
     [Fact]
     void should_expose_an_explicit_preview_and_preserve_event_identity()
     {
-        const string source = "module Projects\n  feature Naming\n    slice StateChange Rename\n      command Rename\n        projectId Uuid identifier\n        produces event Renamed // preserve this\n          name String = \"something\"\n";
+        const string source = "module Projects\n  feature Naming\n    slice StateChange Rename\n      command Rename\n        projectId Uuid identifier\n        produces event Renamed // preserve this\n          name String subject = \"something\"\n";
         File.WriteAllText(Path.Combine(RootPath, "application.play"), source);
         Initialize();
         var opened = Open();
@@ -28,6 +28,8 @@ public class when_extracting_an_inline_event : given.an_authoring_connection
         var candidate = Candidate(proposal);
         var entry = WorkspaceSyntaxIndex.Create(candidate).Entries.Single(value => value.Node is EventSyntax);
         entry.Member.ShouldEqual("events");
+        ((EventSyntax)entry.Node).Properties.Single().IsSubject.ShouldBeTrue();
+        candidate.Documents[0].Text.ShouldContain("name String subject");
         entry.EventContractId.ShouldNotBeNull();
         candidate.Documents[0].Text.ShouldContain("for projectId");
         candidate.Documents[0].Text.ShouldContain("// preserve this");

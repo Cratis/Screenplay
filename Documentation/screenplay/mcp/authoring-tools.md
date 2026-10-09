@@ -238,6 +238,29 @@ across files has several occurrences, not one magic writable location. For a
 logical header rename, update all fragments in one batch; a partial rename is
 rejected.
 
+## Move across logical parents
+
+Use `propose-move` rather than a manual AST move when moving a slice to another
+feature or a feature to another module or feature. Copy its `target` and
+`newParent` `{kind, parts}` addresses from the workspace identity inventory and
+supply `expectedRevision` and `expectedCatalogRevision`. Optional occurrence
+handles are guards, not substitutes for the logical addresses. Declaration moves
+between slices are deferred.
+
+The planner moves all fragments, computes every assigned semantic and event
+migration and repairs qualified references, including `depends on`. It does not
+rename events, change their pins, or move files. It refuses identity loss, capture,
+collisions, descendant destinations, inherited authorization and screen interaction
+changes. Placing imports must be literal paths with one destination; a split
+destination needs a single own-named file. Globs are not rewritten by guessing.
+
+Review `moveReport.identityMigrations`, the empty `retired` list,
+`referenceRepairs` and `fragmentsMoved` in the response or `read-proposal`.
+Formatting defaults to `PreserveTrivia` and never falls back to canonical output;
+choose `CanonicalizeTouchedDocuments` explicitly if needed and inspect dropped
+comments. Apply with the existing `apply` tool. Run `expand-layout` separately to
+realign files after the move.
+
 ## Rename without hand-editing references
 
 For a supported declaration, call `propose-rename` with its handle, exact

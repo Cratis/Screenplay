@@ -226,6 +226,11 @@ public sealed record WorkspaceAuthoringResult
     public bool ExecutableReady { get; init; }
 
     /// <summary>
+    /// Gets the move planner's identity, reference and fragment report, when this is a move proposal.
+    /// </summary>
+    public WorkspaceMoveReport? MoveReport { get; init; }
+
+    /// <summary>
     /// Gets diagnostics from executable semantic compilation, independently of source acceptance.
     /// </summary>
     public ImmutableArray<Diagnostic> ExecutableDiagnostics { get; init; } = [];

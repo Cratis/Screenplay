@@ -23,7 +23,7 @@ internal sealed class SyntaxMember(PropertyInfo property, ParameterInfo? paramet
 
     internal bool Required => Type != typeof(SourceOptions) && ElementType is null && !Nullable && Parameter?.HasDefaultValue != true &&
         !(Property.DeclaringType == typeof(ConceptAttributeSyntax) && Property.Name == nameof(ConceptAttributeSyntax.Criminal)) &&
-        !(Property.DeclaringType == typeof(PropertySyntax) && Property.Name == nameof(PropertySyntax.IsGenerated)) &&
+        !(Property.DeclaringType == typeof(PropertySyntax) && (Property.Name == nameof(PropertySyntax.IsGenerated) || Property.Name == nameof(PropertySyntax.IsSubject))) &&
         !(Property.DeclaringType == typeof(Specifications.SpecificationSyntax) && Property.Name == nameof(Specifications.SpecificationSyntax.ThenNoEvents)) &&
         !(Property.DeclaringType == typeof(EventSyntax) &&
           (Property.Name == nameof(EventSyntax.Generation) || Property.Name == nameof(EventSyntax.HasGenerationMarker)));
@@ -41,7 +41,7 @@ internal sealed class SyntaxMember(PropertyInfo property, ParameterInfo? paramet
                 return Array.CreateInstance(ElementType, 0);
             }
 
-            if (Property.DeclaringType == typeof(PropertySyntax) && Property.Name == nameof(PropertySyntax.IsGenerated)) return false;
+            if (Property.DeclaringType == typeof(PropertySyntax) && (Property.Name == nameof(PropertySyntax.IsGenerated) || Property.Name == nameof(PropertySyntax.IsSubject))) return false;
 
             if (Property.DeclaringType == typeof(EventSyntax))
             {

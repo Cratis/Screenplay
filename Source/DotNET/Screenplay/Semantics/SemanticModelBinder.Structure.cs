@@ -175,6 +175,11 @@ public sealed partial class SemanticModelBinder
                     Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Event '{declaration.Name}' file reference is realization provenance.", declaration.File.Location);
                 }
 
+                foreach (var property in declaration.Properties.Where(property => property.IsSubject))
+                {
+                    Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Event '{declaration.Name}' subject property '{property.Name}' is report-only lineage metadata; it adds no executable semantics or provider output.", property.Location);
+                }
+
                 var properties = declaration.Properties.Select(property => declarations.Length > 1
                     ? BindEventProperty(address, new EventContractRevision(declaration.Generation), property)
                     : BindProperty(address, property, false)).ToImmutableArray();
