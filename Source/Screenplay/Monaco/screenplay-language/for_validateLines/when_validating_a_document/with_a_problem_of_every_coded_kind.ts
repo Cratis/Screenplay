@@ -129,6 +129,21 @@ describe('when validating a document with a problem of every coded kind', () => 
             ['module A', '  depends on Shared.F', 'module B', '  feature Shared', '    feature F', 'module C', '  feature Shared', '    feature F'],
         ];
         issues.push(...dependencies.flatMap(lines => validateLines(lines, { compilerDiagnostics: parse(lines.join('\n')).diagnostics })));
+        const publicContracts = ['import Outside.Arrived from "other/store"', 'module Sales', '  feature Orders', '    slice StateChange Facts', '      event Changed', '      public event Published', '      public event Second'];
+        const publicUses = [
+            ['StateChange', 'command Send\n        produces Published'],
+            ['Automation', 'reaction Receive\n        when Arrived\n          produces Published'],
+            ['Translate', 'direction outbound'],
+            ['Translate', 'direction outbound\n      reaction Send\n        when Published\n          produces Changed'],
+            ['Translate', 'direction inbound\n      reaction Receive\n        when Changed\n          produces Arrived'],
+            ['Translate', 'direction outbound\n      capture Data\n        append Published'],
+            ['Translate', 'reaction Receive\n        when Arrived\n          produces Changed'],
+            ['StateView', 'projection Publisher => Published\n        from Changed\n          id = $eventSourceId'],
+            ['Translate', 'capture Feed\n        source events\n          from Arrived\n        key id'],
+            ['Translate', 'direction inbound\n      capture Feed\n        source events\n        key id'],
+        ];
+        issues.push(...publicUses.flatMap(([kind, body]) => validateLines([...publicContracts, `    slice ${kind} Transfer`, ...(`      ${body}`).split('\n')])));
+        issues.push(...validateLines(['import Invalid from " "', 'module M', '  feature F', '    slice Translate S', '      direction sideways', '      public event E from " "']));
     });
 
     it('should give every issue it reports a code', () => {
@@ -139,7 +154,7 @@ describe('when validating a document with a problem of every coded kind', () => 
         const reported = new Set(issues.map((issue) => issue.code));
         // Keep the old constant in the exported API, but admitted v7 responses no longer emit it.
         Object.values(diagnosticCodes).filter(code => code !== diagnosticCodes.unavailableResponseExecution)
-            .forEach((code) => reported.has(code).should.be.true);
+            .forEach((code) => reported.has(code).should.equal(true, code));
         reported.has(diagnosticCodes.unavailableResponseExecution).should.be.false;
     });
 });

@@ -160,6 +160,7 @@ export class CompletionProvider implements languages.CompletionItemProvider {
             { label: 'api', detail: 'source api', documentation: 'Capture data by polling an HTTP API' },
             { label: 'webhook', detail: 'source webhook', documentation: 'Capture data from incoming webhook requests' },
             { label: 'message', detail: 'source message', documentation: 'Capture data from a message topic' },
+            { label: 'events', detail: 'source events', documentation: "Capture another application's public events (inbound translation); each 'from <Event>' names one consumed event" },
         ].forEach((source) => {
             suggestions.push({
                 label: source.label,
@@ -184,6 +185,9 @@ export class CompletionProvider implements languages.CompletionItemProvider {
             ],
             webhook: [
                 { label: 'path', detail: 'path <route>', documentation: 'The inbound path this webhook listens on' },
+            ],
+            events: [
+                { label: 'from', detail: 'from <Event>', documentation: "Names a public event of another application to consume; repeat for more events" },
             ],
             message: [
                 { label: 'topic', detail: 'topic <name>', documentation: 'The topic or subject to subscribe to' },
@@ -346,7 +350,7 @@ export class CompletionProvider implements languages.CompletionItemProvider {
     private getCurrentSourceType(model: editor.ITextModel, lineNumber: number): string | null {
         for (let index = lineNumber; index >= 1; index--) {
             const line = model.getLineContent(index).trim();
-            const match = line.match(/^source\s+(api|webhook|message)\b/);
+            const match = line.match(/^source\s+(api|webhook|message|events)\b/);
             if (match) {
                 return match[1];
             }

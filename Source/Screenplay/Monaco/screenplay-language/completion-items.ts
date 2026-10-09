@@ -27,6 +27,7 @@ export const topLevelItems: CompletionEntry[] = [
     { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams, admitted by ESM v8. Pin the stored name before renaming a source with stored events; Default is reserved.' },
     { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system; not admitted by any supported executable model (ESM) version yet.' },
     { label: 'import', insertText: 'import ${1:Module}.${2:Type}', documentation: 'Imports a type from another module by its qualified name.' },
+    { label: 'import from', insertText: 'import ${1:Module}.${2:Event} from "${3:origin}"', documentation: 'Imports a public event contract with a nonblank opaque origin, not a file path. Executable binding refuses it with PLAY0268.' },
     { label: 'import "…"', insertText: 'import "${1:**/*.play}"', documentation: 'Imports other `.play` files by path or glob, relative to this file\'s folder, as whole documents of the application.' },
     { label: 'concept', insertText: 'concept ${1:Name} : ${2|Uuid,String,Int,Decimal,Bool,Date,DateTime|}', documentation: 'Declares a formalized value type wrapping a primitive.' },
     { label: 'concept (enum)', insertText: 'concept ${1:Name} : Enum\n    ${2:value}', documentation: 'Declares an enumeration concept with a fixed set of values.' },
@@ -86,6 +87,9 @@ export const sliceItems: CompletionEntry[] = [
     ...exampleDeclarationItems,
     { label: 'operation', insertText: 'operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type}', documentation: 'Reusable slice-owned operation intent; not admitted by any supported executable model (ESM) version yet.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
+    { label: 'public event', insertText: 'public event ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Public contract metadata; executable binding refuses it with PLAY0268.' },
+    { label: 'event from', insertText: 'event ${1:Name} from "${2:origin}"\n    ${3:property} ${4:Type}', documentation: 'An imported public event with an opaque origin, not a path or declaration reference. Executable binding refuses it with PLAY0268.' },
+    { label: 'direction', insertText: 'direction ${1|inbound,outbound|}', documentation: 'Translate direction metadata; executable binding refuses it with PLAY0268.' },
     { label: 'event', insertText: 'event ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares an event type — an immutable, past-tense fact.' },
     { label: 'event generation', insertText: 'event ${1:Name} generation ${2:2}\n    ${3:property} ${4:Type}', documentation: 'Declares a complete numbered event generation; start at 1 and do not skip a number.' },
     { label: 'command', insertText: 'command ${1:Name}\n    ${2:property} ${3:Type}', documentation: 'Declares a command — an imperative intent that produces events.' },
@@ -392,5 +396,5 @@ const sliceMembers: Record<string, readonly string[]> = {
 
 export function sliceItemsFor(sliceType: string | undefined): CompletionEntry[] {
     const members = sliceType ? sliceMembers[sliceType] : undefined;
-    return members ? sliceItems.filter(item => item.label === 'example' || item.label === 'documentation' || members.includes(item.label)) : sliceItems;
+    return members ? sliceItems.filter(item => item.label === 'example' || item.label === 'documentation' || item.label === 'public event' || item.label === 'event from' || (item.label === 'direction' && sliceType === 'Translate') || members.includes(item.label)) : sliceItems;
 }

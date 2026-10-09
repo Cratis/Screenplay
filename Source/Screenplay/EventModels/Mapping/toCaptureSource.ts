@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { CaptureSyntax } from '@cratis/screenplay-compiler';
+import { CaptureSyntax, consumedEvents } from '@cratis/screenplay-compiler';
 import { AutomationTriggerDocument, AutomationTriggerType, ExternalEventItemDocument } from '../Document/EventModelDocument';
 import { SliceScope } from './SliceScope';
 
@@ -14,6 +14,8 @@ export function toCaptureSource(capture: CaptureSyntax, scope: SliceScope): Exte
 
 // What sets a capture off: reading its source, which the board shows as a trigger of its own.
 export function toCaptureTrigger(capture: CaptureSyntax): AutomationTriggerDocument {
+    const events = capture.source === null ? [] : consumedEvents(capture.source);
+    if (events.length > 0) return { type: AutomationTriggerType.custom, description: `Captures ${capture.name} from events ${events.map(event => event.value).join(', ')}` };
     const settings = capture.source?.settings.map(setting => `${setting.name} ${setting.value}`).join(', ');
     const from = capture.source === null ? '' : ` from ${capture.source.syntaxKind}${settings === undefined || settings.length === 0 ? '' : ` (${settings})`}`;
     return { type: AutomationTriggerType.custom, description: `Captures ${capture.name}${from}` };

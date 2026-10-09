@@ -163,7 +163,7 @@ export function hoverContent(
         const properties = event.properties
             .map((property) => `${property.name} ${typeReferenceText(propertyTypeReference(property))}`)
             .join('\n');
-        return `\`\`\`screenplay\nevent ${event.name}${event.generation !== undefined ? ` generation ${event.generation}` : ''}\n${properties}\n\`\`\``;
+        return `\`\`\`screenplay\n${event.visibility === 'Public' ? 'public ' : ''}event ${event.name}${event.generation !== undefined ? ` generation ${event.generation}` : ''}${event.origin !== undefined ? ` from ${JSON.stringify(event.origin)}` : ''}\n${properties}\n\`\`\``;
     }
 
     const command = symbols.commands.find((candidate) => candidate.name === word);

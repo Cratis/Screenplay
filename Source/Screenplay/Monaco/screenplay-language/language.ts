@@ -33,6 +33,7 @@ export const constructKeywords = [
     'feature',
     'slice',
     'event',
+    'public',
     'system',
     'eventsource',
     'operation',
@@ -60,6 +61,9 @@ export const typeModifierKeywords = ['optional'];
 
 export const clauseKeywords = [
     'depends',
+    'direction',
+    'inbound',
+    'outbound',
     'description',
     'documentation',
     'template',

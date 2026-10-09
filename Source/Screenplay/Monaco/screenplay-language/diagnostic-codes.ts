@@ -10,6 +10,21 @@
 // and those stay codeless deliberately: minting a PLAY number for something no compiler run can emit
 // would make the catalogue describe two different tools.
 export const diagnosticCodes = {
+    // Preserve supplied C# whole-model diagnostics; these checks are not yet run by the editor.
+    commandProducesPublicEvent: 'PLAY0596',
+    publicEventRequiresOutboundTranslation: 'PLAY0597',
+    outboundPublicEventCount: 'PLAY0598',
+    foreignPublicEventConsumer: 'PLAY0599',
+    outboundTranslationInput: 'PLAY0600',
+    inboundTranslationOutput: 'PLAY0601',
+    foreignPublicEventProduced: 'PLAY0602',
+    publicTranslationRequiresDirection: 'PLAY0603',
+    translationConstructDirection: 'PLAY0604',
+    inboundTranslationInput: 'PLAY0605',
+    outboundTranslationOutput: 'PLAY0606',
+    eventTargetOutsideOutboundTranslation: 'PLAY0607',
+    eventsSourceOutsideInboundTranslation: 'PLAY0608',
+    invalidCaptureEventsSource: 'PLAY0609',
     unknownConceptDirective: 'PLAY0010',
     attributeReasonWithoutAttribute: 'PLAY0012',
     duplicateAttributeReason: 'PLAY0013',

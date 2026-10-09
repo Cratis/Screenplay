@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { eventBodyReservedWords } from '@cratis/screenplay-compiler';
+import { EventVisibility, eventBodyReservedWords, unescapeString } from '@cratis/screenplay-compiler';
 import { fenceMap, indentOf } from './document-context';
 import { eventAnalysisSource } from './event-analysis-source';
 import { CommandResponseSymbol, responseAnalysis } from './response-analysis';
@@ -45,6 +45,9 @@ export interface PolicySymbol {
 }
 
 export interface EventSymbol {
+    // Public editor declarations stay structural; the compiler is privately bundled.
+    visibility?: 'Private' | 'Public';
+    origin?: string;
     name: string;
     generation?: number;
     inline?: boolean;
@@ -215,7 +218,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
         const trimmed = line.trim();
         const indent = indentOf(line);
 
-        const importMatch = eventLines[index].trim().match(/^import\s+([\w.]+)\s*$/);
+        const importMatch = eventLines[index].trim().match(/^import\s+([\w.]+)(?:\s+from\s+"(?:[^"\\]|\\.)*")?\s*$/);
         if (importMatch && indent === 0) {
             const qualifiedName = importMatch[1];
             const shortName = qualifiedName.split('.').pop() ?? qualifiedName;
@@ -267,15 +270,17 @@ export function scanDocument(lines: string[]): DocumentSymbols {
             continue;
         }
 
-        const eventMatch = eventLines[index].trim().match(/^(?:produces\s+)?event\s+(\w+)(?:\s+generation\s+(\d+))?\s*$/);
+        const eventMatch = eventLines[index].trim().match(/^(?:(?:produces|(?<public>public))\s+)?event\s+(?<name>\w+)(?:\s+generation\s+(?<generation>\d+))?(?:\s+from\s+(?<origin>"(?:[^"\\]|\\.)*"))?\s*$/);
         if (eventMatch) {
             const inline = trimmed.startsWith('produces ');
             const body = directBody(eventLines, eventFences, index, indent);
             // Standalone events distinguish file metadata from properties by path shape.
             const propertyBody = inline ? body : body.filter(line => fileReferenceOn(eventLines[line], line) === undefined);
             symbols.events.push({
-                name: eventMatch[1],
-                ...(eventMatch[2] ? { generation: Number(eventMatch[2]) } : {}),
+                name: eventMatch.groups!.name,
+                ...(eventMatch.groups!.generation ? { generation: Number(eventMatch.groups!.generation) } : {}),
+                ...(eventMatch.groups!.public || eventMatch.groups!.origin ? { visibility: EventVisibility.Public } : {}),
+                ...(eventMatch.groups!.origin ? { origin: unescapeString(eventMatch.groups!.origin.slice(1, -1)) } : {}),
                 inline,
                 properties: propertiesIn(inline ? eventPropertyLines : eventLines,
                     propertyBody, inline ? inlineEventReserved : eventReserved),

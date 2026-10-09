@@ -301,9 +301,23 @@
                     }
                 },
                 {
-                    "match": "^\\s*(?:produces\\s+)?(event)\\s+[A-Za-z_]\\w*\\s+(generation)(?=\\s+[0-9]+\\s*$)",
+                    "match": "^\\s*(?:(?:public|produces)\\s+)?(event)\\s+[A-Za-z_]\\w*\\s+(generation)(?=\\s+[0-9]+(?:\\s+from\\s+\"(?:[^\"\\\\]|\\\\.)*\")?\\s*$)",
                     "captures": {
                         "1": { "name": "keyword.control.screenplay" },
+                        "2": { "name": "keyword.other.screenplay" }
+                    }
+                },
+                {
+                    "match": "^\\s*(public)\\s+(event)\\b",
+                    "captures": {
+                        "1": { "name": "keyword.control.screenplay" },
+                        "2": { "name": "keyword.control.screenplay" }
+                    }
+                },
+                {
+                    "match": "^\\s*(direction)\\s+(inbound|outbound)\\s*$",
+                    "captures": {
+                        "1": { "name": "keyword.other.screenplay" },
                         "2": { "name": "keyword.other.screenplay" }
                     }
                 },
@@ -564,11 +578,13 @@
             ]
         },
         "event-block": {
-            "begin": "^([ ]*)((?:produces\\s+)?event)\\s+([A-Za-z_]\\w*)(?:\\s+(generation)\\s+\\d+)?(?=\\s*(?://.*)?$)",
+            "begin": "^([ ]*)((?:(?:produces|public)\\s+)?event)\\s+([A-Za-z_]\\w*)(?:\\s+(generation)\\s+\\d+)?(?:\\s+(from)\\s+(\"(?:[^\"\\\\]|\\\\.)*\"))?(?=\\s*(?://.*)?$)",
             "beginCaptures": {
                 "2": { "name": "keyword.control.screenplay" },
                 "3": { "name": "entity.name.type.screenplay" },
-                "4": { "name": "keyword.other.screenplay" }
+                "4": { "name": "keyword.other.screenplay" },
+                "5": { "name": "keyword.other.screenplay" },
+                "6": { "name": "string.quoted.double.screenplay" }
             },
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
             "patterns": [
@@ -640,7 +656,7 @@
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
             "patterns": [
                 {
-                    "match": "\\b(source|api|route|poll|key|map|translate|append|when|children|identified|by|added|removed|changed)\\b",
+                    "match": "\\b(source|events|from|api|route|poll|key|map|translate|append|when|children|identified|by|added|removed|changed)\\b",
                     "name": "keyword.other.cdl.screenplay"
                 },
                 { "include": "#common" }
