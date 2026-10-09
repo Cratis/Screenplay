@@ -23,8 +23,8 @@ The matrix was reconciled on 9 October 2026 against this vector:
 | --- | --- | --- |
 | Scene | 4.12.0 | Package hosts, galleries and typed command-form geometry ([Scene#79](https://github.com/Cratis/Scene/pull/79), [Scene#80](https://github.com/Cratis/Scene/pull/80)). |
 | Screenplay | 4.116.0 | Conformance harness and corpus. Stage and the CLI bundle the 4.114.0 screen ABI and corpus package. |
-| Stage | 4.49.9 | Latest public image. |
-| CLI | 3.40.4 | Defaults to Stage 4.49.7 ([cli#296](https://github.com/Cratis/cli/pull/296)). A CLI release defaulting to Stage 4.49.9 is held until the browser blockers below clear. |
+| Stage | 4.49.10 | Latest public image ([Stage#279](https://github.com/Cratis/Stage/pull/279)). |
+| CLI | 3.40.4 | Defaults to Stage 4.49.7 ([cli#296](https://github.com/Cratis/cli/pull/296)). A CLI release defaulting to Stage 4.49.10 is held until the browser blockers below clear. |
 | Studio | 0.137.1 | Released, not deployed: a stale production Pulumi lock is awaiting a decision. |
 | AI | 7.17.0 | Includes the real MCP stdio transcript ([AI#563](https://github.com/Cratis/AI/pull/563)). |
 
@@ -33,7 +33,7 @@ The matrix was reconciled on 9 October 2026 against this vector:
 | Proof | Vector | Result |
 | --- | --- | --- |
 | Browser runtime, public | CLI 3.40.4 + `cratis/stage:4.49.7` | Partial. Endpoints, two-item seeding, list and row B details, dotted and punctuated stable ids, enabled native controls and an invalid native create that sends zero requests pass. Recorded as `browser-native-controls-runtime-3.40.4-4.49.7` in `ScreenCompositionCorpus.V1` ([#596](https://github.com/Cratis/Screenplay/pull/596)). |
-| Browser runtime, local CLI build | Local CLI build + public `cratis/stage:4.49.9` | Progress only. Additionally passes the native create fields and the valid create payload and projection. |
+| Browser runtime, local CLI build | Local CLI build + public `cratis/stage:4.49.10` | Progress only, not acceptance: 49 assertions pass and 2 are blocked. Everything listed for the public vector passes here too. So do scoped B comments, the selected-row query and deep-link identity, the delayed A request and clear-selection. Create, Rename and AddComment each pass invalid submit (zero requests, required-field validation) and valid submit (one canonical payload, projection, persistence after reload). The dark theme changes the page background. |
 | MCP stdio transcript | CLI 3.40.4 | Pass. Initialize, 37 tools, open, propose, stale apply refused with `StaleRevision`, apply, and reopen with a changed revision and a preserved comment. |
 | Typed-source MCP authoring | Screenplay 4.116.0 | Pass. `when_authoring_screen_release_ui_from_an_empty_folder`. |
 | Corpus parse, print and admission | Screenplay 4.116.0 | Pass. `for_ScreenCompositionCorpus`; the single-file, folder, reordered and relocated forms produce identical outcomes. |
@@ -52,22 +52,22 @@ pass as the intended one.
 
 ## Open browser blockers
 
-These fail on the latest exact public vector and are owned by the Stage frontend. Each blocks several rows below.
+The rows below cite these blockers as observed on the public vector, the only one that counts for acceptance. The
+second column shows the latest Stage image driven by a local CLI build, so it predicts what the next CLI release
+should clear.
 
-| Blocker | Observation |
-| --- | --- |
-| B1 Scoped comments | Selecting row B shows B's details but not B's comment text. |
-| B2 Selected query identity | No query request carries the selected row's identity. |
-| B3 Deep-link identity | The selected URL stays `#/WorkItemList` and carries no row identity. |
-| B4 Stale response | A delayed response for row A is never observed, so discarding it after selecting B is unproven. |
-| B5 Native fields | On the public vector the create, rename and add-comment dialogs render no `workItemId`, `title`, `commentId` or `text` inputs, and required-field validation text is missing. On a local CLI build with Stage 4.49.9 the create fields render; the rename projection and the add-comment `commentId` input still fail. |
-| B6 Theme effect | Selecting the dark theme leaves the body background unchanged. |
-| B7 Guarded actions | Guarded Close and the double-click interaction stay fail-closed with `STAGE-SCENE-ACTION-001` and `STAGE-SCENE-INTERACTION-001`. |
+| Blocker | Public CLI 3.40.4 + Stage 4.49.7 | Local CLI build + Stage 4.49.10 |
+| --- | --- | --- |
+| B1 Scoped comments | Selecting row B shows B's details but not B's comment text. | B's comment shows, but A's comment shows with it. The Stage runtime's `all-comment-views` endpoint ignores `workItemId`. Owned by the Stage backend. |
+| B2 Selected query identity | No query request carries the selected row's identity. | Passes: `all-comment-views?workItemId=<B>`. |
+| B3 Deep-link identity | The selected URL stays `#/WorkItemList` and carries no row identity. | Passes: `#/WorkItemDetails?workItemId=<B>`. |
+| B4 Stale response | A delayed response for row A is never observed. | The delayed A request is observed. Discarding it is unproven while the server returns A's comment for every request; same root cause as B1. |
+| B5 Native fields | The create, rename and add-comment dialogs render no inputs, and required-field validation text is missing. | Passes for Create, Rename and AddComment: required validation with zero requests on an invalid submit, then one canonical payload, the projection and persistence after reload. |
+| B6 Theme effect | Selecting the dark theme leaves the body background unchanged. | Passes: the background changes from `rgb(244, 245, 247)` to `rgb(15, 17, 23)`. |
+| B7 Guarded actions | Guarded Close and the double-click interaction stay fail-closed with `STAGE-SCENE-ACTION-001` and `STAGE-SCENE-INTERACTION-001`. | Unchanged. |
 
-[Stage#275](https://github.com/Cratis/Stage/pull/275) set out to fix B1, B2 and B4: it publishes selected rows as
-component outputs, clears dependent queries on null arguments and ignores stale delayed responses. It ships in
-Stage 4.49.7, and the three blockers still fail there, so the defect sits between those changes and the rendered
-screen rather than in the published contract.
+The browser assertions for B1 and B4 are unchanged and stay strict: they pass only when the comment list for row B
+contains no comment from row A.
 
 ## The AddComment identifier
 
@@ -77,6 +77,9 @@ authored model, not from what the runtime renders. In the corpus, `AddComment` d
 command routes `CommentAdded` to that event source with `for commentId`, and the slice's own `AddingAComment`
 specification supplies `commentId` when it executes the command. A native form for this command therefore has to
 collect `commentId`.
+
+The local CLI build with Stage 4.49.10 renders that input with the label "Comment Id" and submits the identifier the
+user enters, together with the selected row's `workItemId`.
 
 `when_reading_the_add_comment_command_identity` pins this by reading the released corpus document. If the model ever
 changes to `commentId CommentId generated identifier`, that specification fails first, and the browser assertion must
