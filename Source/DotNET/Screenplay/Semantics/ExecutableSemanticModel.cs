@@ -78,7 +78,7 @@ public sealed record ExecutableSemanticModel
         SemanticVersion semanticVersion,
         SemanticApplication application)
     {
-        EsmSchemaV7Support.EnsureSupported(languageVersion, semanticVersion);
+        EsmSchemaV8Support.EnsureSupported(languageVersion, semanticVersion);
         SemanticModelValidator.Validate(application, semanticVersion);
         var withoutRevision = SemanticModelCanonicalJson.SerializeWithoutRevision(languageVersion, semanticVersion, application);
         var revision = SemanticRevision.Compute(withoutRevision);
@@ -100,8 +100,9 @@ internal static partial class SemanticModelValidator
             throw new InvalidSemanticContract("The semantic application cannot be null.");
         }
 
-        var context = new ValidationContext(semanticVersion == default ? SemanticVersion.V1 : semanticVersion);
+        var context = new ValidationContext(semanticVersion == default ? SemanticVersion.V1 : semanticVersion, application);
         context.RegisterApplication(application);
+        ValidateEventRoutesVersion(application, semanticVersion);
         context.ValidateReferences(application);
         if (semanticVersion == SemanticVersion.V2 && !application.Modules.SelectMany(module => module.Features)
             .SelectMany(AllSlices).Any(slice => slice.Commands.Any(command => command.Destination is not null ||
@@ -242,8 +243,9 @@ internal static partial class SemanticModelValidator
 
         readonly SemanticVersion _semanticVersion;
 
-        public ValidationContext(SemanticVersion semanticVersion)
+        public ValidationContext(SemanticVersion semanticVersion, SemanticApplication application)
         {
+            _eventRoutesApplication = application;
             _semanticVersion = semanticVersion;
             _valueValidator = new(_concepts, _types);
         }
@@ -268,6 +270,7 @@ internal static partial class SemanticModelValidator
                 RegisterType(type);
             }
 
+            RegisterEventSources(application);
             RegisterTriggers(application);
             foreach (var module in application.Modules)
             {
@@ -299,6 +302,7 @@ internal static partial class SemanticModelValidator
                 ValidateProperties(type.Properties);
             }
 
+            ValidateEventSources();
             ValidateTriggers();
             foreach (var slice in AllSlices(application))
             {
@@ -541,6 +545,7 @@ internal static partial class SemanticModelValidator
 
             ValidateProperties(command.Properties, true);
             ValidateResponse(command);
+            ValidateCommandRoute(command);
             var properties = Properties([.. command.Properties.Where(property => !property.IsGenerated)]);
             if (command.Requirements.IsDefault) throw new InvalidSemanticContract("Command requirements cannot be default.");
             foreach (var requirement in command.Requirements)
@@ -885,13 +890,14 @@ internal static partial class SemanticModelValidator
                 if (specification.When is not null) throw new InvalidSemanticContract("A specification cannot state both command and append actions.");
                 if (!_events.TryGetValue(appended.EventContract, out var eventContract)) throw new InvalidSemanticContract("An appended specification event is unresolved.");
                 ValidatePropertyValues(appended.Values, eventContract.Properties, true);
+                ValidateFixtureRoute(appended.Route, false, false, appended.EventSource, appended.EventContract);
                 if (appended.EventSource is not null)
                 {
                     if (_semanticVersion == SemanticVersion.V1) throw new InvalidSemanticContract("An appended event source requires ESM v2.");
                     SemanticTypeReference destinationType;
                     try
                     {
-                        destinationType = DeclaredEventSourceType(_commands.Values, _reactions, _captures.Values, appended.EventContract);
+                        destinationType = FixtureEventSourceType(appended.Route, appended.EventContract);
                     }
                     catch (InvalidSemanticContract)
                     {
@@ -918,7 +924,7 @@ internal static partial class SemanticModelValidator
                     throw new InvalidSemanticContract("A specification expects an event the command does not produce.");
                 }
 
-                ValidateSpecificationEvent(value);
+                ValidateSpecificationEvent(value, true);
             }
 
             foreach (var state in specification.GivenReadModels)
@@ -994,7 +1000,7 @@ internal static partial class SemanticModelValidator
             }
         }
 
-        void ValidateSpecificationEvent(SemanticSpecificationEvent value)
+        void ValidateSpecificationEvent(SemanticSpecificationEvent value, bool then = false)
         {
             if (value.EventSource is not null && _semanticVersion == SemanticVersion.V1)
             {
@@ -1007,9 +1013,10 @@ internal static partial class SemanticModelValidator
             }
 
             ValidatePropertyValues(value.Values, eventContract.Properties, true);
+            ValidateFixtureRoute(value.Route, value.Unrouted, then, value.EventSource, value.EventContract);
             if (value.EventSource is not null)
             {
-                ValidateEventSource(value.EventSource, DeclaredEventSourceType(_commands.Values, _reactions, _captures.Values, value.EventContract));
+                ValidateEventSource(value.EventSource, FixtureEventSourceType(value.Route, value.EventContract));
             }
         }
 

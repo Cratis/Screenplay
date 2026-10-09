@@ -1,0 +1,4 @@
+eventsource Account
+  stream Notes
+    id "Ledger"
+  stream Ledger

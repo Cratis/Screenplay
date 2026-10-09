@@ -21,8 +21,8 @@ public class when_indexing_authored_source_streams : Specification
     [Fact] void should_not_accept_foreign_qualification() => _index.Resolve(new("Banking.Account.Transactions", ["EventStream"], [], SourceLocation.Start)).Length.ShouldEqual(0);
     [Fact] void should_index_identifier_types_under_the_stream_owner() => _index.References.Any(reference => reference.Name == "Month" && reference.Owner?.Kind == "EventStream").ShouldBeTrue();
     [Fact] void should_index_command_source_and_stream_links() => _index.Outgoing("Banking.Deposits.Deposit.Deposit").Select(reference => reference.Role).ShouldContain("commandStream");
-    [Fact] void should_disclose_the_model_as_authoring_only() => _index.Readiness.ModelExecutionReadiness.ShouldContain("event sources, streams and routes (#302)");
-    [Fact] void should_disclose_a_specification_using_the_routed_command_as_unavailable() => _index.Readiness.ExecutionReadiness(_index.Find("Banking.Deposits.Deposit.Routed", "Specification")[0].Syntax).ShouldContain("event sources, streams and routes (#302)");
+    [Fact] void should_disclose_the_model_as_admitted() => _index.Readiness.ModelExecutionReadiness.ShouldBeNull();
+    [Fact] void should_disclose_a_specification_using_the_routed_command_as_admitted() => _index.Readiness.ExecutionReadiness(_index.Find("Banking.Deposits.Deposit.Routed", "Specification")[0].Syntax).ShouldBeNull();
 
     [Fact]
     void should_index_part_types_under_the_stream_owner_without_part_declarations()
@@ -31,7 +31,7 @@ public class when_indexing_authored_source_streams : Specification
         snapshot.Index.References.Any(reference => reference.Name == "Period" && reference.Owner?.Kind == "EventStream").ShouldBeTrue();
         snapshot.Index.Find("period", "EventStreamIdPart").ShouldBeEmpty();
         var part = snapshot.Compilation.Value!.EventSources.Single().Streams.Single().StreamIdParts.First();
-        snapshot.Index.Readiness.SyntaxOnly(part).ShouldBeTrue();
+        snapshot.Index.Readiness.SyntaxOnly(part).ShouldBeFalse();
     }
 
     [Fact]

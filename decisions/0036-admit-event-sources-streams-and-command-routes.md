@@ -283,3 +283,7 @@ The decider delegated this verdict to the orchestrating agent. The choices above
 3. **Mappings?** Direct, required, non-generated properties or literals. Paths are refused for now.
 4. **Phase?** After validation and requirements, before generation. Failure is atomic for the failing command.
 5. **Delivery?** One batch branch and one claim. The formatter and authoring changes may merge earlier. 0031 and 0033 join only when ready.
+
+## Status notes
+
+**2026-10-09.** Event routes claim ESM v8 at the release-ready admission checkpoint under [0025](0025-allocate-esm-v7-to-responses-and-number-later-versions-at-admission.md). The executable halves of [0031](0031-event-source-and-stream-in-specifications.md) and [0033](0033-composite-event-stream-ids.md) joined v8.

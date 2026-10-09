@@ -1,0 +1,12 @@
+type Details
+  key String
+eventsource Account
+  stream Notes
+    streamId String
+module M
+  feature F
+    slice StateChange S
+      command C
+        details Details
+        stream Account.Notes
+          streamId = details.key

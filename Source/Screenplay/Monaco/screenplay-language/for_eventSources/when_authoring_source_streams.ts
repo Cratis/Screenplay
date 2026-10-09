@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { describe, expect, it } from 'vitest';
+import { topLevelItems } from '../completion-items';
 import { analyzeEventSources, eventSourceCompletions, eventSourceHover, eventSourceIdentifier, eventSourceReferenceAt } from '../event-source-authoring';
 import { responseAnalysis } from '../response-analysis';
 import { responseTokens } from '../response-tokens';
@@ -20,6 +21,11 @@ function complete(source: string, marker: string, application = mergeSymbols()) 
 }
 
 describe('when authoring source streams', () => {
+    it('should describe the event routes admission as ESM v8', () => {
+        const description = topLevelItems.find(item => item.label === 'eventsource')!.documentation;
+        expect(description).toContain('ESM v8');
+        expect(description).not.toContain('not admitted');
+    });
     it('should retain application declarations around isolated command fragments', () => {
         const analysis = analyzeEventSources(source.split('\n'));
         expect(analysis.declarations.map(source => source.name)).toEqual(['Account']);
@@ -46,7 +52,11 @@ describe('when authoring source streams', () => {
         const start = lines[line].lastIndexOf('month') + 1;
         expect(eventSourceHover(lines, line, start, start + 5)).toContain('Month');
         expect(eventSourceHover(lines, line, start, start + 5)).toContain('Command source for authored stream id');
-        expect(eventSourceHover(lines, line, 5, 13)).toContain('Authored stream id mapping');
+        const hover = eventSourceHover(lines, line, 5, 13);
+        expect(hover).toContain('Authored stream id mapping');
+        expect(hover).toContain('admitted in executable semantic model (ESM) v8');
+        expect(hover).not.toContain('Syntax-only');
+        expect(hover).not.toContain('#302');
     });
     it('should use current typed source locations including every standalone location member', () => {
         const lines = command.split('\n');
