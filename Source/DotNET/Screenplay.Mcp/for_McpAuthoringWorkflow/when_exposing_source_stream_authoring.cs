@@ -39,6 +39,34 @@ public class when_exposing_source_stream_authoring : given.an_authoring_connecti
     }
 
     [Fact]
+    void should_report_indexed_sources_streams_and_route_details_as_admitted()
+    {
+        Start(Source);
+        Open();
+        foreach (var kind in new[] { "EventSource", "EventStream" })
+        {
+            var name = kind == "EventSource" ? "Account" : "Transactions";
+            var indexed = Result("find-declaration", new { name, kind, includeContent = true }).GetProperty("matches")[0].GetProperty("details");
+            indexed.GetProperty("syntaxOnly").GetBoolean().ShouldBeFalse();
+            indexed.GetProperty("executionReadiness").GetString().ShouldBeNull();
+        }
+        var route = Result("declaration-details", new { address = "Banking.Deposits.Deposit.Deposit", kind = "Command", view = "route" }).GetProperty("details");
+        route.GetProperty("executionAvailable").GetBoolean().ShouldBeTrue();
+        route.GetProperty("executionReadiness").GetString().ShouldBeNull();
+    }
+
+    [Fact]
+    void should_keep_unadmitted_route_details_unavailable()
+    {
+        Start(Source.Replace("        month Month", "        input Period", StringComparison.Ordinal)
+            .Replace("streamId = month", "streamId = input.month", StringComparison.Ordinal) + "type Period\n  month Month\n");
+        Open();
+        var route = Result("declaration-details", new { address = "Banking.Deposits.Deposit.Deposit", kind = "Command", view = "route" }).GetProperty("details");
+        route.GetProperty("executionAvailable").GetBoolean().ShouldBeFalse();
+        route.GetProperty("executionReadiness").GetString()!.ShouldContain("property-path stream id mappings (#407)");
+    }
+
+    [Fact]
     void should_refuse_duplicate_parent_stream_details_without_an_unhandled_sequence_error()
     {
         Start(Source + "eventsource Account\n  stream Other\n");

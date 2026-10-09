@@ -232,7 +232,16 @@ static class McpSemanticDiff
                 : "unkeyed";
         }
 
-        return Schema(previous[0]) != Schema(current[0]);
+        if (Schema(previous[0]) != Schema(current[0])) return true;
+        var previousParts = previous[0].StreamIdParts.ToArray();
+        var currentParts = current[0].StreamIdParts.ToArray();
+        for (var index = 0; index < previousParts.Length; index++)
+        {
+            var position = Array.FindIndex(currentParts, part => part.Name == previousParts[index].Name);
+            if (position >= 0 && position != index) return true;
+        }
+
+        return false;
     }
 
     static string MemberChange(string member, string? before, string? after, bool outcome)

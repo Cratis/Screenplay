@@ -53,7 +53,11 @@ describe('when authoring source streams', () => {
         const start = lines[line].lastIndexOf('month') + 1;
         expect(eventSourceHover(lines, line, start, start + 5)).toContain('Month');
         expect(eventSourceHover(lines, line, start, start + 5)).toContain('Command source for authored stream id');
-        expect(eventSourceHover(lines, line, 5, 13)).toContain('Authored stream id mapping');
+        const hover = eventSourceHover(lines, line, 5, 13);
+        expect(hover).toContain('Authored stream id mapping');
+        expect(hover).toContain('admitted in the event routes executable model');
+        expect(hover).not.toContain('Syntax-only');
+        expect(hover).not.toContain('#302');
     });
     it('should use current typed source locations including every standalone location member', () => {
         const lines = command.split('\n');

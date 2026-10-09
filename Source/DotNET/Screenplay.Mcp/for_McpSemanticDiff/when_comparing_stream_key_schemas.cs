@@ -18,7 +18,32 @@ public class when_comparing_stream_key_schemas : given.a_semantic_comparison
     }
 
     [Fact]
-    void should_not_treat_a_part_name_as_stored_identity()
+    void should_report_a_same_type_part_swap_as_contract_breaking()
+    {
+        const string source = "eventsource Journey\n  stream Routes\n    streamId\n      origin String\n      destination String\n";
+        CompareSnapshots(source, source.Replace("      origin String\n      destination String", "      destination String\n      origin String", StringComparison.Ordinal));
+        Items("members").Single(item => item.GetProperty("kind").GetString() == "EventStream" && item.GetProperty("member").GetString() == "streamIdParts")
+            .GetProperty("contractBreaking").GetBoolean().ShouldBeTrue();
+    }
+
+    [Fact]
+    void should_report_a_part_type_change_as_contract_breaking()
+    {
+        CompareSnapshots(Streams, Streams.Replace("bucket String", "bucket Uuid", StringComparison.Ordinal));
+        Items("members").Single(item => item.GetProperty("kind").GetString() == "EventStream" && item.GetProperty("member").GetString() == "streamIdParts")
+            .GetProperty("contractBreaking").GetBoolean().ShouldBeTrue();
+    }
+
+    [Fact]
+    void should_report_an_added_part_as_contract_breaking()
+    {
+        CompareSnapshots(Streams, Streams + "      region String\n");
+        Items("members").Single(item => item.GetProperty("kind").GetString() == "EventStream" && item.GetProperty("member").GetString() == "streamIdParts")
+            .GetProperty("contractBreaking").GetBoolean().ShouldBeTrue();
+    }
+
+    [Fact]
+    void should_not_treat_a_position_preserving_part_rename_as_stored_identity()
     {
         CompareSnapshots(Streams, Streams.Replace("bucket String", "partition String", StringComparison.Ordinal));
         Items("members").Single(item => item.GetProperty("kind").GetString() == "EventStream" && item.GetProperty("member").GetString() == "streamIdParts")

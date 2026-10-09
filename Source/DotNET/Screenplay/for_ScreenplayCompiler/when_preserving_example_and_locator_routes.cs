@@ -56,22 +56,24 @@ public class when_preserving_example_and_locator_routes
     }
 
     [Fact]
-    void should_refuse_both_the_locator_route_and_redelivery_independently()
+    void should_admit_routes_but_keep_redelivery_refused_independently()
     {
         var document = WorkspaceDocument.Create("model", PortablePlayPath.Parse("model.play"), Encoding.UTF8.GetBytes(Source));
         var workspace = ScreenplayWorkspace.Create("A", [document], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("A")));
         var errors = workspace.Compilation.Diagnostics.Where(diagnostic => diagnostic.Code == "PLAY0268").ToArray();
         errors.Any(diagnostic => diagnostic.Message.Contains("#433", StringComparison.Ordinal) && diagnostic.Location.Line == 21).ShouldBeTrue();
-        errors.Any(diagnostic => diagnostic.Message.Contains("#457", StringComparison.Ordinal) && diagnostic.Location.Line == 22).ShouldBeTrue();
-        errors.Any(diagnostic => diagnostic.Message.Contains("#457", StringComparison.Ordinal) && diagnostic.Location.Line == 15).ShouldBeTrue();
+        errors.Any(diagnostic => diagnostic.Message.Contains("#457", StringComparison.Ordinal)).ShouldBeFalse();
+        errors.Any(diagnostic => diagnostic.Location.Line is 15 or 22).ShouldBeFalse();
     }
 
     [Fact]
-    void should_refuse_an_unused_routed_example()
+    void should_admit_an_unused_routed_example()
     {
         var source = Source[..Source.IndexOf("      specification", StringComparison.Ordinal)];
         var document = WorkspaceDocument.Create("model", PortablePlayPath.Parse("model.play"), Encoding.UTF8.GetBytes(source));
         var workspace = ScreenplayWorkspace.Create("A", [document], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("A")));
-        workspace.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Location.Line == 15 && diagnostic.Message.Contains("#457", StringComparison.Ordinal)).ShouldBeTrue();
+        workspace.Compilation.Diagnostics.ShouldBeEmpty();
+        workspace.Compilation.Success.ShouldBeTrue();
+        workspace.Compilation.Value!.Model.SemanticVersion.ShouldEqual(EventRoutesVersion.Semantic);
     }
 }
