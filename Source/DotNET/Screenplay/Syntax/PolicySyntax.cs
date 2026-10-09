@@ -38,6 +38,11 @@ public record PolicySyntax(
     /// The file implementing the policy instead of an inline code block, if any.
     /// </summary>
     public FileReferenceSyntax? File { get; init; }
+
+    /// <summary>
+    /// Gets the report-only description of this authorization rule.
+    /// </summary>
+    public string? Description { get; init; }
 }
 
 /// <summary>

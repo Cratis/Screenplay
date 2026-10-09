@@ -13,7 +13,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ NumericPreamble ], [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl
+Document       = [ NumericPreamble ], [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
                | PersonaDecl | AuthenticationDecl | TriggerDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | SystemDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
@@ -109,10 +109,29 @@ StreamIdPart = Ident, QualifiedName, NL ;
 (* Concepts                                                        *)
 (* -------------------------------------------------------------- *)
 
+PurposeDecl    = "purpose", Ident, NL,
+                 [ INDENT, { DescriptionDecl
+                 | "basis", PurposeBasis, [ QuotedString ], NL
+                 | "interest", QuotedString, NL
+                 | "condition", PurposeCondition, [ QuotedString ], NL
+                 | "authorization", QuotedString, NL
+                 | "subjects", Ident, { ",", Ident }, NL
+                 | "retention", QuotedString, NL
+                 | "recipient", QuotedString, NL
+                 | "transfer", QuotedString, "safeguard", QuotedString, NL
+                 | "erasure", "exception", ErasureException, NL }, DEDENT ] ;
+PurposeReference = "purpose", Ident, NL ;
+PurposeBasis   = "consent" | "contract" | "legalObligation" | "vitalInterests"
+               | "publicTask" | "legitimateInterests" ;
+PurposeCondition = "explicitConsent" | "employmentLaw" | "vitalInterests" | "notForProfit"
+                 | "madePublic" | "legalClaims" | "substantialPublicInterest" | "healthCare"
+                 | "publicHealth" | "research" ;
+ErasureException = "expression" | "legalObligation" | "publicTask" | "publicHealth" | "archiving" | "legalClaims" ;
+
 ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL,
-                   [ INDENT, { FileDirective | AttributeReason | ComplianceSetting | ConceptValidate }, DEDENT ]
+                   [ INDENT, { DescriptionDecl | FileDirective | AttributeReason | ComplianceSetting | ConceptValidate }, DEDENT ]
                | "concept", Ident, ":", "Enum", { Attribute }, NL,
-                   INDENT, { FileDirective | AttributeReason | ComplianceSetting | [ "@" ], LowerIdent, NL | ConceptValidate }, DEDENT ;
+                   INDENT, { DescriptionDecl | FileDirective | AttributeReason | ComplianceSetting | [ "@" ], LowerIdent, NL | ConceptValidate }, DEDENT ;
 
 AttributeReason = AttributeName, "reason", StringLiteral, NL ;
 ComplianceSetting = ( "pii" | "personal" ), "special", SpecialCategory, NL
@@ -152,7 +171,7 @@ TypeDecl       = "type", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 PolicyDecl     = "policy", Ident, NL,
-                 INDENT, PolicyBody, DEDENT ;
+                 INDENT, [ DescriptionDecl ], PolicyBody, DEDENT ;
 
 PolicyBody     = PolicyExpr
                | InlineBlock
@@ -267,7 +286,7 @@ PackageName    = Ident, { ".", Ident } ;
 
 Module         = "module", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | DocumentationDecl
+                   { DescriptionDecl | DocumentationDecl | PurposeReference
                    | AuthorizeDecl
                    | DependsOnDecl
                    | FileImport
@@ -346,7 +365,7 @@ BindingText    = ? nonempty remainder of the line, stored verbatim ? ;
 (* -------------------------------------------------------------- *)
 
 FormDecl       = "form", Ident, "for", QualifiedName, NL,
-                 INDENT, { FormDirective }, DEDENT ;
+                 INDENT, { DescriptionDecl | FormDirective }, DEDENT ;
 
 FormDirective  = FormPopulateDecl
                | FormFieldDecl
@@ -443,7 +462,7 @@ ArrangementSizeClass = "compact" | "regular" ;
 
 Feature        = "feature", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | DocumentationDecl
+                   { DescriptionDecl | DocumentationDecl | PurposeReference
                    | AuthorizeDecl
                    | DependsOnDecl
                    | FileImport
@@ -460,7 +479,7 @@ Feature        = "feature", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 SliceDecl      = "slice", SliceType, Ident, NL,
-                 INDENT, { DescriptionDecl | DocumentationDecl | FileDirective | SliceBody }, DEDENT ;
+                 INDENT, { DescriptionDecl | DocumentationDecl | PurposeReference | FileDirective | SliceBody }, DEDENT ;
 
 SliceType      = "StateChange" | "StateView" | "Automation" | "Translate" ;
 
@@ -539,7 +558,10 @@ TagValue       = Ident
 
 Path           = Ident, { ".", Ident } ;
 
-PropertyLine   = [ "@" ], Ident, TypeRef, [ "generated" ], [ "identifier" ], NL ;
+PropertyLine   = [ "@" ], Ident, TypeRef, [ "generated" ], [ "identifier" ], [ "subject" ], NL ;
+(* subject is last and only valid on event properties: one required scalar identity
+   per event generation, not pii/secret. It is report-only (PLAY0270), adding no ESM bytes.
+   Read models are not yet supported; commands, types and responses refuse it. *)
 
 (* "generated" is command-only and requires a required scalar Uuid-backed concept.
    Generated values and responses select ESM v7. Pre-generation references report
@@ -729,7 +751,8 @@ QualifiedOperationReference = Ident, ".", Ident, { ".", Ident } ;
 
 InlineEventProduction = "produces", "event", Ident, NL,
                         [ INDENT, { ForDecl | TagDecl | EventMetadata | TypedMapping }, DEDENT ] ;
-TypedMapping   = [ "@" ], Ident, TypeRef, "=", MappingSource, NL ;
+TypedMapping   = [ "@" ], Ident, TypeRef, [ "subject" ], "=", MappingSource, NL ;
+(* subject applies only to inline event mappings, not operation inputs. *)
 ForDecl        = "for", MappingSource, NL ;
 
 (* InlineEventProduction is allowed only inside commands. It declares a slice-owned
@@ -875,7 +898,7 @@ PerformerDecl  = "performer", NL,
 (* -------------------------------------------------------------- *)
 
 ProjectionDecl = "projection", QualifiedName, [ "=>", QualifiedName ], NL,
-                 INDENT, PDLBody, DEDENT ;
+                 INDENT, [ DescriptionDecl ], PDLBody, DEDENT ;
 
 (* Variant groups omit the target: each variant names its read model.
    A non-variant projection in a Screenplay application needs a target to bind
@@ -917,9 +940,18 @@ ExampleDecl    = "example", Ident, ":", QualifiedName, NL,
 InlineFixtureAssignment = Path, "=", ConcreteValue ;
 
 SpecificationDecl = "specification", Ident, NL,
-                 INDENT, { DescriptionDecl | FileDirective | SpecificationGiven | SpecificationWhen | SpecificationThen }, DEDENT ;
+                 INDENT, { DescriptionDecl | FileDirective | SpecificationParameter | SpecificationCase | SpecificationGiven | SpecificationWhen | SpecificationThen }, DEDENT ;
+
+SpecificationParameter = "parameter", PropertyName, TypeRef, NL ;
+SpecificationCase = "case", Ident, [ Path, "=", ConcreteValue ], NL,
+                    [ INDENT, { Path, "=", ConcreteValue, NL }, DEDENT ] ;
+CaseValue = "case.", PropertyName ;
+(* CaseValue occupies a whole specification value position, including then error.
+   Every case assigns every typed parameter once. Callers, clocks, redelivery
+   locators, example bodies and structured-literal members exclude CaseValue. *)
 
 SpecificationGiven = OperationFailureFixture
+               | "given", "caller", "as", Ident, NL
                | "given", "caller", NL,
                  [ INDENT, { "authenticated", NL | "role", StringLiteral, NL | "claim", StringLiteral, "=", StringLiteral, NL }, DEDENT ]
                | "given", "readmodel", QualifiedName, [ InlineFixtureAssignment ], NL,
@@ -1061,7 +1093,7 @@ SeedEvent      = Ident, NL,
 (* -------------------------------------------------------------- *)
 
 ConstraintDecl = "constraint", Ident, NL,
-                 INDENT, ConstraintBody, DEDENT ;
+                 INDENT, [ DescriptionDecl ], ConstraintBody, DEDENT ;
 
 ConstraintBody = { ConstraintOption }, UniquePropertyRule,
                    { UniquePropertyRule | ConstraintOption }
@@ -1166,7 +1198,7 @@ RefusalValue   = "$refusal.", ( "reason" | "constraint" | "message" ) ;
    that holds it - "Queue.All", "Preparation.Queue.All" - to reach across.  *)
 
 ScreenDecl     = "screen", Ident, NL,
-                 INDENT, ScreenBody, DEDENT ;
+                 INDENT, [ DescriptionDecl ], ScreenBody, DEDENT ;
 
 ScreenBody     = FileDirective                          (* full external file  *)
                | { ScreenDirective } ;                  (* declarative levels  *)
@@ -1307,6 +1339,8 @@ INDENT         = ? increase in indentation level ? ;
 DEDENT         = ? decrease in indentation level ? ;
 AnyLine        = ? any text until newline ? ;
 ```
+
+Descriptions on concepts, policies, constraints, projection headers, screens and forms are report-only body metadata. The canonical forms above put them first, before `file`; source may place them later. They never satisfy a policy implementation, constraint rule or projection directive requirement, and do not add markdown `documentation` to these kinds. In an enum, bare `description` without an indented fence remains a value and prints as `@description`.
 
 ## Declarative first — `file` is never required
 

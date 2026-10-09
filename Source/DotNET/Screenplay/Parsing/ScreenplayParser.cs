@@ -42,6 +42,7 @@ internal static partial class ScreenplayParser
         var concepts = new List<ConceptSyntax>();
         var types = new List<TypeSyntax>();
         var policies = new List<PolicySyntax>();
+        var purposes = new List<PurposeSyntax>();
         var personas = new List<PersonaSyntax>();
         var modules = new List<ModuleSyntax>();
         var seeds = new List<SeedSyntax>();
@@ -61,7 +62,7 @@ internal static partial class ScreenplayParser
             switch (LineText.FirstWord(line.Content))
             {
                 case "domain":
-                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null || uiProfiles.Count > 0 || themes.Count > 0 || triggers.Count > 0 || layouts.Count > 0 || systems.Count > 0 || eventSources.Count > 0 || examples.Count > 0);
+                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || purposes.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null || uiProfiles.Count > 0 || themes.Count > 0 || triggers.Count > 0 || layouts.Count > 0 || systems.Count > 0 || eventSources.Count > 0 || examples.Count > 0);
                     break;
                 case "import" when FileImportParser.IsFileImport(line.Content):
                     // A top level import belongs to whatever the document's top level is - the application, or the
@@ -118,6 +119,12 @@ internal static partial class ScreenplayParser
                     break;
                 case "type":
                     types.Add(TypeParser.Parse(context, line));
+                    break;
+                case "purpose" when moduleBody is not null || featureBody is not null:
+                    _ = moduleBody?.TryParse(context, line) ?? featureBody!.TryParse(context, line);
+                    break;
+                case "purpose":
+                    purposes.Add(PurposeParser.Parse(context, line));
                     break;
                 case "policy":
                     policies.Add(PolicyParser.Parse(context, line));
@@ -182,6 +189,7 @@ internal static partial class ScreenplayParser
         return new(imports, concepts, policies, modules, context.Start, domain, personas, seeds, authentication, types, uiProfiles, themes, triggers, layouts)
         {
             SourceOptions = context.SourceOptions,
+            Purposes = purposes,
             Examples = examples,
             Systems = systems,
             EventSources = eventSources,
@@ -471,12 +479,14 @@ internal static partial class ScreenplayParser
         }
 
         var values = new List<string>();
+        string? description = null;
         var validations = new List<ValidateSyntax>();
         var directiveLocations = new Dictionary<string, SourceLocation>();
         FileReferenceSyntax? file = null;
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
+            if (DescriptionParser.TryParse(context, child, ref description, $"Concept '{name}'", directiveLocations, type == "Enum")) continue;
             if (FileReferenceParser.IsDirective(child))
             {
                 file = FileReferenceParser.ParseReplacing(context, child, file, directiveLocations);
@@ -516,7 +526,7 @@ internal static partial class ScreenplayParser
             }
         }
 
-        return new(name, type, attributes, values, line.Location, validations) { File = file, DirectiveLocations = directiveLocations };
+        return new(name, type, attributes, values, line.Location, validations) { Description = description, File = file, DirectiveLocations = directiveLocations };
     }
 
     static PersonaSyntax ParsePersona(ParserContext context, SourceLine line)

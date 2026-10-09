@@ -53,7 +53,7 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
     const original = parseForAuthoring(source, undefined, options.placement);
     // PLAY0614 and the public-event boundary errors that follow from a missing direction are errors the repair itself removes,
     // so a document whose only errors are public-event boundary errors stays repairable.
-    const publicEventCodes: ReadonlySet<string> = new Set(Array.from({ length: 14 }, (_, index) => `PLAY0${596 + index}`));
+    const publicEventCodes: ReadonlySet<string> = new Set(Array.from({ length: 14 }, (_, index) => `PLAY0${607 + index}`));
     const acceptable = (parsed: ReturnType<typeof parseForAuthoring>): boolean => parsed.success || parsed.diagnostics.every(diagnostic => diagnostic.severity !== 'error' || publicEventCodes.has(diagnostic.code));
     const errorCodes = (parsed: ReturnType<typeof parseForAuthoring>): Set<string> => new Set(parsed.diagnostics.filter(diagnostic => diagnostic.severity === 'error').map(diagnostic => diagnostic.code));
     if (!acceptable(original)) return () => [];

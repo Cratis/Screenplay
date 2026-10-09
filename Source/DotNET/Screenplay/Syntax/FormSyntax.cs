@@ -50,6 +50,11 @@ public record FormSyntax(
     SourceLocation Location) : SyntaxNode(Location)
 {
     /// <summary>
+    /// Gets the report-only description of this input surface.
+    /// </summary>
+    public string? Description { get; init; }
+
+    /// <summary>
     /// Gets the behaviors attached inline to the form. Every screen beneath it inherits them, additively
     /// with whatever is attached closer in.
     /// </summary>

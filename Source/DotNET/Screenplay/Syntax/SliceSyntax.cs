@@ -136,4 +136,9 @@ public record SliceSyntax(
     /// Gets slice-scoped template assignments.
     /// </summary>
     public IEnumerable<TemplateAssignmentSyntax> Templates { get; init; } = [];
+
+    /// <summary>
+    /// Gets the processing purposes directly covering this slice.
+    /// </summary>
+    public IEnumerable<PurposeReferenceSyntax> Purposes { get; init; } = [];
 }

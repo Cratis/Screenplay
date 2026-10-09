@@ -22,12 +22,15 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         foreach (var example in syntax.Examples) VisitSpecificationExample(example);
+        foreach (var parameter in syntax.Parameters) VisitSpecificationParameter(parameter);
+        foreach (var row in syntax.Cases) VisitSpecificationCase(row);
 
         if (syntax.File is not null)
         {
             VisitFileReference(syntax.File);
         }
 
+        if (syntax.GivenCallerPersona is not null) VisitSpecificationCallerPersona(syntax.GivenCallerPersona);
         if (syntax.GivenCaller is not null) VisitSpecificationCaller(syntax.GivenCaller);
         if (syntax.GivenClock is not null) VisitSpecificationClock(syntax.GivenClock);
 
@@ -127,6 +130,12 @@ public abstract partial class ScreenplaySyntaxWalker
         if (syntax.NoStream is { } noStream) VisitSpecificationNoStream(noStream);
         foreach (var value in syntax.Values) VisitPropertyMapping(value);
     }
+
+    /// <summary>
+    /// Visits a persona caller reference.
+    /// </summary>
+    /// <param name="syntax">The persona reference.</param>
+    public virtual void VisitSpecificationCallerPersona(SpecificationCallerPersonaSyntax syntax) => VisitNode(syntax);
 
     /// <summary>Visits a caller fixture and its claims.</summary>
     /// <param name="syntax">The caller fixture.</param>
@@ -265,7 +274,31 @@ public abstract partial class ScreenplaySyntaxWalker
     /// Visits a <see cref="SpecificationErrorSyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="SpecificationErrorSyntax"/> to visit.</param>
-    public virtual void VisitSpecificationError(SpecificationErrorSyntax syntax) => VisitNode(syntax);
+    public virtual void VisitSpecificationError(SpecificationErrorSyntax syntax)
+    {
+        VisitNode(syntax);
+        if (syntax.CaseValue is { } value) VisitCaseValueExpression(value);
+    }
+
+    /// <summary>
+    /// Visits a table parameter and its type.
+    /// </summary>
+    /// <param name="syntax">The parameter.</param>
+    public virtual void VisitSpecificationParameter(SpecificationParameterSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitTypeRef(syntax.Type);
+    }
+
+    /// <summary>
+    /// Visits a named table case and its values.
+    /// </summary>
+    /// <param name="syntax">The case.</param>
+    public virtual void VisitSpecificationCase(SpecificationCaseSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var value in syntax.Values) VisitPropertyMapping(value);
+    }
 
     /// <summary>
     /// Visits a <see cref="SpecificationClockSyntax"/> node.

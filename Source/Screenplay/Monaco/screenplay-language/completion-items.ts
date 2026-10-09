@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { documentationItem } from './documentation-item';
+import { purposeReferenceItem } from './purpose-items';
 
 import { eventContextPaths } from './event-context';
 import { exampleDeclarationItems } from './example-declaration-items';
@@ -23,6 +24,7 @@ const fenced = (tag: string) => `\`\`\`${tag}\n\${1}\n\`\`\``;
 export { exampleDeclarationItems } from './example-declaration-items';
 
 export const topLevelItems: CompletionEntry[] = [
+    { label: 'purpose', insertText: 'purpose ${1:Name}\n    description "${2:processing intent}"\n    basis ${3|consent,contract,legalObligation,vitalInterests,publicTask,legitimateInterests|}', documentation: 'Report-only processing metadata. Not legal advice; referenced by module, feature and slice.' },
     ...exampleDeclarationItems,
     { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams, admitted by ESM v8. Pin the stored name before renaming a source with stored events; Default is reserved.' },
     { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system; not admitted by any supported executable model (ESM) version yet.' },
@@ -67,6 +69,7 @@ export const operationPhaseItems: CompletionEntry[] = [
 ];
 
 export const conceptItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:what this value represents}"', documentation: 'Report-only authoring description; not a validation or compliance note.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Names the repository relative file this declaration is realized by, so the document can be navigated back to the code.' },
     { label: 'pii reason', insertText: 'pii reason "${1:why this value is personal data}"', documentation: 'A free-text concept note, not a lawful basis.' },
     { label: 'secret reason', insertText: 'secret reason "${1:why this value is an operational secret}"', documentation: 'Records why the secret marker applies.' },
@@ -83,6 +86,7 @@ export const typeItems: CompletionEntry[] = [
 ];
 
 export const sliceItems: CompletionEntry[] = [
+    purposeReferenceItem,
     documentationItem,
     ...exampleDeclarationItems,
     { label: 'operation', insertText: 'operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type}', documentation: 'Reusable slice-owned operation intent; not admitted by any supported executable model (ESM) version yet.' },
@@ -171,6 +175,7 @@ export const performerItems: CompletionEntry[] = [
 ];
 
 export const constraintItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:invariant intent}"', documentation: 'Report-only description, distinct from the violation message.' },
     { label: 'unique', insertText: 'unique ${1:property} on ${2:EventType}', documentation: 'Enforces a unique property value across an event type.' },
     { label: 'unique event', insertText: 'unique event ${1:EventType}', documentation: 'Enforces that the event type occurs at most once per event source.' },
     { label: 'file', insertText: 'file ${1:Path}', documentation: 'Delegates the constraint to a custom C# implementation.' },
@@ -215,6 +220,9 @@ export const triggerItems: CompletionEntry[] = [
 ];
 
 export const specificationItems: CompletionEntry[] = [
+    { label: 'parameter', insertText: 'parameter ${1:name} ${2:Type}', documentation: 'One typed value, supplied exactly once by every case.' },
+    { label: 'case', insertText: 'case ${1:Name}\n    ${2:parameter} = ${3:value}', documentation: 'One named complete set of concrete parameter values.' },
+    { label: 'given caller as', insertText: 'given caller as ${1:Persona}', documentation: 'An authenticated deterministic witness of a top-level persona; no body. Use explicit callers for negation, ownership claims and implementations.' },
     { label: 'description', insertText: 'description "${1:rule or case witnessed}"', documentation: 'Authoring-only description of what this scenario demonstrates.' },
     { label: 'when redelivered', insertText: 'when redelivered ${1:Event} to ${2:Reaction}\n    for ${3:value}', documentation: `Selects exactly one given event occurrence for one event-trigger reaction; does not append it again. ${refusalAvailability}` },
     { label: 'given operation fails', insertText: 'given operation ${1:Name} fails', documentation: 'Failure fixture leaf; not admitted by any supported executable model (ESM) version yet (PLAY0268).' },
@@ -290,6 +298,7 @@ export const ruleItems: CompletionEntry[] = [
 ];
 
 export const policyItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:authorization intent}"', documentation: 'Report-only description; does not supply an implementation.' },
     { label: 'require authenticated', insertText: 'require authenticated', documentation: 'Requires an authenticated caller.' },
     { label: 'require role', insertText: 'require role "${1:role}"', documentation: 'Requires the caller to have a role.' },
     { label: 'require not role', insertText: 'require not role "${1:role}"', documentation: 'Excludes callers with a role. Add authenticated to require a signed-in caller.' },
@@ -311,6 +320,7 @@ export const validateItems: CompletionEntry[] = [
 ];
 
 export const screenItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:screen intent}"', documentation: 'Report-only description, not a localizable screen title.' },
     { label: 'data', insertText: 'data ${1:ReadModel} via query ${2:QueryName}', documentation: 'Binds a read model to the screen through a query.' },
     { label: 'action', insertText: 'action ${1:CommandName}', documentation: 'Makes a command available as an action on the screen.' },
     { label: 'action "…"', insertText: 'action "${1:Label}"\n    when item.${2:status} == "${3:open}" execute ${4:CommandName}\n    otherwise hidden', documentation: 'One labeled button selecting the first matching command; hidden without a subject or match.' },
@@ -396,5 +406,5 @@ const sliceMembers: Record<string, readonly string[]> = {
 
 export function sliceItemsFor(sliceType: string | undefined): CompletionEntry[] {
     const members = sliceType ? sliceMembers[sliceType] : undefined;
-    return members ? sliceItems.filter(item => item.label === 'example' || item.label === 'documentation' || item.label === 'public event' || item.label === 'event from' || (item.label === 'direction' && sliceType === 'Translate') || members.includes(item.label)) : sliceItems;
+    return members ? sliceItems.filter(item => item.label === 'purpose' || item.label === 'example' || item.label === 'documentation' || item.label === 'public event' || item.label === 'event from' || (item.label === 'direction' && sliceType === 'Translate') || members.includes(item.label)) : sliceItems;
 }

@@ -88,13 +88,33 @@ outcome and session revision, retains the previous root-conflict snapshot, and
 reports the inspection failure in `metadataProblem`. Repair that metadata before
 continuing; do not retry the completed apply.
 
+## Processing purposes
+
+Use `kind: "Purpose"` to read a declared [processing purpose](../purposes.md). `declaration-details` summaries expose its `processingPurpose` fields and the direct `purposes` references of modules, features and slices. Reference and dependency inventories include role `purpose`. These are report-only declarations, not executable behavior or legal advice. `diagnostics` can opt into coverage prompts with `checks: "purposes"`.
+
+`processing-record` pages one row per declared purpose, including its declared legal and retention fields, reachable concept categories and marker-declared protection mappings, DPIA prompts and erasure-exception/crypto-shredding findings. Its response includes `notice`, `coverage`, optional controller fields, `sourceRevision` and `rows` (`totalCount`, `offset`, `items`, `nextOffset`, `revision`). It requires error-free source, not successful executable binding. Supply controller information as `controllerName`/`controllerContact`, never through model syntax. Echo `sourceRevision` as `expectedSourceRevision` after the first page. Counts are capped at 200 and row pages are byte-bounded; an oversized individual row is refused rather than truncated. These declarations are not legal advice or proof of runtime protection.
+
 ## Generated values and responses
+
+Event `declaration-details` summaries expose `subject: { "source": "eventSource" }` by default, or `{ "source": "property", "property": "<name>" }` for a trailing event-property `subject` mark. Property pages expose `isSubject`; `syntax-schema` describes optional `PropertySyntax.isSubject`, omitted when false. This is report-only lineage metadata (`PLAY0270`), not executable subject propagation or provider output. Rename and inline extraction preserve the mark.
 
 `declaration-details` exposes `isGenerated` on property pages and a command `response` view with typed scalar/block syntax, source property names, declared and inferred field types, and command-scoped `syntaxOnly`/`executionReadiness`. Generated values are not request/form inputs. Specification details and `find-fixtures` distinguish `generatedValues` and `thenReturns` from ordinary `whenCommand` values. These are syntax facts, not evaluated results.
 
 Discover `CommandSyntax.response`, `RecordCommandResponseSyntax.fields`, `ScalarCommandResponseSyntax.source`, `ResponseFieldSyntax` and `PropertyResponseSourceSyntax` with `syntax-schema`. Use the existing `read-ast` handles and typed Add/Replace/Remove operations under `propose-ast`, with `validation: "Executable"` for the admitted subset, or `"Authoring"` for full-language syntax. Add a response to the command's `response` member, replace or remove its node to change or clear it, and add/replace/remove record fields through `fields`. Field types are nullable for inference. Source locations remain server-owned; response fields have no ESM identities.
 
 Workspace and catalog revisions, expected nodes, preview and explicit acceptance still apply. Inspect `read-proposal` before `apply`; discovery and preview never write. Generated values, responses, fixtures and return expectations are admitted as ESM v7. Response-only commands report `syntaxOnly: false` and null `executionReadiness`; a command that also uses operations, handlers, exact numeric mode or generated properties on concepts with validation rules remains unadmitted. Null readiness is not proof that the whole application binds or that reference execution has every generation fixture. Canonical `executable-model` byte pages include `generated`, `response`, `generatedValues` and `thenReturns` when present. Pin `expectedModelRevision` and `expectedAttachmentManifestRevision` on continuation; stale revisions refuse without a page. Form response scopes and an official renderer response type remain downstream work. Inline-event extraction can prove its executable-byte invariant for admitted response-bearing commands; other refusal and comment-preservation rules still apply. Rename with `PreserveTrivia` to retain response comments; canonical rename can refuse a proposal that would drop comments. See the [response contract](../commands.md#generated-values-and-responses).
+
+## Persona specification callers
+
+`declaration-details` for `kind: "Persona"`, `view: "caller"` returns `caller`, policy `contributions` (kind, value, optional claim type, policy and location), and `refusal`. The caller is always authenticated. Refusal carries a policy, location and reason: `negation`, `nonLiteralClaim`, `roleClaim`, `opaqueImplementation`, `unresolvedPolicy` or `noPolicies`. A required role-URI claim refuses synthesis; an `or` skips alternatives requiring it. See [persona callers](../personas.md#persona-callers-in-specifications).
+
+`find-fixtures` reports `role: "givenCaller"`, `origin: "persona"`, and the supplying `persona` and `policy` for synthesized caller atoms. `find-references` and rename index `given caller as` as a persona reference. `diagnostics` accepts `checks: "personas"` for opt-in coverage warnings and ambiguity information; it never runs this check implicitly.
+
+## Specification tables
+
+A specification summary includes typed `parameters` and `caseCount`. Its paged `cases` view returns `name`, `effectiveName`, `effectiveAddress`, `location` and `values`. Searching specifications lists an authored table once; resolving a derived address returns the table with `case` set.
+
+`find-fixtures` accepts a table or derived `specification` address and an optional `case` name. Effective values add `table`, `case`, `origin: "case"` and `caseParameter`. Parameter references are available through `find-references`; table, case and parameter renames update their references and derived identities. A table address in `run-specifications` scope selects every row; a derived address selects one. Failure keys use derived addresses and source-bound failure messages name the case.
 
 ## Typed specification examples
 
@@ -166,6 +186,7 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `find-declaration` | Required exact `name`; optional kind/scope/document | Paged matches; typed syntax only with `includeContent: true` |
 | `search-declarations` | Optional `name`, `match`: exact/prefix/contains, kind/scope/document | Compact scoped search |
 | `declaration-details` | `address`, `kind`; optional `view` | Summary (including `description` and `documentation` wherever supported) or paged properties, occurrences, commands, specifications, produces, enum values, module/feature dependencies; explicit syntax view |
+| `processing-record` | Optional `controllerName`, `controllerContact`, `offset`, `limit`, `expectedSourceRevision` | Paged declaration-derived controller inventory; not legal advice |
 | `find-references` | `address`, `kind` | Paged resolved incoming references and ambiguities, with owners/roles |
 | `dependencies` | `address`, `kind`, direction incoming/outgoing; optional descendants/document | Direct indexed dependencies and resolution candidates |
 | `dependency-graph` | Optional view, from/to levels, scope, direction, kinds, includeTestOnly, evidenceLimit | Inferred slice/container/context edges, ordering cycles, story-order suggestions, unresolved references or checked dependency declarations |
@@ -398,6 +419,7 @@ An unbound model returns `outcome: "unbound"`, executable diagnostics and `page:
 | `propose-source` | `expectedRevision`, `expectedCatalogRevision`, `formatting`, `documents` | validation (`Authoring` default or `Executable`), referencePolicy (`Safe` default or `Draft`), semanticRenames, eventRenames, retiredSemanticAddresses, retiredEventAddresses, includeContent |
 | `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | `line` for a `PLAY0565` concept-line repair, `pinRepairEvidence`, `expectedRepairEvidenceRevision`, includeContent; use the discovered `requiredFormatting`. `PLAY0479` and `PLAY0565` support `PreserveTrivia` or explicit `CanonicalizeTouchedDocuments`; other repairs require `CanonicalizeTouchedDocuments` |
 | `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent, `eventNeverPersisted` (boolean, default false) |
+| `propose-move` | Expected revisions, target address, newParent address | targetHandle, newParentHandle, formatting, validation, includeContent |
 | `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
 | `expand-layout` | Expected revisions | layout (`single`, `module`, `feature`, `slice`; default `slice`, one file per slice), validation, formatting, referencePolicy, includeContent |
 | `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`semantic-diff` for structural impact; `implementation-requirements` for attachments), documentId, offset, limit, expectedSourceRevision |
@@ -647,6 +669,48 @@ and repairs requiring a choice are not offered.
 `propose-ast` creates, replaces, removes or moves typed nodes/documents in one
 atomic proposal. Disjoint edits in one file compose before validation. Typed
 whole-document replacement can repair parser-invalid source without node handles.
+
+### Logical parent moves
+
+`propose-move` accepts `target` and `newParent` as `{kind, parts}` semantic addresses,
+using the same typed parts returned by the identity inventories. Copy the complete
+address, including its application identity. Optional `targetHandle` and
+`newParentHandle` must resolve to the same logical declarations. Both expected
+revisions are required. Formatting defaults to `PreserveTrivia`, validation to
+`Authoring`; formatting consent and executable validation work as for rename.
+
+The first release moves a Slice to a Feature or a Feature to a Module or Feature.
+Moving modules or declarations between slices is not offered. Every assigned
+subtree declaration gets an automatic semantic migration and every affected event
+contract an event migration. Event names and identity pins do not change. Qualified
+typed references, including container `depends on` references and interaction
+`navigate to`, `execute` and `refresh` operands, are repaired. Named-behavior
+parameter operands stay unchanged; their declaration-valued `uses` arguments are
+bound and repaired at the attachment's scope. Arguments used for multiple target
+domains refuse with the behavior and parameter named.
+
+No-op moves, collisions, capture or ambiguous references, descendant destinations,
+disallowed parent kinds and any identity loss refuse with structured conflicts.
+Inherited `authorize` and screen `on`/`uses` bindings must not change. Interaction
+continuity compares resolved targets as well as attachment text, so identical
+attachments that resolve to different screens, commands or queries refuse. When the
+original model is executable, the candidate executable model is compared by
+preserved identity, allowing only container ownership changes; differences refuse.
+Authoring-only source still has inherited binding and reference continuity checked.
+
+Split subtrees move all fragments together. Inline and restated-header fragments
+remain in their documents. Restated headers outside the file's import-placement
+scope remain authored headers; only the actual placement scope is header-less.
+Literal placing imports that directly own the moved fragment move to one authored destination
+(or a single own-named file for a split destination); placing globs and ambiguous
+split destinations refuse. An empty metadata-free wrapper fragment can be removed,
+but the old logical parent remains. Files are never relocated; `expand-layout` is
+a separate operation.
+
+The proposal response and every `read-proposal` response include `moveReport`:
+`identityMigrations` (domain, unchanged id, previousAddress and currentAddress),
+`retired: []`, `referenceRepairs` and `fragmentsMoved`. Review the usual source,
+dropped-comment and semantic-diff views before the existing `apply` tool.
 
 `propose-rename` coordinates logical declarations, fragments, supported typed
 references and assigned identities. Event sources, streams, examples and specifications are supported rename targets. Source rename migrates its catalog entry and owned streams atomically; existing pins stay unchanged, while unpinned renames change stored names. Pin before renaming a declaration with stored events; underlying event, command and read-model renames update example type references. Examples have no ESM identities. It preserves trivia by default. Ambiguity,

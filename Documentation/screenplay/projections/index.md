@@ -6,6 +6,8 @@ For documentation examples, use `pdl` fences for projection-only snippets in `pr
 
 The pages in this section document the full projection sub-language — every directive, operation, and expression the PDL supports. The same language is also used standalone by Cratis Chronicle to define projections without writing code; see [Chronicle projections](/chronicle/projections/projection-declaration-language/) for how Chronicle hosts and executes it. Chronicle is also the semantic reference for what a projection means: the executable semantic model mirrors how Chronicle lowers and runs it — see [Semantic Model](semantic-model.md).
 
+One quoted or fenced-text `description` on the projection header records report-only authoring intent (`PLAY0270`), printed before `file` and every builder directive. Variants and nested blocks do not accept it. The description does not satisfy a projection's directive requirement and adds no executable bytes. Markdown `documentation` is not supported here.
+
 ## Syntax
 
 ```screenplay

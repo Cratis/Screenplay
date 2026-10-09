@@ -19,6 +19,7 @@ export interface PropertySyntax extends SyntaxNode {
     readonly type: TypeRefSyntax;
     readonly isIdentifier: boolean;
     readonly isGenerated?: boolean;
+    readonly isSubject?: boolean;
     // Parser-owned escape evidence, excluded from structural JSON.
     readonly nameWasEscaped?: boolean;
 }
@@ -45,6 +46,7 @@ export interface ConceptAttributeSyntax extends SyntaxNode {
 }
 
 export interface ConceptSyntax extends SyntaxNode {
+    readonly description?: string | null;
     readonly kind: 'ConceptSyntax';
     readonly name: string;
     readonly validations?: readonly ValidateSyntax[];

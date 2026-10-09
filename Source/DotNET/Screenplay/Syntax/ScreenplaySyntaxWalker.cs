@@ -88,6 +88,8 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitType(type);
         }
 
+        foreach (var purpose in syntax.Purposes) VisitPurpose(purpose);
+
         foreach (var policy in syntax.Policies)
         {
             VisitPolicy(policy);
@@ -190,6 +192,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitModule(ModuleSyntax syntax)
     {
         VisitNode(syntax);
+        foreach (var purpose in syntax.Purposes) VisitPurposeReference(purpose);
         foreach (var example in syntax.Examples) VisitSpecificationExample(example);
         foreach (var dependency in syntax.DependsOn) VisitDependsOn(dependency);
 
@@ -452,6 +455,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitFeature(FeatureSyntax syntax)
     {
         VisitNode(syntax);
+        foreach (var purpose in syntax.Purposes) VisitPurposeReference(purpose);
         foreach (var example in syntax.Examples) VisitSpecificationExample(example);
         foreach (var dependency in syntax.DependsOn) VisitDependsOn(dependency);
 
@@ -490,6 +494,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitSlice(SliceSyntax syntax)
     {
         VisitNode(syntax);
+        foreach (var purpose in syntax.Purposes) VisitPurposeReference(purpose);
         foreach (var example in syntax.Examples) VisitSpecificationExample(example);
 
         if (syntax.File is not null)

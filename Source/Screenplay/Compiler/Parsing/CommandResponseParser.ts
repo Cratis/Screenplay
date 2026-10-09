@@ -6,7 +6,7 @@ import { CommandResponseSyntax, ResponseFieldSyntax } from '../Syntax/Responses'
 import { pattern } from '../Text/patterns';
 import { unescapeIdentifier } from './LineText';
 import { ParserContext } from './ParserContext';
-import { parseTypeRef, reportLegacyOptionalSuffix } from './PropertyLineParser';
+import { parseTypeRef, reportLegacyOptionalSuffix, tryParseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
 
 export const scalarResponsePattern = pattern('^returns\\s+(@?[A-Za-z_]\\w*)$');
@@ -35,7 +35,9 @@ export function parseCommandResponse(context: ParserContext, line: SourceLine): 
         context.reader.takeSignificant();
         const match = fieldPattern.exec(child.content);
         if (match === null) {
-            context.error(DiagnosticCodes.InvalidCommandResponse, "Expected '<field> [<Type>] = <property>' in a response block.", locationOf(child));
+            const candidate = tryParseProperty({ ...child, content: child.content.split('=', 1)[0].trimEnd() });
+            if (candidate?.isSubject) context.error(DiagnosticCodes.InvalidSubjectOwner, 'The subject modifier is only valid on event properties, not response fields (decision 0008: one data subject per event).', locationOf(child));
+            else context.error(DiagnosticCodes.InvalidCommandResponse, "Expected '<field> [<Type>] = <property>' in a response block.", locationOf(child));
             context.skipBlock(child.indent);
             continue;
         }

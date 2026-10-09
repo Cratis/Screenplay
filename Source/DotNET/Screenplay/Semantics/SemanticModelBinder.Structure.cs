@@ -126,7 +126,10 @@ public sealed partial class SemanticModelBinder
                 ? query with
                 {
                     Authorization = EffectiveAuthorization(
-                    value.Authorize, [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)], module, featurePath)
+                        value.Authorize,
+                        query.Argument is null ? [] : [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)],
+                        module,
+                        featurePath)
                 }
                 : null).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             foreach (var query in queries) _queries[query.Name] = query;
@@ -173,6 +176,11 @@ public sealed partial class SemanticModelBinder
                 if (declaration.File is not null)
                 {
                     Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Event '{declaration.Name}' file reference is realization provenance.", declaration.File.Location);
+                }
+
+                foreach (var property in declaration.Properties.Where(property => property.IsSubject))
+                {
+                    Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Event '{declaration.Name}' subject property '{property.Name}' is report-only lineage metadata; it adds no executable semantics or provider output.", property.Location);
                 }
 
                 var properties = declaration.Properties.Select(property => declarations.Length > 1

@@ -23,8 +23,12 @@ static class McpDeclarationDetails
                 executionReadiness = readiness.ExecutionReadiness(declaration.Syntax),
                 eventCount = declaration.Syntax is SliceSyntax eventOwner ? EventDeclarations.In(eventOwner).Count() : 0,
                 eventId = (declaration.Syntax as EventSyntax)?.Id,
+                subject = Subject(declaration.Syntax),
                 description = declaration.Syntax.GetType().GetProperty("Description")?.GetValue(declaration.Syntax) as string,
                 documentation = declaration.Syntax.GetType().GetProperty("Documentation")?.GetValue(declaration.Syntax) as string,
+                purposes = declaration.Syntax.GetType().GetProperty("Purposes")?.GetValue(declaration.Syntax),
+                processingPurpose = declaration.Syntax as PurposeSyntax,
+                reportOnly = declaration.Syntax is PurposeSyntax,
                 uses = (declaration.Syntax as OperationSyntax)?.Uses,
                 identifier = (declaration.Syntax as EventSourceSyntax)?.Identifier,
                 streamId = (declaration.Syntax as EventStreamSyntax)?.StreamId,
@@ -40,6 +44,8 @@ static class McpDeclarationDetails
                 partCount = declaration.Parts.Count,
                 commandCount = declaration.Syntax is SliceSyntax slice ? slice.Commands.Count() : 0,
                 specificationCount = declaration.Syntax is SliceSyntax described ? described.Specifications.Count() : 0,
+                parameters = (declaration.Syntax as SpecificationSyntax)?.Parameters.Select(parameter => new { parameter.Name, parameter.Type }),
+                caseCount = (declaration.Syntax as SpecificationSyntax)?.Cases.Count(),
                 availableViews = Views(declaration.Syntax)
             },
             "properties" when declaration.Syntax is CommandSyntax or EventSyntax or ReadModelSyntax or TypeSyntax => McpPaging.Page(
@@ -52,6 +58,7 @@ static class McpDeclarationDetails
                     property.Type.IsOptional,
                     property.IsIdentifier,
                     property.IsGenerated,
+                    property.IsSubject,
                     property.Location
                 },
                 arguments,
@@ -98,6 +105,18 @@ static class McpDeclarationDetails
                 },
                 arguments,
                 snapshot.SourceRevision),
+            "cases" when declaration.Syntax is SpecificationSyntax table => McpPaging.Page(
+                table.Cases,
+                row => new
+            {
+                row.Name,
+                effectiveName = $"{table.Name}_{row.Name}",
+                effectiveAddress = string.Join('.', declaration.Scope.Append($"{table.Name}_{row.Name}")),
+                row.Location,
+                row.Values
+            },
+                arguments,
+                snapshot.SourceRevision),
             "inputs" when declaration.Syntax is OperationSyntax operation => McpPaging.Page(operation.Inputs, arguments, snapshot.SourceRevision),
             "phases" when declaration.Syntax is OperationSyntax operation => McpPaging.Page(
                 new[] { (Name: "execute", Phase: operation.Execute), (Name: "compensate", Phase: operation.Compensate) }.Where(value => value.Phase is not null),
@@ -123,6 +142,7 @@ static class McpDeclarationDetails
             "values" when declaration.Syntax is ConceptSyntax concept => McpPaging.Page(concept.Values, arguments, snapshot.SourceRevision),
             "values" when declaration.Syntax is SpecificationExampleSyntax example => McpPaging.Page(example.Values, arguments, snapshot.SourceRevision),
             "generatedValues" when declaration.Syntax is SpecificationExampleSyntax example => McpPaging.Page(example.GeneratedValues, arguments, snapshot.SourceRevision),
+            "caller" when declaration.Syntax is PersonaSyntax persona => PersonaCaller(persona, snapshot),
             "syntax" => declaration.Syntax,
             _ => throw new McpFailure($"View '{view}' is not available for {declaration.Kind}.", -32602)
         };
@@ -159,6 +179,14 @@ static class McpDeclarationDetails
         return matches.Length == 1 ? matches[0] : throw new McpFailure($"Declaration target must identify exactly one logical declaration; found {matches.Length}.");
     }
 
+    static object? Subject(SyntaxNode node)
+    {
+        if (node is not EventSyntax @event) return null;
+        var property = @event.Properties.FirstOrDefault(property => property.IsSubject);
+
+        return property is null ? new { source = "eventSource" } : new { source = "property", property = property.Name };
+    }
+
     static IEnumerable<string> Views(SyntaxNode node) => node switch
     {
         ModuleSyntax or FeatureSyntax => ["summary", "dependencies", "occurrences", "syntax"],
@@ -169,8 +197,17 @@ static class McpDeclarationDetails
         EventSyntax or ReadModelSyntax or TypeSyntax => ["summary", "properties", "occurrences", "syntax"],
         ConceptSyntax => ["summary", "values", "occurrences", "syntax"],
         SpecificationExampleSyntax => ["summary", "values", "generatedValues", "occurrences", "syntax"],
+        PersonaSyntax => ["summary", "caller", "occurrences", "syntax"],
+        SpecificationSyntax => ["summary", "cases", "occurrences", "syntax"],
         _ => ["summary", "occurrences", "syntax"]
     };
+
+    static object PersonaCaller(PersonaSyntax persona, McpSnapshot snapshot)
+    {
+        var application = snapshot.Compilation.Value ?? throw new McpFailure("Persona caller synthesis requires a parsed application.");
+        var result = PersonaCallers.Synthesize(persona, application);
+        return new { result.Caller, result.Contributions, result.Refusal };
+    }
 
     static object Response(CommandSyntax command, McpAuthoringReadiness readiness)
     {

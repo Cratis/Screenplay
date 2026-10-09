@@ -9,6 +9,8 @@ import { DependsOnSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax } from '
 import { pattern } from '../Text/patterns';
 import { combineAuthorize, parseAuthorize } from './AuthorizeParser';
 import { parseDescription } from './DescriptionParser';
+import { PurposeReferenceSyntax } from '../Syntax/Purposes';
+import { parsePurposeReference } from './PurposeParser';
 import { parseDocumentation } from './DocumentationParser';
 import { parseDependsOn } from './DependsOnParser';
 import { parseFeature } from './FeatureBody';
@@ -34,6 +36,7 @@ export class ModuleBody {
     readonly #examples: SpecificationExampleSyntax[] = [];
     readonly #fileImports: FileImportSyntax[] = [];
     readonly #dependsOn: DependsOnSyntax[] = [];
+    readonly #purposes: PurposeReferenceSyntax[] = [];
     #description: string | null = null;
     #documentation: string | null = null;
     #authorize: AuthorizeSyntax | null = null;
@@ -53,6 +56,9 @@ export class ModuleBody {
                 return true;
             case 'depends':
                 parseDependsOn(context, line, this.#dependsOn, DiagnosticCodes.UnknownModuleDirective);
+                return true;
+            case 'purpose':
+                parsePurposeReference(context, line, this.#purposes);
                 return true;
             case 'authorize':
                 this.#authorize = combineAuthorize(this.#authorize, parseAuthorize(context, line));
@@ -95,6 +101,7 @@ export class ModuleBody {
             documentation: this.#documentation,
             authorize: this.#authorize,
             dependsOn: this.#dependsOn,
+            purposes: this.#purposes,
             features: this.#features,
             examples: this.#examples,
             fileImports: this.#fileImports,

@@ -1,0 +1,40 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+concept Name : String
+  description "A displayed name"
+concept Status : Enum
+  description
+  open
+  description "Workflow states"
+policy Access
+  description "A signed-in caller"
+  require authenticated
+module M
+  form Input for Record
+    description
+      ```text
+      Supply the value to record.
+      This is intent, not a UI label.
+      ```
+    field value
+  feature F
+    slice StateChange S
+      event Recorded
+        value Name
+      command Record
+        value Name
+        produces Recorded
+          value = value
+      constraint Unique
+        description "One claim per value"
+        unique value on Recorded
+      readmodel View
+        value Name
+      projection View => View
+        description "Build the recorded values"
+        from Recorded
+      query All => View[]
+      screen Details
+        description "Inspect the recorded values"
+        data View[] via query All

@@ -71,6 +71,10 @@ internal static partial class OperationParser
                 {
                     context.Error(DiagnosticCodes.InvalidOperationMapping, "An inline operation input requires '<property> <Type> = <source>'.", line.Location);
                 }
+                if (property.IsSubject)
+                {
+                    context.Error(DiagnosticCodes.InvalidSubjectOwner, "The subject modifier is only valid on event properties, not operation inputs (decision 0008: one data subject per event).", line.Location);
+                }
                 if (property.IsIdentifier || property.IsGenerated)
                 {
                     context.Error(DiagnosticCodes.InvalidOperationDeclaration, "Operation inputs cannot be identifier or generated properties.", line.Location);

@@ -21,6 +21,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     McpQueryIndex _queries = null!;
     bool _inRefusal;
     ConstraintSyntax? _constraint;
+    SpecificationSyntax? _specification;
 
     internal EventSourceReadConfidence? SourceConfidence { get; set; }
 
@@ -115,24 +116,25 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
             case QuerySyntax value: Declare("Query", value.Name, value); break;
             case EventSyntax value: Declare("Event", value.Name, value, value.Description); break;
             case ReadModelSyntax value: Declare("ReadModel", value.Name, value); break;
-            case ScreenSyntax value: Declare("Screen", value.Name, value); break;
-            case ConceptSyntax value: Declare("Concept", value.Name, value); break;
+            case ScreenSyntax value: Declare("Screen", value.Name, value, value.Description); break;
+            case ConceptSyntax value: Declare("Concept", value.Name, value, value.Description); break;
+            case PurposeSyntax value: Declare("Purpose", value.Name, value, value.Description, new { reportOnly = true }); break;
             case TypeSyntax value: Declare("Type", value.Name, value); break;
-            case PolicySyntax value: Declare("Policy", value.Name, value); break;
+            case PolicySyntax value: Declare("Policy", value.Name, value, value.Description); break;
             case PersonaSyntax value: Declare("Persona", value.Name, value); break;
             case LayoutSyntax value: Declare("Layout", value.Name, value); break;
             case ScreenTemplateSyntax value: Declare("ScreenTemplate", value.Name, value); break;
             case DialogTemplateSyntax value: Declare("DialogTemplate", value.Name, value); break;
-            case FormSyntax value: Declare("Form", value.Name, value); break;
+            case FormSyntax value: Declare("Form", value.Name, value, value.Description); break;
             case SlotSyntax { Contributes: not null } value: Declare("ContributionPoint", value.Contributes, value); break;
             case UiProfileSyntax value: Declare("UiProfile", value.Name, value); break;
             case ThemeSyntax value: Declare("Theme", value.Name, value); break;
             case TriggerSyntax value: Declare("Trigger", value.Name, value); break;
             case ReactionSyntax value: Declare("Reaction", value.Name, value, value.Description); break;
-            case ProjectionSyntax value: Declare("Projection", value.Name, value); break;
+            case ProjectionSyntax value: Declare("Projection", value.Name, value, value.Description); break;
             case ReducerSyntax value: Declare("Reducer", value.Name, value); break;
             case CaptureSyntax value: Declare("Capture", value.Name, value); break;
-            case ConstraintSyntax value when ReferenceEquals(value, _constraint): Declare("Constraint", value.Name, value); break;
+            case ConstraintSyntax value when ReferenceEquals(value, _constraint): Declare("Constraint", value.Name, value, value.Description); break;
             case SpecificationExampleSyntax value:
                 Declare("Example", value.Name, value, value.Description, new { value.Type, value.Values, value.For, value.GeneratedValues });
                 break;
@@ -171,6 +173,42 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
                 AmbiguousSourceOwner = node is CommandStreamSyntax { PropertyCandidate: not null }
             });
         }
+    }
+
+    /// <inheritdoc/>
+    public override void VisitSpecification(SpecificationSyntax syntax)
+    {
+        _specification = syntax;
+        base.VisitSpecification(syntax);
+        _specification = null;
+    }
+
+    /// <inheritdoc/>
+    public override void VisitSpecificationParameter(SpecificationParameterSyntax syntax)
+    {
+        _scope.Add(_specification!.Name);
+        Declare("SpecificationParameter", syntax.Name, syntax);
+        base.VisitSpecificationParameter(syntax);
+        _scope.RemoveAt(_scope.Count - 1);
+    }
+
+    /// <inheritdoc/>
+    public override void VisitSpecificationCase(SpecificationCaseSyntax syntax)
+    {
+        _scope.Add(_specification!.Name);
+        Declare("SpecificationCase", syntax.Name, syntax);
+        base.VisitSpecificationCase(syntax);
+        _scope.RemoveAt(_scope.Count - 1);
+    }
+
+    /// <inheritdoc/>
+    public override void VisitCaseValueExpression(CaseValueExpressionSyntax syntax)
+    {
+        if (_specification is not null)
+        {
+            _references.Add(new(syntax.Parameter, ["SpecificationParameter"], [.. _scope, _specification.Name], syntax.Location, "caseParameter", _owners.GetValueOrDefault(_specification)?.Owner));
+        }
+        base.VisitCaseValueExpression(syntax);
     }
 
     internal void Initialize(ApplicationSyntax application) => Readiness = new(application);
@@ -223,7 +261,15 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         return new(reference, Resolve(reference));
     }
 
-    internal McpDeclaration[] Find(string address, string kind) => _queries.Find(address, kind);
+    internal McpDeclaration[] Find(string address, string kind)
+    {
+        var matches = _queries.Find(address, kind);
+        if (matches.Length > 0 || kind != "Specification") return matches;
+
+        return [.. _declarations.Where(declaration => declaration.Syntax is SpecificationSyntax).SelectMany(declaration =>
+            ((SpecificationSyntax)declaration.Syntax).Cases.Where(row => string.Join('.', declaration.Scope.Append($"{declaration.Name}_{row.Name}")) == address)
+                .Select(row => declaration with { Case = row.Name }))];
+    }
 
     internal bool HasExactOwnershipCollision(string kind, string name, string[] scope) => _queries.HasExactOwnershipCollision(kind, name, scope);
 

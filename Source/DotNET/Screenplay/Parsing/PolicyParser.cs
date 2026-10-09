@@ -36,10 +36,13 @@ internal static partial class PolicyParser
         var hasRequire = false;
         CodeBlockSyntax? code = null;
         FileReferenceSyntax? file = null;
+        string? description = null;
+        var locations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
+            if (DescriptionParser.TryParse(context, line, ref description, $"Policy '{name.Groups[1].Value}'", locations)) continue;
             if (LineText.FirstWord(line.Content) == "require")
             {
                 var text = line.Content["require".Length..].Trim();
@@ -101,7 +104,7 @@ internal static partial class PolicyParser
             context.Error(DiagnosticCodes.PolicyWithoutRequirement, $"Policy '{name.Groups[1].Value}' must declare a 'require' condition, a file reference or an inline code block", header.Location);
         }
 
-        return new(name.Groups[1].Value, condition, code, header.Location) { File = file };
+        return new(name.Groups[1].Value, condition, code, header.Location) { File = file, Description = description, DirectiveLocations = locations };
     }
 
     static PolicyConditionSyntax? ParseCondition(ParserContext context, string text, SourceLocation location) =>

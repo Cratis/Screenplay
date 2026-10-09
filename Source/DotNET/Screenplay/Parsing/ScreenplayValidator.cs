@@ -32,9 +32,10 @@ internal static class ScreenplayValidator
     {
         foreach (var error in SourceNumericModes.Errors(application)) context.Add(error);
         new PublicEventMetadataValidator(context).VisitApplication(application);
+        PurposeValidator.Validate(application, context);
         var authored = application;
         var expansion = SpecificationExamples.Expand(application);
-        if (!expansion.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)) application = expansion.Application;
+        if (!expansion.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && diagnostic.Code != DiagnosticCodes.UnsynthesizablePersonaCaller)) application = expansion.Application;
 
         var slices = application.Modules
             .SelectMany(module => module.Features.SelectMany(AllFeatures))
@@ -147,6 +148,7 @@ internal static class ScreenplayValidator
         ProjectionVariantValidator.Validate(declarations, context);
         ProjectionTargetValidator.Validate(declarations, context);
         IdentifierComplianceValidator.Validate(application, declarations, context);
+        EventSubjectValidator.Validate(application, declarations, context);
         SpecificationValueConsistencyValidator.Validate(declarations, context);
         SpecificationOutcomeConsistencyValidator.Validate(declarations, context);
         SpecificationActionValidator.Validate(application, declarations, context);
@@ -186,7 +188,7 @@ internal static class ScreenplayValidator
         ValidateThemes(application, context);
         ValidateProfileLayouts(application, context);
         ValidateArrangements(application, context);
-        foreach (var diagnostic in expansion.Diagnostics.Where(diagnostic => !context.Diagnostics.Contains(diagnostic))) context.Add(diagnostic);
+        foreach (var diagnostic in expansion.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.UnsynthesizablePersonaCaller && !context.Diagnostics.Contains(diagnostic))) context.Add(diagnostic);
 
         authored = DeclaredDependencyTargets.Validate(authored, context);
         DeclaredDependencies.Validate(authored, context);

@@ -25,5 +25,5 @@ static class McpReadResults
         };
     }
 
-    internal static object Summary(McpDeclaration declaration) => new { declaration.Kind, declaration.Name, declaration.Address, declaration.Scope, declaration.Location, declaration.Locations, declaration.Description, declaration.IsImplicit };
+    internal static object Summary(McpDeclaration declaration) => new { declaration.Kind, declaration.Name, declaration.Address, declaration.Scope, declaration.Location, declaration.Locations, declaration.Description, declaration.IsImplicit, declaration.Case };
 }

@@ -180,6 +180,7 @@ public partial class ScreenplayPrinter
         writer.DirectiveLine($"constraint {constraint.Name}", constraint, "header");
         using (writer.Indent())
         {
+            WriteDescription(writer, constraint.Description, constraint);
             foreach (var rule in new[] { constraint }.Concat(constraint.AdditionalRules))
             {
                 switch (rule)
@@ -313,7 +314,7 @@ public partial class ScreenplayPrinter
     {
         foreach (var property in properties)
         {
-            var modifier = (property.IsGenerated ? " generated" : string.Empty) + (property.IsIdentifier ? $" {PropertySyntax.IdentifierModifier}" : string.Empty);
+            var modifier = (property.IsGenerated ? " generated" : string.Empty) + (property.IsIdentifier ? $" {PropertySyntax.IdentifierModifier}" : string.Empty) + (property.IsSubject ? " subject" : string.Empty);
             writer.Line($"{ReservedWords.Escape(property.Name, reserved)} {ScreenplaySyntaxText.TypeRef(property.Type)}{modifier}", property);
         }
     }
@@ -463,7 +464,7 @@ public partial class ScreenplayPrinter
                 foreach (var (property, mapping) in inline.Properties.Zip(produces.Mappings))
                 {
                     using var propertyAnchor = writer.Anchor(property);
-                    writer.Line($"{ReservedWords.Escape(property.Name, ReservedWords.InlineEventBody)} {ScreenplaySyntaxText.TypeRef(property.Type)} = {writer.Expression(mapping.Source)}", mapping);
+                    writer.Line($"{ReservedWords.Escape(property.Name, ReservedWords.InlineEventBody)} {ScreenplaySyntaxText.TypeRef(property.Type)}{(property.IsSubject ? " subject" : string.Empty)} = {writer.Expression(mapping.Source)}", mapping);
                 }
             }
 

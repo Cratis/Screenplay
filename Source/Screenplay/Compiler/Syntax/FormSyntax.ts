@@ -8,6 +8,7 @@ import { ScreenNavigateSyntax } from './Screens';
 import { SyntaxNode } from './SyntaxNode';
 
 export interface FormSyntax extends SyntaxNode {
+    readonly description?: string | null;
     readonly kind: 'FormSyntax';
     readonly name: string;
     readonly for: string;

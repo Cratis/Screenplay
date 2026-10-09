@@ -127,6 +127,12 @@ public sealed partial class ScreenplayPrinter :
             WriteType(writer, type);
         }
 
+        foreach (var purpose in application.Purposes)
+        {
+            writer.Blank();
+            WritePurpose(writer, purpose);
+        }
+
         foreach (var policy in application.Policies)
         {
             writer.Blank();
@@ -386,13 +392,14 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"concept {concept.Name} : {concept.Type}{string.Concat(attributes.Select(attribute => $" {Parsing.ConceptComplianceParser.CanonicalName(attribute.Name)}"))}");
         var validations = concept.Validations?.ToList() ?? [];
         var reasoned = attributes.Where(attribute => attribute.Reason is not null).ToList();
-        if (!concept.IsEnum && validations.Count == 0 && reasoned.Count == 0 && concept.File is null && !attributes.Exists(attribute => attribute.Scope is not null || attribute.SpecialCategory is not null || attribute.Criminal))
+        if (!concept.IsEnum && validations.Count == 0 && reasoned.Count == 0 && concept.Description is null && concept.File is null && !attributes.Exists(attribute => attribute.Scope is not null || attribute.SpecialCategory is not null || attribute.Criminal))
         {
             return;
         }
 
         using (writer.Indent())
         {
+            WriteDescription(writer, concept.Description, concept);
             WriteFile(writer, concept.File);
 
             foreach (var attribute in reasoned)
@@ -441,6 +448,7 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"policy {policy.Name}");
         using (writer.Indent())
         {
+            WriteDescription(writer, policy.Description, policy);
             if (policy.Condition is not null)
             {
                 writer.Line($"require {ScreenplaySyntaxText.PolicyCondition(policy.Condition)}", policy.Condition);
@@ -507,6 +515,7 @@ public sealed partial class ScreenplayPrinter :
     {
         WriteDescription(writer, module.Description, module);
         WriteDocumentation(writer, module.Documentation, module);
+        foreach (var purpose in module.Purposes) writer.Line($"purpose {purpose.Name}", purpose);
         foreach (var dependency in module.DependsOn) writer.Line($"depends on {dependency.Target}", dependency);
         var members = new List<PrintableMember>();
         AddMembers(members, module.FileImports, -1, import => WriteFileImports(writer, [import]));
@@ -558,6 +567,7 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"form {form.Name} for {form.For}");
         using (writer.Indent())
         {
+            WriteDescription(writer, form.Description, form);
             if (form.Populate is not null)
             {
                 writer.Line(WriteFormPopulate(form.Populate), form.Populate);
@@ -906,6 +916,7 @@ public sealed partial class ScreenplayPrinter :
     {
         WriteDescription(writer, feature.Description, feature);
         WriteDocumentation(writer, feature.Documentation, feature);
+        foreach (var purpose in feature.Purposes) writer.Line($"purpose {purpose.Name}", purpose);
         foreach (var dependency in feature.DependsOn) writer.Line($"depends on {dependency.Target}", dependency);
         var members = new List<PrintableMember>();
         AddMembers(members, feature.FileImports, -1, import => WriteFileImports(writer, [import]));
@@ -938,6 +949,7 @@ public sealed partial class ScreenplayPrinter :
 
             WriteDescription(writer, slice.Description, slice);
             WriteDocumentation(writer, slice.Documentation, slice);
+            foreach (var purpose in slice.Purposes) writer.Line($"purpose {purpose.Name}", purpose);
             WriteFile(writer, slice.File);
 
             var members = new List<PrintableMember>();

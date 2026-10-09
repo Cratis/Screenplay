@@ -7,6 +7,7 @@ import { pattern } from '../Text/patterns';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { isFileDirective } from './FileReferences';
 import { firstWord } from './LineText';
+import { parseDescription } from './DescriptionParser';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 
@@ -31,9 +32,14 @@ export function parseConstraint(context: ParserContext, line: SourceLine): Const
     const releasedEvents = new Set<string>();
     const targets = new Set<string>();
     let message: string | null = null;
+    let description: string | null = null;
     let ignoreCasing = false;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
+        if (firstWord(child.content) === 'description') {
+            description = parseDescription(context, child, description, `Constraint '${name}'`);
+            continue;
+        }
         const release = releasePattern.exec(child.content);
         const text = messagePattern.exec(child.content);
         if (release !== null) {
@@ -68,7 +74,7 @@ export function parseConstraint(context: ParserContext, line: SourceLine): Const
     if (rules[0].kind === 'FileConstraintSyntax' && (releases.length > 0 || message !== null || ignoreCasing)) {
         context.error(DiagnosticCodes.InvalidConstraintBody, `File constraint '${name}' cannot have declarative options`, locationOf(line));
     }
-    return { ...rules[0], additionalRules: rules.slice(1), releasedBy: releases, message, ignoreCasing };
+    return { ...rules[0], additionalRules: rules.slice(1), releasedBy: releases, message, ignoreCasing, description };
 }
 
 function addRule(context: ParserContext, name: string, line: SourceLine, rules: ConstraintSyntax[], targets: Set<string>): void {

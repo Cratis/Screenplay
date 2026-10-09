@@ -12,10 +12,15 @@ Invoicing/
   invoicing.nb.strings   the same keys in Norwegian
 ```
 
+Processing purposes are declared at the top level: Billing covers the module, Bookkeeping is added on Auditing, and PaymentDisputes on CollectionsBoard. Their union is report-only; it does not enforce retention or make a legal-compliance claim. Concept reasons describe the value rather than its lawful basis.
+
+Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNumber, InvoiceList and RegisterInvoiceScreen explain values, rules, builders and input/view surfaces. They are report-only metadata, not UI titles, validation or generated code comments.
+
 ## Who uses it
 
 | Persona | Holds | Sees the screens of |
 | --- | --- | --- |
+| `InvoiceDraftCreator` | `IsAuthenticated`, `CanManageInvoice` | a focused authenticated draft-creation specification witness; broader screen roles remain below |
 | `InvoiceManager` | `IsAuthenticated`, `IsPerson`, `IsInvoicingStaff`, `CanManageInvoice` | StartInvoiceDraft, RegisterInvoice, CancelInvoice, TagInvoice, UpdateBillingContact, InvoiceList, InvoiceDetails |
 | `Accountant` | the above, plus `IsAccountant`, `IsFinanceDepartment` | everything the invoice manager sees, plus ChangeInvoiceStatus, ProcessInvoiceBatch, ArchiveOldInvoices, InvoiceLineReport, InvoiceDashboard, ApplyDiscount, RecordPayment, InvoiceBalances, InvoiceAging, CollectionsBoard, ExchangeRates |
 | `FinanceController` | `IsAuthenticated`, `IsPerson`, `IsInvoicingStaff`, `IsFinanceDepartment`, `CanWriteOff` | WriteOffInvoice |
@@ -46,6 +51,8 @@ balance or due/overdue invoice rows; the payment form loads the balance by that 
 `ExchangeRates`, `CreditStatus` and the overdue list on `InvoiceDashboard` are views no event builds: their
 queries' performers read the central bank feed, a credit bureau and stored invoices.
 
+`InvoiceDraftStarted.customerId` uses the trailing event-property `subject` role to name the customer instead of the invoice stream. This is report-only lineage metadata, with no executable model or provider output yet.
+
 ## Where each construct is used
 
 | Construct | Where |
@@ -55,7 +62,8 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | `concept` of every primitive, `Enum`, `pii`/`secret` with reasons, secret scope and personal-data special/criminal qualifiers, `file`, concept `validate` with `matches email`, `rule` with a `file` and an inline body, `severity` | Concepts |
 | `type` with `description`, `file`, optional and collection properties | Composite value types |
 | `policy` with `require` (`authenticated`, `role`, `claim … matches` a literal, `subject` or `$context` path, `not`/`and`/`or`/parentheses, continuation lines), inline ```` ```csharp ```` and `file` bodies | Authorization |
-| `persona` with single-line and fenced descriptions | Authorization |
+| Typed specification `parameter`, named `case` and `case.<parameter>` values | StartingDraftsForCustomers |
+| `persona` with single-line and fenced descriptions; `given caller as` with a deterministic authenticated witness | Authorization; StartingAnInvoiceDraft |
 | `authentication` with named providers | Authorization |
 | `trigger` with `description`, `file`, typed and untyped values | Triggers |
 | `theme`, two `layout`s with `arrangement flow`, `when width compact`, `gap`; two `ui profile`s | Look and shell |

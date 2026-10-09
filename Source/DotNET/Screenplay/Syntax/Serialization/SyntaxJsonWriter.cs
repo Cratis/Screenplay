@@ -21,10 +21,14 @@ internal static class SyntaxJsonWriter
             if (node is SliceSyntax && member.Name == "direction" && value is null) continue;
             if (node is ConceptAttributeSyntax && (member.Name == "scope" || member.Name == "specialCategory") && value is null) continue;
             if (node is ConceptAttributeSyntax && member.Name == "criminal" && Equals(value, false)) continue;
+            if (node is PropertySyntax && member.Name == "isSubject" && Equals(value, false)) continue;
             if (member.Name == "documentation" && node is not EventSyntax && value is null) continue;
-            if (node is Specifications.SpecificationSyntax && member.Name == "description" && value is null) continue;
+            if (node is Specifications.SpecificationSyntax && (member.Name == "description" || member.Name == "givenCallerPersona") && value is null) continue;
+            if (member.Name == "description" && value is null && node is ConceptSyntax or PolicySyntax or ConstraintSyntax or Projections.ProjectionSyntax or ScreenSyntax or FormSyntax) continue;
             if (member.Type == typeof(SourceOptions) && Equals(value, SourceOptions.Legacy)) continue;
-            if (member.Name == "examples" && value is IEnumerable examples && !examples.Cast<object>().Any()) continue;
+            if ((member.Name == "examples" || (node is Specifications.SpecificationSyntax && (member.Name == "parameters" || member.Name == "cases"))) && value is IEnumerable examples && !examples.Cast<object>().Any()) continue;
+            if (node is Specifications.SpecificationErrorSyntax && member.Name == "caseValue" && value is null) continue;
+            if (member.Name == "purposes" && value is IEnumerable purposes && !purposes.Cast<object>().Any()) continue;
             if (member.Name == "inlineProperty" && value is null) continue;
             if (node is Specifications.SpecificationExampleSyntax or Specifications.SpecificationRedeliverySyntax && (member.Name == "stream" || member.Name == "noStream") && value is null) continue;
             if (node is Specifications.SpecificationSyntax && member.Name == "thenNoEvents" && Equals(value, false)) continue;

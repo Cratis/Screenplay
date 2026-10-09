@@ -24,6 +24,7 @@ export const constructKeywords = [
     'concept',
     'type',
     'policy',
+    'purpose',
     'persona',
     'authentication',
     'module',
@@ -51,6 +52,8 @@ export const constructKeywords = [
     'contribute',
     'constraint',
     'specification',
+    'case',
+    'parameter',
     'example',
     'seed',
     'behavior',
@@ -216,7 +219,7 @@ export const conceptAttributes = ['pii', 'personal', 'secret'];
 
 // The lines that open a block with a body of their own. A line that is complete as written - a `domain`, a
 // `concept` or `query` with nothing under it, a `produces` of an existing event - is not one.
-export const blockHeaderPattern = /^\s*(?:module|feature|slice\s+\w+|type|command|event|readmodel|reducer|projection|capture|reaction|screen|dialog|form|contribute|specification|constraint|persona|policy|behavior|layout|theme|ui\s+profile|trigger|authentication|seed|system|eventsource|operation|screen\s+template|dialog\s+template|produces\s+event|validate|handler|on)\b[^=]*$/;
+export const blockHeaderPattern = /^\s*(?:module|feature|slice\s+\w+|type|command|event|readmodel|reducer|projection|capture|reaction|screen|dialog|form|contribute|specification|case|constraint|persona|policy|behavior|layout|theme|ui\s+profile|trigger|authentication|seed|system|eventsource|operation|screen\s+template|dialog\s+template|produces\s+event|validate|handler|on)\b[^=]*$/;
 
 export const languageConfiguration: languages.LanguageConfiguration = {
     comments: {

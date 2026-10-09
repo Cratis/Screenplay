@@ -188,9 +188,9 @@ public sealed class SemanticExecutionPlan
             issues.AddRange(SemanticScopedProjectionIssues.For(projection));
         }
 
-        foreach (var query in slices.SelectMany(_ => _.Queries).Where(_ => _.Cardinality != SemanticQueryCardinality.ZeroOrOne || _.Delivery != SemanticQueryDelivery.Snapshot))
+        foreach (var query in slices.SelectMany(_ => _.Queries).Where(_ => _.Cardinality == SemanticQueryCardinality.One))
         {
-            issues.Add(new(query.Id, SemanticPlanIssueKind.UnsupportedQuery, $"Query '{query.Name}' must be an optional snapshot lookup in the minimum evaluator."));
+            issues.Add(new(query.Id, SemanticPlanIssueKind.UnsupportedQuery, $"Query '{query.Name}' must be an optional lookup or a collection in the minimum evaluator."));
         }
 
         if (issues.Count > 0)

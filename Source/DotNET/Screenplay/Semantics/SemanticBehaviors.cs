@@ -418,21 +418,21 @@ public sealed record SemanticProjection(
 }
 
 /// <summary>
-/// Represents a deterministic keyed query.
+/// Represents a deterministic read-model query.
 /// </summary>
 /// <param name="Id">The stable semantic identity.</param>
 /// <param name="Name">The display name.</param>
-/// <param name="Argument">The typed key argument.</param>
+/// <param name="Argument">The typed key argument, or <see langword="null"/> for an unkeyed list query.</param>
 /// <param name="ReadModel">The queried read model identity.</param>
-/// <param name="KeyProperty">The read model property matched by the key.</param>
+/// <param name="KeyProperty">The read model property matched by the key, or <see langword="null"/> for an unkeyed list query.</param>
 /// <param name="Cardinality">The result cardinality.</param>
 /// <param name="Delivery">The result delivery behavior.</param>
 public sealed record SemanticKeyedQuery(
     SemanticId Id,
     string Name,
-    SemanticReadModelQueryArgument Argument,
+    SemanticReadModelQueryArgument? Argument,
     SemanticId ReadModel,
-    SemanticId KeyProperty,
+    SemanticId? KeyProperty,
     SemanticQueryCardinality Cardinality,
     SemanticQueryDelivery Delivery)
 {

@@ -687,6 +687,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// A setting of a provider is not <c>&lt;name&gt; &lt;value&gt;</c>.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error)]
     public const string InvalidProviderSetting = "PLAY0127";
 
     // Event seeding.
@@ -753,6 +754,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// A line in a reaction trigger body opens with a word a trigger declares nothing by.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error)]
     public const string UnknownReactionTriggerDirective = "PLAY0139";
 
     // Validation rules.
@@ -954,6 +956,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// No longer reported. Repeated reads without aliases are reported as <c>PLAY0410</c>. Retained for compatibility.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error, retired: true)]
     public const string DuplicateReads = "PLAY0176";
 
     /// <summary>
@@ -1463,6 +1466,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// Source syntax requires an explicit reviewed semantic migration before binding.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error)]
     public const string SemanticMigrationRequired = "PLAY0272";
 
     /// <summary>
@@ -1495,6 +1499,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// A variant declares no <c>enters on</c> event, so nothing ever activates it.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error)]
     public const string ProjectionVariantWithoutEntersOn = "PLAY0278";
 
     /// <summary>
@@ -1510,6 +1515,7 @@ public static class DiagnosticCodes
     /// <summary>
     /// Two variants of the same projection declare the same name.
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Error)]
     public const string DuplicateProjectionVariantName = "PLAY0281";
 
     /// <summary>
@@ -2550,6 +2556,96 @@ public static class DiagnosticCodes
     public const string ConflictingDocumentationAcrossFiles = "PLAY0559";
 
     /// <summary>
+    /// A persona caller reference is malformed, has a body, or names an unknown persona.
+    /// </summary>
+    public const string InvalidSpecificationCallerPersona = "PLAY0572";
+
+    /// <summary>
+    /// A persona cannot synthesize a portable specification caller.
+    /// </summary>
+    public const string UnsynthesizablePersonaCaller = "PLAY0573";
+
+    /// <summary>
+    /// None of a persona's policies gates an application entry point.
+    /// </summary>
+    public const string PersonaWithoutGate = "PLAY0574";
+
+    /// <summary>
+    /// Every synthesizable persona is definitely denied by an effective gate.
+    /// </summary>
+    public const string GateWithoutPersona = "PLAY0575";
+
+    /// <summary>
+    /// Required atoms do not pin a persona's buildable alternatives.
+    /// </summary>
+    public const string AmbiguousPersonaCaller = "PLAY0576";
+
+    /// <summary>
+    /// A specification parameter requires a name and a property-line type.
+    /// </summary>
+    public const string InvalidSpecificationParameter = "PLAY0577";
+
+    /// <summary>
+    /// A case requires an identifier and concrete assignments.
+    /// </summary>
+    public const string InvalidSpecificationCase = "PLAY0578";
+
+    /// <summary>
+    /// A specification repeats a parameter name.
+    /// </summary>
+    public const string DuplicateSpecificationParameter = "PLAY0579";
+
+    /// <summary>
+    /// A specification repeats a case name.
+    /// </summary>
+    public const string DuplicateSpecificationCase = "PLAY0580";
+
+    /// <summary>
+    /// A table requires both parameters and cases.
+    /// </summary>
+    public const string IncompleteSpecificationTable = "PLAY0581";
+
+    /// <summary>
+    /// A case must assign every declared parameter exactly once.
+    /// </summary>
+    public const string InvalidSpecificationCaseAssignment = "PLAY0582";
+
+    /// <summary>
+    /// A case value is not concrete or cannot be normalized to its parameter type.
+    /// </summary>
+    public const string InvalidSpecificationCaseValue = "PLAY0583";
+
+    /// <summary>
+    /// A case reference is unknown or used outside an allowed table value position.
+    /// </summary>
+    public const string InvalidSpecificationCaseReference = "PLAY0584";
+
+    /// <summary>
+    /// An optional parameter supplies a required target.
+    /// </summary>
+    public const string OptionalSpecificationParameterTarget = "PLAY0585";
+
+    /// <summary>
+    /// An expanded specification name collides in its owning scope.
+    /// </summary>
+    public const string SpecificationCaseNameCollision = "PLAY0586";
+
+    /// <summary>
+    /// A parameter and its target have incompatible types.
+    /// </summary>
+    public const string IncompatibleSpecificationParameterType = "PLAY0587";
+
+    /// <summary>
+    /// A declared table parameter is never referenced.
+    /// </summary>
+    public const string UnusedSpecificationParameter = "PLAY0588";
+
+    /// <summary>
+    /// The singular expansion API cannot represent a specification table.
+    /// </summary>
+    public const string SingularSpecificationTableExpansion = "PLAY0589";
+
+    /// <summary>
     /// A legacy compliance marker spelling should be migrated to bare pii or secret.
     /// </summary>
     public const string LegacyComplianceMarker = "PLAY0565";
@@ -2585,6 +2681,61 @@ public static class DiagnosticCodes
     public const string DuplicateSpecialCategory = "PLAY0571";
 
     /// <summary>
+    /// A purpose declaration or field has invalid syntax.
+    /// </summary>
+    public const string InvalidPurposeDeclaration = "PLAY0596";
+
+    /// <summary>
+    /// A purpose uses a value outside a statutory vocabulary.
+    /// </summary>
+    public const string InvalidPurposeVocabulary = "PLAY0597";
+
+    /// <summary>
+    /// A purpose repeats a singleton field.
+    /// </summary>
+    public const string DuplicatePurposeField = "PLAY0598";
+
+    /// <summary>
+    /// A purpose name is declared more than once.
+    /// </summary>
+    public const string DuplicatePurposeDeclaration = "PLAY0599";
+
+    /// <summary>
+    /// A purpose reference does not resolve.
+    /// </summary>
+    public const string UnknownPurpose = "PLAY0600";
+
+    /// <summary>
+    /// A legitimate-interest statement and basis do not agree.
+    /// </summary>
+    public const string PurposeInterestMismatch = "PLAY0601";
+
+    /// <summary>
+    /// An opt-in check found personal data without purpose coverage.
+    /// </summary>
+    public const string PersonalDataWithoutPurpose = "PLAY0602";
+
+    /// <summary>
+    /// An opt-in check found special data without a processing condition.
+    /// </summary>
+    public const string SpecialDataWithoutCondition = "PLAY0603";
+
+    /// <summary>
+    /// An opt-in check found criminal data without authorization.
+    /// </summary>
+    public const string CriminalDataWithoutAuthorization = "PLAY0604";
+
+    /// <summary>
+    /// An opt-in check found a purpose without a lawful basis.
+    /// </summary>
+    public const string PurposeWithoutBasis = "PLAY0605";
+
+    /// <summary>
+    /// An opt-in check found an unreferenced purpose.
+    /// </summary>
+    public const string UnusedPurpose = "PLAY0606";
+
+    /// <summary>
     /// Interaction alternatives require a click, double click or select trigger.
     /// </summary>
     public const string UnsupportedInteractionAlternatives = "PLAY0560";
@@ -2610,6 +2761,34 @@ public static class DiagnosticCodes
     public const string LegacyInteractionWhere = "PLAY0564";
 
     /// <summary>
+    /// An event marks more than one property as its data subject.
+    /// </summary>
+    public const string DuplicateEventSubject = "PLAY0590";
+
+    /// <summary>
+    /// A subject property has an optional, collection, composite or unsupported identity type.
+    /// </summary>
+    public const string InvalidSubjectType = "PLAY0591";
+
+    /// <summary>
+    /// A subject property uses a personal data or secret concept rather than a surrogate identity.
+    /// </summary>
+    public const string ProtectedSubjectType = "PLAY0592";
+
+    /// <summary>
+    /// A subject modifier is used on a command, type or response instead of an event.
+    /// </summary>
+    public const string InvalidSubjectOwner = "PLAY0593";
+
+    /// <summary>
+    /// A read model subject modifier is not yet supported.
+    /// </summary>
+    public const string ReadModelSubjectNotSupported = "PLAY0594";
+
+    /// <summary>
+    /// The subject property modifier is duplicated or is not last in modifier order.
+    /// </summary>
+    public const string InvalidSubjectModifierOrder = "PLAY0595";
     /// A command produces a public event.
     /// </summary>
     public const string CommandProducesPublicEvent = "PLAY0607";

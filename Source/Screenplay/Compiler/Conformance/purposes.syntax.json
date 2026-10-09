@@ -1,0 +1,155 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [
+            {
+              "kind": "FeatureSyntax",
+              "authorize": null,
+              "description": null,
+              "features": [],
+              "fileImports": [],
+              "isPlacement": false,
+              "name": "FollowUp",
+              "slices": [
+                {
+                  "kind": "SliceSyntax",
+                  "captures": [],
+                  "commands": [
+                    {
+                      "kind": "CommandSyntax",
+                      "authorize": null,
+                      "description": null,
+                      "handler": null,
+                      "name": "SendReminder",
+                      "produces": [],
+                      "properties": [
+                        {
+                          "kind": "PropertySyntax",
+                          "isGenerated": false,
+                          "isIdentifier": false,
+                          "name": "message",
+                          "type": {
+                            "kind": "TypeRefSyntax",
+                            "isCollection": false,
+                            "isOptional": false,
+                            "name": "String"
+                          }
+                        }
+                      ],
+                      "response": null,
+                      "stream": null,
+                      "streamCandidates": [],
+                      "validations": []
+                    }
+                  ],
+                  "constraints": [],
+                  "description": null,
+                  "events": [],
+                  "name": "SendReminder",
+                  "operations": [],
+                  "projections": [],
+                  "purposes": [
+                    {
+                      "kind": "PurposeReferenceSyntax",
+                      "name": "Billing"
+                    }
+                  ],
+                  "queries": [],
+                  "reactions": [],
+                  "readModels": [],
+                  "screens": [],
+                  "specifications": [],
+                  "type": "StateChange"
+                }
+              ]
+            }
+          ],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Collections",
+          "purposes": [
+            {
+              "kind": "PurposeReferenceSyntax",
+              "name": "Claims"
+            }
+          ],
+          "slices": []
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Finance",
+      "purposes": [
+        {
+          "kind": "PurposeReferenceSyntax",
+          "name": "Billing"
+        }
+      ]
+    }
+  ],
+  "personas": [],
+  "purposes": [
+    {
+      "kind": "PurposeSyntax",
+      "authorization": null,
+      "basis": "contract",
+      "basisReference": "Customer agreement",
+      "condition": null,
+      "conditionReference": null,
+      "description": "Issue invoices",
+      "erasureException": "legalObligation",
+      "interest": null,
+      "name": "Billing",
+      "recipients": [
+        "Payment provider",
+        "Accountant"
+      ],
+      "retention": "Until the relationship ends",
+      "subjects": [
+        "customer",
+        "customerContact",
+        "ansatt",
+        "søker"
+      ],
+      "transfers": [
+        {
+          "kind": "PurposeTransferSyntax",
+          "destination": "United States",
+          "safeguard": "Standard clauses"
+        }
+      ]
+    },
+    {
+      "kind": "PurposeSyntax",
+      "authorization": "Under official authority",
+      "basis": "legitimateInterests",
+      "basisReference": null,
+      "condition": "legalClaims",
+      "conditionReference": "Art. 9(2)(f)",
+      "description": "Recover unpaid invoices\nand defend payment claims.",
+      "erasureException": null,
+      "interest": "Recover unpaid invoices",
+      "name": "Claims",
+      "recipients": [],
+      "retention": null,
+      "subjects": [],
+      "transfers": []
+    }
+  ],
+  "systems": [],
+  "types": []
+}

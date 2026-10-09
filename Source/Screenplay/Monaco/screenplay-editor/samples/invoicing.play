@@ -31,11 +31,37 @@ import Shipping.InvoiceShipped
 import Shipping.InvoiceShippingCleared
 import Payments.PaymentSettled
 
+// These declarations describe an example controller's processing, not legal
+// advice or runtime retention rules. Value classification stays on concepts.
+purpose Billing
+  description "Issue invoices and collect payment for delivered work"
+  basis contract
+  subjects customer, customerContact
+  retention "Until the customer relationship ends"
+  recipient "Payment provider"
+
+purpose Bookkeeping
+  basis legalObligation "Bokføringsloven § 13"
+  retention "Five years after the financial year ends"
+  erasure exception legalObligation
+  recipient "Tax authority"
+  transfer "United States" safeguard "EU Standard Contractual Clauses"
+
+purpose PaymentDisputes
+  description "Handle payment disputes and pursue legal claims"
+  basis legitimateInterests
+  interest "Recover unpaid invoices and defend payment claims"
+  condition legalClaims
+  authorization "Criminal data only under official authority according to applicable national law"
+  subjects customer
+  retention "Until the payment claim is settled and the appeal period ends"
+
 // ------------------------------------------------------------
 // Concepts - one per domain value, never a raw primitive
 // ------------------------------------------------------------
 
 concept InvoiceId : Uuid
+  description "The stable identity of one invoice"
   // 'file' on a declaration says which file realizes it - realization metadata,
   // never a replacement for the declaration itself.
   file Concepts/InvoiceId.cs
@@ -58,17 +84,17 @@ concept InvoiceDate   : Date
 concept OccurredAt    : DateTime
 
 concept PersonName : String pii
-  pii reason "The name of the person to contact about an invoice. Needed to reach them about billing; lawful basis: contract performance. Lives under the customer's subject and is erasable with their key."
+  pii reason "The name identifies the person to contact about an invoice."
 
 concept BankAccount : String pii secret
-  pii reason "Refund payout account. Remits money back to the customer; lawful basis: contract performance / legal obligation. Personal only for sole-proprietor customers."
+  pii reason "A refund payout account identifies sole-proprietor customers."
   secret reason "Fraud-sensitive - a leaked account number enables direct financial harm, so it is never rendered in full and never leaves the payout path."
   validate
     rule BeAValidIban message $strings.validation.bankAccount.invalid
       file Validations/BeAValidIban.cs
 
 concept EmailAddress : String pii
-  pii reason "Billing contact address. Delivers invoices and payment reminders; lawful basis: contract performance. Under the customer's subject, erasable with their key."
+  pii reason "The billing contact address identifies the customer's contact."
   validate
     not empty                                 message "Email is required"
     matches email                             message "Must be a valid email address"
@@ -162,6 +188,7 @@ type InstallmentPlan
 // ------------------------------------------------------------
 
 policy IsAuthenticated
+  description "Only signed-in callers may enter the invoicing workflow"
   require authenticated
 
 policy IsPerson
@@ -204,6 +231,13 @@ policy IsAdultCustomer
 
 policy IsWithinCreditLimit
   file Policies/IsWithinCreditLimit.cs
+
+// A focused draft-creation witness uses portable positive policies. Broader
+// personas below include negation or ownership and keep explicit callers.
+persona InvoiceDraftCreator
+  description "Starts invoice drafts as invoice management staff"
+  policy IsAuthenticated
+  policy CanManageInvoice
 
 persona InvoiceManager
   description "Registers invoices and manages their lifecycle"
@@ -361,6 +395,7 @@ behavior RefreshOnEnter
 // ============================================================
 
 module Invoicing
+  purpose Billing
   documentation
     ```markdown
     Invoicing owns billing decisions. Payment-provider facts enter through translation slices.
@@ -455,6 +490,7 @@ module Invoicing
   // A form is the input surface of a command - discovered wherever the command
   // is invoked, never named by the screen that invokes it.
   form RegisterInvoiceForm for RegisterInvoice
+    description "Gather the customer, terms and lines needed to issue an invoice"
     field invoiceNumber  label $strings.invoices.fields.number
     field customerId     label "Customer"
     field lines          compose using BuildInvoiceLines
@@ -529,7 +565,7 @@ module Invoicing
         authorize CanManageInvoice
 
         produces event InvoiceDraftStarted
-          customerId CustomerId = customerId
+          customerId CustomerId subject = customerId
           receiptId InvoiceReceiptId = receiptId
 
         returns
@@ -542,9 +578,7 @@ module Invoicing
 
       specification StartingAnInvoiceDraft
         description "Witnesses that creating a draft returns the generated invoice and receipt identities"
-        given caller
-          authenticated
-          role "InvoiceManager"
+        given caller as InvoiceDraftCreator
         when StartInvoiceDraft
           for "11111111-1111-1111-1111-111111111111"
           generated receiptId = "22222222-2222-2222-2222-222222222222"
@@ -555,6 +589,20 @@ module Invoicing
           receiptId = "22222222-2222-2222-2222-222222222222"
         then returns
           invoiceId = "11111111-1111-1111-1111-111111111111"
+          receiptId = "22222222-2222-2222-2222-222222222222"
+
+      specification StartingDraftsForCustomers
+        parameter customer CustomerId
+        case Acme customer = "33333333-3333-3333-3333-333333333333"
+        case Contoso customer = "44444444-4444-4444-4444-444444444444"
+        given caller as InvoiceDraftCreator
+        when StartInvoiceDraft
+          for "11111111-1111-1111-1111-111111111111"
+          generated receiptId = "22222222-2222-2222-2222-222222222222"
+          customerId = case.customer
+        then InvoiceDraftStarted
+          for "11111111-1111-1111-1111-111111111111"
+          customerId = case.customer
           receiptId = "22222222-2222-2222-2222-222222222222"
 
     slice StateChange RegisterInvoice
@@ -689,6 +737,7 @@ module Invoicing
         dueDate      Date
 
       constraint UniqueInvoiceNumber
+        description "An invoice number belongs to only one invoice"
         unique invoiceNumber on InvoiceRegistered
         released by InvoiceCancelled
         ignore casing
@@ -698,6 +747,7 @@ module Invoicing
         unique event InvoiceRegistered
 
       screen RegisterInvoiceScreen
+        description "Issue an invoice for the customer's delivered work"
         template CommandDialog
           body
             title $strings.invoices.register.title
@@ -1272,6 +1322,7 @@ module Invoicing
         authorize CanManageInvoice
 
       projection InvoiceList => InvoiceListReadModel
+        description "Build the finance team's searchable invoice list"
         every
           lastActivityAt = $eventContext.occurred
         from InvoiceRegistered
@@ -2216,6 +2267,7 @@ module Invoicing
           reminders = 0
 
     slice StateView CollectionsBoard
+      purpose PaymentDisputes
       description "Every unpaid invoice is exactly one of due, overdue or settled"
 
       readmodel DueInvoice
@@ -2692,6 +2744,7 @@ module Invoicing
   // ==========================================================
 
   feature Auditing
+    purpose Bookkeeping
     description "What auditors look at - nothing here changes anything"
     authorize IsAuditor
 

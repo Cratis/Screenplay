@@ -3,6 +3,11 @@
     "documents": [
         { "name": "public-events", "path": "Source/Screenplay/Compiler/Conformance/public-events.play" },
         { "name": "event-translations", "path": "Source/Screenplay/Compiler/Conformance/event-translations.play" },
+        { "name": "declaration-descriptions", "path": "Source/Screenplay/Compiler/Conformance/declaration-descriptions.play" },
+        { "name": "purposes", "path": "Source/Screenplay/Compiler/Conformance/purposes.play" },
+        { "name": "specification-tables", "path": "Source/Screenplay/Compiler/Conformance/specification-tables.play" },
+        { "name": "persona-callers", "path": "Source/Screenplay/Compiler/Conformance/persona-callers.play" },
+        { "name": "event-subject", "path": "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/EventSubject/source.play" },
         { "name": "compliance", "path": "Source/Screenplay/Compiler/Conformance/compliance.play" },
         { "name": "authoring-metadata", "path": "Source/Screenplay/Compiler/Conformance/authoring-metadata.play" },
         { "name": "specification-examples", "path": "Source/Screenplay/Compiler/Conformance/specification-examples.play" },

@@ -205,6 +205,7 @@ export class HoverProvider implements languages.HoverProvider {
 
     private getKeywordInfo(word: string): string | null {
         const keywords: Record<string, string> = {
+            'description': '**description** - Report-only intent on the projection header, as quoted or fenced text. Not accepted on variants or nested blocks; adds no executable bytes.',
             'projection': '**projection** - Defines a projection that transforms events into a read model',
             'from': '**from** *<EventType>*\n\nHandles specific event types and maps their properties to the read model.',
             'all': '**all**\n\nSubscribes to **all event types in the system**, regardless of explicit `from` blocks. Mappings inside `all` run for every event that arrives system-wide.',

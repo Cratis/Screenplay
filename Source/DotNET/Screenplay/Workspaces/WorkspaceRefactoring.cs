@@ -11,7 +11,7 @@ using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Workspaces;
 
-sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
+internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace)
 {
     // The complete candidate must bind every original absence obligation, at its unchanged position, to the migrated
     // original target, and only members bound to the renamed declaration may change their text.
@@ -175,8 +175,8 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             throw new InvalidWorkspaceAuthoring("Constraint names are executable identity: renaming starts an empty constraint index and changes default rejection messages. Safe rename cannot preserve this contract; use explicit coordinated typed edits.");
         }
 
-        if (target is null || (target.Address is null && target.Node is not (SpecificationExampleSyntax or EventSourceSyntax or EventStreamSyntax)) ||
-            (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or SpecificationExampleSyntax or SpecificationSyntax or ReactionSyntax or EventSourceSyntax or EventStreamSyntax)))
+        if (target is null || (target.Address is null && target.Node is not (SpecificationExampleSyntax or EventSourceSyntax or EventStreamSyntax or PersonaSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or SpecificationSyntax)) ||
+            (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or SpecificationExampleSyntax or SpecificationSyntax or ReactionSyntax or EventSourceSyntax or EventStreamSyntax or PersonaSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax)))
         {
             throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property, command, event, read model, query, module, feature, slice, example, specification, reaction, event source, or stream declaration handle.");
         }
@@ -204,6 +204,11 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             throw new InvalidWorkspaceAuthoring($"The owning slice already declares {target.Kind} '{request.NewName}'.");
         }
 
+        if (target.Node is SpecificationParameterSyntax or SpecificationCaseSyntax && index.Entries.Any(entry => entry.Handle != target.Handle && entry.Parent == target.Parent && entry.Node.GetType() == target.Node.GetType() && WorkspaceReferenceBindings.Name(entry.Node) == request.NewName))
+        {
+            throw new InvalidWorkspaceAuthoring($"The table already declares {target.Kind} '{request.NewName}'.");
+        }
+
         var eventSource = target.Node as EventSourceSyntax ?? (target.Node is EventStreamSyntax && target.Parent is { } sourceParent ? index.Find(sourceParent)?.Node as EventSourceSyntax : null);
         if (eventSource is not null && index.Entries.Count(entry => entry.Node is EventSourceSyntax source && source.Name == eventSource.Name) > 1)
         {
@@ -225,7 +230,7 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
         bool IsTarget(WorkspaceSyntaxEntry entry) => target.Address is { } address ? address.Equals(entry.Address) : target.Handle == entry.Handle;
 
         RejectHierarchyCollision(index, target, request.NewName);
-        RejectOpaque(workspace.Documents, index, target, request);
+        if (target.Node is not (SpecificationParameterSyntax or SpecificationCaseSyntax)) RejectOpaque(workspace.Documents, index, target, request);
         var bindings = new WorkspaceReferenceBindings(index);
         bindings.RequireNoCollisions();
         if (target.Node is ModuleSyntax or FeatureSyntax)

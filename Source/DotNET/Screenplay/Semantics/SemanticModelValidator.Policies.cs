@@ -116,7 +116,13 @@ internal static partial class SemanticModelValidator
             foreach (var slice in AllSlices(application))
             {
                 foreach (var command in slice.Commands) ValidateAuthorization(command.Authorization, application.Policies, command.Properties);
-                foreach (var query in slice.Queries) ValidateAuthorization(query.Authorization, application.Policies, [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)]);
+                foreach (var query in slice.Queries)
+                {
+                    ValidateAuthorization(
+                        query.Authorization,
+                        application.Policies,
+                        query.Argument is null ? [] : [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)]);
+                }
                 foreach (var specification in slice.Specifications)
                 {
                     var authorizedCommand = specification.When is not null && slice.Commands.Any(command => command.Id == specification.When.Command && command.Authorization is not null);

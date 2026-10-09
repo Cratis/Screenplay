@@ -18,6 +18,7 @@ import { SpecificationExampleSyntax, SpecificationSyntax } from './Specification
 import { SyntaxNode } from './SyntaxNode';
 import { SourceOptions } from './SourceOptions';
 import { TranslationDirection } from './TranslationDirection';
+import { PurposeReferenceSyntax, PurposeSyntax } from './Purposes';
 
 // The four kinds of slice. The names are the C# SliceType members, which is also how SyntaxJson writes them.
 export type SliceType = 'StateChange' | 'StateView' | 'Automation' | 'Translate';
@@ -25,6 +26,7 @@ export type SliceType = 'StateChange' | 'StateView' | 'Automation' | 'Translate'
 export const sliceTypes: readonly SliceType[] = ['StateChange', 'StateView', 'Automation', 'Translate'];
 
 export interface SliceSyntax extends SyntaxNode {
+    readonly purposes?: readonly PurposeReferenceSyntax[];
     readonly kind: 'SliceSyntax';
     readonly direction?: TranslationDirection | null;
     readonly documentation?: string | null;
@@ -59,6 +61,7 @@ export interface DependsOnSyntax extends SyntaxNode {
 }
 
 export interface FeatureSyntax extends SyntaxNode {
+    readonly purposes?: readonly PurposeReferenceSyntax[];
     readonly dependsOn?: readonly DependsOnSyntax[];
     readonly kind: 'FeatureSyntax';
     readonly documentation?: string | null;
@@ -76,6 +79,7 @@ export interface FeatureSyntax extends SyntaxNode {
 }
 
 export interface ModuleSyntax extends SyntaxNode {
+    readonly purposes?: readonly PurposeReferenceSyntax[];
     readonly dependsOn?: readonly DependsOnSyntax[];
     readonly kind: 'ModuleSyntax';
     readonly documentation?: string | null;
@@ -92,6 +96,7 @@ export interface ModuleSyntax extends SyntaxNode {
 }
 
 export interface ApplicationSyntax extends SyntaxNode {
+    readonly purposes?: readonly PurposeSyntax[];
     readonly kind: 'ApplicationSyntax';
     readonly examples?: readonly SpecificationExampleSyntax[];
     readonly sourceOptions?: SourceOptions;

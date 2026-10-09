@@ -217,6 +217,7 @@ jobs:
     permissions:
       # Required for NuGet trusted publishing using OIDC tokens
       id-token: write
+      contents: write
 
     steps:
       - name: Checkout code
@@ -249,6 +250,13 @@ jobs:
       - name: Create NuGet packages
         run: dotnet pack --no-build --configuration Release -o ${{ env.NUGET_OUTPUT }} -p:PackageVersion=${{ needs.release.outputs.version }}
 
+      - name: Attach the Screenplay contract to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: gh release upload "v$VERSION" Source/DotNET/Tool/bin/Release/net10.0/screenplay-contract.json --clobber
+
       - name: NuGet login (OIDC → temp API key)
         uses: NuGet/login@v1
         id: login
@@ -257,6 +265,16 @@ jobs:
 
       - name: Push NuGet packages
         run: dotnet nuget push --skip-duplicate '${{ env.NUGET_OUTPUT }}/*.nupkg' --timeout 900 --api-key ${{steps.login.outputs.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json
+
+      - name: Notify the AI corpus of the published contract
+        env:
+          # The repository token cannot dispatch to another repository.
+          GH_TOKEN: ${{ secrets.PAT_WORKFLOWS }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          test -n "$GH_TOKEN"
+          jq -n --arg version "$VERSION" '{event_type: "screenplay-contract-published", client_payload: {version: $version, schemaVersion: 1}}' |
+            gh api --method POST repos/Cratis/AI/dispatches --input -
 
   publish-docker:
     if: needs.release.outputs.publish == 'true'

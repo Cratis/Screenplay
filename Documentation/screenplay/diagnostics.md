@@ -144,6 +144,30 @@ remove duplicate route headers before export.
 | `PLAY0569` | Warning | Explicit secret scope on `pii secret` is ignored because only Chronicle `[PII]` renders. |
 | `PLAY0570` | Error | Invalid personal-data qualifier or unknown Art. 9(1) category. |
 | `PLAY0571` | Error | A concept declares more than one `pii special` category. |
+| `PLAY0590` | Error | An event marks more than one data-subject property; each extra mark names the first. Choose one; no automatic repair is safe. |
+| `PLAY0591` | Error | A subject must be a required scalar String, Uuid or their concepts, or an Int-backed concept. Optional values, collections, composites, bare Int, enums, Decimal, Bool, Date and DateTime are refused. |
+| `PLAY0592` | Error | A subject concept is pii or secret; EventContext.Subject is plaintext. Use a surrogate identity. |
+| `PLAY0593` | Error | The subject modifier belongs only to event properties, not commands, types, operation inputs, trigger or reaction data or response fields (decision 0008). |
+| `PLAY0594` | Error | Read model subjects are not yet supported; #559 covers the mark and Chronicle's reserved _subject, __subject and __subjects names. |
+| `PLAY0595` | Error | Subject is duplicated or out of modifier order. Write each modifier once: Type optional generated identifier subject. |
+
+### Processing purposes
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0596` | Error | Invalid purpose declaration, reference or field syntax. |
+| `PLAY0597` | Error | Unknown basis, condition or erasure-exception value. |
+| `PLAY0598` | Error | A purpose repeats a singleton field. |
+| `PLAY0599` | Error | A purpose name is declared more than once. |
+| `PLAY0600` | Warning | A purpose reference does not resolve. |
+| `PLAY0601` | Warning | Interest is declared without basis legitimateInterests, or that basis has no nonblank interest statement. |
+| `PLAY0602` | Warning | Opt-in purposes check: a slice carries pii without a declared purpose in scope. |
+| `PLAY0603` | Warning | Opt-in purposes check: special-category data lacks a purpose's condition. |
+| `PLAY0604` | Warning | Opt-in purposes check: criminal data lacks a purpose's authorization. |
+| `PLAY0605` | Warning | Opt-in purposes check: a purpose has no basis. |
+| `PLAY0606` | Warning | Opt-in purposes check: a purpose is never referenced. |
+
+These are structural findings, not legal verdicts. See [Processing purposes](purposes.md).
 
 ### Types
 
@@ -855,7 +879,7 @@ An inline `on` block is an anonymous behavior, so it has no name to report again
 | `PLAY0386` | Error | A `given caller` line is not `authenticated`, `role "<name>"`, or `claim "<type>" = "<value>"`. |
 | `PLAY0387` | Error | A specification declares more than one `given caller` block or `then denied` outcome. |
 | `PLAY0388` | Error | `then denied` contains extra text or is mixed with another outcome. |
-| `PLAY0389` | Error | A specification exercises an authorized command or query without an explicit `given caller` fixture. |
+| `PLAY0389` | Error | A specification exercises an authorized command or query without a `given caller` fixture or `given caller as <Persona>`. |
 
 ### Constraints in the semantic model
 
@@ -977,6 +1001,11 @@ These codes cover [inline command events](commands.md#declare-an-event-inline) a
 | `PLAY0477` | Error | Event documentation is not one nonempty fenced Markdown block, or is repeated. |
 | `PLAY0558` | Error | Module, feature, slice, command, read-model or reaction documentation is not one nonempty fenced Markdown block, or is repeated. |
 | `PLAY0559` | Warning | Files give different documentation for one module or feature. The first documentation is kept. |
+| `PLAY0572` | Error | A `given caller as <Persona>` reference is malformed, has body lines, or names an unknown top-level persona. Unknown references list declared personas. |
+| `PLAY0573` | Error | A persona caller cannot be synthesized or verified against its policies. Binding names the persona, policy and refusal (`negation`, `nonLiteralClaim`, `roleClaim`, `opaqueImplementation`, `unresolvedPolicy`, `noPolicies`); use an explicit `given caller`. |
+| `PLAY0574` | Warning | Opt-in `personas` check: none of a persona's policies gates a command, query or inherited screen scope. |
+| `PLAY0575` | Warning | Opt-in `personas` check: an effective command or query gate definitely denies every declared persona's synthesized caller; unsynthesizable or undecidable callers are unknown. |
+| `PLAY0576` | Information | Opt-in `personas` check: required atoms do not pin an `or` with multiple buildable alternatives. Names an unchosen alternative and suggests adding a policy that pins it. |
 
 Malformed typed mappings and duplicate destinations retain `PLAY0044` and `PLAY0193`. Descriptions retain their existing diagnostics. Event descriptions, documentation, and rename pins are authoring-only metadata (`PLAY0270`); none changes canonical ESM bytes.
 
@@ -1153,6 +1182,26 @@ See [Policies](policies.md#portable-evaluation) for three-valued evaluation and 
 | `PLAY0564` | Warning / Information | Opaque `where` on click, double click or select is deprecated. A strict item condition warns and has a C# typed repair; other text is Information without a repair. Other triggers are unchanged. |
 
 Both compilers check these forms. Repairs require individual review (`CanFixAll: false`) and refuse trailing-comment relocation or comment loss. Conditions reuse PLAY0344–PLAY0348; fallback ordering uses PLAY0343 and missing alternatives uses PLAY0342. See [Interactions](interactions.md#choose-an-action-list-by-item-state). Interactions still report PLAY0269 at ESM binding; syntax support is not runtime admission.
+
+## Specification case tables
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0577` | Error | A parameter requires a name and property-line type, without a body or default. |
+| `PLAY0578` | Error | A case requires an identifier and at most one inline assignment. |
+| `PLAY0579` | Error | A parameter name is repeated within a table. |
+| `PLAY0580` | Error | A case name is repeated within a table. |
+| `PLAY0581` | Error | Tables require parameters and at least one case. |
+| `PLAY0582` | Error | A case omits, repeats or invents a parameter assignment. |
+| `PLAY0583` | Error | A case value is not concrete or cannot be normalized to its declared parameter type. |
+| `PLAY0584` | Error | A case reference names no declared table parameter or occurs in an excluded position. |
+| `PLAY0585` | Error | An optional parameter feeds a required target. |
+| `PLAY0586` | Error | A derived specification name collides in its scope. |
+| `PLAY0587` | Error | The parameter type is unknown or incompatible with its target type. |
+| `PLAY0588` | Warning | A declared parameter is never referenced. |
+| `PLAY0589` | Error | Singular effective expansion cannot represent a table; use `ExpandAll`. |
+
+See [Named case tables](specifications.md#named-case-tables).
 
 ## Retired codes
 

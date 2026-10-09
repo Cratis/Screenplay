@@ -573,7 +573,7 @@ internal static partial class SemanticModelRead
         string? name = null;
         SemanticId readModel = default;
         SemanticReadModelQueryArgument? argument = null;
-        SemanticId keyProperty = default;
+        SemanticId? keyProperty = null;
         SemanticQueryCardinality? cardinality = null;
         SemanticQueryDelivery? delivery = null;
         SemanticAuthorization? authorization = null;
@@ -593,8 +593,9 @@ internal static partial class SemanticModelRead
             }
         }
 
-        Required(id.IsSet && name is not null && readModel.IsSet && argument is not null && keyProperty.IsSet && cardinality is not null && delivery is not null, "query");
-        return new(id, name!, argument!, readModel, keyProperty, cardinality!.Value, delivery!.Value) { Authorization = authorization };
+        Required(id.IsSet && name is not null && readModel.IsSet && cardinality is not null && delivery is not null, "query");
+        Required((argument is null) == (keyProperty is null), "query");
+        return new(id, name!, argument, readModel, keyProperty, cardinality!.Value, delivery!.Value) { Authorization = authorization };
     }
 
     internal static SemanticReadModelQueryArgument QueryArgument(ref Utf8JsonReader reader)

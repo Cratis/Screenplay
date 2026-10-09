@@ -29,6 +29,7 @@ internal sealed class FeatureBody(string name)
     readonly List<FileImportSyntax> _fileImports = [];
     readonly List<DependsOnSyntax> _dependsOn = [];
     readonly List<TemplateAssignmentSyntax> _templates = [];
+    readonly List<PurposeReferenceSyntax> _purposes = [];
     string? _description;
     string? _documentation;
     AuthorizeSyntax? _authorize;
@@ -57,6 +58,9 @@ internal sealed class FeatureBody(string name)
                 return true;
             case "depends":
                 DependsOnParser.Parse(context, line, _dependsOn, DiagnosticCodes.UnknownFeatureDirective);
+                return true;
+            case "purpose":
+                PurposeParser.ParseReference(context, line, _purposes);
                 return true;
             case "authorize":
                 _authorize = AuthorizeParser.Combine(_authorize, AuthorizeParser.Parse(context, line));
@@ -110,6 +114,7 @@ internal sealed class FeatureBody(string name)
             DirectiveLocations = _directiveLocations,
             FileImports = _fileImports,
             IsPlacement = isPlacement,
-            Templates = _templates
+            Templates = _templates,
+            Purposes = _purposes
         };
 }

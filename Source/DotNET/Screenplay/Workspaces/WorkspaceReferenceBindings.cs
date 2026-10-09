@@ -20,7 +20,7 @@ sealed class WorkspaceReferenceBindings
     readonly Dictionary<string, string[]> _imports;
     readonly Dictionary<(string? Source, string Stream), WorkspaceReferenceDeclaration[]> _streams;
 
-    internal WorkspaceReferenceBindings(WorkspaceSyntaxIndex index)
+    internal WorkspaceReferenceBindings(WorkspaceSyntaxIndex index, bool includeInteractions = false)
     {
         _index = index;
         _declarations = [.. Declarations(index)];
@@ -29,7 +29,7 @@ sealed class WorkspaceReferenceBindings
             .GroupBy(declaration => (declaration.Owner, declaration.Name)).ToDictionary(group => group.Key, group => group.ToArray());
         _imports = index.Entries.Select(entry => entry.Node).OfType<ImportSyntax>().GroupBy(import => import.Name, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.Select(import => import.QualifiedName).Distinct(StringComparer.Ordinal).ToArray(), StringComparer.Ordinal);
-        Bindings = [.. WorkspaceReferenceMembers.All(index).Select(Bind)];
+        Bindings = [.. WorkspaceReferenceMembers.All(index).Concat(includeInteractions ? WorkspaceReferenceMembers.Interactions(index) : []).Distinct().Select(Bind)];
     }
 
     internal WorkspaceReferenceBinding[] Bindings { get; }
@@ -113,6 +113,8 @@ sealed class WorkspaceReferenceBindings
                 ScreenSyntax => WorkspaceReferenceDomain.Screen,
                 DialogTemplateSyntax => WorkspaceReferenceDomain.DialogTemplate,
                 PolicySyntax => WorkspaceReferenceDomain.Policy,
+                PersonaSyntax => WorkspaceReferenceDomain.Persona,
+                SpecificationParameterSyntax => WorkspaceReferenceDomain.SpecificationParameter,
                 TriggerSyntax => WorkspaceReferenceDomain.Trigger,
                 ReactionSyntax => WorkspaceReferenceDomain.Reaction,
                 ConstraintSyntax when entry.Parent is { } constraintParent && index.Find(constraintParent)?.Node is SliceSyntax => WorkspaceReferenceDomain.Constraint,
@@ -124,6 +126,7 @@ sealed class WorkspaceReferenceBindings
                 var owner = actual switch
                 {
                     WorkspaceReferenceDomain.Property => ((TypeSyntax)index.Find(entry.Parent!)!.Node).Name,
+                    WorkspaceReferenceDomain.SpecificationParameter => WorkspaceReferenceMembers.TableOwner(entry, index),
                     WorkspaceReferenceDomain.EventStream when entry.Parent is { } parent && index.Find(parent)?.Node is EventSourceSyntax source => source.Name,
                     _ => null
                 };
@@ -197,7 +200,7 @@ sealed class WorkspaceReferenceBindings
             return new(reference, target, target is not null ? "resolved" : outcome);
         }
 
-        if (domain == WorkspaceReferenceDomain.Property)
+        if (domain is WorkspaceReferenceDomain.Property or WorkspaceReferenceDomain.SpecificationParameter)
         {
             var properties = (_byName.GetValueOrDefault((domain, reference.Text)) ?? [])
                 .Where(declaration => declaration.Owner == reference.Owner).ToArray();

@@ -1,0 +1,32 @@
+policy IsAccountant
+  require authenticated and role "Accountant" and claim "department" matches "Finance"
+policy IsManager
+  require role "Manager"
+policy CanManage
+  require role "Manager" or role "Accountant"
+persona Accountant
+  policy IsAccountant
+  policy CanManage
+module Billing
+  feature Invoices
+    slice StateChange RegisterInvoice
+      event InvoiceRegistered
+        number String
+      command RegisterInvoice
+        number String
+        authorize IsAccountant
+        produces InvoiceRegistered
+          number = number
+      command ManageInvoice
+        number String
+        authorize IsManager
+        produces InvoiceRegistered
+          number = number
+      specification Registering
+        given caller as Accountant
+        when RegisterInvoice number = "INV-42"
+        then InvoiceRegistered number = "INV-42"
+      specification DenyingManagement
+        given caller as Accountant
+        when ManageInvoice number = "INV-42"
+        then denied

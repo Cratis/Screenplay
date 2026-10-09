@@ -16,6 +16,7 @@ export * from './Expressions';
 export * from './Commands';
 export * from './Conditions';
 export * from './Policies';
+export * from './Purposes';
 export * from './Seeds';
 export * from './Implementations';
 export * from './Queries';

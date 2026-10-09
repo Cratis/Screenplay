@@ -21,6 +21,8 @@ import { captureReducer } from './DependencySourceParser';
 import { parseConstraint } from './ConstraintParser';
 import { parseEvent, parseReadModel } from './DeclarationParsers';
 import { parseDescription } from './DescriptionParser';
+import { PurposeReferenceSyntax } from '../Syntax/Purposes';
+import { parsePurposeReference } from './PurposeParser';
 import { parseDocumentation } from './DocumentationParser';
 import { isFileDirective } from './FileReferences';
 import { firstWord } from './LineText';
@@ -71,6 +73,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     const constraints: ConstraintSyntax[] = [];
     const specifications: SpecificationSyntax[] = [];
     const examples: SpecificationExampleSyntax[] = [];
+    const purposes: PurposeReferenceSyntax[] = [];
     const readModels: ReadModelSyntax[] = [];
     const screens: ScreenSyntax[] = [];
     const reducers: ReducerSyntax[] = [];
@@ -85,6 +88,8 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
             description = parseDescription(context, child, description, `Slice '${name}'`);
         } else if (keyword === 'documentation') {
             documentation = parseDocumentation(context, child, documentation, `Slice '${name}'`);
+        } else if (keyword === 'purpose') {
+            parsePurposeReference(context, child, purposes);
         } else if (keyword === 'operation') {
             operations.push(parseOperation(context, child).operation);
         } else if (keyword === 'direction') {
@@ -127,7 +132,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     }
     context.scope = previous;
     const syntax: SliceSyntax = {
-        kind: 'SliceSyntax', type, name, direction, description, documentation, examples, events, operations, commands, queries, projections, captures, reactions, constraints, specifications, readModels, screens,
+        kind: 'SliceSyntax', type, name, direction, description, documentation, examples, purposes, events, operations, commands, queries, projections, captures, reactions, constraints, specifications, readModels, screens,
         location: locationOf(line),
     };
     dependencySources.set(syntax, { reducers });

@@ -19,6 +19,10 @@ function keywordsOn(line: string): string[] {
 }
 
 describe('when highlighting specification steps', () => {
+    it('scopes a bodyless persona caller', () => {
+        keywordsOn('        given caller as Accountant').should.deep.equal(['given', 'caller', 'as']);
+    });
+
     it('scopes a clock step', () => {
         keywordsOn('        given clock "2026-10-05T08:00:00Z"').should.deep.equal(['given', 'clock']);
     });

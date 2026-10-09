@@ -110,7 +110,7 @@ public sealed partial class SemanticModelBinder
 
             var address = SemanticAddress.ForSpecification(slice, specification.Name);
             var id = Resolve(address, specification.Location);
-            if (origin?.Steps.Any(step => step.Example is not null) == true) _specificationOrigins.TryAdd(id, origin);
+            if (origin is not null && (origin.Case is not null || origin.Steps.Any(step => step.Example is not null))) _specificationOrigins.TryAdd(id, origin);
             var givenEvents = specification.Given.Select(value => BindSpecificationEvent(value, commands, historicalFact: true)).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             var givenReadModels = (specification.GivenReadModels ?? [])
                 .Select(value => BindReadModelState(value.Name, value.Properties, value.Location, value.Exactly))
@@ -349,15 +349,32 @@ public sealed partial class SemanticModelBinder
             }
 
             var arguments = value.Arguments.ToArray();
-            if (arguments.Length != 1 || arguments[0].Property != query.Argument.Name || BindConcreteValue(arguments[0].Source, query.Argument.Type, "specification query argument", false) is not { } key)
+            SemanticValue key;
+            if (query.Argument is null)
+            {
+                if (arguments.Length != 0)
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Specification query '{value.Query}' is unkeyed and must not state arguments.", value.Location);
+                    return null;
+                }
+
+                key = SemanticValue.Null;
+            }
+            else if (arguments.Length != 1 || arguments[0].Property != query.Argument.Name || BindConcreteValue(arguments[0].Source, query.Argument.Type, "specification query argument", false) is not { } boundKey)
             {
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Specification query '{value.Query}' must state exactly its keyed argument in Program v1.", value.Location);
                 return null;
             }
+            else
+            {
+                key = boundKey;
+            }
 
             var readModel = _readModels.Values.Single(_ => _.Model.Id == query.ReadModel);
+            var identifier = readModel.Model.Properties.SingleOrDefault(_ => _.IsIdentifier);
+            var inferredResultKey = identifier is not null && query.KeyProperty == identifier.Id ? key : null;
             var results = value.Results
-                .Select(result => BindReadModelState(readModel, result.Properties, result.Location, key))
+                .Select(result => BindReadModelState(readModel, result.Properties, result.Location, inferredResultKey))
                 .Where(_ => _ is not null)
                 .Select(_ => _!)
                 .ToImmutableArray();

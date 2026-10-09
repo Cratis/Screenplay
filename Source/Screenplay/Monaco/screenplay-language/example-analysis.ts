@@ -170,6 +170,7 @@ function expressionText(expression: ExpressionSyntax): string {
         case 'ListExpressionSyntax': return `[${expression.items.map(expressionText).join(', ')}]`;
         case 'ObjectExpressionSyntax': return `{ ${expression.members.map(member => `${JSON.stringify(member.name)}: ${expressionText(member.value)}`).join(', ')} }`;
         case 'RawExpressionSyntax': return expression.text;
+        case 'CaseValueExpressionSyntax': return `case.${expression.parameter}`;
         case 'PathExpressionSyntax': return expression.path;
         case 'ContextExpressionSyntax': return `$context.${expression.path}`;
         case 'EventContextExpressionSyntax': return `$eventContext.${expression.path}`;

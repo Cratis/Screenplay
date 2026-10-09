@@ -63,6 +63,7 @@ internal static partial class ProjectionParser
         var name = match.Groups[1].Value;
         var readModel = match.Groups[2].Success ? match.Groups[2].Value : null;
         string? sequence = null;
+        string? description = null;
         SourceLocation? sequenceLocation = null;
         var autoMap = AutoMapMode.Inherit;
         var directiveLocations = new Dictionary<string, SourceLocation>();
@@ -73,6 +74,7 @@ internal static partial class ProjectionParser
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
+            if (DescriptionParser.TryParse(context, line, ref description, $"Projection '{name}'", directiveLocations)) continue;
             if (FileReferenceParser.IsDirective(line))
             {
                 file = FileReferenceParser.ParseReplacing(context, line, file, directiveLocations);
@@ -140,7 +142,8 @@ internal static partial class ProjectionParser
             SourceOptions = context.SourceOptions,
             File = file,
             DirectiveLocations = AddSequenceLocation(directiveLocations, sequenceLocation),
-            ParsedAutoMapMode = autoMap
+            ParsedAutoMapMode = autoMap,
+            Description = description
         };
     }
 

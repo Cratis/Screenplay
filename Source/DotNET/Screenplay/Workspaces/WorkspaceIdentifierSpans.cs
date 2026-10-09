@@ -18,6 +18,12 @@ internal static partial class WorkspaceIdentifierSpans
         {
             (SpecificationExampleSyntax, "name" or "type") => keyword == "example",
             (SpecificationSyntax, "name") => keyword == "specification",
+            (SpecificationParameterSyntax, "name") => keyword == "parameter",
+            (SpecificationCaseSyntax, "name") => keyword == "case",
+            (CaseValueExpressionSyntax, "parameter") => line.Contains("case.", StringComparison.Ordinal),
+            (PropertyMappingSyntax, "property") => line.Contains('='),
+            (SpecificationCallerPersonaSyntax, "name") => line.StartsWith("given caller as ", StringComparison.Ordinal),
+            (PersonaSyntax, "name") => keyword == "persona",
             (ConceptSyntax, "name") => keyword == "concept",
             (TypeSyntax, "name") => keyword == "type",
             (ModuleSyntax, "name") => keyword == "module",
@@ -84,6 +90,11 @@ internal static partial class WorkspaceIdentifierSpans
             var match = EventHeaderRegex().Match(line);
             var group = match.Groups["name"];
             return match.Success && group.Value == expected ? [(group.Index, group.Length)] : [];
+        }
+
+        if (node is CaseValueExpressionSyntax && member == "parameter")
+        {
+            return Find(line, $"case.{expected}").Select(span => (span.Offset + 5, span.Length - 5));
         }
 
         if (node is SpecificationRedeliverySyntax && (member == "eventType" || member == "reaction"))

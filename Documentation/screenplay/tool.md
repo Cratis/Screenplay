@@ -21,6 +21,9 @@ docker run --rm -v "$PWD/specifications:/work:ro" cratis/screenplay --warnaserro
 ```
 
 The image also runs the [MCP server](mcp/index.md): `docker run -i --rm -v "$PWD/specifications:/model" cratis/screenplay mcp /model`.
+Use its [`propose-move`](mcp/edit.md#move-a-slice-or-feature-to-another-parent) tool
+for identity-preserving slice and feature moves across logical parents. This is an
+MCP proposal, reviewed and applied through `apply`, not a CLI move command.
 
 ## Verify your files
 
@@ -73,9 +76,13 @@ screenplay path/to/invoicing.play --warnaserror
 
 Colors are enabled automatically on interactive terminals; disable them with `--no-color` or by setting the `NO_COLOR` environment variable.
 
+## Report processing purposes
+
+`screenplay report processing [<file.play|folder>] --format json|markdown|csv` derives a controller's [record of processing](purposes.md#record-of-processing) from error-free source. The default format is Markdown and the default path is the current directory. Supply `--controller-name` and `--controller-contact` explicitly; the model does not infer them. The report records declarations and limited structural derivations, not legal advice or verified runtime protection. Source errors exit `1`; bad arguments, unavailable paths and empty model directories exit `2`. A model with no purposes yields zero rows.
+
 ## Check structural completeness
 
-Select additional warnings with `--check data-bindings,input-surfaces,field-origins,query-keys,event-consumers,navigation` or `--check all`. Combine with `--warnaserror` to gate on findings, and with `--scope` to limit the reported set. Checks are not part of ordinary compilation and run only when the whole application has no source errors. Otherwise output reports `completeness checks skipped: the model has N error(s)`. See [Completeness checks](completeness.md) for rules and exemptions.
+Select additional warnings with `--check data-bindings,input-surfaces,field-origins,query-keys,event-consumers,navigation,purposes` or `--check all`. Combine with `--warnaserror` to gate on findings, and with `--scope` to limit the reported set. Checks are not part of ordinary compilation and run only when the whole application has no source errors. Otherwise output reports `completeness checks skipped: the model has N error(s)`. See [Completeness checks](completeness.md) for rules and exemptions.
 
 ## Check one part of the application
 
@@ -102,7 +109,7 @@ screenplay test path/to/screenplays
 screenplay test path/to/invoicing.play --filter Billing.Invoices.Send.SendingAnInvoice --format json
 ```
 
-`PATH` defaults to the current directory. A folder is one application; a file includes only that file and its imports, not unimported siblings. `--filter` takes one exact, case-sensitive dotted specification address (module, nested features, slice, specification). Unknown selections are usage errors, not empty passes. Without a filter, every discovered specification is selected. `--format` defaults to `text`; `json` writes one camel-case JSON report to stdout.
+`PATH` defaults to the current directory. A folder is one application; a file includes only that file and its imports, not unimported siblings. `--filter` takes one exact, case-sensitive dotted specification address (module, nested features, slice, specification). A table address selects every named case; a derived `<Specification>_<Case>` address selects one case. Unknown selections are usage errors, not empty passes. Without a filter, every discovered specification is selected. `--format` defaults to `text`; `json` writes one camel-case JSON report to stdout.
 
 The CLI does not read MCP workspace state from `.screenplay/identities.json`. Its printed semantic ids are derived from addresses and may differ from MCP's persisted identities after renames. A CLI-derived semantic id is also accepted by `--filter`; use MCP `run-specifications` for identity-stable selection.
 
@@ -116,6 +123,41 @@ The report includes `sourceRevision`, `outcome`, `discovered`, `selected`, `exec
 | `1` | At least one selected specification failed, even if others were unsupported |
 | `2` | Invalid arguments, selection or input, or the command could not run |
 | `3` | The model did not bind, or nothing failed but reference execution was unsupported |
+
+## Export the language and tool contract
+
+To check tooling or AI guidance against the installed Screenplay release, export its machine-readable contract:
+
+```bash
+screenplay contract
+screenplay contract --output screenplay-contract.json
+```
+
+Without `--output`, the command writes one JSON document to stdout. With it, the command writes UTF-8 JSON to the given file (overwriting an existing file); its parent directory must exist. No model directory, MCP connection or external service is needed. Exit code `0` means the document was written; `2` means invalid arguments, an unclassified contract fact or a write failure.
+
+The document has `schemaVersion: 1` and contains:
+
+- `keywords`, derived from the compiled parser dispatch and reserved-word catalog, and `topLevelConstructs`, accepted at the application document root.
+- `constructs`, including container and slice declarations, with `parseStatus: accepted`, bound `probes`, and an `admission` entry for each supported ESM schema version. Each probe publishes its source, observed `minimumSemanticVersion`, primary disposition `diagnostic`, every raised `diagnostics` code and severity, and admission per schema. `admitted` means the baseline probe has backend executable meaning; `refused` also covers authoring/UI metadata not carried into the backend model. `conditional` means another published probe is refused; its `condition` lists zero-based indexes into `probes`. These examples are evidence, not an exhaustive inventory of every grammar combination. `diagnostic` is the actual refusal/disposition PLAY code, or `null` where none is raised, including version-only refusals; `issue` is the tracking URL when the binder names one. Parsing alone does not imply execution.
+- `diagnostics`: every C# `DiagnosticCodes` entry, its catalog-summary `title`, primary `severity`, all emitted `severities`, and `reserved` and `retired` flags. The primary severity is the highest possible severity; some codes vary by context. Reserved but unretired entries remain listed.
+- `mcpTools`: every tool, including `run-specifications` and the optional board tool, with `requiredParameters`, `optionalParameters` and its complete `inputSchema`. Conditional requirements remain in the schema; an optional parameter may be required for a particular view.
+- `cliCommands`, from the definitions used by the tool dispatcher and argument readers, including the default check command (empty name), usage, options and information-command aliases. MCP includes rootless startup and the explicit `--create-root` alternative.
+- `esmVersions`, with schema versions and supported language/semantic version pairs. Construct admission describes the portable backend model, not renderer or reference-evaluator capability.
+
+The release asset is named `screenplay-contract.json`; the same generated document is included at the root of the `Cratis.Screenplay.Tool` NuGet package. Consumers should check the schema version before comparing facts.
+
+For a library call, reference `Cratis.Screenplay.Contracts` and use `Cratis.Screenplay.Contracts.ScreenplayContract.Write(TextWriter)` or `Serialize()`. Neither entry point opens an MCP server or reads a model from disk.
+
+### Regenerate the contract golden
+
+From a Screenplay source checkout, regenerate the checked-in golden after an intentional language or tool change:
+
+```bash
+dotnet run --project Source/DotNET/Tool -- contract --output Source/DotNET/Screenplay.Contracts/Golden/screenplay-contract.json
+dotnet test Source/DotNET/Screenplay.Contracts/Screenplay.Contracts.csproj --configuration Debug
+```
+
+Review the JSON diff. Ordinary specs compare the generated document with the golden and never rewrite it. Every admission probe uses the same workspace compilation path as a real model, including source validation and timeline analysis before semantic binding. Generation fails with the probe's name if it raises an error other than an unsupported, deferred or report-only semantic disposition; malformed examples cannot become published admission refusals by updating the golden. A new conditional rule needs an example and condition in the admission probe table.
 
 ## Use the compiler as a library
 

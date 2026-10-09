@@ -61,6 +61,7 @@ sealed class McpTools
                 "workspace-state" => _workspaces.State(arguments),
                 "recover-workspace" => _workspaces.Recover(arguments),
                 "propose-rename" => _workspaces.Rename(arguments),
+                "propose-move" => _workspaces.Move(arguments),
                 "propose-extract-inline-event" => _workspaces.ExtractInlineEvent(arguments),
                 "read-workspace" => _workspaces.ReadWorkspace(arguments),
                 "read-ast" => _workspaces.ReadAst(arguments),
@@ -143,7 +144,9 @@ sealed class McpTools
                 McpJson.Integer(arguments, "offset", 0, 0, int.MaxValue),
                 McpJson.Integer(arguments, "limit", 50, 1, 200),
                 McpJson.OptionalString(arguments, "scope"),
-                McpJson.OptionalString(arguments, "document")),
+                McpJson.OptionalString(arguments, "document"),
+                McpJson.OptionalString(arguments, "case")),
+            "processing-record" => McpProcessingRecord.Read(snapshot, arguments),
             "find-modeling-smells" => McpModelingSmells.Read(snapshot, arguments),
             "find-specification-obligations" => McpSpecificationObligations.Read(snapshot, arguments),
             "find-assertion-gaps" => McpFixtureQueries.AssertionGaps(

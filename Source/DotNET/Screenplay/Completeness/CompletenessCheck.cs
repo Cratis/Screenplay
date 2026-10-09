@@ -36,5 +36,15 @@ public enum CompletenessCheck
     /// <summary>
     /// Checks screen reachability.
     /// </summary>
-    Navigation
+    Navigation,
+
+    /// <summary>
+    /// Checks persona reachability and deterministic caller ambiguity.
+    /// </summary>
+    Personas,
+
+    /// <summary>
+    /// Checks declared processing purposes without assessing lawfulness.
+    /// </summary>
+    Purposes
 }

@@ -147,8 +147,10 @@ internal static class SemanticTypedContextCatalog
                         matches.Add(Policy(
                             requirement,
                             query.Id,
-                            [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)],
-                            new SemanticContextSource(SemanticContextSourceKinds.QueryKey, query.Argument.Id, query.Argument.Name)));
+                            query.Argument is null ? [] : [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)],
+                            query.Argument is null
+                                ? new SemanticContextSource(SemanticContextSourceKinds.Unavailable, null, string.Empty)
+                                : new SemanticContextSource(SemanticContextSourceKinds.QueryKey, query.Argument.Id, query.Argument.Name)));
                     }
                     break;
             }

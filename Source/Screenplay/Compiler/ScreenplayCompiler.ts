@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { Diagnostic } from './Diagnostics/Diagnostic';
+import { validateSpecificationCases } from './Parsing/SpecificationCaseValidator';
+import { expandSpecificationExamples } from './Parsing/SpecificationCommandExamples';
 import { productionDestinationDiagnostics } from './Diagnostics/ProductionDestinationDiagnostics';
 import { validateConstraintProperties } from './Parsing/ConstraintPropertyValidator';
 import { validateDependencyDeclarations } from './Dependencies/DeclaredDependencyTargets';
@@ -18,9 +20,12 @@ import { CommandStreamCandidates } from './Parsing/CommandStreamCandidates';
 import { validateEventSources } from './Parsing/EventSourceValidator';
 import { validateProjectionTargets } from './Parsing/ProjectionTargetValidator';
 import { validateIdentifierCompliance } from './Parsing/IdentifierComplianceValidator';
+import { validateEventSubjects } from './Parsing/EventSubjectValidator';
 import { validateReactionRefusals } from './Parsing/ReactionRefusalValidator';
 import { validateSpecificationRedelivery } from './Parsing/SpecificationRedeliveryValidator';
 import { validateGuardedActions } from './Parsing/GuardedActionValidator';
+import { validatePersonaCallers } from './Parsing/PersonaCallerValidator';
+import { validatePurposes } from './Parsing/PurposeValidator';
 import { parseApplication } from './Parsing/ScreenplayParser';
 import { splitLines } from './Parsing/SourceLineSplitter';
 import { PropertySyntax } from './Syntax/Declarations';
@@ -67,17 +72,22 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
     let value = parseApplication(context, lines, placement);
     // Folder assembly validates declaration-dependent contracts once against the merged inventory.
     if (validateResponseContracts) {
+        validatePurposes(value, context);
         validateInlineEvents(value, context);
         validateConstraintProperties(value, context);
         validateOperations(value, context);
         validatePublicEventUsage(value, context);
-        validateResponses(value, context);
+        validateSpecificationCases(value, context);
+        const effective = expandSpecificationExamples(value);
+        validateResponses(effective, context);
         validateEventSources(value, context);
         validateProjectionTargets(value, context);
-        validateIdentifierCompliance(value, context);
+        validateIdentifierCompliance(effective, context);
+        validateEventSubjects(value, context);
         validateReactionRefusals(value, context);
         validateSpecificationRedelivery(value, context);
         validateGuardedActions(value, context);
+        validatePersonaCallers(value, context);
         value = validateDependencyDeclarations(value, context);
         DeclaredDependencies.validate(value, context);
         for (const diagnostic of productionDestinationDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);
@@ -150,5 +160,9 @@ function parseSourceFamily<T extends SyntaxNode>(source: string, keyword: string
         context.error(code, `Document must contain at least one ${keyword}`, context.start);
     }
     const roots = keyword === 'specification' && examples.length > 0 ? value.map(node => ({ ...node, examples })) : value;
+    if (keyword === 'specification') {
+        const application = parseApplication(sourceContext([], path, languages), [], documentPlacement);
+        validateSpecificationCases({ ...application, examples }, context, roots as unknown as SpecificationSyntax[]);
+    }
     return { value: roots, diagnostics: context.diagnostics, success: !context.diagnostics.some(diagnostic => diagnostic.severity === 'error') };
 }

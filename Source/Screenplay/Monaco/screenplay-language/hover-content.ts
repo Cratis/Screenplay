@@ -9,12 +9,12 @@ import { exampleHover } from './example-authoring';
 import { operationHover } from './operation-authoring';
 import { DocumentSymbols } from './symbols';
 import { responseAnalysis, responseAvailability } from './response-analysis';
-import { enclosingChain, fenceMap, indentOf, withoutComment } from './document-context';
+import { enclosingChain, enclosingHeaders, fenceMap, indentOf, withoutComment } from './document-context';
 import { directBody, propertyTypeReference, scanDocument } from './symbols';
 import { typeReferenceText } from './TypeReferenceSymbol';
 import { eventAnalysisSource } from './event-analysis-source';
 import { getSubLanguage } from './sub-language-registry';
-import { attributeDocs, contextVariableDocs, handlerIntentDocs, keywordDocs, specificationKeywordDocs } from './keyword-docs';
+import { attributeDocs, contextVariableDocs, handlerIntentDocs, keywordDocs, specialCategoryDocs, specificationKeywordDocs } from './keyword-docs';
 
 // Produces the hover markdown for a word at a position, without any editor
 // dependency — the Monaco service and the VSCode extension share this content.
@@ -53,12 +53,14 @@ export function hoverContent(
         return word === name && startColumn === start && endColumn === start + name.length && line.slice(start - 1, endColumn - 1) === name;
     };
     const before = line.charAt(startColumn - 2);
+    if (word === 'authorization' && enclosingChain(lines, fences, lineIndex, indentOf(line))[0] === 'purpose') return 'A quoted authorization in law for criminal-offence data (Art. 10).';
 
     const complianceHeader = /^\s*concept\s+[^\s:]+\s*:\s*\w+\s+/.exec(line);
     const complianceBody = enclosingChain(lines, fences, lineIndex, indentOf(line))[0] === 'concept' && /^\s*(?:@?pii|personal|@?sensitive|secret)\s+(?:reason|scope|special|criminal)\b/.test(line);
     if ((complianceHeader !== null && startColumn - 1 >= complianceHeader[0].length - 1) || complianceBody) {
         const doc = attributeDocs[word];
         if (doc) return doc;
+        if (Object.hasOwn(specialCategoryDocs, word) && /^\s*(?:@?pii|personal)\s+special\s+/.test(line)) return `**${word}** — ${specialCategoryDocs[word]}`;
         if (word === 'special') return 'GDPR Art. 9(1) special category; requires pii. At most one category per concept.';
         if (word === 'criminal') return 'Personal data relating to criminal convictions and offenses (GDPR Art. 10); requires pii.';
         if (/^\s*(?:secret|sensitive|@sensitive)\s+scope\s+/.test(line) && ['subject', 'namespace', 'global'].includes(word)) return `**${word}** — Secret encryption scope${word === 'subject' ? ' per data subject' : word === 'namespace' ? ' per tenant namespace' : ' shared globally'}. Not an event-property subject role.`;
@@ -88,6 +90,16 @@ export function hoverContent(
         : /^\s*@?[a-z_]\w*\s+[\w.]+(?:\[\])?\s+$/.test(prefix);
     const followsQueryType = /^\s*query\s+\w+\s*=>\s*(?:observable\s+)?[\w.]+(?:\[\])?\s+$/.test(prefix) &&
         !/^\s*query\s+\w+\s*=>\s*observable\s+$/.test(prefix);
+    if (word === 'subject') {
+        const source = eventAnalysisSource(lines);
+        const subjectPrefix = /^\s*@?[a-z_]\w*\s+[\w.]+(?:\[\])?(?:\?|\s+optional)?(?:\s+generated)?(?:\s+identifier)?\s+$/.test(prefix);
+        const ownerChain = enclosingChain(source, fences, lineIndex, indentOf(line));
+        if (subjectPrefix && (ownerChain[0] === 'event' || /^produces\s+event\s+/.test(enclosingHeaders(source, fences, lineIndex, indentOf(line))[0] ?? ''))) {
+            return '**subject** — This event property identifies its one data subject instead of the event source (decision 0008). Required scalar String, Uuid or their concepts, or an Int-backed concept; never pii or secret. Report-only lineage metadata (PLAY0270); no ESM bytes or provider output yet.';
+        }
+        if (/\bclaim\s+"(?:[^"\\]|\\.)*"\s+matches\s+$/.test(prefix) && ownerChain.includes('policy')) return `**subject** — ${keywordDocs.subject}`;
+        return null;
+    }
     if (word === 'optional' && (followsPropertyType || followsQueryType)) {
         return `**optional** — ${keywordDocs.optional}`;
     }
@@ -161,7 +173,7 @@ export function hoverContent(
             .sort((left, right) => (right.generation ?? 1) - (left.generation ?? 1))[0];
     if (event) {
         const properties = event.properties
-            .map((property) => `${property.name} ${typeReferenceText(propertyTypeReference(property))}`)
+            .map((property) => `${property.name} ${typeReferenceText(propertyTypeReference(property))}${property.isSubject ? ' subject' : ''}`)
             .join('\n');
         return `\`\`\`screenplay\n${event.visibility === 'Public' ? 'public ' : ''}event ${event.name}${event.generation !== undefined ? ` generation ${event.generation}` : ''}${event.origin !== undefined ? ` from ${JSON.stringify(event.origin)}` : ''}\n${properties}\n\`\`\``;
     }

@@ -10,6 +10,7 @@ import { ExpressionSyntax } from '../Syntax/Expressions';
 import { pattern } from '../Text/patterns';
 import { parseProjectionExpression } from './ProjectionExpressionParser';
 import { isFileDirective } from './FileReferences';
+import { parseDescription } from './DescriptionParser';
 import { firstWord, splitTopLevel, unescapeIdentifier } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
@@ -48,6 +49,7 @@ export function parseProjection(context: ParserContext, line: SourceLine): Proje
     }
     const name = match[1];
     let sequence: string | null = null;
+    let description: string | null = null;
     let autoMap: AutoMapMode = 'Inherit';
     let key: KeySyntax | null = null;
     const blocks: ProjectionBlockSyntax[] = [];
@@ -57,7 +59,9 @@ export function parseProjection(context: ParserContext, line: SourceLine): Proje
             continue;
         }
         const keyword = firstWord(child.content);
-        if (keyword === 'sequence') {
+        if (keyword === 'description') {
+            description = parseDescription(context, child, description, `Projection '${name}'`);
+        } else if (keyword === 'sequence') {
             sequence = child.content.substring('sequence'.length).trim();
         } else if (keyword === 'automap') {
             autoMap = 'Enabled';
@@ -78,7 +82,7 @@ export function parseProjection(context: ParserContext, line: SourceLine): Proje
     if (blocks.length === 0) {
         context.error(DiagnosticCodes.EmptyProjection, `Projection '${name}' must contain at least one directive`, locationOf(line));
     }
-    return { kind: 'ProjectionSyntax', sourceOptions: context.sourceOptions, name, readModel: match[2] ?? null, sequence, autoMap, key, blocks, location: locationOf(line) };
+    return { kind: 'ProjectionSyntax', sourceOptions: context.sourceOptions, name, readModel: match[2] ?? null, sequence, autoMap, key, blocks, description, location: locationOf(line) };
 }
 
 function reportVariantConflicts(context: ParserContext, blocks: readonly ProjectionBlockSyntax[], name: string): void {

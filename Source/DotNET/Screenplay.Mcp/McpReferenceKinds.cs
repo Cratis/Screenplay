@@ -10,7 +10,7 @@ namespace Cratis.Screenplay.Mcp;
 
 static class McpReferenceKinds
 {
-    internal const string Coverage = "Explicit declaration references in source identifier/stream-id types, authored command and specification event source/stream routes, types, policies, commands, queries, screen data, forms, contribution points, specifications, projections, reducers, reactions, captures, constraints, seeds and concurrency event lists. Not code, property paths, imports, profile settings, external host registrations or expression identifiers. Read models include projection output aliases and variants, not the projection builder's name when it produces a different view.";
+    internal const string Coverage = "Explicit declaration references in source identifier/stream-id types, authored command and specification event source/stream routes, types, policies, processing purposes, commands, queries, screen data, forms, contribution points, specifications, projections, reducers, reactions, captures, constraints, seeds and concurrency event lists. Not code, property paths, imports, profile settings, external host registrations or expression identifiers. Read models include projection output aliases and variants, not the projection builder's name when it produces a different view.";
     static readonly string[] _eventKinds = ["Event"];
 
     internal static IEnumerable<(string Name, string[] Kinds, string Role)> For(SyntaxNode node, SyntaxNode? owner = null) => node switch
@@ -31,6 +31,7 @@ static class McpReferenceKinds
         ReadsSyntax value => [(value.ReadModel, ["ReadModel"], "reads")],
         ConcurrencySyntax value => value.EventTypes.Select(name => (name, _eventKinds, "concurrency")),
         PolicyReferenceSyntax value => [(value.Name, ["Policy"], "authorizes")],
+        PurposeReferenceSyntax value => [(value.Name, ["Purpose"], "purpose")],
         TypeRefSyntax value when owner is QuerySyntax query && ReferenceEquals(query.ReturnType, value) && !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["ReadModel", "Concept", "Type"], "queryResult")],
         TypeRefSyntax value when owner is ScreenSyntax && !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["ReadModel"], "dataReadModel")],
         TypeRefSyntax value when !ConceptSyntax.PrimitiveTypes.Contains(value.Name, StringComparer.Ordinal) => [(value.Name, ["Concept", "Type"], "type")],
@@ -44,6 +45,7 @@ static class McpReferenceKinds
         FormSyntax value => [(value.For, ["Command"], "formCommand")],
         FormPopulateViaQuerySyntax value => [(value.Query, ["Query"], "populate")],
         SpecificationExampleSyntax value => [(value.Type, ["Event", "Command", "ReadModel"], "exampleType")],
+        SpecificationCallerPersonaSyntax value => [(value.Name, ["Persona"], "givenCallerPersona")],
         SpecificationEventSyntax value => [(value.EventType, ["Event", "Example"], "specificationEvent")],
         SpecificationCommandSyntax value => [(value.CommandType, ["Command", "Example"], "whenCommand")],
         SpecificationReadModelSyntax value => [(value.Name, ["ReadModel", "Example"], "specificationReadModel")],

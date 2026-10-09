@@ -6,4 +6,9 @@ using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Mcp;
 
-sealed record McpFixtureOccurrence(McpReadOwner Specification, string Role, McpReference Reference, int Ordinal, IEnumerable<PropertyMappingSyntax> Values, ExpressionSyntax? For = null, SpecificationStreamSyntax? Stream = null, SpecificationNoStreamSyntax? NoStream = null, EffectiveSpecificationStep? Step = null);
+sealed record McpFixtureOccurrence(McpReadOwner Specification, string Role, McpReference Reference, int Ordinal, IEnumerable<PropertyMappingSyntax> Values, ExpressionSyntax? For = null, SpecificationStreamSyntax? Stream = null, SpecificationNoStreamSyntax? NoStream = null, EffectiveSpecificationStep? Step = null)
+{
+    internal string? Table { get; init; }
+    internal string? Case { get; init; }
+    internal IEnumerable<PropertyMappingSyntax> CaseValues { get; init; } = [];
+}

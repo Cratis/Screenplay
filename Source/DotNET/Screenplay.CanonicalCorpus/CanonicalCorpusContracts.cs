@@ -323,6 +323,108 @@ public sealed record CanonicalMcpEditExpectation
 }
 
 /// <summary>
+/// Represents one working-branch harness against an unreleased dependency branch.
+/// </summary>
+public sealed record CanonicalWorkingBranchHarnessExpectation
+{
+    /// <summary>
+    /// Gets the stable harness name.
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
+    /// Gets the product or host that owns the working branch.
+    /// </summary>
+    public required string Host { get; init; }
+
+    /// <summary>
+    /// Gets the GitHub repository name.
+    /// </summary>
+    public required string Repository { get; init; }
+
+    /// <summary>
+    /// Gets the pull request URL or identifier that carries the branch.
+    /// </summary>
+    public required string PullRequest { get; init; }
+
+    /// <summary>
+    /// Gets the exact branch name used for this working run.
+    /// </summary>
+    public required string Branch { get; init; }
+
+    /// <summary>
+    /// Gets the exact commit SHA used for this working run.
+    /// </summary>
+    public required string Commit { get; init; }
+
+    /// <summary>
+    /// Gets the command, endpoint, or test entry point used to run the harness.
+    /// </summary>
+    public required string EntryPoint { get; init; }
+
+    /// <summary>
+    /// Gets how this working-branch harness switches to released packages.
+    /// </summary>
+    public required string ReleaseSwitch { get; init; }
+
+    /// <summary>
+    /// Gets the observed status of this working-branch run.
+    /// </summary>
+    public required string Status { get; init; }
+
+    /// <summary>
+    /// Gets the exact reason the harness is pending or red, or <c>null</c> when it passed.
+    /// </summary>
+    public string? PendingReason { get; init; }
+
+    /// <summary>
+    /// Gets machine-checkable assertions the harness must evaluate.
+    /// </summary>
+    public ImmutableArray<CanonicalScreenAssertion> Assertions { get; init; } = [];
+}
+
+/// <summary>
+/// Represents one executed released-vector harness result.
+/// </summary>
+public sealed record CanonicalReleasedVectorHarnessResult
+{
+    /// <summary>
+    /// Gets the stable result name.
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
+    /// Gets the host or product that executed the result.
+    /// </summary>
+    public required string Host { get; init; }
+
+    /// <summary>
+    /// Gets the exact released version vector.
+    /// </summary>
+    public required string VersionVector { get; init; }
+
+    /// <summary>
+    /// Gets the command, endpoint, or transcript entry point that was executed.
+    /// </summary>
+    public required string EntryPoint { get; init; }
+
+    /// <summary>
+    /// Gets the observed status for this released-vector result.
+    /// </summary>
+    public required string Status { get; init; }
+
+    /// <summary>
+    /// Gets the exact blocker or red evidence when the full assertion set did not pass.
+    /// </summary>
+    public string? PendingReason { get; init; }
+
+    /// <summary>
+    /// Gets machine-checkable assertions observed or required for this released vector.
+    /// </summary>
+    public ImmutableArray<CanonicalScreenAssertion> Assertions { get; init; } = [];
+}
+
+/// <summary>
 /// Represents one pending or executable harness entry point for released screen parity checks.
 /// </summary>
 public sealed record CanonicalScreenHarnessExpectation
@@ -418,6 +520,82 @@ public sealed record CanonicalStagePlanExpectation
     /// Gets machine-checkable plan assertions that do not depend on final artifact bytes.
     /// </summary>
     public ImmutableArray<CanonicalScreenAssertion> Assertions { get; init; } = [];
+
+    /// <summary>
+    /// Gets diagnostic codes a released toolchain produced when planning this corpus, recording why the plan is pending.
+    /// </summary>
+    public ImmutableArray<string> ObservedRefusalCodes { get; init; } = [];
+}
+
+/// <summary>
+/// Represents an executed Stage render of one canonical corpus source form on an exact released toolchain vector.
+/// </summary>
+public sealed record CanonicalStageExecutionVector
+{
+    /// <summary>
+    /// Gets the stable execution vector name.
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
+    /// Gets the application name used for the render.
+    /// </summary>
+    public required string ApplicationName { get; init; }
+
+    /// <summary>
+    /// Gets the renderer target name.
+    /// </summary>
+    public required string Target { get; init; }
+
+    /// <summary>
+    /// Gets the released target version reported by the renderer.
+    /// </summary>
+    public required string TargetVersion { get; init; }
+
+    /// <summary>
+    /// Gets the released renderer implementation name.
+    /// </summary>
+    public required string Renderer { get; init; }
+
+    /// <summary>
+    /// Gets the released renderer version.
+    /// </summary>
+    public required string RendererVersion { get; init; }
+
+    /// <summary>
+    /// Gets the exact semantic revision the render was planned from; must equal the corpus's pinned revision.
+    /// </summary>
+    public required string SemanticRevision { get; init; }
+
+    /// <summary>
+    /// Gets the exact released toolchain versions the render ran on.
+    /// </summary>
+    public required string VersionVector { get; init; }
+
+    /// <summary>
+    /// Gets the pinned <c>.cratis-render.json</c> manifest produced by the render.
+    /// </summary>
+    public required CanonicalCorpusDocument Manifest { get; init; }
+
+    /// <summary>
+    /// Gets the pinned <c>scene.json</c> plan produced by the render.
+    /// </summary>
+    public required CanonicalCorpusDocument ScenePlan { get; init; }
+
+    /// <summary>
+    /// Gets the pinned generated typed-binding module produced by the render.
+    /// </summary>
+    public required CanonicalCorpusDocument Bindings { get; init; }
+
+    /// <summary>
+    /// Gets the ordered artifact expectations captured from the render manifest.
+    /// </summary>
+    public ImmutableArray<CanonicalStageArtifactExpectation> Artifacts { get; init; } = [];
+
+    /// <summary>
+    /// Gets machine-checkable assertions the executed plan must satisfy.
+    /// </summary>
+    public ImmutableArray<CanonicalScreenAssertion> Assertions { get; init; } = [];
 }
 
 /// <summary>
@@ -474,6 +652,16 @@ public sealed record CanonicalScreenCorpusVector
     /// Gets released-version harness entry points.
     /// </summary>
     public ImmutableArray<CanonicalScreenHarnessExpectation> Harnesses { get; init; } = [];
+
+    /// <summary>
+    /// Gets working-branch harness entry points that run before the final released packages publish.
+    /// </summary>
+    public ImmutableArray<CanonicalWorkingBranchHarnessExpectation> WorkingBranchHarnesses { get; init; } = [];
+
+    /// <summary>
+    /// Gets exact released-vector results for the screen corpus.
+    /// </summary>
+    public ImmutableArray<CanonicalReleasedVectorHarnessResult> ReleasedVectorResults { get; init; } = [];
 
     /// <summary>
     /// Gets Stage plan expectations when released renderer packages provide deterministic artifact bytes.

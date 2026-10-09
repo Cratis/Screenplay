@@ -119,11 +119,15 @@ function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJ
             if (value.kind === 'SliceSyntax' && member === 'direction' && memberValue == null) continue;
             if (value.kind === 'ConceptAttributeSyntax' && (member === 'scope' || member === 'specialCategory') && memberValue == null) continue;
             if (value.kind === 'ConceptAttributeSyntax' && member === 'criminal' && memberValue === false) continue;
+            if (value.kind === 'PropertySyntax' && member === 'isSubject' && memberValue === false) continue;
+            if (member === 'description' && memberValue == null && ['ConceptSyntax', 'PolicySyntax', 'FileConstraintSyntax', 'UniqueEventConstraintSyntax', 'UniquePropertyConstraintSyntax', 'ProjectionSyntax', 'ScreenSyntax', 'FormSyntax'].includes(value.kind)) continue;
             if (member === 'documentation' && value.kind !== 'EventSyntax' && memberValue == null) continue;
             if (value.kind === 'SpecificationSyntax' && member === 'description' && memberValue == null) continue;
             if (member === 'dependsOn' && (value.kind === 'ModuleSyntax' || value.kind === 'FeatureSyntax') && Array.isArray(memberValue) && memberValue.length === 0) continue;
             if (member === 'sourceOptions' && (memberValue as { numericMode?: string } | undefined)?.numericMode === 'legacy') continue;
-            if (member === 'examples' && Array.isArray(memberValue) && memberValue.length === 0) continue;
+            if ((member === 'examples' || value.kind === 'SpecificationSyntax' && (member === 'parameters' || member === 'cases')) && Array.isArray(memberValue) && memberValue.length === 0) continue;
+            if (value.kind === 'SpecificationErrorSyntax' && member === 'caseValue' && memberValue == null) continue;
+            if (member === 'purposes' && Array.isArray(memberValue) && memberValue.length === 0) continue;
             if (member === 'inlineProperty' && memberValue == null) continue;
             if ((value.kind === 'SpecificationExampleSyntax' || value.kind === 'SpecificationRedeliverySyntax') && (member === 'stream' || member === 'noStream') && memberValue == null) continue;
             if (value.kind === 'SpecificationSyntax' && member === 'thenNoEvents' && memberValue === false) continue;

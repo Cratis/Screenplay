@@ -25,6 +25,7 @@ export interface NotPolicyConditionSyntax extends SyntaxNode {
 }
 export type PolicyConditionSyntax = AuthenticatedConditionSyntax | RoleConditionSyntax | ClaimConditionSyntax | LogicalPolicyConditionSyntax | NotPolicyConditionSyntax;
 export interface PolicySyntax extends SyntaxNode {
+    readonly description?: string | null;
     readonly kind: 'PolicySyntax';
     readonly name: string;
     readonly condition: PolicyConditionSyntax | null;

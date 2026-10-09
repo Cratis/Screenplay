@@ -44,6 +44,16 @@ internal static partial class DescriptionParser
     internal static string? Parse(ParserContext context, SourceLine line, string? existing, string owner, out DescriptionSpan? span) =>
         Parse(context, line, existing, owner, false, out span);
 
+    internal static bool TryParse(ParserContext context, SourceLine line, ref string? description, string owner, Dictionary<string, SourceLocation> locations, bool enumeration = false)
+    {
+        if (LineText.FirstWord(line.Content) != "description") return false;
+        if (enumeration && line.Content == "description" && (!context.TryPeekChild(line.Indent, out var child) || !child.Content.StartsWith("```", StringComparison.Ordinal))) return false;
+        var previous = description;
+        description = Parse(context, line, description, owner);
+        if (previous is null && description is not null) locations["description"] = line.Location;
+        return true;
+    }
+
     internal static string? ParseEvent(ParserContext context, SourceLine line, string? existing, string owner) =>
         Parse(context, line, existing, owner, true, out _);
 

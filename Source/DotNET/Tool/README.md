@@ -56,6 +56,10 @@ partial board as success.
 [MCP board guide](https://cratis.io/screenplay/mcp/view/) ·
 [Compiler reference](https://cratis.io/screenplay/tool/)
 
+## Record declared processing purposes
+
+Run `screenplay report processing ./specifications --format json` for a controller inventory, or choose `markdown` (the default) or `csv`. Supply `--controller-name` and `--controller-contact` explicitly. The inventory is generated from model declarations, not legal advice or evidence that runtime protection is installed. MCP hosts can page the same facts with `processing-record`.
+
 ## CLI alternative
 
 CLI hosting shipped in 3.11.0 as `cratis screenplay mcp ./specifications`.

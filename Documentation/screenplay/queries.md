@@ -71,7 +71,7 @@ A one-shot query returning an optional scalar type named `observable` must keep 
 
 ## What the caller sees
 
-`authorize` says *who may call* a query. In ESM v1, declarative gates on optional keyed snapshot queries run before the lookup and compare a supplied caller against the keyed query argument. A missing caller or failed gate yields `Unauthorized`; module and feature gates also apply by AND. If evaluation reaches an opaque ESM v3 policy predicate, the reference evaluator returns `SemanticUnsupported` instead of guessing a decision. Other query shapes (live, filtered, scoped, or performer-backed) are not yet admitted into the reference evaluator. It says nothing about *what they get back* — and in a real application those are different questions. `All` and `Mine` may admit exactly the same callers and return entirely different rows, and that difference is the access model a reader needs.
+`authorize` says *who may call* a query. In the executable semantic model, declarative gates on optional keyed lookups, unkeyed list queries and keyed list queries run before the lookup. A keyed query compares a supplied caller against the `by` argument; an unkeyed list query has no query-key artifact. A missing caller or failed gate yields `Unauthorized`; module and feature gates also apply by AND. If evaluation reaches an opaque ESM v3 policy predicate, the reference evaluator returns `SemanticUnsupported` instead of guessing a decision. Filtered, scoped and performer-backed queries are still authoring syntax for the implementation and are not yet admitted into the reference evaluator. It says nothing about *what they get back* — and in a real application those are different questions. `All` and `Mine` may admit exactly the same callers and return entirely different rows, and that difference is the access model a reader needs.
 
 `scoped to` states it:
 
@@ -129,6 +129,21 @@ query GetInvoice => InvoiceDetailsReadModel
   authorize IsAuthenticated
 ```
 
+An observable list query for a whole screen:
+
+```screenplay
+query AllWorkItems => observable WorkItemSummary[]
+  description "Every work item on the board, kept current as work changes"
+```
+
+An observable list narrowed by a caller-supplied key:
+
+```screenplay
+query CommentsForWorkItem => observable CommentView[]
+  description "All comments for the selected work item, kept live while the detail screen is open"
+  by workItemId WorkItemId
+```
+
 A collection query with optional filters:
 
 ```screenplay
@@ -138,6 +153,39 @@ query ListInvoices => InvoiceListReadModel[]
   filter customerId CustomerId optional
   authorize IsAuthenticated
 ```
+
+The executable semantic model admits the first two collection shapes: unfiltered lists and lists narrowed by one caller-supplied `by` key, including their `observable` form. `filter`, `scoped to`, `performer`, and `by ... from <source>` remain implementation-facing authoring syntax until their executable semantics are defined; binding reports that limitation instead of silently changing the route.
+
+## Executable query shape
+
+The executable semantic model serializes the admitted collection shapes explicitly so Stage can generate the same query, projection and handler routes in every host:
+
+```json
+{
+  "name": "AllWorkItems",
+  "readModel": "<WorkItemSummary semantic id>",
+  "cardinality": "many",
+  "delivery": "live"
+}
+```
+
+An unkeyed list query has no `argument` and no `keyProperty`. It routes to the whole read-model collection.
+
+```json
+{
+  "name": "CommentsForWorkItem",
+  "readModel": "<CommentView semantic id>",
+  "argument": {
+    "name": "workItemId",
+    "type": { "kind": "concept", "concept": "<WorkItemId semantic id>" }
+  },
+  "keyProperty": "<CommentView.workItemId semantic id>",
+  "cardinality": "many",
+  "delivery": "live"
+}
+```
+
+A keyed list query routes through its caller-supplied `argument` and matches that value against `keyProperty` on the read model. Stage should map `delivery: "live"` to the native observable query lifecycle. `delivery: "snapshot"` uses the same shape without live updates.
 
 ## The `performer` block
 

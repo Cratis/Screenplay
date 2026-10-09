@@ -10,6 +10,8 @@ export const handlerIntentDocs = {
 };
 
 export const keywordDocs: Record<string, string> = {
+    parameter: 'A typed value declared by a specification table, or an argument of a named behavior. Table types are required; every case supplies each parameter exactly once.',
+    case: 'One named concrete row of a specification table, expanded as <Specification>_<Case>. Use case.<parameter> for a whole step value.',
     example: 'One typed, possibly partial fixture: `example <Name> : <EventOrCommandOrReadModel>`. Use its name in a matching specification step; assignments override example values without changing matching or supplying defaults. Event examples may carry stream or no stream; a step replaces that route as a whole.',
     domain: 'The domain the file belongs to — optional, at most one per file, before everything else.',
     import: 'Imports a type from another module by its qualified name — `import Module.Type` — making it available by its short name; or, quoted, other `.play` files by path or glob — `import "Orders/**/*.play"`, relative to this file\'s folder. Written inside a module or feature, a file import places the imported files there: their top level is that module\'s or feature\'s body. `import Module.Event from "origin"` is instead public contract metadata with an opaque origin; executable binding refuses it with PLAY0268.',
@@ -19,6 +21,17 @@ export const keywordDocs: Record<string, string> = {
     optional: 'Allows a value to be absent. Write it after the type: `note String optional` or `lines InvoiceLine[] optional`. The collection itself may be absent; its items keep their declared type.',
     identifier: 'Marks the command property a runtime resolves the event source id from. At most one per command; without it a new Uuid is generated.',
     policy: 'A named authorization rule referenced by commands and queries. Multiple policies AND together.',
+    purpose: 'A report-only processing declaration (GDPR Art. 30), referenced on modules, features and slices. Coverage is their union, not an authorization gate. Generated declarations are not legal advice.',
+    basis: 'One declared Art. 6(1) basis: consent, contract, legalObligation, vitalInterests, publicTask or legitimateInterests; an optional quoted reference may follow.',
+    interest: 'The legitimate-interest statement for basis legitimateInterests (Art. 13(1)(d)).',
+    condition: 'One Art. 9(2) processing condition, optionally followed by a quoted reference.',
+    subjects: 'Comma-separated categories of data subjects, as open identifiers.',
+    retention: 'Declared retention period or criteria, not enforced by the model or Chronicle.',
+    recipient: 'A quoted recipient category; repeatable on a purpose.',
+    transfer: 'A declared destination followed by safeguard and quoted safeguards; repeatable.',
+    safeguard: 'The declared safeguard accompanying a third-country transfer.',
+    erasure: 'An erasure exception under Art. 17(3); Chronicle crypto-shredding remains per subject, not per purpose.',
+    exception: 'One declared Art. 17(3) exception: expression, legalObligation, publicTask, publicHealth, archiving or legalClaims.',
     persona: 'A named role interacting with the application, with an optional description and its associated policies.',
     authentication: 'Declares the identity providers of the application — at most one block per file.',
     provider: 'A named identity provider within `authentication`, with free-form `name value` settings.',
@@ -68,7 +81,7 @@ export const keywordDocs: Record<string, string> = {
     authenticated: 'Requires an authenticated caller.',
     role: 'Requires the caller to have the given role.',
     claim: 'Requires a claim on the caller to match a subject or value.',
-    subject: 'The subject (identity) of the caller.',
+    subject: 'In policy `matches subject`, the identifier of the thing acted on, not the caller. The caller is `$context.causedBy.subject`.',
     data: 'Binds a read model to a screen through a query.',
     action: 'Makes a command available on a screen. `action "Label"` declares one button with ordered `when … execute` alternatives over the nearest data item or selected row. No subject hides it; commands still enforce authorization and validation.',
     otherwise: 'The final fallback of a guarded action: `otherwise hidden` or `otherwise execute <Command>`. In an item interaction, bare `otherwise` opens a fallback action list. No subject runs nothing, including fallback; authorization never falls through.',
@@ -146,6 +159,9 @@ export const keywordDocs: Record<string, string> = {
 // What the words of a specification's steps mean there - where 'trigger', 'capture' and 'query' name what the
 // scenario exercises rather than declare one.
 export const specificationKeywordDocs: Record<string, string> = {
+    parameter: 'Declares a required typed case value: `parameter <name> <Type>`. Every case assigns it once. `optional` permits literal null but supplies no default.',
+    case: 'One named complete row of a specification table. `case.<parameter>` substitutes a whole value after example overrides; each row runs as `<Specification>_<Case>`.',
+    caller: '`given caller` states an explicit identity; `given caller as <Persona>` synthesizes an authenticated deterministic witness of the persona, with no body. Leftmost buildable policy alternatives are significant.',
     clock: keywordDocs.clock,
     redelivered: keywordDocs.redelivered,
     trigger: '`when trigger <Trigger>` - an application trigger fires, as the action, with the values on the lines beneath it.',
@@ -185,4 +201,17 @@ export const contextVariableDocs: Record<string, string> = {
     '$strings': 'A localized string resolved from the `.strings` file of the active locale, e.g. `$strings.invoices.title`.',
     // Every $eventContext path the event-context catalog lists, for projections.
     ...Object.fromEntries(eventContextPaths.map((path) => [`$eventContext.${path.path}`, path.description])),
+};
+
+// One-sentence descriptions of the `pii special` categories (GDPR Art. 9(1)) and `pii criminal` (Art. 10).
+// The same sentences appear in Documentation/screenplay/concepts.md.
+export const specialCategoryDocs: Record<string, string> = {
+    racialOrEthnicOrigin: 'Data revealing a person\'s racial or ethnic origin (GDPR Art. 9(1)).',
+    politicalOpinions: 'Data revealing a person\'s political opinions (GDPR Art. 9(1)).',
+    religiousOrPhilosophicalBeliefs: 'Data revealing a person\'s religious or philosophical beliefs (GDPR Art. 9(1)).',
+    tradeUnionMembership: 'Data revealing whether a person belongs to a trade union (GDPR Art. 9(1)).',
+    genetic: 'Data about inherited or acquired genetic characteristics that gives unique information about a person\'s physiology or health (GDPR Art. 9(1), Art. 4(13)).',
+    biometric: 'Data from technical processing of physical, physiological or behavioral characteristics, special only when processed to uniquely identify a person (GDPR Art. 9(1), Art. 4(14)).',
+    health: 'Data about a person\'s physical or mental health, including health care services, that reveals their health status (GDPR Art. 9(1), Art. 4(15)).',
+    sexLifeOrSexualOrientation: 'Data concerning a person\'s sex life or sexual orientation (GDPR Art. 9(1)).'
 };

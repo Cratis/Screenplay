@@ -12,7 +12,7 @@ public class when_compiling_unsupported_semantics : a_valid_semantic_model
     void Because()
     {
         var slice = _application.Modules.Single().Features.Single().Slices.Single(_ => _.Queries.Length > 0);
-        var query = slice.Queries.Single() with { Delivery = SemanticQueryDelivery.Live };
+        var query = slice.Queries.Single() with { Cardinality = SemanticQueryCardinality.One };
         var model = ExecutableSemanticModel.Create(
             LanguageVersion.V1,
             SemanticVersion.V1,

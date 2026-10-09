@@ -22,6 +22,7 @@ public partial class ScreenplayPrinter
 
         using (writer.Indent())
         {
+            WriteDescription(writer, projection.Description, projection);
             WriteFile(writer, projection.File);
 
             if (projection.Sequence is not null)
