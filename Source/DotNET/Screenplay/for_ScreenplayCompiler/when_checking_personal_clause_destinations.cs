@@ -15,7 +15,7 @@ public class when_checking_personal_clause_destinations : given.a_compiler
     {
         var compiler = registered ? new ScreenplayCompiler(new ScreenplayLanguageRegistry(triggers: [new TriggerDefinition("External", ["patient"])])) : _compiler;
         var result = compiler.Compile("""
-            concept PatientId : Uuid @pii
+            concept PatientId : Uuid pii
             module M
               feature F
                 slice Automation S
@@ -36,7 +36,7 @@ public class when_checking_personal_clause_destinations : given.a_compiler
     void should_keep_typed_values_local_to_each_trigger_clause()
     {
         var result = _compiler.Compile("""
-            concept PatientId : Uuid @pii
+            concept PatientId : Uuid pii
             module M
               feature F
                 slice Automation S

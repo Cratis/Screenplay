@@ -2548,4 +2548,39 @@ public static class DiagnosticCodes
     /// Files give conflicting documentation for the same module or feature.
     /// </summary>
     public const string ConflictingDocumentationAcrossFiles = "PLAY0559";
+
+    /// <summary>
+    /// A legacy compliance marker spelling should be migrated to bare pii or secret.
+    /// </summary>
+    public const string LegacyComplianceMarker = "PLAY0560";
+
+    /// <summary>
+    /// A concept marker is not recognized.
+    /// </summary>
+    public const string UnknownComplianceMarker = "PLAY0561";
+
+    /// <summary>
+    /// A scope is not on secret or does not name subject, namespace or global.
+    /// </summary>
+    public const string InvalidSecretScope = "PLAY0562";
+
+    /// <summary>
+    /// A concept declares secret scope more than once.
+    /// </summary>
+    public const string DuplicateSecretScope = "PLAY0563";
+
+    /// <summary>
+    /// A pii secret concept declares a secret scope that cannot render.
+    /// </summary>
+    public const string SecretScopeIgnoredForPii = "PLAY0564";
+
+    /// <summary>
+    /// A personal data qualifier has an invalid marker or category.
+    /// </summary>
+    public const string InvalidPersonalDataQualifier = "PLAY0565";
+
+    /// <summary>
+    /// A concept declares more than one special category.
+    /// </summary>
+    public const string DuplicateSpecialCategory = "PLAY0566";
 }

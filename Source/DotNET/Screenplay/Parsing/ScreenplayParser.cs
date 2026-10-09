@@ -453,10 +453,7 @@ internal static partial class ScreenplayParser
 
         var name = match.Groups[1].Value;
         var type = match.Groups[2].Value;
-        var attributes = match.Groups[3].Value
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-            .Select(attribute => new ConceptAttributeSyntax(attribute.TrimStart('@'), line.Location))
-            .ToList();
+        var attributes = ConceptComplianceParser.ParseMarkers(context, line, match.Groups[3].Value);
 
         if (type != "Enum" && !ConceptSyntax.PrimitiveTypes.Contains(type))
         {
@@ -489,12 +486,9 @@ internal static partial class ScreenplayParser
                     validations.Add(validate);
                 }
             }
-            else if (AttributeReasonRegex().Match(child.Content) is { Success: true } reason)
+            else if (ConceptComplianceParser.TryParseDirective(context, child, name, attributes, directiveLocations))
             {
-                if (ApplyAttributeReason(context, child, name, attributes, reason))
-                {
-                    directiveLocations[$"reason:{reason.Groups[1].Value}"] = child.Location;
-                }
+                // Compliance directives preserve their original source anchors for trivia and repairs.
             }
             else if (type == "Enum" && EnumValueRegex().IsMatch(child.Content))
             {
@@ -513,31 +507,6 @@ internal static partial class ScreenplayParser
         }
 
         return new(name, type, attributes, values, line.Location, validations) { File = file, DirectiveLocations = directiveLocations };
-    }
-
-    static bool ApplyAttributeReason(
-        ParserContext context,
-        SourceLine line,
-        string concept,
-        List<ConceptAttributeSyntax> attributes,
-        Match reason)
-    {
-        var attribute = reason.Groups[1].Value;
-        var index = attributes.FindIndex(candidate => candidate.Name == attribute);
-        if (index < 0)
-        {
-            context.Error(DiagnosticCodes.AttributeReasonWithoutAttribute, $"Concept '{concept}' declares a reason for '{attribute}' without the attribute - write 'concept {concept} : <Type> @{attribute}'", line.Location);
-            return false;
-        }
-
-        if (attributes[index].Reason is not null)
-        {
-            context.Error(DiagnosticCodes.DuplicateAttributeReason, $"Concept '{concept}' already declares a reason for '{attribute}' - at most one is allowed", line.Location);
-            return false;
-        }
-
-        attributes[index] = attributes[index] with { Reason = StringLiteral.Unescape(reason.Groups[2].Value) };
-        return true;
     }
 
     static PersonaSyntax ParsePersona(ParserContext context, SourceLine line)
@@ -617,14 +586,11 @@ internal static partial class ScreenplayParser
     [GeneratedRegex(@"^import\s+([\w.]+)$", RegexOptions.None, 1000)]
     private static partial Regex ImportRegex();
 
-    [GeneratedRegex(@"^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@\w+)*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@?\w+)*)$", RegexOptions.None, 1000)]
     private static partial Regex ConceptRegex();
 
     [GeneratedRegex(@"^@?[a-z_]\w*$", RegexOptions.None, 1000)]
     private static partial Regex EnumValueRegex();
-
-    [GeneratedRegex(@"^([a-z_]\w*)\s+reason\s+""(" + StringLiteral.BodyPattern + @")""$", RegexOptions.None, 1000)]
-    private static partial Regex AttributeReasonRegex();
 
     [GeneratedRegex(@"^persona\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex PersonaRegex();

@@ -103,7 +103,7 @@ internal static class IdentifierComplianceValidator
         {
             if (personal.Contains(type.Name) || sensitive.Contains(type.Name))
             {
-                var attribute = personal.Contains(type.Name) ? "@pii" : "@sensitive";
+                var attribute = personal.Contains(type.Name) ? "pii" : "secret";
                 context.Error(DiagnosticCodes.PiiNotSupportedOnIdentifier, $"Concept '{type.Name}' is {attribute} and cannot be {position} - use a surrogate Uuid identifier and keep the {attribute} value as a property", location);
             }
         }

@@ -8,7 +8,7 @@ namespace Cratis.Screenplay.for_ScreenplayCompiler;
 public class when_validating_refusal_productions : given.a_compiler
 {
     const string Source = """
-        concept PersonalId : String @pii
+        concept PersonalId : String pii
         system Bank
         type Details
           message String
