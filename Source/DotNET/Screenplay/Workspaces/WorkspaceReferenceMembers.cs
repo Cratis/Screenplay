@@ -18,6 +18,7 @@ enum WorkspaceReferenceDomain
     Query,
     Screen,
     Policy,
+    Persona,
     Trigger,
     Property,
     Operation,
@@ -128,6 +129,7 @@ static class WorkspaceReferenceMembers
         ScreenNavigateSyntax => [("screen", WorkspaceReferenceDomain.Screen)],
         PolicyReferenceSyntax => [("name", WorkspaceReferenceDomain.Policy)],
         PersonaSyntax => [("policies", WorkspaceReferenceDomain.Policy)],
+        SpecificationCallerPersonaSyntax => [("name", WorkspaceReferenceDomain.Persona)],
         _ => []
     };
 }

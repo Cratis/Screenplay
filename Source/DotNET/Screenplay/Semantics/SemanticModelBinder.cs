@@ -176,6 +176,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var types = (syntax.Types ?? []).Select(BindType).ToImmutableArray();
             var modules = AttachAutomation([.. syntax.Modules.Select(BindModule)]);
             var policies = BindPolicies();
+            VerifyPersonaCallers(policies);
             ValidateExampleAdmission(concepts, types, modules);
             return new(
                 applicationId,

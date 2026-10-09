@@ -47,6 +47,11 @@ public partial class ScreenplayPrinter
             WriteDescription(writer, specification.Description, specification);
             WriteFile(writer, specification.File);
 
+            if (specification.GivenCallerPersona is { } persona)
+            {
+                writer.Line($"given caller as {persona.Name}", persona);
+            }
+
             if (specification.GivenCaller is { } caller)
             {
                 writer.Line("given caller", caller);

@@ -2548,4 +2548,29 @@ public static class DiagnosticCodes
     /// Files give conflicting documentation for the same module or feature.
     /// </summary>
     public const string ConflictingDocumentationAcrossFiles = "PLAY0559";
+
+    /// <summary>
+    /// A persona caller reference is malformed, has a body, or names an unknown persona.
+    /// </summary>
+    public const string InvalidSpecificationCallerPersona = "PLAY0565";
+
+    /// <summary>
+    /// A persona cannot synthesize a portable specification caller.
+    /// </summary>
+    public const string UnsynthesizablePersonaCaller = "PLAY0566";
+
+    /// <summary>
+    /// None of a persona's policies gates an application entry point.
+    /// </summary>
+    public const string PersonaWithoutGate = "PLAY0567";
+
+    /// <summary>
+    /// Every synthesizable persona is definitely denied by an effective gate.
+    /// </summary>
+    public const string GateWithoutPersona = "PLAY0568";
+
+    /// <summary>
+    /// Required atoms do not pin a persona's buildable alternatives.
+    /// </summary>
+    public const string AmbiguousPersonaCaller = "PLAY0569";
 }

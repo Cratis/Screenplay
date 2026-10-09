@@ -800,7 +800,7 @@ An inline `on` block is an anonymous behavior, so it has no name to report again
 | `PLAY0386` | Error | A `given caller` line is not `authenticated`, `role "<name>"`, or `claim "<type>" = "<value>"`. |
 | `PLAY0387` | Error | A specification declares more than one `given caller` block or `then denied` outcome. |
 | `PLAY0388` | Error | `then denied` contains extra text or is mixed with another outcome. |
-| `PLAY0389` | Error | A specification exercises an authorized command or query without an explicit `given caller` fixture. |
+| `PLAY0389` | Error | A specification exercises an authorized command or query without a `given caller` fixture or `given caller as <Persona>`. |
 
 ### Constraints in the semantic model
 
@@ -922,6 +922,11 @@ These codes cover [inline command events](commands.md#declare-an-event-inline) a
 | `PLAY0477` | Error | Event documentation is not one nonempty fenced Markdown block, or is repeated. |
 | `PLAY0558` | Error | Module, feature, slice, command, read-model or reaction documentation is not one nonempty fenced Markdown block, or is repeated. |
 | `PLAY0559` | Warning | Files give different documentation for one module or feature. The first documentation is kept. |
+| `PLAY0565` | Error | A `given caller as <Persona>` reference is malformed, has body lines, or names an unknown top-level persona. Unknown references list declared personas. |
+| `PLAY0566` | Error | A persona caller cannot be synthesized or verified against its policies. Binding names the persona, policy and refusal (`negation`, `nonLiteralClaim`, `roleClaim`, `opaqueImplementation`, `unresolvedPolicy`, `noPolicies`); use an explicit `given caller`. |
+| `PLAY0567` | Warning | Opt-in `personas` check: none of a persona's policies gates a command, query or inherited screen scope. |
+| `PLAY0568` | Warning | Opt-in `personas` check: an effective command or query gate definitely denies every declared persona's synthesized caller; unsynthesizable or undecidable callers are unknown. |
+| `PLAY0569` | Information | Opt-in `personas` check: required atoms do not pin an `or` with multiple buildable alternatives. Names an unchosen alternative and suggests adding a policy that pins it. |
 
 Malformed typed mappings and duplicate destinations retain `PLAY0044` and `PLAY0193`. Descriptions retain their existing diagnostics. Event descriptions, documentation, and rename pins are authoring-only metadata (`PLAY0270`); none changes canonical ESM bytes.
 

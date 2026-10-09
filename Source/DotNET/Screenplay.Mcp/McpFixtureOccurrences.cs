@@ -51,6 +51,10 @@ static class McpFixtureOccurrences
     {
         var specification = expanded?.Effective ?? (SpecificationSyntax)declaration.Syntax;
         var ordinal = 0;
+        if (specification.GivenCaller is { } caller && expanded?.Authored.GivenCallerPersona is { } persona)
+        {
+            yield return Occurrence(persona.Name, "Persona", "givenCaller", caller, []);
+        }
         foreach (var item in specification.Given)
         {
             yield return Occurrence(item.EventType, "Event", "givenEvent", item, item.Values, item.For, item.Stream, item.NoStream);

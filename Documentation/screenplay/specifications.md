@@ -13,6 +13,33 @@ The [complete source fixture](https://github.com/Cratis/Screenplay/blob/main/Doc
 
 Specifications express Given/When/Then scenarios against a slice's behavior, or read-only Given/Then scenarios against established state — executable documentation for the behavior a slice implements. A `specification` block lives inside a `slice`, alongside its `command`, `event`, `projection` and other constructs, and is compiled by the Screenplay compiler like every other sub-language.
 
+## Persona callers
+
+Name a top-level persona instead of repeating its policy witness:
+
+```screenplay
+policy IsAccountant
+  require role "Accountant"
+persona Accountant
+  policy IsAccountant
+module Billing
+  feature Invoices
+    slice StateChange RegisterInvoice
+      command RegisterInvoice
+        invoiceNumber String
+        authorize IsAccountant
+        produces InvoiceRegistered
+          invoiceNumber = invoiceNumber
+      event InvoiceRegistered
+        invoiceNumber String
+      specification RegisteringAsAnAccountant
+        given caller as Accountant
+        when RegisterInvoice invoiceNumber = "INV-42"
+        then InvoiceRegistered invoiceNumber = "INV-42"
+```
+
+Unknown or malformed references and body lines report `PLAY0565`. If synthesis is refused, binding reports `PLAY0566` with the persona, policy, refusal reason and explicit-caller remedy. This is not a runtime unsupported outcome. Inspect the selected roles and claims in hover or MCP's persona `caller` view. A persona-backed denial scenario uses the same form with `then denied`.
+
 ## Authoring descriptions
 
 Add one `description` to state which rule or case a specification witnesses. Use `description "<text>"` for one line, or a fenced `text` block for several lines. The field is report-only (`PLAY0270`): it does not change execution or executable-model bytes. Specifications do not accept `documentation`; put longer modeling reasoning on the owning slice. See [Descriptions and documentation](slices.md#descriptions-and-documentation).
@@ -81,7 +108,7 @@ specification <Name>
 
 - `given <EventType>` — zero or more. Establishes prior state by replaying events onto the slice's event source before the command runs.
 - `given readmodel <ReadModelType>` — zero or more. Establishes prior read model state directly, for scenarios where expressing the state as events would be noise.
-- `given caller` — zero or one. Explicit authentication, roles, and repeatable claim values for authorization. No fixture is inferred for an authorized scenario (`PLAY0389`).
+- `given caller` or `given caller as <Persona>` — zero or one, never both. The explicit block states authentication, roles, and repeatable claim values. The persona form has no body and expands into an authenticated deterministic witness satisfying every persona policy; see [persona synthesis](personas.md#persona-callers-in-specifications). Either form satisfies the caller requirement for an authorized scenario (`PLAY0389`). It supplies no actor to reaction invocations.
 - `when <CommandType>` or `when append <EventType>` — at most one action. Append directly establishes an event occurrence, checks append-time constraints, projects it, then checks read models and queries; it does not run a command. Without `when`, provide at least one `then readmodel`, `then no readmodel`, or `then query`; `then` events and errors require an action (`PLAY0352`).
 - `when redelivered <EventType> to <Reaction>` — syntax-only action selecting exactly one given event occurrence for one compatible event-trigger reaction. It participates in the same one-action rule and is not yet executable (`PLAY0268`). See [Redelivery specifications](#redelivery-specifications-syntax-only).
 - `then <EventType>` — zero or more. Compares the complete set of new facts, in authored order by default. For `when append`, if any `then` events are asserted, they must match exactly the appended fact (no extra facts); omit them to check only projected state or queries.

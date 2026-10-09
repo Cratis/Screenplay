@@ -7,7 +7,7 @@ import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
 import {
     SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationErrorSyntax, SpecificationEventSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
     SpecificationNoResultSyntax, SpecificationQueryResultSyntax, SpecificationReadModelSyntax, SpecificationSyntax, SpecificationTriggerSyntax,
-    SpecificationWhenQuerySyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationRedeliverySyntax,
+    SpecificationWhenQuerySyntax, SpecificationCallerPersonaSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationRedeliverySyntax,
 } from '../Syntax/Specifications';
 import { SpecificationDeniedSyntax, SpecificationReturnSyntax } from '../Syntax/Responses';
 import { dotNetWhitespace, nativePattern, pattern } from '../Text/patterns';
@@ -27,6 +27,7 @@ import { SpecificationAbsentReadModelSyntax, SpecificationCallerClaimSyntax, Spe
 const operationStepPrefix = pattern('^(?:given\\s+operation|then\\s+(?:operation|compensated))(?:\\s|$)');
 const operationStep = pattern('^(given operation|then operation|then compensated)\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)(\\s+fails)?$');
 const header = pattern('^specification\\s+([A-Za-z_]\\w*)$');
+const callerPersonaPattern = pattern('^given caller as ([A-Za-z_]\\w*)$');
 const stepName = '([A-Z]\\w*(?:\\.\\w+)*)';
 const inlineAssignment = '(?:\\s+(?<property>[\\w.]+)\\s*=(?!=|>)\\s*(?<value>.+))?';
 const stepPattern = (prefix: string, exactly = ''): RegExp => nativePattern(`^${prefix}\\s+${stepName}${exactly}${inlineAssignment}$`.replaceAll('\\s', dotNetWhitespace));
@@ -90,6 +91,7 @@ interface SpecificationBody {
     thenNoResult: SpecificationNoResultSyntax | null;
     thenDenied: SpecificationDeniedSyntax | null;
     givenCaller: SpecificationCallerSyntax | null;
+    givenCallerPersona?: SpecificationCallerPersonaSyntax;
     thenReturns: SpecificationReturnSyntax | null;
     givenOperationFailures: SpecificationOperationFailureSyntax[];
     thenOperations: SpecificationOperationSyntax[];
@@ -173,9 +175,16 @@ function parseGiven(context: ParserContext, line: SourceLine, body: Specificatio
             body.givenCaptures.push(capture);
         }
     } else if (line.content.startsWith('given caller')) {
-        if (body.givenCaller !== null) {
+        if (body.givenCaller !== null || body.givenCallerPersona !== undefined) {
             context.error(DiagnosticCodes.DuplicateSpecificationCallerOrDenied, "A specification has at most one 'given caller' block.", locationOf(line));
             context.skipBlock(line.indent);
+        } else if (line.content.startsWith('given caller as')) {
+            const match = callerPersonaPattern.exec(line.content);
+            if (match === null) context.error(DiagnosticCodes.InvalidSpecificationCallerPersona, "Expected 'given caller as <Persona>'.", locationOf(line));
+            const child = context.peekChild(line.indent);
+            if (child !== undefined) context.error(DiagnosticCodes.InvalidSpecificationCallerPersona, "'given caller as <Persona>' has no body; use an explicit 'given caller' for refinements.", locationOf(child));
+            skipBody(context, line.indent);
+            if (match !== null) body.givenCallerPersona = { kind: 'SpecificationCallerPersonaSyntax', name: match[1], location: locationOf(line) };
         } else {
             body.givenCaller = parseCaller(context, line);
         }

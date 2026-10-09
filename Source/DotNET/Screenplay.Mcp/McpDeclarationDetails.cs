@@ -123,6 +123,7 @@ static class McpDeclarationDetails
             "values" when declaration.Syntax is ConceptSyntax concept => McpPaging.Page(concept.Values, arguments, snapshot.SourceRevision),
             "values" when declaration.Syntax is SpecificationExampleSyntax example => McpPaging.Page(example.Values, arguments, snapshot.SourceRevision),
             "generatedValues" when declaration.Syntax is SpecificationExampleSyntax example => McpPaging.Page(example.GeneratedValues, arguments, snapshot.SourceRevision),
+            "caller" when declaration.Syntax is PersonaSyntax persona => PersonaCaller(persona, snapshot),
             "syntax" => declaration.Syntax,
             _ => throw new McpFailure($"View '{view}' is not available for {declaration.Kind}.", -32602)
         };
@@ -169,8 +170,16 @@ static class McpDeclarationDetails
         EventSyntax or ReadModelSyntax or TypeSyntax => ["summary", "properties", "occurrences", "syntax"],
         ConceptSyntax => ["summary", "values", "occurrences", "syntax"],
         SpecificationExampleSyntax => ["summary", "values", "generatedValues", "occurrences", "syntax"],
+        PersonaSyntax => ["summary", "caller", "occurrences", "syntax"],
         _ => ["summary", "occurrences", "syntax"]
     };
+
+    static object PersonaCaller(PersonaSyntax persona, McpSnapshot snapshot)
+    {
+        var application = snapshot.Compilation.Value ?? throw new McpFailure("Persona caller synthesis requires a parsed application.");
+        var result = PersonaCallers.Synthesize(persona, application);
+        return new { result.Caller, result.Contributions, result.Refusal };
+    }
 
     static object Response(CommandSyntax command, McpAuthoringReadiness readiness)
     {

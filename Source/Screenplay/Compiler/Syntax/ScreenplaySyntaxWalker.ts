@@ -581,6 +581,7 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.givenOperationFailures?.forEach(node => this.visitSpecificationOperationFailure(node));
         syntax.thenOperations?.forEach(node => this.visitSpecificationOperation(node));
         syntax.thenCompensated?.forEach(node => this.visitSpecificationCompensated(node));
+        if (syntax.givenCallerPersona != null) this.visitNode(syntax.givenCallerPersona);
         if (syntax.givenCaller != null) {
             this.visitNode(syntax.givenCaller);
             syntax.givenCaller.claims.forEach(node => this.visitNode(node));

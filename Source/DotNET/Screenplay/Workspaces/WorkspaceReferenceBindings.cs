@@ -112,6 +112,7 @@ sealed class WorkspaceReferenceBindings
                 QuerySyntax => WorkspaceReferenceDomain.Query,
                 ScreenSyntax => WorkspaceReferenceDomain.Screen,
                 PolicySyntax => WorkspaceReferenceDomain.Policy,
+                PersonaSyntax => WorkspaceReferenceDomain.Persona,
                 TriggerSyntax => WorkspaceReferenceDomain.Trigger,
                 ReactionSyntax => WorkspaceReferenceDomain.Reaction,
                 ConstraintSyntax when entry.Parent is { } constraintParent && index.Find(constraintParent)?.Node is SliceSyntax => WorkspaceReferenceDomain.Constraint,

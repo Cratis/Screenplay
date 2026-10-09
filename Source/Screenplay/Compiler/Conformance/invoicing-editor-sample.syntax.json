@@ -1661,13 +1661,9 @@
                   "kind": "SpecificationSyntax",
                   "description": "Witnesses that creating a draft returns the generated invoice and receipt identities",
                   "given": [],
-                  "givenCaller": {
-                    "kind": "SpecificationCallerSyntax",
-                    "authenticated": true,
-                    "claims": [],
-                    "roles": [
-                      "InvoiceManager"
-                    ]
+                  "givenCallerPersona": {
+                    "kind": "SpecificationCallerPersonaSyntax",
+                    "name": "InvoiceDraftCreator"
                   },
                   "givenCaptures": [],
                   "givenClock": null,
@@ -15277,6 +15273,15 @@
     }
   ],
   "personas": [
+    {
+      "kind": "PersonaSyntax",
+      "description": "Starts invoice drafts as invoice management staff",
+      "name": "InvoiceDraftCreator",
+      "policies": [
+        "IsAuthenticated",
+        "CanManageInvoice"
+      ]
+    },
     {
       "kind": "PersonaSyntax",
       "description": "Registers invoices and manages their lifecycle",

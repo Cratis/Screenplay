@@ -44,6 +44,7 @@ static class McpReferenceKinds
         FormSyntax value => [(value.For, ["Command"], "formCommand")],
         FormPopulateViaQuerySyntax value => [(value.Query, ["Query"], "populate")],
         SpecificationExampleSyntax value => [(value.Type, ["Event", "Command", "ReadModel"], "exampleType")],
+        SpecificationCallerPersonaSyntax value => [(value.Name, ["Persona"], "givenCallerPersona")],
         SpecificationEventSyntax value => [(value.EventType, ["Event", "Example"], "specificationEvent")],
         SpecificationCommandSyntax value => [(value.CommandType, ["Command", "Example"], "whenCommand")],
         SpecificationReadModelSyntax value => [(value.Name, ["ReadModel", "Example"], "specificationReadModel")],

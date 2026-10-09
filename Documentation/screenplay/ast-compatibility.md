@@ -26,6 +26,8 @@ Appending a trailing optional parameter instead looks equivalent and is not. It 
 
 Authoring metadata follows this rule: `SpecificationSyntax.Description` and the `Documentation` members on modules, features, slices, commands, read models and reactions are nullable init-only properties. They appear in the syntax transport schema, not in the executable semantic model. Preserve them when rewriting a declaration.
 
+`SpecificationSyntax.GivenCallerPersona` is an additive init-only reference with a name and location, distinct from `GivenCaller`. It is omitted from syntax JSON when absent, preserving untouched documents' bytes. A reader that predates the persona member must reject the new member rather than silently interpret an unauthenticated caller. Effective syntax expands the reference and carries `SpecificationValueOrigin.Persona` with persona and policy provenance; it adds no ESM member or version.
+
 ## Composite stream id members
 
 `EventStreamIdPartSyntax(Name, Type, Location)` is additive. `EventStreamSyntax.StreamIdParts` contains declarations in identity-bearing declaration order. `CommandStreamSyntax.StreamIdParts` and `SpecificationStreamSyntax.StreamIdParts` contain `PropertyMappingSyntax` in authored mapping order. These init-only collections default to empty, including old JSON omissions; existing positional constructors and scalar members are unchanged. A nonempty parts list is mutually exclusive with `StreamId`. Part names are not workspace references; part types are ordinary type references. The walker visits parts, their types and route mappings. Binding remains refused with `PLAY0268`; no ESM bytes change.

@@ -89,6 +89,7 @@ internal static partial class SpecificationParser
         var thenQueries = new List<SpecificationQuerySyntax>();
         var thenErrors = new List<SpecificationErrorSyntax>();
         SpecificationCallerSyntax? caller = null;
+        SpecificationCallerPersonaSyntax? callerPersona = null;
         SpecificationDeniedSyntax? denied = null;
         SpecificationReturnSyntax? thenReturns = null;
         FileReferenceSyntax? file = null;
@@ -147,10 +148,14 @@ internal static partial class SpecificationParser
                     }
                     else if (line.Content.StartsWith("given caller", StringComparison.Ordinal))
                     {
-                        if (caller is not null)
+                        if (caller is not null || callerPersona is not null)
                         {
                             context.Error(DiagnosticCodes.DuplicateSpecificationCallerOrDenied, "A specification has at most one 'given caller' block.", line.Location);
                             SkipBody(context, line.Indent);
+                        }
+                        else if (line.Content.StartsWith("given caller as", StringComparison.Ordinal))
+                        {
+                            callerPersona = ParseCallerPersona(context, line);
                         }
                         else
                         {
@@ -321,6 +326,7 @@ internal static partial class SpecificationParser
             ThenQueries = thenQueries,
             ThenAbsentReadModels = thenAbsentReadModels,
             GivenCaller = caller,
+            GivenCallerPersona = callerPersona,
             ThenDenied = denied,
             ThenReturns = thenReturns,
             GivenOperationFailures = givenOperationFailures,
@@ -476,6 +482,24 @@ internal static partial class SpecificationParser
         },
         _ => ThenResultPrefixRegex()
     };
+
+    static SpecificationCallerPersonaSyntax? ParseCallerPersona(ParserContext context, SourceLine line)
+    {
+        var match = CallerPersonaRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidSpecificationCallerPersona, "Expected 'given caller as <Persona>'.", line.Location);
+        }
+        if (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Error(DiagnosticCodes.InvalidSpecificationCallerPersona, "'given caller as <Persona>' has no body; use an explicit 'given caller' for refinements.", child.Location);
+        }
+        SkipBody(context, line.Indent);
+        return match.Success ? new(match.Groups[1].Value, line.Location) : null;
+    }
+
+    [GeneratedRegex(@"^given caller as ([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex CallerPersonaRegex();
 
     static SpecificationCallerSyntax? ParseCaller(ParserContext context, SourceLine line)
     {

@@ -248,6 +248,8 @@ public static class SpecificationExamples
             var steps = new List<EffectiveSpecificationStep>();
             var effective = specification with
             {
+                GivenCaller = ExpandCaller(specification, steps),
+                GivenCallerPersona = null,
                 Given = [.. specification.Given.Select(step => ExpandEvent(step, "given", scope, steps))],
                 GivenReadModels = specification.GivenReadModels is null ? null : [.. specification.GivenReadModels.Select(step => ExpandReadModel(step, "given readmodel", scope, steps))],
                 When = specification.When is { } when ? ExpandCommand(when, scope, steps) : null,
@@ -258,6 +260,36 @@ public static class SpecificationExamples
             _specifications.Add(new(specification, effective, [.. steps]));
 
             return effective;
+        }
+
+        SpecificationCallerSyntax? ExpandCaller(SpecificationSyntax specification, List<EffectiveSpecificationStep> steps)
+        {
+            if (specification.GivenCallerPersona is not { } reference) return specification.GivenCaller;
+            if (specification.GivenCaller is not null)
+            {
+                _context.Error(DiagnosticCodes.DuplicateSpecificationCallerOrDenied, "A specification has at most one 'given caller' block.", reference.Location);
+                return null;
+            }
+            var personas = (_application.Personas ?? []).Where(persona => persona.Name == reference.Name).ToArray();
+            if (personas.Length != 1)
+            {
+                _context.Error(DiagnosticCodes.InvalidSpecificationCallerPersona, $"{(personas.Length == 0 ? "Unknown" : "Ambiguous")} persona '{reference.Name}' - declared personas: {string.Join(", ", (_application.Personas ?? []).Select(persona => persona.Name))}.", reference.Location);
+                return null;
+            }
+            var persona = personas[0];
+            var result = PersonaCallers.Synthesize(persona, _application);
+            if (result.Refusal is { } refusal)
+            {
+                _context.Error(DiagnosticCodes.UnsynthesizablePersonaCaller, $"Persona '{persona.Name}' cannot synthesize a caller: policy '{refusal.Policy ?? "(none)"}', {refusal.Reason}; use an explicit 'given caller'.", refusal.Location);
+                return null;
+            }
+            var caller = result.Caller! with { Location = reference.Location };
+            steps.Add(new("given caller", reference, caller, null, [.. result.Contributions.Select(value => new EffectiveSpecificationValue(value.Type ?? value.Kind, new LiteralExpressionSyntax(value.Kind == "authenticated" ? true : value.Value, value.Location), SpecificationValueOrigin.Persona, null)
+            {
+                Persona = persona.Name,
+                Policy = value.Policy
+            })]));
+            return caller;
         }
 
         (SpecificationExampleSyntax? Example, Entry? Type) ExampleFor(string name, string kind, string role, DeclarationScope scope, SourceLocation location)

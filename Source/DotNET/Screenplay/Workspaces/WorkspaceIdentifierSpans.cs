@@ -18,6 +18,8 @@ internal static partial class WorkspaceIdentifierSpans
         {
             (SpecificationExampleSyntax, "name" or "type") => keyword == "example",
             (SpecificationSyntax, "name") => keyword == "specification",
+            (SpecificationCallerPersonaSyntax, "name") => line.StartsWith("given caller as ", StringComparison.Ordinal),
+            (PersonaSyntax, "name") => keyword == "persona",
             (ConceptSyntax, "name") => keyword == "concept",
             (TypeSyntax, "name") => keyword == "type",
             (ModuleSyntax, "name") => keyword == "module",

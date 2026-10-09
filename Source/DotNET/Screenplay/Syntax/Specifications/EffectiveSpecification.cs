@@ -23,7 +23,12 @@ public enum SpecificationValueOrigin
     /// <summary>
     /// The step replaces a value supplied by the example.
     /// </summary>
-    Override
+    Override,
+
+    /// <summary>
+    /// A persona policy supplies the caller atom.
+    /// </summary>
+    Persona
 }
 
 /// <summary>
@@ -33,7 +38,18 @@ public enum SpecificationValueOrigin
 /// <param name="Value">The effective expression, retaining its source location.</param>
 /// <param name="Origin">How the value was supplied.</param>
 /// <param name="OverriddenValue">The example expression replaced by the step, if any.</param>
-public sealed record EffectiveSpecificationValue(string Property, ExpressionSyntax Value, SpecificationValueOrigin Origin, ExpressionSyntax? OverriddenValue);
+public sealed record EffectiveSpecificationValue(string Property, ExpressionSyntax Value, SpecificationValueOrigin Origin, ExpressionSyntax? OverriddenValue)
+{
+    /// <summary>
+    /// Gets the persona supplying a caller atom.
+    /// </summary>
+    public string? Persona { get; init; }
+
+    /// <summary>
+    /// Gets the persona policy supplying a caller atom.
+    /// </summary>
+    public string? Policy { get; init; }
+}
 
 /// <summary>
 /// An expanded step alongside the unmodified authored step.

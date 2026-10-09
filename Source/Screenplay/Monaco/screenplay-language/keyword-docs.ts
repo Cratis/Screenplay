@@ -142,6 +142,7 @@ export const keywordDocs: Record<string, string> = {
 // What the words of a specification's steps mean there - where 'trigger', 'capture' and 'query' name what the
 // scenario exercises rather than declare one.
 export const specificationKeywordDocs: Record<string, string> = {
+    caller: '`given caller` states an explicit identity; `given caller as <Persona>` synthesizes an authenticated deterministic witness of the persona, with no body. Leftmost buildable policy alternatives are significant.',
     clock: keywordDocs.clock,
     redelivered: keywordDocs.redelivered,
     trigger: '`when trigger <Trigger>` - an application trigger fires, as the action, with the values on the lines beneath it.',

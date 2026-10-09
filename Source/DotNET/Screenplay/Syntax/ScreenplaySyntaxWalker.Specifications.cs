@@ -28,6 +28,7 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitFileReference(syntax.File);
         }
 
+        if (syntax.GivenCallerPersona is not null) VisitSpecificationCallerPersona(syntax.GivenCallerPersona);
         if (syntax.GivenCaller is not null) VisitSpecificationCaller(syntax.GivenCaller);
         if (syntax.GivenClock is not null) VisitSpecificationClock(syntax.GivenClock);
 
@@ -127,6 +128,12 @@ public abstract partial class ScreenplaySyntaxWalker
         if (syntax.NoStream is { } noStream) VisitSpecificationNoStream(noStream);
         foreach (var value in syntax.Values) VisitPropertyMapping(value);
     }
+
+    /// <summary>
+    /// Visits a persona caller reference.
+    /// </summary>
+    /// <param name="syntax">The persona reference.</param>
+    public virtual void VisitSpecificationCallerPersona(SpecificationCallerPersonaSyntax syntax) => VisitNode(syntax);
 
     /// <summary>Visits a caller fixture and its claims.</summary>
     /// <param name="syntax">The caller fixture.</param>

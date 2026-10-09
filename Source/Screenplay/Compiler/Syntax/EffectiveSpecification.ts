@@ -6,13 +6,15 @@ import { SpecificationExampleSyntax, SpecificationStreamSyntax, SpecificationNoS
 import { SyntaxNode } from './SyntaxNode';
 import { ApplicationSyntax } from './Structure';
 
-export type SpecificationValueOrigin = 'authored' | 'example' | 'override';
+export type SpecificationValueOrigin = 'authored' | 'example' | 'override' | 'persona';
 
 export interface EffectiveSpecificationValue {
     readonly property: string;
     readonly value: ExpressionSyntax;
     readonly origin: SpecificationValueOrigin;
     readonly overriddenValue: ExpressionSyntax | null;
+    readonly persona?: string;
+    readonly policy?: string;
 }
 
 export interface EffectiveSpecificationRoute {

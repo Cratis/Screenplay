@@ -194,6 +194,7 @@ internal static class SyntaxKinds
         typeof(SourceItemExpressionSyntax),
         typeof(SpecificationAbsentReadModelSyntax),
         typeof(SpecificationCallerClaimSyntax),
+        typeof(SpecificationCallerPersonaSyntax),
         typeof(SpecificationCallerSyntax),
         typeof(SpecificationCaptureSyntax),
         typeof(SpecificationClockSyntax),

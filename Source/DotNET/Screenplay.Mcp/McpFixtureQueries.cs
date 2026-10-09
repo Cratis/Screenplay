@@ -57,6 +57,17 @@ static class McpFixtureQueries
     static IEnumerable<McpFixtureValue> Values(McpSyntaxIndex index, McpFixtureOccurrence occurrence, ApplicationSyntax? application)
     {
         var candidates = index.Resolve(occurrence.Reference).Select(declaration => declaration.Owner).ToArray();
+        if (occurrence.Role == "givenCaller" && occurrence.Step is { } caller)
+        {
+            foreach (var atom in caller.Values)
+            {
+                yield return new(occurrence.Specification, occurrence.Role, occurrence.Ordinal, occurrence.Reference.Name, candidates, atom.Property, null, atom.Value.GetType().Name, Value(atom.Value), atom.Value.Location, "persona", null, null)
+                {
+                    Persona = atom.Persona,
+                    Policy = atom.Policy
+                };
+            }
+        }
         foreach (var mapping in occurrence.Values)
         {
             yield return new(

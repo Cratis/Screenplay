@@ -10,6 +10,8 @@ import { SpecificationOperationSyntax } from './SpecificationOperationSyntax';
 import { SpecificationCompensatedSyntax } from './SpecificationCompensatedSyntax';
 import { SpecificationExampleSyntax } from './SpecificationExampleSyntax';
 import { SpecificationRedeliverySyntax } from './SpecificationRedeliverySyntax';
+import { SpecificationCallerPersonaSyntax } from './SpecificationCallerPersonaSyntax';
+export type { SpecificationCallerPersonaSyntax } from './SpecificationCallerPersonaSyntax';
 export type { SpecificationRedeliverySyntax } from './SpecificationRedeliverySyntax';
 
 export type { SpecificationOperationFailureSyntax } from './SpecificationOperationFailureSyntax';
@@ -146,6 +148,7 @@ export interface SpecificationSyntax extends SyntaxNode {
     readonly thenQueries?: readonly SpecificationQuerySyntax[];
     readonly given: readonly SpecificationEventSyntax[];
     readonly givenCaller?: SpecificationCallerSyntax | null;
+    readonly givenCallerPersona?: SpecificationCallerPersonaSyntax | null;
     readonly givenReadModels: readonly SpecificationReadModelSyntax[];
     readonly when: SpecificationCommandSyntax | null;
     readonly whenAppended: SpecificationEventSyntax | null;

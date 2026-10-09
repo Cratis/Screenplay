@@ -85,6 +85,8 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
                 ['identifier', 'type.identifier', 'white', 'keyword']],
             [/^(\s*query\s+[A-Za-z_]\w*\s*=>\s*(?!observable\s+optional\s*(?:\/\/.*)?$)(?:observable\s+)?)([\w.]+(?:\[\])?)(\s+)(optional)\b(?=\s*(?:\/\/.*)?$)/,
                 ['keyword', 'type.identifier', 'white', 'keyword']],
+            [new RegExp(`^(\\s*)(given)(\\s+)(caller)(\\s+)(as)(\\s+)([A-Za-z_][${bmpWordCharacters}]*)(?=\\s*(?://.*)?$)`),
+                ['white', 'keyword', 'white', 'keyword', 'white', 'keyword', 'white', 'type.identifier']],
             // A specification's clock, trigger, capture and query steps - matched before a sub-language keyword
             // can claim 'capture' and read the rest of the specification as change data capture.
             [/^(\s*)(given|when)(\s+)(clock|capture|trigger|query)\b/, ['white', 'keyword', 'white', 'keyword']],

@@ -885,6 +885,7 @@ SpecificationDecl = "specification", Ident, NL,
                  INDENT, { DescriptionDecl | FileDirective | SpecificationGiven | SpecificationWhen | SpecificationThen }, DEDENT ;
 
 SpecificationGiven = OperationFailureFixture
+               | "given", "caller", "as", Ident, NL
                | "given", "caller", NL,
                  [ INDENT, { "authenticated", NL | "role", StringLiteral, NL | "claim", StringLiteral, "=", StringLiteral, NL }, DEDENT ]
                | "given", "readmodel", QualifiedName, [ InlineFixtureAssignment ], NL,

@@ -71,6 +71,11 @@ public record SpecificationSyntax(
     /// <summary>Gets the explicit caller fixture, or null when no identity context was authored.</summary>
     public SpecificationCallerSyntax? GivenCaller { get; init; }
 
+    /// <summary>
+    /// Gets the persona reference used instead of an explicit caller fixture.
+    /// </summary>
+    public SpecificationCallerPersonaSyntax? GivenCallerPersona { get; init; }
+
     /// <summary>Gets whether this scenario explicitly expects an authorization denial.</summary>
     public SpecificationDeniedSyntax? ThenDenied { get; init; }
 
