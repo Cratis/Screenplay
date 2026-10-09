@@ -39,6 +39,18 @@
         { "name": "Malformed locator routes use PLAY0547 not the command diagnostic", "validate": true, "source": ["module M", "  feature F", "    slice Automation S", "      event E", "      reaction Observer", "        when E", "      specification X", "        given E", "        when redelivered E to Observer", "          stream broken", "        then no events"], "diagnostics": ["PLAY0547@10"] },
         { "name": "Duplicate example routes use the ordinary routing diagnostic", "source": ["example Prior : E", "  stream A.S", "  no stream"], "diagnostics": ["PLAY0547@3"] },
         { "name": "Example payload streamId remains an ordinary property", "source": ["example Prior : E", "  streamId = \"payload\""], "diagnostics": [] },
+        { "name": "Legacy compliance headers report once per line", "source": ["concept Value : String @pii @sensitive", "  sensitive reason \"Preserve legal text\""], "diagnostics": ["PLAY0560@1", "PLAY0560@2"] },
+        { "name": "Unknown compliance markers are errors", "source": ["concept Value : String @encrypted"], "diagnostics": ["PLAY0561@1"] },
+        { "name": "Personal aliases are diagnostic free", "source": ["concept Value : String personal", "  personal special health", "  personal criminal"], "diagnostics": [] },
+        { "name": "Pii cannot declare secret scope", "source": ["concept Value : String pii", "  pii scope subject"], "diagnostics": ["PLAY0562@2"] },
+        { "name": "Secret scope is closed", "source": ["concept Value : String secret", "  secret scope tenant"], "diagnostics": ["PLAY0562@2"] },
+        { "name": "Secret scope is singleton", "source": ["concept Value : String secret", "  secret scope subject", "  secret scope global"], "diagnostics": ["PLAY0563@3"] },
+        { "name": "Combined markers warn about ineffective secret scope", "source": ["concept Value : String pii secret", "  secret scope global"], "diagnostics": ["PLAY0564@2"] },
+        { "name": "Special categories are closed", "source": ["concept Value : String pii", "  pii special unknown"], "diagnostics": ["PLAY0565@2"] },
+        { "name": "Special categories are singleton", "source": ["concept Value : String pii", "  pii special health", "  pii special genetic"], "diagnostics": ["PLAY0566@3"] },
+        { "name": "Compliance reasons require quotes", "source": ["concept Value : String pii", "  pii reason missing-quotes"], "diagnostics": ["PLAY0010@2"] },
+        { "name": "Compliance reasons are singleton", "source": ["concept Value : String pii", "  pii reason \"First\"", "  personal reason \"Second\""], "diagnostics": ["PLAY0013@3"] },
+        { "name": "Personal qualifiers require pii", "source": ["concept Value : String", "  pii special health", "  pii criminal"], "diagnostics": ["PLAY0012@2", "PLAY0012@3"] },
         { "name": "Routed command identifier mismatches are errors", "validate": true, "source": ["concept Id : Uuid", "eventsource A", "  identifier Id", "  stream S", "module M", "  feature F", "    slice StateChange S", "      command C", "        id Uuid identifier", "        stream A.S", "        produces event Recorded"], "diagnostics": ["PLAY0504@9"], "messages": ["Command identifier 'id' does not have the source's nominal identifier type 'Id'. The stream does not supply a destination."] },
         { "name": "Routed explicit production destinations must match the source", "validate": true, "source": ["concept Id : Uuid", "eventsource A", "  identifier Id", "  stream S", "module M", "  feature F", "    slice StateChange S", "      command C", "        other String", "        stream A.S", "        produces event Recorded", "          for other"], "diagnostics": ["PLAY0504@12"], "messages": ["Command production destination does not have the source's nominal identifier type 'Id'. The stream does not supply a destination."] },
         { "name": "Routed matching destinations remain accepted", "validate": true, "source": ["concept Id : Uuid", "eventsource A", "  identifier Id", "  stream S", "module M", "  feature F", "    slice StateChange S", "      command C", "        id Id identifier", "        stream A.S", "        produces event Recorded", "          for id"], "diagnostics": [] },
@@ -49,14 +61,14 @@
         { "name": "Then stream ids refuse non-NFC literals", "validate": true, "source": ["eventsource A", "  identifier String", "  stream S", "    streamId String", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId = \"e\u0301\""], "diagnostics": ["PLAY0549@12"], "messages": ["A stream id text literal must be Unicode NFC."] },
         { "name": "Given stream ids refuse Double integers below the safe bound", "validate": true, "source": ["concept Key : Int", "eventsource A", "  identifier String", "  stream S", "    streamId Key", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        given E", "          for \"id\"", "          stream A.S", "            streamId = -9007199254740992"], "diagnostics": ["PLAY0549@14"], "messages": ["A stream id integer literal must be between -9007199254740991 and 9007199254740991 in Double numeric mode."] },
         { "name": "Then stream ids refuse Double integers above the safe bound", "validate": true, "source": ["concept Key : Int", "eventsource A", "  identifier String", "  stream S", "    streamId Key", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId = 9007199254740992"], "diagnostics": ["PLAY0549@13"], "messages": ["A stream id integer literal must be between -9007199254740991 and 9007199254740991 in Double numeric mode."] },
-        { "name": "Personal concepts cannot declare scalar stream ids", "validate": true, "source": ["concept Personal : String @pii", "eventsource A", "  stream S", "    streamId Personal"], "diagnostics": ["PLAY0515@4"], "messages": ["Concept 'Personal' is @pii and cannot be a stream id - use a surrogate Uuid identifier and keep the @pii value as a property"] },
-        { "name": "Sensitive concepts cannot declare composite stream id parts", "validate": true, "source": ["concept Secret : String @sensitive", "eventsource A", "  stream S", "    streamId", "      owner Secret", "      period String"], "diagnostics": ["PLAY0515@5"], "messages": ["Concept 'Secret' is @sensitive and cannot be a stream id part 'owner' - use a surrogate Uuid identifier and keep the @sensitive value as a property"] },
-        { "name": "Personal command paths cannot feed scalar stream id mappings", "validate": true, "source": ["concept Personal : String @pii", "eventsource A", "  stream S", "    streamId String", "module M", "  feature F", "    slice StateChange S", "      command C", "        personal Personal", "        stream A.S", "          streamId = personal"], "diagnostics": ["PLAY0504@11", "PLAY0515@11"], "messages": ["Stream id source 'personal' is absent or incompatible with nominal type 'String'.", "Concept 'Personal' is @pii and cannot be a stream id route mapping - use a surrogate Uuid identifier and keep the @pii value as a property"] },
-        { "name": "Sensitive command paths cannot feed composite stream id mappings", "validate": true, "source": ["concept Secret : String @sensitive", "eventsource A", "  stream S", "    streamId", "      owner String", "      period String", "module M", "  feature F", "    slice StateChange S", "      command C", "        secret Secret", "        stream A.S", "          streamId", "            owner = secret", "            period = \"public\""], "diagnostics": ["PLAY0504@14", "PLAY0515@14"], "messages": ["Stream id source 'secret' is absent or incompatible with nominal type 'String'.", "Concept 'Secret' is @sensitive and cannot be a stream id route mapping - use a surrogate Uuid identifier and keep the @sensitive value as a property"] },
-        { "name": "A protected scalar declaration does not repeat its own mapping report", "validate": true, "source": ["concept Personal : String @pii", "eventsource A", "  stream S", "    streamId Personal", "module M", "  feature F", "    slice StateChange S", "      command C", "        personal Personal", "        stream A.S", "          streamId = personal"], "diagnostics": ["PLAY0515@4"], "messages": ["Concept 'Personal' is @pii and cannot be a stream id - use a surrogate Uuid identifier and keep the @pii value as a property"] },
-        { "name": "A protected composite declaration does not repeat its own mapping report", "validate": true, "source": ["concept Personal : String @pii", "eventsource A", "  stream S", "    streamId", "      owner Personal", "      period String", "module M", "  feature F", "    slice StateChange S", "      command C", "        personal Personal", "        stream A.S", "          streamId", "            owner = personal", "            period = \"public\""], "diagnostics": ["PLAY0515@5"], "messages": ["Concept 'Personal' is @pii and cannot be a stream id part 'owner' - use a surrogate Uuid identifier and keep the @pii value as a property"] },
-        { "name": "A different protected route source is reported even with a protected declaration", "validate": true, "source": ["concept Target : String @pii", "concept Source : String @sensitive", "eventsource A", "  stream S", "    streamId Target", "module M", "  feature F", "    slice StateChange S", "      command C", "        source Source", "        stream A.S", "          streamId = source"], "diagnostics": ["PLAY0504@12", "PLAY0515@5", "PLAY0515@12"], "messages": ["Stream id source 'source' is absent or incompatible with nominal type 'Target'.", "Concept 'Target' is @pii and cannot be a stream id - use a surrogate Uuid identifier and keep the @pii value as a property", "Concept 'Source' is @sensitive and cannot be a stream id route mapping - use a surrogate Uuid identifier and keep the @sensitive value as a property"] },
-        { "name": "Specification route literals rely on their protected declaration check", "validate": true, "source": ["concept Personal : String @pii", "eventsource A", "  identifier String", "  stream S", "    streamId Personal", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId = \"value-not-in-diagnostics\""], "diagnostics": ["PLAY0515@5"], "messages": ["Concept 'Personal' is @pii and cannot be a stream id - use a surrogate Uuid identifier and keep the @pii value as a property"] },
+        { "name": "Personal concepts cannot declare scalar stream ids", "validate": true, "source": ["concept Personal : String pii", "eventsource A", "  stream S", "    streamId Personal"], "diagnostics": ["PLAY0515@4"], "messages": ["Concept 'Personal' is pii and cannot be a stream id - use a surrogate Uuid identifier and keep the pii value as a property"] },
+        { "name": "Sensitive concepts cannot declare composite stream id parts", "validate": true, "source": ["concept Secret : String secret", "eventsource A", "  stream S", "    streamId", "      owner Secret", "      period String"], "diagnostics": ["PLAY0515@5"], "messages": ["Concept 'Secret' is secret and cannot be a stream id part 'owner' - use a surrogate Uuid identifier and keep the secret value as a property"] },
+        { "name": "Personal command paths cannot feed scalar stream id mappings", "validate": true, "source": ["concept Personal : String pii", "eventsource A", "  stream S", "    streamId String", "module M", "  feature F", "    slice StateChange S", "      command C", "        personal Personal", "        stream A.S", "          streamId = personal"], "diagnostics": ["PLAY0504@11", "PLAY0515@11"], "messages": ["Stream id source 'personal' is absent or incompatible with nominal type 'String'.", "Concept 'Personal' is pii and cannot be a stream id route mapping - use a surrogate Uuid identifier and keep the pii value as a property"] },
+        { "name": "Sensitive command paths cannot feed composite stream id mappings", "validate": true, "source": ["concept Secret : String secret", "eventsource A", "  stream S", "    streamId", "      owner String", "      period String", "module M", "  feature F", "    slice StateChange S", "      command C", "        secret Secret", "        stream A.S", "          streamId", "            owner = secret", "            period = \"public\""], "diagnostics": ["PLAY0504@14", "PLAY0515@14"], "messages": ["Stream id source 'secret' is absent or incompatible with nominal type 'String'.", "Concept 'Secret' is secret and cannot be a stream id route mapping - use a surrogate Uuid identifier and keep the secret value as a property"] },
+        { "name": "A protected scalar declaration does not repeat its own mapping report", "validate": true, "source": ["concept Personal : String pii", "eventsource A", "  stream S", "    streamId Personal", "module M", "  feature F", "    slice StateChange S", "      command C", "        personal Personal", "        stream A.S", "          streamId = personal"], "diagnostics": ["PLAY0515@4"], "messages": ["Concept 'Personal' is pii and cannot be a stream id - use a surrogate Uuid identifier and keep the pii value as a property"] },
+        { "name": "A protected composite declaration does not repeat its own mapping report", "validate": true, "source": ["concept Personal : String pii", "eventsource A", "  stream S", "    streamId", "      owner Personal", "      period String", "module M", "  feature F", "    slice StateChange S", "      command C", "        personal Personal", "        stream A.S", "          streamId", "            owner = personal", "            period = \"public\""], "diagnostics": ["PLAY0515@5"], "messages": ["Concept 'Personal' is pii and cannot be a stream id part 'owner' - use a surrogate Uuid identifier and keep the pii value as a property"] },
+        { "name": "A different protected route source is reported even with a protected declaration", "validate": true, "source": ["concept Target : String pii", "concept Source : String secret", "eventsource A", "  stream S", "    streamId Target", "module M", "  feature F", "    slice StateChange S", "      command C", "        source Source", "        stream A.S", "          streamId = source"], "diagnostics": ["PLAY0504@12", "PLAY0515@5", "PLAY0515@12"], "messages": ["Stream id source 'source' is absent or incompatible with nominal type 'Target'.", "Concept 'Target' is pii and cannot be a stream id - use a surrogate Uuid identifier and keep the pii value as a property", "Concept 'Source' is secret and cannot be a stream id route mapping - use a surrogate Uuid identifier and keep the secret value as a property"] },
+        { "name": "Specification route literals rely on their protected declaration check", "validate": true, "source": ["concept Personal : String pii", "eventsource A", "  identifier String", "  stream S", "    streamId Personal", "module M", "  feature F", "    slice StateView S", "      event E", "      specification X", "        then E", "          stream A.S", "            streamId = \"value-not-in-diagnostics\""], "diagnostics": ["PLAY0515@5"], "messages": ["Concept 'Personal' is pii and cannot be a stream id - use a surrogate Uuid identifier and keep the pii value as a property"] },
         { "name": "Composite duplicate diagnostics precede invalid part type diagnostics", "validate": true, "source": ["eventsource A", "  stream S", "    streamId", "      one Decimal", "      one String"], "diagnostics": ["PLAY0503@5", "PLAY0506@4"] },
         { "name": "Composite command routes refuse an empty block", "validate": true, "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId"], "diagnostics": ["PLAY0504@11", "PLAY0504@10", "PLAY0504@10"] },
         { "name": "Composite command routes refuse both mapping forms", "source": ["eventsource A", "  stream S", "    streamId", "      one String", "      two String", "module M", "  feature F", "    slice StateChange S", "      command C", "        stream A.S", "          streamId", "            one = \"a\"", "            two = \"b\"", "          streamId = \"joined\""], "diagnostics": ["PLAY0504@14"] },
@@ -1029,34 +1041,34 @@
         {
             "name": "Personal declared trigger data cannot supply reaction destinations",
             "validate": true,
-            "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
+            "source": ["concept PatientId : Uuid pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
             "diagnostics": ["PLAY0515@12"]
         },
         {
             "name": "Personal clause-local data cannot supply a registered trigger destination",
             "validate": true,
             "registeredTriggers": ["External"],
-            "source": ["concept PatientId : Uuid @pii", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient PatientId", "          produces Recorded", "            for patient"],
+            "source": ["concept PatientId : Uuid pii", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient PatientId", "          produces Recorded", "            for patient"],
             "diagnostics": ["PLAY0515@10"]
         },
         {
             "name": "Personal clause-local data cannot hide behind a surrogate declared trigger value",
             "validate": true,
-            "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient Uuid", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient PatientId", "          produces Recorded", "            for patient"],
+            "source": ["concept PatientId : Uuid pii", "trigger External", "  patient Uuid", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient PatientId", "          produces Recorded", "            for patient"],
             "diagnostics": ["PLAY0515@12"]
         },
         {
             "name": "Composite clause-local data cannot hide personal identifiers",
             "validate": true,
             "registeredTriggers": ["External"],
-            "source": ["concept PatientId : Uuid @pii", "type Detail", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          detail Detail", "          produces Recorded", "            for detail.patient"],
+            "source": ["concept PatientId : Uuid pii", "type Detail", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          detail Detail", "          produces Recorded", "            for detail.patient"],
             "diagnostics": ["PLAY0515@12"]
         },
         {
             "name": "Surrogate clause-local data remains a valid reaction destination",
             "validate": true,
             "registeredTriggers": ["External"],
-            "source": ["concept PatientId : Uuid @pii", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient Uuid", "          produces Recorded", "            for patient"],
+            "source": ["concept PatientId : Uuid pii", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient Uuid", "          produces Recorded", "            for patient"],
             "diagnostics": []
         },
         {
@@ -1068,58 +1080,58 @@
         {
             "name": "A shared source name uses surrogate event data instead of personal trigger data",
             "validate": true,
-            "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event External", "        patient Uuid", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
+            "source": ["concept PatientId : Uuid pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event External", "        patient Uuid", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
             "diagnostics": []
         },
         {
             "name": "A shared source name with surrogate clause data ignores personal shadowed trigger data",
             "validate": true,
             "registeredTriggers": ["External"],
-            "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event External", "        patient Uuid", "      event Recorded", "      reaction R", "        when External", "          patient Uuid", "          produces Recorded", "            for patient"],
+            "source": ["concept PatientId : Uuid pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event External", "        patient Uuid", "      event Recorded", "      reaction R", "        when External", "          patient Uuid", "          produces Recorded", "            for patient"],
             "diagnostics": []
         },
         {
             "name": "A shared source name still checks personal clause data alongside surrogate event data",
             "validate": true,
             "registeredTriggers": ["External"],
-            "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient Uuid", "module M", "  feature F", "    slice Automation S", "      event External", "        patient Uuid", "      event Recorded", "      reaction R", "        when External", "          patient PatientId", "          produces Recorded", "            for patient"],
+            "source": ["concept PatientId : Uuid pii", "trigger External", "  patient Uuid", "module M", "  feature F", "    slice Automation S", "      event External", "        patient Uuid", "      event Recorded", "      reaction R", "        when External", "          patient PatientId", "          produces Recorded", "            for patient"],
             "diagnostics": ["PLAY0515@14"]
         },
         {
             "name": "A shared source name still checks personal event data alongside surrogate clause data",
             "validate": true,
             "registeredTriggers": ["External"],
-            "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient Uuid", "module M", "  feature F", "    slice Automation S", "      event External", "        patient PatientId", "      event Recorded", "      reaction R", "        when External", "          patient Uuid", "          produces Recorded", "            for patient"],
+            "source": ["concept PatientId : Uuid pii", "trigger External", "  patient Uuid", "module M", "  feature F", "    slice Automation S", "      event External", "        patient PatientId", "      event Recorded", "      reaction R", "        when External", "          patient Uuid", "          produces Recorded", "            for patient"],
             "diagnostics": ["PLAY0515@14"]
         },
         {
             "name": "An imported event shadows personal declared trigger values without claiming a shape",
             "validate": true,
-            "source": ["import Outside.External", "concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
+            "source": ["import Outside.External", "concept PatientId : Uuid pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
             "diagnostics": []
         },
         {
             "name": "A shared source name checks personal event data even when trigger data is a surrogate",
             "validate": true,
-            "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient Uuid", "module M", "  feature F", "    slice Automation S", "      event External", "        patient PatientId", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
+            "source": ["concept PatientId : Uuid pii", "trigger External", "  patient Uuid", "module M", "  feature F", "    slice Automation S", "      event External", "        patient PatientId", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
             "diagnostics": ["PLAY0515@14"]
         },
         {
             "name": "Personal trigger and event data at the same destination report only once",
             "validate": true,
-            "source": ["concept PatientId : Uuid @pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event External", "        patient PatientId", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
+            "source": ["concept PatientId : Uuid pii", "trigger External", "  patient PatientId", "module M", "  feature F", "    slice Automation S", "      event External", "        patient PatientId", "      event Recorded", "      reaction R", "        when External", "          patient", "          produces Recorded", "            for patient"],
             "diagnostics": ["PLAY0515@14"]
         },
         {
             "name": "Composite command destination paths cannot hide personal identifiers",
             "validate": true,
-            "source": ["concept PatientId : Uuid @pii", "type Detail", "  patient PatientId", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        detail Detail", "        produces E", "          for detail.patient"],
+            "source": ["concept PatientId : Uuid pii", "type Detail", "  patient PatientId", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        detail Detail", "        produces E", "          for detail.patient"],
             "diagnostics": ["PLAY0515@11"]
         },
         {
             "name": "Composite trigger destination paths cannot hide personal identifiers",
             "validate": true,
-            "source": ["concept PatientId : Uuid @pii", "type Detail", "  patient PatientId", "trigger External", "  detail Detail", "module M", "  feature F", "    slice Automation S", "      event E", "      reaction R", "        when External", "          detail", "          produces E", "            for detail.patient"],
+            "source": ["concept PatientId : Uuid pii", "type Detail", "  patient PatientId", "trigger External", "  detail Detail", "module M", "  feature F", "    slice Automation S", "      event E", "      reaction R", "        when External", "          detail", "          produces E", "            for detail.patient"],
             "diagnostics": ["PLAY0515@14"]
         },
         {
@@ -1185,7 +1197,7 @@
         {
             "name": "Personal event values cannot supply a reaction's explicit destination",
             "validate": true,
-            "source": ["concept PatientId : Uuid @pii", "module M", "  feature F", "    slice Automation S", "      event E", "        patient PatientId", "      event Recorded", "      reaction R", "        when E", "          patient", "          produces Recorded", "            for patient"],
+            "source": ["concept PatientId : Uuid pii", "module M", "  feature F", "    slice Automation S", "      event E", "        patient PatientId", "      event Recorded", "      reaction R", "        when E", "          patient", "          produces Recorded", "            for patient"],
             "diagnostics": ["PLAY0515@12"]
         },
         {
@@ -1269,49 +1281,49 @@
         {
             "name": "Personal concepts cannot identify commands",
             "validate": true,
-            "source": ["concept PatientId : Uuid @pii", "module M", "  feature F", "    slice StateChange S", "      command C", "        id PatientId identifier"],
+            "source": ["concept PatientId : Uuid pii", "module M", "  feature F", "    slice StateChange S", "      command C", "        id PatientId identifier"],
             "diagnostics": ["PLAY0515@6"]
         },
         {
             "name": "Personal concepts cannot supply explicit event source destinations",
             "validate": true,
-            "source": ["concept PatientId : Uuid @pii", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        patient PatientId", "        produces E", "          for patient"],
+            "source": ["concept PatientId : Uuid pii", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        patient PatientId", "        produces E", "          for patient"],
             "diagnostics": ["PLAY0515@9"]
         },
         {
             "name": "Personal concepts cannot identify event sources",
             "validate": true,
-            "source": ["concept PatientId : Uuid @pii", "eventsource Patients", "  identifier PatientId"],
+            "source": ["concept PatientId : Uuid pii", "eventsource Patients", "  identifier PatientId"],
             "diagnostics": ["PLAY0515@3"]
         },
         {
             "name": "Surrogate identifiers keep personal values as ordinary properties",
             "validate": true,
-            "source": ["concept PatientId : Uuid", "concept NationalId : String @pii", "module M", "  feature F", "    slice StateChange S", "      command C", "        id PatientId identifier", "        nationalId NationalId"],
+            "source": ["concept PatientId : Uuid", "concept NationalId : String pii", "module M", "  feature F", "    slice StateChange S", "      command C", "        id PatientId identifier", "        nationalId NationalId"],
             "diagnostics": []
         },
         {
             "name": "Sensitive concepts cannot identify commands",
             "validate": true,
-            "source": ["concept PatientId : Uuid @sensitive", "module M", "  feature F", "    slice StateChange S", "      command C", "        id PatientId identifier"],
+            "source": ["concept PatientId : Uuid secret", "module M", "  feature F", "    slice StateChange S", "      command C", "        id PatientId identifier"],
             "diagnostics": ["PLAY0515@6"]
         },
         {
             "name": "Sensitive concepts cannot supply explicit event source destinations",
             "validate": true,
-            "source": ["concept PatientId : Uuid @sensitive", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        patient PatientId", "        produces E", "          for patient"],
+            "source": ["concept PatientId : Uuid secret", "module M", "  feature F", "    slice StateChange S", "      event E", "      command C", "        patient PatientId", "        produces E", "          for patient"],
             "diagnostics": ["PLAY0515@9"]
         },
         {
             "name": "Sensitive concepts cannot identify event sources",
             "validate": true,
-            "source": ["concept PatientId : Uuid @sensitive", "eventsource Patients", "  identifier PatientId"],
+            "source": ["concept PatientId : Uuid secret", "eventsource Patients", "  identifier PatientId"],
             "diagnostics": ["PLAY0515@3"]
         },
         {
             "name": "Combined personal and sensitive concepts remain ordinary values",
             "validate": true,
-            "source": ["concept PatientId : Uuid", "concept NationalId : String @pii @sensitive", "module M", "  feature F", "    slice StateChange S", "      command C", "        id PatientId identifier", "        nationalId NationalId"],
+            "source": ["concept PatientId : Uuid", "concept NationalId : String pii secret", "module M", "  feature F", "    slice StateChange S", "      command C", "        id PatientId identifier", "        nationalId NationalId"],
             "diagnostics": []
         },
         {
@@ -2328,7 +2340,7 @@
         {
             "name": "duplicate attribute reason",
             "source": [
-                "concept Email : String @pii",
+                "concept Email : String pii",
                 "  pii reason \"One\"",
                 "  pii reason \"Two\""
             ],

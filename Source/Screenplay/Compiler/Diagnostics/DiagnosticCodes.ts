@@ -4,6 +4,13 @@
 // Shared diagnostic names, including the explicitly C#-only checks below. Catalogue membership does
 // not imply TypeScript validation support; see Documentation/screenplay/editor-diagnostics.md.
 export const DiagnosticCodes = {
+    LegacyComplianceMarker: 'PLAY0560',
+    UnknownComplianceMarker: 'PLAY0561',
+    InvalidSecretScope: 'PLAY0562',
+    DuplicateSecretScope: 'PLAY0563',
+    SecretScopeIgnoredForPii: 'PLAY0564',
+    InvalidPersonalDataQualifier: 'PLAY0565',
+    DuplicateSpecialCategory: 'PLAY0566',
     // C#-only: opt-in completeness, scoped action/refusal reference validation, and semantic binding.
     ConflictingScreenDataBinding: 'PLAY0530',
     ScreenDataQueryMismatch: 'PLAY0531',

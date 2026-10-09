@@ -36,6 +36,9 @@ export interface ConceptAttributeSyntax extends SyntaxNode {
     readonly kind: 'ConceptAttributeSyntax';
     readonly name: string;
     readonly reason: string | null;
+    readonly scope?: string | null;
+    readonly specialCategory?: string | null;
+    readonly criminal?: boolean;
 }
 
 export interface ConceptSyntax extends SyntaxNode {
