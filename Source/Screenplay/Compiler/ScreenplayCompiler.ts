@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { Diagnostic } from './Diagnostics/Diagnostic';
+import { validateSpecificationCases } from './Parsing/SpecificationCaseValidator';
+import { expandSpecificationExamples } from './Parsing/SpecificationCommandExamples';
 import { productionDestinationDiagnostics } from './Diagnostics/ProductionDestinationDiagnostics';
 import { validateConstraintProperties } from './Parsing/ConstraintPropertyValidator';
 import { validateDependencyDeclarations } from './Dependencies/DeclaredDependencyTargets';
@@ -70,10 +72,12 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateInlineEvents(value, context);
         validateConstraintProperties(value, context);
         validateOperations(value, context);
-        validateResponses(value, context);
+        validateSpecificationCases(value, context);
+        const effective = expandSpecificationExamples(value);
+        validateResponses(effective, context);
         validateEventSources(value, context);
         validateProjectionTargets(value, context);
-        validateIdentifierCompliance(value, context);
+        validateIdentifierCompliance(effective, context);
         validateReactionRefusals(value, context);
         validateSpecificationRedelivery(value, context);
         validateGuardedActions(value, context);
@@ -141,6 +145,14 @@ function parseSourceFamily<T extends SyntaxNode>(source: string, keyword: string
     if (context.sourceOptions.numericMode === 'exact' && value.length === 0 && context.diagnostics.length === 0) {
         const code = keyword === 'projection' ? DiagnosticCodes.ProjectionDocumentWithoutProjection : keyword === 'capture' ? DiagnosticCodes.CaptureDocumentWithoutCapture : DiagnosticCodes.SpecificationDocumentWithoutSpecification;
         context.error(code, `Document must contain at least one ${keyword}`, context.start);
+    }
+    if (keyword === 'specification') {
+        const specifications = value as unknown as SpecificationSyntax[];
+        for (const specification of specifications) for (const row of specification.cases ?? []) {
+            const name = `${specification.name}_${row.name}`;
+            if (specifications.some(other => other !== specification && other.name === name) || specifications.flatMap(other => (other.cases ?? []).map(row => `${other.name}_${row.name}`)).filter(candidate => candidate === name).length > 1)
+                context.error(DiagnosticCodes.SpecificationCaseNameCollision, `Case '${row.name}' derives specification '${name}', which collides in this document.`, row.location);
+        }
     }
     const roots = keyword === 'specification' && examples.length > 0 ? value.map(node => ({ ...node, examples })) : value;
     return { value: roots, diagnostics: context.diagnostics, success: !context.diagnostics.some(diagnostic => diagnostic.severity === 'error') };

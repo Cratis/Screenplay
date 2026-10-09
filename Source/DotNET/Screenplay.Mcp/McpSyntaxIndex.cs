@@ -21,6 +21,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     McpQueryIndex _queries = null!;
     bool _inRefusal;
     ConstraintSyntax? _constraint;
+    SpecificationSyntax? _specification;
 
     internal EventSourceReadConfidence? SourceConfidence { get; set; }
 
@@ -223,7 +224,51 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         return new(reference, Resolve(reference));
     }
 
-    internal McpDeclaration[] Find(string address, string kind) => _queries.Find(address, kind);
+    internal McpDeclaration[] Find(string address, string kind)
+    {
+        var matches = _queries.Find(address, kind);
+        if (matches.Length > 0 || kind != "Specification") return matches;
+
+        return [.. _declarations.Where(declaration => declaration.Syntax is SpecificationSyntax).SelectMany(declaration =>
+            ((SpecificationSyntax)declaration.Syntax).Cases.Where(row => string.Join('.', declaration.Scope.Append($"{declaration.Name}_{row.Name}")) == address)
+                .Select(row => declaration with { Case = row.Name }))];
+    }
+
+    /// <inheritdoc/>
+    public override void VisitSpecification(SpecificationSyntax syntax)
+    {
+        _specification = syntax;
+        base.VisitSpecification(syntax);
+        _specification = null;
+    }
+
+    /// <inheritdoc/>
+    public override void VisitSpecificationParameter(SpecificationParameterSyntax syntax)
+    {
+        _scope.Add(_specification!.Name);
+        Declare("SpecificationParameter", syntax.Name, syntax);
+        base.VisitSpecificationParameter(syntax);
+        _scope.RemoveAt(_scope.Count - 1);
+    }
+
+    /// <inheritdoc/>
+    public override void VisitSpecificationCase(SpecificationCaseSyntax syntax)
+    {
+        _scope.Add(_specification!.Name);
+        Declare("SpecificationCase", syntax.Name, syntax);
+        base.VisitSpecificationCase(syntax);
+        _scope.RemoveAt(_scope.Count - 1);
+    }
+
+    /// <inheritdoc/>
+    public override void VisitCaseValueExpression(CaseValueExpressionSyntax syntax)
+    {
+        if (_specification is not null)
+        {
+            _references.Add(new(syntax.Parameter, ["SpecificationParameter"], [.. _scope, _specification.Name], syntax.Location, "caseParameter", _owners.GetValueOrDefault(_specification)?.Owner));
+        }
+        base.VisitCaseValueExpression(syntax);
+    }
 
     internal bool HasExactOwnershipCollision(string kind, string name, string[] scope) => _queries.HasExactOwnershipCollision(kind, name, scope);
 

@@ -157,7 +157,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
     internal static SemanticSpecificationRun EnrichFailures(SemanticCompilation compilation, SemanticSpecificationRun run)
     {
         if (run.Passed || !compilation.SpecificationOrigins.TryGetValue(run.Specification, out var origin) ||
-            !origin.Steps.Any(step => step.Example is not null))
+            (origin.Case is null && !origin.Steps.Any(step => step.Example is not null || step.Values.Any(value => value.Origin == Syntax.Specifications.SpecificationValueOrigin.Case))))
         {
             return run;
         }
@@ -165,7 +165,8 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
         var fixtures = origin.Steps.SelectMany(step => step.Values.Select(value =>
             $"{step.Role}{(step.Example is null ? string.Empty : $" {step.Example.Name}")}: {value.Property} = {ScreenplaySyntaxText.Expression(value.Value)} ({value.Origin.ToString().ToLowerInvariant()}{(value.OverriddenValue is null ? string.Empty : $", replaces {ScreenplaySyntaxText.Expression(value.OverriddenValue)}")})"));
         var provenance = $"Effective fixtures: {string.Join("; ", fixtures)}.";
-        return run with { Failures = [.. run.Failures.Select(failure => $"{failure} {provenance}")] };
+        var prefix = origin.Case is { } row ? $"Case '{row.Name}' of '{origin.Authored.Name}': " : string.Empty;
+        return run with { Failures = [.. run.Failures.Select(failure => $"{prefix}{failure} {provenance}")] };
     }
 
     static IEnumerable<SemanticSlice> AllSlices(ImmutableArray<SemanticFeature> features) =>

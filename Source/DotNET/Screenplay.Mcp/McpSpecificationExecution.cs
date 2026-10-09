@@ -28,8 +28,8 @@ static class McpSpecificationExecution
             .Select(assignment => (assignment.Id, Address: Address(assignment.Address)))
             .OrderBy(assignment => assignment.Address, StringComparer.Ordinal).ToArray();
         var selected = declarations.Where(assignment =>
-            (specification is null || assignment.Address == specification || assignment.Id.ToString() == specification) &&
-            (scope is null || assignment.Address.StartsWith($"{scope}.", StringComparison.Ordinal))).ToArray();
+            (specification is null || assignment.Address == specification || assignment.Id.ToString() == specification || TableAddress(compilation, assignment.Id, assignment.Address) == specification) &&
+            (scope is null || assignment.Address == scope || assignment.Address.StartsWith($"{scope}.", StringComparison.Ordinal) || TableAddress(compilation, assignment.Id, assignment.Address) == scope)).ToArray();
         if ((specification is not null || scope is not null) && selected.Length == 0)
         {
             throw new McpFailure("UnknownSpecificationSelection: no specification matches the exact address, semantic id or scope.", -32602);
@@ -70,6 +70,10 @@ static class McpSpecificationExecution
 
         return new(revision, outcome, declarations.Length, selected.Length, passed + failed, passed, failed, unsupportedCount, [.. workspace.Compilation.Diagnostics], [.. admitted.Issues], results);
     }
+
+    static string? TableAddress(SemanticCompilation compilation, SemanticId id, string address) =>
+        compilation.SpecificationOrigins.TryGetValue(id, out var origin) && origin.Case is not null
+            ? address[..^(origin.Effective.Name.Length)] + origin.Authored.Name : null;
 
     static string DescribeFact(SemanticExecutionPlan plan, SemanticId contract, IEnumerable<SemanticPropertyValue> values)
     {

@@ -30,4 +30,8 @@ sealed record McpFixtureValue(
     /// Gets the policy supplying a synthesized caller atom.
     /// </summary>
     public string? Policy { get; init; }
+
+    public string? Table { get; init; }
+    public string? Case { get; init; }
+    public string? CaseParameter { get; init; }
 }

@@ -208,6 +208,8 @@ export const triggerItems: CompletionEntry[] = [
 ];
 
 export const specificationItems: CompletionEntry[] = [
+    { label: 'parameter', insertText: 'parameter ${1:name} ${2:Type}', documentation: 'One typed value, supplied exactly once by every case.' },
+    { label: 'case', insertText: 'case ${1:Name}\n    ${2:parameter} = ${3:value}', documentation: 'One named complete set of concrete parameter values.' },
     { label: 'given caller as', insertText: 'given caller as ${1:Persona}', documentation: 'An authenticated deterministic witness of a top-level persona; no body. Use explicit callers for negation, ownership claims and implementations.' },
     { label: 'description', insertText: 'description "${1:rule or case witnessed}"', documentation: 'Authoring-only description of what this scenario demonstrates.' },
     { label: 'when redelivered', insertText: 'when redelivered ${1:Event} to ${2:Reaction}\n    for ${3:value}', documentation: `Selects exactly one given event occurrence for one event-trigger reaction; does not append it again. ${refusalAvailability}` },

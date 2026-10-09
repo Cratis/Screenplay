@@ -9,7 +9,7 @@ namespace Cratis.Screenplay.Syntax.Specifications;
 /// <summary>
 /// Resolves typed examples and exposes complete effective steps to syntax consumers.
 /// </summary>
-public static class SpecificationExamples
+public static partial class SpecificationExamples
 {
     /// <summary>
     /// Expands specification fixtures without mutating authored nodes or introducing defaults.
@@ -25,10 +25,28 @@ public static class SpecificationExamples
     /// <param name="declarations">The application declaring the fixture types and shared examples.</param>
     /// <param name="scope">The module, nested features, and slice of the specification's use site.</param>
     /// <returns>The effective specification and any resolution diagnostics.</returns>
-    public static CompilationResult<EffectiveSpecification> Expand(SpecificationSyntax specification, ApplicationSyntax declarations, IReadOnlyList<string> scope) =>
+    public static CompilationResult<EffectiveSpecification> Expand(SpecificationSyntax specification, ApplicationSyntax declarations, IReadOnlyList<string> scope)
+    {
+        if (specification.Parameters.Any() || specification.Cases.Any())
+        {
+            return new(null, [new(DiagnosticSeverity.Error, DiagnosticCodes.SingularSpecificationTableExpansion, "Use ExpandAll for a specification table; singular expansion cannot represent its cases.", specification.Location)]);
+        }
+        var result = ExpandAll(specification, declarations, scope);
+
+        return new(result.Value?.Single(), result.Diagnostics);
+    }
+
+    /// <summary>
+    /// Expands every named case, or one ordinary specification, against the owning declarations.
+    /// </summary>
+    /// <param name="specification">The authored specification.</param>
+    /// <param name="declarations">The owning application.</param>
+    /// <param name="scope">The specification declaration scope.</param>
+    /// <returns>Every effective specification and resolution diagnostics.</returns>
+    public static CompilationResult<IReadOnlyList<EffectiveSpecification>> ExpandAll(SpecificationSyntax specification, ApplicationSyntax declarations, IReadOnlyList<string> scope) =>
         new Expansion(declarations, specification.Examples, new(scope)).ExpandStandalone(specification, new(scope));
 
-    sealed class Expansion
+    private sealed partial class Expansion
     {
         readonly ApplicationSyntax _application;
         readonly List<Entry> _entries = [];
@@ -59,7 +77,7 @@ public static class SpecificationExamples
             }
 
             _index = new(_entries.Select(entry => entry.Declaration));
-            if (_entries.Exists(entry => entry.Kind == "example")) _declarations = new(application, _slices);
+            _declarations = new(application, _slices);
         }
 
         internal EffectiveSpecificationApplication Expand()
@@ -76,12 +94,12 @@ public static class SpecificationExamples
             };
         }
 
-        internal CompilationResult<EffectiveSpecification> ExpandStandalone(SpecificationSyntax specification, DeclarationScope scope)
+        internal CompilationResult<IReadOnlyList<EffectiveSpecification>> ExpandStandalone(SpecificationSyntax specification, DeclarationScope scope)
         {
             foreach (var entry in _entries.Where(entry => entry.Node is SpecificationExampleSyntax)) ValidateExample(entry);
-            ExpandSpecification(specification, scope);
+            _ = ExpandSpecifications(specification, scope).ToArray();
 
-            return new(_specifications[0], _context.Diagnostics);
+            return new(_specifications, _context.Diagnostics);
         }
 
         static string Qualified(Entry type) => string.Join('.', type.Declaration.Scope.Segments.Append(type.Declaration.Name));
@@ -239,11 +257,11 @@ public static class SpecificationExamples
             Features = [.. feature.Features.Select(ExpandFeature)],
             Slices = [.. feature.Slices.Select(slice => slice with
             {
-                Specifications = [.. slice.Specifications.Select(specification => ExpandSpecification(specification, _slices.First(entry => ReferenceEquals(entry.Slice, slice)).Scope))]
+                Specifications = ExpandSliceSpecifications(slice)
             })]
         };
 
-        SpecificationSyntax ExpandSpecification(SpecificationSyntax specification, DeclarationScope scope)
+        EffectiveSpecification ExpandSpecification(SpecificationSyntax specification, DeclarationScope scope)
         {
             var steps = new List<EffectiveSpecificationStep>();
             var effective = specification with
@@ -257,9 +275,7 @@ public static class SpecificationExamples
                 ThenEvents = [.. specification.ThenEvents.Select(step => ExpandEvent(step, "then", scope, steps))],
                 ThenReadModels = specification.ThenReadModels is null ? null : [.. specification.ThenReadModels.Select(step => ExpandReadModel(step, "then readmodel", scope, steps))]
             };
-            _specifications.Add(new(specification, effective, [.. steps]));
-
-            return effective;
+            return new(specification, effective, [.. steps]);
         }
 
         SpecificationCallerSyntax? ExpandCaller(SpecificationSyntax specification, List<EffectiveSpecificationStep> steps)
@@ -322,8 +338,11 @@ public static class SpecificationExamples
             var route = authoredRoute ?? inheritedRoute;
             var effective = type is null ? step : step with
             {
-                EventType = Qualified(type), Values = Merge(inherited, step.Values), For = step.For ?? source,
-                Stream = route as SpecificationStreamSyntax, NoStream = route as SpecificationNoStreamSyntax
+                EventType = Qualified(type),
+                Values = Merge(inherited, step.Values),
+                For = step.For ?? source,
+                Stream = route as SpecificationStreamSyntax,
+                NoStream = route as SpecificationNoStreamSyntax
             };
             var origin = (authoredRoute, inheritedRoute) switch
             {

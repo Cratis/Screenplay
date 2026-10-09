@@ -8,6 +8,7 @@ import { SpecificationReturnSyntax } from '../Syntax/Responses';
 import { pattern } from '../Text/patterns';
 import { stringBodyPattern } from '../Text/StringLiteral';
 import { parseMappingSource } from './ExpressionParser';
+import { containsCaseReference, parseSpecificationValue } from './SpecificationCaseParser';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 
@@ -18,6 +19,8 @@ const fieldPattern = pattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
 const quotedValue = pattern(`^(?:"${stringBodyPattern}"|'(?:[^'\\\\]|\\\\.)*')$`);
 
 export function parseConcrete(context: ParserContext, text: string, location: SourceLocation, code: string): ExpressionSyntax | null {
+    if (text.startsWith('case.')) return parseSpecificationValue(text, location, context);
+    if (containsCaseReference(text)) context.error(DiagnosticCodes.InvalidSpecificationCaseReference, 'A case reference fills a whole value position; it cannot occur inside a structured value or expression.', location);
     if ((text.startsWith('"') || text.startsWith("'")) && !quotedValue.test(text)) {
         context.error(code, 'Expected exactly one concrete value.', location);
         return null;

@@ -40,6 +40,8 @@ static class McpDeclarationDetails
                 partCount = declaration.Parts.Count,
                 commandCount = declaration.Syntax is SliceSyntax slice ? slice.Commands.Count() : 0,
                 specificationCount = declaration.Syntax is SliceSyntax described ? described.Specifications.Count() : 0,
+                parameters = (declaration.Syntax as SpecificationSyntax)?.Parameters.Select(parameter => new { parameter.Name, parameter.Type }),
+                caseCount = (declaration.Syntax as SpecificationSyntax)?.Cases.Count(),
                 availableViews = Views(declaration.Syntax)
             },
             "properties" when declaration.Syntax is CommandSyntax or EventSyntax or ReadModelSyntax or TypeSyntax => McpPaging.Page(
@@ -98,6 +100,14 @@ static class McpDeclarationDetails
                 },
                 arguments,
                 snapshot.SourceRevision),
+            "cases" when declaration.Syntax is SpecificationSyntax table => McpPaging.Page(table.Cases, row => new
+            {
+                row.Name,
+                effectiveName = $"{table.Name}_{row.Name}",
+                effectiveAddress = string.Join('.', declaration.Scope.Append($"{table.Name}_{row.Name}")),
+                row.Location,
+                row.Values
+            }, arguments, snapshot.SourceRevision),
             "inputs" when declaration.Syntax is OperationSyntax operation => McpPaging.Page(operation.Inputs, arguments, snapshot.SourceRevision),
             "phases" when declaration.Syntax is OperationSyntax operation => McpPaging.Page(
                 new[] { (Name: "execute", Phase: operation.Execute), (Name: "compensate", Phase: operation.Compensate) }.Where(value => value.Phase is not null),
@@ -171,6 +181,7 @@ static class McpDeclarationDetails
         ConceptSyntax => ["summary", "values", "occurrences", "syntax"],
         SpecificationExampleSyntax => ["summary", "values", "generatedValues", "occurrences", "syntax"],
         PersonaSyntax => ["summary", "caller", "occurrences", "syntax"],
+        SpecificationSyntax => ["summary", "cases", "occurrences", "syntax"],
         _ => ["summary", "occurrences", "syntax"]
     };
 

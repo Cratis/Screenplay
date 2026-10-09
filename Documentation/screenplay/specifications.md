@@ -40,6 +40,32 @@ module Billing
 
 Unknown or malformed references and body lines report `PLAY0565`. If synthesis is refused, binding reports `PLAY0566` with the persona, policy, refusal reason and explicit-caller remedy. This is not a runtime unsupported outcome. Inspect the selected roles and claims in hover or MCP's persona `caller` view. A persona-backed denial scenario uses the same form with `then denied`.
 
+## Named case tables
+
+Use a table when scenarios share their steps but differ in concrete inputs or expected messages:
+
+```screenplay
+specification RecordingAmounts
+  parameter amount Int
+  case Small amount = 10
+  case Large
+    amount = 100
+  when Record amount = case.amount
+  then Recorded amount = case.amount
+```
+
+A table declares typed `parameter` values and at least one named `case`. Every case assigns every parameter exactly once, inline or indented. Values are concrete literals, single-line objects or lists; a case cannot name an example, use mapping expressions, `$` values or another case reference. `optional` permits literal `null`, not an omitted assignment or a default. Unused parameters warn with `PLAY0581`.
+
+`case.<parameter>` fills a whole specification value position. It is substituted **after** example resolution and step overrides. Parameter and target types must match, or be a concept and its underlying primitive in either direction. An optional parameter can feed only an optional target. Every row value, including unused parameters, follows ordinary fixture normalization; substituted values still follow the target's ordinary admission rules.
+
+Use references in step assignments, generated fixtures, query arguments and results, `for` values, absent read-model keys, or `streamId = case.<parameter>` inside a restated route. `then error case.reason` takes a String parameter; a value such as `"$strings.nameRequired"` retains its symbolic-message meaning. References cannot replace callers, redelivery locators, clocks, declaration names, step kinds or members inside structured literals. Pass the whole object or list instead.
+
+Each row runs independently as `<Specification>_<Case>`, in case order, inheriting the table description. Derived names must not collide with other specifications or derived names in the same scope. The executable bytes and revision match hand-written specifications with those names; the table is authoring syntax, not a new executable-model version. The board titles cards `<Specification> — <Case>`.
+
+A table address selects all rows in `run-specifications` scope and `screenplay test --filter`; a derived address selects one. Source-bound failures start with `Case '<Case>' of '<Specification>':`. MCP's specification `cases` view pages names, effective addresses, locations and values; `find-fixtures` accepts the table or effective address and an optional `case` filter, with case-parameter provenance.
+
+For C# consumers, `SpecificationExamples.ExpandAll(specification, application, scope)` returns every effective case. The singular `Expand` refuses tables with `PLAY0582`. `EffectiveSpecification.Case`, the `Case` value origin and `CaseParameter` retain source provenance. TypeScript's effective expansion exposes `table` and `case` on each pair.
+
 ## Authoring descriptions
 
 Add one `description` to state which rule or case a specification witnesses. Use `description "<text>"` for one line, or a fenced `text` block for several lines. The field is report-only (`PLAY0270`): it does not change execution or executable-model bytes. Specifications do not accept `documentation`; put longer modeling reasoning on the owning slice. See [Descriptions and documentation](slices.md#descriptions-and-documentation).
@@ -177,7 +203,7 @@ Declaration checks run once at the example, even if it is unused or every use ov
 
 TypeScript exports `expandSpecificationExamples(application)` from `@cratis/screenplay-compiler` for syntax consumers such as the event model board. It returns application syntax with resolved examples expanded into effective specification values without changing the authored application. For event-step provenance, `expandEffectiveSpecificationExamples(application)` returns the effective application and specification pairs whose event steps retain authored/example/override values and whole-route origins. Route overrides retain the replaced stream or no-stream node. This TypeScript view does not return resolution diagnostics; neither expansion API executes specifications.
 
-Examples cannot supply callers, clocks or whole scenarios, and cannot be used in query results, `then result`, `then returns`, trigger or capture fixtures. Composite-value examples, inheritance, named setups and scenario outlines are not supported; structured values inside an event, command or read-model example are supported. There are no implicit defaults or unused/shadowing warnings.
+Examples cannot supply callers, clocks or whole scenarios, and cannot be used in query results, `then result`, `then returns`, trigger or capture fixtures. Composite-value examples, inheritance and named setups are not supported; named case tables above cover repeated scenario shapes, while pipe-table outlines remain unsupported; structured values inside an event, command or read-model example are supported. There are no implicit defaults or unused/shadowing warnings.
 
 Assign a property only once within each fixture or step. An inline assignment repeated in the indented body reports `PLAY0519`; a malformed example header reports `PLAY0518`. A declaration does not supply implicit defaults or change the step's matching mode. Unlike `seed`, an example declares specification data, not events to append when the application starts.
 

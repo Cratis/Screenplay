@@ -28,7 +28,12 @@ public enum SpecificationValueOrigin
     /// <summary>
     /// A persona policy supplies the caller atom.
     /// </summary>
-    Persona
+    Persona,
+
+    /// <summary>
+    /// A named case supplies the parameter value.
+    /// </summary>
+    Case
 }
 
 /// <summary>
@@ -49,6 +54,11 @@ public sealed record EffectiveSpecificationValue(string Property, ExpressionSynt
     /// Gets the persona policy supplying a caller atom.
     /// </summary>
     public string? Policy { get; init; }
+
+    /// <summary>
+    /// Gets the parameter supplying this case value.
+    /// </summary>
+    public string? CaseParameter { get; init; }
 }
 
 /// <summary>
@@ -81,7 +91,13 @@ public sealed record EffectiveSpecificationRoute(SyntaxNode Value, Specification
 /// <param name="Authored">The original specification.</param>
 /// <param name="Effective">The expanded specification.</param>
 /// <param name="Steps">The supported fixture steps in scenario order.</param>
-public sealed record EffectiveSpecification(SpecificationSyntax Authored, SpecificationSyntax Effective, IReadOnlyList<EffectiveSpecificationStep> Steps);
+public sealed record EffectiveSpecification(SpecificationSyntax Authored, SpecificationSyntax Effective, IReadOnlyList<EffectiveSpecificationStep> Steps)
+{
+    /// <summary>
+    /// Gets the named case expanded from the authored table.
+    /// </summary>
+    public SpecificationCaseSyntax? Case { get; init; }
+}
 
 /// <summary>
 /// The effective application view and diagnostics from resolving its examples.

@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { synthesizePersonaCaller } from '../Syntax/PersonaCallers';
+import { specificationCaseOrigins } from '../Syntax/SpecificationCaseOrigin';
+import { substituteCase } from './SpecificationCaseParser';
 import { dependencySources, dependencySourcesOf } from '../Syntax/DependencySources';
 import { eventDeclarations } from '../Syntax/EventDeclarations';
 import { EffectiveSpecification, EffectiveSpecificationStep, EffectiveSpecificationValue, EffectiveSpecificationApplication } from '../Syntax/EffectiveSpecification';
@@ -112,7 +114,7 @@ export function expandEffectiveSpecificationExamples(application: ApplicationSyn
             features: features(feature.features, scope),
             slices: feature.slices.map(slice => {
                 const scope = [...parent, feature.name, slice.name];
-                const expanded = { ...slice, specifications: slice.specifications.map(specification => {
+                const expanded = { ...slice, specifications: slice.specifications.flatMap(specification => {
                     const steps: EffectiveSpecificationStep[] = [];
                     const event = (step: SpecificationEventSyntax, role: string): SpecificationEventSyntax => {
                         const pair = effective.eventStep(step, role, scope);
@@ -135,8 +137,21 @@ export function expandEffectiveSpecificationExamples(application: ApplicationSyn
                         thenEvents: specification.thenEvents.map(step => event(step, 'then')),
                         thenReadModels: specification.thenReadModels.map(step => effective.readModel(step, scope)),
                     };
-                    specifications.push({ authored: specification, effective: result, steps });
-                    return result;
+                    if ((specification.cases?.length ?? 0) === 0) {
+                        specifications.push({ authored: specification, effective: result, steps });
+                        return [result];
+                    }
+                    return specification.cases!.map(row => {
+                        const copies = new WeakMap<object, unknown>();
+                        const expanded = { ...substituteCase(result, row, copies), name: `${specification.name}_${row.name}`, parameters: [], cases: [] };
+                        specificationCaseOrigins.set(expanded, { table: specification.name, case: row.name });
+                        specifications.push({ authored: specification, effective: expanded, table: specification.name, case: row.name,
+                            steps: steps.map(step => ({ ...step, effective: substituteCase(step.effective, row, copies),
+                                values: step.values.map(value => value.value.kind === 'CaseValueExpressionSyntax'
+                                    ? { ...value, value: substituteCase(value.value, row, copies), origin: 'case', caseParameter: value.value.parameter } : value),
+                                route: step.route === null ? null : { ...step.route, value: substituteCase(step.route.value, row, copies) } })) });
+                        return expanded;
+                    });
                 }) };
                 dependencySources.set(expanded, dependencySourcesOf(slice));
                 return expanded;

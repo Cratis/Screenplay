@@ -1,7 +1,11 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { ExpressionSyntax, PropertyMappingSyntax } from './Expressions';
+import { CaseValueExpressionSyntax, ExpressionSyntax, PropertyMappingSyntax } from './Expressions';
+import { SpecificationParameterSyntax } from './SpecificationParameterSyntax';
+import { SpecificationCaseSyntax } from './SpecificationCaseSyntax';
+export type { SpecificationParameterSyntax } from './SpecificationParameterSyntax';
+export type { SpecificationCaseSyntax } from './SpecificationCaseSyntax';
 import { SpecificationDeniedSyntax, SpecificationReturnSyntax } from './Responses';
 import { SyntaxNode } from './SyntaxNode';
 import { SourceOptions } from './SourceOptions';
@@ -66,6 +70,7 @@ export interface SpecificationReadModelSyntax extends SyntaxNode {
 // 'then error' or 'then error "<reason>"'.
 export interface SpecificationErrorSyntax extends SyntaxNode {
     readonly kind: 'SpecificationErrorSyntax';
+    readonly caseValue?: CaseValueExpressionSyntax | null;
     readonly name: string | null;
 }
 
@@ -140,6 +145,8 @@ export interface SpecificationCallerClaimSyntax extends SyntaxNode {
 // A specification of a slice.
 export interface SpecificationSyntax extends SyntaxNode {
     readonly kind: 'SpecificationSyntax';
+    readonly parameters?: readonly SpecificationParameterSyntax[];
+    readonly cases?: readonly SpecificationCaseSyntax[];
     readonly description?: string | null;
     readonly examples?: readonly SpecificationExampleSyntax[];
     readonly sourceOptions?: SourceOptions;

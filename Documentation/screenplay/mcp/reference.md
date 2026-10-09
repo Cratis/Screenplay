@@ -102,6 +102,12 @@ Workspace and catalog revisions, expected nodes, preview and explicit acceptance
 
 `find-fixtures` reports `role: "givenCaller"`, `origin: "persona"`, and the supplying `persona` and `policy` for synthesized caller atoms. `find-references` and rename index `given caller as` as a persona reference. `diagnostics` accepts `checks: "personas"` for opt-in coverage warnings and ambiguity information; it never runs this check implicitly.
 
+## Specification tables
+
+A specification summary includes typed `parameters` and `caseCount`. Its paged `cases` view returns `name`, `effectiveName`, `effectiveAddress`, `location` and `values`. Searching specifications lists an authored table once; resolving a derived address returns the table with `case` set.
+
+`find-fixtures` accepts a table or derived `specification` address and an optional `case` name. Effective values add `table`, `case`, `origin: "case"` and `caseParameter`. Parameter references are available through `find-references`; table, case and parameter renames update their references and derived identities. A table address in `run-specifications` scope selects every row; a derived address selects one. Failure keys use derived addresses and source-bound failure messages name the case.
+
 ## Typed specification examples
 
 Use `kind: "Example"` with `search-declarations`, `declaration-details`, `find-references` and `dependencies`. Example details report the authored underlying type and destination, with paged `values` and `generatedValues` views. Specification references point to the example; the example's `exampleType` dependency points to its underlying event, command or read model.

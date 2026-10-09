@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { Diagnostic } from '../Diagnostics/Diagnostic';
+import { validateSpecificationCases } from '../Parsing/SpecificationCaseValidator';
+import { expandSpecificationExamples } from '../Parsing/SpecificationCommandExamples';
 import { productionDestinationDiagnostics } from '../Diagnostics/ProductionDestinationDiagnostics';
 import { validateConstraintProperties } from '../Parsing/ConstraintPropertyValidator';
 import { validateDependencyDeclarations } from '../Dependencies/DeclaredDependencyTargets';
@@ -77,13 +79,15 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     const merged = mergeDocuments(parsed);
     const context = new ParserContext(new LineReader([]), undefined, languages);
     if (merged.value.sourceOptions !== undefined) context.sourceOptions = merged.value.sourceOptions;
+    validateSpecificationCases(merged.value, context);
+    const effective = expandSpecificationExamples(merged.value);
     validateEventSources(merged.value, context);
     validateOperations(merged.value, context);
     validateInlineEvents(merged.value, context);
     validateConstraintProperties(merged.value, context);
-    validateResponses(merged.value, context, parsed.flatMap(document => document.inputUses));
+    validateResponses(effective, context, parsed.flatMap(document => document.inputUses));
     validateProjectionTargets(merged.value, context);
-    validateIdentifierCompliance(merged.value, context);
+    validateIdentifierCompliance(effective, context);
     validateReactionRefusals(merged.value, context);
     validateSpecificationRedelivery(merged.value, context);
     validateGuardedActions(merged.value, context);

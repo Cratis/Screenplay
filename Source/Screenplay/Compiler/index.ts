@@ -6,6 +6,7 @@ export * from './Diagnostics';
 export * from './Dependencies';
 export * from './Syntax';
 export * from './ScreenplayCompiler';
+export { specificationCaseOrigins } from './Syntax/SpecificationCaseOrigin';
 export { synthesizePersonaCaller } from './Syntax/PersonaCallers';
 export type { PersonaCallerResult } from './Syntax/PersonaCallerResult';
 export { expandSpecificationExamples, expandEffectiveSpecificationExamples } from './Parsing/SpecificationCommandExamples';

@@ -10,6 +10,8 @@ export const handlerIntentDocs = {
 };
 
 export const keywordDocs: Record<string, string> = {
+    parameter: 'A typed value declared by a specification table, or an argument of a named behavior. Table types are required; every case supplies each parameter exactly once.',
+    case: 'One named concrete row of a specification table, expanded as <Specification>_<Case>. Use case.<parameter> for a whole step value.',
     example: 'One typed, possibly partial fixture: `example <Name> : <EventOrCommandOrReadModel>`. Use its name in a matching specification step; assignments override example values without changing matching or supplying defaults. Event examples may carry stream or no stream; a step replaces that route as a whole.',
     domain: 'The domain the file belongs to — optional, at most one per file, before everything else.',
     import: 'Imports a type from another module by its qualified name — `import Module.Type` — making it available by its short name; or, quoted, other `.play` files by path or glob — `import "Orders/**/*.play"`, relative to this file\'s folder. Written inside a module or feature, a file import places the imported files there: their top level is that module\'s or feature\'s body.',
@@ -142,6 +144,8 @@ export const keywordDocs: Record<string, string> = {
 // What the words of a specification's steps mean there - where 'trigger', 'capture' and 'query' name what the
 // scenario exercises rather than declare one.
 export const specificationKeywordDocs: Record<string, string> = {
+    parameter: 'Declares a required typed case value: `parameter <name> <Type>`. Every case assigns it once. `optional` permits literal null but supplies no default.',
+    case: 'One named complete row of a specification table. `case.<parameter>` substitutes a whole value after example overrides; each row runs as `<Specification>_<Case>`.',
     caller: '`given caller` states an explicit identity; `given caller as <Persona>` synthesizes an authenticated deterministic witness of the persona, with no body. Leftmost buildable policy alternatives are significant.',
     clock: keywordDocs.clock,
     redelivered: keywordDocs.redelivered,

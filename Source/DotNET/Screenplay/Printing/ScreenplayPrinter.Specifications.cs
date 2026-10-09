@@ -46,6 +46,8 @@ public partial class ScreenplayPrinter
         {
             WriteDescription(writer, specification.Description, specification);
             WriteFile(writer, specification.File);
+            foreach (var parameter in specification.Parameters) writer.Line($"parameter {parameter.Name} {ScreenplaySyntaxText.TypeRef(parameter.Type)}", parameter);
+            foreach (var row in specification.Cases) WriteSpecificationBlock(writer, $"case {row.Name}", row, row.Values);
 
             if (specification.GivenCallerPersona is { } persona)
             {
@@ -178,7 +180,7 @@ public partial class ScreenplayPrinter
                         case SpecificationQueryResultSyntax result: WriteSpecificationResult(writer, result); break;
                         case SpecificationNoResultSyntax none: writer.Line("then no result", none); break;
                         case SpecificationDeniedSyntax denied: writer.Line("then denied", denied); break;
-                        case SpecificationErrorSyntax error: writer.Line(error.Name is null ? "then error" : $"then error {StringLiteral.Quote(error.Name)}", error); break;
+                        case SpecificationErrorSyntax error: WriteSpecificationError(writer, error); break;
                     }
                 }
             }
@@ -210,11 +212,14 @@ public partial class ScreenplayPrinter
 
                 foreach (var error in specification.ThenErrors)
                 {
-                    writer.Line(error.Name is null ? "then error" : $"then error {StringLiteral.Quote(error.Name)}", error);
+                    WriteSpecificationError(writer, error);
                 }
             }
         }
     }
+
+    void WriteSpecificationError(ScreenplayWriter writer, SpecificationErrorSyntax error) =>
+        writer.Line(error.CaseValue is { } value ? $"then error case.{value.Parameter}" : error.Name is null ? "then error" : $"then error {StringLiteral.Quote(error.Name)}", error);
 
     void WriteSpecificationEvent(ScreenplayWriter writer, string keyword, SpecificationEventSyntax @event)
     {

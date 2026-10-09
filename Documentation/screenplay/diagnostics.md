@@ -1092,6 +1092,26 @@ Valid [source/stream authoring](event-sources.md) is not admitted by any support
 
 See [Policies](policies.md#portable-evaluation) for three-valued evaluation and the distinction between a missing caller claim and a missing comparison target.
 
+## Specification case tables
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0570` | Error | A parameter requires a name and property-line type, without a body or default. |
+| `PLAY0571` | Error | A case requires an identifier and at most one inline assignment. |
+| `PLAY0572` | Error | A parameter name is repeated within a table. |
+| `PLAY0573` | Error | A case name is repeated within a table. |
+| `PLAY0574` | Error | Tables require parameters and at least one case. |
+| `PLAY0575` | Error | A case omits, repeats or invents a parameter assignment. |
+| `PLAY0576` | Error | A case value is not concrete or cannot be normalized to its declared parameter type. |
+| `PLAY0577` | Error | A case reference names no declared table parameter or occurs in an excluded position. |
+| `PLAY0578` | Error | An optional parameter feeds a required target. |
+| `PLAY0579` | Error | A derived specification name collides in its scope. |
+| `PLAY0580` | Error | The parameter type is unknown or incompatible with its target type. |
+| `PLAY0581` | Warning | A declared parameter is never referenced. |
+| `PLAY0582` | Error | Singular effective expansion cannot represent a table; use `ExpandAll`. |
+
+See [Named case tables](specifications.md#named-case-tables).
+
 ## Retired codes
 
 A retired code stays out of use forever.

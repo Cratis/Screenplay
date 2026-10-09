@@ -56,6 +56,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | `concept` of every primitive, `Enum`, `@pii`/`@sensitive` with reasons, `file`, concept `validate` with `matches email`, `rule` with a `file` and an inline body, `severity` | Concepts |
 | `type` with `description`, `file`, optional and collection properties | Composite value types |
 | `policy` with `require` (`authenticated`, `role`, `claim … matches` a literal, `subject` or `$context` path, `not`/`and`/`or`/parentheses, continuation lines), inline ```` ```csharp ```` and `file` bodies | Authorization |
+| Typed specification `parameter`, named `case` and `case.<parameter>` values | StartingDraftsForCustomers |
 | `persona` with single-line and fenced descriptions; `given caller as` with a deterministic authenticated witness | Authorization; StartingAnInvoiceDraft |
 | `authentication` with named providers | Authorization |
 | `trigger` with `description`, `file`, typed and untyped values | Triggers |

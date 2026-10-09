@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
@@ -13,6 +14,25 @@ internal static class SpecificationStreamValidator
     internal static string? CanonicalStreamId(ExpressionSyntax? expression, TypeRefSyntax type, ApplicationSyntax application, ResponseValueTypes values) => FormatStreamId(expression, type, application, values);
 
     internal static void Validate(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context, EffectiveSpecificationApplication expansion)
+    {
+        var rows = expansion.Specifications.Where(specification => specification.Case is not null).Select(specification => specification.Case!).ToArray();
+        if (rows.Length == 0)
+        {
+            ValidateRoutes(application, declarations, context, expansion);
+            return;
+        }
+        var sink = ParserContext.ForDiagnostics();
+        ValidateRoutes(application, declarations, sink, expansion);
+        var reported = new HashSet<SourceLocation>();
+        foreach (var diagnostic in sink.Diagnostics)
+        {
+            var row = diagnostic.Code == DiagnosticCodes.InvalidSpecificationStreamRoute ? rows.FirstOrDefault(row => row.Values.Any(value => value.Source.Location == diagnostic.Location)) : null;
+            if (row is null) context.Add(diagnostic);
+            else if (reported.Add(diagnostic.Location)) context.Add(diagnostic with { Message = $"Case '{row.Name}': {diagnostic.Message}" });
+        }
+    }
+
+    static void ValidateRoutes(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context, EffectiveSpecificationApplication expansion)
     {
         var catalog = new EventSourceCatalog(application);
         var values = new ResponseValueTypes(application);

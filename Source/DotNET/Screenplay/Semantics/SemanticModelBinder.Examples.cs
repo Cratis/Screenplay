@@ -16,11 +16,31 @@ public sealed partial class SemanticModelBinder
 
         void ValidateExampleAdmission(ImmutableArray<SemanticConcept> concepts, ImmutableArray<SemanticCompositeType> types, ImmutableArray<SemanticModule> modules)
         {
-            if (expansion.ResolvedExamples.Count == 0) return;
+            if (expansion.ResolvedExamples.Count == 0 && !expansion.Specifications.Any(specification => specification.Case is not null)) return;
 
             // Admission is independent of use: an override must not conceal a malformed example value.
             // Validate only stated properties; top-level partial examples are not complete instances.
             var validator = new SemanticValueValidator(concepts.ToDictionary(concept => concept.Id), types.ToDictionary(type => type.Id));
+            foreach (var table in expansion.Specifications.Where(specification => specification.Case is not null).Select(specification => specification.Authored).Distinct(ReferenceEqualityComparer.Instance).OfType<SpecificationSyntax>())
+            {
+                foreach (var row in table.Cases)
+                {
+                    foreach (var assignment in row.Values)
+                    {
+                        var parameter = table.Parameters.Single(item => item.Name == assignment.Property);
+                        try
+                        {
+                            var target = BindTypeReference(parameter.Type);
+                            var value = BindConcreteValue(assignment.Source, target, "specification case", true);
+                            if (value is not null) validator.Validate(value, target, $"case '{row.Name}' parameter '{parameter.Name}'");
+                        }
+                        catch (InvalidSemanticContract failure)
+                        {
+                            Error(DiagnosticCodes.InvalidSpecificationCaseValue, $"Case '{row.Name}' parameter '{parameter.Name}' cannot be admitted: {failure.Message}", assignment.Source.Location);
+                        }
+                    }
+                }
+            }
             var slices = syntax.Modules.SelectMany(module => module.Features).SelectMany(AllSlices).ToArray();
             foreach (var resolved in expansion.ResolvedExamples)
             {

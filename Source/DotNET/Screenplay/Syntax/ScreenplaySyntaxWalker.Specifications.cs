@@ -22,6 +22,8 @@ public abstract partial class ScreenplaySyntaxWalker
     {
         VisitNode(syntax);
         foreach (var example in syntax.Examples) VisitSpecificationExample(example);
+        foreach (var parameter in syntax.Parameters) VisitSpecificationParameter(parameter);
+        foreach (var row in syntax.Cases) VisitSpecificationCase(row);
 
         if (syntax.File is not null)
         {
@@ -272,7 +274,31 @@ public abstract partial class ScreenplaySyntaxWalker
     /// Visits a <see cref="SpecificationErrorSyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="SpecificationErrorSyntax"/> to visit.</param>
-    public virtual void VisitSpecificationError(SpecificationErrorSyntax syntax) => VisitNode(syntax);
+    public virtual void VisitSpecificationError(SpecificationErrorSyntax syntax)
+    {
+        VisitNode(syntax);
+        if (syntax.CaseValue is { } value) VisitCaseValueExpression(value);
+    }
+
+    /// <summary>
+    /// Visits a table parameter and its type.
+    /// </summary>
+    /// <param name="syntax">The parameter.</param>
+    public virtual void VisitSpecificationParameter(SpecificationParameterSyntax syntax)
+    {
+        VisitNode(syntax);
+        VisitTypeRef(syntax.Type);
+    }
+
+    /// <summary>
+    /// Visits a named table case and its values.
+    /// </summary>
+    /// <param name="syntax">The case.</param>
+    public virtual void VisitSpecificationCase(SpecificationCaseSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var value in syntax.Values) VisitPropertyMapping(value);
+    }
 
     /// <summary>
     /// Visits a <see cref="SpecificationClockSyntax"/> node.
