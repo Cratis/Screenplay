@@ -43,6 +43,7 @@ export interface ConceptAttributeSyntax extends SyntaxNode {
 }
 
 export interface ConceptSyntax extends SyntaxNode {
+    readonly description?: string | null;
     readonly kind: 'ConceptSyntax';
     readonly name: string;
     readonly validations?: readonly ValidateSyntax[];

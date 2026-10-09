@@ -1,5 +1,7 @@
 # Screens
 
+A screen accepts one quoted or fenced-text `description` body line, printed first before `file` or other directives. This is report-only authoring metadata, not a localizable `title`, and does not render text in the UI. Sections and nested directives do not gain descriptions. Markdown `documentation` is not supported here.
+
 Screens are UI declarations. They live inside `StateView` slices and support three levels of abstraction — from pure intent (Studio generates the component) to a filled template with inline code — plus a full external file reference.
 
 ## The structure a screen fills

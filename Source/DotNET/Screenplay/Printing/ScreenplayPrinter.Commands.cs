@@ -176,6 +176,7 @@ public partial class ScreenplayPrinter
         writer.DirectiveLine($"constraint {constraint.Name}", constraint, "header");
         using (writer.Indent())
         {
+            WriteDescription(writer, constraint.Description, constraint);
             foreach (var rule in new[] { constraint }.Concat(constraint.AdditionalRules))
             {
                 switch (rule)

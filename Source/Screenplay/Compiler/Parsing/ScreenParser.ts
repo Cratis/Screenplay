@@ -11,6 +11,7 @@ import {
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { pattern } from '../Text/patterns';
 import { parseFencedText } from './CodeBlockParser';
+import { parseDescription } from './DescriptionParser';
 import { isFileDirective } from './FileReferences';
 import { parseGuardedAction } from './GuardedActionParser';
 import { collectInputUses } from './InputUses';
@@ -57,13 +58,16 @@ export function parseScreen(context: ParserContext, line: SourceLine): ScreenSyn
         context.error(DiagnosticCodes.InvalidScreenDeclaration, `Invalid screen declaration '${line.content}' - expected 'screen <Name>'`, locationOf(line));
     }
     const directives: ScreenDirectiveSyntax[] = [];
+    let description: string | null = null;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
-        if (!isFileDirective(child)) {
+        if (firstWord(child.content) === 'description') {
+            description = parseDescription(context, child, description, `Screen '${match?.[1] ?? ''}'`);
+        } else if (!isFileDirective(child)) {
             pushDirective(context, child, directives);
         }
     }
-    return { kind: 'ScreenSyntax', name: match?.[1] ?? '', directives, location: locationOf(line) };
+    return { kind: 'ScreenSyntax', name: match?.[1] ?? '', directives, description, location: locationOf(line) };
 }
 
 function pushDirective(context: ParserContext, line: SourceLine, directives: ScreenDirectiveSyntax[]): void {

@@ -41,5 +41,10 @@ public enum CompletenessCheck
     /// <summary>
     /// Checks persona reachability and deterministic caller ambiguity.
     /// </summary>
-    Personas
+    Personas,
+
+    /// <summary>
+    /// Checks declared processing purposes without assessing lawfulness.
+    /// </summary>
+    Purposes
 }

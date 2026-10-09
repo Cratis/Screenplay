@@ -12,6 +12,10 @@ Invoicing/
   invoicing.nb.strings   the same keys in Norwegian
 ```
 
+Processing purposes are declared at the top level: Billing covers the module, Bookkeeping is added on Auditing, and PaymentDisputes on CollectionsBoard. Their union is report-only; it does not enforce retention or make a legal-compliance claim. Concept reasons describe the value rather than its lawful basis.
+
+Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNumber, InvoiceList and RegisterInvoiceScreen explain values, rules, builders and input/view surfaces. They are report-only metadata, not UI titles, validation or generated code comments.
+
 ## Who uses it
 
 | Persona | Holds | Sees the screens of |

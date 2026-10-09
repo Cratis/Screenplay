@@ -4,6 +4,7 @@
 import type { CompletionEntry } from './completion-items';
 import { exampleDeclarationItems } from './example-declaration-items';
 import { documentationItem } from './documentation-item';
+import { purposeReferenceItem } from './purpose-items';
 
 const interactions = ['click', 'double click', 'select', 'submit', 'change', 'load', 'unload', 'enter', 'leave'];
 
@@ -13,6 +14,7 @@ const interactionItems: CompletionEntry[] = [
 ];
 
 export const moduleScopeItems: CompletionEntry[] = [
+    purposeReferenceItem,
     documentationItem,
     ...exampleDeclarationItems,
     { label: 'description', insertText: 'description "${1:what this module is for}"', documentation: 'A human-readable description.' },
@@ -29,6 +31,7 @@ export const moduleScopeItems: CompletionEntry[] = [
 ];
 
 export const featureScopeItems: CompletionEntry[] = [
+    purposeReferenceItem,
     documentationItem,
     ...exampleDeclarationItems,
     { label: 'description', insertText: 'description "${1:what this feature is for}"', documentation: 'A human-readable description.' },
@@ -57,6 +60,7 @@ export const reducerItems: CompletionEntry[] = [
 ];
 
 export const formItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:input surface intent}"', documentation: 'Report-only description of the form.' },
     { label: 'populate via query', insertText: 'populate via query ${1:Query} by ${2:parameter}', documentation: 'Fills the form from a query before it is shown.' },
     { label: 'populate from item', insertText: 'populate from item', documentation: 'Fills the form from the item the screen was opened for.' },
     { label: 'field', insertText: 'field ${1:property} label "${2:Label}"', documentation: 'A form field bound to a command property.' },

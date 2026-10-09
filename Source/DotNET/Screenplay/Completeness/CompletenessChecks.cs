@@ -47,6 +47,7 @@ public sealed record CompletenessChecks(ImmutableHashSet<CompletenessCheck> Sele
                 "event-consumers" or "PLAY0536" => CompletenessCheck.EventConsumers,
                 "navigation" or "PLAY0537" => CompletenessCheck.Navigation,
                 "personas" or "PLAY0574" or "PLAY0575" or "PLAY0576" => CompletenessCheck.Personas,
+                "purposes" or "PLAY0602" or "PLAY0603" or "PLAY0604" or "PLAY0605" or "PLAY0606" => CompletenessCheck.Purposes,
                 _ => (CompletenessCheck?)null
             };
             if (check is null)

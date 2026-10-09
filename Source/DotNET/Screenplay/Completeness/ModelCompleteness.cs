@@ -44,6 +44,7 @@ public static class ModelCompleteness
         if (checks.Selected.Contains(CompletenessCheck.EventConsumers)) findings.AddRange(EventConsumerCompleteness.Check(application, declarations));
         if (checks.Selected.Contains(CompletenessCheck.Navigation)) findings.AddRange(NavigationCompleteness.Check(application, declarations));
         if (checks.Selected.Contains(CompletenessCheck.Personas)) findings.AddRange(PersonaCompleteness.Check(application));
+        if (checks.Selected.Contains(CompletenessCheck.Purposes)) findings.AddRange(PurposeCompleteness.Check(application));
 
         return findings.ToImmutable();
     }

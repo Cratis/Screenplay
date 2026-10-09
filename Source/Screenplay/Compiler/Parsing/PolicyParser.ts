@@ -10,6 +10,7 @@ import { nativePattern as pattern } from '../Text/patterns';
 import { parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
 import { parseCode, parseFile } from './ImplementationParser';
 import { firstWord } from './LineText';
+import { parseDescription } from './DescriptionParser';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 
@@ -24,9 +25,12 @@ export function parsePolicy(context: ParserContext, header: SourceLine): PolicyS
     let code: CodeBlockSyntax | null = null;
     let file: FileReferenceSyntax | null = null;
     let hasRequire = false;
+    let description: string | null = null;
     for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
-        if (firstWord(line.content) === 'require') {
+        if (firstWord(line.content) === 'description') {
+            description = parseDescription(diagnosticContext, line, description, `Policy '${name}'`);
+        } else if (firstWord(line.content) === 'require') {
             let text = line.content.substring('require'.length).trim();
             for (let continuation = context.peekChild(line.indent); continuation !== undefined; continuation = context.peekChild(line.indent)) {
                 context.reader.takeSignificant();
@@ -54,7 +58,7 @@ export function parsePolicy(context: ParserContext, header: SourceLine): PolicyS
     }
     if (condition !== null && (code !== null || file !== null)) context.error(DiagnosticCodes.MixedPolicyImplementation, `Policy '${name}' cannot combine 'require' with a file or inline code block`, locationOf(header));
     if (condition === null && code === null && file === null) context.error(DiagnosticCodes.PolicyWithoutRequirement, `Policy '${name}' must declare a 'require' condition, a file reference or an inline code block`, locationOf(header));
-    return { kind: 'PolicySyntax', name, condition, code, file, location: locationOf(header) };
+    return { kind: 'PolicySyntax', name, condition, code, file, description, location: locationOf(header) };
 }
 
 function tokenizePolicyCondition(context: ParserContext, text: string): string[] {

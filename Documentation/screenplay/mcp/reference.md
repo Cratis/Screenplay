@@ -88,6 +88,12 @@ outcome and session revision, retains the previous root-conflict snapshot, and
 reports the inspection failure in `metadataProblem`. Repair that metadata before
 continuing; do not retry the completed apply.
 
+## Processing purposes
+
+Use `kind: "Purpose"` to read a declared [processing purpose](../purposes.md). `declaration-details` summaries expose its `processingPurpose` fields and the direct `purposes` references of modules, features and slices. Reference and dependency inventories include role `purpose`. These are report-only declarations, not executable behavior or legal advice. `diagnostics` can opt into coverage prompts with `checks: "purposes"`.
+
+`processing-record` pages one row per declared purpose, including its declared legal and retention fields, reachable concept categories and marker-declared protection mappings, DPIA prompts and erasure-exception/crypto-shredding findings. Its response includes `notice`, `coverage`, optional controller fields, `sourceRevision` and `rows` (`totalCount`, `offset`, `items`, `nextOffset`, `revision`). It requires error-free source, not successful executable binding. Supply controller information as `controllerName`/`controllerContact`, never through model syntax. Echo `sourceRevision` as `expectedSourceRevision` after the first page. Counts are capped at 200 and row pages are byte-bounded; an oversized individual row is refused rather than truncated. These declarations are not legal advice or proof of runtime protection.
+
 ## Generated values and responses
 
 Event `declaration-details` summaries expose `subject: { "source": "eventSource" }` by default, or `{ "source": "property", "property": "<name>" }` for a trailing event-property `subject` mark. Property pages expose `isSubject`; `syntax-schema` describes optional `PropertySyntax.isSubject`, omitted when false. This is report-only lineage metadata (`PLAY0270`), not executable subject propagation or provider output. Rename and inline extraction preserve the mark.
@@ -180,6 +186,7 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `find-declaration` | Required exact `name`; optional kind/scope/document | Paged matches; typed syntax only with `includeContent: true` |
 | `search-declarations` | Optional `name`, `match`: exact/prefix/contains, kind/scope/document | Compact scoped search |
 | `declaration-details` | `address`, `kind`; optional `view` | Summary (including `description` and `documentation` wherever supported) or paged properties, occurrences, commands, specifications, produces, enum values, module/feature dependencies; explicit syntax view |
+| `processing-record` | Optional `controllerName`, `controllerContact`, `offset`, `limit`, `expectedSourceRevision` | Paged declaration-derived controller inventory; not legal advice |
 | `find-references` | `address`, `kind` | Paged resolved incoming references and ambiguities, with owners/roles |
 | `dependencies` | `address`, `kind`, direction incoming/outgoing; optional descendants/document | Direct indexed dependencies and resolution candidates |
 | `dependency-graph` | Optional view, from/to levels, scope, direction, kinds, includeTestOnly, evidenceLimit | Inferred slice/container/context edges, ordering cycles, story-order suggestions, unresolved references or checked dependency declarations |

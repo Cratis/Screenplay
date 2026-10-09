@@ -40,10 +40,13 @@ internal static partial class FormParser
         var columnMode = FormColumnMode.Unspecified;
         var hasPopulate = false;
         var hasSubmit = false;
+        string? description = null;
+        var locations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
+            if (DescriptionParser.TryParse(context, line, ref description, $"Form '{name}'", locations)) continue;
             switch (LineText.FirstWord(line.Content))
             {
                 case "populate":
@@ -103,6 +106,8 @@ internal static partial class FormParser
         {
             Behaviors = behaviors,
             UsedBehaviors = usedBehaviors,
+            Description = description,
+            DirectiveLocations = locations,
             ColumnMode = columnMode,
             Columns = columns
         };

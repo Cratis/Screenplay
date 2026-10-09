@@ -23,7 +23,7 @@ const scopes: Record<string, [string, string[]]> = {
     'a translate slice': ['module M\n  feature F\n    slice Translate S\n      ', ['capture', 'documentation', 'event', 'event generation', 'example', 'file', 'specification']],
     'a read model': ['module M\n  feature F\n    slice StateView S\n      readmodel R\n        ', ['description', 'documentation', 'file', 'property']],
     'a reducer': ['module M\n  feature F\n    slice StateView S\n      reducer R => V\n        ', ['description', 'on']],
-    'a form': ['module M\n  form F for C\n    ', ['field', 'on', 'populate from item', 'populate via query', 'uses']],
+    'a form': ['module M\n  form F for C\n    ', ['description', 'field', 'on', 'populate from item', 'populate via query', 'uses']],
     'a contribution': ['module M\n  contribute to Navigation\n    ', ['label', 'navigate to', 'order']],
     'a behavior': ['behavior B\n  ', ['description', 'on', 'order', 'parameter']],
     'a persona': ['persona P\n  ', ['description', 'policy']],
@@ -36,8 +36,9 @@ const scopes: Record<string, [string, string[]]> = {
 
 describe('when completing an empty line in each scope', () => {
     for (const [scope, [text, expected]] of Object.entries(scopes)) {
+        const supportsPurpose = ['the root', 'a domain', 'a module', 'a feature', 'a state change slice', 'a state view slice', 'an automation slice', 'a translate slice'].includes(scope);
         it(`should offer only what ${scope} can hold`, () => {
-            offered(text).should.deep.equal([...expected].sort());
+            offered(text).should.deep.equal([...expected, ...supportsPurpose ? ['purpose'] : []].sort());
         });
     }
 

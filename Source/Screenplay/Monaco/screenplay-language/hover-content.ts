@@ -14,7 +14,7 @@ import { directBody, propertyTypeReference, scanDocument } from './symbols';
 import { typeReferenceText } from './TypeReferenceSymbol';
 import { eventAnalysisSource } from './event-analysis-source';
 import { getSubLanguage } from './sub-language-registry';
-import { attributeDocs, contextVariableDocs, handlerIntentDocs, keywordDocs, specificationKeywordDocs } from './keyword-docs';
+import { attributeDocs, contextVariableDocs, handlerIntentDocs, keywordDocs, specialCategoryDocs, specificationKeywordDocs } from './keyword-docs';
 
 // Produces the hover markdown for a word at a position, without any editor
 // dependency — the Monaco service and the VSCode extension share this content.
@@ -53,12 +53,14 @@ export function hoverContent(
         return word === name && startColumn === start && endColumn === start + name.length && line.slice(start - 1, endColumn - 1) === name;
     };
     const before = line.charAt(startColumn - 2);
+    if (word === 'authorization' && enclosingChain(lines, fences, lineIndex, indentOf(line))[0] === 'purpose') return 'A quoted authorization in law for criminal-offence data (Art. 10).';
 
     const complianceHeader = /^\s*concept\s+[^\s:]+\s*:\s*\w+\s+/.exec(line);
     const complianceBody = enclosingChain(lines, fences, lineIndex, indentOf(line))[0] === 'concept' && /^\s*(?:@?pii|personal|@?sensitive|secret)\s+(?:reason|scope|special|criminal)\b/.test(line);
     if ((complianceHeader !== null && startColumn - 1 >= complianceHeader[0].length - 1) || complianceBody) {
         const doc = attributeDocs[word];
         if (doc) return doc;
+        if (Object.hasOwn(specialCategoryDocs, word) && /^\s*(?:@?pii|personal)\s+special\s+/.test(line)) return `**${word}** — ${specialCategoryDocs[word]}`;
         if (word === 'special') return 'GDPR Art. 9(1) special category; requires pii. At most one category per concept.';
         if (word === 'criminal') return 'Personal data relating to criminal convictions and offenses (GDPR Art. 10); requires pii.';
         if (/^\s*(?:secret|sensitive|@sensitive)\s+scope\s+/.test(line) && ['subject', 'namespace', 'global'].includes(word)) return `**${word}** — Secret encryption scope${word === 'subject' ? ' per data subject' : word === 'namespace' ? ' per tenant namespace' : ' shared globally'}. Not an event-property subject role.`;

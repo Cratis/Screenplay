@@ -24,6 +24,7 @@ import { validateReactionRefusals } from './Parsing/ReactionRefusalValidator';
 import { validateSpecificationRedelivery } from './Parsing/SpecificationRedeliveryValidator';
 import { validateGuardedActions } from './Parsing/GuardedActionValidator';
 import { validatePersonaCallers } from './Parsing/PersonaCallerValidator';
+import { validatePurposes } from './Parsing/PurposeValidator';
 import { parseApplication } from './Parsing/ScreenplayParser';
 import { splitLines } from './Parsing/SourceLineSplitter';
 import { PropertySyntax } from './Syntax/Declarations';
@@ -70,6 +71,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
     let value = parseApplication(context, lines, placement);
     // Folder assembly validates declaration-dependent contracts once against the merged inventory.
     if (validateResponseContracts) {
+        validatePurposes(value, context);
         validateInlineEvents(value, context);
         validateConstraintProperties(value, context);
         validateOperations(value, context);

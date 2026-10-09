@@ -62,4 +62,9 @@ public record ProjectionSyntax(
     /// an init property is neither, and is how this record should grow from here.
     /// </remarks>
     public FileReferenceSyntax? File { get; init; }
+
+    /// <summary>
+    /// Gets the report-only description of this builder, not its nested blocks.
+    /// </summary>
+    public string? Description { get; init; }
 }

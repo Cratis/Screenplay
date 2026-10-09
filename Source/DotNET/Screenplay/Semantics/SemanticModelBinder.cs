@@ -171,6 +171,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         internal SemanticApplication BindApplication()
         {
             ReportTopLevelDispositions();
+            foreach (var purpose in syntax.Purposes) Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Purpose '{purpose.Name}' is report-only processing metadata and adds no executable behavior.", purpose.Location);
+            foreach (var reference in PurposeReferences(syntax)) Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Purpose reference '{reference.Name}' is report-only processing metadata.", reference.Location);
             var applicationAddress = SemanticAddress.ForApplication(_applicationIdentity);
             var applicationId = Resolve(applicationAddress, syntax.Location);
 

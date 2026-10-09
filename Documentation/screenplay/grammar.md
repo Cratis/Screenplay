@@ -13,7 +13,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ NumericPreamble ], [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl
+Document       = [ NumericPreamble ], [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
                | PersonaDecl | AuthenticationDecl | TriggerDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | SystemDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
@@ -109,10 +109,29 @@ StreamIdPart = Ident, QualifiedName, NL ;
 (* Concepts                                                        *)
 (* -------------------------------------------------------------- *)
 
+PurposeDecl    = "purpose", Ident, NL,
+                 [ INDENT, { DescriptionDecl
+                 | "basis", PurposeBasis, [ QuotedString ], NL
+                 | "interest", QuotedString, NL
+                 | "condition", PurposeCondition, [ QuotedString ], NL
+                 | "authorization", QuotedString, NL
+                 | "subjects", Ident, { ",", Ident }, NL
+                 | "retention", QuotedString, NL
+                 | "recipient", QuotedString, NL
+                 | "transfer", QuotedString, "safeguard", QuotedString, NL
+                 | "erasure", "exception", ErasureException, NL }, DEDENT ] ;
+PurposeReference = "purpose", Ident, NL ;
+PurposeBasis   = "consent" | "contract" | "legalObligation" | "vitalInterests"
+               | "publicTask" | "legitimateInterests" ;
+PurposeCondition = "explicitConsent" | "employmentLaw" | "vitalInterests" | "notForProfit"
+                 | "madePublic" | "legalClaims" | "substantialPublicInterest" | "healthCare"
+                 | "publicHealth" | "research" ;
+ErasureException = "expression" | "legalObligation" | "publicTask" | "publicHealth" | "archiving" | "legalClaims" ;
+
 ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL,
-                   [ INDENT, { FileDirective | AttributeReason | ComplianceSetting | ConceptValidate }, DEDENT ]
+                   [ INDENT, { DescriptionDecl | FileDirective | AttributeReason | ComplianceSetting | ConceptValidate }, DEDENT ]
                | "concept", Ident, ":", "Enum", { Attribute }, NL,
-                   INDENT, { FileDirective | AttributeReason | ComplianceSetting | [ "@" ], LowerIdent, NL | ConceptValidate }, DEDENT ;
+                   INDENT, { DescriptionDecl | FileDirective | AttributeReason | ComplianceSetting | [ "@" ], LowerIdent, NL | ConceptValidate }, DEDENT ;
 
 AttributeReason = AttributeName, "reason", StringLiteral, NL ;
 ComplianceSetting = ( "pii" | "personal" ), "special", SpecialCategory, NL
@@ -152,7 +171,7 @@ TypeDecl       = "type", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 PolicyDecl     = "policy", Ident, NL,
-                 INDENT, PolicyBody, DEDENT ;
+                 INDENT, [ DescriptionDecl ], PolicyBody, DEDENT ;
 
 PolicyBody     = PolicyExpr
                | InlineBlock
@@ -267,7 +286,7 @@ PackageName    = Ident, { ".", Ident } ;
 
 Module         = "module", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | DocumentationDecl
+                   { DescriptionDecl | DocumentationDecl | PurposeReference
                    | AuthorizeDecl
                    | DependsOnDecl
                    | FileImport
@@ -346,7 +365,7 @@ BindingText    = ? nonempty remainder of the line, stored verbatim ? ;
 (* -------------------------------------------------------------- *)
 
 FormDecl       = "form", Ident, "for", QualifiedName, NL,
-                 INDENT, { FormDirective }, DEDENT ;
+                 INDENT, { DescriptionDecl | FormDirective }, DEDENT ;
 
 FormDirective  = FormPopulateDecl
                | FormFieldDecl
@@ -443,7 +462,7 @@ ArrangementSizeClass = "compact" | "regular" ;
 
 Feature        = "feature", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | DocumentationDecl
+                   { DescriptionDecl | DocumentationDecl | PurposeReference
                    | AuthorizeDecl
                    | DependsOnDecl
                    | FileImport
@@ -460,7 +479,7 @@ Feature        = "feature", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 SliceDecl      = "slice", SliceType, Ident, NL,
-                 INDENT, { DescriptionDecl | DocumentationDecl | FileDirective | SliceBody }, DEDENT ;
+                 INDENT, { DescriptionDecl | DocumentationDecl | PurposeReference | FileDirective | SliceBody }, DEDENT ;
 
 SliceType      = "StateChange" | "StateView" | "Automation" | "Translate" ;
 
@@ -867,7 +886,7 @@ PerformerDecl  = "performer", NL,
 (* -------------------------------------------------------------- *)
 
 ProjectionDecl = "projection", QualifiedName, [ "=>", QualifiedName ], NL,
-                 INDENT, PDLBody, DEDENT ;
+                 INDENT, [ DescriptionDecl ], PDLBody, DEDENT ;
 
 (* Variant groups omit the target: each variant names its read model.
    A non-variant projection in a Screenplay application needs a target to bind
@@ -1058,7 +1077,7 @@ SeedEvent      = Ident, NL,
 (* -------------------------------------------------------------- *)
 
 ConstraintDecl = "constraint", Ident, NL,
-                 INDENT, ConstraintBody, DEDENT ;
+                 INDENT, [ DescriptionDecl ], ConstraintBody, DEDENT ;
 
 ConstraintBody = { ConstraintOption }, UniquePropertyRule,
                    { UniquePropertyRule | ConstraintOption }
@@ -1163,7 +1182,7 @@ RefusalValue   = "$refusal.", ( "reason" | "constraint" | "message" ) ;
    that holds it - "Queue.All", "Preparation.Queue.All" - to reach across.  *)
 
 ScreenDecl     = "screen", Ident, NL,
-                 INDENT, ScreenBody, DEDENT ;
+                 INDENT, [ DescriptionDecl ], ScreenBody, DEDENT ;
 
 ScreenBody     = FileDirective                          (* full external file  *)
                | { ScreenDirective } ;                  (* declarative levels  *)
@@ -1304,6 +1323,8 @@ INDENT         = ? increase in indentation level ? ;
 DEDENT         = ? decrease in indentation level ? ;
 AnyLine        = ? any text until newline ? ;
 ```
+
+Descriptions on concepts, policies, constraints, projection headers, screens and forms are report-only body metadata. The canonical forms above put them first, before `file`; source may place them later. They never satisfy a policy implementation, constraint rule or projection directive requirement, and do not add markdown `documentation` to these kinds. In an enum, bare `description` without an indented fence remains a value and prints as `@description`.
 
 ## Declarative first — `file` is never required
 

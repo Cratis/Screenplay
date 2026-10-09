@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import type { CancellationToken, editor, languages, Range } from 'monaco-editor';
 import { planCompletions } from '../completion-planner';
 import { hoverContent } from '../hover-content';
+import { specialCategoryDocs } from '../keyword-docs';
 import { validateLines } from '../validation';
 import { createCodeActionProvider } from '../code-actions';
 
@@ -32,10 +33,14 @@ describe('when editing compliance markers', () => {
         expect(hover('concept Value : String secret', 'secret')).toContain('Operational secret');
         expect(hover('  pii special health', 'special')).toContain('Art. 9(1)');
         expect(hover('  pii criminal', 'criminal')).toContain('Art. 10');
+        expect(hover('  personal special health', 'health')).toContain('physical or mental health');
         expect(hover('  secret scope namespace', 'scope')).toContain('subject, namespace or global');
         expect(hover('  secret scope subject', 'subject')).toContain('Secret encryption scope per data subject');
         expect(hover('  secret String', 'secret')).toBeNull();
         expect(hoverContent(['command C', '  secret scope'], 1, 'scope', 10, 15)).toBeNull();
+    });
+    it.each(Object.entries(specialCategoryDocs))('should describe the special category %s', (category, description) => {
+        expect(hover(`  pii special ${category}`, category)).toContain(description);
     });
     it('should surface the compiler legacy and unknown-marker diagnostics', () => {
         expect(validateLines(['concept Value : String @pii']).filter(issue => issue.code === 'PLAY0565')).toMatchObject([{ severity: 'information' }]);

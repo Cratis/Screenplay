@@ -25,6 +25,7 @@ import { ApplicationSyntax, DependsOnSyntax, FeatureSyntax, FileImportSyntax, Mo
 import { CommandResponseSyntax, PropertyResponseSourceSyntax, RecordCommandResponseSyntax, RecordSpecificationReturnSyntax, ResponseFieldSyntax, ScalarCommandResponseSyntax, ScalarSpecificationReturnSyntax, SpecificationReturnSyntax } from './Responses';
 import { EventStreamIdPartSyntax } from './EventStreamIdPartSyntax';
 import { SyntaxNode } from './SyntaxNode';
+import { PurposeSyntax, PurposeReferenceSyntax, PurposeTransferSyntax } from './Purposes';
 import { OperationSyntax, OperationPhaseSyntax, SystemSyntax } from './Operations';
 import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSyntax, ImplementationHintSyntax } from './Implementations';
 import { ReadsSyntax, ConcurrencySyntax, ReducerSyntax, ReducerRuleSyntax, FormSyntax, TriggerDataSyntax } from './DependencySources';
@@ -46,10 +47,19 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.types.forEach(node => this.visitType(node));
         syntax.personas.forEach(node => this.visitPersona(node));
         syntax.policies?.forEach(node => this.visitPolicy(node));
+        syntax.purposes?.forEach(node => this.visitPurpose(node));
         syntax.seeds?.forEach(node => this.visitSeed(node));
         syntax.modules.forEach(node => this.visitModule(node));
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
     }
+
+    visitPurpose(syntax: PurposeSyntax): void {
+        this.visitNode(syntax);
+        syntax.transfers.forEach(node => this.visitPurposeTransfer(node));
+    }
+
+    visitPurposeReference(syntax: PurposeReferenceSyntax): void { this.visitNode(syntax); }
+    visitPurposeTransfer(syntax: PurposeTransferSyntax): void { this.visitNode(syntax); }
 
     visitPolicy(syntax: PolicySyntax): void {
         this.visitNode(syntax);
@@ -117,6 +127,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitModule(syntax: ModuleSyntax): void {
         this.visitNode(syntax);
+        syntax.purposes?.forEach(node => this.visitPurposeReference(node));
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
         syntax.dependsOn?.forEach(node => this.visitDependsOn(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
@@ -126,6 +137,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitFeature(syntax: FeatureSyntax): void {
         this.visitNode(syntax);
+        syntax.purposes?.forEach(node => this.visitPurposeReference(node));
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
         syntax.dependsOn?.forEach(node => this.visitDependsOn(node));
         syntax.fileImports.forEach(node => this.visitFileImport(node));
@@ -136,6 +148,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitSlice(syntax: SliceSyntax): void {
         this.visitNode(syntax);
+        syntax.purposes?.forEach(node => this.visitPurposeReference(node));
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
         syntax.commands.forEach(node => this.visitCommand(node));
         syntax.operations?.forEach(node => this.visitOperation(node));

@@ -9,6 +9,7 @@
     "and",
     "any",
     "append",
+    "archiving",
     "arguments",
     "arrangement",
     "as",
@@ -20,6 +21,7 @@
     "auto",
     "automap",
     "back",
+    "basis",
     "behavior",
     "biometric",
     "by",
@@ -48,10 +50,13 @@
     "compose",
     "concept",
     "concurrency",
+    "condition",
     "confirm",
+    "consent",
     "constraint",
     "contains",
     "context",
+    "contract",
     "contribute",
     "contributes",
     "correlation",
@@ -68,9 +73,11 @@
     "dialog",
     "documentation",
     "domain",
+    "employmentLaw",
     "empty",
     "enter",
     "enters",
+    "erasure",
     "error",
     "event",
     "eventSource",
@@ -80,10 +87,13 @@
     "exact",
     "exactly",
     "example",
+    "exception",
     "exclude",
     "execute",
     "expected",
+    "explicitConsent",
     "exposes",
+    "expression",
     "fails",
     "failure",
     "false",
@@ -109,6 +119,7 @@
     "handler",
     "header",
     "health",
+    "healthCare",
     "height",
     "hidden",
     "hint",
@@ -127,6 +138,7 @@
     "increment",
     "info",
     "information",
+    "interest",
     "interval",
     "invokes",
     "item",
@@ -136,9 +148,13 @@
     "layout",
     "leave",
     "legacy",
+    "legalClaims",
+    "legalObligation",
+    "legitimateInterests",
     "length",
     "literal",
     "load",
+    "madePublic",
     "manual",
     "map",
     "matches",
@@ -155,6 +171,7 @@
     "nested",
     "no",
     "not",
+    "notForProfit",
     "notify",
     "null",
     "numbers",
@@ -189,6 +206,9 @@
     "propagate",
     "property",
     "provider",
+    "publicHealth",
+    "publicTask",
+    "purpose",
     "query",
     "racialOrEthnicOrigin",
     "raise",
@@ -196,6 +216,7 @@
     "readmodel",
     "reads",
     "reason",
+    "recipient",
     "redelivered",
     "reducer",
     "refresh",
@@ -206,12 +227,15 @@
     "remove",
     "removed",
     "require",
+    "research",
     "result",
+    "retention",
     "returns",
     "role",
     "route",
     "row",
     "rule",
+    "safeguard",
     "scope",
     "scoped",
     "screen",
@@ -240,7 +264,9 @@
     "streamId",
     "streamType",
     "subject",
+    "subjects",
     "submit",
+    "substantialPublicInterest",
     "subtract",
     "success",
     "summary",
@@ -255,6 +281,7 @@
     "to",
     "toolbar",
     "tradeUnionMembership",
+    "transfer",
     "translate",
     "trigger",
     "true",
@@ -269,6 +296,7 @@
     "validation",
     "variant",
     "via",
+    "vitalInterests",
     "warning",
     "when",
     "where",
@@ -288,6 +316,7 @@
     "numbers",
     "persona",
     "policy",
+    "purpose",
     "seed",
     "system",
     "template",
@@ -1163,6 +1192,67 @@
           ]
         },
         {
+          "source": "concept Value : String\n  description \u0022Value intent\u0022\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": "PLAY0270",
+          "diagnostics": [
+            {
+              "code": "PLAY0270",
+              "severity": "information"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            }
+          ]
+        },
+        {
           "source": "concept Value : String @pii\n  pii reason \u0022Personal data\u0022\n",
           "minimumSemanticVersion": null,
           "diagnostic": "PLAY0268",
@@ -1293,17 +1383,29 @@
         {
           "esmVersion": 1,
           "status": "conditional",
-          "diagnostic": "PLAY0268",
+          "diagnostic": "PLAY0270",
           "issue": null,
           "condition": [
             1,
-            2
+            2,
+            3
           ]
         },
         {
           "esmVersion": 2,
           "status": "conditional",
-          "diagnostic": "PLAY0268",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "esmVersion": 3,
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
           "issue": null,
           "condition": [
             1,
@@ -1311,57 +1413,53 @@
           ]
         },
         {
-          "esmVersion": 3,
-          "status": "conditional",
-          "diagnostic": "PLAY0268",
-          "issue": null,
-          "condition": [
-            1
-          ]
-        },
-        {
           "esmVersion": 4,
           "status": "conditional",
-          "diagnostic": "PLAY0268",
+          "diagnostic": "PLAY0270",
           "issue": null,
           "condition": [
-            1
+            1,
+            2
           ]
         },
         {
           "esmVersion": 5,
           "status": "conditional",
-          "diagnostic": "PLAY0268",
+          "diagnostic": "PLAY0270",
           "issue": null,
           "condition": [
-            1
+            1,
+            2
           ]
         },
         {
           "esmVersion": 6,
           "status": "conditional",
-          "diagnostic": "PLAY0268",
+          "diagnostic": "PLAY0270",
           "issue": null,
           "condition": [
-            1
+            1,
+            2
           ]
         },
         {
           "esmVersion": 7,
           "status": "conditional",
-          "diagnostic": "PLAY0268",
+          "diagnostic": "PLAY0270",
           "issue": null,
           "condition": [
-            1
+            1,
+            2
           ]
         },
         {
           "esmVersion": 8,
           "status": "conditional",
-          "diagnostic": "PLAY0268",
+          "diagnostic": "PLAY0270",
           "issue": null,
           "condition": [
-            1
+            1,
+            2
           ]
         }
       ]
@@ -1425,56 +1523,141 @@
               "issue": null
             }
           ]
+        },
+        {
+          "source": "module M\n  feature F\n    slice StateChange S\n      event Recorded\n        value String\n      constraint Unique\n        description \u0022Constraint intent\u0022\n        unique value on Recorded\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": "PLAY0270",
+          "diagnostics": [
+            {
+              "code": "PLAY0270",
+              "severity": "information"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            }
+          ]
         }
       ],
       "admission": [
         {
           "esmVersion": 1,
-          "status": "admitted",
-          "diagnostic": null,
-          "issue": null
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
         },
         {
           "esmVersion": 2,
-          "status": "admitted",
-          "diagnostic": null,
-          "issue": null
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
         },
         {
           "esmVersion": 3,
-          "status": "admitted",
-          "diagnostic": null,
-          "issue": null
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
         },
         {
           "esmVersion": 4,
-          "status": "admitted",
-          "diagnostic": null,
-          "issue": null
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
         },
         {
           "esmVersion": 5,
-          "status": "admitted",
-          "diagnostic": null,
-          "issue": null
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
         },
         {
           "esmVersion": 6,
-          "status": "admitted",
-          "diagnostic": null,
-          "issue": null
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
         },
         {
           "esmVersion": 7,
-          "status": "admitted",
-          "diagnostic": null,
-          "issue": null
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
         },
         {
           "esmVersion": 8,
-          "status": "admitted",
-          "diagnostic": null,
-          "issue": null
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
         }
       ]
     },
@@ -2473,6 +2656,67 @@
               "issue": null
             }
           ]
+        },
+        {
+          "source": "module M\n  feature F\n    slice StateChange S\n      event Recorded\n        value String\n      command Record\n        value String\n        produces Recorded\n          value = value\n  form Input for Record\n    description \u0022Form intent\u0022\n    field value\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": "PLAY0269",
+          "diagnostics": [
+            {
+              "code": "PLAY0269",
+              "severity": "information"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            }
+          ]
         }
       ],
       "admission": [
@@ -3372,6 +3616,67 @@
           ]
         },
         {
+          "source": "policy Allowed\n  description \u0022Policy intent\u0022\n  require authenticated\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": "PLAY0270",
+          "diagnostics": [
+            {
+              "code": "PLAY0270",
+              "severity": "information"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            }
+          ]
+        },
+        {
           "source": "policy Allowed\n  require not authenticated\n",
           "minimumSemanticVersion": "7.0",
           "diagnostic": null,
@@ -3488,17 +3793,29 @@
         {
           "esmVersion": 1,
           "status": "conditional",
-          "diagnostic": null,
+          "diagnostic": "PLAY0270",
           "issue": null,
           "condition": [
             1,
-            2
+            2,
+            3
           ]
         },
         {
           "esmVersion": 2,
           "status": "conditional",
-          "diagnostic": null,
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "esmVersion": 3,
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
           "issue": null,
           "condition": [
             1,
@@ -3506,52 +3823,52 @@
           ]
         },
         {
-          "esmVersion": 3,
-          "status": "conditional",
-          "diagnostic": null,
-          "issue": null,
-          "condition": [
-            1
-          ]
-        },
-        {
           "esmVersion": 4,
           "status": "conditional",
-          "diagnostic": null,
+          "diagnostic": "PLAY0270",
           "issue": null,
           "condition": [
-            1
+            1,
+            2
           ]
         },
         {
           "esmVersion": 5,
           "status": "conditional",
-          "diagnostic": null,
+          "diagnostic": "PLAY0270",
           "issue": null,
           "condition": [
-            1
+            1,
+            2
           ]
         },
         {
           "esmVersion": 6,
           "status": "conditional",
-          "diagnostic": null,
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1,
+            2
+          ]
+        },
+        {
+          "esmVersion": 7,
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
           "issue": null,
           "condition": [
             1
           ]
         },
         {
-          "esmVersion": 7,
-          "status": "admitted",
-          "diagnostic": null,
-          "issue": null
-        },
-        {
           "esmVersion": 8,
-          "status": "admitted",
-          "diagnostic": null,
-          "issue": null
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
         }
       ]
     },
@@ -3614,55 +3931,261 @@
               "issue": null
             }
           ]
+        },
+        {
+          "source": "module M\n  feature F\n    slice StateChange S\n      event Recorded\n        value String\n      readmodel View\n        value String\n      projection View =\u003E View\n        description \u0022Projection intent\u0022\n        from Recorded\n          value = value\n      query ByValue =\u003E View optional\n        by value String\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": "PLAY0270",
+          "diagnostics": [
+            {
+              "code": "PLAY0270",
+              "severity": "information"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            }
+          ]
         }
       ],
       "admission": [
         {
           "esmVersion": 1,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
+        },
+        {
+          "esmVersion": 2,
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
+        },
+        {
+          "esmVersion": 3,
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
+        },
+        {
+          "esmVersion": 4,
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
+        },
+        {
+          "esmVersion": 5,
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
+        },
+        {
+          "esmVersion": 6,
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
+        },
+        {
+          "esmVersion": 7,
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
+        },
+        {
+          "esmVersion": 8,
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "name": "purpose",
+      "parseStatus": "accepted",
+      "probes": [
+        {
+          "source": "purpose Billing\n  basis contract\nmodule M\n  purpose Billing\n  feature F\n    slice StateChange S\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": "PLAY0270",
+          "diagnostics": [
+            {
+              "code": "PLAY0270",
+              "severity": "information"
+            },
+            {
+              "code": "PLAY0270",
+              "severity": "information"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            }
+          ]
+        }
+      ],
+      "admission": [
+        {
+          "esmVersion": 1,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
           "issue": null
         },
         {
           "esmVersion": 2,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
           "issue": null
         },
         {
           "esmVersion": 3,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
           "issue": null
         },
         {
           "esmVersion": 4,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
           "issue": null
         },
         {
           "esmVersion": 5,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
           "issue": null
         },
         {
           "esmVersion": 6,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
           "issue": null
         },
         {
           "esmVersion": 7,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
           "issue": null
         },
         {
           "esmVersion": 8,
-          "status": "admitted",
-          "diagnostic": null,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
           "issue": null
         }
       ]
@@ -4374,6 +4897,67 @@
       "probes": [
         {
           "source": "module M\n  feature F\n    slice StateChange S\n      screen Screen\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": "PLAY0269",
+          "diagnostics": [
+            {
+              "code": "PLAY0269",
+              "severity": "information"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            }
+          ]
+        },
+        {
+          "source": "module M\n  feature F\n    slice StateChange S\n      screen Screen\n        description \u0022Screen intent\u0022\n",
           "minimumSemanticVersion": "1.0",
           "diagnostic": "PLAY0269",
           "diagnostics": [
@@ -11750,6 +12334,127 @@
       "title": "The subject property modifier is duplicated or is not last in modifier order.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0596",
+      "name": "InvalidPurposeDeclaration",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A purpose declaration or field has invalid syntax.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0597",
+      "name": "InvalidPurposeVocabulary",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A purpose uses a value outside a statutory vocabulary.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0598",
+      "name": "DuplicatePurposeField",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A purpose repeats a singleton field.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0599",
+      "name": "DuplicatePurposeDeclaration",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A purpose name is declared more than once.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0600",
+      "name": "UnknownPurpose",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A purpose reference does not resolve.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0601",
+      "name": "PurposeInterestMismatch",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A legitimate-interest statement and basis do not agree.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0602",
+      "name": "PersonalDataWithoutPurpose",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "An opt-in check found personal data without purpose coverage.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0603",
+      "name": "SpecialDataWithoutCondition",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "An opt-in check found special data without a processing condition.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0604",
+      "name": "CriminalDataWithoutAuthorization",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "An opt-in check found criminal data without authorization.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0605",
+      "name": "PurposeWithoutBasis",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "An opt-in check found a purpose without a lawful basis.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0606",
+      "name": "UnusedPurpose",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "An opt-in check found an unreferenced purpose.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [
@@ -13013,6 +13718,42 @@
           "includeContent": {
             "type": "boolean",
             "default": false
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "processing-record",
+      "requiredParameters": [],
+      "optionalParameters": [
+        "controllerContact",
+        "controllerName",
+        "expectedSourceRevision",
+        "limit",
+        "offset"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "controllerName": {
+            "type": "string"
+          },
+          "controllerContact": {
+            "type": "string"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200
+          },
+          "expectedSourceRevision": {
+            "type": "string"
           }
         },
         "required": [],
@@ -16409,6 +17150,16 @@
       "usage": "screenplay contract [--output \u003Cpath\u003E]",
       "options": [
         "--output"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "report",
+      "usage": "screenplay report processing [\u003Cfile.play|folder\u003E] [--format json|markdown|csv] [--controller-name \u003Cname\u003E] [--controller-contact \u003Ccontact\u003E]",
+      "options": [
+        "--controller-contact",
+        "--controller-name",
+        "--format"
       ],
       "aliases": []
     },

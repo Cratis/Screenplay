@@ -30,10 +30,12 @@ internal static partial class ConstraintParser
         var releaseLocations = new List<SourceLocation>();
         var directiveLocations = new Dictionary<string, SourceLocation> { ["header"] = header.Location };
         string? message = null;
+        string? description = null;
         var ignoreCasing = false;
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
+            if (DescriptionParser.TryParse(context, line, ref description, $"Constraint '{name}'", directiveLocations)) continue;
             if (ReleaseRegex().Match(line.Content) is { Success: true } release)
             {
                 var releaseName = release.Groups[1].Value;
@@ -148,6 +150,7 @@ internal static partial class ConstraintParser
 
         return rules[0] with
         {
+            Description = description,
             AdditionalRules = [.. rules.Skip(1)],
             ReleasedBy = releases,
             Message = message,

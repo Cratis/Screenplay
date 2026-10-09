@@ -42,7 +42,13 @@ public record ScreenSyntax(
     string Name,
     FileReferenceSyntax? File,
     IEnumerable<ScreenDirectiveSyntax> Directives,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the report-only description, distinct from the UI title.
+    /// </summary>
+    public string? Description { get; init; }
+}
 
 /// <summary>
 /// Represents the base of every directive in a screen body.

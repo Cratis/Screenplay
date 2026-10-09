@@ -19,6 +19,7 @@ public sealed partial class SemanticModelBinder
 
         SemanticConstraint? BindConstraint(SemanticAddress owner, ConstraintSyntax constraint)
         {
+            if (constraint.Description is not null) Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Constraint '{constraint.Name}' description is authoring metadata.", constraint.Location);
             ValidateStringKey(constraint.Message, constraint.Location);
             if (constraint is FileConstraintSyntax attachment)
             {

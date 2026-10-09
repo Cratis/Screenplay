@@ -60,6 +60,11 @@ public record ApplicationSyntax(
     /// </summary>
     public IEnumerable<SystemSyntax> Systems { get; init; } = [];
 
+    /// <summary>
+    /// Gets the report-only processing purposes declared in the application.
+    /// </summary>
+    public IEnumerable<PurposeSyntax> Purposes { get; init; } = [];
+
     /// <summary>Gets every physical application-owned event source declaration.</summary>
     public IEnumerable<EventSourceSyntax> EventSources { get; init; } = [];
 

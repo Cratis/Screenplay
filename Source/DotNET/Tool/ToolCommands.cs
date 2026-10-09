@@ -14,6 +14,7 @@ static class ToolCommands
         [CliCommandCatalog.Test] = (args, output, error) => ModelTest.Run(args[1..], output, error),
         [CliCommandCatalog.Mcp] = (args, _, _) => McpCommand.Run(args),
         [CliCommandCatalog.Contract] = (args, output, error) => ContractCommand.Run(args[1..], output, error),
+        [CliCommandCatalog.Report] = (args, output, error) => ProcessingReportCommand.Run(args[1..], output, error),
         [CliCommandCatalog.Help] = (args, output, error) => ModelCheck.Run(args, output, error, !Console.IsOutputRedirected && Environment.GetEnvironmentVariable("NO_COLOR") is null),
         [CliCommandCatalog.Version] = (args, output, error) => ModelCheck.Run(args, output, error, !Console.IsOutputRedirected && Environment.GetEnvironmentVariable("NO_COLOR") is null)
     };

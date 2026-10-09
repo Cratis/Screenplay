@@ -10,6 +10,9 @@
 // and those stay codeless deliberately: minting a PLAY number for something no compiler run can emit
 // would make the catalogue describe two different tools.
 export const diagnosticCodes = {
+    invalidDescription: 'PLAY0145',
+    emptyDescription: 'PLAY0146',
+    duplicateDescription: 'PLAY0147',
     unknownConceptDirective: 'PLAY0010',
     attributeReasonWithoutAttribute: 'PLAY0012',
     duplicateAttributeReason: 'PLAY0013',
@@ -20,6 +23,17 @@ export const diagnosticCodes = {
     secretScopeIgnoredForPii: 'PLAY0569',
     invalidPersonalDataQualifier: 'PLAY0570',
     duplicateSpecialCategory: 'PLAY0571',
+    invalidPurposeDeclaration: 'PLAY0596',
+    invalidPurposeVocabulary: 'PLAY0597',
+    duplicatePurposeField: 'PLAY0598',
+    duplicatePurposeDeclaration: 'PLAY0599',
+    unknownPurpose: 'PLAY0600',
+    purposeInterestMismatch: 'PLAY0601',
+    personalDataWithoutPurpose: 'PLAY0602',
+    specialDataWithoutCondition: 'PLAY0603',
+    criminalDataWithoutAuthorization: 'PLAY0604',
+    purposeWithoutBasis: 'PLAY0605',
+    unusedPurpose: 'PLAY0606',
     duplicateEventSubject: 'PLAY0590',
     invalidSubjectType: 'PLAY0591',
     protectedSubjectType: 'PLAY0592',

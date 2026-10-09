@@ -145,6 +145,7 @@ export type ProjectionBlockSyntax =
     | ProjectionVariantSyntax;
 
 export interface ProjectionSyntax extends SyntaxNode {
+    readonly description?: string | null;
     readonly kind: 'ProjectionSyntax';
     readonly sourceOptions?: SourceOptions;
     readonly name: string;

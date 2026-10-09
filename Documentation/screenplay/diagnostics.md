@@ -151,6 +151,24 @@ remove duplicate route headers before export.
 | `PLAY0594` | Error | Read model subjects are not yet supported; #559 covers the mark and Chronicle's reserved _subject, __subject and __subjects names. |
 | `PLAY0595` | Error | Subject is duplicated or out of modifier order. Write each modifier once: Type optional generated identifier subject. |
 
+### Processing purposes
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0596` | Error | Invalid purpose declaration, reference or field syntax. |
+| `PLAY0597` | Error | Unknown basis, condition or erasure-exception value. |
+| `PLAY0598` | Error | A purpose repeats a singleton field. |
+| `PLAY0599` | Error | A purpose name is declared more than once. |
+| `PLAY0600` | Warning | A purpose reference does not resolve. |
+| `PLAY0601` | Warning | Interest is declared without basis legitimateInterests, or that basis has no nonblank interest statement. |
+| `PLAY0602` | Warning | Opt-in purposes check: a slice carries pii without a declared purpose in scope. |
+| `PLAY0603` | Warning | Opt-in purposes check: special-category data lacks a purpose's condition. |
+| `PLAY0604` | Warning | Opt-in purposes check: criminal data lacks a purpose's authorization. |
+| `PLAY0605` | Warning | Opt-in purposes check: a purpose has no basis. |
+| `PLAY0606` | Warning | Opt-in purposes check: a purpose is never referenced. |
+
+These are structural findings, not legal verdicts. See [Processing purposes](purposes.md).
+
 ### Types
 
 | Code | Severity | Reported when |

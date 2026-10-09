@@ -25,6 +25,8 @@ import { ModuleBody, moduleBodyExpected, modulePattern, parseModule } from './Mo
 import { ParserContext } from './ParserContext';
 import { PolicySyntax } from '../Syntax/Policies';
 import { parsePolicy } from './PolicyParser';
+import { PurposeSyntax } from '../Syntax/Purposes';
+import { parsePurpose } from './PurposeParser';
 import { SeedSyntax } from '../Syntax/Seeds';
 import { parseSeed } from './SeedParser';
 import { parseSystem } from './OperationParser';
@@ -67,6 +69,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     const modules: ModuleSyntax[] = [];
     const personas: PersonaSyntax[] = [];
     const policies: PolicySyntax[] = [];
+    const purposes: PurposeSyntax[] = [];
     const seeds: SeedSyntax[] = [];
     const examples: SpecificationExampleSyntax[] = [];
     const declaredTriggers: NonNullable<ApplicationSyntax['declaredTriggers']>[number][] = [];
@@ -117,6 +120,10 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             personas.push(parsePersona(context, line));
         } else if (keyword === 'seed') {
             seeds.push(parseSeed(context.valueContext, line));
+        } else if (keyword === 'purpose' && placedBody !== undefined) {
+            placedBody.tryParse(context, line);
+        } else if (keyword === 'purpose') {
+            purposes.push(parsePurpose(context, line));
         } else if (keyword === 'policy') {
             // Legacy policies were opaque: enrich their structure without adding diagnostics.
             policies.push(parsePolicy(context, line));
@@ -136,7 +143,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, examples, modules, personas, policies, seeds, declaredTriggers, fileImports, location: context.start };
+    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, location: context.start };
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }
@@ -148,7 +155,7 @@ function declaresConstruct(keyword: string, line: SourceLine, placement: PlayPla
     if (keyword === 'module') {
         return isDocumentPlacement(placement);
     }
-    return keyword === 'example' || keyword === 'eventsource' || keyword === 'system' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || opaqueTopLevel.has(keyword);
+    return keyword === 'purpose' || keyword === 'example' || keyword === 'eventsource' || keyword === 'system' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || opaqueTopLevel.has(keyword);
 }
 
 function parseModuleInPlacedFile(context: ParserContext, line: SourceLine, placement: PlayPlacement, moduleBody: ModuleBody | undefined): void {
@@ -237,10 +244,13 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
         context.error(DiagnosticCodes.UnknownPrimitiveType, `Unknown primitive type '${type}' - expected ${primitiveTypes.join(', ')} or Enum`, locationOf(line));
     }
     const values: string[] = [];
+    let description: string | null = null;
     const validations: ValidateSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
-        if (isFileDirective(child)) {
+        if (firstWord(child.content) === 'description' && (type !== 'Enum' || child.content !== 'description' || context.peekChild(child.indent)?.content.startsWith('```') === true)) {
+            description = parseDescription(context, child, description, `Concept '${name}'`);
+        } else if (isFileDirective(child)) {
             continue;
         } else if (firstWord(child.content) === 'validate') {
             if (type === 'Enum' && child.content === 'validate' && context.peekChild(child.indent) === undefined) {
@@ -261,7 +271,7 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
             context.skipBlock(child.indent);
         }
     }
-    return { kind: 'ConceptSyntax', name, type, attributes, values, validations, location: locationOf(line) };
+    return { kind: 'ConceptSyntax', name, type, attributes, values, validations, description, location: locationOf(line) };
 }
 
 // 'persona <Name>' with an optional description and the policies it holds - the port of the C# ParsePersona.

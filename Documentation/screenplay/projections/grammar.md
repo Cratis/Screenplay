@@ -32,7 +32,7 @@ Document        = { Projection } ;
 
 Projection      = "projection", Ident, [ "=>", TypeRef ], NL,
                   [ INDENT,
-                    { ProjDirective | Block },
+                    [ DescriptionDecl ], { ProjDirective | Block },
                   DEDENT ] ;
 
 ProjDirective   = "no", "automap", NL
@@ -40,6 +40,11 @@ ProjDirective   = "no", "automap", NL
                 | FileDirective
                 | KeyDecl
                 | CompositeKeyDecl ;
+
+DescriptionDecl = "description", QuotedString, NL
+                | "description", NL, INDENT, "```text", NL, Text, "```", NL, DEDENT ;
+(* Header-only authoring metadata. Source placement is flexible; printing puts it first.
+   Variants and nested blocks do not accept descriptions. *)
 
 FileDirective   = "file", FilePath, NL ;
 FilePath        = (* repository relative path, never absolute *) ;

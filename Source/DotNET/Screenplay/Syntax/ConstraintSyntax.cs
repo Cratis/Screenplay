@@ -42,6 +42,11 @@ public abstract record ConstraintSyntax(string Name, SourceLocation Location) : 
     /// The declared violation message, or null for the default message.
     /// </summary>
     public string? Message { get; init; }
+
+    /// <summary>
+    /// Gets the report-only description of this constraint, not its violation message.
+    /// </summary>
+    public string? Description { get; init; }
 }
 
 /// <summary>

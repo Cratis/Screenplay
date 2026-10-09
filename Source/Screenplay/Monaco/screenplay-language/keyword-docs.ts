@@ -21,6 +21,17 @@ export const keywordDocs: Record<string, string> = {
     optional: 'Allows a value to be absent. Write it after the type: `note String optional` or `lines InvoiceLine[] optional`. The collection itself may be absent; its items keep their declared type.',
     identifier: 'Marks the command property a runtime resolves the event source id from. At most one per command; without it a new Uuid is generated.',
     policy: 'A named authorization rule referenced by commands and queries. Multiple policies AND together.',
+    purpose: 'A report-only processing declaration (GDPR Art. 30), referenced on modules, features and slices. Coverage is their union, not an authorization gate. Generated declarations are not legal advice.',
+    basis: 'One declared Art. 6(1) basis: consent, contract, legalObligation, vitalInterests, publicTask or legitimateInterests; an optional quoted reference may follow.',
+    interest: 'The legitimate-interest statement for basis legitimateInterests (Art. 13(1)(d)).',
+    condition: 'One Art. 9(2) processing condition, optionally followed by a quoted reference.',
+    subjects: 'Comma-separated categories of data subjects, as open identifiers.',
+    retention: 'Declared retention period or criteria, not enforced by the model or Chronicle.',
+    recipient: 'A quoted recipient category; repeatable on a purpose.',
+    transfer: 'A declared destination followed by safeguard and quoted safeguards; repeatable.',
+    safeguard: 'The declared safeguard accompanying a third-country transfer.',
+    erasure: 'An erasure exception under Art. 17(3); Chronicle crypto-shredding remains per subject, not per purpose.',
+    exception: 'One declared Art. 17(3) exception: expression, legalObligation, publicTask, publicHealth, archiving or legalClaims.',
     persona: 'A named role interacting with the application, with an optional description and its associated policies.',
     authentication: 'Declares the identity providers of the application — at most one block per file.',
     provider: 'A named identity provider within `authentication`, with free-form `name value` settings.',
@@ -186,4 +197,17 @@ export const contextVariableDocs: Record<string, string> = {
     '$strings': 'A localized string resolved from the `.strings` file of the active locale, e.g. `$strings.invoices.title`.',
     // Every $eventContext path the event-context catalog lists, for projections.
     ...Object.fromEntries(eventContextPaths.map((path) => [`$eventContext.${path.path}`, path.description])),
+};
+
+// One-sentence descriptions of the `pii special` categories (GDPR Art. 9(1)) and `pii criminal` (Art. 10).
+// The same sentences appear in Documentation/screenplay/concepts.md.
+export const specialCategoryDocs: Record<string, string> = {
+    racialOrEthnicOrigin: 'Data revealing a person\'s racial or ethnic origin (GDPR Art. 9(1)).',
+    politicalOpinions: 'Data revealing a person\'s political opinions (GDPR Art. 9(1)).',
+    religiousOrPhilosophicalBeliefs: 'Data revealing a person\'s religious or philosophical beliefs (GDPR Art. 9(1)).',
+    tradeUnionMembership: 'Data revealing whether a person belongs to a trade union (GDPR Art. 9(1)).',
+    genetic: 'Data about inherited or acquired genetic characteristics that gives unique information about a person\'s physiology or health (GDPR Art. 9(1), Art. 4(13)).',
+    biometric: 'Data from technical processing of physical, physiological or behavioral characteristics, special only when processed to uniquely identify a person (GDPR Art. 9(1), Art. 4(14)).',
+    health: 'Data about a person\'s physical or mental health, including health care services, that reveals their health status (GDPR Art. 9(1), Art. 4(15)).',
+    sexLifeOrSexualOrientation: 'Data concerning a person\'s sex life or sexual orientation (GDPR Art. 9(1)).'
 };

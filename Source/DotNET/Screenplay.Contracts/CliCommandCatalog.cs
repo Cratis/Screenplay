@@ -69,6 +69,26 @@ public static class CliCommandCatalog
     public static CliCommand Contract { get; } = new("contract", string.Empty, [Output]);
 
     /// <summary>
+    /// Gets the processing-record output format.
+    /// </summary>
+    public static CliOption ProcessingFormat { get; } = new("--format", "json|markdown|csv");
+
+    /// <summary>
+    /// Gets the controller-name input.
+    /// </summary>
+    public static CliOption ControllerName { get; } = new("--controller-name", "<name>");
+
+    /// <summary>
+    /// Gets the controller-contact input.
+    /// </summary>
+    public static CliOption ControllerContact { get; } = new("--controller-contact", "<contact>");
+
+    /// <summary>
+    /// Gets the processing-record report command.
+    /// </summary>
+    public static CliCommand Report { get; } = new("report", "processing [<file.play|folder>]", [ProcessingFormat, ControllerName, ControllerContact]);
+
+    /// <summary>
     /// Gets the help command.
     /// </summary>
     public static CliCommand Help { get; } = new("help", string.Empty, [], ["--help", "-h"]);
@@ -81,7 +101,7 @@ public static class CliCommandCatalog
     /// <summary>
     /// Gets all dispatched commands.
     /// </summary>
-    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Help, Version];
+    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Report, Help, Version];
 
     /// <summary>
     /// Resolves the first argument using the owning definitions.

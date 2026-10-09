@@ -39,6 +39,8 @@ This record amends the surface names and encryption-scope deferral of [0034](003
 7. Opt-in `--check purposes` warns on uncovered personal data, special data without a condition, criminal data without authorization, purposes without a basis, and unused purposes. Ordinary compilation does not run this check. Findings prompt investigation; they do not assess lawfulness.
 8. An Art. 30 processing record exposes declared purpose fields plus derived concept categories, qualifiers, security measures and a DPIA prompt. It flags erasure exceptions conflicting with Chronicle's per-subject crypto-shredding. MCP `processing_record` and CLI `screenplay report processing --format json|markdown|csv` obtain controller contact details from tool input, not language syntax. Reports say: “Generated from declarations in this model. Not legal advice.”
 
+**2026-10-09 allocation clarification:** The unpublished purpose diagnostics are allocated PLAY0596–PLAY0606. Their draft PLAY0572–PLAY0582 assignments were never on main or released and were moved with approval to preserve main's published persona/specification-table codes unchanged.
+
 ## Options considered
 
 - Keep `pii` (chosen) to align with Chronicle `[PII]`; accept `personal` as a readable alias rather than deprecating `pii`.

@@ -76,7 +76,7 @@ internal static class ReservedWords
     /// The keywords an enumeration <c>concept</c> body reserves, and so the values that need escaping.
     /// </summary>
     public static readonly IReadOnlySet<string> ConceptBody =
-        new HashSet<string>(StringComparer.Ordinal) { "validate" };
+        new HashSet<string>(StringComparer.Ordinal) { "validate", "description" };
 
     /// <summary>
     /// Prefixes a name with the <c>@</c> escape when the enclosing block reserves it as a directive keyword.

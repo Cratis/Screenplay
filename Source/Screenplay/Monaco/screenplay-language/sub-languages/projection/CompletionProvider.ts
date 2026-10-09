@@ -416,6 +416,7 @@ export class CompletionProvider implements languages.CompletionItemProvider {
     private addStatementCompletions(suggestions: languages.CompletionItem[], context: CompletionContext, activeSchema?: JsonSchema): void {
         // Add all statement keywords
         const keywords = [
+            { label: 'description', insertText: 'description ""', documentation: 'Report-only description on the projection header only', detail: 'description "<text>"' },
             { label: 'sequence', insertText: 'sequence ', documentation: 'Specify which event sequence to use for this projection', detail: 'sequence <event-sequence-id>' },
             { label: 'variant', insertText: 'variant ', documentation: 'Declare one of several mutually exclusive named read models sharing this projection\'s identity', detail: 'variant <Name>' },
             { label: 'enters on', insertText: 'enters on ', documentation: 'Declare the event that activates a variant', detail: 'enters on <EventType>' },

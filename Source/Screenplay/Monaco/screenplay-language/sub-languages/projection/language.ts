@@ -8,6 +8,7 @@ export const languageId = 'pdl';
 // Keywords for the Projection Declaration Language
 const KEYWORDS = [
     'projection',
+    'description',
     'sequence',
     'all',
     'every',

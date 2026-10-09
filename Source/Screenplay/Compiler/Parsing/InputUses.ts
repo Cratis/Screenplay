@@ -6,6 +6,7 @@ import { pattern } from '../Text/patterns';
 import { firstWord, unescapeIdentifier } from './LineText';
 import { validateInteractionBodies } from './InteractionAlternatives';
 import { ParserContext } from './ParserContext';
+import { parseDescription } from './DescriptionParser';
 import { locationOf, SourceLine } from './SourceLine';
 
 // Typed authoring facts from bodies the TS syntax tree does not yet model. Never serialized as ESM.
@@ -32,6 +33,7 @@ export function collectInputUses(context: ParserContext, header: SourceLine): vo
     const parameters = new Set<string>();
     const inputs: InputUse[] = [];
     const isBehavior = firstWord(header.content) === 'behavior';
+    let formDescription: string | null = null;
     const recognize = (line: SourceLine): void => {
         while (owners.length > 0 && owners[owners.length - 1].indent >= line.indent) owners.pop();
         const declared = isBehavior && owners.length === 0 ? parameter.exec(line.content) : null;
@@ -52,7 +54,10 @@ export function collectInputUses(context: ParserContext, header: SourceLine): vo
     const lines = [header];
     for (let child = context.peekChild(header.indent); child !== undefined; child = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
-        if (child.content.startsWith('```')) context.skipFencedBody();
+        while (owners.length > 0 && owners[owners.length - 1].indent >= child.indent) owners.pop();
+        if (form.test(header.content) && firstWord(child.content) === 'description' && owners.at(-1)?.kind === 'form') {
+            formDescription = parseDescription(context, child, formDescription, `Form '${header.content.split(pattern('\\s+'))[1]}'`);
+        } else if (child.content.startsWith('```')) context.skipFencedBody();
         else {
             lines.push(child);
             recognize(child);
