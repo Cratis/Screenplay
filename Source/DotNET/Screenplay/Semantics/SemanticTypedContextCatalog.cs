@@ -114,13 +114,16 @@ internal static class SemanticTypedContextCatalog
                     {
                         foreach (var transition in reducer.Transitions.Where(value => value.RequirementId == requirement.RequirementId))
                         {
-                            var state = readModels.SingleOrDefault(value => value.Id == reducer.ReadModel);
+                            // A reducer that targets an event folds into the public event's own shape: that event is its state.
+                            var state = reducer.Target == SemanticProjectionTargetKind.Event
+                                ? events.Where(value => value.Id == reducer.ReadModel).Select(value => (value.Id, value.Properties)).Cast<(SemanticId Id, ImmutableArray<SemanticProperty> Properties)?>().SingleOrDefault()
+                                : readModels.Where(value => value.Id == reducer.ReadModel).Select(value => (value.Id, value.Properties)).Cast<(SemanticId Id, ImmutableArray<SemanticProperty> Properties)?>().SingleOrDefault();
                             var @event = events.SingleOrDefault(value => value.Id == transition.EventContract);
                             if (state is null || @event is null) continue;
                             matches.Add(Descriptor(
                                 requirement,
                                 reducer.ReadModel,
-                                Shaped("State", state.Id, SemanticContextSourceKinds.ReadModel, state.Properties, true),
+                                Shaped("State", state.Value.Id, SemanticContextSourceKinds.ReadModel, state.Value.Properties, true),
                                 Shaped("Event", @event.Id, SemanticContextSourceKinds.CurrentEvent, @event.Properties) with { Source = new(SemanticContextSourceKinds.CurrentEvent, @event.Id, "Event") { EventRevision = @event.Revision } },
                                 new("Key", Runtime(SemanticContextRuntimeTokens.Text), false, false, new(SemanticContextSourceKinds.EventSourceId, @event.Id, "eventSourceId")),
                                 Fixed("Tenant", SemanticContextRuntimeTokens.TenantId),

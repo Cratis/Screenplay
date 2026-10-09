@@ -15,6 +15,16 @@ static class SemanticScopedProjectionIssues
     /// <returns>The issues; empty for a flat projection.</returns>
     internal static IEnumerable<SemanticPlanIssue> For(SemanticProjection projection)
     {
+        if (projection.Target == SemanticProjectionTargetKind.Event)
+        {
+            foreach (var issue in SemanticEventPublication.IssuesFor(projection))
+            {
+                yield return issue;
+            }
+
+            yield break;
+        }
+
         if (projection.Scope is not { } scope)
         {
             yield break;

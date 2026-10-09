@@ -140,10 +140,17 @@ public sealed partial class SemanticModelBinder
                 .Select(_ => _!)
                 .ToImmutableArray();
             ReportUnsupportedSliceMembers(address, slice);
+            if (slice.Direction is not null) UsesPublicEvents = true;
             return new(id, slice.Name, kind, [.. events.Select(_ => _.Contract)], commands, readModels, projections, queries, specifications)
             {
                 Constraints = BindConstraints(address, slice),
-                Reducers = reducers
+                Reducers = reducers,
+                Direction = slice.Direction switch
+                {
+                    TranslationDirection.Inbound => SemanticTranslationDirection.Inbound,
+                    TranslationDirection.Outbound => SemanticTranslationDirection.Outbound,
+                    _ => null
+                }
             };
         }
 
@@ -165,6 +172,7 @@ public sealed partial class SemanticModelBinder
             }
 
             if (declarations.Length > 1) UsesV4 = true;
+            if (current.Visibility != EventVisibility.Private || current.Origin is not null) UsesPublicEvents = true;
             var revisions = new List<(EventSyntax Syntax, ImmutableArray<SemanticProperty> Properties, ImmutableArray<string> Tags)>();
             foreach (var declaration in declarations)
             {
@@ -196,6 +204,8 @@ public sealed partial class SemanticModelBinder
                 new(semanticAssignment.Id, contractAssignment.Id, revision, current.Name, latest.Properties)
                 {
                     Tags = latest.Tags,
+                    Visibility = current.Visibility == EventVisibility.Public || current.Origin is not null ? SemanticEventVisibility.Public : SemanticEventVisibility.Private,
+                    Origin = current.Origin,
                     Predecessor = revision.Value > 1 ? new EventContractRevision(revision.Value - 1) : null,
                     PriorRevisions = [.. revisions.Take(revisions.Count - 1).Select(value => new SemanticEventRevision(
                         new EventContractRevision(value.Syntax.Generation),

@@ -43,7 +43,13 @@ public sealed partial class SemanticModelBinder
         SemanticCapture? BindCapture(SemanticAddress slice, CaptureSyntax capture)
         {
             UsesV6 = true;
-            if (capture.Source is not null)
+            SemanticCaptureEventsSource? eventsSource = null;
+            if (capture.Source is { } source && CaptureEventsSource.IsEvents(source))
+            {
+                UsesPublicEvents = true;
+                eventsSource = BindEventsSource(capture, source);
+            }
+            else if (capture.Source is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Capture '{capture.Name}' source is realization metadata; the reference evaluator is handed records, never a source.", capture.Source.Location);
             }
@@ -67,8 +73,27 @@ public sealed partial class SemanticModelBinder
             return new(id, capture.Name, capture.Key, BindCaptureMap(capture.Name, capture.Map), BindCaptureAppends(capture.Name, capture.Appends))
             {
                 Children = [.. children],
-                Nested = [.. nested]
+                Nested = [.. nested],
+                EventsSource = eventsSource
             };
+        }
+
+        SemanticCaptureEventsSource? BindEventsSource(CaptureSyntax capture, CaptureSourceSyntax source)
+        {
+            var events = ImmutableArray.CreateBuilder<SemanticId>();
+            foreach (var setting in CaptureEventsSource.Events(source))
+            {
+                var name = setting.Value;
+                if (!_events.TryGetValue(ShortName(name), out var @event))
+                {
+                    Error(DiagnosticCodes.InvalidSemanticBinding, $"Capture '{capture.Name}' reads '{name}', which is not a declared event. Declare the foreign public event with its own fields as 'event <Name> from \"<store>\"'.", setting.Location);
+                    continue;
+                }
+
+                events.Add(@event.Contract.Id);
+            }
+
+            return events.Count == 0 ? null : new(events.ToImmutable());
         }
 
         ImmutableArray<SemanticCaptureMap> BindCaptureMap(string capture, IEnumerable<CaptureMapOperationSyntax> operations)

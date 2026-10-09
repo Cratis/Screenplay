@@ -38,4 +38,10 @@ public sealed record SemanticReducer(string Name, SemanticId ReadModel, Immutabl
 
     /// <summary>Gets the transition outcome: a new state, or delete on null.</summary>
     public SemanticReducerResult Result => SemanticReducerResult.StateOrDelete;
+
+    /// <summary>
+    /// Gets what the reducer builds. When <see cref="SemanticProjectionTargetKind.Event"/>, <see cref="ReadModel"/> holds the
+    /// identity of the public event declaration the folded state is published as.
+    /// </summary>
+    public SemanticProjectionTargetKind Target { get; init; } = SemanticProjectionTargetKind.ReadModel;
 }

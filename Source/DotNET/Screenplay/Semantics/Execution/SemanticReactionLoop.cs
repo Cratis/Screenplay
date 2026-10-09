@@ -99,8 +99,9 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
             return result;
         }
 
+        // What the append published (an outbound translation's public event) is observed with it.
         World = accepted.World;
-        return Observe([fact], occurred);
+        return Observe(accepted.Facts, occurred);
     }
 
     /// <summary>

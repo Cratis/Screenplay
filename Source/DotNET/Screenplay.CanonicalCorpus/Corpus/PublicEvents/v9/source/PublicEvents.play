@@ -1,0 +1,42 @@
+domain Contracts
+concept OrderId : Uuid
+concept OrderStatus : String
+module Integration
+    feature Translation
+        slice StateChange PackOrder
+            command PackOrder
+                orderId OrderId identifier
+                carrier String
+                produces OrderPacked
+                    for orderId
+                    carrier = carrier
+            event OrderPacked
+                carrier String
+        slice Translate PublishOrderShipped
+            description "Publishes the one public event of this application for each packed order"
+            direction outbound
+            public event OrderShipped
+                carrier String
+                status OrderStatus
+            projection OrderShippedPublisher => OrderShipped
+                from OrderPacked
+                    status = "packed"
+            specification PublishingAPackedOrder
+                when append OrderPacked
+                    for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    carrier = "DHL"
+                then OrderShipped
+                    carrier = "DHL"
+                    status = "packed"
+        slice Translate TrackShipments
+            direction inbound
+            event ShipmentDispatched from "shipping"
+                orderId OrderId
+            event OrderDispatched
+                orderId OrderId
+            capture ShipmentTracking
+                source events
+                    from ShipmentDispatched
+                key orderId
+                append OrderDispatched
+                    orderId = $.orderId

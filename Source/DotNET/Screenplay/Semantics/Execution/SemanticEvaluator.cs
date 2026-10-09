@@ -216,6 +216,12 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, projectionFailure!);
         }
 
+        if (!SemanticEventPublication.TryPublish(plan, world.Facts, facts.ToImmutable(), out var publications, out var publicationFailure))
+        {
+            return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, publicationFailure!);
+        }
+
+        facts.AddRange(publications);
         var tentative = world.Commit(facts.ToImmutable(), readModels);
         var execution = ExecuteQueries(plan, world, tentative, facts.ToImmutable(), request.Queries, request.Caller);
         return execution is SemanticAccepted accepted ? accepted with { Response = response } : execution;
@@ -257,6 +263,12 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, failure!);
         }
 
+        if (!SemanticEventPublication.TryPublish(plan, world.Facts, facts, out var publications, out var publicationFailure))
+        {
+            return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, publicationFailure!);
+        }
+
+        facts = facts.AddRange(publications);
         return ExecuteQueries(plan, world, world.Commit(facts, readModels), facts, queries, caller);
     }
 
@@ -755,6 +767,12 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         {
             foreach (var projection in plan.Projections.Values.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal))
             {
+                // An event-target projection publishes its state as an event; it builds no read-model instance.
+                if (projection.Target == SemanticProjectionTargetKind.Event)
+                {
+                    continue;
+                }
+
                 // A scoped projection runs through the reference semantics of every Chronicle projection block.
                 if (projection.Scope is not null)
                 {

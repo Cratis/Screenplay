@@ -164,4 +164,10 @@ public sealed record SemanticSlice(
     /// Gets the captures the slice declares; empty for models before ESM v6.
     /// </summary>
     public ImmutableArray<SemanticCapture> Captures { get; init; } = [];
+
+    /// <summary>
+    /// Gets the explicitly declared direction of a translation; <see langword="null"/> for every other slice and for a
+    /// translation that declares none, which keeps its historical inbound meaning.
+    /// </summary>
+    public SemanticTranslationDirection? Direction { get; init; }
 }

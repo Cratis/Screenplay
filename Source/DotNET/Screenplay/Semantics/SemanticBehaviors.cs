@@ -238,6 +238,17 @@ public sealed record SemanticEventContract(
     /// <summary>The immediately preceding contract revision, if any.</summary>
     public EventContractRevision? Predecessor { get; init; }
 
+    /// <summary>
+    /// Gets whether the event is a public contract; private for every model before the version that admits public events.
+    /// </summary>
+    public SemanticEventVisibility Visibility { get; init; } = SemanticEventVisibility.Private;
+
+    /// <summary>
+    /// Gets the opaque store name a foreign public event comes from, or <see langword="null"/> for a local event.
+    /// </summary>
+    /// <remarks>The origin is never resolved; the shape is the one this model declares, and nothing verifies it against the producer.</remarks>
+    public string? Origin { get; init; }
+
     /// <summary>Complete historical revisions, in ascending revision order.</summary>
     public ImmutableArray<SemanticEventRevision> PriorRevisions { get; init; } = [];
 
@@ -415,6 +426,12 @@ public sealed record SemanticProjection(
     /// This is an init-only property to preserve the public positional constructor and deconstruction shape.
     /// </remarks>
     public SemanticProjectionScope? Scope { get; init; }
+
+    /// <summary>
+    /// Gets what the projection builds. When <see cref="SemanticProjectionTargetKind.Event"/>, <see cref="ReadModel"/> holds
+    /// the identity of the public event declaration that the folded state is published as.
+    /// </summary>
+    public SemanticProjectionTargetKind Target { get; init; } = SemanticProjectionTargetKind.ReadModel;
 }
 
 /// <summary>

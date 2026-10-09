@@ -1,0 +1,14 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+namespace Cratis.Screenplay.Semantics.for_SemanticModelValidator.when_validating_public_events;
+
+public class an_outbound_slice_that_declares_a_capture : given.a_model_to_corrupt
+{
+    Exception _error;
+
+    void Because() => _error = Rebuild(OutboundModel, "PublishOrderShipped", slice => slice with { Captures = [new SemanticCapture(SemanticId.Create(SemanticKind.Capture, "stray"), "Stray", "key", [], [])] });
+
+    [Fact] void should_refuse_the_model() => _error.ShouldBeOfExactType<InvalidSemanticContract>();
+    [Fact] void should_say_why() => _error.Message.ShouldContain("cannot declare a capture");
+}
