@@ -92,7 +92,7 @@ describe('when validating a document with a problem of every coded kind', () => 
         ];
         issues.push(...sources.flatMap(lines => validateLines(lines)));
         const vectors = JSON.parse(readFileSync(new URL('../../../../Compiler/Conformance/diagnostics.json', import.meta.url), 'utf8')) as { cases: { source: string[]; diagnostics: string[] }[] };
-        const authoring = ['PLAY0558', 'PLAY0514', 'PLAY0515', 'PLAY0518', 'PLAY0519', 'PLAY0341', 'PLAY0342', 'PLAY0343', 'PLAY0344', 'PLAY0391', 'PLAY0453', 'PLAY0538', 'PLAY0539', 'PLAY0543', 'PLAY0545']
+        const authoring = ['PLAY0010', 'PLAY0012', 'PLAY0013', 'PLAY0560', 'PLAY0561', 'PLAY0562', 'PLAY0563', 'PLAY0564', 'PLAY0565', 'PLAY0566', 'PLAY0558', 'PLAY0514', 'PLAY0515', 'PLAY0518', 'PLAY0519', 'PLAY0341', 'PLAY0342', 'PLAY0343', 'PLAY0344', 'PLAY0391', 'PLAY0453', 'PLAY0538', 'PLAY0539', 'PLAY0543', 'PLAY0545']
             .map(code => vectors.cases.find(vector => vector.diagnostics.some(diagnostic => diagnostic.startsWith(code + '@')))!.source);
         issues.push(...authoring.flatMap(lines => validateLines(lines)));
         // Catalogue entries for C#-only checks are not promises of local TypeScript validation.

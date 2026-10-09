@@ -170,6 +170,16 @@ export function planCompletions(
 ): CompletionPlan {
     const fences = fenceMap(lines);
     if (fences[lineIndex] || withoutComment(textBefore).length < textBefore.length) return { kind: 'none' };
+    if (/^\s*concept\s+\w+\s*:\s*\w+\s+(?:(?:pii|personal|secret)\s+)*\w*$/.test(textBefore)) {
+        return { kind: 'entries', entries: ['pii', 'secret'].filter(marker => !new RegExp(`\\b${marker}\\b`).test(textBefore)).map(marker => ({ label: marker, insertText: marker, documentation: marker === 'pii' ? 'personal data (GDPR Art. 4(1)); renders Chronicle [PII]' : 'Operational secret; renders [Encrypted] + [NotAudited].' })) };
+    }
+    const inConcept = enclosingChain(lines, fences, lineIndex, indentOf(textBefore))[0] === 'concept';
+    if (inConcept && /^\s*(?:secret|sensitive|@sensitive)\s+scope\s+\w*$/.test(textBefore)) {
+        return { kind: 'entries', entries: ['subject', 'namespace', 'global'].map(scope => ({ label: scope, insertText: scope, documentation: 'Explicit secret encryption scope.' })) };
+    }
+    if (inConcept && /^\s*(?:pii|personal|@pii)\s+special\s+\w*$/.test(textBefore)) {
+        return { kind: 'entries', entries: ['racialOrEthnicOrigin', 'politicalOpinions', 'religiousOrPhilosophicalBeliefs', 'tradeUnionMembership', 'genetic', 'biometric', 'health', 'sexLifeOrSexualOrientation'].map(category => ({ label: category, insertText: category, documentation: 'GDPR Art. 9(1) special category.' })) };
+    }
     const responseEntries = exampleCompletions(lines, lineIndex, textBefore) ?? responseCompletions(lines, lineIndex, textBefore, scanDocument(lines));
     if (responseEntries !== null) return { kind: 'entries', entries: responseEntries };
     const dependencyEntries = dependencyTargetCompletions(lines, lineIndex, textBefore, symbols);

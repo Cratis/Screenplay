@@ -20,7 +20,7 @@ export function validate(monaco: Monaco, model: editor.ITextModel, options: Comp
                 : issue.severity === 'information'
                     ? monaco.MarkerSeverity.Info
                     : monaco.MarkerSeverity.Warning,
-        tags: issue.code === 'PLAY0479' ? [monaco.MarkerTag.Deprecated] : undefined,
+        tags: (issue.code === 'PLAY0479' || issue.code === 'PLAY0560') ? [monaco.MarkerTag.Deprecated] : undefined,
         message: issue.message,
         code: issue.code,
         startLineNumber: issue.line + 1,
