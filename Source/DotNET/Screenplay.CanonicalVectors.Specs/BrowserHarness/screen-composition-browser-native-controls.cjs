@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-const { spawn } = require('node:child_process');
+const { execFileSync, spawn } = require('node:child_process');
 const { writeFileSync } = require('node:fs');
 const { chromium } = require('playwright');
 
@@ -9,8 +9,13 @@ const root = process.cwd();
 const source = `${root}/Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ScreenComposition/v1/source/folder`;
 const port = Number(process.env.SCREENPLAY_BROWSER_PORT ?? '19109');
 const workbenchPort = Number(process.env.SCREENPLAY_BROWSER_WORKBENCH_PORT ?? '35109');
-const tag = process.env.SCREENPLAY_STAGE_TAG ?? '4.49.2';
-const nextTag = process.env.SCREENPLAY_NEXT_STAGE_TAG ?? '4.49.4';
+// Unset (or 'cli-default') runs the Stage image the installed CLI defaults to, so a CLI release that moves its default
+// Stage version is rerun without editing this harness. An explicit tag pins a specific image instead.
+const requestedTag = process.env.SCREENPLAY_STAGE_TAG && process.env.SCREENPLAY_STAGE_TAG !== 'cli-default' ? process.env.SCREENPLAY_STAGE_TAG : null;
+const tag = requestedTag ?? 'cli-default';
+const nextTag = process.env.SCREENPLAY_NEXT_STAGE_TAG ?? tag;
+const expectedCliVersion = process.env.SCREENPLAY_EXPECTED_CLI_VERSION ?? null;
+const expectedStageTag = process.env.SCREENPLAY_EXPECTED_STAGE_TAG ?? null;
 const baseUrl = `http://localhost:${port}`;
 const resultPath = process.env.SCREENPLAY_BROWSER_RESULT ?? `${root}/.ai-work/browser-native-controls-result.json`;
 
@@ -55,15 +60,70 @@ async function waitForReady(process) {
 }
 
 function startRuntime() {
+    const tagArguments = requestedTag ? ['--tag', requestedTag] : [];
     return spawn('cratis', [
         'run',
         source,
-        '--tag', tag,
+        ...tagArguments,
         '--port', String(port),
         '--workbench-port', String(workbenchPort),
         '--yes',
         '--verbose'
     ], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
+}
+
+function readCommand(command, args) {
+    try {
+        return execFileSync(command, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+    } catch {
+        return null;
+    }
+}
+
+// The container cratis run starts for this harness is found by its published port and confirmed by its mount of this
+// corpus folder, so cleanup can never remove a container another process owns.
+function findStageContainer() {
+    const listing = readCommand('docker', ['ps', '-a', '--filter', `publish=${port}`, '--format', '{{.ID}} {{.Image}}']);
+    if (!listing) return null;
+
+    for (const line of listing.split('\n').filter(Boolean)) {
+        const [id, image] = line.split(' ');
+        const mounts = readCommand('docker', ['inspect', '-f', '{{range .Mounts}}{{.Source}} {{end}}', id]) ?? '';
+        if (mounts.includes(source)) return { id, image };
+    }
+
+    return null;
+}
+
+function recordVector(result) {
+    const cliVersion = readCommand('cratis', ['--version']);
+    const container = findStageContainer();
+    const stageImage = container?.image ?? null;
+    const stageTag = stageImage?.split(':')[1] ?? null;
+    result.vector = {
+        cliPath: readCommand('which', ['cratis']),
+        cliVersion,
+        requestedStageTag: requestedTag,
+        stageImage,
+        stageTag
+    };
+    result.stageTag = stageTag ?? tag;
+
+    if (stageImage) record(result, 'vector.stageImage', 'info', stageImage);
+    else block(result, 'vector.stageImage', `no Stage container published on port ${port} mounts ${source}`);
+
+    if (expectedCliVersion && cliVersion !== expectedCliVersion) block(result, 'vector.cliVersion', `expected ${expectedCliVersion}, found ${cliVersion}`);
+    else record(result, 'vector.cliVersion', 'info', cliVersion);
+
+    if (expectedStageTag && stageTag !== expectedStageTag) block(result, 'vector.stageTag', `expected ${expectedStageTag}, found ${stageTag}`);
+    else record(result, 'vector.stageTag', 'info', stageTag);
+
+    return container;
+}
+
+function removeStageContainer(container) {
+    if (!container) return;
+    readCommand('docker', ['rm', '-f', container.id]);
 }
 
 async function stopRuntime(process) {
@@ -550,8 +610,10 @@ async function runBrowserFlow(result) {
         assertions: []
     };
 
+    let container = null;
     try {
         await waitForReady(runtime);
+        container = recordVector(result);
         await runBrowserFlow(result);
     } catch (error) {
         result.status = 'failed';
@@ -560,6 +622,7 @@ async function runBrowserFlow(result) {
         result.runtimeLogTail = logs.join('').split('\n').slice(-80);
         writeFileSync(resultPath, `${JSON.stringify(result, null, 2)}\n`);
         await stopRuntime(runtime);
+        removeStageContainer(container ?? findStageContainer());
     }
 
     console.log(JSON.stringify(result, null, 2));
