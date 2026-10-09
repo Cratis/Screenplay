@@ -88,6 +88,18 @@ public record SliceSyntax(
     public FileReferenceSyntax? File { get; init; }
 
     /// <summary>
+    /// Gets the explicitly authored translation direction, or null when omitted.
+    /// Only Translate slices may declare a direction.
+    /// </summary>
+    public TranslationDirection? Direction { get; init; }
+
+    /// <summary>
+    /// Gets the translation direction, interpreting legacy directionless Translate slices as inbound.
+    /// Other slice types have no translation direction.
+    /// </summary>
+    public TranslationDirection? EffectiveDirection => Type == SliceType.Translate ? Direction ?? TranslationDirection.Inbound : null;
+
+    /// <summary>
     /// Gets the authoring-only markdown explaining this slice.
     /// </summary>
     public string? Documentation { get; init; }

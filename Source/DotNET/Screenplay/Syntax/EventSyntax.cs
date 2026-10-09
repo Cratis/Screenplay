@@ -32,6 +32,17 @@ public record EventSyntax(
     public FileReferenceSyntax? File { get; init; }
 
     /// <summary>
+    /// Gets whether this event is a private fact or a public contract. Unmarked local events are private.
+    /// </summary>
+    public EventVisibility Visibility { get; init; } = EventVisibility.Private;
+
+    /// <summary>
+    /// Gets the opaque origin of another application's public event, or null for a local event.
+    /// This value is not a declaration reference or a filesystem path.
+    /// </summary>
+    public string? Origin { get; init; }
+
+    /// <summary>
     /// Gets the generation of this complete event declaration. Unmarked events are generation 1.
     /// </summary>
     public uint Generation { get; init; } = 1;

@@ -51,7 +51,7 @@ describe('when preserving existing operand grammars', () => {
         'seed invalid\n  ignored\n',
         'seed\n  invalid group\n    ignored\n',
         'seed\n  for "global"\n    invalid\n      ignored\n',
-        'seed\n  for "global"\n    Added\n      not a mapping\n',
+        'seed\n  for "global"\n    Added\n      not a mapping\nmodule M\n  feature F\n    slice StateChange S\n      event Added\n',
         'policy P\n  require\n',
         'policy P\n  require role unquoted\n',
         'policy P\n  require claim "limit" invalid 1\n',

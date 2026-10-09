@@ -22,7 +22,7 @@ export class AuthoringProductionResolver {
     private readonly scopes = new Map<SliceSyntax, readonly string[]>();
     private readonly resolutions = new Map<SliceSyntax, Map<string, AuthoringProductionResolution>>();
 
-    constructor(application: ApplicationSyntax) {
+    constructor(application: ApplicationSyntax, declarations?: readonly AuthoringProductionDeclaration[]) {
         const collect = (features: readonly FeatureSyntax[], parent: readonly string[]): void => {
             for (const feature of features) {
                 const scope = [...parent, feature.name];
@@ -46,6 +46,7 @@ export class AuthoringProductionResolver {
             this.declarations.push(...logicalEvents.map(node => ({ kind: AuthoringProductionKind.Event as const, name: node.name, node, scope })),
                 ...operationDeclarations(slice).map(node => ({ kind: AuthoringProductionKind.Operation as const, name: node.name, node, scope })));
         }
+        if (declarations !== undefined) this.declarations.splice(0, this.declarations.length, ...declarations);
         for (const entry of this.declarations) {
             const named = this.byName.get(entry.name) ?? [];
             named.push(entry);
@@ -59,13 +60,17 @@ export class AuthoringProductionResolver {
         const cache = this.resolutions.get(slice) ?? new Map<string, AuthoringProductionResolution>();
         const cached = cache.get(reference);
         if (cached !== undefined) return cached;
-        const candidates = this.candidates(reference, scope);
-        const resolution = candidates.length === 1
-            ? { kind: candidates[0].kind, declaration: candidates[0], candidates: [] }
-            : { kind: candidates.length === 0 ? AuthoringProductionKind.Unresolved : AuthoringProductionKind.Ambiguous, declaration: null, candidates };
+        const resolution = this.resolveFromScope(reference, scope);
         cache.set(reference, resolution);
         this.resolutions.set(slice, cache);
         return resolution;
+    }
+
+    resolveFromScope(reference: string, scope: readonly string[]): AuthoringProductionResolution {
+        const candidates = this.candidates(reference, scope);
+        return candidates.length === 1
+            ? { kind: candidates[0].kind, declaration: candidates[0], candidates: [] }
+            : { kind: candidates.length === 0 ? AuthoringProductionKind.Unresolved : AuthoringProductionKind.Ambiguous, declaration: null, candidates };
     }
 
     isOperation(production: ProducesSyntax, slice: SliceSyntax): boolean {
@@ -79,7 +84,8 @@ export class AuthoringProductionResolver {
     }
 
     private candidates(reference: string, from: readonly string[]): AuthoringProductionDeclaration[] {
-        const segments = reference.split('.');
+        const segments = reference.split('.').filter(segment => segment.length > 0);
+        if (segments.length === 0) return [];
         const named = this.byName.get(segments.at(-1)!) ?? [];
         const qualifiers = segments.slice(0, -1);
         if (qualifiers.length > 0) return named.filter(entry => qualifiers.length <= entry.scope.length && qualifiers.every((value, index) => entry.scope[entry.scope.length - qualifiers.length + index] === value));

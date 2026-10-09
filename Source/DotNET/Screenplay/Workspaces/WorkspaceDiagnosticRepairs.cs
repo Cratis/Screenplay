@@ -208,6 +208,11 @@ public static class WorkspaceDiagnosticRepairs
             return WorkspaceInteractionRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
+        if (diagnostic.Code == DiagnosticCodes.PublicTranslationRequiresDirection)
+        {
+            return WorkspaceTranslationRepairs.Find(index, revision, diagnostic);
+        }
+
         if (diagnostic.Code != DiagnosticCodes.LegacyInlineCodeFence)
         {
             return [];

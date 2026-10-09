@@ -357,7 +357,7 @@ compilation diagnostics belong to the paged diagnostics view. Available typed re
 | `PLAY0479` (Information) | Write `optional` after the type. An occurrence repair changes one type; a document repair contains all spelling changes in one transaction. Both preserve syntax structure. |
 | `PLAY0516` (Information) | Move a sibling declaration or explicit file import, or pin an already placed file before a retained glob. The proposal removes the selected backward edge without new timeline findings. Own-sub-feature findings, cycle groups, unranked members and mixed/different-parent boundaries have no repair. |
 
-Discovery verifies listed `PLAY0166`, `PLAY0478`, `PLAY0469`, `PLAY0471`, `PLAY0479`, `PLAY0516`, `PLAY0563` and strict-condition `PLAY0564` repairs. Interaction repairs expand a one-line alternative or replace opaque `where` with one block-form `when`, respectively; both require individual review and refuse trailing-comment relocation.
+Discovery verifies listed `PLAY0166`, `PLAY0478`, `PLAY0469`, `PLAY0471`, `PLAY0479`, `PLAY0516`, `PLAY0563`, strict-condition `PLAY0564` and `PLAY0614` repairs. `PLAY0614` adds the one `direction inbound|outbound` consistent with the slice's events and constructs; it is offered only when exactly one direction fits and requires individual review. Interaction repairs expand a one-line alternative or replace opaque `where` with one block-form `when`, respectively; both require individual review and refuse trailing-comment relocation.
 It checks authoring acceptance and comment preservation, plus routing safety for
 `PLAY0478`, consumer/routing impact and executable readiness for `PLAY0469`, and
 executable-model/catalog preservation for `PLAY0471`. For example, an inferred

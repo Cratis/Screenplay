@@ -34,6 +34,9 @@ internal static class syntax_examples
         // while still independently populating every other structural member.
         return node switch
         {
+            EventSyntax @event => @event with { Visibility = EventVisibility.Public },
+            ImportSyntax import => import with { Visibility = EventVisibility.Public },
+            SliceSyntax slice => slice with { Type = SliceType.Translate },
             ValidationRuleSyntax rule => rule with { Rule = ValidationRuleKind.Rule, Value = new PathExpressionSyntax("ExamplePredicate", rule.Location), Code = null },
             EventSourceSyntax source => source with { Identifier = source.Identifier is null ? null : source.Identifier with { IsCollection = false, IsOptional = false } },
             EventStreamSyntax stream => stream with { StreamId = null, StreamIdParts = stream.StreamIdParts.Select(part => part with { Type = part.Type with { IsCollection = false, IsOptional = false } }) },

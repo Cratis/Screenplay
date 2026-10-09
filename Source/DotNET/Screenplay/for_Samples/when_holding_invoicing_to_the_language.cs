@@ -24,6 +24,10 @@ public class when_holding_invoicing_to_the_language : Specification
         ("`numbers exact`", 285, [("Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play", [])]),
         ("`system`, `operation`, operation specifications", 301,
             [("Documentation/screenplay/fixtures/operations.play", [typeof(SystemSyntax), typeof(OperationSyntax), typeof(OperationPhaseSyntax), typeof(SpecificationOperationFailureSyntax), typeof(SpecificationOperationSyntax), typeof(SpecificationCompensatedSyntax)])]),
+        ("`direction inbound`/`outbound` on a Translate slice", 480, [("Source/Screenplay/Compiler/Conformance/event-translations.play", [])]),
+        ("`public event` and event or import origins (`from \"store\"`)", 481, [("Source/Screenplay/Compiler/Conformance/event-translations.play", [])]),
+        ("event-target `projection`/`reducer` in outbound translations", 482, [("Source/Screenplay/Compiler/Conformance/event-translations.play", [])]),
+        ("`source events` capture in inbound translations", 483, [("Source/Screenplay/Compiler/Conformance/event-translations.play", [])]),
         ("refusals, redelivery, `then no events`", 433,
             [
                 ("Source/Screenplay/Compiler/Conformance/reaction-refusals-redelivery.play", [typeof(InvocationRefusalSyntax), typeof(RefusalExpressionSyntax), typeof(SpecificationRedeliverySyntax)]),

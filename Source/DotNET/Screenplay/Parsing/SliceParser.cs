@@ -41,6 +41,8 @@ internal static partial class SliceParser
             }
         }
 
+        TranslationDirection? direction = null;
+        var hasDirection = false;
         string? description = null;
         string? documentation = null;
         SourceLocation? descriptionLocation = null;
@@ -72,7 +74,7 @@ internal static partial class SliceParser
                 continue;
             }
 
-            switch (LineText.FirstWord(line.Content))
+            switch (FirstSliceWord(line.Content))
             {
                 case "description":
                     var previousDescription = description;
@@ -98,6 +100,21 @@ internal static partial class SliceParser
                 case "operation":
                     operations.Add(OperationParser.Parse(context, line).Operation);
                     break;
+                case "direction":
+                    var directionMatch = DirectionRegex().Match(line.Content);
+                    if (hasDirection || type != SliceType.Translate || !directionMatch.Success)
+                    {
+                        context.Error(DiagnosticCodes.InvalidSliceDeclaration, "Declare direction inbound or direction outbound once, inside a Translate slice only", line.Location);
+                    }
+                    else
+                    {
+                        direction = Enum.Parse<TranslationDirection>(directionMatch.Groups[1].Value, ignoreCase: true);
+                        directiveLocations["direction"] = line.Location;
+                    }
+
+                    hasDirection = true;
+                    break;
+                case "public":
                 case "event":
                     events.Add(EventParser.Parse(context, line));
                     break;
@@ -150,6 +167,7 @@ internal static partial class SliceParser
 
         return new(type, name, events, commands, queries, projections, captures, reactions, screens, constraints, specifications, header.Location, description, readModels, reducers)
         {
+            Direction = direction,
             Documentation = documentation,
             Examples = examples,
             Operations = operations,
@@ -161,6 +179,19 @@ internal static partial class SliceParser
             DirectiveLocations = directiveLocations
         };
     }
+
+    static string FirstSliceWord(string content)
+    {
+        var end = content.AsSpan().IndexOfAny(' ', '\t');
+        var word = end < 0 ? content : content[..end];
+
+        // Only the new metadata forms use tab-separated dispatch. Changing the shared helper would
+        // reinterpret legacy property-shaped directives elsewhere (notably command responses).
+        return word == "public" || word == "direction" ? word : LineText.FirstWord(content);
+    }
+
+    [GeneratedRegex(@"^direction\s+(inbound|outbound)$", RegexOptions.None, 1000)]
+    private static partial Regex DirectionRegex();
 
     [GeneratedRegex(@"^slice\s+([A-Za-z]\w*)\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();

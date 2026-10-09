@@ -3,6 +3,7 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { CaptureAppendSyntax, CaptureChildrenSyntax, CaptureMapOperationSyntax, CaptureNestedSyntax, CaptureSourceSettingSyntax, CaptureSourceSyntax, CaptureSyntax, CaptureTranslationSyntax, CaptureWhenSyntax } from '../Syntax/Captures';
+import { eventsSourceKind, fromSetting } from '../Syntax/CaptureEventsSource';
 import { TagSyntax } from '../Syntax/Declarations';
 import { PropertyMappingSyntax } from '../Syntax/Expressions';
 import { nativePattern as pattern, pattern as legacyPattern } from '../Text/patterns';
@@ -17,6 +18,7 @@ import { locationOf, SourceLine } from './SourceLine';
 // The grammar Legacy already modeled keeps its original patterns; native patterns apply to Exact documents.
 const grammar = (source: string): { legacy: RegExp; native: RegExp } => ({ legacy: legacyPattern(source), native: pattern(source) });
 const headerRules = grammar('^capture\\s+([A-Za-z_]\\w*)$');
+const eventNameRules = /^[A-Za-z_][\w.]*$/;
 const appendRules = grammar('^append\\s+([A-Z]\\w*)$');
 const childrenRules = grammar('^children\\s+([a-z_]\\w*)\\s+identified\\s+by\\s+([\\w.]+)$');
 const nestedRules = grammar('^nested\\s+([\\w.]+)$');
@@ -31,6 +33,8 @@ const splitTarget = pattern('^[\\w.]+$');
 // A structural port of the existing capture grammar. Transition operands remain authored strings, as
 // C# models them; exact numeric mode is not admitted by any supported executable model (ESM) version yet (#285).
 export function parseCapture(context: ParserContext, line: SourceLine): CaptureSyntax {
+    // The events source is new grammar, so its violations reach the owning context rather than the quiet value context.
+    const owner = context;
     context = context.valueContext;
     const name = select(context, headerRules).exec(line.content)?.[1] ?? '';
     if (name === '' && context.sourceOptions.numericMode === 'exact') context.error(DiagnosticCodes.InvalidCaptureDeclaration, `Invalid capture declaration '${line.content}' - expected 'capture <Name>'`, locationOf(line));
@@ -43,7 +47,7 @@ export function parseCapture(context: ParserContext, line: SourceLine): CaptureS
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         switch (firstWord(child.content)) {
-            case 'source': source = parseSource(context, child); break;
+            case 'source': source = parseSource(context, child, owner); break;
             case 'key': key = child.content.substring('key'.length).trim(); break;
             case 'map': map.push(...parseMap(context, child)); break;
             case 'append': pushAppend(context, child, appends); break;
@@ -69,14 +73,27 @@ export function parseCapture(context: ParserContext, line: SourceLine): CaptureS
     return { kind: 'CaptureSyntax', sourceOptions: context.sourceOptions, name, source, key, map, appends, children, nested, location: locationOf(line) };
 }
 
-function parseSource(context: ParserContext, line: SourceLine): CaptureSourceSyntax {
+function parseSource(context: ParserContext, line: SourceLine, owner: ParserContext): CaptureSourceSyntax {
     const settings: CaptureSourceSettingSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const settingName = firstWord(child.content);
         settings.push({ kind: 'CaptureSourceSettingSyntax', name: settingName, value: child.content.substring(settingName.length).trim(), location: locationOf(child) });
     }
-    return { kind: 'CaptureSourceSyntax', syntaxKind: line.content.substring('source'.length).trim(), settings, location: locationOf(line) };
+    const syntaxKind = line.content.substring('source'.length).trim();
+    if (syntaxKind === eventsSourceKind) validateEventsSource(owner, line, settings);
+    return { kind: 'CaptureSourceSyntax', syntaxKind, settings, location: locationOf(line) };
+}
+
+function validateEventsSource(context: ParserContext, line: SourceLine, settings: readonly CaptureSourceSettingSyntax[]): void {
+    if (settings.length === 0) context.error(DiagnosticCodes.InvalidCaptureEventsSource, "'source events' needs at least one 'from <Event>' line naming a public event to consume", locationOf(line));
+    const seen = new Set<string>();
+    for (const setting of settings) {
+        if (setting.name !== fromSetting) context.error(DiagnosticCodes.InvalidCaptureEventsSource, `'source events' accepts only 'from <Event>' lines, got '${setting.name}'`, setting.location);
+        else if (!eventNameRules.test(setting.value)) context.error(DiagnosticCodes.InvalidCaptureEventsSource, `Invalid event '${setting.value}' - expected 'from <Event>', optionally qualified with dots`, setting.location);
+        else if (seen.has(setting.value)) context.error(DiagnosticCodes.InvalidCaptureEventsSource, `Event '${setting.value}' is already consumed by this 'source events'`, setting.location);
+        else seen.add(setting.value);
+    }
 }
 
 function parseMap(context: ParserContext, line: SourceLine): CaptureMapOperationSyntax[] {

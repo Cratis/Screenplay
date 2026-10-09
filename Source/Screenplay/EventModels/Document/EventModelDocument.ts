@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { EventVisibility, TranslationDirection } from '@cratis/screenplay-compiler';
+
 // The JSON document the event model board reads (@cratis/event-models' event-model-document.schema.json).
 // It is plain data - string ids, numeric enumerations, JSON Schema objects - so it can cross into a webview
 // as-is and be read there with readEventModelDocument. Members the board defaults when absent are left out.
@@ -87,6 +89,7 @@ export interface FeatureDocument {
 }
 
 export interface SliceDocument {
+    direction?: TranslationDirection;
     id: string;
     name: string;
     sliceType: number;
@@ -117,6 +120,8 @@ export interface EventConstraintDocument {
 }
 
 export interface EventItemDocument {
+    visibility?: EventVisibility;
+    origin?: string;
     id: string;
     name: string;
     schema: JsonSchemaObject;

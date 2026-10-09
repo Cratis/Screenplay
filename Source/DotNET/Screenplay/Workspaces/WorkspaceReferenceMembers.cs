@@ -141,6 +141,10 @@ static class WorkspaceReferenceMembers
         if (entry.Node is ProducesSyntax production && parent?.Node is not InvocationRefusalSyntax && index.OwningSlice(entry) is { } slice && !index.Productions.IsEventProduction(production, slice))
             return [("event", WorkspaceReferenceDomain.Operation)];
 
+        // 'from <Event>' inside 'source events' consumes an event; the same setting name under other sources is opaque.
+        if (entry.Node is CaptureSourceSettingSyntax setting && setting.Name == CaptureEventsSource.FromSetting && parent?.Node is CaptureSourceSyntax source && CaptureEventsSource.IsEvents(source))
+            return [("value", WorkspaceReferenceDomain.Event)];
+
         return EventMembers(entry.Node).Concat(OtherMembers(entry, index));
     }
 

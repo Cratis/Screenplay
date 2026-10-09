@@ -27,6 +27,27 @@ Appending a trailing optional parameter instead looks equivalent and is not. It 
 Authoring metadata follows this rule: `SpecificationSyntax.Description` and the `Documentation` members on modules, features, slices, commands, read models and reactions are nullable init-only properties. They appear in the syntax transport schema, not in the executable semantic model. Preserve them when rewriting a declaration.
 
 `SpecificationSyntax.GivenCallerPersona` is an additive init-only reference with a name and location, distinct from `GivenCaller`. It is omitted from syntax JSON when absent, preserving untouched documents' bytes. A reader that predates the persona member must reject the new member rather than silently interpret an unauthenticated caller. Effective syntax expands the reference and carries `SpecificationValueOrigin.Persona` with persona and policy provenance; it adds no ESM member or version.
+## Public event source-authoring members
+
+`EventSyntax` and `ImportSyntax` gain init-only `Visibility` (`EventVisibility.Private` by default)
+and nullable `Origin`. An origin-bearing declaration/import must have `Public` visibility.
+`SliceSyntax` gains nullable init-only `Direction`; its computed `EffectiveDirection` interprets
+an omitted Translate direction as inbound and is not serialized. Constructors and Deconstruct
+signatures are unchanged. Missing old JSON members default to Private/null/null, and writers omit
+these defaults, preserving legacy syntax bytes. Explicit Public, origin and direction values
+participate in structural equality and survive typed JSON and canonical printing.
+
+C# `SyntaxSchema` owns the new optional fields; the generated transport/TypeScript mirrors are
+regenerated through the owning schema specification, not edited by hand, and the TypeScript parser reads
+and writes the same members. Any nondefault public-event metadata or explicit
+direction refuses semantic compilation with `PLAY0268` (#481/#480); source authoring acceptance
+must not be confused with executable readiness. Preserve these fields when rewriting nodes.
+
+Event-target projections and reducers (`projection X => PublicEvent`, #482) and `source events` captures
+(#483) add no AST member. A projection's or reducer's `ReadModel` text and a capture source's `Kind`
+(`events`) and `from` settings carry them: whether `=>` names an event or a read model is decided by
+resolution against the assembled model, never by the parser. `CaptureEventsSource` (C#) and
+`consumedEvents` (TypeScript) read the consumed events. Both refuse semantic compilation with `PLAY0268`.
 
 ## Compliance marker members
 

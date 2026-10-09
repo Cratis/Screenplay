@@ -1,12 +1,12 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { eventDeclarations, CommandSyntax, QueryParameterSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
+import { eventDeclarations, CommandSyntax, EventVisibility, QueryParameterSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
 import {
     CommandItemDocument, EventItemDocument, QueryItemDocument, QueryParameterType, ReadModelItemDocument, SliceDocument, SliceStatus, SliceType,
 } from '../Document/EventModelDocument';
 import { toUserExperience } from '../Prototypes/toUserExperience';
-import { consumedEvents } from './consumedEvents';
+import { capturedEvents, consumedEvents } from './consumedEvents';
 import { EventConstraint } from './EventConstraint';
 import { EventOwners } from './EventOwners';
 import { producedEvents } from './producedEvents';
@@ -51,6 +51,7 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
         specifications: toSpecifications(slice.specifications, scope, owners, command?.id),
         commentCount: 0,
     };
+    if (slice.direction != null) document.direction = slice.direction;
     if (command !== undefined) {
         document.command = command;
     }
@@ -80,6 +81,8 @@ function eventsOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): E
         id: scope.idOf('event', event.name),
         name: event.name,
         schema: owners.schemas.forProperties(event.properties),
+        ...(event.visibility === EventVisibility.Public ? { visibility: event.visibility } : {}),
+        ...(event.origin != null ? { origin: event.origin } : {}),
     }, constraintsByEvent.get(event.name.toLowerCase()) ?? []));
     if (slice.type === 'StateChange') {
         return declared;
@@ -89,9 +92,11 @@ function eventsOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): E
         declaredNames.add(name.toLowerCase());
         return { id: scope.idOf('produces', name), name, schema: owners.schemaFor(name) } satisfies EventItemDocument;
     });
+    const captured = new Set(capturedEvents(slice).map(name => name.toLowerCase()));
     const consumed = consumedEvents(slice).filter(name => !declaredNames.has(name.toLowerCase())).map(name => {
         const producer = owners.idFor(name);
-        const event: EventItemDocument = { id: scope.idOf('consumes', name), name, schema: owners.schemaFor(name) };
+        // 'source events' consumes another application's public events.
+        const event: EventItemDocument = { id: scope.idOf('consumes', name), name, schema: owners.schemaFor(name), ...(captured.has(name.toLowerCase()) ? { visibility: EventVisibility.Public } : {}) };
         return producer === undefined ? event : { ...event, sourceEventId: producer };
     });
     return [...declared, ...produced, ...consumed];

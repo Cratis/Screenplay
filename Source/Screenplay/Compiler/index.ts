@@ -12,6 +12,7 @@ export type { PersonaCallerResult } from './Syntax/PersonaCallerResult';
 export { expandSpecificationExamples, expandEffectiveSpecificationExamples } from './Parsing/SpecificationCommandExamples';
 export { eventBodyReservedWords } from './Text/ReservedWords';
 export { pattern } from './Text/patterns';
+export { stringBodyPattern, unescapeString } from './Text/StringLiteral';
 export { isSourceStreamName, isSourceStreamTypeName, sourceStreamPattern } from './Text/SourceStreamNames';
 export { authoredOrderOf, authoredOrderKey, copyAuthoredOrder, recordAuthoredOrder } from './Files/AuthoredOrder';
 export { selectOrderingRoot } from './Files/OrderingRoot';

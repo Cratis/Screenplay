@@ -91,6 +91,17 @@ public record ApplicationSyntax(
 public record ImportSyntax(string QualifiedName, SourceLocation Location) : SyntaxNode(Location)
 {
     /// <summary>
+    /// Gets the visibility of the imported contract. An import with an origin is public.
+    /// Ordinary imports retain their legacy private/local classification.
+    /// </summary>
+    public EventVisibility Visibility { get; init; } = EventVisibility.Private;
+
+    /// <summary>
+    /// Gets the opaque origin of the imported public event, not a filesystem path or a resolved name.
+    /// </summary>
+    public string? Origin { get; init; }
+
+    /// <summary>
     /// Gets the short name - the last segment of the qualified name.
     /// </summary>
     public string Name => QualifiedName[(QualifiedName.LastIndexOf('.') + 1)..];

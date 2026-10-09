@@ -93,12 +93,24 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
                 throw new InvalidWorkspaceAuthoring("A projection variant names its output read model. Rename the variant and its read model with explicit coordinated typed edits; variant output continuity is not proven by this rename operation.");
             }
 
+            if (target.Node is EventSyntax && EventTarget(entry.Node) is { } targeted && targeted.Split('.')[^1] == request.ExpectedName)
+            {
+                throw new InvalidWorkspaceAuthoring($"Event '{request.ExpectedName}' is the target of a projection or reducer ('=> {targeted}') at '{Position(documents, entry)}'. Rename the event and its '=>' target with explicit coordinated typed edits; event-target continuity is not proven by this rename operation.");
+            }
+
             if (target.Node is ReadModelSyntax && entry.Node is ProjectionSyntax { ReadModel: null } projection && projection.Name == request.ExpectedName)
             {
                 throw new InvalidWorkspaceAuthoring("A projection's implicit output name is also its declaration identity. Make the output alias explicit before renaming this read model.");
             }
         }
     }
+
+    static string? EventTarget(SyntaxNode node) => node switch
+    {
+        ProjectionSyntax projection => projection.ReadModel,
+        ReducerSyntax reducer => reducer.ReadModel,
+        _ => null
+    };
 
     static string Position(ImmutableArray<WorkspaceDocument> documents, WorkspaceSyntaxEntry entry) =>
         $"{documents.Single(document => document.Id == entry.Handle.Document).Path.Value}({entry.Location.Line},{entry.Location.Column})";

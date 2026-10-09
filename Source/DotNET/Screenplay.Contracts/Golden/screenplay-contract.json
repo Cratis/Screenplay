@@ -73,6 +73,7 @@
     "depends",
     "description",
     "dialog",
+    "direction",
     "documentation",
     "domain",
     "employmentLaw",
@@ -137,6 +138,7 @@
     "implementation",
     "import",
     "in",
+    "inbound",
     "increment",
     "info",
     "information",
@@ -188,6 +190,7 @@
     "order",
     "origin",
     "otherwise",
+    "outbound",
     "outlet",
     "packages",
     "parameter",
@@ -208,6 +211,7 @@
     "propagate",
     "property",
     "provider",
+    "public",
     "publicHealth",
     "publicTask",
     "purpose",
@@ -627,6 +631,75 @@
               "issue": null
             }
           ]
+        },
+        {
+          "source": "import Outside.Arrived from \u0022store\u0022\nmodule M\n  feature F\n    slice Translate S\n      direction inbound\n      event Recorded\n        value String\n      capture Source\n        source events\n          from Arrived\n        key id\n        append Recorded\n          value = $.value\n",
+          "minimumSemanticVersion": null,
+          "diagnostic": "PLAY0268",
+          "diagnostics": [
+            {
+              "code": "PLAY0268",
+              "severity": "error"
+            },
+            {
+              "code": "PLAY0268",
+              "severity": "error"
+            },
+            {
+              "code": "PLAY0268",
+              "severity": "error"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+            }
+          ]
         }
       ],
       "admission": [
@@ -662,21 +735,30 @@
         },
         {
           "esmVersion": 6,
-          "status": "admitted",
-          "diagnostic": null,
-          "issue": null
+          "status": "conditional",
+          "diagnostic": "PLAY0268",
+          "issue": null,
+          "condition": [
+            1
+          ]
         },
         {
           "esmVersion": 7,
-          "status": "admitted",
-          "diagnostic": null,
-          "issue": null
+          "status": "conditional",
+          "diagnostic": "PLAY0268",
+          "issue": null,
+          "condition": [
+            1
+          ]
         },
         {
           "esmVersion": 8,
-          "status": "admitted",
-          "diagnostic": null,
-          "issue": null
+          "status": "conditional",
+          "diagnostic": "PLAY0268",
+          "issue": null,
+          "condition": [
+            1
+          ]
         }
       ]
     },
@@ -1904,6 +1986,123 @@
           "status": "refused",
           "diagnostic": "PLAY0269",
           "issue": null
+        }
+      ]
+    },
+    {
+      "name": "direction",
+      "parseStatus": "accepted",
+      "probes": [
+        {
+          "source": "module M\n  feature F\n    slice Translate S\n      direction inbound\n",
+          "minimumSemanticVersion": null,
+          "diagnostic": "PLAY0268",
+          "diagnostics": [
+            {
+              "code": "PLAY0268",
+              "severity": "error"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/480"
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/480"
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/480"
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/480"
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/480"
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/480"
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/480"
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/480"
+            }
+          ]
+        }
+      ],
+      "admission": [
+        {
+          "esmVersion": 1,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/480"
+        },
+        {
+          "esmVersion": 2,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/480"
+        },
+        {
+          "esmVersion": 3,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/480"
+        },
+        {
+          "esmVersion": 4,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/480"
+        },
+        {
+          "esmVersion": 5,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/480"
+        },
+        {
+          "esmVersion": 6,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/480"
+        },
+        {
+          "esmVersion": 7,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/480"
+        },
+        {
+          "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/480"
         }
       ]
     },
@@ -4070,6 +4269,123 @@
           "condition": [
             1
           ]
+        }
+      ]
+    },
+    {
+      "name": "public",
+      "parseStatus": "accepted",
+      "probes": [
+        {
+          "source": "module M\n  feature F\n    slice StateChange S\n      public event Recorded\n        value String\n",
+          "minimumSemanticVersion": null,
+          "diagnostic": "PLAY0268",
+          "diagnostics": [
+            {
+              "code": "PLAY0268",
+              "severity": "error"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+            }
+          ]
+        }
+      ],
+      "admission": [
+        {
+          "esmVersion": 1,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/481"
+        },
+        {
+          "esmVersion": 2,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/481"
+        },
+        {
+          "esmVersion": 3,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/481"
+        },
+        {
+          "esmVersion": 4,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/481"
+        },
+        {
+          "esmVersion": 5,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/481"
+        },
+        {
+          "esmVersion": 6,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/481"
+        },
+        {
+          "esmVersion": 7,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/481"
+        },
+        {
+          "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/481"
         }
       ]
     },
@@ -12457,6 +12773,160 @@
         "warning"
       ],
       "title": "An opt-in check found an unreferenced purpose.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0607",
+      "name": "CommandProducesPublicEvent",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A command produces a public event.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0608",
+      "name": "PublicEventRequiresOutboundTranslation",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A local public event is produced outside an explicit outbound translation.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0609",
+      "name": "OutboundPublicEventCount",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An outbound translation does not produce exactly one local public event type.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0610",
+      "name": "ForeignPublicEventConsumer",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A foreign public event is consumed outside an explicit inbound translation.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0611",
+      "name": "OutboundTranslationInput",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An outbound translation consumes an event that is not private and local.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0612",
+      "name": "InboundTranslationOutput",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An inbound translation produces an event that is not private and local.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0613",
+      "name": "ForeignPublicEventProduced",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A foreign public event is produced locally.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0614",
+      "name": "PublicTranslationRequiresDirection",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A translation using public events omits explicit direction.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0615",
+      "name": "TranslationConstructDirection",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A translation construct does not fit its direction.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0616",
+      "name": "InboundTranslationInput",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An explicitly inbound translation consumes an event that is not public and foreign.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0617",
+      "name": "OutboundTranslationOutput",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An outbound translation produces a private event.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0618",
+      "name": "EventTargetOutsideOutboundTranslation",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A projection or reducer targets an event outside an explicitly outbound Translate slice.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0619",
+      "name": "EventsSourceOutsideInboundTranslation",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A capture reads source events outside an explicitly inbound Translate slice.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0620",
+      "name": "InvalidCaptureEventsSource",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A source events block does not consist of one or more from \u003CEvent\u003E lines.",
       "reserved": false,
       "retired": false
     }

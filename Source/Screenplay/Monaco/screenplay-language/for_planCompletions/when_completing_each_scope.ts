@@ -13,14 +13,14 @@ const offered = (text: string): string[] => {
 };
 
 const scopes: Record<string, [string, string[]]> = {
-    'the root': ['', ['authentication', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'domain', 'eventsource', 'example', 'import', 'import "…"', 'layout', 'module', 'persona', 'policy', 'seed', 'system', 'theme', 'trigger', 'type', 'ui profile']],
-    'a domain': ['domain Catalog\n  ', ['authentication', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'eventsource', 'example', 'import', 'import "…"', 'layout', 'module', 'persona', 'policy', 'seed', 'system', 'theme', 'trigger', 'type', 'ui profile']],
+    'the root': ['', ['authentication', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'domain', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'seed', 'system', 'theme', 'trigger', 'type', 'ui profile']],
+    'a domain': ['domain Catalog\n  ', ['authentication', 'behavior', 'concept', 'concept (pii with reason)', 'concept (enum)', 'eventsource', 'example', 'import', 'import from', 'import "…"', 'layout', 'module', 'persona', 'policy', 'seed', 'system', 'theme', 'trigger', 'type', 'ui profile']],
     'a module': ['module M\n  ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'dialog template', 'example', 'feature', 'form', 'import "…"', 'on', 'screen', 'screen template', 'uses']],
     'a feature': ['module M\n  feature F\n    ', ['authorize', 'contribute', 'depends on', 'description', 'documentation', 'example', 'feature', 'import "…"', 'on', 'slice Automation', 'slice StateChange', 'slice StateView', 'slice Translate', 'uses']],
-    'a state change slice': ['module M\n  feature F\n    slice StateChange S\n      ', ['command', 'constraint', 'documentation', 'event', 'event generation', 'example', 'file', 'operation', 'screen', 'specification']],
-    'a state view slice': ['module M\n  feature F\n    slice StateView S\n      ', ['documentation', 'event', 'event generation', 'example', 'file', 'projection', 'query', 'query observable', 'readmodel', 'reducer', 'screen', 'specification']],
-    'an automation slice': ['module M\n  feature F\n    slice Automation S\n      ', ['command', 'documentation', 'event', 'event generation', 'example', 'file', 'operation', 'reaction', 'readmodel', 'reducer', 'specification']],
-    'a translate slice': ['module M\n  feature F\n    slice Translate S\n      ', ['capture', 'documentation', 'event', 'event generation', 'example', 'file', 'specification']],
+    'a state change slice': ['module M\n  feature F\n    slice StateChange S\n      ', ['command', 'constraint', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'operation', 'public event', 'screen', 'specification']],
+    'a state view slice': ['module M\n  feature F\n    slice StateView S\n      ', ['documentation', 'event', 'event from', 'event generation', 'example', 'file', 'projection', 'public event', 'query', 'query observable', 'readmodel', 'reducer', 'screen', 'specification']],
+    'an automation slice': ['module M\n  feature F\n    slice Automation S\n      ', ['command', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'operation', 'public event', 'reaction', 'readmodel', 'reducer', 'specification']],
+    'a translate slice': ['module M\n  feature F\n    slice Translate S\n      ', ['capture', 'direction', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'public event', 'specification']],
     'a read model': ['module M\n  feature F\n    slice StateView S\n      readmodel R\n        ', ['description', 'documentation', 'file', 'property']],
     'a reducer': ['module M\n  feature F\n    slice StateView S\n      reducer R => V\n        ', ['description', 'on']],
     'a form': ['module M\n  form F for C\n    ', ['description', 'field', 'on', 'populate from item', 'populate via query', 'uses']],

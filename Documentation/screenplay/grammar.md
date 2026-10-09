@@ -50,7 +50,7 @@ DomainDecl     = "domain", QualifiedName, NL ;
 (* Imports                                                         *)
 (* -------------------------------------------------------------- *)
 
-Import         = "import", QualifiedName, NL
+Import         = "import", QualifiedName, [ EventOrigin ], NL
                | FileImport ;
 QualifiedName  = Ident, { ".", Ident } ;
 
@@ -483,7 +483,12 @@ SliceDecl      = "slice", SliceType, Ident, NL,
 
 SliceType      = "StateChange" | "StateView" | "Automation" | "Translate" ;
 
-SliceBody      = EventDecl
+(* Direction is source only (no executable model admits it): once, on Translate only. Omission is legacy inbound.
+   Explicit direction refuses semantic compilation with PLAY0268 (#480). *)
+TranslationDirectionDecl = "direction", ( "inbound" | "outbound" ), NL ;
+
+SliceBody      = TranslationDirectionDecl
+               | EventDecl
                | OperationDecl
                | CommandDecl
                | QueryDecl
@@ -506,6 +511,11 @@ ReducerDecl    = "reducer", Ident, "=>", Ident, NL,
 ReducerRule    = "on", Ident, NL,
                  [ INDENT, [ DescriptionDecl ], [ FileDirective | InlineBlock ], DEDENT ] ;
 
+(* In an explicitly outbound Translate slice the "=>" target of a projection or
+   reducer may name the slice's public event instead of a read model; resolution,
+   not the parser, decides which (PLAY0618). The source-only form is refused for
+   execution with PLAY0268 (#482). *)
+
 (* A read model declares what it is, never what composes it. Whatever builds it
    - a projection or a reducer - names it with "=>", so the arrow always points
    the same way and a reader follows one direction to find where state comes
@@ -521,7 +531,9 @@ ReducerRule    = "on", Ident, NL,
 (* Events                                                          *)
 (* -------------------------------------------------------------- *)
 
-EventDecl      = "event", Ident, [ "generation", PositiveUInt32 ], NL,
+(* Public visibility and origin are source only; PLAY0268 (#481) refuses binding. *)
+EventOrigin    = "from", StringLiteral ;         (* nonblank opaque origin, not a path or name reference *)
+EventDecl      = [ "public" ], "event", Ident, [ "generation", PositiveUInt32 ], [ EventOrigin ], NL,
                  INDENT, { FileDirective | EventMetadata | TagDecl | PropertyLine }, DEDENT ;
 
 EventMetadata  = EventDescriptionDecl | DocumentationDecl | EventIdDecl ;
@@ -903,6 +915,10 @@ PDLBody        = (* Projection Declaration Language grammar - covers the project
 
 CaptureDecl    = "capture", Ident, NL,
                  INDENT, CDLBody, DEDENT ;
+
+(* "source events" with one or more "from <Event>" lines reads the public events of
+   another application in an explicitly inbound Translate slice (PLAY0619, PLAY0620);
+   it is refused for execution with PLAY0268 (#483). *)
 
 CDLBody        = (* Change Data Capture Language grammar - covers source/key/map
                     (including split), append/when (added, removed, template,

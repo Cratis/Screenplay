@@ -138,7 +138,34 @@ internal static partial class CaptureParser
             settings.Add(new(settingName, child.Content[settingName.Length..].Trim(), child.Location));
         }
 
+        if (kind == CaptureEventsSource.Kind) ValidateEventsSource(context, line, settings);
+
         return new(kind, settings, line.Location);
+    }
+
+    static void ValidateEventsSource(ParserContext context, SourceLine line, List<CaptureSourceSettingSyntax> settings)
+    {
+        if (settings.Count == 0)
+        {
+            context.Error(DiagnosticCodes.InvalidCaptureEventsSource, "'source events' needs at least one 'from <Event>' line naming a public event to consume", line.Location);
+        }
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var setting in settings)
+        {
+            if (setting.Name != CaptureEventsSource.FromSetting)
+            {
+                context.Error(DiagnosticCodes.InvalidCaptureEventsSource, $"'source events' accepts only 'from <Event>' lines, got '{setting.Name}'", setting.Location);
+            }
+            else if (!EventNameRegex().IsMatch(setting.Value))
+            {
+                context.Error(DiagnosticCodes.InvalidCaptureEventsSource, $"Invalid event '{setting.Value}' - expected 'from <Event>', optionally qualified with dots", setting.Location);
+            }
+            else if (!seen.Add(setting.Value))
+            {
+                context.Error(DiagnosticCodes.InvalidCaptureEventsSource, $"Event '{setting.Value}' is already consumed by this 'source events'", setting.Location);
+            }
+        }
     }
 
     static List<CaptureMapOperationSyntax> ParseMap(ParserContext context, SourceLine line)
@@ -512,4 +539,7 @@ internal static partial class CaptureParser
 
     [GeneratedRegex(@"^nested\s+([\w.]+)$", RegexOptions.None, 1000)]
     private static partial Regex NestedRegex();
+
+    [GeneratedRegex(@"^[A-Za-z_][\w.]*$", RegexOptions.None, 1000)]
+    private static partial Regex EventNameRegex();
 }

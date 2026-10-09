@@ -4,6 +4,9 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { EventSyntax, PropertySyntax, ReadModelSyntax, TagSyntax, TypeSyntax } from '../Syntax/Declarations';
 import { pattern } from '../Text/patterns';
+import { EventVisibility } from '../Syntax/EventVisibility';
+import { isBlankPublicEventOrigin } from '../Syntax/PublicEventInvariants';
+import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { eventBodyReservedWords } from '../Text/ReservedWords';
 import { parseDescription } from './DescriptionParser';
 import { parseDocumentation } from './DocumentationParser';
@@ -16,7 +19,7 @@ import { parseProperty, tryParseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
 
 const typeHeader = pattern('^type\\s+([A-Za-z_]\\w*)$');
-const eventHeader = pattern('^event\\s+([A-Za-z_]\\w*)(?:\\s+generation\\s+([0-9]+))?$');
+const eventHeader = pattern(`^(?:(?<public>public)\\s+)?event\\s+(?<name>[A-Za-z_]\\w*)(?:\\s+generation\\s+(?<generation>[0-9]+))?(?:\\s+from\\s+"(?<origin>${stringBodyPattern})")?$`);
 const readModelHeader = pattern('^readmodel\\s+([A-Za-z_]\\w*)$');
 const maximumGeneration = 4294967295;
 const typeShapedPattern = pattern('^[A-Z]\\w*(?:\\[\\])?(?:\\?|\\s+optional)?$');
@@ -65,14 +68,19 @@ export function parseType(context: ParserContext, header: SourceLine): TypeSynta
 
 export function parseEvent(context: ParserContext, header: SourceLine): EventSyntax {
     const match = eventHeader.exec(header.content);
-    const name = match?.[1] ?? '';
+    const name = match?.groups?.name ?? '';
     if (match === null) {
-        context.error(DiagnosticCodes.InvalidEventDeclaration, `Invalid event declaration '${header.content}' - expected 'event <Name> [generation <N>]'`, locationOf(header));
+        context.error(DiagnosticCodes.InvalidEventDeclaration, `Invalid event declaration '${header.content}' - expected '[public] event <Name> [generation <N>] [from "<origin>"]'`, locationOf(header));
     }
-    const hasGenerationMarker = match?.[2] !== undefined;
+    const origin = match?.groups?.origin === undefined ? null : unescapeString(match.groups.origin);
+    const visibility = match?.groups?.public !== undefined || origin !== null ? EventVisibility.Public : EventVisibility.Private;
+    if (origin !== null && isBlankPublicEventOrigin(origin)) {
+        context.error(DiagnosticCodes.InvalidEventDeclaration, 'An event origin must be a nonblank quoted string', locationOf(header));
+    }
+    const hasGenerationMarker = match?.groups?.generation !== undefined;
     let generation = 1;
     if (hasGenerationMarker) {
-        const declared = Number(match![2]);
+        const declared = Number(match!.groups!.generation);
         if (!Number.isSafeInteger(declared) || declared === 0 || declared >= maximumGeneration) {
             context.error(DiagnosticCodes.InvalidEventGeneration, `Event '${name}' must declare a generation between 1 and ${maximumGeneration - 1}`, locationOf(header));
         } else {
@@ -104,7 +112,7 @@ export function parseEvent(context: ParserContext, header: SourceLine): EventSyn
         properties.push(withoutIdentifier(context, property, line, DiagnosticCodes.IdentifierOnEventProperty,
             `Property '${property.name}' of event '${name}' cannot be marked identifier - an event never carries its event source id`));
     }
-    return { kind: 'EventSyntax', name, properties, tags, generation, hasGenerationMarker, ...metadata.value, location: locationOf(header) };
+    return { kind: 'EventSyntax', name, properties, tags, visibility, origin, generation, hasGenerationMarker, ...metadata.value, location: locationOf(header) };
 }
 
 // 'tag <value>' - the port of the C# TagParser, with the warning the C# EventParser gives for a tag whose

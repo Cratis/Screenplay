@@ -1,0 +1,25 @@
+domain Contracts
+import Shipping.ShipmentDispatched from "shipping"
+module Integration
+    feature Translation
+        slice Translate PublishOrderShipped
+            direction outbound
+            event OrderPacked
+                orderId String
+            public event OrderShipped
+                orderId String
+                status String
+            projection OrderShippedPublisher => OrderShipped
+                from OrderPacked
+                    status = "packed"
+        slice Translate TrackShipments
+            direction inbound
+            event OrderDispatched
+                orderId String
+            capture ShipmentTracking
+                source events
+                    from ShipmentDispatched
+                key orderId
+                append OrderDispatched
+                    when status from "pending" to "dispatched"
+                        orderId = $.orderId

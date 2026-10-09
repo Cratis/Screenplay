@@ -50,3 +50,4 @@
 | [0046](0046-specification-case-tables.md) | Run one specification over named cases, expanded in the front end | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0047](0047-data-subject-mark-on-event-properties.md) | Mark an event's data subject with a trailing subject modifier on a property (phase 1) | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0048](0048-guarded-on-bindings.md) | Select whole interaction action lists with ordered item conditions | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
+| [0049](0049-public-events-and-translation-direction.md) | Mark public events, state their origin as an opaque quoted store name, and give Translate slices a direction | accepted | none |  |  |

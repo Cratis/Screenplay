@@ -64,6 +64,7 @@ The slice is the atomic unit of behavior, aligned with Event Modeling. A slice h
 
 ```screenplay
 slice <SliceType> <Name>
+  [direction inbound|outbound]    // Translate only
   [description "<text>"]
   [file <path>]
   <constructs>
@@ -124,7 +125,30 @@ module Invoicing
 | `StateChange` | A command → events flow; something that changes the system |
 | `StateView` | A query + projection + screen; something that reads the system |
 | `Automation` | A reaction or reducer; something that runs when something happens |
-| `Translate` | A capture; converts external data into events |
+| `Translate` | Translates outside occurrences to private local facts (inbound), or private facts to a public contract (outbound) |
+
+### Translation direction (source only)
+
+Declare `direction inbound` or `direction outbound` once directly inside a `Translate`
+slice. Inbound includes existing captures of outside data and translation of another
+application's public events. Outbound describes publishing a local public contract.
+Direction on any other slice type, an unknown value, or a repeated directive is an error
+(`PLAY0027`, invalid slice declaration). Legacy directionless Translate slices remain
+accepted and are interpreted as inbound; the printer does not insert a directive into them.
+
+`SliceSyntax.Direction` (`direction` in TypeScript) is a nullable property preserving whether the author wrote
+the directive; `EffectiveDirection` supplies inbound for legacy translations and null
+for other slice types. Both compilers' printers, typed JSON and the authoring workspace preserve the
+explicit value, and Monaco and VS Code complete and validate it. Any explicit direction currently refuses semantic
+compilation with `PLAY0268` naming #480. This allocates no ESM version and implements
+no publishing, subscription, delivery or Stage behavior. Public/private usage constraints and translation
+cardinality are checked by `PLAY0607`-`PLAY0620` ([diagnostics](diagnostics.md#public-event-boundaries)); `PLAY0614`
+has an editor and MCP repair that declares the one consistent direction.
+
+An outbound slice publishes its one public event with a `projection`/`reducer` whose `=>`
+target is that event ([projecting to an event](projections/index.md#projecting-to-an-event)),
+or with a reaction. An inbound slice may consume another application's public events with
+[`source events`](captures.md#capturing-from-public-events). Both are source-only for now.
 
 ### What goes in a slice
 

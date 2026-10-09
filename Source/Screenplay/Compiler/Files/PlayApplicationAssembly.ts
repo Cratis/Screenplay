@@ -23,6 +23,7 @@ import { validatePurposes } from '../Parsing/PurposeValidator';
 import { splitLines } from '../Parsing/SourceLineSplitter';
 import { ParserContext } from '../Parsing/ParserContext';
 import { validateResponses } from '../Parsing/ResponseValidator';
+import { validatePublicEventUsage } from '../Parsing/PublicEventUsageValidator';
 import { validateOperations } from '../Parsing/OperationValidator';
 import { CompilationResult, discoverImports, parseForAuthoring } from '../ScreenplayCompiler';
 import { ApplicationSyntax } from '../Syntax/Structure';
@@ -85,6 +86,7 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     const effective = expandSpecificationExamples(merged.value);
     validateEventSources(merged.value, context);
     validateOperations(merged.value, context);
+    validatePublicEventUsage(merged.value, context);
     validateInlineEvents(merged.value, context);
     validateConstraintProperties(merged.value, context);
     validateResponses(effective, context, parsed.flatMap(document => document.inputUses));

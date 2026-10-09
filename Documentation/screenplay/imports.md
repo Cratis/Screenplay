@@ -15,6 +15,20 @@ A [folder of `.play` files](folders.md) is already one application. That solves 
 
 [Systems](operations.md) stay application-scoped even in placed files; operations belong to their declared slice. Files compiled together share explicit operation declarations. `produces Register.NotifyAccounting` can select that operation from another slice in the same assembled model. Use enough owning scope to make the reference unique; ambiguous event/operation candidates are not guessed. Newly qualified productions must resolve to an explicit operation, not an event. An unquoted contract import does not invent an operation shape or kind. These constructs remain syntax-only, not admitted by any supported executable model (ESM) version yet (`PLAY0268`).
 
+## Import a public event contract (source only)
+
+`import Fulfillment.Dispatched from "Fulfillment"` names a public event contract
+with an opaque origin. The qualified contract name remains separate from the origin.
+The origin must be a nonblank quoted string; it is neither a file import nor a reference
+that declaration rename resolves. Ordinary `import Fulfillment.Dispatched` keeps its
+legacy behavior. A quoted first operand still imports files; adding `from` to a file
+import is invalid.
+
+The C# and TypeScript ASTs carry `Visibility` and `Origin` as additive properties. Origin-bearing
+imports have public visibility. Both compilers' printers and typed JSON preserve both, and Monaco and
+VS Code recognize them, but semantic compilation refuses them with `PLAY0268` naming #481. Stage and
+renderer support does not exist, so source acceptance alone does not authorize execution.
+
 ## Import files
 
 At the top level of a document, `import` with a quoted path brings in whole documents:

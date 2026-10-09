@@ -29,6 +29,7 @@ const KEYWORDS = [
     'api',
     'webhook',
     'message',
+    'events',
     'route',
     'poll',
     'path',
