@@ -54,6 +54,13 @@ public class when_moving_interaction_targets : given.a_refactoring_workspace
         Formatting = WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments
     });
 
+    [Fact]
+    void should_catalog_each_reference_occurrence_once()
+    {
+        var bindings = new WorkspaceReferenceBindings(WorkspaceSyntaxIndex.Create(Workspace), includeInteractions: true).Bindings;
+        bindings.Select(binding => binding.Reference.Key).Distinct().Count().ShouldEqual(bindings.Length);
+    }
+
     [Fact] void should_accept() => Assert.True(_result.Accepted, string.Join(" | ", _result.Conflicts.Select(conflict => conflict.Message)));
     [Fact] void should_repair_all_three_operands_and_all_three_parameter_arguments() => _result.MoveReport.ReferenceRepairs.Length.ShouldEqual(6);
     [Fact] void should_repair_navigation() => WorkspaceSyntaxIndex.Create(_result.Workspace).Entries.Select(entry => entry.Node).OfType<NavigateActionSyntax>().Single(action => action.Screen != "screen").Screen.ShouldEqual("Projects.Destination.Moving.Home");

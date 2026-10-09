@@ -10671,6 +10671,62 @@
       "title": "Files give conflicting documentation for the same module or feature.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0560",
+      "name": "UnsupportedInteractionAlternatives",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "Interaction alternatives require a click, double click or select trigger.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0561",
+      "name": "MixedInteractionAlternatives",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "Interaction alternatives cannot mix with plain actions or an opaque guard.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0562",
+      "name": "InteractionAlternativeWithoutActions",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An interaction alternative or fallback has no actions.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0563",
+      "name": "InlineInteractionAlternative",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An interaction alternative uses the label-headed one-line spelling instead of a block.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0564",
+      "name": "LegacyInteractionWhere",
+      "severity": "warning",
+      "severities": [
+        "warning",
+        "information"
+      ],
+      "title": "An item interaction uses a deprecated opaque where guard.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [

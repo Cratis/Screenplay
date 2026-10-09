@@ -29,7 +29,7 @@ sealed class WorkspaceReferenceBindings
             .GroupBy(declaration => (declaration.Owner, declaration.Name)).ToDictionary(group => group.Key, group => group.ToArray());
         _imports = index.Entries.Select(entry => entry.Node).OfType<ImportSyntax>().GroupBy(import => import.Name, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.Select(import => import.QualifiedName).Distinct(StringComparer.Ordinal).ToArray(), StringComparer.Ordinal);
-        Bindings = [.. WorkspaceReferenceMembers.All(index).Concat(includeInteractions ? WorkspaceReferenceMembers.Interactions(index) : []).Select(Bind)];
+        Bindings = [.. WorkspaceReferenceMembers.All(index).Concat(includeInteractions ? WorkspaceReferenceMembers.Interactions(index) : []).Distinct().Select(Bind)];
     }
 
     internal WorkspaceReferenceBinding[] Bindings { get; }
