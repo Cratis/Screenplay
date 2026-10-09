@@ -48,7 +48,7 @@ static class ContractAdmission
             "command",
             Slice + Event + Command,
             [
-                Slice + Event.Replace("value String", "value Int", StringComparison.Ordinal) + Command.Replace("value String", "value Int\n        validate\n          value not empty", StringComparison.Ordinal),
+                Slice + Event + Command.Replace("value String", "value String\n        validate\n          value rule BeUnique", StringComparison.Ordinal),
                 Slice + Event + Command.Replace("value String", "value String\n        id Uuid identifier", StringComparison.Ordinal).Replace("value = value", "for id\n          value = value", StringComparison.Ordinal),
                 "concept Id : Uuid\n" + Slice + "      command Record\n        id Id generated\n",
                 "concept Id : Uuid\n" + Slice + "      command Record\n        id Id\n        returns id\n",
@@ -60,7 +60,7 @@ static class ContractAdmission
             Slice + Event,
             [
                 Slice + "      event Recorded generation 1\n        value String\n      event Recorded generation 2\n        value String\n",
-                Slice + "      event Recorded generation 1\n        oldValue String\n      event Recorded generation 2\n        value String\n      specification Historical\n        given Recorded\n          oldValue = \"test\"\n"
+                Slice + "      event Recorded generation 1\n        value String\n      event Recorded generation 2\n        value String\n" + Command + "      specification Historical\n        given Recorded\n          value = \"previous\"\n        when Record\n          value = \"test\"\n        then Recorded\n          value = \"test\"\n"
             ]),
         new("operation", "system Outside\n" + Slice + "      operation External\n        uses Outside\n        execute\n          implementation\n            hint \"External work\"\n"),
         new("projection", Slice + Event + ReadModel + Projection + KeyedQuery),
@@ -82,7 +82,7 @@ static class ContractAdmission
         {
             var probe = Probes.SingleOrDefault(probe => probe.Keyword == keyword) ?? throw new InvalidScreenplayContract($"Construct '{keyword}' lacks an admission probe.");
             var sources = new[] { probe.Source }.Concat(probe.Variants ?? []).ToArray();
-            var bound = sources.Select((source, index) => Observe(source, index == 0 ? probe.Imported : null, index == 0 ? probe.Baseline : null)).ToArray();
+            var bound = sources.Select((source, index) => Observe($"{keyword}[{index}]", source, index == 0 ? probe.Imported : null, index == 0 ? probe.Baseline : null)).ToArray();
             var cases = new JsonArray();
             for (var index = 0; index < sources.Length; index++)
             {
@@ -116,12 +116,14 @@ static class ContractAdmission
         return result;
     }
 
-    internal static Observation Observe(string source, string? imported = null, string? baseline = null)
+    internal static Observation Observe(string probe, string source, string? imported = null, string? baseline = null)
     {
         var compilation = Bind(source, imported);
+        EnsureValidProbe(probe, compilation);
         var baselineCompilation = baseline is null ? null : Bind(baseline);
+        if (baselineCompilation is not null) EnsureValidProbe($"{probe} baseline", baselineCompilation);
         var diagnostics = compilation.Diagnostics.Where(diagnostic => baselineCompilation?.Diagnostics.Contains(diagnostic) != true).ToArray();
-        var diagnostic = diagnostics.FirstOrDefault(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error || diagnostic.Code == DiagnosticCodes.ReportOnlySemanticSyntax || diagnostic.Code == DiagnosticCodes.DeferredSemanticSyntax);
+        var diagnostic = diagnostics.FirstOrDefault(IsDisposition);
         var metadataOnly = baselineCompilation is not null && compilation.Value?.Model.Revision == baselineCompilation.Value?.Model.Revision;
 
         return new(compilation.Value?.Model.SemanticVersion, diagnostic, metadataOnly, diagnostics);
@@ -131,23 +133,30 @@ static class ContractAdmission
 
     internal static CompilationResult<SemanticCompilation> Bind(string source, string? imported = null)
     {
-        var parsed = new ScreenplayCompiler().Parse(source);
-        if (parsed.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)) throw new InvalidScreenplayContract($"Admission probe does not parse: {string.Join("; ", parsed.Diagnostics.Select(diagnostic => diagnostic.Message))}");
-
-        var identity = ApplicationIdentity.Create("Contract");
-        var catalog = SemanticIdentityCatalog.Empty(identity);
-        if (imported is not null)
+        var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Contract"));
+        var documents = new List<WorkspaceDocument>
         {
-            WorkspaceDocument[] documents =
-            [
-                WorkspaceDocument.Create("contract", PortablePlayPath.Parse("contract.play"), Encoding.UTF8.GetBytes(source)),
-                WorkspaceDocument.Create("imported", PortablePlayPath.Parse("imported.play"), Encoding.UTF8.GetBytes(imported))
-            ];
-            return ScreenplayWorkspace.Create("Contract", [.. documents], catalog).Compilation;
-        }
+            WorkspaceDocument.Create("contract", PortablePlayPath.Parse("contract.play"), Encoding.UTF8.GetBytes(source))
+        };
+        if (imported is not null) documents.Add(WorkspaceDocument.Create("imported", PortablePlayPath.Parse("imported.play"), Encoding.UTF8.GetBytes(imported)));
 
-        var document = SemanticSourceDocument.Create(catalog.ResolveDocument("contract"), "contract", "contract.play", source);
-        return new SemanticModelBinder().Bind("Contract", parsed.Value!, SemanticDocumentSet.Create([document], catalog));
+        // Workspace compilation runs the same merged-source validators and timeline analysis as real models.
+        return ScreenplayWorkspace.Create("Contract", [.. documents], catalog).Compilation;
+    }
+
+    static bool IsDisposition(Diagnostic diagnostic) => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax || diagnostic.Code == DiagnosticCodes.DeferredSemanticSyntax || diagnostic.Code == DiagnosticCodes.ReportOnlySemanticSyntax;
+
+    static void EnsureValidProbe(string probe, CompilationResult<SemanticCompilation> compilation)
+    {
+        var errors = compilation.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && !IsDisposition(diagnostic)).ToArray();
+        if (errors.Length > 0)
+        {
+            throw new InvalidScreenplayContract($"Admission probe '{probe}' has unexpected source errors: {string.Join("; ", errors.Select(diagnostic => $"{diagnostic.Code}: {diagnostic.Message}"))}");
+        }
+        if (compilation.Value is null && !compilation.Diagnostics.Any(IsDisposition))
+        {
+            throw new InvalidScreenplayContract($"Admission probe '{probe}' did not bind and has no admission disposition.");
+        }
     }
 
     static JsonObject Entry(Observation observation, JsonNode support) => new()

@@ -153,7 +153,7 @@ dotnet run --project Source/DotNET/Tool -- contract --output Source/DotNET/Scree
 dotnet test Source/DotNET/Screenplay.Contracts/Screenplay.Contracts.csproj --configuration Debug
 ```
 
-Review the JSON diff. Ordinary specs compare the generated document with the golden and never rewrite it. Admission probes bind representative source against the real binder; updating the golden cannot hide a probe that no longer parses or agrees with the declared disposition. A new conditional rule needs an example and condition in the admission probe table.
+Review the JSON diff. Ordinary specs compare the generated document with the golden and never rewrite it. Every admission probe uses the same workspace compilation path as a real model, including source validation and timeline analysis before semantic binding. Generation fails with the probe's name if it raises an error other than an unsupported, deferred or report-only semantic disposition; malformed examples cannot become published admission refusals by updating the golden. A new conditional rule needs an example and condition in the admission probe table.
 
 ## Use the compiler as a library
 

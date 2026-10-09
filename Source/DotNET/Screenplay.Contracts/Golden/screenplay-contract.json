@@ -396,6 +396,10 @@
           "diagnostic": "PLAY0269",
           "diagnostics": [
             {
+              "code": "PLAY0306",
+              "severity": "warning"
+            },
+            {
               "code": "PLAY0269",
               "severity": "information"
             }
@@ -646,12 +650,12 @@
           ]
         },
         {
-          "source": "module M\n  feature F\n    slice StateChange S\n      event Recorded\n        value Int\n      command Record\n        value Int\n        validate\n          value not empty\n        produces Recorded\n          value = value\n",
+          "source": "module M\n  feature F\n    slice StateChange S\n      event Recorded\n        value String\n      command Record\n        value String\n        validate\n          value rule BeUnique\n        produces Recorded\n          value = value\n",
           "minimumSemanticVersion": null,
-          "diagnostic": "PLAY0273",
+          "diagnostic": "PLAY0268",
           "diagnostics": [
             {
-              "code": "PLAY0273",
+              "code": "PLAY0268",
               "severity": "error"
             }
           ],
@@ -659,43 +663,43 @@
             {
               "esmVersion": 1,
               "status": "refused",
-              "diagnostic": "PLAY0273",
+              "diagnostic": "PLAY0268",
               "issue": null
             },
             {
               "esmVersion": 2,
               "status": "refused",
-              "diagnostic": "PLAY0273",
+              "diagnostic": "PLAY0268",
               "issue": null
             },
             {
               "esmVersion": 3,
               "status": "refused",
-              "diagnostic": "PLAY0273",
+              "diagnostic": "PLAY0268",
               "issue": null
             },
             {
               "esmVersion": 4,
               "status": "refused",
-              "diagnostic": "PLAY0273",
+              "diagnostic": "PLAY0268",
               "issue": null
             },
             {
               "esmVersion": 5,
               "status": "refused",
-              "diagnostic": "PLAY0273",
+              "diagnostic": "PLAY0268",
               "issue": null
             },
             {
               "esmVersion": 6,
               "status": "refused",
-              "diagnostic": "PLAY0273",
+              "diagnostic": "PLAY0268",
               "issue": null
             },
             {
               "esmVersion": 7,
               "status": "refused",
-              "diagnostic": "PLAY0273",
+              "diagnostic": "PLAY0268",
               "issue": null
             }
           ]
@@ -918,7 +922,7 @@
         {
           "esmVersion": 1,
           "status": "conditional",
-          "diagnostic": "PLAY0273",
+          "diagnostic": "PLAY0268",
           "issue": null,
           "condition": [
             1,
@@ -931,7 +935,7 @@
         {
           "esmVersion": 2,
           "status": "conditional",
-          "diagnostic": "PLAY0273",
+          "diagnostic": "PLAY0268",
           "issue": null,
           "condition": [
             1,
@@ -943,7 +947,7 @@
         {
           "esmVersion": 3,
           "status": "conditional",
-          "diagnostic": "PLAY0273",
+          "diagnostic": "PLAY0268",
           "issue": null,
           "condition": [
             1,
@@ -955,7 +959,7 @@
         {
           "esmVersion": 4,
           "status": "conditional",
-          "diagnostic": "PLAY0273",
+          "diagnostic": "PLAY0268",
           "issue": null,
           "condition": [
             1,
@@ -967,7 +971,7 @@
         {
           "esmVersion": 5,
           "status": "conditional",
-          "diagnostic": "PLAY0273",
+          "diagnostic": "PLAY0268",
           "issue": null,
           "condition": [
             1,
@@ -979,7 +983,7 @@
         {
           "esmVersion": 6,
           "status": "conditional",
-          "diagnostic": "PLAY0273",
+          "diagnostic": "PLAY0268",
           "issue": null,
           "condition": [
             1,
@@ -991,7 +995,7 @@
         {
           "esmVersion": 7,
           "status": "conditional",
-          "diagnostic": "PLAY0273",
+          "diagnostic": "PLAY0268",
           "issue": null,
           "condition": [
             1,
@@ -1113,7 +1117,12 @@
           "source": "concept Value : String\n  validate csharp\n    \u0060\u0060\u0060csharp\n    return true;\n    \u0060\u0060\u0060\n",
           "minimumSemanticVersion": "3.0",
           "diagnostic": null,
-          "diagnostics": [],
+          "diagnostics": [
+            {
+              "code": "PLAY0397",
+              "severity": "warning"
+            }
+          ],
           "admission": [
             {
               "esmVersion": 1,
@@ -1756,64 +1765,51 @@
           ]
         },
         {
-          "source": "module M\n  feature F\n    slice StateChange S\n      event Recorded generation 1\n        oldValue String\n      event Recorded generation 2\n        value String\n      specification Historical\n        given Recorded\n          oldValue = \u0022test\u0022\n",
-          "minimumSemanticVersion": null,
-          "diagnostic": "PLAY0524",
-          "diagnostics": [
-            {
-              "code": "PLAY0524",
-              "severity": "error"
-            },
-            {
-              "code": "PLAY0352",
-              "severity": "error"
-            },
-            {
-              "code": "PLAY0449",
-              "severity": "error"
-            }
-          ],
+          "source": "module M\n  feature F\n    slice StateChange S\n      event Recorded generation 1\n        value String\n      event Recorded generation 2\n        value String\n      command Record\n        value String\n        produces Recorded\n          value = value\n      specification Historical\n        given Recorded\n          value = \u0022previous\u0022\n        when Record\n          value = \u0022test\u0022\n        then Recorded\n          value = \u0022test\u0022\n",
+          "minimumSemanticVersion": "4.0",
+          "diagnostic": null,
+          "diagnostics": [],
           "admission": [
             {
               "esmVersion": 1,
               "status": "refused",
-              "diagnostic": "PLAY0524",
+              "diagnostic": null,
               "issue": null
             },
             {
               "esmVersion": 2,
               "status": "refused",
-              "diagnostic": "PLAY0524",
+              "diagnostic": null,
               "issue": null
             },
             {
               "esmVersion": 3,
               "status": "refused",
-              "diagnostic": "PLAY0524",
+              "diagnostic": null,
               "issue": null
             },
             {
               "esmVersion": 4,
-              "status": "refused",
-              "diagnostic": "PLAY0524",
+              "status": "admitted",
+              "diagnostic": null,
               "issue": null
             },
             {
               "esmVersion": 5,
-              "status": "refused",
-              "diagnostic": "PLAY0524",
+              "status": "admitted",
+              "diagnostic": null,
               "issue": null
             },
             {
               "esmVersion": 6,
-              "status": "refused",
-              "diagnostic": "PLAY0524",
+              "status": "admitted",
+              "diagnostic": null,
               "issue": null
             },
             {
               "esmVersion": 7,
-              "status": "refused",
-              "diagnostic": "PLAY0524",
+              "status": "admitted",
+              "diagnostic": null,
               "issue": null
             }
           ]
@@ -1823,7 +1819,7 @@
         {
           "esmVersion": 1,
           "status": "conditional",
-          "diagnostic": "PLAY0524",
+          "diagnostic": null,
           "issue": null,
           "condition": [
             1,
@@ -1833,7 +1829,7 @@
         {
           "esmVersion": 2,
           "status": "conditional",
-          "diagnostic": "PLAY0524",
+          "diagnostic": null,
           "issue": null,
           "condition": [
             1,
@@ -1843,7 +1839,7 @@
         {
           "esmVersion": 3,
           "status": "conditional",
-          "diagnostic": "PLAY0524",
+          "diagnostic": null,
           "issue": null,
           "condition": [
             1,
@@ -1852,39 +1848,27 @@
         },
         {
           "esmVersion": 4,
-          "status": "conditional",
-          "diagnostic": "PLAY0524",
-          "issue": null,
-          "condition": [
-            2
-          ]
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 5,
-          "status": "conditional",
-          "diagnostic": "PLAY0524",
-          "issue": null,
-          "condition": [
-            2
-          ]
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 6,
-          "status": "conditional",
-          "diagnostic": "PLAY0524",
-          "issue": null,
-          "condition": [
-            2
-          ]
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 7,
-          "status": "conditional",
-          "diagnostic": "PLAY0524",
-          "issue": null,
-          "condition": [
-            2
-          ]
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
         }
       ]
     },
@@ -10354,7 +10338,7 @@
       "severities": [
         "error"
       ],
-      "title": "A typed specification example declares route metadata instead of stating it on a step.",
+      "title": "A command or read-model example declares a route; only event examples carry routes.",
       "reserved": false,
       "retired": false
     },
