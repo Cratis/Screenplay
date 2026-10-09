@@ -252,6 +252,41 @@ async function seedData(result) {
     }
 }
 
+function collectSceneIds(value, ids = []) {
+    if (Array.isArray(value)) {
+        for (const item of value) collectSceneIds(item, ids);
+        return ids;
+    }
+
+    if (value && typeof value === 'object') {
+        if (typeof value.id === 'string') ids.push(value.id);
+        if (typeof value.stableId === 'string') ids.push(value.stableId);
+        for (const child of Object.values(value)) collectSceneIds(child, ids);
+    }
+
+    return ids;
+}
+
+async function assertSceneIdentifierFidelity(result) {
+    const response = await fetch(`${baseUrl}/stage/scene`);
+    if (!response.ok) {
+        block(result, 'browser.scene.identifierFidelity.fetch', `/stage/scene returned ${response.status}`);
+        return;
+    }
+
+    const scene = await response.json();
+    const ids = [...new Set(collectSceneIds(scene))];
+    const punctuationIds = ids.filter(id => id.includes('.') || id.includes(':'));
+    const dottedIds = ids.filter(id => id.includes('.'));
+    record(result, 'browser.scene.identifierFidelity.ids', 'info', punctuationIds.join(','));
+
+    if (punctuationIds.length > 0) record(result, 'browser.scene.identifierFidelity.punctuation', 'passed', punctuationIds.join(','));
+    else block(result, 'browser.scene.identifierFidelity.punctuation', 'no punctuation-bearing stable ids found in /stage/scene');
+
+    if (dottedIds.length > 0) record(result, 'browser.scene.identifierFidelity.dotted', 'passed', dottedIds.join(','));
+    else record(result, 'browser.scene.identifierFidelity.dotted', 'pending', 'rerun after Stage/CLI vector includes dotted stable ids');
+}
+
 async function assertTwoItemSelectionLifecycle(page, result, network) {
     await page.goto(`${baseUrl}/#/WorkItemList`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
     await page.waitForTimeout(3_000);
@@ -474,6 +509,7 @@ async function runBrowserFlow(result) {
         return;
     }
 
+    await assertSceneIdentifierFidelity(result);
     await seedData(result);
     await assertTwoItemSelectionLifecycle(page, result, network);
     await assertInvalidThenValidCreate(page, result, network);
