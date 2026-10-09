@@ -1,0 +1,5 @@
+eventsource Account
+  stream All
+eventsource Other
+  id "Account"
+  stream All

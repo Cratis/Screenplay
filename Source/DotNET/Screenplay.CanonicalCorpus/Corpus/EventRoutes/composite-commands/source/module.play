@@ -1,0 +1,27 @@
+module M
+  feature F
+    slice StateChange S
+      command Book
+        id String identifier
+        project Uuid
+        period String
+        stream Account.Ledger
+          streamId
+            period = period
+            project = project
+        produces event Booked
+          value String = "other"
+      specification CommandOnlyParts
+        when Book
+          id = "other"
+          project = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          period = "a|b%"
+        then Booked
+          value = "other"
+      specification CommandOnlyOpaqueEscape
+        when Book
+          id = "other"
+          project = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          period = "%7C"
+        then Booked
+          value = "other"
