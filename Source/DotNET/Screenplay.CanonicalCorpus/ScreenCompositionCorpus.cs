@@ -512,6 +512,26 @@ public static class ScreenCompositionCorpus
                         Assertion("browser.dialog.deepLink", "pending", "true")
                     ]),
                 ReleasedVector(
+                    "browser-native-controls-runtime",
+                    "Browser native controls",
+                    "CLI 3.40.1 + cratis/stage:4.49.1 + bundled Screenplay 4.105.0 + Playwright Chromium 156.0.8078.4",
+                    "node Source/DotNET/Screenplay.CanonicalVectors.Specs/BrowserHarness/screen-composition-browser-native-controls.cjs",
+                    "blocked-missing-stage-endpoints",
+                    "The committed browser harness starts cratis run, loads the shell in Chromium and verifies that the Stage frontend requests /stage/routes, /stage/scene and /stage/locales. All three return 404 in cratis/stage:4.49.1, so no stable DOM hooks exist for master/detail, query lifecycle, native validation, dialog/deep-link or package/icon behavior assertions yet.",
+                    [
+                        Assertion("browser.harness.implemented", "equals", "true"),
+                        Assertion("browser.runtime.shell", "loads", "true"),
+                        Assertion("browser.endpoint./stage/routes", "equals", "404"),
+                        Assertion("browser.endpoint./stage/scene", "equals", "404"),
+                        Assertion("browser.endpoint./stage/locales", "equals", "404"),
+                        Assertion("browser.bodyText", "equals", "Unable to render this Stage"),
+                        Assertion("browser.masterDetail.selection", "blocked", "/stage/scene"),
+                        Assertion("browser.queryLifecycle", "blocked", "/stage/scene"),
+                        Assertion("browser.nativeValidation.submit", "blocked", "/stage/routes"),
+                        Assertion("browser.dialog.deepLink", "blocked", "/stage/routes"),
+                        Assertion("browser.packageProfile.icons", "blocked", "/stage/scene")
+                    ]),
+                ReleasedVector(
                     "mcp-released-typed-transcript",
                     "Screenplay MCP",
                     "Screenplay source includes v4.108.0 and PR #586; CLI bundle is 4.105.0; Studio-compatible folder transcript still pending.",
