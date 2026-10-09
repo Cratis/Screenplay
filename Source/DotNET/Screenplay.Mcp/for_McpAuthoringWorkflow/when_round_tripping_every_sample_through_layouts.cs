@@ -140,7 +140,7 @@ public class when_round_tripping_every_sample_through_layouts : given.an_authori
         }
     }
 
-    [Fact] void should_admit_and_apply_every_sample_round_trip() => _workflowFailures.ShouldBeEmpty();
+    [Fact] void should_admit_and_apply_every_sample_round_trip() => Assert.True(_workflowFailures.Count == 0, string.Join('\n', _workflowFailures));
     [Fact] void should_keep_each_scopes_authored_sibling_sequences() => _orderFailures.ShouldBeEmpty();
     [Fact] void should_keep_executable_bytes_or_unbound_syntax_modulo_layout() => _modelFailures.ShouldBeEmpty();
     [Fact] void should_keep_persisted_semantic_and_event_contract_identities() => _identityFailures.ShouldBeEmpty();

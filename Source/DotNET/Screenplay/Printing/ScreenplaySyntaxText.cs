@@ -75,6 +75,7 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="source">The <see cref="TriggerSourceSyntax"/> to render.</param>
     /// <returns>The rendered trigger text, including its leading keyword.</returns>
+    /// <exception cref="UnsupportedSyntaxForPrinting"></exception>
     public static string TriggerSource(TriggerSourceSyntax source) => source switch
     {
         NamedTriggerSourceSyntax named => $"when {named.Name}",
@@ -88,6 +89,7 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="condition">The <see cref="ConditionSyntax"/> to render.</param>
     /// <returns>The rendered condition text.</returns>
+    /// <exception cref="UnsupportedSyntaxForPrinting"></exception>
     public static string Condition(ConditionSyntax condition) => condition switch
     {
         ComparisonConditionSyntax comparison => $"{comparison.Left} {Comparison(comparison.Operator)} {ExpressionCore(comparison.Right)}",
@@ -105,6 +107,7 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="condition">The <see cref="PolicyConditionSyntax"/> to render.</param>
     /// <returns>The rendered policy condition text.</returns>
+    /// <exception cref="UnsupportedSyntaxForPrinting"></exception>
     public static string PolicyCondition(PolicyConditionSyntax condition) => condition switch
     {
         AuthenticatedConditionSyntax => "authenticated",
@@ -127,6 +130,7 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="requirement">The <see cref="PolicyRequirementSyntax"/> to render.</param>
     /// <returns>The rendered requirement text.</returns>
+    /// <exception cref="UnsupportedSyntaxForPrinting"></exception>
     public static string PolicyRequirement(PolicyRequirementSyntax requirement) => requirement switch
     {
         PolicyReferenceSyntax reference => reference.Name,
@@ -187,6 +191,7 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="trigger">The <see cref="InteractionTriggerSyntax"/> to render.</param>
     /// <returns>The rendered trigger text, without the leading <c>on</c>.</returns>
+    /// <exception cref="UnsupportedSyntaxForPrinting"></exception>
     public static string InteractionTrigger(InteractionTriggerSyntax trigger) => trigger switch
     {
         BuiltInInteractionTriggerSyntax builtIn => InteractionTriggerKindText(builtIn.Kind),
@@ -202,6 +207,7 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="action">The <see cref="InteractionActionSyntax"/> to render.</param>
     /// <returns>The rendered action text.</returns>
+    /// <exception cref="UnsupportedSyntaxForPrinting"></exception>
     public static string InteractionAction(InteractionActionSyntax action) => action switch
     {
         ExecuteCommandActionSyntax execute => $"execute {execute.Command}",
@@ -222,6 +228,7 @@ internal static partial class ScreenplaySyntaxText
     /// </summary>
     /// <param name="when">The <see cref="CaptureWhenSyntax"/> to render.</param>
     /// <returns>The rendered trigger text.</returns>
+    /// <exception cref="UnsupportedSyntaxForPrinting"></exception>
     public static string CaptureWhen(CaptureWhenSyntax when)
     {
         var properties = when.Properties.ToList();
@@ -258,6 +265,7 @@ internal static partial class ScreenplaySyntaxText
         LiteralExpressionSyntax literal => Literal(literal.Value),
         ListExpressionSyntax list => $"[{string.Join(',', list.Items.Select(StructuredValue))}]",
         ObjectExpressionSyntax obj => $"{{{string.Join(',', obj.Members.Select(member => $"{JsonSerializer.Serialize(member.Name, _structuredValueOptions)}:{StructuredValue(member.Value)}"))}}}",
+        CaseValueExpressionSyntax value => $"case.{value.Parameter}",
         PathExpressionSyntax path => path.Path,
         ContextExpressionSyntax context => $"$context.{context.Path}",
         RefusalExpressionSyntax refusal => $"$refusal.{refusal.Member}",
@@ -332,6 +340,11 @@ internal static partial class ScreenplaySyntaxText
     /// Renders two conditions combined with an operator, parenthesising an operand that would otherwise
     /// be read back as a different condition.
     /// </summary>
+    /// <param name="left"></param>
+    /// <param name="leftOperator"></param>
+    /// <param name="operator"></param>
+    /// <param name="right"></param>
+    /// <param name="rightOperator"></param>
     /// <remarks>
     /// <c>and</c> binds tighter than <c>or</c> and both are left associative, so an operand needs its
     /// parentheses when it is itself a combination and either sits on the right - where left association
@@ -358,6 +371,8 @@ internal static partial class ScreenplaySyntaxText
     /// Renders a message operand in the form it was authored - quoted when it was a literal, bare when it was a
     /// <c>$strings.</c> reference or a binding.
     /// </summary>
+    /// <param name="message"></param>
+    /// <param name="isLiteral"></param>
     static string InteractionMessage(string message, bool isLiteral) =>
         isLiteral ? StringLiteral.Quote(message) : message;
 

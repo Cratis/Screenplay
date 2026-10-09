@@ -113,6 +113,8 @@ sealed class WorkspaceReferenceBindings
                 ScreenSyntax => WorkspaceReferenceDomain.Screen,
                 DialogTemplateSyntax => WorkspaceReferenceDomain.DialogTemplate,
                 PolicySyntax => WorkspaceReferenceDomain.Policy,
+                PersonaSyntax => WorkspaceReferenceDomain.Persona,
+                SpecificationParameterSyntax => WorkspaceReferenceDomain.SpecificationParameter,
                 TriggerSyntax => WorkspaceReferenceDomain.Trigger,
                 ReactionSyntax => WorkspaceReferenceDomain.Reaction,
                 ConstraintSyntax when entry.Parent is { } constraintParent && index.Find(constraintParent)?.Node is SliceSyntax => WorkspaceReferenceDomain.Constraint,
@@ -124,6 +126,7 @@ sealed class WorkspaceReferenceBindings
                 var owner = actual switch
                 {
                     WorkspaceReferenceDomain.Property => ((TypeSyntax)index.Find(entry.Parent!)!.Node).Name,
+                    WorkspaceReferenceDomain.SpecificationParameter => WorkspaceReferenceMembers.TableOwner(entry, index),
                     WorkspaceReferenceDomain.EventStream when entry.Parent is { } parent && index.Find(parent)?.Node is EventSourceSyntax source => source.Name,
                     _ => null
                 };
@@ -197,7 +200,7 @@ sealed class WorkspaceReferenceBindings
             return new(reference, target, target is not null ? "resolved" : outcome);
         }
 
-        if (domain == WorkspaceReferenceDomain.Property)
+        if (domain is WorkspaceReferenceDomain.Property or WorkspaceReferenceDomain.SpecificationParameter)
         {
             var properties = (_byName.GetValueOrDefault((domain, reference.Text)) ?? [])
                 .Where(declaration => declaration.Owner == reference.Owner).ToArray();

@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { Diagnostic } from '../Diagnostics/Diagnostic';
+import { validateSpecificationCases } from '../Parsing/SpecificationCaseValidator';
+import { expandSpecificationExamples } from '../Parsing/SpecificationCommandExamples';
 import { productionDestinationDiagnostics } from '../Diagnostics/ProductionDestinationDiagnostics';
 import { validateConstraintProperties } from '../Parsing/ConstraintPropertyValidator';
 import { validateDependencyDeclarations } from '../Dependencies/DeclaredDependencyTargets';
@@ -16,6 +18,7 @@ import { validateEventSubjects } from '../Parsing/EventSubjectValidator';
 import { validateReactionRefusals } from '../Parsing/ReactionRefusalValidator';
 import { validateSpecificationRedelivery } from '../Parsing/SpecificationRedeliveryValidator';
 import { validateGuardedActions } from '../Parsing/GuardedActionValidator';
+import { validatePersonaCallers } from '../Parsing/PersonaCallerValidator';
 import { splitLines } from '../Parsing/SourceLineSplitter';
 import { ParserContext } from '../Parsing/ParserContext';
 import { validateResponses } from '../Parsing/ResponseValidator';
@@ -77,17 +80,20 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     const merged = mergeDocuments(parsed);
     const context = new ParserContext(new LineReader([]), undefined, languages);
     if (merged.value.sourceOptions !== undefined) context.sourceOptions = merged.value.sourceOptions;
+    validateSpecificationCases(merged.value, context);
+    const effective = expandSpecificationExamples(merged.value);
     validateEventSources(merged.value, context);
     validateOperations(merged.value, context);
     validateInlineEvents(merged.value, context);
     validateConstraintProperties(merged.value, context);
-    validateResponses(merged.value, context, parsed.flatMap(document => document.inputUses));
+    validateResponses(effective, context, parsed.flatMap(document => document.inputUses));
     validateProjectionTargets(merged.value, context);
-    validateIdentifierCompliance(merged.value, context);
+    validateIdentifierCompliance(effective, context);
     validateEventSubjects(merged.value, context);
     validateReactionRefusals(merged.value, context);
     validateSpecificationRedelivery(merged.value, context);
     validateGuardedActions(merged.value, context);
+    validatePersonaCallers(merged.value, context);
     const value = validateDependencyDeclarations(merged.value, context);
     DeclaredDependencies.validate(value, context);
     for (const diagnostic of productionDestinationDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);

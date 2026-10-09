@@ -19,6 +19,7 @@ enum WorkspaceReferenceDomain
     Screen,
     DialogTemplate,
     Policy,
+    Persona,
     Trigger,
     Property,
     Operation,
@@ -28,7 +29,8 @@ enum WorkspaceReferenceDomain
     Fixture,
     Reaction,
     Constraint,
-    Container
+    Container,
+    SpecificationParameter
 }
 
 sealed record WorkspaceReferenceMember(WorkspaceSyntaxEntry Entry, string Member, int? Index, string Text, WorkspaceReferenceDomain Domain, string? Owner = null)
@@ -53,6 +55,7 @@ static class WorkspaceReferenceMembers
                     var owner = domain switch
                     {
                         WorkspaceReferenceDomain.Property => WorkspaceStructuredReferences.Owner(entry, index),
+                        WorkspaceReferenceDomain.SpecificationParameter => TableOwner(entry, index),
                         WorkspaceReferenceDomain.EventStream when entry.Node is CommandStreamSyntax route => route.EventSource,
                         WorkspaceReferenceDomain.EventStream when entry.Node is SpecificationStreamSyntax route => route.EventSource,
                         _ => null
@@ -77,6 +80,16 @@ static class WorkspaceReferenceMembers
                 }
             }
         }
+    }
+
+    internal static string? TableOwner(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index)
+    {
+        for (var current = entry; current is not null; current = current.Parent is { } parent ? index.Find(parent) : null)
+        {
+            if (current.Node is SpecificationSyntax) return WorkspaceReferenceBindings.Key(current);
+        }
+
+        return null;
     }
 
     // Move-only operands: parameters are bound at their uses site, never as declaration names.
@@ -165,6 +178,8 @@ static class WorkspaceReferenceMembers
 
     static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> OtherMembers(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index) => entry.Node switch
     {
+        CaseValueExpressionSyntax => [("parameter", WorkspaceReferenceDomain.SpecificationParameter)],
+        PropertyMappingSyntax when entry.Parent is { } caseParent && index.Find(caseParent)?.Node is SpecificationCaseSyntax => [("property", WorkspaceReferenceDomain.SpecificationParameter)],
         DependsOnSyntax => [("target", WorkspaceReferenceDomain.Container)],
         SpecificationStreamSyntax => [("eventSource", WorkspaceReferenceDomain.EventSource), ("stream", WorkspaceReferenceDomain.EventStream)],
         CommandStreamSyntax { PropertyCandidate: null } => [("eventSource", WorkspaceReferenceDomain.EventSource), ("stream", WorkspaceReferenceDomain.EventStream)],
@@ -190,6 +205,7 @@ static class WorkspaceReferenceMembers
         RaiseTriggerActionSyntax => [("trigger", WorkspaceReferenceDomain.Trigger)],
         PolicyReferenceSyntax => [("name", WorkspaceReferenceDomain.Policy)],
         PersonaSyntax => [("policies", WorkspaceReferenceDomain.Policy)],
+        SpecificationCallerPersonaSyntax => [("name", WorkspaceReferenceDomain.Persona)],
         _ => []
     };
 }

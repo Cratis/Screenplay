@@ -62,6 +62,9 @@ internal static partial class SpecificationParser
 
     static ExpressionSyntax? ParseConcrete(ParserContext context, string text, SourceLocation location, string code)
     {
+        if (text.StartsWith("case.", StringComparison.Ordinal)) return ParseSpecificationValue(context, text, location);
+        if (ContainsCaseReference(text)) context.Error(DiagnosticCodes.InvalidSpecificationCaseReference, "A case reference fills a whole value position; it cannot occur inside a structured value or expression.", location);
+
         // Existing literal parsing accepts any text between outer quotes. Check the whole token before
         // reusing it, so '"one" "two"' cannot masquerade as one string value.
         if ((text.StartsWith('"') || text.StartsWith('\'')) && !AbsentKeyStringRegex().IsMatch(text))

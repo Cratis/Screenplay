@@ -48,6 +48,18 @@ internal static partial class SpecificationParser
             context.Error(DiagnosticCodes.SpecificationDocumentWithoutSpecification, "Document must contain at least one specification", SourceLocation.Start);
         }
 
+        foreach (var specification in specifications)
+        {
+            foreach (var row in specification.Cases)
+            {
+                var effectiveName = $"{specification.Name}_{row.Name}";
+                if (specifications.Exists(other => !ReferenceEquals(other, specification) && other.Name == effectiveName) || specifications.SelectMany(other => other.Cases.Select(row => $"{other.Name}_{row.Name}")).Count(name => name == effectiveName) > 1)
+                {
+                    context.Error(DiagnosticCodes.SpecificationCaseNameCollision, $"Case '{row.Name}' derives specification '{effectiveName}', which collides in this document.", row.Location);
+                }
+            }
+        }
+
         return [.. specifications.Select(specification => specification with { Examples = examples })];
     }
 
@@ -71,6 +83,8 @@ internal static partial class SpecificationParser
             name = match.Groups[1].Value;
         }
 
+        var parameters = new List<SpecificationParameterSyntax>();
+        var cases = new List<SpecificationCaseSyntax>();
         var given = new List<SpecificationEventSyntax>();
         var givenOperationFailures = new List<SpecificationOperationFailureSyntax>();
         var thenOperations = new List<SpecificationOperationSyntax>();
@@ -89,6 +103,7 @@ internal static partial class SpecificationParser
         var thenQueries = new List<SpecificationQuerySyntax>();
         var thenErrors = new List<SpecificationErrorSyntax>();
         SpecificationCallerSyntax? caller = null;
+        SpecificationCallerPersonaSyntax? callerPersona = null;
         SpecificationDeniedSyntax? denied = null;
         SpecificationReturnSyntax? thenReturns = null;
         FileReferenceSyntax? file = null;
@@ -117,6 +132,12 @@ internal static partial class SpecificationParser
             // Absence assertions admit any whitespace after 'then'; every other directive keeps its space-separated first word.
             switch (ThenNoPrefixRegex().IsMatch(line.Content) ? "then" : LineText.FirstWord(line.Content))
             {
+                case "parameter":
+                    if (ParseParameter(context, line) is { } parameter) parameters.Add(parameter);
+                    break;
+                case "case":
+                    if (ParseCase(context, line) is { } row) cases.Add(row);
+                    break;
                 case "description":
                     var previousDescription = description;
                     description = DescriptionParser.Parse(context, line, description, $"Specification '{name}'");
@@ -147,10 +168,14 @@ internal static partial class SpecificationParser
                     }
                     else if (line.Content.StartsWith("given caller", StringComparison.Ordinal))
                     {
-                        if (caller is not null)
+                        if (caller is not null || callerPersona is not null)
                         {
                             context.Error(DiagnosticCodes.DuplicateSpecificationCallerOrDenied, "A specification has at most one 'given caller' block.", line.Location);
                             SkipBody(context, line.Indent);
+                        }
+                        else if (line.Content.StartsWith("given caller as", StringComparison.Ordinal))
+                        {
+                            callerPersona = ParseCallerPersona(context, line);
                         }
                         else
                         {
@@ -313,14 +338,17 @@ internal static partial class SpecificationParser
                 directiveLocations["then no events"]);
         }
 
-        return new(name, given, when, thenEvents, thenErrors, header.Location, givenReadModels, thenReadModels)
+        var specification = new SpecificationSyntax(name, given, when, thenEvents, thenErrors, header.Location, givenReadModels, thenReadModels)
         {
+            Parameters = parameters,
+            Cases = cases,
             Description = description,
             SourceOptions = context.SourceOptions,
             File = file,
             ThenQueries = thenQueries,
             ThenAbsentReadModels = thenAbsentReadModels,
             GivenCaller = caller,
+            GivenCallerPersona = callerPersona,
             ThenDenied = denied,
             ThenReturns = thenReturns,
             GivenOperationFailures = givenOperationFailures,
@@ -340,6 +368,9 @@ internal static partial class SpecificationParser
             ThenNoResult = thenNoResult,
             DirectiveLocations = WithEventOrderLocation(directiveLocations, eventsInAnyOrderLocation)
         };
+        ValidateTable(specification, context);
+
+        return specification;
     }
 
     [GeneratedRegex(@"^then\s+no\s+events\b", RegexOptions.None, 1000)]
@@ -383,7 +414,7 @@ internal static partial class SpecificationParser
         if (!match.Success || match.Groups[1].Value != keyword)
         {
             context.Error(
-                DiagnosticCodes.InvalidSpecificationClock,
+                ContainsCaseReference(line.Content) ? DiagnosticCodes.InvalidSpecificationCaseReference : DiagnosticCodes.InvalidSpecificationClock,
                 $"Invalid '{keyword} clock' - expected '{keyword} clock \"<ISO 8601 instant>\"', such as '{keyword} clock \"2026-10-05T08:00:00Z\"'",
                 line.Location);
             return null;
@@ -477,6 +508,24 @@ internal static partial class SpecificationParser
         _ => ThenResultPrefixRegex()
     };
 
+    static SpecificationCallerPersonaSyntax? ParseCallerPersona(ParserContext context, SourceLine line)
+    {
+        var match = CallerPersonaRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidSpecificationCallerPersona, "Expected 'given caller as <Persona>'.", line.Location);
+        }
+        if (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Error(DiagnosticCodes.InvalidSpecificationCallerPersona, "'given caller as <Persona>' has no body; use an explicit 'given caller' for refinements.", child.Location);
+        }
+        SkipBody(context, line.Indent);
+        return match.Success ? new(match.Groups[1].Value, line.Location) : null;
+    }
+
+    [GeneratedRegex(@"^given caller as ([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex CallerPersonaRegex();
+
     static SpecificationCallerSyntax? ParseCaller(ParserContext context, SourceLine line)
     {
         if (line.Content != "given caller")
@@ -516,7 +565,7 @@ internal static partial class SpecificationParser
                 continue;
             }
 
-            context.Error(DiagnosticCodes.InvalidSpecificationCaller, $"Invalid caller fixture '{child.Content}' - expected authenticated, role \"...\", or claim \"...\" = \"...\".", child.Location);
+            context.Error(ContainsCaseReference(child.Content) ? DiagnosticCodes.InvalidSpecificationCaseReference : DiagnosticCodes.InvalidSpecificationCaller, $"Invalid caller fixture '{child.Content}' - expected authenticated, role \"...\", or claim \"...\" = \"...\".", child.Location);
         }
 
         return new(authenticated, roles, claims, line.Location) { DirectiveLocations = directiveLocations };
@@ -556,6 +605,12 @@ internal static partial class SpecificationParser
         if (line.Content == "then error")
         {
             thenErrors.Add(new(null, line.Location));
+            return;
+        }
+
+        if (line.Content.StartsWith("then error case.", StringComparison.Ordinal))
+        {
+            thenErrors.Add(new(null, line.Location) { CaseValue = (CaseValueExpressionSyntax)ParseSpecificationValue(context, line.Content[11..], line.LocationAt(11)) });
             return;
         }
 
@@ -623,13 +678,13 @@ internal static partial class SpecificationParser
         var keyText = keyGroup.Value.Trim();
         var keyStart = line.LocationAt(keyGroup.Index + (keyGroup.Value.Length - keyGroup.Value.TrimStart().Length));
         var validString = !(keyText.StartsWith('"') || keyText.StartsWith('\'')) || AbsentKeyStringRegex().IsMatch(keyText);
-        var key = validString ? ExpressionParser.ParseMappingSource(context, keyText, keyText.StartsWith('{') || keyText.StartsWith('[') ? keyStart : line.Location) : null;
+        var key = validString ? ParseSpecificationValue(context, keyText, keyText.StartsWith('{') || keyText.StartsWith('[') || keyText.StartsWith("case.", StringComparison.Ordinal) ? keyStart : line.Location) : null;
         if (key is LiteralExpressionSyntax literal)
         {
             key = literal with { RawLocation = keyStart, RawLength = keyText.Length };
         }
 
-        if (key is not LiteralExpressionSyntax and not ObjectExpressionSyntax)
+        if (key is not LiteralExpressionSyntax and not ObjectExpressionSyntax and not CaseValueExpressionSyntax)
         {
             context.Error(DiagnosticCodes.InvalidAbsentReadModelStep, $"Invalid absence key '{keyText}' - expected exactly one concrete value.", line.Location);
         }
@@ -642,7 +697,7 @@ internal static partial class SpecificationParser
             hasChildren = true;
         }
 
-        return hasChildren || key is not LiteralExpressionSyntax and not ObjectExpressionSyntax ? null : new(match.Groups[1].Value, key, line.Location);
+        return hasChildren || key is not LiteralExpressionSyntax and not ObjectExpressionSyntax and not CaseValueExpressionSyntax ? null : new(match.Groups[1].Value, key, line.Location);
     }
 
     static SpecificationQuerySyntax? ParseQuery(ParserContext context, SourceLine line)
@@ -762,7 +817,7 @@ internal static partial class SpecificationParser
             var mapping = MappingRegex().Match(child.Content);
             if (mapping.Success)
             {
-                AddFixtureValue(context, values, ExpressionParser.ParseMapping(context, mapping.Groups[1].Value, mapping.Groups[2], child));
+                AddFixtureValue(context, values, ParseSpecificationMapping(context, mapping.Groups[1].Value, mapping.Groups[2], child));
                 continue;
             }
 
@@ -814,7 +869,7 @@ internal static partial class SpecificationParser
                     continue;
                 }
 
-                eventSource = ExpressionParser.ParseMappingSource(context, source, child.Location);
+                eventSource = ParseSpecificationValue(context, source, child.Location);
                 continue;
             }
 
@@ -842,7 +897,8 @@ internal static partial class SpecificationParser
                 else
                 {
                     locations["streamId"] = child.Location;
-                    parts = EventSourceParser.ParseRouteParts(context, child, DiagnosticCodes.InvalidSpecificationStream);
+                    parts = [.. EventSourceParser.ParseRouteParts(context, child, DiagnosticCodes.InvalidSpecificationStream).Select(part => part.Source is PathExpressionSyntax path && path.Path.StartsWith("case.", StringComparison.Ordinal)
+                        ? part with { Source = ParseSpecificationValue(context, path.Path, path.Location) } : part)];
                 }
                 continue;
             }
@@ -853,7 +909,7 @@ internal static partial class SpecificationParser
                 context.SkipBlock(child.Indent);
                 continue;
             }
-            streamId = ExpressionParser.ParseMapping(context, "streamId", mapping.Groups[1], child);
+            streamId = ParseSpecificationMapping(context, "streamId", mapping.Groups[1], child);
             RejectSpecificationRouteChildren(context, child);
         }
 
@@ -896,7 +952,7 @@ internal static partial class SpecificationParser
                 continue;
             }
 
-            AddFixtureValue(context, values, ExpressionParser.ParseMapping(context, match.Groups[1].Value, match.Groups[2], child));
+            AddFixtureValue(context, values, ParseSpecificationMapping(context, match.Groups[1].Value, match.Groups[2], child));
         }
 
         return values;

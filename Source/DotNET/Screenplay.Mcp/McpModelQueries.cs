@@ -50,7 +50,7 @@ static class McpModelQueries
     {
         var name = McpJson.RequiredString(arguments, "name");
         var includeContent = McpJson.Boolean(arguments, "includeContent");
-        var matches = Filter(snapshot.Index.Declarations, arguments).Where(declaration => declaration.Name == name || declaration.Address == name);
+        var matches = Filter(DerivedMatches(snapshot.Index.Declarations, name), arguments).Where(declaration => declaration.Case is not null || declaration.Name == name || declaration.Address == name);
         var page = McpPaging.Page(matches, declaration => includeContent ? declaration : McpReadResults.Summary(declaration), arguments, snapshot.SourceRevision);
         return new
         {
@@ -72,7 +72,7 @@ static class McpModelQueries
         var match = McpJson.OptionalString(arguments, "match") ?? "exact";
         if (query is not null)
         {
-            candidates = candidates.Where(declaration => Matches(declaration, query, match));
+            candidates = (match == "exact" ? DerivedMatches(candidates, query) : candidates).Where(declaration => declaration.Case is not null || Matches(declaration, query, match));
         }
         else if (match != "exact" && match != "prefix" && match != "contains")
         {
@@ -175,6 +175,14 @@ static class McpModelQueries
 
         return declarations;
     }
+
+    static IEnumerable<McpDeclaration> DerivedMatches(IEnumerable<McpDeclaration> declarations, string query) => declarations.Select(declaration =>
+    {
+        if (declaration.Syntax is not Syntax.Specifications.SpecificationSyntax table) return declaration;
+        var row = table.Cases.FirstOrDefault(row => $"{table.Name}_{row.Name}" == query || string.Join('.', declaration.Scope.Append($"{table.Name}_{row.Name}")) == query);
+
+        return row is null ? declaration : declaration with { Case = row.Name };
+    });
 
     static object WithCompleteness(object result, CompletenessChecks checks, string? status)
     {
