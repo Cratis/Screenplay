@@ -1,1 +1,1 @@
-[{"Code":"PLAY0469","Message":"Event \u0027E\u0027 copies command identifier \u0027id\u0027 into payload property \u0027value\u0027 although it already identifies the event source"},{"Code":"PLAY0504","Message":"Command identifier \u0027id\u0027 does not have the source\u0027s nominal identifier type \u0027Uuid\u0027. The stream does not supply a destination."}]
+[{"Code":"PLAY0504","Message":"Command identifier \u0027id\u0027 does not have the source\u0027s nominal identifier type \u0027Uuid\u0027. The stream does not supply a destination."}]

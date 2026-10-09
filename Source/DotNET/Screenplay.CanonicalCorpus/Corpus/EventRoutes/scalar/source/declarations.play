@@ -1,3 +1,5 @@
+policy AccountantOnly
+  require authenticated and role "Accountant"
 concept Key : Int
 eventsource Account
   id "StoredAccount"

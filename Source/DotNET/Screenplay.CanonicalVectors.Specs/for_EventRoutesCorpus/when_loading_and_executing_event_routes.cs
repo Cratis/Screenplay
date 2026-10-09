@@ -17,10 +17,11 @@ public class when_loading_and_executing_event_routes : Specification
     [InlineData("scalar")]
     [InlineData("specifications")]
     [InlineData("composites")]
+    [InlineData("composite-commands")]
     void should_pin_bytes_catalogs_revisions_and_outcomes_across_four_forms(string key)
     {
         if (Environment.GetEnvironmentVariable("SCREENPLAY_REGENERATE_EVENT_ROUTES_CORPUS") == "1") Regenerate(key);
-        var corpus = key switch { "scalar" => EventRoutesCorpus.Scalar, "specifications" => EventRoutesCorpus.Specifications, _ => EventRoutesCorpus.Composites };
+        var corpus = key switch { "scalar" => EventRoutesCorpus.Scalar, "specifications" => EventRoutesCorpus.Specifications, "composite-commands" => EventRoutesCorpus.CompositeCommands, _ => EventRoutesCorpus.Composites };
         corpus.SourceForms.Length.ShouldEqual(4);
         foreach (var form in corpus.SourceForms)
         {
@@ -38,6 +39,11 @@ public class when_loading_and_executing_event_routes : Specification
             SemanticModelSerializer.Serialize(read).SequenceEqual(corpus.EsmBytes).ShouldBeTrue();
             var slice = model.Application.Modules.Single().Features.Single().Slices.Single();
             slice.Specifications.Select(spec => spec.Id).OrderBy(id => id.ToString(), StringComparer.Ordinal).SequenceEqual(corpus.SpecificationExpectations.Select(expected => expected.Specification)).ShouldBeTrue();
+            if (key == "composite-commands")
+            {
+                slice.Commands.Single().Route!.StreamIdParts.Length.ShouldEqual(2);
+                slice.Specifications.All(spec => spec.GivenEvents.All(fact => fact.Route is null) && spec.WhenAppended is null && spec.ThenEvents.All(fact => fact.Route is null && !fact.Unrouted)).ShouldBeTrue();
+            }
             var plan = SemanticExecutionPlan.Compile(read).Plan!;
             foreach (var expected in corpus.SpecificationExpectations)
             {
@@ -56,8 +62,34 @@ public class when_loading_and_executing_event_routes : Specification
                 facts.Select(fact => Route(fact.Route)).SequenceEqual(expected.Routes).ShouldBeTrue();
                 if (expected.Passed) run.Failures.ShouldBeEmpty();
                 if (expected.Name == "HistoryWithoutProducer") run.Execution.World.Facts[0].Route!.StreamKind.ShouldEqual("All");
+                if (expected.Name == "AnyOrderAssignment") AssertAssignmentTrap(specification, facts);
             }
         }
+    }
+
+    static void AssertAssignmentTrap(SemanticSpecification specification, ImmutableArray<SemanticFact> facts)
+    {
+        specification.ThenEventsInAnyOrder.ShouldBeTrue();
+        facts.Length.ShouldEqual(3);
+        specification.ThenEvents.Length.ShouldEqual(3);
+        var wildcard = specification.ThenEvents[0];
+        var exact = specification.ThenEvents[2];
+        Assert.Null(wildcard.EventSource);
+        Assert.Null(wildcard.Route);
+        exact.Route.ShouldNotBeNull();
+        foreach (var fact in new[] { facts[0], facts[2] })
+        {
+            fact.EventContract.ShouldEqual(wildcard.EventContract);
+            fact.Values.SequenceEqual(wildcard.Values).ShouldBeTrue();
+        }
+        exact.EventContract.ShouldEqual(wildcard.EventContract);
+        exact.Values.SequenceEqual(wildcard.Values).ShouldBeTrue();
+        facts[0].Route!.SourceKind.ShouldEqual("Account");
+        facts[0].Route!.StreamKind.ShouldEqual("All");
+        Assert.Null(facts[2].Route);
+
+        // Greedy takes fact 0 for the wildcard, leaving the unrouted fact unable to match the exact route.
+        // Assignment instead matches the wildcard to fact 2 and the exact routed expectation to fact 0.
     }
 
     internal static SemanticCompilation Compile(CanonicalCorpusSourceForm form)

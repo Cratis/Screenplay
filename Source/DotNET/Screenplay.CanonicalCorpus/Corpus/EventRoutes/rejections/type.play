@@ -8,4 +8,4 @@ module M
         id String identifier
         stream Account.All
         produces event E
-          value String = id
+          value String = "payload"

@@ -1,0 +1,6 @@
+eventsource Account
+  identifier String
+  stream Ledger
+    streamId
+      project Uuid
+      period String

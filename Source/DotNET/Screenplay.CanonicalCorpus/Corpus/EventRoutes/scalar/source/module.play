@@ -58,6 +58,32 @@ module M
         produces Recorded
           for id
           value = id
+      command Guarded
+        id String identifier
+        text String
+        authorize AccountantOnly
+        validate
+          text not empty message "Text is required."
+        stream Account.Notes
+          streamId = text
+        produces Recorded
+          for id
+          value = "other"
+      specification UnauthorizedRouteFailure
+        given caller
+          authenticated
+        when Guarded
+          id = "other"
+          text = ""
+        then denied
+      specification ValidationRouteFailure
+        given caller
+          authenticated
+          role "Accountant"
+        when Guarded
+          id = "other"
+          text = ""
+        then error "Text is required."
       specification PositiveInput
         when Input
           id = "other"

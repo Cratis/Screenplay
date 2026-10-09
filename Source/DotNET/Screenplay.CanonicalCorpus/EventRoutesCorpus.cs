@@ -29,14 +29,19 @@ public static class EventRoutesCorpus
     public static CanonicalCorpusVector Specifications => Vector("specifications");
 
     /// <summary>
-    /// Gets the composite-stream joining vector.
+    /// Gets the composite specification vector, requiring both joining parts.
     /// </summary>
     public static CanonicalCorpusVector Composites => Vector("composites");
 
     /// <summary>
-    /// Gets the three vector keys without loading their expected bytes.
+    /// Gets composite command routes and outcomes without depending on specification-route admission.
     /// </summary>
-    public static ImmutableArray<string> Keys => ["scalar", "specifications", "composites"];
+    public static CanonicalCorpusVector CompositeCommands => Vector("composite-commands");
+
+    /// <summary>
+    /// Gets the vector keys without loading their expected bytes.
+    /// </summary>
+    public static ImmutableArray<string> Keys => ["scalar", "specifications", "composites", "composite-commands"];
 
     /// <summary>
     /// Gets equivalent single, folder, reordered and relocated source forms for a vector.
@@ -103,8 +108,9 @@ public static class EventRoutesCorpus
         var slice = SemanticAddress.ForSlice(ApplicationIdentity.Create("EventRoutes"), "M", "F", "S");
         var names = key switch
         {
-            "scalar" => new[] { "PositiveInput", "PositiveAdjacentInput", "NegativeInput", "NegativeAdjacentInput", "PositiveLiteral", "PositiveAdjacentLiteral", "NegativeLiteral", "NegativeAdjacentLiteral", "TextInput", "UUIDInput", "UnkeyedInput", "EmptyText", "OutsideBound" },
-            "specifications" => ["HistoryWithoutProducer", "UnroutedFact"],
+            "scalar" => new[] { "PositiveInput", "PositiveAdjacentInput", "NegativeInput", "NegativeAdjacentInput", "PositiveLiteral", "PositiveAdjacentLiteral", "NegativeLiteral", "NegativeAdjacentLiteral", "TextInput", "UUIDInput", "UnkeyedInput", "EmptyText", "OutsideBound", "UnauthorizedRouteFailure", "ValidationRouteFailure" },
+            "specifications" => ["HistoryWithoutProducer", "UnroutedFact", "AnyOrderAssignment"],
+            "composite-commands" => ["CommandOnlyParts", "CommandOnlyOpaqueEscape"],
             _ => ["CommandParts", "AppendParts", "DifferentPart"]
         };
 
@@ -112,34 +118,52 @@ public static class EventRoutesCorpus
         {
             Specification = catalog.ResolveSemantic(SemanticAddress.ForSpecification(slice, name)),
             Name = name,
-            Outcome = (name == "EmptyText" || name == "OutsideBound") ? SemanticExecutionOutcomeKind.Rejected : SemanticExecutionOutcomeKind.Accepted,
-            RejectionCategory = (name == "EmptyText" || name == "OutsideBound") ? SemanticRejectionCategory.Contract : null,
+            Outcome = RejectionCategory(name) is not null ? SemanticExecutionOutcomeKind.Rejected : SemanticExecutionOutcomeKind.Accepted,
+            RejectionCategory = RejectionCategory(name),
             RejectionMessage = name switch
             {
                 "EmptyText" => "A stream id text literal cannot be empty.",
                 "OutsideBound" => "A stream id integer literal must be between -9007199254740991 and 9007199254740991 in Double numeric mode.",
+                "UnauthorizedRouteFailure" => "Caller is not authorized.",
+                "ValidationRouteFailure" => "Text is required.",
                 _ => null
             },
             Passed = name != "DifferentPart",
-            WorldFactCount = name switch { "EmptyText" or "OutsideBound" => 0, "HistoryWithoutProducer" or "CommandParts" => 2, _ => 1 },
-            Routes = (name == "EmptyText" || name == "OutsideBound") ? [] : [ExpectedRoute(key, name)]
+            WorldFactCount = name switch { "EmptyText" or "OutsideBound" or "UnauthorizedRouteFailure" or "ValidationRouteFailure" => 0, "HistoryWithoutProducer" or "CommandParts" => 2, "AnyOrderAssignment" => 3, _ => 1 },
+            Routes = ExpectedRoutes(key, name)
         }).OrderBy(expectation => expectation.Specification.ToString(), StringComparer.Ordinal)];
+    }
+
+    static SemanticRejectionCategory? RejectionCategory(string name) => name switch
+    {
+        "EmptyText" or "OutsideBound" => SemanticRejectionCategory.Contract,
+        "UnauthorizedRouteFailure" => SemanticRejectionCategory.Unauthorized,
+        "ValidationRouteFailure" => SemanticRejectionCategory.Validation,
+        _ => null
+    };
+
+    static ImmutableArray<string> ExpectedRoutes(string key, string name)
+    {
+        if (RejectionCategory(name) is not null) return [];
+        var route = ExpectedRoute(key, name);
+
+        return name == "AnyOrderAssignment" ? [route, route, "null"] : [route];
     }
 
     static string ExpectedRoute(string key, string name)
     {
         if (name == "UnroutedFact") return "null";
         var source = key == "scalar" ? "StoredAccount" : "Account";
-        var stream = name switch { "TextInput" or "HistoryWithoutProducer" => "Notes", "UUIDInput" => "UUIDs", "UnkeyedInput" => "All", _ => key == "scalar" ? "StoredLedger" : "Ledger" };
+        var stream = name switch { "TextInput" or "HistoryWithoutProducer" => "Notes", "UUIDInput" => "UUIDs", "UnkeyedInput" or "AnyOrderAssignment" => "All", _ => key == "scalar" ? "StoredLedger" : "Ledger" };
         var id = name switch
         {
             "TextInput" => "é|%",
             "UUIDInput" => Uuid,
             "HistoryWithoutProducer" => "p-1:2026-10",
-            "CommandParts" => $"{Uuid}|a%7Cb%25",
-            "AppendParts" => $"{Uuid}|%257C",
+            "CommandParts" or "CommandOnlyParts" => $"{Uuid}|a%7Cb%25",
+            "AppendParts" or "CommandOnlyOpaqueEscape" => $"{Uuid}|%257C",
             "DifferentPart" => $"{Uuid}|one",
-            "UnkeyedInput" => null,
+            "UnkeyedInput" or "AnyOrderAssignment" => null,
             _ => (name.StartsWith("Negative", StringComparison.Ordinal) ? "-" : string.Empty) + (name.Contains("Adjacent", StringComparison.Ordinal) ? "9007199254740990" : "9007199254740991")
         };
 
@@ -150,7 +174,9 @@ public static class EventRoutesCorpus
 
     static ImmutableArray<byte> Resource(string name)
     {
-        using var stream = typeof(EventRoutesCorpus).Assembly.GetManifestResourceStream($"{Prefix}.{name}") ??
+        // The SDK replaces hyphens in resource directory names with underscores.
+        var resourceName = name.Replace("composite-commands.", "composite_commands.", StringComparison.Ordinal);
+        using var stream = typeof(EventRoutesCorpus).Assembly.GetManifestResourceStream($"{Prefix}.{resourceName}") ??
             throw new InvalidSemanticContract($"Event-routes corpus resource '{name}' is missing.");
         using var bytes = new MemoryStream();
         stream.CopyTo(bytes);

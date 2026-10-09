@@ -1,6 +1,6 @@
 module M
   feature F
-    slice StateView S
+    slice Automation S
       event Historical
         value String
       event Imported
@@ -18,6 +18,28 @@ module M
         produces Imported
           for id
           value = "other"
+      command Pair
+        id String identifier
+        stream Account.All
+        produces Imported
+          for id
+          value = "same"
+        produces event Started
+          for id
+      reaction PairFollower
+        when Started
+          produces Imported
+            value = "same"
+      specification AnyOrderAssignment
+        when Pair
+          id = "other"
+        then events in any order
+        then Imported
+          value = "same"
+        then Started
+        then Imported
+          stream Account.All
+          value = "same"
       specification HistoryWithoutProducer
         given Historical
           for "before"

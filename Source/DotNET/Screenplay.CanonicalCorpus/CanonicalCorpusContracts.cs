@@ -109,8 +109,8 @@ public sealed record CanonicalCorpusSpecificationExpectation
     public string? Response { get; init; }
 
     /// <summary>
-    /// Gets each produced fact's route as canonical JSON text, in fact order.
-    /// The text <c>null</c> denotes an unrouted fact; no defaults are materialized.
+    /// Gets route JSON text in produced-fact order.
+    /// The JSON text <c>"null"</c> means unrouted; no defaults are materialized.
     /// </summary>
     public ImmutableArray<string> Routes { get; init; } = [];
 }
