@@ -24,8 +24,15 @@ public class when_compiling_the_source_stream_fixture : Specification
 
     [Fact] void should_compile_without_source_diagnostics() => _syntax.Diagnostics.ShouldBeEmpty();
     [Fact] void should_accept_the_source_fixture() => _syntax.Success.ShouldBeTrue();
-    [Fact] void should_refuse_executable_admission() => _workspace.Compilation.Success.ShouldBeFalse();
-    [Fact] void should_name_unadmitted_sources_and_streams_in_the_refusal() => _workspace.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268" && diagnostic.Message.Contains("not admitted by any supported executable model (ESM) version yet (#302)", StringComparison.Ordinal)).ShouldBeTrue();
+    [Fact] void should_admit_the_executable_fixture() => _workspace.Compilation.Success.ShouldBeTrue();
+    [Fact] void should_select_event_routes_and_bind_both_stream_shapes()
+    {
+        _workspace.Compilation.Value!.Model.SemanticVersion.ShouldEqual(EventRoutesVersion.Semantic);
+        var streams = _workspace.Compilation.Value.Model.Application.EventSources.Single().Streams;
+        streams.Single(stream => stream.Name == "Transactions").StreamIdType.ShouldNotBeNull();
+        streams.Single(stream => stream.Name == "Ledger").StreamIdParts.Select(part => part.Name).ShouldEqual(new[] { "account", "month" });
+        _workspace.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == "PLAY0268").ShouldBeFalse();
+    }
     [Fact] void should_not_enroll_source_requirements() => _workspace.Compilation.ImplementationRequirements.ShouldBeEmpty();
     [Fact] void should_keep_the_documented_example_equal_to_the_fixture() => File.ReadAllText(Path.Combine(DocumentationExamples.Root(), "screenplay", "event-sources.md")).ShouldContain("```screenplay\n" + _source + "```");
 }
