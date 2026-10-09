@@ -76,6 +76,16 @@ A join never creates an instance. At the root, when a joined event arrives, ever
 
 This is **reference semantics**, not Chronicle replay. Chronicle's lowering, validation and engine decide runtime meaning (decision 0001); use Chronicle when rebuilding runtime state. This operation does not append facts to an existing world or execute reactions.
 
+## Routed facts
+
+The **event routes** executable model admits application-owned sources and streams, command routes, and specification routes. A routed `SemanticFact` carries `Route` with the stored `sourceKind`, `streamKind`, and the canonical encoded `streamId` when keyed. Stored names use the declaration's `id` pin when present, otherwise its name. Unrouted facts carry no route; the model never fills in Chronicle's `Default`, `All`, `"Default"` triple. Exactly `Default` is reserved as a stored source name.
+
+World establishment resolves each supplied route to one declared source and its owned stream, strictly decodes its scalar or composite key, and validates the event-source identity against the source's declared identifier type. If the source has no identifier type, exactly one unambiguous producer destination type supplies the fallback. Routed history needs no producer when its source declares an identifier. Unknown, foreign, noncanonical or mistyped routes are contract rejections before projections observe them. A route classifies facts; it does not filter projections or change their keys, constraints, reducers, reactions or queries.
+
+Command routes resolve once after declarative validation and requirements, before generation and productions. Formatting-only failures reject the failing command as `Contract` without allocation, append or response; authorization and validation retain precedence. Non-NFC or ill-formed direct inputs already fail request type validation. Arc computes stream ids before authorization, so its native ordering is not equivalent: a renderer must preserve this portable precedence. A later cascade failure keeps already accepted facts. See [event sources and streams](../event-sources.md#route-phase-and-failure) for mapping and formatting rules.
+
+Catalog identities survive source/stream renames and file relocation. A source rename migrates its owned streams atomically, but an unpinned rename changes its stored name. Pin `id` before renaming a declaration with stored events. Models without event routes retain their existing versions, bytes and outcomes; consumers must explicitly admit the event routes contract rather than ignore its members.
+
 ## What stays out of the semantic model
 
 Each of these is reported with a precise message rather than bound and ignored:

@@ -3,7 +3,6 @@
 
 using System.Text;
 using System.Text.Json;
-using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
 
@@ -27,6 +26,8 @@ sealed class McpEventSourceInventory
     internal WorkspaceSyntaxEntry[] Entries { get; }
 
     internal WorkspacePhysicalReadView View { get; }
+
+    McpAuthoringReadiness Readiness => McpWorkspaceAnalysis.For(_workspace).Source.Index.Readiness;
 
     internal string? Key(WorkspaceSyntaxEntry entry) => View.HasResolvedPlacement(entry) && Name(entry).Length > 0 ? JsonSerializer.Serialize(new
     {
@@ -84,25 +85,6 @@ sealed class McpEventSourceInventory
         }
     }
 
-    McpAuthoringReadiness Readiness => McpWorkspaceAnalysis.For(_workspace).Source.Index.Readiness;
-
-    string? SemanticIdentity(WorkspaceSyntaxEntry entry)
-    {
-        if (!View.HasResolvedPlacement(entry) || Confidence(entry).State != "unique") return null;
-        var application = _workspace.IdentityCatalog.Application;
-        SemanticAddress? address = null;
-        if (entry.Node is EventSourceSyntax source)
-        {
-            address = SemanticAddress.ForEventSource(application, source.Name);
-        }
-        else if (entry.Parent is { } parent && _entries.TryGetValue(parent, out var owner) && owner.Node is EventSourceSyntax sourceOwner)
-        {
-            address = SemanticAddress.ForEventStream(SemanticAddress.ForEventSource(application, sourceOwner.Name), Name(entry));
-        }
-
-        return _workspace.IdentityCatalog.Semantics.FirstOrDefault(assignment => assignment.Address.Equals(address))?.Id.ToString();
-    }
-
     static string? Pin(WorkspaceSyntaxEntry entry) => entry.Node is EventSourceSyntax source ? source.Id : ((EventStreamSyntax)entry.Node).Id;
     static string? Description(WorkspaceSyntaxEntry entry) => entry.Node is EventSourceSyntax source ? source.Description : ((EventStreamSyntax)entry.Node).Description;
     static string? Inline(string? value) => value is not null && Encoding.UTF8.GetByteCount(value) > 4096 ? null : value;
@@ -118,6 +100,13 @@ sealed class McpEventSourceInventory
 
     static string Kind(WorkspaceSyntaxEntry entry) => entry.Node is EventSourceSyntax ? "EventSource" : "EventStream";
     static string Name(WorkspaceSyntaxEntry entry) => entry.Node is EventSourceSyntax source ? source.Name : ((EventStreamSyntax)entry.Node).Name;
+
+    string? SemanticIdentity(WorkspaceSyntaxEntry entry)
+    {
+        if (!View.HasResolvedPlacement(entry) || Confidence(entry).State != "unique") return null;
+
+        return _workspace.IdentityCatalog.Semantics.FirstOrDefault(assignment => assignment.Address.Equals(entry.Address))?.Id.ToString();
+    }
 
     string Ownership(WorkspaceSyntaxEntry entry)
     {
