@@ -14,6 +14,9 @@
 #   SCREENPLAY_PLAYWRIGHT_NODE_PATH  NODE_PATH that resolves `playwright` (defaults to NODE_PATH)
 #   SCREENPLAY_AI_VERIFICATION       Cratis/AI Source/Verification folder for the MCP stdio transcript
 #   SCREENPLAY_STUDIO_URL            deployed Studio URL for the production save/export/import/Play harness
+#
+# Harnesses: browser (native controls), render-audit (determinism, portable artifacts, profile rejection,
+# render-then-recover), mcp (stdio transcript) and studio (production Play).
 #   SCREENPLAY_ACCEPTANCE_PORT       browser port (default 19180); the workbench uses this plus 16000
 #
 # Exit codes: 0 every harness passed, 1 a harness ran and found defects or blockers, 2 the run could not start.
@@ -41,10 +44,12 @@ if ! NODE_PATH="$node_path" node -e "require('playwright')" >/dev/null 2>&1; the
     exit 2
 fi
 
-if ! node "${harness}/screen-composition-browser-native-controls.cjs" --self-test; then
-    echo "run-public-acceptance: the browser harness self-test failed; its results cannot be trusted" >&2
-    exit 2
-fi
+for self_tested in screen-composition-browser-native-controls.cjs screen-composition-render-audit.cjs; do
+    if ! node "${harness}/${self_tested}" --self-test; then
+        echo "run-public-acceptance: the ${self_tested} self-test failed; its results cannot be trusted" >&2
+        exit 2
+    fi
+done
 
 port="${SCREENPLAY_ACCEPTANCE_PORT:-19180}"
 workbench_port=$((port + 16000))
@@ -71,6 +76,10 @@ run_step browser env \
     SCREENPLAY_BROWSER_WORKBENCH_PORT="$workbench_port" \
     SCREENPLAY_BROWSER_RESULT="${results}/browser.json" \
     node "${harness}/screen-composition-browser-native-controls.cjs"
+
+run_step render-audit env \
+    SCREENPLAY_RENDER_AUDIT_RESULT="${results}/render-audit.json" \
+    node "${harness}/screen-composition-render-audit.cjs"
 
 if [[ -n "${SCREENPLAY_AI_VERIFICATION:-}" ]]; then
     run_step mcp bash -c "cd \"\$1\" && yarn tsx screenplay-mcp-transcript.ts --corpus \"\$2\" --scratch \"\$3\"" _ \
