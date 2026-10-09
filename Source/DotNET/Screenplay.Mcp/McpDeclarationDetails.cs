@@ -23,6 +23,11 @@ static class McpDeclarationDetails
                 executionReadiness = readiness.ExecutionReadiness(declaration.Syntax),
                 eventCount = declaration.Syntax is SliceSyntax eventOwner ? EventDeclarations.In(eventOwner).Count() : 0,
                 eventId = (declaration.Syntax as EventSyntax)?.Id,
+                subject = declaration.Syntax is EventSyntax subjectOwner
+                    ? subjectOwner.Properties.FirstOrDefault(property => property.IsSubject) is { } subjectProperty
+                        ? new { source = "property", property = subjectProperty.Name }
+                        : (object)new { source = "eventSource" }
+                    : null,
                 description = declaration.Syntax.GetType().GetProperty("Description")?.GetValue(declaration.Syntax) as string,
                 documentation = declaration.Syntax.GetType().GetProperty("Documentation")?.GetValue(declaration.Syntax) as string,
                 uses = (declaration.Syntax as OperationSyntax)?.Uses,
@@ -52,6 +57,7 @@ static class McpDeclarationDetails
                     property.Type.IsOptional,
                     property.IsIdentifier,
                     property.IsGenerated,
+                    property.IsSubject,
                     property.Location
                 },
                 arguments,

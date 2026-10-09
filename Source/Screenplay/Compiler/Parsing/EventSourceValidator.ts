@@ -17,6 +17,12 @@ import { validateSpecificationStreams } from './SpecificationStreamValidator';
 
 const primitives = new Set(['String', 'Uuid', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime']);
 
+export function supportsStreamIdentity(type: TypeRefSyntax, application: ApplicationSyntax): boolean {
+    const concepts = application.concepts.filter(concept => concept.name === type.name);
+    const primitive = concepts.length === 1 ? concepts[0].type : concepts.length === 0 && primitives.has(type.name) ? type.name : null;
+    return primitive === 'String' || primitive === 'Uuid' || primitive === 'Int' && concepts.length === 1 && concepts[0].values.length === 0;
+}
+
 export function formatStreamIdLiteral(expression: ExpressionSyntax | null | undefined, type: TypeRefSyntax | null, application: ApplicationSyntax): StreamIdFormatResult | null {
     if (expression?.kind !== 'LiteralExpressionSyntax') return null;
     const value = expression.value;
@@ -45,7 +51,7 @@ export function validateEventSources(application: ApplicationSyntax, context: Pa
         }
         const named = application.concepts.filter(concept => concept.name === type.name);
         const primitive = named.length === 1 ? named[0].type : named.length === 0 && primitives.has(type.name) ? type.name : null;
-        if (streamId && primitive !== null && (!['String', 'Uuid', 'Int'].includes(primitive) || primitive === 'Int' && named.length === 0 || named.some(concept => concept.values.length > 0)))
+        if (streamId && primitive !== null && !supportsStreamIdentity(type, application))
             context.error(DiagnosticCodes.UnsupportedStreamIdType, 'Stream ids support text and UUID values and their nominal concepts, plus integer-backed concepts; other types need a future portable formatter.', type.location);
         if (primitive === null && !application.imports.some(imported => imported.qualifiedName === type.name || imported.qualifiedName.split('.').at(-1) === type.name))
             context.warning(DiagnosticCodes.UnknownType, `Unknown type '${type.name}' in event source declaration.`, type.location);

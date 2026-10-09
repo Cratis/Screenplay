@@ -135,7 +135,7 @@ internal static class EventSourceValidator
         string? primitive = null;
         if (concepts is [var concept]) primitive = concept.Type;
         else if (concepts.Length == 0 && ConceptSyntax.PrimitiveTypes.Contains(type.Name)) primitive = type.Name;
-        if (streamId && primitive is not null && (primitive is not ("String" or "Uuid" or "Int") || (primitive == "Int" && concepts.Length == 0) || concepts.Any(concept => concept.IsEnum)))
+        if (streamId && primitive is not null && !SupportsStreamIdentity(type, application))
         {
             context.Error(DiagnosticCodes.UnsupportedStreamIdType, "Stream ids support text and UUID values and their nominal concepts, plus integer-backed concepts; other types need a future portable formatter.", type.Location);
         }
@@ -143,6 +143,14 @@ internal static class EventSourceValidator
         {
             context.Warning(DiagnosticCodes.UnknownType, $"Unknown type '{type.Name}' in event source declaration.", type.Location);
         }
+    }
+
+    internal static bool SupportsStreamIdentity(TypeRefSyntax type, ApplicationSyntax application)
+    {
+        var concepts = application.Concepts.Where(concept => concept.Name == type.Name).ToArray();
+        var primitive = Primitive(type, application);
+
+        return primitive == "String" || primitive == "Uuid" || (primitive == "Int" && concepts is [var concept] && !concept.IsEnum);
     }
 
     internal static string? Primitive(TypeRefSyntax type, ApplicationSyntax application)

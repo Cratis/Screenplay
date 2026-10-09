@@ -180,6 +180,10 @@ export function planCompletions(
     if (inConcept && /^\s*(?:pii|personal|@pii)\s+special\s+\w*$/.test(textBefore)) {
         return { kind: 'entries', entries: ['racialOrEthnicOrigin', 'politicalOpinions', 'religiousOrPhilosophicalBeliefs', 'tradeUnionMembership', 'genetic', 'biometric', 'health', 'sexLifeOrSexualOrientation'].map(category => ({ label: category, insertText: category, documentation: 'GDPR Art. 9(1) special category.' })) };
     }
+    const subjectOwner = enclosingHeaders(lines, fences, lineIndex, indentOf(textBefore))[0] ?? '';
+    if (/^(?:event|produces\s+event)\s+/.test(subjectOwner) && /^\s*@?[a-z_]\w*\s+[\w.]+(?:\[\])?(?:\?|\s+optional)?(?:\s+generated)?(?:\s+identifier)?\s+\w*$/.test(textBefore)) {
+        return { kind: 'entries', entries: [{ label: 'subject', insertText: 'subject', documentation: 'One required scalar event data-subject identity; not pii or secret. Report-only lineage metadata (PLAY0270), no ESM or provider output yet.' }] };
+    }
     const responseEntries = exampleCompletions(lines, lineIndex, textBefore) ?? responseCompletions(lines, lineIndex, textBefore, scanDocument(lines));
     if (responseEntries !== null) return { kind: 'entries', entries: responseEntries };
     const dependencyEntries = dependencyTargetCompletions(lines, lineIndex, textBefore, symbols);

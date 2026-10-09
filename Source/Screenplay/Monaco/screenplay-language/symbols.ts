@@ -20,6 +20,7 @@ export interface PropertySymbol {
     sourceType?: { text: string; startColumn: number; endColumn: number };
     isIdentifier: boolean;
     isGenerated?: boolean;
+    isSubject?: boolean;
     line: number;
 }
 
@@ -103,7 +104,7 @@ export interface DocumentSymbols {
 }
 
 const conceptPattern = /^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@\w+)*)\s*$/;
-const propertyPattern = /^\s*(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(\s+generated)?(\s+identifier)?\s*$/;
+const propertyPattern = /^\s*(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(\s+generated)?(\s+identifier)?(\s+subject)?\s*$/;
 const attributeReasonPattern = /^([a-z_]\w*)\s+reason\s+"((?:[^"\\]|\\.)*)"\s*$/;
 const readPattern = /^\s*reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?\s*$/;
 const commandReserved = ['authorize', 'produces', 'reads'];
@@ -139,6 +140,7 @@ function propertiesIn(lines: string[], body: number[], reserved: readonly string
             sourceType: sourceTypeAt(lines[index], lines[index].match(/^\s*\S+\s+/)![0].length + 1),
             isIdentifier: match[4] !== undefined,
             ...(match[3] !== undefined ? { isGenerated: true } : {}),
+            ...(match[5] !== undefined ? { isSubject: true } : {}),
             line: index,
         }));
 }
@@ -299,6 +301,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
                     sourceType: sourceTypeAt(lines[property.type.location.line - 1], property.type.location.column),
                     isIdentifier: property.isIdentifier || /\sidentifier\s*$/.test(lines[property.location.line - 1]),
                     ...(property.isGenerated ? { isGenerated: true } : {}),
+                    ...(property.isSubject ? { isSubject: true } : {}),
                     line: property.location.line - 1,
                 })),
                 response: command.response,
