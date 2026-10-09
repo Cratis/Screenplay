@@ -329,6 +329,7 @@ internal static partial class ScreenParser
         }
 
         UiBindingSyntax? dataContext = null;
+        string? stableId = null;
         string? icon = null;
         var properties = new List<ComponentPropertySyntax>();
         var exposes = new List<ComponentExposedValueSyntax>();
@@ -344,6 +345,9 @@ internal static partial class ScreenParser
             {
                 case "context":
                     dataContext = UiBindingParser.Parse(context, child.Content["context".Length..].Trim(), child.Location);
+                    break;
+                case "id":
+                    stableId = ParseStableId(context, child);
                     break;
                 case "property":
                     if (ParseComponentProperty(context, child) is { } property) properties.Add(property);
@@ -365,7 +369,7 @@ internal static partial class ScreenParser
                     InteractionParser.ParseAttachment(context, child, behaviors, usedBehaviors);
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{child.Content}' in component - expected context, property, icon, presentation, exposes, outlet, on or uses", child.Location);
+                    context.Error(DiagnosticCodes.UnknownScreenDirective, $"Unexpected '{child.Content}' in component - expected context, id, property, icon, presentation, exposes, outlet, on or uses", child.Location);
                     context.SkipBlock(child.Indent);
                     break;
             }
@@ -373,6 +377,7 @@ internal static partial class ScreenParser
 
         return new(match.Groups[1].Value, match.Groups[2].Value, line.Location)
         {
+            StableId = stableId,
             Context = dataContext,
             Properties = properties,
             Exposes = exposes,
@@ -390,10 +395,22 @@ internal static partial class ScreenParser
         if (bound.Success) return new(bound.Groups[1].Value, UiBindingParser.ParseFromClause(context, bound.Groups[2].Value, line.Location), null, line.Location);
 
         var literal = ComponentPropertyLiteralRegex().Match(line.Content);
-        if (literal.Success) return new(literal.Groups[1].Value, null, OperandText(literal, 2), line.Location);
+        if (literal.Success) return new(literal.Groups[1].Value, null, ExpressionParser.ParseMappingSource(context, literal.Groups[2].Value, line.Location), line.Location);
 
-        context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid component property '{line.Content}' - expected 'property <path> from <binding>' or 'property <path> = \"value\"'", line.Location);
+        context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid component property '{line.Content}' - expected 'property <path> from <binding>' or 'property <path> = <literal|object|array|null>'", line.Location);
         return null;
+    }
+
+    static string? ParseStableId(ParserContext context, SourceLine line)
+    {
+        var match = StableIdRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid component id '{line.Content}' - expected 'id \"stable-id\"'", line.Location);
+            return null;
+        }
+
+        return OperandText(match, 1);
     }
 
     static ComponentExposedValueSyntax? ParseComponentExposes(ParserContext context, SourceLine line)
@@ -533,8 +550,11 @@ internal static partial class ScreenParser
     [GeneratedRegex(@"^property\s+([\w.]+)\s+from\s+(.+)$", RegexOptions.None, 1000)]
     private static partial Regex ComponentPropertyBindingRegex();
 
-    [GeneratedRegex("^property\\s+([\\w.]+)\\s*=\\s*(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\S+))$", RegexOptions.None, 1000)]
+    [GeneratedRegex("^property\\s+([\\w.]+)\\s*=\\s*(.+)$", RegexOptions.None, 1000)]
     private static partial Regex ComponentPropertyLiteralRegex();
+
+    [GeneratedRegex("^id\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\S+))$", RegexOptions.None, 1000)]
+    private static partial Regex StableIdRegex();
 
     [GeneratedRegex(@"^exposes\s+([A-Za-z_]\w*)\s+from\s+(.+)$", RegexOptions.None, 1000)]
     private static partial Regex ExposesRegex();

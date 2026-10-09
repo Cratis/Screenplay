@@ -184,6 +184,22 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
         if (syntax.populate !== null) this.visitNode(syntax.populate);
         syntax.fields.forEach(node => this.visitNode(node));
+        syntax.columns?.forEach(node => this.visitNode(node));
+        if (syntax.layout !== null && syntax.layout !== undefined) {
+            this.visitNode(syntax.layout);
+            syntax.layout.columns.forEach(column => {
+                this.visitNode(column);
+                if (column.width !== null) this.visitNode(column.width);
+                if (column.minWidth !== null) this.visitNode(column.minWidth);
+                if (column.maxWidth !== null) this.visitNode(column.maxWidth);
+            });
+            if (syntax.layout.columnGap !== null) this.visitNode(syntax.layout.columnGap);
+            if (syntax.layout.rowGap !== null) this.visitNode(syntax.layout.rowGap);
+            syntax.layout.placements.forEach(placement => {
+                this.visitNode(placement);
+                if (placement.width !== null) this.visitNode(placement.width);
+            });
+        }
         if (syntax.onSubmit !== null) this.visitScreenDirective(syntax.onSubmit);
     }
 
@@ -516,7 +532,7 @@ export abstract class ScreenplaySyntaxWalker {
             case 'ScreenNavigateSyntax':
                 syntax.parameters.forEach(parameter => {
                     this.visitNode(parameter);
-                    this.visitNode(parameter.binding);
+                    this.visitUiBinding(parameter.binding);
                 });
                 break;
             case 'ScreenTemplateReferenceSyntax':
@@ -536,14 +552,15 @@ export abstract class ScreenplaySyntaxWalker {
                 syntax.fields.forEach(node => this.visitNode(node));
                 break;
             case 'ScreenComponentSyntax':
-                if (syntax.context !== null) this.visitNode(syntax.context);
+                if (syntax.context !== null) this.visitUiBinding(syntax.context);
                 syntax.properties.forEach(property => {
                     this.visitNode(property);
-                    if (property.binding !== null) this.visitNode(property.binding);
+                    if (property.binding !== null) this.visitUiBinding(property.binding);
+                    if (property.value !== null) this.visitExpression(property.value);
                 });
                 syntax.exposes.forEach(exposed => {
                     this.visitNode(exposed);
-                    this.visitNode(exposed.binding);
+                    this.visitUiBinding(exposed.binding);
                 });
                 syntax.presentation.forEach(node => this.visitNode(node));
                 syntax.outlets.forEach(outlet => {
@@ -556,7 +573,7 @@ export abstract class ScreenplaySyntaxWalker {
                     this.visitNode(item);
                     item.parameters.forEach(parameter => {
                         this.visitNode(parameter);
-                        this.visitNode(parameter.binding);
+                        this.visitUiBinding(parameter.binding);
                     });
                     item.presentation.forEach(node => this.visitNode(node));
                 });
@@ -707,6 +724,11 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitTypeRef(syntax: TypeRefSyntax): void {
         this.visitNode(syntax);
+    }
+
+    visitUiBinding(syntax: import('./Screens').UiBindingSyntax): void {
+        this.visitNode(syntax);
+        if (syntax.literal !== null) this.visitExpression(syntax.literal);
     }
 
     visitExpression(syntax: ExpressionSyntax): void {

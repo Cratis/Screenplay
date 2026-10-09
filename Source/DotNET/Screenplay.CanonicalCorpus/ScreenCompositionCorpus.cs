@@ -90,6 +90,13 @@ public static class ScreenCompositionCorpus
                     ExpectedSyntaxKinds =
                     [
                         "ScreenComponentSyntax",
+                        "CommandFormLayoutSyntax",
+                        "FormFieldPlacementSyntax",
+                        "FormLayoutColumnSyntax",
+                        "FormWidthSyntax",
+                        "LiteralExpressionSyntax",
+                        "ListExpressionSyntax",
+                        "ObjectExpressionSyntax",
                         "ScreenToolbarSyntax",
                         "UiBindingSyntax",
                         "UiProfileSyntax"
