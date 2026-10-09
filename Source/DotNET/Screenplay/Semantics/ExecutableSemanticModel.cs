@@ -399,8 +399,11 @@ internal static partial class SemanticModelValidator
             foreach (var query in slice.Queries)
             {
                 Register(query.Id, query.Name, "query");
-                RejectNull(query.Argument, "query argument");
-                Register(query.Argument.Id, query.Argument.Name, "query argument");
+                if (query.Argument is not null)
+                {
+                    Register(query.Argument.Id, query.Argument.Name, "query argument");
+                }
+
                 _queries.Add(query.Id, query);
             }
 
@@ -843,22 +846,37 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract($"Query read model '{query.ReadModel}' is unresolved.");
             }
 
+            ValidateEnum(query.Cardinality, SemanticQueryCardinality.Unknown, "query cardinality");
+            ValidateEnum(query.Delivery, SemanticQueryDelivery.Unknown, "query delivery");
+            if ((query.Argument is null) != (query.KeyProperty is null))
+            {
+                throw new InvalidSemanticContract("A keyed query must declare both an argument and a key property; an unkeyed query declares neither.");
+            }
+
+            if (query.Argument is null)
+            {
+                if (query.Cardinality != SemanticQueryCardinality.Many)
+                {
+                    throw new InvalidSemanticContract("An unkeyed query must return a collection.");
+                }
+
+                return;
+            }
+
             ValidateTypeReference(query.Argument.Type);
-            if (!Properties(readModel.Properties).TryGetValue(query.KeyProperty, out var keyProperty))
+            if (!Properties(readModel.Properties).TryGetValue(query.KeyProperty!.Value, out var keyProperty))
             {
                 throw new InvalidSemanticContract($"Query key property '{query.KeyProperty}' is unresolved.");
             }
 
-            ValidateEnum(query.Cardinality, SemanticQueryCardinality.Unknown, "query cardinality");
-            ValidateEnum(query.Delivery, SemanticQueryDelivery.Unknown, "query delivery");
             if (query.Argument.Type.IsCollection || keyProperty.Type.IsCollection || !SameType(query.Argument.Type, keyProperty.Type))
             {
                 throw new InvalidSemanticContract("A query argument and key property must have the same scalar type and optionality.");
             }
 
-            if (keyProperty.IsIdentifier == (query.Cardinality == SemanticQueryCardinality.Many))
+            if (query.Cardinality == SemanticQueryCardinality.ZeroOrOne && !keyProperty.IsIdentifier)
             {
-                throw new InvalidSemanticContract("A query cardinality is incompatible with whether its key property is an identifier.");
+                throw new InvalidSemanticContract("An optional lookup query key property must identify one read-model instance.");
             }
         }
 
@@ -1055,7 +1073,7 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract($"Specification query '{result.Query}' is unresolved.");
             }
 
-            ValidateValue(result.Key, query.Argument.Type, "specification query key");
+            if (query.Argument is not null) ValidateValue(result.Key, query.Argument.Type, "specification query key");
             RequireObjects(result.Results, nameof(result.Results), "specification query result state");
             var validCount = query.Cardinality switch
             {
@@ -1069,7 +1087,9 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract("A specification query result count does not match its cardinality.");
             }
 
-            var keyProperty = _readModels[query.ReadModel].Properties.Single(_ => _.Id == query.KeyProperty);
+            var keyProperty = query.KeyProperty is { } queryKeyProperty
+                ? _readModels[query.ReadModel].Properties.Single(_ => _.Id == queryKeyProperty)
+                : null;
             foreach (var state in result.Results)
             {
                 if (state.ReadModel != query.ReadModel)
@@ -1078,6 +1098,11 @@ internal static partial class SemanticModelValidator
                 }
 
                 ValidateSpecificationReadModel(state, false, false);
+                if (keyProperty is null)
+                {
+                    continue;
+                }
+
                 var queryKeyValue = state.Values.SingleOrDefault(_ => _.TargetProperty == keyProperty.Id)?.Value;
                 if (queryKeyValue is null && keyProperty.IsIdentifier)
                 {

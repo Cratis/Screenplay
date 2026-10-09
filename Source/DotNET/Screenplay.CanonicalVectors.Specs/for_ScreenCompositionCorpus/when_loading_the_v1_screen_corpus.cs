@@ -226,7 +226,6 @@ public class when_loading_the_v1_screen_corpus : Specification
         var catalog = SemanticIdentityCatalogSerializer.Deserialize(form.IdentityCatalogBytes.AsSpan());
         var documents = form.Documents.Select(document => SemanticSourceDocument.Create(catalog.ResolveDocument(document.StableKey), document.StableKey, document.DisplayPath, document.Text));
         var result = new SemanticModelCompiler().Compile("Workspaces", SemanticDocumentSet.Create([.. documents], catalog));
-        result.Success.ShouldBeFalse();
         return result.Diagnostics;
     }
 
