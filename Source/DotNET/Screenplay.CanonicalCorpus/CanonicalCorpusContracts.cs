@@ -107,6 +107,12 @@ public sealed record CanonicalCorpusSpecificationExpectation
     /// Record fields retain response contract order; values use the canonical semantic value encoding.
     /// </summary>
     public string? Response { get; init; }
+
+    /// <summary>
+    /// Gets each produced fact's route as canonical JSON text, in fact order.
+    /// The text <c>null</c> denotes an unrouted fact; no defaults are materialized.
+    /// </summary>
+    public ImmutableArray<string> Routes { get; init; } = [];
 }
 
 /// <summary>

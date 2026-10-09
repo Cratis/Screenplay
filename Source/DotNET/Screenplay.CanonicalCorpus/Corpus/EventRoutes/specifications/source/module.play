@@ -1,0 +1,39 @@
+module M
+  feature F
+    slice StateView S
+      event Historical
+        value String
+      event Imported
+        value String
+      readmodel Snapshot
+        id String
+        value String
+      query SnapshotById => Snapshot?
+        by id String
+      projection SnapshotProjection => Snapshot
+        from Imported
+          value = value
+      command Unrouted
+        id String identifier
+        produces Imported
+          for id
+          value = "other"
+      specification HistoryWithoutProducer
+        given Historical
+          for "before"
+          stream Account.All
+          value = "before"
+        when append Imported
+          for "after"
+          stream Account.Notes
+            streamId = "p-1:2026-10"
+          value = "after"
+        then readmodel Snapshot
+          id = "after"
+          value = "after"
+      specification UnroutedFact
+        when Unrouted
+          id = "other"
+        then Imported
+          no stream
+          value = "other"
