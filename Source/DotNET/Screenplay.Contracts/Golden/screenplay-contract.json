@@ -9,6 +9,7 @@
     "and",
     "any",
     "append",
+    "archiving",
     "arguments",
     "arrangement",
     "as",
@@ -20,6 +21,7 @@
     "auto",
     "automap",
     "back",
+    "basis",
     "behavior",
     "biometric",
     "by",
@@ -47,10 +49,13 @@
     "compose",
     "concept",
     "concurrency",
+    "condition",
     "confirm",
+    "consent",
     "constraint",
     "contains",
     "context",
+    "contract",
     "contribute",
     "contributes",
     "correlation",
@@ -67,9 +72,11 @@
     "dialog",
     "documentation",
     "domain",
+    "employmentLaw",
     "empty",
     "enter",
     "enters",
+    "erasure",
     "error",
     "event",
     "eventSource",
@@ -79,10 +86,13 @@
     "exact",
     "exactly",
     "example",
+    "exception",
     "exclude",
     "execute",
     "expected",
+    "explicitConsent",
     "exposes",
+    "expression",
     "fails",
     "failure",
     "false",
@@ -108,6 +118,7 @@
     "handler",
     "header",
     "health",
+    "healthCare",
     "height",
     "hidden",
     "hint",
@@ -126,6 +137,7 @@
     "increment",
     "info",
     "information",
+    "interest",
     "interval",
     "invokes",
     "item",
@@ -135,9 +147,13 @@
     "layout",
     "leave",
     "legacy",
+    "legalClaims",
+    "legalObligation",
+    "legitimateInterests",
     "length",
     "literal",
     "load",
+    "madePublic",
     "manual",
     "map",
     "matches",
@@ -154,6 +170,7 @@
     "nested",
     "no",
     "not",
+    "notForProfit",
     "notify",
     "null",
     "numbers",
@@ -188,6 +205,9 @@
     "propagate",
     "property",
     "provider",
+    "publicHealth",
+    "publicTask",
+    "purpose",
     "query",
     "racialOrEthnicOrigin",
     "raise",
@@ -195,6 +215,7 @@
     "readmodel",
     "reads",
     "reason",
+    "recipient",
     "redelivered",
     "reducer",
     "refresh",
@@ -205,12 +226,15 @@
     "remove",
     "removed",
     "require",
+    "research",
     "result",
+    "retention",
     "returns",
     "role",
     "route",
     "row",
     "rule",
+    "safeguard",
     "scope",
     "scoped",
     "screen",
@@ -239,7 +263,9 @@
     "streamId",
     "streamType",
     "subject",
+    "subjects",
     "submit",
+    "substantialPublicInterest",
     "subtract",
     "success",
     "summary",
@@ -254,6 +280,7 @@
     "to",
     "toolbar",
     "tradeUnionMembership",
+    "transfer",
     "translate",
     "trigger",
     "true",
@@ -268,6 +295,7 @@
     "validation",
     "variant",
     "via",
+    "vitalInterests",
     "warning",
     "when",
     "where",
@@ -287,6 +315,7 @@
     "numbers",
     "persona",
     "policy",
+    "purpose",
     "seed",
     "system",
     "template",
@@ -3662,6 +3691,127 @@
           "esmVersion": 8,
           "status": "admitted",
           "diagnostic": null,
+          "issue": null
+        }
+      ]
+    },
+    {
+      "name": "purpose",
+      "parseStatus": "accepted",
+      "probes": [
+        {
+          "source": "purpose Billing\n  basis contract\nmodule M\n  purpose Billing\n  feature F\n    slice StateChange S\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": "PLAY0270",
+          "diagnostics": [
+            {
+              "code": "PLAY0270",
+              "severity": "information"
+            },
+            {
+              "code": "PLAY0270",
+              "severity": "information"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            }
+          ]
+        }
+      ],
+      "admission": [
+        {
+          "esmVersion": 1,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 2,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 3,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 4,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 5,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 6,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 7,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
           "issue": null
         }
       ]
@@ -11375,6 +11525,193 @@
         "error"
       ],
       "title": "A concept declares more than one special category.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0572",
+      "name": "InvalidPurposeDeclaration",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A purpose declaration or field has invalid syntax.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0573",
+      "name": "InvalidPurposeVocabulary",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A purpose uses a value outside a statutory vocabulary.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0574",
+      "name": "DuplicatePurposeField",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A purpose repeats a singleton field.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0575",
+      "name": "DuplicatePurposeDeclaration",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A purpose name is declared more than once.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0576",
+      "name": "UnknownPurpose",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A purpose reference does not resolve.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0577",
+      "name": "PurposeInterestMismatch",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A legitimate-interest statement and basis do not agree.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0578",
+      "name": "PersonalDataWithoutPurpose",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "An opt-in check found personal data without purpose coverage.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0579",
+      "name": "SpecialDataWithoutCondition",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "An opt-in check found special data without a processing condition.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0580",
+      "name": "CriminalDataWithoutAuthorization",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "An opt-in check found criminal data without authorization.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0581",
+      "name": "PurposeWithoutBasis",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "An opt-in check found a purpose without a lawful basis.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0582",
+      "name": "UnusedPurpose",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "An opt-in check found an unreferenced purpose.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0590",
+      "name": "DuplicateEventSubject",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An event marks more than one property as its data subject.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0591",
+      "name": "InvalidSubjectType",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A subject property has an optional, collection, composite or unsupported identity type.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0592",
+      "name": "ProtectedSubjectType",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A subject property uses a personal data or secret concept rather than a surrogate identity.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0593",
+      "name": "InvalidSubjectOwner",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A subject modifier is used on a command, type or response instead of an event.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0594",
+      "name": "ReadModelSubjectNotSupported",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A read model subject modifier is not yet supported.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0595",
+      "name": "InvalidSubjectModifierOrder",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "The subject property modifier is duplicated or is not last in modifier order.",
       "reserved": false,
       "retired": false
     }

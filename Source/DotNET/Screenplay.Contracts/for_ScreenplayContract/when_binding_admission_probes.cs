@@ -62,6 +62,18 @@ public class when_binding_admission_probes : Specification
         }
     }
 
+    [Fact]
+    void should_classify_purposes_as_report_only_without_changing_executable_bytes()
+    {
+        var definition = ContractAdmission.Probes.Single(probe => probe.Keyword == "purpose");
+        var observation = ContractAdmission.Observe("purpose", definition.Source, baseline: definition.Baseline);
+        observation.MetadataOnly.ShouldBeTrue();
+        observation.Diagnostic!.Code.ShouldEqual(DiagnosticCodes.ReportOnlySemanticSyntax);
+        observation.Diagnostic.Severity.ShouldEqual(DiagnosticSeverity.Information);
+        ContractAdmission.Create(["purpose"], ScreenplayContract.SupportedVersions())[0]!["admission"]!.AsArray()
+            .All(entry => entry!["status"]!.GetValue<string>() == "refused" && entry["diagnostic"]!.GetValue<string>() == DiagnosticCodes.ReportOnlySemanticSyntax).ShouldBeTrue();
+    }
+
     static CompilationResult<SemanticCompilation> CompileModel(string source, string? imported = null)
     {
         var identity = ApplicationIdentity.Create("Contract");

@@ -34,6 +34,7 @@ static class ContractAdmission
         new("numbers", "numbers exact\n"),
         new("persona", "persona Person\n"),
         new("policy", "policy Allowed\n  require authenticated\n", ["policy Allowed\n  require not authenticated\n", "policy Allowed\n  ```csharp\n  return true;\n  ```\n"]),
+        new("purpose", "purpose Billing\n  basis contract\n" + Slice.Replace("module M\n", "module M\n  purpose Billing\n", StringComparison.Ordinal), Baseline: Slice),
         new("seed", Slice + Event + "seed\n  for \"test\"\n    Recorded\n      value = \"test\"\n"),
         new("system", "system External\n"),
         new("template", "layout Shell\n  content\ntemplate Shell\n", Baseline: "layout Shell\n  content\n"),
