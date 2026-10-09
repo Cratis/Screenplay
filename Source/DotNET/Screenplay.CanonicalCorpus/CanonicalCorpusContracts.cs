@@ -323,6 +323,67 @@ public sealed record CanonicalMcpEditExpectation
 }
 
 /// <summary>
+/// Represents one working-branch harness against an unreleased dependency branch.
+/// </summary>
+public sealed record CanonicalWorkingBranchHarnessExpectation
+{
+    /// <summary>
+    /// Gets the stable harness name.
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
+    /// Gets the product or host that owns the working branch.
+    /// </summary>
+    public required string Host { get; init; }
+
+    /// <summary>
+    /// Gets the GitHub repository name.
+    /// </summary>
+    public required string Repository { get; init; }
+
+    /// <summary>
+    /// Gets the pull request URL or identifier that carries the branch.
+    /// </summary>
+    public required string PullRequest { get; init; }
+
+    /// <summary>
+    /// Gets the exact branch name used for this working run.
+    /// </summary>
+    public required string Branch { get; init; }
+
+    /// <summary>
+    /// Gets the exact commit SHA used for this working run.
+    /// </summary>
+    public required string Commit { get; init; }
+
+    /// <summary>
+    /// Gets the command, endpoint, or test entry point used to run the harness.
+    /// </summary>
+    public required string EntryPoint { get; init; }
+
+    /// <summary>
+    /// Gets how this working-branch harness switches to released packages.
+    /// </summary>
+    public required string ReleaseSwitch { get; init; }
+
+    /// <summary>
+    /// Gets the observed status of this working-branch run.
+    /// </summary>
+    public required string Status { get; init; }
+
+    /// <summary>
+    /// Gets the exact reason the harness is pending or red, or <c>null</c> when it passed.
+    /// </summary>
+    public string? PendingReason { get; init; }
+
+    /// <summary>
+    /// Gets machine-checkable assertions the harness must evaluate.
+    /// </summary>
+    public ImmutableArray<CanonicalScreenAssertion> Assertions { get; init; } = [];
+}
+
+/// <summary>
 /// Represents one pending or executable harness entry point for released screen parity checks.
 /// </summary>
 public sealed record CanonicalScreenHarnessExpectation
@@ -550,6 +611,11 @@ public sealed record CanonicalScreenCorpusVector
     /// Gets released-version harness entry points.
     /// </summary>
     public ImmutableArray<CanonicalScreenHarnessExpectation> Harnesses { get; init; } = [];
+
+    /// <summary>
+    /// Gets working-branch harness entry points that run before the final released packages publish.
+    /// </summary>
+    public ImmutableArray<CanonicalWorkingBranchHarnessExpectation> WorkingBranchHarnesses { get; init; } = [];
 
     /// <summary>
     /// Gets Stage plan expectations when released renderer packages provide deterministic artifact bytes.
