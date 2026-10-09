@@ -29,6 +29,7 @@ public class when_a_proposal_introduces_executable_errors : given.an_authoring_c
                 projectId ProjectId
                 name ProjectName
               query GetProjects => Project[]
+                filter tenantId String from $context.tenant
         """;
 
     JsonElement _unrelated;

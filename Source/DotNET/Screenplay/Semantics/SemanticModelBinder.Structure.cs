@@ -126,7 +126,10 @@ public sealed partial class SemanticModelBinder
                 ? query with
                 {
                     Authorization = EffectiveAuthorization(
-                    value.Authorize, [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)], module, featurePath)
+                        value.Authorize,
+                        query.Argument is null ? [] : [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)],
+                        module,
+                        featurePath)
                 }
                 : null).Where(_ => _ is not null).Select(_ => _!).ToImmutableArray();
             foreach (var query in queries) _queries[query.Name] = query;

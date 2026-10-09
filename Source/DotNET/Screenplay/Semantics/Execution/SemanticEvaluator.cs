@@ -309,13 +309,19 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                     $"Reducer '{reducer.Name}' has opaque transitions and requires a target provider to compute read-model state.");
             }
 
+            var arguments = query.Argument is null
+                ? new Dictionary<string, SemanticValue>(StringComparer.Ordinal)
+                : new Dictionary<string, SemanticValue>(StringComparer.Ordinal) { [query.Argument.Name] = queryRequest.Key };
+            var properties = query.Argument is null
+                ? []
+                : new[] { new SemanticProperty(query.Argument.Id, query.Argument.Name, query.Argument.Type, false) };
             var authorization = SemanticPolicyEvaluation.Evaluate(
                 query.Authorization,
                 plan,
                 caller,
-                new Dictionary<string, SemanticValue>(StringComparer.Ordinal) { [query.Argument.Name] = queryRequest.Key },
+                arguments,
                 queryRequest.Key,
-                [new(query.Argument.Id, query.Argument.Name, query.Argument.Type, false)]);
+                properties);
             if (authorization.Outcome == SemanticPolicyOutcome.Unsupported)
             {
                 return new SemanticUnsupported(
@@ -335,7 +341,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
 
             var results = tentative.ReadModels
                 .Where(instance => instance.ReadModel == query.ReadModel)
-                .Where(instance => instance.Values.Any(value =>
+                .Where(instance => query.KeyProperty is null || instance.Values.Any(value =>
                     value.TargetProperty == query.KeyProperty && SemanticValueRules.AreEqual(value.Value, queryRequest.Key)))
                 .ToImmutableArray();
             queryResults.Add(new(query.Id, queryRequest.Key, results));
@@ -722,7 +728,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             var validator = new SemanticValueValidator(
                 plan.Model.Application.Concepts.ToDictionary(_ => _.Id),
                 plan.Model.Application.Types.ToDictionary(_ => _.Id));
-            validator.Validate(key, query.Argument.Type, $"query '{query.Name}' key");
+            if (query.Argument is not null) validator.Validate(key, query.Argument.Type, $"query '{query.Name}' key");
             return null;
         }
         catch (InvalidSemanticContract exception)

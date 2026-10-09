@@ -370,14 +370,17 @@ public static partial class SemanticModelCanonicalJson
         WriteId(writer, query.Id);
         CanonicalJson.WriteString(writer, "name", query.Name);
         writer.WriteString("readModel", query.ReadModel.ToString());
-        writer.WritePropertyName("argument");
-        writer.WriteStartObject();
-        WriteId(writer, query.Argument.Id);
-        CanonicalJson.WriteString(writer, "name", query.Argument.Name);
-        writer.WritePropertyName("type");
-        WriteTypeReference(writer, query.Argument.Type);
-        writer.WriteEndObject();
-        writer.WriteString("keyProperty", query.KeyProperty.ToString());
+        if (query.Argument is not null && query.KeyProperty is { } keyProperty)
+        {
+            writer.WritePropertyName("argument");
+            writer.WriteStartObject();
+            WriteId(writer, query.Argument.Id);
+            CanonicalJson.WriteString(writer, "name", query.Argument.Name);
+            writer.WritePropertyName("type");
+            WriteTypeReference(writer, query.Argument.Type);
+            writer.WriteEndObject();
+            writer.WriteString("keyProperty", keyProperty.ToString());
+        }
         writer.WriteString("cardinality", QueryCardinality(query.Cardinality));
         writer.WriteString("delivery", QueryDelivery(query.Delivery));
         if (query.Authorization is not null)
