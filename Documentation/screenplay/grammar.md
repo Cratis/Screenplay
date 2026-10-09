@@ -527,7 +527,10 @@ TagValue       = Ident
 
 Path           = Ident, { ".", Ident } ;
 
-PropertyLine   = [ "@" ], Ident, TypeRef, [ "generated" ], [ "identifier" ], NL ;
+PropertyLine   = [ "@" ], Ident, TypeRef, [ "generated" ], [ "identifier" ], [ "subject" ], NL ;
+(* subject is last and only valid on event properties: one required scalar identity
+   per event generation, not pii/secret. It is report-only (PLAY0270), adding no ESM bytes.
+   Read models are not yet supported; commands, types and responses refuse it. *)
 
 (* "generated" is command-only and requires a required scalar Uuid-backed concept.
    Generated values and responses select ESM v7. Pre-generation references report
@@ -717,7 +720,8 @@ QualifiedOperationReference = Ident, ".", Ident, { ".", Ident } ;
 
 InlineEventProduction = "produces", "event", Ident, NL,
                         [ INDENT, { ForDecl | TagDecl | EventMetadata | TypedMapping }, DEDENT ] ;
-TypedMapping   = [ "@" ], Ident, TypeRef, "=", MappingSource, NL ;
+TypedMapping   = [ "@" ], Ident, TypeRef, [ "subject" ], "=", MappingSource, NL ;
+(* subject applies only to inline event mappings, not operation inputs. *)
 ForDecl        = "for", MappingSource, NL ;
 
 (* InlineEventProduction is allowed only inside commands. It declares a slice-owned

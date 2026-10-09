@@ -255,7 +255,18 @@ export function planCompletions(
     const afterPropertyType = propertyOwner && !reservedProperty && optionalPrefix(textBefore.match(/^\s*@?[a-z_]\w*\s+[\w.]+(?:\[\])?\s+(\w*)$/));
     const afterQueryType = (chain[0] === 'query' && optionalPrefix(textBefore.match(/^\s*(?:by|filter)\s+[a-z_]\w*\s+[\w.]+(?:\[\])?\s+(\w*)$/))) ||
         optionalPrefix(textBefore.match(/^\s*query\s+[A-Za-z_]\w*\s*=>\s*(?:observable\s+)?[\w.]+(?:\[\])?\s+(\w*)$/));
-    if ((afterPropertyType || afterQueryType) && !/=>\s*observable\s+$/.test(textBefore)) return { kind: 'entries', entries: items.optionalTypeItems };
+    const eventPropertyOwner = chain[0] === 'event' || (chain[0] === 'produces' && /^produces\s+event\b/.test(nearestEnclosingLine(lines, fences, lineIndex, effectiveIndent) ?? ''));
+    const subjectModifier = eventPropertyOwner && !reservedProperty ? textBefore.match(/^\s*@?[a-z_]\w*\s+([\w.]+)\s+(\w*)$/) : null;
+    const subjectConcept = symbols.concepts.find(concept => concept.name === subjectModifier?.[1]);
+    const subjectType = subjectConcept?.primitive ?? subjectModifier?.[1];
+    const subjectTarget = (subjectType === 'String' || subjectType === 'Uuid' || (subjectType === 'Int' && subjectConcept !== undefined)) &&
+        !subjectConcept?.attributes.some(attribute => ['pii', 'personal', 'secret', 'sensitive'].includes(attribute.replace(/^@/, '')));
+    const afterSubjectType = subjectModifier !== null && subjectTarget && 'subject'.startsWith(subjectModifier[2]);
+    const modifierEntries = [
+        ...((afterPropertyType || afterQueryType) && !/=>\s*observable\s+$/.test(textBefore) ? items.optionalTypeItems : []),
+        ...(afterSubjectType ? [{ label: 'subject', insertText: 'subject', documentation: 'One required scalar event data-subject identity; not pii or secret. Report-only lineage metadata (PLAY0270), no ESM or provider output yet.' }] : []),
+    ];
+    if (modifierEntries.length > 0) return { kind: 'entries', entries: modifierEntries };
 
     if (/\bauthorize\s+[\w\s]*$/.test(textBefore) || chain[0] === 'authorize') {
         return { kind: 'policies' };

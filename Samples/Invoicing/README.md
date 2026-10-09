@@ -46,6 +46,8 @@ balance or due/overdue invoice rows; the payment form loads the balance by that 
 `ExchangeRates`, `CreditStatus` and the overdue list on `InvoiceDashboard` are views no event builds: their
 queries' performers read the central bank feed, a credit bureau and stored invoices.
 
+`InvoiceDraftStarted.customerId` uses the trailing event-property `subject` role to name the customer instead of the invoice stream. This is report-only lineage metadata, with no executable model or provider output yet.
+
 ## Where each construct is used
 
 | Construct | Where |

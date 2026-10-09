@@ -54,7 +54,7 @@ public class when_renaming_inline_events : given.an_authoring_connection
     [InlineData("SliceSyntax", "Rename")]
     void should_preserve_inline_contract_and_property_identity_in_a_rename_proposal(string kind, string name)
     {
-        File.WriteAllText(Path.Combine(RootPath, "application.play"), "module Projects\n  feature Naming\n    slice StateChange Rename\n      command Rename\n        projectId Uuid identifier\n        name String\n        produces event Renamed\n          name String = name\n");
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), "module Projects\n  feature Naming\n    slice StateChange Rename\n      command Rename\n        projectId Uuid identifier\n        name String\n        produces event Renamed\n          name String subject = name\n");
         Initialize();
         var opened = Open();
         var revision = opened.GetProperty("revision").GetString()!;
@@ -72,6 +72,8 @@ public class when_renaming_inline_events : given.an_authoring_connection
         var index = WorkspaceSyntaxIndex.Create(candidate);
         var declaration = index.Entries.Single(entry => entry.Node is EventSyntax);
         ((EventSyntax)declaration.Node).Id.ShouldEqual(kind == "EventSyntax" ? name : null);
+        ((EventSyntax)declaration.Node).Properties.Single().IsSubject.ShouldBeTrue();
+        candidate.Documents[0].Text.ShouldContain("name String subject = name");
         declaration.SemanticId.ShouldNotBeNull();
         declaration.EventContractId.ShouldNotBeNull();
         index.Entries.Single(entry => entry.Node is PropertySyntax && entry.Parent == declaration.Handle).SemanticId.ShouldNotBeNull();

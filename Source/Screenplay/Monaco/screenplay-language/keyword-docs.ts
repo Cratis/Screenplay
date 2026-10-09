@@ -64,7 +64,7 @@ export const keywordDocs: Record<string, string> = {
     authenticated: 'Requires an authenticated caller.',
     role: 'Requires the caller to have the given role.',
     claim: 'Requires a claim on the caller to match a subject or value.',
-    subject: 'The subject (identity) of the caller.',
+    subject: 'In policy `matches subject`, the identifier of the thing acted on, not the caller. The caller is `$context.causedBy.subject`.',
     data: 'Binds a read model to a screen through a query.',
     action: 'Makes a command available on a screen. `action "Label"` declares one button with ordered `when … execute` alternatives over the nearest data item or selected row. No subject hides it; commands still enforce authorization and validation.',
     otherwise: 'The final fallback of a guarded action: `otherwise hidden` or `otherwise execute <Command>`. In an item interaction, bare `otherwise` opens a fallback action list. No subject runs nothing, including fallback; authorization never falls through.',

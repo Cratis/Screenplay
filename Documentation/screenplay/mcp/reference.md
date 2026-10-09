@@ -90,6 +90,8 @@ continuing; do not retry the completed apply.
 
 ## Generated values and responses
 
+Event `declaration-details` summaries expose `subject: { "source": "eventSource" }` by default, or `{ "source": "property", "property": "<name>" }` for a trailing event-property `subject` mark. Property pages expose `isSubject`; `syntax-schema` describes optional `PropertySyntax.isSubject`, omitted when false. This is report-only lineage metadata (`PLAY0270`), not executable subject propagation or provider output. Rename and inline extraction preserve the mark.
+
 `declaration-details` exposes `isGenerated` on property pages and a command `response` view with typed scalar/block syntax, source property names, declared and inferred field types, and command-scoped `syntaxOnly`/`executionReadiness`. Generated values are not request/form inputs. Specification details and `find-fixtures` distinguish `generatedValues` and `thenReturns` from ordinary `whenCommand` values. These are syntax facts, not evaluated results.
 
 Discover `CommandSyntax.response`, `RecordCommandResponseSyntax.fields`, `ScalarCommandResponseSyntax.source`, `ResponseFieldSyntax` and `PropertyResponseSourceSyntax` with `syntax-schema`. Use the existing `read-ast` handles and typed Add/Replace/Remove operations under `propose-ast`, with `validation: "Executable"` for the admitted subset, or `"Authoring"` for full-language syntax. Add a response to the command's `response` member, replace or remove its node to change or clear it, and add/replace/remove record fields through `fields`. Field types are nullable for inference. Source locations remain server-owned; response fields have no ESM identities.

@@ -205,6 +205,17 @@
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "entity.name.type.screenplay" } }
                 },
                 {
+                    "comment": "Subject is a last-position event property role, including before inline mappings.",
+                    "match": "^\\s*(@?[a-z_]\\w*)\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)(?:\\s+(generated))?(?:\\s+(identifier))?\\s+(subject)(?=\\s*(?:=(?!=|>)|//|$))",
+                    "captures": {
+                        "1": { "name": "variable.other.screenplay" },
+                        "2": { "name": "entity.name.type.screenplay" },
+                        "3": { "name": "keyword.other.screenplay" },
+                        "4": { "name": "keyword.other.screenplay" },
+                        "5": { "name": "keyword.other.screenplay" }
+                    }
+                },
+                {
                     "comment": "Generated is a contextual modifier after a complete type, not a globally reserved name.",
                     "match": "^\\s*@?[a-z_]\\w*\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)\\s+(generated)(?:\\s+(identifier))?(?=\\s*(?://.*)?$)",
                     "captures": {

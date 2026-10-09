@@ -2608,4 +2608,34 @@ public static class DiagnosticCodes
     /// An item interaction uses a deprecated opaque where guard.
     /// </summary>
     public const string LegacyInteractionWhere = "PLAY0564";
+
+    /// <summary>
+    /// An event marks more than one property as its data subject.
+    /// </summary>
+    public const string DuplicateEventSubject = "PLAY0590";
+
+    /// <summary>
+    /// A subject property has an optional, collection, composite or unsupported identity type.
+    /// </summary>
+    public const string InvalidSubjectType = "PLAY0591";
+
+    /// <summary>
+    /// A subject property uses a personal data or secret concept rather than a surrogate identity.
+    /// </summary>
+    public const string ProtectedSubjectType = "PLAY0592";
+
+    /// <summary>
+    /// A subject modifier is used on a command, type or response instead of an event.
+    /// </summary>
+    public const string InvalidSubjectOwner = "PLAY0593";
+
+    /// <summary>
+    /// A read model subject modifier is not yet supported.
+    /// </summary>
+    public const string ReadModelSubjectNotSupported = "PLAY0594";
+
+    /// <summary>
+    /// The subject property modifier is duplicated or is not last in modifier order.
+    /// </summary>
+    public const string InvalidSubjectModifierOrder = "PLAY0595";
 }

@@ -529,7 +529,7 @@ module Invoicing
         authorize CanManageInvoice
 
         produces event InvoiceDraftStarted
-          customerId CustomerId = customerId
+          customerId CustomerId subject = customerId
           receiptId InvoiceReceiptId = receiptId
 
         returns
