@@ -70,7 +70,7 @@ export class HoverProvider implements languages.HoverProvider {
             api: '**api**\n\nAs a source type (`source api`): polls an HTTP API for changes.\n\nAs a source property (`api <ServiceName>`): references a configured External Service by name for the base URL and authentication.',
             webhook: '**webhook**\n\nA source type for receiving webhook payloads.',
             message: '**message**\n\nA source type for consuming messages from a topic.',
-            events: "**events**\n\nA source type for consuming the public events of another application: `source events` with one `from <Event>` line per event. Inbound Translate slices only; executable binding currently refuses it.",
+            events: "**events**\n\nA source type for consuming the public events of another application: `source events` with one `from <Event>` line per event. Inbound Translate slices only; admitted by executable semantic model (ESM) v9. The reference runner reports a typed Unsupported outcome for `when capture` over it.",
             route: '**route** *<path>*\n\nOptional path appended to an API source\'s External Service base URL. If omitted, the base URL is used as-is.',
             poll: '**poll** *<interval>*\n\nSets the polling interval for an API source.',
             path: '**path** *<route>*\n\nThe inbound path a webhook source listens on.',
