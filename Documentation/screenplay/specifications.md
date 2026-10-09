@@ -38,7 +38,7 @@ module Billing
         then InvoiceRegistered invoiceNumber = "INV-42"
 ```
 
-Unknown or malformed references and body lines report `PLAY0565`. If synthesis is refused, binding reports `PLAY0566` with the persona, policy, refusal reason and explicit-caller remedy. This is not a runtime unsupported outcome. Inspect the selected roles and claims in hover or MCP's persona `caller` view. A persona-backed denial scenario uses the same form with `then denied`.
+Unknown or malformed references and body lines report `PLAY0572`. If synthesis is refused, binding reports `PLAY0573` with the persona, policy, refusal reason and explicit-caller remedy. This is not a runtime unsupported outcome. Inspect the selected roles and claims in hover or MCP's persona `caller` view. A persona-backed denial scenario uses the same form with `then denied`.
 
 ## Named case tables
 
@@ -54,7 +54,7 @@ specification RecordingAmounts
   then Recorded amount = case.amount
 ```
 
-A table declares typed `parameter` values and at least one named `case`. Every case assigns every parameter exactly once, inline or indented. Values are concrete literals, single-line objects or lists; a case cannot name an example, use mapping expressions, `$` values or another case reference. `optional` permits literal `null`, not an omitted assignment or a default. Unused parameters warn with `PLAY0581`.
+A table declares typed `parameter` values and at least one named `case`. Every case assigns every parameter exactly once, inline or indented. Values are concrete literals, single-line objects or lists; a case cannot name an example, use mapping expressions, `$` values or another case reference. `optional` permits literal `null`, not an omitted assignment or a default. Unused parameters warn with `PLAY0588`.
 
 `case.<parameter>` fills a whole specification value position. It is substituted **after** example resolution and step overrides. Parameter and target types must match, or be a concept and its underlying primitive in either direction. An optional parameter can feed only an optional target. Every row value, including unused parameters, follows ordinary fixture normalization; substituted values still follow the target's ordinary admission rules.
 
@@ -64,7 +64,7 @@ Each row runs independently as `<Specification>_<Case>`, in case order, inheriti
 
 A table address selects all rows in `run-specifications` scope and `screenplay test --filter`; a derived address selects one. Source-bound failures start with `Case '<Case>' of '<Specification>':`. MCP's specification `cases` view pages names, effective addresses, locations and values; `find-fixtures` accepts the table or effective address and an optional `case` filter, with case-parameter provenance.
 
-For C# consumers, `SpecificationExamples.ExpandAll(specification, application, scope)` returns every effective case. The singular `Expand` refuses tables with `PLAY0582`. `EffectiveSpecification.Case`, the `Case` value origin and `CaseParameter` retain source provenance. TypeScript's effective expansion exposes `table` and `case` on each pair.
+For C# consumers, `SpecificationExamples.ExpandAll(specification, application, scope)` returns every effective case. The singular `Expand` refuses tables with `PLAY0589`. `EffectiveSpecification.Case`, the `Case` value origin and `CaseParameter` retain source provenance. TypeScript's effective expansion exposes `table` and `case` on each pair.
 
 ## Authoring descriptions
 

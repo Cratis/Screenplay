@@ -18,7 +18,7 @@ describe('when authoring specification cases', () => {
         expect(caseHover(lines, 5, 13, 24)).toContain('Large: `100`');
     });
     it('reports undeclared case parameters', () => {
-        expect(responseAnalysis(lines.map(line => line.replace('case.amount', 'case.other'))).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0577');
+        expect(responseAnalysis(lines.map(line => line.replace('case.amount', 'case.other'))).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0584');
     });
     it('does not offer references outside specifications or in case values', () => {
         expect(exampleCompletions([...lines, 'command Other', '  amount = case.'], 8, '  amount = case.')).toBeNull();

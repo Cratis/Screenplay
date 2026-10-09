@@ -35,15 +35,15 @@ describe('when parsing specification cases', () => {
         expandEffectiveSpecificationExamples(result.value).specifications[0].effective.thenErrors[0].name!.should.equal('$strings.small');
     });
     it.each([
-        ['parameter amount', 'PLAY0570'],
-        ['case Bad invalid', 'PLAY0571'],
-        ['parameter amount Int\n  parameter amount Int\n  case Small amount = 1', 'PLAY0572'],
-        ['parameter amount Int\n  case Small amount = 1\n  case Small amount = 2', 'PLAY0573'],
-        ['parameter amount Int', 'PLAY0574'],
-        ['case Small amount = 1', 'PLAY0574'],
-        ['parameter amount Int\n  case Small', 'PLAY0575'],
-        ['parameter amount Int\n  case Small amount = case.amount', 'PLAY0576'],
-        ['when Record amount = case.amount', 'PLAY0577'],
+        ['parameter amount', 'PLAY0577'],
+        ['case Bad invalid', 'PLAY0578'],
+        ['parameter amount Int\n  parameter amount Int\n  case Small amount = 1', 'PLAY0579'],
+        ['parameter amount Int\n  case Small amount = 1\n  case Small amount = 2', 'PLAY0580'],
+        ['parameter amount Int', 'PLAY0581'],
+        ['case Small amount = 1', 'PLAY0581'],
+        ['parameter amount Int\n  case Small', 'PLAY0582'],
+        ['parameter amount Int\n  case Small amount = case.amount', 'PLAY0583'],
+        ['when Record amount = case.amount', 'PLAY0584'],
     ])('should reject %s', (body, code) => {
         parseSpecificationSource(`specification Table\n  ${body}`).diagnostics.some(diagnostic => diagnostic.code === code).should.equal(true);
     });

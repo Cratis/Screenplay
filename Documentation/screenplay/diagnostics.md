@@ -922,11 +922,11 @@ These codes cover [inline command events](commands.md#declare-an-event-inline) a
 | `PLAY0477` | Error | Event documentation is not one nonempty fenced Markdown block, or is repeated. |
 | `PLAY0558` | Error | Module, feature, slice, command, read-model or reaction documentation is not one nonempty fenced Markdown block, or is repeated. |
 | `PLAY0559` | Warning | Files give different documentation for one module or feature. The first documentation is kept. |
-| `PLAY0565` | Error | A `given caller as <Persona>` reference is malformed, has body lines, or names an unknown top-level persona. Unknown references list declared personas. |
-| `PLAY0566` | Error | A persona caller cannot be synthesized or verified against its policies. Binding names the persona, policy and refusal (`negation`, `nonLiteralClaim`, `roleClaim`, `opaqueImplementation`, `unresolvedPolicy`, `noPolicies`); use an explicit `given caller`. |
-| `PLAY0567` | Warning | Opt-in `personas` check: none of a persona's policies gates a command, query or inherited screen scope. |
-| `PLAY0568` | Warning | Opt-in `personas` check: an effective command or query gate definitely denies every declared persona's synthesized caller; unsynthesizable or undecidable callers are unknown. |
-| `PLAY0569` | Information | Opt-in `personas` check: required atoms do not pin an `or` with multiple buildable alternatives. Names an unchosen alternative and suggests adding a policy that pins it. |
+| `PLAY0572` | Error | A `given caller as <Persona>` reference is malformed, has body lines, or names an unknown top-level persona. Unknown references list declared personas. |
+| `PLAY0573` | Error | A persona caller cannot be synthesized or verified against its policies. Binding names the persona, policy and refusal (`negation`, `nonLiteralClaim`, `roleClaim`, `opaqueImplementation`, `unresolvedPolicy`, `noPolicies`); use an explicit `given caller`. |
+| `PLAY0574` | Warning | Opt-in `personas` check: none of a persona's policies gates a command, query or inherited screen scope. |
+| `PLAY0575` | Warning | Opt-in `personas` check: an effective command or query gate definitely denies every declared persona's synthesized caller; unsynthesizable or undecidable callers are unknown. |
+| `PLAY0576` | Information | Opt-in `personas` check: required atoms do not pin an `or` with multiple buildable alternatives. Names an unchosen alternative and suggests adding a policy that pins it. |
 
 Malformed typed mappings and duplicate destinations retain `PLAY0044` and `PLAY0193`. Descriptions retain their existing diagnostics. Event descriptions, documentation, and rename pins are authoring-only metadata (`PLAY0270`); none changes canonical ESM bytes.
 
@@ -1096,19 +1096,19 @@ See [Policies](policies.md#portable-evaluation) for three-valued evaluation and 
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
-| `PLAY0570` | Error | A parameter requires a name and property-line type, without a body or default. |
-| `PLAY0571` | Error | A case requires an identifier and at most one inline assignment. |
-| `PLAY0572` | Error | A parameter name is repeated within a table. |
-| `PLAY0573` | Error | A case name is repeated within a table. |
-| `PLAY0574` | Error | Tables require parameters and at least one case. |
-| `PLAY0575` | Error | A case omits, repeats or invents a parameter assignment. |
-| `PLAY0576` | Error | A case value is not concrete or cannot be normalized to its declared parameter type. |
-| `PLAY0577` | Error | A case reference names no declared table parameter or occurs in an excluded position. |
-| `PLAY0578` | Error | An optional parameter feeds a required target. |
-| `PLAY0579` | Error | A derived specification name collides in its scope. |
-| `PLAY0580` | Error | The parameter type is unknown or incompatible with its target type. |
-| `PLAY0581` | Warning | A declared parameter is never referenced. |
-| `PLAY0582` | Error | Singular effective expansion cannot represent a table; use `ExpandAll`. |
+| `PLAY0577` | Error | A parameter requires a name and property-line type, without a body or default. |
+| `PLAY0578` | Error | A case requires an identifier and at most one inline assignment. |
+| `PLAY0579` | Error | A parameter name is repeated within a table. |
+| `PLAY0580` | Error | A case name is repeated within a table. |
+| `PLAY0581` | Error | Tables require parameters and at least one case. |
+| `PLAY0582` | Error | A case omits, repeats or invents a parameter assignment. |
+| `PLAY0583` | Error | A case value is not concrete or cannot be normalized to its declared parameter type. |
+| `PLAY0584` | Error | A case reference names no declared table parameter or occurs in an excluded position. |
+| `PLAY0585` | Error | An optional parameter feeds a required target. |
+| `PLAY0586` | Error | A derived specification name collides in its scope. |
+| `PLAY0587` | Error | The parameter type is unknown or incompatible with its target type. |
+| `PLAY0588` | Warning | A declared parameter is never referenced. |
+| `PLAY0589` | Error | Singular effective expansion cannot represent a table; use `ExpandAll`. |
 
 See [Named case tables](specifications.md#named-case-tables).
 

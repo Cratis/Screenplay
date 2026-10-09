@@ -30,5 +30,5 @@ describe('when authoring persona callers', () => {
         expect(exampleCompletions(current, 5, current[5])?.map(entry => entry.label)).toEqual(['Person']);
     });
     it('does not offer persona callers inside comments', () => expect(exampleCompletions(lines, 5, '  // given caller as ')).toBeNull());
-    it('reports unknown persona references with the compiler code', () => expect(responseAnalysis(lines.map(line => line.replace('as Person', 'as Other'))).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0565'));
+    it('reports unknown persona references with the compiler code', () => expect(responseAnalysis(lines.map(line => line.replace('as Person', 'as Other'))).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0572'));
 });
