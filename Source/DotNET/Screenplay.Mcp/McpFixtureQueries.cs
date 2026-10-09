@@ -10,7 +10,7 @@ namespace Cratis.Screenplay.Mcp;
 
 static class McpFixtureQueries
 {
-    internal static object Values(McpSnapshot snapshot, string? specification, string? role, string? property, string? value, int offset = 0, int limit = 50, string? scope = null, string? document = null) => new
+    internal static object Values(McpSnapshot snapshot, string? specification, string? role, string? property, string? value, int offset = 0, int limit = 50, string? scope = null, string? document = null, string? @case = null) => new
     {
         snapshot.Compilation.Success,
         snapshot.SourceRevision,
@@ -18,7 +18,8 @@ static class McpFixtureQueries
         coverage = "Effective specification property assignments and explicit destinations, and event routes with authored/example/override origins, including whenRedeliveredEvent locators. Values are syntax, not evaluated expressions. Types resolve only direct fields of an unambiguous local declaration; nested paths, imports and implicit view shapes have no inferred type.",
         page = McpReadPage<McpFixtureValue>.Create(
             McpFixtureOccurrences.All(snapshot.Index, snapshot.Compilation.Value).SelectMany(occurrence => Values(snapshot.Index, occurrence, snapshot.Compilation.Value)),
-            item => (specification is null || item.Specification.Address == specification) &&
+            item => (specification is null || item.Specification.Address == specification || item.Table == specification) &&
+                (@case is null || item.Case == @case) &&
                 (role is null || item.Role == role) && (property is null || item.Property == property) &&
                 (value is null || Convert.ToString(item.Value, CultureInfo.InvariantCulture) == value) &&
                 (scope is null || item.Specification.Address.StartsWith(scope + ".", StringComparison.Ordinal)) &&
@@ -54,9 +55,42 @@ static class McpFixtureQueries
     static bool HasAssertions(SpecificationSyntax specification) => specification.ThenReturns is not null || specification.ThenDenied is not null || specification.ThenEvents.Any() || specification.ThenErrors.Any() ||
         (specification.ThenReadModels?.Any() ?? false) || specification.ThenAbsentReadModels.Any() || specification.ThenQueries.Any();
 
-    static IEnumerable<McpFixtureValue> Values(McpSyntaxIndex index, McpFixtureOccurrence occurrence, ApplicationSyntax? application)
+    static IEnumerable<McpFixtureValue> Values(McpSyntaxIndex index, McpFixtureOccurrence occurrence, ApplicationSyntax? application) =>
+        RawValues(index, occurrence, application).Select(value => value with
+        {
+            Table = occurrence.Table,
+            Case = occurrence.Case,
+            CaseParameter = Origin(occurrence, value.Property)?.CaseParameter ?? RouteCaseParameter(occurrence, value),
+            Origin = RouteCaseParameter(occurrence, value) is not null ? "case" : Origin(occurrence, value.Property)?.Origin.ToString().ToLowerInvariant() ?? value.Origin,
+            Location = Origin(occurrence, value.Property) is { Origin: SpecificationValueOrigin.Case } origin ? origin.Value.Location : value.Location
+        });
+
+    static string? RouteCaseParameter(McpFixtureOccurrence occurrence, McpFixtureValue value)
+    {
+        var expression = value.Role switch
+        {
+            var role when role.EndsWith("StreamId", StringComparison.Ordinal) => occurrence.Stream?.StreamId?.Source,
+            var role when role.EndsWith("StreamIdPart", StringComparison.Ordinal) => occurrence.Stream?.StreamIdParts.SingleOrDefault(part => part.Property == value.Property)?.Source,
+            _ => null
+        };
+
+        return expression is null ? null : occurrence.CaseValues.FirstOrDefault(assignment => ReferenceEquals(assignment.Source, expression))?.Property;
+    }
+
+    static IEnumerable<McpFixtureValue> RawValues(McpSyntaxIndex index, McpFixtureOccurrence occurrence, ApplicationSyntax? application)
     {
         var candidates = index.Resolve(occurrence.Reference).Select(declaration => declaration.Owner).ToArray();
+        if (occurrence.Role == "givenCaller" && occurrence.Step is { } caller)
+        {
+            foreach (var atom in caller.Values)
+            {
+                yield return new(occurrence.Specification, occurrence.Role, occurrence.Ordinal, occurrence.Reference.Name, candidates, atom.Property, null, atom.Value.GetType().Name, Value(atom.Value), atom.Value.Location, "persona", null, null)
+                {
+                    Persona = atom.Persona,
+                    Policy = atom.Policy
+                };
+            }
+        }
         foreach (var mapping in occurrence.Values)
         {
             yield return new(

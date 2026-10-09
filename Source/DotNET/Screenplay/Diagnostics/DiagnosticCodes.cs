@@ -2556,6 +2556,96 @@ public static class DiagnosticCodes
     public const string ConflictingDocumentationAcrossFiles = "PLAY0559";
 
     /// <summary>
+    /// A persona caller reference is malformed, has a body, or names an unknown persona.
+    /// </summary>
+    public const string InvalidSpecificationCallerPersona = "PLAY0572";
+
+    /// <summary>
+    /// A persona cannot synthesize a portable specification caller.
+    /// </summary>
+    public const string UnsynthesizablePersonaCaller = "PLAY0573";
+
+    /// <summary>
+    /// None of a persona's policies gates an application entry point.
+    /// </summary>
+    public const string PersonaWithoutGate = "PLAY0574";
+
+    /// <summary>
+    /// Every synthesizable persona is definitely denied by an effective gate.
+    /// </summary>
+    public const string GateWithoutPersona = "PLAY0575";
+
+    /// <summary>
+    /// Required atoms do not pin a persona's buildable alternatives.
+    /// </summary>
+    public const string AmbiguousPersonaCaller = "PLAY0576";
+
+    /// <summary>
+    /// A specification parameter requires a name and a property-line type.
+    /// </summary>
+    public const string InvalidSpecificationParameter = "PLAY0577";
+
+    /// <summary>
+    /// A case requires an identifier and concrete assignments.
+    /// </summary>
+    public const string InvalidSpecificationCase = "PLAY0578";
+
+    /// <summary>
+    /// A specification repeats a parameter name.
+    /// </summary>
+    public const string DuplicateSpecificationParameter = "PLAY0579";
+
+    /// <summary>
+    /// A specification repeats a case name.
+    /// </summary>
+    public const string DuplicateSpecificationCase = "PLAY0580";
+
+    /// <summary>
+    /// A table requires both parameters and cases.
+    /// </summary>
+    public const string IncompleteSpecificationTable = "PLAY0581";
+
+    /// <summary>
+    /// A case must assign every declared parameter exactly once.
+    /// </summary>
+    public const string InvalidSpecificationCaseAssignment = "PLAY0582";
+
+    /// <summary>
+    /// A case value is not concrete or cannot be normalized to its parameter type.
+    /// </summary>
+    public const string InvalidSpecificationCaseValue = "PLAY0583";
+
+    /// <summary>
+    /// A case reference is unknown or used outside an allowed table value position.
+    /// </summary>
+    public const string InvalidSpecificationCaseReference = "PLAY0584";
+
+    /// <summary>
+    /// An optional parameter supplies a required target.
+    /// </summary>
+    public const string OptionalSpecificationParameterTarget = "PLAY0585";
+
+    /// <summary>
+    /// An expanded specification name collides in its owning scope.
+    /// </summary>
+    public const string SpecificationCaseNameCollision = "PLAY0586";
+
+    /// <summary>
+    /// A parameter and its target have incompatible types.
+    /// </summary>
+    public const string IncompatibleSpecificationParameterType = "PLAY0587";
+
+    /// <summary>
+    /// A declared table parameter is never referenced.
+    /// </summary>
+    public const string UnusedSpecificationParameter = "PLAY0588";
+
+    /// <summary>
+    /// The singular expansion API cannot represent a specification table.
+    /// </summary>
+    public const string SingularSpecificationTableExpansion = "PLAY0589";
+
+    /// <summary>
     /// A legacy compliance marker spelling should be migrated to bare pii or secret.
     /// </summary>
     public const string LegacyComplianceMarker = "PLAY0565";

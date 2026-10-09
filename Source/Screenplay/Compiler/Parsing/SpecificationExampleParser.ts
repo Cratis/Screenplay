@@ -7,7 +7,7 @@ import { SpecificationNoStreamSyntax, SpecificationStreamSyntax, SpecificationEx
 import { dotNetWhitespace, nativePattern } from '../Text/patterns';
 import { parseSpecificationStream, rejectSpecificationRouteChildren, specificationStream } from './SpecificationParser';
 import { parseDescription } from './DescriptionParser';
-import { parseMappingSource } from './ExpressionParser';
+import { caseReferences, parseSpecificationValue as parseMappingSource } from './SpecificationCaseParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
@@ -24,6 +24,7 @@ export function parseExample(context: ParserContext, line: SourceLine): Specific
         return { kind: 'SpecificationExampleSyntax', name: '', type: '', values: [], generatedValues: [], for: null, description: null, location: locationOf(line) };
     }
     const body = parseFixtureBody(context, line, undefined, true, match[1]);
+    for (const reference of caseReferences(body)) context.error(DiagnosticCodes.InvalidSpecificationCaseReference, 'Case references are not permitted in example bodies.', reference.location);
     return { kind: 'SpecificationExampleSyntax', name: match[1], type: match[2], ...body, location: locationOf(line) };
 }
 

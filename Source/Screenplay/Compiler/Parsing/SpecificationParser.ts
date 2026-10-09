@@ -7,13 +7,13 @@ import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
 import {
     SpecificationCaptureSyntax, SpecificationClockSyntax, SpecificationCommandSyntax, SpecificationErrorSyntax, SpecificationEventSyntax, SpecificationStreamSyntax, SpecificationNoStreamSyntax,
     SpecificationNoResultSyntax, SpecificationQueryResultSyntax, SpecificationReadModelSyntax, SpecificationSyntax, SpecificationTriggerSyntax,
-    SpecificationWhenQuerySyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationRedeliverySyntax,
+    SpecificationWhenQuerySyntax, SpecificationCallerPersonaSyntax, SpecificationOperationFailureSyntax, SpecificationOperationSyntax, SpecificationCompensatedSyntax, SpecificationRedeliverySyntax,
 } from '../Syntax/Specifications';
 import { SpecificationDeniedSyntax, SpecificationReturnSyntax } from '../Syntax/Responses';
 import { dotNetWhitespace, nativePattern, pattern } from '../Text/patterns';
 import { sourceStreamPattern } from '../Text/SourceStreamNames';
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
-import { parseMappingSource } from './ExpressionParser';
+import { containsCaseReference, parseCase, parseParameter, parseSpecificationValue as parseMappingSource, validateTable } from './SpecificationCaseParser';
 import { parseDescription } from './DescriptionParser';
 import { isFileDirective } from './FileReferences';
 import { firstWord } from './LineText';
@@ -27,6 +27,7 @@ import { SpecificationAbsentReadModelSyntax, SpecificationCallerClaimSyntax, Spe
 const operationStepPrefix = pattern('^(?:given\\s+operation|then\\s+(?:operation|compensated))(?:\\s|$)');
 const operationStep = pattern('^(given operation|then operation|then compensated)\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)(\\s+fails)?$');
 const header = pattern('^specification\\s+([A-Za-z_]\\w*)$');
+const callerPersonaPattern = pattern('^given caller as ([A-Za-z_]\\w*)$');
 const stepName = '([A-Z]\\w*(?:\\.\\w+)*)';
 const inlineAssignment = '(?:\\s+(?<property>[\\w.]+)\\s*=(?!=|>)\\s*(?<value>.+))?';
 const stepPattern = (prefix: string, exactly = ''): RegExp => nativePattern(`^${prefix}\\s+${stepName}${exactly}${inlineAssignment}$`.replaceAll('\\s', dotNetWhitespace));
@@ -90,6 +91,7 @@ interface SpecificationBody {
     thenNoResult: SpecificationNoResultSyntax | null;
     thenDenied: SpecificationDeniedSyntax | null;
     givenCaller: SpecificationCallerSyntax | null;
+    givenCallerPersona?: SpecificationCallerPersonaSyntax;
     thenReturns: SpecificationReturnSyntax | null;
     givenOperationFailures: SpecificationOperationFailureSyntax[];
     thenOperations: SpecificationOperationSyntax[];
@@ -102,6 +104,8 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
         context.error(DiagnosticCodes.InvalidSpecificationDeclaration, `Invalid specification declaration '${line.content}' - expected 'specification <Name>'`, locationOf(line));
     }
     let description: string | null = null;
+    const parameters: NonNullable<SpecificationSyntax['parameters']>[number][] = [];
+    const cases: NonNullable<SpecificationSyntax['cases']>[number][] = [];
     const body: SpecificationBody = {
         givenOperationFailures: [], thenOperations: [], thenCompensated: [], thenAbsentReadModels: [], thenQueries: [],
         given: [], givenReadModels: [], when: null, whenAppended: null, whenRedelivered: null, whenDeclared: false,
@@ -116,7 +120,13 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
         if (parseOperationStep(context, child, body)) continue;
         // Absence assertions admit any whitespace after 'then'; every other directive keeps its first word.
         const keyword = thenNoPrefix.test(child.content) ? 'then' : firstWord(child.content);
-        if (keyword === 'description') {
+        if (keyword === 'parameter') {
+            const parameter = parseParameter(context, child);
+            if (parameter !== null) parameters.push(parameter);
+        } else if (keyword === 'case') {
+            const row = parseCase(context, child);
+            if (row !== null) cases.push(row);
+        } else if (keyword === 'description') {
             description = parseDescription(context, child, description, `Specification '${name}'`);
         } else if (keyword === 'given') {
             parseGiven(context, child, body);
@@ -134,7 +144,10 @@ export function parseSpecification(context: ParserContext, line: SourceLine): Sp
             "'then no events' cannot follow 'when append' or accompany event, event-order, error or denial expectations.", locationOf(body.noEventsLine));
     }
     const { whenDeclared: _, noEventsLine: _noEventsLine, ...members } = body;
-    return { kind: 'SpecificationSyntax', sourceOptions: context.sourceOptions, name, description, ...members, location: locationOf(line) };
+    const specification: SpecificationSyntax = { kind: 'SpecificationSyntax', sourceOptions: context.sourceOptions, name, description, ...members,
+        ...(parameters.length === 0 ? {} : { parameters }), ...(cases.length === 0 ? {} : { cases }), location: locationOf(line) };
+    validateTable(specification, context);
+    return specification;
 }
 
 function parseOperationStep(context: ParserContext, line: SourceLine, body: SpecificationBody): boolean {
@@ -173,9 +186,16 @@ function parseGiven(context: ParserContext, line: SourceLine, body: Specificatio
             body.givenCaptures.push(capture);
         }
     } else if (line.content.startsWith('given caller')) {
-        if (body.givenCaller !== null) {
+        if (body.givenCaller !== null || body.givenCallerPersona !== undefined) {
             context.error(DiagnosticCodes.DuplicateSpecificationCallerOrDenied, "A specification has at most one 'given caller' block.", locationOf(line));
             context.skipBlock(line.indent);
+        } else if (line.content.startsWith('given caller as')) {
+            const match = callerPersonaPattern.exec(line.content);
+            if (match === null) context.error(DiagnosticCodes.InvalidSpecificationCallerPersona, "Expected 'given caller as <Persona>'.", locationOf(line));
+            const child = context.peekChild(line.indent);
+            if (child !== undefined) context.error(DiagnosticCodes.InvalidSpecificationCallerPersona, "'given caller as <Persona>' has no body; use an explicit 'given caller' for refinements.", locationOf(child));
+            skipBody(context, line.indent);
+            if (match !== null) body.givenCallerPersona = { kind: 'SpecificationCallerPersonaSyntax', name: match[1], location: locationOf(line) };
         } else {
             body.givenCaller = parseCaller(context, line);
         }
@@ -216,7 +236,7 @@ function parseCaller(context: ParserContext, line: SourceLine): SpecificationCal
         } else if (claim !== null) {
             claims.push({ kind: 'SpecificationCallerClaimSyntax', type: unescapeString(claim[1]), value: unescapeString(claim[2]), location: locationOf(child) });
         } else {
-            context.error(DiagnosticCodes.InvalidSpecificationCaller, `Invalid caller fixture '${child.content}' - expected authenticated, role "...", or claim "..." = "...".`, locationOf(child));
+            context.error(containsCaseReference(child.content) ? DiagnosticCodes.InvalidSpecificationCaseReference : DiagnosticCodes.InvalidSpecificationCaller, `Invalid caller fixture '${child.content}' - expected authenticated, role "...", or claim "..." = "...".`, locationOf(child));
         }
     }
     return { kind: 'SpecificationCallerSyntax', authenticated, roles, claims, location: locationOf(line) };
@@ -333,6 +353,11 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
         body.thenErrors.push({ kind: 'SpecificationErrorSyntax', name: null, location: locationOf(line) });
         return;
     }
+    if (line.content.startsWith('then error case.')) {
+        const caseValue = parseMappingSource(line.content.substring(11), { ...locationOf(line), column: locationOf(line).column + 11 }, context);
+        if (caseValue.kind === 'CaseValueExpressionSyntax') body.thenErrors.push({ kind: 'SpecificationErrorSyntax', name: null, caseValue, location: locationOf(line) });
+        return;
+    }
     const error = thenErrorPattern.exec(line.content);
     if (error !== null) {
         body.thenErrors.push({ kind: 'SpecificationErrorSyntax', name: unescapeString(error[1]), location: locationOf(line) });
@@ -353,7 +378,7 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
         const match = thenAbsentReadModelPattern.exec(line.content);
         if (match !== null && !match[2].endsWith(' exactly')) {
             const key = parseMappingSource(match[2].trim(), locationOf(line), context.valueContext);
-            if (key.kind === 'LiteralExpressionSyntax' || key.kind === 'ObjectExpressionSyntax') body.thenAbsentReadModels.push({ kind: 'SpecificationAbsentReadModelSyntax', name: match[1], key, location: locationOf(line) });
+            if (key.kind === 'LiteralExpressionSyntax' || key.kind === 'ObjectExpressionSyntax' || key.kind === 'CaseValueExpressionSyntax') body.thenAbsentReadModels.push({ kind: 'SpecificationAbsentReadModelSyntax', name: match[1], key, location: locationOf(line) });
         }
         context.skipOpaqueBlock(line.indent);
         return;
@@ -406,7 +431,7 @@ function parseAbsentReadModel(context: ParserContext, line: SourceLine): Specifi
     const keyText = match[2].trim();
     const validString = !(keyText.startsWith('"') || keyText.startsWith("'")) || absentKeyStringPattern.test(keyText);
     const key = validString ? parseMappingSource(keyText, locationOf(line), context.valueContext) : null;
-    const concrete = key !== null && (key.kind === 'LiteralExpressionSyntax' || key.kind === 'ObjectExpressionSyntax');
+    const concrete = key !== null && (key.kind === 'LiteralExpressionSyntax' || key.kind === 'ObjectExpressionSyntax' || key.kind === 'CaseValueExpressionSyntax');
     if (!concrete) context.error(DiagnosticCodes.InvalidAbsentReadModelStep, `Invalid absence key '${keyText}' - expected exactly one concrete value.`, locationOf(line));
     let hasChildren = false;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
@@ -426,7 +451,7 @@ function parseClock(context: ParserContext, line: SourceLine, keyword: string): 
     const match = clockPattern.exec(line.content);
     skipBody(context, line.indent);
     if (match === null || match[1] !== keyword) {
-        context.error(DiagnosticCodes.InvalidSpecificationClock,
+        context.error(containsCaseReference(line.content) ? DiagnosticCodes.InvalidSpecificationCaseReference : DiagnosticCodes.InvalidSpecificationClock,
             `Invalid '${keyword} clock' - expected '${keyword} clock "<ISO 8601 instant>"', such as '${keyword} clock "2026-10-05T08:00:00Z"'`, locationOf(line));
         return null;
     }
@@ -561,7 +586,8 @@ export function parseSpecificationStream(context: ParserContext, header: SourceL
             } else {
                 block = true;
                 directiveLocations.streamId = locationOf(child);
-                streamIdParts = parseRouteParts(context, child, DiagnosticCodes.InvalidSpecificationStream);
+                streamIdParts = parseRouteParts(context, child, DiagnosticCodes.InvalidSpecificationStream).map(part => part.source.kind === 'PathExpressionSyntax' && part.source.path.startsWith('case.')
+                    ? { ...part, source: parseMappingSource(part.source.path, part.source.location, context) } : part);
             }
             continue;
         }

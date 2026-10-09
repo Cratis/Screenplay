@@ -1,0 +1,30 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+example Input : Record
+  amount = 1
+module M
+  feature F
+    slice StateChange S
+      command Record
+        amount Int
+        produces Recorded
+          amount = amount
+      event Recorded
+        amount Int
+      specification Recording
+        description "Keeps each case amount"
+        parameter amount Int
+        case Small amount = 10
+        case amountTooLow amount = 0
+        case Large
+          amount = 100
+        when Input amount = case.amount
+        then Recorded amount = case.amount
+      specification Rejecting
+        parameter amount Int
+        parameter reason String
+        case Empty amount = 0
+          reason = "$strings.amountRequired"
+        when Record amount = case.amount
+        then error case.reason

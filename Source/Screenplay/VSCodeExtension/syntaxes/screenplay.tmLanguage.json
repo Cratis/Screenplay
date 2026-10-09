@@ -277,6 +277,32 @@
                     }
                 },
                 {
+                    "comment": "Named specification cases and typed parameters.",
+                    "match": "^\\s*(parameter|case)\\s+([A-Za-z_]\\w*)",
+                    "captures": {
+                        "1": { "name": "keyword.other.screenplay" },
+                        "2": { "name": "entity.name.type.screenplay" }
+                    }
+                },
+                {
+                    "match": "\\b(case)(\\.)([a-z_]\\w*)\\b",
+                    "captures": {
+                        "1": { "name": "keyword.other.screenplay" },
+                        "2": { "name": "punctuation.separator.screenplay" },
+                        "3": { "name": "variable.other.screenplay" }
+                    }
+                },
+                {
+                    "comment": "A specification's persona caller is a bodyless reference.",
+                    "match": "^\\s*(given)\\s+(caller)\\s+(as)\\s+([A-Za-z_]\\w*)\\s*$",
+                    "captures": {
+                        "1": { "name": "keyword.other.screenplay" },
+                        "2": { "name": "keyword.other.screenplay" },
+                        "3": { "name": "keyword.other.screenplay" },
+                        "4": { "name": "entity.name.type.screenplay" }
+                    }
+                },
+                {
                     "comment": "A specification's clock, capture, trigger and query steps.",
                     "match": "^\\s*(given|when)\\s+(clock|capture|trigger|query)\\b",
                     "captures": {

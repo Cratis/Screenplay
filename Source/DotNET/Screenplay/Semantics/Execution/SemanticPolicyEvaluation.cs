@@ -28,6 +28,9 @@ internal static class SemanticPolicyEvaluation
         return EvaluateAuthorization(authorization, plan, caller, artifact, subject, properties);
     }
 
+    internal static bool AllowsCaller(SemanticPolicyCondition condition, SemanticCaller caller) =>
+        EvaluateCondition(condition, null, caller, new Dictionary<string, SemanticValue>(), null, []).IsTrue;
+
     static SemanticPolicyDecision EvaluateAuthorization(
         SemanticAuthorization authorization,
         SemanticExecutionPlan plan,
@@ -67,7 +70,7 @@ internal static class SemanticPolicyEvaluation
 
     static SemanticPolicyTruth EvaluateCondition(
         SemanticPolicyCondition condition,
-        SemanticExecutionPlan plan,
+        SemanticExecutionPlan? plan,
         SemanticCaller caller,
         IReadOnlyDictionary<string, SemanticValue> artifact,
         SemanticValue? subject,
@@ -84,7 +87,7 @@ internal static class SemanticPolicyEvaluation
 
     static SemanticPolicyTruth EvaluateLogicalCondition(
         SemanticLogicalPolicyCondition logical,
-        SemanticExecutionPlan plan,
+        SemanticExecutionPlan? plan,
         SemanticCaller caller,
         IReadOnlyDictionary<string, SemanticValue> artifact,
         SemanticValue? subject,
@@ -101,13 +104,13 @@ internal static class SemanticPolicyEvaluation
         return logical.Operator == SemanticLogicalOperator.And ? left.And(right) : left.Or(right);
     }
 
-    static SemanticPolicyTruth MatchClaim(SemanticClaimCondition claim, SemanticExecutionPlan plan, SemanticCaller caller, IReadOnlyDictionary<string, SemanticValue> artifact, SemanticValue? subject, IEnumerable<SemanticProperty> properties)
+    static SemanticPolicyTruth MatchClaim(SemanticClaimCondition claim, SemanticExecutionPlan? plan, SemanticCaller caller, IReadOnlyDictionary<string, SemanticValue> artifact, SemanticValue? subject, IEnumerable<SemanticProperty> properties)
     {
         var target = claim.TargetKind switch
         {
             SemanticClaimTargetKind.Literal => claim.Value,
             SemanticClaimTargetKind.Subject => Text(subject),
-            SemanticClaimTargetKind.Artifact when claim.Value is not null => Text(ArtifactValue(claim.Value, artifact, plan, properties)),
+            SemanticClaimTargetKind.Artifact when claim.Value is not null && plan is not null => Text(ArtifactValue(claim.Value, artifact, plan, properties)),
             _ => null
         };
         if (target is null) return SemanticPolicyTruth.Unknown;

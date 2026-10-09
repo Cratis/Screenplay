@@ -25,6 +25,7 @@
     "by",
     "caller",
     "capture",
+    "case",
     "casing",
     "category",
     "causation",
@@ -4911,6 +4912,118 @@
       "probes": [
         {
           "source": "module M\n  feature F\n    slice StateChange S\n      event Recorded\n        value String\n      command Record\n        value String\n        produces Recorded\n          value = value\n      specification Records\n        when Record\n          value = \u0022test\u0022\n        then Recorded\n          value = \u0022test\u0022\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": null,
+          "diagnostics": [],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            }
+          ]
+        },
+        {
+          "source": "policy Member\n  require authenticated and role \u0022member\u0022\npersona Accountant\n  policy Member\nmodule M\n  feature F\n    slice StateChange S\n      event Recorded\n        value String\n      command Record\n        value String\n        authorize Member\n        produces Recorded\n          value = value\n      specification RecordsAsPersona\n        given caller as Accountant\n        when Record\n          value = \u0022test\u0022\n        then Recorded\n          value = \u0022test\u0022\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": null,
+          "diagnostics": [],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            }
+          ]
+        },
+        {
+          "source": "module M\n  feature F\n    slice StateChange S\n      event Recorded\n        value String\n      command Record\n        value String\n        produces Recorded\n          value = value\n      specification RecordsCases\n        parameter value String\n        case One value = \u0022one\u0022\n        case Two value = \u0022two\u0022\n        when Record value = case.value\n        then Recorded value = case.value\n",
           "minimumSemanticVersion": "1.0",
           "diagnostic": null,
           "diagnostics": [],
@@ -11377,6 +11490,270 @@
       "title": "A concept declares more than one special category.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0572",
+      "name": "InvalidSpecificationCallerPersona",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A persona caller reference is malformed, has a body, or names an unknown persona.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0573",
+      "name": "UnsynthesizablePersonaCaller",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A persona cannot synthesize a portable specification caller.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0574",
+      "name": "PersonaWithoutGate",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "None of a persona\u0027s policies gates an application entry point.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0575",
+      "name": "GateWithoutPersona",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "Every synthesizable persona is definitely denied by an effective gate.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0576",
+      "name": "AmbiguousPersonaCaller",
+      "severity": "information",
+      "severities": [
+        "information"
+      ],
+      "title": "Required atoms do not pin a persona\u0027s buildable alternatives.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0577",
+      "name": "InvalidSpecificationParameter",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A specification parameter requires a name and a property-line type.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0578",
+      "name": "InvalidSpecificationCase",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A case requires an identifier and concrete assignments.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0579",
+      "name": "DuplicateSpecificationParameter",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A specification repeats a parameter name.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0580",
+      "name": "DuplicateSpecificationCase",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A specification repeats a case name.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0581",
+      "name": "IncompleteSpecificationTable",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A table requires both parameters and cases.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0582",
+      "name": "InvalidSpecificationCaseAssignment",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A case must assign every declared parameter exactly once.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0583",
+      "name": "InvalidSpecificationCaseValue",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A case value is not concrete or cannot be normalized to its parameter type.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0584",
+      "name": "InvalidSpecificationCaseReference",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A case reference is unknown or used outside an allowed table value position.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0585",
+      "name": "OptionalSpecificationParameterTarget",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An optional parameter supplies a required target.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0586",
+      "name": "SpecificationCaseNameCollision",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An expanded specification name collides in its owning scope.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0587",
+      "name": "IncompatibleSpecificationParameterType",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A parameter and its target have incompatible types.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0588",
+      "name": "UnusedSpecificationParameter",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A declared table parameter is never referenced.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0589",
+      "name": "SingularSpecificationTableExpansion",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "The singular expansion API cannot represent a specification table.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0590",
+      "name": "DuplicateEventSubject",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An event marks more than one property as its data subject.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0591",
+      "name": "InvalidSubjectType",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A subject property has an optional, collection, composite or unsupported identity type.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0592",
+      "name": "ProtectedSubjectType",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A subject property uses a personal data or secret concept rather than a surrogate identity.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0593",
+      "name": "InvalidSubjectOwner",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A subject modifier is used on a command, type or response instead of an event.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0594",
+      "name": "ReadModelSubjectNotSupported",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A read model subject modifier is not yet supported.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0595",
+      "name": "InvalidSubjectModifierOrder",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "The subject property modifier is duplicated or is not last in modifier order.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [
@@ -11453,6 +11830,7 @@
               "inputs",
               "phases",
               "values",
+              "cases",
               "streams",
               "route",
               "dependencies",
@@ -12400,6 +12778,7 @@
       "name": "find-fixtures",
       "requiredParameters": [],
       "optionalParameters": [
+        "case",
         "document",
         "expectedSourceRevision",
         "limit",
@@ -12414,6 +12793,9 @@
         "type": "object",
         "properties": {
           "specification": {
+            "type": "string"
+          },
+          "case": {
             "type": "string"
           },
           "role": {

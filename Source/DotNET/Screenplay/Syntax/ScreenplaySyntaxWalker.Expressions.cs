@@ -31,6 +31,9 @@ public abstract partial class ScreenplaySyntaxWalker
             case ObjectExpressionSyntax obj:
                 VisitObjectExpression(obj);
                 break;
+            case CaseValueExpressionSyntax value:
+                VisitCaseValueExpression(value);
+                break;
             case PathExpressionSyntax path:
                 VisitPathExpression(path);
                 break;
@@ -117,6 +120,12 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="PathExpressionSyntax"/> to visit.</param>
     public virtual void VisitPathExpression(PathExpressionSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a specification case parameter reference.
+    /// </summary>
+    /// <param name="syntax">The reference.</param>
+    public virtual void VisitCaseValueExpression(CaseValueExpressionSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="ContextExpressionSyntax"/> node.

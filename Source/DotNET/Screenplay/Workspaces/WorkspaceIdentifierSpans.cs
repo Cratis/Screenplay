@@ -18,6 +18,12 @@ internal static partial class WorkspaceIdentifierSpans
         {
             (SpecificationExampleSyntax, "name" or "type") => keyword == "example",
             (SpecificationSyntax, "name") => keyword == "specification",
+            (SpecificationParameterSyntax, "name") => keyword == "parameter",
+            (SpecificationCaseSyntax, "name") => keyword == "case",
+            (CaseValueExpressionSyntax, "parameter") => line.Contains("case.", StringComparison.Ordinal),
+            (PropertyMappingSyntax, "property") => line.Contains('='),
+            (SpecificationCallerPersonaSyntax, "name") => line.StartsWith("given caller as ", StringComparison.Ordinal),
+            (PersonaSyntax, "name") => keyword == "persona",
             (ConceptSyntax, "name") => keyword == "concept",
             (TypeSyntax, "name") => keyword == "type",
             (ModuleSyntax, "name") => keyword == "module",
@@ -78,6 +84,11 @@ internal static partial class WorkspaceIdentifierSpans
 
     internal static IEnumerable<(int Offset, int Length)> Find(SyntaxNode node, string member, string line, string expected)
     {
+        if (node is CaseValueExpressionSyntax && member == "parameter")
+        {
+            return Find(line, $"case.{expected}").Select(span => (span.Offset + 5, span.Length - 5));
+        }
+
         if (node is SpecificationRedeliverySyntax && (member == "eventType" || member == "reaction"))
         {
             var match = RedeliveryRegex().Match(line);

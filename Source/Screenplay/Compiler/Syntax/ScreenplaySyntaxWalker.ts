@@ -577,10 +577,13 @@ export abstract class ScreenplaySyntaxWalker {
     visitSpecification(syntax: SpecificationSyntax): void {
         this.visitNode(syntax);
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
+        syntax.parameters?.forEach(node => { this.visitNode(node); this.visitTypeRef(node.type); });
+        syntax.cases?.forEach(node => { this.visitNode(node); node.values.forEach(value => this.visitPropertyMapping(value)); });
         if (syntax.givenClock !== null) this.visitSpecificationClock(syntax.givenClock);
         syntax.givenOperationFailures?.forEach(node => this.visitSpecificationOperationFailure(node));
         syntax.thenOperations?.forEach(node => this.visitSpecificationOperation(node));
         syntax.thenCompensated?.forEach(node => this.visitSpecificationCompensated(node));
+        if (syntax.givenCallerPersona != null) this.visitNode(syntax.givenCallerPersona);
         if (syntax.givenCaller != null) {
             this.visitNode(syntax.givenCaller);
             syntax.givenCaller.claims.forEach(node => this.visitNode(node));
@@ -607,7 +610,7 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.thenNoResult !== null) this.visitNode(syntax.thenNoResult);
         if (syntax.thenDenied != null) this.visitNode(syntax.thenDenied);
         if (syntax.thenReturns != null) this.visitSpecificationReturn(syntax.thenReturns);
-        syntax.thenErrors.forEach(node => this.visitNode(node));
+        syntax.thenErrors.forEach(node => { this.visitNode(node); if (node.caseValue != null) this.visitExpression(node.caseValue); });
     }
 
     visitSpecificationRedelivery(syntax: SpecificationRedeliverySyntax): void {

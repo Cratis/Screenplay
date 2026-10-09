@@ -34,7 +34,8 @@ public class when_binding_admission_probes : Specification
 
             // Bind independently rather than calling the production observation/classification routine.
             var compilation = CompileModel(probe["source"].GetValue<string>(), index == 0 ? definition.Imported : null);
-            var baselineCompilation = index == 0 && definition.Baseline is not null ? CompileModel(definition.Baseline) : null;
+            var baseline = index == 0 ? definition.Baseline : definition.VariantBaselines?.ElementAtOrDefault(index - 1);
+            var baselineCompilation = baseline is null ? null : CompileModel(baseline);
             var disposition = compilation.Diagnostics.FirstOrDefault(diagnostic => baselineCompilation?.Diagnostics.Contains(diagnostic) != true && (diagnostic.Severity == DiagnosticSeverity.Error || diagnostic.Code == DiagnosticCodes.ReportOnlySemanticSyntax || diagnostic.Code == DiagnosticCodes.DeferredSemanticSyntax));
             (probe["diagnostic"]?.GetValue<string>()).ShouldEqual(disposition?.Code);
             var diagnostics = compilation.Diagnostics.Where(diagnostic => baselineCompilation?.Diagnostics.Contains(diagnostic) != true).ToArray();
@@ -74,6 +75,21 @@ public class when_binding_admission_probes : Specification
 
         // The public model compiler, not ContractAdmission's binding helper, owns the expected result.
         return new SemanticModelCompiler().Compile("Contract", SemanticDocumentSet.Create([.. documents], catalog));
+    }
+
+    [Fact]
+    void should_publish_admitted_persona_caller_and_case_table_specification_forms()
+    {
+        var specification = ContractAdmission.Create(["specification"], ScreenplayContract.SupportedVersions())[0];
+        var probes = specification["probes"].AsArray();
+        probes.Any(probe => probe["source"].GetValue<string>().Contains("given caller as Accountant", StringComparison.Ordinal)).ShouldBeTrue();
+        probes.Any(probe => probe["source"].GetValue<string>().Contains("case One value", StringComparison.Ordinal)).ShouldBeTrue();
+        foreach (var probe in probes)
+        {
+            probe["diagnostic"].ShouldBeNull();
+            probe["minimumSemanticVersion"].ShouldNotBeNull();
+            probe["admission"].AsArray()[^1]["status"].GetValue<string>().ShouldEqual("admitted");
+        }
     }
 
     [Fact]

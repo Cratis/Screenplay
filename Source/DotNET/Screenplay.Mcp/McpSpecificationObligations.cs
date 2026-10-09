@@ -16,7 +16,7 @@ static class McpSpecificationObligations
         var selected = McpReviewSelection.Declarations(snapshot, arguments);
         var index = snapshot.Index;
         var expanded = snapshot.Compilation.Value is { } application ? SpecificationExamples.Expand(application) : null;
-        if (expanded?.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error) == true)
+        if (expanded?.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && diagnostic.Code != DiagnosticCodes.UnsynthesizablePersonaCaller) == true)
         {
             throw new McpFailure("SpecificationExampleExpansionFailed: obligations require unambiguous example expansion.");
         }

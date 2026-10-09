@@ -7,6 +7,7 @@ import { AuthoredSpecificationEvent } from './AuthoredSpecificationEvent';
 import { ResponseAnalysis } from './ResponseAnalysis';
 import { ExampleAnalysis } from './ExampleAnalysis';
 import { exampleAnalysis } from './example-analysis';
+import { personaAnalysis } from './persona-analysis';
 import { dependencyTargetAnalysis } from './dependency-target-analysis';
 import { EventSourceAnalysis } from './EventSourceAnalysis';
 import { AuthoredCommandRoute } from './AuthoredCommandRoute';
@@ -42,7 +43,7 @@ function authoringSource(lines: string[], headers: readonly string[]) {
     const body: number[] = [];
     let global = false;
     lines.forEach((line, index) => {
-        if (!fences[index] && indentOf(line) === 0 && /^\w/.test(line)) global = /^(?:concept|type|import|domain|system|eventsource)\b/.test(line);
+        if (!fences[index] && indentOf(line) === 0 && /^\w/.test(line)) global = /^(?:concept|type|import|domain|system|eventsource|policy|persona)\b/.test(line);
         (global ? globals : body).push(index);
     });
     const depth = roots.includes('feature') ? 1 : roots.includes('slice') ? 2 : 3;
@@ -52,7 +53,7 @@ function authoringSource(lines: string[], headers: readonly string[]) {
     return { source, locations };
 }
 
-function analyze(lines: string[], otherSources: readonly (string | AuthoringDocument)[], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis; readonly examples: ExampleAnalysis; readonly dependencies: ReturnType<typeof dependencyTargetAnalysis> } {
+function analyze(lines: string[], otherSources: readonly (string | AuthoringDocument)[], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis; readonly examples: ExampleAnalysis; readonly personas: ReturnType<typeof personaAnalysis>; readonly dependencies: ReturnType<typeof dependencyTargetAnalysis> } {
     const others = otherSources.map((document, index) => typeof document === 'string' ? { path: `other-${index}.play`, source: document } : document).filter(document => document.path !== path);
     const documents: AuthoringDocument[] = [{ path, source: lines.join('\n'), placement, isPlacementResolved }, ...others];
     // Modules/features merge, but slices are real declarations: equal slice names discard later
@@ -265,10 +266,10 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
             return dependencyAnalysis.completions(line, qualifier, placement);
         },
     };
-    return { commands, specifications, diagnostics, operationProductionLines, operations, eventSources, examples, dependencies };
+    return { commands, specifications, diagnostics, operationProductionLines, operations, eventSources, examples, personas: personaAnalysis(parsed.value, lines), dependencies };
 }
 
-export function responseAnalysis(lines: string[], otherSources: readonly (string | AuthoringDocument)[] = [], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis; readonly examples: ExampleAnalysis; readonly dependencies: ReturnType<typeof dependencyTargetAnalysis> } {
+export function responseAnalysis(lines: string[], otherSources: readonly (string | AuthoringDocument)[] = [], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis; readonly examples: ExampleAnalysis; readonly personas: ReturnType<typeof personaAnalysis>; readonly dependencies: ReturnType<typeof dependencyTargetAnalysis> } {
     const key = JSON.stringify([lines, otherSources, placement, path, isPlacementResolved]);
     let analysis = revisions.get(key);
     if (analysis === undefined) {

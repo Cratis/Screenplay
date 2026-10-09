@@ -19,4 +19,19 @@ sealed record McpFixtureValue(
     SourceLocation Location,
     string Origin,
     string? Example,
-    object? OverriddenValue);
+    object? OverriddenValue)
+{
+    /// <summary>
+    /// Gets the persona supplying a synthesized caller atom.
+    /// </summary>
+    public string? Persona { get; init; }
+
+    /// <summary>
+    /// Gets the policy supplying a synthesized caller atom.
+    /// </summary>
+    public string? Policy { get; init; }
+
+    public string? Table { get; init; }
+    public string? Case { get; init; }
+    public string? CaseParameter { get; init; }
+}

@@ -22,7 +22,7 @@ internal static partial class SpecificationParser
 
         var body = ParseFixtureBody(context, header, allowGenerated: true, example: match.Groups[1].Value);
 
-        return new(match.Groups[1].Value, match.Groups[2].Value, body.Values, header.Location)
+        var example = new SpecificationExampleSyntax(match.Groups[1].Value, match.Groups[2].Value, body.Values, header.Location)
         {
             For = body.For,
             Stream = body.Stream,
@@ -31,6 +31,11 @@ internal static partial class SpecificationParser
             Description = body.Description,
             DirectiveLocations = body.DirectiveLocations
         };
+        var references = new CaseReferences();
+        references.VisitSpecificationExample(example);
+        foreach (var reference in references.Values) context.Error(DiagnosticCodes.InvalidSpecificationCaseReference, "Case references are not permitted in example bodies.", reference.Location);
+
+        return example;
     }
 
     static FixtureBody ParseFixtureBody(ParserContext context, SourceLine parent, Match? inline = null, bool allowGenerated = false, string? example = null)
@@ -86,7 +91,7 @@ internal static partial class SpecificationParser
 
             if (mapping.Success)
             {
-                AddFixtureValue(context, body.Values, ExpressionParser.ParseMapping(context, mapping.Groups[1].Value, mapping.Groups[2], child), body.Generated);
+                AddFixtureValue(context, body.Values, ParseSpecificationMapping(context, mapping.Groups[1].Value, mapping.Groups[2], child), body.Generated);
                 continue;
             }
 
@@ -103,7 +108,7 @@ internal static partial class SpecificationParser
                 }
                 else
                 {
-                    body.For = ExpressionParser.ParseMappingSource(context, source, child.Location);
+                    body.For = ParseSpecificationValue(context, source, child.Location);
                 }
                 continue;
             }

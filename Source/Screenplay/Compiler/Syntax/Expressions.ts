@@ -4,6 +4,8 @@
 import { SyntaxNode } from './SyntaxNode';
 import { ExactNumber } from './ExactNumber';
 import { RefusalExpressionSyntax } from './RefusalExpressionSyntax';
+import { CaseValueExpressionSyntax } from './CaseValueExpressionSyntax';
+export type { CaseValueExpressionSyntax } from './CaseValueExpressionSyntax';
 export type { RefusalExpressionSyntax } from './RefusalExpressionSyntax';
 
 // Legacy literals retain Double interpretation; Exact values use explicit canonical-string slots.
@@ -92,6 +94,7 @@ export interface TemplateExpressionSyntax extends SyntaxNode {
 }
 
 export type ExpressionSyntax =
+    | CaseValueExpressionSyntax
     | RefusalExpressionSyntax
     | EventSourceIdExpressionSyntax
     | EventContextExpressionSyntax
