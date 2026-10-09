@@ -6,7 +6,7 @@ import vectors from '../../../Compiler/Conformance/diagnostics.json';
 import { diagnosticCodes } from '../diagnostic-codes';
 import { validateLines } from '../validation';
 
-const sharedCodes = new Set(['PLAY0514', 'PLAY0515', 'PLAY0518', 'PLAY0519', 'PLAY0341', 'PLAY0342', 'PLAY0343', 'PLAY0344', 'PLAY0391', 'PLAY0453', 'PLAY0478']);
+const sharedCodes = new Set(['PLAY0560', 'PLAY0561', 'PLAY0562', 'PLAY0563', 'PLAY0564', 'PLAY0514', 'PLAY0515', 'PLAY0518', 'PLAY0519', 'PLAY0341', 'PLAY0342', 'PLAY0343', 'PLAY0344', 'PLAY0391', 'PLAY0453', 'PLAY0478']);
 const cases = vectors.cases.filter(vector => vector.diagnostics.some(diagnostic => sharedCodes.has(diagnostic.split('@')[0])));
 
 describe('when forwarding shared parser diagnostics', () => {

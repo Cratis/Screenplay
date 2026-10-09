@@ -46,3 +46,4 @@
 | [0045](0045-model-notes-sidecar.md) | Record questions, tasks and notes against model elements in a committed sidecar outside the semantic model | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0046](0046-specification-case-tables.md) | Run one specification over named cases, expanded in the front end | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0047](0047-data-subject-mark-on-event-properties.md) | Mark an event's data subject with a trailing subject modifier on a property (phase 1) | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
+| [0048](0048-guarded-on-bindings.md) | Select whole interaction action lists with ordered item conditions | accepted | none | 2026-10-08 | Sindre Alstad Wilting |

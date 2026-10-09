@@ -203,7 +203,7 @@ Do not mix spelling migrations with other edits to the same document. Explicit
 single occurrence with `WorkspaceDiagnosticRepairs.Find`, or a whole document with
 `FindDocumentOptionality` and its root handle; preview either through `ProposeRepair`.
 
-`PLAY0560` repairs use `MigrateComplianceMarkerSpelling` to replace legacy `@pii`,
+`PLAY0565` repairs use `MigrateComplianceMarkerSpelling` to replace legacy `@pii`,
 `sensitive` and `@sensitive` with bare `pii` and `secret`. With `PreserveTrivia`,
 the repair changes only the marker spelling, preserving quoted reasons, comments,
 spacing and line endings. The candidate is reparsed and must preserve its syntax

@@ -38,8 +38,8 @@ describe('when editing compliance markers', () => {
         expect(hoverContent(['command C', '  secret scope'], 1, 'scope', 10, 15)).toBeNull();
     });
     it('should surface the compiler legacy and unknown-marker diagnostics', () => {
-        expect(validateLines(['concept Value : String @pii']).filter(issue => issue.code === 'PLAY0560')).toMatchObject([{ severity: 'information' }]);
-        expect(validateLines(['concept Value : String @encrypted']).filter(issue => issue.code === 'PLAY0561')).toMatchObject([{ severity: 'error' }]);
+        expect(validateLines(['concept Value : String @pii']).filter(issue => issue.code === 'PLAY0565')).toMatchObject([{ severity: 'information' }]);
+        expect(validateLines(['concept Value : String @encrypted']).filter(issue => issue.code === 'PLAY0566')).toMatchObject([{ severity: 'error' }]);
         expect(validateLines(['concept Value : String personal'])).toEqual([]);
     });
     it('should offer line and whole-document migrations pinned to the buffer version', async () => {
@@ -54,7 +54,7 @@ describe('when editing compliance markers', () => {
             },
         } as unknown as editor.ITextModel;
         const range = { startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 38 } as Range;
-        const context = { markers: [{ ...range, code: 'PLAY0560', severity: 2, message: 'Legacy' }], trigger: 1 } as languages.CodeActionContext;
+        const context = { markers: [{ ...range, code: 'PLAY0565', severity: 2, message: 'Legacy' }], trigger: 1 } as languages.CodeActionContext;
         const result = await createCodeActionProvider().provideCodeActions(model, range, context, { isCancellationRequested: false } as CancellationToken);
         expect(result?.actions.map(action => action.kind)).toEqual(['quickfix', 'source.screenplay.migrateCompliance']);
         expect(result?.actions[1].edit?.edits).toHaveLength(2);

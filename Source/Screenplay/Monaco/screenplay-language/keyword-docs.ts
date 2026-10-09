@@ -58,7 +58,7 @@ export const keywordDocs: Record<string, string> = {
     reads: 'Declares a view consulted by a command or reaction trigger: `reads <View> [as <alias>] [by <value>]`. A reaction `by` names a value taken by its trigger; clock triggers cannot use `by`. Repeated views require unique aliases. Runtime binding is not yet supported for command or reaction reads.',
     as: 'Names an instance of a view in a command or reaction trigger reads declaration, for example `reads Account as source by sourceId`.',
     handler: 'A fully imperative command implementation — a `file <Path>` reference or an inline `csharp` block, instead of `produces`.',
-    when: 'Guards a produced event or a capture append with a condition. In a labeled screen action, `when item.<field> == <literal> execute <Command>` selects the first matching alternative.',
+    when: 'Guards a produced event or a capture append with a condition. In a labeled screen action, `when item.<field> == <literal> execute <Command>` selects the first matching command. Inside on click, double click or select, block-form `when <condition>` selects one whole action list at gesture time.',
     rule: 'Names a predicate. Bare, it states that a constraint exists without expressing what it computes — nothing resolves the name. Optionally followed by an indented `file <Path>` reference or inline `csharp` block giving it a body.',
     require: 'A policy condition: `authenticated`, `role "..."`, or `claim "..." matches ...`. Unary `not` negates a condition or group; precedence is not, and, or.',
     authenticated: 'Requires an authenticated caller.',
@@ -67,7 +67,7 @@ export const keywordDocs: Record<string, string> = {
     subject: 'The subject (identity) of the caller.',
     data: 'Binds a read model to a screen through a query.',
     action: 'Makes a command available on a screen. `action "Label"` declares one button with ordered `when … execute` alternatives over the nearest data item or selected row. No subject hides it; commands still enforce authorization and validation.',
-    otherwise: 'The last fallback of a guarded action: `otherwise hidden` (the default) or `otherwise execute <Command>`. Authorization never falls through to a different alternative.',
+    otherwise: 'The final fallback of a guarded action: `otherwise hidden` or `otherwise execute <Command>`. In an item interaction, bare `otherwise` opens a fallback action list. No subject runs nothing, including fallback; authorization never falls through.',
     hidden: 'Hides a guarded action when no condition matches. Without a subject the action is always hidden, even with an execute fallback.',
     execute: 'Executes a command. A guarded screen action selects it by the first matching condition; explicit `with … from` bindings precede same-name item fields, its declared form and renderer input.',
     navigate: 'Navigates to a screen, optionally passing a parameter with `by`.',
@@ -152,10 +152,10 @@ export const specificationKeywordDocs: Record<string, string> = {
 };
 
 export const attributeDocs: Record<string, string> = {
-    pii: 'personal data (GDPR Art. 4(1)); renders Chronicle [PII]. Bare suffix marker; @pii is deprecated (PLAY0560). Not admitted by the executable model (PLAY0268).',
+    pii: 'personal data (GDPR Art. 4(1)); renders Chronicle [PII]. Bare suffix marker; @pii is deprecated (PLAY0565). Not admitted by the executable model (PLAY0268).',
     personal: 'Alias of pii: personal data (GDPR Art. 4(1)); renders Chronicle [PII]. No diagnostic; canonical printing writes pii.',
     secret: 'Operational secret, not personal data: encrypted at rest without erasure and withheld from causation. Provider mapping: [Encrypted] + [NotAudited], or [PII] only with pii. Cannot be identity (PLAY0515). Not admitted by the executable model (PLAY0268).',
-    sensitive: 'Deprecated spelling of secret (PLAY0560); repair to bare secret. Operational secret, not GDPR Art. 9 special-category data.',
+    sensitive: 'Deprecated spelling of secret (PLAY0565); repair to bare secret. Operational secret, not GDPR Art. 9 special-category data.',
 };
 
 export const contextVariableDocs: Record<string, string> = {

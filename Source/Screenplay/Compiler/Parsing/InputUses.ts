@@ -4,6 +4,7 @@
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { pattern } from '../Text/patterns';
 import { firstWord, unescapeIdentifier } from './LineText';
+import { validateInteractionBodies } from './InteractionAlternatives';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
 
@@ -23,7 +24,7 @@ const field = pattern('^field\\s+([\\w.]+)(?:\\s|$)');
 const argument = pattern('^with\\s+([A-Za-z_]\\w*)\\s+from\\s+.+$');
 const mapping = pattern('^(@?[\\w.]+)\\s*=(?!=|>)\\s*.+$');
 const parameter = pattern('^parameter\\s+([A-Za-z_]\\w*)(?:\\s+([\\w.]+(?:\\[\\])?))?$');
-const actionBoundaries = new Set(['refresh', 'navigate', 'open', 'close', 'set', 'notify', 'confirm', 'raise', 'on']);
+const actionBoundaries = new Set(['refresh', 'navigate', 'open', 'close', 'set', 'notify', 'confirm', 'raise', 'on', 'when', 'otherwise']);
 
 // A single forward walk, tracking owners by indentation and skipping fences as opaque text.
 export function collectInputUses(context: ParserContext, header: SourceLine): void {
@@ -48,11 +49,16 @@ export function collectInputUses(context: ParserContext, header: SourceLine): vo
         }
     };
     recognize(header);
+    const lines = [header];
     for (let child = context.peekChild(header.indent); child !== undefined; child = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
         if (child.content.startsWith('```')) context.skipFencedBody();
-        else recognize(child);
+        else {
+            lines.push(child);
+            recognize(child);
+        }
     }
+    validateInteractionBodies(context, lines);
     // Parameters may be declared after their bindings; commit facts once their scope is complete.
     for (const input of inputs) context.inputUses.push(parameters.has(input.command) ? { ...input, isParameter: true } : input);
 }

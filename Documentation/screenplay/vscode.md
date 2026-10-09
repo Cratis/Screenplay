@@ -204,7 +204,7 @@ the same verified fixes; neither editor needs a .NET process.
 ## Compliance marker quick fixes
 
 Legacy `@pii`, `sensitive` and `@sensitive` spellings receive information diagnostic
-`PLAY0560`, marked deprecated. Use the per-line lightbulb action **Use bare pii and
+`PLAY0565`, marked deprecated. Use the per-line lightbulb action **Use bare pii and
 secret compliance markers**, or **Use bare pii and secret throughout this document**
 (`source.screenplay.migrateCompliance`) to migrate every legacy line in the buffer.
 The repairs preserve quoted reasons, comments, spacing and line endings, and verify

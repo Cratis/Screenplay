@@ -129,6 +129,24 @@ public partial class ScreenplayPrinter
             {
                 WriteInteractionAction(writer, action);
             }
+
+            foreach (var alternative in binding.Alternatives)
+            {
+                writer.Line($"when {ScreenplaySyntaxText.Condition(alternative.Condition)}", alternative);
+                using (writer.Indent())
+                {
+                    foreach (var action in alternative.Actions) WriteInteractionAction(writer, action);
+                }
+            }
+
+            if (binding.Otherwise is { } otherwise)
+            {
+                writer.Line("otherwise", otherwise);
+                using (writer.Indent())
+                {
+                    foreach (var action in otherwise.Actions) WriteInteractionAction(writer, action);
+                }
+            }
         }
     }
 

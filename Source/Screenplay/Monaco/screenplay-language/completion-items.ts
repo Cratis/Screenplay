@@ -333,6 +333,21 @@ export const guardedActionItems: CompletionEntry[] = [
     ...actionItems.filter(item => item.label !== 'label'),
 ];
 
+export const interactionActionItems: CompletionEntry[] = [
+    { label: 'execute', insertText: 'execute ${1:CommandName}', documentation: 'Executes a command; denial never selects another alternative.' },
+    { label: 'navigate to', insertText: 'navigate to ${1:ScreenName}', documentation: 'Navigates to the named screen.' },
+    { label: 'open dialog', insertText: 'open dialog ${1:DialogTemplate}', documentation: 'Opens a dialog.' },
+    { label: 'notify', insertText: 'notify info "${1:Message}"', documentation: 'Displays a message.' },
+    { label: 'confirm', insertText: 'confirm "${1:Message}"\n    on success\n        execute ${2:CommandName}', documentation: 'Asks before continuing.' },
+    { label: 'refresh', insertText: 'refresh ${1:QueryName}', documentation: 'Refreshes a query-backed element.' },
+];
+
+export const interactionChoiceItems: CompletionEntry[] = [
+    { label: 'when …', insertText: 'when item.${1:status} == "${2:open}"\n    execute ${3:CommandName}', documentation: 'Selects a whole action list once against the rendered subject at gesture time.' },
+    { label: 'otherwise', insertText: 'otherwise\n    notify info "${1:Message}"', documentation: 'Final fallback list; without a subject nothing runs, including fallback.' },
+    ...interactionActionItems,
+];
+
 export const actionArgumentItems: CompletionEntry[] = [
     { label: 'with … from', insertText: 'with ${1:property} from item.${2:property}', documentation: 'Explicit input binding for this command alternative, before same-name item fields or its form.' },
 ];

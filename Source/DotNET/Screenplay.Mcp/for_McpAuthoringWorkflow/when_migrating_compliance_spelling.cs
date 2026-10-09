@@ -26,13 +26,13 @@ public class when_migrating_compliance_spelling : given.an_authoring_connection
     void Because()
     {
         _repairs = [.. Page("repairs", _opened.GetProperty("revision").GetString()!).EnumerateArray()
-            .Where(repair => repair.GetProperty("diagnosticCode").GetString() == "PLAY0560")];
+            .Where(repair => repair.GetProperty("diagnosticCode").GetString() == "PLAY0565")];
         _repair = _repairs.Single(repair => repair.GetProperty("scope").GetString() == "document");
         _proposal = Result("propose-repair", new
         {
             expectedRevision = _opened.GetProperty("revision").GetString(),
             expectedCatalogRevision = _opened.GetProperty("catalogRevision").GetString(),
-            diagnosticCode = "PLAY0560",
+            diagnosticCode = "PLAY0565",
             subject = _repair.GetProperty("subject"),
             formatting = "PreserveTrivia"
         });
@@ -51,7 +51,7 @@ public class when_migrating_compliance_spelling : given.an_authoring_connection
         {
             expectedRevision = _opened.GetProperty("revision").GetString(),
             expectedCatalogRevision = _opened.GetProperty("catalogRevision").GetString(),
-            diagnosticCode = "PLAY0560",
+            diagnosticCode = "PLAY0565",
             subject = repair.GetProperty("subject"),
             line = 3,
             formatting = "PreserveTrivia"

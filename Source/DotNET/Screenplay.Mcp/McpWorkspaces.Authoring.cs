@@ -47,7 +47,7 @@ internal sealed partial class McpWorkspaces
         }
 
         var subject = McpAstHandles.Read(arguments.GetProperty("subject"));
-        var result = code == "PLAY0560" && arguments.TryGetProperty("line", out _)
+        var result = code == "PLAY0565" && arguments.TryGetProperty("line", out _)
             ? ProposeComplianceLine(workspace, subject, McpJson.Integer(arguments, "line", 1, 1, int.MaxValue), request)
             : WorkspaceDiagnosticRepairs.ProposeRepair(workspace, code, subject, request);
         if (result.Conflicts.Any(conflict => conflict.Kind == WorkspaceConflictKind.UnknownRepair))
@@ -136,7 +136,7 @@ internal sealed partial class McpWorkspaces
     static WorkspaceAuthoringResult ProposeComplianceLine(ScreenplayWorkspace workspace, WorkspaceNodeHandle subject, int line, WorkspaceAuthoringRequest request)
     {
         var index = WorkspaceSyntaxIndex.Create(workspace);
-        var matches = index.Diagnostics.Where(diagnostic => diagnostic.Code == "PLAY0560" && diagnostic.Location.Line == line)
+        var matches = index.Diagnostics.Where(diagnostic => diagnostic.Code == "PLAY0565" && diagnostic.Location.Line == line)
             .SelectMany(diagnostic => WorkspaceDiagnosticRepairs.Find(index, workspace.Revision, diagnostic)).Where(repair => repair.Subject == subject).ToArray();
         if (matches.Length != 1) throw new McpFailure("UnknownRepair: no compliance spelling repair for this subject and line.", -32602) { FailureKind = "UnknownRepair" };
         return WorkspaceDiagnosticRepairs.ProposeRepair(workspace, matches[0], request);

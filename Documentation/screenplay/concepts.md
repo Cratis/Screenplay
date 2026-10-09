@@ -89,7 +89,7 @@ These facts remain syntax-only: binding reports `PLAY0268`, including scopes and
 
 ## Legacy spelling
 
-`@pii`, `sensitive` and `@sensitive` are deprecated but accepted with one `PLAY0560` Information diagnostic per line. Repairs migrate one line or the whole document to bare `pii`/`secret`, preserving comments and quoted notes. Unknown markers such as `@encrypted` are errors (`PLAY0561`). No classification marker may be placed on a property or composite type. The event-property `subject` role is a separate design under [decision 0047](https://github.com/Cratis/Screenplay/blob/main/decisions/0047-data-subject-mark-on-event-properties.md); `secret scope subject` selects encryption scope, not that event role.
+`@pii`, `sensitive` and `@sensitive` are deprecated but accepted with one `PLAY0565` Information diagnostic per line. Repairs migrate one line or the whole document to bare `pii`/`secret`, preserving comments and quoted notes. Unknown markers such as `@encrypted` are errors (`PLAY0566`). No classification marker may be placed on a property or composite type. The event-property `subject` role is a separate design under [decision 0047](https://github.com/Cratis/Screenplay/blob/main/decisions/0047-data-subject-mark-on-event-properties.md); `secret scope subject` selects encryption scope, not that event role.
 
 ## Enum concepts
 

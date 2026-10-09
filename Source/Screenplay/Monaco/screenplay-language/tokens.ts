@@ -177,6 +177,8 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
 
         interactionBody: [
             [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(otherwise)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword']],
+            [/^(\s*)(when)(\s+)(?=item\.|\()/, ['white', 'keyword', 'white']],
             [/^(\s*)(execute)(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
             { include: '@root' },
         ],

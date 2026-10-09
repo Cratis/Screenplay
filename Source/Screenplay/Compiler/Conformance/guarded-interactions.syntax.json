@@ -1,0 +1,132 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Items",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Retry",
+                  "produces": [],
+                  "properties": [],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "Details",
+              "operations": [],
+              "projections": [],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "Items",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Item"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Item",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "status",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [
+                {
+                  "kind": "ScreenSyntax",
+                  "directives": [
+                    {
+                      "kind": "ScreenDataSyntax",
+                      "by": null,
+                      "query": "Items",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": true,
+                        "isOptional": false,
+                        "name": "Item"
+                      }
+                    },
+                    {
+                      "kind": "ScreenTableSyntax",
+                      "columns": [
+                        {
+                          "kind": "ScreenColumnSyntax",
+                          "label": null,
+                          "property": "status"
+                        }
+                      ],
+                      "rowClick": null,
+                      "target": "Item"
+                    }
+                  ],
+                  "name": "Details"
+                }
+              ],
+              "specifications": [],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Work"
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

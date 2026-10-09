@@ -66,8 +66,8 @@ public class when_printing_remaining_offset_line_comments : given.a_printer
         foreach (var source in new[] { Source, Source.Replace("\n", "\n\n", StringComparison.Ordinal) })
         {
             var roundtrip = RoundTrip(source);
-            roundtrip.Original!.Diagnostics.ShouldBeEmpty();
-            roundtrip.Reparsed.Diagnostics.ShouldBeEmpty();
+            roundtrip.Original!.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldContainOnly(DiagnosticCodes.LegacyInteractionWhere);
+            roundtrip.Reparsed.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldContainOnly(DiagnosticCodes.LegacyInteractionWhere);
             foreach (var line in new[]
             {
                 "description \"A value\" // type description",
@@ -106,7 +106,7 @@ public class when_printing_remaining_offset_line_comments : given.a_printer
     void should_not_include_new_directive_anchors_in_typed_json()
     {
         var parsed = _compiler.Parse(Source);
-        parsed.Diagnostics.ShouldBeEmpty();
+        parsed.Diagnostics.Select(diagnostic => diagnostic.Code).ShouldContainOnly(DiagnosticCodes.LegacyInteractionWhere);
         var application = parsed.Value!;
         var module = application.Modules.Single();
         var feature = module.Features.Single();

@@ -70,7 +70,7 @@ describe('when migrating optional spelling in VS Code', () => {
 
     it('should offer compliance line and document fixes with explicit version-checked apply', async () => {
         const text = 'concept Value : String @pii @sensitive\n  sensitive reason "Keep @pii in this note"';
-        const legacy = { code: 'PLAY0560', range: new vscode.Range(1, 2, 1, 11) } as vscode.Diagnostic;
+        const legacy = { code: 'PLAY0565', range: new vscode.Range(1, 2, 1, 11) } as vscode.Diagnostic;
         const fixes = await actions({ diagnostics: [legacy] }, text);
         expect(fixes.map(fix => fix.kind?.value)).toEqual(['quickfix', 'source.screenplay.migrateCompliance']);
         expect(editor.applied).toBe(0);

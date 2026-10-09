@@ -17,10 +17,10 @@ describe('when parsing compliance markers', () => {
         expect(result.value.concepts[0].attributes[0].name).toBe(wire);
     });
     it.each(['@pii', 'sensitive', '@sensitive', '@pii @sensitive'])('should report one information per legacy line %s', marker => {
-        expect(parse(`concept Value : String ${marker}`).diagnostics).toMatchObject([{ code: 'PLAY0560', severity: 'information' }]);
+        expect(parse(`concept Value : String ${marker}`).diagnostics).toMatchObject([{ code: 'PLAY0565', severity: 'information' }]);
     });
     it.each(['@encrypted', 'pi', '@personal', '@secret'])('should reject unknown marker %s', marker => {
-        expect(code(`concept Value : String ${marker}`)).toEqual(['PLAY0561']);
+        expect(code(`concept Value : String ${marker}`)).toEqual(['PLAY0566']);
     });
     it.each(['subject', 'namespace', 'global'])('should retain explicit scope %s', scope => {
         const result = parse(`concept Key : String secret\n  secret scope ${scope}`);
@@ -33,24 +33,24 @@ describe('when parsing compliance markers', () => {
         expect(result.value.concepts[0].attributes[0]).toMatchObject({ name: 'pii', specialCategory: category, criminal: true });
     });
     it.each([
-        ['pii', 'pii scope subject', 'PLAY0562'],
-        ['secret', 'secret scope tenant', 'PLAY0562'],
-        ['secret', 'secret scope subject\n  secret scope global', 'PLAY0563'],
-        ['pii', 'pii special unknown', 'PLAY0565'],
-        ['pii', 'pii special health\n  pii special genetic', 'PLAY0566'],
+        ['pii', 'pii scope subject', 'PLAY0567'],
+        ['secret', 'secret scope tenant', 'PLAY0567'],
+        ['secret', 'secret scope subject\n  secret scope global', 'PLAY0568'],
+        ['pii', 'pii special unknown', 'PLAY0570'],
+        ['pii', 'pii special health\n  pii special genetic', 'PLAY0571'],
         ['', 'pii special health', 'PLAY0012'],
         ['', 'pii criminal', 'PLAY0012'],
-        ['secret', 'secret special health', 'PLAY0565'],
-        ['pii', 'pii criminal extra', 'PLAY0565'],
+        ['secret', 'secret special health', 'PLAY0570'],
+        ['pii', 'pii criminal extra', 'PLAY0570'],
         ['pii', 'pii reason missing-quotes', 'PLAY0010'],
         ['pii', 'pii reason "first"\n  personal reason "second"', 'PLAY0013'],
-        ['pii', 'unknown reason "note"', 'PLAY0561'],
-        ['pii', '@personal special health', 'PLAY0561'],
+        ['pii', 'unknown reason "note"', 'PLAY0566'],
+        ['pii', '@personal special health', 'PLAY0566'],
     ])('should reject invalid settings %s / %s', (marker, body, expected) => {
         expect(code(`concept Value : String ${marker}`.trimEnd() + `\n  ${body}`)).toEqual([expected]);
     });
     it('should warn when combined markers make secret scope ineffective', () => {
-        expect(parse('concept Value : String pii secret\n  secret scope global').diagnostics).toMatchObject([{ code: 'PLAY0564', severity: 'warning' }]);
+        expect(parse('concept Value : String pii secret\n  secret scope global').diagnostics).toMatchObject([{ code: 'PLAY0569', severity: 'warning' }]);
     });
     it('should preserve old syntax bytes when no new settings were declared', () => {
         expect(toSyntaxJson(parse('concept Value : String pii').value)).not.toHaveProperty('concepts.0.attributes.0.criminal');
@@ -68,7 +68,7 @@ describe('when migrating compliance spellings', () => {
         expect(toSyntaxJson(parseForAuthoring(expected).value)).toEqual(toSyntaxJson(parseForAuthoring(source).value));
         expect(code(expected)).toEqual([]);
         const occurrence = fixes.find(fix => fix.scope === 'occurrence')!;
-        expect(code(applyQuickFixEdits(source, occurrence.edits)!)).toEqual(['PLAY0560']);
+        expect(code(applyQuickFixEdits(source, occurrence.edits)!)).toEqual(['PLAY0565']);
     });
     it.each(['Café', 'Kunde_Ø', 'Cafe\u0301', '客户'])('should migrate only the selected header of Unicode concept %s', name => {
         const unicodeSource = source.replace('concept Value', `concept ${name}`);
@@ -76,7 +76,7 @@ describe('when migrating compliance spellings', () => {
         const occurrence = fixes.find(fix => fix.scope === 'occurrence')!;
         const repaired = applyQuickFixEdits(unicodeSource, occurrence.edits)!;
         expect(repaired).toBe(unicodeSource.replace('String @pii @sensitive', 'String pii secret'));
-        expect(code(repaired)).toEqual(['PLAY0560']);
+        expect(code(repaired)).toEqual(['PLAY0565']);
     });
     it.each(['Café', 'Kunde_Ø', 'Cafe\u0301', '客户'])('should remove every legacy diagnostic for Unicode concept %s without changing reasons or trivia', name => {
         const unicodeSource = source.replace('concept Value', `concept ${name}`);
@@ -90,7 +90,7 @@ describe('when migrating compliance spellings', () => {
     it('should expose the reason line separately in a range request', () => {
         const fixes = findQuickFixes(source);
         expect(fixes).toHaveLength(1);
-        const prepared = findQuickFixes(source, { line: 3, diagnosticCode: 'PLAY0560' });
+        const prepared = findQuickFixes(source, { line: 3, diagnosticCode: 'PLAY0565' });
         expect(applyQuickFixEdits(source, prepared[0].edits)).toBe(source.replace('  sensitive reason', '  secret reason'));
     });
     it('should refuse erroneous documents and leave canonical aliases alone', () => {

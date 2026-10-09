@@ -7665,13 +7665,7 @@
                                           "property": "invoiceNumber"
                                         }
                                       ],
-                                      "rowClick": {
-                                        "kind": "ScreenNavigateSyntax",
-                                        "by": "invoiceId",
-                                        "parameters": [],
-                                        "route": null,
-                                        "screen": "CancelInvoiceScreen"
-                                      },
+                                      "rowClick": null,
                                       "target": "InvoiceDetailsReadModel"
                                     }
                                   ],

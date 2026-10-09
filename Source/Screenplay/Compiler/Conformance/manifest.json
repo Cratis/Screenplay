@@ -5,6 +5,7 @@
         { "name": "authoring-metadata", "path": "Source/Screenplay/Compiler/Conformance/authoring-metadata.play" },
         { "name": "specification-examples", "path": "Source/Screenplay/Compiler/Conformance/specification-examples.play" },
         { "name": "specification-example-routes", "path": "Source/Screenplay/Compiler/Conformance/specification-example-routes.play" },
+        { "name": "guarded-interactions", "path": "Source/Screenplay/Compiler/Conformance/guarded-interactions.play" },
         { "name": "guarded-actions", "path": "Source/Screenplay/Compiler/Conformance/guarded-actions.play" },
         { "name": "reaction-refusals-redelivery", "path": "Source/Screenplay/Compiler/Conformance/reaction-refusals-redelivery.play" },
         { "name": "no-events", "path": "Source/Screenplay/Compiler/Conformance/no-events.play" },

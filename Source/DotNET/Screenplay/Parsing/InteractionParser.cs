@@ -291,10 +291,38 @@ internal static partial class InteractionParser
         string? condition = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
         var actions = new List<InteractionActionSyntax>();
+        var alternatives = new List<InteractionAlternativeSyntax>();
+        InteractionOtherwiseSyntax? otherwise = null;
+        var sawOtherwise = false;
+        var sawAlternative = false;
 
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
+            if (LineText.FirstWord(child.Content) == "when")
+            {
+                sawAlternative = true;
+                if (sawOtherwise)
+                {
+                    context.Error(DiagnosticCodes.MisplacedActionOtherwise, "A 'when' alternative must precede 'otherwise'", child.Location);
+                }
+
+                if (ParseAlternative(context, child) is { } alternative) alternatives.Add(alternative);
+                continue;
+            }
+
+            if (LineText.FirstWord(child.Content) == "otherwise")
+            {
+                if (sawOtherwise || child.Content != "otherwise")
+                {
+                    context.Error(DiagnosticCodes.MisplacedActionOtherwise, "An interaction permits one final block-form 'otherwise'", child.Location);
+                }
+
+                sawOtherwise = true;
+                otherwise = new(ParseAlternativeActions(context, child), child.Location);
+                continue;
+            }
+
             var where = WhereRegex().Match(child.Content);
             if (where.Success)
             {
@@ -315,12 +343,43 @@ internal static partial class InteractionParser
             }
         }
 
-        if (actions.Count == 0)
+        if (sawAlternative || sawOtherwise)
+        {
+            if (!SupportsAlternatives(trigger))
+            {
+                context.Error(DiagnosticCodes.UnsupportedInteractionAlternatives, "Interaction alternatives are only supported on click, double click and select", line.Location);
+            }
+
+            if (actions.Count > 0 || condition is not null)
+            {
+                context.Error(DiagnosticCodes.MixedInteractionAlternatives, "Interaction alternatives cannot mix with plain actions or 'where'", line.Location);
+            }
+
+            if (!sawAlternative)
+            {
+                context.Error(DiagnosticCodes.GuardedActionWithoutAlternatives, "A guarded interaction requires at least one 'when' alternative", line.Location);
+            }
+        }
+        else if (actions.Count == 0)
         {
             context.Error(DiagnosticCodes.InteractionBindingWithoutActions, $"'{line.Content}' declares no actions - a trigger with nothing to do is never what was meant", line.Location);
         }
 
-        return new(trigger, condition, actions, line.Location) { DirectiveLocations = directiveLocations };
+        if (condition is not null && SupportsAlternatives(trigger))
+        {
+            var location = directiveLocations["where"];
+            const string message = "Opaque 'where' on click, double click and select is deprecated; use block-form 'when' item conditions";
+            if (ParseStrictItemCondition(condition, location, context.SourceOptions) is not null)
+            {
+                context.Warning(DiagnosticCodes.LegacyInteractionWhere, message, location);
+            }
+            else
+            {
+                context.Add(new(DiagnosticSeverity.Information, DiagnosticCodes.LegacyInteractionWhere, message, location));
+            }
+        }
+
+        return new(trigger, condition, actions, line.Location) { DirectiveLocations = directiveLocations, Alternatives = alternatives, Otherwise = otherwise };
     }
 
     static InteractionTriggerSyntax? ParseTrigger(ParserContext context, SourceLine line)

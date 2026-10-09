@@ -135,13 +135,13 @@ remove duplicate route headers before export.
 | `PLAY0012` | Error | A concept gives a reason, scope or personal-data qualifier for a marker it does not carry. |
 | `PLAY0013` | Error | A concept gives the reason for one attribute more than once. |
 | `PLAY0515` | Error | A concept marked `pii` or `secret` is used as a command identifier, an explicit `for` destination, an event source identifier, a scalar stream id type, a composite stream id part type, or a command route mapping source (including nested property paths). The message names the attribute and position, never a value. A mapping using the same protected concept already reported at its resolved stream-id declaration is not reported again; a different protected source concept is still reported. Specification route literals rely on their declaration's check. Use a surrogate `Uuid` identifier and keep personal data or operational secrets as properties. Reaction destinations also check values typed directly in the trigger clause, even for an undeclared or registered trigger. When a reaction source names both an event and a declared trigger, a protected destination in the resolved event shape or the trigger clause is rejected. |
-| `PLAY0560` | Information | Legacy `@pii`, `sensitive` or `@sensitive` spelling. Use bare `pii`/`secret`; per-line and document repairs preserve notes and trivia. |
-| `PLAY0561` | Error | Unknown concept compliance marker; expected `pii`, `personal` or `secret`. |
-| `PLAY0562` | Error | Scope belongs to `secret` and must be `subject`, `namespace` or `global`. |
-| `PLAY0563` | Error | A concept declares secret scope more than once. |
-| `PLAY0564` | Warning | Explicit secret scope on `pii secret` is ignored because only Chronicle `[PII]` renders. |
-| `PLAY0565` | Error | Invalid personal-data qualifier or unknown Art. 9(1) category. |
-| `PLAY0566` | Error | A concept declares more than one `pii special` category. |
+| `PLAY0565` | Information | Legacy `@pii`, `sensitive` or `@sensitive` spelling. Use bare `pii`/`secret`; per-line and document repairs preserve notes and trivia. |
+| `PLAY0566` | Error | Unknown concept compliance marker; expected `pii`, `personal` or `secret`. |
+| `PLAY0567` | Error | Scope belongs to `secret` and must be `subject`, `namespace` or `global`. |
+| `PLAY0568` | Error | A concept declares secret scope more than once. |
+| `PLAY0569` | Warning | Explicit secret scope on `pii secret` is ignored because only Chronicle `[PII]` renders. |
+| `PLAY0570` | Error | Invalid personal-data qualifier or unknown Art. 9(1) category. |
+| `PLAY0571` | Error | A concept declares more than one `pii special` category. |
 
 ### Types
 
@@ -1093,6 +1093,18 @@ Valid [source/stream authoring](event-sources.md) is not admitted by any support
 | `PLAY0546` | Warning | Semantic binding applies a policy with a claim under `not`, directly or through grouping, whose target is an optional path, a command's `subject` without an identifier, or a non-string type. An undecidable target evaluates to unknown even under negation; a final unknown policy result denies. Reported at the authorization reference against that command's properties or query argument. The TypeScript syntax compiler does not perform this semantic check. |
 
 See [Policies](policies.md#portable-evaluation) for three-valued evaluation and the distinction between a missing caller claim and a missing comparison target.
+
+### Guarded interaction alternatives
+
+| Code | Severity | Reported when |
+| --- | --- | --- |
+| `PLAY0560` | Error | Alternatives occur on a trigger other than click, double click or select. Submit and non-item triggers have no structured subject in this version. |
+| `PLAY0561` | Error | A binding mixes alternatives with plain actions or an opaque `where` guard. |
+| `PLAY0562` | Error | A `when` or `otherwise` branch has no actions. |
+| `PLAY0563` | Error | An interaction uses the labeled-action one-line `when … execute …` spelling. C# offers a typed block-form repair. |
+| `PLAY0564` | Warning / Information | Opaque `where` on click, double click or select is deprecated. A strict item condition warns and has a C# typed repair; other text is Information without a repair. Other triggers are unchanged. |
+
+Both compilers check these forms. Repairs require individual review (`CanFixAll: false`) and refuse trailing-comment relocation or comment loss. Conditions reuse PLAY0344–PLAY0348; fallback ordering uses PLAY0343 and missing alternatives uses PLAY0342. See [Interactions](interactions.md#choose-an-action-list-by-item-state). Interactions still report PLAY0269 at ESM binding; syntax support is not runtime admission.
 
 ## Retired codes
 
