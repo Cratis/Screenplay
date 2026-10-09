@@ -20,6 +20,17 @@ export const diagnosticCodes = {
     secretScopeIgnoredForPii: 'PLAY0569',
     invalidPersonalDataQualifier: 'PLAY0570',
     duplicateSpecialCategory: 'PLAY0571',
+    invalidPurposeDeclaration: 'PLAY0572',
+    invalidPurposeVocabulary: 'PLAY0573',
+    duplicatePurposeField: 'PLAY0574',
+    duplicatePurposeDeclaration: 'PLAY0575',
+    unknownPurpose: 'PLAY0576',
+    purposeInterestMismatch: 'PLAY0577',
+    personalDataWithoutPurpose: 'PLAY0578',
+    specialDataWithoutCondition: 'PLAY0579',
+    criminalDataWithoutAuthorization: 'PLAY0580',
+    purposeWithoutBasis: 'PLAY0581',
+    unusedPurpose: 'PLAY0582',
     // Supplied compiler diagnostics are preserved, even for checks only the C# tool can run.
     // See Documentation/screenplay/editor-diagnostics.md for the validation boundary.
     conflictingScreenDataBinding: 'PLAY0530',

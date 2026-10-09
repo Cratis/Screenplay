@@ -2585,6 +2585,61 @@ public static class DiagnosticCodes
     public const string DuplicateSpecialCategory = "PLAY0571";
 
     /// <summary>
+    /// A purpose declaration or field has invalid syntax.
+    /// </summary>
+    public const string InvalidPurposeDeclaration = "PLAY0572";
+
+    /// <summary>
+    /// A purpose uses a value outside a statutory vocabulary.
+    /// </summary>
+    public const string InvalidPurposeVocabulary = "PLAY0573";
+
+    /// <summary>
+    /// A purpose repeats a singleton field.
+    /// </summary>
+    public const string DuplicatePurposeField = "PLAY0574";
+
+    /// <summary>
+    /// A purpose name is declared more than once.
+    /// </summary>
+    public const string DuplicatePurposeDeclaration = "PLAY0575";
+
+    /// <summary>
+    /// A purpose reference does not resolve.
+    /// </summary>
+    public const string UnknownPurpose = "PLAY0576";
+
+    /// <summary>
+    /// A legitimate-interest statement and basis do not agree.
+    /// </summary>
+    public const string PurposeInterestMismatch = "PLAY0577";
+
+    /// <summary>
+    /// An opt-in check found personal data without purpose coverage.
+    /// </summary>
+    public const string PersonalDataWithoutPurpose = "PLAY0578";
+
+    /// <summary>
+    /// An opt-in check found special data without a processing condition.
+    /// </summary>
+    public const string SpecialDataWithoutCondition = "PLAY0579";
+
+    /// <summary>
+    /// An opt-in check found criminal data without authorization.
+    /// </summary>
+    public const string CriminalDataWithoutAuthorization = "PLAY0580";
+
+    /// <summary>
+    /// An opt-in check found a purpose without a lawful basis.
+    /// </summary>
+    public const string PurposeWithoutBasis = "PLAY0581";
+
+    /// <summary>
+    /// An opt-in check found an unreferenced purpose.
+    /// </summary>
+    public const string UnusedPurpose = "PLAY0582";
+
+    /// <summary>
     /// Interaction alternatives require a click, double click or select trigger.
     /// </summary>
     public const string UnsupportedInteractionAlternatives = "PLAY0560";

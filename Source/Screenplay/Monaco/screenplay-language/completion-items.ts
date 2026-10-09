@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { documentationItem } from './documentation-item';
+import { purposeReferenceItem } from './purpose-items';
 
 import { eventContextPaths } from './event-context';
 import { exampleDeclarationItems } from './example-declaration-items';
@@ -23,6 +24,7 @@ const fenced = (tag: string) => `\`\`\`${tag}\n\${1}\n\`\`\``;
 export { exampleDeclarationItems } from './example-declaration-items';
 
 export const topLevelItems: CompletionEntry[] = [
+    { label: 'purpose', insertText: 'purpose ${1:Name}\n    description "${2:processing intent}"\n    basis ${3|consent,contract,legalObligation,vitalInterests,publicTask,legitimateInterests|}', documentation: 'Report-only processing metadata. Not legal advice; referenced by module, feature and slice.' },
     ...exampleDeclarationItems,
     { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams, admitted by ESM v8. Pin the stored name before renaming a source with stored events; Default is reserved.' },
     { label: 'system', insertText: 'system ${1:Name}\n    description "${2:external system}"', documentation: 'Application-scoped external system; not admitted by any supported executable model (ESM) version yet.' },
@@ -82,6 +84,7 @@ export const typeItems: CompletionEntry[] = [
 ];
 
 export const sliceItems: CompletionEntry[] = [
+    purposeReferenceItem,
     documentationItem,
     ...exampleDeclarationItems,
     { label: 'operation', insertText: 'operation ${1:Name}\n    uses ${2:System}\n    ${3:input} ${4:Type}', documentation: 'Reusable slice-owned operation intent; not admitted by any supported executable model (ESM) version yet.' },
@@ -392,5 +395,5 @@ const sliceMembers: Record<string, readonly string[]> = {
 
 export function sliceItemsFor(sliceType: string | undefined): CompletionEntry[] {
     const members = sliceType ? sliceMembers[sliceType] : undefined;
-    return members ? sliceItems.filter(item => item.label === 'example' || item.label === 'documentation' || members.includes(item.label)) : sliceItems;
+    return members ? sliceItems.filter(item => item.label === 'purpose' || item.label === 'example' || item.label === 'documentation' || members.includes(item.label)) : sliceItems;
 }

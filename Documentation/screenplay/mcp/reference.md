@@ -88,6 +88,10 @@ outcome and session revision, retains the previous root-conflict snapshot, and
 reports the inspection failure in `metadataProblem`. Repair that metadata before
 continuing; do not retry the completed apply.
 
+## Processing purposes
+
+Use `kind: "Purpose"` to read a declared [processing purpose](../purposes.md). `declaration-details` summaries expose its `processingPurpose` fields and the direct `purposes` references of modules, features and slices. Reference and dependency inventories include role `purpose`. These are report-only declarations, not executable behavior or legal advice. `diagnostics` can opt into coverage prompts with `checks: "purposes"`.
+
 ## Generated values and responses
 
 `declaration-details` exposes `isGenerated` on property pages and a command `response` view with typed scalar/block syntax, source property names, declared and inferred field types, and command-scoped `syntaxOnly`/`executionReadiness`. Generated values are not request/form inputs. Specification details and `find-fixtures` distinguish `generatedValues` and `thenReturns` from ordinary `whenCommand` values. These are syntax facts, not evaluated results.

@@ -60,6 +60,7 @@ internal static partial class SliceParser
         var readModels = new List<ReadModelSyntax>();
         var reducers = new List<ReducerSyntax>();
         var templates = new List<TemplateAssignmentSyntax>();
+        var purposes = new List<PurposeReferenceSyntax>();
         FileReferenceSyntax? file = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
@@ -90,6 +91,9 @@ internal static partial class SliceParser
                     break;
                 case "documentation":
                     documentation = DocumentationParser.Parse(context, line, documentation, $"Slice '{name}'", directiveLocations);
+                    break;
+                case "purpose":
+                    PurposeParser.ParseReference(context, line, purposes);
                     break;
                 case "operation":
                     operations.Add(OperationParser.Parse(context, line).Operation);
@@ -153,6 +157,7 @@ internal static partial class SliceParser
             DescriptionLocation = descriptionLocation,
             DescriptionRawLength = descriptionRawLength,
             Templates = templates,
+            Purposes = purposes,
             DirectiveLocations = directiveLocations
         };
     }

@@ -13,6 +13,7 @@ import { getSubLanguage } from './sub-language-registry';
 import * as items from './completion-items';
 import * as scope from './scope-items';
 import { CompletionEntry } from './completion-items';
+import { purposeItems } from './purpose-items';
 
 // Matches a validation rule line ending in "rule <Name>" (optionally followed by a
 // message clause) - both the command form ("<property> rule <Name>") and the
@@ -66,6 +67,8 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
     if (subLanguage) return subLanguage.completions ?? [];
     const header = where.headers[0];
     switch (construct) {
+        case 'purpose':
+            return purposeItems;
         case 'module':
             return items.moduleItems;
         case 'feature':

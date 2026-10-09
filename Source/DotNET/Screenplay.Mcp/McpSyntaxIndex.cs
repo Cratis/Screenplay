@@ -117,6 +117,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
             case ReadModelSyntax value: Declare("ReadModel", value.Name, value); break;
             case ScreenSyntax value: Declare("Screen", value.Name, value); break;
             case ConceptSyntax value: Declare("Concept", value.Name, value); break;
+            case PurposeSyntax value: Declare("Purpose", value.Name, value, value.Description, new { reportOnly = true }); break;
             case TypeSyntax value: Declare("Type", value.Name, value); break;
             case PolicySyntax value: Declare("Policy", value.Name, value); break;
             case PersonaSyntax value: Declare("Persona", value.Name, value); break;

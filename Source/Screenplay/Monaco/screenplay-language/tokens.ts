@@ -15,7 +15,7 @@ import { bmpWordCharacters } from './bmp-word-characters';
 // Maps a Screenplay inline code tag to the Monaco language id used for embedded highlighting.
 // Declaration registration must not globally reserve existing property names.
 // Ambiguous standalone operation headers are supplied by typed semantic tokens.
-const contextualConstructs = new Set(['operation', 'system', 'eventsource']);
+const contextualConstructs = new Set(['operation', 'system', 'eventsource', 'purpose']);
 
 const embeddedLanguages: Record<string, string> = {
     csharp: 'csharp',
@@ -60,6 +60,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
         root: [
             [new RegExp(`^(\\s*)(example)(\\s+)([A-Z][${bmpWordCharacters}]*)(\\s*)(:)(\\s*)([A-Z][${bmpWordCharacters}.]*)(?=\\s*(?://.*)?$)`),
                 ['white', 'keyword', 'white', 'type.identifier', 'white', 'operator', 'white', 'type.identifier']],
+            [/^()(purpose)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', { token: 'type.identifier', next: '@purposeBody.$1' }]],
             [/^(\s*)(concept)(\s+)([^\s:]+)(\s*:\s*)(\w+)((?:\s+(?:@?pii|personal|@?sensitive|secret))*)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier', 'operator', { token: 'type.identifier', next: '@conceptBody.$1' }, 'keyword']],
             [/^(numbers)([ \t]+)(exact)(?=[ \t]*(?:(?:\/\/|#).*)?$)/, ['keyword', 'white', 'keyword']],
             [/^(eventsource)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
@@ -180,6 +181,13 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/^(\s*)(otherwise)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword']],
             [/^(\s*)(when)(\s+)(?=item\.|\()/, ['white', 'keyword', 'white']],
             [/^(\s*)(execute)(\s+)([\w.]+)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'type.identifier']],
+            { include: '@root' },
+        ],
+
+        purposeBody: [
+            [/^(?!$S2[ \t]+|\s*$)/, { token: '@rematch', next: '@pop' }],
+            [/^(\s*)(basis|interest|condition|authorization|subjects|retention|recipient|transfer|erasure)(\s+)/, ['white', 'keyword', 'white']],
+            [/\b(safeguard|exception)\b/, 'keyword'],
             { include: '@root' },
         ],
 

@@ -22,7 +22,7 @@ internal sealed class SliceReferences(string? readModel = null) : ScreenplaySynt
         ["whenRedeliveredEvent"] = "verifiedWith", ["redeliveryReaction"] = "verifiedWith", ["refusalConstraint"] = null, ["refusalProduces"] = null,
         ["specificationEvent"] = "verifiedWith", ["givenEvent"] = "verifiedWith", ["whenAppendedEvent"] = "verifiedWith", ["thenEvent"] = "verifiedWith", ["whenCommand"] = "verifiedWith",
         ["declares"] = null, ["uses"] = null, ["commandEventSource"] = null, ["commandStream"] = null, ["specificationEventSource"] = null, ["specificationStream"] = null, ["thenOperation"] = null,
-        ["givenOperationFailure"] = null, ["thenCompensated"] = null, ["produces"] = null, ["authorizes"] = null, ["queryResult"] = null,
+        ["givenOperationFailure"] = null, ["thenCompensated"] = null, ["produces"] = null, ["authorizes"] = null, ["purpose"] = null, ["queryResult"] = null,
         ["dataReadModel"] = null, ["type"] = null, ["exampleType"] = null, ["contributes"] = null, ["template"] = null, ["specificationReadModel"] = null,
         ["thenAbsentReadModel"] = null, ["thenReadModel"] = null, ["givenReadModel"] = null, ["thenQuery"] = null,
         ["compositeKeyType"] = null, ["builds"] = null, ["buildsVariant"] = null, ["appends"] = null, ["seed"] = null

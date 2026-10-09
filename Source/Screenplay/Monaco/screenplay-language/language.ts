@@ -24,6 +24,7 @@ export const constructKeywords = [
     'concept',
     'type',
     'policy',
+    'purpose',
     'persona',
     'authentication',
     'module',

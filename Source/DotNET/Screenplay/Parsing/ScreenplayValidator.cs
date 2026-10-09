@@ -31,6 +31,7 @@ internal static class ScreenplayValidator
     public static ApplicationSyntax Validate(ApplicationSyntax application, ParserContext context, bool allowUnresolvedPersonaPolicies = false)
     {
         foreach (var error in SourceNumericModes.Errors(application)) context.Add(error);
+        PurposeValidator.Validate(application, context);
         var authored = application;
         var expansion = SpecificationExamples.Expand(application);
         if (!expansion.Diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)) application = expansion.Application;

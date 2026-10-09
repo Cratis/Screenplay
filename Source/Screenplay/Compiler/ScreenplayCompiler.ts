@@ -20,6 +20,7 @@ import { validateIdentifierCompliance } from './Parsing/IdentifierComplianceVali
 import { validateReactionRefusals } from './Parsing/ReactionRefusalValidator';
 import { validateSpecificationRedelivery } from './Parsing/SpecificationRedeliveryValidator';
 import { validateGuardedActions } from './Parsing/GuardedActionValidator';
+import { validatePurposes } from './Parsing/PurposeValidator';
 import { parseApplication } from './Parsing/ScreenplayParser';
 import { splitLines } from './Parsing/SourceLineSplitter';
 import { PropertySyntax } from './Syntax/Declarations';
@@ -76,6 +77,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateReactionRefusals(value, context);
         validateSpecificationRedelivery(value, context);
         validateGuardedActions(value, context);
+        validatePurposes(value, context);
         value = validateDependencyDeclarations(value, context);
         DeclaredDependencies.validate(value, context);
         for (const diagnostic of productionDestinationDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);

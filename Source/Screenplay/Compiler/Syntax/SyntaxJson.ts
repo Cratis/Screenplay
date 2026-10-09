@@ -122,6 +122,7 @@ function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJ
             if (member === 'dependsOn' && (value.kind === 'ModuleSyntax' || value.kind === 'FeatureSyntax') && Array.isArray(memberValue) && memberValue.length === 0) continue;
             if (member === 'sourceOptions' && (memberValue as { numericMode?: string } | undefined)?.numericMode === 'legacy') continue;
             if (member === 'examples' && Array.isArray(memberValue) && memberValue.length === 0) continue;
+            if (member === 'purposes' && Array.isArray(memberValue) && memberValue.length === 0) continue;
             if (member === 'inlineProperty' && memberValue == null) continue;
             if ((value.kind === 'SpecificationExampleSyntax' || value.kind === 'SpecificationRedeliverySyntax') && (member === 'stream' || member === 'noStream') && memberValue == null) continue;
             if (value.kind === 'SpecificationSyntax' && member === 'thenNoEvents' && memberValue === false) continue;

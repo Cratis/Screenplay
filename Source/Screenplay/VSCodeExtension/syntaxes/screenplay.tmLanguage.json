@@ -22,6 +22,7 @@
         { "include": "#event-block" },
         { "include": "#command-block" },
         { "include": "#concept-block" },
+        { "include": "#purpose-block" },
         { "include": "#operation-block" },
         { "include": "#description-block" },
         { "include": "#projection-block" },
@@ -34,6 +35,18 @@
         { "include": "#common" }
     ],
     "repository": {
+        "purpose-block": {
+            "begin": "^()(purpose)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
+            "beginCaptures": { "2": { "name": "keyword.control.screenplay" }, "3": { "name": "entity.name.type.screenplay" } },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [
+                { "match": "^\\s*(basis|interest|condition|authorization|subjects|retention|recipient|transfer|erasure)\\b", "captures": { "1": { "name": "keyword.other.screenplay" } } },
+                { "match": "\\b(safeguard|exception)\\b", "name": "keyword.other.screenplay" },
+                { "include": "#description-block" },
+                { "include": "#comment" },
+                { "include": "#common" }
+            ]
+        },
         "concept-block": {
             "begin": "^([ ]*)(concept)\\s+([^\\s:]+)\\s*:\\s*(\\w+)((?:\\s+(?:@?pii|personal|@?sensitive|secret))*)(?=\\s*(?://.*)?$)",
             "beginCaptures": {

@@ -4,6 +4,7 @@
 import type { CompletionEntry } from './completion-items';
 import { exampleDeclarationItems } from './example-declaration-items';
 import { documentationItem } from './documentation-item';
+import { purposeReferenceItem } from './purpose-items';
 
 const interactions = ['click', 'double click', 'select', 'submit', 'change', 'load', 'unload', 'enter', 'leave'];
 
@@ -13,6 +14,7 @@ const interactionItems: CompletionEntry[] = [
 ];
 
 export const moduleScopeItems: CompletionEntry[] = [
+    purposeReferenceItem,
     documentationItem,
     ...exampleDeclarationItems,
     { label: 'description', insertText: 'description "${1:what this module is for}"', documentation: 'A human-readable description.' },
@@ -29,6 +31,7 @@ export const moduleScopeItems: CompletionEntry[] = [
 ];
 
 export const featureScopeItems: CompletionEntry[] = [
+    purposeReferenceItem,
     documentationItem,
     ...exampleDeclarationItems,
     { label: 'description', insertText: 'description "${1:what this feature is for}"', documentation: 'A human-readable description.' },

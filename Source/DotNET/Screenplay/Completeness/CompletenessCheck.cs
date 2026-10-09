@@ -36,5 +36,10 @@ public enum CompletenessCheck
     /// <summary>
     /// Checks screen reachability.
     /// </summary>
-    Navigation
+    Navigation,
+
+    /// <summary>
+    /// Checks declared processing purposes without assessing lawfulness.
+    /// </summary>
+    Purposes
 }

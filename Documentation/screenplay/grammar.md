@@ -13,7 +13,7 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* Screenplay DSL — Full EBNF                                    *)
 (* ============================================================ *)
 
-Document       = [ NumericPreamble ], [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl
+Document       = [ NumericPreamble ], [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
                | PersonaDecl | AuthenticationDecl | TriggerDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | SystemDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
@@ -108,6 +108,25 @@ StreamIdPart = Ident, QualifiedName, NL ;
 (* -------------------------------------------------------------- *)
 (* Concepts                                                        *)
 (* -------------------------------------------------------------- *)
+
+PurposeDecl    = "purpose", Ident, NL,
+                 [ INDENT, { DescriptionDecl
+                 | "basis", PurposeBasis, [ QuotedString ], NL
+                 | "interest", QuotedString, NL
+                 | "condition", PurposeCondition, [ QuotedString ], NL
+                 | "authorization", QuotedString, NL
+                 | "subjects", Ident, { ",", Ident }, NL
+                 | "retention", QuotedString, NL
+                 | "recipient", QuotedString, NL
+                 | "transfer", QuotedString, "safeguard", QuotedString, NL
+                 | "erasure", "exception", ErasureException, NL }, DEDENT ] ;
+PurposeReference = "purpose", Ident, NL ;
+PurposeBasis   = "consent" | "contract" | "legalObligation" | "vitalInterests"
+               | "publicTask" | "legitimateInterests" ;
+PurposeCondition = "explicitConsent" | "employmentLaw" | "vitalInterests" | "notForProfit"
+                 | "madePublic" | "legalClaims" | "substantialPublicInterest" | "healthCare"
+                 | "publicHealth" | "research" ;
+ErasureException = "expression" | "legalObligation" | "publicTask" | "publicHealth" | "archiving" | "legalClaims" ;
 
 ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL,
                    [ INDENT, { FileDirective | AttributeReason | ComplianceSetting | ConceptValidate }, DEDENT ]
@@ -267,7 +286,7 @@ PackageName    = Ident, { ".", Ident } ;
 
 Module         = "module", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | DocumentationDecl
+                   { DescriptionDecl | DocumentationDecl | PurposeReference
                    | AuthorizeDecl
                    | DependsOnDecl
                    | FileImport
@@ -443,7 +462,7 @@ ArrangementSizeClass = "compact" | "regular" ;
 
 Feature        = "feature", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | DocumentationDecl
+                   { DescriptionDecl | DocumentationDecl | PurposeReference
                    | AuthorizeDecl
                    | DependsOnDecl
                    | FileImport
@@ -460,7 +479,7 @@ Feature        = "feature", Ident, NL,
 (* -------------------------------------------------------------- *)
 
 SliceDecl      = "slice", SliceType, Ident, NL,
-                 INDENT, { DescriptionDecl | DocumentationDecl | FileDirective | SliceBody }, DEDENT ;
+                 INDENT, { DescriptionDecl | DocumentationDecl | PurposeReference | FileDirective | SliceBody }, DEDENT ;
 
 SliceType      = "StateChange" | "StateView" | "Automation" | "Translate" ;
 

@@ -57,13 +57,13 @@ concept DateOfBirth      : Date     pii
 
 ## Why a value is personal data
 
-The marker classifies the value. A `reason` is a free-text concept note, not a machine-checked lawful basis, purpose or retention policy. Existing notes remain unchanged during migration; the compiler never guesses their legal meaning.
+The marker classifies the value. A `reason` is a free-text concept note, not a machine-checked lawful basis, purpose or retention policy. Existing notes remain unchanged during migration; the compiler never guesses their legal meaning. Declare [processing purposes](purposes.md), basis and retention separately and reference them on the slices that use the value.
 
 An indented `<attribute> reason "<text>"` line records it:
 
 ```screenplay
 concept BankAccount : String pii secret
-  pii reason "Partner payout bank account - financial data. Remits self-billing payments; lawful basis: contract performance / legal obligation. Personal only for sole-proprietor partners."
+  pii reason "A payout bank account identifies sole-proprietor partners."
   secret reason "Fraud-sensitive - a leaked account number enables direct financial harm, so it never leaves the payout path."
 ```
 

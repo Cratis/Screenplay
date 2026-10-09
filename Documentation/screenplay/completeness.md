@@ -27,6 +27,8 @@ MCP `diagnostics` accepts the same comma-separated selection as `checks`. Findin
 | `event-consumers` | PLAY0536 | Events need a projection, reducer, reaction, constraint or interaction consumer. Specifications do not count. Imports are exempt. Terminal facts and externally consumed events can legitimately trigger this check; there is no acknowledgement mechanism yet. |
 | `navigation` | PLAY0537 | Screens must be reachable from contributions or shell-level behaviors. Edges include actions, row clicks, screen behaviors and discovered forms' submit navigation. Forms are discovered at screen actions and attached behavior `execute` sites, including parameterized command arguments. `open dialog` reaches screens filling that dialog template. Cycles without an entry point are unreachable. Unattached named behaviors and unused screen/dialog templates are not entry points. Template behaviors are edges from the screens using them. With no roots, one unlocated application finding states that no screen is reachable and is retained in every scope. Deep links and opaque code are not inferred. |
 
+| `purposes` | PLAY0578–PLAY0582 | [Processing purposes](purposes.md): prompts for uncovered personal data, missing special-category conditions or criminal authorization, missing bases and unused purposes. Coverage is the union of references on slices and their ancestors; composite types are traversed. Findings do not assess lawfulness or enforce retention. |
+
 ## Library API
 
 ```csharp

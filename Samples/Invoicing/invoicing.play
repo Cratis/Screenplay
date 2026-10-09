@@ -31,6 +31,31 @@ import Shipping.InvoiceShipped
 import Shipping.InvoiceShippingCleared
 import Payments.PaymentSettled
 
+// These declarations describe an example controller's processing, not legal
+// advice or runtime retention rules. Value classification stays on concepts.
+purpose Billing
+  description "Issue invoices and collect payment for delivered work"
+  basis contract
+  subjects customer, customerContact
+  retention "Until the customer relationship ends"
+  recipient "Payment provider"
+
+purpose Bookkeeping
+  basis legalObligation "Bokføringsloven § 13"
+  retention "Five years after the financial year ends"
+  erasure exception legalObligation
+  recipient "Tax authority"
+  transfer "United States" safeguard "EU Standard Contractual Clauses"
+
+purpose PaymentDisputes
+  description "Handle payment disputes and pursue legal claims"
+  basis legitimateInterests
+  interest "Recover unpaid invoices and defend payment claims"
+  condition legalClaims
+  authorization "Criminal data only under official authority according to applicable national law"
+  subjects customer
+  retention "Until the payment claim is settled and the appeal period ends"
+
 // ------------------------------------------------------------
 // Concepts - one per domain value, never a raw primitive
 // ------------------------------------------------------------
@@ -58,17 +83,17 @@ concept InvoiceDate   : Date
 concept OccurredAt    : DateTime
 
 concept PersonName : String pii
-  pii reason "The name of the person to contact about an invoice. Needed to reach them about billing; lawful basis: contract performance. Lives under the customer's subject and is erasable with their key."
+  pii reason "The name identifies the person to contact about an invoice."
 
 concept BankAccount : String pii secret
-  pii reason "Refund payout account. Remits money back to the customer; lawful basis: contract performance / legal obligation. Personal only for sole-proprietor customers."
+  pii reason "A refund payout account identifies sole-proprietor customers."
   secret reason "Fraud-sensitive - a leaked account number enables direct financial harm, so it is never rendered in full and never leaves the payout path."
   validate
     rule BeAValidIban message $strings.validation.bankAccount.invalid
       file Validations/BeAValidIban.cs
 
 concept EmailAddress : String pii
-  pii reason "Billing contact address. Delivers invoices and payment reminders; lawful basis: contract performance. Under the customer's subject, erasable with their key."
+  pii reason "The billing contact address identifies the customer's contact."
   validate
     not empty                                 message "Email is required"
     matches email                             message "Must be a valid email address"
@@ -361,6 +386,7 @@ behavior RefreshOnEnter
 // ============================================================
 
 module Invoicing
+  purpose Billing
   documentation
     ```markdown
     Invoicing owns billing decisions. Payment-provider facts enter through translation slices.
@@ -2216,6 +2242,7 @@ module Invoicing
           reminders = 0
 
     slice StateView CollectionsBoard
+      purpose PaymentDisputes
       description "Every unpaid invoice is exactly one of due, overdue or settled"
 
       readmodel DueInvoice
@@ -2692,6 +2719,7 @@ module Invoicing
   // ==========================================================
 
   feature Auditing
+    purpose Bookkeeping
     description "What auditors look at - nothing here changes anything"
     authorize IsAuditor
 

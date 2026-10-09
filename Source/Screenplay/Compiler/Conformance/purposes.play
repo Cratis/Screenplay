@@ -1,0 +1,34 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+purpose Billing
+  description "Issue invoices"
+  basis contract "Customer agreement"
+  subjects customer, customerContact
+  retention "Until the relationship ends"
+  recipient "Payment provider"
+  recipient "Accountant"
+  transfer "United States" safeguard "Standard clauses"
+  erasure exception legalObligation
+
+purpose Claims
+  description
+    ```text
+    Recover unpaid invoices
+    and defend payment claims.
+    ```
+  basis legitimateInterests
+  interest "Recover unpaid invoices"
+  condition legalClaims "Art. 9(2)(f)"
+  authorization "Under official authority"
+
+module Finance
+  purpose Billing
+  purpose Billing
+  feature Collections
+    purpose Claims
+    feature FollowUp
+      slice StateChange SendReminder
+        purpose Billing
+        command SendReminder
+          message String

@@ -12,6 +12,8 @@
   href: domain.md
 - name: Concepts
   href: concepts.md
+- name: Processing purposes
+  href: purposes.md
 - name: Types
   href: types.md
 - name: Policies

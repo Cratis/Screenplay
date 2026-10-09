@@ -145,6 +145,24 @@ remove duplicate route headers before export.
 | `PLAY0570` | Error | Invalid personal-data qualifier or unknown Art. 9(1) category. |
 | `PLAY0571` | Error | A concept declares more than one `pii special` category. |
 
+### Processing purposes
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0572` | Error | Invalid purpose declaration, reference or field syntax. |
+| `PLAY0573` | Error | Unknown basis, condition or erasure-exception value. |
+| `PLAY0574` | Error | A purpose repeats a singleton field. |
+| `PLAY0575` | Error | A purpose name is declared more than once. |
+| `PLAY0576` | Warning | A purpose reference does not resolve. |
+| `PLAY0577` | Warning | Interest is declared without basis legitimateInterests, or that basis has no nonblank interest statement. |
+| `PLAY0578` | Warning | Opt-in purposes check: a slice carries pii without a declared purpose in scope. |
+| `PLAY0579` | Warning | Opt-in purposes check: special-category data lacks a purpose's condition. |
+| `PLAY0580` | Warning | Opt-in purposes check: criminal data lacks a purpose's authorization. |
+| `PLAY0581` | Warning | Opt-in purposes check: a purpose has no basis. |
+| `PLAY0582` | Warning | Opt-in purposes check: a purpose is never referenced. |
+
+These are structural findings, not legal verdicts. See [Processing purposes](purposes.md).
+
 ### Types
 
 | Code | Severity | Reported when |

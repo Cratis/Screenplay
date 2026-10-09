@@ -36,8 +36,9 @@ const scopes: Record<string, [string, string[]]> = {
 
 describe('when completing an empty line in each scope', () => {
     for (const [scope, [text, expected]] of Object.entries(scopes)) {
+        const supportsPurpose = ['the root', 'a domain', 'a module', 'a feature', 'a state change slice', 'a state view slice', 'an automation slice', 'a translate slice'].includes(scope);
         it(`should offer only what ${scope} can hold`, () => {
-            offered(text).should.deep.equal([...expected].sort());
+            offered(text).should.deep.equal([...expected, ...supportsPurpose ? ['purpose'] : []].sort());
         });
     }
 

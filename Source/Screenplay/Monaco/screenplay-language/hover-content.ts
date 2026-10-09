@@ -53,6 +53,7 @@ export function hoverContent(
         return word === name && startColumn === start && endColumn === start + name.length && line.slice(start - 1, endColumn - 1) === name;
     };
     const before = line.charAt(startColumn - 2);
+    if (word === 'authorization' && enclosingChain(lines, fences, lineIndex, indentOf(line))[0] === 'purpose') return 'A quoted authorization in law for criminal-offence data (Art. 10).';
 
     const complianceHeader = /^\s*concept\s+[^\s:]+\s*:\s*\w+\s+/.exec(line);
     const complianceBody = enclosingChain(lines, fences, lineIndex, indentOf(line))[0] === 'concept' && /^\s*(?:@?pii|personal|@?sensitive|secret)\s+(?:reason|scope|special|criminal)\b/.test(line);

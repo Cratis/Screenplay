@@ -31,6 +31,7 @@ internal sealed class ModuleBody(string name)
     readonly List<FileImportSyntax> _fileImports = [];
     readonly List<DependsOnSyntax> _dependsOn = [];
     readonly List<TemplateAssignmentSyntax> _templates = [];
+    readonly List<PurposeReferenceSyntax> _purposes = [];
     int _restatedHeaders;
     string? _description;
     string? _documentation;
@@ -60,6 +61,9 @@ internal sealed class ModuleBody(string name)
                 return true;
             case "depends":
                 DependsOnParser.Parse(context, line, _dependsOn, DiagnosticCodes.UnknownModuleDirective);
+                return true;
+            case "purpose":
+                PurposeParser.ParseReference(context, line, _purposes);
                 return true;
             case "authorize":
                 _authorize = AuthorizeParser.Combine(_authorize, AuthorizeParser.Parse(context, line));
@@ -121,7 +125,8 @@ internal sealed class ModuleBody(string name)
             DirectiveLocations = _directiveLocations,
             FileImports = _fileImports,
             IsPlacement = isPlacement,
-            Templates = _templates
+            Templates = _templates,
+            Purposes = _purposes
         };
 
     internal void RecordRestatedHeader(SourceLocation location) =>

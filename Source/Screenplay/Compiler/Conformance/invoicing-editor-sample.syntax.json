@@ -126,7 +126,7 @@
         {
           "kind": "ConceptAttributeSyntax",
           "name": "pii",
-          "reason": "The name of the person to contact about an invoice. Needed to reach them about billing; lawful basis: contract performance. Lives under the customer's subject and is erasable with their key."
+          "reason": "The name identifies the person to contact about an invoice."
         }
       ],
       "name": "PersonName",
@@ -139,7 +139,7 @@
         {
           "kind": "ConceptAttributeSyntax",
           "name": "pii",
-          "reason": "Refund payout account. Remits money back to the customer; lawful basis: contract performance / legal obligation. Personal only for sole-proprietor customers."
+          "reason": "A refund payout account identifies sole-proprietor customers."
         },
         {
           "kind": "ConceptAttributeSyntax",
@@ -157,7 +157,7 @@
         {
           "kind": "ConceptAttributeSyntax",
           "name": "pii",
-          "reason": "Billing contact address. Delivers invoices and payment reminders; lawful basis: contract performance. Under the customer's subject, erasable with their key."
+          "reason": "The billing contact address identifies the customer's contact."
         }
       ],
       "name": "EmailAddress",
@@ -10592,6 +10592,12 @@
                   "sequence": null
                 }
               ],
+              "purposes": [
+                {
+                  "kind": "PurposeReferenceSyntax",
+                  "name": "PaymentDisputes"
+                }
+              ],
               "queries": [
                 {
                   "kind": "QuerySyntax",
@@ -13314,6 +13320,12 @@
           "fileImports": [],
           "isPlacement": false,
           "name": "Auditing",
+          "purposes": [
+            {
+              "kind": "PurposeReferenceSyntax",
+              "name": "Bookkeeping"
+            }
+          ],
           "slices": [
             {
               "kind": "SliceSyntax",
@@ -15309,7 +15321,13 @@
       ],
       "fileImports": [],
       "isPlacement": false,
-      "name": "Invoicing"
+      "name": "Invoicing",
+      "purposes": [
+        {
+          "kind": "PurposeReferenceSyntax",
+          "name": "Billing"
+        }
+      ]
     }
   ],
   "personas": [
@@ -15371,6 +15389,71 @@
         "IsPerson",
         "IsAuditor"
       ]
+    }
+  ],
+  "purposes": [
+    {
+      "kind": "PurposeSyntax",
+      "authorization": null,
+      "basis": "contract",
+      "basisReference": null,
+      "condition": null,
+      "conditionReference": null,
+      "description": "Issue invoices and collect payment for delivered work",
+      "erasureException": null,
+      "interest": null,
+      "name": "Billing",
+      "recipients": [
+        "Payment provider"
+      ],
+      "retention": "Until the customer relationship ends",
+      "subjects": [
+        "customer",
+        "customerContact"
+      ],
+      "transfers": []
+    },
+    {
+      "kind": "PurposeSyntax",
+      "authorization": null,
+      "basis": "legalObligation",
+      "basisReference": "Bokføringsloven § 13",
+      "condition": null,
+      "conditionReference": null,
+      "description": null,
+      "erasureException": "legalObligation",
+      "interest": null,
+      "name": "Bookkeeping",
+      "recipients": [
+        "Tax authority"
+      ],
+      "retention": "Five years after the financial year ends",
+      "subjects": [],
+      "transfers": [
+        {
+          "kind": "PurposeTransferSyntax",
+          "destination": "United States",
+          "safeguard": "EU Standard Contractual Clauses"
+        }
+      ]
+    },
+    {
+      "kind": "PurposeSyntax",
+      "authorization": "Criminal data only under official authority according to applicable national law",
+      "basis": "legitimateInterests",
+      "basisReference": null,
+      "condition": "legalClaims",
+      "conditionReference": null,
+      "description": "Handle payment disputes and pursue legal claims",
+      "erasureException": null,
+      "interest": "Recover unpaid invoices and defend payment claims",
+      "name": "PaymentDisputes",
+      "recipients": [],
+      "retention": "Until the payment claim is settled and the appeal period ends",
+      "subjects": [
+        "customer"
+      ],
+      "transfers": []
     }
   ],
   "systems": [],

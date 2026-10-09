@@ -26,7 +26,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "authoring-metadata" || name == "compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams") continue;
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "purposes" || name == "authoring-metadata" || name == "compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -91,21 +91,39 @@ public class when_freezing_legacy_source_syntax_bytes
 
     static ApplicationSyntax WithoutNewAuthoringMetadata(ApplicationSyntax application) => application with
     {
+        Purposes = [],
+        Concepts = application.Concepts.Select(concept => concept with
+        {
+            Attributes = concept.Attributes.Select(attribute => attribute with { Reason = LegacyReason(concept.Name, attribute.Name, attribute.Reason) })
+        }),
         UiProfiles = application.UiProfiles?.Select(profile => profile with { Icons = [] }),
         Modules = application.Modules.Select(module => module with
         {
             Documentation = null,
+            Purposes = [],
             Features = module.Features.Select(WithoutNewAuthoringMetadata)
         })
+    };
+
+    // The living sample moved processing prose into declarations. Freeze its pre-purpose reasons,
+    // while the ordinary conformance vectors assert the current text verbatim.
+    static string? LegacyReason(string concept, string marker, string? reason) => (concept, marker, reason) switch
+    {
+        ("PersonName", "pii", "The name identifies the person to contact about an invoice.") => "The name of the person to contact about an invoice. Needed to reach them about billing; lawful basis: contract performance. Lives under the customer's subject and is erasable with their key.",
+        ("BankAccount", "pii", "A refund payout account identifies sole-proprietor customers.") => "Refund payout account. Remits money back to the customer; lawful basis: contract performance / legal obligation. Personal only for sole-proprietor customers.",
+        ("EmailAddress", "pii", "The billing contact address identifies the customer's contact.") => "Billing contact address. Delivers invoices and payment reminders; lawful basis: contract performance. Under the customer's subject, erasable with their key.",
+        _ => reason
     };
 
     static FeatureSyntax WithoutNewAuthoringMetadata(FeatureSyntax feature) => feature with
     {
         Documentation = null,
+        Purposes = [],
         Features = feature.Features.Select(WithoutNewAuthoringMetadata),
         Slices = feature.Slices.Select(slice => slice with
         {
             Documentation = null,
+            Purposes = [],
             Commands = slice.Commands.Select(command => command with { Documentation = null }),
             ReadModels = (slice.ReadModels ?? []).Select(readModel => readModel with { Documentation = null }),
             Reactions = slice.Reactions.Select(reaction => reaction with { Documentation = null }),

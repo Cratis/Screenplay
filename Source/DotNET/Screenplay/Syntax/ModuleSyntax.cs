@@ -74,6 +74,11 @@ public record ModuleSyntax(
     /// Gets module-scoped template assignments inherited by child features and slices unless overridden.
     /// </summary>
     public IEnumerable<TemplateAssignmentSyntax> Templates { get; init; } = [];
+
+    /// <summary>
+    /// Gets the processing purposes covering this module and its descendants.
+    /// </summary>
+    public IEnumerable<PurposeReferenceSyntax> Purposes { get; init; } = [];
 }
 
 /// <summary>
@@ -140,4 +145,9 @@ public record FeatureSyntax(
     /// Gets feature-scoped template assignments inherited by child features and slices unless overridden.
     /// </summary>
     public IEnumerable<TemplateAssignmentSyntax> Templates { get; init; } = [];
+
+    /// <summary>
+    /// Gets the processing purposes covering this feature and its descendants.
+    /// </summary>
+    public IEnumerable<PurposeReferenceSyntax> Purposes { get; init; } = [];
 }
