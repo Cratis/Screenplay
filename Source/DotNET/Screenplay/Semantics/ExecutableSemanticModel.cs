@@ -78,7 +78,7 @@ public sealed record ExecutableSemanticModel
         SemanticVersion semanticVersion,
         SemanticApplication application)
     {
-        EsmSchemaV8Support.EnsureSupported(languageVersion, semanticVersion);
+        EsmSchemaV9Support.EnsureSupported(languageVersion, semanticVersion);
         SemanticModelValidator.Validate(application, semanticVersion);
         var withoutRevision = SemanticModelCanonicalJson.SerializeWithoutRevision(languageVersion, semanticVersion, application);
         var revision = SemanticRevision.Compute(withoutRevision);
@@ -103,6 +103,7 @@ internal static partial class SemanticModelValidator
         var context = new ValidationContext(semanticVersion == default ? SemanticVersion.V1 : semanticVersion, application);
         context.RegisterApplication(application);
         ValidateEventRoutesVersion(application, semanticVersion);
+        ValidatePublicEventsVersion(application, semanticVersion);
         context.ValidateReferences(application);
         if (semanticVersion == SemanticVersion.V2 && !application.Modules.SelectMany(module => module.Features)
             .SelectMany(AllSlices).Any(slice => slice.Commands.Any(command => command.Destination is not null ||
@@ -483,6 +484,7 @@ internal static partial class SemanticModelValidator
         void ValidateSlice(SemanticSlice slice)
         {
             ValidateEnum(slice.Kind, SemanticSliceKind.Unknown, "slice kind");
+            ValidatePublicEventSlice(slice);
             foreach (var eventContract in slice.Events)
             {
                 ValidateProperties(eventContract.Properties);
@@ -777,6 +779,17 @@ internal static partial class SemanticModelValidator
 
         void ValidateProjection(SemanticProjection projection)
         {
+            if (projection.Target == SemanticProjectionTargetKind.Event)
+            {
+                ValidateEventTargetProjection(projection);
+                return;
+            }
+
+            if (projection.Target != SemanticProjectionTargetKind.ReadModel)
+            {
+                throw new InvalidSemanticContract($"Projection '{projection.Name}' has an unknown target kind.");
+            }
+
             if (!_readModels.TryGetValue(projection.ReadModel, out var readModel))
             {
                 throw new InvalidSemanticContract($"Projection read model '{projection.ReadModel}' is unresolved.");
@@ -820,8 +833,19 @@ internal static partial class SemanticModelValidator
 
         void ValidateReducer(SemanticReducer reducer)
         {
+            var targetsEvent = reducer.Target == SemanticProjectionTargetKind.Event;
+            if (reducer.Target is not (SemanticProjectionTargetKind.ReadModel or SemanticProjectionTargetKind.Event))
+            {
+                throw new InvalidSemanticContract($"Reducer '{reducer.Name}' has an unknown target kind.");
+            }
+
+            if (targetsEvent)
+            {
+                RequirePublicEventTarget(reducer.ReadModel, $"Reducer '{reducer.Name}'");
+            }
+
             if (!_semanticVersion.IsAtLeast(SemanticVersion.V3) || string.IsNullOrWhiteSpace(reducer.Name) ||
-                !_readModels.ContainsKey(reducer.ReadModel) || reducer.Transitions.IsDefaultOrEmpty)
+                (!targetsEvent && !_readModels.ContainsKey(reducer.ReadModel)) || reducer.Transitions.IsDefaultOrEmpty)
             {
                 throw new InvalidSemanticContract($"Reducer '{reducer.Name}' requires ESM v3, a read model, and transitions.");
             }

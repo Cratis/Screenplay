@@ -81,6 +81,7 @@ public static partial class SemanticModelCanonicalJson
             WriteArray(output, "appends", nested.Appends, WriteCaptureAppend);
             output.WriteEndObject();
         });
+        if (capture.EventsSource is { } source) WriteStringArray(writer, "sourceEvents", [.. source.Events.Select(id => id.ToString())]);
         writer.WriteEndObject();
     }
 

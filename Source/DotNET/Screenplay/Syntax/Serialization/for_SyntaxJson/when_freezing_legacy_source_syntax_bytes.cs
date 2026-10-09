@@ -26,7 +26,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "event-translations") continue;
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -218,7 +218,7 @@ public class when_freezing_legacy_source_syntax_bytes
                     },
                     _ => slice
                 })
-            } : feature).Select(feature => feature with
+            } : feature).Select(WithoutPublicationSlice).Select(feature => feature with
             {
                 Slices = feature.Slices.Select(slice => slice with
                 {
@@ -226,6 +226,13 @@ public class when_freezing_legacy_source_syntax_bytes
                 })
             })
         })
+    };
+
+    // The outbound publication slice has its own v9 conformance vector; omit it, wherever it nests, from the frozen bytes.
+    static FeatureSyntax WithoutPublicationSlice(FeatureSyntax feature) => feature with
+    {
+        Slices = feature.Slices.Where(slice => slice.Name != "InvoiceSentPublication"),
+        Features = feature.Features.Select(WithoutPublicationSlice)
     };
 
     // Current shared vectors protect the pre-input click paths. Reconstruct only the historical

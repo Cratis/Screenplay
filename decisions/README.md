@@ -52,3 +52,4 @@
 | [0048](0048-guarded-on-bindings.md) | Select whole interaction action lists with ordered item conditions | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0049](0049-public-events-and-translation-direction.md) | Mark public events, state their origin as an opaque quoted store name, and give Translate slices a direction | accepted | none |  |  |
 | [0050](0050-public-event-execution-semantics.md) | Define the executable meaning of public events, outbound translation, event targets and reaction results | accepted | none | 2026-10-09 | Einar Ingebrigtsen |
+| [0051](0051-admit-public-events-as-esm-v9.md) | Admit public events, translation direction, event-target projections and event-source captures as ESM v9 | accepted | none | 2026-10-09 | Einar Ingebrigtsen |

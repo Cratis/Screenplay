@@ -396,6 +396,12 @@
               "status": "refused",
               "diagnostic": "PLAY0270",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
             }
           ]
         }
@@ -445,6 +451,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "refused",
           "diagnostic": "PLAY0270",
           "issue": null
@@ -517,6 +529,12 @@
               "status": "refused",
               "diagnostic": "PLAY0269",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
             }
           ]
         }
@@ -566,6 +584,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "refused",
           "diagnostic": "PLAY0269",
           "issue": null
@@ -629,6 +653,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         },
@@ -637,14 +667,6 @@
           "minimumSemanticVersion": null,
           "diagnostic": "PLAY0268",
           "diagnostics": [
-            {
-              "code": "PLAY0268",
-              "severity": "error"
-            },
-            {
-              "code": "PLAY0268",
-              "severity": "error"
-            },
             {
               "code": "PLAY0268",
               "severity": "error"
@@ -695,6 +717,12 @@
             },
             {
               "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+            },
+            {
+              "esmVersion": 9,
               "status": "refused",
               "diagnostic": "PLAY0268",
               "issue": "https://github.com/Cratis/Screenplay/issues/481"
@@ -753,6 +781,15 @@
         },
         {
           "esmVersion": 8,
+          "status": "conditional",
+          "diagnostic": "PLAY0268",
+          "issue": null,
+          "condition": [
+            1
+          ]
+        },
+        {
+          "esmVersion": 9,
           "status": "conditional",
           "diagnostic": "PLAY0268",
           "issue": null,
@@ -819,6 +856,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         },
@@ -880,6 +923,12 @@
               "status": "refused",
               "diagnostic": "PLAY0268",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": null
             }
           ]
         },
@@ -933,6 +982,12 @@
             },
             {
               "esmVersion": 8,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
               "status": "admitted",
               "diagnostic": null,
               "issue": null
@@ -992,6 +1047,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         },
@@ -1045,6 +1106,12 @@
             },
             {
               "esmVersion": 8,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
               "status": "admitted",
               "diagnostic": null,
               "issue": null
@@ -1117,6 +1184,12 @@
               "status": "refused",
               "diagnostic": "PLAY0268",
               "issue": "https://github.com/Cratis/Screenplay/issues/301"
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/301"
             }
           ]
         }
@@ -1214,6 +1287,16 @@
             1,
             5
           ]
+        },
+        {
+          "esmVersion": 9,
+          "status": "conditional",
+          "diagnostic": "PLAY0268",
+          "issue": null,
+          "condition": [
+            1,
+            5
+          ]
         }
       ]
     },
@@ -1271,6 +1354,12 @@
             },
             {
               "esmVersion": 8,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
               "status": "admitted",
               "diagnostic": null,
               "issue": null
@@ -1332,6 +1421,12 @@
             },
             {
               "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
               "status": "refused",
               "diagnostic": "PLAY0270",
               "issue": null
@@ -1400,6 +1495,12 @@
               "status": "refused",
               "diagnostic": "PLAY0268",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": null
             }
           ]
         },
@@ -1458,6 +1559,12 @@
             },
             {
               "esmVersion": 8,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
               "status": "admitted",
               "diagnostic": null,
               "issue": null
@@ -1540,6 +1647,16 @@
         },
         {
           "esmVersion": 8,
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1,
+            2
+          ]
+        },
+        {
+          "esmVersion": 9,
           "status": "conditional",
           "diagnostic": "PLAY0270",
           "issue": null,
@@ -1607,6 +1724,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         },
@@ -1665,6 +1788,12 @@
             },
             {
               "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
               "status": "refused",
               "diagnostic": "PLAY0270",
               "issue": null
@@ -1738,6 +1867,15 @@
         },
         {
           "esmVersion": 8,
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
+        },
+        {
+          "esmVersion": 9,
           "status": "conditional",
           "diagnostic": "PLAY0270",
           "issue": null,
@@ -1817,6 +1955,12 @@
               "status": "refused",
               "diagnostic": "PLAY0269",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
             }
           ]
         }
@@ -1866,6 +2010,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "refused",
           "diagnostic": "PLAY0269",
           "issue": null
@@ -1934,6 +2084,12 @@
               "status": "refused",
               "diagnostic": "PLAY0269",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
             }
           ]
         }
@@ -1983,6 +2139,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "refused",
           "diagnostic": "PLAY0269",
           "issue": null
@@ -1995,62 +2157,63 @@
       "probes": [
         {
           "source": "module M\n  feature F\n    slice Translate S\n      direction inbound\n",
-          "minimumSemanticVersion": null,
-          "diagnostic": "PLAY0268",
-          "diagnostics": [
-            {
-              "code": "PLAY0268",
-              "severity": "error"
-            }
-          ],
+          "minimumSemanticVersion": "9.0",
+          "diagnostic": null,
+          "diagnostics": [],
           "admission": [
             {
               "esmVersion": 1,
               "status": "refused",
-              "diagnostic": "PLAY0268",
-              "issue": "https://github.com/Cratis/Screenplay/issues/480"
+              "diagnostic": null,
+              "issue": null
             },
             {
               "esmVersion": 2,
               "status": "refused",
-              "diagnostic": "PLAY0268",
-              "issue": "https://github.com/Cratis/Screenplay/issues/480"
+              "diagnostic": null,
+              "issue": null
             },
             {
               "esmVersion": 3,
               "status": "refused",
-              "diagnostic": "PLAY0268",
-              "issue": "https://github.com/Cratis/Screenplay/issues/480"
+              "diagnostic": null,
+              "issue": null
             },
             {
               "esmVersion": 4,
               "status": "refused",
-              "diagnostic": "PLAY0268",
-              "issue": "https://github.com/Cratis/Screenplay/issues/480"
+              "diagnostic": null,
+              "issue": null
             },
             {
               "esmVersion": 5,
               "status": "refused",
-              "diagnostic": "PLAY0268",
-              "issue": "https://github.com/Cratis/Screenplay/issues/480"
+              "diagnostic": null,
+              "issue": null
             },
             {
               "esmVersion": 6,
               "status": "refused",
-              "diagnostic": "PLAY0268",
-              "issue": "https://github.com/Cratis/Screenplay/issues/480"
+              "diagnostic": null,
+              "issue": null
             },
             {
               "esmVersion": 7,
               "status": "refused",
-              "diagnostic": "PLAY0268",
-              "issue": "https://github.com/Cratis/Screenplay/issues/480"
+              "diagnostic": null,
+              "issue": null
             },
             {
               "esmVersion": 8,
               "status": "refused",
-              "diagnostic": "PLAY0268",
-              "issue": "https://github.com/Cratis/Screenplay/issues/480"
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         }
@@ -2059,50 +2222,56 @@
         {
           "esmVersion": 1,
           "status": "refused",
-          "diagnostic": "PLAY0268",
-          "issue": "https://github.com/Cratis/Screenplay/issues/480"
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 2,
           "status": "refused",
-          "diagnostic": "PLAY0268",
-          "issue": "https://github.com/Cratis/Screenplay/issues/480"
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 3,
           "status": "refused",
-          "diagnostic": "PLAY0268",
-          "issue": "https://github.com/Cratis/Screenplay/issues/480"
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 4,
           "status": "refused",
-          "diagnostic": "PLAY0268",
-          "issue": "https://github.com/Cratis/Screenplay/issues/480"
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 5,
           "status": "refused",
-          "diagnostic": "PLAY0268",
-          "issue": "https://github.com/Cratis/Screenplay/issues/480"
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 6,
           "status": "refused",
-          "diagnostic": "PLAY0268",
-          "issue": "https://github.com/Cratis/Screenplay/issues/480"
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 7,
           "status": "refused",
-          "diagnostic": "PLAY0268",
-          "issue": "https://github.com/Cratis/Screenplay/issues/480"
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 8,
           "status": "refused",
-          "diagnostic": "PLAY0268",
-          "issue": "https://github.com/Cratis/Screenplay/issues/480"
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
         }
       ]
     },
@@ -2168,6 +2337,12 @@
               "status": "refused",
               "diagnostic": "PLAY0270",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
             }
           ]
         }
@@ -2217,6 +2392,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "refused",
           "diagnostic": "PLAY0270",
           "issue": null
@@ -2280,6 +2461,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         },
@@ -2336,6 +2523,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         },
@@ -2389,6 +2582,12 @@
             },
             {
               "esmVersion": 8,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
               "status": "admitted",
               "diagnostic": null,
               "issue": null
@@ -2453,6 +2652,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "admitted",
           "diagnostic": null,
           "issue": null
@@ -2516,6 +2721,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         }
@@ -2565,6 +2776,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "admitted",
           "diagnostic": null,
           "issue": null
@@ -2628,6 +2845,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         }
@@ -2677,6 +2900,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "admitted",
           "diagnostic": null,
           "issue": null
@@ -2740,6 +2969,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         }
@@ -2789,6 +3024,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "admitted",
           "diagnostic": null,
           "issue": null
@@ -2857,6 +3098,12 @@
               "status": "refused",
               "diagnostic": "PLAY0269",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
             }
           ]
         },
@@ -2918,6 +3165,12 @@
               "status": "refused",
               "diagnostic": "PLAY0269",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
             }
           ]
         }
@@ -2967,6 +3220,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "refused",
           "diagnostic": "PLAY0269",
           "issue": null
@@ -3027,6 +3286,12 @@
             },
             {
               "esmVersion": 8,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
               "status": "admitted",
               "diagnostic": null,
               "issue": null
@@ -3091,6 +3356,12 @@
               "status": "refused",
               "diagnostic": "PLAY0268",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": null
             }
           ]
         }
@@ -3161,6 +3432,15 @@
         },
         {
           "esmVersion": 8,
+          "status": "conditional",
+          "diagnostic": "PLAY0268",
+          "issue": null,
+          "condition": [
+            1
+          ]
+        },
+        {
+          "esmVersion": 9,
           "status": "conditional",
           "diagnostic": "PLAY0268",
           "issue": null,
@@ -3232,6 +3512,12 @@
               "status": "refused",
               "diagnostic": "PLAY0269",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
             }
           ]
         }
@@ -3281,6 +3567,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "refused",
           "diagnostic": "PLAY0269",
           "issue": null
@@ -3344,6 +3636,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         }
@@ -3393,6 +3691,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "admitted",
           "diagnostic": null,
           "issue": null
@@ -3461,6 +3765,12 @@
               "status": "refused",
               "diagnostic": "PLAY0268",
               "issue": "https://github.com/Cratis/Screenplay/issues/285"
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/285"
             }
           ]
         }
@@ -3510,6 +3820,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/285"
+        },
+        {
+          "esmVersion": 9,
           "status": "refused",
           "diagnostic": "PLAY0268",
           "issue": "https://github.com/Cratis/Screenplay/issues/285"
@@ -3586,6 +3902,12 @@
               "status": "refused",
               "diagnostic": "PLAY0268",
               "issue": "https://github.com/Cratis/Screenplay/issues/301"
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/301"
             }
           ]
         }
@@ -3635,6 +3957,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/301"
+        },
+        {
+          "esmVersion": 9,
           "status": "refused",
           "diagnostic": "PLAY0268",
           "issue": "https://github.com/Cratis/Screenplay/issues/301"
@@ -3703,6 +4031,12 @@
               "status": "refused",
               "diagnostic": "PLAY0270",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
             }
           ]
         }
@@ -3752,6 +4086,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "refused",
           "diagnostic": "PLAY0270",
           "issue": null
@@ -3812,6 +4152,12 @@
             },
             {
               "esmVersion": 8,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
               "status": "admitted",
               "diagnostic": null,
               "issue": null
@@ -3876,6 +4222,12 @@
               "status": "refused",
               "diagnostic": "PLAY0270",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
             }
           ]
         },
@@ -3932,6 +4284,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         },
@@ -3985,6 +4343,12 @@
             },
             {
               "esmVersion": 8,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
               "status": "admitted",
               "diagnostic": null,
               "issue": null
@@ -4066,6 +4430,15 @@
         },
         {
           "esmVersion": 8,
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
+        },
+        {
+          "esmVersion": 9,
           "status": "conditional",
           "diagnostic": "PLAY0270",
           "issue": null,
@@ -4132,6 +4505,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         },
@@ -4193,6 +4572,12 @@
               "status": "refused",
               "diagnostic": "PLAY0270",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
             }
           ]
         }
@@ -4263,6 +4648,15 @@
         },
         {
           "esmVersion": 8,
+          "status": "conditional",
+          "diagnostic": "PLAY0270",
+          "issue": null,
+          "condition": [
+            1
+          ]
+        },
+        {
+          "esmVersion": 9,
           "status": "conditional",
           "diagnostic": "PLAY0270",
           "issue": null,
@@ -4278,62 +4672,63 @@
       "probes": [
         {
           "source": "module M\n  feature F\n    slice StateChange S\n      public event Recorded\n        value String\n",
-          "minimumSemanticVersion": null,
-          "diagnostic": "PLAY0268",
-          "diagnostics": [
-            {
-              "code": "PLAY0268",
-              "severity": "error"
-            }
-          ],
+          "minimumSemanticVersion": "9.0",
+          "diagnostic": null,
+          "diagnostics": [],
           "admission": [
             {
               "esmVersion": 1,
               "status": "refused",
-              "diagnostic": "PLAY0268",
-              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+              "diagnostic": null,
+              "issue": null
             },
             {
               "esmVersion": 2,
               "status": "refused",
-              "diagnostic": "PLAY0268",
-              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+              "diagnostic": null,
+              "issue": null
             },
             {
               "esmVersion": 3,
               "status": "refused",
-              "diagnostic": "PLAY0268",
-              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+              "diagnostic": null,
+              "issue": null
             },
             {
               "esmVersion": 4,
               "status": "refused",
-              "diagnostic": "PLAY0268",
-              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+              "diagnostic": null,
+              "issue": null
             },
             {
               "esmVersion": 5,
               "status": "refused",
-              "diagnostic": "PLAY0268",
-              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+              "diagnostic": null,
+              "issue": null
             },
             {
               "esmVersion": 6,
               "status": "refused",
-              "diagnostic": "PLAY0268",
-              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+              "diagnostic": null,
+              "issue": null
             },
             {
               "esmVersion": 7,
               "status": "refused",
-              "diagnostic": "PLAY0268",
-              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+              "diagnostic": null,
+              "issue": null
             },
             {
               "esmVersion": 8,
               "status": "refused",
-              "diagnostic": "PLAY0268",
-              "issue": "https://github.com/Cratis/Screenplay/issues/481"
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         }
@@ -4342,50 +4737,56 @@
         {
           "esmVersion": 1,
           "status": "refused",
-          "diagnostic": "PLAY0268",
-          "issue": "https://github.com/Cratis/Screenplay/issues/481"
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 2,
           "status": "refused",
-          "diagnostic": "PLAY0268",
-          "issue": "https://github.com/Cratis/Screenplay/issues/481"
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 3,
           "status": "refused",
-          "diagnostic": "PLAY0268",
-          "issue": "https://github.com/Cratis/Screenplay/issues/481"
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 4,
           "status": "refused",
-          "diagnostic": "PLAY0268",
-          "issue": "https://github.com/Cratis/Screenplay/issues/481"
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 5,
           "status": "refused",
-          "diagnostic": "PLAY0268",
-          "issue": "https://github.com/Cratis/Screenplay/issues/481"
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 6,
           "status": "refused",
-          "diagnostic": "PLAY0268",
-          "issue": "https://github.com/Cratis/Screenplay/issues/481"
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 7,
           "status": "refused",
-          "diagnostic": "PLAY0268",
-          "issue": "https://github.com/Cratis/Screenplay/issues/481"
+          "diagnostic": null,
+          "issue": null
         },
         {
           "esmVersion": 8,
           "status": "refused",
-          "diagnostic": "PLAY0268",
-          "issue": "https://github.com/Cratis/Screenplay/issues/481"
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
         }
       ]
     },
@@ -4455,6 +4856,12 @@
               "status": "refused",
               "diagnostic": "PLAY0270",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
             }
           ]
         }
@@ -4504,6 +4911,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "refused",
           "diagnostic": "PLAY0270",
           "issue": null
@@ -4564,6 +4977,12 @@
             },
             {
               "esmVersion": 8,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
               "status": "admitted",
               "diagnostic": null,
               "issue": null
@@ -4628,6 +5047,12 @@
               "status": "refused",
               "diagnostic": "PLAY0268",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": null
             }
           ]
         }
@@ -4698,6 +5123,15 @@
         },
         {
           "esmVersion": 8,
+          "status": "conditional",
+          "diagnostic": "PLAY0268",
+          "issue": null,
+          "condition": [
+            1
+          ]
+        },
+        {
+          "esmVersion": 9,
           "status": "conditional",
           "diagnostic": "PLAY0268",
           "issue": null,
@@ -4764,6 +5198,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         }
@@ -4813,6 +5253,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "admitted",
           "diagnostic": null,
           "issue": null
@@ -4873,6 +5319,12 @@
             },
             {
               "esmVersion": 8,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
               "status": "admitted",
               "diagnostic": null,
               "issue": null
@@ -4937,6 +5389,12 @@
               "status": "refused",
               "diagnostic": "PLAY0268",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": null
             }
           ]
         }
@@ -5013,6 +5471,15 @@
           "condition": [
             1
           ]
+        },
+        {
+          "esmVersion": 9,
+          "status": "conditional",
+          "diagnostic": "PLAY0268",
+          "issue": null,
+          "condition": [
+            1
+          ]
         }
       ]
     },
@@ -5070,6 +5537,12 @@
             },
             {
               "esmVersion": 8,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
               "status": "admitted",
               "diagnostic": null,
               "issue": null
@@ -5138,6 +5611,12 @@
               "status": "refused",
               "diagnostic": "PLAY0268",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": null
             }
           ]
         }
@@ -5202,6 +5681,15 @@
         },
         {
           "esmVersion": 8,
+          "status": "conditional",
+          "diagnostic": "PLAY0268",
+          "issue": null,
+          "condition": [
+            1
+          ]
+        },
+        {
+          "esmVersion": 9,
           "status": "conditional",
           "diagnostic": "PLAY0268",
           "issue": null,
@@ -5273,6 +5761,12 @@
               "status": "refused",
               "diagnostic": "PLAY0269",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
             }
           ]
         },
@@ -5334,6 +5828,12 @@
               "status": "refused",
               "diagnostic": "PLAY0269",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
             }
           ]
         }
@@ -5383,6 +5883,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "refused",
           "diagnostic": "PLAY0269",
           "issue": null
@@ -5451,6 +5957,12 @@
               "status": "refused",
               "diagnostic": "PLAY0270",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0270",
+              "issue": null
             }
           ]
         }
@@ -5500,6 +6012,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0270",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "refused",
           "diagnostic": "PLAY0270",
           "issue": null
@@ -5563,6 +6081,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         },
@@ -5616,6 +6140,12 @@
             },
             {
               "esmVersion": 8,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
               "status": "admitted",
               "diagnostic": null,
               "issue": null
@@ -5675,6 +6205,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         },
@@ -5728,6 +6264,12 @@
             },
             {
               "esmVersion": 8,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
               "status": "admitted",
               "diagnostic": null,
               "issue": null
@@ -5800,6 +6342,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "admitted",
           "diagnostic": null,
           "issue": null
@@ -5863,6 +6411,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         },
@@ -5916,6 +6470,12 @@
             },
             {
               "esmVersion": 8,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
               "status": "admitted",
               "diagnostic": null,
               "issue": null
@@ -5975,6 +6535,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         }
@@ -6024,6 +6590,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "admitted",
           "diagnostic": null,
           "issue": null
@@ -6092,6 +6664,12 @@
               "status": "refused",
               "diagnostic": "PLAY0268",
               "issue": "https://github.com/Cratis/Screenplay/issues/301"
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/301"
             }
           ]
         }
@@ -6141,6 +6719,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0268",
+          "issue": "https://github.com/Cratis/Screenplay/issues/301"
+        },
+        {
+          "esmVersion": 9,
           "status": "refused",
           "diagnostic": "PLAY0268",
           "issue": "https://github.com/Cratis/Screenplay/issues/301"
@@ -6204,6 +6788,12 @@
               "status": "refused",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         }
@@ -6253,6 +6843,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "refused",
           "diagnostic": null,
           "issue": null
@@ -6321,6 +6917,12 @@
               "status": "refused",
               "diagnostic": "PLAY0269",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
             }
           ]
         }
@@ -6370,6 +6972,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "refused",
           "diagnostic": "PLAY0269",
           "issue": null
@@ -6433,6 +7041,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         }
@@ -6482,6 +7096,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "admitted",
           "diagnostic": null,
           "issue": null
@@ -6545,6 +7165,12 @@
               "status": "admitted",
               "diagnostic": null,
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "admitted",
+              "diagnostic": null,
+              "issue": null
             }
           ]
         }
@@ -6594,6 +7220,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "admitted",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "admitted",
           "diagnostic": null,
           "issue": null
@@ -6666,6 +7298,12 @@
               "status": "refused",
               "diagnostic": "PLAY0269",
               "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
             }
           ]
         }
@@ -6715,6 +7353,12 @@
         },
         {
           "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
           "status": "refused",
           "diagnostic": "PLAY0269",
           "issue": null
@@ -17837,6 +18481,47 @@
         {
           "languageVersion": "8.0",
           "semanticVersion": "8.0"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 9,
+      "supportedPairs": [
+        {
+          "languageVersion": "1.0",
+          "semanticVersion": "1.0"
+        },
+        {
+          "languageVersion": "2.0",
+          "semanticVersion": "2.0"
+        },
+        {
+          "languageVersion": "3.0",
+          "semanticVersion": "3.0"
+        },
+        {
+          "languageVersion": "4.0",
+          "semanticVersion": "4.0"
+        },
+        {
+          "languageVersion": "5.0",
+          "semanticVersion": "5.0"
+        },
+        {
+          "languageVersion": "6.0",
+          "semanticVersion": "6.0"
+        },
+        {
+          "languageVersion": "7.0",
+          "semanticVersion": "7.0"
+        },
+        {
+          "languageVersion": "8.0",
+          "semanticVersion": "8.0"
+        },
+        {
+          "languageVersion": "9.0",
+          "semanticVersion": "9.0"
         }
       ]
     }

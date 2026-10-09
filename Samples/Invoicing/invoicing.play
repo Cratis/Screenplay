@@ -3108,6 +3108,30 @@ module Invoicing
         then InvoicePaid
           paidAt = "2026-10-02T12:00:00Z"
 
+    // A public event is a contract other applications may rely on. An outbound
+    // translation publishes exactly one: a projection that targets the event
+    // folds this application's private facts into it, so the contract can stay
+    // stable while the private events change.
+    slice Translate InvoiceSentPublication
+      description "Publishes each invoice that is sent as one public contract"
+      direction outbound
+
+      public event InvoiceSentPublished
+        sentAt  DateTime
+        channel String
+
+      projection InvoiceSentPublisher => InvoiceSentPublished
+        from InvoiceSent
+          channel = "sent"
+
+      specification PublishingASentInvoice
+        when append InvoiceSent
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          sentAt = "2026-09-01T09:00:00Z"
+        then InvoiceSentPublished
+          sentAt  = "2026-09-01T09:00:00Z"
+          channel = "sent"
+
 // ------------------------------------------------------------
 // Seed data - the starting state, declared as events
 // ------------------------------------------------------------

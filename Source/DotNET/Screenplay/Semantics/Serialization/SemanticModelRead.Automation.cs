@@ -106,7 +106,7 @@ internal static partial class SemanticModelRead
         return new(command, mappings);
     }
 
-    internal static SemanticCapture Capture(ref Utf8JsonReader reader)
+    internal static SemanticCapture Capture(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "capture");
         var seen = NewSeen();
@@ -117,6 +117,7 @@ internal static partial class SemanticModelRead
         ImmutableArray<SemanticCaptureAppend> appends = default;
         ImmutableArray<SemanticCaptureChildren> children = default;
         ImmutableArray<SemanticCaptureNested> nested = default;
+        SemanticCaptureEventsSource? eventsSource = null;
         while (NextProperty(ref reader, seen, "capture") is { } property)
         {
             switch (property)
@@ -128,12 +129,15 @@ internal static partial class SemanticModelRead
                 case "appends": appends = Array(ref reader, CaptureAppend, property); break;
                 case "children": children = Array(ref reader, CaptureChildren, property); break;
                 case "nested": nested = Array(ref reader, CaptureNested, property); break;
+                case "sourceEvents" when schemaVersion >= LanguageVersion.V9.Major:
+                    eventsSource = new([.. StringArray(ref reader, property).Select(SemanticId.Parse)]);
+                    break;
                 default: throw Unknown(property, "capture");
             }
         }
 
         Required(id.IsSet && name is not null && key is not null && !map.IsDefault && !appends.IsDefault && !children.IsDefault && !nested.IsDefault, "capture");
-        return new(id, name!, key!, map, appends) { Children = children, Nested = nested };
+        return new(id, name!, key!, map, appends) { Children = children, Nested = nested, EventsSource = eventsSource };
     }
 
     internal static SemanticCaptureChildren CaptureChildren(ref Utf8JsonReader reader)

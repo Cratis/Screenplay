@@ -99,9 +99,10 @@ public static class SemanticAffectedProjectionInstances
     static ImmutableArray<SemanticAffectedProjectionInstance> CollectAffected(SemanticProjection projection, SemanticApplication? application)
     {
         var result = ImmutableArray.CreateBuilder<SemanticAffectedProjectionInstance>();
-        var readModel = application?.Modules.SelectMany(module => module.Features).SelectMany(AllSlices)
+        var targetsEvent = projection.Target == SemanticProjectionTargetKind.Event;
+        var readModel = targetsEvent ? null : application?.Modules.SelectMany(module => module.Features).SelectMany(AllSlices)
             .SelectMany(slice => slice.ReadModels).SingleOrDefault(_ => _.Id == projection.ReadModel);
-        if (application is not null && readModel is null)
+        if (application is not null && readModel is null && !targetsEvent)
         {
             throw new ArgumentException($"Projection '{projection.Name}' read model '{projection.ReadModel}' is not present in the application.", nameof(application));
         }

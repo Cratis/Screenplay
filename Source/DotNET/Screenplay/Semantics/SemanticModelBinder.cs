@@ -30,11 +30,12 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 syntax.Location)]);
         }
 
-        var admission = CommandProductionAdmission(syntax);
+        var admission = CommandProductionAdmission(syntax, out var usesPublicEvents);
 
-        // Public-event boundaries can only be violated by a model the admission walk already refused; a model that uses none
-        // of them is not walked again, so programmatically built syntax the binder reports itself is not visited twice.
-        if (admission.Count > 0)
+        // Public-event boundaries are checked on the assembled model whenever it uses them, and also when the admission walk
+        // already refused something else; a model that uses none of them is not walked again, so programmatically built
+        // syntax the binder reports itself is not visited twice.
+        if (usesPublicEvents || admission.Count > 0)
         {
             var publicEvents = ParserContext.ForDiagnostics();
             new PublicEventMetadataValidator(publicEvents).VisitApplication(syntax);
@@ -68,7 +69,12 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
             var languageVersion = LanguageVersion.V1;
             var semanticVersion = SemanticVersion.V1;
-            if (context.UsesEventRoutes)
+            if (context.UsesPublicEvents)
+            {
+                languageVersion = LanguageVersion.V9;
+                semanticVersion = SemanticVersion.V9;
+            }
+            else if (context.UsesEventRoutes)
             {
                 languageVersion = LanguageVersion.V8;
                 semanticVersion = SemanticVersion.V8;
@@ -178,6 +184,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
         internal bool UsesEventRoutes { get; set; }
 
+        internal bool UsesPublicEvents { get; set; }
+
         internal ImmutableArray<SemanticSourceMapEntry> SourceMapEntries => [.. _sourceMapEntries];
 
         internal SemanticApplication BindApplication()
@@ -204,7 +212,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 applicationName,
                 concepts,
                 types,
-                UsesV2 || UsesV3 || UsesV4 || UsesV5 || UsesV6 || UsesV7 || !eventSources.IsEmpty ? [.. modules.Select(PromoteV2Destinations)] : modules)
+                UsesV2 || UsesV3 || UsesV4 || UsesV5 || UsesV6 || UsesV7 || UsesPublicEvents || !eventSources.IsEmpty ? [.. modules.Select(PromoteV2Destinations)] : modules)
             {
                 Policies = policies,
                 Triggers = triggers,

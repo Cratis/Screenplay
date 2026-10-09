@@ -127,7 +127,7 @@ module Invoicing
 | `Automation` | A reaction or reducer; something that runs when something happens |
 | `Translate` | Translates outside occurrences to private local facts (inbound), or private facts to a public contract (outbound) |
 
-### Translation direction (source only)
+### Translation direction
 
 Declare `direction inbound` or `direction outbound` once directly inside a `Translate`
 slice. Inbound includes existing captures of outside data and translation of another
@@ -139,16 +139,14 @@ accepted and are interpreted as inbound; the printer does not insert a directive
 `SliceSyntax.Direction` (`direction` in TypeScript) is a nullable property preserving whether the author wrote
 the directive; `EffectiveDirection` supplies inbound for legacy translations and null
 for other slice types. Both compilers' printers, typed JSON and the authoring workspace preserve the
-explicit value, and Monaco and VS Code complete and validate it. Any explicit direction currently refuses semantic
-compilation with `PLAY0268` naming #480. This allocates no ESM version and implements
-no publishing, subscription, delivery or Stage behavior. Public/private usage constraints and translation
+explicit value, and Monaco and VS Code complete and validate it. An explicit direction selects ESM v9 and is part of the executable model; a legacy translation without one keeps its version and bytes. The reference evaluator implements publication as a recorded fact only: no subscription, delivery or Stage behavior. Public/private usage constraints and translation
 cardinality are checked by `PLAY0607`-`PLAY0620` ([diagnostics](diagnostics.md#public-event-boundaries)); `PLAY0614`
 has an editor and MCP repair that declares the one consistent direction.
 
 An outbound slice publishes its one public event with a `projection`/`reducer` whose `=>`
 target is that event ([projecting to an event](projections/index.md#projecting-to-an-event)),
 or with a reaction. An inbound slice may consume another application's public events with
-[`source events`](captures.md#capturing-from-public-events). Both are source-only for now.
+[`source events`](captures.md#capturing-from-public-events). Both select ESM v9.
 
 ### What goes in a slice
 

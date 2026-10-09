@@ -16,7 +16,7 @@ Placement composes. `Catalog.play` places `Products.play` in the module, and `Pr
 
 A placed file may also declare things that belong to the whole application. A concept or trigger that only one slice uses lives in that slice's file. For example, `Weight` is declared in `RegisterProduct.play` and `CarrierReturnedParcel` in `HandleReturnedParcels.play`.
 
-Every file is reached from `application.play`, and none is imported in two places. Compiling the root and compiling the folder therefore cover the same 36 files.
+Every file is reached from `application.play`, and none is imported in two places. Compiling the root and compiling the folder therefore cover the same 37 files.
 
 ## Files
 
@@ -70,6 +70,7 @@ Commerce/
     Tracking/
       Tracking.play            feature: parcels on their way to the door
       TrackCarrierDeliveries.play   Translate: a carrier scan becomes ShipmentDelivered
+      ReceiveCarrierDispatches.play Translate (inbound): a carrier's public dispatch event becomes CarrierDispatchRecorded
       NotifyCustomerOfDispatch.play Automation: the customer hears their parcel shipped
       HandleReturnedParcels.play    Automation on a trigger: a returned parcel is recorded
 ```
@@ -111,7 +112,7 @@ Or compile the folder, which treats every file as a root while imports still pla
 screenplay Samples/Commerce --warnaserror
 ```
 
-Both print `36 file(s) compiled - 0 error(s), 0 warning(s)`. Without the installed tool, run it from source:
+Both print `37 file(s) compiled - 0 error(s), 0 warning(s)`. Without the installed tool, run it from source:
 
 ```bash
 dotnet run --project Source/DotNET/Tool -- Samples/Commerce/application.play --warnaserror

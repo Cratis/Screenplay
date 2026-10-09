@@ -248,6 +248,11 @@ public sealed record SemanticCapture(
     /// Gets the nested records the capture watches.
     /// </summary>
     public ImmutableArray<SemanticCaptureNested> Nested { get; init; } = [];
+
+    /// <summary>
+    /// Gets the events the capture reads, or <see langword="null"/> when the source is an outside system.
+    /// </summary>
+    public SemanticCaptureEventsSource? EventsSource { get; init; }
 }
 
 /// <summary>

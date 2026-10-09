@@ -21,11 +21,13 @@ describe('when authoring public event metadata', () => {
         sliceItemsFor('Translate').some(item => item.label === 'public event').should.be.true;
         completionEntriesFor(['public', 'slice']).some(item => item.label === 'id').should.be.true;
     });
-    it('should explain the explicit semantic refusal', () => {
-        keywordDocs.public.should.contain('PLAY0268');
-        keywordDocs.direction.should.contain('PLAY0268');
+    it('should explain the ESM v9 admission without claiming a refusal', () => {
+        keywordDocs.public.should.contain('ESM) v9');
+        keywordDocs.direction.should.contain('ESM) v9');
+        keywordDocs.public.should.not.contain('PLAY0268');
+        keywordDocs.direction.should.not.contain('PLAY0268');
     });
-    it('should accept authoring syntax without claiming executable admission', () => {
+    it('should accept authoring syntax', () => {
         validateLines([...prefix, '      direction inbound', '      public event Published from "billing"', '        number String']).should.deep.equal([]);
     });
     it('should preserve imported public events in source symbols and hover', () => {

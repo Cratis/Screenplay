@@ -23,7 +23,7 @@ public class when_authoring_public_event_metadata : Specification
     }
 
     [Fact]
-    void should_accept_authoring_without_claiming_executable_readiness()
+    void should_accept_authoring_as_executable_at_the_claimed_version()
     {
         var module = _syntax.Modules.Single();
         var feature = module.Features.Single();
@@ -39,10 +39,10 @@ public class when_authoring_public_event_metadata : Specification
         var request = Request(changed);
         var authoring = _workspace.ProposeAuthoring(request);
         Assert.True(authoring.Accepted, string.Join("; ", authoring.Conflicts.Select(conflict => conflict.Message)));
-        authoring.ExecutableReady.ShouldBeFalse();
-        authoring.Workspace!.Compilation.Diagnostics.Any(value => value.Code == DiagnosticCodes.UnsupportedSemanticSyntax).ShouldBeTrue();
+        authoring.ExecutableReady.ShouldBeTrue();
+        authoring.Workspace!.Compilation.Diagnostics.Any(value => value.Code == DiagnosticCodes.UnsupportedSemanticSyntax).ShouldBeFalse();
         authoring.Workspace.IdentityCatalog.EventContracts.Single().Id.ShouldEqual(_workspace.IdentityCatalog.EventContracts.Single().Id);
-        _workspace.ProposeAuthoring(request with { Validation = WorkspaceAuthoringValidation.Executable }).Accepted.ShouldBeFalse();
+        _workspace.ProposeAuthoring(request with { Validation = WorkspaceAuthoringValidation.Executable }).Accepted.ShouldBeTrue();
     }
 
     [Fact]

@@ -37,7 +37,17 @@ public sealed partial class SemanticModelBinder
                     projection.Location);
             }
 
-            if (projection.ReadModel is null || !_readModels.TryGetValue(ShortName(projection.ReadModel), out var readModel))
+            var targetsEvent = false;
+            BoundReadModel readModel;
+            if (projection.ReadModel is not null && !_readModels.ContainsKey(ShortName(projection.ReadModel)) &&
+                _events.TryGetValue(ShortName(projection.ReadModel), out var target))
+            {
+                // The folded state is the public event: its properties are the mapping targets, and no read model is built.
+                targetsEvent = true;
+                UsesPublicEvents = true;
+                readModel = new(null!, new(target.Contract.Id, target.Contract.Name, target.Contract.Properties), target.Properties);
+            }
+            else if (projection.ReadModel is null || !_readModels.TryGetValue(ShortName(projection.ReadModel), out readModel!))
             {
                 Error(DiagnosticCodes.InvalidSemanticBinding, $"Projection '{projection.Name}' read model is unresolved.", projection.Location);
                 return null;
@@ -47,7 +57,7 @@ public sealed partial class SemanticModelBinder
             var id = Resolve(address, projection.Location);
 
             // The flat shape is kept for every projection it can express, so existing consumers read those unchanged.
-            if (IsFlat(projection, readModel))
+            if (!targetsEvent && IsFlat(projection, readModel))
             {
                 var transitions = projection.Blocks
                     .Cast<FromSyntax>()
@@ -59,7 +69,11 @@ public sealed partial class SemanticModelBinder
             var identifier = readModel.Model.Properties.FirstOrDefault(_ => _.IsIdentifier)?.Name ?? string.Empty;
             var root = new ProjectionLevel(projection.Name, readModel.Properties, projection.AutoMap != AutoMapMode.Disabled, true, false, identifier);
             var scope = BindScope(projection.Blocks, root, projection.AutoMap);
-            return new(id, projection.Name, readModel.Model.Id, []) { Scope = scope };
+            return new(id, projection.Name, readModel.Model.Id, [])
+            {
+                Scope = scope,
+                Target = targetsEvent ? SemanticProjectionTargetKind.Event : SemanticProjectionTargetKind.ReadModel
+            };
         }
 
         bool IsFlat(ProjectionSyntax projection, BoundReadModel readModel) =>

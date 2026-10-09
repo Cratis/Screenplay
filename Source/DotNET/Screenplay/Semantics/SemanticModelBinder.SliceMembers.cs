@@ -50,10 +50,23 @@ public sealed partial class SemanticModelBinder
                     continue;
                 }
 
+                var targetsEvent = false;
+                SemanticId targetId;
                 if (!_readModels.TryGetValue(ShortName(reducer.ReadModel), out var readModel))
                 {
-                    Error(DiagnosticCodes.InvalidSemanticBinding, $"Reducer '{reducer.Name}' read model is unresolved.", reducer.Location);
-                    continue;
+                    if (!_events.TryGetValue(ShortName(reducer.ReadModel), out var targetEvent))
+                    {
+                        Error(DiagnosticCodes.InvalidSemanticBinding, $"Reducer '{reducer.Name}' read model is unresolved.", reducer.Location);
+                        continue;
+                    }
+
+                    targetsEvent = true;
+                    UsesPublicEvents = true;
+                    targetId = targetEvent.Contract.Id;
+                }
+                else
+                {
+                    targetId = readModel.Model.Id;
                 }
 
                 var transitions = ImmutableArray.CreateBuilder<SemanticReducerTransition>();
@@ -67,7 +80,10 @@ public sealed partial class SemanticModelBinder
                     }
                 }
 
-                reducers.Add(new(reducer.Name, readModel.Model.Id, transitions.ToImmutable()));
+                reducers.Add(new(reducer.Name, targetId, transitions.ToImmutable())
+                {
+                    Target = targetsEvent ? SemanticProjectionTargetKind.Event : SemanticProjectionTargetKind.ReadModel
+                });
                 UsesV3 = true;
             }
 

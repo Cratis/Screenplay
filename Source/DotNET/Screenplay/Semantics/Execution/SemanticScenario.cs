@@ -151,6 +151,16 @@ internal static class SemanticScenario
         SemanticCommandOccurrence? occurrence)
     {
         var capture = plan.Captures[presented.Capture];
+        if (capture.EventsSource is not null)
+        {
+            // A source-events capture consumes published facts, not records presented from an outside system; the reference
+            // evaluator can observe the facts but has no record shape to present, so it declines rather than guessing.
+            return new SemanticUnsupported(
+                loop.World,
+                SemanticExecutionCapability.Specification,
+                $"Capture '{capture.Name}' consumes public events; the reference evaluator does not present records to a source-events capture.");
+        }
+
         var key = KeyOf(presented.Record, capture.Key);
         var previous = expected.GivenCaptures.LastOrDefault(given => given.Capture == presented.Capture &&
             SemanticValueRules.AreEqual(KeyOf(given.Record, capture.Key), key))?.Record;

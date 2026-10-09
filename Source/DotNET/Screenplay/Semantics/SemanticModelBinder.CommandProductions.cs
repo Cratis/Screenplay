@@ -14,18 +14,11 @@ public sealed partial class SemanticModelBinder
     internal const bool SpecificationRoutesJoin = true;
     internal const bool CompositeStreamIdsJoin = true;
 
-    static List<Diagnostic> CommandProductionAdmission(ApplicationSyntax syntax)
+    static List<Diagnostic> CommandProductionAdmission(ApplicationSyntax syntax, out bool usesPublicEvents)
     {
         var walker = new CommandProductionAdmissionWalker();
         walker.VisitApplication(syntax);
-        foreach (var target in PublicEventUsageValidator.EventTargets(syntax))
-        {
-            walker.Diagnostics.Add(Diagnostic.Error(
-                DiagnosticCodes.UnsupportedSemanticSyntax,
-                "A projection or reducer that targets an event is accepted in source only, not admitted by any supported executable model (ESM) version yet (#482).",
-                target.Location));
-        }
-
+        usesPublicEvents = walker.UsesPublicEvents || PublicEventUsageValidator.EventTargets(syntax).Count > 0;
         return walker.Diagnostics;
     }
 
@@ -33,31 +26,34 @@ public sealed partial class SemanticModelBinder
     {
         internal List<Diagnostic> Diagnostics { get; } = [];
 
+        /// <summary>Gets whether the model declares a public event, an origin, a direction or an events source.</summary>
+        internal bool UsesPublicEvents { get; private set; }
+
         public override void VisitNode(SyntaxNode node)
         {
-            if (node is EventSyntax { Visibility: not EventVisibility.Private } or EventSyntax { Origin: not null } or
-                ImportSyntax { Visibility: not EventVisibility.Private } or ImportSyntax { Origin: not null })
+            if (node is EventSyntax { Visibility: not EventVisibility.Private } or EventSyntax { Origin: not null })
+            {
+                UsesPublicEvents = true;
+            }
+
+            // An import names a declaration in another file; it carries no shape of its own, so a public or foreign import has
+            // nothing to execute. The shape of a foreign public event is the local 'event X from "store"' declaration.
+            if (node is ImportSyntax { Visibility: not EventVisibility.Private } or ImportSyntax { Origin: not null })
             {
                 Diagnostics.Add(Diagnostic.Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
-                    "Public event visibility and opaque event/import origins are accepted in source only, not admitted by any supported executable model (ESM) version yet (#481).",
+                    "A public or foreign import has no local shape to execute. Declare the foreign public event with its own fields as 'event <Name> from \"<store>\"' instead (#481).",
                     node.Location));
             }
 
             if (node is SliceSyntax { Direction: not null })
             {
-                Diagnostics.Add(Diagnostic.Error(
-                    DiagnosticCodes.UnsupportedSemanticSyntax,
-                    "Explicit Translate direction is accepted in source only, not admitted by any supported executable model (ESM) version yet (#480). Legacy directionless translations remain inbound.",
-                    node.DirectiveLocations.GetValueOrDefault("direction", node.Location)));
+                UsesPublicEvents = true;
             }
 
             if (node is CaptureSourceSyntax source && CaptureEventsSource.IsEvents(source))
             {
-                Diagnostics.Add(Diagnostic.Error(
-                    DiagnosticCodes.UnsupportedSemanticSyntax,
-                    "Capture 'source events' is accepted in source only, not admitted by any supported executable model (ESM) version yet (#483).",
-                    node.Location));
+                UsesPublicEvents = true;
             }
 
             if (node is InvocationRefusalSyntax or RefusalExpressionSyntax or SpecificationRedeliverySyntax)

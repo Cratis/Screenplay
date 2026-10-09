@@ -155,6 +155,7 @@ public static partial class SemanticModelCanonicalJson
         WriteConstraints(writer, slice.Constraints);
         if (!slice.Reactions.IsDefaultOrEmpty) WriteArray(writer, "reactions", slice.Reactions.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, reaction) => WriteReaction(output, reaction, version));
         if (!slice.Captures.IsDefaultOrEmpty) WriteArray(writer, "captures", slice.Captures.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteCapture);
+        if (slice.Direction is { } direction) writer.WriteString("direction", direction == SemanticTranslationDirection.Outbound ? "outbound" : "inbound");
         writer.WriteEndObject();
     }
 
@@ -162,7 +163,7 @@ public static partial class SemanticModelCanonicalJson
     {
         writer.WriteStartObject();
         CanonicalJson.WriteString(writer, "name", reducer.Name);
-        writer.WriteString("readModel", reducer.ReadModel.ToString());
+        writer.WriteString(reducer.Target == SemanticProjectionTargetKind.Event ? "event" : "readModel", reducer.ReadModel.ToString());
         writer.WriteString("key", "eventSourceId");
         writer.WriteNull("initialState");
         writer.WriteString("result", "stateOrDelete");
@@ -235,6 +236,8 @@ public static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", eventContract.Name);
         WriteArray(writer, "properties", eventContract.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProperty);
         if (!eventContract.Tags.IsDefaultOrEmpty) WriteStringArray(writer, "tags", eventContract.Tags);
+        if (eventContract.Visibility == SemanticEventVisibility.Public) writer.WriteString("visibility", "public");
+        if (eventContract.Origin is not null) CanonicalJson.WriteString(writer, "origin", eventContract.Origin);
         if (version.IsAtLeast(SemanticVersion.V4) && !eventContract.PriorRevisions.IsDefaultOrEmpty)
         {
             writer.WriteNumber("predecessor", eventContract.Predecessor!.Value.Value);
@@ -344,7 +347,7 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteStartObject();
         WriteId(writer, projection.Id);
         CanonicalJson.WriteString(writer, "name", projection.Name);
-        writer.WriteString("readModel", projection.ReadModel.ToString());
+        writer.WriteString(projection.Target == SemanticProjectionTargetKind.Event ? "event" : "readModel", projection.ReadModel.ToString());
         WriteArray(writer, "transitions", projection.Transitions, (output, transition) => WriteTransition(output, transition, version));
         WriteProjectionScope(writer, projection.Scope);
         writer.WriteEndObject();
