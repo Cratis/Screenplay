@@ -47,7 +47,9 @@ static class ContractAdmission
         new("ui", "layout Shell\n  content\nui profile Web\n  target platform web\n  layout Shell\n"),
         new("feature", Slice),
         new("slice", Slice, [Slice.Replace("StateChange", "StateView", StringComparison.Ordinal), Slice.Replace("StateChange", "Automation", StringComparison.Ordinal), Slice.Replace("StateChange", "Translate", StringComparison.Ordinal)]),
-        new("capture", Slice.Replace("StateChange", "Translate", StringComparison.Ordinal) + Event + "      capture Source\n        key id\n        append Recorded\n          value = $.value\n",
+        new(
+            "capture",
+            Slice.Replace("StateChange", "Translate", StringComparison.Ordinal) + Event + "      capture Source\n        key id\n        append Recorded\n          value = $.value\n",
             ["import Outside.Arrived from \"store\"\n" + Slice.Replace("StateChange", "Translate", StringComparison.Ordinal) + "      direction inbound\n" + Event + "      capture Source\n        source events\n          from Arrived\n        key id\n        append Recorded\n          value = $.value\n"]),
         new(
             "command",
