@@ -115,6 +115,8 @@ function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJ
         const members = Object.keys(structural).filter(member => (known === undefined || known.has(member)) && !(owningMode === 'legacy' && !complete && isLegacyOmittedMember(value, member)) && !omitted.has(member) && !(value.kind === 'OperationSyntax' && member === 'usesLocation')).sort(ordinal);
         for (const member of members) {
             const memberValue = structural[member];
+            if ((value.kind === 'EventSyntax' || value.kind === 'ImportSyntax') && ((member === 'visibility' && memberValue === 'Private') || (member === 'origin' && memberValue == null))) continue;
+            if (value.kind === 'SliceSyntax' && member === 'direction' && memberValue == null) continue;
             if (value.kind === 'ConceptAttributeSyntax' && (member === 'scope' || member === 'specialCategory') && memberValue == null) continue;
             if (value.kind === 'ConceptAttributeSyntax' && member === 'criminal' && memberValue === false) continue;
             if (member === 'documentation' && value.kind !== 'EventSyntax' && memberValue == null) continue;

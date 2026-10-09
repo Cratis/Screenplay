@@ -28,6 +28,9 @@ import { parsePolicy } from './PolicyParser';
 import { SeedSyntax } from '../Syntax/Seeds';
 import { parseSeed } from './SeedParser';
 import { parseSystem } from './OperationParser';
+import { EventVisibility } from '../Syntax/EventVisibility';
+import { isBlankPublicEventOrigin } from '../Syntax/PublicEventInvariants';
+import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { SystemSyntax } from '../Syntax/Operations';
 import { EventSourceSyntax } from '../Syntax/EventSources';
 import { parseEventSource } from './EventSourceParser';
@@ -35,7 +38,7 @@ import { parseExample } from './SpecificationExampleParser';
 import { locationOf, SourceLine, startOf } from './SourceLine';
 
 const domainPattern = pattern('^domain\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)$');
-const importPattern = pattern('^import\\s+([\\w.]+)$');
+const importPattern = pattern(`^import\\s+([\\w.]+)(?:\\s+from\\s+"(?<origin>${stringBodyPattern})")?$`);
 const conceptPattern = pattern('^concept\\s+(\\w+)\\s*:\\s*(\\w+)((?:\\s+@?\\w+)*)$');
 const enumValuePattern = pattern('^@?[a-z_]\\w*$');
 const personaPattern = pattern('^persona\\s+([A-Za-z_]\\w*)$');
@@ -94,9 +97,13 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
         } else if (keyword === 'import') {
             const match = importPattern.exec(line.content);
             if (match === null) {
-                context.error(DiagnosticCodes.InvalidImportDeclaration, `Invalid import '${line.content}' - expected 'import <Qualified.Name>'`, locationOf(line));
+                context.error(DiagnosticCodes.InvalidImportDeclaration, `Invalid import '${line.content}' - expected 'import <Qualified.Name> [from "<origin>"]'`, locationOf(line));
             } else {
-                imports.push({ kind: 'ImportSyntax', qualifiedName: match[1], location: locationOf(line) });
+                const origin = match.groups?.origin === undefined ? null : unescapeString(match.groups.origin);
+                if (origin !== null && isBlankPublicEventOrigin(origin)) {
+                    context.error(DiagnosticCodes.InvalidImportDeclaration, 'An import origin must be a nonblank quoted string', locationOf(line));
+                }
+                imports.push({ kind: 'ImportSyntax', qualifiedName: match[1], origin, visibility: origin === null ? EventVisibility.Private : EventVisibility.Public, location: locationOf(line) });
             }
         } else if (keyword === 'example') {
             if (placedBody !== undefined) placedBody.tryParse(context, line);

@@ -19,6 +19,8 @@ describe('when parsing what automations and translations do', () => {
             'module Billing',
             '  feature Invoicing',
             '    slice Automation ChaseOverdue',
+            '      event InvoiceMarkedOverdue',
+            '      event LargeInvoiceSent',
             '      reaction OverdueChaser',
             '        at 08:00',
             '          produces InvoiceMarkedOverdue',

@@ -4,6 +4,21 @@
 // Shared diagnostic names, including the explicitly C#-only checks below. Catalogue membership does
 // not imply TypeScript validation support; see Documentation/screenplay/editor-diagnostics.md.
 export const DiagnosticCodes = {
+    // C#-only whole-model public event boundaries; membership is not TypeScript validation support.
+    CommandProducesPublicEvent: 'PLAY0596',
+    PublicEventRequiresOutboundTranslation: 'PLAY0597',
+    OutboundPublicEventCount: 'PLAY0598',
+    ForeignPublicEventConsumer: 'PLAY0599',
+    OutboundTranslationInput: 'PLAY0600',
+    InboundTranslationOutput: 'PLAY0601',
+    ForeignPublicEventProduced: 'PLAY0602',
+    PublicTranslationRequiresDirection: 'PLAY0603',
+    TranslationConstructDirection: 'PLAY0604',
+    InboundTranslationInput: 'PLAY0605',
+    OutboundTranslationOutput: 'PLAY0606',
+    EventTargetOutsideOutboundTranslation: 'PLAY0607',
+    EventsSourceOutsideInboundTranslation: 'PLAY0608',
+    InvalidCaptureEventsSource: 'PLAY0609',
     LegacyComplianceMarker: 'PLAY0565',
     UnknownComplianceMarker: 'PLAY0566',
     InvalidSecretScope: 'PLAY0567',

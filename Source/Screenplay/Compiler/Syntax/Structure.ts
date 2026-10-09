@@ -17,6 +17,7 @@ import { ScreenSyntax } from './Screens';
 import { SpecificationExampleSyntax, SpecificationSyntax } from './Specifications';
 import { SyntaxNode } from './SyntaxNode';
 import { SourceOptions } from './SourceOptions';
+import { TranslationDirection } from './TranslationDirection';
 
 // The four kinds of slice. The names are the C# SliceType members, which is also how SyntaxJson writes them.
 export type SliceType = 'StateChange' | 'StateView' | 'Automation' | 'Translate';
@@ -25,6 +26,7 @@ export const sliceTypes: readonly SliceType[] = ['StateChange', 'StateView', 'Au
 
 export interface SliceSyntax extends SyntaxNode {
     readonly kind: 'SliceSyntax';
+    readonly direction?: TranslationDirection | null;
     readonly documentation?: string | null;
     readonly examples?: readonly SpecificationExampleSyntax[];
     readonly type: SliceType;

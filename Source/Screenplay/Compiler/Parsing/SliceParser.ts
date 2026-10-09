@@ -13,6 +13,7 @@ import { ScreenSyntax } from '../Syntax/Screens';
 import { SpecificationExampleSyntax, SpecificationSyntax } from '../Syntax/Specifications';
 import { SliceSyntax, SliceType, sliceTypes } from '../Syntax/Structure';
 import { pattern } from '../Text/patterns';
+import { TranslationDirection } from '../Syntax/TranslationDirection';
 import { parseCapture } from './CaptureParser';
 import { parseCommand } from './CommandParser';
 import { dependencySources, ReducerSyntax } from '../Syntax/DependencySources';
@@ -56,6 +57,8 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     }
     const previous = context.scope;
     context.scope = [...previous, name];
+    let direction: TranslationDirection | null = null;
+    let hasDirection = false;
     let description: string | null = null;
     let documentation: string | null = null;
     const events: EventSyntax[] = [];
@@ -76,14 +79,23 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
         if (isFileDirective(child)) {
             continue;
         }
-        const keyword = firstWord(child.content);
+        const metadataWord = child.content.split(/[ \t]/, 1)[0];
+        const keyword = metadataWord === 'public' || metadataWord === 'direction' ? metadataWord : firstWord(child.content);
         if (keyword === 'description') {
             description = parseDescription(context, child, description, `Slice '${name}'`);
         } else if (keyword === 'documentation') {
             documentation = parseDocumentation(context, child, documentation, `Slice '${name}'`);
         } else if (keyword === 'operation') {
             operations.push(parseOperation(context, child).operation);
-        } else if (keyword === 'event') {
+        } else if (keyword === 'direction') {
+            const directionMatch = /^direction\s+(inbound|outbound)$/.exec(child.content);
+            if (hasDirection || type !== 'Translate' || directionMatch === null) {
+                context.error(DiagnosticCodes.InvalidSliceDeclaration, 'Declare direction inbound or direction outbound once, inside a Translate slice only', locationOf(child));
+            } else {
+                direction = directionMatch[1] === 'inbound' ? TranslationDirection.Inbound : TranslationDirection.Outbound;
+            }
+            hasDirection = true;
+        } else if (keyword === 'event' || keyword === 'public') {
             events.push(parseEvent(context, child));
         } else if (keyword === 'command') {
             commands.push(parseCommand(context, child));
@@ -115,7 +127,7 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
     }
     context.scope = previous;
     const syntax: SliceSyntax = {
-        kind: 'SliceSyntax', type, name, description, documentation, examples, events, operations, commands, queries, projections, captures, reactions, constraints, specifications, readModels, screens,
+        kind: 'SliceSyntax', type, name, direction, description, documentation, examples, events, operations, commands, queries, projections, captures, reactions, constraints, specifications, readModels, screens,
         location: locationOf(line),
     };
     dependencySources.set(syntax, { reducers });

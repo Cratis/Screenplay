@@ -4,6 +4,7 @@
 import { ExpressionSyntax } from './Expressions';
 import { ValidateSyntax } from './Commands';
 import { SyntaxNode } from './SyntaxNode';
+import { EventVisibility } from './EventVisibility';
 
 export interface TypeRefSyntax extends SyntaxNode {
     readonly kind: 'TypeRefSyntax';
@@ -30,6 +31,8 @@ export interface DomainSyntax extends SyntaxNode {
 export interface ImportSyntax extends SyntaxNode {
     readonly kind: 'ImportSyntax';
     readonly qualifiedName: string;
+    readonly visibility?: EventVisibility;
+    readonly origin?: string | null;
 }
 
 export interface ConceptAttributeSyntax extends SyntaxNode {
@@ -65,6 +68,8 @@ export interface TagSyntax extends SyntaxNode {
 
 export interface EventSyntax extends SyntaxNode {
     readonly kind: 'EventSyntax';
+    readonly visibility?: EventVisibility;
+    readonly origin?: string | null;
     readonly name: string;
     readonly properties: readonly PropertySyntax[];
     readonly tags: readonly TagSyntax[];

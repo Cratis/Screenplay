@@ -1,0 +1,205 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": {
+    "kind": "DomainSyntax",
+    "name": "Contracts"
+  },
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [
+    {
+      "kind": "ImportSyntax",
+      "origin": "billing",
+      "qualifiedName": "Billing.InvoiceIssued",
+      "visibility": "Public"
+    },
+    {
+      "kind": "ImportSyntax",
+      "qualifiedName": "Billing.LocalFact"
+    }
+  ],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Publishing",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "direction": "Outbound",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 2,
+                  "hasGenerationMarker": true,
+                  "id": null,
+                  "name": "InvoicePublished",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": [],
+                  "visibility": "Public"
+                },
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "ExternalInvoice",
+                  "origin": "billing",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": [],
+                  "visibility": "Public"
+                }
+              ],
+              "name": "PublishInvoice",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "Translate"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "direction": "Inbound",
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": true,
+                  "id": null,
+                  "name": "InvoiceReceived",
+                  "origin": "billing\"contracts\\v1",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": [],
+                  "visibility": "Public"
+                }
+              ],
+              "name": "ReceiveInvoice",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "Translate"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "InvoiceRegistered",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "number",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "tags": []
+                }
+              ],
+              "name": "RegisterInvoice",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "StateChange"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Integration"
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": []
+}
