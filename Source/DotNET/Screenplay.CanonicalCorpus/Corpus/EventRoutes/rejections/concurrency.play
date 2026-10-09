@@ -1,0 +1,10 @@
+eventsource Account
+  stream All
+module M
+  feature F
+    slice StateChange S
+      command C
+        id String identifier
+        stream Account.All
+        concurrency
+          eventSource

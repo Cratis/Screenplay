@@ -63,6 +63,10 @@
                           Link="Golden/full-esm-v7.json"
                           WithCulture="false"
                           LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.full-esm-v7.json" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/event-routes-esm.json"
+                          Link="Golden/event-routes-esm.json"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalVectors.Golden.event-routes-esm.json" />
         <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/policy-negation-v7.json"
                           Link="Golden/policy-negation-v7.json"
                           WithCulture="false"

@@ -1,0 +1,157 @@
+module M
+  feature F
+    slice StateChange S
+      command Input
+        id String identifier
+        key Key
+        stream Account.Ledger
+          streamId = key
+        produces event Recorded
+          value String = id
+      command Positive
+        id String identifier
+        stream Account.Ledger
+          streamId = 9007199254740991
+        produces Recorded
+          for id
+          value = id
+      command PositiveAdjacent
+        id String identifier
+        stream Account.Ledger
+          streamId = 9007199254740990
+        produces Recorded
+          for id
+          value = id
+      command Negative
+        id String identifier
+        stream Account.Ledger
+          streamId = -9007199254740991
+        produces Recorded
+          for id
+          value = id
+      command NegativeAdjacent
+        id String identifier
+        stream Account.Ledger
+          streamId = -9007199254740990
+        produces Recorded
+          for id
+          value = id
+      command Text
+        id String identifier
+        text String
+        stream Account.Notes
+          streamId = text
+        produces Recorded
+          for id
+          value = id
+      command UUID
+        id String identifier
+        key Uuid
+        stream Account.UUIDs
+          streamId = key
+        produces Recorded
+          for id
+          value = id
+      command Unkeyed
+        id String identifier
+        stream Account.All
+        produces Recorded
+          for id
+          value = id
+      command Guarded
+        id String identifier
+        text String
+        authorize AccountantOnly
+        validate
+          text not empty message "Text is required."
+        stream Account.Notes
+          streamId = text
+        produces Recorded
+          for id
+          value = "other"
+      specification UnauthorizedRouteFailure
+        given caller
+          authenticated
+        when Guarded
+          id = "other"
+          text = ""
+        then denied
+      specification ValidationRouteFailure
+        given caller
+          authenticated
+          role "Accountant"
+        when Guarded
+          id = "other"
+          text = ""
+        then error "Text is required."
+      specification PositiveInput
+        when Input
+          id = "other"
+          key = 9007199254740991
+        then Recorded
+          value = "other"
+      specification PositiveAdjacentInput
+        when Input
+          id = "other"
+          key = 9007199254740990
+        then Recorded
+          value = "other"
+      specification NegativeInput
+        when Input
+          id = "other"
+          key = -9007199254740991
+        then Recorded
+          value = "other"
+      specification NegativeAdjacentInput
+        when Input
+          id = "other"
+          key = -9007199254740990
+        then Recorded
+          value = "other"
+      specification PositiveLiteral
+        when Positive
+          id = "other"
+        then Recorded
+          value = "other"
+      specification PositiveAdjacentLiteral
+        when PositiveAdjacent
+          id = "other"
+        then Recorded
+          value = "other"
+      specification NegativeLiteral
+        when Negative
+          id = "other"
+        then Recorded
+          value = "other"
+      specification NegativeAdjacentLiteral
+        when NegativeAdjacent
+          id = "other"
+        then Recorded
+          value = "other"
+      specification TextInput
+        when Text
+          id = "other"
+          text = "é|%"
+        then Recorded
+          value = "other"
+      specification UUIDInput
+        when UUID
+          id = "other"
+          key = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        then Recorded
+          value = "other"
+      specification UnkeyedInput
+        when Unkeyed
+          id = "other"
+        then Recorded
+          value = "other"
+      specification EmptyText
+        when Text
+          id = "other"
+          text = ""
+        then error "A stream id text literal cannot be empty."
+      specification OutsideBound
+        when Input
+          id = "other"
+          key = 9007199254740992
+        then error "A stream id integer literal must be between -9007199254740991 and 9007199254740991 in Double numeric mode."

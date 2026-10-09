@@ -1,0 +1,11 @@
+concept GeneratedKey : Uuid
+eventsource Account
+  stream Notes
+    streamId GeneratedKey
+module M
+  feature F
+    slice StateChange S
+      command C
+        key GeneratedKey generated
+        stream Account.Notes
+          streamId = key

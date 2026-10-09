@@ -1,0 +1,14 @@
+policy AccountantOnly
+  require authenticated and role "Accountant"
+concept Key : Int
+eventsource Account
+  id "StoredAccount"
+  identifier String
+  stream Ledger
+    id "StoredLedger"
+    streamId Key
+  stream Notes
+    streamId String
+  stream UUIDs
+    streamId Uuid
+  stream All
