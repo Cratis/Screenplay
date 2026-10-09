@@ -22,6 +22,10 @@ describe('when marking event subjects', () => {
     for (const marker of ['pii', 'personal', 'secret', '@pii', 'sensitive', '@sensitive']) {
         it(`should refuse ${marker} keys`, () => event('CustomerId', `concept CustomerId : String ${marker}\n`).diagnostics.some(diagnostic => diagnostic.code === DiagnosticCodes.ProtectedSubjectType).should.be.true);
     }
+    it('should isolate the subject refusal on an otherwise valid operation', () => {
+        const result = parse('system Mailer\n' + prefix + '      operation Send\n        uses Mailer\n        customerId Uuid subject\n        execute');
+        result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal([DiagnosticCodes.InvalidSubjectOwner]);
+    });
     it('should report each extra mark naming the first', () => {
         const result = parse(prefix + '      event Changed\n        customerId Uuid subject\n        personId Uuid subject\n        employeeId String subject');
         result.diagnostics.filter(diagnostic => diagnostic.code === DiagnosticCodes.DuplicateEventSubject).map(diagnostic => diagnostic.message.includes('customerId')).should.deep.equal([true, true]);

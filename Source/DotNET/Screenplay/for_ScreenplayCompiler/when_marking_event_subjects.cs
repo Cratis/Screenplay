@@ -68,6 +68,13 @@ public class when_marking_event_subjects : given.a_compiler
         _compiler.Compile(Prefix + "      " + body).Diagnostics.Any(diagnostic => diagnostic.Code == code).ShouldBeTrue();
 
     [Fact]
+    void should_isolate_the_subject_refusal_on_an_otherwise_valid_operation()
+    {
+        var result = _compiler.Compile("system Mailer\n" + Prefix + "      operation Send\n        uses Mailer\n        customerId Uuid subject\n        execute");
+        result.Diagnostics.Single().Code.ShouldEqual(DiagnosticCodes.InvalidSubjectOwner);
+    }
+
+    [Fact]
     void should_refuse_type_properties() => _compiler.Compile("type T\n  key String subject").Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidSubjectOwner).ShouldBeTrue();
 
     [Theory]
