@@ -98,6 +98,8 @@
   href: printing.md
 - name: Interoperability and extensions
   href: interoperability.md
+- name: Screens release acceptance
+  href: screens-release-acceptance.md
 - name: Workspace transport
   href: workspace-transport.md
 - name: Visitors and traversal
