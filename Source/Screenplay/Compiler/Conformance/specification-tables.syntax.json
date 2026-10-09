@@ -145,6 +145,20 @@
                     },
                     {
                       "kind": "SpecificationCaseSyntax",
+                      "name": "amountTooLow",
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 0
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "SpecificationCaseSyntax",
                       "name": "Large",
                       "values": [
                         {

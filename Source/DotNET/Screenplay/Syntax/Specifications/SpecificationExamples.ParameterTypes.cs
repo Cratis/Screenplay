@@ -10,6 +10,9 @@ public static partial class SpecificationExamples
 {
     private sealed partial class Expansion
     {
+        static TypeRefSyntax? UniqueDestinationType(IEnumerable<TypeRefSyntax> types) =>
+            types.DistinctBy(type => (type.Name, type.IsOptional, type.IsCollection)).ToArray() is [var type] ? type : null;
+
         void ValidateParameterReferences(SpecificationSyntax specification, DeclarationScope scope)
         {
             var values = new ResponseValueTypes(_application);
@@ -78,9 +81,13 @@ public static partial class SpecificationExamples
                         if (occurrence.Stream is { } eventRoute)
                         {
                             var source = new EventSourceCatalog(_application).Resolve(eventRoute.EventSource, eventRoute.Stream);
-                            if (source.Kind == EventSourceResolutionKind.Unique && source.Sources[0].Identifier is { } identifier) return identifier;
+                            if (source.Kind != EventSourceResolutionKind.Unique) return null;
+                            if (source.Sources[0].Identifier is { } identifier) return identifier;
                         }
-                        return specification.When is { } action ? _declarations!.Resolve(action.CommandType, scope, slice => slice.Commands, item => item.Name)?.Node.Properties.SingleOrDefault(value => value.IsIdentifier)?.Type : null;
+                        var eventDeclaration = _declarations!.Event(occurrence.EventType, scope);
+                        if (eventDeclaration is null) return null;
+                        var local = _slices.Find(owner => owner.Scope.Segments.SequenceEqual(scope.Segments)).Slice;
+                        return UniqueDestinationType(CommandDestinationTypesFor(eventDeclaration, local)) ?? UniqueDestinationType(CommandDestinationTypesFor(eventDeclaration)) ?? UniqueDestinationType(EventDestinationTypes(eventDeclaration, []));
                     }
                     properties = _declarations!.Event(occurrence.EventType, scope)?.Properties;
                     break;
@@ -118,6 +125,57 @@ public static partial class SpecificationExamples
             }
 
             return _declarations!.Property(properties, property, out _)?.Type;
+        }
+
+        IEnumerable<TypeRefSyntax> CommandDestinationTypesFor(EventSyntax eventDeclaration, SliceSyntax? local = null)
+        {
+            foreach (var (slice, scope) in _slices.Where(owner => local is null || ReferenceEquals(owner.Slice, local)))
+            {
+                foreach (var command in slice.Commands)
+                {
+                    var productions = command.Produces.Where(produced => _declarations!.Productions.IsEventProduction(produced, slice)).ToArray();
+                    foreach (var produced in productions.Where(produced => ReferenceEquals(_declarations!.Event(produced.Event, scope), eventDeclaration)))
+                    {
+                        if (CommandDestinationTypes.DestinationType(command, produced, productions, _declarations!) is { } type) yield return type;
+                    }
+                }
+            }
+        }
+
+        IEnumerable<TypeRefSyntax> EventDestinationTypes(EventSyntax eventDeclaration, HashSet<EventSyntax> visited)
+        {
+            if (!visited.Add(eventDeclaration)) yield break;
+            var commandTypes = CommandDestinationTypesFor(eventDeclaration).ToArray();
+            foreach (var type in commandTypes) yield return type;
+            foreach (var (slice, scope) in _slices)
+            {
+                foreach (var trigger in slice.Reactions.SelectMany(reaction => reaction.Triggers))
+                {
+                    var sourceEvent = trigger.Source is NamedTriggerSourceSyntax named ? _declarations!.Event(named.Name, scope) : null;
+                    foreach (var produced in (trigger.Produces ?? []).Where(produced => ReferenceEquals(_declarations!.Event(produced.Event, scope), eventDeclaration)))
+                    {
+                        if (produced.For is PathExpressionSyntax path)
+                        {
+                            var type = _declarations!.Property(sourceEvent?.Properties, path.Path, out _)?.Type ??
+                                (trigger.Source is NamedTriggerSourceSyntax source ? (_application.Triggers ?? []).SingleOrDefault(declared => declared.Name == source.Name)?.Data.SingleOrDefault(property => property.Name == path.Path)?.Type : null);
+                            if (type is not null) yield return type;
+                        }
+                        else if (produced.For is LiteralExpressionSyntax)
+                        {
+                            yield return new("String", false, false, produced.Location);
+                        }
+                        else if (produced.For is null && sourceEvent is not null)
+                        {
+                            foreach (var type in EventDestinationTypes(sourceEvent, visited)) yield return type;
+                        }
+                    }
+                }
+                if (slice.Captures.SelectMany(capture => capture.Appends.Concat(capture.Children.SelectMany(child => child.Appends)).Concat(capture.Nested.SelectMany(nested => nested.Appends)))
+                    .Any(append => ReferenceEquals(_declarations!.Event(append.Event, scope), eventDeclaration)))
+                {
+                    yield return UniqueDestinationType(commandTypes) ?? new("String", false, false, eventDeclaration.Location);
+                }
+            }
         }
 
         IEnumerable<PropertySyntax>? QueryProperties(string name, DeclarationScope scope)

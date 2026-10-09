@@ -97,6 +97,7 @@ public static partial class SpecificationExamples
         internal CompilationResult<IReadOnlyList<EffectiveSpecification>> ExpandStandalone(SpecificationSyntax specification, DeclarationScope scope)
         {
             foreach (var entry in _entries.Where(entry => entry.Node is SpecificationExampleSyntax)) ValidateExample(entry);
+            SpecificationParser.ValidateTable(specification, _context);
             _ = ExpandSpecifications(specification, scope).ToArray();
 
             return new(_specifications, _context.Diagnostics);

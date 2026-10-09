@@ -12,7 +12,7 @@ import { parseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
 import { parseConcrete } from './SpecificationResponseParser';
 
-const caseHeader = pattern('^case\\s+([A-Za-z_]\\w*)(?:\\s+(?<property>[\\w.]+)\\s*=(?!=|>)\\s*(?<value>.+))?$');
+const caseHeader = new RegExp(pattern('^case\\s+([A-Za-z_]\\w*)(?:\\s+(?<property>[\\w.]+)\\s*=(?!=|>)\\s*(?<value>.+))?$').source, 'du');
 const assignment = pattern('^([\\w.]+)\\s*=(?!=|>)\\s*(.+)$');
 const reference = pattern('^case\\.([a-z_]\\w*)$');
 
@@ -62,7 +62,7 @@ export function parseCase(context: ParserContext, line: SourceLine): Specificati
             return;
         }
         const source = parseConcrete(context, text, valueLocation, DiagnosticCodes.InvalidSpecificationCaseValue);
-        if (source !== null) values.push({ kind: 'PropertyMappingSyntax', property, source, location: owner === line ? { ...location, column: location.column + owner.content.indexOf(property, 'case'.length) } : location });
+        if (source !== null) values.push({ kind: 'PropertyMappingSyntax', property, source, location: owner === line ? { ...location, column: location.column + match.indices!.groups!.property[0] } : location });
     };
     if (match.groups?.property !== undefined) add(match.groups.property, match.groups.value, line);
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {

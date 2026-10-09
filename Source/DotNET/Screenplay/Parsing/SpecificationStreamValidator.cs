@@ -23,7 +23,7 @@ internal static class SpecificationStreamValidator
         var sink = ParserContext.ForDiagnostics();
         ValidateRoutes(application, declarations, sink, expansion);
         var reported = new HashSet<SourceLocation>();
-        foreach (var diagnostic in sink.Diagnostics)
+        foreach (var diagnostic in sink.Diagnostics.DistinctBy(diagnostic => (diagnostic.Code, diagnostic.Location, diagnostic.Message)))
         {
             var row = diagnostic.Code == DiagnosticCodes.InvalidSpecificationStreamRoute ? rows.FirstOrDefault(row => row.Values.Any(value => value.Source.Location == diagnostic.Location)) : null;
             if (row is null) context.Add(diagnostic);

@@ -2,9 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
-import { PropertySyntax, TypeRefSyntax } from '../Syntax/Declarations';
+import { EventSyntax, PropertySyntax, TypeRefSyntax } from '../Syntax/Declarations';
+import { AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
+import { EventSourceCatalog } from '../Syntax/EventSourceCatalog';
+import { EventSourceResolutionKind } from '../Syntax/EventSources';
+import { SpecificationSyntax } from '../Syntax/Specifications';
+import { commandDestinationType } from './CommandDestinationTypes';
 import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
-import { ApplicationSyntax } from '../Syntax/Structure';
+import { ApplicationSyntax, SliceSyntax } from '../Syntax/Structure';
 import { ParserContext } from './ParserContext';
 import { RefusalDeclarations } from './RefusalDeclarations';
 import { compatibleValue } from './ResponseValidator';
@@ -12,11 +17,15 @@ import { specificationExamples } from './SpecificationCommandExamples';
 
 const primitives = new Set(['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime']);
 
-export function validateSpecificationCases(application: ApplicationSyntax, context: ParserContext): void {
+export function validateSpecificationCases(application: ApplicationSyntax, context: ParserContext, standaloneSpecifications?: readonly SpecificationSyntax[]): void {
     const declarations = new RefusalDeclarations(application);
     const examples = specificationExamples(application);
     const composites = new Map([...declarations.types].map(([name, type]) => [name, new Map(type.properties.map(property => [property.name, property]))]));
-    for (const { slice, scope } of declarations.slices) {
+    const owners = standaloneSpecifications === undefined ? declarations.slices : [{ scope: [], slice: {
+        kind: 'SliceSyntax' as const, type: 'StateChange' as const, name: '', description: null, location: application.location,
+        events: [], commands: [], queries: [], projections: [], captures: [], reactions: [], constraints: [], readModels: [], screens: [], specifications: standaloneSpecifications,
+    } }];
+    for (const { slice, scope } of owners) {
         const names = new Map<string, number>();
         for (const specification of slice.specifications) {
             const expandedNames = (specification.cases?.length ?? 0) === 0 ? [specification.name] : specification.cases!.map(row => `${specification.name}_${row.name}`);
@@ -25,7 +34,7 @@ export function validateSpecificationCases(application: ApplicationSyntax, conte
         }
         for (const specification of slice.specifications) {
             for (const row of specification.cases ?? []) {
-                if ((names.get(`${specification.name}_${row.name}`) ?? 0) > 1) context.error(DiagnosticCodes.SpecificationCaseNameCollision, `Case '${row.name}' derives specification '${specification.name}_${row.name}', which collides in this slice.`, row.location);
+                if ((names.get(`${specification.name}_${row.name}`) ?? 0) > 1) context.error(DiagnosticCodes.SpecificationCaseNameCollision, `Case '${row.name}' derives specification '${specification.name}_${row.name}', which collides in this ${standaloneSpecifications === undefined ? 'slice' : 'document'}.`, row.location);
             }
             for (const parameter of specification.parameters ?? []) {
                 if (!primitives.has(parameter.type.name) && !declarations.concepts.has(parameter.type.name) && !declarations.types.has(parameter.type.name)) context.error(DiagnosticCodes.IncompatibleSpecificationParameterType, `Parameter '${parameter.name}' has unknown type '${parameter.type.name}'.`, parameter.type.location);
@@ -69,15 +78,20 @@ export function validateSpecificationCases(application: ApplicationSyntax, conte
             for (const authored of [...specification.given, ...specification.thenEvents, ...(specification.whenAppended === null ? [] : [specification.whenAppended])]) {
                 const event = examples.eventStep(authored, 'given', scope).effective as typeof authored;
                 assignments(event.values, declarations.event(event.eventType, slice)?.properties ?? null);
-                const source = (application.eventSources ?? []).find(source => source.name === event.stream?.eventSource);
-                const stream = source?.streams.find(stream => stream.name === event.stream?.stream);
-                check(event.for, source?.identifier ?? (command === null ? undefined : declarations.resolve(command.commandType, slice, slice => slice.commands)?.node.properties.find(property => property.isIdentifier)?.type), 'for');
+                const route = event.stream == null ? null : new EventSourceCatalog(application).resolve(event.stream.eventSource, event.stream.stream);
+                const source = route?.kind === EventSourceResolutionKind.Unique ? route.sources[0] : undefined;
+                const stream = route?.kind === EventSourceResolutionKind.Unique ? route.streams[0] : undefined;
+                check(event.for, event.stream != null && source === undefined ? undefined : source?.identifier ?? eventDestinationType(event.eventType, slice, application, declarations), 'for');
                 if (event.stream?.streamId != null) check(event.stream.streamId.source, stream?.streamId ?? undefined, 'streamId');
                 for (const part of event.stream?.streamIdParts ?? []) check(part.source, stream?.streamIdParts.find(declaration => declaration.name === part.property)?.type, part.property);
             }
             for (const authored of [...specification.givenReadModels, ...specification.thenReadModels]) {
                 const model = examples.readModel(authored, scope);
                 assignments(model.properties, declarations.resolve(model.name, slice, slice => slice.readModels)?.node.properties ?? null);
+            }
+            if (specification.whenTrigger != null) {
+                const trigger = (application.declaredTriggers ?? []).find(trigger => trigger.name === specification.whenTrigger!.trigger);
+                for (const value of specification.whenTrigger.values) check(value.source, trigger?.data.find(property => property.name === value.property)?.type, value.property);
             }
             for (const error of specification.thenErrors) check(error.caseValue ?? null, { kind: 'TypeRefSyntax', name: 'String', isOptional: false, isCollection: false, location: error.location }, 'message');
             for (const absent of specification.thenAbsentReadModels ?? []) {
@@ -95,4 +109,42 @@ export function validateSpecificationCases(application: ApplicationSyntax, conte
             }
         }
     }
+}
+
+function uniqueDestinationType(types: readonly TypeRefSyntax[]): TypeRefSyntax | undefined {
+    const distinct = new Map(types.map(type => [JSON.stringify([type.name, type.isOptional, type.isCollection]), type]));
+    return distinct.size === 1 ? [...distinct.values()][0] : undefined;
+}
+
+function eventDestinationType(reference: string, local: SliceSyntax, application: ApplicationSyntax, declarations: RefusalDeclarations): TypeRefSyntax | undefined {
+    const resolver = new AuthoringProductionResolver(application);
+    const event = declarations.event(reference, local);
+    if (event === null) return undefined;
+    const commandTypes = (event: EventSyntax, owners = declarations.slices): TypeRefSyntax[] => owners.flatMap(({ slice }) => slice.commands.flatMap(command => command.produces
+        .filter(produced => resolver.isEventProduction(produced, slice) && declarations.event(produced.event, slice) === event)
+        .map(produced => commandDestinationType(command, produced, application, { resolver, slice })).filter((type): type is TypeRefSyntax => type !== null)));
+    const producerTypes = (event: EventSyntax, visited: Set<EventSyntax>): TypeRefSyntax[] => {
+        if (visited.has(event)) return [];
+        visited.add(event);
+        const types = commandTypes(event);
+        for (const { slice } of declarations.slices) {
+            for (const trigger of slice.reactions.flatMap(reaction => reaction.triggers)) {
+                const sourceName = trigger.source.kind === 'NamedTriggerSourceSyntax' ? trigger.source.name : undefined;
+                const source = sourceName === undefined ? null : declarations.event(sourceName, slice);
+                for (const produced of trigger.produces.filter(produced => declarations.event(produced.event, slice) === event)) {
+                    if (produced.for?.kind === 'PathExpressionSyntax') {
+                        const path = produced.for.path;
+                        const type = declarations.property(source?.properties ?? null, path)?.type ?? (sourceName === undefined ? undefined
+                            : (application.declaredTriggers ?? []).find(declared => declared.name === sourceName)?.data.find(property => property.name === path)?.type);
+                        if (type !== undefined) types.push(type);
+                    } else if (produced.for?.kind === 'LiteralExpressionSyntax') types.push({ kind: 'TypeRefSyntax', name: 'String', isOptional: false, isCollection: false, location: produced.location });
+                    else if (produced.for === null && source !== null) types.push(...producerTypes(source, visited));
+                }
+            }
+            if (slice.captures.flatMap(capture => [...capture.appends, ...capture.children.flatMap(child => child.appends), ...capture.nested.flatMap(nested => nested.appends)]).some(append => declarations.event(append.event, slice) === event))
+                types.push(uniqueDestinationType(commandTypes(event)) ?? { kind: 'TypeRefSyntax', name: 'String', isOptional: false, isCollection: false, location: event.location });
+        }
+        return types;
+    };
+    return uniqueDestinationType(commandTypes(event, declarations.slices.filter(owner => owner.slice === local))) ?? uniqueDestinationType(commandTypes(event)) ?? uniqueDestinationType(producerTypes(event, new Set()));
 }

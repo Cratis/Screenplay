@@ -34,7 +34,6 @@ public static partial class SpecificationExamples
                 yield return expanded.Effective;
                 yield break;
             }
-            SpecificationParser.ValidateTable(specification, _context);
             ValidateParameterReferences(expanded.Effective, scope);
             foreach (var row in specification.Cases)
             {

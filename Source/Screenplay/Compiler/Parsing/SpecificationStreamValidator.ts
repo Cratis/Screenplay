@@ -29,7 +29,11 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
     const sink = new ParserContext(new LineReader([]));
     validateRoutes(application, sink);
     const reported = new Set<string>();
+    const distinct = new Set<string>();
     for (const diagnostic of sink.diagnostics) {
+        const key = JSON.stringify([diagnostic.code, diagnostic.location.path, diagnostic.location.line, diagnostic.location.column, diagnostic.message]);
+        if (distinct.has(key)) continue;
+        distinct.add(key);
         const row = diagnostic.code === DiagnosticCodes.InvalidSpecificationStreamRoute ? rows.find(row => row.values.some(value => value.source.location.line === diagnostic.location.line && value.source.location.column === diagnostic.location.column && value.source.location.path === diagnostic.location.path)) : undefined;
         if (row === undefined) context.error(diagnostic.code, diagnostic.message, diagnostic.location);
         else {

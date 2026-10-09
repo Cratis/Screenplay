@@ -146,14 +146,10 @@ function parseSourceFamily<T extends SyntaxNode>(source: string, keyword: string
         const code = keyword === 'projection' ? DiagnosticCodes.ProjectionDocumentWithoutProjection : keyword === 'capture' ? DiagnosticCodes.CaptureDocumentWithoutCapture : DiagnosticCodes.SpecificationDocumentWithoutSpecification;
         context.error(code, `Document must contain at least one ${keyword}`, context.start);
     }
-    if (keyword === 'specification') {
-        const specifications = value as unknown as SpecificationSyntax[];
-        for (const specification of specifications) for (const row of specification.cases ?? []) {
-            const name = `${specification.name}_${row.name}`;
-            if (specifications.some(other => other !== specification && other.name === name) || specifications.flatMap(other => (other.cases ?? []).map(row => `${other.name}_${row.name}`)).filter(candidate => candidate === name).length > 1)
-                context.error(DiagnosticCodes.SpecificationCaseNameCollision, `Case '${row.name}' derives specification '${name}', which collides in this document.`, row.location);
-        }
-    }
     const roots = keyword === 'specification' && examples.length > 0 ? value.map(node => ({ ...node, examples })) : value;
+    if (keyword === 'specification') {
+        const application = parseApplication(sourceContext([], path, languages), [], documentPlacement);
+        validateSpecificationCases({ ...application, examples }, context, roots as unknown as SpecificationSyntax[]);
+    }
     return { value: roots, diagnostics: context.diagnostics, success: !context.diagnostics.some(diagnostic => diagnostic.severity === 'error') };
 }

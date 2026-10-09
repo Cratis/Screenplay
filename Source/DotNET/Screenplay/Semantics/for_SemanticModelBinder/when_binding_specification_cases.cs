@@ -70,6 +70,26 @@ public class when_binding_specification_cases : given.a_semantic_binder
     }
 
     [Theory]
+    [InlineData("Amount required")]
+    [InlineData("$strings.amountRequired")]
+    void should_bind_case_error_messages_like_quoted_messages(string reason)
+    {
+        var table = Table.Replace("parameter amount Int", "parameter amount Int\n        parameter reason String", StringComparison.Ordinal)
+            .Replace("case Small amount = 10", $"case Small amount = 10\n          reason = \"{reason}\"", StringComparison.Ordinal)
+            .Replace("case Large amount = 100", $"case Large amount = 100\n          reason = \"{reason}\"", StringComparison.Ordinal)
+            .Replace("then Recorded amount = case.amount", "then error case.reason", StringComparison.Ordinal);
+        var expanded = Expanded.Replace("then Recorded amount = 100", $"then error \"{reason}\"", StringComparison.Ordinal)
+            .Replace("then Recorded amount = 10", $"then error \"{reason}\"", StringComparison.Ordinal);
+        var boundTable = Bind(Declarations + "\n" + table);
+        var boundExpanded = Bind(Declarations + "\n" + expanded);
+        Assert.True(boundTable.Success, string.Join('\n', boundTable.Diagnostics.Select(diagnostic => diagnostic.Message)));
+        boundExpanded.Success.ShouldBeTrue();
+        SemanticModelSerializer.Serialize(boundTable.Value.Model).SequenceEqual(SemanticModelSerializer.Serialize(boundExpanded.Value.Model)).ShouldBeTrue();
+        boundTable.Value.Model.Revision.ShouldEqual(boundExpanded.Value.Model.Revision);
+        boundTable.Value.Model.Application.Modules.Single().Features.Single().Slices.Single().Specifications.All(specification => specification.ThenErrors.Single().Message == reason).ShouldBeTrue();
+    }
+
+    [Theory]
     [InlineData("Int optional", DiagnosticCodes.OptionalSpecificationParameterTarget)]
     [InlineData("Decimal", DiagnosticCodes.IncompatibleSpecificationParameterType)]
     void should_check_parameter_types_before_substitution(string type, string code) => Bind(Declarations + "\n" + Table.Replace("parameter amount Int", $"parameter amount {type}", StringComparison.Ordinal)).Diagnostics.ShouldContain(diagnostic => diagnostic.Code == code);

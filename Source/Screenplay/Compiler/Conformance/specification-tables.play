@@ -16,6 +16,7 @@ module M
         description "Keeps each case amount"
         parameter amount Int
         case Small amount = 10
+        case amountTooLow amount = 0
         case Large
           amount = 100
         when Input amount = case.amount

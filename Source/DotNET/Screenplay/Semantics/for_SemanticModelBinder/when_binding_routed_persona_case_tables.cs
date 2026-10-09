@@ -105,8 +105,9 @@ public class when_binding_routed_persona_case_tables : given.a_semantic_binder
     [Fact]
     void should_expand_composite_case_keys_in_declaration_order()
     {
-        var declarations = Declarations.Replace("    streamId String", "    streamId\n      period String\n      amount Int", StringComparison.Ordinal)
-            .Replace("        streamId = period", "        streamId\n          amount = amount\n          period = period", StringComparison.Ordinal);
+        var declarations = "concept AmountId : Int\n" + Declarations.Replace("    streamId String", "    streamId\n      period String\n      amount AmountId", StringComparison.Ordinal)
+            .Replace("amount Int", "amount AmountId", StringComparison.Ordinal)
+            .Replace("          streamId = period", "          streamId\n            amount = amount\n            period = period", StringComparison.Ordinal);
         var tableSource = Table.Replace("            streamId = case.period", "            streamId\n              amount = case.amount\n              period = case.period", StringComparison.Ordinal);
         var scenario = Scenario.Replace("            streamId = \"PERIOD\"", "            streamId\n              amount = AMOUNT\n              period = \"PERIOD\"", StringComparison.Ordinal);
         var table = Bind(declarations + "\n" + tableSource);
