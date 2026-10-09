@@ -449,17 +449,103 @@ public static class ScreenCompositionCorpus
                         Assertion("mcp.folderTranscript", "pending", "true")
                     ])
             ],
+            ReleasedVectorResults =
+            [
+                ReleasedVector(
+                    "cli-stage-render-3.40.0-4.49.1",
+                    "Cratis CLI and Stage",
+                    "CLI 3.40.0 (4fa85f4ca47019fa38f1681249b545ad219fa588) + Stage 4.49.1 (209a2f0edf6a03954ea925fec460a828e7c391ee, cratis/stage:4.49.1) + bundled Screenplay 4.105.0 (9f3738f6cea34fc594eed705d7bb694404f0cbbc) + Scene 4.12.0 (921720db4a9a6b20c7f45ad8820ea2858c398992)",
+                    "cratis render Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ScreenComposition/v1/source/folder --target cratis --destination .ai-work/stage-render-screen-r7/out --name Workspaces -y -o plain",
+                    "red-full-app",
+                    "Render succeeds with 37 backend/generated artifacts and 11 PLAY0269 UI deferrals, but scene.json is the generated backend surface only: one Workspaces screen, Application layout, native command/query input forms, no authored AppShell/MasterDetail templates, no WorkItemList/WorkItemDetails/CommentThread screens, no Navigation contribution, no EditDialog, no Desktop profile and no authored package/icon surface.",
+                    [
+                        Assertion("released.cli.version", "equals", "3.40.0"),
+                        Assertion("released.stage.version", "equals", "4.49.1"),
+                        Assertion("released.screenplay.bundle", "equals", "4.105.0"),
+                        Assertion("released.screenplay.latest", "equals", "4.107.0"),
+                        Assertion("released.scene.version", "equals", "4.12.0"),
+                        Assertion("render.exitCode", "equals", "0"),
+                        Assertion("render.documents", "equals", "10"),
+                        Assertion("render.artifacts", "equals", "37"),
+                        Assertion("render.semanticRevision", "equals", "rev1:ba6161900f9462226e66e5f7276b8c4c02dee59d59d37d3685f93694ddabbf6b"),
+                        Assertion("render.manifest.sha256", "equals", "8b6fe3f1f473554d73787b5d78ae25d909d9deaa4823bcdc794cd009d7612966"),
+                        Assertion("render.scene.sha256", "equals", "ff1f39f77ec3e58fecbbaa3bda12b4276810ed5302863429941164f51c1b7b8c"),
+                        Assertion("render.bindings.sha256", "equals", "b76082ae4439f1a177a6577a6d7fcf36db84d54d5c7839bc4b6409af4c07a302"),
+                        Assertion("render.shaMismatches", "equals", "0"),
+                        Assertion("render.diagnostics.codes", "equals", "PLAY0269"),
+                        Assertion("render.diagnostics.count", "equals", "11"),
+                        Assertion("scene.screens", "equals", "Workspaces"),
+                        Assertion("scene.layouts", "equals", "Application:content"),
+                        Assertion("scene.screenTemplates.count", "equals", "0"),
+                        Assertion("scene.dialogTemplates.count", "equals", "0"),
+                        Assertion("scene.uiProfiles.count", "equals", "0"),
+                        Assertion("scene.commandForms", "equals", "AddComment,CloseWorkItem,CreateWorkItem,RenameWorkItem"),
+                        Assertion("scene.queryInputForms", "equals", "GetWorkItem,WorkItemById"),
+                        Assertion("bindings.commands", "equals", "AddComment,CloseWorkItem,CreateWorkItem,RenameWorkItem"),
+                        Assertion("bindings.queries", "equals", "AllWorkItems,CommentsForWorkItem,GetWorkItem,WorkItemById"),
+                        Assertion("fullApp.WorkItemList", "missing", "true"),
+                        Assertion("fullApp.WorkItemDetails", "missing", "true"),
+                        Assertion("fullApp.CommentThread", "missing", "true"),
+                        Assertion("fullApp.Navigation", "missing", "true"),
+                        Assertion("fullApp.EditDialog", "missing", "true"),
+                        Assertion("fullApp.DesktopProfile", "missing", "true"),
+                        Assertion("protected.uiDeferrals", "contains", "PLAY0269")
+                    ]),
+                ReleasedVector(
+                    "cratis-run-stage-4.49.1",
+                    "Cratis CLI and Stage sandbox",
+                    "CLI 3.40.0 + cratis/stage:4.49.1 + bundled Screenplay 4.105.0",
+                    "cratis run Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ScreenComposition/v1/source/folder --tag 4.49.1 --port 19091 --workbench-port 35091 --yes --verbose",
+                    "passed-sandbox-started",
+                    "The Stage sandbox starts and serves /index.html with HTTP 200, but no browser automation endpoint executes the authored folder-source full-app behavior. Browser pass remains pending.",
+                    [
+                        Assertion("run.stage.image", "equals", "cratis/stage:4.49.1"),
+                        Assertion("run.ready", "equals", "true"),
+                        Assertion("run.index.status", "equals", "200"),
+                        Assertion("run.log.sha256", "equals", "f2cd254313ac5e8df203de3939c5ee2776b5eca362bd3a75e7cb568ac9fbe037"),
+                        Assertion("browser.masterDetail.selection", "pending", "true"),
+                        Assertion("browser.nativeValidation.submit", "pending", "true"),
+                        Assertion("browser.dialog.deepLink", "pending", "true")
+                    ]),
+                ReleasedVector(
+                    "mcp-released-typed-transcript",
+                    "Screenplay MCP",
+                    "Screenplay source includes v4.107.0 and PR #580; CLI bundle is 4.105.0; Studio-compatible folder transcript still pending.",
+                    "dotnet test Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj --filter FullyQualifiedName~when_authoring_screen_release_ui_from_an_empty_folder",
+                    "passed-typed-source-only",
+                    "The released-compatible typed-source MCP transcript passes. The folder-source multi-document revision edit transcript through Studio is still pending because Studio v0.136.3 production deployment is blocked and no production MCP bridge route is available.",
+                    [
+                        Assertion("mcp.typedTranscript.specs.passed", "equals", "6"),
+                        Assertion("mcp.proposal.droppedComments", "equals", "0"),
+                        Assertion("mcp.identityContinuity.changed", "equals", "0"),
+                        Assertion("mcp.folderTranscript", "pending", "true")
+                    ]),
+                ReleasedVector(
+                    "studio-0.136.3-production-play",
+                    "Studio",
+                    "Studio 0.136.3 (732048d6f038e6f33ff9b6cde47372f8bad2ce9e)",
+                    "Studio production save/export/import/Play over screen-composition/v1/source/folder",
+                    "blocked",
+                    "Release tag v0.136.3 exists, but the production deploy step failed on a Pulumi lock; production save/export/import/Play route is unavailable, so deploy proof remains pending.",
+                    [
+                        Assertion("studio.release.version", "equals", "0.136.3"),
+                        Assertion("studio.release.commit", "equals", "732048d6f038e6f33ff9b6cde47372f8bad2ce9e"),
+                        Assertion("studio.productionDeploy", "blocked", "Pulumi lock"),
+                        Assertion("studio.saveExportImport", "pending", "true"),
+                        Assertion("studio.play.deepLinks", "pending", "true")
+                    ])
+            ],
             StagePlans =
             [
                 new CanonicalStagePlanExpectation
                 {
                     Target = "scene-web",
                     Profile = "Web",
-                    PlanDigest = "pending:stage-scene-web-plan-v1",
-                    RequiredVersionVector = "Screenplay CLI whose bundled compiler is >= the screens authoring syntax release (4.94.0), plus Stage final screens release",
-                    PendingReason = "Executed on CLI 3.39.0 + cratis/stage:4.43.0: the bundled compiler 4.93.0 predates the screens authoring syntax and rejects template category/type/exposes/outlet slots (PLAY0025), screen toolbar and component directives (PLAY0103), ui profile icons (PLAY0207), form columns (PLAY0210) and slice templates (PLAY0029); the pre-4.94 corpus form parses but planning refuses its observable list queries (PLAY0268) and publishes zero artifacts. Red vectors preserved; no expectation was regenerated to force green.",
+                    PlanDigest = "released:scene-sha256:ff1f39f77ec3e58fecbbaa3bda12b4276810ed5302863429941164f51c1b7b8c",
+                    RequiredVersionVector = "CLI 3.40.0 + Stage 4.49.1 + bundled Screenplay 4.105.0 + Scene 4.12.0",
+                    PendingReason = "Executed on the exact released vector: CLI 3.40.0 + Stage 4.49.1 + bundled Screenplay 4.105.0 + Scene 4.12.0. Rendering succeeds and produces 37 artifacts, but the emitted scene is a generated backend surface, not the authored full app: no WorkItemList/WorkItemDetails/CommentThread screens, no AppShell/MasterDetail templates, no Navigation contribution, no EditDialog, no Desktop profile and no authored package/icon surface. Full screen parity remains red/pending.",
                     Artifacts = [],
-                    ObservedRefusalCodes = ["PLAY0025", "PLAY0103", "PLAY0207", "PLAY0210", "PLAY0029", "PLAY0268"],
+                    ObservedRefusalCodes = ["PLAY0269"],
                     Assertions =
                     [
                         Assertion("source.form", "equals", FolderSourceCase),
@@ -561,6 +647,17 @@ public static class ScreenCompositionCorpus
         Commit = commit,
         EntryPoint = entryPoint,
         ReleaseSwitch = releaseSwitch,
+        Status = status,
+        PendingReason = pendingReason,
+        Assertions = assertions
+    };
+
+    static CanonicalReleasedVectorHarnessResult ReleasedVector(string name, string host, string versionVector, string entryPoint, string status, string? pendingReason, ImmutableArray<CanonicalScreenAssertion> assertions) => new()
+    {
+        Name = name,
+        Host = host,
+        VersionVector = versionVector,
+        EntryPoint = entryPoint,
         Status = status,
         PendingReason = pendingReason,
         Assertions = assertions
