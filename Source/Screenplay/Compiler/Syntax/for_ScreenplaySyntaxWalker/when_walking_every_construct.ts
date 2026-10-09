@@ -29,6 +29,55 @@ function kindsIn(value: SyntaxJsonValue, counted = new Map<string, number>()): M
     return counted;
 }
 
+describe('when walking a command form layout', () => {
+    let walked: Map<string, number>;
+
+    beforeAll(() => {
+        const counter = new KindCounter();
+        counter.visitForm({
+            kind: 'FormSyntax',
+            name: 'Edit',
+            for: 'EditCommand',
+            populate: null,
+            fields: [],
+            onSubmit: null,
+            columnMode: 'Manual',
+            generationMode: 'Manual',
+            columns: [{ kind: 'FormColumnSyntax', property: 'title', label: null, location: { line: 1, column: 1, path: 'form.play' } }],
+            layout: {
+                kind: 'CommandFormLayoutSyntax',
+                columns: [{
+                    kind: 'FormLayoutColumnSyntax',
+                    index: 1,
+                    width: { kind: 'FormWidthSyntax', unit: 'Fraction', value: 1, location: { line: 1, column: 1, path: 'form.play' } },
+                    minWidth: { kind: 'FormWidthSyntax', unit: 'Pixels', value: 240, location: { line: 1, column: 1, path: 'form.play' } },
+                    maxWidth: { kind: 'FormWidthSyntax', unit: 'Percent', value: 50, location: { line: 1, column: 1, path: 'form.play' } },
+                    location: { line: 1, column: 1, path: 'form.play' },
+                }],
+                columnGap: { kind: 'FormWidthSyntax', unit: 'Pixels', value: 24, location: { line: 1, column: 1, path: 'form.play' } },
+                rowGap: { kind: 'FormWidthSyntax', unit: 'Pixels', value: 16, location: { line: 1, column: 1, path: 'form.play' } },
+                placements: [{
+                    kind: 'FormFieldPlacementSyntax',
+                    field: 'title',
+                    row: 1,
+                    column: 1,
+                    rowSpan: 2,
+                    columnSpan: 1,
+                    width: { kind: 'FormWidthSyntax', unit: 'Auto', value: null, location: { line: 1, column: 1, path: 'form.play' } },
+                    location: { line: 1, column: 1, path: 'form.play' },
+                }],
+                location: { line: 1, column: 1, path: 'form.play' },
+            },
+            location: { line: 1, column: 1, path: 'form.play' },
+        });
+        walked = counter.kinds;
+    });
+
+    it('should visit the layout node', () => (walked.get('CommandFormLayoutSyntax') ?? 0).should.equal(1));
+    it('should visit the column widths', () => (walked.get('FormWidthSyntax') ?? 0).should.equal(6));
+    it('should visit the placement node', () => (walked.get('FormFieldPlacementSyntax') ?? 0).should.equal(1));
+});
+
 // The walker exists so a consumer never writes the walk itself, which only holds if it reaches every node.
 // The canonical JSON holds every node the tree has, so the two must count the same of every kind.
 describe('when walking every construct', () => {

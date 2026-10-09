@@ -107,8 +107,10 @@ describe('when parsing screen release UI bindings', () => {
             '            icon edit',
             '            presentation placement "primary"',
             '        component scene.web.DataGrid invoices',
+            '          id "invoices:list"',
             '          context from query AllInvoices.items',
-            '          property selectedItem from component invoices.selectedItem null preserve',
+            '          property selectedItem from component "invoices:list".selectedItem null preserve',
+            '          property pageSize from literal 25',
             '          property title = "Invoices"',
             '          icon table',
             '          presentation density "compact"',
@@ -125,8 +127,10 @@ describe('when parsing screen release UI bindings', () => {
     it('should read toolbar parameters as component bindings', () => toolbar.items[0].parameters[0].binding.should.deep.include({ bindingKind: 'ComponentProperty', componentId: 'invoices', path: 'selectedItem.id' }));
     it('should read toolbar presentation', () => toolbar.items[1].presentation[0].value!.should.equal('primary'));
     it('should read component query context', () => component.context!.should.deep.include({ bindingKind: 'QueryResult', query: 'AllInvoices', path: 'items' }));
-    it('should read component property null behavior', () => component.properties[0].binding!.nullBehavior!.should.equal('Preserve'));
-    it('should read component literals', () => component.properties[1].value!.should.equal('Invoices'));
+    it('should read exact component stable ids', () => component.stableId!.should.equal('invoices:list'));
+    it('should read component property null behavior', () => component.properties[0].binding!.should.deep.include({ componentId: 'invoices:list', nullBehavior: 'Preserve' }));
+    it('should read literal bindings', () => component.properties[1].binding!.should.deep.include({ bindingKind: 'Literal', literal: { kind: 'LiteralExpressionSyntax', value: 25, location: { line: 16, column: 11, path: 'Document.play' } } }));
+    it('should read component literals', () => component.properties[2].value!.should.deep.include({ kind: 'LiteralExpressionSyntax', value: 'Invoices' }));
     it('should read component exposed bindings', () => component.exposes[0].binding.componentId!.should.equal('invoices'));
     it('should read component outlets', () => component.outlets[0].directives[0].kind.should.equal('ScreenSummarySyntax'));
 });
@@ -168,6 +172,11 @@ describe('when parsing every UI binding source form', () => {
             '          property dataValue from data current.name mode oneWay null clear expected String',
             '          property queryValue from query AllInvoices mode twoWay null propagate',
             '          property componentValue from component other.selected null preserve',
+            '          property exactComponentValue from component "other:list".selected null preserve',
+            '          property literalValue from literal true mode oneWay',
+            '          property objectLiteral from literal {"label":"Done","count":2}',
+            '          property arrayLiteral from literal ["one",2,false,null]',
+            '          property invalidLiteral from literal true mode sideways',
             '          property invalidQuery from query 123',
             '          property invalidComponent from component other',
         );
@@ -182,9 +191,14 @@ describe('when parsing every UI binding source form', () => {
     it('should read data binding modifiers', () => properties[0].binding!.should.deep.include({ bindingKind: 'DataContext', path: 'current.name', mode: 'OneWay', nullBehavior: 'Clear', expectedValueType: 'String' }));
     it('should read query bindings without a path', () => properties[1].binding!.should.deep.include({ bindingKind: 'QueryResult', query: 'AllInvoices', path: '', mode: 'TwoWay', nullBehavior: 'Propagate' }));
     it('should read component bindings with null preserve', () => properties[2].binding!.should.deep.include({ bindingKind: 'ComponentProperty', componentId: 'other', componentPropertyPath: 'selected', nullBehavior: 'Preserve' }));
-    it('should preserve invalid query text', () => properties[3].binding!.rawText!.should.equal('from query 123'));
-    it('should preserve invalid component text', () => properties[4].binding!.rawText!.should.equal('from component other'));
-    it('should report invalid typed binding diagnostics', () => result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0103', 'PLAY0103']));
+    it('should read quoted component bindings', () => properties[3].binding!.should.deep.include({ bindingKind: 'ComponentProperty', componentId: 'other:list', componentPropertyPath: 'selected', nullBehavior: 'Preserve' }));
+    it('should read typed literal bindings', () => properties[4].binding!.should.deep.include({ bindingKind: 'Literal', mode: 'OneWay' }));
+    it('should read object literal bindings', () => properties[5].binding!.literal!.kind.should.equal('ObjectExpressionSyntax'));
+    it('should read array literal bindings', () => properties[6].binding!.literal!.kind.should.equal('ListExpressionSyntax'));
+    it('should preserve invalid literal modifier text', () => properties[7].binding!.rawText!.should.equal('mode sideways'));
+    it('should preserve invalid query text', () => properties[8].binding!.rawText!.should.equal('from query 123'));
+    it('should preserve invalid component text', () => properties[9].binding!.rawText!.should.equal('from component other'));
+    it('should report invalid typed binding diagnostics', () => result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0103', 'PLAY0103', 'PLAY0103']));
 });
 
 describe('when parsing screen release navigation and diagnostics', () => {
@@ -228,6 +242,7 @@ describe('when parsing invalid screen release component children', () => {
             '    slice StateView BrowseInvoices',
             '      screen BrowseInvoices',
             '        component scene.web.DataGrid invoices',
+            '          id',
             '          uses SharedBehavior',
             '            argument selected from data selectedItem',
             '          property',
@@ -235,7 +250,7 @@ describe('when parsing invalid screen release component children', () => {
         );
     });
 
-    it('should report invalid property and expose diagnostics', () => result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0103', 'PLAY0103']));
+    it('should report invalid id, property and expose diagnostics', () => result.diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0103', 'PLAY0103', 'PLAY0103']));
 });
 
 describe('when parsing invalid screen release component declarations', () => {

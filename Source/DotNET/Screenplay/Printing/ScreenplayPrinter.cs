@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Globalization;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
@@ -573,12 +574,18 @@ public sealed partial class ScreenplayPrinter :
                 writer.Line(WriteFormPopulate(form.Populate), form.Populate);
             }
 
+            if (form.GenerationMode != FormGenerationMode.Unspecified)
+            {
+                writer.Line($"generation {(form.GenerationMode == FormGenerationMode.Auto ? "auto" : "manual")}", form);
+            }
+
             foreach (var field in form.Fields)
             {
                 writer.Line(WriteFormField(field), field);
             }
 
             WriteFormColumns(writer, form);
+            WriteFormLayout(writer, form.Layout);
 
             if (form.OnSubmit is not null)
             {
@@ -615,6 +622,55 @@ public sealed partial class ScreenplayPrinter :
             }
         }
     }
+
+    void WriteFormLayout(ScreenplayWriter writer, CommandFormLayoutSyntax? layout)
+    {
+        if (layout is null)
+        {
+            return;
+        }
+
+        writer.Line("layout", layout);
+        using (writer.Indent())
+        {
+            foreach (var column in layout.Columns)
+            {
+                var text = $"column {column.Index}";
+                if (column.Width is not null) text += $" width {WriteFormWidth(column.Width)}";
+                if (column.MinWidth is not null) text += $" min {WriteFormWidth(column.MinWidth)}";
+                if (column.MaxWidth is not null) text += $" max {WriteFormWidth(column.MaxWidth)}";
+                writer.Line(text, column);
+            }
+
+            if (layout.ColumnGap is not null)
+            {
+                writer.Line($"columnGap {WriteFormWidth(layout.ColumnGap)}", layout.ColumnGap);
+            }
+
+            if (layout.RowGap is not null)
+            {
+                writer.Line($"rowGap {WriteFormWidth(layout.RowGap)}", layout.RowGap);
+            }
+
+            foreach (var placement in layout.Placements)
+            {
+                var text = $"place {placement.Field} row {placement.Row} column {placement.Column}";
+                if (placement.RowSpan is not null) text += $" rowSpan {placement.RowSpan}";
+                if (placement.ColumnSpan is not null) text += $" columnSpan {placement.ColumnSpan}";
+                if (placement.Width is not null) text += $" width {WriteFormWidth(placement.Width)}";
+                writer.Line(text, placement);
+            }
+        }
+    }
+
+    string WriteFormWidth(FormWidthSyntax width) => width.Unit switch
+    {
+        FormWidthUnitSyntax.Auto => "auto",
+        FormWidthUnitSyntax.Fraction => width.Value!.Value.ToString("0.###", CultureInfo.InvariantCulture) + "fr",
+        FormWidthUnitSyntax.Pixels => width.Value!.Value.ToString("0.###", CultureInfo.InvariantCulture) + "px",
+        FormWidthUnitSyntax.Percent => width.Value!.Value.ToString("0.###", CultureInfo.InvariantCulture) + "%",
+        _ => throw new UnsupportedSyntaxForPrinting("form width unit", width.Unit.ToString())
+    };
 
     string WriteFormPopulate(FormPopulateSource populate) => populate switch
     {

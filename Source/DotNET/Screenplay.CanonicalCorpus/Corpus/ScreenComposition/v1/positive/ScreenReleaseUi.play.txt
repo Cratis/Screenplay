@@ -54,10 +54,19 @@ module Workspaces
     actions
 
   form CreateWorkItemForm for CreateWorkItem
+    generation manual
     field workItemId
     field title label "Title"
     field priority label "Priority"
     columns auto
+    layout
+      column 1 width 1fr min 240px max 50%
+      column 2 width 2fr
+      columnGap 24px
+      rowGap 16px
+      place workItemId row 1 column 1 width auto
+      place title row 1 column 2 columnSpan 1 width 100%
+      place priority row 2 column 1 columnSpan 2
     on submit navigate to WorkItemDetails by workItemId
 
   form RenameWorkItemForm for RenameWorkItem
@@ -138,9 +147,15 @@ module Workspaces
             icon clear
             presentation route "work-items"
         component scene.web.DataGrid workItems
+          id "work-items:list"
           context from query AllWorkItems
-          property selectedItem from component workItems.selectedItem null clear
+          property selectedItem from component "work-items:list".selectedItem null clear
+          property initialSelection from literal null
           property title = "Work items"
+          property pageSize = 25
+          property selectable = true
+          property emptyState = {"title":"No work items","actions":["create"]}
+          property noSelection = null
           icon table
           presentation density "compact"
           exposes selectedWorkItem from component workItems.selectedItem.workItemId
@@ -175,9 +190,11 @@ module Workspaces
           item deepLink navigate to WorkItemDetails
             parameter workItemId from data.workItemId
         component scene.web.DetailsPanel details
+          id "details.panel:primary"
           context from data workItemId
           property title from data.title
           property status from data.status
+          property pinned from literal false
           icon file
           presentation route "work-items/{workItemId}"
           outlet actions

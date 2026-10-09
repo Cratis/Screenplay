@@ -139,15 +139,20 @@ screen BrowseInvoices
       icon edit
       presentation placement "primary"
     item details navigate to InvoiceDetails
-      parameter invoiceId from component invoices.selectedItem.id
+      parameter invoiceId from component "invoices:list".selectedItem.id
 
   component scene.web.DataGrid invoices
+    id "invoices:list"
     context from query AllInvoices.items
-    property selectedItem from component invoices.selectedItem null preserve
+    property selectedItem from component "invoices:list".selectedItem null preserve
+    property pageSize from literal 25
     property title = "Invoices"
+    property selectable = true
+    property emptyState = {"title":"No invoices","actions":["create"]}
+    property noSelection = null
     icon table
     presentation density "compact"
-    exposes selectedInvoice from component invoices.selectedItem
+    exposes selectedInvoice from component "invoices:list".selectedItem
     outlet detail
       summary selectedInvoice
         field invoiceId label "Invoice"
@@ -159,8 +164,13 @@ Bindings are typed. A legacy bare binding such as `context selectedInvoice` is s
 | --- | --- | --- |
 | Data context | `from data <path>` | Reads from the inherited data context for the element. |
 | Query result | `from query <QueryName>[.<path>]` | Reads from the latest result of a named screen query. |
-| Component output | `from component <stableInstanceId>.<outputPath>` | Reads an exposed value from another stable component instance. |
-| Literal | `property <name> = "value"` | Assigns a literal property value, not a binding. |
+| Component output | `from component <stableInstanceId>.<outputPath>` or `from component "<stableInstanceId>".<outputPath>` | Reads an exposed value from another stable component instance. Use the quoted form when the stable id contains punctuation. |
+| Literal binding | `from literal <value>` | Supplies a typed literal as a binding value. |
+| Literal property | `property <name> = <value>` | Assigns a typed literal property value, not a binding. |
+
+A component may declare `id "<stable-id>"` to preserve the exact stable instance id Studio and Stage use for bindings. If it omits `id`, the authored component name remains the stable id. The compiler does not normalize quoted ids.
+
+Literal values are typed: strings, numbers, booleans, `null`, arrays and objects all round-trip as literal syntax nodes. They are not lossy strings.
 
 A binding may carry `mode oneWay`, `mode twoWay`, `null propagate`, `null clear`, `null preserve` and `expected <Type>`. Unsupported modifiers, malformed query bindings and malformed component bindings are reported as diagnostics and the raw authored text is preserved in the AST so an authoring tool can show and repair it. The compiler does not guess Stage-specific prefixes or reinterpret an invalid string.
 

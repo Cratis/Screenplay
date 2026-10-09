@@ -29,6 +29,8 @@ export * from './ReducerSyntax';
 export * from './ReducerRuleSyntax';
 export * from './FormSyntax';
 export * from './FormFieldSyntax';
+export * from './FormColumnSyntax';
+export * from './CommandFormLayoutSyntax';
 export * from './FormPopulateViaQuerySyntax';
 export * from './FormPopulateFromItemSyntax';
 export * from './TriggerDataSyntax';

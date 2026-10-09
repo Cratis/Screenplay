@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Globalization;
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
@@ -38,6 +39,8 @@ internal static partial class FormParser
         ScreenNavigateSyntax? onSubmit = null;
         var columns = new List<FormColumnSyntax>();
         var columnMode = FormColumnMode.Unspecified;
+        var generationMode = FormGenerationMode.Unspecified;
+        CommandFormLayoutSyntax? layout = null;
         var hasPopulate = false;
         var hasSubmit = false;
         string? description = null;
@@ -65,6 +68,12 @@ internal static partial class FormParser
                         fields.Add(field);
                     }
 
+                    break;
+                case "generation":
+                    generationMode = ParseGeneration(context, line) ?? generationMode;
+                    break;
+                case "layout":
+                    layout = ParseLayout(context, line);
                     break;
                 case "columns":
                     if (ParseColumns(context, line, columns) is { } mode)
@@ -109,7 +118,9 @@ internal static partial class FormParser
             Description = description,
             DirectiveLocations = locations,
             ColumnMode = columnMode,
-            Columns = columns
+            GenerationMode = generationMode,
+            Columns = columns,
+            Layout = layout
         };
     }
 
@@ -146,6 +157,153 @@ internal static partial class FormParser
         var composeUsing = match.Groups[3].Success ? match.Groups[3].Value : null;
         var label = match.Groups[4].Success || match.Groups[5].Success ? OperandText(match, 4) : null;
         return new(match.Groups[1].Value, label, from, composeUsing, line.Location);
+    }
+
+    static FormGenerationMode? ParseGeneration(ParserContext context, SourceLine line)
+    {
+        var match = GenerationRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.UnknownFormDirective, $"Invalid generation declaration '{line.Content}' - expected 'generation auto' or 'generation manual'", line.Location);
+            return null;
+        }
+
+        return match.Groups[1].Value == "auto" ? FormGenerationMode.Auto : FormGenerationMode.Manual;
+    }
+
+    static CommandFormLayoutSyntax ParseLayout(ParserContext context, SourceLine line)
+    {
+        var columns = new List<FormLayoutColumnSyntax>();
+        var placements = new List<FormFieldPlacementSyntax>();
+        FormWidthSyntax? columnGap = null;
+        FormWidthSyntax? rowGap = null;
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            var first = LineText.FirstWord(child.Content);
+            if (first == "column")
+            {
+                if (ParseLayoutColumn(context, child) is { } column) columns.Add(column);
+            }
+            else if (first == "place")
+            {
+                if (ParsePlacement(context, child) is { } placement) placements.Add(placement);
+            }
+            else if (first == "columnGap")
+            {
+                columnGap = ParseWidthDirective(context, child, "columnGap");
+            }
+            else if (first == "rowGap")
+            {
+                rowGap = ParseWidthDirective(context, child, "rowGap");
+            }
+            else
+            {
+                context.Error(DiagnosticCodes.UnknownFormDirective, $"Unexpected '{child.Content}' in form layout - expected column, place, columnGap or rowGap", child.Location);
+            }
+        }
+
+        return new(columns, placements, columnGap, rowGap, line.Location);
+    }
+
+    static FormLayoutColumnSyntax? ParseLayoutColumn(ParserContext context, SourceLine line)
+    {
+        var tokens = line.Content.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length < 2 || !int.TryParse(tokens[1], NumberStyles.None, CultureInfo.InvariantCulture, out var index) || index < 1)
+        {
+            context.Error(DiagnosticCodes.UnknownFormDirective, $"Invalid form layout column '{line.Content}' - expected 'column <index> [width <width>] [min <width>] [max <width>]'", line.Location);
+            return null;
+        }
+
+        FormWidthSyntax? width = null;
+        FormWidthSyntax? minWidth = null;
+        FormWidthSyntax? maxWidth = null;
+        for (var position = 2; position < tokens.Length; position += 2)
+        {
+            if (position + 1 >= tokens.Length)
+            {
+                context.Error(DiagnosticCodes.UnknownFormDirective, $"Invalid form layout column '{line.Content}' - expected width, min and max values to have a width", line.Location);
+                return null;
+            }
+
+            var parsed = ParseWidth(context, tokens[position + 1], line.Location);
+            switch (tokens[position])
+            {
+                case "width": width = parsed; break;
+                case "min": minWidth = parsed; break;
+                case "max": maxWidth = parsed; break;
+                default:
+                    context.Error(DiagnosticCodes.UnknownFormDirective, $"Invalid form layout column option '{tokens[position]}' - expected width, min or max", line.Location);
+                    return null;
+            }
+        }
+
+        return new(index, width, minWidth, maxWidth, line.Location);
+    }
+
+    static FormFieldPlacementSyntax? ParsePlacement(ParserContext context, SourceLine line)
+    {
+        var tokens = line.Content.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length < 6 || tokens[2] != "row" || tokens[4] != "column" ||
+            !int.TryParse(tokens[3], NumberStyles.None, CultureInfo.InvariantCulture, out var row) ||
+            !int.TryParse(tokens[5], NumberStyles.None, CultureInfo.InvariantCulture, out var column) ||
+            row < 1 || column < 1)
+        {
+            context.Error(DiagnosticCodes.UnknownFormDirective, $"Invalid form field placement '{line.Content}' - expected 'place <field> row <row> column <column> [rowSpan <n>] [columnSpan <n>] [width <width>]'", line.Location);
+            return null;
+        }
+
+        int? rowSpan = null;
+        int? columnSpan = null;
+        FormWidthSyntax? width = null;
+        for (var position = 6; position < tokens.Length; position += 2)
+        {
+            if (position + 1 >= tokens.Length)
+            {
+                context.Error(DiagnosticCodes.UnknownFormDirective, $"Invalid form field placement '{line.Content}' - expected placement options to have values", line.Location);
+                return null;
+            }
+
+            switch (tokens[position])
+            {
+                case "rowSpan" when int.TryParse(tokens[position + 1], NumberStyles.None, CultureInfo.InvariantCulture, out var span) && span > 0:
+                    rowSpan = span;
+                    break;
+                case "columnSpan" when int.TryParse(tokens[position + 1], NumberStyles.None, CultureInfo.InvariantCulture, out var span) && span > 0:
+                    columnSpan = span;
+                    break;
+                case "width":
+                    width = ParseWidth(context, tokens[position + 1], line.Location);
+                    break;
+                default:
+                    context.Error(DiagnosticCodes.UnknownFormDirective, $"Invalid form field placement option '{tokens[position]}' - expected rowSpan, columnSpan or width", line.Location);
+                    return null;
+            }
+        }
+
+        return new(tokens[1], row, column, rowSpan, columnSpan, width, line.Location);
+    }
+
+    static FormWidthSyntax? ParseWidthDirective(ParserContext context, SourceLine line, string keyword)
+    {
+        var tokens = line.Content.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length != 2)
+        {
+            context.Error(DiagnosticCodes.UnknownFormDirective, $"Invalid form layout {keyword} '{line.Content}' - expected '{keyword} <width>'", line.Location);
+            return null;
+        }
+
+        return ParseWidth(context, tokens[1], line.Location);
+    }
+
+    static FormWidthSyntax? ParseWidth(ParserContext context, string text, SourceLocation location)
+    {
+        if (text == "auto") return new(FormWidthUnitSyntax.Auto, null, location);
+        if (text.EndsWith("fr", StringComparison.Ordinal) && double.TryParse(text[..^2], NumberStyles.Float, CultureInfo.InvariantCulture, out var fraction)) return new(FormWidthUnitSyntax.Fraction, fraction, location);
+        if (text.EndsWith("px", StringComparison.Ordinal) && double.TryParse(text[..^2], NumberStyles.Float, CultureInfo.InvariantCulture, out var pixels)) return new(FormWidthUnitSyntax.Pixels, pixels, location);
+        if (text.EndsWith('%') && double.TryParse(text[..^1], NumberStyles.Float, CultureInfo.InvariantCulture, out var percent)) return new(FormWidthUnitSyntax.Percent, percent, location);
+        context.Error(DiagnosticCodes.UnknownFormDirective, $"Invalid form width '{text}' - expected auto, <number>fr, <number>px or <number>%", location);
+        return null;
     }
 
     static FormColumnMode? ParseColumns(ParserContext context, SourceLine line, List<FormColumnSyntax> columns)
@@ -208,6 +366,9 @@ internal static partial class FormParser
 
     [GeneratedRegex(@"^form\s+([A-Za-z_]\w*)\s+for\s+([A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
+
+    [GeneratedRegex(@"^generation\s+(auto|manual)$", RegexOptions.None, 1000)]
+    private static partial Regex GenerationRegex();
 
     [GeneratedRegex(@"^on\s+submit\s+navigate\b", RegexOptions.None, 1000)]
     private static partial Regex SubmitNavigationRegex();

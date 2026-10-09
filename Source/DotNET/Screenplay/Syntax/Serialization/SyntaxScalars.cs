@@ -49,6 +49,11 @@ internal static class SyntaxScalars
             return unsignedInteger;
         }
 
+        if (type == typeof(double) && value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var number))
+        {
+            return number;
+        }
+
         if (type.IsEnum && value.ValueKind == JsonValueKind.String && Enum.GetNames(type).Contains(value.GetString(), StringComparer.Ordinal))
         {
             return Enum.Parse(type, value.GetString()!, false);
@@ -94,6 +99,11 @@ internal static class SyntaxScalars
         if (value is string or bool or int or uint)
         {
             return value;
+        }
+
+        if (value is double number && double.IsFinite(number))
+        {
+            return number;
         }
 
         throw new InvalidSyntaxJson($"{path}: unsupported {type.Name} value '{value}'.");

@@ -3,13 +3,15 @@
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { UiBindingSyntax } from '../Syntax/Screens';
+import { parseMappingSource } from './ExpressionParser';
 import { pattern } from '../Text/patterns';
 import { ParserContext } from './ParserContext';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 
 const bindingHead = pattern('^(data|query|component)\\s+(\\S+)(.*)$');
+const literalBindingHead = pattern('^literal\\s+(.+?)(?:\\s+(mode\\s+.+|null\\s+.+|expected\\s+.+))?$');
 const qualifiedPath = pattern('^([A-Za-z_]\\w*)(?:\\.(.+))?$');
-const requiredQualifiedPath = pattern('^([A-Za-z_]\\w*)\\.(.+)$');
+const requiredQualifiedPath = pattern('^(?:([A-Za-z_]\\w*)|"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)")\\.(.+)$');
 const mode = pattern('^mode\\s+(oneWay|twoWay)\\b(.*)$');
 const nullBehavior = pattern('^null\\s+(propagate|clear|preserve)\\b(.*)$');
 const expected = pattern('^expected\\s+(\\w+(?:\\.\\w+)*)(.*)$');
@@ -17,7 +19,7 @@ const expected = pattern('^expected\\s+(\\w+(?:\\.\\w+)*)(.*)$');
 export function parseFromClause(context: ParserContext, text: string, location: SourceLocation): UiBindingSyntax {
     const trimmed = text.trim();
     const first = trimmed.split(/\s+/, 1)[0];
-    return first === 'data' || first === 'query' || first === 'component'
+    return first === 'data' || first === 'query' || first === 'component' || first === 'literal'
         ? parseUiBinding(context, `from ${trimmed}`, location)
         : parseUiBinding(context, trimmed, location);
 }
@@ -29,9 +31,18 @@ export function parseUiBinding(context: ParserContext, text: string, location: S
     }
 
     const body = trimmed.substring('from '.length).trim();
+    if (body.startsWith('literal ')) {
+        const literalHead = literalBindingHead.exec(body);
+        if (literalHead === null) {
+            context.error(DiagnosticCodes.UnknownScreenDirective, `Invalid UI binding '${trimmed}' - expected 'from literal <value>'`, location);
+            return { ...create('Invalid', body, location), rawText: trimmed };
+        }
+        return withModifiers(context, { ...create('Literal', '', location), literal: parseMappingSource(literalHead[1], location, context) }, literalHead[2] ?? '', location);
+    }
+
     const head = bindingHead.exec(body);
     if (head === null) {
-        context.error(DiagnosticCodes.UnknownScreenDirective, `Invalid UI binding '${trimmed}' - expected 'from data <path>', 'from query <Query>[.<path>]' or 'from component <id>.<path>'`, location);
+        context.error(DiagnosticCodes.UnknownScreenDirective, `Invalid UI binding '${trimmed}' - expected 'from data <path>', 'from query <Query>[.<path>]', 'from component <id>.<path>' or 'from literal <value>'`, location);
         return { ...create('Invalid', body, location), rawText: trimmed };
     }
 
@@ -59,11 +70,13 @@ function queryBinding(context: ParserContext, expression: string, raw: string, l
 function componentBinding(context: ParserContext, expression: string, raw: string, location: SourceLocation): UiBindingSyntax {
     const match = requiredQualifiedPath.exec(expression);
     if (match === null) {
-        context.error(DiagnosticCodes.UnknownScreenDirective, `Invalid component binding '${raw}' - expected 'from component <stableInstanceId>.<outputPath>'.`, location);
+        context.error(DiagnosticCodes.UnknownScreenDirective, `Invalid component binding '${raw}' - expected 'from component <stableInstanceId>.<outputPath>' or 'from component "<stableInstanceId>".<outputPath>'.`, location);
         return { ...create('Invalid', expression, location), rawText: raw };
     }
 
-    return { ...create('ComponentProperty', match[2], location), componentId: match[1], componentPropertyPath: match[2] };
+    const componentId = match[1] ?? match[2];
+    const path = match[3];
+    return { ...create('ComponentProperty', path, location), componentId, componentPropertyPath: path };
 }
 
 function withModifiers(context: ParserContext, binding: UiBindingSyntax, modifiers: string, location: SourceLocation): UiBindingSyntax {
@@ -109,6 +122,7 @@ function create(bindingKind: UiBindingSyntax['bindingKind'], path: string, locat
         mode: null,
         nullBehavior: null,
         expectedValueType: null,
+        literal: null,
         rawText: null,
         location,
     };

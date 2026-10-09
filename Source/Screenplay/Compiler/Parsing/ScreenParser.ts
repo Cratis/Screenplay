@@ -11,6 +11,7 @@ import {
 import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { pattern } from '../Text/patterns';
 import { parseFencedText } from './CodeBlockParser';
+import { parseMappingSource } from './ExpressionParser';
 import { parseDescription } from './DescriptionParser';
 import { isFileDirective } from './FileReferences';
 import { parseGuardedAction } from './GuardedActionParser';
@@ -34,8 +35,9 @@ const navigate = pattern('^navigate\\s+to\\s+(\\w+(?:\\.\\w+)*)(?:\\s+by\\s+(\\w
 const route = pattern(`^route\\s+${operand}$`);
 const parameter = pattern('^parameter\\s+([A-Za-z_]\\w*)\\s+from\\s+(.+)$');
 const component = pattern('^component\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)\\s+([A-Za-z_]\\w*)$');
+const stableId = pattern(`^id\\s+(?:"(${stringBodyPattern})"|(\\S+))$`);
 const componentPropertyBinding = pattern('^property\\s+([\\w.]+)\\s+from\\s+(.+)$');
-const componentPropertyLiteral = pattern(`^property\\s+([\\w.]+)\\s*=\\s+${operand}$`);
+const componentPropertyLiteral = pattern('^property\\s+([\\w.]+)\\s*=\\s+(.+)$');
 const exposes = pattern('^exposes\\s+([A-Za-z_]\\w*)\\s+from\\s+(.+)$');
 const presentation = pattern(`^presentation\\s+([A-Za-z_]\\w*)\\s+${operand}$`);
 const toolbarItem = pattern('^item\\s+([A-Za-z_]\\w*)\\s+(action|navigate|dialog)(?:\\s+to)?\\s+([A-Za-z_]\\w*(?:\\.\\w+)*)$');
@@ -261,6 +263,7 @@ function parseComponent(context: ParserContext, line: SourceLine): ScreenCompone
     }
 
     let dataContext = null;
+    let componentStableId = null;
     let icon = null;
     const properties: ComponentPropertySyntax[] = [];
     const exposedValues: ComponentExposedValueSyntax[] = [];
@@ -271,6 +274,9 @@ function parseComponent(context: ParserContext, line: SourceLine): ScreenCompone
         switch (firstWord(child.content)) {
             case 'context':
                 dataContext = parseUiContext(context, child);
+                break;
+            case 'id':
+                componentStableId = parseStableId(context, child);
                 break;
             case 'property':
                 parseComponentProperty(context, child, properties);
@@ -294,13 +300,13 @@ function parseComponent(context: ParserContext, line: SourceLine): ScreenCompone
                 context.skipOpaqueBlock(child.indent);
                 break;
             default:
-                context.error(DiagnosticCodes.UnknownScreenDirective, `Unexpected '${child.content}' in component - expected context, property, icon, presentation, exposes, outlet, on or uses`, locationOf(child));
+                context.error(DiagnosticCodes.UnknownScreenDirective, `Unexpected '${child.content}' in component - expected context, id, property, icon, presentation, exposes, outlet, on or uses`, locationOf(child));
                 context.skipBlock(child.indent);
                 break;
         }
     }
 
-    return { kind: 'ScreenComponentSyntax', component: match[1], name: match[2], context: dataContext, properties, exposes: exposedValues, presentation: presentationValues, icon, outlets, location: locationOf(line) };
+    return { kind: 'ScreenComponentSyntax', component: match[1], name: match[2], stableId: componentStableId, context: dataContext, properties, exposes: exposedValues, presentation: presentationValues, icon, outlets, location: locationOf(line) };
 }
 
 function parseUiContext(context: ParserContext, line: SourceLine) {
@@ -315,10 +321,19 @@ function parseComponentProperty(context: ParserContext, line: SourceLine, proper
     }
     const literal = componentPropertyLiteral.exec(line.content);
     if (literal !== null) {
-        properties.push({ kind: 'ComponentPropertySyntax', property: literal[1], binding: null, value: operandText(literal, 2), location: locationOf(line) });
+        properties.push({ kind: 'ComponentPropertySyntax', property: literal[1], binding: null, value: parseMappingSource(literal[2], locationOf(line), context), location: locationOf(line) });
         return;
     }
-    context.error(DiagnosticCodes.UnknownScreenDirective, `Invalid component property '${line.content}' - expected 'property <path> from <binding>' or 'property <path> = "value"'`, locationOf(line));
+    context.error(DiagnosticCodes.UnknownScreenDirective, `Invalid component property '${line.content}' - expected 'property <path> from <binding>' or 'property <path> = <literal|object|array|null>'`, locationOf(line));
+}
+
+function parseStableId(context: ParserContext, line: SourceLine): string | null {
+    const match = stableId.exec(line.content);
+    if (match === null) {
+        context.error(DiagnosticCodes.UnknownScreenDirective, `Invalid component id '${line.content}' - expected 'id "stable-id"'`, locationOf(line));
+        return null;
+    }
+    return operandText(match, 1);
 }
 
 function parseExposedValue(context: ParserContext, line: SourceLine, values: ComponentExposedValueSyntax[]): void {

@@ -500,11 +500,22 @@ module Invoicing
     field dueDate        label "Due date"
     field isProForma     label "Pro forma"
 
+    generation manual
     columns manual
       column invoiceNumber  label $strings.invoices.fields.number
       column customerId     label "Customer"
       column dueDate        label "Due date"
       column currency       label "Currency"
+
+    layout
+      column 1 width 1fr min 240px max 50%
+      column 2 width 2fr
+      columnGap 24px
+      rowGap 16px
+      place invoiceNumber row 1 column 1 width auto
+      place customerId row 1 column 2 width 100%
+      place dueDate row 2 column 1
+      place currency row 2 column 2
 
     on submit navigate to InvoiceDetails by invoiceId
 
