@@ -58,11 +58,11 @@ export const commonTokenRules: MonarchTokenRules = [
 export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMonarchLanguage {
     const tokenizer: Record<string, MonarchTokenRules> = {
         root: [
+            [new RegExp(`^(\\s*)(example)(\\s+)([A-Z][${bmpWordCharacters}]*)(\\s*)(:)(\\s*)([A-Z][${bmpWordCharacters}.]*)(?=\\s*(?://.*)?$)`),
+                ['white', 'keyword', 'white', 'type.identifier', 'white', 'operator', 'white', 'type.identifier']],
             [/^(\s*)(parameter)(\s+)([a-z_]\w*)(\s+)([\w.]+(?:\[\])?(?:\s+optional)?)(?=\s*(?:\/\/.*)?$)/, ['white', 'keyword', 'white', 'identifier', 'white', 'type.identifier']],
             [/^(\s*)(case)(\s+)([A-Za-z_]\w*)(?=\s*(?:[a-z_]\w*\s*=|\/\/|$))/, ['white', 'keyword', 'white', 'type.identifier']],
             [/\b(case)(\.)([a-z_]\w*)\b/, ['keyword', 'delimiter', 'identifier']],
-            [new RegExp(`^(\\s*)(example)(\\s+)([A-Z][${bmpWordCharacters}]*)(\\s*)(:)(\\s*)([A-Z][${bmpWordCharacters}.]*)(?=\\s*(?://.*)?$)`),
-                ['white', 'keyword', 'white', 'type.identifier', 'white', 'operator', 'white', 'type.identifier']],
             [/^(numbers)([ \t]+)(exact)(?=[ \t]*(?:(?:\/\/|#).*)?$)/, ['keyword', 'white', 'keyword']],
             [/^(eventsource)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
             [/^(system)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],

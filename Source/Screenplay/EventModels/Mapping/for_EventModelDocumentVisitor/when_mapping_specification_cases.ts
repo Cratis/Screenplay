@@ -5,10 +5,14 @@ import { readFileSync } from 'node:fs';
 import { describe, it } from 'vitest';
 import { parse } from '@cratis/screenplay-compiler';
 import { toEventModelDocument } from '../EventModelDocumentVisitor';
+import { expressionText } from '../expressionText';
 
 const source = readFileSync(new URL('../../../Compiler/Conformance/specification-tables.play', import.meta.url), 'utf8');
 
 describe('when mapping specification cases', () => {
+    it('retains authored case references in source descriptions', () => {
+        expressionText({ kind: 'CaseValueExpressionSyntax', parameter: 'amount', location: { line: 1, column: 1 } }).should.equal('case.amount');
+    });
     it('should draw independent cards named from case provenance in case order', () => {
         const document = toEventModelDocument(parse(source).value, 'Cases');
         const specifications = document.collections[0].modules[0].features[0].slices[0].specifications;

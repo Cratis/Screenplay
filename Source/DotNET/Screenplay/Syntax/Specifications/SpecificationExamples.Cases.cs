@@ -10,7 +10,7 @@ public static partial class SpecificationExamples
 {
     private sealed partial class Expansion
     {
-        IEnumerable<SpecificationSyntax> ExpandSliceSpecifications(SliceSyntax slice)
+        SpecificationSyntax[] ExpandSliceSpecifications(SliceSyntax slice)
         {
             var scope = _slices.First(entry => ReferenceEquals(entry.Slice, slice)).Scope;
             var specifications = slice.Specifications.SelectMany(specification => ExpandSpecifications(specification, scope)).ToArray();

@@ -31,10 +31,10 @@ export function validateSpecificationStreams(application: ApplicationSyntax, con
     const reported = new Set<string>();
     for (const diagnostic of sink.diagnostics) {
         const row = diagnostic.code === DiagnosticCodes.InvalidSpecificationStreamRoute ? rows.find(row => row.values.some(value => value.source.location.line === diagnostic.location.line && value.source.location.column === diagnostic.location.column && value.source.location.path === diagnostic.location.path)) : undefined;
-        if (row === undefined) context.diagnostics.push(diagnostic);
+        if (row === undefined) context.error(diagnostic.code, diagnostic.message, diagnostic.location);
         else {
             const key = JSON.stringify(diagnostic.location);
-            if (!reported.has(key)) context.diagnostics.push({ ...diagnostic, message: `Case '${row.name}': ${diagnostic.message}` });
+            if (!reported.has(key)) context.error(diagnostic.code, `Case '${row.name}': ${diagnostic.message}`, diagnostic.location);
             reported.add(key);
         }
     }

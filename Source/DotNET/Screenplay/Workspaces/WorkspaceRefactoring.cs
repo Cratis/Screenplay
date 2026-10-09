@@ -163,7 +163,7 @@ sealed class WorkspaceRefactoring(ScreenplayWorkspace workspace)
             throw new InvalidWorkspaceAuthoring("Constraint names are executable identity: renaming starts an empty constraint index and changes default rejection messages. Safe rename cannot preserve this contract; use explicit coordinated typed edits.");
         }
 
-        if (target is null || (target.Address is null && target.Node is not (SpecificationExampleSyntax or EventSourceSyntax or EventStreamSyntax or PersonaSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax)) ||
+        if (target is null || (target.Address is null && target.Node is not (SpecificationExampleSyntax or EventSourceSyntax or EventStreamSyntax or PersonaSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or SpecificationSyntax)) ||
             (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or SpecificationExampleSyntax or SpecificationSyntax or ReactionSyntax or EventSourceSyntax or EventStreamSyntax or PersonaSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax)))
         {
             throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property, command, event, read model, query, module, feature, slice, example, specification, reaction, event source, or stream declaration handle.");

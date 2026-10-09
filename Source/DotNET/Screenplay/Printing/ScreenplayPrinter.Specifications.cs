@@ -218,8 +218,16 @@ public partial class ScreenplayPrinter
         }
     }
 
-    void WriteSpecificationError(ScreenplayWriter writer, SpecificationErrorSyntax error) =>
-        writer.Line(error.CaseValue is { } value ? $"then error case.{value.Parameter}" : error.Name is null ? "then error" : $"then error {StringLiteral.Quote(error.Name)}", error);
+    void WriteSpecificationError(ScreenplayWriter writer, SpecificationErrorSyntax error)
+    {
+        var message = error switch
+        {
+            { CaseValue: { } value } => $"then error case.{value.Parameter}",
+            { Name: null } => "then error",
+            _ => $"then error {StringLiteral.Quote(error.Name)}"
+        };
+        writer.Line(message, error);
+    }
 
     void WriteSpecificationEvent(ScreenplayWriter writer, string keyword, SpecificationEventSyntax @event)
     {

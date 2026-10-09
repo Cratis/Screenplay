@@ -100,14 +100,18 @@ static class McpDeclarationDetails
                 },
                 arguments,
                 snapshot.SourceRevision),
-            "cases" when declaration.Syntax is SpecificationSyntax table => McpPaging.Page(table.Cases, row => new
+            "cases" when declaration.Syntax is SpecificationSyntax table => McpPaging.Page(
+                table.Cases,
+                row => new
             {
                 row.Name,
                 effectiveName = $"{table.Name}_{row.Name}",
                 effectiveAddress = string.Join('.', declaration.Scope.Append($"{table.Name}_{row.Name}")),
                 row.Location,
                 row.Values
-            }, arguments, snapshot.SourceRevision),
+            },
+                arguments,
+                snapshot.SourceRevision),
             "inputs" when declaration.Syntax is OperationSyntax operation => McpPaging.Page(operation.Inputs, arguments, snapshot.SourceRevision),
             "phases" when declaration.Syntax is OperationSyntax operation => McpPaging.Page(
                 new[] { (Name: "execute", Phase: operation.Execute), (Name: "compensate", Phase: operation.Compensate) }.Where(value => value.Phase is not null),

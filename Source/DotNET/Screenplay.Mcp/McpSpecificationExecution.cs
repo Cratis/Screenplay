@@ -73,7 +73,7 @@ static class McpSpecificationExecution
 
     static string? TableAddress(SemanticCompilation compilation, SemanticId id, string address) =>
         compilation.SpecificationOrigins.TryGetValue(id, out var origin) && origin.Case is not null
-            ? address[..^(origin.Effective.Name.Length)] + origin.Authored.Name : null;
+            ? address[..^origin.Effective.Name.Length] + origin.Authored.Name : null;
 
     static string DescribeFact(SemanticExecutionPlan plan, SemanticId contract, IEnumerable<SemanticPropertyValue> values)
     {

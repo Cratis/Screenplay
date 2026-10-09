@@ -67,8 +67,12 @@ static class McpFixtureQueries
 
     static string? RouteCaseParameter(McpFixtureOccurrence occurrence, McpFixtureValue value)
     {
-        var expression = value.Role.EndsWith("StreamId", StringComparison.Ordinal) ? occurrence.Stream?.StreamId?.Source
-            : value.Role.EndsWith("StreamIdPart", StringComparison.Ordinal) ? occurrence.Stream?.StreamIdParts.SingleOrDefault(part => part.Property == value.Property)?.Source : null;
+        var expression = value.Role switch
+        {
+            var role when role.EndsWith("StreamId", StringComparison.Ordinal) => occurrence.Stream?.StreamId?.Source,
+            var role when role.EndsWith("StreamIdPart", StringComparison.Ordinal) => occurrence.Stream?.StreamIdParts.SingleOrDefault(part => part.Property == value.Property)?.Source,
+            _ => null
+        };
 
         return expression is null ? null : occurrence.CaseValues.FirstOrDefault(assignment => ReferenceEquals(assignment.Source, expression))?.Property;
     }

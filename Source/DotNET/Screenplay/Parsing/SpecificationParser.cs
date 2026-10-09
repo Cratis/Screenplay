@@ -53,7 +53,7 @@ internal static partial class SpecificationParser
             foreach (var row in specification.Cases)
             {
                 var effectiveName = $"{specification.Name}_{row.Name}";
-                if (specifications.Any(other => !ReferenceEquals(other, specification) && other.Name == effectiveName) || specifications.SelectMany(other => other.Cases.Select(row => $"{other.Name}_{row.Name}")).Count(name => name == effectiveName) > 1)
+                if (specifications.Exists(other => !ReferenceEquals(other, specification) && other.Name == effectiveName) || specifications.SelectMany(other => other.Cases.Select(row => $"{other.Name}_{row.Name}")).Count(name => name == effectiveName) > 1)
                 {
                     context.Error(DiagnosticCodes.SpecificationCaseNameCollision, $"Case '{row.Name}' derives specification '{effectiveName}', which collides in this document.", row.Location);
                 }

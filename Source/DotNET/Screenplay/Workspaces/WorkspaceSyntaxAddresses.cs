@@ -65,7 +65,7 @@ static class WorkspaceSyntaxAddresses
                 ProjectionSyntax projection when member == "projections" => SemanticAddress.ForProjection(owner, projection.Name),
                 ReactionSyntax reaction when member == "reactions" => SemanticAddress.ForReaction(owner, reaction.Name),
                 QuerySyntax query when member == "queries" => SemanticAddress.ForQuery(owner, query.Name),
-                SpecificationSyntax specification when member == "specifications" => SemanticAddress.ForSpecification(owner, specification.Name),
+                SpecificationSyntax specification when member == "specifications" && !specification.Cases.Any() => SemanticAddress.ForSpecification(owner, specification.Name),
                 _ => null
             };
         }

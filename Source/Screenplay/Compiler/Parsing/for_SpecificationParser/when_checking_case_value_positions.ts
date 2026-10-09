@@ -22,6 +22,16 @@ const table = `
         then returns case.expected`;
 
 describe('when checking case value positions', () => {
+    it('refuses optional parameters at required targets even with nonnull values', () => {
+        expect(parse(declarations + table.replace('expected Int', 'expected Int optional')).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0578');
+    });
+    it('reports undeclared references within a table', () => {
+        expect(parse(declarations + table.replace('case.expected', 'case.missing')).diagnostics.map(diagnostic => diagnostic.code)).toContain('PLAY0577');
+    });
+    it('keeps unresolved target shapes unknown rather than guessing types', () => {
+        const source = declarations + table.replace('when Record', 'when Missing');
+        expect(parse(source).diagnostics.some(diagnostic => diagnostic.code === 'PLAY0580')).toEqual(false);
+    });
     it('checks scalar response parameter references', () => {
         expect(parse(declarations + table).diagnostics).toEqual([]);
         const incompatible = table.replace('expected Int', 'expected Decimal');
