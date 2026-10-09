@@ -108,7 +108,7 @@ internal static partial class SliceParser
                     }
                     else
                     {
-                        direction = directionMatch.Groups[1].Value == "inbound" ? TranslationDirection.Inbound : TranslationDirection.Outbound;
+                        direction = Enum.Parse<TranslationDirection>(directionMatch.Groups[1].Value, ignoreCase: true);
                         directiveLocations["direction"] = line.Location;
                     }
 

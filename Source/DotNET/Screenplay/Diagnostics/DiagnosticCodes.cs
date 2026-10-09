@@ -2789,6 +2789,8 @@ public static class DiagnosticCodes
     /// The subject property modifier is duplicated or is not last in modifier order.
     /// </summary>
     public const string InvalidSubjectModifierOrder = "PLAY0595";
+
+    /// <summary>
     /// A command produces a public event.
     /// </summary>
     public const string CommandProducesPublicEvent = "PLAY0607";
