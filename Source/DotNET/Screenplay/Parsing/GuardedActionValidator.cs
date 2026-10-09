@@ -56,6 +56,7 @@ internal static partial class GuardedActionValidator
                 case ScreenComponentSyntax component:
                     foreach (var behavior in component.Behaviors) ValidateInteraction(behavior, subjects, scope, declarations, context);
                     foreach (var uses in component.UsedBehaviors) ValidateInteractionUse(uses, subjects, scope, declarations, context, behaviors);
+                    foreach (var outlet in component.Outlets) ValidateContainer(outlet.Directives, subjects, scope, declarations, context, behaviors);
                     break;
                 case ScreenSectionSyntax section:
                     ValidateContainer(section.Directives, subjects, scope, declarations, context, behaviors);

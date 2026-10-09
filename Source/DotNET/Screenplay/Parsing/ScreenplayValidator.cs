@@ -1038,7 +1038,17 @@ internal static class ScreenplayValidator
 
                         break;
                     case ScreenComponentSyntax component:
-                        ValidateAttachments(component.Behaviors, component.UsedBehaviors, scope, references, behaviors, context);
+                        // Preserve plain component interactions' existing reference-validation behavior.
+                        foreach (var behavior in component.Behaviors)
+                        {
+                            ValidateBindings(behavior.Bindings.Where(binding => binding.Alternatives.Any()), scope, references, _noParameters, context);
+                        }
+
+                        foreach (var uses in component.UsedBehaviors.Where(uses => behaviors.TryGetValue(uses.Behavior, out var behavior) && behavior.Bindings.Any(binding => binding.Alternatives.Any())))
+                        {
+                            ValidateUses(uses, behaviors, context);
+                        }
+
                         break;
                 }
             }

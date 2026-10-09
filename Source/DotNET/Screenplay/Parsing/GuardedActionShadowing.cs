@@ -13,16 +13,22 @@ internal static class GuardedActionShadowing
 {
     const int MaximumDisjuncts = 64;
 
-    internal static void Validate(ScreenGuardedActionSyntax action, ParserContext context)
+    internal static void Validate(ScreenGuardedActionSyntax action, ParserContext context) =>
+        Validate(action.Alternatives.Select(alternative => (alternative.Condition, alternative.Location, $"Alternative executing '{alternative.Command}' is shadowed by earlier alternatives in this action")), context);
+
+    internal static void Validate(InteractionBindingSyntax binding, ParserContext context) =>
+        Validate(binding.Alternatives.Select(alternative => (alternative.Condition, alternative.Location, "This 'when' alternative is shadowed by earlier alternatives in this interaction")), context);
+
+    static void Validate(IEnumerable<(ConditionSyntax Condition, SourceLocation Location, string Message)> alternatives, ParserContext context)
     {
         var earlier = new List<HashSet<Comparison>>();
-        foreach (var alternative in action.Alternatives)
+        foreach (var alternative in alternatives)
         {
             var terms = Normalize(alternative.Condition);
             if (terms is null) continue;
             if (terms.Count > 0 && terms.TrueForAll(term => earlier.Exists(previous => previous.IsSubsetOf(term))))
             {
-                context.Warning(DiagnosticCodes.UnreachableActionAlternative, $"Alternative executing '{alternative.Command}' is shadowed by earlier alternatives in this action", alternative.Location);
+                context.Warning(DiagnosticCodes.UnreachableActionAlternative, alternative.Message, alternative.Location);
             }
 
             earlier.AddRange(terms);

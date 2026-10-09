@@ -26,7 +26,16 @@ internal static partial class GuardedActionValidator
         ILookup<string, BehaviorSyntax> behaviors)
     {
         var matches = behaviors[uses.Behavior].ToArray();
-        if (matches.Length == 1) ValidateInteraction(matches[0], subjects, scope, declarations, context, uses.Location);
+        if (matches.Length != 1) return;
+
+        // Shapes and command resolution vary by attachment scope, so every uses site must be checked.
+        // Identical findings at the shared declaration need only be reported once.
+        var siteContext = ParserContext.ForDiagnostics();
+        ValidateInteraction(matches[0], subjects, scope, declarations, siteContext, uses.Location);
+        foreach (var diagnostic in siteContext.Diagnostics.Where(diagnostic => !context.Diagnostics.Contains(diagnostic)))
+        {
+            context.Add(diagnostic);
+        }
     }
 
     static void ValidateInteraction(
@@ -56,8 +65,7 @@ internal static partial class GuardedActionValidator
             }
 
             if (binding.Otherwise is not null) ValidateInteractionArguments(binding.Otherwise.Actions, properties, scope, declarations, context);
-            var choices = binding.Alternatives.Select(alternative => new ScreenActionAlternativeSyntax(alternative.Condition, "interaction action list", alternative.Location));
-            GuardedActionShadowing.Validate(new ScreenGuardedActionSyntax(string.Empty, choices, binding.Location), context);
+            if (behavior.Name is null) GuardedActionShadowing.Validate(binding, context);
         }
     }
 
@@ -86,7 +94,14 @@ internal static partial class GuardedActionValidator
 
         public override void VisitBehavior(BehaviorSyntax syntax)
         {
-            if (syntax.Name is null) ValidateInteraction(syntax, [], new([]), declarations, context);
+            if (syntax.Name is null)
+            {
+                ValidateInteraction(syntax, [], new([]), declarations, context);
+            }
+            else
+            {
+                foreach (var binding in syntax.Bindings) GuardedActionShadowing.Validate(binding, context);
+            }
         }
 
         public override void VisitUsesBehavior(UsesBehaviorSyntax syntax) =>
