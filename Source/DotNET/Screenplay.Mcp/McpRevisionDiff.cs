@@ -40,6 +40,11 @@ static class McpRevisionDiff
             throw new McpFailure($"'{side}' must select exactly one of workspace, path or workspaceJson.", -32602);
         }
 
+        return Select(source, side, workspaces ?? new McpWorkspaces());
+    }
+
+    static ScreenplayWorkspace Select(JsonElement source, string side, McpWorkspaces workspaces)
+    {
         if (source.TryGetProperty("workspaceJson", out _))
         {
             return Restore(source, "workspaceJson");
@@ -47,7 +52,7 @@ static class McpRevisionDiff
 
         if (source.TryGetProperty("path", out _))
         {
-            return (workspaces ?? new McpWorkspaces()).ReadComparisonPath(McpJson.RequiredString(source, "path"));
+            return workspaces.ReadComparisonPath(McpJson.RequiredString(source, "path"));
         }
 
         if (McpJson.RequiredString(source, "workspace") != "active")
@@ -55,7 +60,7 @@ static class McpRevisionDiff
             throw new McpFailure($"'{side}.workspace' must be 'active'.", -32602);
         }
 
-        return (workspaces ?? new McpWorkspaces()).ReadComparisonWorkspace();
+        return workspaces.ReadComparisonWorkspace();
     }
 
     static ScreenplayWorkspace Restore(JsonElement arguments, string name)

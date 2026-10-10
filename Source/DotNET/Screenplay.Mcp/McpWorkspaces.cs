@@ -93,7 +93,7 @@ internal sealed partial class McpWorkspaces
         }
 
         var candidate = serialized is null
-            ? state?.Open(Root) ?? OpenFromDisk(name)
+            ? state?.Open(Root) ?? OpenFromDisk(Root, name)
             : McpAttachmentContents.Refresh(Root, McpWorkspaceTransport.Restore(serialized));
         if (persisted is not null && !McpManagedFiles.Equal(persisted, McpState.Serialize(candidate)))
         {
@@ -251,48 +251,10 @@ internal sealed partial class McpWorkspaces
         return properties;
     }
 
-    internal ScreenplayWorkspace ReadComparisonWorkspace()
-    {
-        if (_workspace is null)
-        {
-            throw new McpFailure("Open a workspace first.");
-        }
-
-        return Current();
-    }
-
-    internal ScreenplayWorkspace ReadComparisonPath(string path)
-    {
-        var root = ResolveRequestedRoot(path);
-        McpRecoveryJournal.RefusePending(root);
-        var files = new McpManagedFiles(root);
-        var persisted = files.Read(McpState.FileName);
-        var state = persisted is null ? null : McpState.Deserialize(persisted);
-        var workspace = state?.Open(root) ?? OpenFromDisk(root, root.ApplicationName);
-        root.Verify(workspace);
-        files.Verify(McpState.FileName, persisted);
-        McpRecoveryJournal.RefusePending(root);
-
-        return workspace;
-    }
-
     internal void RefusePendingWorkspace()
     {
         RefuseCompetingPending();
         McpRecoveryJournal.RefusePending(Root);
-    }
-
-    static ScreenplayWorkspace OpenFromDisk(McpRoot root, string name)
-    {
-        var documents = root.Read(allowEmpty: true);
-        var identity = ApplicationIdentity.Create(name);
-        if (documents.IsEmpty)
-        {
-            return ScreenplayWorkspace.CreateEmpty(identity, name);
-        }
-
-        var loaded = McpAttachmentContents.Load(root, documents);
-        return ScreenplayWorkspace.Create(identity, name, documents, SemanticIdentityCatalog.Empty(identity), loaded.Contents, loaded.Diagnostics);
     }
 
     static object? DescribeMove(WorkspaceMoveReport? report) => report is null ? null : new
@@ -585,22 +547,6 @@ internal sealed partial class McpWorkspaces
         Root.Verify(workspace);
         return workspace;
     }
-
-    McpRoot ResolveRequestedRoot(string path)
-    {
-        var requested = new McpRoot(Path.GetFullPath(path, CurrentDirectoryHint ?? Environment.CurrentDirectory));
-
-        if (_configuredRoot is null)
-        {
-            return requested;
-        }
-
-        // Check the approved root before touching an old worktree that may have been removed.
-        return McpDirectoryIdentity.Same(_configuredRoot, requested)
-            ? _configuredRoot : McpWorktreeRoots.Resolve(_configuredRoot, requested);
-    }
-
-    ScreenplayWorkspace OpenFromDisk(string name) => OpenFromDisk(Root, name);
 
     ScreenplayWorkspace Current()
     {
