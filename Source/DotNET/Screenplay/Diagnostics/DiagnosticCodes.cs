@@ -839,7 +839,7 @@ public static class DiagnosticCodes
     public const string UnknownContextCausedByProperty = "PLAY0154";
 
     /// <summary>
-    /// A $context.identity path names a property the identity does not carry.
+    /// A $identity or $context.identity path names a property the caller identity does not carry.
     /// </summary>
     public const string UnknownContextIdentityProperty = "PLAY0155";
 

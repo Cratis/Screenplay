@@ -36,6 +36,13 @@ describe('when reading values', () => {
         ]);
     });
 
+    it('should read the caller as a distinct identity expression', () => {
+        [read('$identity.userName'), read('$identity.claims.anything.here')].should.deep.equal([
+            { kind: 'IdentityExpressionSyntax', path: 'userName' },
+            { kind: 'IdentityExpressionSyntax', path: 'claims.anything.here' },
+        ]);
+    });
+
     it('should read a dotted name as a path', () => {
         read('customer.@name').should.deep.equal({ kind: 'PathExpressionSyntax', path: 'customer.@name' });
     });

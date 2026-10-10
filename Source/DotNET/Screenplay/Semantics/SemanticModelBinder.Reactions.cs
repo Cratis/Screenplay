@@ -335,6 +335,7 @@ public sealed partial class SemanticModelBinder
             string description) => source switch
             {
                 ContextExpressionSyntax context => BindOccurrence(context, target),
+                IdentityExpressionSyntax identity => BindOccurrence(identity, target),
                 LiteralExpressionSyntax literal => BindConcreteValue(literal, target, description, false) is { } value ? SemanticExpression.FromValue(value) : null,
                 PathExpressionSyntax path when !values.ContainsKey(path.Path) && EnumerationMember(path.Path, target) is { } member =>
                     SemanticExpression.FromValue(SemanticValue.Text(member)),

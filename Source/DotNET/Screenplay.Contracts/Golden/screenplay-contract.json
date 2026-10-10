@@ -9068,7 +9068,7 @@
       "severities": [
         "warning"
       ],
-      "title": "A $context.identity path names a property the identity does not carry.",
+      "title": "A $identity or $context.identity path names a property the caller identity does not carry.",
       "reserved": false,
       "retired": false
     },
