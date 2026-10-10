@@ -55,6 +55,7 @@
 | [0051](0051-admit-public-events-as-esm-v9.md) | Admit public events, translation direction, event-target projections and event-source captures as ESM v9 | accepted | none | 2026-10-09 | Einar Ingebrigtsen |
 | [0052](0052-identity-details-as-authoring-metadata.md) | Declare one caller detail shape as authoring metadata before executable admission | accepted | implemented | 2026-10-09 | Sindre Alstad Wilting |
 | [0053](0053-public-structural-model-comparison.md) | Share typed structural model comparison from the Screenplay library | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |
+| [0054](0054-concept-generation-strategies-and-freshness.md) | Declare how a concept generates its values, and refuse a generated value that is not fresh | proposed | none |  |  |
 | [0060](0060-declare-read-model-keys-and-bind-lookups-by-name.md) | Declare read-model keys on properties and supply every key part by name in lookups | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |
 | [0061](0061-per-production-route-overrides.md) | Replace the command route per event production | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |
 | [0062](0062-observer-source-and-stream-filters.md) | Filter reactions and reducers by event source and stream | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |
