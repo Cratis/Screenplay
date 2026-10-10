@@ -22,7 +22,7 @@ static class ModelDifferenceProjection
         [.. difference.Changes.Where(change => change.Section == "dependants").Select(change => new DirectDependant(Declaration(ChangedDeclaration(change, difference), matching), change.Snapshot == "before" ? ComparedSide.Before : ComparedSide.After, change.DependantAddress!, change.Role!, Resolution(change.Resolution!)))],
         [.. difference.Changes.Where(change => change.Section == "identities").Select(change => new IdentityChange(Declaration(change, matching), IdentityKind(change.ChangeKind), change.EventContractId is { } id ? EventContractId.Parse(id) : null))],
         [.. difference.Sections.Select(section => new ComparisonSection(SectionKind(section.Section), section.Complete, [.. section.Gaps.Select(gap => new ComparisonGap(GapKind(gap.Kind), gap.Statement))]))],
-        difference.Limits);
+        [.. difference.Limits]);
 
     static ComparedDeclaration Declaration(StructuralComparison.Change change, DeclarationMatching matching) => new(
         change.Kind,
