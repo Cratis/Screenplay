@@ -83,11 +83,47 @@ static class WorkspaceAuthoringReferences
             }
         }
 
-        var disappeared = previousBindings.Where(binding => !matched.Contains(binding.Reference.Key) && !routeSelections.Removed.Contains(binding.Reference.Key)).ToArray();
-        if ((introduced.Count > 0 && disappeared.Length > 0) || (routeSelections.Removed.Count > 0 && disappeared.Length > 0))
+        var disappeared = previousBindings.Where(binding => !matched.Contains(binding.Reference.Key) && !routeSelections.Removed.Contains(binding.Reference.Key)).ToList();
+        PairRelocated(introduced, disappeared, previousIndex, currentIndex, migrations);
+        if ((introduced.Count > 0 && disappeared.Count > 0) || (routeSelections.Removed.Count > 0 && disappeared.Count > 0))
         {
             throw new InvalidWorkspaceAuthoring("Reference occurrence correspondence cannot be proven for simultaneous removal/reordering and insertion. Split explicit removals and additions, or preserve the existing occurrence owners with semantic migrations.");
         }
+    }
+
+    // Removing or reordering a sibling shifts the collection index in every later reference path, so an
+    // unchanged reference looks like one that disappeared plus one that was introduced. Pair them only when
+    // they are the same reference: same owner, same member, same text and the same resolved target. Anything
+    // left unpaired still fails the correspondence check, so no reference is silently rebound.
+    static void PairRelocated(
+        List<WorkspaceReferenceBinding> introduced,
+        List<WorkspaceReferenceBinding> disappeared,
+        WorkspaceSyntaxIndex before,
+        WorkspaceSyntaxIndex after,
+        Dictionary<SemanticAddress, SemanticAddress> migrations)
+    {
+        foreach (var binding in introduced.ToArray())
+        {
+            var owner = Owner(binding.Reference, after, []);
+            var match = disappeared.Find(candidate =>
+                candidate.Reference.Domain == binding.Reference.Domain &&
+                candidate.Reference.Member == binding.Reference.Member &&
+                string.Equals(candidate.Reference.Text, binding.Reference.Text, StringComparison.Ordinal) &&
+                Equals(Owner(candidate.Reference, before, migrations), owner) &&
+                candidate.Target is not null && binding.Target is not null &&
+                SameTarget(candidate.Target, binding.Target, migrations));
+            if (match is not null)
+            {
+                disappeared.Remove(match);
+                introduced.Remove(binding);
+            }
+        }
+    }
+
+    static object Owner(WorkspaceReferenceMember reference, WorkspaceSyntaxIndex index, Dictionary<SemanticAddress, SemanticAddress> migrations)
+    {
+        var occurrence = Occurrence(reference, index, migrations);
+        return (object?)occurrence.Owner ?? occurrence.Document;
     }
 
     // A command replacement may explicitly select one retained property candidate. Prove the
