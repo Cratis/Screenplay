@@ -78,7 +78,7 @@ public sealed record ExecutableSemanticModel
         SemanticVersion semanticVersion,
         SemanticApplication application)
     {
-        EsmSchemaV9Support.EnsureSupported(languageVersion, semanticVersion);
+        EsmSchemaV10Support.EnsureSupported(languageVersion, semanticVersion);
         SemanticModelValidator.Validate(application, semanticVersion);
         var withoutRevision = SemanticModelCanonicalJson.SerializeWithoutRevision(languageVersion, semanticVersion, application);
         var revision = SemanticRevision.Compute(withoutRevision);
@@ -172,7 +172,7 @@ internal static partial class SemanticModelValidator
     }
 
     internal static SemanticTypeReference? ProducedEventSourceType(SemanticCommand command, SemanticProducedEvent produced) =>
-        command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) &&
+        (produced.Route is not null || command.Properties.Any(property => property.IsGenerated && property.IsIdentifier)) &&
         produced.Destination is SemanticResolvedExpression { Source: SemanticExpressionSourceKind.Property } route
             ? command.Properties.SingleOrDefault(property => property.Id == route.Target)?.Type
             : command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type;
@@ -763,7 +763,7 @@ internal static partial class SemanticModelValidator
                     : null;
                 var generatedIdentifier = _semanticVersion.IsAtLeast(SemanticVersion.V7) && command.Properties.Any(value => value.IsGenerated && value.IsIdentifier);
                 if (destinationType?.IsCollection is not false || destinationType.IsOptional || destinationProperty is null ||
-                    (!destinationProperty.IsIdentifier && !generatedIdentifier))
+                    (!destinationProperty.IsIdentifier && !generatedIdentifier && produced.Route is null))
                 {
                     throw new InvalidSemanticContract("A produced event destination must resolve to one required scalar command identity.");
                 }
@@ -833,6 +833,7 @@ internal static partial class SemanticModelValidator
 
         void ValidateReducer(SemanticReducer reducer)
         {
+            ValidateObserverFilter(reducer.From);
             var targetsEvent = reducer.Target == SemanticProjectionTargetKind.Event;
             if (reducer.Target is not (SemanticProjectionTargetKind.ReadModel or SemanticProjectionTargetKind.Event))
             {

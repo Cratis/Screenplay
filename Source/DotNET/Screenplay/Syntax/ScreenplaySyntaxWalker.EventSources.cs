@@ -31,6 +31,10 @@ public abstract partial class ScreenplaySyntaxWalker
         VisitTypeRef(syntax.Type);
     }
 
+    /// <summary>Visits an observer's source and optional stream filter.</summary>
+    /// <param name="syntax">The observer filter.</param>
+    public virtual void VisitObserverFilter(ObserverFilterSyntax syntax) => VisitNode(syntax);
+
     /// <summary>Visits an authored command route and its mapping or preserved property candidate.</summary>
     /// <param name="syntax">The command route.</param>
     public virtual void VisitCommandStream(CommandStreamSyntax syntax)

@@ -29,6 +29,11 @@ public record ReactionSyntax(
     /// Gets the authoring-only markdown explaining this reaction.
     /// </summary>
     public string? Documentation { get; init; }
+
+    /// <summary>
+    /// Gets the event source and optional stream this reaction observes.
+    /// </summary>
+    public ObserverFilterSyntax? From { get; init; }
 }
 
 /// <summary>

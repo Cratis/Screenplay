@@ -72,6 +72,9 @@ public sealed partial class ScreenplayPrinter
         }
     }
 
+    void WriteObserverFilter(ScreenplayWriter writer, ObserverFilterSyntax filter) =>
+        writer.Line($"from {filter.EventSource}{(filter.Stream is null ? string.Empty : $".{filter.Stream}")}", filter);
+
     void WriteCommandStream(ScreenplayWriter writer, CommandStreamSyntax route)
     {
         EventSourceInvariants.Validate(route);

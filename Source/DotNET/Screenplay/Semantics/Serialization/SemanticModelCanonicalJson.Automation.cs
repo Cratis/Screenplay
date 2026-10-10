@@ -26,6 +26,7 @@ public static partial class SemanticModelCanonicalJson
         WriteId(writer, reaction.Id);
         CanonicalJson.WriteString(writer, "name", reaction.Name);
         WriteArray(writer, "triggers", reaction.Triggers, (output, trigger) => WriteReactionTrigger(output, trigger, version));
+        if (reaction.From is not null) WriteObserverFilter(writer, reaction.From);
         writer.WriteEndObject();
     }
 

@@ -82,6 +82,7 @@ public sealed partial class SemanticModelBinder
 
                 reducers.Add(new(reducer.Name, targetId, transitions.ToImmutable())
                 {
+                    From = BindObserverFilter(reducer.From),
                     Target = targetsEvent ? SemanticProjectionTargetKind.Event : SemanticProjectionTargetKind.ReadModel
                 });
                 UsesV3 = true;

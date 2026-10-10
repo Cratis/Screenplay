@@ -41,6 +41,7 @@ internal static class IdentifierComplianceValidator
                 }
 
                 var routes = (command.Stream is { } selected ? new[] { selected }.Concat(command.StreamCandidates) : command.StreamCandidates)
+                    .Concat(command.Produces.Select(produced => produced.Stream).OfType<CommandStreamSyntax>())
                     .Where(route => route.PropertyCandidate is null);
                 foreach (var route in routes)
                 {

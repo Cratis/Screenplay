@@ -111,6 +111,15 @@ internal static partial class SemanticModelValidator
 
         void ValidateReaction(SemanticReaction reaction)
         {
+            ValidateObserverFilter(reaction.From);
+            if (reaction.From is not null && reaction.Triggers.Any(trigger => trigger.Kind != SemanticReactionTriggerKind.Event))
+            {
+                throw new InvalidSemanticContract("A filtered reaction requires only event triggers.");
+            }
+            if (reaction.Triggers.SelectMany(trigger => trigger.Produces).Any(produced => produced.Route is not null))
+            {
+                throw new InvalidSemanticContract("Reaction productions cannot declare routes.");
+            }
             if (reaction.Triggers.IsDefaultOrEmpty)
             {
                 throw new InvalidSemanticContract($"Reaction '{reaction.Name}' must declare at least one trigger.");

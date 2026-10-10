@@ -54,3 +54,6 @@
 | [0050](0050-public-event-execution-semantics.md) | Define the executable meaning of public events, outbound translation, event targets and reaction results | accepted | none | 2026-10-09 | Einar Ingebrigtsen |
 | [0051](0051-admit-public-events-as-esm-v9.md) | Admit public events, translation direction, event-target projections and event-source captures as ESM v9 | accepted | none | 2026-10-09 | Einar Ingebrigtsen |
 | [0052](0052-declare-read-model-keys-and-bind-lookups-by-name.md) | Declare read-model keys on properties and supply every key part by name in lookups | proposed | none | | |
+| [0053](0053-per-production-route-overrides.md) | Replace the command route per event production | proposed | none | | |
+| [0054](0054-observer-source-and-stream-filters.md) | Filter reactions and reducers by event source and stream | proposed | none | | |
+| [0055](0055-admit-production-routes-and-observer-filters-as-esm-v10.md) | Admit production routes and observer filters as ESM v10 | proposed | none | | |

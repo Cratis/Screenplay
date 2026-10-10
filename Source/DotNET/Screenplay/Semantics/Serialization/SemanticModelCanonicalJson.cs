@@ -174,6 +174,7 @@ public static partial class SemanticModelCanonicalJson
             CanonicalJson.WriteString(output, "requirementId", transition.RequirementId);
             output.WriteEndObject();
         });
+        if (reducer.From is not null) WriteObserverFilter(writer, reducer.From);
         writer.WriteEndObject();
     }
 
@@ -321,6 +322,7 @@ public static partial class SemanticModelCanonicalJson
             WriteTypeReference(writer, produced.DestinationType);
         }
 
+        if (produced.Route is not null) WriteCommandRoute(writer, produced.Route);
         writer.WriteEndObject();
     }
 

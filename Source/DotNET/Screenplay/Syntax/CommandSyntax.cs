@@ -360,6 +360,11 @@ public record ProducesSyntax(
     public EventSyntax? InlineEvent { get; init; }
 
     /// <summary>
+    /// Gets the route replacing the command route for this production.
+    /// </summary>
+    public CommandStreamSyntax? Stream { get; init; }
+
+    /// <summary>
     /// Gets the operation declared by this production, owned by the containing slice.
     /// </summary>
     public OperationSyntax? InlineOperation { get; init; }

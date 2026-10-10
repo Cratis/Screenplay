@@ -58,6 +58,7 @@ static class WorkspaceReferenceMembers
                         WorkspaceReferenceDomain.SpecificationParameter => TableOwner(entry, index),
                         WorkspaceReferenceDomain.EventStream when entry.Node is CommandStreamSyntax route => route.EventSource,
                         WorkspaceReferenceDomain.EventStream when entry.Node is SpecificationStreamSyntax route => route.EventSource,
+                        WorkspaceReferenceDomain.EventStream when entry.Node is ObserverFilterSyntax filter => filter.EventSource,
                         _ => null
                     };
                     if (domain != WorkspaceReferenceDomain.Property || owner is not null)
@@ -186,6 +187,7 @@ static class WorkspaceReferenceMembers
         PropertyMappingSyntax when entry.Parent is { } caseParent && index.Find(caseParent)?.Node is SpecificationCaseSyntax => [("property", WorkspaceReferenceDomain.SpecificationParameter)],
         DependsOnSyntax => [("target", WorkspaceReferenceDomain.Container)],
         SpecificationStreamSyntax => [("eventSource", WorkspaceReferenceDomain.EventSource), ("stream", WorkspaceReferenceDomain.EventStream)],
+        ObserverFilterSyntax => [("eventSource", WorkspaceReferenceDomain.EventSource), ("stream", WorkspaceReferenceDomain.EventStream)],
         CommandStreamSyntax { PropertyCandidate: null } => [("eventSource", WorkspaceReferenceDomain.EventSource), ("stream", WorkspaceReferenceDomain.EventStream)],
         OperationSyntax => [("uses", WorkspaceReferenceDomain.System)],
         InvocationRefusalSyntax => [("constraint", WorkspaceReferenceDomain.Constraint)],

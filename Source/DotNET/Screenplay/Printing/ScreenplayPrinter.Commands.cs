@@ -237,6 +237,7 @@ public partial class ScreenplayPrinter
         {
             WriteDescription(writer, reaction.Description, reaction);
             WriteDocumentation(writer, reaction.Documentation, reaction);
+            if (reaction.From is not null) WriteObserverFilter(writer, reaction.From);
 
             foreach (var trigger in reaction.Triggers)
             {
@@ -484,6 +485,7 @@ public partial class ScreenplayPrinter
             {
                 WriteEventMetadata(writer, inline);
                 WriteProducesTarget(writer, produces.For);
+                if (produces.Stream is not null) WriteCommandStream(writer, produces.Stream);
                 WriteTags(writer, inline.Tags);
 
                 // The parser creates each property and mapping together, including on erroneous trees.
@@ -503,6 +505,7 @@ public partial class ScreenplayPrinter
             using (writer.Indent())
             {
                 WriteProducesTarget(writer, produces.For);
+                if (produces.Stream is not null) WriteCommandStream(writer, produces.Stream);
                 WriteTags(writer, produces.Tags);
                 WriteMappings(writer, produces.Mappings, ReservedWords.MappingBlock);
             }
@@ -517,6 +520,7 @@ public partial class ScreenplayPrinter
             using (writer.Indent())
             {
                 WriteProducesTarget(writer, produces.For);
+                if (produces.Stream is not null) WriteCommandStream(writer, produces.Stream);
                 WriteTags(writer, produces.Tags);
                 WriteMappings(writer, produces.Mappings, ReservedWords.MappingBlock);
             }

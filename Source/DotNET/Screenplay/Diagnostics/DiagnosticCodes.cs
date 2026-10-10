@@ -2934,4 +2934,24 @@ public static class DiagnosticCodes
     /// A read-model lookup has invalid parts, shape or sources.
     /// </summary>
     public const string InvalidReadModelKeyLookup = "PLAY0635";
+
+    /// <summary>
+    /// A route is declared on a production outside a command.
+    /// </summary>
+    public const string ProductionRouteOutsideCommand = "PLAY0636";
+
+    /// <summary>
+    /// A production route repeats its command's route.
+    /// </summary>
+    public const string RedundantProductionRoute = "PLAY0637";
+
+    /// <summary>
+    /// An observer filter is malformed, unresolved or used with a non-event trigger.
+    /// </summary>
+    public const string InvalidObserverFilter = "PLAY0638";
+
+    /// <summary>
+    /// An observer filter excludes every statically known producer.
+    /// </summary>
+    public const string ObserverFilterExcludesEveryProducer = "PLAY0639";
 }

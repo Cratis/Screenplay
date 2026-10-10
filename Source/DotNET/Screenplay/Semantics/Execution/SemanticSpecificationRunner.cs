@@ -85,11 +85,11 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
 
         var reducer = plan.Model.Application.Modules.SelectMany(module => AllSlices(module.Features))
             .SelectMany(slice => slice.Reducers)
-            .FirstOrDefault(candidate =>
+            .FirstOrDefault(candidate => candidate.From is null && (
                 expected.GivenReadModels.Any(state => state.ReadModel == candidate.ReadModel) ||
                 expected.ThenReadModels.Any(state => state.ReadModel == candidate.ReadModel) ||
                 expected.ThenAbsentReadModels.Any(state => state.ReadModel == candidate.ReadModel) ||
-                expected.ThenQueries.Any(query => plan.Queries.TryGetValue(query.Query, out var target) && target.ReadModel == candidate.ReadModel));
+                expected.ThenQueries.Any(query => plan.Queries.TryGetValue(query.Query, out var target) && target.ReadModel == candidate.ReadModel)));
         if (reducer is not null)
         {
             var unsupported = new SemanticUnsupported(

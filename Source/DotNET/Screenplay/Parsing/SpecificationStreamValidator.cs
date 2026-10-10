@@ -101,7 +101,7 @@ internal static class SpecificationStreamValidator
                 }
             }
             if (!occurrence.Expected || command is null || eventProducers.Length == 0 || eventProducers.Any(producer => !ReferenceEquals(producer.Command, command))) continue;
-            var contradicts = Contradicts(node, command.Stream, catalog, application, values);
+            var contradicts = eventProducers.All(producer => Contradicts(node, producer.Route, catalog, application, values));
             if (node.For is LiteralExpressionSyntax identityValue && eventProducers.All(producer => producer.Type is { } type &&
                 (identifier is not null ? declarations.Compatible(type, identifier) == false : !values.Compatible(identityValue, type))))
             {
@@ -137,7 +137,7 @@ internal static class SpecificationStreamValidator
                 foreach (var produced in productions)
                 {
                     if (declarations.Event(produced.Event, scope) is not { } @event) continue;
-                    yield return new(@event, command, CommandDestinationTypes.DestinationType(command, produced, productions, declarations));
+                    yield return new(@event, command, CommandDestinationTypes.DestinationType(command, produced, productions, declarations), produced.Stream ?? command.Stream);
                 }
             }
 
@@ -197,5 +197,5 @@ internal static class SpecificationStreamValidator
         return EventSourceValidator.FormatLiteral(literal, type, application, out _);
     }
 
-    sealed record Producer(EventSyntax Event, CommandSyntax? Command, TypeRefSyntax? Type);
+    sealed record Producer(EventSyntax Event, CommandSyntax? Command, TypeRefSyntax? Type, CommandStreamSyntax? Route = null);
 }

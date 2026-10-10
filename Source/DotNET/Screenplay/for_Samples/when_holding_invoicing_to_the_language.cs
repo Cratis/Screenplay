@@ -40,6 +40,7 @@ public class when_holding_invoicing_to_the_language : Specification
 
     static readonly (Type Node, string Path, string Reason)[] CoveredElsewhere =
     [
+        (typeof(ObserverFilterSyntax), "Source/Screenplay/Compiler/Conformance/source-streams.play", "Observer filters are pinned by the compiler conformance vector; Invoicing migration belongs to the next package in this batch."),
         (typeof(FileImportSyntax), "Samples/Commerce/application.play", "Composition is shown by Commerce, not a single-document application."),
         (typeof(FileConstraintSyntax), "Source/DotNET/Screenplay/for_ScreenplayCompiler/invoicing.play", "Legacy file constraints warn with PLAY0396; with_a_file pins the warning, so they cannot enter warning-free Samples."),
         (typeof(TemplateAssignmentSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Hierarchical template assignments are covered by the focused round-trip spec until TypeScript conformance admits them into Samples/Invoicing."),

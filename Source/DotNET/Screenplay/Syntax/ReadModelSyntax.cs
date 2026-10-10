@@ -63,7 +63,13 @@ public record ReducerSyntax(
     string ReadModel,
     IEnumerable<ReducerRuleSyntax> Rules,
     SourceLocation Location,
-    string? Description = null) : SyntaxNode(Location);
+    string? Description = null) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the event source and optional stream this reducer observes.
+    /// </summary>
+    public ObserverFilterSyntax? From { get; init; }
+}
 
 /// <summary>
 /// Represents an <c>on &lt;EventType&gt;</c> rule within a reducer.

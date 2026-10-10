@@ -654,6 +654,17 @@ section has no automatic repair because each one is a contract decision for the 
 direction; `PLAY0610`, `PLAY0615`, `PLAY0618` and `PLAY0619` would move a construct between slices or change its direction;
 `PLAY0620` is malformed `source events` input with no single intended correction.
 
+### Production routes and observer filters
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0636` | Error | A reaction or refusal-branch production declares a `stream` route. Only command event productions can override a route. |
+| `PLAY0637` | Warning | A production repeats its command's source, stream and stream-id mappings. The typed workspace repair removes the override. |
+| `PLAY0638` | Error | An observer filter is malformed, duplicated, has children, names an unresolved or ambiguous source/stream, or a filtered reaction has a non-event trigger. |
+| `PLAY0639` | Warning | A reaction or reducer filter excludes every statically known producer's effective route. Handlers and foreign origins are unknown and suppress this C#-only warning. |
+
+Overrides reuse `PLAY0504` for route shape, mapping, destination type and duplicate-route errors. Protected sources reuse `PLAY0515`. Property paths remain refused at binding with `PLAY0268` (#574), and generated route inputs with `PLAY0273`.
+
 ### Screen composition
 
 These checks run on the assembled model. The source stays in the syntax tree, so an authoring tool can still show and repair it.

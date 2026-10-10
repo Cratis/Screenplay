@@ -53,6 +53,11 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V9 = new(9, 0);
 
     /// <summary>
+    /// The language version for production routes and observer filters.
+    /// </summary>
+    public static readonly LanguageVersion V10 = new(10, 0);
+
+    /// <summary>
     /// Parses a canonical, supported language version.
     /// </summary>
     /// <param name="value">The value to parse.</param>
@@ -126,6 +131,11 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     /// The semantic version for public events, translation direction, event-target projections and reducers, and event-source captures.
     /// </summary>
     public static readonly SemanticVersion V9 = new(9, 0);
+
+    /// <summary>
+    /// The semantic version for production routes and observer filters.
+    /// </summary>
+    public static readonly SemanticVersion V10 = new(10, 0);
 
     /// <summary>
     /// Gets whether this version admits everything another version admits - each version builds on the ones before it.
@@ -486,7 +496,7 @@ static class VersionParser
     {
         if (!TryParse(value, out LanguageVersion version))
         {
-            throw new InvalidSemanticContract($"'{value}' is not a canonical language version supported by ESM schema v1, v2, v3, v4, v5, v6, v7, v8 or v9.");
+            throw new InvalidSemanticContract($"'{value}' is not a canonical language version supported by ESM schema v1, v2, v3, v4, v5, v6, v7, v8, v9 or v10.");
         }
 
         return version;
@@ -496,7 +506,7 @@ static class VersionParser
     {
         if (!TryParse(value, out SemanticVersion version))
         {
-            throw new InvalidSemanticContract($"'{value}' is not a canonical semantic version supported by ESM schema v1, v2, v3, v4, v5, v6, v7, v8 or v9.");
+            throw new InvalidSemanticContract($"'{value}' is not a canonical semantic version supported by ESM schema v1, v2, v3, v4, v5, v6, v7, v8, v9 or v10.");
         }
 
         return version;
@@ -506,7 +516,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV9Support.LanguageVersions.Contains(version))
+        if (success && !EsmSchemaV10Support.LanguageVersions.Contains(version))
         {
             version = default;
             return false;
@@ -519,7 +529,7 @@ static class VersionParser
     {
         var success = TryParseParts(value, out var major, out var minor);
         version = success ? new(major, minor) : default;
-        if (success && !EsmSchemaV9Support.SemanticVersions.Contains(version))
+        if (success && !EsmSchemaV10Support.SemanticVersions.Contains(version))
         {
             version = default;
             return false;

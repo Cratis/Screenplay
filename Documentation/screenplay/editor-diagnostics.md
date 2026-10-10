@@ -11,6 +11,7 @@ The diagnostic catalogues share the C# names and codes. A catalogue entry does n
 
 | Codes | TypeScript and editor support |
 |---|---|
+| PLAY0636–PLAY0638 | Command-only production routes, redundant overrides, and observer filter syntax, source/stream resolution and event-only triggers. |
 | PLAY0633, PLAY0635 (shape checks) | Read-model key modifiers and key-part types; `by` block arity and duplicate names. Scoped lookup resolution remains a C# check. |
 | PLAY0514, PLAY0515 | Projection target and personal identifier checks. Both editors preserve compiler diagnostics. |
 | PLAY0518, PLAY0519 | Typed-example syntax and duplicate assignments. Both editors preserve compiler diagnostics. Example type resolution and semantic values remain C# checks. |
@@ -32,6 +33,7 @@ These checks are not computed by the TypeScript compiler or by the editors' ordi
 
 | Codes | Why the C# tool is required |
 |---|---|
+| PLAY0639 | Warns when a reaction or reducer filter excludes every statically known producer's effective route. Handlers and foreign origins remain unknown. |
 | PLAY0634, PLAY0635 (scoped checks) | Resolve declared read-model keys and require complete compatible single-instance lookups across reads, queries, screens, forms and absence fixtures. |
 | PLAY0530–PLAY0537 | Opt-in [completeness checks](completeness.md), selected through CLI `--check` or MCP `checks`, after error-free whole-application compilation. TypeScript has no completeness-check API. They are not ordinary parser warnings. |
 | PLAY0546 | The semantic binder checks negated claim targets for nullable, missing or non-string values. TypeScript has no executable semantic binder. |

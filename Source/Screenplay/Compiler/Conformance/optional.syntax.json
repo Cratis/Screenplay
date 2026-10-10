@@ -2,6 +2,7 @@
   "kind": "ApplicationSyntax",
   "concepts": [],
   "domain": null,
+  "eventSources": [],
   "fileImports": [],
   "imports": [],
   "modules": [
@@ -131,6 +132,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": []
                 }
               ],

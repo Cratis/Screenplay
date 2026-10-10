@@ -24,6 +24,7 @@ import {
 import { ApplicationSyntax, DependsOnSyntax, FeatureSyntax, FileImportSyntax, ModuleSyntax, SliceSyntax } from './Structure';
 import { CommandResponseSyntax, PropertyResponseSourceSyntax, RecordCommandResponseSyntax, RecordSpecificationReturnSyntax, ResponseFieldSyntax, ScalarCommandResponseSyntax, ScalarSpecificationReturnSyntax, SpecificationReturnSyntax } from './Responses';
 import { EventStreamIdPartSyntax } from './EventStreamIdPartSyntax';
+import { ObserverFilterSyntax } from './ObserverFilterSyntax';
 import { SyntaxNode } from './SyntaxNode';
 import { PurposeSyntax, PurposeReferenceSyntax, PurposeTransferSyntax } from './Purposes';
 import { OperationSyntax, OperationPhaseSyntax, SystemSyntax } from './Operations';
@@ -194,6 +195,7 @@ export abstract class ScreenplaySyntaxWalker {
     visitConcurrency(syntax: ConcurrencySyntax): void { this.visitNode(syntax); }
     visitReducer(syntax: ReducerSyntax): void {
         this.visitNode(syntax);
+        if (syntax.from != null) this.visitObserverFilter(syntax.from);
         syntax.rules.forEach(node => this.visitReducerRule(node));
     }
     visitReducerRule(syntax: ReducerRuleSyntax): void {
@@ -250,6 +252,8 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
         this.visitTypeRef(syntax.type);
     }
+    visitObserverFilter(syntax: ObserverFilterSyntax): void { this.visitNode(syntax); }
+
     visitCommandStream(syntax: CommandStreamSyntax): void {
         this.visitNode(syntax);
         if (syntax.streamId !== null) this.visitPropertyMapping(syntax.streamId);
@@ -454,6 +458,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitReaction(syntax: ReactionSyntax): void {
         this.visitNode(syntax);
+        if (syntax.from != null) this.visitObserverFilter(syntax.from);
         if (syntax.where != null) this.visitCondition(syntax.where);
         syntax.triggers.forEach(node => this.visitReactionTrigger(node));
     }
@@ -467,6 +472,7 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitProduces(syntax: ProducesSyntax): void {
         this.visitNode(syntax);
+        if (syntax.stream != null) this.visitCommandStream(syntax.stream);
         if (syntax.when != null) this.visitCondition(syntax.when);
         if (syntax.inlineEvent !== null) this.visitEvent(syntax.inlineEvent);
         if (syntax.inlineOperation != null) this.visitOperation(syntax.inlineOperation);

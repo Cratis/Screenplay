@@ -52,6 +52,7 @@ internal static class SyntaxKinds
         typeof(CodeValidateSyntax),
         typeof(CommandSyntax),
         typeof(CommandStreamSyntax),
+        typeof(ObserverFilterSyntax),
         typeof(ComparisonConditionSyntax),
         typeof(CompositeKeySyntax),
         typeof(ConceptAttributeSyntax),

@@ -73,10 +73,11 @@ internal static partial class ProducesParser
             }
 
             context.Reader.TakeSignificant();
-            var body = ParseBody(context, eventLine);
+            var body = ParseBody(context, eventLine, inCommand);
             context.SkipBlock(line.Indent);
             return new ProducesSyntax(eventLine.Content, condition, body.Mappings, line.Location, body.Tags, body.For)
             {
+                Stream = body.Stream,
                 TargetLocation = eventLine.Location,
                 DirectiveLocations = new Dictionary<string, SourceLocation> { ["event"] = eventLine.Location }
             };
@@ -90,9 +91,10 @@ internal static partial class ProducesParser
             return null;
         }
 
-        var unconditionalBody = ParseBody(context, line);
+        var unconditionalBody = ParseBody(context, line, inCommand);
         return new(unconditional.Groups[1].Value, null, unconditionalBody.Mappings, line.Location, unconditionalBody.Tags, unconditionalBody.For)
         {
+            Stream = unconditionalBody.Stream,
             TargetLocation = line.Location with { Column = line.Location.Column + unconditional.Groups[1].Index }
         };
     }
@@ -109,17 +111,24 @@ internal static partial class ProducesParser
     /// parenthesised call - and it puts the target beside the mappings that fill the event rather than
     /// out past the end of the line.
     /// </remarks>
-    static (List<PropertyMappingSyntax> Mappings, List<TagSyntax> Tags, ExpressionSyntax? For) ParseBody(ParserContext context, SourceLine parent)
+    static (List<PropertyMappingSyntax> Mappings, List<TagSyntax> Tags, ExpressionSyntax? For, CommandStreamSyntax? Stream) ParseBody(ParserContext context, SourceLine parent, bool inCommand)
     {
         var mappings = new List<PropertyMappingSyntax>();
         var tags = new List<TagSyntax>();
         ExpressionSyntax? target = null;
+        CommandStreamSyntax? stream = null;
 
         while (context.TryPeekChild(parent.Indent, out var child))
         {
             context.Reader.TakeSignificant();
             if (RejectReserved(context, child))
             {
+                continue;
+            }
+
+            if (IsRoute(child))
+            {
+                stream = ParseRoute(context, child, stream, inCommand);
                 continue;
             }
 
@@ -158,7 +167,7 @@ internal static partial class ProducesParser
             mappings.Add(ExpressionParser.ParseMapping(context, LineText.Unescape(match.Groups[1].Value), match.Groups[2], child));
         }
 
-        return (mappings, tags, target);
+        return (mappings, tags, target, stream);
     }
 
     static ProducesSyntax ParseInline(ParserContext context, SourceLine header, string name, int nameColumn, IEqualityComparer<string>? propertyNameComparer)
@@ -169,6 +178,7 @@ internal static partial class ProducesParser
         var mappings = new List<PropertyMappingSyntax>();
         var tags = new List<TagSyntax>();
         ExpressionSyntax? target = null;
+        CommandStreamSyntax? stream = null;
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
@@ -185,6 +195,12 @@ internal static partial class ProducesParser
                     keyword == "generation" ? "Inline events are generation 1 - extract the event before declaring generations" : "An inline event is local to its command and cannot declare origin",
                     line.Location);
                 context.SkipBlock(line.Indent);
+                continue;
+            }
+
+            if (IsRoute(line))
+            {
+                stream = ParseRoute(context, line, stream, true);
                 continue;
             }
 
@@ -234,10 +250,43 @@ internal static partial class ProducesParser
 
         return new(name, null, mappings, header.Location, [], target)
         {
+            Stream = stream,
             TargetLocation = header.Location with { Column = header.Location.Column + nameColumn },
             InlineEvent = metadata.Apply(new(name, properties, header.Location, tags))
         };
     }
+
+    static bool IsRoute(SourceLine line) => LineText.FirstWord(line.Content) == "stream" && !line.Content.Contains('=');
+
+    static CommandStreamSyntax? ParseRoute(ParserContext context, SourceLine line, CommandStreamSyntax? previous, bool inCommand)
+    {
+        if (!inCommand)
+        {
+            context.Error(DiagnosticCodes.ProductionRouteOutsideCommand, "Only command event productions can declare a stream route.", line.Location);
+            context.SkipBlock(line.Indent);
+            return previous;
+        }
+        if (previous is not null)
+        {
+            context.Error(DiagnosticCodes.InvalidCommandStream, "A production can declare at most one stream route.", line.Location);
+            context.SkipBlock(line.Indent);
+            return previous;
+        }
+        var match = ProductionRouteRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidCommandStream, "Expected 'stream <Source>.<Stream>'.", line.Location);
+            context.SkipBlock(line.Indent);
+            return null;
+        }
+        var location = line.LocationAt(match.Groups[1].Index);
+        var candidate = new PropertySyntax("stream", new(match.Groups[1].Value, false, false, location), line.Location);
+
+        return EventSourceParser.ParseRoute(context, line, candidate, false);
+    }
+
+    [GeneratedRegex(@"^stream\s+([A-Za-z_]\w*\.[A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex ProductionRouteRegex();
 
     static bool RejectReserved(ParserContext context, SourceLine line)
     {

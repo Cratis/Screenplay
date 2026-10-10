@@ -36,6 +36,7 @@ internal static partial class ReactionParser
         string? description = null;
         string? documentation = null;
         ConditionSyntax? where = null;
+        ObserverFilterSyntax? from = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
 
         // Whether the body already told the author something is wrong. A reaction whose only trigger is
@@ -62,6 +63,12 @@ internal static partial class ReactionParser
             if (keyword == "documentation")
             {
                 documentation = DocumentationParser.Parse(context, line, documentation, $"Reaction '{name}'", directiveLocations);
+                continue;
+            }
+
+            if (keyword == "from")
+            {
+                from = ObserverFilterParser.Parse(context, line, from);
                 continue;
             }
 
@@ -120,7 +127,7 @@ internal static partial class ReactionParser
             context.Error(DiagnosticCodes.ReactionWithoutTrigger, $"Reaction '{name}' must declare at least one trigger - nothing sets it off", header.Location);
         }
 
-        return new(name, triggers, header.Location, description, where) { Documentation = documentation, DirectiveLocations = directiveLocations };
+        return new(name, triggers, header.Location, description, where) { Documentation = documentation, From = from, DirectiveLocations = directiveLocations };
     }
 
     // Two triggers are the same when they name the same occurrence, wherever in the file they were written -

@@ -7,6 +7,7 @@ export * from './EventVisibility';
 export * from './TranslationDirection';
 export * from './EventDeclarations';
 export * from './EventSources';
+export * from './ObserverFilterSyntax';
 export * from './EventSourceCatalog';
 export * from './EventSourceReadConfidence';
 export * from './Operations';

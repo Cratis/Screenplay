@@ -222,6 +222,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitProduces(ProducesSyntax syntax)
     {
         VisitNode(syntax);
+        if (syntax.Stream is not null) VisitCommandStream(syntax.Stream);
 
         if (syntax.InlineEvent is not null)
         {

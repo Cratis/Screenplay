@@ -23,6 +23,7 @@ internal static partial class SemanticModelRead
         SemanticId id = default;
         string? name = null;
         ImmutableArray<SemanticReactionTrigger> triggers = default;
+        SemanticObserverFilter? from = null;
         while (NextProperty(ref reader, seen, "reaction") is { } property)
         {
             switch (property)
@@ -30,12 +31,13 @@ internal static partial class SemanticModelRead
                 case "id": id = SemanticId.Parse(String(ref reader, property)); break;
                 case "name": name = String(ref reader, property); break;
                 case "triggers": triggers = Array(ref reader, (ref Utf8JsonReader item) => ReactionTrigger(ref item, schemaVersion), property); break;
+                case "from" when schemaVersion >= 10: RequiredToken(ref reader, JsonTokenType.StartObject, property); from = ObserverFilter(ref reader); break;
                 default: throw Unknown(property, "reaction");
             }
         }
 
         Required(id.IsSet && name is not null && !triggers.IsDefault, "reaction");
-        return new(id, name!, triggers);
+        return new(id, name!, triggers) { From = from };
     }
 
     internal static SemanticReactionTrigger ReactionTrigger(ref Utf8JsonReader reader, uint schemaVersion)

@@ -378,5 +378,9 @@ export const DiagnosticCodes = {
     InvalidReadModelKey: 'PLAY0633',
     IncompleteReadModelKey: 'PLAY0634', // C# only: scoped read-model key resolution.
     InvalidReadModelKeyLookup: 'PLAY0635', // Shape checks shared; scoped lookup checks are C# only.
+    ProductionRouteOutsideCommand: 'PLAY0636',
+    RedundantProductionRoute: 'PLAY0637',
+    InvalidObserverFilter: 'PLAY0638',
+    ObserverFilterExcludesEveryProducer: 'PLAY0639', // C# only: statically known producer routes.
     ReadsWithChildren: 'PLAY0451',
 } as const;

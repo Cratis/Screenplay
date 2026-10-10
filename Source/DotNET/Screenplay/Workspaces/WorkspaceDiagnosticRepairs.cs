@@ -198,6 +198,11 @@ public static class WorkspaceDiagnosticRepairs
             return WorkspaceOptionalityRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
+        if (diagnostic.Code == DiagnosticCodes.RedundantProductionRoute)
+        {
+            return WorkspaceProductionRouteRepairs.Find(index, revision, diagnostic, verifyRepair);
+        }
+
         if (diagnostic.Code == DiagnosticCodes.RedundantEventId || diagnostic.Code == DiagnosticCodes.EventSourceIdInPayload)
         {
             return WorkspaceEventRepairs.Find(index, revision, diagnostic, verifyRepair);

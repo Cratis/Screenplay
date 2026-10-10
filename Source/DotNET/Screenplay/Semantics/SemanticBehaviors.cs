@@ -310,6 +310,11 @@ public sealed record SemanticProducedEvent(
     /// command, and for a reaction that appends to the event source of the event that set it off.
     /// </summary>
     public SemanticTypeReference? DestinationType { get; init; }
+
+    /// <summary>
+    /// Gets the complete route replacing the command route for this production.
+    /// </summary>
+    public SemanticCommandRoute? Route { get; init; }
 }
 
 /// <summary>

@@ -47,6 +47,15 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
+    static void WriteObserverFilter(Utf8JsonWriter writer, SemanticObserverFilter filter)
+    {
+        writer.WritePropertyName("from");
+        writer.WriteStartObject();
+        writer.WriteString("source", filter.Source.ToString());
+        if (filter.Stream is { } stream) writer.WriteString("stream", stream.ToString());
+        writer.WriteEndObject();
+    }
+
     static void WriteCommandRoute(Utf8JsonWriter writer, SemanticCommandRoute route)
     {
         WriteRouteStart(writer, route.Source, route.Stream);

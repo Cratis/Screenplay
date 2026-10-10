@@ -232,6 +232,55 @@
                         }
                       ],
                       "tags": []
+                    },
+                    {
+                      "kind": "ProducesSyntax",
+                      "event": "DepositNoted",
+                      "for": null,
+                      "inlineEvent": {
+                        "kind": "EventSyntax",
+                        "description": null,
+                        "documentation": null,
+                        "generation": 1,
+                        "hasGenerationMarker": false,
+                        "id": null,
+                        "name": "DepositNoted",
+                        "properties": [
+                          {
+                            "kind": "PropertySyntax",
+                            "isGenerated": false,
+                            "isIdentifier": false,
+                            "name": "amount",
+                            "type": {
+                              "kind": "TypeRefSyntax",
+                              "isCollection": false,
+                              "isOptional": false,
+                              "name": "Decimal"
+                            }
+                          }
+                        ],
+                        "tags": []
+                      },
+                      "inlineOperation": null,
+                      "mappings": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "amount",
+                          "source": {
+                            "kind": "PathExpressionSyntax",
+                            "path": "amount"
+                          }
+                        }
+                      ],
+                      "stream": {
+                        "kind": "CommandStreamSyntax",
+                        "eventSource": "Account",
+                        "propertyCandidate": null,
+                        "stream": "Onboarding",
+                        "streamId": null,
+                        "streamIdParts": []
+                      },
+                      "tags": []
                     }
                   ],
                   "properties": [
@@ -674,6 +723,88 @@
               "screens": [],
               "specifications": [],
               "type": "StateChange"
+            },
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "Alerts",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [
+                {
+                  "kind": "ReactionSyntax",
+                  "description": null,
+                  "from": {
+                    "kind": "ObserverFilterSyntax",
+                    "eventSource": "Account",
+                    "stream": "Transactions"
+                  },
+                  "name": "Alert",
+                  "triggers": [
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "invokes": [],
+                      "produces": [],
+                      "source": {
+                        "kind": "NamedTriggerSourceSyntax",
+                        "name": "Deposited"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "ReactionSyntax",
+                  "description": null,
+                  "from": {
+                    "kind": "ObserverFilterSyntax",
+                    "eventSource": "Account",
+                    "stream": null
+                  },
+                  "name": "SourceAlert",
+                  "triggers": [
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "invokes": [],
+                      "produces": [],
+                      "source": {
+                        "kind": "NamedTriggerSourceSyntax",
+                        "name": "Booked"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "AlertView",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "accountId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "AccountId"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [],
+              "specifications": [],
+              "type": "Automation"
             }
           ]
         }

@@ -19,6 +19,8 @@ internal static class SyntaxJsonWriter
             if (node is EventSyntax or ImportSyntax && member.Name == "visibility" && Equals(value, EventVisibility.Private)) continue;
             if (node is EventSyntax or ImportSyntax && member.Name == "origin" && value is null) continue;
             if (node is SliceSyntax && member.Name == "direction" && value is null) continue;
+            if (node is ReactionSyntax or ReducerSyntax && member.Name == "from" && value is null) continue;
+            if (node is ProducesSyntax && member.Name == "stream" && value is null) continue;
             if (node is ConceptAttributeSyntax && (member.Name == "scope" || member.Name == "specialCategory") && value is null) continue;
             if (node is ConceptAttributeSyntax && member.Name == "criminal" && Equals(value, false)) continue;
             if (node is PropertySyntax && (member.Name == "isSubject" || member.Name == "isKey") && Equals(value, false)) continue;

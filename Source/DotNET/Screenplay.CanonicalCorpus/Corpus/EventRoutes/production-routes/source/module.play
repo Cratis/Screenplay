@@ -1,0 +1,56 @@
+module M
+  feature F
+    slice StateChange S
+      command Book
+        id String identifier
+        period String
+        project Uuid
+        stream Account.Base
+          streamId = period
+        produces event Booked
+          stream Account.Notes
+            streamId = period
+        produces event PeriodBooked
+          stream Account.Periods
+            streamId
+              month = period
+              project = project
+      command WithoutDefault
+        id String identifier
+        produces event Noted
+          stream Account.All
+      command Skip
+        id String identifier
+        bad String
+        enabled Bool
+        stream Account.All
+        produces event Started
+        produces when enabled == true
+          Noted
+            for id
+            stream Account.Notes
+              streamId = bad
+      specification Override
+        when Book
+          id = "other"
+          period = "a|b%"
+          project = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        then Booked
+          stream Account.Notes
+            streamId = "a|b%"
+        then PeriodBooked
+          stream Account.Periods
+            streamId
+              project = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+              month = "a|b%"
+      specification NoDefault
+        when WithoutDefault
+          id = "other"
+        then Noted
+          stream Account.All
+      specification SkippedRouteFailure
+        when Skip
+          id = "other"
+          bad = ""
+          enabled = false
+        then error "A stream id text literal cannot be empty."

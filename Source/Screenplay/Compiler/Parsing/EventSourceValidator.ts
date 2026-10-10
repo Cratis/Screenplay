@@ -5,7 +5,8 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
 import { PropertySyntax, TypeRefSyntax } from '../Syntax/Declarations';
 import { EventSourceCatalog } from '../Syntax/EventSourceCatalog';
-import { EventSourceResolutionKind } from '../Syntax/EventSources';
+import { CommandStreamSyntax, EventSourceResolutionKind } from '../Syntax/EventSources';
+import { validateObserverFilters } from './ObserverFilterValidator';
 import { ApplicationSyntax } from '../Syntax/Structure';
 import { ExpressionSyntax, PropertyMappingSyntax } from '../Syntax/Expressions';
 import { StreamIdFormatResult, streamIdFailureMessage, tryFormatInteger, tryFormatText, tryFormatUuidText } from '../Syntax/StreamIdFormatter';
@@ -14,6 +15,13 @@ import { validateStreamIdParts } from './CompositeStreamIdValidator';
 import { ParserContext } from './ParserContext';
 import { compatibleValue, uniqueByName } from './ResponseValidator';
 import { validateSpecificationStreams } from './SpecificationStreamValidator';
+
+const sameExpression = (left: ExpressionSyntax | null | undefined, right: ExpressionSyntax | null | undefined): boolean =>
+    left == null && right == null || left?.kind === 'PathExpressionSyntax' && right?.kind === 'PathExpressionSyntax' && left.path === right.path ||
+    left?.kind === 'LiteralExpressionSyntax' && right?.kind === 'LiteralExpressionSyntax' && JSON.stringify(left.value) === JSON.stringify(right.value);
+const sameRoute = (left: CommandStreamSyntax, right: CommandStreamSyntax): boolean => left.eventSource === right.eventSource && left.stream === right.stream &&
+    sameExpression(left.streamId?.source, right.streamId?.source) && left.streamIdParts.length === right.streamIdParts.length &&
+    left.streamIdParts.every(part => right.streamIdParts.some(other => part.property === other.property && sameExpression(part.source, other.source)));
 
 const primitives = new Set(['String', 'Uuid', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime']);
 
@@ -90,9 +98,14 @@ export function validateEventSources(application: ApplicationSyntax, context: Pa
     };
     const catalog = new EventSourceCatalog(application);
     const resolver = new AuthoringProductionResolver(application);
-    for (const { slice } of resolver.slices) for (const command of slice.commands) {
-        const route = command.stream;
-        if (route == null || route.propertyCandidate !== null) continue;
+    validateObserverFilters(application, context, resolver);
+    for (const { slice } of resolver.slices) for (const command of slice.commands) for (const { route, production } of [
+        ...(command.stream == null ? [] : [{ route: command.stream, production: null }]),
+        ...command.produces.filter(produced => produced.stream != null).map(produced => ({ route: produced.stream!, production: produced }))
+    ]) {
+        if (route.propertyCandidate !== null) continue;
+        if (production !== null && command.stream != null && sameRoute(route, command.stream))
+            context.warning(DiagnosticCodes.RedundantProductionRoute, 'The production route repeats its command route; omit the override.', route.location);
         const resolution = catalog.resolve(route.eventSource, route.stream);
         if (resolution.kind !== EventSourceResolutionKind.Unique) {
             const state = { ambiguous: 'Ambiguous', notFound: 'NotFound', wrongKind: 'WrongKind' }[resolution.kind];
@@ -102,9 +115,9 @@ export function validateEventSources(application: ApplicationSyntax, context: Pa
         const source = resolution.sources[0];
         const stream = resolution.streams[0];
         const identifiers = command.properties.filter(property => property.isIdentifier);
-        if (source.identifier !== null && identifiers.length === 1 && compatible(identifiers[0].type, source.identifier) === false)
+        if (production === null && source.identifier !== null && identifiers.length === 1 && compatible(identifiers[0].type, source.identifier) === false)
             context.error(DiagnosticCodes.InvalidCommandStream, `Command identifier '${identifiers[0].name}' does not have the source's nominal identifier type '${source.identifier.name}'. The stream does not supply a destination.`, identifiers[0].location);
-        for (const produced of command.produces.filter(produced => resolver.isEventProduction(produced, slice))) {
+        for (const produced of command.produces.filter(produced => resolver.isEventProduction(produced, slice) && (production === null ? produced.stream == null : produced === production))) {
             if (source.identifier === null) continue;
             const destination = commandDestinationType(command, produced, application, { resolver, slice });
             if (destination === null) continue;

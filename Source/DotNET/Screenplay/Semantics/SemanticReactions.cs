@@ -119,4 +119,10 @@ public sealed record SemanticReactionTrigger(SemanticReactionTriggerKind Kind)
 /// <param name="Id">The reaction semantic identity.</param>
 /// <param name="Name">The reaction name.</param>
 /// <param name="Triggers">The triggers in authored order.</param>
-public sealed record SemanticReaction(SemanticId Id, string Name, ImmutableArray<SemanticReactionTrigger> Triggers);
+public sealed record SemanticReaction(SemanticId Id, string Name, ImmutableArray<SemanticReactionTrigger> Triggers)
+{
+    /// <summary>
+    /// Gets the event source and optional stream filter.
+    /// </summary>
+    public SemanticObserverFilter? From { get; init; }
+}

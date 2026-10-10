@@ -109,7 +109,13 @@ public sealed partial class SemanticModelBinder
 
             var id = Resolve(SemanticAddress.ForReaction(slice, reaction.Name), reaction.Location);
             var triggers = reaction.Triggers.Select(trigger => BindReactionTrigger(slice, reaction, trigger, commands)).OfType<SemanticReactionTrigger>();
-            return new(id, reaction.Name, [.. triggers]);
+            var boundTriggers = triggers.ToImmutableArray();
+            if (reaction.From is not null && boundTriggers.Any(trigger => trigger.Kind != SemanticReactionTriggerKind.Event))
+            {
+                Error(DiagnosticCodes.InvalidObserverFilter, "A filtered reaction requires only declared event triggers.", reaction.From.Location);
+            }
+
+            return new(id, reaction.Name, boundTriggers) { From = BindObserverFilter(reaction.From) };
         }
 
         SemanticReactionTrigger? BindReactionTrigger(

@@ -345,6 +345,7 @@ public sealed partial class ScreenplayPrinter :
         using (writer.Indent())
         {
             WriteDescription(writer, reducer.Description, reducer);
+            if (reducer.From is not null) WriteObserverFilter(writer, reducer.From);
 
             foreach (var rule in reducer.Rules)
             {
