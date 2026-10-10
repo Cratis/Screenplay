@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <!--
+        Materializes the screens corpus from the published Cratis.Screenplay.CanonicalCorpus package, so the
+        acceptance harnesses read the corpus a consumer receives rather than this repository's source tree.
+        Run by run-public-acceptance.sh with SCREENPLAY_CORPUS_PACKAGE_VERSION.
+    -->
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+        <IsPackable>false</IsPackable>
+        <CorpusPackageVersion Condition="'$(CorpusPackageVersion)' == ''">4.129.0</CorpusPackageVersion>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Cratis.Screenplay.CanonicalCorpus" Version="$(CorpusPackageVersion)" />
+    </ItemGroup>
+</Project>

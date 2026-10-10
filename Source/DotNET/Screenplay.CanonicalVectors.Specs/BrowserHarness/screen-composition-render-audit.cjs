@@ -20,7 +20,8 @@ const { join, relative } = require('node:path');
 
 const root = process.cwd();
 const corpus = join(root, 'Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ScreenComposition/v1');
-const source = join(corpus, 'source/folder');
+// SCREENPLAY_CORPUS_SOURCE points at a folder materialized from the published corpus package; unset reads this repository.
+const source = process.env.SCREENPLAY_CORPUS_SOURCE ?? join(corpus, 'source/folder');
 const resultPath = process.env.SCREENPLAY_RENDER_AUDIT_RESULT ?? join(root, '.ai-work/render-audit-result.json');
 
 const guidPattern = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
@@ -136,7 +137,7 @@ function checkDeterminismAndArtifacts(result, work) {
     if (firstArtifacts.length > 0 && firstArtifacts.length === secondArtifacts.length && differing.length === 0) record(result, 'render.deterministic', 'passed', `${firstArtifacts.length} artifacts byte-identical across two renders`);
     else record(result, 'render.deterministic', 'failed', `differing: ${differing.join(', ') || 'artifact sets differ'}`);
 
-    const sourceGuids = new Set(filesUnder(corpus).flatMap(path => [...guidsIn(readFileSync(path, 'utf8'))]));
+    const sourceGuids = new Set([corpus, source].flatMap(folder => filesUnder(folder)).flatMap(path => [...guidsIn(readFileSync(path, 'utf8'))]));
     const findings = auditArtifacts(firstArtifacts, sourceGuids, environmentMarkers());
     if (findings.length === 0) record(result, 'render.portableArtifacts', 'passed', `${firstArtifacts.length} artifacts scanned`);
     else record(result, 'render.portableArtifacts', 'failed', findings.slice(0, 20).join('; '));
