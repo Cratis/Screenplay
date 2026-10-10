@@ -166,6 +166,7 @@ Attribute      = AttributeName | "@pii" | "@sensitive" ;
 AttributeName  = "pii" | "personal" | "secret" | "sensitive" ;
 (* pii is canonical; personal is a diagnostic-free alias. sensitive, @sensitive
    and @pii are legacy spellings (PLAY0565); printing and repair use pii/secret.
+   Repeated markers with the same wire identity warn (PLAY0653); only the first is retained.
    Settings accept these legacy spellings too. Unknown markers are errors.
    special/criminal require pii; one special and one scope at most. Markers and
    settings remain refused at binding (PLAY0268), not executable protection. *)

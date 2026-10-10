@@ -188,6 +188,11 @@ public static class WorkspaceDiagnosticRepairs
             return WorkspaceTimelineRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
+        if (diagnostic.Code == DiagnosticCodes.DuplicateComplianceMarker)
+        {
+            return WorkspaceDuplicateComplianceRepairs.Find(index, revision, diagnostic, verifyRepair);
+        }
+
         if (diagnostic.Code == DiagnosticCodes.LegacyComplianceMarker)
         {
             return WorkspaceComplianceRepairs.Find(index, revision, diagnostic, verifyRepair);
@@ -274,6 +279,7 @@ public static class WorkspaceDiagnosticRepairs
         {
             return candidate.Operations.Zip(selected.Operations).All(pair => (pair.First, pair.Second) switch
             {
+                (RemoveDuplicateComplianceMarkers left, RemoveDuplicateComplianceMarkers right) => left.Target == right.Target && SyntaxJson.StructurallyEqual(left.Expected, right.Expected),
                 (MigrateComplianceMarkerSpelling left, MigrateComplianceMarkerSpelling right) => left.Target == right.Target && left.Line == right.Line && SyntaxJson.StructurallyEqual(left.Expected, right.Expected),
                 (MigrateOptionalTypeSpelling left, MigrateOptionalTypeSpelling right) => left.Target == right.Target && SyntaxJson.StructurallyEqual(left.Expected, right.Expected),
                 (AddWorkspaceNode left, AddWorkspaceNode right) => left.Parent == right.Parent && left.Member == right.Member && left.Index == right.Index &&
@@ -294,7 +300,7 @@ public static class WorkspaceDiagnosticRepairs
 
     static bool PermitsFormatting(string code, WorkspaceAuthoringFormatting formatting) =>
         formatting == WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments ||
-        ((code == DiagnosticCodes.LegacyOptionalSuffix || code == DiagnosticCodes.LegacyComplianceMarker) && formatting == WorkspaceAuthoringFormatting.PreserveTrivia);
+        ((code == DiagnosticCodes.LegacyOptionalSuffix || code == DiagnosticCodes.LegacyComplianceMarker || code == DiagnosticCodes.DuplicateComplianceMarker) && formatting == WorkspaceAuthoringFormatting.PreserveTrivia);
 
     static WorkspaceAuthoringResult Refuse(WorkspaceConflictKind kind, string message) => new()
     {

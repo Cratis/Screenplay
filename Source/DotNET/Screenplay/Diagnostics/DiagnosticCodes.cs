@@ -3019,4 +3019,9 @@ public static class DiagnosticCodes
     /// A trigger producer does not require every role of an elevated reaction, or its gate is opaque.
     /// </summary>
     public const string ReactionPrivilegeEscalation = "PLAY0652";
+
+    /// <summary>
+    /// A concept header repeats a compliance marker with the same wire identity.
+    /// </summary>
+    public const string DuplicateComplianceMarker = "PLAY0653";
 }

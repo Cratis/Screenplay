@@ -15234,6 +15234,17 @@
       "title": "A trigger producer does not require every role of an elevated reaction, or its gate is opaque.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0653",
+      "name": "DuplicateComplianceMarker",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A concept header repeats a compliance marker with the same wire identity.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [

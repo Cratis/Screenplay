@@ -4,6 +4,7 @@
 import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { PlayPlacement } from '../Files/PlayPlacement';
+import { complianceWireName } from '../Parsing/ConceptComplianceParser';
 import { commentStart, splitLines } from '../Parsing/SourceLineSplitter';
 import { parseForAuthoring } from '../ScreenplayCompiler';
 import { EventSyntax } from '../Syntax/Declarations';
@@ -33,7 +34,7 @@ export interface QuickFixOptions {
 }
 
 export function isQuickFixDiagnostic(code: unknown): code is string {
-    return code === DiagnosticCodes.LegacyOptionalSuffix || code === DiagnosticCodes.LegacyComplianceMarker || code === DiagnosticCodes.RedundantEventId || code === DiagnosticCodes.PublicTranslationRequiresDirection;
+    return code === DiagnosticCodes.DuplicateComplianceMarker || code === DiagnosticCodes.LegacyOptionalSuffix || code === DiagnosticCodes.LegacyComplianceMarker || code === DiagnosticCodes.RedundantEventId || code === DiagnosticCodes.PublicTranslationRequiresDirection;
 }
 
 // Diagnostics point at the complete type, not at the suffix. Never derive edits from message text.
@@ -68,6 +69,9 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
     walker.visitApplication(original.value);
     const counts = new Map<string, number>();
     const byLine = new Map<number, QuickFixCandidate>();
+    // Duplicate removal and legacy spelling can share a header. Keep their independently verified recipes separate.
+    const duplicateByLine = new Map<number, QuickFix>();
+    const duplicateVerdicts = new Map<number, QuickFix | undefined>();
     const events = new Map<number, EventSyntax>();
     let event: EventSyntax | undefined;
     for (const line of lines) {
@@ -77,6 +81,10 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
     for (const diagnostic of original.diagnostics) {
         counts.set(diagnostic.code, (counts.get(diagnostic.code) ?? 0) + 1);
         const line = lines[diagnostic.location.line - 1];
+        if (diagnostic.code === DiagnosticCodes.DuplicateComplianceMarker) {
+            const edit = duplicateComplianceMarkerEdit(line.raw, line.startOffset);
+            if (edit !== undefined) duplicateByLine.set(line.number, { diagnosticCode: diagnostic.code, title: 'Remove duplicate compliance markers', scope: 'occurrence', edits: [edit] });
+        }
         const length = legacyOptionalTypeLength(line.raw, diagnostic);
         if (length > 0) {
             byLine.set(line.number, { line: line.number, fix: { diagnosticCode: diagnostic.code, title: "Use 'optional' instead of '?'", scope: 'occurrence', edits: [{ start: line.startOffset + diagnostic.location.column + length - 2, length: 1, text: ' optional' }] } });
@@ -125,6 +133,16 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
     };
     return (line, diagnosticCode) => {
         const requests = typeof line === 'number' || line === undefined ? undefined : line;
+        const duplicateLines = requests === undefined
+            ? typeof line === 'number' && (diagnosticCode === undefined || diagnosticCode === DiagnosticCodes.DuplicateComplianceMarker) ? [line] : []
+            : requests.filter(request => request.diagnosticCode === DiagnosticCodes.DuplicateComplianceMarker).map(request => request.line);
+        const duplicates = [...new Set(duplicateLines)].flatMap(number => {
+            const fix = duplicateByLine.get(number);
+            if (fix === undefined) return [];
+            if (!duplicateVerdicts.has(number)) duplicateVerdicts.set(number, verify(fix));
+            const verified = duplicateVerdicts.get(number);
+            return verified === undefined ? [] : [verified];
+        });
         const selectedCodes = spellingCodes.filter(code => requests === undefined ? diagnosticCode === undefined || diagnosticCode === code : requests.some(request => request.diagnosticCode === code));
         for (const code of selectedCodes.filter(code => !documentChecked.has(code))) {
             const candidates = [...byLine.values()].filter(candidate => candidate.fix.diagnosticCode === code);
@@ -163,7 +181,7 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
                 const fix = rangeVerdicts.get(request.line);
                 if (fix?.diagnosticCode === request.diagnosticCode) selected.set(request.line, fix);
             }
-            return [...selected.values(), ...documents];
+            return [...selected.values(), ...duplicates, ...documents];
         }
         const occurrenceLine = typeof line === 'number' ? line : undefined;
         const selected = occurrenceLine === undefined ? undefined : byLine.get(occurrenceLine);
@@ -175,8 +193,22 @@ export function prepareQuickFixes(source: string, options: Pick<QuickFixOptions,
             }
             occurrenceFix = verified.get(occurrenceLine);
         }
-        return [...(occurrenceFix === undefined ? [] : [occurrenceFix]), ...documents];
+        return [...(occurrenceFix === undefined ? [] : [occurrenceFix]), ...duplicates, ...documents];
     };
+}
+
+function duplicateComplianceMarkerEdit(raw: string, startOffset: number): QuickFixEdit | undefined {
+    const header = pattern('^(\\s*concept\\s+\\w+\\s*:\\s*\\w+)((?:[^\\S\\r\\n]+@?\\w+)*)').exec(raw);
+    if (header === null) return undefined;
+    const suffix = header[2];
+    const seen = new Set<string>();
+    const text = suffix.replace(new RegExp(pattern('[^\\S\\r\\n]+(@?\\w+)').source, 'gu'), (token, marker: string) => {
+        const wire = complianceWireName(marker);
+        if (seen.has(wire)) return '';
+        seen.add(wire);
+        return token;
+    });
+    return text === suffix ? undefined : { start: startOffset + header[1].length, length: suffix.length, text };
 }
 
 function complianceMarkerEdit(raw: string, startOffset: number): QuickFixEdit | undefined {
