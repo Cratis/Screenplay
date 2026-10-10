@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Globalization;
 using System.Text.RegularExpressions;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
@@ -31,12 +32,17 @@ internal static partial class ScreenParser
         string? description = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
         var directives = new List<ScreenDirectiveSyntax>();
+        var contributions = new List<ScreenContributionSyntax>();
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
             if (DescriptionParser.TryParse(context, line, ref description, $"Screen '{name.Groups[1].Value}'", directiveLocations)) continue;
-            if (FileReferenceParser.IsDirective(line))
+            if (LineText.FirstWord(line.Content) == "contribute")
+            {
+                if (ParseContribution(context, line) is { } contribution) contributions.Add(contribution);
+            }
+            else if (FileReferenceParser.IsDirective(line))
             {
                 file = FileReferenceParser.ParseReplacing(context, line, file, directiveLocations);
             }
@@ -46,7 +52,39 @@ internal static partial class ScreenParser
             }
         }
 
-        return new(name.Groups[1].Value, file, directives, header.Location) { Description = description, DirectiveLocations = directiveLocations };
+        return new(name.Groups[1].Value, file, directives, header.Location) { Description = description, DirectiveLocations = directiveLocations, Contributions = contributions };
+    }
+
+    /// <summary>
+    /// Parses the screen directives nested under a line - the content of a template slot or a contribution.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
+    /// <param name="line">The consumed line whose children are the directives.</param>
+    /// <returns>The parsed <see cref="ScreenDirectiveSyntax">directives</see>.</returns>
+    internal static IReadOnlyList<ScreenDirectiveSyntax> ParseDirectiveBlock(ParserContext context, SourceLine line)
+    {
+        var directives = new List<ScreenDirectiveSyntax>();
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            if (ParseDirective(context, child) is { } directive) directives.Add(directive);
+        }
+
+        return directives;
+    }
+
+    static ScreenContributionSyntax? ParseContribution(ParserContext context, SourceLine line)
+    {
+        var match = ContributionRegex().Match(line.Content);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.UnknownScreenDirective, $"Invalid screen contribution '{line.Content}' - expected 'contribute to <Point> [order <n>]'", line.Location);
+            context.SkipBlock(line.Indent);
+            return null;
+        }
+
+        var order = match.Groups[2].Success ? int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture) : (int?)null;
+        return new(match.Groups[1].Value, order, ParseDirectiveBlock(context, line), line.Location);
     }
 
     static ScreenDirectiveSyntax? ParseDirective(ParserContext context, SourceLine line)
@@ -163,6 +201,7 @@ internal static partial class ScreenParser
 
         var parameters = new List<ScreenNavigationParameterSyntax>();
         string? route = null;
+        string? outlet = null;
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
@@ -180,10 +219,17 @@ internal static partial class ScreenParser
                 continue;
             }
 
-            context.Error(DiagnosticCodes.InvalidNavigation, $"Unexpected '{child.Content}' in navigation - expected 'route \"...\"' or 'parameter <name> from <binding>'", child.Location);
+            var outletMatch = OutletRegex().Match(child.Content);
+            if (outletMatch.Success)
+            {
+                outlet = outletMatch.Groups[1].Value;
+                continue;
+            }
+
+            context.Error(DiagnosticCodes.InvalidNavigation, $"Unexpected '{child.Content}' in navigation - expected 'route \"...\"', 'outlet <name>' or 'parameter <name> from <binding>'", child.Location);
         }
 
-        return new(match.Groups[1].Value, match.Groups[2].Success ? match.Groups[2].Value : null, line.Location) { Route = route, Parameters = parameters };
+        return new(match.Groups[1].Value, match.Groups[2].Success ? match.Groups[2].Value : null, line.Location) { Route = route, Outlet = outlet, Parameters = parameters };
     }
 
     static ScreenTemplateReferenceSyntax ParseTemplateReference(ParserContext context, SourceLine line)
@@ -428,14 +474,7 @@ internal static partial class ScreenParser
     static ComponentOutletSyntax ParseComponentOutlet(ParserContext context, SourceLine line)
     {
         var name = line.Content["outlet".Length..].Trim();
-        var directives = new List<ScreenDirectiveSyntax>();
-        while (context.TryPeekChild(line.Indent, out var child))
-        {
-            context.Reader.TakeSignificant();
-            if (ParseDirective(context, child) is { } directive) directives.Add(directive);
-        }
-
-        return new(name, directives, line.Location);
+        return new(name, ParseDirectiveBlock(context, line), line.Location);
     }
 
     static ScreenToolbarSyntax ParseToolbar(ParserContext context, SourceLine line)
@@ -543,6 +582,12 @@ internal static partial class ScreenParser
 
     [GeneratedRegex(@"^parameter\s+([A-Za-z_]\w*)\s+from\s+(.+)$", RegexOptions.None, 1000)]
     private static partial Regex ParameterRegex();
+
+    [GeneratedRegex(@"^outlet\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
+    private static partial Regex OutletRegex();
+
+    [GeneratedRegex(@"^contribute\s+to\s+([A-Za-z_]\w*)(?:\s+order\s+(-?\d+))?$", RegexOptions.None, 1000)]
+    private static partial Regex ContributionRegex();
 
     [GeneratedRegex(@"^component\s+([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex ComponentRegex();

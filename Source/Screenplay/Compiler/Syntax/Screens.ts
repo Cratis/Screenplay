@@ -4,6 +4,7 @@
 import { ConditionSyntax } from './Conditions';
 import { TypeRefSyntax } from './Declarations';
 import { ExpressionSyntax } from './Expressions';
+import type { ScreenContributionSyntax } from './CompositionSyntax';
 import { SyntaxNode } from './SyntaxNode';
 
 export type UiBindingKind = 'Invalid' | 'DataContext' | 'QueryResult' | 'ComponentProperty' | 'Literal';
@@ -31,6 +32,7 @@ export interface ScreenSyntax extends SyntaxNode {
     readonly kind: 'ScreenSyntax';
     readonly name: string;
     readonly directives: readonly ScreenDirectiveSyntax[];
+    readonly contributions?: readonly ScreenContributionSyntax[];
 }
 
 // 'data <ReadModel>[[]] via query <Query> [by <param>]'.
@@ -86,6 +88,7 @@ export interface ScreenNavigateSyntax extends SyntaxNode {
     readonly screen: string;
     readonly by: string | null;
     readonly route: string | null;
+    readonly outlet?: string | null;
     readonly parameters: readonly ScreenNavigationParameterSyntax[];
 }
 

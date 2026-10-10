@@ -27,7 +27,8 @@ internal sealed class SyntaxMember(PropertyInfo property, ParameterInfo? paramet
         !(Property.DeclaringType == typeof(Specifications.SpecificationSyntax) && Property.Name == nameof(Specifications.SpecificationSyntax.ThenNoEvents)) &&
         !(Property.DeclaringType == typeof(EventSyntax) &&
           (Property.Name == nameof(EventSyntax.Generation) || Property.Name == nameof(EventSyntax.HasGenerationMarker) || Property.Name == nameof(EventSyntax.Visibility))) &&
-        !(Property.DeclaringType == typeof(ImportSyntax) && Property.Name == nameof(ImportSyntax.Visibility));
+        !(Property.DeclaringType == typeof(ImportSyntax) && Property.Name == nameof(ImportSyntax.Visibility)) &&
+        !CompositionDefaults.IsOptional(Property);
 
     internal object? MissingValue
     {
@@ -36,6 +37,7 @@ internal sealed class SyntaxMember(PropertyInfo property, ParameterInfo? paramet
             if (Type == typeof(SourceOptions)) return SourceOptions.Legacy;
             if (Property.DeclaringType == typeof(ConceptAttributeSyntax) && Property.Name == nameof(ConceptAttributeSyntax.Criminal)) return false;
             if (Property.DeclaringType == typeof(Specifications.SpecificationSyntax) && Property.Name == nameof(Specifications.SpecificationSyntax.ThenNoEvents)) return false;
+            if (CompositionDefaults.IsOptional(Property)) return false;
 
             if (ElementType is not null)
             {

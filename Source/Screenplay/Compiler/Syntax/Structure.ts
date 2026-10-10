@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import type { ExposureSyntax, InstanceContributionsSyntax } from './CompositionSyntax';
 import { AuthorizeSyntax, PersonaSyntax } from './Authorization';
 import { CaptureSyntax } from './Captures';
 import { CommandSyntax } from './Commands';
@@ -116,4 +117,8 @@ export interface ApplicationSyntax extends SyntaxNode {
 
     // The files the document imports at its top level - whole documents, merged into the application.
     readonly fileImports: readonly FileImportSyntax[];
+
+    // What layouts and templates expose, and what instances store for it - written only when present.
+    readonly exposures?: readonly ExposureSyntax[];
+    readonly instanceContributions?: readonly InstanceContributionsSyntax[];
 }

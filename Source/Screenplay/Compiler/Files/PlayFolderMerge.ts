@@ -67,6 +67,8 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         policies: applications.flatMap(application => application.policies ?? []),
         seeds: applications.flatMap(application => application.seeds ?? []),
         fileImports: applications.flatMap(application => application.fileImports),
+        ...presentOnly('exposures', applications.flatMap(application => application.exposures ?? [])),
+        ...presentOnly('instanceContributions', applications.flatMap(application => application.instanceContributions ?? [])),
         location: applications[0]?.location ?? { line: 1, column: 1 },
     };
     const all = [...documents.flatMap(document => document.diagnostics), ...diagnostics];
@@ -199,3 +201,8 @@ function declaredInOneFile<T extends { readonly name: string; readonly location:
 const describe = (path: string | undefined): string => path ?? 'another file';
 const error = (code: string, message: string, location: SourceLocation): Diagnostic => ({ severity: 'error', code, message, location });
 const warning = (code: string, message: string, location: SourceLocation): Diagnostic => ({ severity: 'warning', code, message, location });
+
+// Composition members are written only when a document declares them, matching the C# canonical JSON.
+function presentOnly<TKey extends string, TValue>(key: TKey, values: readonly TValue[]): Partial<Record<TKey, readonly TValue[]>> {
+    return values.length === 0 ? {} : { [key]: values } as Partial<Record<TKey, readonly TValue[]>>;
+}

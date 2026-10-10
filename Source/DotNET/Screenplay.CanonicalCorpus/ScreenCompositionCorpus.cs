@@ -99,9 +99,49 @@ public static class ScreenCompositionCorpus
                         "ObjectExpressionSyntax",
                         "ScreenToolbarSyntax",
                         "UiBindingSyntax",
-                        "UiProfileSyntax"
+                        "UiProfileSyntax",
+                        "ExposureSyntax",
+                        "ExposedPropertySyntax",
+                        "InstanceContributionsSyntax",
+                        "InstanceContributionSyntax",
+                        "ContributedItemSyntax",
+                        "ContributedItemValueSyntax",
+                        "ScreenContributionSyntax",
+                        "TemplateSlotContentSyntax",
+                        "ArrangementContainerSyntax"
                     ]
                 }
+            ],
+            RejectionVectors =
+            [
+                Rejection(
+                    "incompatible-template-scope",
+                    "IncompatibleTemplateScope",
+                    Diagnostic("PLAY0631", "The screen template 'FeatureShell' cannot be used at slice scope - it allows feature")),
+                Rejection(
+                    "incompatible-component-package",
+                    "IncompatibleComponentPackage",
+                    Diagnostic("PLAY0632", "The component 'vendor.charts.Gauge' comes from package 'vendor.charts', which no ui profile declares - add it to a profile's 'packages'")),
+                Rejection(
+                    "incompatible-instance-value",
+                    "IncompatibleInstanceValue",
+                    Diagnostic("PLAY0628", "'shell:header.actions' is exposed as a collection - contribute 'items', not 'set'")),
+                Rejection(
+                    "missing-outlet",
+                    "MissingOutlet",
+                    Diagnostic("PLAY0630", "Unknown outlet 'details' - no layout, template or component declares 'outlet details'")),
+                Rejection(
+                    "missing-references",
+                    "MissingReferences",
+                    Diagnostic("PLAY0622", "Unknown exposure owner 'NoSuchTemplate' - an exposure belongs to a layout, screen template or dialog template"),
+                    Diagnostic("PLAY0626", "Unknown instance 'NoSuchScreen' - instance values belong to a screen, screen template or dialog template"),
+                    Diagnostic("PLAY0627", "'WorkItemList' stores a value for 'shell:header.subtitle', which no exposure exposes"),
+                    Diagnostic("PLAY0629", "The screen template 'FeatureShell' provides content for slot 'footer', which it does not declare")),
+                Rejection(
+                    "re-exposure-cycle",
+                    "ReExposureCycle",
+                    Diagnostic("PLAY0623", "Re-exposing 'shell:header.title' from 'Outer' forms a cycle - a re-exposure must lead back to the owner that exposes it first"),
+                    Diagnostic("PLAY0623", "Re-exposing 'shell:header.title' from 'Inner' forms a cycle - a re-exposure must lead back to the owner that exposes it first"))
             ],
             BehaviorExpectations =
             [
@@ -748,6 +788,20 @@ public static class ScreenCompositionCorpus
             Document("work-item-comments-slice", "Workspaces/Tracking/WorkItemComments/WorkItemComments.play", $"{Prefix}.source.folder.Workspaces.Tracking.WorkItemComments.WorkItemComments.play")
         ],
         IdentityCatalogBytes = Resource($"{Prefix}.identity.folder-catalog-v1.json")
+    };
+
+    static CanonicalCorpusRejectionVector Rejection(string name, string file, params CanonicalCorpusDiagnosticExpectation[] diagnostics) => new()
+    {
+        Name = $"screen-composition/v1/negative/{name}",
+        ApplicationName = "Workspaces",
+        ApplicationIdentity = ApplicationIdentity.Parse("app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"),
+        SourceForm = new CanonicalCorpusSourceForm
+        {
+            Name = "single",
+            Documents = [Document(name, $"negative/{file}.play", $"{Prefix}.negative.{file}.play.txt")]
+        },
+        Diagnostics = [.. diagnostics],
+        ArtifactPaths = []
     };
 
     static CanonicalCorpusDiagnosticExpectation Diagnostic(string code, string message) => new()

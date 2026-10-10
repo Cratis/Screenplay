@@ -343,6 +343,19 @@ layout PortalShell
       header height 72
       content grow
 
+// What the Board template lets a screen inside it configure, and what the
+// collections board stores for it.
+exposure for Board
+  property "board:toolbar".dense label "Compact toolbar"
+  property "board:toolbar".actions label "Board actions" operations add, reorder fields label
+
+instance CollectionsBoard
+  set "board:toolbar".dense = false
+  items "board:toolbar".actions
+    item refresh
+      label = "Refresh"
+      icon = "refresh"
+
 ui profile Desktop
   target platform web
   target size regular
@@ -460,18 +473,26 @@ module Invoicing
 
   screen template Board
     fits slot content
+    display "Board"
+    description "Invoices grouped into columns by payment state"
+    scopes slice
 
     toolbar contributes BoardActions
     due
     overdue
     settled
 
+    content toolbar
+      component Cratis.Components.Toolbar boardToolbar
+        id "board:toolbar"
+        property dense = true
+
     arrangement flow
       column gap 8
         toolbar height 48
-        grid gap 16
+        grid gap 16 columns 3 rows 1 grow
           due     span 1
-          overdue span 1
+          overdue grow 2 span 1
           settled span 1
 
   screen template List
@@ -2375,6 +2396,10 @@ module Invoicing
         on event PaymentRecorded
           where amount > 0
           refresh ListSettledInvoices
+        contribute to BoardActions order 10
+          action RecordPayment
+            navigate to InvoiceDetails
+              outlet detail
 
       specification MovingAnInvoiceFromDueToOverdue
         given caller

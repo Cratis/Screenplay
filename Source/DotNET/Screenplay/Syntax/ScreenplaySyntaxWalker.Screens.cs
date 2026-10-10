@@ -25,6 +25,15 @@ public abstract partial class ScreenplaySyntaxWalker
         {
             VisitScreenDirective(directive);
         }
+
+        foreach (var contribution in syntax.Contributions)
+        {
+            VisitNode(contribution);
+            foreach (var directive in contribution.Directives)
+            {
+                VisitScreenDirective(directive);
+            }
+        }
     }
 
     /// <summary>

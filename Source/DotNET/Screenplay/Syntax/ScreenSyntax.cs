@@ -48,6 +48,11 @@ public record ScreenSyntax(
     /// Gets the report-only description, distinct from the UI title.
     /// </summary>
     public string? Description { get; init; }
+
+    /// <summary>
+    /// Gets what this screen contributes to contribution points elsewhere in the tree.
+    /// </summary>
+    public IEnumerable<ScreenContributionSyntax> Contributions { get; init; } = [];
 }
 
 /// <summary>
@@ -86,6 +91,11 @@ public record ScreenNavigateSyntax(string Screen, string? By, SourceLocation Loc
     /// Gets the explicit route override, or <c>null</c> when navigation uses the target screen's default route.
     /// </summary>
     public string? Route { get; init; }
+
+    /// <summary>
+    /// Gets the named outlet the destination opens in, or <c>null</c> for the default outlet.
+    /// </summary>
+    public string? Outlet { get; init; }
 
     /// <summary>
     /// Gets the route or navigation parameters supplied by the author.

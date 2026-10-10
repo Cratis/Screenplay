@@ -15,7 +15,8 @@ Declarations and body directives can appear in any order unless a rule below sta
 
 Document       = [ NumericPreamble ], [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
                | PersonaDecl | AuthenticationDecl | TriggerDecl | ThemeDecl
-               | LayoutDecl | UiProfileDecl | BehaviorDecl | SystemDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
+               | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
+               | SystemDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
 (* At most one domain and authentication block. Put domain first; the compiler
    reports PLAY0004 when it follows another application declaration. *)
@@ -404,15 +405,31 @@ LayoutDecl     = "layout", Ident, NL,
                  INDENT, StructureBody, DEDENT ;
 
 ScreenTemplateDecl = "screen", "template", Ident, NL,
-                 INDENT, { FitsSlotDecl | SlotDecl | ArrangementDecl
+                 INDENT, { FitsSlotDecl | SlotDecl | ArrangementDecl | TemplatePicker | SlotContentDecl
                          | InteractionBinding | UsesBehaviorDecl }, DEDENT ;
 
 DialogTemplateDecl = "dialog", "template", Ident, NL,
-                 INDENT, StructureBody, DEDENT ;
+                 INDENT, { SlotDecl | ArrangementDecl | TemplatePicker | SlotContentDecl
+                         | InteractionBinding | UsesBehaviorDecl }, DEDENT ;
+
+(* Template picker metadata and the content a template provides for its own
+   slots - Scene's ScreenTemplate/DialogTemplate DisplayName, Description,
+   Metadata.Scopes and Content. A layout may declare "scopes" only.          *)
+
+TemplatePicker = "display", String, NL
+               | "description", String, NL
+               | TemplateScopes ;
+
+TemplateScopes = "scopes", ( TemplateScope, { ",", TemplateScope } | "none" ), NL ;
+
+TemplateScope  = "application" | "module" | "feature" | "subfeature" | "slice" ;
+
+SlotContentDecl = "content", Ident, NL,
+                 INDENT, { ScreenDirective }, DEDENT ;
 
 FitsSlotDecl   = "fits", "slot", Ident, NL ;
 
-StructureBody  = { SlotDecl | ArrangementDecl | InteractionBinding | UsesBehaviorDecl } ;
+StructureBody  = { SlotDecl | ArrangementDecl | TemplateScopes | InteractionBinding | UsesBehaviorDecl } ;
 (* At most one arrangement; a screen template has at most one fits slot. *)
 
 SlotDecl       = Ident, [ "contributes", Ident ], NL ;
@@ -429,13 +446,15 @@ ArrangementDecl = "arrangement", "flow", NL,
 
 ArrangementNode = ContainerDecl | ArrangementSlot ;
 
-ContainerDecl  = ( "row" | "column" | "grid" ), [ "gap", Number ], NL,
+ContainerDecl  = ( "row" | "column" | "grid" ), [ "gap", Number ],
+                 [ "columns", Number ], [ "rows", Number ],     (* grid only *)
+                 [ "grow", [ Number ] ], [ "span", Number ], NL,
                  INDENT, { ArrangementNode }, DEDENT ;
 
 ArrangementSlot = Ident,
                  [ "width", Number ],
                  [ "height", Number ],
-                 [ "grow" ],
+                 [ "grow", [ Number ] ],
                  [ "span", Number ],
                  NL ;
 
@@ -443,6 +462,34 @@ WhenDecl       = "when",
                  ( "width", ArrangementSizeClass, [ ",", "height", ArrangementSizeClass ]
                  | "height", ArrangementSizeClass ), NL,
                  INDENT, { ArrangementNode }, DEDENT ;
+
+(* What a layout or template lets whatever sits inside it configure, and the
+   values an instance stores for it - Scene's ExposureDeclaration and
+   InstanceContribution. A component is an identifier or a quoted exact
+   stable id; values are typed literals.                                     *)
+
+ExposureDecl   = "exposure", "for", Ident, NL,
+                 INDENT, { ExposedProperty }, DEDENT ;
+
+ExposedProperty = "property", ComponentPath,
+                 [ "label", String ],
+                 [ "operations", ( CollectionOperation, { ",", CollectionOperation } | "none" ) ],
+                 [ "fields", ( Ident, { ",", Ident } | "none" ) ],
+                 [ "reexposes", Ident ], NL ;
+
+CollectionOperation = "add" | "remove" | "reorder" | "edit-fields" ;
+
+InstanceDecl   = "instance", Ident, NL,
+                 INDENT, { InstanceValue }, DEDENT ;
+
+InstanceValue  = "set", ComponentPath, "=", JSONValue, NL
+               | "items", ComponentPath, NL,
+                 INDENT, { ContributedItem }, DEDENT ;
+
+ContributedItem = "item", ( Ident | String ), NL,
+                 INDENT, { Ident, "=", JSONValue, NL }, DEDENT ;
+
+ComponentPath  = ( Ident | String ), ".", Ident, { ".", Ident } ;
 
 VariantDecl    = "variant", "width", ArrangementSizeClass, ",", "height", ArrangementSizeClass, NL,
                  INDENT, { PlaceDecl }, DEDENT ;
@@ -1198,7 +1245,13 @@ RefusalValue   = "$refusal.", ( "reason" | "constraint" | "message" ) ;
    that holds it - "Queue.All", "Preparation.Queue.All" - to reach across.  *)
 
 ScreenDecl     = "screen", Ident, NL,
-                 INDENT, [ DescriptionDecl ], ScreenBody, DEDENT ;
+                 INDENT, [ DescriptionDecl ], ScreenBody, { ScreenContributionDecl }, DEDENT ;
+
+(* Content a screen contributes to a contribution point elsewhere in the tree -
+   Scene's Screen.Contributions.                                             *)
+
+ScreenContributionDecl = "contribute", "to", Ident, [ "order", Integer ], NL,
+                 INDENT, { ScreenDirective }, DEDENT ;
 
 ScreenBody     = FileDirective                          (* full external file  *)
                | { ScreenDirective } ;                  (* declarative levels  *)
@@ -1235,7 +1288,12 @@ ActionOtherwise   = "otherwise", "hidden", NL
 ActionOption   = NavigateDecl
                | "label", LocalizableString, NL ;
 
-NavigateDecl   = "navigate", "to", QualifiedName, [ "by", Ident ], NL ;
+NavigateDecl   = "navigate", "to", QualifiedName, [ "by", Ident ], NL,
+                 [ INDENT, { NavigateOption }, DEDENT ] ;
+
+NavigateOption = "route", LocalizableString, NL
+               | "outlet", Ident, NL
+               | "parameter", Ident, "from", ( "data" | "query" | "component" | "literal" ), (* binding *) NL ;
 
 TemplateRef    = "template", Ident, NL,
                  INDENT, { FilledSlot }, DEDENT ;

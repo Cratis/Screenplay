@@ -176,6 +176,18 @@ public sealed partial class ScreenplayPrinter :
             WriteLayout(writer, layout);
         }
 
+        foreach (var exposure in application.Exposures)
+        {
+            writer.Blank();
+            WriteExposure(writer, exposure);
+        }
+
+        foreach (var instance in application.InstanceContributions)
+        {
+            writer.Blank();
+            WriteInstanceContributions(writer, instance);
+        }
+
         foreach (var uiProfile in application.UiProfiles ?? [])
         {
             writer.Blank();
@@ -708,6 +720,7 @@ public sealed partial class ScreenplayPrinter :
         using (writer.Indent())
         {
             WriteTemplateMetadata(writer, layout.Category, layout.TemplateType, layout.Exposes, layout.Outlets);
+            WriteTemplateScopes(writer, layout.RestrictsScopes, layout.Scopes);
             WriteSlots(writer, layout.Slots);
             WriteArrangement(writer, layout.Arrangement);
             WriteAttachments(writer, layout.Behaviors, layout.UsedBehaviors);
@@ -727,7 +740,9 @@ public sealed partial class ScreenplayPrinter :
             }
 
             WriteTemplateMetadata(writer, template.Category, template.TemplateType, template.Exposes, template.Outlets);
+            WriteTemplatePicker(writer, template.DisplayName, template.Description, template.RestrictsScopes, template.Scopes);
             WriteSlots(writer, template.Slots);
+            WriteTemplateContent(writer, template.Content);
             WriteArrangement(writer, template.Arrangement);
             WriteAttachments(writer, template.Behaviors, template.UsedBehaviors);
         }
@@ -740,7 +755,9 @@ public sealed partial class ScreenplayPrinter :
         using (writer.Indent())
         {
             WriteTemplateMetadata(writer, template.Category, template.TemplateType, template.Exposes, template.Outlets);
+            WriteTemplatePicker(writer, template.DisplayName, template.Description, template.RestrictsScopes, template.Scopes);
             WriteSlots(writer, template.Slots);
+            WriteTemplateContent(writer, template.Content);
             WriteArrangement(writer, template.Arrangement);
             WriteAttachments(writer, template.Behaviors, template.UsedBehaviors);
         }
@@ -868,7 +885,7 @@ public sealed partial class ScreenplayPrinter :
                     ArrangementContainerKind.Grid => "grid",
                     _ => throw new UnsupportedSyntaxForPrinting("nested arrangement container kind", container.Kind.ToString()),
                 };
-                writer.Line(container.Gap is null ? keyword : $"{keyword} gap {container.Gap}");
+                writer.Line(WriteArrangementContainerLine(keyword, container));
                 using (writer.Indent())
                 {
                     foreach (var child in container.Children)
@@ -921,7 +938,7 @@ public sealed partial class ScreenplayPrinter :
 
         if (slot.Grow)
         {
-            line += " grow";
+            line += slot.GrowFactor is null ? " grow" : $" grow {WriteNumber(slot.GrowFactor.Value)}";
         }
 
         if (slot.Span is not null)

@@ -60,6 +60,17 @@ public record LayoutSyntax(
     /// Gets recursively fillable outlets declared by the template.
     /// </summary>
     public IEnumerable<TemplateOutletSyntax> Outlets { get; init; } = [];
+
+    /// <summary>
+    /// Gets a value indicating whether a <c>scopes</c> line restricts where the template may be used.
+    /// </summary>
+    public bool RestrictsScopes { get; init; }
+
+    /// <summary>
+    /// Gets the scopes - <c>application</c>, <c>module</c>, <c>feature</c>, <c>subfeature</c> or <c>slice</c> - the
+    /// template may be used at when <see cref="RestrictsScopes"/> is set; empty for <c>scopes none</c>.
+    /// </summary>
+    public IEnumerable<string> Scopes { get; init; } = [];
 }
 
 /// <summary>
@@ -119,6 +130,32 @@ public record ScreenTemplateSyntax(
     /// Gets recursively fillable outlets declared by the template.
     /// </summary>
     public IEnumerable<TemplateOutletSyntax> Outlets { get; init; } = [];
+
+    /// <summary>
+    /// Gets a value indicating whether a <c>scopes</c> line restricts where the template may be used.
+    /// </summary>
+    public bool RestrictsScopes { get; init; }
+
+    /// <summary>
+    /// Gets the scopes - <c>application</c>, <c>module</c>, <c>feature</c>, <c>subfeature</c> or <c>slice</c> - the
+    /// template may be used at when <see cref="RestrictsScopes"/> is set; empty for <c>scopes none</c>.
+    /// </summary>
+    public IEnumerable<string> Scopes { get; init; } = [];
+
+    /// <summary>
+    /// Gets the human-readable name for a template picker, or <c>null</c> to use <see cref="Name"/>.
+    /// </summary>
+    public string? DisplayName { get; init; }
+
+    /// <summary>
+    /// Gets the one-line description for a template picker.
+    /// </summary>
+    public string? Description { get; init; }
+
+    /// <summary>
+    /// Gets the content the template itself provides for its slots - its own chrome.
+    /// </summary>
+    public IEnumerable<TemplateSlotContentSyntax> Content { get; init; } = [];
 }
 
 /// <summary>
@@ -169,6 +206,32 @@ public record DialogTemplateSyntax(
     /// Gets recursively fillable outlets declared by the template.
     /// </summary>
     public IEnumerable<TemplateOutletSyntax> Outlets { get; init; } = [];
+
+    /// <summary>
+    /// Gets a value indicating whether a <c>scopes</c> line restricts where the template may be used.
+    /// </summary>
+    public bool RestrictsScopes { get; init; }
+
+    /// <summary>
+    /// Gets the scopes - <c>application</c>, <c>module</c>, <c>feature</c>, <c>subfeature</c> or <c>slice</c> - the
+    /// template may be used at when <see cref="RestrictsScopes"/> is set; empty for <c>scopes none</c>.
+    /// </summary>
+    public IEnumerable<string> Scopes { get; init; } = [];
+
+    /// <summary>
+    /// Gets the human-readable name for a template picker, or <c>null</c> to use <see cref="Name"/>.
+    /// </summary>
+    public string? DisplayName { get; init; }
+
+    /// <summary>
+    /// Gets the one-line description for a template picker.
+    /// </summary>
+    public string? Description { get; init; }
+
+    /// <summary>
+    /// Gets the content the template itself provides for its slots - its own chrome.
+    /// </summary>
+    public IEnumerable<TemplateSlotContentSyntax> Content { get; init; } = [];
 }
 
 /// <summary>

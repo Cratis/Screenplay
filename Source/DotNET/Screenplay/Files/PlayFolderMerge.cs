@@ -79,6 +79,8 @@ internal static partial class PlayFolderMerge
             EventSources = [.. applications.SelectMany(application => application.EventSources)],
             Behaviors = DeclaredInOneFile(applications.SelectMany(application => application.Behaviors), behavior => behavior.Name ?? string.Empty, behavior => behavior.Location, "behavior", context),
             SourceComments = [.. applications.SelectMany(application => application.SourceComments)],
+            Exposures = [.. applications.SelectMany(application => application.Exposures)],
+            InstanceContributions = [.. applications.SelectMany(application => application.InstanceContributions)],
             FileImports = [.. applications.SelectMany(application => application.FileImports)],
             RegisteredTriggers = MergeRegisteredTriggers(applications, context)
         };

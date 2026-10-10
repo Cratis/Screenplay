@@ -1,0 +1,11 @@
+ui profile Web
+  target platform web
+  packages
+    scene.web
+
+module Workspaces
+  feature Tracking
+    slice StateView WorkItemList
+      screen WorkItemList
+        component vendor.charts.Gauge progress
+          property value = 42
