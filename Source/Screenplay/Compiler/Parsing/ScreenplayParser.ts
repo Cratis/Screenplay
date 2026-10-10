@@ -36,6 +36,8 @@ import { stringBodyPattern, unescapeString } from '../Text/StringLiteral';
 import { SystemSyntax } from '../Syntax/Operations';
 import { EventSourceSyntax } from '../Syntax/EventSources';
 import { parseEventSource } from './EventSourceParser';
+import { parseExposure, parseInstance } from './CompositionParser';
+import { ExposureSyntax, InstanceContributionsSyntax } from '../Syntax/CompositionSyntax';
 import { parseExample } from './SpecificationExampleParser';
 import { locationOf, SourceLine, startOf } from './SourceLine';
 
@@ -76,6 +78,8 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     const seeds: SeedSyntax[] = [];
     const examples: SpecificationExampleSyntax[] = [];
     const declaredTriggers: NonNullable<ApplicationSyntax['declaredTriggers']>[number][] = [];
+    const exposures: ExposureSyntax[] = [];
+    const instanceContributions: InstanceContributionsSyntax[] = [];
     let sawOtherConstruct = false;
     for (let line = context.reader.peekSignificant(); line !== undefined; line = context.reader.peekSignificant()) {
         context.reader.takeSignificant();
@@ -134,6 +138,10 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
         } else if (keyword === 'policy') {
             // Legacy policies were opaque: enrich their structure without adding diagnostics.
             policies.push(parsePolicy(context, line));
+        } else if (keyword === 'exposure') {
+            exposures.push(parseExposure(context, line));
+        } else if (keyword === 'instance') {
+            instanceContributions.push(parseInstance(context, line));
         } else if (keyword === 'trigger') {
             const data = parseTriggerDeclaration(context, line);
             const name = /^trigger\s+([A-Za-z_]\w*)$/.exec(line.content)?.[1];
@@ -150,7 +158,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, location: context.start };
+    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...(exposures.length > 0 ? { exposures } : {}), ...(instanceContributions.length > 0 ? { instanceContributions } : {}), location: context.start };
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }
@@ -162,7 +170,7 @@ function declaresConstruct(keyword: string, line: SourceLine, placement: PlayPla
     if (keyword === 'module') {
         return isDocumentPlacement(placement);
     }
-    return keyword === 'purpose' || keyword === 'example' || keyword === 'eventsource' || keyword === 'system' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || opaqueTopLevel.has(keyword);
+    return keyword === 'purpose' || keyword === 'example' || keyword === 'exposure' || keyword === 'instance' || keyword === 'eventsource' || keyword === 'system' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || opaqueTopLevel.has(keyword);
 }
 
 function parseModuleInPlacedFile(context: ParserContext, line: SourceLine, placement: PlayPlacement, moduleBody: ModuleBody | undefined): void {

@@ -43,7 +43,9 @@ internal static partial class LayoutParser
             Category = body.Category,
             TemplateType = body.TemplateType,
             Exposes = body.Exposes,
-            Outlets = body.Outlets
+            Outlets = body.Outlets,
+            RestrictsScopes = body.RestrictsScopes,
+            Scopes = body.Scopes
         };
     }
 
@@ -71,7 +73,12 @@ internal static partial class LayoutParser
             Category = body.Category,
             TemplateType = body.TemplateType,
             Exposes = body.Exposes,
-            Outlets = body.Outlets
+            Outlets = body.Outlets,
+            RestrictsScopes = body.RestrictsScopes,
+            Scopes = body.Scopes,
+            DisplayName = body.DisplayName,
+            Description = body.Description,
+            Content = body.Content
         };
     }
 
@@ -98,7 +105,12 @@ internal static partial class LayoutParser
             Category = body.Category,
             TemplateType = body.TemplateType,
             Exposes = body.Exposes,
-            Outlets = body.Outlets
+            Outlets = body.Outlets,
+            RestrictsScopes = body.RestrictsScopes,
+            Scopes = body.Scopes,
+            DisplayName = body.DisplayName,
+            Description = body.Description,
+            Content = body.Content
         };
     }
 

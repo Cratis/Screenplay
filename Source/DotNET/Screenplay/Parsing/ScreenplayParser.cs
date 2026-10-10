@@ -55,6 +55,8 @@ internal static partial class ScreenplayParser
         var eventSources = new List<EventSourceSyntax>();
         var examples = new List<SpecificationExampleSyntax>();
         var templates = new List<TemplateAssignmentSyntax>();
+        var exposures = new List<ExposureSyntax>();
+        var instanceContributions = new List<InstanceContributionsSyntax>();
 
         while (context.Reader.PeekSignificant() is { } line)
         {
@@ -166,6 +168,12 @@ internal static partial class ScreenplayParser
                 case "behavior":
                     AddBehavior(context, InteractionParser.ParseBehavior(context, line), behaviors);
                     break;
+                case "exposure":
+                    exposures.Add(CompositionParser.ParseExposure(context, line));
+                    break;
+                case "instance":
+                    instanceContributions.Add(CompositionParser.ParseInstance(context, line));
+                    break;
                 default:
                     if (moduleBody?.TryParse(context, line) == true || featureBody?.TryParse(context, line) == true)
                     {
@@ -195,7 +203,9 @@ internal static partial class ScreenplayParser
             EventSources = eventSources,
             Behaviors = behaviors,
             FileImports = fileImports,
-            Templates = templates
+            Templates = templates,
+            Exposures = exposures,
+            InstanceContributions = instanceContributions
         };
     }
 

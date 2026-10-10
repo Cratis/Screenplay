@@ -47,6 +47,24 @@ export abstract class ScreenplaySyntaxWalker {
         syntax.types.forEach(node => this.visitType(node));
         syntax.personas.forEach(node => this.visitPersona(node));
         syntax.policies?.forEach(node => this.visitPolicy(node));
+        syntax.exposures?.forEach(node => {
+            this.visitNode(node);
+            node.properties.forEach(property => this.visitNode(property));
+        });
+        syntax.instanceContributions?.forEach(node => {
+            this.visitNode(node);
+            node.contributions.forEach(contribution => {
+                this.visitNode(contribution);
+                if (contribution.value !== null) this.visitExpression(contribution.value);
+                contribution.items.forEach(item => {
+                    this.visitNode(item);
+                    item.values.forEach(value => {
+                        this.visitNode(value);
+                        this.visitExpression(value.value);
+                    });
+                });
+            });
+        });
         syntax.purposes?.forEach(node => this.visitPurpose(node));
         syntax.seeds?.forEach(node => this.visitSeed(node));
         syntax.modules.forEach(node => this.visitModule(node));
@@ -518,6 +536,10 @@ export abstract class ScreenplaySyntaxWalker {
     visitScreen(syntax: ScreenSyntax): void {
         this.visitNode(syntax);
         syntax.directives.forEach(node => this.visitScreenDirective(node));
+        syntax.contributions?.forEach(contribution => {
+            this.visitNode(contribution);
+            contribution.directives.forEach(node => this.visitScreenDirective(node));
+        });
     }
 
     visitScreenDirective(syntax: ScreenDirectiveSyntax): void {

@@ -29,8 +29,8 @@ A `key a, b` declaration would overlap a legal property named `key` whose type i
 3. The existing query `by name Type` form stays. A `by` header with at least two distinct `name Type [from source]` children declares a composite lookup. The forms are mutually exclusive.
 4. A command or reaction trigger supplies named parts under a `reads View [as alias]` child `by` block, as `part = source`. Sources are required, noncollection property paths with compatible nominal types. Literals are refused. The existing single `reads View by value` form stays.
 5. Resolve a lookup key from explicit marks first, otherwise from a unique single-instance query key shape. Unknown external identities stay undecided. Single-instance reads and queries supply every part exactly once. Collection queries may filter by a subset. Screen, form and navigation scalar lookups cannot supply a composite key and receive a missing-parts diagnostic. Read-model state fixtures state every part, and absence fixtures use an object with every named part.
-6. PLAY0625 rejects invalid declarations and marks. PLAY0626 names missing lookup parts. PLAY0627 rejects invalid lookup shapes, parts or sources. PLAY0351 extends to every key part in state fixtures. PLAY0283 remains the scalar reads type mismatch. The parsers share PLAY0625 and shape-only PLAY0627 checks; scoped lookup checks are C# only.
-7. PLAY0626 has a typed repair only when each missing part has one same-named compatible source. It preserves authored mappings and refuses ambiguity. Trigger-read repairs are not supported. PLAY0625 and PLAY0627 have no automatic repair. Read-model property rename remains explicitly unsupported until its whole mapping chain can be preserved.
+6. PLAY0633 rejects invalid declarations and marks. PLAY0634 names missing lookup parts. PLAY0635 rejects invalid lookup shapes, parts or sources. PLAY0351 extends to every key part in state fixtures. PLAY0283 remains the scalar reads type mismatch. The parsers share PLAY0633 and shape-only PLAY0635 checks; scoped lookup checks are C# only.
+7. PLAY0634 has a typed repair only when each missing part has one same-named compatible source. It preserves authored mappings and refuses ambiguity. Trigger-read repairs are not supported. PLAY0633 and PLAY0635 have no automatic repair. Read-model property rename remains explicitly unsupported until its whole mapping chain can be preserved.
 8. A single explicit key binds into the existing identifier property. Its canonical ESM bytes match the equivalent inferred model. It is a byte-preserving extension under 0004, not a new ESM version.
 9. Composite keys, by-block queries and fixtures using composite views fail executable binding with PLAY0268 naming [#599](https://github.com/Cratis/Screenplay/issues/599). The evaluator is unchanged. Composite instance identity, query arguments, fixture keys and projection alignment need their own admission contract.
 
@@ -52,7 +52,7 @@ Holds until superseded. In scope: both parsers and ASTs, validation, explicit si
 
 ## Verification
 
-**Done when:** named keys and complete lookups compile; invalid owners, shapes and sources receive PLAY0625 to PLAY0627; fixtures require all parts; deterministic repairs preserve comments; single explicit and inferred keys have identical canonical bytes; composite binding fails with PLAY0268 citing #599.
+**Done when:** named keys and complete lookups compile; invalid owners, shapes and sources receive PLAY0633 to PLAY0635; fixtures require all parts; deterministic repairs preserve comments; single explicit and inferred keys have identical canonical bytes; composite binding fails with PLAY0268 citing #599.
 
 **Verify by:** run the read-model key parser, lookup, binder, printer and workspace/MCP repair specs, TypeScript conformance and diagnostic vectors, and the local CI gates. Review editor, board and sample coverage before merging the whole change.
 

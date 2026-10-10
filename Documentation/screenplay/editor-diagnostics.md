@@ -11,7 +11,7 @@ The diagnostic catalogues share the C# names and codes. A catalogue entry does n
 
 | Codes | TypeScript and editor support |
 |---|---|
-| PLAY0625, PLAY0627 (shape checks) | Read-model key modifiers and key-part types; `by` block arity and duplicate names. Scoped lookup resolution remains a C# check. |
+| PLAY0633, PLAY0635 (shape checks) | Read-model key modifiers and key-part types; `by` block arity and duplicate names. Scoped lookup resolution remains a C# check. |
 | PLAY0514, PLAY0515 | Projection target and personal identifier checks. Both editors preserve compiler diagnostics. |
 | PLAY0518, PLAY0519 | Typed-example syntax and duplicate assignments. Both editors preserve compiler diagnostics. Example type resolution and semantic values remain C# checks. |
 | PLAY0341–PLAY0344 | Guarded-action syntax. Both editors preserve compiler diagnostics. |
@@ -21,6 +21,8 @@ The diagnostic catalogues share the C# names and codes. A catalogue entry does n
 | PLAY0453 | Malformed read-model absence assertions in `numbers exact` mode. Legacy numeric mode deliberately skips malformed `then no readmodel` assertions without a diagnostic, preserving its existing parser behavior. |
 | PLAY0607–PLAY0620 | Public/private event boundaries on the assembled model: scoped operational inputs and outputs, imports, seeds, direction, exactly one local public output type, event-target projections and reducers, and `source events` captures. Both editors forward these diagnostics. Unresolved and ambiguous references remain unclassified; legacy Translate slices without public metadata retain inbound behavior. Event-target projections and `source events` captures are checked like any other operational edge. These checks do not admit public events for execution. |
 | PLAY0538–PLAY0545 | Refusal-branch and no-event assertion syntax, scoped constraint resolution, selector coverage, refusal-value scope and types, and redelivery observer/occurrence matching. Monaco forwards these diagnostics for buffers; VS Code also reports them for files compiled together in a workspace folder. These checks do not admit the features for execution. |
+| PLAY0621, PLAY0625 | Malformed `exposure` and `instance` declarations. Both compilers report them. |
+| PLAY0622–PLAY0624, PLAY0626–PLAY0632 | Screen-composition references on the assembled model: exposure owners, re-exposures, instances, exposed values, template content slots, navigation outlets, template scopes and component packages. C# only; the TypeScript compiler parses the syntax but does not resolve these references. |
 
 Shared invalid-source cases live in `Source/Screenplay/Compiler/Conformance/diagnostics.json`; both compilers are checked against their codes, lines and order.
 
@@ -30,7 +32,7 @@ These checks are not computed by the TypeScript compiler or by the editors' ordi
 
 | Codes | Why the C# tool is required |
 |---|---|
-| PLAY0626, PLAY0627 (scoped checks) | Resolve declared read-model keys and require complete compatible single-instance lookups across reads, queries, screens, forms and absence fixtures. |
+| PLAY0634, PLAY0635 (scoped checks) | Resolve declared read-model keys and require complete compatible single-instance lookups across reads, queries, screens, forms and absence fixtures. |
 | PLAY0530–PLAY0537 | Opt-in [completeness checks](completeness.md), selected through CLI `--check` or MCP `checks`, after error-free whole-application compilation. TypeScript has no completeness-check API. They are not ordinary parser warnings. |
 | PLAY0546 | The semantic binder checks negated claim targets for nullable, missing or non-string values. TypeScript has no executable semantic binder. |
 

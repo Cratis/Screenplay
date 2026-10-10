@@ -185,6 +185,8 @@ public class when_freezing_legacy_source_syntax_bytes
 
     static ApplicationSyntax WithoutSampleAdditions(ApplicationSyntax application) => application with
     {
+        Exposures = [],
+        InstanceContributions = [],
         Concepts = application.Concepts.Where(concept => concept.Name != "InvoiceReceiptId"),
         Policies = application.Policies.Where(policy => policy.Name != "IsPerson"),
         Personas = application.Personas.Where(persona => persona.Name != "InvoiceDraftCreator").Select(persona => persona with { Policies = persona.Policies.Where(policy => policy != "IsPerson") }),
@@ -193,6 +195,9 @@ public class when_freezing_legacy_source_syntax_bytes
             Authorize = module.Authorize is { Requirement: PolicyReferenceSyntax reference } authorize && reference.Name == "IsPerson"
                 ? authorize with { Requirement = reference with { Name = "IsAuthenticated" } }
                 : module.Authorize,
+
+            // Screen composition has its own round-trip and corpus specs; the frozen bytes predate it.
+            ScreenTemplates = module.ScreenTemplates.Select(WithoutComposition),
 
             // The samples-policy coverage spec protects TagInvoiceForm's newly restored item population.
             Forms = module.Forms?.Where(form => form.Name != "TagInvoiceForm").Select(form =>
@@ -222,10 +227,27 @@ public class when_freezing_legacy_source_syntax_bytes
             {
                 Slices = feature.Slices.Select(slice => slice with
                 {
-                    Screens = slice.Screens.Select(screen => screen with { Directives = WithoutSampleInputNavigation(RestoreCollectionsToolbar(screen)) })
+                    Screens = slice.Screens.Select(screen => screen with { Directives = WithoutSampleInputNavigation(RestoreCollectionsToolbar(screen)), Contributions = [] })
                 })
             })
         })
+    };
+
+    static ScreenTemplateSyntax WithoutComposition(ScreenTemplateSyntax template) => template with
+    {
+        DisplayName = null,
+        Description = null,
+        RestrictsScopes = false,
+        Scopes = [],
+        Content = [],
+        Arrangement = template.Arrangement is { Root: { } root } arrangement ? arrangement with { Root = WithoutComposition(root) } : template.Arrangement
+    };
+
+    static ArrangementNodeSyntax WithoutComposition(ArrangementNodeSyntax node) => node switch
+    {
+        ArrangementContainerSyntax container => container with { Columns = null, Rows = null, Grow = null, Span = null, Children = [.. container.Children.Select(WithoutComposition)] },
+        ArrangementSlotSyntax { GrowFactor: not null } slot => slot with { Grow = false, GrowFactor = null },
+        _ => node
     };
 
     // The outbound publication slice has its own v9 conformance vector; omit it, wherever it nests, from the frozen bytes.

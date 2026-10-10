@@ -2861,17 +2861,77 @@ public static class DiagnosticCodes
     public const string InvalidCaptureEventsSource = "PLAY0620";
 
     /// <summary>
+    /// An <c>exposure for &lt;Owner&gt;</c> declaration, or one of its <c>property</c> lines, is malformed.
+    /// </summary>
+    public const string InvalidExposureDeclaration = "PLAY0621";
+
+    /// <summary>
+    /// An <c>exposure for &lt;Owner&gt;</c> names something that is not a layout, screen template or dialog template.
+    /// </summary>
+    public const string UnknownExposureOwner = "PLAY0622";
+
+    /// <summary>
+    /// Re-exposures of one component property form a cycle.
+    /// </summary>
+    public const string ReExposureCycle = "PLAY0623";
+
+    /// <summary>
+    /// A <c>reexposes &lt;Owner&gt;</c> names an owner that does not expose the same component property.
+    /// </summary>
+    public const string ReExposureBroken = "PLAY0624";
+
+    /// <summary>
+    /// An <c>instance &lt;Instance&gt;</c> block, or one of its <c>set</c>, <c>items</c> or <c>item</c> lines, is malformed.
+    /// </summary>
+    public const string InvalidInstanceContribution = "PLAY0625";
+
+    /// <summary>
+    /// An <c>instance &lt;Instance&gt;</c> names something that is not a screen, screen template or dialog template.
+    /// </summary>
+    public const string UnknownContributionInstance = "PLAY0626";
+
+    /// <summary>
+    /// An instance stores a value for a component property no exposure exposes.
+    /// </summary>
+    public const string ContributionNotExposed = "PLAY0627";
+
+    /// <summary>
+    /// An instance sets a single value on a collection exposure, or adds items to a property not exposed as a collection.
+    /// </summary>
+    public const string ContributionTypeMismatch = "PLAY0628";
+
+    /// <summary>
+    /// A template's <c>content &lt;slot&gt;</c> names a slot the template does not declare.
+    /// </summary>
+    public const string UnknownTemplateContentSlot = "PLAY0629";
+
+    /// <summary>
+    /// A navigation's <c>outlet &lt;name&gt;</c> names an outlet no layout, template or component declares.
+    /// </summary>
+    public const string UnknownNavigationOutlet = "PLAY0630";
+
+    /// <summary>
+    /// A screen uses a template whose <c>scopes</c> do not include the screen's scope.
+    /// </summary>
+    public const string TemplateScopeMismatch = "PLAY0631";
+
+    /// <summary>
+    /// A component's package is not declared by any <c>ui profile</c>.
+    /// </summary>
+    public const string IncompatibleComponentPackage = "PLAY0632";
+
+    /// <summary>
     /// A key modifier has an invalid owner, type or modifier combination.
     /// </summary>
-    public const string InvalidReadModelKey = "PLAY0625";
+    public const string InvalidReadModelKey = "PLAY0633";
 
     /// <summary>
     /// A single-instance lookup omits declared read-model key parts.
     /// </summary>
-    public const string IncompleteReadModelKey = "PLAY0626";
+    public const string IncompleteReadModelKey = "PLAY0634";
 
     /// <summary>
     /// A read-model lookup has invalid parts, shape or sources.
     /// </summary>
-    public const string InvalidReadModelKeyLookup = "PLAY0627";
+    public const string InvalidReadModelKeyLookup = "PLAY0635";
 }

@@ -603,9 +603,9 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0625` | Error | `key` is marked outside a top-level read-model property, combined with another modifier, or has an optional or collection type. A part of a multipart key cannot have a composite type. |
-| `PLAY0626` | Error | A single-instance lookup omits key parts. The message names the missing parts. Reads and queries have a typed repair when every missing part has one same-named compatible source. Scalar screen, form and navigation lookups cannot supply composite keys. |
-| `PLAY0627` | Error | A `by` block has fewer than two distinct parts, names an unknown part, uses the wrong key shape or supplies an incompatible, optional, collection or literal source. A single-instance query must agree with the declared key. No automatic repair is offered. |
+| `PLAY0633` | Error | `key` is marked outside a top-level read-model property, combined with another modifier, or has an optional or collection type. A part of a multipart key cannot have a composite type. |
+| `PLAY0634` | Error | A single-instance lookup omits key parts. The message names the missing parts. Reads and queries have a typed repair when every missing part has one same-named compatible source. Scalar screen, form and navigation lookups cannot supply composite keys. |
+| `PLAY0635` | Error | A `by` block has fewer than two distinct parts, names an unknown part, uses the wrong key shape or supplies an incompatible, optional, collection or literal source. A single-instance query must agree with the declared key. No automatic repair is offered. |
 
 An explicit single `key` binds byte-identically to an inferred identifier. Composite keys and by-block queries are authoring-only: binding reports `PLAY0268` citing [#599](https://github.com/Cratis/Screenplay/issues/599).
 
@@ -653,6 +653,27 @@ section has no automatic repair because each one is a contract decision for the 
 `PLAY0609`, `PLAY0611`, `PLAY0612` and `PLAY0616` would change which events a translation consumes or produces, or its
 direction; `PLAY0610`, `PLAY0615`, `PLAY0618` and `PLAY0619` would move a construct between slices or change its direction;
 `PLAY0620` is malformed `source events` input with no single intended correction.
+
+### Screen composition
+
+These checks run on the assembled model. The source stays in the syntax tree, so an authoring tool can still show and repair it.
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0621` | Error | An `exposure for <Owner>` header or one of its `property` lines is malformed, or names an unknown collection operation. |
+| `PLAY0622` | Error | An exposure's owner is not a layout, screen template or dialog template. |
+| `PLAY0623` | Error | Re-exposures of one component property form a cycle. |
+| `PLAY0624` | Error | A `reexposes <Owner>` names an owner that does not expose the same component property. |
+| `PLAY0625` | Error | An `instance` header or one of its `set`, `items`, `item` or item value lines is malformed. |
+| `PLAY0626` | Error | An instance is not a screen, screen template or dialog template. |
+| `PLAY0627` | Error | An instance stores a value for a component property no exposure exposes. |
+| `PLAY0628` | Error | An instance uses `set` on a collection exposure, or `items` on a single-value exposure. |
+| `PLAY0629` | Error | A template's `content <slot>` names a slot the template does not declare. |
+| `PLAY0630` | Error | A navigation's `outlet <name>` names an outlet no layout, template or component declares. |
+| `PLAY0631` | Error | A screen or scoped `template` assignment uses a template whose `scopes` exclude that scope. |
+| `PLAY0632` | Error | A component comes from a package no `ui profile` declares. Only checked when at least one profile declares packages. |
+
+None of these has an automatic repair: each is a composition decision for the author.
 
 ### Triggers
 

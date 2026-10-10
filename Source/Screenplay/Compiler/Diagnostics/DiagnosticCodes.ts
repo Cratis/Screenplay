@@ -19,6 +19,19 @@ export const DiagnosticCodes = {
     EventTargetOutsideOutboundTranslation: 'PLAY0618',
     EventsSourceOutsideInboundTranslation: 'PLAY0619',
     InvalidCaptureEventsSource: 'PLAY0620',
+    // Syntax shared with C#; the reference checks (owners, instances, cycles, outlets, scopes, packages) are C#-only.
+    InvalidExposureDeclaration: 'PLAY0621',
+    UnknownExposureOwner: 'PLAY0622',
+    ReExposureCycle: 'PLAY0623',
+    ReExposureBroken: 'PLAY0624',
+    InvalidInstanceContribution: 'PLAY0625',
+    UnknownContributionInstance: 'PLAY0626',
+    ContributionNotExposed: 'PLAY0627',
+    ContributionTypeMismatch: 'PLAY0628',
+    UnknownTemplateContentSlot: 'PLAY0629',
+    UnknownNavigationOutlet: 'PLAY0630',
+    TemplateScopeMismatch: 'PLAY0631',
+    IncompatibleComponentPackage: 'PLAY0632',
     LegacyComplianceMarker: 'PLAY0565',
     UnknownComplianceMarker: 'PLAY0566',
     InvalidSecretScope: 'PLAY0567',
@@ -362,8 +375,8 @@ export const DiagnosticCodes = {
     CommandWithProducesAndHandler: 'PLAY0035',
     AbsoluteFileReference: 'PLAY0264',
     InvalidTriggerData: 'PLAY0246',
-    InvalidReadModelKey: 'PLAY0625',
-    IncompleteReadModelKey: 'PLAY0626', // C# only: scoped read-model key resolution.
-    InvalidReadModelKeyLookup: 'PLAY0627', // Shape checks shared; scoped lookup checks are C# only.
+    InvalidReadModelKey: 'PLAY0633',
+    IncompleteReadModelKey: 'PLAY0634', // C# only: scoped read-model key resolution.
+    InvalidReadModelKeyLookup: 'PLAY0635', // Shape checks shared; scoped lookup checks are C# only.
     ReadsWithChildren: 'PLAY0451',
 } as const;

@@ -1,0 +1,20 @@
+exposure for NoSuchTemplate
+  property "shell:header".title
+
+instance NoSuchScreen
+  set "shell:header".title = "Work items"
+
+instance WorkItemList
+  set "shell:header".subtitle = "Open"
+
+module Workspaces
+  screen template FeatureShell
+    header
+
+    content footer
+      title "Footer"
+
+  feature Tracking
+    slice StateView WorkItemList
+      screen WorkItemList
+        template FeatureShell

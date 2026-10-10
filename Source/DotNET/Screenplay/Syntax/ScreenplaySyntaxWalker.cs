@@ -115,6 +115,16 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitBehavior(behavior);
         }
 
+        foreach (var exposure in syntax.Exposures)
+        {
+            VisitExposure(exposure);
+        }
+
+        foreach (var instance in syntax.InstanceContributions)
+        {
+            VisitInstanceContributions(instance);
+        }
+
         foreach (var trigger in syntax.Triggers ?? [])
         {
             VisitTrigger(trigger);
@@ -274,6 +284,11 @@ public abstract partial class ScreenplaySyntaxWalker
         }
 
         VisitAttachments(syntax.Behaviors, syntax.UsedBehaviors);
+
+        foreach (var content in syntax.Content)
+        {
+            VisitTemplateSlotContent(content);
+        }
     }
 
     /// <summary>
@@ -295,6 +310,11 @@ public abstract partial class ScreenplaySyntaxWalker
         }
 
         VisitAttachments(syntax.Behaviors, syntax.UsedBehaviors);
+
+        foreach (var content in syntax.Content)
+        {
+            VisitTemplateSlotContent(content);
+        }
     }
 
     /// <summary>
@@ -302,6 +322,55 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="SlotSyntax"/> to visit.</param>
     public virtual void VisitSlot(SlotSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits a <see cref="TemplateSlotContentSyntax"/> node and the content it provides.
+    /// </summary>
+    /// <param name="syntax">The <see cref="TemplateSlotContentSyntax"/> to visit.</param>
+    public virtual void VisitTemplateSlotContent(TemplateSlotContentSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var directive in syntax.Directives)
+        {
+            VisitScreenDirective(directive);
+        }
+    }
+
+    /// <summary>
+    /// Visits an <see cref="ExposureSyntax"/> node and the properties it exposes.
+    /// </summary>
+    /// <param name="syntax">The <see cref="ExposureSyntax"/> to visit.</param>
+    public virtual void VisitExposure(ExposureSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var property in syntax.Properties)
+        {
+            VisitNode(property);
+        }
+    }
+
+    /// <summary>
+    /// Visits an <see cref="InstanceContributionsSyntax"/> node and the values it stores.
+    /// </summary>
+    /// <param name="syntax">The <see cref="InstanceContributionsSyntax"/> to visit.</param>
+    public virtual void VisitInstanceContributions(InstanceContributionsSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var contribution in syntax.Contributions)
+        {
+            VisitNode(contribution);
+            if (contribution.Value is not null) VisitExpression(contribution.Value);
+            foreach (var item in contribution.Items ?? [])
+            {
+                VisitNode(item);
+                foreach (var value in item.Values)
+                {
+                    VisitNode(value);
+                    VisitExpression(value.Value);
+                }
+            }
+        }
+    }
 
     /// <summary>
     /// Visits an <see cref="ArrangementSyntax"/> node and its children.
