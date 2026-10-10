@@ -105,3 +105,5 @@ In force from acceptance through admission. Out of scope: persona identities, pe
 ## Consequences
 
 Models state the trusted path instead of prose. Existing models invoking gated commands gain a warning (visible to `--warnaserror` users). 0030's admission becomes possible. `runsAs` is a published ESM kind that Stage, CritterStack and Studio must admit or refuse.
+
+> **2026-10-10 — status: pre-admission half implemented (#383).** Both compilers parse, print and round-trip `runs as system [role "…" and role "…"]`; PLAY0647–PLAY0652 report malformed, repeated or misplaced lines, gated invocations without identity, unused identities, unused roles and unsatisfiable identities as specified above, and PLAY0557 is suppressed by a declared identity with the corrected Arc premise. The opt-in `privilege` completeness check, MCP `declaration-details` `runsAs` and readiness, editors and documentation follow this record. Binding refuses `runs as` with `PLAY0268` naming #383; models without it keep their bytes. Admission (`runsAs` in the ESM, the reference evaluator's system caller, goldens) is still open, so the stage stays `none`.
