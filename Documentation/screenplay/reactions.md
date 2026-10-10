@@ -27,7 +27,7 @@ reaction <Name>
 
 A reaction declares at least one trigger. Everything under a trigger is optional.
 
-## Returned-command identity (syntax-only)
+## Returned-command identity
 
 A gated command needs a caller even when a reaction asks for it. Declare the trusted returned-command path explicitly:
 
@@ -55,7 +55,7 @@ module Claims
 
 The identity covers every command returned or `invokes` under every trigger. It does not cover imperative `ICommandPipeline` calls inside an inline or `file` implementation, `produces`, `reads`, refusal-branch productions or causation. It is authorization identity, not caller audit identity; `given caller` never supplies an actor to invocations.
 
-This is **authoring syntax only**. Binding refuses `runs as` with `PLAY0268` naming [#383](https://github.com/Cratis/Screenplay/issues/383); no supported executable model admits it yet. At admission, claim conditions on this system caller remain unknown, including under `not`; a satisfied role alternative can allow, but a final unknown denies. Clock and application triggers may declare the identity, but Stage has no Arc realization for either trigger kind yet. MCP reports that as readiness, not a source diagnostic.
+Declaring `runs as` selects **ESM v10 (claimed, unreleased)**. The reference evaluator authenticates this system principal and grants exactly its declared roles. Every claim condition remains unknown, including under `not`; a satisfied role alternative can allow, but a final unknown denies. This is a deliberate deny-only divergence from Arc: Arc's system principal carries `[System]` subject claims, but the portable contract does not pin those claims. Clock and application triggers may declare the identity, but Stage has no Arc realization for either trigger kind yet. MCP reports that as readiness, not a source diagnostic.
 
 Without the line, invocations retain their no-caller behavior and existing executable bytes. Arc runs returned commands as the system only for a reactor carrying `[ExecuteCommandsAsSystem]`; an unmarked reactor has no principal and authorization gates deny.
 
@@ -266,7 +266,7 @@ Branches are ordered: the first matching selector wins. A branch contains `ackno
 
 Duplicate selectors and narrower branches after a covering branch produce `PLAY0540`. Bare refusal never shadows authorization. An unresolved named constraint produces `PLAY0542`; a known constraint that cannot target any of the invoked command's produced events also produces `PLAY0540`.
 
-Both compilers warn with `PLAY0557` on an `on refused by authorization` branch when the invoked command has an `authorize` gate of its own or inherits one from its module or enclosing features, but the reaction has no declared `runs as`. The reference runner has no caller and always denies a gated command. Arc runs commands as the system only for a reactor carrying `[ExecuteCommandsAsSystem]`; an unmarked reactor also has no principal. Declare `runs as system role "<Role>"` to state the intended identity; this suppresses the warning but remains syntax-only until admission. `given caller` does not supply that identity. Validation and constraint branches do not receive `PLAY0557`; a gated invocation without an authorization branch receives `PLAY0648` instead.
+Both compilers warn with `PLAY0557` on an `on refused by authorization` branch when the invoked command has an `authorize` gate of its own or inherits one from its module or enclosing features, but the reaction has no declared `runs as`. The reference runner has no caller and always denies a gated command. Arc runs commands as the system only for a reactor carrying `[ExecuteCommandsAsSystem]`; an unmarked reactor also has no principal. Declare `runs as system role "<Role>"` to state the intended identity; this suppresses the warning and selects ESM v10 for system authorization. Refusal branches themselves remain syntax-only. `given caller` does not supply that identity. Validation and constraint branches do not receive `PLAY0557`; a gated invocation without an authorization branch receives `PLAY0648` instead.
 
 The branch's event mappings may use these String values:
 
