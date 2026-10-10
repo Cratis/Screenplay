@@ -14,10 +14,10 @@ static class McpSemanticDiff
 {
     internal static object Read(IMcpProposal proposal, JsonElement arguments) => Read(proposal.Before, proposal.Workspace, arguments, proposal.Workspace.Revision.ToString(), false);
 
-    internal static object Compare(ScreenplayWorkspace before, ScreenplayWorkspace after, JsonElement arguments) =>
-        Read(before, after, arguments, $"comparison:{Hash($"{before.Revision}:{after.Revision}")}", true);
+    internal static object Compare(ScreenplayWorkspace before, ScreenplayWorkspace after, JsonElement arguments, bool matchByAddress = false) =>
+        Read(before, after, arguments, $"comparison:{Hash($"{before.Revision}:{after.Revision}")}", true, matchByAddress);
 
-    static object Read(ScreenplayWorkspace baseline, ScreenplayWorkspace candidate, JsonElement arguments, string revision, bool revisions)
+    static object Read(ScreenplayWorkspace baseline, ScreenplayWorkspace candidate, JsonElement arguments, string revision, bool revisions, bool matchByAddress = false)
     {
         var expected = McpJson.OptionalString(arguments, "expectedSourceRevision");
         if (expected is not null && expected != revision)
@@ -31,7 +31,7 @@ static class McpSemanticDiff
 
         var before = McpWorkspaceAnalysis.For(baseline);
         var after = McpWorkspaceAnalysis.For(candidate);
-        var difference = StructuralComparison.Compare(baseline, candidate, before.Source.Authoring, before.Syntax, after.Source.Authoring, after.Syntax);
+        var difference = StructuralComparison.Compare(baseline, candidate, before.Source.Authoring, before.Syntax, after.Source.Authoring, after.Syntax, matchByAddress: matchByAddress);
         return new
         {
             sourceRevision = revision,

@@ -9,17 +9,17 @@ namespace Cratis.Screenplay.Mcp;
 // Loads the sources semantic-diff compares: the open workspace, or a model folder read without writing anything.
 internal sealed partial class McpWorkspaces
 {
-    internal ScreenplayWorkspace ReadComparisonWorkspace()
+    internal (ScreenplayWorkspace Workspace, bool HasPersistedIdentities) ReadComparisonWorkspace()
     {
         if (_workspace is null)
         {
             throw new McpFailure("Open a workspace first.");
         }
 
-        return Current();
+        return (Current(), _stateBytes is not null);
     }
 
-    internal ScreenplayWorkspace ReadComparisonPath(string path)
+    internal (ScreenplayWorkspace Workspace, bool HasPersistedIdentities) ReadComparisonPath(string path)
     {
         var root = ResolveRequestedRoot(path);
         McpRecoveryJournal.RefusePending(root);
@@ -31,7 +31,7 @@ internal sealed partial class McpWorkspaces
         files.Verify(McpState.FileName, persisted);
         McpRecoveryJournal.RefusePending(root);
 
-        return workspace;
+        return (workspace, persisted is not null);
     }
 
     static ScreenplayWorkspace OpenFromDisk(McpRoot root, string name)

@@ -33,6 +33,7 @@ public class when_comparing_the_active_workspace_with_a_path : given.comparison_
     [Fact] void should_compare_the_current_workspace_to_disk() => _result.GetProperty("isError").GetBoolean().ShouldBeFalse();
     [Fact] void should_keep_the_active_revision() => _result.GetProperty("structuredContent").GetProperty("beforeRevision").GetString().ShouldEqual(Opened.GetProperty("revision").GetString());
     [Fact] void should_load_the_changed_path_revision() => (_result.GetProperty("structuredContent").GetProperty("beforeRevision").GetString() != _result.GetProperty("structuredContent").GetProperty("afterRevision").GetString()).ShouldBeTrue();
+    [Fact] void should_report_address_matching() => _result.GetProperty("structuredContent").GetProperty("limits").EnumerateArray().Select(limit => limit.GetString()).ShouldContain("Declarations are matched by exact kind and address because at least one side has no persisted identities; renames and owner moves appear as a removal and an addition.");
     [Fact] void should_not_clear_proposals() => _retained.GetProperty("isError").GetBoolean().ShouldBeFalse();
     [Fact] void should_not_create_metadata() => Directory.Exists(Path.Combine(RootPath, ".screenplay")).ShouldBeFalse();
     [Fact] void should_not_change_any_disk_entries() => Directory.GetFileSystemEntries(RootPath).Select(Path.GetFileName).ShouldContainOnly("application.play");

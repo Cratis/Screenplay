@@ -774,7 +774,7 @@ See [the AST API](../ast-authoring.md) and [authoring procedure](authoring-tools
 Both semantic-diff views use the structural implementation behind
 [`ModelComparison`](../model-comparison.md) in `Cratis.Screenplay`.
 The library offers typed, unpaged differences and explicit Identity or Address
-matching; MCP retains its existing identity-based JSON, revision checks and paging.
+matching; MCP retains its existing JSON shape, revision checks and paging.
 
 `read-proposal` with `view: "semantic-diff"` compares the retained disk baseline
 with the proposal, without applying it. It works without MCP Apps and does not
@@ -934,14 +934,22 @@ without creating a directory. A pending recovery journal refuses a path source;
 active sources also respect pending or competing journals. Git refs are not
 resolved: compare a committed revision through its worktree path instead.
 
-Both sources must have the same application identity. Preserve their authoritative
-catalogs: separately generated IDs do not establish rename continuity. The tool
-never guesses a rename from similar names or edits a catalog to make it match.
+Declarations match by Identity when both sources have persisted identities;
+otherwise they match by exact kind and address. Exports (including legacy string
+arguments) carry identities. Paths have persisted identities only when
+`.screenplay/identities.json` exists; the active workspace uses the persisted
+state loaded for its bound root. In Address mode, `limits` adds: "Declarations are
+matched by exact kind and address because at least one side has no persisted
+identities; renames and owner moves appear as a removal and an addition."
+
+Only Identity mode requires the same application identity; different application
+identities return `IncompatibleRevisions`. Preserve authoritative catalogs:
+separately generated IDs do not establish rename continuity. The tool never
+guesses a rename from similar names or edits a catalog to make it match.
 Malformed, noncanonical, incomplete, duplicated or content-revision-mismatched
 exports return a tool error with `failureKind: "UnreadableRevision"` naming the
-unreadable input. Different application identities return `IncompatibleRevisions`
-rather than an ambiguous comparison. Structurally ambiguous declarations in a
-readable snapshot retain the proposal comparison's explicit incomplete sections.
+unreadable input. Structurally ambiguous declarations in a readable snapshot
+retain the proposal comparison's explicit incomplete sections.
 
 The result reuses the [semantic proposal difference](#semantic-proposal-difference)
 fields, sections, ordering, completeness rules and exclusions. `beforeRevision`

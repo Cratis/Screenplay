@@ -13,15 +13,16 @@ static class McpRevisionDiff
     {
         var before = Resolve(arguments, "before", workspaces);
         var after = Resolve(arguments, "after", workspaces);
-        if (before.IdentityCatalog.Application != after.IdentityCatalog.Application)
+        var matchByAddress = !before.HasPersistedIdentities || !after.HasPersistedIdentities;
+        if (!matchByAddress && before.Workspace.IdentityCatalog.Application != after.Workspace.IdentityCatalog.Application)
         {
             throw new McpFailure("IncompatibleRevisions: snapshots must belong to the same application identity; identity continuity cannot be inferred across applications.") { FailureKind = "IncompatibleRevisions" };
         }
 
-        return McpJson.ToolResult(McpSemanticDiff.Compare(before, after, arguments));
+        return McpJson.ToolResult(McpSemanticDiff.Compare(before.Workspace, after.Workspace, arguments, matchByAddress));
     }
 
-    static ScreenplayWorkspace Resolve(JsonElement arguments, string side, McpWorkspaces? workspaces)
+    static ComparisonSource Resolve(JsonElement arguments, string side, McpWorkspaces? workspaces)
     {
         var legacyName = $"{side}WorkspaceJson";
         if (!arguments.TryGetProperty(side, out var source))
@@ -43,7 +44,7 @@ static class McpRevisionDiff
         return Select(source, side, workspaces ?? new McpWorkspaces());
     }
 
-    static ScreenplayWorkspace Select(JsonElement source, string side, McpWorkspaces workspaces)
+    static ComparisonSource Select(JsonElement source, string side, McpWorkspaces workspaces)
     {
         if (source.TryGetProperty("workspaceJson", out _))
         {
@@ -52,7 +53,9 @@ static class McpRevisionDiff
 
         if (source.TryGetProperty("path", out _))
         {
-            return workspaces.ReadComparisonPath(McpJson.RequiredString(source, "path"));
+            var path = workspaces.ReadComparisonPath(McpJson.RequiredString(source, "path"));
+
+            return new(path.Workspace, path.HasPersistedIdentities);
         }
 
         if (McpJson.RequiredString(source, "workspace") != "active")
@@ -60,15 +63,17 @@ static class McpRevisionDiff
             throw new McpFailure($"'{side}.workspace' must be 'active'.", -32602);
         }
 
-        return workspaces.ReadComparisonWorkspace();
+        var active = workspaces.ReadComparisonWorkspace();
+
+        return new(active.Workspace, active.HasPersistedIdentities);
     }
 
-    static ScreenplayWorkspace Restore(JsonElement arguments, string name)
+    static ComparisonSource Restore(JsonElement arguments, string name)
     {
         var json = McpJson.RequiredString(arguments, name);
         try
         {
-            return McpWorkspaceTransport.Restore(json);
+            return new(McpWorkspaceTransport.Restore(json), true);
         }
         catch (Exception failure) when (failure is McpFailure or InvalidScreenplayWorkspace or InvalidSemanticContract or
             InvalidWorkspaceDocument or InvalidPortablePlayPath or JsonException or KeyNotFoundException or InvalidOperationException or FormatException)
@@ -76,4 +81,6 @@ static class McpRevisionDiff
             throw new McpFailure($"UnreadableRevision: '{name}' must be a complete canonical export-workspace snapshot with a valid catalog and matching content revision. {failure.Message}") { FailureKind = "UnreadableRevision" };
         }
     }
+
+    sealed record ComparisonSource(ScreenplayWorkspace Workspace, bool HasPersistedIdentities);
 }

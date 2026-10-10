@@ -12,8 +12,9 @@ public class when_comparing_sources_with_pending_recovery : given.comparison_sou
 
     void Establish()
     {
-        Directory.CreateDirectory(Path.Combine(RootPath, ".screenplay"));
-        File.WriteAllText(Path.Combine(RootPath, ".screenplay", "pending.json"), "pending");
+        McpFileAccess.CreatePrivateDirectory(Path.Combine(RootPath, ".screenplay"));
+        using var journal = McpFileAccess.CreatePrivate(Path.Combine(RootPath, ".screenplay", "pending.json"));
+        journal.Write("pending"u8);
     }
 
     void Because()
