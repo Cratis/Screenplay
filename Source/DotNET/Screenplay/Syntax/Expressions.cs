@@ -102,7 +102,7 @@ public record ContextExpressionSyntax(string Path, SourceLocation Location) : Ex
     public static readonly IEnumerable<string> KnownCausedByProperties = ["subject", "name", "userName"];
 
     /// <summary>
-    /// Gets the properties a <c>$context.identity.</c> path can name, mirroring the members of
+    /// Gets the properties a <c>$identity.</c> or <c>$context.identity.</c> path can name, mirroring the members of
     /// <see cref="Contexts.Identity"/>.
     /// </summary>
     public static readonly IEnumerable<string> KnownIdentityProperties =
@@ -113,6 +113,13 @@ public record ContextExpressionSyntax(string Path, SourceLocation Location) : Ex
     /// </summary>
     public string Root => Path.Split('.')[0];
 }
+
+/// <summary>
+/// Represents a <c>$identity</c> expression reading the caller, equivalent to <c>$context.identity</c>.
+/// </summary>
+/// <param name="Path">The dotted path following <c>$identity.</c>.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record IdentityExpressionSyntax(string Path, SourceLocation Location) : ExpressionSyntax(Location);
 
 /// <summary>
 /// Represents an <c>$env</c> expression referencing an environment variable, such as <c>$env.SERVICE_NAME</c>.

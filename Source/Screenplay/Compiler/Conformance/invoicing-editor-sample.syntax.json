@@ -12915,8 +12915,8 @@
                           "kind": "PropertyMappingSyntax",
                           "property": "requestedBy",
                           "source": {
-                            "kind": "ContextExpressionSyntax",
-                            "path": "identity.userName"
+                            "kind": "IdentityExpressionSyntax",
+                            "path": "userName"
                           }
                         }
                       ],

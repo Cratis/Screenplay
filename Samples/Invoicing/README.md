@@ -51,6 +51,8 @@ balance or due/overdue invoice rows; the payment form loads the balance by that 
 `ExchangeRates`, `CreditStatus` and the overdue list on `InvoiceDashboard` are views no event builds: their
 queries' performers read the central bank feed, a credit bureau and stored invoices.
 
+`RequestPaymentPlan` maps `requestedBy` from `$identity.userName`, the caller's user name. This is equivalent to `$context.identity.userName`; both spellings remain supported.
+
 `InvoiceDraftStarted.customerId` uses the trailing event-property `subject` role to name the customer instead of the invoice stream. This is report-only lineage metadata, with no executable model or provider output yet.
 
 ## Where each construct is used
@@ -76,7 +78,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | `generated identifier`, `generated`, record `returns` with inferred/explicit types, `when … for`, generation fixtures and `then returns`; scalar `returns` and `then returns` | StartInvoiceDraft; CancelInvoice |
 | inline `produces event`, typed mappings, event `description` and Markdown `documentation`, implicit identifier destination | TagInvoice |
 | command `description`, `identifier`, multi-line `authorize`, every validation rule, named-rule `implementation` hints with the existing file link, `severity`, `require`, inline `validate` block, `$strings` messages | RegisterInvoice, CancelInvoice, TagInvoice, ProcessInvoiceBatch, ApplyDiscount |
-| `produces` with `for`, `tag`, every mapping source (`$context.*`, `$env`, `$strings`, literals, Booleans, lists, expressions); `produces when` with `and`/`or`/parentheses, `contains`, `starts with` | RegisterInvoice, ApplyDiscount, RecordPayment, NotifyCustomerOnInvoiceRegistered |
+| `produces` with `for`, `tag`, every mapping source (`$identity.*`, `$context.*`, `$env`, `$strings`, literals, Booleans, lists, expressions); `produces when` with `and`/`or`/parentheses, `contains`, `starts with` | RegisterInvoice, ApplyDiscount, RecordPayment, NotifyCustomerOnInvoiceRegistered |
 | `reads … as … by` and `require` over read state | RecordPayment |
 | `handler` inline and `implementation` with a hint and existing `file`; `concurrency` | ProcessInvoiceBatch, ArchiveOldInvoices, RegisterInvoice |
 | `event` with `generation 2`, `file`, `tag` (name, string, `$env`, `$context`), an `@tag` escaped property | RegisterInvoice, TagInvoice |

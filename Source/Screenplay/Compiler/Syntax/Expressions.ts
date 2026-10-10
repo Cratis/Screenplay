@@ -24,6 +24,11 @@ export interface ContextExpressionSyntax extends SyntaxNode {
     readonly path: string;
 }
 
+export interface IdentityExpressionSyntax extends SyntaxNode {
+    readonly kind: 'IdentityExpressionSyntax';
+    readonly path: string;
+}
+
 export interface EnvironmentExpressionSyntax extends SyntaxNode {
     readonly kind: 'EnvironmentExpressionSyntax';
     readonly name: string;
@@ -103,6 +108,7 @@ export type ExpressionSyntax =
     | LiteralExpressionSyntax
     | PathExpressionSyntax
     | ContextExpressionSyntax
+    | IdentityExpressionSyntax
     | EnvironmentExpressionSyntax
     | StringsExpressionSyntax
     | SourceItemExpressionSyntax

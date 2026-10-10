@@ -268,6 +268,7 @@ internal static partial class ScreenplaySyntaxText
         CaseValueExpressionSyntax value => $"case.{value.Parameter}",
         PathExpressionSyntax path => path.Path,
         ContextExpressionSyntax context => $"$context.{context.Path}",
+        IdentityExpressionSyntax identity => $"$identity.{identity.Path}",
         RefusalExpressionSyntax refusal => $"$refusal.{refusal.Member}",
         EnvironmentExpressionSyntax environment => $"$env.{environment.Name}",
         StringsExpressionSyntax strings => $"$strings.{strings.Key}",

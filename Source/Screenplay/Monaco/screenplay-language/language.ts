@@ -214,7 +214,7 @@ export const contextRoots = [
 
 export const causedByProperties = ['subject', 'name', 'userName'];
 
-// The properties a `$context.identity.` path can name — the members of Identity. Everything after
+// The properties a `$identity.` or `$context.identity.` path can name — the members of Identity. Everything after
 // `claims.` is the name of a claim rather than a member, so it is never checked.
 export const identityProperties = ['id', 'name', 'userName', 'isAuthenticated', 'roles', 'claims'];
 

@@ -202,7 +202,7 @@ ClaimTarget    = "subject"
                | MappingSource ;
 
 (* A quoted ClaimTarget is the literal value the claim must equal; every other
-   MappingSource form - a path, "$context.", "$env." - names where
+   MappingSource form - a path, "$context.", "$identity.", "$env." - names where
    the value to compare against is read from.                                 *)
 
 (* Every condition in the language - a policy "require", a "produces when" -
@@ -601,6 +601,7 @@ TagDecl        = "tag", TagValue, NL ;
 TagValue       = Ident
                | StringLiteral
                | "$context.", Path
+               | "$identity.", Path
                | "$env.", Ident ;
 
 Path           = Ident, { ".", Ident } ;
@@ -836,6 +837,7 @@ PropertyMapping = [ "@" ], Ident, "=", MappingSource, NL ;
 
 MappingSource  = Ident                         (* command property   *)
                | ContextPath
+               | IdentityPath
                | "$env.", Ident
                | "$strings.", Path
                | StringLiteral
@@ -859,6 +861,10 @@ JSONString      = (* double-quoted JSON string, including escaped characters *) 
    "identity.claims." is the name of a claim and is not checked.             *)
 
 ContextPath    = "$context.", ContextRoot, { ".", Ident } ;
+
+(* The caller root is equivalent to $context.identity; claim suffixes are opaque.
+   Unknown properties warn with PLAY0155; a path is required. *)
+IdentityPath   = "$identity.", IdentityProp, { ".", Ident } ;
 
 ContextRoot    = "command" | "arguments" | "tenant" | "causedBy"
                | "causation" | "occurred" | "identity" ;

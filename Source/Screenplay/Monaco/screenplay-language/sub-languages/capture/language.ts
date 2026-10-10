@@ -46,6 +46,7 @@ const KEYWORDS = [
 
 const BUILTINS = [
     '$context',
+    '$identity',
     '$previous',
     '$env',
 ] as const;
@@ -109,6 +110,7 @@ export const monarchLanguage: languages.IMonarchLanguage = {
             [/\$\.(?:[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*)?/, 'variable'],
             [/\$previous(?:\.[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*)?/, 'variable.predefined'],
             [/\$context(?:\.(?:occurred|eventSourceId))?/, 'variable.predefined'],
+            [/\$identity(?:\.\w+)*/, 'variable.predefined'],
             [/\$env(?:\.[A-Z_][A-Z0-9_]*)?/, 'variable.predefined'],
             [/@[a-zA-Z_$][\w$]*/, 'identifier.escape'],
             [

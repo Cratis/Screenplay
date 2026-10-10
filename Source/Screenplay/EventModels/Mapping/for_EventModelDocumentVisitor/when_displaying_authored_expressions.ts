@@ -19,6 +19,7 @@ const vectors: [ExpressionSyntax, string][] = [
     [{ kind: 'LiteralExpressionSyntax', value: null, location }, 'null'],
     [{ kind: 'PathExpressionSyntax', path: '@uses.email', location }, '@uses.email'],
     [{ kind: 'ContextExpressionSyntax', path: 'identity.name', location }, '$context.identity.name'],
+    [{ kind: 'IdentityExpressionSyntax', path: 'name', location }, '$identity.name'],
     [{ kind: 'EnvironmentExpressionSyntax', name: 'region', location }, '$env.region'],
     [{ kind: 'StringsExpressionSyntax', key: 'welcome', location }, '$strings.welcome'],
     [{ kind: 'SourceItemExpressionSyntax', path: 'name', location }, '$.name'],

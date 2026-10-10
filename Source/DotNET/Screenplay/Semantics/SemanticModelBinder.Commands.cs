@@ -237,9 +237,12 @@ public sealed partial class SemanticModelBinder
                     continue;
                 }
 
-                var source = mapping.Source is ContextExpressionSyntax context
-                    ? BindOccurrence(context, target.Type)
-                    : BindExpression(mapping.Source, commandProperties, SemanticExpressionRootKind.Command, "produced event mapping");
+                var source = mapping.Source switch
+                {
+                    ContextExpressionSyntax context => BindOccurrence(context, target.Type),
+                    IdentityExpressionSyntax identity => BindOccurrence(identity, target.Type),
+                    _ => BindExpression(mapping.Source, commandProperties, SemanticExpressionRootKind.Command, "produced event mapping")
+                };
                 if (source is not null)
                 {
                     mappings.Add(new(target.Id, source));
@@ -256,10 +259,16 @@ public sealed partial class SemanticModelBinder
             return bound;
         }
 
-        SemanticEventContextExpression? BindOccurrence(ContextExpressionSyntax context, SemanticTypeReference target)
+        SemanticEventContextExpression? BindOccurrence(ContextExpressionSyntax context, SemanticTypeReference target) =>
+            BindOccurrence(context.Path, $"$context.{context.Path}", context.Location, target);
+
+        SemanticEventContextExpression? BindOccurrence(IdentityExpressionSyntax identity, SemanticTypeReference target) =>
+            BindOccurrence($"identity.{identity.Path}", $"$identity.{identity.Path}", identity.Location, target);
+
+        SemanticEventContextExpression? BindOccurrence(string path, string authored, SourceLocation location, SemanticTypeReference target)
         {
             // Decision: 0001. Chronicle EventContext carries Occurred and CausedBy, not command tenant or claims.
-            var kind = context.Path switch
+            var kind = path switch
             {
                 "occurred" => SemanticEventContextValueKind.Occurred,
                 "identity.id" or "causedBy.subject" => SemanticEventContextValueKind.CausedBySubject,
@@ -269,7 +278,7 @@ public sealed partial class SemanticModelBinder
             };
             if (kind == SemanticEventContextValueKind.Unknown)
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"$context.{context.Path} has no scalar counterpart on Chronicle EventContext (tenant is not namespace; causation, roles and claims are collections or unbounded).", context.Location);
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"{authored} has no scalar counterpart on Chronicle EventContext (tenant is not namespace; causation, roles and claims are collections or unbounded).", location);
                 return null;
             }
 

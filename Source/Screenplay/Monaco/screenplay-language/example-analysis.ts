@@ -173,6 +173,7 @@ function expressionText(expression: ExpressionSyntax): string {
         case 'CaseValueExpressionSyntax': return `case.${expression.parameter}`;
         case 'PathExpressionSyntax': return expression.path;
         case 'ContextExpressionSyntax': return `$context.${expression.path}`;
+        case 'IdentityExpressionSyntax': return `$identity.${expression.path}`;
         case 'EventContextExpressionSyntax': return `$eventContext.${expression.path}`;
         case 'RefusalExpressionSyntax': return `$refusal.${expression.member}`;
         case 'EventSourceIdExpressionSyntax': return '$eventSourceId';

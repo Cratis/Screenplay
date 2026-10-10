@@ -416,7 +416,7 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 | `PLAY0152` | Error | An expression is not one the language can read. |
 | `PLAY0153` | Warning | A $context path opens with a root the context does not have. |
 | `PLAY0154` | Warning | A $context.causedBy path names a property the cause does not carry. |
-| `PLAY0155` | Warning | A $context.identity path names a property the identity does not carry. |
+| `PLAY0155` | Warning | A $identity or $context.identity path names a property the caller identity does not carry. |
 | `PLAY0156` | Error | A template expression is never closed. |
 | `PLAY0157` | Error | An interpolation inside a template expression is never closed. |
 
