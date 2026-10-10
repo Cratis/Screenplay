@@ -11,6 +11,7 @@ The diagnostic catalogues share the C# names and codes. A catalogue entry does n
 
 | Codes | TypeScript and editor support |
 |---|---|
+| PLAY0647–PLAY0649 | Reaction `runs as` syntax, gated invocations without identity and unused identity. Both editors forward the TypeScript checks; declared identity suppresses PLAY0557. PLAY0650–PLAY0651 are C# bound-gate analyses, and PLAY0652 is the opt-in `privilege` completeness finding. Supplied C# findings are preserved. |
 | PLAY0633–PLAY0646 | Identity declaration, source, duplicate-name, built-in-name and keyed-query/type/authorization checks. Both editors forward these checks from the assembled TypeScript model; caller detail paths are completed and validated alongside token built-ins. Executable detail reads still require the C# binder's PLAY0268 verdict (#600). |
 | PLAY0514, PLAY0515 | Projection target and personal identifier checks. Both editors preserve compiler diagnostics. |
 | PLAY0518, PLAY0519 | Typed-example syntax and duplicate assignments. Both editors preserve compiler diagnostics. Example type resolution and semantic values remain C# checks. |
@@ -22,7 +23,7 @@ The diagnostic catalogues share the C# names and codes. A catalogue entry does n
 | PLAY0607–PLAY0620 | Public/private event boundaries on the assembled model: scoped operational inputs and outputs, imports, seeds, direction, exactly one local public output type, event-target projections and reducers, and `source events` captures. Both editors forward these diagnostics. Unresolved and ambiguous references remain unclassified; legacy Translate slices without public metadata retain inbound behavior. Event-target projections and `source events` captures are checked like any other operational edge. These checks do not admit public events for execution. |
 | PLAY0538–PLAY0545 | Refusal-branch and no-event assertion syntax, scoped constraint resolution, selector coverage, refusal-value scope and types, and redelivery observer/occurrence matching. Monaco forwards these diagnostics for buffers; VS Code also reports them for files compiled together in a workspace folder. These checks do not admit the features for execution. |
 | PLAY0621, PLAY0625 | Malformed `exposure` and `instance` declarations. Both compilers report them. |
-| PLAY0622–PLAY0624, PLAY0626–PLAY0632, PLAY0647–PLAY0649 | Screen-composition references on the assembled model: exposure owners, re-exposures, instances, exposed values, template content slots and nesting cycles, screen contribution points, navigation outlets and destinations, template scopes and component packages. C# only; the TypeScript compiler parses the syntax but does not resolve these references. |
+| PLAY0622–PLAY0624, PLAY0626–PLAY0632, PLAY0654–PLAY0656 | Screen-composition references on the assembled model: exposure owners, re-exposures, instances, exposed values, template content slots and nesting cycles, screen contribution points, navigation outlets and destinations, template scopes and component packages. C# only; the TypeScript compiler parses the syntax but does not resolve these references. |
 
 Shared invalid-source cases live in `Source/Screenplay/Compiler/Conformance/diagnostics.json`; both compilers are checked against their codes, lines and order.
 

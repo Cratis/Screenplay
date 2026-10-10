@@ -2991,17 +2991,52 @@ public static class DiagnosticCodes
     public const string IdentityQueryTypeMismatch = "PLAY0646";
 
     /// <summary>
+    /// A runs as declaration is malformed, repeated, misplaced, or has empty or duplicate roles.
+    /// </summary>
+    public const string InvalidReactionIdentity = "PLAY0647";
+
+    /// <summary>
+    /// A reaction invokes a gated command without declaring a command identity.
+    /// </summary>
+    public const string GatedInvocationWithoutIdentity = "PLAY0648";
+
+    /// <summary>
+    /// A declared reaction identity has neither invocations nor an implementation body.
+    /// </summary>
+    public const string UnusedReactionIdentity = "PLAY0649";
+
+    /// <summary>
+    /// A declared reaction role is referenced by no invoked command's effective gate.
+    /// </summary>
+    public const string UnusedReactionRole = "PLAY0650";
+
+    /// <summary>
+    /// A declared reaction identity definitely cannot satisfy an invoked command's effective gate.
+    /// </summary>
+    public const string UnsatisfiedReactionIdentity = "PLAY0651";
+
+    /// <summary>
+    /// A trigger producer does not require every role of an elevated reaction, or its gate is opaque.
+    /// </summary>
+    public const string ReactionPrivilegeEscalation = "PLAY0652";
+
+    /// <summary>
+    /// A concept header repeats a compliance marker with the same wire identity.
+    /// </summary>
+    public const string DuplicateComplianceMarker = "PLAY0653";
+
+    /// <summary>
     /// A navigation contribution's <c>destination outlet</c> or <c>destination dialog</c> names an outlet or dialog template nothing declares.
     /// </summary>
-    public const string UnknownNavigationDestination = "PLAY0647";
+    public const string UnknownNavigationDestination = "PLAY0654";
 
     /// <summary>
     /// A screen's <c>contribute to &lt;Point&gt;</c> names a contribution point no layout or template slot declares.
     /// </summary>
-    public const string UnknownScreenContributionPoint = "PLAY0648";
+    public const string UnknownScreenContributionPoint = "PLAY0655";
 
     /// <summary>
     /// Template content nests templates in a cycle - a template's content uses itself, directly or through other templates.
     /// </summary>
-    public const string TemplateNestingCycle = "PLAY0649";
+    public const string TemplateNestingCycle = "PLAY0656";
 }

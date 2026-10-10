@@ -58,7 +58,7 @@ const malformed = [
 
 const compositionCodes = [
     'PLAY0621', 'PLAY0622', 'PLAY0623', 'PLAY0624', 'PLAY0625', 'PLAY0626', 'PLAY0627', 'PLAY0628',
-    'PLAY0629', 'PLAY0630', 'PLAY0631', 'PLAY0632', 'PLAY0647', 'PLAY0648', 'PLAY0649',
+    'PLAY0629', 'PLAY0630', 'PLAY0631', 'PLAY0632', 'PLAY0654', 'PLAY0655', 'PLAY0656',
 ];
 
 describe('when the editor reads well-formed screen composition', () => {

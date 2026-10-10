@@ -122,9 +122,15 @@ sealed class WorkspaceAuthoringTransaction(
             throw new InvalidWorkspaceAuthoring("Compliance migrations require a target and expected concept.");
         }
 
+        if (request.Operations.OfType<RemoveDuplicateComplianceMarkers>().Any(operation => operation.Target is null || operation.Expected is null))
+        {
+            throw new InvalidWorkspaceAuthoring("Duplicate compliance repairs require a target and expected concept.");
+        }
+
+        var duplicateComplianceRemovals = request.Operations.OfType<RemoveDuplicateComplianceMarkers>().GroupBy(operation => operation.Target.Document).ToArray();
         var spellingMigrations = request.Operations.OfType<MigrateOptionalTypeSpelling>().GroupBy(operation => operation.Target.Document).ToArray();
         var complianceMigrations = request.Operations.OfType<MigrateComplianceMarkerSpelling>().GroupBy(operation => operation.Target.Document).ToArray();
-        edits.Prepare([.. request.Operations.Where(operation => operation is not (MigrateOptionalTypeSpelling or MigrateComplianceMarkerSpelling))]);
+        edits.Prepare([.. request.Operations.Where(operation => operation is not (MigrateOptionalTypeSpelling or MigrateComplianceMarkerSpelling or RemoveDuplicateComplianceMarkers))]);
         var candidates = workspace.Documents.ToDictionary(document => document.Id);
         var documentRenames = ImmutableArray.CreateBuilder<DocumentIdentityRename>();
         var retiredDocuments = ImmutableArray.CreateBuilder<string>();
@@ -191,6 +197,17 @@ sealed class WorkspaceAuthoringTransaction(
             }
 
             candidates[spellings.Key] = WorkspaceComplianceRepairs.Print(index, document, [.. spellings], request.Formatting, _diagnostics);
+        }
+
+        foreach (var removals in duplicateComplianceRemovals)
+        {
+            if (edits.Touched.Contains(removals.Key) || targeted.Contains(removals.Key) || spellingMigrations.Any(group => group.Key == removals.Key) ||
+                complianceMigrations.Any(group => group.Key == removals.Key) || !candidates.TryGetValue(removals.Key, out var document))
+            {
+                throw new InvalidWorkspaceAuthoring("A duplicate compliance repair requires an existing document not targeted by another edit.");
+            }
+
+            candidates[removals.Key] = WorkspaceDuplicateComplianceRepairs.Print(index, document, [.. removals], request.Formatting, _diagnostics);
         }
 
         // The logical move planner supplies exact occurrence lineage and proves all fragments and

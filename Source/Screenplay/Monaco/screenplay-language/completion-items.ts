@@ -199,6 +199,8 @@ export const constraintItems: CompletionEntry[] = [
 
 export const reactionItems: CompletionEntry[] = [
     documentationItem,
+    { label: 'runs as system', insertText: 'runs as system', documentation: 'Authenticated system identity with no roles for returned commands. Admitted by ESM v10 (claimed, unreleased); claims are unknown.' },
+    { label: 'runs as system role', insertText: 'runs as system role "${1:Role}"', documentation: 'Exact system roles for every returned or invoked command, not imperative pipeline calls. Admitted by ESM v10 (claimed, unreleased); claims are unknown.' },
     { label: 'description', insertText: 'description "${1:what this reaction does}"', documentation: 'What the reaction does — a complete statement of intent before any code exists.' },
     { label: 'when', insertText: 'when ${1:Trigger}', documentation: 'An event, a declared trigger or a host signal that sets the reaction off. A trigger needs no body.' },
     { label: 'every', insertText: 'every ${1:15} ${2|seconds,minutes,hours,days|}', documentation: 'Runs the reaction on an interval.' },

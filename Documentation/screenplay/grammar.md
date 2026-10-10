@@ -166,6 +166,7 @@ Attribute      = AttributeName | "@pii" | "@sensitive" ;
 AttributeName  = "pii" | "personal" | "secret" | "sensitive" ;
 (* pii is canonical; personal is a diagnostic-free alias. sensitive, @sensitive
    and @pii are legacy spellings (PLAY0565); printing and repair use pii/secret.
+   Repeated markers with the same wire identity warn (PLAY0653); only the first is retained.
    Settings accept these legacy spellings too. Unknown markers are errors.
    special/criminal require pii; one special and one scope at most. Markers and
    settings remain refused at binding (PLAY0268), not executable protection. *)
@@ -1179,10 +1180,16 @@ ConstraintOption = "released", "by", Ident, NL
 
 ReactionDecl   = "reaction", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | DocumentationDecl | TriggerClause | WhereDecl },
+                   { DescriptionDecl | DocumentationDecl | ReactionIdentityDecl | TriggerClause | WhereDecl },
                  DEDENT ;
 
-(* A reaction needs at least one trigger and at most one where condition.
+ReactionIdentityDecl = "runs", "as", "system",
+                       [ "role", String, { "and", "role", String } ], NL ;
+
+(* Identity is one reaction-level line, at most once; roles are nonempty, distinct
+   quoted literals. It prints after documentation and before the first trigger.
+   Admitted by ESM v10 (claimed, unreleased); system claim conditions are unknown.
+   A reaction needs at least one trigger and at most one where condition.
    A trigger with no body is a complete statement of intent - the reaction runs
    when that happens. The file reference and the inline block are optional
    realization metadata.                                                      *)

@@ -13,7 +13,7 @@ public partial class and_every_index_role_is_classified : given.a_graph_query
 
     void Establish()
     {
-        var text = File.ReadAllText(Path.Combine(Root(), "Source/DotNET/Screenplay.Mcp/McpReferenceKinds.cs"));
+        var text = File.ReadAllText(Path.Combine(Root(), "Source/DotNET/Screenplay/Indexing/ReferenceKinds.cs"));
         _roles = [.. IndexRoles().Matches(text).Select(match => match.Groups[1].Value).Distinct(), "givenEvent", "whenAppendedEvent", "thenEvent", "givenReadModel", "thenReadModel", "thenAbsentReadModel"];
     }
     void Because() => _allClassified = _roles.All(SliceReferences.Classifications.ContainsKey);

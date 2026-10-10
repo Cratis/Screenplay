@@ -32,11 +32,11 @@ with `PLAY0269`; they are authored, validated, printed and exported, and Stage p
 | --- | --- | --- | --- | --- |
 | Template categories and assignment (536.2, 536.3) | `layout`, `screen template`, `dialog template`, `category`, `type`, `template <Name>` at module, feature or slice | Hierarchical; the nearest assignment wins | `PLAY0026`, `PLAY0631` scope mismatch | None |
 | Template picker metadata | `display`, `description`, `scopes` | Scene `DisplayName`, `Description`, `Metadata.Scopes` | `PLAY0026`, `PLAY0631` | None |
-| Template content | `content <slot>` with screen directives | Scene template `Content` | `PLAY0629` unknown slot, `PLAY0649` nesting cycle | None |
+| Template content | `content <slot>` with screen directives | Scene template `Content` | `PLAY0629` unknown slot, `PLAY0656` nesting cycle | None |
 | Arrangements | `arrangement flow\|freeform`, `row`, `column`, `grid columns rows`, `grow`, `span`, `when`, `variant`, `place` | Scene `FlowArrangement`, `FreeformArrangement` | `PLAY0235`, `PLAY0236` | None |
 | Exposures | `exposure for <Owner>`, `property <component>.<path>` with `label`, `operations`, `fields`, `reexposes` | Scene `ExposureDeclaration` | `PLAY0621`–`PLAY0624` | None |
 | Instance values | `instance <X>` with `set` and `items` | Scene `InstanceContribution` | `PLAY0625`–`PLAY0628` | None |
-| Screen contributions | `contribute to <Point> [order <n>]` inside a screen | Scene `Screen.Contributions` | `PLAY0648` unknown point | None |
+| Screen contributions | `contribute to <Point> [order <n>]` inside a screen | Scene `Screen.Contributions` | `PLAY0655` unknown point | None |
 | Recursive outlets (536.3) | `outlet <name>` on layouts, templates and components | Authoring | `PLAY0630` unknown outlet | None |
 
 ## Navigation
@@ -44,8 +44,8 @@ with `PLAY0269`; they are authored, validated, printed and exported, and Stage p
 | Criterion | Syntax | Semantics | Diagnostics | Not expressible |
 | --- | --- | --- | --- | --- |
 | Navigation targets and URL overrides (536.3) | `navigate to <Screen> [by <param>]`, `route`, `outlet`, `parameter` | Scene `DestinationReference` | `PLAY0107`, `PLAY0197` unknown screen, `PLAY0630` | None |
-| Navigation items | `contribute to <Point>` with `navigate`, `label`, `order`, `id`, `icon`, `presentation`, `group`, `destination outlet\|dialog\|external` | Scene `NavigationItem` and `DestinationKind` | `PLAY0217`–`PLAY0224`, `PLAY0647` unknown destination | None |
-| Dialog placement (536.3) | `open dialog <DialogTemplate>`, `destination dialog <DialogTemplate>` | Authoring | `PLAY0647` | None |
+| Navigation items | `contribute to <Point>` with `navigate`, `label`, `order`, `id`, `icon`, `presentation`, `group`, `destination outlet\|dialog\|external` | Scene `NavigationItem` and `DestinationKind` | `PLAY0217`–`PLAY0224`, `PLAY0654` unknown destination | None |
+| Dialog placement (536.3) | `open dialog <DialogTemplate>`, `destination dialog <DialogTemplate>` | Authoring | `PLAY0654` | None |
 
 ## Packages and design-time output
 

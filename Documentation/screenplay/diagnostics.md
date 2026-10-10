@@ -137,6 +137,7 @@ remove duplicate route headers before export.
 | `PLAY0012` | Error | A concept gives a reason, scope or personal-data qualifier for a marker it does not carry. |
 | `PLAY0013` | Error | A concept gives the reason for one attribute more than once. |
 | `PLAY0515` | Error | A concept marked `pii` or `secret` is used as a command identifier, an explicit `for` destination, an event source identifier, a scalar stream id type, a composite stream id part type, or a command route mapping source (including nested property paths). The message names the attribute and position, never a value. A mapping using the same protected concept already reported at its resolved stream-id declaration is not reported again; a different protected source concept is still reported. Specification route literals rely on their declaration's check. Use a surrogate `Uuid` identifier and keep personal data or operational secrets as properties. Reaction destinations also check values typed directly in the trigger clause, even for an undeclared or registered trigger. When a reaction source names both an event and a declared trigger, a protected destination in the resolved event shape or the trigger clause is rejected. |
+| `PLAY0653` | Warning | A concept header repeats a compliance marker, including `pii personal`. Both compilers keep the first marker for each wire identity and attach body settings to it; canonical printing writes one marker. The concept-line repair removes later tokens with `PreserveTrivia`. |
 | `PLAY0565` | Information | Legacy `@pii`, `sensitive` or `@sensitive` spelling. Use bare `pii`/`secret`; per-line and document repairs preserve notes and trivia. |
 | `PLAY0566` | Error | Unknown concept compliance marker; expected `pii`, `personal` or `secret`. |
 | `PLAY0567` | Error | Scope belongs to `secret` and must be `subject`, `namespace` or `global`. |
@@ -662,9 +663,9 @@ These checks run on the assembled model. The source stays in the syntax tree, so
 | `PLAY0630` | Error | A navigation's `outlet <name>` names an outlet no layout, template or component declares. |
 | `PLAY0631` | Error | A screen or scoped `template` assignment uses a template whose `scopes` exclude that scope. |
 | `PLAY0632` | Error | A component comes from a package no `ui profile` declares. Only checked when at least one profile declares packages. |
-| `PLAY0647` | Error | A navigation contribution's `destination outlet` or `destination dialog` names an outlet or dialog template nothing declares. |
-| `PLAY0648` | Error | A screen's `contribute to <Point>` names a contribution point no layout or template slot declares. Unlike a module or feature `contribute to` (`PLAY0224`, a warning), screen contributions belong to the screen-composition checks. |
-| `PLAY0649` | Error | Template content nests templates in a cycle: a template's `content` uses itself, directly or through other templates. |
+| `PLAY0654` | Error | A navigation contribution's `destination outlet` or `destination dialog` names an outlet or dialog template nothing declares. |
+| `PLAY0655` | Error | A screen's `contribute to <Point>` names a contribution point no layout or template slot declares. Unlike a module or feature `contribute to` (`PLAY0224`, a warning), screen contributions belong to the screen-composition checks. |
+| `PLAY0656` | Error | Template content nests templates in a cycle: a template's `content` uses itself, directly or through other templates. |
 
 ## Identity details
 
@@ -1007,10 +1008,23 @@ Refusal branches, `$refusal` values, redelivery and `then no events` are syntax-
 | `PLAY0540` | Warning | A refusal branch is shadowed by an earlier selector, or its declared constraint targets none of the invoked command's events. Bare refusal covers validation and constraints, not authorization. |
 | `PLAY0541` | Error | A `$refusal` value is outside a branch's event mapping, has an unknown member, uses `constraint` outside a constraint selector, or targets an incompatible property type. The values `reason`, `constraint` and `message` are String values. |
 | `PLAY0542` | Error | A named constraint in a refusal selector does not resolve to a declared constraint. |
-| `PLAY0557` | Warning | An `on refused by authorization` branch invokes a command gated by its own, feature or module authorization without a declared invoking identity. With no caller the reference runner always refuses the command, while Arc runs reactor commands as the system. Declare an invoking identity once [#383](https://github.com/Cratis/Screenplay/issues/383) supports it; identity syntax is not available yet. |
+| `PLAY0557` | Warning | An `on refused by authorization` branch invokes a command gated by its own, feature or module authorization without a declared invoking identity. With no caller the reference runner always refuses the command. Arc runs commands as the system only for a reactor carrying `[ExecuteCommandsAsSystem]`. Declare `runs as system role "<Role>"` to state the intended identity; it suppresses this warning and selects ESM v10 (claimed, unreleased). Refusal branches remain syntax-only. |
 | `PLAY0543` | Error | `when redelivered <Event> to <Reaction>` is malformed, or its values, optional `for` and route locator do not identify exactly one definitely matching given event occurrence with no undecidable candidates. Use `for`, values, `stream` or `no stream` to narrow the locator. |
 | `PLAY0544` | Error | The redelivery reaction is unknown or ambiguous, or has no event trigger on the stated event. |
 | `PLAY0545` | Error | `then no events` is malformed, repeated, has child mappings, follows `when append`, or accompanies event, event-order, error or denial expectations. Use one leaf assertion after a non-append action; read-model, query and response assertions may accompany it. |
+
+### Reaction command identity
+
+`runs as` is admitted by ESM v10 (claimed, unreleased); `PLAY0268` no longer refuses reaction command identity. Omitting it preserves existing executable bytes. System claim conditions evaluate to unknown and a final unknown denies.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0647` | Error | `runs as` is malformed, repeated or misplaced, or contains an empty or duplicate role. Use one reaction-level `runs as system [role "<Role>" and role "<Role>"]` line. Roles are quoted literals; zero roles is allowed. |
+| `PLAY0648` | Warning | A reaction invokes a command with its own or inherited authorization gate without declaring `runs as`. Both compilers report at most one finding per invocation; an authorization refusal branch receives `PLAY0557` instead. |
+| `PLAY0649` | Warning | The reaction declares identity but has neither invocations nor an inline or `file` implementation body. Both compilers check this. |
+| `PLAY0650` | Warning | C# binder only: a declared role is referenced by no invoked command's effective gate. Opaque gates and inline or `file` reaction bodies suppress this least-privilege finding. |
+| `PLAY0651` | Warning | C# binder only: the declared system identity definitely cannot satisfy an invoked command's effective gate. Claim conditions and other unknown results are not treated as definite denial. |
+| `PLAY0652` | Warning / Information | Opt-in `privilege` completeness: each producer of an elevated reaction's trigger event must require every declared system role. Ungated commands, captures and reaction productions produce Warning; opaque gates produce Information because they cannot be compared. Clock and application triggers have no producer and are silent. |
 
 See [Refusal branches](reactions.md#refusal-branches-syntax-only), [Redelivery specifications](specifications.md#redelivery-specifications-syntax-only) and [Specification syntax](specifications.md#syntax).
 

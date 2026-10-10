@@ -16,6 +16,8 @@ Processing purposes are declared at the top level: Billing covers the module, Bo
 
 Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNumber, InvoiceList and RegisterInvoiceScreen explain values, rules, builders and input/view surfaces. They are report-only metadata, not UI titles, validation or generated code comments.
 
+`PaymentReconciler` declares `runs as system role "Accountant"` for its role-gated `ChangeInvoiceStatus` invocation. The line selects ESM v10 (claimed, unreleased); the reference authenticates the system identity with that role, while claim conditions remain unknown and a final unknown denies. It does not supply audit identity. Source compilation remains warning-free.
+
 ## Who uses it
 
 | Persona | Holds | Sees the screens of |

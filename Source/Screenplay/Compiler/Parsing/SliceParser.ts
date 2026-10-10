@@ -32,6 +32,7 @@ import { OperationSyntax } from '../Syntax/Operations';
 import { parseProjection } from './ProjectionParser';
 import { parseQuery } from './QueryParser';
 import { parseReaction } from './ReactionParser';
+import { misplacedReactionIdentity } from './ReactionIdentityParser';
 import { parseScreen } from './ScreenParser';
 import { parseExample } from './SpecificationExampleParser';
 import { parseSpecification } from './SpecificationParser';
@@ -110,6 +111,8 @@ export function parseSlice(context: ParserContext, line: SourceLine): SliceSynta
             projections.push(parseProjection(context, child));
         } else if (keyword === 'capture') {
             captures.push(parseCapture(context, child));
+        } else if (keyword === 'runs') {
+            misplacedReactionIdentity(context, child);
         } else if (keyword === 'reaction') {
             reactions.push(parseReaction(context, child));
         } else if (keyword === 'constraint') {

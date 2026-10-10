@@ -22,16 +22,31 @@ export function canonicalComplianceName(marker: string): string {
     return name === 'sensitive' ? 'secret' : name;
 }
 
-export function parseComplianceMarkers(context: ParserContext, line: SourceLine, text: string): ConceptAttributeSyntax[] {
+export function parseComplianceMarkers(context: ParserContext, line: SourceLine, concept: string, text: string): ConceptAttributeSyntax[] {
     const markers = text.trim().split(/\s+/).filter(marker => marker.length > 0);
     reportLegacy(context, line, markers);
-    return markers.map(marker => {
+    const attributes: ConceptAttributeSyntax[] = [];
+    const firstMarkers = new Map<string, string>();
+    let reported = false;
+    for (const marker of markers) {
         const name = complianceWireName(marker);
         if (!['pii', 'sensitive'].includes(name) || marker === '@personal' || marker === '@secret') {
             context.error(DiagnosticCodes.UnknownComplianceMarker, `Unknown concept marker '${marker}' - expected pii, personal or secret`, locationOf(line));
         }
-        return { kind: 'ConceptAttributeSyntax', name, reason: null, scope: null, specialCategory: null, criminal: false, location: locationOf(line) };
-    });
+        const first = firstMarkers.get(name);
+        if (first !== undefined) {
+            if (!reported) {
+                const canonical = canonicalComplianceName(marker);
+                const alias = first === marker ? '' : ` - '${marker === canonical ? first : marker}' is the same marker as '${canonical}'`;
+                context.warning(DiagnosticCodes.DuplicateComplianceMarker, `Concept '${concept}' repeats the '${canonical}' marker${alias} - remove the duplicate`, locationOf(line));
+                reported = true;
+            }
+            continue;
+        }
+        firstMarkers.set(name, marker);
+        attributes.push({ kind: 'ConceptAttributeSyntax', name, reason: null, scope: null, specialCategory: null, criminal: false, location: locationOf(line) });
+    }
+    return attributes;
 }
 
 export function parseComplianceDirective(context: ParserContext, line: SourceLine, concept: string, attributes: ConceptAttributeSyntax[]): boolean {

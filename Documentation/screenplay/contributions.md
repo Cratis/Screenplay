@@ -67,7 +67,7 @@ contribute to Navigation
 
 - `id`, `icon`, `presentation` and `group` take an identifier or a quoted string, kept exactly as written.
 - `destination outlet <name>` opens the item in a named outlet, `destination dialog <DialogTemplate>` opens a dialog, and `destination external "<route>"` leaves the application. These map to Scene's `DestinationKind` `Outlet`, `Dialog` and `External`.
-- An outlet or dialog template nothing declares is reported as `PLAY0647`.
+- An outlet or dialog template nothing declares is reported as `PLAY0654`.
 - A `navigate to` inside a contribution accepts the same `route`, `outlet` and `parameter` lines as a screen's navigation.
 
 ## How a contribution resolves

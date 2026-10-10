@@ -93,7 +93,7 @@ describe('when validating a document with a problem of every coded kind', () => 
         ];
         issues.push(...sources.flatMap(lines => validateLines(lines)));
         const vectors = JSON.parse(readFileSync(new URL('../../../../Compiler/Conformance/diagnostics.json', import.meta.url), 'utf8')) as { cases: { source: string[]; diagnostics: string[] }[] };
-        const authoring = ['PLAY0633', 'PLAY0634', 'PLAY0635', 'PLAY0636', 'PLAY0637', 'PLAY0638', 'PLAY0639', 'PLAY0640', 'PLAY0641', 'PLAY0642', 'PLAY0643', 'PLAY0644', 'PLAY0645', 'PLAY0646', 'PLAY0596', 'PLAY0597', 'PLAY0598', 'PLAY0599', 'PLAY0600', 'PLAY0601', 'PLAY0010', 'PLAY0012', 'PLAY0013', 'PLAY0560', 'PLAY0561', 'PLAY0562', 'PLAY0563', 'PLAY0564', 'PLAY0565', 'PLAY0566', 'PLAY0567', 'PLAY0568', 'PLAY0569', 'PLAY0570', 'PLAY0571', 'PLAY0572', 'PLAY0577', 'PLAY0581', 'PLAY0582', 'PLAY0583', 'PLAY0584', 'PLAY0586', 'PLAY0587', 'PLAY0590', 'PLAY0591', 'PLAY0592', 'PLAY0593', 'PLAY0594', 'PLAY0595', 'PLAY0558', 'PLAY0514', 'PLAY0515', 'PLAY0518', 'PLAY0519', 'PLAY0341', 'PLAY0342', 'PLAY0343', 'PLAY0344', 'PLAY0391', 'PLAY0453', 'PLAY0538', 'PLAY0539', 'PLAY0543', 'PLAY0545']
+        const authoring = ['PLAY0633', 'PLAY0634', 'PLAY0635', 'PLAY0636', 'PLAY0637', 'PLAY0638', 'PLAY0639', 'PLAY0640', 'PLAY0641', 'PLAY0642', 'PLAY0643', 'PLAY0644', 'PLAY0645', 'PLAY0646', 'PLAY0647', 'PLAY0648', 'PLAY0649', 'PLAY0596', 'PLAY0597', 'PLAY0598', 'PLAY0599', 'PLAY0600', 'PLAY0601', 'PLAY0010', 'PLAY0012', 'PLAY0013', 'PLAY0560', 'PLAY0561', 'PLAY0562', 'PLAY0563', 'PLAY0564', 'PLAY0565', 'PLAY0653', 'PLAY0566', 'PLAY0567', 'PLAY0568', 'PLAY0569', 'PLAY0570', 'PLAY0571', 'PLAY0572', 'PLAY0577', 'PLAY0581', 'PLAY0582', 'PLAY0583', 'PLAY0584', 'PLAY0586', 'PLAY0587', 'PLAY0590', 'PLAY0591', 'PLAY0592', 'PLAY0593', 'PLAY0594', 'PLAY0595', 'PLAY0558', 'PLAY0514', 'PLAY0515', 'PLAY0518', 'PLAY0519', 'PLAY0341', 'PLAY0342', 'PLAY0343', 'PLAY0344', 'PLAY0391', 'PLAY0453', 'PLAY0538', 'PLAY0539', 'PLAY0543', 'PLAY0545']
             .map(code => vectors.cases.find(vector => vector.diagnostics.some(diagnostic => diagnostic.startsWith(code + '@')))!.source);
         issues.push(...authoring.flatMap(lines => validateLines(lines)));
         const identity = ['identity', '  department String from claim "department"'];
@@ -101,10 +101,10 @@ describe('when validating a document with a problem of every coded kind', () => 
         issues.push(...validateLines(['concept C : String', '  description invalid', '  description', '    ```text', '    ```', '  description "One"', '  description "Two"']));
         // Catalogue entries for C#-only checks are not promises of local TypeScript validation.
         // A host may supply them; the adapter must preserve their codes rather than drop them.
-        const nativeOnly = ['PLAY0602', 'PLAY0603', 'PLAY0604', 'PLAY0605', 'PLAY0606', 'PLAY0559', 'PLAY0530', 'PLAY0531', 'PLAY0532', 'PLAY0533', 'PLAY0534', 'PLAY0535', 'PLAY0536', 'PLAY0537',
+        const nativeOnly = ['PLAY0650', 'PLAY0651', 'PLAY0652', 'PLAY0602', 'PLAY0603', 'PLAY0604', 'PLAY0605', 'PLAY0606', 'PLAY0559', 'PLAY0530', 'PLAY0531', 'PLAY0532', 'PLAY0533', 'PLAY0534', 'PLAY0535', 'PLAY0536', 'PLAY0537',
             'PLAY0345', 'PLAY0346', 'PLAY0347', 'PLAY0348', 'PLAY0540', 'PLAY0541', 'PLAY0542', 'PLAY0544', 'PLAY0546',
             'PLAY0573', 'PLAY0574', 'PLAY0575', 'PLAY0576', 'PLAY0578', 'PLAY0579', 'PLAY0580', 'PLAY0585', 'PLAY0588', 'PLAY0589',
-            'PLAY0622', 'PLAY0623', 'PLAY0624', 'PLAY0626', 'PLAY0627', 'PLAY0628', 'PLAY0629', 'PLAY0630', 'PLAY0631', 'PLAY0632', 'PLAY0647', 'PLAY0648', 'PLAY0649'];
+            'PLAY0622', 'PLAY0623', 'PLAY0624', 'PLAY0626', 'PLAY0627', 'PLAY0628', 'PLAY0629', 'PLAY0630', 'PLAY0631', 'PLAY0632', 'PLAY0654', 'PLAY0655', 'PLAY0656'];
         // Malformed screen composition is a parse error both compilers report.
         issues.push(...validateLines(['exposure Shell', 'instance']));
         issues.push(...validateLines(['module M'], { compilerDiagnostics: nativeOnly.map(code => ({ code, severity: 'warning', message: 'C# finding', location: { line: 1, column: 1 } })) }));

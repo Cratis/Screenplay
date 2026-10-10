@@ -106,6 +106,8 @@
   href: screens-capability-matrix.md
 - name: Workspace transport
   href: workspace-transport.md
+- name: Model comparison API
+  href: model-comparison.md
 - name: Visitors and traversal
   href: visitors.md
 - name: Syntax tree compatibility

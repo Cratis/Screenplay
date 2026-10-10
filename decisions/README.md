@@ -44,7 +44,7 @@
 | [0040](0040-description-on-concepts-rules-and-ui.md) | Accept body-line descriptions on concepts, policies, constraints, projections, screens and forms | accepted | implemented | 2026-10-08 | Sindre Alstad Wilting |
 | [0041](0041-personal-data-secrets-and-processing-purposes.md) | Mark personal data and secrets on concepts, and declare processing purposes once | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0042](0042-persona-callers-in-specifications.md) | Expand persona callers in specifications and check persona coverage on request | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
-| [0043](0043-reaction-identity-runs-as.md) | Declare the system identity under which a reaction's invoked commands run | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
+| [0043](0043-reaction-identity-runs-as.md) | Declare the system identity under which a reaction's invoked commands run | accepted | implemented | 2026-10-08 | Sindre Alstad Wilting |
 | [0044](0044-evolve-event-properties-through-mcp.md) | Add, rename and remove a property along its mapping chain through a planned proposal, with an explicit event-evolution choice | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0045](0045-model-notes-sidecar.md) | Record questions, tasks and notes against model elements in a committed sidecar outside the semantic model | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0046](0046-specification-case-tables.md) | Run one specification over named cases, expanded in the front end | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
@@ -54,3 +54,4 @@
 | [0050](0050-public-event-execution-semantics.md) | Define the executable meaning of public events, outbound translation, event targets and reaction results | accepted | none | 2026-10-09 | Einar Ingebrigtsen |
 | [0051](0051-admit-public-events-as-esm-v9.md) | Admit public events, translation direction, event-target projections and event-source captures as ESM v9 | accepted | none | 2026-10-09 | Einar Ingebrigtsen |
 | [0052](0052-identity-details-as-authoring-metadata.md) | Declare one caller detail shape as authoring metadata before executable admission | accepted | implemented | 2026-10-09 | Sindre Alstad Wilting |
+| [0053](0053-public-structural-model-comparison.md) | Share typed structural model comparison from the Screenplay library | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |

@@ -1,0 +1,23 @@
+policy AutomationAccess
+  require role "Automation" and role "Auditor"
+
+module Billing
+  feature Claims
+    slice Automation Expiration
+      event DeadlinePassed
+      command CloseClaim
+        authorize AutomationAccess
+      reaction CloseExpiredClaims
+        description "Closes expired claims under a narrowly declared system identity"
+        runs as system role "Automation" and role "Auditor"
+        when DeadlinePassed
+          invokes CloseClaim
+        every 1 day
+          invokes CloseClaim
+        when Startup
+          invokes CloseClaim
+      command Ungated
+      reaction AuthenticatedAutomation
+        runs as system
+        when DeadlinePassed
+          invokes Ungated

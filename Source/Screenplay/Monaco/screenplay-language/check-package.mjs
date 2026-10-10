@@ -29,6 +29,22 @@ function npmPack(destination) {
     return execFileSync(process.execPath, [cli, ...args], options);
 }
 
+export function checkRuntimeBudget(files) {
+    const modules = files.filter(file => file.path.endsWith('.js')).sort((left, right) => right.size - left.size);
+    if (!modules.length) throw new Error('No published JavaScript modules found');
+    // The per-file limit is the consumer chunk budget: never raise it. Consumers must be able
+    // to split the published module graph themselves instead of inheriting a prebuilt monolith.
+    for (const file of modules) {
+        if (file.size > 500_000) throw new Error(`Monaco runtime file budget exceeded: ${file.path} (${file.size} bytes; limit 500000)`);
+    }
+    const runtimeBytes = modules.reduce((sum, file) => sum + file.size, 0);
+    // The 1 MB total ceiling approves language growth within that ceiling, not vendoring
+    // dependencies (Monaco alone is several megabytes). Beyond it, review the module breakdown
+    // and approve the growth explicitly rather than tuning the ceiling for each release.
+    if (runtimeBytes > 1_000_000) throw new Error(`Monaco runtime bundle budget exceeded: ${runtimeBytes} bytes (a dependency may have been bundled into the runtime)`);
+    return { modules, runtimeBytes };
+}
+
 // Exercise the tarball, not workspace symlinks. The consumer lives outside the checkout and contains
 // only the packed package and declared peers, so workspace dependencies cannot hide declaration leaks.
 // A resolver guard also prevents the browser bundle from hiding an undeclared runtime dependency.
@@ -38,6 +54,7 @@ export async function checkPackage() {
         const result = JSON.parse(npmPack(consumer));
         const packed = Object.values(result)[0];
         if (!packed?.filename) throw new Error('npm pack did not report a package filename');
+        const { modules, runtimeBytes } = checkRuntimeBudget(packed.files);
         const installed = join(consumer, 'node_modules/@cratis/screenplay-language');
         await mkdir(installed, { recursive: true });
         // Relative paths from the consumer directory: a drive-letter path (C:\...) makes GNU tar treat it as a remote host.
@@ -87,12 +104,26 @@ export async function checkPackage() {
             // Monaco is a browser peer (and imports CSS), not a Node-loadable runtime. The browser
             // bundler above resolves the complete packed module graph, leaving only that peer external.
         }
-        const runtimeBytes = packed.files.filter(file => file.path.endsWith('.js')).reduce((sum, file) => sum + file.size, 0);
-        // Guards against vendoring a dependency into the runtime (Monaco alone is several megabytes),
-        // not against language growth: undeclared imports are already rejected by the resolver above.
-        // The language runtime is ~541 KB; a 1 MB ceiling leaves room for the language to grow without
-        // tuning this number per release, while any vendored dependency still exceeds it.
-        if (runtimeBytes > 1_000_000) throw new Error(`Monaco runtime bundle budget exceeded: ${runtimeBytes} bytes (a dependency may have been bundled into the runtime)`);
+        const smoke = await build({
+            stdin: {
+                contents: `import { register, languageId, screenplayDarkThemeName } from '@cratis/screenplay-language'; console.log(register, languageId, screenplayDarkThemeName);`,
+                resolveDir: consumer,
+            },
+            absWorkingDir: consumer,
+            bundle: true,
+            write: false,
+            platform: 'browser',
+            format: 'esm',
+            target: 'es2022',
+            minify: true,
+            keepNames: true,
+            external: [...peers],
+            metafile: true,
+        });
+        const consumerBytes = smoke.outputFiles.reduce((sum, file) => sum + file.contents.length, 0);
+        console.log(`Monaco consumer smoke: register, languageId, screenplayDarkThemeName; ${consumerBytes} bundled bytes`);
+        console.log(`Monaco module breakdown: ${modules.length} JavaScript files; largest ${modules[0].path}: ${modules[0].size} bytes`);
+        for (const file of modules.slice(0, 10)) console.log(`  ${file.size} bytes ${file.path}`);
         console.log(`Monaco pack: ${entries.length} exports type-checked and bundled; ${runtimeBytes} runtime bytes; ${packed.size} packed bytes`);
     } finally {
         // This directory was created exclusively by this check; never clean another build's output.

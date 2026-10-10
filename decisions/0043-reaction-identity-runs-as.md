@@ -2,7 +2,7 @@
 id: 0043
 title: Declare the system identity under which a reaction's invoked commands run
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-10-08
 decider: Sindre Alstad Wilting
 class: contract
@@ -105,3 +105,7 @@ In force from acceptance through admission. Out of scope: persona identities, pe
 ## Consequences
 
 Models state the trusted path instead of prose. Existing models invoking gated commands gain a warning (visible to `--warnaserror` users). 0030's admission becomes possible. `runsAs` is a published ESM kind that Stage, CritterStack and Studio must admit or refuse.
+
+> **2026-10-10 — status: pre-admission half implemented (#383).** Both compilers parse, print and round-trip `runs as system [role "…" and role "…"]`; PLAY0647–PLAY0652 report malformed, repeated or misplaced lines, gated invocations without identity, unused identities, unused roles and unsatisfiable identities as specified above, and PLAY0557 is suppressed by a declared identity with the corrected Arc premise. The opt-in `privilege` completeness check, MCP `declaration-details` `runsAs` and readiness, editors and documentation follow this record. Binding refuses `runs as` with `PLAY0268` naming #383; models without it keep their bytes. Admission (`runsAs` in the ESM, the reference evaluator's system caller, goldens) is still open, so the stage stays `none`.
+
+> **2026-10-10 — admitted as ESM v10 (claimed, unreleased).** ESM v9 was released in Screenplay 4.117.0, so, per *Admission* and 0025, reaction identity takes the next unused number rather than amending 0051. Binding selects language/semantic 10.0 only for a declared `runs as`; the strict member is `runsAs` with the closed `system` kind and ordinally sorted roles, including `[]`. The reference authenticates the declared principal with exactly those roles; all claim conditions are unknown, a final unknown denies, and audit identity remains unsupported. `full-esm-v10.json` and `ReactionIdentityCorpus.V10` pin the contract and accepted/unauthorized invocation outcomes. `PLAY0268` is retired for `runs as`; prior-version bytes are unchanged. Stage realization and explicit consumer admission remain separately tracked.

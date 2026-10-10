@@ -16,6 +16,7 @@ export type { FormPopulateViaQuerySyntax } from './FormPopulateViaQuerySyntax';
 export type { TriggerDataSyntax } from './TriggerDataSyntax';
 
 export interface DependencySources {
+    readonly implementation?: boolean;
     readonly data?: readonly TriggerDataSyntax[];
     readonly reads?: readonly ReadsSyntax[];
     readonly concurrency?: ConcurrencySyntax | null;

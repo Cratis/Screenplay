@@ -36,6 +36,8 @@ internal static partial class ReactionParser
         string? description = null;
         string? documentation = null;
         ConditionSyntax? where = null;
+        ReactionIdentitySyntax? runsAs = null;
+        var identityDeclared = false;
         var directiveLocations = new Dictionary<string, SourceLocation>();
 
         // Whether the body already told the author something is wrong. A reaction whose only trigger is
@@ -62,6 +64,13 @@ internal static partial class ReactionParser
             if (keyword == "documentation")
             {
                 documentation = DocumentationParser.Parse(context, line, documentation, $"Reaction '{name}'", directiveLocations);
+                continue;
+            }
+
+            if (keyword == "runs")
+            {
+                runsAs = ReactionIdentityParser.Parse(context, line, identityDeclared) ?? runsAs;
+                identityDeclared = true;
                 continue;
             }
 
@@ -120,7 +129,7 @@ internal static partial class ReactionParser
             context.Error(DiagnosticCodes.ReactionWithoutTrigger, $"Reaction '{name}' must declare at least one trigger - nothing sets it off", header.Location);
         }
 
-        return new(name, triggers, header.Location, description, where) { Documentation = documentation, DirectiveLocations = directiveLocations };
+        return new(name, triggers, header.Location, description, where) { Documentation = documentation, RunsAs = runsAs, DirectiveLocations = directiveLocations };
     }
 
     // Two triggers are the same when they name the same occurrence, wherever in the file they were written -
@@ -171,6 +180,9 @@ internal static partial class ReactionParser
             context.Reader.TakeSignificant();
             switch (LineText.FirstWord(body.Content))
             {
+                case "runs" when ReactionIdentityParser.IsDeclarationLine(body):
+                    ReactionIdentityParser.Misplaced(context, body);
+                    continue;
                 case "description":
                     var previousDescription = description;
                     description = DescriptionParser.Parse(context, body, description, $"Trigger '{body.Content}'");
@@ -263,6 +275,12 @@ internal static partial class ReactionParser
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
+            if (ReactionIdentityParser.IsDeclarationLine(child))
+            {
+                ReactionIdentityParser.Misplaced(context, child);
+                continue;
+            }
+
             if (RefusalPrefixRegex().IsMatch(child.Content))
             {
                 if (ParseRefusal(context, child) is { } refusal) refusals.Add(refusal);
@@ -299,6 +317,13 @@ internal static partial class ReactionParser
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
+            if (ReactionIdentityParser.IsDeclarationLine(child))
+            {
+                ReactionIdentityParser.Misplaced(context, child);
+                reported = true;
+                continue;
+            }
+
             if (child.Content == "acknowledge")
             {
                 if (acknowledge || produces.Count > 0 || context.TryPeekChild(child.Indent, out _))

@@ -179,6 +179,9 @@ internal static partial class ScreenplayParser
                 case "instance":
                     instanceContributions.Add(CompositionParser.ParseInstance(context, line));
                     break;
+                case "runs":
+                    ReactionIdentityParser.Misplaced(context, line);
+                    break;
                 default:
                     if (moduleBody?.TryParse(context, line) == true || featureBody?.TryParse(context, line) == true)
                     {
@@ -487,7 +490,7 @@ internal static partial class ScreenplayParser
 
         var name = match.Groups[1].Value;
         var type = match.Groups[2].Value;
-        var attributes = ConceptComplianceParser.ParseMarkers(context, line, match.Groups[3].Value);
+        var attributes = ConceptComplianceParser.ParseMarkers(context, line, name, match.Groups[3].Value);
 
         if (type != "Enum" && !ConceptSyntax.PrimitiveTypes.Contains(type))
         {

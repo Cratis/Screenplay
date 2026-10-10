@@ -17,6 +17,7 @@ import { parseFileImport } from './FileImportParser';
 import { collectInputUses } from './InputUses';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
+import { misplacedReactionIdentity } from './ReactionIdentityParser';
 import { parseExample } from './SpecificationExampleParser';
 import { parseSlice } from './SliceParser';
 import { locationOf, SourceLine } from './SourceLine';
@@ -49,6 +50,9 @@ export class FeatureBody {
     tryParse(context: ParserContext, line: SourceLine): boolean {
         const keyword = firstWord(line.content);
         switch (keyword) {
+            case 'runs':
+                misplacedReactionIdentity(context, line);
+                return true;
             case 'description':
                 this.#description = parseDescription(context, line, this.#description, `Feature '${this.name}'`);
                 return true;

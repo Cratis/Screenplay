@@ -43,6 +43,11 @@ public static partial class SpecificationExamples
     /// <param name="declarations">The owning application.</param>
     /// <param name="scope">The specification declaration scope.</param>
     /// <returns>Every effective specification and resolution diagnostics.</returns>
+    /// <remarks>
+    /// This expands one specification on its own, so it skips the checks that need the whole application:
+    /// an unknown case-parameter type is not reported as <see cref="DiagnosticCodes.IncompatibleSpecificationParameterType"/>,
+    /// and a parameter is checked against the property it fills only when both types are declared in the application it is given. To get every diagnostic for a complete model, call <see cref="Expand(ApplicationSyntax)"/>.
+    /// </remarks>
     public static CompilationResult<IReadOnlyList<EffectiveSpecification>> ExpandAll(SpecificationSyntax specification, ApplicationSyntax declarations, IReadOnlyList<string> scope) =>
         new Expansion(declarations, specification.Examples, new(scope)).ExpandStandalone(specification, new(scope));
 

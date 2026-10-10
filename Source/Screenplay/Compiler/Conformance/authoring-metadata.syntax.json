@@ -122,6 +122,7 @@
                   "description": null,
                   "documentation": "A reaction observes issuance without changing its meaning.",
                   "name": "ObserveIssuance",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",

@@ -53,3 +53,7 @@ Stage and other consumers can rely on the outbound contract; the shape of a fore
 ## Related
 
 Builds on 0009, 0049, 0050; follows 0004, 0025.
+
+## Status notes
+
+**2026-10-10.** ESM v9 was released in Screenplay 4.117.0 (#598).

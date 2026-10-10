@@ -47,6 +47,9 @@ internal sealed class ModuleBody(string name)
     {
         switch (LineText.FirstWord(line.Content))
         {
+            case "runs":
+                ReactionIdentityParser.Misplaced(context, line);
+                return true;
             case "description":
                 var previousDescription = _description;
                 _description = DescriptionParser.Parse(context, line, _description, $"Module '{name}'");

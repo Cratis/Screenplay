@@ -47,6 +47,7 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
             ["public"] = ("EventDecl", "events.md"),
             ["query"] = ("QueryDecl", "queries.md"),
             ["reaction"] = ("ReactionDecl", "reactions.md"),
+            ["runs"] = ("ReactionIdentityDecl", "reactions.md"),
             ["readmodel"] = ("ReadModelDecl", "readmodels.md"),
             ["reducer"] = ("ReducerDecl", "readmodels.md"),
             ["screen"] = ("ScreenDecl", "screens.md"),
