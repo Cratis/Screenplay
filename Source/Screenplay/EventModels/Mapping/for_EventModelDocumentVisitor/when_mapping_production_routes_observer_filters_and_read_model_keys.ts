@@ -49,6 +49,22 @@ describe('when mapping production routes, observer filters and read-model keys',
         expect(details).toContain('Produces Changed: Account.Other');
         expect(details).toContain('Reads Row by id = id, period = period');
     });
+    it('should leave existing command details unchanged for a plain reads by lookup', () => {
+        const parsed = parse(`module M
+  feature F
+    slice StateView View
+      readmodel Row
+        id String
+    slice StateChange Change
+      command C
+        description "Read the current row."
+        id String identifier
+        reads Row by id
+`);
+        expect(parsed.diagnostics).toEqual([]);
+        const command = toEventModelDocument(parsed.value, 'Reads').collections[0].modules[0].features[0].slices[1].command!;
+        expect(command.logicDescription).toBe('Read the current row.');
+    });
     it('should mark key fields and include each query key part', () => {
         expect(slices()[1].readModel!.schema.properties).toMatchObject({ id: { title: 'id (key)' }, period: { title: 'period (key)' } });
         expect(slices()[1].queries[0].parameters.map(parameter => parameter.name)).toEqual(['id', 'period']);

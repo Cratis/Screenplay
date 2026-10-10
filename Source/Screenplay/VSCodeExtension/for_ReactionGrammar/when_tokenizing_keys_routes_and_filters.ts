@@ -36,6 +36,18 @@ describe('when tokenizing read-model keys, production routes and observer filter
     it.each(['produces Changed', 'produces event Changed'])('should highlight a route under %s', production => {
         expect(scopes(`command C\n  ${production}\n    stream Account.Main`, 'stream')).toContain('keyword.other.screenplay');
     });
+    it('should preserve keyword, operator and number scopes in a conditional production header', () => {
+        const source = 'command C\n  produces when amount > 100';
+        expect(scopes(source, 'when')).toContain('keyword.other.screenplay');
+        expect(scopes(source, 'when')).not.toContain('entity.name.type.screenplay');
+        expect(scopes(source, '>')).toContain('keyword.operator.screenplay');
+        expect(scopes(source, '100')).toContain('constant.numeric.screenplay');
+    });
+    it('should preserve a trailing production comment', () => {
+        const source = 'command C\n  produces Big // note';
+        expect(scopes(source, 'Big')).toContain('entity.name.type.screenplay');
+        expect(scopes(source, '// note')).toContain('comment.line.double-slash.screenplay');
+    });
     it.each(['reaction R', 'reducer R => Row'])('should highlight from under %s', header => {
         expect(scopes(`${header}\n  from Account.Main`, 'from')).toContain('keyword.other.screenplay');
     });

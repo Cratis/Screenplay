@@ -85,7 +85,7 @@ function routeDetails(command: CommandSyntax): string {
 }
 
 function readsDetails(command: CommandSyntax): string {
-    return (dependencySourcesOf(command).reads ?? []).map(read => `Reads ${read.readModel}${read.alias ? ` as ${read.alias}` : ''}${read.by ? ` by ${read.by}` : read.byParts?.length ? ` by ${read.byParts.map(part => `${part.property} = ${expressionText(part.source)}`).join(', ')}` : ''}`).join('\n');
+    return (dependencySourcesOf(command).reads ?? []).filter(read => (read.byParts?.length ?? 0) > 0).map(read => `Reads ${read.readModel}${read.alias ? ` as ${read.alias}` : ''} by ${read.byParts!.map(part => `${part.property} = ${expressionText(part.source)}`).join(', ')}`).join('\n');
 }
 
 function detailsOf(command: CommandSyntax): string {

@@ -148,7 +148,7 @@
             "captures": { "1": { "name": "variable.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
         },
         "production-block": {
-            "begin": "^([ ]*)(produces)\\s+(?!operation\\b|event\\b)([A-Za-z_]\\w*)(?:\\s+.*)?$",
+            "begin": "^([ ]*)(produces)\\s+(?!operation\\b|event\\b|when\\b)([A-Za-z_]\\w*)(?=\\s|$)",
             "beginCaptures": { "2": { "name": "keyword.other.screenplay" }, "3": { "name": "entity.name.type.screenplay" } },
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
             "patterns": [{ "include": "#specification-stream" }, { "include": "#keywords" }, { "include": "#common" }]
