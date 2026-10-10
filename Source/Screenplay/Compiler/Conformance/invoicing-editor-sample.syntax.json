@@ -11855,6 +11855,7 @@
                   "kind": "ReactionSyntax",
                   "description": "Every settlement from the provider becomes a recorded payment",
                   "name": "PaymentProviderTranslator",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",
@@ -12047,6 +12048,13 @@
                   "description": "Marks an invoice paid when a payment covers what is outstanding",
                   "documentation": "Payment recording and invoice closure are separate facts so reconciliation can be reviewed.",
                   "name": "PaymentReconciler",
+                  "runsAs": {
+                    "kind": "ReactionIdentitySyntax",
+                    "roles": [
+                      "Accountant"
+                    ],
+                    "syntaxKind": "system"
+                  },
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",
@@ -12233,6 +12241,7 @@
                   "kind": "ReactionSyntax",
                   "description": "Sends the first reminder at once, then one every morning",
                   "name": "OverdueChaser",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",
@@ -12289,6 +12298,7 @@
                   "kind": "ReactionSyntax",
                   "description": "Summarizes the week's collections for the finance department",
                   "name": "WeeklyCollectionsDigest",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",
@@ -12327,6 +12337,7 @@
                   "kind": "ReactionSyntax",
                   "description": "Issues every customer a statement on the first of the month",
                   "name": "MonthlyStatementRun",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",
@@ -14402,6 +14413,7 @@
                       "kind": "ReactionSyntax",
                       "description": "Emails the billing contact once an invoice is registered",
                       "name": "NotifyCustomer",
+                      "runsAs": null,
                       "triggers": [
                         {
                           "kind": "ReactionTriggerSyntax",
@@ -14599,6 +14611,7 @@
                   "kind": "ReactionSyntax",
                   "description": "Marks a sent invoice overdue once its due date has passed",
                   "name": "OverdueInvoiceDetector",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",
@@ -14795,6 +14808,7 @@
                   "kind": "ReactionSyntax",
                   "description": "Reconciles the billing contact list against the external directory",
                   "name": "BillingDirectorySync",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",
@@ -15342,6 +15356,7 @@
                   "kind": "ReactionSyntax",
                   "description": "A payment the legacy system saw is a payment here too",
                   "name": "LegacyPaymentTranslator",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",
