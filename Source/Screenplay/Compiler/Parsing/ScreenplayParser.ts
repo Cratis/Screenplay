@@ -266,7 +266,7 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
         return { kind: 'ConceptSyntax', name: firstWord(line.content), type: '', attributes: [], values: [], location: locationOf(line) };
     }
     const [, name, type, attributeText] = match;
-    const attributes = parseComplianceMarkers(context, line, attributeText);
+    const attributes = parseComplianceMarkers(context, line, name, attributeText);
     if (type !== 'Enum' && !primitiveTypes.includes(type)) {
         context.error(DiagnosticCodes.UnknownPrimitiveType, `Unknown primitive type '${type}' - expected ${primitiveTypes.join(', ')} or Enum`, locationOf(line));
     }

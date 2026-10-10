@@ -54,7 +54,8 @@
 | [0050](0050-public-event-execution-semantics.md) | Define the executable meaning of public events, outbound translation, event targets and reaction results | accepted | none | 2026-10-09 | Einar Ingebrigtsen |
 | [0051](0051-admit-public-events-as-esm-v9.md) | Admit public events, translation direction, event-target projections and event-source captures as ESM v9 | accepted | none | 2026-10-09 | Einar Ingebrigtsen |
 | [0052](0052-identity-details-as-authoring-metadata.md) | Declare one caller detail shape as authoring metadata before executable admission | accepted | implemented | 2026-10-09 | Sindre Alstad Wilting |
-| [0053](0053-declare-read-model-keys-and-bind-lookups-by-name.md) | Declare read-model keys on properties and supply every key part by name in lookups | proposed | none | | |
-| [0054](0054-per-production-route-overrides.md) | Replace the command route per event production | proposed | none | | |
-| [0055](0055-observer-source-and-stream-filters.md) | Filter reactions and reducers by event source and stream | proposed | none | | |
-| [0056](0056-admit-production-routes-and-observer-filters-as-esm-v10.md) | Join the claimed unreleased ESM v10 with production routes and observer filters | proposed | none | | |
+| [0053](0053-public-structural-model-comparison.md) | Share typed structural model comparison from the Screenplay library | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |
+| [0060](0060-declare-read-model-keys-and-bind-lookups-by-name.md) | Declare read-model keys on properties and supply every key part by name in lookups | proposed | none | | |
+| [0061](0061-per-production-route-overrides.md) | Replace the command route per event production | proposed | none | | |
+| [0062](0062-observer-source-and-stream-filters.md) | Filter reactions and reducers by event source and stream | proposed | none | | |
+| [0063](0063-admit-production-routes-and-observer-filters-as-esm-v10.md) | Join the claimed unreleased ESM v10 with production routes and observer filters | proposed | none | | |

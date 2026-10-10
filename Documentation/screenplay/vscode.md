@@ -219,6 +219,11 @@ the same verified fixes; neither editor needs a .NET process.
 
 ## Compliance marker quick fixes
 
+Repeated compliance markers on a concept header receive Warning `PLAY0653`.
+Use **Remove duplicate compliance markers** to remove later tokens with the same
+wire identity (`personal` counts as `pii`). This occurrence-only action keeps the
+first spelling and preserves body settings, notes, comments and line endings.
+
 Legacy `@pii`, `sensitive` and `@sensitive` spellings receive information diagnostic
 `PLAY0565`, marked deprecated. Use the per-line lightbulb action **Use bare pii and
 secret compliance markers**, or **Use bare pii and secret throughout this document**

@@ -425,7 +425,7 @@ An unbound model returns `outcome: "unbound"`, executable diagnostics and `page:
 | `propose` | Expected workspace/catalog revisions, operations | Explicit migrations/retirements, includeContent; legacy single-operation form supported |
 | `propose-ast` | Expected revisions, formatting | operations, documents, validation, referencePolicy, migrations/retirements, includeContent |
 | `propose-source` | `expectedRevision`, `expectedCatalogRevision`, `formatting`, `documents` | validation (`Authoring` default or `Executable`), referencePolicy (`Safe` default or `Draft`), semanticRenames, eventRenames, retiredSemanticAddresses, retiredEventAddresses, includeContent |
-| `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | `line` for a `PLAY0565` concept-line repair, `pinRepairEvidence`, `expectedRepairEvidenceRevision`, includeContent; use the discovered `requiredFormatting`. `PLAY0479` and `PLAY0565` support `PreserveTrivia` or explicit `CanonicalizeTouchedDocuments`; other repairs require `CanonicalizeTouchedDocuments` |
+| `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | `line` for a `PLAY0565` concept-line repair, `pinRepairEvidence`, `expectedRepairEvidenceRevision`, includeContent; use the discovered `requiredFormatting`. `PLAY0479`, `PLAY0565` and `PLAY0653` support `PreserveTrivia` or explicit `CanonicalizeTouchedDocuments`; other repairs require `CanonicalizeTouchedDocuments` |
 | `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent, `eventNeverPersisted` (boolean, default false) |
 | `propose-move` | Expected revisions, target address, newParent address | targetHandle, newParentHandle, formatting, validation, includeContent |
 | `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
@@ -553,7 +553,7 @@ no open workspace. Its `structuredContent` identifies
 The [narrow response schema](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/mcp/repair-capabilities-v1.schema.json) covers capabilities,
 evidence metadata and the failure discriminator, not every MCP feature.
 
-The contract advertises `PLAY0166`, `PLAY0478`, `PLAY0563`, `PLAY0564` and `PLAY0614` through `propose-repair`. `PLAY0614` declares the translation direction (`inbound` or `outbound`) and is offered only when exactly one direction is consistent with the slice; it requires individual review and does not support pinned evidence. Guarded interaction repairs (`PLAY0563`/`PLAY0564`) require individual review and canonical formatting, refuse trailing-comment relocation, and do not support pinned evidence. The original `PLAY0166`/`PLAY0478` actions retain
+The contract advertises `PLAY0166`, `PLAY0478`, `PLAY0563`, `PLAY0564`, `PLAY0614` and `PLAY0653` through `propose-repair`. `PLAY0653` removes duplicate compliance markers from one concept header with `PreserveTrivia` and does not support pinned evidence. `PLAY0614` declares the translation direction (`inbound` or `outbound`) and is offered only when exactly one direction is consistent with the slice; it requires individual review and does not support pinned evidence. Guarded interaction repairs (`PLAY0563`/`PLAY0564`) require individual review and canonical formatting, refuse trailing-comment relocation, and do not support pinned evidence. The original `PLAY0166`/`PLAY0478` actions retain
 `CanonicalizeTouchedDocuments` and optional evidence pinning v1. Existing
 repairs outside this contract remain available to legacy clients. Feature support
 comes from negotiation, not a CLI version or an ESM version. Initialize with MCP
@@ -770,6 +770,11 @@ Untouched bytes and BOM policy are retained. Printer omissions reject the propos
 See [the AST API](../ast-authoring.md) and [authoring procedure](authoring-tools.md).
 
 ## Semantic proposal difference
+
+Both semantic-diff views use the structural implementation behind
+[`ModelComparison`](../model-comparison.md) in `Cratis.Screenplay`.
+The library offers typed, unpaged differences and explicit Identity or Address
+matching; MCP retains its existing identity-based JSON, revision checks and paging.
 
 `read-proposal` with `view: "semantic-diff"` compares the retained disk baseline
 with the proposal, without applying it. It works without MCP Apps and does not

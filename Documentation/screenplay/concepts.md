@@ -119,6 +119,8 @@ These facts remain syntax-only: binding reports `PLAY0268`, including scopes and
 
 ## Legacy spelling
 
+Repeating a marker on a concept header reports one `PLAY0653` Warning per header. This includes `pii personal`, because `personal` is an alias of `pii`, as well as `pii pii` and `secret secret`. Both compilers retain the first marker for each wire identity; body settings attach to that attribute, and canonical printing writes one marker. The **Remove duplicate compliance markers** line repair keeps the first spellings and preserves comments, quoted notes and line endings.
+
 `@pii`, `sensitive` and `@sensitive` are deprecated but accepted with one `PLAY0565` Information diagnostic per line. Repairs migrate one line or the whole document to bare `pii`/`secret`, preserving comments and quoted notes. Unknown markers such as `@encrypted` are errors (`PLAY0566`). No classification marker may be placed on a property or composite type. The [event-property `subject` role](events.md#data-subject) is report-only lineage metadata, not classification; it requires an unprotected scalar identity concept (String, Uuid or Int-backed), or bare String/Uuid, under [decision 0047](https://github.com/Cratis/Screenplay/blob/main/decisions/0047-data-subject-mark-on-event-properties.md); `secret scope subject` selects encryption scope, not that event role.
 
 ## Enum concepts

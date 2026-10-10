@@ -15393,6 +15393,17 @@
       "retired": false
     },
     {
+      "code": "PLAY0653",
+      "name": "DuplicateComplianceMarker",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "A concept header repeats a compliance marker with the same wire identity.",
+      "reserved": false,
+      "retired": false
+    },
+    {
       "code": "PLAY0660",
       "name": "InvalidReadModelKey",
       "severity": "error",

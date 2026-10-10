@@ -213,6 +213,8 @@ Do not mix spelling migrations with other edits to the same document. Explicit
 single occurrence with `WorkspaceDiagnosticRepairs.Find`, or a whole document with
 `FindDocumentOptionality` and its root handle; preview either through `ProposeRepair`.
 
+`PLAY0653` repairs use `RemoveDuplicateComplianceMarkers` on one concept header with `PreserveTrivia`. They remove later tokens with the same wire identity while preserving the first marker, body settings, comments and line endings.
+
 `PLAY0565` repairs use `MigrateComplianceMarkerSpelling` to replace legacy `@pii`,
 `sensitive` and `@sensitive` with bare `pii` and `secret`. With `PreserveTrivia`,
 the repair changes only the marker spelling, preserving quoted reasons, comments,

@@ -19,7 +19,10 @@ public class when_pinning_repair_evidence : given.an_authoring_connection
         var capabilities = Result("repair-capabilities");
         capabilities.GetProperty("schemaVersion").GetInt32().ShouldEqual(1);
         capabilities.GetProperty("repairContractVersion").GetInt32().ShouldEqual(1);
-        capabilities.GetProperty("actions").GetArrayLength().ShouldEqual(6);
+        capabilities.GetProperty("actions").GetArrayLength().ShouldEqual(7);
+        var duplicate = capabilities.GetProperty("actions").EnumerateArray().Single(action => action.GetProperty("diagnosticCode").GetString() == "PLAY0653");
+        duplicate.GetProperty("requiredFormatting").GetString().ShouldEqual("PreserveTrivia");
+        duplicate.GetProperty("pinRepairEvidence").GetBoolean().ShouldBeFalse();
         capabilities.GetProperty("actions").EnumerateArray().Where(action => string.Equals(action.GetProperty("diagnosticCode").GetString(), "PLAY0563", StringComparison.Ordinal) || string.Equals(action.GetProperty("diagnosticCode").GetString(), "PLAY0564", StringComparison.Ordinal)).All(action => !action.GetProperty("pinRepairEvidence").GetBoolean()).ShouldBeTrue();
         capabilities.GetProperty("cancellation").GetProperty("supported").GetBoolean().ShouldBeFalse();
         Directory.Exists(Path.Combine(RootPath, ".screenplay")).ShouldBeFalse();
