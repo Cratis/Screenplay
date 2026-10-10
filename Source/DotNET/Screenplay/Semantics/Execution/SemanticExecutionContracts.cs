@@ -241,6 +241,8 @@ public sealed record SemanticExecutionRequest(
     /// </summary>
     public SemanticId? ReactionOrigin { get; init; }
 
+    internal SemanticReactionIdentity? RunsAs { get; init; }
+
     /// <summary>
     /// Creates a request that only queries established world state.
     /// </summary>

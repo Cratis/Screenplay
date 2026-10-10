@@ -6,7 +6,7 @@ slice Automation QueueApprovedTimesheets
 
   reaction QueueApprovedHours
     description "Asks payroll to take an approved week - the command may still refuse it"
-    runs as system role "PayrollOfficer"
+    runs as system role "PayrollOfficer" and role "PayrollAutomation"
     when TimesheetApproved
       timesheetId
       consultantId

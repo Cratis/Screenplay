@@ -1004,14 +1004,14 @@ Refusal branches, `$refusal` values, redelivery and `then no events` are syntax-
 | `PLAY0540` | Warning | A refusal branch is shadowed by an earlier selector, or its declared constraint targets none of the invoked command's events. Bare refusal covers validation and constraints, not authorization. |
 | `PLAY0541` | Error | A `$refusal` value is outside a branch's event mapping, has an unknown member, uses `constraint` outside a constraint selector, or targets an incompatible property type. The values `reason`, `constraint` and `message` are String values. |
 | `PLAY0542` | Error | A named constraint in a refusal selector does not resolve to a declared constraint. |
-| `PLAY0557` | Warning | An `on refused by authorization` branch invokes a command gated by its own, feature or module authorization without a declared invoking identity. With no caller the reference runner always refuses the command. Arc runs commands as the system only for a reactor carrying `[ExecuteCommandsAsSystem]`. Declare `runs as system role "<Role>"` to state the intended identity; it suppresses this warning but remains syntax-only (`PLAY0268`, #383). |
+| `PLAY0557` | Warning | An `on refused by authorization` branch invokes a command gated by its own, feature or module authorization without a declared invoking identity. With no caller the reference runner always refuses the command. Arc runs commands as the system only for a reactor carrying `[ExecuteCommandsAsSystem]`. Declare `runs as system role "<Role>"` to state the intended identity; it suppresses this warning and selects ESM v10 (claimed, unreleased). Refusal branches remain syntax-only. |
 | `PLAY0543` | Error | `when redelivered <Event> to <Reaction>` is malformed, or its values, optional `for` and route locator do not identify exactly one definitely matching given event occurrence with no undecidable candidates. Use `for`, values, `stream` or `no stream` to narrow the locator. |
 | `PLAY0544` | Error | The redelivery reaction is unknown or ambiguous, or has no event trigger on the stated event. |
 | `PLAY0545` | Error | `then no events` is malformed, repeated, has child mappings, follows `when append`, or accompanies event, event-order, error or denial expectations. Use one leaf assertion after a non-append action; read-model, query and response assertions may accompany it. |
 
 ### Reaction command identity
 
-`runs as` parses and prints, but binding refuses it with `PLAY0268` naming reaction command identity and #383. Omitting it preserves existing executable bytes.
+`runs as` is admitted by ESM v10 (claimed, unreleased); `PLAY0268` no longer refuses reaction command identity. Omitting it preserves existing executable bytes. System claim conditions evaluate to unknown and a final unknown denies.
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
