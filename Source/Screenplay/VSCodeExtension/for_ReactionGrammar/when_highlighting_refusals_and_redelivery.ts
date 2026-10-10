@@ -1,12 +1,14 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { should } from 'chai';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { Registry, parseRawGrammar, INITIAL, type IGrammar } from 'vscode-textmate';
 import { loadWASM, OnigScanner, OnigString } from 'vscode-oniguruma';
 
+should();
 let grammar: IGrammar;
 beforeAll(async () => {
     const require = createRequire(import.meta.url);
@@ -22,6 +24,9 @@ beforeAll(async () => {
 const scopeAt = (line: string, word: string) => grammar.tokenizeLine(line, INITIAL).tokens.find(token => token.startIndex <= line.indexOf(word) && token.endIndex > line.indexOf(word))?.scopes ?? [];
 
 describe('when highlighting refusals and redelivery', () => {
+    it('should highlight reaction command identity', () => {
+        for (const word of ['runs', 'as', 'system', 'role']) scopeAt('runs as system role "Automation"', word).should.include('keyword.other.screenplay');
+    });
     it.each(['on refused', 'on refused by validation', 'on refused by constraint Unique', 'on refused by authorization'])('should highlight the refusal selector in %s', line => {
         expect(scopeAt(line, 'refused')).toContain('keyword.other.screenplay');
     });

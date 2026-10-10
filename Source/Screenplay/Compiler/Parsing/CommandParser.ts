@@ -24,6 +24,7 @@ import { CodeBlockSyntax, FileReferenceSyntax, HandlerSyntax, ImplementationSynt
 import { parseMappingSource } from './ExpressionParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
+import { isReactionIdentityLine, misplacedReactionIdentity } from './ReactionIdentityParser';
 import { commandReadSources } from './CommandReadSources';
 import { dependencySources, ReadsSyntax, ConcurrencySyntax } from '../Syntax/DependencySources';
 import { captureReads, captureConcurrency } from './DependencySourceParser';
@@ -126,6 +127,8 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
             if (stream !== null || streamCandidates.length > 0) context.error(DiagnosticCodes.InvalidCommandStream, 'A command declares at most one stream route.', locationOf(child));
             if (ambiguous || stream !== null) streamCandidates.push(route);
             else stream = route;
+        } else if (keyword === 'runs' && isReactionIdentityLine(child)) {
+            misplacedReactionIdentity(context, child);
         } else if (keyword === 'description') {
             description = parseDescription(context, child, description, `Command '${name}'`);
         } else if (keyword === 'documentation') {

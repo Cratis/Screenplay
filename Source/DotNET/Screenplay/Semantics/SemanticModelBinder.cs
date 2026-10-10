@@ -237,6 +237,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var modules = AttachAutomation([.. syntax.Modules.Select(BindModule)]);
             var policies = BindPolicies();
             VerifyPersonaCallers(policies);
+            ValidateReactionIdentities(modules, policies);
             var application = new SemanticApplication(
                 applicationId,
                 applicationName,

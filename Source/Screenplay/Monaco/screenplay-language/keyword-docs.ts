@@ -58,6 +58,7 @@ export const keywordDocs: Record<string, string> = {
     projection: 'Declares how events project into a read model, using the embedded Projection Declaration Language (PDL).',
     capture: 'Converts external data into events, using the embedded Change Data Capture Language (CDL).',
     reaction: 'Behavior that runs when something happens. Lives inside Automation slices. A trigger with no body states intent on its own — `file`/code is optional realization metadata.',
+    runs: '`runs as system [role "Role" and role "Role"]` declares the identity for every returned or invoked command of a reaction, not imperative pipeline calls. Syntax-only (PLAY0268, #383); clock and application triggers have no Stage realization yet.',
     trigger: 'Declares a kind of occurrence a reaction can respond to, and the values it hands the reaction. What makes one occur belongs to whoever provides it, never to the compiler.',
     where: 'Narrows which occurrences actually run the reaction.',
     contains: 'Text comparison — true when the left string holds the right one anywhere.',

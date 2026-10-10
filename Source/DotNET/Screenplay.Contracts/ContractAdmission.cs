@@ -76,6 +76,7 @@ static class ContractAdmission
         new("projection", Slice + Event + ReadModel + Projection + KeyedQuery, [Slice + Event + ReadModel + Projection.Replace("      projection View => View\n", "      projection View => View\n        description \"Projection intent\"\n", StringComparison.Ordinal) + KeyedQuery]),
         new("query", Slice + Event + ReadModel + Projection + KeyedQuery, [Slice + ReadModel + "      query All => View[]\n"]),
         new("reaction", Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      reaction FollowUp\n        when Recorded\n          value\n          produces FollowedUp\n            value = value\n      event FollowedUp\n        value String\n"),
+        new("runs", Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      command C\n      reaction FollowUp\n        runs as system\n        when Recorded\n          invokes C\n"),
         new("readmodel", Slice + Event + ReadModel + Projection + KeyedQuery, [Slice + ReadModel]),
         new("reducer", Slice + Event + ReadModel + KeyedQuery + "      reducer View => View\n        on Recorded\n          ```csharp\n          return context.State;\n          ```\n", [Slice + Event + ReadModel + "      reducer View => View\n        on Recorded\n"]),
         new("screen", Slice + "      screen Screen\n", [Slice + "      screen Screen\n        description \"Screen intent\"\n"]),

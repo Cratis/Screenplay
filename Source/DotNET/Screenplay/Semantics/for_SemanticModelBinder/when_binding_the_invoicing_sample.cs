@@ -69,6 +69,8 @@ public class when_binding_the_invoicing_sample : given.a_semantic_binder
         (Unsupported, "Read model 'OverdueInvoicesReadModel' must have one unambiguous keyed query"),
         (Unsupported, "Read model 'SystemActivityReadModel' must have one unambiguous keyed query"),
 
+        (Unsupported, "Reaction command identity ('runs as')"),
+
         // A clock reaction appends to no event source unless it names one with 'for' (decision 0022).
         (DiagnosticCodes.InvalidSemanticBinding, "Reaction 'OverdueChaser' must say with 'for' which event source")
     ];

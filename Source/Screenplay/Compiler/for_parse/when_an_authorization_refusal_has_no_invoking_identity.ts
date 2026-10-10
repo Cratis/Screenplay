@@ -6,7 +6,7 @@ import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { compileApplication } from '../Files/PlayApplicationAssembly';
 import { parse } from '../ScreenplayCompiler';
 
-const message = "Command 'Claim' is authorization-gated, but this invocation has no declared identity. This authorization refusal branch always fires in the reference runner because there is no caller; Arc runs reactor commands as the system. Declare an invoking identity once supported (#383).";
+const message = "Command 'Claim' is authorization-gated, but this invocation has no declared identity. This authorization refusal branch always fires in the reference runner because there is no caller. Declare 'runs as system role \"<Role>\"'; Arc runs commands as the system only for a reactor carrying [ExecuteCommandsAsSystem].";
 const code = DiagnosticCodes.AuthorizationRefusalWithoutIdentity;
 
 describe('when an authorization refusal has no invoking identity', () => {

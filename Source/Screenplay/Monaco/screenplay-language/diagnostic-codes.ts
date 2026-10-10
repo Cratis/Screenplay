@@ -25,6 +25,12 @@ export const diagnosticCodes = {
     invalidIdentityQueryKey: 'PLAY0644',
     identityQueryAuthorizationDependency: 'PLAY0645',
     identityQueryTypeMismatch: 'PLAY0646',
+    invalidReactionIdentity: 'PLAY0647',
+    gatedInvocationWithoutIdentity: 'PLAY0648',
+    unusedReactionIdentity: 'PLAY0649',
+    unusedReactionRole: 'PLAY0650',
+    unsatisfiedReactionIdentity: 'PLAY0651',
+    reactionPrivilegeEscalation: 'PLAY0652',
     // Preserve supplied C# whole-model diagnostics; these checks are not yet run by the editor.
     commandProducesPublicEvent: 'PLAY0607',
     publicEventRequiresOutboundTranslation: 'PLAY0608',

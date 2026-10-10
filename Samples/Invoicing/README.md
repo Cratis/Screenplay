@@ -16,6 +16,8 @@ Processing purposes are declared at the top level: Billing covers the module, Bo
 
 Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNumber, InvoiceList and RegisterInvoiceScreen explain values, rules, builders and input/view surfaces. They are report-only metadata, not UI titles, validation or generated code comments.
 
+`PaymentReconciler` declares `runs as system role "Accountant"` for its role-gated `ChangeInvoiceStatus` invocation. The line is authoring syntax only: binding refuses reaction command identity with `PLAY0268` (#383), while source compilation remains warning-free.
+
 ## Who uses it
 
 | Persona | Holds | Sees the screens of |

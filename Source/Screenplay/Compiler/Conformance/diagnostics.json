@@ -1,6 +1,16 @@
 {
     "description": "Guarded syntax-only fixtures use an external data shape so subject validation stays unknown. Invalid documents and the diagnostics both compilers report for them, as <code>@<line> in the order reported. The TypeScript compiler is held to it by Conformance/for_Conformance/when_holding_the_compilers_to_the_diagnostic_vectors and the C# compiler by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_its_diagnostics. Each case only exercises what the TypeScript compiler reads; the constructs it skips are reported by the C# compiler alone. Cases with validate: true run C# Compile rather than Parse to include validation; TypeScript parse includes these checks.",
     "cases": [
+        { "name": "A runs as line belongs in a reaction", "source": ["runs as system"], "diagnostics": ["PLAY0647@1"] },
+        { "name": "Reaction identity rejects personas", "source": ["module M", "  feature F", "    slice Automation S", "      event E", "      reaction R", "        runs as Persona", "        when E"], "diagnostics": ["PLAY0647@6"] },
+        { "name": "Reaction identity roles are literals", "source": ["module M", "  feature F", "    slice Automation S", "      event E", "      reaction R", "        runs as system role Expression", "        when E"], "diagnostics": ["PLAY0647@6"] },
+        { "name": "Reaction identity roles cannot be empty", "source": ["module M", "  feature F", "    slice Automation S", "      event E", "      reaction R", "        runs as system role \"\"", "        when E"], "diagnostics": ["PLAY0647@6"] },
+        { "name": "Reaction identity roles cannot repeat", "source": ["module M", "  feature F", "    slice Automation S", "      event E", "      reaction R", "        runs as system role \"A\" and role \"A\"", "        when E"], "diagnostics": ["PLAY0647@6"] },
+        { "name": "Reaction identity is declared once", "source": ["module M", "  feature F", "    slice Automation S", "      event E", "      command C", "      reaction R", "        runs as system", "        runs as system", "        when E", "          invokes C"], "diagnostics": ["PLAY0647@8"] },
+        { "name": "Reaction identity cannot sit under a trigger", "source": ["module M", "  feature F", "    slice Automation S", "      event E", "      reaction R", "        when E", "          runs as system"], "diagnostics": ["PLAY0647@7"] },
+        { "name": "Unused reaction identity is visible", "validate": true, "source": ["module M", "  feature F", "    slice Automation S", "      event E", "      reaction R", "        runs as system", "        when E"], "diagnostics": ["PLAY0649@6"] },
+        { "name": "Gated invocation needs declared identity", "validate": true, "source": ["policy Access", "  require authenticated", "module M", "  authorize Access", "  feature F", "    slice Automation S", "      event E", "      command C", "      reaction R", "        when E", "          invokes C"], "diagnostics": ["PLAY0648@11"] },
+        { "name": "Declared identity suppresses gated invocation warnings", "validate": true, "source": ["policy Access", "  require authenticated", "module M", "  authorize Access", "  feature F", "    slice Automation S", "      event E", "      command C", "      reaction R", "        runs as system", "        when E", "          invokes C", "            on refused by authorization", "              acknowledge"], "diagnostics": [] },
         { "name": "Identity details accept projection outputs without explicit read models", "validate": true, "source": ["identity", "  organization Organization optional from query Mine by $identity.id", "module M", "  feature F", "    slice StateView S", "      event Changed", "        name String", "      projection Builder => Organization", "        from Changed", "      query Mine => Organization optional", "        by id String"], "diagnostics": [] },
         { "name": "Identity details accept projection variant outputs without explicit read models", "validate": true, "source": ["identity", "  organization Organization optional from query Mine by $identity.id", "module M", "  feature F", "    slice StateView S", "      event Changed", "        name String", "      projection Builder", "        variant Organization", "          enters on Changed", "          from Changed", "      query Mine => Organization optional", "        by id String"], "diagnostics": [] },
         { "name": "A variant builder name is not an identity detail type", "validate": true, "source": ["identity", "  organization Builder optional from query Mine by $identity.id", "module M", "  feature F", "    slice StateView S", "      event Changed", "        name String", "      projection Builder", "        variant Organization", "          enters on Changed", "          from Changed", "      query Mine => Builder optional", "        by id String"], "diagnostics": ["PLAY0165@2"] },
@@ -311,7 +321,7 @@
             "validate": true,
             "source": ["policy Access", "  require not role \"Blocked\"", "module M", "  feature F", "    slice Automation S", "      event Approved", "      command Claim", "        authorize Access", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by authorization", "              acknowledge"],
             "diagnostics": ["PLAY0557@12"],
-            "messages": ["Command 'Claim' is authorization-gated, but this invocation has no declared identity. This authorization refusal branch always fires in the reference runner because there is no caller; Arc runs reactor commands as the system. Declare an invoking identity once supported (#383)."]
+            "messages": ["Command 'Claim' is authorization-gated, but this invocation has no declared identity. This authorization refusal branch always fires in the reference runner because there is no caller. Declare 'runs as system role \"<Role>\"'; Arc runs commands as the system only for a reactor carrying [ExecuteCommandsAsSystem]."]
         },
         {
             "name": "An authorization refusal inherits the invoked command module gate",
@@ -338,10 +348,10 @@
             "diagnostics": []
         },
         {
-            "name": "Validation and constraint branches on a gated command have no callerless authorization warning",
+            "name": "Validation and constraint branches do not hide a gated invocation without identity",
             "validate": true,
             "source": ["policy Access", "  require authenticated", "module M", "  feature F", "    slice Automation S", "      event Approved", "      command Claim", "        authorize Access", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by validation", "              acknowledge", "            on refused by constraint", "              acknowledge"],
-            "diagnostics": []
+            "diagnostics": ["PLAY0648@11"]
         },
         {
             "name": "An ungated local command shadows a gated command in another slice",
@@ -657,7 +667,7 @@
             "name": "Shadowed authorization refusals retain the identity warning in branch order",
             "validate": true,
             "source": ["policy Access", "  require authenticated", "module M", "  feature F", "    slice Automation S", "      event Approved", "      command Claim", "        authorize Access", "      reaction R", "        when Approved", "          invokes Claim", "            on refused by authorization", "              acknowledge", "            on refused by authorization", "              acknowledge"],
-            "diagnostics": ["PLAY0557@12", "PLAY0540@14", "PLAY0557@14"]
+            "diagnostics": ["PLAY0557@12", "PLAY0540@14"]
         },
         {
             "name": "An earlier refusal selector covers validation",

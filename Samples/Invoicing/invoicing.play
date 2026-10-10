@@ -2531,6 +2531,7 @@ module Invoicing
           Payment recording and invoice closure are separate facts so reconciliation can be reviewed.
           ```
         description "Marks an invoice paid when a payment covers what is outstanding"
+        runs as system role "Accountant"
         when PaymentRecorded
           description "A payment arrived - is the invoice settled now?"
           invoiceId

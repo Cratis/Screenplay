@@ -1004,10 +1004,23 @@ Refusal branches, `$refusal` values, redelivery and `then no events` are syntax-
 | `PLAY0540` | Warning | A refusal branch is shadowed by an earlier selector, or its declared constraint targets none of the invoked command's events. Bare refusal covers validation and constraints, not authorization. |
 | `PLAY0541` | Error | A `$refusal` value is outside a branch's event mapping, has an unknown member, uses `constraint` outside a constraint selector, or targets an incompatible property type. The values `reason`, `constraint` and `message` are String values. |
 | `PLAY0542` | Error | A named constraint in a refusal selector does not resolve to a declared constraint. |
-| `PLAY0557` | Warning | An `on refused by authorization` branch invokes a command gated by its own, feature or module authorization without a declared invoking identity. With no caller the reference runner always refuses the command, while Arc runs reactor commands as the system. Declare an invoking identity once [#383](https://github.com/Cratis/Screenplay/issues/383) supports it; identity syntax is not available yet. |
+| `PLAY0557` | Warning | An `on refused by authorization` branch invokes a command gated by its own, feature or module authorization without a declared invoking identity. With no caller the reference runner always refuses the command. Arc runs commands as the system only for a reactor carrying `[ExecuteCommandsAsSystem]`. Declare `runs as system role "<Role>"` to state the intended identity; it suppresses this warning but remains syntax-only (`PLAY0268`, #383). |
 | `PLAY0543` | Error | `when redelivered <Event> to <Reaction>` is malformed, or its values, optional `for` and route locator do not identify exactly one definitely matching given event occurrence with no undecidable candidates. Use `for`, values, `stream` or `no stream` to narrow the locator. |
 | `PLAY0544` | Error | The redelivery reaction is unknown or ambiguous, or has no event trigger on the stated event. |
 | `PLAY0545` | Error | `then no events` is malformed, repeated, has child mappings, follows `when append`, or accompanies event, event-order, error or denial expectations. Use one leaf assertion after a non-append action; read-model, query and response assertions may accompany it. |
+
+### Reaction command identity
+
+`runs as` parses and prints, but binding refuses it with `PLAY0268` naming reaction command identity and #383. Omitting it preserves existing executable bytes.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0647` | Error | `runs as` is malformed, repeated or misplaced, or contains an empty or duplicate role. Use one reaction-level `runs as system [role "<Role>" and role "<Role>"]` line. Roles are quoted literals; zero roles is allowed. |
+| `PLAY0648` | Warning | A reaction invokes a command with its own or inherited authorization gate without declaring `runs as`. Both compilers report at most one finding per invocation; an authorization refusal branch receives `PLAY0557` instead. |
+| `PLAY0649` | Warning | The reaction declares identity but has neither invocations nor an inline or `file` implementation body. Both compilers check this. |
+| `PLAY0650` | Warning | C# binder only: a declared role is referenced by no invoked command's effective gate. Opaque gates and inline or `file` reaction bodies suppress this least-privilege finding. |
+| `PLAY0651` | Warning | C# binder only: the declared system identity definitely cannot satisfy an invoked command's effective gate. Claim conditions and other unknown results are not treated as definite denial. |
+| `PLAY0652` | Warning / Information | Opt-in `privilege` completeness: each producer of an elevated reaction's trigger event must require every declared system role. Ungated commands, captures and reaction productions produce Warning; opaque gates produce Information because they cannot be compared. Clock and application triggers have no producer and are silent. |
 
 See [Refusal branches](reactions.md#refusal-branches-syntax-only), [Redelivery specifications](specifications.md#redelivery-specifications-syntax-only) and [Specification syntax](specifications.md#syntax).
 

@@ -29,6 +29,11 @@ public record ReactionSyntax(
     /// Gets the authoring-only markdown explaining this reaction.
     /// </summary>
     public string? Documentation { get; init; }
+
+    /// <summary>
+    /// Gets the declared identity for every command returned or invoked by this reaction.
+    /// </summary>
+    public ReactionIdentitySyntax? RunsAs { get; init; }
 }
 
 /// <summary>

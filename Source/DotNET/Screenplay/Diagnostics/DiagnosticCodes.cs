@@ -2989,4 +2989,34 @@ public static class DiagnosticCodes
     /// An identity detail's type does not match its query result type or nullability.
     /// </summary>
     public const string IdentityQueryTypeMismatch = "PLAY0646";
+
+    /// <summary>
+    /// A runs as declaration is malformed, repeated, misplaced, or has empty or duplicate roles.
+    /// </summary>
+    public const string InvalidReactionIdentity = "PLAY0647";
+
+    /// <summary>
+    /// A reaction invokes a gated command without declaring a command identity.
+    /// </summary>
+    public const string GatedInvocationWithoutIdentity = "PLAY0648";
+
+    /// <summary>
+    /// A declared reaction identity has neither invocations nor an implementation body.
+    /// </summary>
+    public const string UnusedReactionIdentity = "PLAY0649";
+
+    /// <summary>
+    /// A declared reaction role is referenced by no invoked command's effective gate.
+    /// </summary>
+    public const string UnusedReactionRole = "PLAY0650";
+
+    /// <summary>
+    /// A declared reaction identity definitely cannot satisfy an invoked command's effective gate.
+    /// </summary>
+    public const string UnsatisfiedReactionIdentity = "PLAY0651";
+
+    /// <summary>
+    /// A trigger producer does not require every role of an elevated reaction, or its gate is opaque.
+    /// </summary>
+    public const string ReactionPrivilegeEscalation = "PLAY0652";
 }

@@ -179,6 +179,9 @@ internal static partial class ScreenplayParser
                 case "instance":
                     instanceContributions.Add(CompositionParser.ParseInstance(context, line));
                     break;
+                case "runs":
+                    ReactionIdentityParser.Misplaced(context, line);
+                    break;
                 default:
                     if (moduleBody?.TryParse(context, line) == true || featureBody?.TryParse(context, line) == true)
                     {

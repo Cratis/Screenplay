@@ -173,6 +173,7 @@ internal static class SyntaxKinds
         typeof(QuerySyntax),
         typeof(RaiseTriggerActionSyntax),
         typeof(RawExpressionSyntax),
+        typeof(ReactionIdentitySyntax),
         typeof(ReactionSyntax),
         typeof(ReactionTriggerSyntax),
         typeof(RefusalExpressionSyntax),

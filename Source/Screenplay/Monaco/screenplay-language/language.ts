@@ -44,6 +44,7 @@ export const constructKeywords = [
     'projection',
     'capture',
     'reaction',
+    'runs',
     'reducer',
     'readmodel',
     'trigger',

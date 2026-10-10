@@ -79,6 +79,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitReaction(ReactionSyntax syntax)
     {
         VisitNode(syntax);
+        if (syntax.RunsAs is not null) VisitReactionIdentity(syntax.RunsAs);
 
         foreach (var trigger in syntax.Triggers)
         {
@@ -90,6 +91,12 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitCondition(syntax.Where);
         }
     }
+
+    /// <summary>
+    /// Visits a reaction's declared command identity.
+    /// </summary>
+    /// <param name="syntax">The identity declaration.</param>
+    public virtual void VisitReactionIdentity(ReactionIdentitySyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a <see cref="ReactionTriggerSyntax"/> node and its children.

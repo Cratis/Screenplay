@@ -17,7 +17,7 @@ describe('when an authorization refusal has no invoking identity in the workspac
         application.set('reaction.play', source.join('\n'));
         const diagnostics = application.diagnosticsFor('reaction.play');
         expect(diagnostics.filter(diagnostic => diagnostic.code === code)).toEqual([
-            { code, severity: 'warning', location: { path: 'reaction.play', line: 6, column: 9 }, message: "Command 'Claim' is authorization-gated, but this invocation has no declared identity. This authorization refusal branch always fires in the reference runner because there is no caller; Arc runs reactor commands as the system. Declare an invoking identity once supported (#383)." },
+            { code, severity: 'warning', location: { path: 'reaction.play', line: 6, column: 9 }, message: "Command 'Claim' is authorization-gated, but this invocation has no declared identity. This authorization refusal branch always fires in the reference runner because there is no caller. Declare 'runs as system role \"<Role>\"'; Arc runs commands as the system only for a reactor carrying [ExecuteCommandsAsSystem]." },
         ]);
         expect(application.diagnosticsFor('command.play').filter(diagnostic => diagnostic.code === code)).toEqual([]);
         const issues = validateLines(source, { application: application.symbolsExcept('reaction.play'), placement: application.placementOf('reaction.play'), path: 'reaction.play', compilerDiagnostics: diagnostics });
