@@ -7,7 +7,7 @@ using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp.for_McpSemanticDiff;
 
-public class when_reviewing_a_combined_change : given.a_semantic_comparison
+public partial class when_reviewing_a_combined_change : given.a_semantic_comparison
 {
     string _renamedId = string.Empty;
     string _eventId = string.Empty;
