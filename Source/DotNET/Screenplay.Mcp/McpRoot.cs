@@ -14,10 +14,14 @@ sealed class McpRoot
     const int MaximumEntries = 32768;
     static readonly HashSet<string> _excludedDirectories = new(StringComparer.OrdinalIgnoreCase) { ".git", ".ai-work", ".screenplay", "bin", "obj", "node_modules" };
     readonly string _path;
+    readonly int _missingLevels;
 
-    internal McpRoot(string path)
+    // missingLevels bounds how many trailing folders may not exist yet. A path a host or user names may only miss its
+    // last folder, so a mistyped path never creates a tree; the server's own Documents/Screenplay fallback may miss two.
+    internal McpRoot(string path, int missingLevels = 1)
     {
-        _path = Path.GetFullPath(path);
+        _path = Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
+        _missingLevels = missingLevels;
         CheckDirectory();
     }
 
@@ -218,6 +222,20 @@ sealed class McpRoot
         return content;
     }
 
+    static bool Present(string path)
+    {
+        try
+        {
+            _ = File.GetAttributes(path);
+            return true;
+        }
+        catch (Exception exception) when (exception is FileNotFoundException or DirectoryNotFoundException)
+        {
+            // Absent: the caller decides whether this level may be created later.
+            return false;
+        }
+    }
+
     void CheckParents(string[] parents, bool create)
     {
         if (create)
@@ -260,23 +278,20 @@ sealed class McpRoot
 
     void CheckDirectory()
     {
-        try
+        var existing = _path;
+        for (var missing = 0; !Present(existing); missing++)
         {
-            CheckAncestors(_path);
-        }
-        catch (Exception exception) when (exception is FileNotFoundException or DirectoryNotFoundException)
-        {
-            var parent = Path.GetDirectoryName(_path);
-            if (parent is null || !Directory.Exists(parent))
+            var parent = Path.GetDirectoryName(existing);
+            if (parent is null || missing >= _missingLevels)
             {
                 throw new McpFailure("The MCP root must be a directory, or a missing directory whose parent exists.");
             }
 
-            CheckAncestors(parent);
-            return;
+            existing = parent;
         }
 
-        if (!Exists)
+        CheckAncestors(existing);
+        if (!Directory.Exists(existing))
         {
             throw new McpFailure("The MCP root must be a directory, or a missing directory whose parent exists.");
         }

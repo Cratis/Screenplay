@@ -480,7 +480,7 @@ internal sealed partial class McpWorkspaces
         }
 
         // No project and no model here: work in the user's own Screenplay folder, so a chat host with no workspace still works.
-        return new McpRoot(McpModelLocation.User(DocumentsDirectoryHint));
+        return new McpRoot(McpModelLocation.User(DocumentsDirectoryHint), missingLevels: 2);
     }
 
     IMcpProposal Proposal(JsonElement arguments)
