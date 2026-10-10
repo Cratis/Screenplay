@@ -1,0 +1,18 @@
+exposure for FeatureShell
+  property "shell:header".actions operations add
+
+instance WorkItemList
+  set "shell:header".actions = []
+
+module Workspaces
+  screen template FeatureShell
+    header
+
+    content header
+      component scene.web.Header shellHeader
+        id "shell:header"
+
+  feature Tracking
+    slice StateView WorkItemList
+      screen WorkItemList
+        template FeatureShell

@@ -28,6 +28,23 @@ ui profile Web
 
 template ApplicationShell
 
+exposure for WorkspaceFeatureShell
+  property "shell:header".title label "Header title"
+  property "shell:header".actions label "Header actions" operations add, remove, reorder, edit-fields fields label, icon
+
+exposure for EditWorkItemDialog
+  property "shell:header".title reexposes WorkspaceFeatureShell
+
+instance WorkItemList
+  set "shell:header".title = "Work items"
+  items "shell:header".actions
+    item "export:csv"
+      label = "Export"
+      icon = "download"
+    item archive
+      label = "Archive"
+      icon = null
+
 concept WorkItemId : Uuid
 concept CommentId : Uuid
 concept WorkStatus : Enum
@@ -43,15 +60,44 @@ module Workspaces
     type masterDetail
     exposes selectedWorkItem WorkItemId
     outlet detail
+    display "Workspace feature shell"
+    description "A list with the selected item beside it"
+    scopes module, feature, subfeature, slice
+    header contributes WorkspaceActions
     list
     detail
+
+    content header
+      component scene.web.Header shellHeader
+        id "shell:header"
+        property title = "Workspace"
+        property actions = []
+
+    arrangement flow
+      column gap 8
+        header height 56
+        grid gap 16 columns 2 rows 1 grow
+          list grow 1 span 1
+          detail grow 2 span 1
+
+      when width compact
+        column
+          header
+          row grow 1.5
+            list grow
 
   dialog template EditWorkItemDialog
     category dialog
     type commandForm
     exposes submittedWorkItem WorkItemId
+    display "Edit work item"
+    scopes slice
     body
     actions
+
+    content actions
+      toolbar dialogDefaults
+        item cancel navigate to WorkItemList
 
   form CreateWorkItemForm for CreateWorkItem
     generation manual
@@ -163,6 +209,14 @@ module Workspaces
             summary selectedWorkItem
               field title label "Title"
               field status label "Status"
+        contribute to WorkspaceActions order 10
+          action CreateWorkItem
+            navigate to WorkItemDetails
+              outlet details
+              parameter workItemId from component "work-items:list".selectedItem.workItemId
+        contribute to Navigation
+          section quickFilters
+            title "Open items"
 
     slice StateView WorkItemDetails
       template WorkspaceFeatureShell

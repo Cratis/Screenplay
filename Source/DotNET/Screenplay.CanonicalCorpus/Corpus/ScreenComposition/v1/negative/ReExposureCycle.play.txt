@@ -1,0 +1,12 @@
+exposure for Outer
+  property "shell:header".title reexposes Inner
+
+exposure for Inner
+  property "shell:header".title reexposes Outer
+
+module Workspaces
+  screen template Outer
+    header
+
+  screen template Inner
+    body
