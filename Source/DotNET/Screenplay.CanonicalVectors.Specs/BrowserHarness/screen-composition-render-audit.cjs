@@ -81,8 +81,10 @@ function declarationsIn(text) {
             continue;
         }
 
-        const member = /^(\w+)\s+([A-Z]\w*)/.exec(trimmed);
-        if (owner && indent === ownerIndent + 2 && member && !['produces', 'for', 'by', 'from', 'when', 'then', 'given'].includes(member[1])) {
+        // A member is `name Type`, where the type token ends the word. A recovered model also carries source references
+        // such as `file Workspaces/Tracking/X.cs`, which are provenance, not members.
+        const member = /^(\w+)\s+([A-Z][\w[\]?]*)(?:\s|$)/.exec(trimmed);
+        if (owner && indent === ownerIndent + 2 && member && !['produces', 'for', 'by', 'from', 'when', 'then', 'given', 'file'].includes(member[1])) {
             declarations.add(`${owner}.${member[1]}`);
         }
     }
@@ -245,6 +247,8 @@ function selfTest() {
         ['produces clauses are not members', declarationsIn(sourceModel).has('command AddComment.produces'), false],
         ['a dropped event member is reported missing', compareDeclarations(declarationsIn(sourceModel), declarationsIn(sourceModel.replace('      event CommentAdded\n        text String\n', '      event CommentAdded\n'))).missing, ['event CommentAdded.text']],
         ['an identical recovery has no differences', compareDeclarations(declarationsIn(sourceModel), declarationsIn(sourceModel)), { missing: [], unexpected: [] }],
+        ['a recovered source reference is not a member', compareDeclarations(declarationsIn(sourceModel), declarationsIn(sourceModel.replace('      event CommentAdded\n', '      event CommentAdded\n        file Workspaces/Tracking/AddComment/AddComment.cs\n'))), { missing: [], unexpected: [] }],
+        ['a renamed member type is still compared', declarationsIn('      readmodel CommentView\n        texts String[]\n').has('readmodel CommentView.texts'), true],
         ['every diagnostic code is read', diagnosticCodes('{"code":"PLAY0263"},{"code":"STAGE-SCENE-ACTION-001"},{"code":"CLI0017"}'), ['PLAY0263', 'STAGE-SCENE-ACTION-001', 'CLI0017']]
     ];
 
