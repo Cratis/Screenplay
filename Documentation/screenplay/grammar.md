@@ -4,6 +4,10 @@
 
 > [Event sources, source-owned streams and command stream routes](event-sources.md), specification routes and composite stream ids are admitted by executable semantic model (ESM) v8. Command mappings may read direct, required, non-collection, non-generated inputs or literals; property paths and handler routes remain refused with `PLAY0268`. Production route overrides and reaction/reducer observer filters select ESM v10. Composite read-model keys and by-block queries are authoring-only and report `PLAY0268` (#599). New concurrency flags, occurrence time and constraint scopes remain unadmitted.
 
+:::note
+The generation rules described here are being extended beyond `Uuid` concepts by [proposed decision 0054](https://github.com/Cratis/Screenplay/blob/main/decisions/0054-concept-generation-strategies-and-freshness.md). Until it is accepted and implemented, `generated` keeps its current meaning.
+:::
+
 The Screenplay syntax reference in EBNF. `INDENT`/`DEDENT` represent indented bodies: parsers read lines at greater indentation until the body ends. PDL and CDL have their own [sub-grammars](sub-languages.md). The C# compiler validates the full language; the TypeScript compiler models a subset and recognizes the remaining shipped constructs as opaque bodies.
 
 Declarations and body directives can appear in any order unless a rule below states otherwise. A repeated group such as { A | B } means its members may appear in any order; it does not allow repeating singleton directives such as description, for or where. References may name declarations later in the document; scope and semantic checks still apply.

@@ -2,6 +2,10 @@
 
 Concepts are formalized value types that wrap a primitive. They give every domain value a precise, strongly-typed name — you never pass a raw `Uuid` or `String` around — and they are where compliance is declared. Bare markers declare the protection a concept needs: `pii` marks personal data (GDPR Art. 4(1)); `secret` marks an operational secret, encrypted at rest without erasure and withheld from the causation chain. C# providers map these to Chronicle and Arc attributes as described below.
 
+:::note
+The generation rules described here are being extended beyond `Uuid` concepts by [proposed decision 0054](https://github.com/Cratis/Screenplay/blob/main/decisions/0054-concept-generation-strategies-and-freshness.md). Until it is accepted and implemented, `generated` keeps its current meaning.
+:::
+
 A concept names one primitive value. For a shape made of several — the child records events carry — see [Types](types.md).
 
 ## Syntax
