@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace Cratis.Screenplay.Mcp.for_McpSemanticDiff;
 
-public class when_comparison_is_incomplete : given.a_semantic_comparison
+public partial class when_comparison_is_incomplete : given.a_semantic_comparison
 {
     void Because()
     {

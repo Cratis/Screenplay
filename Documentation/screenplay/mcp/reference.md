@@ -765,6 +765,11 @@ See [the AST API](../ast-authoring.md) and [authoring procedure](authoring-tools
 
 ## Semantic proposal difference
 
+Both semantic-diff views use the structural implementation behind
+[`ModelComparison`](../model-comparison.md) in `Cratis.Screenplay`.
+The library offers typed, unpaged differences and explicit Identity or Address
+matching; MCP retains its existing identity-based JSON, revision checks and paging.
+
 `read-proposal` with `view: "semantic-diff"` compares the retained disk baseline
 with the proposal, without applying it. It works without MCP Apps and does not
 execute specifications. Changes to `.play` files or the retained

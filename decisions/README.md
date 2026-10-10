@@ -54,3 +54,4 @@
 | [0050](0050-public-event-execution-semantics.md) | Define the executable meaning of public events, outbound translation, event targets and reaction results | accepted | none | 2026-10-09 | Einar Ingebrigtsen |
 | [0051](0051-admit-public-events-as-esm-v9.md) | Admit public events, translation direction, event-target projections and event-source captures as ESM v9 | accepted | none | 2026-10-09 | Einar Ingebrigtsen |
 | [0052](0052-identity-details-as-authoring-metadata.md) | Declare one caller detail shape as authoring metadata before executable admission | accepted | implemented | 2026-10-09 | Sindre Alstad Wilting |
+| [0053](0053-public-structural-model-comparison.md) | Share typed structural model comparison from the Screenplay library | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |
