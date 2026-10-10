@@ -10,12 +10,13 @@ internal static class ObserverFilterValidator
 {
     internal static void Validate(ApplicationSyntax application, ConsistencyDeclarations declarations, ParserContext context)
     {
+        var catalog = new EventSourceCatalog(application);
         foreach (var (slice, scope) in declarations.Slices)
         {
             foreach (var reaction in slice.Reactions.Where(reaction => reaction.From is not null))
             {
                 var filter = reaction.From!;
-                if (!Resolve(filter, application, context)) continue;
+                if (!Resolve(filter, catalog, context)) continue;
                 foreach (var trigger in reaction.Triggers)
                 {
                     if (trigger.Source is not NamedTriggerSourceSyntax named || declarations.Event(named.Name, scope) is not { } @event)
@@ -29,7 +30,7 @@ internal static class ObserverFilterValidator
             foreach (var reducer in (slice.Reducers ?? []).Where(reducer => reducer.From is not null))
             {
                 var filter = reducer.From!;
-                if (!Resolve(filter, application, context)) continue;
+                if (!Resolve(filter, catalog, context)) continue;
                 foreach (var rule in reducer.Rules)
                 {
                     if (declarations.Event(rule.Event, scope) is { } @event) WarnIfExcluded(filter, @event, application, declarations, context);
@@ -38,10 +39,10 @@ internal static class ObserverFilterValidator
         }
     }
 
-    static bool Resolve(ObserverFilterSyntax filter, ApplicationSyntax application, ParserContext context)
+    static bool Resolve(ObserverFilterSyntax filter, EventSourceCatalog catalog, ParserContext context)
     {
-        var sources = application.EventSources.Where(source => source.Name == filter.EventSource).ToArray();
-        if (sources.Length == 1 && (filter.Stream is null || sources[0].Streams.Count(stream => stream.Name == filter.Stream) == 1)) return true;
+        var resolution = filter.Stream is null ? catalog.Resolve(filter.EventSource) : catalog.Resolve(filter.EventSource, filter.Stream);
+        if (resolution.Kind == EventSourceResolutionKind.Unique) return true;
         context.Error(DiagnosticCodes.InvalidObserverFilter, "An observer filter must name one physical event source and, when supplied, one stream belonging to it.", filter.Location);
 
         return false;

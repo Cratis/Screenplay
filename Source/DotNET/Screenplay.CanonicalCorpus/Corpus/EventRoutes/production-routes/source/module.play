@@ -15,6 +15,7 @@ module M
             streamId
               month = period
               project = project
+        produces event BookRecorded
       command WithoutDefault
         id String identifier
         produces event Noted
@@ -43,6 +44,9 @@ module M
             streamId
               project = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
               month = "a|b%"
+        then BookRecorded
+          stream Account.Base
+            streamId = "a|b%"
       specification NoDefault
         when WithoutDefault
           id = "other"

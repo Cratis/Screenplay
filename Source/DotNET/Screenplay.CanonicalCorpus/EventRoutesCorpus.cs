@@ -126,7 +126,7 @@ public static class EventRoutesCorpus
         string[] names = key switch
         {
             "production-routes" => ["Override", "NoDefault", "SkippedRouteFailure"],
-            "observer-filters" => ["RoutedReaction", "UnroutedReaction", "UnroutedReducer", "MatchingReducer"],
+            "observer-filters" => ["RoutedReaction", "UnroutedReaction", "WrongStreamReaction", "UnroutedReducer", "MatchingReducer"],
             "scalar" => ["PositiveInput", "PositiveAdjacentInput", "NegativeInput", "NegativeAdjacentInput", "PositiveLiteral", "PositiveAdjacentLiteral", "NegativeLiteral", "NegativeAdjacentLiteral", "TextInput", "UUIDInput", "UnkeyedInput", "EmptyText", "OutsideBound", "UnauthorizedRouteFailure", "ValidationRouteFailure"],
             "specifications" => ["HistoryWithoutProducer", "UnroutedFact", "AnyOrderAssignment"],
             "composite-commands" => ["CommandOnlyParts", "CommandOnlyOpaqueEscape"],
@@ -154,7 +154,7 @@ public static class EventRoutesCorpus
                 _ => null
             },
             Passed = name is not ("DifferentPart" or "MatchingReducer"),
-            WorldFactCount = name switch { "MatchingReducer" or "SkippedRouteFailure" => 0, "RoutedReaction" => 3, "Override" => 2, "EmptyText" or "OutsideBound" or "UnauthorizedRouteFailure" or "ValidationRouteFailure" => 0, "HistoryWithoutProducer" or "CommandParts" => 2, "AnyOrderAssignment" => 3, _ => 1 },
+            WorldFactCount = name switch { "MatchingReducer" or "SkippedRouteFailure" => 0, "RoutedReaction" => 3, "Override" => 3, "EmptyText" or "OutsideBound" or "UnauthorizedRouteFailure" or "ValidationRouteFailure" => 0, "HistoryWithoutProducer" or "CommandParts" => 2, "AnyOrderAssignment" => 3, _ => 1 },
             Routes = ExpectedRoutes(key, name)
         }).OrderBy(expectation => expectation.Specification.ToString(), StringComparer.Ordinal)];
     }
@@ -173,9 +173,17 @@ public static class EventRoutesCorpus
         if (key == "production-routes")
         {
             return name == "NoDefault" ? ["{\"sourceKind\":\"Account\",\"streamKind\":\"All\"}"] :
-                ["{\"sourceKind\":\"Account\",\"streamKind\":\"Notes\",\"streamId\":\"a|b%\"}", $"{{\"sourceKind\":\"Account\",\"streamKind\":\"Periods\",\"streamId\":\"{Uuid}|a%7Cb%25\"}}"];
+                ["{\"sourceKind\":\"Account\",\"streamKind\":\"Notes\",\"streamId\":\"a|b%\"}", $"{{\"sourceKind\":\"Account\",\"streamKind\":\"Periods\",\"streamId\":\"{Uuid}|a%7Cb%25\"}}", "{\"sourceKind\":\"Account\",\"streamKind\":\"Base\",\"streamId\":\"a|b%\"}"];
         }
-        if (key == "observer-filters") return name == "RoutedReaction" ? ["{\"sourceKind\":\"Account\",\"streamKind\":\"Notes\",\"streamId\":\"period\"}", "null"] : ["null"];
+        if (key == "observer-filters")
+        {
+            return name switch
+            {
+                "RoutedReaction" => ["{\"sourceKind\":\"Account\",\"streamKind\":\"Notes\",\"streamId\":\"period\"}", "null"],
+                "WrongStreamReaction" => ["{\"sourceKind\":\"Account\",\"streamKind\":\"All\"}"],
+                _ => ["null"]
+            };
+        }
         var route = ExpectedRoute(key, name);
 
         return name == "AnyOrderAssignment" ? [route, route, "null"] : [route];

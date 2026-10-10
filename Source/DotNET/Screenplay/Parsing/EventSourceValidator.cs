@@ -69,7 +69,7 @@ internal static class EventSourceValidator
                 var destination = CommandDestinationTypes.DestinationType(command, produced, productions, declarations);
                 if (destination is null) continue;
                 var identifierProperty = command.Properties.Where(property => property.IsIdentifier).ToArray();
-                if (produced.For is null && produced.InlineEvent is not null && identifierProperty is [var implicitIdentifier] && declarations.Compatible(implicitIdentifier.Type, expectedType) == false) continue;
+                if (overrideProduction is null && produced.For is null && produced.InlineEvent is not null && identifierProperty is [var implicitIdentifier] && declarations.Compatible(implicitIdentifier.Type, expectedType) == false) continue;
                 var allocated = produced.For is null && produced.InlineEvent is null && !command.Properties.Any(property => property.IsGenerated && property.IsIdentifier);
                 var compatible = declarations.Compatible(destination, expectedType);
                 if (allocated)
@@ -79,7 +79,7 @@ internal static class EventSourceValidator
                 }
                 if (compatible == false)
                 {
-                    context.Error(DiagnosticCodes.InvalidCommandStream, $"Command production destination does not have the source's nominal identifier type '{expectedType.Name}'. The stream does not supply a destination.", produced.For?.Location ?? produced.Location);
+                    context.Error(DiagnosticCodes.InvalidCommandStream, $"Command production destination does not have the source's nominal identifier type '{expectedType.Name}'. The stream does not supply a destination.", overrideProduction?.Stream?.Location ?? produced.For?.Location ?? produced.Location);
                 }
             }
             if (stream.StreamIdParts.Any())

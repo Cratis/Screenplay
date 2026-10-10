@@ -44,6 +44,11 @@ module M
         when append Folded
           for "other"
         then no readmodel Snapshot for "other"
+      specification WrongStreamReaction
+        when append Recorded
+          for "other"
+          stream Account.All
+        then no readmodel Snapshot for "other"
       specification MatchingReducer
         when append Folded
           for "other"

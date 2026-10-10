@@ -121,11 +121,11 @@ export function validateEventSources(application: ApplicationSyntax, context: Pa
             if (source.identifier === null) continue;
             const destination = commandDestinationType(command, produced, application, { resolver, slice });
             if (destination === null) continue;
-            if (produced.for === null && produced.inlineEvent !== null && identifiers.length === 1 && compatible(identifiers[0].type, source.identifier) === false) continue;
+            if (production === null && produced.for === null && produced.inlineEvent !== null && identifiers.length === 1 && compatible(identifiers[0].type, source.identifier) === false) continue;
             const allocated = produced.for === null && produced.inlineEvent === null && !command.properties.some(property => property.isGenerated && property.isIdentifier);
             const primitive = concepts.get(source.identifier.name)?.type ?? (primitives.has(source.identifier.name) ? source.identifier.name : null);
             const matches = allocated ? primitive === null ? null : primitive === 'Uuid' : compatible(destination, source.identifier);
-            if (matches === false) context.error(DiagnosticCodes.InvalidCommandStream, `Command production destination does not have the source's nominal identifier type '${source.identifier.name}'. The stream does not supply a destination.`, produced.for?.location ?? produced.location);
+            if (matches === false) context.error(DiagnosticCodes.InvalidCommandStream, `Command production destination does not have the source's nominal identifier type '${source.identifier.name}'. The stream does not supply a destination.`, production?.stream?.location ?? produced.for?.location ?? produced.location);
         }
         const validateMapping = (mapping: PropertyMappingSyntax, target: TypeRefSyntax): void => {
             const expression = mapping.source;

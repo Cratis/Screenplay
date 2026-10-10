@@ -16,5 +16,13 @@ public class when_compiling_production_routes : Specification
     void should_warn_about_a_redundant_override() => new ScreenplayCompiler().Compile(Source.Replace("stream Account.Notes", "stream Account.Transactions", StringComparison.Ordinal)).Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.RedundantProductionRoute).ShouldBeTrue();
 
     [Fact]
+    void should_report_an_implicit_inline_override_identifier_mismatch_on_the_override()
+    {
+        var source = Source.Replace("        stream Account.Transactions\n", string.Empty, StringComparison.Ordinal).Replace("identifier String", "identifier Uuid", StringComparison.Ordinal);
+        var result = new ScreenplayCompiler().Compile(source);
+        result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidCommandStream).Location.Line.ShouldEqual(11);
+    }
+
+    [Fact]
     void should_refuse_an_identifier_type_mismatch() => new ScreenplayCompiler().Compile(Source.Replace("identifier String", "identifier Uuid", StringComparison.Ordinal)).Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidCommandStream).ShouldBeTrue();
 }

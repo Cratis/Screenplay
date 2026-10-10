@@ -470,13 +470,16 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticRejected(SemanticWorld.Empty, SemanticRejectionCategory.Contract, null, exception.Message);
         }
 
-        var observedEvents = facts.Select(fact => fact.EventContract).ToHashSet();
         var reducer = plan.Model.Application.Modules.SelectMany(module => Reducers(module.Features))
             .FirstOrDefault(candidate =>
-                candidate.Transitions.Any(transition => facts.Any(fact => fact.EventContract == transition.EventContract &&
-                     (candidate.From?.Matches(plan.Model.Application, fact.Route) != false))) ||
-                (facts.Any(fact => candidate.From?.Matches(plan.Model.Application, fact.Route) != false) && plan.Projections.Values.Any(projection => projection.ReadModel == candidate.ReadModel &&
-                    projection.GetAffectedInstances().Any(affected => affected.EventContract is null || observedEvents.Contains(affected.EventContract.Value)))));
+            {
+                var matchingFacts = facts.Where(fact => candidate.From?.Matches(plan.Model.Application, fact.Route) != false).ToArray();
+                var observedEvents = matchingFacts.Select(fact => fact.EventContract).ToHashSet();
+
+                return candidate.Transitions.Any(transition => observedEvents.Contains(transition.EventContract)) ||
+                    (matchingFacts.Length > 0 && plan.Projections.Values.Any(projection => projection.ReadModel == candidate.ReadModel &&
+                        projection.GetAffectedInstances().Any(affected => affected.EventContract is null || observedEvents.Contains(affected.EventContract.Value))));
+            });
         if (publicReplay && reducer is not null)
         {
             return new SemanticUnsupported(

@@ -4,14 +4,16 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
 import { dependencySourcesOf } from '../Syntax/DependencySources';
+import { EventSourceCatalog, EventSourceResolutionKind } from '../Syntax/EventSourceCatalog';
 import { ObserverFilterSyntax } from '../Syntax/ObserverFilterSyntax';
 import { ApplicationSyntax } from '../Syntax/Structure';
 import { ParserContext } from './ParserContext';
 
 export function validateObserverFilters(application: ApplicationSyntax, context: ParserContext, resolver: AuthoringProductionResolver): void {
+    const catalog = new EventSourceCatalog(application);
     const resolve = (filter: ObserverFilterSyntax): boolean => {
-        const sources = application.eventSources?.filter(source => source.name === filter.eventSource) ?? [];
-        if (sources.length === 1 && (filter.stream === null || sources[0].streams.filter(stream => stream.name === filter.stream).length === 1)) return true;
+        const resolution = catalog.resolve(filter.eventSource, filter.stream ?? undefined);
+        if (resolution.kind === EventSourceResolutionKind.Unique) return true;
         context.error(DiagnosticCodes.InvalidObserverFilter, 'An observer filter must name one physical event source and, when supplied, one stream belonging to it.', filter.location);
         return false;
     };

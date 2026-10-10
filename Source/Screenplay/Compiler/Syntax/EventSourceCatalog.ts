@@ -15,13 +15,13 @@ export class EventSourceCatalog {
         this.otherNames = new Set([...application.concepts, ...application.types].map(type => type.name));
     }
 
-    resolve(source: string, stream: string): EventSourceResolution {
+    resolve(source: string, stream?: string): EventSourceResolution {
         const sources = this.sources.get(source) ?? [];
         const streams = sources.flatMap(parent => parent.streams).filter(candidate => candidate.name === stream);
         let kind: EventSourceResolutionKind;
         if (sources.length === 0) kind = this.otherNames.has(source) ? EventSourceResolutionKind.WrongKind : EventSourceResolutionKind.NotFound;
         else if (sources.length > 1 || streams.length > 1) kind = EventSourceResolutionKind.Ambiguous;
-        else kind = streams.length === 1 ? EventSourceResolutionKind.Unique : EventSourceResolutionKind.NotFound;
+        else kind = stream === undefined || streams.length === 1 ? EventSourceResolutionKind.Unique : EventSourceResolutionKind.NotFound;
         return { kind, sources, streams };
     }
 }

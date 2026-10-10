@@ -37,7 +37,16 @@ v10 remains claimed, unreleased until the release checkpoint. These records rema
 
 ## Timeline and scope
 
-Holds until superseded. Covers only production routes and observer source/stream filters. The other #302 increments retain their current dispositions.
+Holds until superseded. Covers only production routes and observer source/stream filters. The remaining #302 dispositions are:
+
+- Reaction direct-production routes are refused with PLAY0636. Reactions have no command route and their direct productions remain unrouted.
+- Occurred-at routing remains reserved system metadata. Its admission needs a separate clock, occurrence and ordering contract.
+- New concurrency flags remain unadmitted. Legacy command `concurrency` keeps its PLAY0271 disposition pending decision-consistent reads and a concurrency contract.
+- Constraint scopes and first-append rules remain unadmitted pending Chronicle capability and a ruling on existing marker-event models.
+- Stream closing remains unadmitted pending Chronicle and Arc capability.
+- Property-path stream id mappings remain refused with PLAY0268 under #574. Generated route inputs remain refused with PLAY0273.
+
+Stage must refuse an unkeyed production override under a keyed command route until its Arc adapter can prevent sentinel fallback from inheriting the command stream id, as 0053 requires. Portable Screenplay semantics replace the entire route and do not inherit that id. The Stage adaptation issue for this batch must cover v10 admission and this refusal before a renderer claims support; it is separate from Screenplay's portable admission.
 
 ## Verification
 
