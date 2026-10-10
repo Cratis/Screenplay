@@ -17,10 +17,11 @@ internal static partial class StructuralComparison
     static readonly string[] _hierarchyChildren = ["modules", "concepts", "types", "policies", "personas", "uiProfiles", "themes", "triggers", "layouts", "systems", "eventSources", "screenTemplates", "dialogTemplates", "forms", "features", "slices", "events", "commands", "queries", "projections", "captures", "reactions", "screens", "constraints", "specifications", "readModels", "reducers", "operations"];
     static readonly string[] _limits = ["Structural authoring comparison, not an equivalence or execution verdict.", "Opaque inline content and file references are compared by hash, but behavior inside code and external file contents are not analyzed; use implementation-requirements for attachment content hashes.", "Direct indexed dependants only (before and after); properties use their owner's references and containers aggregate external references to contained declarations, excluding references inside the container. No transitive or runtime impact.", "Unassigned kinds (including constraints) are compared by exact kind/authoring address only, never claimed as identity-preserving renames."];
 
-    internal static StructuralDifference Compare(ScreenplayWorkspace baseline, ScreenplayWorkspace candidate, AuthoringSnapshot? beforeSource = null, WorkspaceSyntaxIndex? beforeSyntax = null, AuthoringSnapshot? afterSource = null, WorkspaceSyntaxIndex? afterSyntax = null)
+    internal static StructuralDifference Compare(ScreenplayWorkspace baseline, ScreenplayWorkspace candidate, AuthoringSnapshot? beforeSource = null, WorkspaceSyntaxIndex? beforeSyntax = null, AuthoringSnapshot? afterSource = null, WorkspaceSyntaxIndex? afterSyntax = null, bool matchByAddress = false)
     {
-        var before = new Snapshot(baseline, beforeSource, beforeSyntax);
-        var after = new Snapshot(candidate, afterSource, afterSyntax);
+        var declarationLevelOnly = matchByAddress && (!baseline.Compilation.Success || !candidate.Compilation.Success);
+        var before = new Snapshot(baseline, beforeSource, beforeSyntax, matchByAddress, declarationLevelOnly);
+        var after = new Snapshot(candidate, afterSource, afterSyntax, matchByAddress, declarationLevelOnly);
         var changes = new List<Change>();
         var changedIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var id in before.Assignments.Keys.Union(after.Assignments.Keys).Order(StringComparer.Ordinal))
@@ -35,12 +36,12 @@ internal static partial class StructuralComparison
             {
                 var change = old is null ? "added" : "removed";
                 Add(new("declarations", change, id, kind, previous, next, BeforeDocuments: before.Documents(id), AfterDocuments: after.Documents(id)));
-                changes.Add(new("identities", old is null ? "assigned" : "retired", id, kind, previous, next));
+                if (!matchByAddress) changes.Add(new("identities", old is null ? "assigned" : "retired", id, kind, previous, next));
                 if (address.Kind == SemanticKind.Specification) changes.Add(new("specifications", change, id, kind, previous, next));
                 continue;
             }
 
-            if (!old.Address.Equals(current.Address))
+            if (!AddressesEqual(old.Address, current.Address))
             {
                 if (!SameDeclarationLocation(old.Address, current.Address))
                 {
@@ -54,7 +55,7 @@ internal static partial class StructuralComparison
             if (!before.Comparable(id) || !after.Comparable(id)) continue;
             var oldPaths = before.Documents(id);
             var newPaths = after.Documents(id);
-            if (!oldPaths.SequenceEqual(newPaths) && (old.Address.Equals(current.Address) || old.Address.Name != current.Address.Name || SameDeclarationLocation(old.Address, current.Address)))
+            if (!matchByAddress && !oldPaths.SequenceEqual(newPaths) && (AddressesEqual(old.Address, current.Address) || old.Address.Name != current.Address.Name || SameDeclarationLocation(old.Address, current.Address)))
             {
                 Add(new("declarations", "moved", id, kind, previous, next, BeforeDocuments: oldPaths, AfterDocuments: newPaths, MoveKind: "document"));
             }
@@ -106,7 +107,7 @@ internal static partial class StructuralComparison
         {
             changes.AddRange(before.Dependants(id, "before").Concat(after.Dependants(id, "after")));
         }
-        IdentityContracts(before, after, changes);
+        if (!matchByAddress) IdentityContracts(before, after, changes);
 
         var sections = _sections.Select(section => new StructuralSection(section, [.. before.Reasons(section).Concat(after.Reasons(section)).Distinct().OrderBy(gap => gap.Statement, StringComparer.Ordinal)])).ToArray();
         var ordered = changes.Distinct().OrderBy(change => change.Section, StringComparer.Ordinal)
@@ -115,7 +116,8 @@ internal static partial class StructuralComparison
             .ThenBy(change => change.ChangeKind, StringComparer.Ordinal).ThenBy(change => change.Member, StringComparer.Ordinal)
             .ThenBy(change => change.Snapshot, StringComparer.Ordinal).ThenBy(change => change.DependantAddress, StringComparer.Ordinal)
             .ThenBy(change => change.Role, StringComparer.Ordinal).ThenBy(change => change.BeforeGeneration).ThenBy(change => change.AfterGeneration).ToArray();
-        return new(ordered, sections, sections.All(section => section.Complete), SemanticChange(ordered, sections.All(section => section.Complete)), _limits, before.Assignments.Count + before.Unassigned.Count, after.Assignments.Count + after.Unassigned.Count);
+        var limits = matchByAddress ? [.. _limits, "Declarations are matched by exact kind and address because at least one side has no persisted identities; renames and owner moves appear as a removal and an addition."] : _limits;
+        return new(ordered, sections, sections.All(section => section.Complete), SemanticChange(ordered, sections.All(section => section.Complete)), limits, before.Assignments.Count + before.Unassigned.Count, after.Assignments.Count + after.Unassigned.Count);
 
         void Add(Change change)
         {

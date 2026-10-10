@@ -14,6 +14,5 @@ global using McpReadOwnership = Cratis.Screenplay.Indexing.ReadOwnership;
 global using McpReference = Cratis.Screenplay.Indexing.AuthoredReference;
 global using McpReferenceEdge = Cratis.Screenplay.Indexing.ReferenceEdge;
 global using McpReferenceKinds = Cratis.Screenplay.Indexing.ReferenceKinds;
-global using McpSnapshot = Cratis.Screenplay.Indexing.AuthoringSnapshot;
 global using McpSourceRevision = Cratis.Screenplay.Indexing.AuthoringSourceRevision;
 global using McpSyntaxIndex = Cratis.Screenplay.Indexing.AuthoringIndex;

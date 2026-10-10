@@ -17,17 +17,21 @@ internal static partial class StructuralComparison
         readonly AuthoringSnapshot _source;
         readonly WorkspaceSyntaxIndex _syntax;
         readonly bool _sourceComplete;
+        readonly bool _matchByAddress;
+        readonly bool _declarationLevelOnly;
         readonly Dictionary<string, WorkspaceSyntaxEntry[]> _physical;
         readonly Dictionary<(string Kind, string Address), AuthoredDeclaration[]> _indexed;
         readonly Dictionary<(string Name, SourceLocation Location), SpecificationSyntax> _effectiveSpecifications;
         readonly bool _exampleExpansionFailed;
 
-        internal Snapshot(ScreenplayWorkspace workspace, AuthoringSnapshot? source, WorkspaceSyntaxIndex? syntax)
+        internal Snapshot(ScreenplayWorkspace workspace, AuthoringSnapshot? source, WorkspaceSyntaxIndex? syntax, bool matchByAddress, bool declarationLevelOnly)
         {
             Workspace = workspace;
+            _matchByAddress = matchByAddress;
+            _declarationLevelOnly = declarationLevelOnly;
             _source = source ?? WorkspaceAuthoringAnalysis.For(workspace).Source;
             _syntax = syntax ?? WorkspaceAuthoringAnalysis.For(workspace).Syntax;
-            Assignments = workspace.IdentityCatalog.Semantics.ToDictionary(assignment => assignment.Id.ToString(), StringComparer.Ordinal);
+            Assignments = declarationLevelOnly ? [] : workspace.IdentityCatalog.Semantics.ToDictionary(assignment => matchByAddress ? AddressKey(assignment.Address) : assignment.Id.ToString(), StringComparer.Ordinal);
             HashSet<(string Kind, string Address)> assignedKeys = [.. Assignments.Values.Select(assignment => (Kind(assignment.Address), Address(assignment.Address)))];
             _physical = _syntax.Entries.Where(entry => entry.SemanticId is not null).GroupBy(entry => entry.SemanticId!.Value.ToString()).ToDictionary(group => group.Key, group => group.ToArray(), StringComparer.Ordinal);
             _indexed = _source.Index.Declarations.GroupBy(declaration => (declaration.Kind, declaration.Address)).ToDictionary(group => group.Key, group => group.ToArray());
@@ -51,7 +55,8 @@ internal static partial class StructuralComparison
 
         internal DocumentLocation[] Documents(string id)
         {
-            var paths = (_physical.GetValueOrDefault(id) ?? []).Select(entry => Workspace.Documents.Single(document => document.Id == entry.Handle.Document).Path.Value)
+            var physicalId = Assignments.TryGetValue(id, out var assignment) ? assignment.Id.ToString() : id;
+            var paths = (_physical.GetValueOrDefault(physicalId) ?? []).Select(entry => Workspace.Documents.Single(document => document.Id == entry.Handle.Document).Path.Value)
                 .Concat((Nodes.GetValueOrDefault(id) ?? []).Select(node => node.Location.Path).OfType<string>()).ToHashSet(StringComparer.Ordinal);
             return [.. Workspace.Documents.Where(document => paths.Contains(document.Path.Value)).Select(document => new DocumentLocation(document.Id.ToString(), document.Path.Value)).OrderBy(document => document.DocumentId, StringComparer.Ordinal).ThenBy(document => document.Path, StringComparer.Ordinal)];
         }
@@ -62,9 +67,15 @@ internal static partial class StructuralComparison
 
         internal IEnumerable<StructuralGap> Reasons(string section)
         {
+            if (_matchByAddress && section == "identities")
+            {
+                yield return new(StructuralGapKind.IdentitiesNotCompared, "Persisted identities are not compared when declarations are matched by exact kind and address.");
+                yield break;
+            }
+            if (_declarationLevelOnly && (section == "declarations" || section == "members")) yield return new(StructuralGapKind.DeclarationLevelOnly, "At least one model has no executable model; both sides use authoring declaration keys only, without property-level matching.");
             if (_exampleExpansionFailed && (section == "members" || section == "specifications")) yield return new(StructuralGapKind.ExampleResolution, "Typed example resolution is incomplete; effective specification steps cannot be compared.");
             if (!_sourceComplete) yield return new(StructuralGapKind.IncompleteSource, "Source syntax or import placement is incomplete; missing declarations/members are not evidence of no change.");
-            var unavailable = Assignments.Values.Count(assignment => !Comparable(assignment.Id.ToString()) && (section == "members" || section == "declarations" || (section == "events" && assignment.Address.Kind == SemanticKind.EventContract) || (section == "specifications" && assignment.Address.Kind == SemanticKind.Specification)));
+            var unavailable = Assignments.Count(pair => !Comparable(pair.Key) && (section == "members" || section == "declarations" || (section == "events" && pair.Value.Address.Kind == SemanticKind.EventContract) || (section == "specifications" && pair.Value.Address.Kind == SemanticKind.Specification)));
             if (unavailable > 0) yield return new(StructuralGapKind.NotComparableAssigned, $"{unavailable} assigned semantic IDs have no unique comparable authored members; every catalog kind is included in this count.");
             var ambiguous = Unassigned.Count(pair => !ComparableAuthoring(pair.Key) && (section == "members" || section == "declarations" || section == "identities" || (section == "events" && pair.Value[0].Kind == "Event") || (section == "specifications" && pair.Value[0].Kind == "Specification")));
             if (ambiguous > 0) yield return new(StructuralGapKind.NotComparableIndexed, $"{ambiguous} indexed kind/address groups have no comparable authored members; ambiguous or unsupported groups were not discarded.");

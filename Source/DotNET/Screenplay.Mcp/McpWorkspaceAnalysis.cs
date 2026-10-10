@@ -11,6 +11,7 @@ sealed class McpWorkspaceAnalysis
 {
     static readonly ConditionalWeakTable<ScreenplayWorkspace, McpWorkspaceAnalysis> _analyses = [];
     readonly WorkspaceAuthoringAnalysis _authoring;
+    readonly Lazy<McpSnapshot> _source;
     readonly Lazy<WorkspacePhysicalReadView> _physical;
     readonly Lazy<WorkspaceImplementationInventory> _handlerIntents;
     readonly Lazy<WorkspaceNamedRuleIntentInventory> _namedRuleIntents;
@@ -22,6 +23,7 @@ sealed class McpWorkspaceAnalysis
     McpWorkspaceAnalysis(ScreenplayWorkspace workspace)
     {
         _authoring = WorkspaceAuthoringAnalysis.For(workspace);
+        _source = new(() => new McpSnapshot(_authoring.Source));
         _physical = new(() => WorkspacePhysicalReadView.Create(workspace));
         _handlerIntents = new(() => WorkspaceImplementationInventory.Create(Syntax));
         _namedRuleIntents = new(() => WorkspaceNamedRuleIntentInventory.Create(Syntax));
@@ -31,7 +33,7 @@ sealed class McpWorkspaceAnalysis
         _childCounts = new(() => Syntax.Entries.Where(entry => entry.Parent is not null).GroupBy(entry => entry.Parent!).ToDictionary(group => group.Key, group => group.Count()));
     }
 
-    internal McpSnapshot Source => _authoring.Source;
+    internal McpSnapshot Source => _source.Value;
     internal WorkspaceSyntaxIndex Syntax => _authoring.Syntax;
     internal WorkspaceImplementationInventory HandlerIntents => _handlerIntents.Value;
     internal WorkspaceNamedRuleIntentInventory NamedRuleIntents => _namedRuleIntents.Value;

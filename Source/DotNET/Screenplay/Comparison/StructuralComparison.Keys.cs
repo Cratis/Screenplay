@@ -3,6 +3,7 @@
 
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using Cratis.Screenplay.Semantics;
 
 namespace Cratis.Screenplay.Comparison;
@@ -33,7 +34,11 @@ internal static partial class StructuralComparison
 
     static string? Hash(string? value) => value is null ? null : Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
 
-    static bool SameDeclarationLocation(SemanticAddress before, SemanticAddress after) => before.Kind == after.Kind && before.Parts.Where(part => part.Kind != SemanticAddressPartKind.Generation).SequenceEqual(after.Parts.Where(part => part.Kind != SemanticAddressPartKind.Generation));
+    static bool AddressesEqual(SemanticAddress before, SemanticAddress after) => before.Kind == after.Kind && before.Parts.Where(part => part.Kind != SemanticAddressPartKind.Application).SequenceEqual(after.Parts.Where(part => part.Kind != SemanticAddressPartKind.Application));
+
+    static bool SameDeclarationLocation(SemanticAddress before, SemanticAddress after) => before.Kind == after.Kind && before.Parts.Where(part => part.Kind is not (SemanticAddressPartKind.Application or SemanticAddressPartKind.Generation)).SequenceEqual(after.Parts.Where(part => part.Kind is not (SemanticAddressPartKind.Application or SemanticAddressPartKind.Generation)));
+
+    static string AddressKey(SemanticAddress address) => $"{Kind(address)}:{JsonSerializer.Serialize(address.Parts.Where(part => part.Kind != SemanticAddressPartKind.Application))}";
 
     static string Owner(SemanticAddress address) => string.Join('.', address.Parts.SkipLast(1).Where(part => part.Kind is not (SemanticAddressPartKind.Application or SemanticAddressPartKind.OwnerKind or SemanticAddressPartKind.Generation)).Select(part => part.Key));
 

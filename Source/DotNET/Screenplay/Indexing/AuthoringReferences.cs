@@ -18,7 +18,11 @@ sealed class AuthoringReferences
     readonly Dictionary<AuthoredReference, AuthoredDeclaration[]> _resolutions = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<(string Name, string Kinds, string Scope), AuthoredDeclaration[]> _names = [];
     readonly Dictionary<(string Name, string Kinds, string Scope), AuthoredDeclaration[]> _productionNames = [];
+#if NET9_0_OR_GREATER
     readonly Lock _resolutionLock = new();
+#else
+    readonly object _resolutionLock = new();
+#endif
     readonly Dictionary<AuthoredDeclaration, List<ReferenceResolution>> _incoming = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<ReadOwner, List<AuthoredReference>> _outgoing = [];
     readonly Dictionary<string, List<AuthoredReference>> _outgoingByAddress = new(StringComparer.Ordinal);

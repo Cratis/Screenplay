@@ -31,7 +31,7 @@ static class McpSemanticDiff
 
         var before = McpWorkspaceAnalysis.For(baseline);
         var after = McpWorkspaceAnalysis.For(candidate);
-        var difference = StructuralComparison.Compare(baseline, candidate, before.Source, before.Syntax, after.Source, after.Syntax);
+        var difference = StructuralComparison.Compare(baseline, candidate, before.Source.Authoring, before.Syntax, after.Source.Authoring, after.Syntax);
         return new
         {
             sourceRevision = revision,
