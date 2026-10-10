@@ -1591,6 +1591,7 @@
                   "kind": "ReactionSyntax",
                   "description": "Sends every new member a welcome letter with their library card",
                   "name": "WelcomeLetter",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",

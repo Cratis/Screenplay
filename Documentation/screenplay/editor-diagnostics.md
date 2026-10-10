@@ -11,6 +11,7 @@ The diagnostic catalogues share the C# names and codes. A catalogue entry does n
 
 | Codes | TypeScript and editor support |
 |---|---|
+| PLAY0647–PLAY0649 | Reaction `runs as` syntax, gated invocations without identity and unused identity. Both editors forward the TypeScript checks; declared identity suppresses PLAY0557. PLAY0650–PLAY0651 are C# bound-gate analyses, and PLAY0652 is the opt-in `privilege` completeness finding. Supplied C# findings are preserved. |
 | PLAY0633–PLAY0646 | Identity declaration, source, duplicate-name, built-in-name and keyed-query/type/authorization checks. Both editors forward these checks from the assembled TypeScript model; caller detail paths are completed and validated alongside token built-ins. Executable detail reads still require the C# binder's PLAY0268 verdict (#600). |
 | PLAY0514, PLAY0515 | Projection target and personal identifier checks. Both editors preserve compiler diagnostics. |
 | PLAY0518, PLAY0519 | Typed-example syntax and duplicate assignments. Both editors preserve compiler diagnostics. Example type resolution and semantic values remain C# checks. |

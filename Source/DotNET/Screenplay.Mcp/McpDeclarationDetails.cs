@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.Json;
+using Cratis.Screenplay.Parsing;
+using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
 
@@ -28,6 +30,7 @@ static class McpDeclarationDetails
                 documentation = declaration.Syntax.GetType().GetProperty("Documentation")?.GetValue(declaration.Syntax) as string,
                 purposes = declaration.Syntax.GetType().GetProperty("Purposes")?.GetValue(declaration.Syntax),
                 processingPurpose = declaration.Syntax as PurposeSyntax,
+                runsAs = RunsAs(snapshot, declaration),
                 reportOnly = declaration.Syntax is PurposeSyntax,
                 uses = (declaration.Syntax as OperationSyntax)?.Uses,
                 identifier = (declaration.Syntax as EventSourceSyntax)?.Identifier,
@@ -177,6 +180,25 @@ static class McpDeclarationDetails
             }
         }
         return matches.Length == 1 ? matches[0] : throw new McpFailure($"Declaration target must identify exactly one logical declaration; found {matches.Length}.");
+    }
+
+    static object? RunsAs(McpSnapshot snapshot, McpDeclaration declaration)
+    {
+        if (declaration.Syntax is not ReactionSyntax { RunsAs: { } identity }) return null;
+        var analysis = new AuthorizationRoleAnalysis(snapshot.Compilation.Value!);
+        var module = declaration.Scope.FirstOrDefault();
+        var crossBoundary = identity.Roles.Where(role =>
+            analysis.Commands.Any(command => command.Module != module && ReactionIdentityAnalysis.Roles(command.Gate, analysis.Policies).Contains(role, StringComparer.Ordinal)) &&
+            !analysis.Commands.Any(command => command.Module == module && ReactionIdentityAnalysis.Roles(command.Gate, analysis.Policies).Contains(role, StringComparer.Ordinal)));
+
+        return new
+        {
+            kind = identity.Kind,
+            roles = identity.Roles,
+            identity.Location,
+            readiness = "Reaction command identity is syntax-only, not admitted by any supported executable model (PLAY0268, #383). Clock and application triggers have no Arc realization in Stage yet. It covers returned commands, not imperative pipeline calls inside implementation bodies.",
+            crossBoundaryRoles = crossBoundary.ToArray()
+        };
     }
 
     static object? Subject(SyntaxNode node)

@@ -17,11 +17,21 @@ internal static class ReactionRefusalValidator
         Dictionary<CommandSyntax, bool>? authorizationGates = null;
         foreach (var (slice, scope) in declarations.Slices)
         {
-            foreach (var invocation in slice.Reactions.SelectMany(reaction => reaction.Triggers).SelectMany(trigger => trigger.Invokes ?? []))
+            foreach (var reaction in slice.Reactions.Where(reaction => reaction.RunsAs is not null && !reaction.Triggers.Any(trigger => (trigger.Invokes ?? []).Any() || trigger.File is not null || trigger.Code is not null)))
+            {
+                context.Warning(DiagnosticCodes.UnusedReactionIdentity, $"Reaction '{reaction.Name}' declares an identity but has no invocations or implementation body.", reaction.RunsAs!.Location);
+            }
+
+            foreach (var (reaction, invocation) in slice.Reactions.SelectMany(reaction => reaction.Triggers.SelectMany(trigger => trigger.Invokes ?? []).Select(invocation => (reaction, invocation))))
             {
                 var command = declarations.Resolve(invocation.Command, scope, owner => owner.Commands, node => node.Name);
-                var authorizationGated = invocation.OnRefused.Any(branch => branch.Selector == "authorization") &&
-                    command is { } invokedCommand && (authorizationGates ??= CollectAuthorizationGates(application))[invokedCommand.Node];
+                var authorizationGated = command is { } invokedCommand && (authorizationGates ??= CollectAuthorizationGates(application))[invokedCommand.Node];
+                var authorizationBranch = invocation.OnRefused.FirstOrDefault(branch => branch.Selector == "authorization");
+                if (reaction.RunsAs is null && authorizationGated && authorizationBranch is null)
+                {
+                    context.Warning(DiagnosticCodes.GatedInvocationWithoutIdentity, $"Command '{invocation.Command}' is authorization-gated, but reaction '{reaction.Name}' has no declared identity. Declare 'runs as system role \"<Role>\"'.", invocation.Location);
+                }
+
                 var earlier = new List<InvocationRefusalSyntax>();
                 foreach (var branch in invocation.OnRefused)
                 {
@@ -31,11 +41,11 @@ internal static class ReactionRefusalValidator
                     }
 
                     earlier.Add(branch);
-                    if (branch.Selector == "authorization" && InvocationHasNoDeclaredIdentity() && authorizationGated)
+                    if (ReferenceEquals(branch, authorizationBranch) && reaction.RunsAs is null && authorizationGated)
                     {
                         context.Warning(
                             DiagnosticCodes.AuthorizationRefusalWithoutIdentity,
-                            $"Command '{invocation.Command}' is authorization-gated, but this invocation has no declared identity. This authorization refusal branch always fires in the reference runner because there is no caller; Arc runs reactor commands as the system. Declare an invoking identity once supported (#383).",
+                            $"Command '{invocation.Command}' is authorization-gated, but this invocation has no declared identity. This authorization refusal branch always fires in the reference runner because there is no caller. Declare 'runs as system role \"<Role>\"'; Arc runs commands as the system only for a reactor carrying [ExecuteCommandsAsSystem].",
                             branch.Location);
                     }
 
@@ -75,9 +85,6 @@ internal static class ReactionRefusalValidator
             }
         }
     }
-
-    // Invocations have no identity declaration until #383; keep that decision separate from authorization gating.
-    static bool InvocationHasNoDeclaredIdentity() => true;
 
     static Dictionary<CommandSyntax, bool> CollectAuthorizationGates(ApplicationSyntax application)
     {

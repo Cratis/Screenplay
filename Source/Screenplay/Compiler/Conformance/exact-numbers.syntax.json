@@ -877,6 +877,7 @@
                   "kind": "ReactionSyntax",
                   "description": null,
                   "name": "React",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",
@@ -947,6 +948,7 @@
                   "kind": "ReactionSyntax",
                   "description": null,
                   "name": "Réact",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",

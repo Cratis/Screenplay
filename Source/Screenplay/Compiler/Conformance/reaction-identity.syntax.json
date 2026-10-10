@@ -1,0 +1,185 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Claims",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "AutomationAccess"
+                    }
+                  },
+                  "description": null,
+                  "handler": null,
+                  "name": "CloseClaim",
+                  "produces": [],
+                  "properties": [],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                },
+                {
+                  "kind": "CommandSyntax",
+                  "authorize": null,
+                  "description": null,
+                  "handler": null,
+                  "name": "Ungated",
+                  "produces": [],
+                  "properties": [],
+                  "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
+                  "validations": []
+                }
+              ],
+              "constraints": [],
+              "description": null,
+              "events": [
+                {
+                  "kind": "EventSyntax",
+                  "description": null,
+                  "documentation": null,
+                  "generation": 1,
+                  "hasGenerationMarker": false,
+                  "id": null,
+                  "name": "DeadlinePassed",
+                  "properties": [],
+                  "tags": []
+                }
+              ],
+              "name": "Expiration",
+              "operations": [],
+              "projections": [],
+              "queries": [],
+              "reactions": [
+                {
+                  "kind": "ReactionSyntax",
+                  "description": "Closes expired claims under a narrowly declared system identity",
+                  "name": "CloseExpiredClaims",
+                  "runsAs": {
+                    "kind": "ReactionIdentitySyntax",
+                    "roles": [
+                      "Automation",
+                      "Auditor"
+                    ],
+                    "syntaxKind": "system"
+                  },
+                  "triggers": [
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "invokes": [
+                        {
+                          "kind": "InvokesSyntax",
+                          "command": "CloseClaim"
+                        }
+                      ],
+                      "produces": [],
+                      "source": {
+                        "kind": "NamedTriggerSourceSyntax",
+                        "name": "DeadlinePassed"
+                      }
+                    },
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "invokes": [
+                        {
+                          "kind": "InvokesSyntax",
+                          "command": "CloseClaim"
+                        }
+                      ],
+                      "produces": [],
+                      "source": {
+                        "kind": "IntervalTriggerSourceSyntax",
+                        "amount": 1,
+                        "unit": "Days"
+                      }
+                    },
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "invokes": [
+                        {
+                          "kind": "InvokesSyntax",
+                          "command": "CloseClaim"
+                        }
+                      ],
+                      "produces": [],
+                      "source": {
+                        "kind": "NamedTriggerSourceSyntax",
+                        "name": "Startup"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "ReactionSyntax",
+                  "description": null,
+                  "name": "AuthenticatedAutomation",
+                  "runsAs": {
+                    "kind": "ReactionIdentitySyntax",
+                    "roles": [],
+                    "syntaxKind": "system"
+                  },
+                  "triggers": [
+                    {
+                      "kind": "ReactionTriggerSyntax",
+                      "description": null,
+                      "invokes": [
+                        {
+                          "kind": "InvokesSyntax",
+                          "command": "Ungated"
+                        }
+                      ],
+                      "produces": [],
+                      "source": {
+                        "kind": "NamedTriggerSourceSyntax",
+                        "name": "DeadlinePassed"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "readModels": [],
+              "screens": [],
+              "specifications": [],
+              "type": "Automation"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Billing"
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

@@ -1177,10 +1177,16 @@ ConstraintOption = "released", "by", Ident, NL
 
 ReactionDecl   = "reaction", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | DocumentationDecl | TriggerClause | WhereDecl },
+                   { DescriptionDecl | DocumentationDecl | ReactionIdentityDecl | TriggerClause | WhereDecl },
                  DEDENT ;
 
-(* A reaction needs at least one trigger and at most one where condition.
+ReactionIdentityDecl = "runs", "as", "system",
+                       [ "role", String, { "and", "role", String } ], NL ;
+
+(* Identity is one reaction-level line, at most once; roles are nonempty, distinct
+   quoted literals. It prints after documentation and before the first trigger.
+   Syntax-only: binding refuses reaction command identity with PLAY0268 (#383).
+   A reaction needs at least one trigger and at most one where condition.
    A trigger with no body is a complete statement of intent - the reaction runs
    when that happens. The file reference and the inline block are optional
    realization metadata.                                                      *)

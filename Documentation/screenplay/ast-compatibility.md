@@ -27,6 +27,10 @@ Appending a trailing optional parameter instead looks equivalent and is not. It 
 Authoring metadata follows this rule: `SpecificationSyntax.Description` and the `Documentation` members on modules, features, slices, commands, read models and reactions are nullable init-only properties. They appear in the syntax transport schema, not in the executable semantic model. Preserve them when rewriting a declaration.
 
 `SpecificationSyntax.GivenCallerPersona` is an additive init-only reference with a name and location, distinct from `GivenCaller`. It is omitted from syntax JSON when absent, preserving untouched documents' bytes. A reader that predates the persona member must reject the new member rather than silently interpret an unauthenticated caller. Effective syntax expands the reference and carries `SpecificationValueOrigin.Persona` with persona and policy provenance; it adds no ESM member or version.
+## Reaction command identity member
+
+`ReactionSyntax.RunsAs` is a nullable init-only `ReactionIdentitySyntax`, not a new constructor or Deconstruct parameter. `ReactionIdentitySyntax(Kind, Roles, Location)` is an additive node; its CLR `Kind` uses `syntaxKind` in typed syntax JSON to avoid the node discriminator. The walker gains `VisitReactionIdentity`, and generated transport and collection schemas describe the roles. Preserve `RunsAs` when rewriting a reaction. Old syntax JSON may omit the member; its default is null. The line is syntax-only: binding refuses it with `PLAY0268` (#383), and omission preserves existing ESM bytes and revisions.
+
 ## Public event source-authoring members
 
 `EventSyntax` and `ImportSyntax` gain init-only `Visibility` (`EventVisibility.Private` by default)

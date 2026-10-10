@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Diagnostics;
+using Cratis.Screenplay.for_Documentation.given;
 using Cratis.Screenplay.for_ScreenplayCompiler.given;
 
 namespace Cratis.Screenplay.Semantics.for_SemanticModelBinder;
@@ -84,6 +85,17 @@ public class when_binding_the_invoicing_sample : given.a_semantic_binder
         // instead of waiting for the executable model's generic shape failure.
         _incompleteSteps = [.. errors.Where(diagnostic => diagnostic.Code == DiagnosticCodes.MissingSpecificationProperty)];
         _errors = [.. errors.Where(diagnostic => diagnostic.Code != DiagnosticCodes.MissingSpecificationProperty)];
+    }
+
+    [Fact]
+    void should_refuse_the_living_samples_declared_identity_once()
+    {
+        // Samples.Invoicing is the frozen embedded fixture, not the living language showcase.
+        var root = Directory.GetParent(DocumentationExamples.Root())!.FullName;
+        var source = File.ReadAllText(Path.Combine(root, "Samples/Invoicing/invoicing.play"));
+        var refusal = Bind(source).Diagnostics.Single(diagnostic => diagnostic.Code == Unsupported && diagnostic.Message.StartsWith("Reaction command identity ('runs as')", StringComparison.Ordinal));
+        refusal.Message.ShouldContain("#383");
+        refusal.Location.Line.ShouldEqual(source.Split('\n').ToList().FindIndex(line => line.Contains("runs as system", StringComparison.Ordinal)) + 1);
     }
 
     [Fact] void should_report_partial_design_fixtures_at_their_steps() => _incompleteSteps.ShouldNotBeEmpty();

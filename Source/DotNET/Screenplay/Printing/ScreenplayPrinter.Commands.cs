@@ -225,6 +225,11 @@ public partial class ScreenplayPrinter
         {
             WriteDescription(writer, reaction.Description, reaction);
             WriteDocumentation(writer, reaction.Documentation, reaction);
+            if (reaction.RunsAs is { } identity)
+            {
+                var roles = identity.Roles.Select(role => $"role {StringLiteral.Quote(role)}");
+                writer.Line($"runs as {identity.Kind}{(identity.Roles.Any() ? $" {string.Join(" and ", roles)}" : string.Empty)}", identity);
+            }
 
             foreach (var trigger in reaction.Triggers)
             {

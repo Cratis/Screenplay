@@ -21,6 +21,7 @@ import { JoinEventSyntax, KeySyntax, MappingSyntax, ProjectionBlockSyntax, Proje
 import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax } from './EventSources';
 import { QueryParameterSyntax, QuerySyntax } from './Queries';
 import { InvocationRefusalSyntax } from './InvocationRefusalSyntax';
+import { ReactionIdentitySyntax } from './ReactionIdentitySyntax';
 import { SpecificationRedeliverySyntax } from './SpecificationRedeliverySyntax';
 import { InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from './Reactions';
 import { InteractionArgumentSyntax, ScreenActionAlternativeSyntax, ScreenActionOtherwiseSyntax, ScreenDirectiveSyntax, ScreenGuardedActionSyntax, ScreenSyntax } from './Screens';
@@ -484,9 +485,12 @@ export abstract class ScreenplaySyntaxWalker {
 
     visitReaction(syntax: ReactionSyntax): void {
         this.visitNode(syntax);
+        if (syntax.runsAs != null) this.visitReactionIdentity(syntax.runsAs);
         if (syntax.where != null) this.visitCondition(syntax.where);
         syntax.triggers.forEach(node => this.visitReactionTrigger(node));
     }
+
+    visitReactionIdentity(syntax: ReactionIdentitySyntax): void { this.visitNode(syntax); }
 
     visitReactionTrigger(syntax: ReactionTriggerSyntax): void {
         this.visitNode(syntax);

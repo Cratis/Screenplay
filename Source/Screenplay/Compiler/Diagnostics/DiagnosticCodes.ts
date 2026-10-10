@@ -18,6 +18,12 @@ export const DiagnosticCodes = {
     InvalidIdentityQueryKey: 'PLAY0644',
     IdentityQueryAuthorizationDependency: 'PLAY0645',
     IdentityQueryTypeMismatch: 'PLAY0646',
+    InvalidReactionIdentity: 'PLAY0647',
+    GatedInvocationWithoutIdentity: 'PLAY0648',
+    UnusedReactionIdentity: 'PLAY0649',
+    UnusedReactionRole: 'PLAY0650',
+    UnsatisfiedReactionIdentity: 'PLAY0651',
+    ReactionPrivilegeEscalation: 'PLAY0652',
     // C#-only whole-model public event boundaries; membership is not TypeScript validation support.
     CommandProducesPublicEvent: 'PLAY0607',
     PublicEventRequiresOutboundTranslation: 'PLAY0608',

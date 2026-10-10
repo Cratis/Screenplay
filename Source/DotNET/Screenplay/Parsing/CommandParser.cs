@@ -54,6 +54,10 @@ internal static partial class CommandParser
             context.Reader.TakeSignificant();
             switch (LineText.FirstWord(line.Content))
             {
+                case "runs" when ReactionIdentityParser.IsDeclarationLine(line):
+                    ReactionIdentityParser.Misplaced(context, line);
+                    break;
+
                 // The bare directives below cannot take a type reference, so a line that has property shape
                 // is a property no matter which keyword it starts with - 'description String' declares a
                 // property called description. Only the directives that do take an identifier operand

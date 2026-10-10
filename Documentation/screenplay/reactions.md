@@ -11,6 +11,7 @@ A reaction can carry one nonempty fenced `markdown` `documentation` block direct
 ```screenplay
 reaction <Name>
   [description "<text>"]
+  [runs as system [role "<Role>" { and role "<Role>" }]]
   <trigger>
     [description "<text>"]
     [<value> ...]
@@ -25,6 +26,40 @@ reaction <Name>
 ```
 
 A reaction declares at least one trigger. Everything under a trigger is optional.
+
+## Returned-command identity (syntax-only)
+
+A gated command needs a caller even when a reaction asks for it. Declare the trusted returned-command path explicitly:
+
+```screenplay
+policy ClaimsAutomation
+  require role "ClaimsAutomation"
+
+module Claims
+  feature Expiration
+    slice Automation CloseExpiredClaims
+      event ClaimDeadlinePassed
+        claim String
+      command CloseClaim
+        claim String
+        authorize ClaimsAutomation
+      reaction CloseExpiredClaims
+        runs as system role "ClaimsAutomation"
+        when ClaimDeadlinePassed
+          claim
+          invokes CloseClaim
+            claim = claim
+```
+
+`runs as system` declares an authenticated system identity with exactly the quoted roles; omitting roles is valid. Roles must be nonempty, distinct literals, not expressions. Declare the line once, directly under the reaction, anywhere among its reaction-level directives. The printer places it after documentation and before the first trigger. Personas are not accepted here.
+
+The identity covers every command returned or `invokes` under every trigger. It does not cover imperative `ICommandPipeline` calls inside an inline or `file` implementation, `produces`, `reads`, refusal-branch productions or causation. It is authorization identity, not caller audit identity; `given caller` never supplies an actor to invocations.
+
+This is **authoring syntax only**. Binding refuses `runs as` with `PLAY0268` naming [#383](https://github.com/Cratis/Screenplay/issues/383); no supported executable model admits it yet. At admission, claim conditions on this system caller remain unknown, including under `not`; a satisfied role alternative can allow, but a final unknown denies. Clock and application triggers may declare the identity, but Stage has no Arc realization for either trigger kind yet. MCP reports that as readiness, not a source diagnostic.
+
+Without the line, invocations retain their no-caller behavior and existing executable bytes. Arc runs returned commands as the system only for a reactor carrying `[ExecuteCommandsAsSystem]`; an unmarked reactor has no principal and authorization gates deny.
+
+Both compilers warn on a gated invocation without identity (`PLAY0648`), or on an identity with neither invocations nor an implementation body (`PLAY0649`). An authorization refusal branch receives `PLAY0557` instead of `PLAY0648`, once per invocation. The C# binder also warns about unused roles (`PLAY0650`, silent for opaque gates or implementation bodies) and definite authorization denial (`PLAY0651`, unknown stays silent). Cross-module roles are valid and listed in MCP details without a diagnostic. Opt into the [privilege completeness check](completeness.md) to inspect who can produce the events that reach this trusted path.
 
 ## Trigger → reaction → effects
 
@@ -231,7 +266,7 @@ Branches are ordered: the first matching selector wins. A branch contains `ackno
 
 Duplicate selectors and narrower branches after a covering branch produce `PLAY0540`. Bare refusal never shadows authorization. An unresolved named constraint produces `PLAY0542`; a known constraint that cannot target any of the invoked command's produced events also produces `PLAY0540`.
 
-Both compilers warn with `PLAY0557` on an `on refused by authorization` branch when the invoked command has an `authorize` gate of its own or inherits one from its module or enclosing features, but the invocation has no declared identity. The reference runner has no caller for reaction invocations and always denies a gated command; Arc runs reactor commands as the system, so the branch would behave differently. The remedy is an invoking identity, tracked by [#383](https://github.com/Cratis/Screenplay/issues/383); no identity syntax is available yet. `given caller` does not supply that identity. Resolve this mismatch before admitting refusal handling into an executable model. Validation and constraint branches do not receive this warning.
+Both compilers warn with `PLAY0557` on an `on refused by authorization` branch when the invoked command has an `authorize` gate of its own or inherits one from its module or enclosing features, but the reaction has no declared `runs as`. The reference runner has no caller and always denies a gated command. Arc runs commands as the system only for a reactor carrying `[ExecuteCommandsAsSystem]`; an unmarked reactor also has no principal. Declare `runs as system role "<Role>"` to state the intended identity; this suppresses the warning but remains syntax-only until admission. `given caller` does not supply that identity. Validation and constraint branches do not receive `PLAY0557`; a gated invocation without an authorization branch receives `PLAY0648` instead.
 
 The branch's event mappings may use these String values:
 

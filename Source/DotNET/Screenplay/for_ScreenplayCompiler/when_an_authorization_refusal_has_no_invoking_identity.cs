@@ -68,6 +68,6 @@ public class when_an_authorization_refusal_has_no_invoking_identity : given.a_co
         warning.Location.Path.ShouldBeNull();
         warning.Location.Line.ShouldEqual(source.Split('\n').ToList().FindIndex(line => line.Contains("on refused", StringComparison.Ordinal)) + 1);
         warning.Location.Column.ShouldEqual(15);
-        warning.Message.ShouldEqual("Command 'Claim' is authorization-gated, but this invocation has no declared identity. This authorization refusal branch always fires in the reference runner because there is no caller; Arc runs reactor commands as the system. Declare an invoking identity once supported (#383).");
+        warning.Message.ShouldEqual("Command 'Claim' is authorization-gated, but this invocation has no declared identity. This authorization refusal branch always fires in the reference runner because there is no caller. Declare 'runs as system role \"<Role>\"'; Arc runs commands as the system only for a reactor carrying [ExecuteCommandsAsSystem].");
     }
 }

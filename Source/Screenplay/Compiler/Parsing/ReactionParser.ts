@@ -9,6 +9,8 @@ import { parseCondition } from './ConditionParser';
 import { parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
 import { DayOfWeek, IntervalUnit, InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from '../Syntax/Reactions';
 import { nativePattern, pattern } from '../Text/patterns';
+import { ReactionIdentitySyntax } from '../Syntax/ReactionIdentitySyntax';
+import { isReactionIdentityLine, misplacedReactionIdentity, parseReactionIdentity } from './ReactionIdentityParser';
 import { parseDescription } from './DescriptionParser';
 import { parseDocumentation } from './DocumentationParser';
 import { collectInputUses } from './InputUses';
@@ -39,6 +41,8 @@ export function parseReaction(context: ParserContext, line: SourceLine): Reactio
     let description: string | null = null;
     let documentation: string | null = null;
     let where: ConditionSyntax | null = null;
+    let runsAs: ReactionIdentitySyntax | null = null;
+    let identityDeclared = false;
     const triggers: ReactionTriggerSyntax[] = [];
     const sources = new Set<string>();
     // A reaction whose only trigger is misspelled has no trigger, but saying so as well turns one mistake
@@ -53,6 +57,11 @@ export function parseReaction(context: ParserContext, line: SourceLine): Reactio
         }
         if (keyword === 'documentation') {
             documentation = parseDocumentation(context, child, documentation, `Reaction '${name}'`);
+            continue;
+        }
+        if (keyword === 'runs') {
+            runsAs = parseReactionIdentity(context, child, identityDeclared) ?? runsAs;
+            identityDeclared = true;
             continue;
         }
         if (keyword === 'where') {
@@ -88,7 +97,7 @@ export function parseReaction(context: ParserContext, line: SourceLine): Reactio
     if (triggers.length === 0 && !reported) {
         context.error(DiagnosticCodes.ReactionWithoutTrigger, `Reaction '${name}' must declare at least one trigger - nothing sets it off`, locationOf(line));
     }
-    return { kind: 'ReactionSyntax', name, description, documentation, where, triggers, location: locationOf(line) };
+    return { kind: 'ReactionSyntax', name, description, documentation, runsAs, where, triggers, location: locationOf(line) };
 }
 
 // What a trigger does - the events it produces and the commands it invokes - is read by name; its reads,
@@ -99,10 +108,13 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
     const invokes: InvokesSyntax[] = [];
     const reads: ReadsSyntax[] = [];
     const data: TriggerDataSyntax[] = [];
+    let implementation = false;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const keyword = firstWord(child.content);
-        if (keyword === 'description') {
+        if (keyword === 'runs' && isReactionIdentityLine(child)) {
+            misplacedReactionIdentity(context, child);
+        } else if (keyword === 'description') {
             description = parseDescription(context, child, description, `Trigger '${child.content}'`);
         } else if (keyword === 'produces') {
             const produced = parseProduces(context, child);
@@ -124,6 +136,10 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
                 const onRefused: InvocationRefusalSyntax[] = [];
                 for (let value = context.peekChild(child.indent); value !== undefined; value = context.peekChild(child.indent)) {
                     context.reader.takeSignificant();
+                    if (isReactionIdentityLine(value)) {
+                        misplacedReactionIdentity(context, value);
+                        continue;
+                    }
                     if (refusalPrefix.test(value.content)) {
                         const refusal = parseRefusal(context, value);
                         if (refusal !== undefined) onRefused.push(refusal);
@@ -139,6 +155,7 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
             context.error(DiagnosticCodes.InvalidRefusalBranch, "A refusal branch belongs inside 'invokes <Command>'.", locationOf(child));
             context.skipBlock(child.indent);
         } else if (keyword === 'reads' || keyword === 'file' || child.content === 'csharp' || child.content.startsWith('```')) {
+            implementation ||= keyword === 'file' || child.content === 'csharp' || child.content.startsWith('```');
             const read = captureReads(child);
             if (read !== undefined) reads.push(read);
             if (optionalReads.test(child.content)) {
@@ -155,7 +172,7 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
         }
     }
     const syntax: ReactionTriggerSyntax = { kind: 'ReactionTriggerSyntax', source, description, produces, invokes, location: locationOf(line) };
-    dependencySources.set(syntax, { reads, data });
+    dependencySources.set(syntax, { reads, data, implementation });
     return syntax;
 }
 
@@ -171,7 +188,10 @@ function parseRefusal(context: ParserContext, line: SourceLine): InvocationRefus
     let reported = false;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
-        if (child.content === 'acknowledge') {
+        if (isReactionIdentityLine(child)) {
+            misplacedReactionIdentity(context, child);
+            reported = true;
+        } else if (child.content === 'acknowledge') {
             if (acknowledge || produces.length > 0 || context.peekChild(child.indent) !== undefined) {
                 context.error(DiagnosticCodes.InvalidRefusalBranchBody, "A refusal branch contains 'acknowledge' alone or one or more 'produces' blocks.", locationOf(child));
                 reported = true;
