@@ -24,6 +24,11 @@ internal sealed class ParserContext(LineReader reader, string? path = null, IScr
     public SourceOptions SourceOptions { get; internal set; } = SourceOptions.Legacy;
 
     /// <summary>
+    /// Gets or sets whether caller paths are checked after the whole application is assembled.
+    /// </summary>
+    internal bool DeferIdentityValidation { get; set; }
+
+    /// <summary>
     /// Gets the <see cref="LineReader"/> providing the source lines.
     /// </summary>
     public LineReader Reader => reader;

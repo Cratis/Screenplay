@@ -2919,4 +2919,74 @@ public static class DiagnosticCodes
     /// A component's package is not declared by any <c>ui profile</c>.
     /// </summary>
     public const string IncompatibleComponentPackage = "PLAY0632";
+
+    /// <summary>
+    /// An identity block has an invalid header.
+    /// </summary>
+    public const string InvalidIdentityDeclaration = "PLAY0633";
+
+    /// <summary>
+    /// A document declares more than one identity block.
+    /// </summary>
+    public const string DuplicateIdentity = "PLAY0634";
+
+    /// <summary>
+    /// An identity detail or its implementation is malformed.
+    /// </summary>
+    public const string InvalidIdentityDetail = "PLAY0635";
+
+    /// <summary>
+    /// An identity detail names an unknown source kind.
+    /// </summary>
+    public const string UnknownIdentitySource = "PLAY0636";
+
+    /// <summary>
+    /// An identity detail has no source.
+    /// </summary>
+    public const string IdentityDetailWithoutSource = "PLAY0637";
+
+    /// <summary>
+    /// A claim or query identity source has a body.
+    /// </summary>
+    public const string IdentitySourceWithBody = "PLAY0638";
+
+    /// <summary>
+    /// Identity detail names are duplicated.
+    /// </summary>
+    public const string DuplicateIdentityDetail = "PLAY0639";
+
+    /// <summary>
+    /// An identity detail redeclares a built-in caller property.
+    /// </summary>
+    public const string BuiltInIdentityDetail = "PLAY0640";
+
+    /// <summary>
+    /// An identity source names an unknown or ambiguous query.
+    /// </summary>
+    public const string UnknownIdentityQuery = "PLAY0641";
+
+    /// <summary>
+    /// An identity source query is not keyed or returns a collection.
+    /// </summary>
+    public const string InvalidIdentityQuery = "PLAY0642";
+
+    /// <summary>
+    /// An identity query source omits its by expression.
+    /// </summary>
+    public const string IdentityQueryWithoutKey = "PLAY0643";
+
+    /// <summary>
+    /// An identity query key depends on something other than token built-ins or literals.
+    /// </summary>
+    public const string InvalidIdentityQueryKey = "PLAY0644";
+
+    /// <summary>
+    /// An identity source query's authorization depends on additional caller details.
+    /// </summary>
+    public const string IdentityQueryAuthorizationDependency = "PLAY0645";
+
+    /// <summary>
+    /// An identity detail's type does not match its query result type or nullability.
+    /// </summary>
+    public const string IdentityQueryTypeMismatch = "PLAY0646";
 }

@@ -30,6 +30,7 @@ internal static partial class ScreenplayParser
     /// <returns>The parsed <see cref="ApplicationSyntax"/>.</returns>
     public static ApplicationSyntax Parse(ParserContext context, IReadOnlyList<SourceLine> lines, PlayPlacement? placement = null)
     {
+        context.DeferIdentityValidation = true;
         WarnOnTabIndentation(context, lines);
         placement ??= PlayPlacement.Document;
         var moduleBody = placement.Scope.Count == 1 ? new ModuleBody(placement.Scope[0]) : null;
@@ -38,6 +39,7 @@ internal static partial class ScreenplayParser
 
         DomainSyntax? domain = null;
         AuthenticationSyntax? authentication = null;
+        IdentitySyntax? identity = null;
         var imports = new List<ImportSyntax>();
         var concepts = new List<ConceptSyntax>();
         var types = new List<TypeSyntax>();
@@ -64,7 +66,7 @@ internal static partial class ScreenplayParser
             switch (LineText.FirstWord(line.Content))
             {
                 case "domain":
-                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || purposes.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null || uiProfiles.Count > 0 || themes.Count > 0 || triggers.Count > 0 || layouts.Count > 0 || systems.Count > 0 || eventSources.Count > 0 || examples.Count > 0);
+                    domain = ParseDomain(context, line, domain, imports.Count > 0 || concepts.Count > 0 || types.Count > 0 || policies.Count > 0 || purposes.Count > 0 || personas.Count > 0 || modules.Count > 0 || seeds.Count > 0 || authentication is not null || identity is not null || uiProfiles.Count > 0 || themes.Count > 0 || triggers.Count > 0 || layouts.Count > 0 || systems.Count > 0 || eventSources.Count > 0 || examples.Count > 0);
                     break;
                 case "import" when FileImportParser.IsFileImport(line.Content):
                     // A top level import belongs to whatever the document's top level is - the application, or the
@@ -134,6 +136,9 @@ internal static partial class ScreenplayParser
                 case "persona":
                     personas.Add(ParsePersona(context, line));
                     break;
+                case "identity":
+                    identity = IdentityParser.Parse(context, line, identity);
+                    break;
                 case "authentication":
                     authentication = AuthenticationParser.Parse(context, line, authentication);
                     break;
@@ -196,6 +201,7 @@ internal static partial class ScreenplayParser
 
         return new(imports, concepts, policies, modules, context.Start, domain, personas, seeds, authentication, types, uiProfiles, themes, triggers, layouts)
         {
+            Identity = identity,
             SourceOptions = context.SourceOptions,
             Purposes = purposes,
             Examples = examples,
@@ -343,7 +349,7 @@ internal static partial class ScreenplayParser
         {
             var hint = _scopeKeywords.Contains(word)
                 ? $" - '{word}' belongs in a module or feature; wrap it in one, or import this file from inside one"
-                : " - expected domain, import, concept, type, policy, persona, authentication, module, seed, trigger, behavior, ui profile, theme or layout";
+                : " - expected domain, import, concept, type, policy, persona, authentication, identity, module, seed, trigger, behavior, ui profile, theme or layout";
             context.Error(DiagnosticCodes.UnknownTopLevelConstruct, $"Unexpected '{word}' at the top level{hint}", line.Location);
         }
 

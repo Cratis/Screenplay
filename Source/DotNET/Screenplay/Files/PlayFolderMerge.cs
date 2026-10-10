@@ -70,6 +70,7 @@ internal static partial class PlayFolderMerge
             // A behavior is declared at the top level, so it merges and is name-checked across the folder the
             // same way a layout or a theme is. Without this a 'uses' in one file cannot see a behavior declared
             // in another - and the folder is one application.
+            Identity = OnlyOne(applications.Select(application => application.Identity), identity => identity.Location, "identity block", context),
             SourceOptions = SourceNumericModes.Consensus(applications, context.Add),
             Examples = [.. applications.SelectMany(application => application.Examples)],
             Systems = [.. applications.SelectMany(application => application.Systems)],

@@ -45,6 +45,15 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     }
 
     /// <inheritdoc/>
+    public override void VisitIdentity(IdentitySyntax syntax)
+    {
+        Declare("Identity", "identity", syntax, syntax.Description, new { syntaxOnly = true, authoringMetadata = true });
+        _scope.Add("identity");
+        base.VisitIdentity(syntax);
+        _scope.RemoveAt(_scope.Count - 1);
+    }
+
+    /// <inheritdoc/>
     public override void VisitEventSource(EventSourceSyntax syntax)
     {
         _ownership.VisitEventSource(syntax);
@@ -122,6 +131,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
             case TypeSyntax value: Declare("Type", value.Name, value); break;
             case PolicySyntax value: Declare("Policy", value.Name, value, value.Description); break;
             case PersonaSyntax value: Declare("Persona", value.Name, value); break;
+            case IdentityDetailSyntax value: Declare("IdentityDetail", value.Name, value, details: new { value.Type, value.Source, syntaxOnly = true, authoringMetadata = true }); break;
             case LayoutSyntax value: Declare("Layout", value.Name, value); break;
             case ScreenTemplateSyntax value: Declare("ScreenTemplate", value.Name, value); break;
             case DialogTemplateSyntax value: Declare("DialogTemplate", value.Name, value); break;
