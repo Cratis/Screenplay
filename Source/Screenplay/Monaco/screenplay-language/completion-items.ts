@@ -5,6 +5,7 @@ import { documentationItem } from './documentation-item';
 import { purposeReferenceItem } from './purpose-items';
 
 import { eventContextPaths } from './event-context';
+import { identityProperties } from './language';
 import { exampleDeclarationItems } from './example-declaration-items';
 
 export const optionalTypeItems: CompletionEntry[] = [
@@ -372,6 +373,11 @@ export const tableItems: CompletionEntry[] = [
 ];
 
 export const contextVariableItems: CompletionEntry[] = [
+    ...identityProperties.map(property => ({
+        label: `$identity.${property}${property === 'claims' ? '.' : ''}`,
+        insertText: `$identity.${property}${property === 'claims' ? '.${1:name}' : ''}`,
+        documentation: `The caller's ${property}, equivalent to $context.identity.${property}.`,
+    })),
     { label: '$context.occurred', insertText: '$context.occurred', documentation: 'When the command or query was received.' },
     { label: '$context.tenant', insertText: '$context.tenant', documentation: 'The tenant the command or query is executing for.' },
     { label: '$context.command.', insertText: '$context.command.${1:property}', documentation: 'A property of the command being handled.' },

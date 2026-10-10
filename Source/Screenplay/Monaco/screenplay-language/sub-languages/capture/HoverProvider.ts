@@ -31,7 +31,7 @@ export class HoverProvider implements languages.HoverProvider {
 
     private getTokenAtPosition(model: editor.ITextModel, position: Position): { word: string; range: IRange } | null {
         const lineContent = model.getLineContent(position.lineNumber);
-        const tokens = [...lineContent.matchAll(/\$context|\$previous|\$env|[a-zA-Z_][\w-]*/g)];
+        const tokens = [...lineContent.matchAll(/\$context|\$identity|\$previous|\$env|[a-zA-Z_][\w-]*/g)];
         const column = position.column - 1;
 
         for (const token of tokens) {
@@ -91,6 +91,7 @@ export class HoverProvider implements languages.HoverProvider {
     private getExpressionInfo(word: string): string | null {
         const expressions: Record<string, string> = {
             '$context': '**$context**\n\nCapture execution context.\n\n**Properties:**\n- `occurred` - When the current event should be considered to have occurred\n- `eventSourceId` - The resolved event source identifier',
+            '$identity': '**$identity**\n\nThe caller, equivalent to `$context.identity`. Properties: `id`, `name`, `userName`, `isAuthenticated`, `roles`, `claims`. Caller mappings are not portable capture inputs (PLAY0268).',
             '$previous': '**$previous**\n\nThe previous state for the captured item. Use dot notation such as `$previous.status`.',
             '$env': '**$env**\n\nEnvironment variables. Use dot notation such as `$env.API_TOKEN`.',
         };

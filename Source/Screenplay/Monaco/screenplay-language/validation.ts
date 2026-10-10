@@ -319,6 +319,17 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
         const uniqueProperty = trimmed.match(/^unique\s+[a-z_]\w*\s+on\s+([A-Z]\w*)/);
         if (uniqueProperty) checkEvent(index, line, uniqueProperty[1]);
 
+        // Every $identity. path must name a member of the caller; anything after 'claims.' is a claim name.
+        // A bare $identity is left to the compilers, which see it only where an expression is expected.
+        for (const path of line.match(/\$identity\.[\w.]+/g) ?? []) {
+            const member = path.substring('$identity.'.length).split('.')[0];
+            if (!identityProperties.includes(member)) {
+                issues.push(tokenIssue('warning', index, line, path,
+                    `Unknown $identity property '${member}' — expected ${identityProperties.join(', ')}.`,
+                    diagnosticCodes.unknownContextIdentityProperty));
+            }
+        }
+
         // Every $context. path must name something CommandContext or QueryContext carries.
         for (const path of line.match(/\$context\.[\w.]+/g) ?? []) {
             const segments = path.substring('$context.'.length).split('.');

@@ -408,7 +408,7 @@
                     "name": "entity.other.attribute-name.screenplay"
                 },
                 {
-                    "match": "\\$(?:context|eventContext|eventSourceId|causedBy|refusal)(?:\\.\\w+)*|\\$(?:env|secrets|strings)\\.[\\w.]+|\\$\\.[\\w.]*",
+                    "match": "\\$(?:context|identity|eventContext|eventSourceId|causedBy|refusal)(?:\\.\\w+)*|\\$(?:env|secrets|strings)\\.[\\w.]+|\\$\\.[\\w.]*",
                     "name": "variable.language.screenplay"
                 },
                 {
