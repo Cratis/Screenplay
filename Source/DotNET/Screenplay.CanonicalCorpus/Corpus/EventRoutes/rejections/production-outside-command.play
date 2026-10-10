@@ -1,0 +1,12 @@
+eventsource Account
+  identifier String
+  stream All
+module M
+  feature F
+    slice Automation S
+      event Recorded
+      event Followed
+      reaction Follow
+        when Recorded
+          produces Followed
+            stream Account.All

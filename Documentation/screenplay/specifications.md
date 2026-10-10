@@ -346,6 +346,8 @@ slice StateChange RegisterInvoice
     then error "An invoice must have at least one line"
 ```
 
+A then-event route assertion uses the producing event's effective route. A production override replaces the whole command route, including its stream id. Omitting a then route leaves routing unasserted. See [Production routes](event-sources.md#production-route-overrides).
+
 ## Read model state
 
 When a scenario is really about derived state rather than events, `given readmodel` seeds the read model directly and `then readmodel` asserts what it should look like afterwards:
@@ -365,7 +367,7 @@ When a scenario is really about derived state rather than events, `given readmod
       status = "sent"
 ```
 
-`given readmodel` seeds a complete instance and must include the identifier property. `then readmodel` also must include the identifier to select the instance, but asserts only its stated properties. The identifier is inferred from the read model's keyed query (see [Read models](readmodels.md)); omitting it produces `PLAY0351` at that block. Additional properties in actual state do not fail a subset assertion. A missing asserted property is different from a present property with a `null` value.
+`given readmodel` seeds a complete instance and must include the identifier property. `then readmodel` also must include the identifier to select the instance, but asserts only its stated properties. Explicit `key` properties replace inference. Without them, the identifier is inferred from the read model's keyed query or one unambiguous `*Id` property (see [Read models](readmodels.md#keys)). Fixtures for a composite key state every key property; omitting any part produces `PLAY0351`. A composite absence assertion uses an object with every named part. Composite views and their fixtures remain unadmitted and report `PLAY0268` citing #599. Additional properties in actual state do not fail a subset assertion. A missing asserted property is different from a present property with a `null` value.
 
 A projection can remove one instance while another remains. For example, with `InvoiceView` keyed by `invoiceId` through a query `InvoiceById => InvoiceView optional` whose body declares `by invoiceId InvoiceId`, and a projection declaring `remove with InvoiceRemoved key invoiceId`:
 

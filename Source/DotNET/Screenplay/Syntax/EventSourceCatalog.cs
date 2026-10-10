@@ -36,6 +36,22 @@ public sealed class EventSourceCatalog(ApplicationSyntax application)
     readonly HashSet<string> _otherNames = application.Concepts.Select(concept => concept.Name)
         .Concat((application.Types ?? []).Select(type => type.Name)).ToHashSet(StringComparer.Ordinal);
 
+    /// <summary>Resolves one exact source without choosing a stream.</summary>
+    /// <param name="source">The application-owned source name.</param>
+    /// <returns>The state and all physical source candidates.</returns>
+    public EventSourceResolution Resolve(string source)
+    {
+        var parents = _sources[source].ToArray();
+        var kind = parents.Length switch
+        {
+            0 => _otherNames.Contains(source) ? EventSourceResolutionKind.WrongKind : EventSourceResolutionKind.NotFound,
+            1 => EventSourceResolutionKind.Unique,
+            _ => EventSourceResolutionKind.Ambiguous
+        };
+
+        return new(kind, parents, []);
+    }
+
     /// <summary>Resolves an exact source and its exact local stream name.</summary>
     /// <param name="source">The application-owned source name.</param>
     /// <param name="stream">The source-local stream name.</param>

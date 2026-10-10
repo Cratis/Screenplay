@@ -1,9 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, Diagnostic, EventSourceReadConfidence, FeatureSyntax, OperationSyntax, parseForAuthoring, parsePlacedDocuments, SpecificationSyntax } from '@cratis/screenplay-compiler';
+import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, dependencySourcesOf, Diagnostic, EventSourceReadConfidence, FeatureSyntax, OperationSyntax, parseForAuthoring, parsePlacedDocuments, SpecificationSyntax } from '@cratis/screenplay-compiler';
 import { fenceMap, indentOf, withoutComment } from './document-context';
-import { AuthoredSpecificationEvent } from './AuthoredSpecificationEvent';
 import { ResponseAnalysis } from './ResponseAnalysis';
 import { ExampleAnalysis } from './ExampleAnalysis';
 import { exampleAnalysis } from './example-analysis';
@@ -11,6 +10,7 @@ import { personaAnalysis } from './persona-analysis';
 import { dependencyTargetAnalysis } from './dependency-target-analysis';
 import { EventSourceAnalysis } from './EventSourceAnalysis';
 import { AuthoredCommandRoute } from './AuthoredCommandRoute';
+import { AuthoredReadModelKeys } from './AuthoredReadModelKeys';
 import { AuthoringDocument } from './AuthoringDocument';
 import { OperationAnalysis, OperationDeclaration, OperationReference } from './OperationAnalysis';
 
@@ -53,7 +53,7 @@ function authoringSource(lines: string[], headers: readonly string[]) {
     return { source, locations };
 }
 
-function analyze(lines: string[], otherSources: readonly (string | AuthoringDocument)[], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis; readonly examples: ExampleAnalysis; readonly personas: ReturnType<typeof personaAnalysis>; readonly dependencies: ReturnType<typeof dependencyTargetAnalysis> } {
+function analyze(lines: string[], otherSources: readonly (string | AuthoringDocument)[], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis; readonly readModels: readonly AuthoredReadModelKeys[]; readonly examples: ExampleAnalysis; readonly personas: ReturnType<typeof personaAnalysis>; readonly dependencies: ReturnType<typeof dependencyTargetAnalysis> } {
     const others = otherSources.map((document, index) => typeof document === 'string' ? { path: `other-${index}.play`, source: document } : document).filter(document => document.path !== path);
     const documents: AuthoringDocument[] = [{ path, source: lines.join('\n'), placement, isPlacementResolved }, ...others];
     // Modules/features merge, but slices are real declarations: equal slice names discard later
@@ -121,6 +121,7 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
         return diagnostic.location.line > 0 ? [diagnostic] : [];
     });
     const productions = new AuthoringProductionResolver(parsed.value);
+    for (const { slice } of productions.slices) for (const reducer of dependencySourcesOf(slice).reducers ?? []) walk(reducer);
     const operationProductionLines = new Set(productions.slices.flatMap(({ slice }) => [...slice.commands.flatMap(command => command.produces), ...slice.reactions.flatMap(reaction => reaction.triggers).flatMap(trigger => trigger.produces)]
         .filter(production => production.location.path === path && !productions.isEventProduction(production, slice))
         .map(production => production.location.line - 1)));
@@ -213,7 +214,7 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
     const targets = sourceDeclarations.flatMap(source => {
         return source.streams.filter(stream => resolve(source.name, stream.name).state === 'unique' && !importedTypeReferences.has(`${source.name}.${stream.name}`)).map(stream => ({ name: `${source.name}.${stream.name}`, source, stream }));
     });
-    const sourceContexts = new Map<number, { command?: CommandSyntax; event?: AuthoredSpecificationEvent; expectation?: boolean; route?: AuthoredCommandRoute; source?: typeof sourceDeclarations[number]; stream?: typeof sourceDeclarations[number]['streams'][number] }>();
+    const sourceContexts = new Map<number, EventSourceAnalysis['contexts'] extends ReadonlyMap<number, infer Context> ? Context : never>();
     const routes: AuthoredCommandRoute[] = [];
     for (const command of commands.values()) {
         for (const line of range(command.location.line - 1)) sourceContexts.set(line, { command });
@@ -223,6 +224,24 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
         if (command.stream) {
             routes.push(command.stream);
             for (const line of range(command.stream.location.line - 1)) sourceContexts.set(line, { command, route: command.stream });
+        }
+    }
+    const commandSlices = new Map(productions.slices.flatMap(({ slice }) => slice.commands.map(command => [command, slice] as const)));
+    for (const command of commands.values()) {
+        const slice = commandSlices.get(command);
+        if (!slice) continue;
+        for (const production of command.produces) {
+            if (!productions.isEventProduction(production, slice)) continue;
+            for (const line of range(production.location.line - 1)) sourceContexts.set(line, { command, production: true });
+            if (production.stream) {
+                routes.push(production.stream);
+                for (const line of range(production.stream.location.line - 1)) sourceContexts.set(line, { command, production: true, route: production.stream });
+            }
+        }
+    }
+    for (const { slice } of productions.slices) {
+        for (const observer of [...slice.reactions, ...dependencySourcesOf(slice).reducers ?? []].filter(observer => observer.location.path === path && observer.location.line > 0)) {
+            for (const line of range(observer.location.line - 1)) sourceContexts.set(line, { observer });
         }
     }
     const examples = exampleAnalysis(parsed.value, path, lines, range, syntheticScopes, parsed.diagnostics);
@@ -267,10 +286,10 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
         },
     };
     const identityDetails = (parsed.value.identity?.details ?? []).map(detail => ({ name: detail.name, type: `${detail.type.name}${detail.type.isCollection ? '[]' : ''}${detail.type.isOptional ? ' optional' : ''}`, line: detail.location.line - 1 }));
-    return { identityDetails, commands, specifications, diagnostics, operationProductionLines, operations, eventSources, examples, personas: personaAnalysis(parsed.value, lines), dependencies };
+    return { identityDetails, commands, specifications, diagnostics, operationProductionLines, operations, eventSources, readModels: productions.slices.flatMap(({ slice, scope }) => (slice.readModels ?? []).map(model => ({ model, scope: scope.filter(segment => !syntheticScopes.has(segment)) }))), examples, personas: personaAnalysis(parsed.value, lines), dependencies };
 }
 
-export function responseAnalysis(lines: string[], otherSources: readonly (string | AuthoringDocument)[] = [], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis; readonly examples: ExampleAnalysis; readonly personas: ReturnType<typeof personaAnalysis>; readonly dependencies: ReturnType<typeof dependencyTargetAnalysis> } {
+export function responseAnalysis(lines: string[], otherSources: readonly (string | AuthoringDocument)[] = [], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis; readonly readModels: readonly AuthoredReadModelKeys[]; readonly examples: ExampleAnalysis; readonly personas: ReturnType<typeof personaAnalysis>; readonly dependencies: ReturnType<typeof dependencyTargetAnalysis> } {
     const key = JSON.stringify([lines, otherSources, placement, path, isPlacementResolved]);
     let analysis = revisions.get(key);
     if (analysis === undefined) {

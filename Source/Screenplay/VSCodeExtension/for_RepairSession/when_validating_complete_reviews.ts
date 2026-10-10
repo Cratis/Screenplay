@@ -96,6 +96,31 @@ it('consumes all split byte pages before issuing a token, including absent-befor
     expect(calls.filter(name => name === 'propose-repair')).toHaveLength(1);
     expect(calls.filter(name => name === 'apply')).toHaveLength(1);
 });
+it.each(['PLAY0661', 'PLAY0664'])('previews and applies %s without unsupported attachment-evidence pins', async code => {
+    const original = vi.mocked(RepairClient.prototype.tool).getMockImplementation()!;
+    vi.mocked(RepairClient.prototype.tool).mockImplementation(async (...args) => {
+        const [name, parameters] = args;
+        if (name === 'propose-repair' || name === 'apply') {
+            expect(parameters).not.toHaveProperty('expectedRepairEvidenceRevision');
+            expect(parameters).not.toHaveProperty('pinRepairEvidence');
+        }
+        const result = await original(...args);
+        if (name === 'read-workspace' && parameters.view === 'repairs') return { ...result, page: page([{ ...descriptor, diagnosticCode: code }], parameters, 'base') };
+        if (name === 'read-workspace' && parameters.view === 'diagnostics') return { ...result, page: page([{ ...issue, code }], parameters, 'base') };
+        if (name === 'propose-repair' || name === 'read-proposal') {
+            const { repairEvidence: _pins, ...unpinned } = result;
+            return unpinned;
+        }
+        return result;
+    });
+    const choice = (await session.discover()).choices[0];
+    expect(choice.code).toBe(code);
+    const preview = await session.preview(choice.token);
+    expect(preview.files[0]).toMatchObject({ before, after });
+    await session.apply(preview.token);
+    expect(applied).toBe(true);
+});
+
 for (const failure of ['truncated', 'nonprogress', 'wrongByteRevision', 'identityHash', 'oversize', 'oversizeMetadata', 'invalidUtf8']) it(`refuses ${failure} reviews and never supplies Apply authority`, async () => {
     const choices = (await session.discover()).choices; malformed = failure;
     await expect(session.preview(choices[0].token)).rejects.toBeInstanceOf(RepairFailure);

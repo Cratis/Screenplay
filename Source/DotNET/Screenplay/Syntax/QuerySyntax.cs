@@ -51,6 +51,11 @@ public record QuerySyntax(
     /// an init property is neither, and is how this record should grow from here.
     /// </remarks>
     public string? Scope { get; init; }
+
+    /// <summary>
+    /// Gets the named composite lookup parameters, mutually exclusive with <see cref="By"/>.
+    /// </summary>
+    public IEnumerable<QueryParameterSyntax> ByParts { get; init; } = [];
 }
 
 /// <summary>

@@ -34,6 +34,7 @@ public static partial class SemanticModelCanonicalJson
             WriteStringArray(writer, "roles", identity.Roles);
             writer.WriteEndObject();
         }
+        if (reaction.From is not null) WriteObserverFilter(writer, reaction.From);
         writer.WriteEndObject();
     }
 

@@ -118,6 +118,8 @@ function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJ
             if (value.kind === 'ApplicationSyntax' && member === 'identity' && memberValue == null) continue;
             if ((value.kind === 'EventSyntax' || value.kind === 'ImportSyntax') && ((member === 'visibility' && memberValue === 'Private') || (member === 'origin' && memberValue == null))) continue;
             if (value.kind === 'SliceSyntax' && member === 'direction' && memberValue == null) continue;
+            if ((value.kind === 'ReactionSyntax' || value.kind === 'ReducerSyntax') && member === 'from' && memberValue == null) continue;
+            if (value.kind === 'ProducesSyntax' && member === 'stream' && memberValue == null) continue;
             if (value.kind === 'ConceptAttributeSyntax' && (member === 'scope' || member === 'specialCategory') && memberValue == null) continue;
             if (value.kind === 'ConceptAttributeSyntax' && member === 'criminal' && memberValue === false) continue;
             if (value.kind === 'PropertySyntax' && member === 'isSubject' && memberValue === false) continue;

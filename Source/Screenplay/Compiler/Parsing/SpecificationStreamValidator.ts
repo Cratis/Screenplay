@@ -6,7 +6,7 @@ import { AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolv
 import { CommandSyntax } from '../Syntax/Commands';
 import { EventSyntax, TypeRefSyntax } from '../Syntax/Declarations';
 import { EventSourceCatalog } from '../Syntax/EventSourceCatalog';
-import { EventSourceResolutionKind } from '../Syntax/EventSources';
+import { CommandStreamSyntax, EventSourceResolutionKind } from '../Syntax/EventSources';
 import { formatSpecificationStreamId } from './SpecificationRouteComparison';
 import { streamIdFailureMessage } from '../Syntax/StreamIdFormatter';
 import { ExpressionSyntax } from '../Syntax/Expressions';
@@ -21,7 +21,7 @@ import { compatibleValue, uniqueByName } from './ResponseValidator';
 import { expandEffectiveSpecificationExamples, specificationExamples } from './SpecificationCommandExamples';
 import { SpecificationEventSyntax } from '../Syntax/Specifications';
 
-interface Producer { event: EventSyntax; command: CommandSyntax | null; type: TypeRefSyntax | null }
+interface Producer { event: EventSyntax; command: CommandSyntax | null; type: TypeRefSyntax | null; route?: CommandStreamSyntax | null }
 
 export function validateSpecificationStreams(application: ApplicationSyntax, context: ParserContext): void {
     const rows = new AuthoringProductionResolver(application).slices.flatMap(({ slice }) => slice.specifications.flatMap(specification => specification.cases ?? []));
@@ -80,7 +80,7 @@ function validateRoutes(application: ApplicationSyntax, context: ParserContext):
             const event = eventOf(produced.event, slice);
             if (event === null) continue;
             const type = commandDestinationType(command, produced, application, { resolver, slice });
-            producers.push({ event, command, type });
+            producers.push({ event, command, type, route: produced.stream ?? command.stream });
         }
         for (const produced of slice.reactions.flatMap(reaction => reaction.triggers).flatMap(trigger => trigger.produces)) {
             const event = eventOf(produced.event, slice);
@@ -174,28 +174,31 @@ function validateRoutes(application: ApplicationSyntax, context: ParserContext):
                     contextualError(DiagnosticCodes.InvalidSpecificationStreamEventSource, "A routed event's for value must be a concrete literal compatible with the source's identifier type.", node.for.location);
             }
             if (!expected || command === null || eventProducers.length === 0 || eventProducers.some(producer => producer.command !== command)) continue;
-            const commandRoute = command.stream?.propertyCandidate === null ? command.stream : null;
-            let contradicts = node.noStream != null ? commandRoute != null : commandRoute == null || commandRoute.eventSource !== node.stream!.eventSource || commandRoute.stream !== node.stream!.stream;
-            if (!contradicts && node.stream != null && commandRoute != null) {
-                const resolution = catalog.resolve(node.stream.eventSource, node.stream.stream);
-                const stream = resolution.kind === EventSourceResolutionKind.Unique ? resolution.streams[0] : null;
-                if (stream !== null && stream.streamIdParts.length > 0) {
-                    if (commandRoute.streamId === null && node.stream.streamId === null && commandRoute.streamIdParts.length > 0 && node.stream.streamIdParts.length > 0) {
-                        for (const part of stream.streamIdParts) {
-                            const actual = commandRoute.streamIdParts.filter(mapping => mapping.property === part.name);
-                            const expected = node.stream.streamIdParts.filter(mapping => mapping.property === part.name);
-                            if (actual.length !== 1 || expected.length !== 1) continue;
-                            const actualId = formatStreamId(actual[0].source, part.type);
-                            const expectedId = formatStreamId(expected[0].source, part.type);
-                            if (actualId !== null && expectedId !== null && actualId !== expectedId) contradicts = true;
+            let contradicts = eventProducers.every(producer => {
+                const commandRoute = producer.route?.propertyCandidate === null ? producer.route : null;
+                let differs = node.noStream != null ? commandRoute != null : commandRoute == null || commandRoute.eventSource !== node.stream!.eventSource || commandRoute.stream !== node.stream!.stream;
+                if (!differs && node.stream != null && commandRoute != null) {
+                    const resolution = catalog.resolve(node.stream.eventSource, node.stream.stream);
+                    const stream = resolution.kind === EventSourceResolutionKind.Unique ? resolution.streams[0] : null;
+                    if (stream !== null && stream.streamIdParts.length > 0) {
+                        if (commandRoute.streamId === null && node.stream.streamId === null && commandRoute.streamIdParts.length > 0 && node.stream.streamIdParts.length > 0) {
+                            for (const part of stream.streamIdParts) {
+                                const actual = commandRoute.streamIdParts.filter(mapping => mapping.property === part.name);
+                                const expected = node.stream.streamIdParts.filter(mapping => mapping.property === part.name);
+                                if (actual.length !== 1 || expected.length !== 1) continue;
+                                const actualId = formatStreamId(actual[0].source, part.type);
+                                const expectedId = formatStreamId(expected[0].source, part.type);
+                                if (actualId !== null && expectedId !== null && actualId !== expectedId) differs = true;
+                            }
                         }
+                    } else if (stream?.streamId != null && commandRoute.streamIdParts.length === 0 && node.stream.streamIdParts.length === 0) {
+                        const actualId = formatStreamId(commandRoute.streamId?.source, stream.streamId);
+                        const expectedId = formatStreamId(node.stream.streamId?.source, stream.streamId);
+                        if (actualId !== null && expectedId !== null && actualId !== expectedId) differs = true;
                     }
-                } else if (stream?.streamId != null && commandRoute.streamIdParts.length === 0 && node.stream.streamIdParts.length === 0) {
-                    const actualId = formatStreamId(commandRoute.streamId?.source, stream.streamId);
-                    const expectedId = formatStreamId(node.stream.streamId?.source, stream.streamId);
-                    if (actualId !== null && expectedId !== null && actualId !== expectedId) contradicts = true;
                 }
-            }
+                return differs;
+            });
             if (node.for?.kind === 'LiteralExpressionSyntax' && eventProducers.every(producer => producer.type !== null &&
                 (identifier !== null ? nominallyCompatible(producer.type, identifier) === false : !compatible(node.for!, producer.type)))) contradicts = true;
             if (contradicts) contextualError(DiagnosticCodes.SpecificationStreamContradictsCommand, 'The expected event route contradicts its only producer, the command under test.', (node.stream ?? node.noStream)!.location);

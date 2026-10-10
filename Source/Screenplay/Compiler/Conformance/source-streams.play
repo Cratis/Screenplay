@@ -1,4 +1,4 @@
-// Authoring-only conformance fixture. Event sources and streams are not executable ESM contracts.
+// Source and stream routes, including ESM v10 production overrides and observer filters.
 concept AccountId : Uuid
 concept Month : String
 concept Partition : Int
@@ -42,6 +42,9 @@ module Banking
           streamId = month
         produces event Deposited
           amount Decimal = amount
+        produces event DepositNoted
+          stream Account.Onboarding
+          amount Decimal = amount
       command Book
         accountId AccountId identifier
         month Month
@@ -84,3 +87,17 @@ module Banking
         from String
         @stream Account.Transactions optional
         @stream Account.ThreeParts optional
+    slice Automation Alerts
+      reaction Alert
+        from Account.Transactions
+        when Deposited
+          amount
+      reaction SourceAlert
+        from Account
+        when Booked
+      reducer Alerts => AlertView
+        from Account.PeriodLedger
+        on Booked
+          file Reducers/Alerts.cs
+      readmodel AlertView
+        accountId AccountId

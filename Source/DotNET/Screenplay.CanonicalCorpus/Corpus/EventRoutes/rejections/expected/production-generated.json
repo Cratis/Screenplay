@@ -1,0 +1,1 @@
+[{"Code":"PLAY0273","Message":"Stream id mapping \u0027period\u0027 on command \u0027Record\u0027 must read a direct, required, non-collection, non-generated property of the declared stream id type; routing occurs before generation."}]

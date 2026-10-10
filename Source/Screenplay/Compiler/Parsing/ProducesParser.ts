@@ -2,6 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { CommandStreamSyntax } from '../Syntax/CommandStreamSyntax';
+import { sourceStreamPattern } from '../Text/SourceStreamNames';
+import { parseCommandStream } from './EventSourceParser';
 import { ConditionSyntax } from '../Syntax/Conditions';
 import { parseCondition } from './ConditionParser';
 import { PropertySyntax, TagSyntax } from '../Syntax/Declarations';
@@ -81,6 +84,7 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
     const tags: TagSyntax[] = [];
     const metadata = new EventMetadataParser(name);
     let target: ExpressionSyntax | null = null;
+    let stream: CommandStreamSyntax | null = null;
     for (let line = context.peekChild(parent.indent); line !== undefined; line = context.peekChild(parent.indent)) {
         context.reader.takeSignificant();
         const keyword = firstWord(line.content);
@@ -94,6 +98,24 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
             context.error(keyword === 'generation' ? DiagnosticCodes.InlineEventGeneration : DiagnosticCodes.ReservedProductionMetadata,
                 keyword === 'generation' ? 'Inline events are generation 1 - extract the event before declaring generations' : 'An inline event is local to its command and cannot declare origin', location);
             context.skipOpaqueBlock(line.indent);
+            continue;
+        }
+        if (keyword === 'stream' && !line.content.includes('=')) {
+            const route = sourceStreamPattern('^stream\\s+([A-Za-z_]\\w*\\.[A-Za-z_]\\w*)$').exec(line.content);
+            if (!inCommand) {
+                context.error(DiagnosticCodes.ProductionRouteOutsideCommand, 'Only command event productions can declare a stream route.', location);
+                context.skipBlock(line.indent);
+            } else if (stream !== null) {
+                context.error(DiagnosticCodes.InvalidCommandStream, 'A production can declare at most one stream route.', location);
+                context.skipBlock(line.indent);
+            } else if (route === null) {
+                context.error(DiagnosticCodes.InvalidCommandStream, "Expected 'stream <Source>.<Stream>'.", location);
+                context.skipBlock(line.indent);
+            } else {
+                const typeLocation = { ...location, column: line.indent + line.content.indexOf(route[1]) + 1 };
+                const candidate: PropertySyntax = { kind: 'PropertySyntax', name: 'stream', type: { kind: 'TypeRefSyntax', name: route[1], isCollection: false, isOptional: false, location: typeLocation }, isIdentifier: false, location };
+                stream = parseCommandStream(context, line, candidate, false);
+            }
             continue;
         }
         if (keyword === 'tag') {
@@ -132,7 +154,7 @@ export function parseProduces(context: ParserContext, header: SourceLine, inComm
     }
     if (parent !== header) context.skipBlock(header.indent);
     return {
-        kind: 'ProducesSyntax', when, event: name, targetLocation: { ...locationOf(parent), column: targetColumn }, inlineOperation: null, mappings, for: target, tags: inline === null ? tags : [], location: locationOf(header),
+        kind: 'ProducesSyntax', when, event: name, stream, targetLocation: { ...locationOf(parent), column: targetColumn }, inlineOperation: null, mappings, for: target, tags: inline === null ? tags : [], location: locationOf(header),
         inlineEvent: inline === null ? null : { kind: 'EventSyntax', name, properties, tags, generation: 1, hasGenerationMarker: false, ...metadata.value, location: locationOf(header) },
     };
 }

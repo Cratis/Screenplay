@@ -8,6 +8,8 @@ import { SyntaxNode } from './SyntaxNode';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { OperationSyntax } from './Operations';
 import { InvocationRefusalSyntax } from './InvocationRefusalSyntax';
+import { CommandStreamSyntax } from './CommandStreamSyntax';
+import { ObserverFilterSyntax } from './ObserverFilterSyntax';
 import { ReactionIdentitySyntax } from './ReactionIdentitySyntax';
 
 // 'when <Name>' - an event, a declared trigger, or one a consumer registered.
@@ -47,6 +49,7 @@ export interface ProducesSyntax extends SyntaxNode {
     // Parser-owned identifier span, separate from a conditional production's header.
     readonly targetLocation?: SourceLocation;
     readonly inlineEvent: EventSyntax | null;
+    readonly stream?: CommandStreamSyntax | null;
     readonly inlineOperation?: OperationSyntax | null;
     readonly for: ExpressionSyntax | null;
     readonly mappings: readonly PropertyMappingSyntax[];
@@ -74,6 +77,7 @@ export interface ReactionTriggerSyntax extends SyntaxNode {
 export interface ReactionSyntax extends SyntaxNode {
     readonly kind: 'ReactionSyntax';
     readonly documentation?: string | null;
+    readonly from?: ObserverFilterSyntax | null;
     readonly runsAs?: ReactionIdentitySyntax | null;
     readonly name: string;
     readonly where?: ConditionSyntax | null;

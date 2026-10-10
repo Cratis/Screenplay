@@ -245,6 +245,7 @@ internal static partial class CommandParser
     static void AddProperty(ParserContext context, List<PropertySyntax> properties, PropertySyntax property, string commandName, SourceLine line)
     {
         PropertyLineParser.ReportLegacyOptionalSuffix(context, property.Type, line);
+        property = PropertyLineParser.WithoutKey(context, property);
         if (property.IsIdentifier && properties.Find(existing => existing.IsIdentifier) is { } identifier)
         {
             context.Error(DiagnosticCodes.DuplicateCommandIdentifier, $"Command '{commandName}' already marks '{identifier.Name}' as identifier - only one property can be the identifier", property.Location);

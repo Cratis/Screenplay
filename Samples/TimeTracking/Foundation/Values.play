@@ -29,6 +29,10 @@ concept HourlyRate : Decimal
   validate
     >= 0  message "A rate cannot be negative"
 
+concept ReportingMonth : String
+  validate
+    matches "^[0-9]{4}-(0[1-9]|1[0-2])$" message "Use a year and month, such as 2026-10"
+
 concept TimesheetYear : Int
   validate
     min 2020  message "Time before 2020 is recorded in the old system"

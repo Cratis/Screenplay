@@ -9,8 +9,8 @@ import { ParserContext } from './ParserContext';
 import { unescapeIdentifier } from './LineText';
 import { locationOf, SourceLine } from './SourceLine';
 
-const propertyPattern = pattern('^(@?[a-z_]\\w*)\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)(?:\\s+(generated))?(?:\\s+(identifier))?(?:\\s+(subject))?$');
-const invalidGeneratedModifiers = pattern('^@?[a-z_]\\w*\\s+[\\w.]+(?:\\[\\])?\\??\\s+((?:optional|generated|identifier|subject)(?:\\s+(?:optional|generated|identifier|subject))*)$');
+const propertyPattern = pattern('^(@?[a-z_]\\w*)\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)(?:\\s+(generated))?(?:\\s+(identifier))?(?:\\s+(subject))?(?:\\s+(key))?$');
+const invalidGeneratedModifiers = pattern('^@?[a-z_]\\w*\\s+[\\w.]+(?:\\[\\])?\\??\\s+((?:optional|generated|identifier|subject|key)(?:\\s+(?:optional|generated|identifier|subject|key))*)$');
 const reversedModifiers = pattern('^@?[a-z_]\\w*\\s+[\\w.]+(?:\\[\\])?\\s+identifier\\s+optional(?:\\s*=.*)?$');
 
 // A '<name> <Type>[[]][?] [identifier]' line, or undefined when the line does not have that shape.
@@ -28,6 +28,7 @@ export function tryParseProperty(line: SourceLine): PropertySyntax | undefined {
         nameWasEscaped: match[1].startsWith('@'),
         isIdentifier: match[4] !== undefined,
         ...(match[5] !== undefined ? { isSubject: true } : {}),
+        ...(match[6] !== undefined ? { isKey: true } : {}),
         location,
     };
 }
@@ -51,6 +52,9 @@ export function parseProperty(context: ParserContext, line: SourceLine): Propert
     const property = tryParseProperty(line);
     if (property !== undefined) {
         reportLegacyOptionalSuffix(context, property.type, line);
+        if (property.isKey && (property.type.isOptional || property.type.isCollection || property.isGenerated || property.isIdentifier || property.isSubject)) {
+            context.error(DiagnosticCodes.InvalidReadModelKey, 'A read-model key part must be required, not a collection, and cannot combine key with generated, identifier or subject.', locationOf(line));
+        }
     } else {
         reportInvalidModifierOrder(context, line);
     }
@@ -68,6 +72,11 @@ export function reportLegacyOptionalSuffix(context: ParserContext, type: TypeRef
 }
 
 export function reportInvalidModifierOrder(context: ParserContext, line: SourceLine): boolean {
+    const keyModifiers = invalidGeneratedModifiers.exec(line.content);
+    if (keyModifiers !== null && keyModifiers[1].split(/\s+/).includes('key')) {
+        context.error(DiagnosticCodes.InvalidReadModelKey, "Write 'key' once, without other modifiers: '<name> <Type> key'.", locationOf(line));
+        return true;
+    }
     const subjectModifiers = invalidGeneratedModifiers.exec(line.content);
     if (subjectModifiers !== null && subjectModifiers[1].split(/\s+/).includes('subject')) {
         context.error(DiagnosticCodes.InvalidSubjectModifierOrder, "Write each modifier once in order: '<name> <Type> optional generated identifier subject'.", locationOf(line));

@@ -178,7 +178,7 @@ internal sealed partial class WorkspaceRefactoring(ScreenplayWorkspace workspace
         if (target is null || (target.Address is null && target.Node is not (SpecificationExampleSyntax or EventSourceSyntax or EventStreamSyntax or PersonaSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax or SpecificationSyntax)) ||
             (!compositeProperty && target.Node is not (ConceptSyntax or TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax or QuerySyntax or ModuleSyntax or FeatureSyntax or SliceSyntax or SpecificationExampleSyntax or SpecificationSyntax or ReactionSyntax or EventSourceSyntax or EventStreamSyntax or PersonaSyntax or SpecificationParameterSyntax or SpecificationCaseSyntax)))
         {
-            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property, command, event, read model, query, module, feature, slice, example, specification, reaction, event source, or stream declaration handle.");
+            throw new InvalidWorkspaceAuthoring("The target must be a current concept, type, composite-type property (not a read-model property or key part), command, event, read model, query, module, feature, slice, example, specification, reaction, event source, or stream declaration handle.");
         }
 
         if (WorkspaceReferenceBindings.Name(target.Node) != request.ExpectedName || !Identifier(request.NewName))

@@ -56,10 +56,13 @@ internal static class CommandConsistencyValidator
 
             var queries = declarations.Slices.SelectMany(entry => entry.Slice.Queries
                 .Where(query => declarations.View(query.ReturnType.Name, entry.Scope) == view)).ToList();
-            var parameters = queries.Select(query => query.By).OfType<QueryParameterSyntax>().ToList();
+            var key = declarations.ViewKey(read.ReadModel, scope);
+            List<QueryParameterSyntax> parameters = key.Length == 1 && key[0].IsKey
+                ? [new(key[0].Name, key[0].Type, key[0].Location)]
+                : [.. queries.Select(query => query.By).OfType<QueryParameterSyntax>()];
 
             // No query signature is not evidence of incompatibility: the read may be realized externally.
-            if (queries.Count > 0 && parameters.Count > 0 && parameters.TrueForAll(parameter => declarations.Compatible(property.Type, parameter.Type) == false))
+            if (parameters.Count > 0 && parameters.TrueForAll(parameter => declarations.Compatible(property.Type, parameter.Type) == false))
             {
                 context.Error(
                     DiagnosticCodes.IncompatibleReadsKey,

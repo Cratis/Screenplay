@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { eventDeclarations, CommandSyntax, EventVisibility, QueryParameterSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
+import { dependencySourcesOf, eventDeclarations, CommandSyntax, EventVisibility, QueryParameterSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
 import {
     CommandItemDocument, EventItemDocument, QueryItemDocument, QueryParameterType, ReadModelItemDocument, SliceDocument, SliceStatus, SliceType,
 } from '../Document/EventModelDocument';
@@ -36,7 +36,7 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
         id: scope.id,
         name: slice.name,
         sliceType,
-        description: slice.description ?? '',
+        description: [slice.description ?? '', ...(dependencySourcesOf(slice).reducers ?? []).filter(reducer => reducer.from != null).map(reducer => `Reducer ${reducer.name}: Observes ${reducer.from!.eventSource}${reducer.from!.stream ? `.${reducer.from!.stream}` : ''}`)].filter(Boolean).join('\n'),
         status: SliceStatus.notStarted,
         collapsed: false,
         sortOrder,
@@ -45,7 +45,7 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
         queries: slice.queries.map(query => ({
             id: scope.idOf('query', query.name),
             name: query.name,
-            parameters: [query.by, ...query.filters].filter(parameter => parameter !== null).map(parameter => parameterOf(parameter, owners)),
+            parameters: [query.by, ...query.byParts ?? [], ...query.filters].filter(parameter => parameter !== null).map(parameter => parameterOf(parameter, owners)),
         }) satisfies QueryItemDocument),
         actors: toUserExperience(slice.screens, scope.path, audience),
         specifications: toSpecifications(slice.specifications, scope, owners, command?.id),

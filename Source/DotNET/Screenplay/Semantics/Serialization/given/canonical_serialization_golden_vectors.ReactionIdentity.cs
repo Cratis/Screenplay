@@ -8,7 +8,7 @@ public static partial class canonical_serialization_golden_vectors
 {
     public static byte[] EsmV10Bytes => ReadResource("Cratis.Screenplay.Semantics.Serialization.Golden.full-esm-v10.json");
 
-    public static ExecutableSemanticModel CreateSemanticModelV10()
+    public static ExecutableSemanticModel CreateReactionIdentityModelV10()
     {
         var application = CreateSemanticModelV9().Application;
         var feature = new SemanticFeature(

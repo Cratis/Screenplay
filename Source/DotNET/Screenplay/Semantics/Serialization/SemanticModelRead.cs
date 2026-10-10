@@ -188,6 +188,7 @@ internal static partial class SemanticModelRead
         string? result = null;
         var targetsEvent = false;
         var initialStateRead = false;
+        SemanticObserverFilter? from = null;
         ImmutableArray<SemanticReducerTransition> transitions = default;
         while (NextProperty(ref reader, seen, "reducer") is { } property)
         {
@@ -200,12 +201,13 @@ internal static partial class SemanticModelRead
                 case "initialState": RequiredToken(ref reader, JsonTokenType.Null, property); initialStateRead = true; break;
                 case "result": result = String(ref reader, property); break;
                 case "transitions": transitions = Array(ref reader, ReducerTransition, property); break;
+                case "from" when schemaVersion >= 10: RequiredToken(ref reader, JsonTokenType.StartObject, property); from = ObserverFilter(ref reader); break;
                 default: throw Unknown(property, "reducer");
             }
         }
 
         Required(name is not null && readModel.IsSet && key == "eventSourceId" && initialStateRead && result == "stateOrDelete" && !transitions.IsDefault, "reducer");
-        return new(name!, readModel, transitions) { Target = targetsEvent ? SemanticProjectionTargetKind.Event : SemanticProjectionTargetKind.ReadModel };
+        return new(name!, readModel, transitions) { From = from, Target = targetsEvent ? SemanticProjectionTargetKind.Event : SemanticProjectionTargetKind.ReadModel };
     }
 
     internal static SemanticReducerTransition ReducerTransition(ref Utf8JsonReader reader)
@@ -465,6 +467,7 @@ internal static partial class SemanticModelRead
         SemanticCondition? when = null;
         ImmutableArray<string> tags = [];
         SemanticTypeReference? destinationType = null;
+        SemanticCommandRoute? route = null;
         while (NextProperty(ref reader, seen, "produced event") is { } property)
         {
             switch (property)
@@ -476,12 +479,13 @@ internal static partial class SemanticModelRead
                 case "when": RequiredToken(ref reader, JsonTokenType.StartObject, property); when = Condition(ref reader); break;
                 case "tags": tags = StringArray(ref reader, property); break;
                 case "destinationType" when schemaVersion >= 6 && reaction: RequiredToken(ref reader, JsonTokenType.StartObject, property); destinationType = TypeReference(ref reader); break;
+                case "route" when schemaVersion >= 10 && !reaction: RequiredToken(ref reader, JsonTokenType.StartObject, property); route = CommandRoute(ref reader); break;
                 default: throw Unknown(property, "produced event");
             }
         }
 
         Required(eventContract.IsSet && conditionRead && destinationRead && !mappings.IsDefault, "produced event");
-        return new(eventContract, condition, destination, mappings) { When = when, Tags = tags, DestinationType = destinationType };
+        return new(eventContract, condition, destination, mappings) { When = when, Tags = tags, DestinationType = destinationType, Route = route };
     }
 
     internal static SemanticPropertyMapping Mapping(ref Utf8JsonReader reader)

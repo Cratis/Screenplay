@@ -75,7 +75,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
             var languageVersion = LanguageVersion.V1;
             var semanticVersion = SemanticVersion.V1;
-            if (context.UsesReactionIdentity)
+            if (context.UsesV10 || context.UsesReactionIdentity)
             {
                 languageVersion = LanguageVersion.V10;
                 semanticVersion = SemanticVersion.V10;
@@ -221,6 +221,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
         internal bool UsesPublicEvents { get; set; }
 
+        internal bool UsesV10 { get; set; }
+
         internal ImmutableArray<SemanticSourceMapEntry> SourceMapEntries => [.. _sourceMapEntries];
 
         internal SemanticApplication BindApplication()
@@ -248,7 +250,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 applicationName,
                 concepts,
                 types,
-                UsesV2 || UsesV3 || UsesV4 || UsesV5 || UsesV6 || UsesV7 || UsesPublicEvents || !eventSources.IsEmpty ? [.. modules.Select(PromoteV2Destinations)] : modules)
+                UsesV2 || UsesV3 || UsesV4 || UsesV5 || UsesV6 || UsesV7 || UsesPublicEvents || UsesV10 || !eventSources.IsEmpty ? [.. modules.Select(PromoteV2Destinations)] : modules)
             {
                 Policies = policies,
                 Triggers = triggers,
@@ -278,7 +280,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             {
                 Commands = [.. slice.Commands.Select(command =>
                 {
-                    var source = command.Produces.Select(produced => produced.Destination)
+                    var source = command.Produces.Where(produced => produced.Route is null || (produced.Destination is SemanticResolvedExpression expression && command.Properties.Any(property => property.Id == expression.Target && property.IsIdentifier))).Select(produced => produced.Destination)
                         .OfType<SemanticResolvedExpression>().FirstOrDefault();
                     if (command.Destination is not null || source is null ||
                         (command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) && command.Produces.Any(produced => produced.Destination is null)))

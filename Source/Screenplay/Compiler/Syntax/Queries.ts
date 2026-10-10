@@ -18,6 +18,7 @@ export interface QuerySyntax extends SyntaxNode {
     readonly name: string;
     readonly returnType: TypeRefSyntax;
     readonly by: QueryParameterSyntax | null;
+    readonly byParts?: readonly QueryParameterSyntax[];
     readonly filters: readonly QueryParameterSyntax[];
     readonly description: string | null;
     readonly isObservable: boolean;

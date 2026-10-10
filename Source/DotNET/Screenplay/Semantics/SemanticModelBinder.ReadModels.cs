@@ -35,6 +35,12 @@ public sealed partial class SemanticModelBinder
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Read model '{readModel.Name}' file reference is realization provenance.", readModel.File.Location);
             }
 
+            var explicitKeys = readModel.Properties.Where(property => property.IsKey).Select(property => property.Name).ToArray();
+            if (explicitKeys.Length > 1)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Read model '{readModel.Name}' has a composite key, which is not admitted into the executable model. See https://github.com/Cratis/Screenplay/issues/599.", readModel.Location);
+            }
+
             var identifierNames = owner.Queries
                 .Where(query => ShortName(query.ReturnType.Name) == readModel.Name && query.By is not null && !query.ReturnType.IsCollection)
                 .Select(query => query.By!.Name)
@@ -65,7 +71,9 @@ public sealed partial class SemanticModelBinder
                 identifierNames = identifiersOutsideCollectionKeys.Length == 1 ? identifiersOutsideCollectionKeys : conventionalIdentifiers;
             }
 
-            if (identifierNames.Length != 1)
+            if (explicitKeys.Length > 0) identifierNames = explicitKeys;
+
+            if (identifierNames.Length != 1 && explicitKeys.Length < 2)
             {
                 Error(
                     DiagnosticCodes.UnsupportedSemanticSyntax,
@@ -87,6 +95,12 @@ public sealed partial class SemanticModelBinder
 
         SemanticKeyedQuery? BindQuery(SemanticAddress slice, QuerySyntax query)
         {
+            if (query.ByParts.Any())
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' has a composite by block, which is not admitted into the executable model. See https://github.com/Cratis/Screenplay/issues/599.", query.Location);
+                return null;
+            }
+
             if (query.Description is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Query '{query.Name}' description is authoring metadata.", query.Location);

@@ -96,7 +96,7 @@ public sealed partial class SemanticModelBinder
             var typedDestination = productions.Any(value => value.For is PathExpressionSyntax source &&
                 events.TryGetValue(value.Event, out var @event) && !@event.Properties.ContainsKey(source.Path));
             if (typedDestination) UsesV2 = true;
-            var routed = produced.Select(value => value.Destination).OfType<SemanticResolvedExpression>().FirstOrDefault();
+            var routed = produced.Where(value => value.Route is null).Select(value => value.Destination).OfType<SemanticResolvedExpression>().FirstOrDefault();
             var allocatedProduction = properties.Any(property => property.IsGenerated && property.IsIdentifier) && produced.Any(value => value.Destination is null);
             var defaultDestination = !allocatedProduction && routed is not null && (typedDestination || UsesV2 || UsesV7)
                 ? properties.FirstOrDefault(property => property.IsGenerated && property.IsIdentifier) ??
@@ -204,7 +204,7 @@ public sealed partial class SemanticModelBinder
             var tags = BindTags(produced.Tags);
 
             if (produced.For is PathExpressionSyntax path && commandProperties.TryGetValue(path.Path, out var targetProperty) &&
-                ((!targetProperty.IsIdentifier && !commandProperties.Values.Any(property => property.IsGenerated && property.IsIdentifier)) || targetProperty.Type.IsCollection || targetProperty.Type.IsOptional))
+                ((produced.Stream is null && !targetProperty.IsIdentifier && !commandProperties.Values.Any(property => property.IsGenerated && property.IsIdentifier)) || targetProperty.Type.IsCollection || targetProperty.Type.IsOptional))
             {
                 Error(DiagnosticCodes.InvalidSemanticBinding, $"Produced event destination '{path.Path}' must be the command's required scalar identifier; fan-out to another source is not admitted.", produced.For.Location);
             }
@@ -249,7 +249,14 @@ public sealed partial class SemanticModelBinder
                 }
             }
 
-            return new(@event.Contract.Id, null, destination, mappings.ToImmutable()) { When = when, Tags = tags };
+            var bound = new SemanticProducedEvent(@event.Contract.Id, null, destination, mappings.ToImmutable()) { When = when, Tags = tags };
+            if (produced.Stream is { } route)
+            {
+                UsesV10 = true;
+                bound = bound with { Route = BindRoute(command, route, commandProperties, [bound]) };
+            }
+
+            return bound;
         }
 
         SemanticEventContextExpression? BindOccurrence(ContextExpressionSyntax context, SemanticTypeReference target) =>

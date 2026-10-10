@@ -100,6 +100,9 @@ public static partial class SpecificationExamples
                 case SpecificationAbsentReadModelSyntax absent:
                     var absentModel = _declarations!.Resolve(absent.Name, scope, slice => slice.ReadModels ?? [], item => item.Name)?.Node;
                     var keyed = _slices.SelectMany(owner => owner.Slice.Queries.Where(query => query.By is not null && ReferenceEquals(_declarations.Resolve(query.ReturnType.Name, owner.Scope, slice => slice.ReadModels ?? [], item => item.Name)?.Node, absentModel))).ToArray();
+                    var declaredKey = absentModel?.Properties.Where(property => property.IsKey).ToArray() ?? [];
+                    if (declaredKey.Length == 1) return declaredKey[0].Type;
+                    if (declaredKey.Length > 1) return null;
                     return absentModel is not null && keyed.Length == 1 ? keyed[0].By!.Type : null;
                 case SpecificationWhenQuerySyntax query:
                     properties = QueryProperties(query.Query, scope);
@@ -184,7 +187,7 @@ public static partial class SpecificationExamples
         IEnumerable<PropertySyntax>? QueryProperties(string name, DeclarationScope scope)
         {
             var query = _declarations!.Resolve(name, scope, slice => slice.Queries, item => item.Name)?.Node;
-            return query is null ? null : (query.By is null ? Enumerable.Empty<QueryParameterSyntax>() : [query.By]).Concat(query.Filters).Select(parameter => new PropertySyntax(parameter.Name, parameter.Type, parameter.Location));
+            return query is null ? null : (query.By is null ? Enumerable.Empty<QueryParameterSyntax>() : [query.By]).Concat(query.ByParts).Concat(query.Filters).Select(parameter => new PropertySyntax(parameter.Name, parameter.Type, parameter.Location));
         }
     }
 }

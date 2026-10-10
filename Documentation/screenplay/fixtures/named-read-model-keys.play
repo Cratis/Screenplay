@@ -1,0 +1,24 @@
+concept ResourceId : Uuid
+concept Period : String
+
+module Reporting
+  feature Months
+    slice StateView Totals
+      readmodel ResourceMonth
+        resourceId ResourceId key
+        period Period key
+        hours Decimal
+      query FindMonth => ResourceMonth optional
+        by
+          resourceId ResourceId
+          period Period
+    slice StateChange CloseMonth
+      command CloseMonth
+        resourceId ResourceId identifier
+        period Period
+        reads ResourceMonth as totals
+          by
+            resourceId = resourceId
+            period = period
+        produces event MonthClosed
+          period Period = period

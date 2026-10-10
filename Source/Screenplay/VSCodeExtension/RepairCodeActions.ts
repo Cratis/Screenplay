@@ -322,7 +322,7 @@ export function registerRepairCodeActions(context: vscode.ExtensionContext, inde
             // Capture the selected generation AFTER that reset, including failed initialization.
             const connecting = connect(true);
             const generation = connectionGeneration;
-            try { const owner = await connecting; const discovered = await owner.session.discover(); publish(owner, discovered.diagnostics); if (!discovered.choices.length) await vscode.window.showInformationMessage('No verified PLAY0166/PLAY0478 repair is available. C# eligibility and refusals are unchanged.'); } catch (error) { await report(error, () => !disposed && generation === connectionGeneration); }
+            try { const owner = await connecting; const discovered = await owner.session.discover(); publish(owner, discovered.diagnostics); if (!discovered.choices.length) await vscode.window.showInformationMessage('No verified PLAY0166/PLAY0478/PLAY0661/PLAY0664 repair is available. C# eligibility and refusals are unchanged.'); } catch (error) { await report(error, () => !disposed && generation === connectionGeneration); }
         }),
         vscode.commands.registerCommand(previewCommand, async (token: unknown) => {
             const owner = current;

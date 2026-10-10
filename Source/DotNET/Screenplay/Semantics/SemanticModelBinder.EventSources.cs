@@ -76,6 +76,21 @@ public sealed partial class SemanticModelBinder
             return sources.ToImmutable();
         }
 
+        SemanticObserverFilter? BindObserverFilter(ObserverFilterSyntax? filter)
+        {
+            if (filter is null) return null;
+            UsesV10 = true;
+            if (!_eventSources.TryGetValue(filter.EventSource, out var source))
+            {
+                Error(DiagnosticCodes.InvalidObserverFilter, "An observer filter requires one declared event source.", filter.Location);
+                return null;
+            }
+            if (filter.Stream is null) return new(source.Id);
+            if (ResolveRoute(filter.EventSource, filter.Stream, filter.Location) is not { } resolved) return null;
+
+            return new(source.Id, resolved.Stream.Id);
+        }
+
         (SemanticEventSource Source, SemanticEventStream Stream)? ResolveRoute(string sourceName, string streamName, SourceLocation location)
         {
             if (_eventSources.TryGetValue(sourceName, out var source) && source.Streams.SingleOrDefault(stream => string.Equals(stream.Name, streamName, StringComparison.Ordinal)) is { } stream)

@@ -22,6 +22,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitQueryParameter(syntax.By);
         }
 
+        foreach (var part in syntax.ByParts)
+        {
+            VisitQueryParameter(part);
+        }
+
         foreach (var filter in syntax.Filters)
         {
             VisitQueryParameter(filter);
@@ -79,6 +84,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitReaction(ReactionSyntax syntax)
     {
         VisitNode(syntax);
+        if (syntax.From is not null) VisitObserverFilter(syntax.From);
         if (syntax.RunsAs is not null) VisitReactionIdentity(syntax.RunsAs);
 
         foreach (var trigger in syntax.Triggers)

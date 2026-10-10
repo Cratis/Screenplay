@@ -16,6 +16,12 @@ Processing purposes are declared at the top level: Billing covers the module, Bo
 
 Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNumber, InvoiceList and RegisterInvoiceScreen explain values, rules, builders and input/view surfaces. They are report-only metadata, not UI titles, validation or generated code comments.
 
+## Keys and event routing
+
+`InvoiceListReadModel` declares an explicit single key. `InvoicePaymentMethodTotals` uses invoice and payment method as a composite key. `RecordPayment` supplies both parts in a named reads block. Composite keys remain authoring-only and refuse executable binding with `PLAY0268` (#599).
+
+`Payment` owns scalar-keyed `Transactions` and composite-keyed `Audit` streams. `RecordPayment` routes ordinary facts to Transactions and overrides the cash audit production to Audit. `PaymentReconciler` observes Transactions; `PaymentAudit` observes the Payment source. Specifications state scalar and composite routes, and `TaggingAnInvoice` asserts `no stream`. Production overrides and observer filters select ESM v10.
+
 `PaymentReconciler` declares `runs as system role "Accountant"` for its role-gated `ChangeInvoiceStatus` invocation. The line selects ESM v10 (claimed, unreleased); the reference authenticates the system identity with that role, while claim conditions remain unknown and a final unknown denies. It does not supply audit identity. Source compilation remains warning-free.
 
 ## Who uses it

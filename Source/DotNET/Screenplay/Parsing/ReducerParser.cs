@@ -36,6 +36,7 @@ internal static partial class ReducerParser
         var name = match.Groups[1].Value;
         var rules = new List<ReducerRuleSyntax>();
         string? description = null;
+        ObserverFilterSyntax? from = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
@@ -50,6 +51,12 @@ internal static partial class ReducerParser
                     directiveLocations["description"] = line.Location;
                 }
 
+                continue;
+            }
+
+            if (LineText.FirstWord(line.Content) == "from")
+            {
+                from = ObserverFilterParser.Parse(context, line, from);
                 continue;
             }
 
@@ -69,7 +76,7 @@ internal static partial class ReducerParser
             context.Error(DiagnosticCodes.ReducerWithoutRule, $"Reducer '{name}' must declare at least one 'on <EventType>' rule", header.Location);
         }
 
-        return new(name, match.Groups[2].Value, rules, header.Location, description) { DirectiveLocations = directiveLocations };
+        return new(name, match.Groups[2].Value, rules, header.Location, description) { From = from, DirectiveLocations = directiveLocations };
     }
 
     static ReducerRuleSyntax ParseRule(ParserContext context, SourceLine line, string @event)

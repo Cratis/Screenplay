@@ -3,10 +3,12 @@
 
 import { ReducerRuleSyntax } from './ReducerRuleSyntax';
 import { SyntaxNode } from './SyntaxNode';
+import { ObserverFilterSyntax } from './ObserverFilterSyntax';
 
 export interface ReducerSyntax extends SyntaxNode {
     readonly kind: 'ReducerSyntax';
     readonly name: string;
+    readonly from?: ObserverFilterSyntax | null;
     readonly readModel: string;
     readonly rules: readonly ReducerRuleSyntax[];
     readonly description: string | null;

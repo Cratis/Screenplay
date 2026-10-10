@@ -100,6 +100,7 @@
             "patterns": [
                 { "include": "#inline-operation-block" },
                 { "include": "#command-validation" },
+                { "include": "#production-block" },
                 { "include": "#handler-block" },
                 { "include": "#event-block" },
                 { "include": "#description-block" },
@@ -145,6 +146,12 @@
         "keyword-input": {
             "match": "^\\s*(@?(?:system|operation|command|uses|execute|compensate|eventsource|stream|streamId|identifier|from))\\s+([\\w.]+(?:\\[\\])?(?:\\?|\\s+optional)?)(?=\\s*(?:=(?!=|>)|//|$))",
             "captures": { "1": { "name": "variable.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
+        },
+        "production-block": {
+            "begin": "^([ ]*)(produces)\\s+(?!operation\\b|event\\b|when\\b)([A-Za-z_]\\w*)(?=\\s|$)",
+            "beginCaptures": { "2": { "name": "keyword.other.screenplay" }, "3": { "name": "entity.name.type.screenplay" } },
+            "while": "^(?=\\1[ ]+\\S|[ ]*$)",
+            "patterns": [{ "include": "#specification-stream" }, { "include": "#keywords" }, { "include": "#common" }]
         },
         "operation-block": {
             "begin": "^([ ]*)(operation)\\s+([A-Za-z_]\\w*)(?=\\s*(?://.*)?$)",
@@ -238,6 +245,16 @@
                 {
                     "match": "^\\s*(then)\\s+(operation|compensated)\\s+([\\w.]+)(?=\\s*(?://.*)?$)",
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "entity.name.type.screenplay" } }
+                },
+                {
+                    "comment": "A property named key remains a property.",
+                    "match": "^\\s*(key)\\s+([\\w.]+(?:\\[\\])?(?:\\s+optional)?)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "variable.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" } }
+                },
+                {
+                    "comment": "Key is a trailing read-model property modifier.",
+                    "match": "^\\s*(@?[a-z_]\\w*)\\s+([\\w.]+)\\s+(key)(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "variable.other.screenplay" }, "2": { "name": "entity.name.type.screenplay" }, "3": { "name": "keyword.other.screenplay" } }
                 },
                 {
                     "comment": "Subject is a last-position event property role, including before inline mappings.",
@@ -665,6 +682,7 @@
                     "captures": { "1": { "name": "keyword.other.screenplay" } }
                 },
                 { "include": "#event-description-block" },
+                { "include": "#specification-stream" },
                 { "include": "#keywords" },
                 { "include": "#common" }
             ]

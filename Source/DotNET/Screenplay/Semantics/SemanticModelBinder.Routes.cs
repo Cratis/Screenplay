@@ -16,11 +16,16 @@ public sealed partial class SemanticModelBinder
 
         SemanticCommandRoute? BindCommandRoute(CommandSyntax command, Dictionary<string, SemanticProperty> properties, ImmutableArray<SemanticProducedEvent> produced)
         {
-            if (command.Stream is not { } route || ResolveRoute(route.EventSource, route.Stream, route.Location) is not { } resolved) return null;
+            return command.Stream is { } route ? BindRoute(command, route, properties, [.. produced.Where(value => value.Route is null)], true) : null;
+        }
+
+        SemanticCommandRoute? BindRoute(CommandSyntax command, CommandStreamSyntax route, Dictionary<string, SemanticProperty> properties, ImmutableArray<SemanticProducedEvent> produced, bool commandRoute = false)
+        {
+            if (ResolveRoute(route.EventSource, route.Stream, route.Location) is not { } resolved) return null;
             var (source, stream) = resolved;
             if (source.IdentifierType is { } identifier)
             {
-                if (properties.Values.SingleOrDefault(property => property.IsIdentifier) is { } property && property.Type != identifier)
+                if (commandRoute && properties.Values.SingleOrDefault(property => property.IsIdentifier) is { } property && property.Type != identifier)
                 {
                     Error(DiagnosticCodes.InvalidSemanticBinding, $"Command '{command.Name}' identifier type must match its routed source's identifier type.", route.Location);
                 }
@@ -116,8 +121,8 @@ public sealed partial class SemanticModelBinder
         SemanticSpecificationCommand BindRoutedSpecificationCommand(SpecificationCommandSyntax when, SemanticCommand command)
         {
             var bound = BindSpecificationCommand(when, command);
-            if (command.Route is not { } route) return bound;
-            var routedInputs = route.StreamIdParts.Select(part => part.Value).Concat(route.StreamId is { } scalar ? [scalar] : [])
+            var routes = command.Produces.Select(produced => produced.Route).Append(command.Route).OfType<SemanticCommandRoute>();
+            var routedInputs = routes.SelectMany(route => route.StreamIdParts.Select(part => part.Value).Concat(route.StreamId is { } scalar ? [scalar] : []))
                 .OfType<SemanticResolvedExpression>().Select(expression => expression.Target).ToHashSet();
             var literals = when.Values.Where(mapping => mapping.Source is LiteralExpressionSyntax)
                 .GroupBy(mapping => mapping.Property, StringComparer.Ordinal).Where(group => group.Count() == 1)
@@ -173,10 +178,12 @@ public sealed partial class SemanticModelBinder
                     {
                         continue;
                     }
-                    var contradicts = expected.Unrouted ? command.Route is not null :
-                        command.Route is null || command.Route.Source != expected.Route!.Source || command.Route.Stream != expected.Route.Stream;
-                    if (!contradicts && expected.Route is { } route && command.Route is { } actual)
+                    var contradicts = command.Produces.Where(produced => produced.EventContract == expected.EventContract).All(produced => Contradicts(produced.Route ?? command.Route));
+                    bool Contradicts(SemanticCommandRoute? actual)
                     {
+                        var differs = expected.Unrouted ? actual is not null :
+                            actual is null || actual.Source != expected.Route!.Source || actual.Stream != expected.Route.Stream;
+                        if (differs || expected.Route is not { } route || actual is null) return differs;
                         var (source, stream) = SemanticEventRouting.Resolve(application, route.Source, route.Stream);
                         var scalar = (actual.StreamId as SemanticValueExpression)?.Value;
                         var parts = actual.StreamIdParts.Where(part => part.Value is SemanticValueExpression)
@@ -184,13 +191,14 @@ public sealed partial class SemanticModelBinder
                         if (SemanticEventRouting.TryFormat(source, stream, scalar, parts, application.Concepts, out var actualRoute, out _) &&
                             SemanticEventRouting.TryFormat(source, stream, route.StreamId, route.StreamIdParts, application.Concepts, out var expectedRoute, out _))
                         {
-                            contradicts = actualRoute != expectedRoute;
+                            differs = actualRoute != expectedRoute;
                         }
                         if (expected.EventSource is { } identity)
                         {
-                            contradicts |= command.Produces.Where(produced => produced.EventContract == expected.EventContract)
+                            differs |= command.Produces.Where(produced => produced.EventContract == expected.EventContract)
                                 .All(produced => SemanticModelValidator.ProducedEventSourceType(command, produced) is { } type && type != identity.Type);
                         }
+                        return differs;
                     }
                     if (contradicts)
                     {
