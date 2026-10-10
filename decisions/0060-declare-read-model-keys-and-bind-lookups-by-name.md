@@ -1,8 +1,10 @@
 ---
 id: 0060
 title: Declare read-model keys on properties and supply every key part by name in lookups
-status: proposed
-stage: none
+status: accepted
+stage: implemented
+decided: 2026-10-10
+decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
 applies-to:
