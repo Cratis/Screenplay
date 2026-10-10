@@ -1,8 +1,10 @@
 ---
 id: 0061
 title: Replace the command route per event production
-status: proposed
-stage: none
+status: accepted
+stage: implemented
+decided: 2026-10-10
+decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
 applies-to:

@@ -1,8 +1,10 @@
 ---
 id: 0063
 title: Join the claimed unreleased ESM v10 with production routes and observer filters
-status: proposed
-stage: none
+status: accepted
+stage: implemented
+decided: 2026-10-10
+decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
 applies-to:
@@ -34,7 +36,7 @@ The reference evaluator resolves every route in the existing route phase, replac
 
 ## Default if unanswered
 
-v10 remains claimed, unreleased until the release checkpoint. These records remain proposed until a human accepts them. Consumers that have not admitted v10 must refuse it.
+v10 remains claimed, unreleased until the release checkpoint. Consumers that have not admitted v10 must refuse it.
 
 ## Timeline and scope
 

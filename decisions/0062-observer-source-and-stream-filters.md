@@ -1,8 +1,10 @@
 ---
 id: 0062
 title: Filter reactions and reducers by event source and stream
-status: proposed
-stage: none
+status: accepted
+stage: implemented
+decided: 2026-10-10
+decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
 applies-to:
