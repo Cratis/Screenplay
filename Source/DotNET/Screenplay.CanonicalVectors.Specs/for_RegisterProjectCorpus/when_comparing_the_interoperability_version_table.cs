@@ -16,7 +16,7 @@ public class when_comparing_the_interoperability_version_table : Specification
         var text = reader.ReadToEnd();
         var released = Rows(text, "#### Released versions");
         var claimed = text.Contains("#### Claimed, unreleased version", StringComparison.Ordinal) ? Rows(text, "#### Claimed, unreleased version") : [];
-        released.Length.ShouldEqual(8);
+        released.Length.ShouldEqual(9);
         (claimed.Length <= 1).ShouldBeTrue();
         var rows = released.Concat(claimed).ToArray();
         var languageVersions = rows.Select(row => LanguageVersion.Parse(row[0])).ToArray();
