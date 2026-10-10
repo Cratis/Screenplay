@@ -15,7 +15,7 @@ import { bmpWordCharacters } from './bmp-word-characters';
 // Maps a Screenplay inline code tag to the Monaco language id used for embedded highlighting.
 // Declaration registration must not globally reserve existing property names.
 // Ambiguous standalone operation headers are supplied by typed semantic tokens.
-const contextualConstructs = new Set(['operation', 'system', 'eventsource', 'purpose']);
+const contextualConstructs = new Set(['operation', 'system', 'eventsource', 'purpose', 'runs']);
 
 const embeddedLanguages: Record<string, string> = {
     csharp: 'csharp',
@@ -69,6 +69,8 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/^(numbers)([ \t]+)(exact)(?=[ \t]*(?:(?:\/\/|#).*)?$)/, ['keyword', 'white', 'keyword']],
             [/^(eventsource)(\s+)([A-Za-z_]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
             [/^(system)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/, ['keyword', 'white', 'type.identifier']],
+            // 'runs' is contextual: only a reaction's identity line is a keyword; a property called runs keeps its name.
+            [/^(\s*)(runs)(\s+)(as)(\s+)(system)\b/, ['white', 'keyword', 'white', 'keyword', 'white', 'keyword']],
             [/^(\s*)(produces\s+operation)(\s+)([A-Z]\w*)(?=\s*(?:\/\/.*)?$)/,
                 ['white', 'keyword', 'white', { token: 'type.identifier', next: '@operationBody.$1' }]],
             [/^(\s*)(given\s+operation)(\s+)([\w.]+)(\s+)(fails)(?=\s*(?:\/\/.*)?$)/,
