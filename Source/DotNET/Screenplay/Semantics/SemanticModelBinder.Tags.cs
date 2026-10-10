@@ -22,7 +22,12 @@ public sealed partial class SemanticModelBinder
                 }
                 else
                 {
-                    var reason = tag.Value is ContextExpressionSyntax ? "$context tag values require ESM v2 (#226)" : "only nonempty literal text tags are admitted";
+                    var reason = tag.Value switch
+                    {
+                        ContextExpressionSyntax => "$context tag values require ESM v2 (#226)",
+                        IdentityExpressionSyntax => "$identity tag values require ESM v2 (#226)",
+                        _ => "only nonempty literal text tags are admitted"
+                    };
                     Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Tag is not admitted: {reason}.", tag.Location);
                 }
             }

@@ -183,6 +183,7 @@ static class McpFixtureQueries
         PathExpressionSyntax path => path.Path,
         RawExpressionSyntax raw => raw.Text,
         ContextExpressionSyntax context => $"$context.{context.Path}",
+        IdentityExpressionSyntax identity => $"$identity.{identity.Path}",
         EnvironmentExpressionSyntax environment => $"$env.{environment.Name}",
         StringsExpressionSyntax strings => $"$strings.{strings.Key}",
         SourceItemExpressionSyntax source => $"$.{source.Path}",

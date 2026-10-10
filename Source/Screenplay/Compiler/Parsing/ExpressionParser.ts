@@ -29,6 +29,15 @@ export function parseMappingSource(text: string, location: SourceLocation, conte
     if (text === '$refusal' || text.startsWith('$refusal.')) {
         return { kind: 'RefusalExpressionSyntax', member: text === '$refusal' ? '' : text.substring('$refusal.'.length), location };
     }
+    if (text === '$identity' || text === '$identity.') {
+        context?.error(DiagnosticCodes.InvalidExpression, `Invalid expression '${text}'`, location);
+        return { kind: 'RawExpressionSyntax', text, location };
+    }
+    if (text.startsWith('$identity.')) {
+        const path = text.substring('$identity.'.length);
+        warnOnUnknownIdentityProperty(path.split('.')[0], '$identity', location, context);
+        return { kind: 'IdentityExpressionSyntax', path, location };
+    }
     if (text.startsWith('$context.')) {
         const path = text.substring('$context.'.length);
         warnOnUnknownContextPath(path, location, context);
@@ -71,9 +80,15 @@ function warnOnUnknownContextPath(path: string, location: SourceLocation, contex
     } else if (member !== undefined && root === 'causedBy' && !causedByProperties.includes(member)) {
         context?.warning(DiagnosticCodes.UnknownContextCausedByProperty,
             `Unknown $context.causedBy property '${member}' - expected ${causedByProperties.join(', ')}`, location);
-    } else if (member !== undefined && root === 'identity' && !identityProperties.includes(member)) {
+    } else if (member !== undefined && root === 'identity') {
+        warnOnUnknownIdentityProperty(member, '$context.identity', location, context);
+    }
+}
+
+function warnOnUnknownIdentityProperty(member: string, root: string, location: SourceLocation, context: ParserContext | undefined): void {
+    if (!identityProperties.includes(member)) {
         context?.warning(DiagnosticCodes.UnknownContextIdentityProperty,
-            `Unknown $context.identity property '${member}' - expected ${identityProperties.join(', ')}`, location);
+            `Unknown ${root} property '${member}' - expected ${identityProperties.join(', ')}`, location);
     }
 }
 

@@ -49,6 +49,7 @@ public sealed partial class SemanticModelBinder
                 {
                     EnvironmentExpressionSyntax => "$env operands are non-deterministic across realizations",
                     ContextExpressionSyntax => "$context operands require ESM v2 (#226)",
+                    IdentityExpressionSyntax => "$identity operands require ESM v2 (#226)",
                     PathExpressionSyntax => "read-model paths require decision-consistent reads (#129); 'today' and undeclared command properties are not portable operands",
                     _ => "only command properties and constants are portable operands"
                 };

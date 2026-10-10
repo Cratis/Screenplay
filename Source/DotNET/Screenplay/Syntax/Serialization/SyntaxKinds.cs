@@ -59,6 +59,7 @@ internal static class SyntaxKinds
         typeof(ConcurrencySyntax),
         typeof(ConfirmActionSyntax),
         typeof(ContextExpressionSyntax),
+        typeof(IdentityExpressionSyntax),
         typeof(ContributionSyntax),
         typeof(CountMappingSyntax),
         typeof(DeclarativeValidateSyntax),

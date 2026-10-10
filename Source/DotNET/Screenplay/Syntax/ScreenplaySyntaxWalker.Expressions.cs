@@ -40,6 +40,9 @@ public abstract partial class ScreenplaySyntaxWalker
             case ContextExpressionSyntax context:
                 VisitContextExpression(context);
                 break;
+            case IdentityExpressionSyntax identity:
+                VisitIdentityExpression(identity);
+                break;
             case RefusalExpressionSyntax refusal:
                 VisitRefusalExpression(refusal);
                 break;
@@ -132,6 +135,12 @@ public abstract partial class ScreenplaySyntaxWalker
     /// </summary>
     /// <param name="syntax">The <see cref="ContextExpressionSyntax"/> to visit.</param>
     public virtual void VisitContextExpression(ContextExpressionSyntax syntax) => VisitNode(syntax);
+
+    /// <summary>
+    /// Visits an <see cref="IdentityExpressionSyntax"/> node.
+    /// </summary>
+    /// <param name="syntax">The <see cref="IdentityExpressionSyntax"/> to visit.</param>
+    public virtual void VisitIdentityExpression(IdentityExpressionSyntax syntax) => VisitNode(syntax);
 
     /// <summary>
     /// Visits a refusal value expression.

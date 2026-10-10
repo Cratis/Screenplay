@@ -24,6 +24,8 @@ public class when_binding_unportable_occurrence_paths : given.a_semantic_binder
     CompilationResult<SemanticCompilation>[] _results = [];
 
     void Because() => _results = [
+        Bind(Source.Replace("$context.PATH", "$identity.roles", StringComparison.Ordinal)),
+        Bind(Source.Replace("$context.PATH", "$identity.claims.department", StringComparison.Ordinal)),
         Bind(Source.Replace("PATH", "identity.roles", StringComparison.Ordinal)),
         Bind(Source.Replace("PATH", "identity.claims.department", StringComparison.Ordinal)),
         Bind(Source.Replace("PATH", "causation.type", StringComparison.Ordinal)),

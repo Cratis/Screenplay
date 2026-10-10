@@ -57,6 +57,14 @@ resolution against the assembled model, never by the parser. `CaptureEventsSourc
 
 `EventStreamIdPartSyntax(Name, Type, Location)` is additive. `EventStreamSyntax.StreamIdParts` contains declarations in identity-bearing declaration order. `CommandStreamSyntax.StreamIdParts` and `SpecificationStreamSyntax.StreamIdParts` contain `PropertyMappingSyntax` in authored mapping order. These init-only collections default to empty, including old JSON omissions; existing positional constructors and scalar members are unchanged. A nonempty parts list is mutually exclusive with `StreamId`. Part names are not workspace references; part types are ordinary type references. The walker visits parts, their types and route mappings. Composite stream ids are admitted by ESM v8. Models using them select that version; models without sources or routes retain their existing ESM version and bytes.
 
+## Caller expression node
+
+`IdentityExpressionSyntax(Path, Location)` is an additive expression kind for `$identity.<path>`.
+`Path` contains only the text after `$identity.`. `VisitIdentityExpression` is an additive virtual
+walker method. `$context.identity.<path>` keeps its existing `ContextExpressionSyntax` kind and path;
+the printer preserves both spellings. The two forms bind to the same executable expressions and add
+no ESM member or version. Syntax transport consumers must support the new kind or reject it explicitly.
+
 ## What is not guaranteed
 
 **The positional parameter list.** Inserting a parameter, removing one, promoting an optional one to required, or appending a new one is a breaking change. The first three break source and binary; appending breaks binary only, which is the worse of the two to discover. Any of them is allowed in a major release and is enumerated in the release notes when it happens. If you construct nodes yourself, prefer named arguments and object initializers; if you consume them, prefer property access over deconstruction.

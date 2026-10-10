@@ -122,6 +122,19 @@ internal static partial class ExpressionParser
             return new RefusalExpressionSyntax(text == "$refusal" ? string.Empty : text["$refusal.".Length..], location);
         }
 
+        if (text == "$identity" || text == "$identity.")
+        {
+            context.Error(DiagnosticCodes.InvalidExpression, $"Invalid expression '{text}'", location);
+            return new RawExpressionSyntax(text, location);
+        }
+
+        if (text.StartsWith("$identity.", StringComparison.Ordinal))
+        {
+            var path = text["$identity.".Length..];
+            WarnOnUnknownIdentityProperty(context, path.Split('.')[0], "$identity", location);
+            return new IdentityExpressionSyntax(path, location);
+        }
+
         if (text.StartsWith("$context.", StringComparison.Ordinal))
         {
             var expression = new ContextExpressionSyntax(text["$context.".Length..], location);
@@ -295,12 +308,20 @@ internal static partial class ExpressionParser
 
         // Anything under 'claims' is the name of a claim rather than a member, so only the segment naming
         // the member itself is checked against what the identity carries.
-        if (expression.Root == "identity" && !ContextExpressionSyntax.KnownIdentityProperties.Contains(segments[1]))
+        if (expression.Root == "identity")
+        {
+            WarnOnUnknownIdentityProperty(context, segments[1], "$context.identity", expression.Location);
+        }
+    }
+
+    static void WarnOnUnknownIdentityProperty(ParserContext context, string property, string root, SourceLocation location)
+    {
+        if (!ContextExpressionSyntax.KnownIdentityProperties.Contains(property))
         {
             context.Warning(
                 DiagnosticCodes.UnknownContextIdentityProperty,
-                $"Unknown $context.identity property '{segments[1]}' - expected {string.Join(", ", ContextExpressionSyntax.KnownIdentityProperties)}",
-                expression.Location);
+                $"Unknown {root} property '{property}' - expected {string.Join(", ", ContextExpressionSyntax.KnownIdentityProperties)}",
+                location);
         }
     }
 

@@ -70,7 +70,11 @@ public class when_freezing_legacy_source_syntax_bytes
             if (name == "invoicing-sample" || name == "invoicing-editor-sample")
             {
                 text = text.Replace(",\"thenNoEvents\":true", string.Empty, StringComparison.Ordinal)
-                    .Replace(",\"isSubject\":true", string.Empty, StringComparison.Ordinal);
+                    .Replace(",\"isSubject\":true", string.Empty, StringComparison.Ordinal)
+
+                    // The samples now spell the caller as $identity, which has its own parser and printer specs;
+                    // project it back to the $context.identity node it means so the pre-root bytes stay frozen.
+                    .Replace("{\"kind\":\"IdentityExpressionSyntax\",\"path\":\"userName\"}", "{\"kind\":\"ContextExpressionSyntax\",\"path\":\"identity.userName\"}", StringComparison.Ordinal);
             }
 
             var actual = Encoding.UTF8.GetBytes(text);

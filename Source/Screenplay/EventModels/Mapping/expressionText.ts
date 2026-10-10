@@ -11,6 +11,7 @@ export function expressionText(expression: ExpressionSyntax): string {
         case 'CaseValueExpressionSyntax': return `case.${expression.parameter}`;
         case 'PathExpressionSyntax': return expression.path;
         case 'ContextExpressionSyntax': return `$context.${expression.path}`;
+        case 'IdentityExpressionSyntax': return `$identity.${expression.path}`;
         case 'EnvironmentExpressionSyntax': return `$env.${expression.name}`;
         case 'StringsExpressionSyntax': return `$strings.${expression.key}`;
         case 'SourceItemExpressionSyntax': return `$.${expression.path}`;
