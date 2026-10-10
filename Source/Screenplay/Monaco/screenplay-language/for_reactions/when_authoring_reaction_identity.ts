@@ -15,9 +15,9 @@ describe('when authoring reaction identity', () => {
         const plan = planCompletions(['reaction R', '  '], 1, '  ');
         (plan.kind === 'entries' ? plan.entries.map(entry => entry.label) : []).should.include('runs as system role');
     });
-    it('should explain the syntax-only readiness', () => {
+    it('should explain the executable admission', () => {
         const lines = ['reaction R', '  runs as system role "Automation"'];
-        hoverContent(lines, 1, 'runs', 3, 7)!.should.include('PLAY0268');
+        hoverContent(lines, 1, 'runs', 3, 7)!.should.include('ESM v10');
     });
     it('should warn when a gated invocation has no identity', () => {
         validateLines(source()).filter(issue => issue.code === 'PLAY0648').should.have.lengthOf(1);
