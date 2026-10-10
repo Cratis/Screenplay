@@ -31,6 +31,7 @@
     }
   ],
   "domain": null,
+  "eventSources": [],
   "fileImports": [],
   "imports": [],
   "modules": [
@@ -146,6 +147,8 @@
                       "property": "projectId"
                     }
                   },
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": []
                 },
                 {
@@ -235,6 +238,8 @@
                       }
                     ]
                   },
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": []
                 },
                 {
@@ -272,6 +277,8 @@
                       }
                     ]
                   },
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": []
                 },
                 {
@@ -320,6 +327,8 @@
                     }
                   ],
                   "response": null,
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": []
                 },
                 {
@@ -350,6 +359,8 @@
                       "property": "returns"
                     }
                   },
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": []
                 },
                 {
@@ -380,6 +391,8 @@
                       "property": "slug"
                     }
                   },
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": []
                 },
                 {
@@ -410,6 +423,8 @@
                       "property": "slug"
                     }
                   },
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": []
                 },
                 {
@@ -452,6 +467,8 @@
                       }
                     ]
                   },
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": []
                 },
                 {
@@ -491,6 +508,8 @@
                       "property": "name"
                     }
                   },
+                  "stream": null,
+                  "streamCandidates": [],
                   "validations": []
                 }
               ],

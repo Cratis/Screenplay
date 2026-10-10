@@ -38,6 +38,7 @@ internal static partial class WorkspaceIdentifierSpans
             (EventSourceSyntax, "name") => keyword == "eventsource",
             (EventStreamSyntax, "name") => keyword == "stream",
             (CommandStreamSyntax or SpecificationStreamSyntax, "eventSource" or "stream") => keyword == "stream",
+            (ObserverFilterSyntax, "eventSource" or "stream") => keyword == "from",
             (ConstraintSyntax, "name") => keyword == "constraint",
             (InvocationRefusalSyntax, "constraint") => keyword == "on",
             (SpecificationRedeliverySyntax, "eventType" or "reaction") => keyword == "when",
@@ -104,6 +105,13 @@ internal static partial class WorkspaceIdentifierSpans
             return match.Success && group.Value == expected ? [(group.Index, group.Length)] : [];
         }
 
+        if (node is ObserverFilterSyntax && (member == "eventSource" || member == "stream"))
+        {
+            var match = ObserverFilterRegex().Match(line);
+            var group = match.Groups[member];
+            return match.Success && group.Value == expected ? [(group.Index, group.Length)] : [];
+        }
+
         if (node is CommandStreamSyntax or SpecificationStreamSyntax && (member == "eventSource" || member == "stream"))
         {
             var match = StreamRouteRegex().Match(line);
@@ -162,6 +170,9 @@ internal static partial class WorkspaceIdentifierSpans
 
     [GeneratedRegex(@"^when\s+redelivered\s+(?<eventType>[A-Za-z_]\w*(?:\.\w+)*)\s+to\s+(?<reaction>[A-Za-z_]\w*(?:\.\w+)*)$", RegexOptions.None, 1000)]
     private static partial Regex RedeliveryRegex();
+
+    [GeneratedRegex(@"^\s*from\s+(?<eventSource>[A-Za-z_]\w*)(?:\.(?<stream>[A-Za-z_]\w*))?(?:\s|$)", RegexOptions.None, 1000)]
+    private static partial Regex ObserverFilterRegex();
 
     [GeneratedRegex(@"^stream\s+(?<eventSource>[A-Za-z_]\w*)\.(?<stream>[A-Za-z_]\w*)", RegexOptions.None, 1000)]
     private static partial Regex StreamRouteRegex();

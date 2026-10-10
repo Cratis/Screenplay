@@ -103,9 +103,9 @@ describe('when validating a document with a problem of every coded kind', () => 
         // A host may supply them; the adapter must preserve their codes rather than drop them.
         const nativeOnly = ['PLAY0650', 'PLAY0651', 'PLAY0652', 'PLAY0602', 'PLAY0603', 'PLAY0604', 'PLAY0605', 'PLAY0606', 'PLAY0559', 'PLAY0530', 'PLAY0531', 'PLAY0532', 'PLAY0533', 'PLAY0534', 'PLAY0535', 'PLAY0536', 'PLAY0537',
             'PLAY0345', 'PLAY0346', 'PLAY0347', 'PLAY0348', 'PLAY0540', 'PLAY0541', 'PLAY0542', 'PLAY0544', 'PLAY0546',
-            'PLAY0573', 'PLAY0574', 'PLAY0575', 'PLAY0576', 'PLAY0578', 'PLAY0579', 'PLAY0580', 'PLAY0585', 'PLAY0588', 'PLAY0589'];
+            'PLAY0661', 'PLAY0666', 'PLAY0573', 'PLAY0574', 'PLAY0575', 'PLAY0576', 'PLAY0578', 'PLAY0579', 'PLAY0580', 'PLAY0585', 'PLAY0588', 'PLAY0589'];
         issues.push(...validateLines(['module M'], { compilerDiagnostics: nativeOnly.map(code => ({ code, severity: 'warning', message: 'C# finding', location: { line: 1, column: 1 } })) }));
-        const routes = ['PLAY0547', 'PLAY0548', 'PLAY0549', 'PLAY0550', 'PLAY0551'].map(code => vectors.cases.find(vector => vector.diagnostics.some(diagnostic => diagnostic.startsWith(code + '@')))!.source);
+        const routes = ['PLAY0660', 'PLAY0662', 'PLAY0663', 'PLAY0664', 'PLAY0665', 'PLAY0547', 'PLAY0548', 'PLAY0549', 'PLAY0550', 'PLAY0551'].map(code => vectors.cases.find(vector => vector.diagnostics.some(diagnostic => diagnostic.startsWith(code + '@')))!.source);
         issues.push(...routes.flatMap(lines => validateLines(lines, { compilerDiagnostics: parse(lines.join('\n')).diagnostics })));
         const authorizationRefusal = [
             'policy Access',

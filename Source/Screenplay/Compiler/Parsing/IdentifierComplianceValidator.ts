@@ -49,7 +49,7 @@ export function validateIdentifierCompliance(application: ApplicationSyntax, con
     for (const { slice } of resolver.slices) {
         for (const command of slice.commands) {
             for (const entry of command.properties.filter(entry => entry.isIdentifier)) validate(entry.type, entry.location);
-            for (const route of [...(command.stream ? [command.stream] : []), ...command.streamCandidates ?? []].filter(route => route.propertyCandidate === null)) {
+            for (const route of [...(command.stream ? [command.stream] : []), ...command.streamCandidates ?? [], ...command.produces.flatMap(produced => produced.stream == null ? [] : [produced.stream])].filter(route => route.propertyCandidate === null)) {
                 const resolution = catalog.resolve(route.eventSource, route.stream);
                 const stream = resolution.kind === EventSourceResolutionKind.Unique ? resolution.streams[0] : undefined;
                 const mappings = [

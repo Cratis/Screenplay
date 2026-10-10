@@ -14,12 +14,15 @@ import * as items from './completion-items';
 import * as scope from './scope-items';
 import { CompletionEntry } from './completion-items';
 import { purposeItems } from './purpose-items';
+import { readModelKeyCompletions } from './read-model-key-completions';
 
 // Matches a validation rule line ending in "rule <Name>" (optionally followed by a
 // message clause) - both the command form ("<property> rule <Name>") and the
 // concept implied-subject form ("rule <Name>"). Its first word is the property
 // name, not "rule", so it can't be recognized through the chain[0] keyword switch
 // the way "on <EventType>" or "handler" are - hence the dedicated regex check.
+const productionRouteItem = { label: 'stream', insertText: 'stream ${1:Source.Stream}', documentation: 'Replace the whole command route for this event production. ESM v10.' };
+
 const RULE_LINE_PATTERN = /(?:^|\s)rule\s+[A-Za-z_]\w*(?:\s+severity\s+(?:information|warning|error))?(?:\s+message\s+.*)?$/;
 
 export type CompletionPlan =
@@ -121,11 +124,13 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
         case 'compensate':
             return items.operationPhaseItems;
         case 'produces':
-            return items.producesItems;
+            return chain.includes('command') ? [...items.producesItems, productionRouteItem] : items.producesItems;
         case 'handler':
             return items.handlerItems;
         case 'implementation':
             return chain[1] === 'handler' ? items.implementationItems : ['execute', 'compensate'].includes(chain[1]) ? items.operationImplementationItems : [];
+        case 'reads':
+            return [{ label: 'by parts', insertText: 'by\n  ${1:part} = ${2:source}\n  ${3:part} = ${4:source}', documentation: 'Supply every composite read-model key part by name.' }];
         case 'query':
             return items.queryItems;
         case 'performer':
@@ -161,7 +166,7 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
             if (isTemplate(where.headers.find(candidate => isTemplate(candidate)))) return scope.templateItems;
             // Sections inside a screen expose the screen vocabulary.
             if (chain.includes('screen') || construct === 'section') return items.screenItems;
-            if (chain.includes('produces')) return items.producesItems;
+            if (chain.includes('produces')) return chain.includes('command') ? [...items.producesItems, productionRouteItem] : items.producesItems;
             return [];
     }
 }
@@ -188,6 +193,8 @@ export function planCompletions(
     }
     const responseEntries = exampleCompletions(lines, lineIndex, textBefore) ?? responseCompletions(lines, lineIndex, textBefore, scanDocument(lines));
     if (responseEntries !== null) return { kind: 'entries', entries: responseEntries };
+    const keyEntries = readModelKeyCompletions(lines, lineIndex, textBefore, symbols);
+    if (keyEntries !== null) return { kind: 'entries', entries: keyEntries };
     const dependencyEntries = dependencyTargetCompletions(lines, lineIndex, textBefore, symbols);
     if (dependencyEntries !== null) return { kind: 'entries', entries: dependencyEntries };
 
@@ -268,7 +275,9 @@ export function planCompletions(
     const subjectTarget = (subjectType === 'String' || subjectType === 'Uuid' || (subjectType === 'Int' && subjectConcept !== undefined)) &&
         !subjectConcept?.attributes.some(attribute => ['pii', 'personal', 'secret', 'sensitive'].includes(attribute.replace(/^@/, '')));
     const afterSubjectType = subjectModifier !== null && subjectTarget && 'subject'.startsWith(subjectModifier[2]);
+    const keyModifier = chain[0] === 'readmodel' ? textBefore.match(/^\s*@?[a-z_]\w*\s+[\w.]+\s+(\w*)$/) : null;
     const modifierEntries = [
+        ...(keyModifier && 'key'.startsWith(keyModifier[1]) ? [{ label: 'key', insertText: 'key', documentation: 'Declares a required read-model key part. Explicit keys replace inference. Composite keys are authoring-only (#599).' }] : []),
         ...((afterPropertyType || afterQueryType) && !/=>\s*observable\s+$/.test(textBefore) ? items.optionalTypeItems : []),
         ...(afterSubjectType ? [{ label: 'subject', insertText: 'subject', documentation: 'One required scalar event data-subject identity; not pii or secret. Report-only lineage metadata (PLAY0270), no ESM or provider output yet.' }] : []),
     ];
@@ -317,7 +326,7 @@ export function planCompletions(
     if (enclosingLine && /^produces\s+operation\b/.test(enclosingLine)) return { kind: 'entries', entries: items.operationItems };
     if (enclosingLine && /^produces\s+event\b/.test(enclosingLine)) {
         if (/^\s+@?[a-z_]\w*\s+[\w[\]?]*$/.test(textBefore)) return { kind: 'types' };
-        return { kind: 'entries', entries: items.inlineEventItems };
+        return { kind: 'entries', entries: chain.includes('command') ? [...items.inlineEventItems, productionRouteItem] : items.inlineEventItems };
     }
     if (enclosingLine && RULE_LINE_PATTERN.test(enclosingLine)) {
         return { kind: 'entries', entries: items.ruleItems };

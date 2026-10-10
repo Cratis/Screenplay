@@ -462,13 +462,13 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0175` | Error | A `reads` line is not `reads <ReadModel> [as <alias>] [by <value>]`, or uses `as`, `by`, or `reads` as an alias. Under a reaction trigger, a bare `reads` line suggests `@reads` for a value named `reads`. |
+| `PLAY0175` | Error | A `reads` line is not `reads <ReadModel> [as <alias>] [by <value>]` (or the header of a child `by` mapping block), or uses `as`, `by`, or `reads` as an alias. Under a reaction trigger, a bare `reads` line suggests `@reads` for a value named `reads`. |
 | `PLAY0177` | Warning | A command or reaction trigger reads a read model no projection in the document produces. |
 | `PLAY0178` | Warning | The `by` of a command's `reads` declaration does not name a property of the command. |
 | `PLAY0442` | Warning | A reaction trigger reads by a value it does not take. |
 | `PLAY0443` | Error | A clock trigger reads by a value, but clock triggers take no values. |
 | `PLAY0444` | Warning | A reaction trigger reads a primitive type name as a view; use `@reads <PrimitiveType>` if `reads` is a trigger value. |
-| `PLAY0451` | Error | A `reads` line in a command or reaction trigger has indented children; the block is skipped, not parsed as owner values or properties. |
+| `PLAY0451` | Error | A `reads` line in a command or reaction trigger has children other than one `by` block, or combines that block with a single `by` value. Invalid children are skipped, not parsed as owner values or properties. |
 
 ### Rules about the whole artifact
 
@@ -645,6 +645,17 @@ section has no automatic repair because each one is a contract decision for the 
 direction; `PLAY0610`, `PLAY0615`, `PLAY0618` and `PLAY0619` would move a construct between slices or change its direction;
 `PLAY0620` is malformed `source events` input with no single intended correction.
 
+### Production routes and observer filters
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0663` | Error | A reaction or refusal-branch production declares a `stream` route. Only command event productions can override a route. |
+| `PLAY0664` | Warning | A production repeats its command's source, stream and stream-id mappings. The typed workspace repair removes the override. |
+| `PLAY0665` | Error | An observer filter is malformed, duplicated, has children, names an unresolved or ambiguous source/stream, or a filtered reaction has a non-event trigger. |
+| `PLAY0666` | Warning | A reaction or reducer filter excludes every statically known producer's effective route. Handlers and foreign origins are unknown and suppress this C#-only warning. |
+
+Overrides reuse `PLAY0504` for route shape, mapping, destination type and duplicate-route errors. Protected sources reuse `PLAY0515`. Property paths remain refused at binding with `PLAY0268` (#574), and generated route inputs with `PLAY0273`.
+
 ### Screen composition
 
 These checks run on the assembled model. The source stays in the syntax tree, so an authoring tool can still show and repair it.
@@ -687,6 +698,16 @@ Unknown detail types reuse `PLAY0165`; unknown caller properties reuse `PLAY0155
 report `PLAY0268`, naming the detail and its pending admission (#600). See [identity details](identity.md).
 
 None of these has an automatic repair: each is a composition decision for the author.
+
+### Read-model keys
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0660` | Error | `key` is marked outside a top-level read-model property, combined with another modifier, or has an optional or collection type. A part of a multipart key cannot have a composite type. |
+| `PLAY0661` | Error | A single-instance lookup omits key parts. The message names the missing parts. Command reads have a typed repair when every missing part has one same-named compatible source. Queries and trigger reads are not repaired. Scalar screen, form and navigation lookups cannot supply composite keys. |
+| `PLAY0662` | Error | A `by` block has fewer than two distinct parts, names an unknown part, uses the wrong key shape or supplies an incompatible, optional, collection or literal source. A single-instance query must agree with the declared key. No automatic repair is offered. |
+
+An explicit single `key` binds byte-identically to an inferred identifier. Composite keys and by-block queries are authoring-only: binding reports `PLAY0268` citing [#599](https://github.com/Cratis/Screenplay/issues/599).
 
 ### Triggers
 
@@ -831,7 +852,7 @@ Every `$eventContext.<path>` - in a projection expression or in a dynamic dictio
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0350` | Error | A command or event specification value is `null`; in Chronicle an optional fact is a separate event. Optional read-model values may be null. |
-| `PLAY0351` | Error | A `given readmodel` or `then readmodel` block does not state the identifier inferred from its keyed query. A `then query … result` block may derive it from the argument. |
+| `PLAY0351` | Error | A `given readmodel` or `then readmodel` block does not state every declared key part, or its inferred identifier when no key is declared. A scalar `then query … result` block may derive its identifier from the argument. |
 | `PLAY0352` | Error | A specification without `when` asserts an event or error, or has no `then query` or `then readmodel` outcome. |
 | `PLAY0353` | Error | A specification value is null for a required property, or a nested command/event property is null; only optional read-model properties admit null. |
 | `PLAY0354` | Error | A structured specification object omits a required property of its declared composite type. |

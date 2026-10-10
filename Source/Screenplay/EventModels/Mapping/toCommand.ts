@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { AuthoringProductionKind, OperationPhaseSyntax, OperationSyntax, CommandSyntax, ValidationRuleSyntax } from '@cratis/screenplay-compiler';
+import { dependencySourcesOf, AuthoringProductionKind, OperationPhaseSyntax, OperationSyntax, CommandSyntax, ValidationRuleSyntax } from '@cratis/screenplay-compiler';
 import { CommandItemDocument, CommandRuleDocument } from '../Document/EventModelDocument';
 import { SchemaSynthesizer } from '../Schemas/SchemaSynthesizer';
 import { SliceScope } from './SliceScope';
@@ -30,7 +30,7 @@ export function toCommand(command: CommandSyntax, scope: SliceScope, schemas: Sc
         name: command.name,
         schema: schemas.forProperties(command.properties.filter(property => !property.isGenerated)),
         stateSchema: {},
-        logicDescription: [detailsOf(command), routeDetails(command), operationDetails(command, owners)].filter(Boolean).join('\n\n'),
+        logicDescription: [detailsOf(command), readsDetails(command), routeDetails(command), operationDetails(command, owners)].filter(Boolean).join('\n\n'),
         rules: rulesOf(command),
     };
 }
@@ -67,15 +67,25 @@ function routeDetails(command: CommandSyntax): string {
     if ((command.streamCandidates ?? []).some(candidate => candidate.propertyCandidate != null)) return 'Ambiguous stream/property authoring: no route selected (PLAY0505).';
     if ((command.streamCandidates ?? []).length > 0) return 'Conflicting authored stream routes: no effective route selected.';
     const route = command.stream;
-    if (!route) return '';
+    const overrides = command.produces.filter(production => production.stream != null).map(production => {
+        const override = production.stream!;
+        const id = override.streamId ? expressionText(override.streamId.source) : override.streamIdParts.map(part => `${part.property} = ${expressionText(part.source)}`).join(', ');
+        return `Produces ${production.event}: ${override.eventSource}.${override.stream}${id ? `; stream id: ${id}` : ''} (ESM v10, replaces the whole route)`;
+    });
+    if (!route) return escape(overrides.join('\n'));
     return escape([`Authored stream: ${route.eventSource}.${route.stream}`,
         route.streamId ? `Stream id: ${expressionText(route.streamId.source)}` : route.streamIdParts.length > 0 ? `Stream id: ${route.streamIdParts.map(part => `${part.property} = ${expressionText(part.source)}`).join(', ')}` : '',
         command.handler ? 'Command handlers remain unadmitted (PLAY0268).' :
             [route.streamId?.source, ...route.streamIdParts.map(part => part.source)].some(source => source?.kind === 'PathExpressionSyntax' && source.path.includes('.')) ?
                 'Property paths remain unadmitted (PLAY0268).' :
                 'Admitted by ESM v8: direct required, non-generated properties or literals. Other unadmitted constructs still prevent binding.',
-        'This classification does not supply an identity destination.'
+        'This classification does not supply an identity destination.',
+        ...overrides
     ].filter(Boolean).join('\n'));
+}
+
+function readsDetails(command: CommandSyntax): string {
+    return (dependencySourcesOf(command).reads ?? []).filter(read => (read.byParts?.length ?? 0) > 0).map(read => `Reads ${read.readModel}${read.alias ? ` as ${read.alias}` : ''} by ${read.byParts!.map(part => `${part.property} = ${expressionText(part.source)}`).join(', ')}`).join('\n');
 }
 
 function detailsOf(command: CommandSyntax): string {

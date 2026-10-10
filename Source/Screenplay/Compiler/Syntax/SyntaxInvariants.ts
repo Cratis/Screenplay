@@ -10,6 +10,7 @@ import { InvalidSyntaxJson } from './InvalidSyntaxJson';
 import { publicEventMetadataError } from './PublicEventInvariants';
 import { OperationPhaseSyntax } from './Operations';
 import { ProducesSyntax } from './Reactions';
+import { ObserverFilterSyntax } from './ObserverFilterSyntax';
 import { SyntaxNode } from './SyntaxNode';
 import { SpecificationEventSyntax, SpecificationStreamSyntax } from './Specifications';
 import { isBlankImplementationHint } from '../Text/ImplementationHintText';
@@ -51,6 +52,7 @@ export function validateSyntaxInvariants(node: SyntaxNode): void {
     }
     if (node.kind === 'ProducesSyntax') {
         const production = node as ProducesSyntax;
+        if (production.stream?.propertyCandidate != null) refuse('A production route cannot contain a property candidate.');
         const operation = production.inlineOperation;
         if (operation != null) {
             if (production.inlineEvent != null) refuse('A production cannot declare both an event and an operation.');
@@ -141,6 +143,11 @@ function validateSourceStream(node: SyntaxNode): void {
         name(route.stream);
         if (route.streamId !== null && route.streamId.property !== 'streamId') refuse('A specification stream maps only streamId.');
         mappings(route.streamId, route.streamIdParts);
+    }
+    if (node.kind === 'ObserverFilterSyntax') {
+        const filter = node as ObserverFilterSyntax;
+        name(filter.eventSource);
+        if (filter.stream != null) name(filter.stream);
     }
     if (node.kind === 'CommandStreamSyntax') {
         const route = node as CommandStreamSyntax;

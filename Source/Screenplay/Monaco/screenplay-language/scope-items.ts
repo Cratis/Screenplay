@@ -55,6 +55,7 @@ export const readModelItems: CompletionEntry[] = [
 ];
 
 export const reducerItems: CompletionEntry[] = [
+    { label: 'from', insertText: 'from ${1:Source.Stream}', documentation: 'Observe matching routed facts only, without filtering stream ids. ESM v10.' },
     { label: 'description', insertText: 'description "${1:what the reducer does}"', documentation: 'A human-readable description.' },
     { label: 'on', insertText: 'on ${1:EventType}\n    ```csharp\n    ${2}\n    ```', documentation: 'A rule applied when the event occurs, in code or from a file.' },
 ];

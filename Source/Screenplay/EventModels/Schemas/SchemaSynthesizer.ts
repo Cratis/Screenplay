@@ -23,7 +23,7 @@ export class SchemaSynthesizer {
         }
         const schema: JsonSchemaObject = {
             type: 'object',
-            properties: Object.fromEntries(declared.map(property => [property.name, this.forType(property.type, visiting)])),
+            properties: Object.fromEntries(declared.map(property => [property.name, { ...this.forType(property.type, visiting), ...(property.isKey ? { title: `${property.name} (key)`, description: 'Read-model key part' } : {}) }])),
         };
         const required = declared.filter(property => !property.type.isOptional).map(property => property.name);
         if (required.length > 0) {

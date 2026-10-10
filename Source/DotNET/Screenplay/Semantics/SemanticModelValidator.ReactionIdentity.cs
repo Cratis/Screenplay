@@ -9,11 +9,6 @@ internal static partial class SemanticModelValidator
     {
         var identities = application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices)
             .SelectMany(slice => slice.Reactions).Select(reaction => reaction.RunsAs).OfType<SemanticReactionIdentity>().ToArray();
-        if (version == SemanticVersion.V10 && identities.Length == 0)
-        {
-            throw new InvalidSemanticContract("An ESM v10 model must contain a reaction system identity.");
-        }
-
         if (!version.IsAtLeast(SemanticVersion.V10) && identities.Length > 0)
         {
             throw new InvalidSemanticContract("A reaction system identity requires ESM v10.");

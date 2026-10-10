@@ -1,0 +1,11 @@
+eventsource Account
+  identifier String
+  stream Base
+    streamId String
+  stream Notes
+    streamId String
+  stream Periods
+    streamId
+      project Uuid
+      month String
+  stream All

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Nodes;
 using Cratis.Screenplay.Diagnostics;
 
@@ -27,7 +28,18 @@ public class when_writing_the_contract : Specification
         _contract = JsonNode.Parse(_json).AsObject();
     }
 
-    [Fact] void should_match_the_checked_in_golden() => _json.ShouldEqual(_golden);
+    [Fact]
+    void should_match_the_checked_in_golden()
+    {
+        if (Environment.GetEnvironmentVariable("SCREENPLAY_REGENERATE_CONTRACT") == "1")
+        {
+            File.WriteAllText(GoldenPath(), _json);
+            Assert.Fail("Contract golden regenerated. Review, rebuild and rerun without SCREENPLAY_REGENERATE_CONTRACT.");
+        }
+        _json.ShouldEqual(_golden);
+    }
+
+    static string GoldenPath([CallerFilePath] string path = "") => Path.GetFullPath(Path.Combine(Path.GetDirectoryName(path)!, "..", "Golden", "screenplay-contract.json"));
     [Fact] void should_be_deterministic() => ScreenplayContract.Serialize().ShouldEqual(_json);
     [Fact] void should_identify_the_schema_version() => _contract["schemaVersion"].GetValue<int>().ShouldEqual(1);
     [Fact] void should_classify_every_catalog_code() => _contract["diagnostics"].AsArray().Select(value => value["code"].GetValue<string>()).ShouldEqual(typeof(DiagnosticCodes).GetFields(BindingFlags.Public | BindingFlags.Static).Where(field => field.IsLiteral).Select(field => (string)field.GetRawConstantValue()).Order(StringComparer.Ordinal));

@@ -50,6 +50,10 @@ Holds until superseded. Status 2026-10-09: implemented in the C# compiler and re
 
 Stage and other consumers can rely on the outbound contract; the shape of a foreign event is never verified (#593).
 
+## Status notes
+
+**2026-10-09: released.** ESM v9 was released in Screenplay 4.117.0. The interoperability table now lists it as released under 0025.
+
 ## Related
 
 Builds on 0009, 0049, 0050; follows 0004, 0025.

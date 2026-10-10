@@ -265,7 +265,64 @@
     "kind": "DomainSyntax",
     "name": "Acme.Invoicing"
   },
-  "eventSources": [],
+  "eventSources": [
+    {
+      "kind": "EventSourceSyntax",
+      "description": null,
+      "id": null,
+      "identifier": {
+        "kind": "TypeRefSyntax",
+        "isCollection": false,
+        "isOptional": false,
+        "name": "PaymentId"
+      },
+      "name": "Payment",
+      "streams": [
+        {
+          "kind": "EventStreamSyntax",
+          "description": null,
+          "id": null,
+          "name": "Transactions",
+          "streamId": {
+            "kind": "TypeRefSyntax",
+            "isCollection": false,
+            "isOptional": false,
+            "name": "InvoiceId"
+          },
+          "streamIdParts": []
+        },
+        {
+          "kind": "EventStreamSyntax",
+          "description": null,
+          "id": null,
+          "name": "Audit",
+          "streamId": null,
+          "streamIdParts": [
+            {
+              "kind": "EventStreamIdPartSyntax",
+              "name": "invoice",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "InvoiceId"
+              }
+            },
+            {
+              "kind": "EventStreamIdPartSyntax",
+              "name": "payment",
+              "type": {
+                "kind": "TypeRefSyntax",
+                "isCollection": false,
+                "isOptional": false,
+                "name": "PaymentId"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "exposures": [
     {
       "kind": "ExposureSyntax",
@@ -4587,6 +4644,9 @@
                         "kind": "LiteralExpressionSyntax",
                         "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
                       },
+                      "noStream": {
+                        "kind": "SpecificationNoStreamSyntax"
+                      },
                       "values": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -6686,6 +6746,7 @@
                       "kind": "PropertySyntax",
                       "isGenerated": false,
                       "isIdentifier": false,
+                      "isKey": true,
                       "name": "invoiceId",
                       "type": {
                         "kind": "TypeRefSyntax",
@@ -9440,6 +9501,31 @@
                           }
                         }
                       ],
+                      "stream": {
+                        "kind": "CommandStreamSyntax",
+                        "eventSource": "Payment",
+                        "propertyCandidate": null,
+                        "stream": "Audit",
+                        "streamId": null,
+                        "streamIdParts": [
+                          {
+                            "kind": "PropertyMappingSyntax",
+                            "property": "invoice",
+                            "source": {
+                              "kind": "PathExpressionSyntax",
+                              "path": "invoiceId"
+                            }
+                          },
+                          {
+                            "kind": "PropertyMappingSyntax",
+                            "property": "payment",
+                            "source": {
+                              "kind": "PathExpressionSyntax",
+                              "path": "paymentId"
+                            }
+                          }
+                        ]
+                      },
                       "tags": []
                     }
                   ],
@@ -9494,7 +9580,21 @@
                     }
                   ],
                   "response": null,
-                  "stream": null,
+                  "stream": {
+                    "kind": "CommandStreamSyntax",
+                    "eventSource": "Payment",
+                    "propertyCandidate": null,
+                    "stream": "Transactions",
+                    "streamId": {
+                      "kind": "PropertyMappingSyntax",
+                      "property": "streamId",
+                      "source": {
+                        "kind": "PathExpressionSyntax",
+                        "path": "invoiceId"
+                      }
+                    },
+                    "streamIdParts": []
+                  },
                   "streamCandidates": [],
                   "validations": [
                     {
@@ -9668,9 +9768,122 @@
               "name": "RecordPayment",
               "operations": [],
               "projections": [],
-              "queries": [],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": {
+                    "kind": "AuthorizeSyntax",
+                    "requirement": {
+                      "kind": "PolicyReferenceSyntax",
+                      "name": "IsAccountant"
+                    }
+                  },
+                  "by": null,
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "ListInvoicePaymentMethodTotals",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "InvoicePaymentMethodTotals"
+                  },
+                  "scope": null
+                }
+              ],
               "reactions": [],
-              "readModels": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "InvoicePaymentMethodTotals",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "invoiceId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "InvoiceId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "method",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PaymentMethod"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "total",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Money"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "PaymentAuditReadModel",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "isKey": true,
+                      "name": "paymentId",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "PaymentId"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "receivedBy",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    },
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "requiresReceipt",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "Bool"
+                      }
+                    }
+                  ]
+                }
+              ],
               "screens": [
                 {
                   "kind": "ScreenSyntax",
@@ -9781,6 +9994,20 @@
                         "kind": "LiteralExpressionSyntax",
                         "value": "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
                       },
+                      "stream": {
+                        "kind": "SpecificationStreamSyntax",
+                        "eventSource": "Payment",
+                        "stream": "Transactions",
+                        "streamId": {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "streamId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                          }
+                        },
+                        "streamIdParts": []
+                      },
                       "values": [
                         {
                           "kind": "PropertyMappingSyntax",
@@ -9851,6 +10078,209 @@
                         "source": {
                           "kind": "LiteralExpressionSyntax",
                           "value": "card"
+                        }
+                      }
+                    ]
+                  },
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaller": {
+                    "kind": "SpecificationCallerSyntax",
+                    "authenticated": true,
+                    "claims": [
+                      {
+                        "kind": "SpecificationCallerClaimSyntax",
+                        "type": "name",
+                        "value": "Ada"
+                      }
+                    ],
+                    "roles": [
+                      "Accountant"
+                    ]
+                  },
+                  "givenCaptures": [],
+                  "givenClock": {
+                    "kind": "SpecificationClockSyntax",
+                    "instant": "2026-10-05T09:00:00Z"
+                  },
+                  "givenOperationFailures": [],
+                  "givenReadModels": [
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "InvoiceBalanceReadModel",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "total",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 100
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "paid",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 0
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "outstanding",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 100
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "SpecificationReadModelSyntax",
+                      "exactly": false,
+                      "name": "InvoicePaymentMethodTotals",
+                      "properties": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "invoiceId",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "method",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "cash"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "total",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 0
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "name": "AuditingACashPayment",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "CashPaymentRecorded",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+                      },
+                      "stream": {
+                        "kind": "SpecificationStreamSyntax",
+                        "eventSource": "Payment",
+                        "stream": "Audit",
+                        "streamId": null,
+                        "streamIdParts": [
+                          {
+                            "kind": "PropertyMappingSyntax",
+                            "property": "invoice",
+                            "source": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                            }
+                          },
+                          {
+                            "kind": "PropertyMappingSyntax",
+                            "property": "payment",
+                            "source": {
+                              "kind": "LiteralExpressionSyntax",
+                              "value": "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+                            }
+                          }
+                        ]
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "receivedBy",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "Ada"
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "requiresReceipt",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": true
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": {
+                    "kind": "SpecificationCommandSyntax",
+                    "commandType": "RecordPayment",
+                    "for": null,
+                    "generatedValues": [],
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "paymentId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "amount",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 100
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "method",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "cash"
                         }
                       }
                     ]
@@ -12047,6 +12477,11 @@
                   "kind": "ReactionSyntax",
                   "description": "Marks an invoice paid when a payment covers what is outstanding",
                   "documentation": "Payment recording and invoice closure are separate facts so reconciliation can be reviewed.",
+                  "from": {
+                    "kind": "ObserverFilterSyntax",
+                    "eventSource": "Payment",
+                    "stream": "Transactions"
+                  },
                   "name": "PaymentReconciler",
                   "runsAs": {
                     "kind": "ReactionIdentitySyntax",

@@ -1,6 +1,6 @@
 # Event sources and streams
 
-Name the business classification of an event source and its streams, then reference a stream from a command. Executable semantic model **v8** admits source declarations, scalar and composite command routes, and specification routes. Models without these constructs keep their existing versions, canonical bytes and outcomes. Renderers and other consumers must explicitly admit the contract; a package update alone is not routing support.
+Name the business classification of an event source and its streams, then reference a stream from a command. Executable semantic model **v8** admits source declarations, scalar and composite command routes, and specification routes. ESM v10 adds production route overrides and observer filters. Models without the new forms keep their existing versions, canonical bytes and outcomes. Renderers and other consumers must explicitly admit the contract; a package update alone is not routing support.
 
 ## Declare a source and its streams
 
@@ -79,6 +79,24 @@ A scalar keyed stream requires `streamId = <value>`; a composite stream requires
 
 `stream Account.Transactions` classifies the command's events. It does **not** supply `for`, change plain-production allocation, or override inline-production destination rules. A routed command's identifier and each known production destination type must match the source's nominal identifier type; a mismatch is a `PLAY0504` error. An allocated destination uses the generated identifier's type when declared, otherwise the source identifier must be UUID-backed. A handler command may author a route even when its returned events are unavailable statically. The existing prohibition on combining `handler` and `produces` is unchanged.
 
+## Production route overrides
+
+A command event production may declare one `stream Source.Stream` line. Its scalar or composite `streamId` mappings use the command-route rules. The override replaces the source, stream and stream id together. Other productions keep the command route. An override never supplies `for`, and its destination type must match its source's identifier type.
+
+Plain, conditional and inline event productions accept overrides. A line with `=` remains payload, including a payload named `stream`. Reaction and refusal-branch productions reject routes with `PLAY0663`. Duplicate and invalid routes use `PLAY0504`. An identical override warns with `PLAY0664`; a typed repair removes it.
+
+There is no `no stream` override. An unkeyed override under a keyed command is valid portable semantics. Stage must refuse it until its Arc adapter can prevent sentinel fallback from inheriting the command stream id. Screenplay replaces the whole route and does not inherit that id.
+
+[Invoicing](https://github.com/Cratis/Screenplay/blob/main/Samples/Invoicing/invoicing.play) routes recorded payments to `Payment.Transactions` and cash audit facts to `Payment.Audit`. Overrides select ESM v10. All routes resolve eagerly, even for skipped conditional productions.
+
+## Observer filters
+
+A reaction or reducer may declare one leaf `from Source` or `from Source.Stream`. It observes only facts with matching stored source and stream names. Stream ids are never filtered. Unrouted facts never match. An observer without a filter is unchanged. A filtered reaction uses only declared-event triggers. Projections and captures do not gain metadata filters.
+
+`PLAY0665` rejects malformed, duplicate, child-bearing or unresolved filters. The C# compiler warns with `PLAY0666` when every statically known producer lands outside the filter. Command productions use their effective routes. Reaction productions, captures and public publication are unrouted. Handler and foreign origins are unknown and suppress the warning.
+
+Filters select ESM v10. The reference runner applies them to given history and newly appended facts. Reaching a matching opaque reducer still returns Unsupported; routing does not execute its code.
+
 ## Canonical stored encoding
 
 Scalar ids use the portable scalar formatting rule without composite escaping. Composite ids use the following stored encoding in authoring validation and reference execution.
@@ -95,7 +113,7 @@ This is stored identity encoding, not transport or log escaping. Parts can conta
 
 ## Route phase and failure
 
-A command resolves its route once, after declarative validation and requirements, before generation and productions. A reaction-invoked command uses the same phase; captures and a reaction's direct productions stay unrouted. The route classifies every produced event without changing allocation, authorization, constraints, projections or queries.
+A command resolves its command route and all production overrides eagerly, after declarative validation and requirements, before generation and productions. A reaction-invoked command uses the same phase; captures and a reaction's direct productions stay unrouted. Each production uses its override when present, otherwise the command route. Formatting failure in a skipped production rejects the command atomically. Routing does not change allocation, authorization, constraints, projections or queries.
 
 Formatting-only failures, such as empty text or an integer outside the Double bound, reject the failing command as `Contract`: no allocation, facts or response. Authorization denial and validation failure take precedence. Non-NFC or ill-formed direct inputs already fail request type validation, before declarative rules; nothing normalizes them silently. Previously accepted cascade facts remain after a later command fails.
 
@@ -109,7 +127,7 @@ Properties named `stream`, `eventsource`, `from`, `streamId` and `identifier` re
 
 ## Rename a source or stream
 
-Use MCP `propose-rename` with the source or stream's original `read-ast` handle, both expected revisions, `expectedName` and `newName`. Preview with `read-proposal` before `apply`. A source rename repairs the source member of command and specification routes; a stream rename repairs only routes bound to that stream under its source. Given, `when append` and then routes are included; `no stream` assertions stay unchanged.
+Use MCP `propose-rename` with the source or stream's original `read-ast` handle, both expected revisions, `expectedName` and `newName`. Preview with `read-proposal` before `apply`. A source rename repairs command routes, production overrides, observer filters and specification routes. A stream rename repairs only references bound to that stream under its source. Given, `when append` and then routes are included; `no stream` assertions stay unchanged.
 
 Existing `id` pins stay untouched, even when the new name equals the pin. No pins are added automatically. Catalog entries migrate atomically, including all streams owned by a renamed source. An unpinned rename preserves catalog identity but changes the stored name and semantic revision. **Before renaming a source or stream with stored events, add `id "OldName"` with a typed edit** to preserve its stored identity. `eventNeverPersisted` has no effect on source or stream renames.
 
@@ -119,12 +137,12 @@ Colliding names, duplicate physical source declarations, captured route debt and
 
 | Surface | Supported in this increment | Not available |
 | --- | --- | --- |
-| C# and TypeScript syntax | Declarations, command routes, key mappings, strict typed JSON, full-input ambiguity validation | Executable binding is provided by the C# semantic compiler |
-| Monaco and VS Code | Typed symbols, contextual tokens, reference/key completion, hover and exact source navigation where the host has authoritative source | Guessed effective routing, automatic source/stream rename, routing quick fixes |
-| MCP | Paged source/stream inventories, exact owner keys, physical AST handles, catalog identities, executable export, `propose-rename` with atomic catalog migration and command/specification route repair | Automatic routing diagnostic repairs |
-| Board | Authored stream and readable key expression in existing command details | Stream event cards, inferred facts or successful routed specification states |
+| C# and TypeScript syntax | Declarations, command and production routes, observer filters, key mappings, strict typed JSON, full-input ambiguity validation | Executable binding is provided by the C# semantic compiler |
+| Monaco and VS Code | Typed symbols, contextual tokens, reference/key completion, hover and exact source navigation where the host has authoritative source | Guessed effective routing, automatic source/stream rename or route selection |
+| MCP | Paged source/stream inventories, physical AST handles, executable export, source/stream rename, typed redundant-production-route removal | Automatic route selection |
+| Board | Command route, each production override, named lookup parts and observer descriptions | Stream event cards, inferred facts or successful routed specification states |
 | Reference execution | Canonical routed facts and specification route comparisons | Provider execution without explicit consumer admission |
 
 Source queries expose original source locations, not merged document line numbers. Physical read inventories include retained declarations and route candidates from errorful documents, separately from write eligibility. Parser and whole-assembly diagnostics remain visible; unknown parsed extent reports incomplete ownership rather than a unique survivor. Unresolved or conflicting import placement does not yield confident navigation. [Typed edits](ast-authoring.md#source-and-stream-edits) and [MCP inventories](mcp/authoring-tools.md#event-source-and-stream-authoring) retain revision checks, preview and explicit acceptance.
 
-Per-production overrides, reaction/reducer `from` filters, new concurrency flags, occurrence-time routing and constraint scopes are later increments. Existing `concurrency` remains distinct from routing; omission retains its existing meaning. See [Commands](commands.md) and the [grammar](grammar.md).
+Reaction direct-production routes, new concurrency flags, occurrence-time routing, constraint scopes, first-append rules and stream closing remain unadmitted. Property-path stream-id mappings remain refused under #574. Existing `concurrency` remains distinct from routing; omission retains its existing meaning. See [Commands](commands.md) and the [grammar](grammar.md).

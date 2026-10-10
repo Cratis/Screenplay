@@ -122,6 +122,11 @@ public sealed record SemanticReactionTrigger(SemanticReactionTriggerKind Kind)
 public sealed record SemanticReaction(SemanticId Id, string Name, ImmutableArray<SemanticReactionTrigger> Triggers)
 {
     /// <summary>
+    /// Gets the event source and optional stream filter.
+    /// </summary>
+    public SemanticObserverFilter? From { get; init; }
+
+    /// <summary>
     /// Gets the authorization identity used by invoked commands, independently of audit identity.
     /// </summary>
     public SemanticReactionIdentity? RunsAs { get; init; }

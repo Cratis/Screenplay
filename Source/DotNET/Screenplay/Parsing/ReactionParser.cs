@@ -36,6 +36,7 @@ internal static partial class ReactionParser
         string? description = null;
         string? documentation = null;
         ConditionSyntax? where = null;
+        ObserverFilterSyntax? from = null;
         ReactionIdentitySyntax? runsAs = null;
         var identityDeclared = false;
         var directiveLocations = new Dictionary<string, SourceLocation>();
@@ -67,6 +68,11 @@ internal static partial class ReactionParser
                 continue;
             }
 
+            if (keyword == "from")
+            {
+                from = ObserverFilterParser.Parse(context, line, from);
+                continue;
+            }
             if (keyword == "runs")
             {
                 runsAs = ReactionIdentityParser.Parse(context, line, identityDeclared) ?? runsAs;
@@ -129,7 +135,7 @@ internal static partial class ReactionParser
             context.Error(DiagnosticCodes.ReactionWithoutTrigger, $"Reaction '{name}' must declare at least one trigger - nothing sets it off", header.Location);
         }
 
-        return new(name, triggers, header.Location, description, where) { Documentation = documentation, RunsAs = runsAs, DirectiveLocations = directiveLocations };
+        return new(name, triggers, header.Location, description, where) { Documentation = documentation, From = from, RunsAs = runsAs, DirectiveLocations = directiveLocations };
     }
 
     // Two triggers are the same when they name the same occurrence, wherever in the file they were written -

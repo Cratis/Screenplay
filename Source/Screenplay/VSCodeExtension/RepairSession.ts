@@ -167,7 +167,7 @@ export class RepairSession {
             const choices: RepairChoice[] = [];
             for (const value of await read('repairs')) {
                 const item = object(value);
-                if (!['PLAY0166', 'PLAY0478'].includes(String(item.diagnosticCode))) continue;
+                if (!['PLAY0166', 'PLAY0478', 'PLAY0661', 'PLAY0664'].includes(String(item.diagnosticCode))) continue;
                 const subject = object(item.subject);
                 const source = location(item.location);
                 const code = text(item.diagnosticCode);
@@ -175,7 +175,7 @@ export class RepairSession {
                 const handle = { revision: text(subject.revision), documentId: text(subject.documentId), path: text(subject.path) };
                 if (handle.revision !== opened.revision || !source.path || documents.get(handle.documentId) !== source.path ||
                     !diagnostics.some(issue => issue.code === code && issue.location.path === source.path && issue.location.line === source.line && issue.location.column === source.column)) continue;
-                choices.push({ token: randomUUID(), code, title: code === 'PLAY0478' ? 'Change routing: explicitly route to the command identifier' : 'Declare the missing produced event', location: source, subject: handle });
+                choices.push({ token: randomUUID(), code, title: code === 'PLAY0478' ? 'Change routing: explicitly route to the command identifier' : code === 'PLAY0661' ? 'Supply every command-read key part by name' : code === 'PLAY0664' ? 'Remove the redundant production route' : 'Declare the missing produced event', location: source, subject: handle });
             }
             this.#check(epoch, versions);
             this.#snapshot = { epoch, versions, revision: opened.revision, catalog: opened.catalog, evidence: evidence(pinnedEvidence), diagnostics, choices };
@@ -195,20 +195,21 @@ export class RepairSession {
         this.#busy = true;
         this.#phase = 'preview-collection'; this.trace('preview:begin', { tokenHash: repairObservationEnabled(this.launch.root) ? observationHash(choiceToken) : undefined });
         let proposalId: string | undefined;
+        const pinned = ['PLAY0166', 'PLAY0478'].includes(choice.code);
         try {
             const proposal = await this.#client.tool('propose-repair', {
                 diagnosticCode: choice.code, subject: choice.subject, formatting: 'CanonicalizeTouchedDocuments',
                 expectedRevision: snapshot.revision, expectedCatalogRevision: snapshot.catalog,
-                pinRepairEvidence: true, expectedRepairEvidenceRevision: snapshot.evidence,
+                ...(pinned ? { pinRepairEvidence: true, expectedRepairEvidenceRevision: snapshot.evidence } : {}),
             }, signal, () => this.#check(snapshot.epoch, snapshot.versions));
             proposalId = text(proposal.proposalId);
             this.#proposal = proposalId; this.trace('preview:proposal');
             if (proposal.success !== true || proposal.validation !== 'Authoring') throw new RepairFailure('MalformedContract', 'Expected an accepted authoring proposal.');
             const before = revisions(proposal.before), after = revisions(proposal.after);
-            const pins = object(proposal.repairEvidence);
-            const beforeEvidence = evidence(pins.beforeRevision), candidateEvidence = evidence(pins.candidateRevision);
-            if (before.revision !== snapshot.revision || before.catalog !== snapshot.catalog || beforeEvidence !== snapshot.evidence) throw new RepairFailure('StaleRevision', 'Proposal did not bind the discovered evidence.');
-            const args = { proposalId, expectedRepairEvidenceRevision: beforeEvidence };
+            const pins = pinned ? object(proposal.repairEvidence) : undefined;
+            const beforeEvidence = pins ? evidence(pins.beforeRevision) : '', candidateEvidence = pins ? evidence(pins.candidateRevision) : '';
+            if (before.revision !== snapshot.revision || before.catalog !== snapshot.catalog || (pinned && beforeEvidence !== snapshot.evidence)) throw new RepairFailure('StaleRevision', 'Proposal did not bind the discovered evidence.');
+            const args = { proposalId, ...(pinned ? { expectedRepairEvidenceRevision: beforeEvidence } : {}) };
             const read = async (view: string): Promise<unknown[]> => this.#items(async offset => {
                 const result = await this.#client.tool('read-proposal', { ...args, view, offset, limit: 100 }, signal);
                 this.#verifyReview(result, before.revision, after.revision, beforeEvidence, candidateEvidence);
@@ -276,7 +277,7 @@ export class RepairSession {
         try {
             const result = await this.#client.tool('apply', {
                 proposalId: retained.proposalId, expectedRevision: snapshot.revision, expectedCatalogRevision: snapshot.catalog,
-                expectedRepairEvidenceRevision: retained.beforeEvidence,
+                ...(retained.beforeEvidence ? { expectedRepairEvidenceRevision: retained.beforeEvidence } : {}),
             }, undefined, () => this.#check(snapshot.epoch, snapshot.versions), () => {
                 retained.dispatched = true; // Write attempt: no cancellation or retry after this boundary.
                 this.#reconnectRequired = true; // Barrier starts at dispatch, not an incidental rename.
@@ -306,8 +307,11 @@ export class RepairSession {
         }
     }
     #verifyReview(value: Record<string, unknown>, before: string, after: string, base: string, candidate: string): void {
-        const pins = object(value.repairEvidence);
-        if (revisions(value.before).revision !== before || revisions(value.after).revision !== after || evidence(pins.beforeRevision) !== base || evidence(pins.candidateRevision) !== candidate) throw new RepairFailure('StaleRevision', 'Retained preview evidence changed.');
+        if (revisions(value.before).revision !== before || revisions(value.after).revision !== after) throw new RepairFailure('StaleRevision', 'Retained preview revisions changed.');
+        if (base) {
+            const pins = object(value.repairEvidence);
+            if (evidence(pins.beforeRevision) !== base || evidence(pins.candidateRevision) !== candidate) throw new RepairFailure('StaleRevision', 'Retained preview evidence changed.');
+        }
     }
     async #items(read: (offset: number) => Promise<Record<string, unknown>>, revision: string): Promise<unknown[]> {
         const result: unknown[] = [];

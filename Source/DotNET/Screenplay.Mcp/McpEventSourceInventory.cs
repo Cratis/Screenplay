@@ -74,6 +74,15 @@ sealed class McpEventSourceInventory
         foreach (var entry in View.Entries.Where(entry => entry.Node is CommandSyntax))
         {
             var command = (CommandSyntax)entry.Node;
+            foreach (var produced in command.Produces.Where(produced => produced.Stream is not null))
+            {
+                yield return new
+                {
+                    kind = "production-route", command = command.Name, @event = produced.Event, scope = Scope(entry), handle = McpAstHandles.Describe(entry.Handle),
+                    authoredRoute = produced.Stream, placementResolved = View.HasResolvedPlacement(entry), inventoryComplete = View.IsComplete,
+                    syntaxOnly = Readiness.SyntaxOnly(command), executionAvailable = _workspace.Compilation.Success, executionReadiness = Readiness.ExecutionReadiness(command)
+                };
+            }
             if (command.Stream is null && !command.StreamCandidates.Any()) continue;
             yield return new
             {

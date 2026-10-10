@@ -8,6 +8,12 @@ assistant, start with [the MCP server overview](index.md), and see
 [Create a model](create.md), [Explore a model](explore.md), [View a model](view.md)
 and [Edit a model](edit.md) for prompts.
 
+## Key and route admission
+
+Typed source and AST proposals retain read-model key marks, named query/read key parts, production routes and observer filters. Composite read-model keys remain authoring-only (`PLAY0268`, #599). Production route overrides and observer filters select ESM v10. Source inventories include production route references. Declaration details retain the authored lookup parts and filters.
+
+`PLAY0661` repairs command reads only when missing parts have unique same-named compatible inputs. Queries and trigger reads are not repaired. `PLAY0664` removes an identical production route through a typed proposal. Both require canonical formatting consent and explicit Apply. The saved-file attachment-evidence pin contract remains limited to PLAY0166 and PLAY0478. See [Authoring tools](authoring-tools.md).
+
 ## Installation and scope
 
 The server is included in the `cratis/screenplay` Docker image and in the

@@ -396,4 +396,12 @@ export const DiagnosticCodes = {
     CommandWithProducesAndHandler: 'PLAY0035',
     AbsoluteFileReference: 'PLAY0264',
     InvalidTriggerData: 'PLAY0246',
+    InvalidReadModelKey: 'PLAY0660',
+    IncompleteReadModelKey: 'PLAY0661', // C# only: scoped read-model key resolution.
+    InvalidReadModelKeyLookup: 'PLAY0662', // Shape checks shared; scoped lookup checks are C# only.
+    ProductionRouteOutsideCommand: 'PLAY0663',
+    RedundantProductionRoute: 'PLAY0664',
+    InvalidObserverFilter: 'PLAY0665',
+    ObserverFilterExcludesEveryProducer: 'PLAY0666', // C# only: statically known producer routes.
+    ReadsWithChildren: 'PLAY0451',
 } as const;

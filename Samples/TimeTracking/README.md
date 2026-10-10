@@ -2,6 +2,12 @@
 
 A consultancy's time tracking, written in Screenplay. Engagement managers open client engagements and staff consultants on them. Consultants record their hours each week and submit the timesheet. Managers approve the week or return it, and payroll officers collect the approved hours into payroll runs for an external payroll provider. Absences reported in the HR system come in as time off.
 
+## Monthly lookup keys
+
+`Timesheets/Reporting/CheckingEngagementMonths.play` declares a monthly row keyed by engagement and reporting month. Its single-instance query supplies both parts in a `by` block. `ClosingAnEngagementMonth.play` supplies the same parts in a command reads block. Screens use a collection query because scalar screen lookups cannot supply composite keys.
+
+These files compile as authoring syntax. Composite keys and by-block queries refuse executable binding with `PLAY0268` (#599). Command reads also retain their separate decision-consistency limitation (#129).
+
 ## How the files are composed
 
 Every file tells one part of the story. Three kinds of file put them together:

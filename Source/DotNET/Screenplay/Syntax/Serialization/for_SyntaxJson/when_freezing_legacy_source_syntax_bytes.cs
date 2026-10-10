@@ -26,7 +26,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "reaction-identity" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "duplicate-compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations") continue;
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "reaction-identity" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "duplicate-compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -34,7 +34,7 @@ public class when_freezing_legacy_source_syntax_bytes
             // guarded actions have full shared vectors; project only those additions out of frozen legacy bytes.
             var legacy = name switch
             {
-                "invoicing-sample" or "invoicing-editor-sample" => WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(parsed))),
+                "invoicing-sample" or "invoicing-editor-sample" => WithoutSampleRoutesAndKeys(WithoutGuardedSampleAction(WithoutSampleAdditions(WithoutSampleExamples(parsed)))),
                 "library-sample" => WithoutLibraryForms(parsed),
                 _ => parsed
             };
@@ -187,6 +187,61 @@ public class when_freezing_legacy_source_syntax_bytes
             })
         };
     }
+
+    // Current shared vectors cover these named additions. Restore only their pre-feature
+    // counterparts in the living sample; every other serialized member remains protected.
+    static ApplicationSyntax WithoutSampleRoutesAndKeys(ApplicationSyntax application) => application with
+    {
+        EventSources = application.EventSources.Where(source => source.Name != "Payment"),
+        Modules = application.Modules.Select(module => module.Name == "Invoicing" ? module with
+        {
+            Features = module.Features.Select(WithoutSampleRoutesAndKeys)
+        } : module)
+    };
+
+    static FeatureSyntax WithoutSampleRoutesAndKeys(FeatureSyntax feature) => feature with
+    {
+        Features = feature.Features.Select(WithoutSampleRoutesAndKeys),
+        Slices = feature.Slices.Select(slice => slice.Name switch
+        {
+            "InvoiceList" => slice with
+            {
+                ReadModels = slice.ReadModels.Select(model => model.Name == "InvoiceListReadModel" ? model with
+                {
+                    Properties = model.Properties.Select(property => property.Name == "invoiceId" ? property with { IsKey = false } : property)
+                } : model)
+            },
+            "TagInvoice" => slice with
+            {
+                Specifications = slice.Specifications.Select(specification => specification.Name == "TaggingAnInvoice" ? specification with
+                {
+                    ThenEvents = specification.ThenEvents.Select(@event => @event.EventType == "InvoiceTagged" ? @event with { NoStream = null } : @event)
+                } : specification)
+            },
+            "RecordPayment" => slice with
+            {
+                ReadModels = slice.ReadModels.Where(model => model.Name is not ("InvoicePaymentMethodTotals" or "PaymentAuditReadModel")),
+                Reducers = slice.Reducers.Where(reducer => reducer.Name != "PaymentAudit"),
+                Queries = slice.Queries.Where(query => query.Name != "ListInvoicePaymentMethodTotals"),
+                Commands = slice.Commands.Select(command => command.Name == "RecordPayment" ? command with
+                {
+                    Stream = null,
+                    Reads = command.Reads.Where(read => read.ReadModel != "InvoicePaymentMethodTotals"),
+                    Produces = command.Produces.Select(production => production.Event == "CashPaymentRecorded" ? production with { Stream = null } : production)
+                } : command),
+                Specifications = slice.Specifications.Where(specification => specification.Name != "AuditingACashPayment")
+                    .Select(specification => specification.Name == "RecordingACardPayment" ? specification with
+                    {
+                        ThenEvents = specification.ThenEvents.Select(@event => @event.EventType == "PaymentRecorded" ? @event with { Stream = null } : @event)
+                    } : specification)
+            },
+            "ReconcilePayments" => slice with
+            {
+                Reactions = slice.Reactions.Select(reaction => reaction.Name == "PaymentReconciler" ? reaction with { From = null } : reaction)
+            },
+            _ => slice
+        })
+    };
 
     static ApplicationSyntax WithoutSampleAdditions(ApplicationSyntax application) => application with
     {

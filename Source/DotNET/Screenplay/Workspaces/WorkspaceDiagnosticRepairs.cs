@@ -203,6 +203,11 @@ public static class WorkspaceDiagnosticRepairs
             return WorkspaceOptionalityRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
+        if (diagnostic.Code == DiagnosticCodes.RedundantProductionRoute)
+        {
+            return WorkspaceProductionRouteRepairs.Find(index, revision, diagnostic, verifyRepair);
+        }
+
         if (diagnostic.Code == DiagnosticCodes.RedundantEventId || diagnostic.Code == DiagnosticCodes.EventSourceIdInPayload)
         {
             return WorkspaceEventRepairs.Find(index, revision, diagnostic, verifyRepair);
@@ -211,6 +216,11 @@ public static class WorkspaceDiagnosticRepairs
         if (diagnostic.Code == DiagnosticCodes.LegacyInteractionWhere || diagnostic.Code == DiagnosticCodes.InlineInteractionAlternative)
         {
             return WorkspaceInteractionRepairs.Find(index, revision, diagnostic, verifyRepair);
+        }
+
+        if (diagnostic.Code == DiagnosticCodes.IncompleteReadModelKey)
+        {
+            return WorkspaceReadModelKeyRepairs.Find(index, revision, diagnostic, verifyRepair);
         }
 
         if (diagnostic.Code == DiagnosticCodes.PublicTranslationRequiresDirection)

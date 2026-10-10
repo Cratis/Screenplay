@@ -105,18 +105,19 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A v2 command using $context needs an occurrence supplied by the execution request.");
         }
 
-        SemanticEventRoute? route = null;
-        if (command.Route is { } declaredRoute)
+        var resolvedRoutes = new Dictionary<SemanticCommandRoute, SemanticEventRoute>(ReferenceEqualityComparer.Instance);
+        foreach (var declaredRoute in command.Produces.Select(produced => produced.Route).Append(command.Route).OfType<SemanticCommandRoute>())
         {
             var (source, stream) = SemanticEventRouting.Resolve(plan.Model.Application, declaredRoute.Source, declaredRoute.Stream);
             var scalar = declaredRoute.StreamId is null ? null : Evaluate(declaredRoute.StreamId, SemanticExpressionRootKind.Command, commandValues);
             var parts = declaredRoute.StreamIdParts.Select(part => new SemanticFixtureRoutePart(
                 part.Part,
                 Evaluate(part.Value, SemanticExpressionRootKind.Command, commandValues))).ToImmutableArray();
-            if (!SemanticEventRouting.TryFormat(source, stream, scalar, parts, plan.Model.Application.Concepts, out route, out var failure))
+            if (!SemanticEventRouting.TryFormat(source, stream, scalar, parts, plan.Model.Application.Concepts, out var route, out var failure))
             {
                 return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, SemanticStreamIdFormatter.FailureMessage(failure));
             }
+            resolvedRoutes[declaredRoute] = route!;
         }
 
         if (Generate(plan, world, command, request.GeneratedValues, commandValues) is { } generationFailure)
@@ -194,7 +195,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
                 Tags = plan.Events[produced.EventContract].Tags.AddRange(produced.Tags),
                 Occurred = request.Occurrence?.Occurred,
                 ReactionOrigin = request.ReactionOrigin,
-                Route = route
+                Route = (produced.Route ?? command.Route) is { } effectiveRoute ? resolvedRoutes[effectiveRoute] : null
             });
         }
 
@@ -469,12 +470,16 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticRejected(SemanticWorld.Empty, SemanticRejectionCategory.Contract, null, exception.Message);
         }
 
-        var observedEvents = facts.Select(fact => fact.EventContract).ToHashSet();
         var reducer = plan.Model.Application.Modules.SelectMany(module => Reducers(module.Features))
             .FirstOrDefault(candidate =>
-                candidate.Transitions.Any(transition => observedEvents.Contains(transition.EventContract)) ||
-                (observedEvents.Count > 0 && plan.Projections.Values.Any(projection => projection.ReadModel == candidate.ReadModel &&
-                    projection.GetAffectedInstances().Any(affected => affected.EventContract is null || observedEvents.Contains(affected.EventContract.Value)))));
+            {
+                var matchingFacts = facts.Where(fact => candidate.From?.Matches(plan.Model.Application, fact.Route) != false).ToArray();
+                var observedEvents = matchingFacts.Select(fact => fact.EventContract).ToHashSet();
+
+                return candidate.Transitions.Any(transition => observedEvents.Contains(transition.EventContract)) ||
+                    (matchingFacts.Length > 0 && plan.Projections.Values.Any(projection => projection.ReadModel == candidate.ReadModel &&
+                        projection.GetAffectedInstances().Any(affected => affected.EventContract is null || observedEvents.Contains(affected.EventContract.Value))));
+            });
         if (publicReplay && reducer is not null)
         {
             return new SemanticUnsupported(
@@ -504,7 +509,8 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
     static SemanticReducer? ReachedReducer(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts) =>
         plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V6)
             ? plan.Model.Application.Modules.SelectMany(module => Reducers(module.Features))
-                .FirstOrDefault(reducer => reducer.Transitions.Any(transition => facts.Any(fact => fact.EventContract == transition.EventContract)))
+                .FirstOrDefault(reducer => reducer.Transitions.Any(transition => facts.Any(fact => fact.EventContract == transition.EventContract &&
+                     (reducer.From?.Matches(plan.Model.Application, fact.Route) != false))))
             : null;
 
     static SemanticReducer? ReducerFor(SemanticExecutionPlan plan, SemanticId readModel) =>

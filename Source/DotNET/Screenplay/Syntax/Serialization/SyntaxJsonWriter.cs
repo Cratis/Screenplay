@@ -20,9 +20,12 @@ internal static class SyntaxJsonWriter
             if (node is EventSyntax or ImportSyntax && member.Name == "visibility" && Equals(value, EventVisibility.Private)) continue;
             if (node is EventSyntax or ImportSyntax && member.Name == "origin" && value is null) continue;
             if (node is SliceSyntax && member.Name == "direction" && value is null) continue;
+            if (node is ReactionSyntax or ReducerSyntax && member.Name == "from" && value is null) continue;
+            if (node is ProducesSyntax && member.Name == "stream" && value is null) continue;
             if (node is ConceptAttributeSyntax && (member.Name == "scope" || member.Name == "specialCategory") && value is null) continue;
             if (node is ConceptAttributeSyntax && member.Name == "criminal" && Equals(value, false)) continue;
-            if (node is PropertySyntax && member.Name == "isSubject" && Equals(value, false)) continue;
+            if (node is PropertySyntax && (member.Name == "isSubject" || member.Name == "isKey") && Equals(value, false)) continue;
+            if (node is QuerySyntax or ReadsSyntax && member.Name == "byParts" && value is IEnumerable parts && !parts.Cast<object>().Any()) continue;
             if (member.Name == "documentation" && node is not EventSyntax && value is null) continue;
             if (node is Specifications.SpecificationSyntax && (member.Name == "description" || member.Name == "givenCallerPersona") && value is null) continue;
             if (member.Name == "description" && value is null && node is ConceptSyntax or PolicySyntax or ConstraintSyntax or Projections.ProjectionSyntax or ScreenSyntax or FormSyntax) continue;

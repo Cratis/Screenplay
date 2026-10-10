@@ -306,6 +306,11 @@ public sealed partial class SemanticModelBinder
             SourceLocation location,
             SemanticValue? inferredKey)
         {
+            if (readModel.Syntax.Properties.Count(property => property.IsKey) > 1)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Specification read model '{readModel.Model.Name}' uses a composite key. See https://github.com/Cratis/Screenplay/issues/599.", location);
+                return null;
+            }
             var bound = BindPropertyValues(values, readModel.Properties, "specification read model");
             var identifier = readModel.Model.Properties.SingleOrDefault(_ => _.IsIdentifier);
 
@@ -334,6 +339,11 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
+            if (readModel.Syntax.Properties.Count(property => property.IsKey) > 1)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Specification read model '{value.Name}' uses a composite key. See https://github.com/Cratis/Screenplay/issues/599.", value.Location);
+                return null;
+            }
             var identifier = readModel.Model.Properties.SingleOrDefault(_ => _.IsIdentifier);
             if (identifier is null) return null; // The declaration has already reported an ambiguous or missing identifier.
             var key = BindConcreteValue(value.Key, identifier.Type, "specification read model key", false);

@@ -140,6 +140,7 @@ export function parseTag(context: ParserContext, line: SourceLine, eventDeclarat
 }
 
 export function parseReadModel(context: ParserContext, header: SourceLine): ReadModelSyntax {
+    let bodyIndent: number | undefined;
     const name = readModelHeader.exec(header.content)?.[1] ?? '';
     if (name === '') {
         context.error(DiagnosticCodes.InvalidReadModelDeclaration, `Invalid read model declaration '${header.content}' - expected 'readmodel <Name>'`, locationOf(header));
@@ -149,6 +150,7 @@ export function parseReadModel(context: ParserContext, header: SourceLine): Read
     let documentation: string | null = null;
     for (let line = context.peekChild(header.indent); line !== undefined; line = context.peekChild(header.indent)) {
         context.reader.takeSignificant();
+        bodyIndent ??= line.indent;
         if (isDescription(line)) {
             description = parseDescription(context, line, description, `Read model '${name}'`);
         } else if (firstWord(line.content) === 'documentation' && tryParseProperty(line) === undefined) {
@@ -161,7 +163,10 @@ export function parseReadModel(context: ParserContext, header: SourceLine): Read
                 context.error(DiagnosticCodes.InvalidPropertyDeclaration, `Invalid property '${line.content}' - expected '<name> <Type>'`, locationOf(line));
                 continue;
             }
-            properties.push(withoutIdentifier(context, property, line, DiagnosticCodes.IdentifierOutsideCommand,
+            if (property.isKey && line.indent > bodyIndent) {
+                context.error(DiagnosticCodes.InvalidReadModelKey, 'The key modifier is only valid on top-level read-model properties.', property.location);
+            }
+            properties.push(withoutIdentifier(context, line.indent > bodyIndent ? { ...property, isKey: false } : property, line, DiagnosticCodes.IdentifierOutsideCommand,
                 `Property '${property.name}' of read model '${name}' cannot be marked identifier - only a command property can be`));
         }
     }

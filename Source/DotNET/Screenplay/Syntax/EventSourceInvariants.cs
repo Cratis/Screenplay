@@ -27,6 +27,14 @@ internal static partial class EventSourceInvariants
                 }
                 if (command.Stream is not null) Validate(command.Stream);
                 break;
+            case ObserverFilterSyntax filter:
+                Name(filter.EventSource);
+                if (filter.Stream is not null) Name(filter.Stream);
+                break;
+            case ProducesSyntax { Stream: { } route }:
+                if (route.PropertyCandidate is not null) throw new InvalidSyntaxJson("A production route cannot contain a property candidate.");
+                Validate(route);
+                break;
             case EventSourceSyntax source:
                 Name(source.Name);
                 Pin(source.Id);

@@ -20,6 +20,7 @@ export interface PropertySyntax extends SyntaxNode {
     readonly isIdentifier: boolean;
     readonly isGenerated?: boolean;
     readonly isSubject?: boolean;
+    readonly isKey?: boolean;
     // Parser-owned escape evidence, excluded from structural JSON.
     readonly nameWasEscaped?: boolean;
 }

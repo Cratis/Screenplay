@@ -126,6 +126,18 @@ public partial class ScreenplayPrinter
                 writer.Line($"by {ScreenplaySyntaxText.QueryParameter(query.By)}", query.By);
             }
 
+            if (query.ByParts.Any())
+            {
+                writer.DirectiveLine("by", query, "by");
+                using (writer.Indent())
+                {
+                    foreach (var part in query.ByParts)
+                    {
+                        writer.Line(ScreenplaySyntaxText.QueryParameter(part), part);
+                    }
+                }
+            }
+
             foreach (var filter in query.Filters)
             {
                 writer.Line($"filter {ScreenplaySyntaxText.QueryParameter(filter)}", filter);
@@ -225,6 +237,7 @@ public partial class ScreenplayPrinter
         {
             WriteDescription(writer, reaction.Description, reaction);
             WriteDocumentation(writer, reaction.Documentation, reaction);
+            if (reaction.From is not null) WriteObserverFilter(writer, reaction.From);
             if (reaction.RunsAs is { } identity)
             {
                 var roles = identity.Roles.Select(role => $"role {StringLiteral.Quote(role)}");
@@ -313,13 +326,27 @@ public partial class ScreenplayPrinter
         var alias = reads.Alias is null ? string.Empty : $" as {reads.Alias}";
         var by = reads.By is null ? string.Empty : $" by {reads.By}";
         writer.Line($"reads {reads.ReadModel}{alias}{by}", reads);
+        if (reads.ByParts.Any())
+        {
+            using (writer.Indent())
+            {
+                writer.DirectiveLine("by", reads, "by");
+                using (writer.Indent())
+                {
+                    foreach (var part in reads.ByParts)
+                    {
+                        writer.Line($"{part.Property} = {writer.Expression(part.Source)}", part);
+                    }
+                }
+            }
+        }
     }
 
     void WriteProperties(ScreenplayWriter writer, IEnumerable<PropertySyntax> properties, IReadOnlySet<string> reserved)
     {
         foreach (var property in properties)
         {
-            var modifier = (property.IsGenerated ? " generated" : string.Empty) + (property.IsIdentifier ? $" {PropertySyntax.IdentifierModifier}" : string.Empty) + (property.IsSubject ? " subject" : string.Empty);
+            var modifier = (property.IsGenerated ? " generated" : string.Empty) + (property.IsIdentifier ? $" {PropertySyntax.IdentifierModifier}" : string.Empty) + (property.IsSubject ? " subject" : string.Empty) + (property.IsKey ? " key" : string.Empty);
             writer.Line($"{ReservedWords.Escape(property.Name, reserved)} {ScreenplaySyntaxText.TypeRef(property.Type)}{modifier}", property);
         }
     }
@@ -463,6 +490,7 @@ public partial class ScreenplayPrinter
             {
                 WriteEventMetadata(writer, inline);
                 WriteProducesTarget(writer, produces.For);
+                if (produces.Stream is not null) WriteCommandStream(writer, produces.Stream);
                 WriteTags(writer, inline.Tags);
 
                 // The parser creates each property and mapping together, including on erroneous trees.
@@ -482,6 +510,7 @@ public partial class ScreenplayPrinter
             using (writer.Indent())
             {
                 WriteProducesTarget(writer, produces.For);
+                if (produces.Stream is not null) WriteCommandStream(writer, produces.Stream);
                 WriteTags(writer, produces.Tags);
                 WriteMappings(writer, produces.Mappings, ReservedWords.MappingBlock);
             }
@@ -496,6 +525,7 @@ public partial class ScreenplayPrinter
             using (writer.Indent())
             {
                 WriteProducesTarget(writer, produces.For);
+                if (produces.Stream is not null) WriteCommandStream(writer, produces.Stream);
                 WriteTags(writer, produces.Tags);
                 WriteMappings(writer, produces.Mappings, ReservedWords.MappingBlock);
             }

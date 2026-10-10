@@ -31,10 +31,12 @@ internal static partial class ReadModelParser
         string? documentation = null;
         var directiveLocations = new Dictionary<string, SourceLocation>();
         FileReferenceSyntax? file = null;
+        int? bodyIndent = null;
 
         while (context.TryPeekChild(header.Indent, out var line))
         {
             context.Reader.TakeSignificant();
+            bodyIndent ??= line.Indent;
             if (LineText.FirstWord(line.Content) == "description" && PropertyLineParser.TryParse(line) is null)
             {
                 var previousDescription = description;
@@ -54,6 +56,7 @@ internal static partial class ReadModelParser
             }
             else if (PropertyLineParser.Parse(context, line) is { } property)
             {
+                if (line.Indent > bodyIndent) property = PropertyLineParser.WithoutKey(context, property);
                 if (property.IsIdentifier)
                 {
                     context.Error(

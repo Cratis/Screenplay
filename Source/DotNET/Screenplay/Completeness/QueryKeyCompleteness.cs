@@ -46,6 +46,12 @@ static class QueryKeyCompleteness
 
     static List<TypeRefSyntax> Identity(ReadModelSyntax model, ConsistencyDeclarations declarations)
     {
+        var declared = model.Properties.Where(property => property.IsKey).ToArray();
+        if (declared.Length > 0)
+        {
+            return [.. declared.Select(property => property.Type).Concat(declared.Length == 1 ? declarations.TypeProperties(declared[0].Type.Name)?.Select(property => property.Type) ?? [] : [])];
+        }
+
         // The binder identifies a property by the single distinct 'by' name of queries in the owning slice.
         // The parameter's declared type is not evidence of the view's identity type.
         var owner = declarations.Slices.Single(entry => (entry.Slice.ReadModels ?? []).Any(candidate => ReferenceEquals(candidate, model)));

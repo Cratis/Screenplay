@@ -12,6 +12,9 @@ public class when_refusing_unadmitted_event_routes : Specification
 {
     [Theory]
     [InlineData("path", "PLAY0268")]
+    [InlineData("production-outside-command", "PLAY0663")]
+    [InlineData("production-path", "PLAY0268")]
+    [InlineData("production-generated", "PLAY0273")]
     [InlineData("handler", "PLAY0268")]
     [InlineData("concurrency", "PLAY0271")]
     [InlineData("generated", "PLAY0273")]

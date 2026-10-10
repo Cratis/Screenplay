@@ -111,7 +111,7 @@ public class when_loading_and_executing_event_routes : Specification
             : JsonSerializer.Serialize(new { sourceKind = route.SourceKind, streamKind = route.StreamKind, streamId = route.StreamId });
     }
 
-    static void Regenerate(string key)
+    internal static void Regenerate(string key)
     {
         var root = Path.Combine(Root(), "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/EventRoutes", key);
         var declarations = File.ReadAllBytes(Path.Combine(root, "source/declarations.play")).ToImmutableArray();
@@ -145,7 +145,7 @@ public class when_loading_and_executing_event_routes : Specification
             File.WriteAllBytes(Path.Combine(expected, $"identity-catalog-{form.Name}.json"), bytes);
             var pinned = Compile(form with { IdentityCatalogBytes = [.. bytes] });
             SemanticModelSerializer.Serialize(pinned.Model).SequenceEqual(SemanticModelSerializer.Serialize(compilation.Model)).ShouldBeTrue();
-            File.WriteAllBytes(Path.Combine(expected, "esm-v8.json"), SemanticModelSerializer.Serialize(pinned.Model));
+            File.WriteAllBytes(Path.Combine(expected, $"esm-v{EventRoutesCorpus.Version(key)}.json"), SemanticModelSerializer.Serialize(pinned.Model));
             File.WriteAllText(Path.Combine(expected, "semantic-revision.txt"), $"{pinned.Model.Revision}\n", new UTF8Encoding(false));
         }
         Assert.Fail("ESM v8 event-routes corpus regenerated; review, rebuild and rerun without SCREENPLAY_REGENERATE_EVENT_ROUTES_CORPUS.");

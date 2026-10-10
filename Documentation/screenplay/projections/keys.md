@@ -2,6 +2,8 @@
 
 Keys on `from` blocks (or individual events in a `from`) identify individual projection instances. They determine which read model instance to create or update when an event occurs. A `key` directly on the projection is parsed and retained in syntax, but neither Chronicle's visitor nor the executable semantic model uses it to route events; it does not provide a default for `from`. The parser reports `PLAY0381` as a warning. Declare the key on every relevant `from` (or its events) instead.
 
+A declared [read-model key](../readmodels.md#keys) describes instance identity and lookup parts. A projection still declares its own event-to-instance key on each relevant `from` block. Align that mapping with the read model's key parts. A read-model key does not supply a projection route. Multipart read-model keys remain authoring-only and are refused at binding with `PLAY0268` (#599).
+
 ## Explicit Keys
 
 Specify which property from the event identifies the instance:

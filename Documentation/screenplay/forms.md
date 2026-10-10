@@ -4,6 +4,8 @@ A form accepts one quoted or fenced-text `description` body line. It prints firs
 
 A screen's `action` directive exposes a command, but says nothing about how a user enters the data that command needs. Naming every field on the screen that invokes it would tie one input surface to one place it can be invoked from - a `form` is that input surface, declared once and reused wherever its command is.
 
+`populate via query ... by value` and `on submit navigate ... by value` remain scalar lookups. They cannot supply a composite read-model key. A single-instance composite lookup reports `PLAY0661`; no automatic form repair is offered. See [Read-model keys](readmodels.md#keys).
+
 ## Syntax
 
 ```screenplay
