@@ -22,6 +22,8 @@
   href: personas.md
 - name: Authentication
   href: authentication.md
+- name: Identity details
+  href: identity.md
 - name: UI profile
   href: ui-profile.md
 - name: Theme

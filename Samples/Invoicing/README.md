@@ -60,6 +60,7 @@ queries' performers read the central bank feed, a credit bureau and stored invoi
 | Construct | Where |
 | --- | --- |
 | `domain` with a qualified name, `import` | top of the file |
+| `identity` with claim, keyed query, inline code and file sources | Caller metadata next to authentication; the details are not used in executable clauses pending #600 |
 | Fenced Markdown `documentation` on module, feature, slice, command, read model and reaction; specification `description` | Invoicing, InvoiceManagement, StartInvoiceDraft, InvoiceListReadModel, PaymentReconciler, StartingAnInvoiceDraft |
 | `concept` of every primitive, `Enum`, `pii`/`secret` with reasons, secret scope and personal-data special/criminal qualifiers, `file`, concept `validate` with `matches email`, `rule` with a `file` and an inline body, `severity` | Concepts |
 | `type` with `description`, `file`, optional and collection properties | Composite value types |

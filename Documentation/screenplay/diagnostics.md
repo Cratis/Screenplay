@@ -663,6 +663,28 @@ These checks run on the assembled model. The source stays in the syntax tree, so
 | `PLAY0631` | Error | A screen or scoped `template` assignment uses a template whose `scopes` exclude that scope. |
 | `PLAY0632` | Error | A component comes from a package no `ui profile` declares. Only checked when at least one profile declares packages. |
 
+## Identity details
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0633` | Error | Invalid identity header; write the bare `identity` keyword. |
+| `PLAY0634` | Error | More than one identity block in a document. A second file's block uses the existing folder singular-declaration diagnostic. |
+| `PLAY0635` | Error | Invalid typed detail line or escape source; each detail has exactly one source. |
+| `PLAY0636` | Error | Unknown identity source kind; use `from claim`, `from query`, inline code or a file. |
+| `PLAY0637` | Error | Identity detail has neither a declarative source nor an implementation. |
+| `PLAY0638` | Error | A claim/query detail has a body; refresh and caching belong to the runtime. |
+| `PLAY0639` | Error | Duplicate identity detail name. |
+| `PLAY0640` | Error | Detail redeclares `id`, `name`, `userName`, `isAuthenticated`, `roles` or `claims`. |
+| `PLAY0641` | Error | Identity query source names an unknown or ambiguous query. |
+| `PLAY0642` | Error | Identity source query is unkeyed or returns a list rather than one result. |
+| `PLAY0643` | Error | Identity query source omits `by <expression>`. |
+| `PLAY0644` | Error | Identity query key reads something other than token built-ins, claims or literals. |
+| `PLAY0645` | Error | Source query's authorization depends on additional identity details. |
+| `PLAY0646` | Error | Query result type or optionality does not match the declared detail type. |
+
+Unknown detail types reuse `PLAY0165`; unknown caller properties reuse `PLAY0155`. Executable detail reads
+report `PLAY0268`, naming the detail and its pending admission (#600). See [identity details](identity.md).
+
 None of these has an automatic repair: each is a composition decision for the author.
 
 ### Triggers

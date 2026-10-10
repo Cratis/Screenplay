@@ -65,6 +65,15 @@ walker method. `$context.identity.<path>` keeps its existing `ContextExpressionS
 the printer preserves both spellings. The two forms bind to the same executable expressions and add
 no ESM member or version. Syntax transport consumers must support the new kind or reject it explicitly.
 
+## Caller detail metadata
+
+`ApplicationSyntax.Identity` is a nullable init-only property, never a new positional parameter.
+`IdentitySyntax` carries typed `IdentityDetailSyntax` entries with claim, query, inline code or file source
+nodes. Absent identity metadata is omitted from syntax JSON, preserving existing documents' bytes.
+The walker visits all source children; syntax schema and TypeScript transport mirrors include the new
+kinds. Preserve the property during rewrites. The block adds no ESM member or version; executable reads
+of declared details refuse with `PLAY0268` until admitted (#600).
+
 ## What is not guaranteed
 
 **The positional parameter list.** Inserting a parameter, removing one, promoting an optional one to required, or appending a new one is a breaking change. The first three break source and binary; appending breaks binary only, which is the worse of the two to discover. Any of them is allowed in a major release and is enumerated in the release notes when it happens. If you construct nodes yourself, prefer named arguments and object initializers; if you consume them, prefer property access over deconstruction.
