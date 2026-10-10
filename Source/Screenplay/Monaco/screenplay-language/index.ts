@@ -157,7 +157,7 @@ export type {
 export { attributeDocs, contextVariableDocs, keywordDocs, specificationKeywordDocs } from './keyword-docs';
 export { eventContextMemberAt, eventContextMembers, eventContextMembersAfter, eventContextPaths, namesEventContextMember } from './event-context';
 export type { EventContextMember, EventContextPath } from './event-context';
-export { contextVariableItems, producesItems, specificationStepItems } from './completion-items';
+export { contextVariableEntries, contextVariableItems, producesItems, specificationStepItems } from './completion-items';
 export type { CompletionEntry } from './completion-items';
 export { completionEntriesFor, planCompletions } from './completion-planner';
 export type { CompletionPlan } from './completion-planner';

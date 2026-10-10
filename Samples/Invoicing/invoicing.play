@@ -288,6 +288,19 @@ authentication
   provider OpenId name Partner
   provider OpenId name CustomerPortal
 
+// Additional caller details describe the application, not token built-ins.
+// These sources are authoring metadata only; no executable clause reads them.
+identity
+  description "What billing knows about whoever is calling"
+  department String optional from claim "department"
+  creditStatus CustomerCreditReadModel optional from query GetMyCreditStatus by $identity.claims.customerId
+  isPartner Bool
+    ```csharp
+    return context.Identity.HasRole("Partner");
+    ```
+  contactEmail EmailAddress
+    file Identity/BillingContactEmail.cs
+
 // ------------------------------------------------------------
 // Triggers - signals the domain does not raise itself
 // ------------------------------------------------------------

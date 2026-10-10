@@ -46,6 +46,11 @@ public record ApplicationSyntax(
     public SourceOptions SourceOptions { get; init; } = SourceOptions.Legacy;
 
     /// <summary>
+    /// Gets the authoring-only metadata for additional caller details.
+    /// </summary>
+    public IdentitySyntax? Identity { get; init; }
+
+    /// <summary>
     /// Gets the named behaviors the document declares, attached where a <c>uses</c> clause references them.
     /// </summary>
     public IEnumerable<BehaviorSyntax> Behaviors { get; init; } = [];

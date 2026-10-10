@@ -10,6 +10,21 @@
 // and those stay codeless deliberately: minting a PLAY number for something no compiler run can emit
 // would make the catalogue describe two different tools.
 export const diagnosticCodes = {
+    repeatedSingularDeclarationAcrossFiles: 'PLAY0172',
+    invalidIdentityDeclaration: 'PLAY0633',
+    duplicateIdentity: 'PLAY0634',
+    invalidIdentityDetail: 'PLAY0635',
+    unknownIdentitySource: 'PLAY0636',
+    identityDetailWithoutSource: 'PLAY0637',
+    identitySourceWithBody: 'PLAY0638',
+    duplicateIdentityDetail: 'PLAY0639',
+    builtInIdentityDetail: 'PLAY0640',
+    unknownIdentityQuery: 'PLAY0641',
+    invalidIdentityQuery: 'PLAY0642',
+    identityQueryWithoutKey: 'PLAY0643',
+    invalidIdentityQueryKey: 'PLAY0644',
+    identityQueryAuthorizationDependency: 'PLAY0645',
+    identityQueryTypeMismatch: 'PLAY0646',
     // Preserve supplied C# whole-model diagnostics; these checks are not yet run by the editor.
     commandProducesPublicEvent: 'PLAY0607',
     publicEventRequiresOutboundTranslation: 'PLAY0608',

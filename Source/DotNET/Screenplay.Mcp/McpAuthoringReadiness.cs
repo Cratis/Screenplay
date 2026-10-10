@@ -3,6 +3,8 @@
 
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Captures;
+using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Mcp;
@@ -13,6 +15,8 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
     readonly EffectiveSpecificationApplication _effective = SpecificationExamples.Expand(application);
     readonly Dictionary<SyntaxNode, SliceSyntax> _owners = Owners(application);
     readonly Dictionary<SyntaxNode, bool> _operations = new(ReferenceEqualityComparer.Instance);
+    readonly HashSet<string> _identityDetails = (application.Identity?.Details ?? []).Select(detail => detail.Name).ToHashSet(StringComparer.Ordinal);
+    readonly Dictionary<SyntaxNode, bool> _identityReads = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<SliceSyntax, string[]> _scopes = Scopes(application);
     readonly ILookup<string, (CommandSyntax Command, string[] Scope)> _commands = Scopes(application)
         .SelectMany(entry => entry.Key.Commands.Select(command => (Command: command, Scope: entry.Value))).ToLookup(entry => entry.Command.Name, StringComparer.Ordinal);
@@ -138,6 +142,7 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
         };
 
         return [.. LocalFeatures().Concat(Feature(ReactionRefusals(node), "reaction refusal handling and redelivery (#433)"))
+            .Concat(Feature(IdentityDetailsRead(node), "declared identity detail reads (#600)"))
             .Concat(Feature(Operations(node), "operations and systems (#301)"))
             .Concat(Feature(application.SourceOptions.NumericMode == NumericMode.Exact, "exact numbers (#285)"))
             .Distinct(StringComparer.Ordinal)
@@ -200,6 +205,50 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
         _operations[node] = result;
 
         return result;
+    }
+
+    bool IdentityDetailsRead(SyntaxNode node)
+    {
+        if (_identityDetails.Count == 0) return false;
+        if (_identityReads.TryGetValue(node, out var cached)) return cached;
+        var walker = new IdentityReadinessWalker(_identityDetails);
+        switch (node)
+        {
+            case ApplicationSyntax value: walker.VisitApplication(value); break;
+            case ModuleSyntax value: walker.VisitModule(value); break;
+            case FeatureSyntax value: walker.VisitFeature(value); break;
+            case SliceSyntax value: walker.VisitSlice(value); break;
+            case CommandSyntax value: walker.VisitCommand(value); break;
+            case QuerySyntax value: walker.VisitQuery(value); break;
+            case EventSyntax value: walker.VisitEvent(value); break;
+            case PolicySyntax value: walker.VisitPolicy(value); break;
+            case ReactionSyntax value: walker.VisitReaction(value); break;
+            case ReactionTriggerSyntax value: walker.VisitReactionTrigger(value); break;
+            case CaptureSyntax value: walker.VisitCapture(value); break;
+            case ProjectionSyntax value: walker.VisitProjection(value); break;
+            case ReducerSyntax value: walker.VisitReducer(value); break;
+            case SpecificationSyntax value: walker.VisitSpecification(value); break;
+            case ExpressionSyntax value: walker.VisitExpression(value); break;
+            default: walker.VisitNode(node); break;
+        }
+        _identityReads[node] = walker.Unadmitted;
+
+        return walker.Unadmitted;
+    }
+
+    sealed class IdentityReadinessWalker(IReadOnlySet<string> details) : ScreenplaySyntaxWalker
+    {
+        internal bool Unadmitted { get; private set; }
+
+        public override void VisitIdentity(IdentitySyntax syntax)
+        {
+            // Detail source expressions belong to metadata, not executable reads.
+        }
+
+        public override void VisitIdentityExpression(IdentityExpressionSyntax syntax)
+        {
+            if (details.Contains(syntax.Path.Split('.')[0])) Unadmitted = true;
+        }
     }
 
     sealed class RefusalReadinessWalker : ScreenplaySyntaxWalker

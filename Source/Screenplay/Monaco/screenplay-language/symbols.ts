@@ -89,6 +89,7 @@ export interface ImportSymbol {
 }
 
 export interface DocumentSymbols {
+    identityDetails?: readonly { readonly name: string; readonly type: string; readonly line: number }[];
     authoringSources?: readonly string[];
     authoringPath?: string;
     authoringPlacement?: readonly string[];
@@ -193,6 +194,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
     if (cached) return cached;
     const analysis = responseAnalysis(lines);
     const symbols: DocumentSymbols = {
+        ...(analysis.identityDetails?.length ? { identityDetails: analysis.identityDetails } : {}),
         authoringSources: [source],
         eventSources: analysis.eventSources.declarations,
         imports: [],
@@ -395,6 +397,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
 // the document each symbol came from, so the result names things; it does not locate them.
 export function mergeSymbols(...documents: DocumentSymbols[]): DocumentSymbols {
     return {
+        ...(documents.some(document => document.identityDetails?.length) ? { identityDetails: documents.flatMap(document => document.identityDetails ?? []) } : {}),
         authoringSources: documents.flatMap(document => document.authoringSources ?? []),
         ...(documents.some(document => document.authoringDocuments) ? { authoringDocuments: documents.flatMap(document => document.authoringDocuments ?? []) } : {}),
         eventSources: documents.flatMap(document => document.eventSources ?? []),

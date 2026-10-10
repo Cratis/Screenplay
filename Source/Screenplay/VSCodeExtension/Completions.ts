@@ -7,7 +7,7 @@ import {
     CompletionEntry,
     eventSourceCompletions,
     exampleCompletions,
-    contextVariableItems,
+    contextVariableEntries,
     knownEventNames,
     knownTriggerNames,
     languageId,
@@ -73,7 +73,7 @@ const providerFor = (index: ApplicationIndex): vscode.CompletionItemProvider => 
                 });
             }
             case 'contextVariables':
-                return contextVariableItems.map((entry) => {
+                return contextVariableEntries(symbols).map((entry) => {
                     const item = snippetItem(entry);
                     item.range = new vscode.Range(
                         position.line,

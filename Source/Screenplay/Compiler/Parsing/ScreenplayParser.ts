@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { IdentitySyntax } from '../Syntax/IdentitySyntax';
+import { parseIdentity } from './IdentityParser';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { recordAuthoredDocument } from '../Syntax/SourceOptions';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
@@ -60,10 +62,12 @@ const bodyKeywords = new Set(['slice', 'feature', 'description', 'documentation'
 // Parses one document into its application syntax - the port of the C# ScreenplayParser. The placement says
 // where the document's top level belongs: the application, unless an import placed it in a module or feature.
 export function parseApplication(context: ParserContext, lines: readonly SourceLine[], placement: PlayPlacement = documentPlacement): ApplicationSyntax {
+    context.deferIdentityValidation = true;
     warnOnTabIndentation(context, lines);
     const moduleBody = placement.length === 1 ? new ModuleBody(placement[0]) : undefined;
     const featureBody = placement.length > 1 ? new FeatureBody(placement[placement.length - 1]) : undefined;
     const placedBody = moduleBody ?? featureBody;
+    let identity: IdentitySyntax | null = null;
     let domain: DomainSyntax | null = null;
     const imports: ImportSyntax[] = [];
     const fileImports: FileImportSyntax[] = [];
@@ -135,6 +139,8 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
             placedBody.tryParse(context, line);
         } else if (keyword === 'purpose') {
             purposes.push(parsePurpose(context, line));
+        } else if (keyword === 'identity') {
+            identity = parseIdentity(context, line, identity);
         } else if (keyword === 'policy') {
             // Legacy policies were opaque: enrich their structure without adding diagnostics.
             policies.push(parsePolicy(context, line));
@@ -158,7 +164,7 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     } else if (featureBody !== undefined) {
         modules.unshift(place(placement, featureBody.build(context.start, true), context.start));
     }
-    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...(exposures.length > 0 ? { exposures } : {}), ...(instanceContributions.length > 0 ? { instanceContributions } : {}), location: context.start };
+    const root: ApplicationSyntax = { kind: 'ApplicationSyntax', ...(identity === null ? {} : { identity }), sourceOptions: context.sourceOptions, domain, imports, concepts, types, systems, eventSources, examples, modules, personas, policies, purposes, seeds, declaredTriggers, fileImports, ...(exposures.length > 0 ? { exposures } : {}), ...(instanceContributions.length > 0 ? { instanceContributions } : {}), location: context.start };
     if (context.authoredDeclarations) recordAuthoredDocument(root);
     return root;
 }
@@ -170,6 +176,7 @@ function declaresConstruct(keyword: string, line: SourceLine, placement: PlayPla
     if (keyword === 'module') {
         return isDocumentPlacement(placement);
     }
+    if (keyword === 'identity') return line.content === 'identity';
     return keyword === 'purpose' || keyword === 'example' || keyword === 'exposure' || keyword === 'instance' || keyword === 'eventsource' || keyword === 'system' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || opaqueTopLevel.has(keyword);
 }
 
@@ -196,7 +203,7 @@ function reportUnexpectedTopLevel(context: ParserContext, line: SourceLine, plac
     } else {
         const hint = bodyKeywords.has(word)
             ? ` - '${word}' belongs in a module or feature; wrap it in one, or import this file from inside one`
-            : ' - expected domain, import, concept, type, policy, persona, authentication, module, seed, trigger, behavior, ui profile, theme or layout';
+            : ' - expected domain, import, concept, type, policy, persona, authentication, identity, module, seed, trigger, behavior, ui profile, theme or layout';
         context.error(DiagnosticCodes.UnknownTopLevelConstruct, `Unexpected '${word}' at the top level${hint}`, locationOf(line));
     }
     context.skipBlock(line.indent);

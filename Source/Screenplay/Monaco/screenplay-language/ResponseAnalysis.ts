@@ -7,6 +7,7 @@ import { AnalysisSpecification } from './AnalysisSpecification';
 import { OperationAnalysis } from './OperationAnalysis';
 
 export interface ResponseAnalysis {
+    readonly identityDetails?: readonly { readonly name: string; readonly type: string; readonly line: number }[];
     readonly commands: ReadonlyMap<number, AnalysisCommand>;
     readonly specifications: ReadonlyMap<number, AnalysisSpecification>;
     readonly diagnostics: readonly AnalysisDiagnostic[];

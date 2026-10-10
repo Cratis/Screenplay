@@ -31,6 +31,12 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         }
 
         var admission = CommandProductionAdmission(syntax, out var usesPublicEvents);
+        if (syntax.Identity?.Details.Any() == true)
+        {
+            var identityAdmission = new IdentityAdmission(syntax);
+            identityAdmission.VisitApplication(syntax);
+            admission.AddRange(identityAdmission.Diagnostics);
+        }
 
         // Public-event boundaries are checked on the assembled model whenever it uses them, and also when the admission walk
         // already refused something else; a model that uses none of them is not walked again, so programmatically built
@@ -148,6 +154,30 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         {
             context.Error(DiagnosticCodes.InvalidSemanticBinding, exception.Message, syntax.Location);
             return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements };
+        }
+    }
+
+    sealed class IdentityAdmission(ApplicationSyntax application) : ScreenplaySyntaxWalker
+    {
+        readonly HashSet<string> _details = (application.Identity?.Details ?? []).Select(detail => detail.Name).ToHashSet(StringComparer.Ordinal);
+
+        internal List<Diagnostic> Diagnostics { get; } = [];
+
+        public override void VisitIdentity(IdentitySyntax syntax)
+        {
+            // Source expressions here describe metadata, not executable reads.
+        }
+
+        public override void VisitIdentityExpression(IdentityExpressionSyntax syntax)
+        {
+            var detail = syntax.Path.Split('.')[0];
+            if (_details.Contains(detail))
+            {
+                Diagnostics.Add(Diagnostic.Error(
+                    DiagnosticCodes.UnsupportedSemanticSyntax,
+                    $"Identity detail '{detail}' is not executable: the identity block is authoring metadata until admitted (#600).",
+                    syntax.Location));
+            }
         }
     }
 

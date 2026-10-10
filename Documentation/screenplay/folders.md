@@ -351,7 +351,7 @@ Every level of the language gets a folder, and the file inside a folder carries 
 
 ```text
 application.play                                    domain, imports, concepts, types,
-                                                    policies, personas, authentication, seed
+                                                    policies, personas, authentication, identity, seed
 Invoicing/
   Invoicing.play                                    module Invoicing - description and templates
   Invoices/
@@ -368,7 +368,7 @@ Invoicing/
 
 | File | Holds |
 |---|---|
-| `application.play` | Everything that belongs to the application as a whole rather than to any one module: `domain`, `import`, `concept`, `type`, `policy`, `persona`, `authentication` and `seed`. There is one, always, at the root. |
+| `application.play` | Everything that belongs to the application as a whole rather than to any one module: `domain`, `import`, `concept`, `type`, `policy`, `persona`, `authentication`, `identity` and `seed`. There is one, always, at the root. |
 | `<Module>/<Module>.play` | The module's own `description`, `authorize`, `screen template`, `dialog template`, `form`, and `contribute` declarations - not its features. |
 | `<Module>/…/<Feature>/<Feature>.play` | The feature's own `description`, `authorize` and `contribute` declarations - not its slices or sub features. |
 | `<Module>/…/<Feature>/<Slice>/<Slice>.play` | One slice, whole. |
@@ -398,7 +398,7 @@ Merging follows a single rule: **the documents of a folder are one document**. F
 | `on` on a module or feature | Accumulated under that owner, in file-path order. Inline behaviors are additive, so distinct `on` blocks from different files all run. A block identical to one another file already attaches is ignored with a `PLAY0340` warning, so it runs once. Expansion writes them only in the owner's own file. |
 | `uses` on a module or feature | Accumulated under that owner, in file-path order. Attaching the same behavior with the same arguments from a second file is ignored with a `PLAY0340` warning, so it runs once; the same behavior with different arguments is two distinct attachments, and both are kept. Expansion writes them only in the owner's own file. |
 | `concept`, `type`, `policy`, `persona` | Accumulated. Concepts and types share one namespace, so a `type` cannot take a `concept`'s name. A second file declaring one that already exists is an error. |
-| `domain`, `authentication` | At most one for the whole folder. A second file declaring one is an error. |
+| `domain`, `authentication`, `identity` | At most one for the whole folder. A second file declaring one is an error. |
 | `import` | Merged and de-duplicated. An import declared anywhere applies to the whole application, exactly as it does within a single document. |
 | `seed` | Accumulated, the same way multiple `seed` blocks accumulate within one document. |
 | `description` on a module or feature | The first one given wins. A second, different one is a warning - only the file that owns the folder is expected to describe it. |

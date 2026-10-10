@@ -65,6 +65,11 @@ internal sealed class ParserContext(LineReader reader, string? path = null, IScr
     internal Dictionary<int, Diagnostic> NestedNumericDirectives { get; set; } = [];
 
     /// <summary>
+    /// Gets or sets whether caller paths are checked after the whole application is assembled.
+    /// </summary>
+    internal bool DeferIdentityValidation { get; set; }
+
+    /// <summary>
     /// Creates a context for work that produces diagnostics without reading source lines, such as merging
     /// and validating the documents of a folder.
     /// </summary>

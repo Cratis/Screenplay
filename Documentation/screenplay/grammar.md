@@ -14,11 +14,11 @@ Declarations and body directives can appear in any order unless a rule below sta
 (* ============================================================ *)
 
 Document       = [ NumericPreamble ], [ DomainDecl ], { Import | ConceptDecl | TypeDecl | PolicyDecl | PurposeDecl
-               | PersonaDecl | AuthenticationDecl | TriggerDecl | ThemeDecl
+               | PersonaDecl | AuthenticationDecl | IdentityDecl | TriggerDecl | ThemeDecl
                | LayoutDecl | UiProfileDecl | BehaviorDecl | ExposureDecl | InstanceDecl
                | SystemDecl | EventSourceDecl | ExampleDecl | Module | SeedDecl } ;
 
-(* At most one domain and authentication block. Put domain first; the compiler
+(* At most one domain, authentication block and identity block. Put domain first; the compiler
    reports PLAY0004 when it follows another application declaration. *)
 
 (* A document a FileImport placed in a module or feature holds, besides the
@@ -46,6 +46,17 @@ NumericPreamble = "numbers", "exact", NL ;
 (* -------------------------------------------------------------- *)
 
 DomainDecl     = "domain", QualifiedName, NL ;
+
+(* Caller detail authoring metadata, not executable behavior. *)
+IdentityDecl   = "identity", NL, [ INDENT, { DescriptionDecl | IdentityDetail }, DEDENT ] ;
+IdentityDetail = PropertyName, TypeRef,
+                 ( "from", "claim", StringLiteral, NL
+                 | "from", "query", QualifiedName, "by", Expression, NL
+                 | NL, INDENT, ( InlineBlock | FileDirective ), DEDENT ) ;
+(* Details are unique and cannot redeclare caller built-ins. Query sources must be
+   keyed, single-result and type-compatible. Keys and authorization cannot read
+   additional identity details. Executable use of details reports PLAY0268 (#600).
+   Sourced details have no body: refreshing and caching belong to the runtime. *)
 
 (* -------------------------------------------------------------- *)
 (* Imports                                                         *)

@@ -1,6 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { validateIdentity } from '../Parsing/IdentityValidator';
+import { ParserContext } from '../Parsing/ParserContext';
+import { LineReader } from '../Parsing/LineReader';
 import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
@@ -42,6 +45,9 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     const named = new Map<string, SourceLocation>();
     const concepts = declaredInOneFile<ConceptSyntax>(applications.flatMap(application => application.concepts), 'declaration of', diagnostics, undefined, named);
     const types = declaredInOneFile<TypeSyntax>(applications.flatMap(application => application.types), 'declaration of', diagnostics, undefined, named);
+    const identities = applications.flatMap(application => application.identity == null ? [] : [application.identity]);
+    for (const extra of identities.slice(1)) diagnostics.push(error(DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles,
+        `The folder already declares an identity block in '${describe(identities[0].location.path)}' - a folder compiles to one application, which can have at most one`, extra.location));
     const domains = applications.map(application => application.domain).filter(domain => domain !== null);
     for (const extra of domains.slice(1)) {
         diagnostics.push(error(DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles,
@@ -53,6 +59,7 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
     const value: ApplicationSyntax = {
         kind: 'ApplicationSyntax',
         sourceOptions,
+        ...(identities.length === 0 ? {} : { identity: identities[0] }),
         domain: domains[0] ?? null,
         imports: firstOfEach(applications.flatMap(application => application.imports), item => item.qualifiedName),
         concepts,
@@ -71,13 +78,16 @@ export function mergeDocuments(documents: readonly CompilationResult<Application
         ...presentOnly('instanceContributions', applications.flatMap(application => application.instanceContributions ?? [])),
         location: applications[0]?.location ?? { line: 1, column: 1 },
     };
+    const identityContext = new ParserContext(new LineReader([]));
+    validateIdentity(value, identityContext);
+    diagnostics.push(...identityContext.diagnostics);
     const all = [...documents.flatMap(document => document.diagnostics), ...diagnostics];
     return { value, diagnostics: all, success: !all.some(diagnostic => diagnostic.severity === 'error') };
 }
 
 function hasDeclarations(application: ApplicationSyntax): boolean {
     if (isAuthoredDocument(application)) return true;
-    if (application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0) return true;
+    if (application.identity != null || application.domain !== null || application.concepts.length > 0 || application.types.length > 0 || application.personas.length > 0 || (application.policies?.length ?? 0) > 0 || (application.purposes?.length ?? 0) > 0 || (application.seeds?.length ?? 0) > 0 || (application.systems?.length ?? 0) > 0 || (application.eventSources?.length ?? 0) > 0 || (application.examples?.length ?? 0) > 0) return true;
     const feature = (node: FeatureSyntax): boolean => !node.isPlacement || (node.examples?.length ?? 0) > 0 || node.slices.length > 0 || node.features.some(feature);
     return application.modules.some(module => !module.isPlacement || (module.examples?.length ?? 0) > 0 || module.features.some(feature));
 }

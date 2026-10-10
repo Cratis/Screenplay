@@ -1,0 +1,197 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "identity": {
+    "kind": "IdentitySyntax",
+    "description": "What the application knows about the caller",
+    "details": [
+      {
+        "kind": "IdentityDetailSyntax",
+        "name": "department",
+        "source": {
+          "kind": "ClaimIdentitySourceSyntax",
+          "claim": "department"
+        },
+        "type": {
+          "kind": "TypeRefSyntax",
+          "isCollection": false,
+          "isOptional": true,
+          "name": "String"
+        }
+      },
+      {
+        "kind": "IdentityDetailSyntax",
+        "name": "organization",
+        "source": {
+          "kind": "QueryIdentitySourceSyntax",
+          "by": {
+            "kind": "IdentityExpressionSyntax",
+            "path": "id"
+          },
+          "query": "MyOrganization"
+        },
+        "type": {
+          "kind": "TypeRefSyntax",
+          "isCollection": false,
+          "isOptional": true,
+          "name": "Organization"
+        }
+      },
+      {
+        "kind": "IdentityDetailSyntax",
+        "name": "partner",
+        "source": {
+          "kind": "CodeIdentitySourceSyntax",
+          "code": {
+            "kind": "CodeBlockSyntax",
+            "code": "return context.Identity.HasRole(\"Partner\");",
+            "language": "csharp"
+          }
+        },
+        "type": {
+          "kind": "TypeRefSyntax",
+          "isCollection": false,
+          "isOptional": false,
+          "name": "Bool"
+        }
+      },
+      {
+        "kind": "IdentityDetailSyntax",
+        "name": "external",
+        "source": {
+          "kind": "FileIdentitySourceSyntax",
+          "file": {
+            "kind": "FileReferenceSyntax",
+            "path": "Identity/External.cs"
+          }
+        },
+        "type": {
+          "kind": "TypeRefSyntax",
+          "isCollection": false,
+          "isOptional": false,
+          "name": "String"
+        }
+      }
+    ]
+  },
+  "imports": [],
+  "modules": [
+    {
+      "kind": "ModuleSyntax",
+      "authorize": null,
+      "description": null,
+      "features": [
+        {
+          "kind": "FeatureSyntax",
+          "authorize": null,
+          "description": null,
+          "features": [],
+          "fileImports": [],
+          "isPlacement": false,
+          "name": "Membership",
+          "slices": [
+            {
+              "kind": "SliceSyntax",
+              "captures": [],
+              "commands": [],
+              "constraints": [],
+              "description": null,
+              "events": [],
+              "name": "Mine",
+              "operations": [],
+              "projections": [],
+              "queries": [
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": {
+                    "kind": "QueryParameterSyntax",
+                    "name": "userId",
+                    "type": {
+                      "kind": "TypeRefSyntax",
+                      "isCollection": false,
+                      "isOptional": false,
+                      "name": "String"
+                    }
+                  },
+                  "description": null,
+                  "filters": [],
+                  "isObservable": false,
+                  "name": "MyOrganization",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": false,
+                    "isOptional": true,
+                    "name": "Organization"
+                  },
+                  "scope": null
+                },
+                {
+                  "kind": "QuerySyntax",
+                  "authorize": null,
+                  "by": null,
+                  "description": null,
+                  "filters": [
+                    {
+                      "kind": "QueryParameterSyntax",
+                      "name": "department",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ],
+                  "isObservable": false,
+                  "name": "ListOrganizations",
+                  "returnType": {
+                    "kind": "TypeRefSyntax",
+                    "isCollection": true,
+                    "isOptional": false,
+                    "name": "Organization"
+                  },
+                  "scope": null
+                }
+              ],
+              "reactions": [],
+              "readModels": [
+                {
+                  "kind": "ReadModelSyntax",
+                  "description": null,
+                  "name": "Organization",
+                  "properties": [
+                    {
+                      "kind": "PropertySyntax",
+                      "isGenerated": false,
+                      "isIdentifier": false,
+                      "name": "name",
+                      "type": {
+                        "kind": "TypeRefSyntax",
+                        "isCollection": false,
+                        "isOptional": false,
+                        "name": "String"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "screens": [],
+              "specifications": [],
+              "type": "StateView"
+            }
+          ]
+        }
+      ],
+      "fileImports": [],
+      "isPlacement": false,
+      "name": "Organizations"
+    }
+  ],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

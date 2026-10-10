@@ -117,7 +117,7 @@ The differences are the point, not an oversight:
 
 ## Reaching the context declaratively
 
-The same values are reachable from a `produces` mapping, a `capture` mapping, a `tag`, or a query parameter — without any code. Use `$identity.<path>` to read the caller directly: it is the same value as `$context.identity.<path>`, not a separate identity. Both spellings remain supported and print as written. The built-in properties are `id`, `name`, `userName`, `isAuthenticated`, `roles` and `claims`; everything after `claims.` is an opaque claim name. A bare `$identity` without a path is invalid.
+The same values are reachable from a `produces` mapping, a `capture` mapping, a `tag`, or a query parameter — without any code. Use `$identity.<path>` to read the caller directly: it is the same value as `$context.identity.<path>`, not a separate identity. Both spellings remain supported and print as written. The built-in properties are `id`, `name`, `userName`, `isAuthenticated`, `roles` and `claims`; everything after `claims.` is an opaque claim name. A bare `$identity` without a path is invalid. A top-level [identity block](identity.md) can also declare typed caller details reachable as `$identity.<detail>` (not `$context.identity.<detail>`). These details are authoring metadata only: executable use reports `PLAY0268` until admitted (#600); the runtime `Identity` contract and built-ins are unchanged.
 
 | Path | Value |
 | --- | --- |

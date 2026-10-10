@@ -4,6 +4,20 @@
 // Shared diagnostic names, including the explicitly C#-only checks below. Catalogue membership does
 // not imply TypeScript validation support; see Documentation/screenplay/editor-diagnostics.md.
 export const DiagnosticCodes = {
+    InvalidIdentityDeclaration: 'PLAY0633',
+    DuplicateIdentity: 'PLAY0634',
+    InvalidIdentityDetail: 'PLAY0635',
+    UnknownIdentitySource: 'PLAY0636',
+    IdentityDetailWithoutSource: 'PLAY0637',
+    IdentitySourceWithBody: 'PLAY0638',
+    DuplicateIdentityDetail: 'PLAY0639',
+    BuiltInIdentityDetail: 'PLAY0640',
+    UnknownIdentityQuery: 'PLAY0641',
+    InvalidIdentityQuery: 'PLAY0642',
+    IdentityQueryWithoutKey: 'PLAY0643',
+    InvalidIdentityQueryKey: 'PLAY0644',
+    IdentityQueryAuthorizationDependency: 'PLAY0645',
+    IdentityQueryTypeMismatch: 'PLAY0646',
     // C#-only whole-model public event boundaries; membership is not TypeScript validation support.
     CommandProducesPublicEvent: 'PLAY0607',
     PublicEventRequiresOutboundTranslation: 'PLAY0608',

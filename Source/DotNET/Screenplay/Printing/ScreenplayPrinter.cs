@@ -152,6 +152,12 @@ public sealed partial class ScreenplayPrinter :
             WriteAuthentication(writer, application.Authentication);
         }
 
+        if (application.Identity is not null)
+        {
+            writer.Blank();
+            WriteIdentity(writer, application.Identity);
+        }
+
         foreach (var theme in application.Themes ?? [])
         {
             writer.Blank();

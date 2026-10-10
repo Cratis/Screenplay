@@ -100,6 +100,8 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitPersona(persona);
         }
 
+        if (syntax.Identity is not null) VisitIdentity(syntax.Identity);
+
         if (syntax.Authentication is not null)
         {
             VisitAuthentication(syntax.Authentication);

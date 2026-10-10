@@ -1,0 +1,20 @@
+identity
+  description "What the application knows about the caller"
+  department String optional from claim "department"
+  organization Organization optional from query MyOrganization by $identity.id
+  partner Bool
+    ```csharp
+    return context.Identity.HasRole("Partner");
+    ```
+  external String
+    file Identity/External.cs
+
+module Organizations
+  feature Membership
+    slice StateView Mine
+      readmodel Organization
+        name String
+      query MyOrganization => Organization optional
+        by userId String
+      query ListOrganizations => Organization[]
+        filter department String from $identity.department
