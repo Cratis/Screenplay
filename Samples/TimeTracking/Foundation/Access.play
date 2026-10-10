@@ -15,9 +15,10 @@ policy IsEngagementManager
 policy IsPayrollOfficer
   require role "PayrollOfficer"
 
-// A claim compared against a literal: payroll is only reachable from finance.
+// Human payroll callers need the finance claim. The declared automation role is
+// the trusted alternative: a system identity has no portable department claim.
 policy IsFinanceDepartment
-  require claim "department" matches "Finance"
+  require claim "department" matches "Finance" or role "PayrollAutomation"
 
 persona Consultant
   description "Records the hours worked on each engagement and submits a timesheet every week"

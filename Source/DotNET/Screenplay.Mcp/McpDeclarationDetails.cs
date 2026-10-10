@@ -196,7 +196,7 @@ static class McpDeclarationDetails
             kind = identity.Kind,
             roles = identity.Roles,
             identity.Location,
-            readiness = "Reaction command identity is syntax-only, not admitted by any supported executable model (PLAY0268, #383). Clock and application triggers have no Arc realization in Stage yet. It covers returned commands, not imperative pipeline calls inside implementation bodies.",
+            readiness = "Admitted by ESM v10 (claimed, unreleased); claim conditions evaluate to unknown for the system identity. Clock and application triggers have no Arc realization in Stage yet. It covers returned commands, not imperative pipeline calls inside implementation bodies.",
             crossBoundaryRoles = crossBoundary.ToArray()
         };
     }

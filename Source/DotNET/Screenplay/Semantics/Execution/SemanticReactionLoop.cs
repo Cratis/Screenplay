@@ -12,8 +12,9 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// <remarks>
 /// Facts are reacted to in the order they were appended. The reactions to one fact run in the order of their semantic
 /// identities, and a reaction's triggers in authored order; each produces its events, then invokes its commands. An
-/// invoked command runs through the full command pipeline with no caller: a reaction acts on its own authority, so a
-/// command that requires a caller rejects it. A rejection or an unsupported capability anywhere ends the scenario.
+/// invoked command runs through the full command pipeline with its reaction's declared system identity, or no caller
+/// when none is declared. The given caller is never forwarded. System claims are unknown; audit identity is unaffected.
+/// A rejection or an unsupported capability anywhere ends the scenario.
 /// </remarks>
 /// <param name="evaluator">The evaluator invoked commands run through.</param>
 /// <param name="plan">The capability-admitted plan.</param>
@@ -259,7 +260,8 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
         var request = SemanticExecutionRequest.Create(command.Id, commandValues, []) with
         {
             Occurrence = occurrence,
-            ReactionOrigin = reaction.Id
+            ReactionOrigin = reaction.Id,
+            RunsAs = reaction.RunsAs
         };
 
         var result = evaluator.Execute(plan, World, request);

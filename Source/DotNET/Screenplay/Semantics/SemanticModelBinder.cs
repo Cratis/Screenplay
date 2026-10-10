@@ -75,7 +75,12 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
             var languageVersion = LanguageVersion.V1;
             var semanticVersion = SemanticVersion.V1;
-            if (context.UsesPublicEvents)
+            if (context.UsesReactionIdentity)
+            {
+                languageVersion = LanguageVersion.V10;
+                semanticVersion = SemanticVersion.V10;
+            }
+            else if (context.UsesPublicEvents)
             {
                 languageVersion = LanguageVersion.V9;
                 semanticVersion = SemanticVersion.V9;

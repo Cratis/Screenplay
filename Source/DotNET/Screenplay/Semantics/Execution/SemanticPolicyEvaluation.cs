@@ -20,21 +20,27 @@ internal static class SemanticPolicyEvaluation
         SemanticCaller? caller,
         IReadOnlyDictionary<string, SemanticValue> artifact,
         SemanticValue? subject,
-        IEnumerable<SemanticProperty> properties)
+        IEnumerable<SemanticProperty> properties,
+        SemanticReactionIdentity? runsAs = null)
     {
         if (authorization is null) return new(SemanticPolicyOutcome.Allow);
+        if (runsAs is not null)
+        {
+            if (runsAs is not { Kind: SemanticReactionIdentityKind.System, Roles.IsDefault: false }) return new(SemanticPolicyOutcome.Deny);
+            caller = new(true, runsAs.Roles, []);
+        }
         if (caller is not { Roles.IsDefault: false, Claims.IsDefault: false }) return new(SemanticPolicyOutcome.Deny);
 
-        return EvaluateAuthorization(authorization, plan, caller, artifact, subject, properties);
+        return EvaluateAuthorization(authorization, plan, new(caller, runsAs is not null), artifact, subject, properties);
     }
 
     internal static bool AllowsCaller(SemanticPolicyCondition condition, SemanticCaller caller) =>
-        EvaluateCondition(condition, null, caller, new Dictionary<string, SemanticValue>(), null, []).IsTrue;
+        EvaluateCondition(condition, null, new(caller, false), new Dictionary<string, SemanticValue>(), null, []).IsTrue;
 
     static SemanticPolicyDecision EvaluateAuthorization(
         SemanticAuthorization authorization,
         SemanticExecutionPlan plan,
-        SemanticCaller caller,
+        Principal caller,
         IReadOnlyDictionary<string, SemanticValue> artifact,
         SemanticValue? subject,
         IEnumerable<SemanticProperty> properties)
@@ -71,14 +77,14 @@ internal static class SemanticPolicyEvaluation
     static SemanticPolicyTruth EvaluateCondition(
         SemanticPolicyCondition condition,
         SemanticExecutionPlan? plan,
-        SemanticCaller caller,
+        Principal caller,
         IReadOnlyDictionary<string, SemanticValue> artifact,
         SemanticValue? subject,
         IEnumerable<SemanticProperty> properties) => condition switch
     {
-        SemanticAuthenticatedCondition => new(caller.Authenticated),
+        SemanticAuthenticatedCondition => new(caller.Caller.Authenticated),
         SemanticNotPolicyCondition not => EvaluateCondition(not.Operand, plan, caller, artifact, subject, properties).Not(),
-        SemanticRoleCondition role => new(caller.Roles.Contains(role.Role, StringComparer.Ordinal)),
+        SemanticRoleCondition role => new(caller.Caller.Roles.Contains(role.Role, StringComparer.Ordinal)),
         SemanticClaimCondition claim => MatchClaim(claim, plan, caller, artifact, subject, properties),
         SemanticLogicalPolicyCondition { Operator: SemanticLogicalOperator.And or SemanticLogicalOperator.Or } logical =>
             EvaluateLogicalCondition(logical, plan, caller, artifact, subject, properties),
@@ -88,7 +94,7 @@ internal static class SemanticPolicyEvaluation
     static SemanticPolicyTruth EvaluateLogicalCondition(
         SemanticLogicalPolicyCondition logical,
         SemanticExecutionPlan? plan,
-        SemanticCaller caller,
+        Principal caller,
         IReadOnlyDictionary<string, SemanticValue> artifact,
         SemanticValue? subject,
         IEnumerable<SemanticProperty> properties)
@@ -104,8 +110,11 @@ internal static class SemanticPolicyEvaluation
         return logical.Operator == SemanticLogicalOperator.And ? left.And(right) : left.Or(right);
     }
 
-    static SemanticPolicyTruth MatchClaim(SemanticClaimCondition claim, SemanticExecutionPlan? plan, SemanticCaller caller, IReadOnlyDictionary<string, SemanticValue> artifact, SemanticValue? subject, IEnumerable<SemanticProperty> properties)
+    static SemanticPolicyTruth MatchClaim(SemanticClaimCondition claim, SemanticExecutionPlan? plan, Principal caller, IReadOnlyDictionary<string, SemanticValue> artifact, SemanticValue? subject, IEnumerable<SemanticProperty> properties)
     {
+        // Arc's system subject claims are not part of the portable identity contract. Unknown remains unknown under not.
+        if (caller.IsSystem) return SemanticPolicyTruth.Unknown;
+
         var target = claim.TargetKind switch
         {
             SemanticClaimTargetKind.Literal => claim.Value,
@@ -115,7 +124,7 @@ internal static class SemanticPolicyEvaluation
         };
         if (target is null) return SemanticPolicyTruth.Unknown;
 
-        return new(caller.Claims.Any(value =>
+        return new(caller.Caller.Claims.Any(value =>
             string.Equals(value.Type, claim.Claim, StringComparison.OrdinalIgnoreCase) &&
             string.Equals(value.Value, target, StringComparison.Ordinal)));
     }
@@ -139,4 +148,6 @@ internal static class SemanticPolicyEvaluation
     }
 
     static string? Text(SemanticValue? value) => value is SemanticTextValue text ? text.Value : null;
+
+    sealed record Principal(SemanticCaller Caller, bool IsSystem);
 }

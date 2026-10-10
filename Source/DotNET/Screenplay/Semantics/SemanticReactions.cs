@@ -119,4 +119,17 @@ public sealed record SemanticReactionTrigger(SemanticReactionTriggerKind Kind)
 /// <param name="Id">The reaction semantic identity.</param>
 /// <param name="Name">The reaction name.</param>
 /// <param name="Triggers">The triggers in authored order.</param>
-public sealed record SemanticReaction(SemanticId Id, string Name, ImmutableArray<SemanticReactionTrigger> Triggers);
+public sealed record SemanticReaction(SemanticId Id, string Name, ImmutableArray<SemanticReactionTrigger> Triggers)
+{
+    /// <summary>
+    /// Gets the authorization identity used by invoked commands, independently of audit identity.
+    /// </summary>
+    public SemanticReactionIdentity? RunsAs { get; init; }
+}
+
+/// <summary>
+/// Represents the authorization identity under which a reaction invokes commands.
+/// </summary>
+/// <param name="Kind">The identity kind.</param>
+/// <param name="Roles">The distinct, ordinally sorted roles, which may be empty.</param>
+public sealed record SemanticReactionIdentity(SemanticReactionIdentityKind Kind, ImmutableArray<string> Roles);

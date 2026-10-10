@@ -26,6 +26,14 @@ public static partial class SemanticModelCanonicalJson
         WriteId(writer, reaction.Id);
         CanonicalJson.WriteString(writer, "name", reaction.Name);
         WriteArray(writer, "triggers", reaction.Triggers, (output, trigger) => WriteReactionTrigger(output, trigger, version));
+        if (reaction.RunsAs is { } identity)
+        {
+            writer.WritePropertyName("runsAs");
+            writer.WriteStartObject();
+            writer.WriteString("kind", identity.Kind == SemanticReactionIdentityKind.System ? "system" : throw new InvalidSemanticContract("Unknown reaction identity kind."));
+            WriteStringArray(writer, "roles", identity.Roles);
+            writer.WriteEndObject();
+        }
         writer.WriteEndObject();
     }
 
