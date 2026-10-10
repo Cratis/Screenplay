@@ -14,15 +14,15 @@ sealed class McpRoot
     const int MaximumEntries = 32768;
     static readonly HashSet<string> _excludedDirectories = new(StringComparer.OrdinalIgnoreCase) { ".git", ".ai-work", ".screenplay", "bin", "obj", "node_modules" };
     readonly string _path;
+    readonly int _missingLevels;
 
-    internal McpRoot(string path)
+    // missingLevels bounds how many trailing folders may not exist yet. A path a host or user names may only miss its
+    // last folder, so a mistyped path never creates a tree; the server's own Documents/Screenplay fallback may miss two.
+    internal McpRoot(string path, int missingLevels = 1)
     {
-        _path = Path.GetFullPath(path);
-        CheckAncestors(_path);
-        if (!Directory.Exists(_path))
-        {
-            throw new McpFailure("The MCP root must be an existing directory.");
-        }
+        _path = Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
+        _missingLevels = missingLevels;
+        CheckDirectory();
     }
 
     internal string ApplicationName => new DirectoryInfo(_path).Name;
@@ -34,7 +34,7 @@ sealed class McpRoot
     {
         get
         {
-            CheckAncestors(_path);
+            CheckDirectory();
             return _path;
         }
     }
@@ -65,11 +65,17 @@ sealed class McpRoot
 
     internal bool SamePath(McpRoot other) => string.Equals(_path, other._path, StringComparison.Ordinal);
 
+    internal void Create()
+    {
+        CheckDirectory();
+        Directory.CreateDirectory(_path);
+        CheckAncestors(_path);
+    }
+
     internal ImmutableArray<WorkspaceDocument> Read(bool allowEmpty = false)
     {
-        CheckAncestors(_path);
-        var directories = new Stack<(string Path, int Depth)>();
-        directories.Push((_path, 0));
+        CheckDirectory();
+        var directories = TraversalStart();
         var documents = ImmutableArray.CreateBuilder<WorkspaceDocument>();
         var entries = 0;
         var bytes = 0;
@@ -149,7 +155,7 @@ sealed class McpRoot
 
     internal string PathFor(PortablePlayPath path, bool createParents = false)
     {
-        CheckAncestors(_path);
+        CheckDirectory();
         var segments = path.Value.Split('/');
         if (segments.Length > 17 || segments.Any(_excludedDirectories.Contains))
         {
@@ -162,26 +168,7 @@ sealed class McpRoot
             throw new McpFailure($"Path '{path}' escapes the root.");
         }
 
-        var current = _path;
-        foreach (var segment in segments[..^1])
-        {
-            current = Path.Combine(current, segment);
-            McpManagedFiles.CheckExisting(current);
-            if (Directory.Exists(current) || File.Exists(current))
-            {
-                CheckAncestors(current);
-                if (!Directory.Exists(current))
-                {
-                    throw new McpFailure($"A file blocks directory '{current}'.");
-                }
-            }
-            else if (createParents)
-            {
-                Directory.CreateDirectory(current);
-                CheckAncestors(current);
-            }
-        }
-
+        CheckParents(segments[..^1], createParents);
         McpManagedFiles.CheckExisting(full);
         if (File.Exists(full) || Directory.Exists(full))
         {
@@ -233,5 +220,80 @@ sealed class McpRoot
 
         CheckAncestors(path);
         return content;
+    }
+
+    static bool Present(string path)
+    {
+        try
+        {
+            _ = File.GetAttributes(path);
+            return true;
+        }
+        catch (Exception exception) when (exception is FileNotFoundException or DirectoryNotFoundException)
+        {
+            // Absent: the caller decides whether this level may be created later.
+            return false;
+        }
+    }
+
+    void CheckParents(string[] parents, bool create)
+    {
+        if (create)
+        {
+            Create();
+        }
+
+        var current = _path;
+        foreach (var segment in parents)
+        {
+            current = Path.Combine(current, segment);
+            McpManagedFiles.CheckExisting(current);
+            if (Directory.Exists(current) || File.Exists(current))
+            {
+                CheckAncestors(current);
+                if (!Directory.Exists(current))
+                {
+                    throw new McpFailure($"A file blocks directory '{current}'.");
+                }
+            }
+            else if (create)
+            {
+                Directory.CreateDirectory(current);
+                CheckAncestors(current);
+            }
+        }
+    }
+
+    // A root that does not exist yet reads as an empty model, so traversal starts with nothing to visit.
+    Stack<(string Path, int Depth)> TraversalStart()
+    {
+        var directories = new Stack<(string Path, int Depth)>();
+        if (Exists)
+        {
+            directories.Push((_path, 0));
+        }
+
+        return directories;
+    }
+
+    void CheckDirectory()
+    {
+        var existing = _path;
+        for (var missing = 0; !Present(existing); missing++)
+        {
+            var parent = Path.GetDirectoryName(existing);
+            if (parent is null || missing >= _missingLevels)
+            {
+                throw new McpFailure("The MCP root must be a directory, or a missing directory whose parent exists.");
+            }
+
+            existing = parent;
+        }
+
+        CheckAncestors(existing);
+        if (!Directory.Exists(existing))
+        {
+            throw new McpFailure("The MCP root must be a directory, or a missing directory whose parent exists.");
+        }
     }
 }

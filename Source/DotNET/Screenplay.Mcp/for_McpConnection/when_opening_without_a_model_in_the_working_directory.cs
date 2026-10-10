@@ -14,5 +14,5 @@ public class when_opening_without_a_model_in_the_working_directory : given.a_dyn
     void Because() => _response = Call("open-workspace");
 
     [Fact] void should_work_in_the_users_screenplay_folder() => Failed(_response).ShouldBeFalse();
-    [Fact] void should_create_the_folder() => Directory.Exists(Path.Combine(DocumentsPath, "Screenplay")).ShouldBeTrue();
+    [Fact] void should_not_create_the_folder() => Directory.Exists(Path.Combine(DocumentsPath, "Screenplay")).ShouldBeFalse();
 }

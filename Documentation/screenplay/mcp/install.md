@@ -143,8 +143,10 @@ for saved-file `PLAY0166` and `PLAY0478` proposals. The experimental
 explicitly configured process client; browser Monaco does not spawn a process.
 Registering Copilot MCP or installing a desktop plugin does not enable editor repairs.
 
-An editor host must explicitly approve an executable and one existing physical
-application root. Supported process forms are `cratis screenplay mcp ROOT`,
+An editor host must explicitly approve an executable and one physical
+application root. The server accepts an existing directory, or a missing directory
+whose parent exists; it creates the root on the first write, not on startup or reads.
+Supported process forms are `cratis screenplay mcp ROOT`,
 `screenplay mcp ROOT`, or the `server/Cratis.Screenplay.Tool` binary from a complete,
 checksum-verified unpacked native bundle (`.exe` on Windows). Launch without a shell
 and pass the approved root as one argument. Do not use a project's executable,
@@ -187,8 +189,9 @@ first time it needs one:
 2. The folder your MCP client offers through its workspace roots, when the client
    offers exactly one. That folder is the project, not necessarily the model: the
    server serves the folder already holding the project's `.play` files, else its
-   `Source` or `src` folder, else a new `Screenplay` folder in the project. Existing
-   workspaces keep their root: if `.screenplay/identities.json` or
+   `Source` or `src` folder, else a `Screenplay` folder in the project. Discovery
+   does not create that folder; the first write does. Existing workspaces keep their
+   root: if `.screenplay/identities.json` or
    `.screenplay/pending.json` exists at the offered folder or along the directory
    path down to the discovered model folder (including both ends), the server binds
    the directory holding that state. With state at several directories on that
@@ -214,12 +217,16 @@ screenplay mcp
 ```
 
 If none of these applies, the server works in `Documents/Screenplay` in your home
-folder, creating it when needed. That is where a chat in Claude or ChatGPT desktop
-puts the `.play` files, so you can open, commit or move them like any other files.
+folder, creating it on the first write. Its `Documents` parent must already exist.
+Opening, reading and proposing changes create nothing. That is where a chat in
+Claude or ChatGPT desktop puts the `.play` files, so you can open, commit or move
+them like any other files.
 Pass `path` to `open-workspace` to work somewhere else.
 
 Pass a root, as below, to restrict the connection to one model and its Git
-worktrees. `open-workspace.path` accepts the same physical directory or the
+worktrees. The root may be missing if its parent exists: reads see an empty model,
+and the first managed write creates the root and its `.screenplay` state.
+`open-workspace.path` accepts the same physical directory or the
 corresponding model folder in a registered worktree of the same repository.
 Unrelated repositories and other model folders return `RootChangeRefused`.
 Case aliases require physical directory identity; symbolic links and reparse
@@ -232,7 +239,8 @@ If the startup root is `/work/shop/.cratis/screenplay` and Git has a registered
 worktree at `/work/shop-feature`, pass either `/work/shop-feature` or
 `/work/shop-feature/.cratis/screenplay` as `open-workspace.path`. The server
 opens the same relative model folder, `.cratis/screenplay`, in that checkout;
-the folder must already exist. It verifies Git's shared directory and the
+the folder may be missing if its parent exists and is created on the first write.
+It verifies Git's shared directory and the
 worktree registration's back-pointer, not a common path prefix. The main
 checkout is also available when the server starts in a linked worktree.
 Submodules and checkouts created with `--separate-git-dir` cannot switch roots:
@@ -262,8 +270,9 @@ worktree's model.
 
 ## Choose one application root
 
-Create a directory for a new model, or use an existing directory containing its
-`.play` files:
+For a native server, you can name a missing model directory whose parent exists;
+it stays absent until the first write. For Docker, create the host directory before
+mounting it, or use an existing directory containing the model's `.play` files:
 
 ```bash
 mkdir specifications
@@ -511,7 +520,7 @@ See [identity state and recovery](recovery.md).
 - **`docker` not found:** verify `PATH` or configure the absolute path of the executable. Check that Docker is running with `docker info`.
 - **Server times out on first start:** the image was still downloading. Run `docker pull cratis/screenplay`, or raise the client's startup timeout; Codex uses `startup_timeout_sec`.
 - **Permission denied on apply (Linux):** add `--user "$(id -u):$(id -g)"` before the image name.
-- **Root rejected:** the path passed to `mcp` must be an existing physical directory, not a symlink or one `.play` file. With Docker that is the container path `/model`, so check the host path on the left of `-v` instead.
+- **Root rejected:** the path passed to `mcp` must be an existing physical directory, or a missing directory whose parent exists, not a symlink or one `.play` file. Links in ancestors are also rejected. With Docker that is the container path `/model`, so check the host path on the left of `-v` instead.
 - **Empty model although files exist:** the host path on the left of `-v` does not exist, or is misspelled. Docker creates a missing host directory for a `-v` mount instead of failing, so the server opens an empty folder. Check the path exists before you start the client.
 - **Missing runtime (.NET tool):** install the .NET 10 SDK and retry `screenplay --version`.
 - **Identity conflict:** retain the state file; do not bootstrap over it. Restore externally changed declaration names or paths before making an explicit refactoring proposal.

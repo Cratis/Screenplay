@@ -11,7 +11,7 @@ public static class ScreenplayMcpServer
     /// <summary>
     /// Runs one sequential MCP connection until the input reaches its end.
     /// </summary>
-    /// <param name="root">The existing physical application directory to serve (including its corresponding Git worktree roots), or null to choose a root per workspace.</param>
+    /// <param name="root">The physical application directory to serve (including its corresponding Git worktree roots): an existing directory, or a missing one whose parent exists; created on the first write. Null chooses a root per workspace.</param>
     /// <param name="input">The reader supplying newline-delimited JSON-RPC requests.</param>
     /// <param name="output">The writer receiving only JSON-RPC responses, flushed after each response.</param>
     /// <exception cref="McpFailure">The root is rejected or a request exceeds the size limit.</exception>

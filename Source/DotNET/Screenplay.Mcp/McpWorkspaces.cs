@@ -332,7 +332,7 @@ internal sealed partial class McpWorkspaces
     {
         var project = RootFromClientUri(uri);
         _ = StateAt(project.DirectoryPath);
-        var discovered = McpModelLocation.Project(project.DirectoryPath, createFallback: false);
+        var discovered = McpModelLocation.Project(project.DirectoryPath);
         var paths = new List<string>();
         for (var directory = discovered; directory is not null; directory = Path.GetDirectoryName(directory))
         {
@@ -349,12 +349,6 @@ internal sealed partial class McpWorkspaces
         var stateRoots = states.Where(entry => entry.State.HasState).Select(entry => entry.Path).ToImmutableArray();
         var pendingRoots = states.Where(entry => entry.State.HasJournal).Select(entry => entry.Path).ToImmutableArray();
         var selectedPath = stateRoots.IsEmpty ? discovered : stateRoots[0];
-        if (stateRoots.IsEmpty)
-        {
-            McpManagedFiles.CheckExisting(selectedPath);
-            Directory.CreateDirectory(selectedPath);
-        }
-
         var selected = new McpRoot(selectedPath);
         _discoveredRootPaths = [.. paths];
         _rootBindingConflict = stateRoots.Length < 2 ? null : new(selected.DirectoryPath, stateRoots, pendingRoots);
@@ -486,7 +480,7 @@ internal sealed partial class McpWorkspaces
         }
 
         // No project and no model here: work in the user's own Screenplay folder, so a chat host with no workspace still works.
-        return new McpRoot(McpModelLocation.User(DocumentsDirectoryHint));
+        return new McpRoot(McpModelLocation.User(DocumentsDirectoryHint), missingLevels: 2);
     }
 
     IMcpProposal Proposal(JsonElement arguments)

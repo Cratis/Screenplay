@@ -15,12 +15,11 @@ static class McpModelLocation
     static readonly HashSet<string> _skipped = new(StringComparer.OrdinalIgnoreCase) { "node_modules", "bin", "obj", "artifacts", "dist", "out", "packages" };
 
     /// <summary>
-    /// Finds the model inside a project: the folder holding its .play files, else Source or src, else a new Screenplay folder.
+    /// Finds the model inside a project: the folder holding its .play files, else Source or src, else a Screenplay folder.
     /// </summary>
     /// <param name="project">The project directory.</param>
-    /// <param name="createFallback">Whether to create the fallback folder when no existing model or source folder is found.</param>
-    /// <returns>The directory to serve, which may not exist when fallback creation is disabled.</returns>
-    internal static string Project(string project, bool createFallback = true)
+    /// <returns>The directory to serve, without creating it.</returns>
+    internal static string Project(string project)
     {
         if (Existing(project) is { } existing)
         {
@@ -37,26 +36,16 @@ static class McpModelLocation
             }
         }
 
-        var created = Path.Combine(project, ProjectFallback);
-        if (createFallback)
-        {
-            Directory.CreateDirectory(created);
-        }
-
-        return created;
+        return Path.Combine(project, ProjectFallback);
     }
 
     /// <summary>
-    /// Gets the per-user model folder, creating it: Documents/Screenplay.
+    /// Gets the per-user model folder without creating it: Documents/Screenplay.
     /// </summary>
     /// <param name="documents">The Documents directory, or null for the current user's.</param>
-    /// <returns>The existing directory to serve.</returns>
-    internal static string User(string? documents)
-    {
-        var folder = Path.Combine(documents ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Documents"), ProjectFallback);
-        Directory.CreateDirectory(folder);
-        return folder;
-    }
+    /// <returns>The directory to serve, which may not exist yet.</returns>
+    internal static string User(string? documents) =>
+        Path.Combine(documents ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Documents"), ProjectFallback);
 
     static string? Existing(string project)
     {

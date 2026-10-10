@@ -12,8 +12,16 @@ internal static partial class McpDirectoryIdentity
 {
     internal static bool Same(McpRoot approved, McpRoot requested)
     {
-        var before = Read(approved.DirectoryPath);
-        var candidate = Read(requested.DirectoryPath);
+        var approvedPath = approved.DirectoryPath;
+        var requestedPath = requested.DirectoryPath;
+        if (!approved.Exists || !requested.Exists)
+        {
+            // A missing directory has no physical identity; only its exact admitted path can match.
+            return !approved.Exists && !requested.Exists && approved.SamePath(requested);
+        }
+
+        var before = Read(approvedPath);
+        var candidate = Read(requestedPath);
         McpRoot.CheckAncestors(approved.DirectoryPath);
         McpRoot.CheckAncestors(requested.DirectoryPath);
         return before == candidate;

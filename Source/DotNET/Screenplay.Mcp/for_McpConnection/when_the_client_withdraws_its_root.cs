@@ -25,5 +25,6 @@ public class when_the_client_withdraws_its_root : given.a_dynamic_connection
     }
 
     [Fact] void should_unbind_the_workspace() => Tools.ClientDerivedRootPath.ShouldBeNull();
-    [Fact] void should_fall_back_to_the_users_screenplay_folder() => Directory.Exists(Path.Combine(DocumentsPath, "Screenplay")).ShouldBeTrue();
+    [Fact] void should_read_the_empty_fallback() => Failed(_response).ShouldBeFalse();
+    [Fact] void should_not_create_the_users_screenplay_folder() => Directory.Exists(Path.Combine(DocumentsPath, "Screenplay")).ShouldBeFalse();
 }
