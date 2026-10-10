@@ -2670,7 +2670,7 @@ module Invoicing
           for invoiceId
           installments = plan.installments
           firstDueDate = plan.firstDueDate
-          requestedBy  = $context.identity.userName
+          requestedBy  = $identity.userName
 
       event PaymentPlanRequested
         installments Int

@@ -117,7 +117,7 @@ The differences are the point, not an oversight:
 
 ## Reaching the context declaratively
 
-The same values are reachable from a `produces` mapping, a `capture` mapping, a `tag`, or a query parameter — without any code:
+The same values are reachable from a `produces` mapping, a `capture` mapping, a `tag`, or a query parameter — without any code. Use `$identity.<path>` to read the caller directly: it is the same value as `$context.identity.<path>`, not a separate identity. Both spellings remain supported and print as written. The built-in properties are `id`, `name`, `userName`, `isAuthenticated`, `roles` and `claims`; everything after `claims.` is an opaque claim name. A bare `$identity` without a path is invalid.
 
 | Path | Value |
 | --- | --- |
@@ -129,12 +129,12 @@ The same values are reachable from a `produces` mapping, a `capture` mapping, a 
 | `$context.causedBy.name` | The display name of the calling identity. |
 | `$context.causedBy.userName` | The user name of the calling identity. |
 | `$context.causation.type` | What caused this — a command, a reactor, a schedule. |
-| `$context.identity.id` | The caller's identifier from the auth token. |
-| `$context.identity.name` | The caller's display name. |
-| `$context.identity.userName` | The caller's user name. |
-| `$context.identity.isAuthenticated` | Whether the caller is authenticated. |
-| `$context.identity.roles` | The roles the caller holds. |
-| `$context.identity.claims.<name>` | The value of a claim the caller carries. |
+| `$identity.id` or `$context.identity.id` | The caller's identifier from the auth token. |
+| `$identity.name` or `$context.identity.name` | The caller's display name. |
+| `$identity.userName` or `$context.identity.userName` | The caller's user name. |
+| `$identity.isAuthenticated` or `$context.identity.isAuthenticated` | Whether the caller is authenticated. |
+| `$identity.roles` or `$context.identity.roles` | The roles the caller holds. |
+| `$identity.claims.<name>` or `$context.identity.claims.<name>` | The value of a claim the caller carries. |
 
 ```screenplay
 produces InvoiceRegistered
@@ -142,10 +142,10 @@ produces InvoiceRegistered
   registeredAt  = $context.occurred
   registeredFor = $context.tenant
   registeredBy  = $context.causedBy.subject
-  department    = $context.identity.claims.department
+  department    = $identity.claims.department
 ```
 
-In ESM v2 `produces` mappings, the portable subset is `$context.occurred`, `$context.identity.id` / `.name` / `.userName`, and the equivalent `$context.causedBy.subject` / `.name` / `.userName`. The execution request supplies the occurrence time and audit identity; `occurred` is the event occurrence time, not a guaranteed append timestamp. `identity.id` maps to the event context's `causedBy.subject`. This is separate from `$eventSourceId`, which is supplied by the fact's typed event-source context. The target property must have the matching scalar type (`DateTime` for `occurred`, `String` or `Uuid` for audit identity). Without request occurrence data, reference execution rejects a command that reads these paths.
+In ESM v2 `produces` mappings, the portable subset is `$context.occurred`, `$identity.id` / `.name` / `.userName` (or `$context.identity.id` / `.name` / `.userName`), and the equivalent `$context.causedBy.subject` / `.name` / `.userName`. The two identity spellings bind to identical executable model bytes; roles, authentication state and claims have no portable scalar mapping. The execution request supplies the occurrence time and audit identity; `occurred` is the event occurrence time, not a guaranteed append timestamp. `identity.id` maps to the event context's `causedBy.subject`. This is separate from `$eventSourceId`, which is supplied by the fact's typed event-source context. The target property must have the matching scalar type (`DateTime` for `occurred`, `String` or `Uuid` for audit identity). Without request occurrence data, reference execution rejects a command that reads these paths.
 
 Other paths may still be available to code and to other language surfaces, but cannot bind as a portable `produces` mapping. `identity.roles` and `identity.claims.<name>` are collections or unbounded; `causation.<anything>` is not addressable on Chronicle's collection-valued causation. `$context.tenant` is a tenant ID, not Chronicle's event namespace, and the language does not name a `$context.correlation` value. These cases report `PLAY0268` rather than guessing a mapping. A path outside the documented language catalog remains a syntax-level **warning**; admission to ESM is a separate decision.
 

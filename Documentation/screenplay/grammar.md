@@ -789,6 +789,7 @@ PropertyMapping = [ "@" ], Ident, "=", MappingSource, NL ;
 
 MappingSource  = Ident                         (* command property   *)
                | ContextPath
+               | IdentityPath
                | "$env.", Ident
                | "$strings.", Path
                | StringLiteral
@@ -812,6 +813,10 @@ JSONString      = (* double-quoted JSON string, including escaped characters *) 
    "identity.claims." is the name of a claim and is not checked.             *)
 
 ContextPath    = "$context.", ContextRoot, { ".", Ident } ;
+
+(* The caller root is equivalent to $context.identity; claim suffixes are opaque.
+   Unknown properties warn with PLAY0155; a path is required. *)
+IdentityPath   = "$identity.", IdentityProp, { ".", Ident } ;
 
 ContextRoot    = "command" | "arguments" | "tenant" | "causedBy"
                | "causation" | "occurred" | "identity" ;
