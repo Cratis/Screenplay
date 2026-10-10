@@ -63,8 +63,6 @@ static class McpToolSchemas
 
         if (tool.Name == "semantic-diff")
         {
-            properties["before"] = RevisionSource();
-            properties["after"] = RevisionSource();
             schema["allOf"] = new JsonArray(SourceSelection("before"), SourceSelection("after"));
             properties["beforeWorkspaceJson"]!["description"] = "Complete canonical UTF-8 export-workspace JSON for the baseline, decoded and reassembled from export pages; not a Git ref or path.";
             properties["afterWorkspaceJson"]!["description"] = "Complete canonical UTF-8 export-workspace JSON for the candidate, with the same application identity; not a Git ref or path.";
@@ -76,6 +74,7 @@ static class McpToolSchemas
 
     internal static JsonObject Argument(string tool, string property) => property switch
     {
+        "before" or "after" when tool == "semantic-diff" => RevisionSource(),
         "includeTestOnly" or "includeContent" or "eventNeverPersisted" or "pinRepairEvidence" => new() { ["type"] = "boolean", ["default"] = false },
         "descendants" => new() { ["type"] = "boolean", ["default"] = tool != "dependencies" },
         "line" when tool == "propose-repair" => new() { ["type"] = "integer", ["minimum"] = 1 },
