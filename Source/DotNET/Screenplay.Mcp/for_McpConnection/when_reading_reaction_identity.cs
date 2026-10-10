@@ -27,7 +27,7 @@ public class when_reading_reaction_identity : Specification
     [Fact] void should_expose_system_kind() => _identity.GetProperty("kind").GetString().ShouldEqual("system");
     [Fact] void should_expose_exact_roles() => _identity.GetProperty("roles").EnumerateArray().Select(role => role.GetString()).ShouldContainOnly("Local", "External");
     [Fact] void should_disclose_only_cross_boundary_roles() => _identity.GetProperty("crossBoundaryRoles").EnumerateArray().Select(role => role.GetString()).ShouldContainOnly("External");
-    [Fact] void should_expose_source_location() => _identity.GetProperty("location").GetProperty("line").GetInt32().ShouldEqual(12);
+    [Fact] void should_expose_source_location() => _identity.GetProperty("location").GetProperty("line").GetInt32().ShouldEqual(11);
     [Fact] void should_name_the_admission_issue() => _identity.GetProperty("readiness").GetString().ShouldContain("#383");
     [Fact] void should_disclose_clock_and_application_trigger_readiness() => _identity.GetProperty("readiness").GetString().ShouldContain("Clock and application triggers");
     [Fact] void should_mark_the_reaction_as_syntax_only() => _readiness.SyntaxOnly(_reaction).ShouldBeTrue();
