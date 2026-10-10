@@ -149,6 +149,8 @@ concept PaymentTerms : Enum
 
 A concept can declare validation rules in an optional indented body — business rules that travel with the value everywhere it appears. The rules use the same shapes as command validation (see [Commands](commands.md)): declarative `validate` blocks and imperative `validate` blocks with a ` ```csharp ` fence. The one difference is that the rules omit the property subject — the concept's own value is implied.
 
+`matches` searches for a matching substring unless you add anchors. The `$` anchor means the very end of the input, not the position before a trailing newline: `matches "^[A-Z]{3}$"` accepts `ABC` but rejects `ABC\n`. Escaped `\$` and `$` inside a character class stay literal. The built-in `matches email` rule also rejects a trailing newline.
+
 ````screenplay
 concept EmailAddress : String pii
   validate
