@@ -6,6 +6,7 @@ import { parse, parseForAuthoring } from '../ScreenplayCompiler';
 import { mergeDocuments } from '../Files/PlayFolderMerge';
 import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
 import { SyntaxNode } from '../Syntax/SyntaxNode';
+import { ExpressionSyntax } from '../Syntax/Expressions';
 
 const declaration = ['identity', '  department String optional from claim "department"', '  partner Bool', '    ```csharp', '    return context.Identity.HasRole("Partner");', '    ```', '  external String', '    file Identity/External.cs'].join('\n');
 
@@ -41,6 +42,22 @@ describe('when parsing identity metadata', () => {
         const policy = parseForAuthoring('policy P\n  require claim "x" matches $identity.department', 'policy.play', [], false);
         const metadata = parseForAuthoring(declaration, 'application.play', [], false);
         mergeDocuments([policy, metadata]).diagnostics.should.deep.equal([]);
+    });
+
+    it('should inspect nested expression kinds after merging physical files', () => {
+        const policy = parseForAuthoring('policy P\n  require claim "x" matches id', 'policy.play', [], false);
+        const location = { line: 2, column: 3, path: 'policy.play' };
+        const expression: ExpressionSyntax = { kind: 'ListExpressionSyntax', location, items: [
+            { kind: 'IdentityExpressionSyntax', path: 'department', location },
+            { kind: 'ObjectExpressionSyntax', location, members: [{ kind: 'ObjectMemberSyntax', name: 'nested', location, value: { kind: 'IdentityExpressionSyntax', path: 'missingObject', location } }] },
+            { kind: 'TemplateExpressionSyntax', location, parts: [{ kind: 'TemplateInterpolationSyntax', location, expression: { kind: 'IdentityExpressionSyntax', path: 'missingTemplate', location } }] },
+        ] };
+        const original = policy.value.policies![0];
+        if (original.condition?.kind !== 'ClaimConditionSyntax') throw new Error('Expected the claim fixture');
+        const rewritten = { ...policy, value: { ...policy.value, policies: [{ ...original, condition: { ...original.condition, matches: expression } }] } };
+        const metadata = parseForAuthoring(declaration, 'application.play', [], false);
+        const warnings = mergeDocuments([rewritten, metadata]).diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0155');
+        warnings.map(warning => warning.message.split("'")[1]).should.deep.equal(['missingObject', 'missingTemplate']);
     });
 
     it('should reject repeated folder blocks', () => {
