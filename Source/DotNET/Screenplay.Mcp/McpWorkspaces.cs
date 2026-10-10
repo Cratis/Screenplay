@@ -64,13 +64,10 @@ internal sealed partial class McpWorkspaces
         var requestedPath = McpJson.OptionalString(arguments, "path");
         if (requestedPath is not null)
         {
-            var requestedRoot = new McpRoot(Path.GetFullPath(requestedPath, CurrentDirectoryHint ?? Environment.CurrentDirectory));
+            var requestedRoot = ResolveRequestedRoot(requestedPath);
             if (_configuredRoot is not null)
             {
-                // Check the approved root before touching an old worktree that may have been removed.
-                var resolved = McpDirectoryIdentity.Same(_configuredRoot, requestedRoot)
-                    ? _configuredRoot : McpWorktreeRoots.Resolve(_configuredRoot, requestedRoot);
-                BindRoot(resolved);
+                BindRoot(requestedRoot);
             }
             else
             {
@@ -96,7 +93,7 @@ internal sealed partial class McpWorkspaces
         }
 
         var candidate = serialized is null
-            ? state?.Open(Root) ?? OpenFromDisk(name)
+            ? state?.Open(Root) ?? OpenFromDisk(Root, name)
             : McpAttachmentContents.Refresh(Root, McpWorkspaceTransport.Restore(serialized));
         if (persisted is not null && !McpManagedFiles.Equal(persisted, McpState.Serialize(candidate)))
         {
@@ -549,19 +546,6 @@ internal sealed partial class McpWorkspaces
 
         Root.Verify(workspace);
         return workspace;
-    }
-
-    ScreenplayWorkspace OpenFromDisk(string name)
-    {
-        var documents = Root.Read(allowEmpty: true);
-        var identity = ApplicationIdentity.Create(name);
-        if (documents.IsEmpty)
-        {
-            return ScreenplayWorkspace.CreateEmpty(identity, name);
-        }
-
-        var loaded = McpAttachmentContents.Load(Root, documents);
-        return ScreenplayWorkspace.Create(identity, name, documents, SemanticIdentityCatalog.Empty(identity), loaded.Contents, loaded.Diagnostics);
     }
 
     ScreenplayWorkspace Current()

@@ -208,7 +208,7 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `merged-document` | `view`: source, syntax or both | Canonical merged byte pages or explicitly requested typed AST |
 | `recommend-layout` | None | Size-admissible layout choices and recommendation |
 | `syntax-schema` | Optional concrete `kind` | Kind list or exact typed JSON schema |
-| `semantic-diff` | Required `beforeWorkspaceJson`, `afterWorkspaceJson`; optional offset/limit/expectedSourceRevision | Paged authoring-structure comparison of two exported model revisions |
+| `semantic-diff` | Each of `before`/`after` selects active workspace, path or export; legacy `beforeWorkspaceJson`/`afterWorkspaceJson` supported; optional offset/limit/expectedSourceRevision | Paged authoring-structure comparison without rebinding the workspace |
 
 Names and kinds are case-sensitive. Logical address example:
 `Projects.Registration.RegisterProject.RegisterProject`, kind `Command`.
@@ -774,7 +774,7 @@ See [the AST API](../ast-authoring.md) and [authoring procedure](authoring-tools
 Both semantic-diff views use the structural implementation behind
 [`ModelComparison`](../model-comparison.md) in `Cratis.Screenplay`.
 The library offers typed, unpaged differences and explicit Identity or Address
-matching; MCP retains its existing identity-based JSON, revision checks and paging.
+matching; MCP retains its existing JSON shape, revision checks and paging.
 
 `read-proposal` with `view: "semantic-diff"` compares the retained disk baseline
 with the proposal, without applying it. It works without MCP Apps and does not
@@ -890,36 +890,81 @@ revisions.
 
 ## Semantic revision difference
 
-`semantic-diff` compares two complete canonical workspace exports without opening
-or replacing the active workspace, reading disk files or writing identities.
-Pass the decoded, reassembled UTF-8 JSON from `export-workspace` as the strings
-`beforeWorkspaceJson` and `afterWorkspaceJson`. These are snapshots, not Git refs,
-paths, labels or raw `.play` text. To compare committed revisions, export each
-revision from its checkout with its corresponding identity state; to compare a
-generated model with a curated model, export both workspaces instead.
+`semantic-diff` compares two model sources without replacing the active workspace,
+clearing proposals or writing source or identities. Each of `before` and `after`
+must select exactly one source form:
 
-Both exports must have the same application identity. Preserve their authoritative
-catalogs: separately generated IDs do not establish rename continuity. The tool
-never guesses a rename from similar names or edits a catalog to make it match.
+| Form | Source |
+| --- | --- |
+| `{ "workspace": "active" }` | The open workspace at its current revision, with its identities; refused if none is open |
+| `{ "path": "../main/Screenplay" }` | A read-only model folder or worktree; relative paths use the server working directory |
+| `{ "workspaceJson": "<canonical export JSON>" }` | Decoded, reassembled UTF-8 JSON from `export-workspace`, not raw `.play` text |
+
+For example, compare the active model against a worktree model folder:
+
+```json
+{
+  "before": { "workspace": "active" },
+  "after": { "path": "../main/Screenplay" },
+  "limit": 50
+}
+```
+
+An export can replace either side. This illustrative argument shape assumes
+`<canonical export JSON>` is replaced with the complete export string:
+
+```json
+{
+  "before": { "path": "Screenplay" },
+  "after": { "workspaceJson": "<canonical export JSON>" }
+}
+```
+
+The legacy `beforeWorkspaceJson` and `afterWorkspaceJson` strings still work,
+including alongside the other side's source object. Supplying both a source
+object and its matching legacy string, no source for a side, an empty or
+multi-form object, or a workspace value other than `active` is invalid.
+
+Path admission matches `open-workspace`: a fixed-root server admits its root or
+the corresponding model folder in a registered Git worktree; a dynamic server
+admits folders under the normal root checks. Paths restore existing
+`.screenplay/identities.json` without bootstrapping metadata. With no identity
+state, declarations match by address; a missing root reads as an empty model
+without creating a directory. A pending recovery journal refuses a path source;
+active sources also respect pending or competing journals. Git refs are not
+resolved: compare a committed revision through its worktree path instead.
+
+Declarations match by Identity when both sources have persisted identities;
+otherwise they match by exact kind and address. Exports (including legacy string
+arguments) carry identities. Paths have persisted identities only when
+`.screenplay/identities.json` exists; the active workspace uses the persisted
+state loaded for its bound root. In Address mode, `limits` adds: "Declarations are
+matched by exact kind and address because at least one side has no persisted
+identities; renames and owner moves appear as a removal and an addition."
+
+Only Identity mode requires the same application identity; different application
+identities return `IncompatibleRevisions`. Preserve authoritative catalogs:
+separately generated IDs do not establish rename continuity. The tool never
+guesses a rename from similar names or edits a catalog to make it match.
 Malformed, noncanonical, incomplete, duplicated or content-revision-mismatched
 exports return a tool error with `failureKind: "UnreadableRevision"` naming the
-unreadable input. Different application identities return `IncompatibleRevisions`
-rather than an ambiguous comparison. Structurally ambiguous declarations in a
-readable snapshot retain the proposal comparison's explicit incomplete sections.
+unreadable input. Structurally ambiguous declarations in a readable snapshot
+retain the proposal comparison's explicit incomplete sections.
 
 The result reuses the [semantic proposal difference](#semantic-proposal-difference)
 fields, sections, ordering, completeness rules and exclusions. `beforeRevision`
 and `afterRevision` identify the two validated workspace revisions, including
 catalogs and exact sources. `sourceRevision` and `page.revision` instead identify
-the ordered pair with a SHA-256 comparison token. Send the same two exports and
-echo that token as `expectedSourceRevision` on every continuation. Changing either
-snapshot rejects with `StaleRevision`; missing continuation pins are invalid
-arguments. No retained proposal or MCP Apps support is required.
+the ordered pair with a SHA-256 comparison token. Send the same source selections
+and echo that token as `expectedSourceRevision` on every continuation. Both sides
+reload on every page: an active-workspace revision change, path disk change or
+changed export rejects continuation with `StaleRevision`. Missing continuation
+pins are invalid arguments. No retained proposal or MCP Apps support is required.
 
 Pages use `offset`, `limit` (default `50`, range `1`–`200`) and the same 192 KiB
 serialized-item budget; follow `nextOffset` rather than assuming a full count
-page. Both exports must fit the ordinary request envelope together, and each is
-subject to the existing workspace/source admission bounds. This tool does not
+page. Inline exports must fit the ordinary request envelope together; every
+source is subject to the existing workspace/source admission bounds. This tool does not
 resolve Git refs directly or provide a chunked snapshot-upload protocol.
 
 As with proposal review, this is not an equivalence or execution verdict. Opaque

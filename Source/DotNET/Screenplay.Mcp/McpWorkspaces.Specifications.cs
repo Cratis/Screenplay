@@ -13,7 +13,7 @@ internal sealed partial class McpWorkspaces
         var persisted = new McpManagedFiles(Root).Read(McpState.FileName);
         var workspace = _workspace is not null ? Current() : persisted switch
         {
-            null => OpenFromDisk(Root.ApplicationName),
+            null => OpenFromDisk(Root, Root.ApplicationName),
             _ => McpState.Deserialize(persisted).Open(Root)
         };
         Root.Verify(workspace);

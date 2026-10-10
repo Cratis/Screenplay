@@ -19989,11 +19989,12 @@
     },
     {
       "name": "semantic-diff",
-      "requiredParameters": [
-        "afterWorkspaceJson",
-        "beforeWorkspaceJson"
-      ],
+      "requiredParameters": [],
       "optionalParameters": [
+        "after",
+        "afterWorkspaceJson",
+        "before",
+        "beforeWorkspaceJson",
         "expectedSourceRevision",
         "limit",
         "offset"
@@ -20001,6 +20002,80 @@
       "inputSchema": {
         "type": "object",
         "properties": {
+          "before": {
+            "type": "object",
+            "properties": {
+              "workspace": {
+                "type": "string",
+                "enum": [
+                  "active"
+                ]
+              },
+              "path": {
+                "type": "string"
+              },
+              "workspaceJson": {
+                "type": "string"
+              }
+            },
+            "required": [],
+            "additionalProperties": false,
+            "description": "Select exactly one source: the open workspace, a read-only model folder/worktree path admitted like open-workspace, or a complete canonical export. Relative paths use the server working directory; Git refs are not resolved.",
+            "oneOf": [
+              {
+                "required": [
+                  "workspace"
+                ]
+              },
+              {
+                "required": [
+                  "path"
+                ]
+              },
+              {
+                "required": [
+                  "workspaceJson"
+                ]
+              }
+            ]
+          },
+          "after": {
+            "type": "object",
+            "properties": {
+              "workspace": {
+                "type": "string",
+                "enum": [
+                  "active"
+                ]
+              },
+              "path": {
+                "type": "string"
+              },
+              "workspaceJson": {
+                "type": "string"
+              }
+            },
+            "required": [],
+            "additionalProperties": false,
+            "description": "Select exactly one source: the open workspace, a read-only model folder/worktree path admitted like open-workspace, or a complete canonical export. Relative paths use the server working directory; Git refs are not resolved.",
+            "oneOf": [
+              {
+                "required": [
+                  "workspace"
+                ]
+              },
+              {
+                "required": [
+                  "path"
+                ]
+              },
+              {
+                "required": [
+                  "workspaceJson"
+                ]
+              }
+            ]
+          },
           "beforeWorkspaceJson": {
             "type": "string",
             "description": "Complete canonical UTF-8 export-workspace JSON for the baseline, decoded and reassembled from export pages; not a Git ref or path."
@@ -20020,14 +20095,41 @@
           },
           "expectedSourceRevision": {
             "type": "string",
-            "description": "Echo the ordered-pair sourceRevision on continuation. Both snapshot revisions are pinned, including catalogs and exact source."
+            "description": "Echo the ordered-pair sourceRevision on continuation. Both source revisions are pinned, including catalogs and exact source; sources reload on each page and a change refuses continuation as stale."
           }
         },
-        "required": [
-          "beforeWorkspaceJson",
-          "afterWorkspaceJson"
-        ],
-        "additionalProperties": false
+        "required": [],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "oneOf": [
+              {
+                "required": [
+                  "before"
+                ]
+              },
+              {
+                "required": [
+                  "beforeWorkspaceJson"
+                ]
+              }
+            ]
+          },
+          {
+            "oneOf": [
+              {
+                "required": [
+                  "after"
+                ]
+              },
+              {
+                "required": [
+                  "afterWorkspaceJson"
+                ]
+              }
+            ]
+          }
+        ]
       }
     },
     {

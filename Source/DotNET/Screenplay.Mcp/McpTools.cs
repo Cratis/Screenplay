@@ -54,7 +54,7 @@ sealed class McpTools
             return name switch
             {
                 "repair-capabilities" => McpRepairCapabilities.Read(),
-                "semantic-diff" => McpRevisionDiff.Read(arguments),
+                "semantic-diff" => McpRevisionDiff.Read(arguments, _workspaces),
                 "syntax-schema" => Schema(arguments),
                 "open-workspace" => _workspaces.Open(arguments),
                 "run-specifications" => _workspaces.RunSpecifications(arguments),
