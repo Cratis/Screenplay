@@ -82,6 +82,7 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     const merged = mergeDocuments(parsed);
     const context = new ParserContext(new LineReader([]), undefined, languages);
     if (merged.value.sourceOptions !== undefined) context.sourceOptions = merged.value.sourceOptions;
+    context.guardedInteractions.push(...parsed.flatMap(document => document.guardedInteractions));
     validateSpecificationCases(merged.value, context);
     const effective = expandSpecificationExamples(merged.value);
     validateEventSources(merged.value, context);

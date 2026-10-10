@@ -12,6 +12,7 @@ import { DeclaredDependencies } from './Dependencies/DeclaredDependencies';
 import { documentPlacement, PlayPlacement } from './Files/PlayPlacement';
 import { DiscoveredImport, discoverImports as discoverImportsIn } from './Parsing/ImportDiscovery';
 import { InputUse } from './Parsing/InputUses';
+import { GuardedInteractionBinding, interactionAncestry } from './Parsing/InteractionAlternatives';
 import { validateResponses } from './Parsing/ResponseValidator';
 import { validatePublicEventUsage } from './Parsing/PublicEventUsageValidator';
 import { sourceContext } from './Parsing/SourceOptionsParser';
@@ -65,10 +66,11 @@ export function parse(source: string, path?: string, placement: PlayPlacement = 
 }
 
 // Additive authoring view: do not widen TypeRefSyntax or the cross-compiler SyntaxJson projection.
-export function parseForAuthoring(source: string, path?: string, placement: PlayPlacement = documentPlacement, validateResponseContracts = true, streamCandidates?: CommandStreamCandidates, languages?: ReadonlySet<string>): CompilationResult<ApplicationSyntax> & { readonly triggerData: readonly PropertySyntax[]; readonly inputUses: readonly InputUse[] } {
+export function parseForAuthoring(source: string, path?: string, placement: PlayPlacement = documentPlacement, validateResponseContracts = true, streamCandidates?: CommandStreamCandidates, languages?: ReadonlySet<string>): CompilationResult<ApplicationSyntax> & { readonly triggerData: readonly PropertySyntax[]; readonly inputUses: readonly InputUse[]; readonly guardedInteractions: readonly GuardedInteractionBinding[] } {
     const lines = splitLines(source, false, path);
     const context = sourceContext(lines, path, languages);
     context.scope = placement;
+    context.interactionAncestors = interactionAncestry(lines);
     context.streamCandidates = streamCandidates ?? CommandStreamCandidates.capture([lines], placement, languages);
     let value = parseApplication(context, lines, placement);
     // Folder assembly validates declaration-dependent contracts once against the merged inventory.
@@ -100,6 +102,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         diagnostics: context.diagnostics,
         triggerData: context.triggerData,
         inputUses: context.inputUses,
+        guardedInteractions: context.guardedInteractions,
         success: !context.diagnostics.some(diagnostic => diagnostic.severity === 'error'),
     };
 }

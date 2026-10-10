@@ -2,20 +2,31 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { SourceLocation } from '../Diagnostics/SourceLocation';
 import { ConditionSyntax } from '../Syntax/Conditions';
 import { ScreenGuardedActionSyntax } from '../Syntax/Screens';
 import { ParserContext } from './ParserContext';
 
 const maximumDisjuncts = 64;
 
-// Proves shadowing by comparison-set inclusion, bounding each DNF expansion to 64 disjuncts.
+export interface ShadowingAlternative {
+    readonly condition: ConditionSyntax;
+    readonly location: SourceLocation;
+    readonly message: string;
+}
+
 export function validateGuardedActionShadowing(action: ScreenGuardedActionSyntax, context: ParserContext): void {
+    validateAlternativeShadowing(action.alternatives.map(alternative => ({ ...alternative, message: `Alternative executing '${alternative.command}' is shadowed by earlier alternatives in this action` })), context);
+}
+
+// Proves shadowing by comparison-set inclusion, bounding each DNF expansion to 64 disjuncts.
+export function validateAlternativeShadowing(alternatives: readonly ShadowingAlternative[], context: ParserContext): void {
     const earlier: ReadonlySet<string>[] = [];
-    for (const alternative of action.alternatives) {
+    for (const alternative of alternatives) {
         const terms = normalize(alternative.condition);
         if (terms === null) continue;
         if (terms.length > 0 && terms.every(term => earlier.some(previous => [...previous].every(comparison => term.has(comparison))))) {
-            context.warning(DiagnosticCodes.UnreachableActionAlternative, `Alternative executing '${alternative.command}' is shadowed by earlier alternatives in this action`, alternative.location);
+            context.warning(DiagnosticCodes.UnreachableActionAlternative, alternative.message, alternative.location);
         }
         earlier.push(...terms);
     }

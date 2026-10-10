@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { SourceLocation } from '../Diagnostics/SourceLocation';
+import { ShadowingAlternative } from './GuardedActionShadowing';
 import { dotNetWhitespace, pattern } from '../Text/patterns';
 import { parseCondition } from './ConditionParser';
 import { validateCondition } from './GuardedActionParser';
@@ -9,6 +11,38 @@ import { firstWord } from './LineText';
 import { LineReader } from './LineReader';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
+
+// Authoring facts only: interaction bodies are still opaque in the serialized TS AST.
+export interface InteractionAncestor {
+    readonly keyword: string;
+    readonly location: SourceLocation;
+}
+
+export interface GuardedInteractionBinding {
+    readonly location: SourceLocation;
+    readonly ancestors: readonly InteractionAncestor[];
+    readonly alternatives: readonly ShadowingAlternative[];
+}
+
+const screenTemplate = pattern(`^screen${dotNetWhitespace}+template(?:${dotNetWhitespace}|$)`);
+
+// Capture attachment ancestry before parsing consumes opaque bodies. Fenced code is not Screenplay.
+export function interactionAncestry(lines: readonly SourceLine[]): ReadonlyMap<number, readonly InteractionAncestor[]> {
+    const result = new Map<number, readonly InteractionAncestor[]>();
+    const ancestors: SourceLine[] = [];
+    let fenced = false;
+    for (const line of lines) {
+        if (line.content.startsWith('```')) {
+            fenced = !fenced;
+            continue;
+        }
+        if (fenced || line.content.length === 0 || line.content.startsWith('//')) continue;
+        while (ancestors.length > 0 && ancestors[ancestors.length - 1].indent >= line.indent) ancestors.pop();
+        if (firstWord(line.content) === 'on') result.set(line.number, ancestors.map(ancestor => ({ keyword: screenTemplate.test(ancestor.content) ? 'screen template' : firstWord(ancestor.content), location: locationOf(ancestor) })));
+        ancestors.push(line);
+    }
+    return result;
+}
 
 const inline = pattern(`^when${dotNetWhitespace}+([^\\n]+)${dotNetWhitespace}+execute${dotNetWhitespace}+([A-Za-z_]\\w*(?:\\.\\w+)*)$`);
 const trigger = pattern(`^on${dotNetWhitespace}+([^\\n]+)$`);
@@ -28,6 +62,7 @@ export function validateInteractionBodies(context: ParserContext, lines: readonl
         const branches = children.filter(line => ['when', 'otherwise'].includes(firstWord(line.content)));
         const supported = ['click', 'double click', 'select'].includes(on[1].trim());
         const guards = children.filter(line => where.test(line.content));
+        const alternatives: ShadowingAlternative[] = [];
         let sawOtherwise = false;
         for (const branch of branches) {
             const isWhen = firstWord(branch.content) === 'when';
@@ -35,7 +70,10 @@ export function validateInteractionBodies(context: ParserContext, lines: readonl
             if (isWhen) {
                 if (sawOtherwise) context.error(DiagnosticCodes.MisplacedActionOtherwise, "A 'when' alternative must precede 'otherwise'", locationOf(branch));
                 const condition = parseCondition(context, match?.[1] ?? branch.content.slice(4).trim(), locationOf(branch), true);
-                if (condition !== null) validateCondition(context, condition);
+                if (condition !== null) {
+                    validateCondition(context, condition);
+                    alternatives.push({ condition, location: locationOf(branch), message: "This 'when' alternative is shadowed by earlier alternatives in this interaction" });
+                }
                 if (match !== null) context.error(DiagnosticCodes.InlineInteractionAlternative, "Interaction alternatives require an indented action list, not 'when <condition> execute <Command>'", locationOf(branch));
             } else {
                 if (sawOtherwise || branch.content !== 'otherwise') context.error(DiagnosticCodes.MisplacedActionOtherwise, "An interaction permits one final block-form 'otherwise'", locationOf(branch));
@@ -55,6 +93,7 @@ export function validateInteractionBodies(context: ParserContext, lines: readonl
             if (!branches.some(line => firstWord(line.content) === 'when')) context.error(DiagnosticCodes.GuardedActionWithoutAlternatives, "A guarded interaction requires at least one 'when' alternative", locationOf(header));
         }
         if (supported) for (const guard of guards) deprecateWhere(context, guard);
+        if (alternatives.length > 0) context.guardedInteractions.push({ location: locationOf(header), ancestors: context.interactionAncestors.get(header.number) ?? [], alternatives });
     }
 }
 
