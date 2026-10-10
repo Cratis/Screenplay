@@ -1,6 +1,13 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { IdentitySyntax } from './IdentitySyntax';
+import { IdentityDetailSyntax } from './IdentityDetailSyntax';
+import { IdentitySourceSyntax } from './IdentitySourceSyntax';
+import { ClaimIdentitySourceSyntax } from './ClaimIdentitySourceSyntax';
+import { QueryIdentitySourceSyntax } from './QueryIdentitySourceSyntax';
+import { CodeIdentitySourceSyntax } from './CodeIdentitySourceSyntax';
+import { FileIdentitySourceSyntax } from './FileIdentitySourceSyntax';
 import { AuthorizeSyntax, PersonaSyntax, PolicyRequirementSyntax } from './Authorization';
 import { CaptureAppendSyntax, CaptureChildrenSyntax, CaptureMapOperationSyntax, CaptureNestedSyntax, CaptureSourceSettingSyntax, CaptureSourceSyntax, CaptureSyntax } from './Captures';
 import { CommandSyntax, ValidateSyntax, ValidationRuleSyntax } from './Commands';
@@ -9,7 +16,7 @@ import { ConditionSyntax } from './Conditions';
 import { PolicyConditionSyntax, PolicySyntax } from './Policies';
 import { SeedSyntax } from './Seeds';
 import { ConceptSyntax, DomainSyntax, EventSyntax, ImportSyntax, PropertySyntax, ReadModelSyntax, TagSyntax, TypeRefSyntax, TypeSyntax } from './Declarations';
-import { ExpressionSyntax, ObjectMemberSyntax, PropertyMappingSyntax } from './Expressions';
+import { IdentityExpressionSyntax, ExpressionSyntax, ObjectMemberSyntax, PropertyMappingSyntax } from './Expressions';
 import { JoinEventSyntax, KeySyntax, MappingSyntax, ProjectionBlockSyntax, ProjectionSyntax } from './Projections';
 import { CommandStreamSyntax, EventSourceSyntax, EventStreamSyntax } from './EventSources';
 import { QueryParameterSyntax, QuerySyntax } from './Queries';
@@ -66,11 +73,38 @@ export abstract class ScreenplaySyntaxWalker {
                 });
             });
         });
+        if (syntax.identity != null) this.visitIdentity(syntax.identity);
         syntax.purposes?.forEach(node => this.visitPurpose(node));
         syntax.seeds?.forEach(node => this.visitSeed(node));
         syntax.modules.forEach(node => this.visitModule(node));
         syntax.examples?.forEach(node => this.visitSpecificationExample(node));
     }
+
+    visitIdentity(syntax: IdentitySyntax): void {
+        this.visitNode(syntax);
+        syntax.details.forEach(detail => this.visitIdentityDetail(detail));
+    }
+
+    visitIdentityDetail(syntax: IdentityDetailSyntax): void {
+        this.visitNode(syntax);
+        this.visitTypeRef(syntax.type);
+        this.visitIdentitySource(syntax.source);
+    }
+
+    visitIdentitySource(syntax: IdentitySourceSyntax): void {
+        switch (syntax.kind) {
+            case 'ClaimIdentitySourceSyntax': this.visitClaimIdentitySource(syntax); break;
+            case 'QueryIdentitySourceSyntax': this.visitQueryIdentitySource(syntax); break;
+            case 'CodeIdentitySourceSyntax': this.visitCodeIdentitySource(syntax); break;
+            case 'FileIdentitySourceSyntax': this.visitFileIdentitySource(syntax); break;
+            default: this.visitNode(syntax); break;
+        }
+    }
+
+    visitClaimIdentitySource(syntax: ClaimIdentitySourceSyntax): void { this.visitNode(syntax); }
+    visitQueryIdentitySource(syntax: QueryIdentitySourceSyntax): void { this.visitNode(syntax); this.visitExpression(syntax.by); }
+    visitCodeIdentitySource(syntax: CodeIdentitySourceSyntax): void { this.visitNode(syntax); this.visitCodeBlock(syntax.code); }
+    visitFileIdentitySource(syntax: FileIdentitySourceSyntax): void { this.visitNode(syntax); this.visitFileReference(syntax.file); }
 
     visitPurpose(syntax: PurposeSyntax): void {
         this.visitNode(syntax);
@@ -763,7 +797,10 @@ export abstract class ScreenplaySyntaxWalker {
         if (syntax.literal !== null) this.visitExpression(syntax.literal);
     }
 
+    visitIdentityExpression(syntax: IdentityExpressionSyntax): void { this.visitNode(syntax); }
+
     visitExpression(syntax: ExpressionSyntax): void {
+        if (syntax.kind === 'IdentityExpressionSyntax') { this.visitIdentityExpression(syntax); return; }
         this.visitNode(syntax);
         if (syntax.kind === 'ListExpressionSyntax') {
             syntax.items.forEach(item => this.visitExpression(item));

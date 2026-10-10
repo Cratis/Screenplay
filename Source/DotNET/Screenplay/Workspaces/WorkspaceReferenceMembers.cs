@@ -183,6 +183,7 @@ static class WorkspaceReferenceMembers
 
     static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> OtherMembers(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index) => entry.Node switch
     {
+        QueryIdentitySourceSyntax => [("query", WorkspaceReferenceDomain.Query)],
         CaseValueExpressionSyntax => [("parameter", WorkspaceReferenceDomain.SpecificationParameter)],
         PropertyMappingSyntax when entry.Parent is { } caseParent && index.Find(caseParent)?.Node is SpecificationCaseSyntax => [("property", WorkspaceReferenceDomain.SpecificationParameter)],
         DependsOnSyntax => [("target", WorkspaceReferenceDomain.Container)],
@@ -194,7 +195,7 @@ static class WorkspaceReferenceMembers
         SpecificationRedeliverySyntax => [("reaction", WorkspaceReferenceDomain.Reaction)],
         SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax => [("operation", WorkspaceReferenceDomain.Operation)],
         ObjectMemberSyntax => [("name", WorkspaceReferenceDomain.Property)],
-        TypeRefSyntax => [("name", entry.Parent is { } parent && index.Find(parent)?.Node is QuerySyntax or ScreenDataSyntax
+        TypeRefSyntax => [("name", entry.Parent is { } parent && index.Find(parent)?.Node is QuerySyntax or ScreenDataSyntax or IdentityDetailSyntax { Source: QueryIdentitySourceSyntax }
             ? WorkspaceReferenceDomain.View : WorkspaceReferenceDomain.Type)],
         CompositeKeySyntax => [("type", WorkspaceReferenceDomain.Type)],
         SpecificationExampleSyntax => [("type", WorkspaceReferenceDomain.Fixture)],

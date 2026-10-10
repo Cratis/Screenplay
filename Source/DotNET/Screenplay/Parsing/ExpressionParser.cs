@@ -131,7 +131,7 @@ internal static partial class ExpressionParser
         if (text.StartsWith("$identity.", StringComparison.Ordinal))
         {
             var path = text["$identity.".Length..];
-            WarnOnUnknownIdentityProperty(context, path.Split('.')[0], "$identity", location);
+            if (!context.DeferIdentityValidation) WarnOnUnknownIdentityProperty(context, path.Split('.')[0], "$identity", location);
             return new IdentityExpressionSyntax(path, location);
         }
 

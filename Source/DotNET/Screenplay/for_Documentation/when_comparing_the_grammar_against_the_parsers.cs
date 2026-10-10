@@ -13,6 +13,7 @@ public partial class when_comparing_the_grammar_against_the_parsers : Specificat
     static readonly IReadOnlyDictionary<string, (string Production, string Page)> _references =
         new Dictionary<string, (string, string)>(StringComparer.Ordinal)
         {
+            ["identity"] = ("IdentityDecl", "identity.md"),
             ["authentication"] = ("AuthenticationDecl", "authentication.md"),
             ["authorize"] = ("AuthorizeDecl", "policies.md"),
             ["behavior"] = ("BehaviorDecl", "interactions.md"),

@@ -10,7 +10,7 @@ import { exampleCompletions } from './example-authoring';
 import { operationCompletions } from './operation-authoring';
 import { eventSourceCompletions } from './event-source-authoring';
 import { planCompletions } from './completion-planner';
-import { contextVariableItems, producesItems, CompletionEntry } from './completion-items';
+import { contextVariableEntries, producesItems, CompletionEntry } from './completion-items';
 
 // What a host knows beyond the one model the editor holds.
 export interface CompletionOptions {
@@ -98,7 +98,7 @@ export function createCompletionProvider(monaco: Monaco, options: CompletionOpti
                         word.endColumn,
                     );
                     return {
-                        suggestions: contextVariableItems.map((entry) => ({
+                        suggestions: contextVariableEntries(symbols).map((entry) => ({
                             ...snippet(entry),
                             range: variableRange,
                         })),

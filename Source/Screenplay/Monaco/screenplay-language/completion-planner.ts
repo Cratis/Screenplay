@@ -47,7 +47,7 @@ export interface CompletionScope {
 const declaredIn = (document: readonly string[], keyword: string) => document.some(line => new RegExp(`^${keyword}\\b`).test(line));
 
 function topLevelEntries(document: readonly string[]): CompletionEntry[] {
-    return items.topLevelItems.filter(item => !(item.label === 'domain' && declaredIn(document, 'domain')) && !(item.label === 'authentication' && declaredIn(document, 'authentication')));
+    return items.topLevelItems.filter(item => !(item.label === 'domain' && declaredIn(document, 'domain')) && !(item.label === 'authentication' && declaredIn(document, 'authentication')) && !(item.label === 'identity' && declaredIn(document, 'identity')));
 }
 
 const isTemplate = (header: string | undefined) => /^(?:screen|dialog)\s+template\b/.test(header ?? '');
@@ -96,6 +96,8 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
             return scope.behaviorItems;
         case 'persona':
             return scope.personaItems;
+        case 'identity':
+            return items.identityItems;
         case 'authentication':
             return scope.authenticationItems;
         case 'seed':

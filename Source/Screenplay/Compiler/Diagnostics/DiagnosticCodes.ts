@@ -4,6 +4,20 @@
 // Shared diagnostic names, including the explicitly C#-only checks below. Catalogue membership does
 // not imply TypeScript validation support; see Documentation/screenplay/editor-diagnostics.md.
 export const DiagnosticCodes = {
+    InvalidIdentityDeclaration: 'PLAY0633',
+    DuplicateIdentity: 'PLAY0634',
+    InvalidIdentityDetail: 'PLAY0635',
+    UnknownIdentitySource: 'PLAY0636',
+    IdentityDetailWithoutSource: 'PLAY0637',
+    IdentitySourceWithBody: 'PLAY0638',
+    DuplicateIdentityDetail: 'PLAY0639',
+    BuiltInIdentityDetail: 'PLAY0640',
+    UnknownIdentityQuery: 'PLAY0641',
+    InvalidIdentityQuery: 'PLAY0642',
+    IdentityQueryWithoutKey: 'PLAY0643',
+    InvalidIdentityQueryKey: 'PLAY0644',
+    IdentityQueryAuthorizationDependency: 'PLAY0645',
+    IdentityQueryTypeMismatch: 'PLAY0646',
     // C#-only whole-model public event boundaries; membership is not TypeScript validation support.
     CommandProducesPublicEvent: 'PLAY0607',
     PublicEventRequiresOutboundTranslation: 'PLAY0608',
@@ -375,12 +389,12 @@ export const DiagnosticCodes = {
     CommandWithProducesAndHandler: 'PLAY0035',
     AbsoluteFileReference: 'PLAY0264',
     InvalidTriggerData: 'PLAY0246',
-    InvalidReadModelKey: 'PLAY0633',
-    IncompleteReadModelKey: 'PLAY0634', // C# only: scoped read-model key resolution.
-    InvalidReadModelKeyLookup: 'PLAY0635', // Shape checks shared; scoped lookup checks are C# only.
-    ProductionRouteOutsideCommand: 'PLAY0636',
-    RedundantProductionRoute: 'PLAY0637',
-    InvalidObserverFilter: 'PLAY0638',
-    ObserverFilterExcludesEveryProducer: 'PLAY0639', // C# only: statically known producer routes.
+    InvalidReadModelKey: 'PLAY0647',
+    IncompleteReadModelKey: 'PLAY0648', // C# only: scoped read-model key resolution.
+    InvalidReadModelKeyLookup: 'PLAY0649', // Shape checks shared; scoped lookup checks are C# only.
+    ProductionRouteOutsideCommand: 'PLAY0650',
+    RedundantProductionRoute: 'PLAY0651',
+    InvalidObserverFilter: 'PLAY0652',
+    ObserverFilterExcludesEveryProducer: 'PLAY0653', // C# only: statically known producer routes.
     ReadsWithChildren: 'PLAY0451',
 } as const;

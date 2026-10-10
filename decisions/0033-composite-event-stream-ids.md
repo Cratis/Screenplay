@@ -24,7 +24,7 @@ applies-to:
   - Samples/**
 ---
 
-> **2026-10-09: read-model alignment adopted.** [0052](0052-declare-read-model-keys-and-bind-lookups-by-name.md) adopts named parts for composite read-model lookups. Read-model keys remain object keys, not encoded stream-id strings. Composite executable admission is tracked in #599.
+> **2026-10-09: read-model alignment adopted.** [0053](0053-declare-read-model-keys-and-bind-lookups-by-name.md) adopts named parts for composite read-model lookups. Read-model keys remain object keys, not encoded stream-id strings. Composite executable admission is tracked in #599.
 
 ## Context
 

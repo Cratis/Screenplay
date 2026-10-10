@@ -333,6 +333,7 @@
     "eventsource",
     "example",
     "exposure",
+    "identity",
     "import",
     "instance",
     "layout",
@@ -3734,6 +3735,215 @@
           "esmVersion": 10,
           "status": "refused",
           "diagnostic": "PLAY0269",
+          "issue": null
+        }
+      ]
+    },
+    {
+      "name": "identity",
+      "parseStatus": "accepted",
+      "probes": [
+        {
+          "source": "identity\n  department String from claim \u0022department\u0022\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": null,
+          "diagnostics": [],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            },
+            {
+              "esmVersion": 10,
+              "status": "refused",
+              "diagnostic": null,
+              "issue": null
+            }
+          ]
+        },
+        {
+          "source": "identity\n  department String from claim \u0022department\u0022\nmodule M\n  feature F\n    slice StateChange S\n      event Recorded\n        value String\n      command Record\n        value String\n        produces Recorded\n          value = $identity.department\n",
+          "minimumSemanticVersion": null,
+          "diagnostic": "PLAY0268",
+          "diagnostics": [
+            {
+              "code": "PLAY0268",
+              "severity": "error"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/600"
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/600"
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/600"
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/600"
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/600"
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/600"
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/600"
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/600"
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/600"
+            },
+            {
+              "esmVersion": 10,
+              "status": "refused",
+              "diagnostic": "PLAY0268",
+              "issue": "https://github.com/Cratis/Screenplay/issues/600"
+            }
+          ]
+        }
+      ],
+      "admission": [
+        {
+          "esmVersion": 1,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 2,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 3,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 4,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 5,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 6,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 7,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
+          "status": "refused",
+          "diagnostic": null,
+          "issue": null
+        },
+        {
+          "esmVersion": 10,
+          "status": "refused",
+          "diagnostic": null,
           "issue": null
         }
       ]
@@ -14825,6 +15035,160 @@
     },
     {
       "code": "PLAY0633",
+      "name": "InvalidIdentityDeclaration",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An identity block has an invalid header.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0634",
+      "name": "DuplicateIdentity",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A document declares more than one identity block.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0635",
+      "name": "InvalidIdentityDetail",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An identity detail or its implementation is malformed.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0636",
+      "name": "UnknownIdentitySource",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An identity detail names an unknown source kind.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0637",
+      "name": "IdentityDetailWithoutSource",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An identity detail has no source.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0638",
+      "name": "IdentitySourceWithBody",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A claim or query identity source has a body.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0639",
+      "name": "DuplicateIdentityDetail",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "Identity detail names are duplicated.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0640",
+      "name": "BuiltInIdentityDetail",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An identity detail redeclares a built-in caller property.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0641",
+      "name": "UnknownIdentityQuery",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An identity source names an unknown or ambiguous query.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0642",
+      "name": "InvalidIdentityQuery",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An identity source query is not keyed or returns a collection.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0643",
+      "name": "IdentityQueryWithoutKey",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An identity query source omits its by expression.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0644",
+      "name": "InvalidIdentityQueryKey",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An identity query key depends on something other than token built-ins or literals.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0645",
+      "name": "IdentityQueryAuthorizationDependency",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An identity source query\u0027s authorization depends on additional caller details.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0646",
+      "name": "IdentityQueryTypeMismatch",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An identity detail\u0027s type does not match its query result type or nullability.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0647",
       "name": "InvalidReadModelKey",
       "severity": "error",
       "severities": [
@@ -14835,7 +15199,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0634",
+      "code": "PLAY0648",
       "name": "IncompleteReadModelKey",
       "severity": "error",
       "severities": [
@@ -14846,7 +15210,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0635",
+      "code": "PLAY0649",
       "name": "InvalidReadModelKeyLookup",
       "severity": "error",
       "severities": [
@@ -14857,7 +15221,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0636",
+      "code": "PLAY0650",
       "name": "ProductionRouteOutsideCommand",
       "severity": "error",
       "severities": [
@@ -14868,7 +15232,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0637",
+      "code": "PLAY0651",
       "name": "RedundantProductionRoute",
       "severity": "warning",
       "severities": [
@@ -14879,7 +15243,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0638",
+      "code": "PLAY0652",
       "name": "InvalidObserverFilter",
       "severity": "error",
       "severities": [
@@ -14890,7 +15254,7 @@
       "retired": false
     },
     {
-      "code": "PLAY0639",
+      "code": "PLAY0653",
       "name": "ObserverFilterExcludesEveryProducer",
       "severity": "warning",
       "severities": [

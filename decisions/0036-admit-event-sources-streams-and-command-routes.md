@@ -290,4 +290,4 @@ The decider delegated this verdict to the orchestrating agent. The choices above
 
 **2026-10-09.** ESM v8 was released in Screenplay 4.101.0 (PR #566).
 
-**2026-10-09.** [0053](0053-per-production-route-overrides.md), [0054](0054-observer-source-and-stream-filters.md) and [0055](0055-admit-production-routes-and-observer-filters-as-esm-v10.md) propose the next #302 increment: complete per-production route replacement and observer filters as ESM v10. Reaction direct-production routes, occurred-at routing, concurrency flags, constraint scopes and stream closing remain outside this increment. This note does not change the accepted v8 contract.
+**2026-10-09.** [0054](0054-per-production-route-overrides.md), [0055](0055-observer-source-and-stream-filters.md) and [0056](0056-admit-production-routes-and-observer-filters-as-esm-v10.md) propose the next #302 increment: complete per-production route replacement and observer filters as ESM v10. Reaction direct-production routes, occurred-at routing, concurrency flags, constraint scopes and stream closing remain outside this increment. This note does not change the accepted v8 contract.

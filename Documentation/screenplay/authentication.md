@@ -2,6 +2,8 @@
 
 Policies and personas describe *who may do what* — but an application also has to say *how its users sign in*. The top level `authentication` block declares the identity providers of the application, so the sign-in surface is part of the same declaration as everything else.
 
+Additional typed information about the caller belongs in the separate top-level [identity block](identity.md), not under `authentication`. Both blocks are authoring metadata, not ESM behavior.
+
 ## Syntax
 
 ```screenplay

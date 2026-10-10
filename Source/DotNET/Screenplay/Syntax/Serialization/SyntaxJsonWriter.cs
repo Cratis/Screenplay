@@ -16,6 +16,7 @@ internal static class SyntaxJsonWriter
         foreach (var member in descriptor.Members)
         {
             var value = member.Property.GetValue(node);
+            if (node is ApplicationSyntax && member.Name == "identity" && value is null) continue;
             if (node is EventSyntax or ImportSyntax && member.Name == "visibility" && Equals(value, EventVisibility.Private)) continue;
             if (node is EventSyntax or ImportSyntax && member.Name == "origin" && value is null) continue;
             if (node is SliceSyntax && member.Name == "direction" && value is null) continue;

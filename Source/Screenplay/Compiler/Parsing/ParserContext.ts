@@ -21,6 +21,7 @@ export class ParserContext {
     readonly languages: ReadonlySet<string>;
     sourceOptions: SourceOptions = legacySourceOptions;
     authoredDeclarations = false;
+    deferIdentityValidation = false;
     streamCandidates?: CommandStreamCandidates;
 
     // Structural enrichment of formerly opaque Legacy fields must not add diagnostics. Exact operands

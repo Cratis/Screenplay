@@ -26,7 +26,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // New feature vectors have their own full conformance assertions, not a pre-feature baseline.
             // Route and refusal fixtures use Legacy mode so their own admission diagnostics are not masked by #285.
-            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys") continue;
+            if (parsed.SourceOptions != SourceOptions.Legacy || name.StartsWith("source-stream", StringComparison.Ordinal) || name == "identity" || name == "declaration-descriptions" || name == "purposes" || name == "event-subject" || name == "authoring-metadata" || name == "compliance" || name == "named-rule-intent" || name == "specification-examples" || name == "persona-callers" || name == "specification-tables" || name == "guarded-actions" || name == "guarded-interactions" || name == "no-events" || name == "declared-dependencies" || name == "reaction-refusals-redelivery" || name == "specification-streams" || name == "public-events" || name == "public-events-admission" || name == "event-translations" || name == "read-model-keys") continue;
 
             // Main added route members with transport defaults. Project only those additive empty defaults
             // out of pre-route fixtures; numeric tokens and every previously modeled byte stay untouched.
@@ -42,7 +42,7 @@ public class when_freezing_legacy_source_syntax_bytes
             {
                 // Newly demonstrated classifications have their own conformance vector. Preserve the
                 // baseline for every existing concept, rather than rewriting protected historical bytes.
-                legacy = legacy with { Concepts = legacy.Concepts.Where(concept => concept.Name != "BillingApiKey" && concept.Name != "MedicalBillingNote" && concept.Name != "FraudConvictionNote") };
+                legacy = legacy with { Identity = null, Concepts = legacy.Concepts.Where(concept => concept.Name != "BillingApiKey" && concept.Name != "MedicalBillingNote" && concept.Name != "FraudConvictionNote") };
             }
 
             if (name == "invoicing" || name == "invoicing-sample" || name == "invoicing-editor-sample") legacy = WithoutSampleDependencies(legacy, name == "invoicing");

@@ -648,10 +648,10 @@ direction; `PLAY0610`, `PLAY0615`, `PLAY0618` and `PLAY0619` would move a constr
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0636` | Error | A reaction or refusal-branch production declares a `stream` route. Only command event productions can override a route. |
-| `PLAY0637` | Warning | A production repeats its command's source, stream and stream-id mappings. The typed workspace repair removes the override. |
-| `PLAY0638` | Error | An observer filter is malformed, duplicated, has children, names an unresolved or ambiguous source/stream, or a filtered reaction has a non-event trigger. |
-| `PLAY0639` | Warning | A reaction or reducer filter excludes every statically known producer's effective route. Handlers and foreign origins are unknown and suppress this C#-only warning. |
+| `PLAY0650` | Error | A reaction or refusal-branch production declares a `stream` route. Only command event productions can override a route. |
+| `PLAY0651` | Warning | A production repeats its command's source, stream and stream-id mappings. The typed workspace repair removes the override. |
+| `PLAY0652` | Error | An observer filter is malformed, duplicated, has children, names an unresolved or ambiguous source/stream, or a filtered reaction has a non-event trigger. |
+| `PLAY0653` | Warning | A reaction or reducer filter excludes every statically known producer's effective route. Handlers and foreign origins are unknown and suppress this C#-only warning. |
 
 Overrides reuse `PLAY0504` for route shape, mapping, destination type and duplicate-route errors. Protected sources reuse `PLAY0515`. Property paths remain refused at binding with `PLAY0268` (#574), and generated route inputs with `PLAY0273`.
 
@@ -674,15 +674,37 @@ These checks run on the assembled model. The source stays in the syntax tree, so
 | `PLAY0631` | Error | A screen or scoped `template` assignment uses a template whose `scopes` exclude that scope. |
 | `PLAY0632` | Error | A component comes from a package no `ui profile` declares. Only checked when at least one profile declares packages. |
 
+## Identity details
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0633` | Error | Invalid identity header; write the bare `identity` keyword. |
+| `PLAY0634` | Error | More than one identity block in a document. A second file's block uses the existing folder singular-declaration diagnostic. |
+| `PLAY0635` | Error | Invalid typed detail line or escape source; each detail has exactly one source. |
+| `PLAY0636` | Error | Unknown identity source kind; use `from claim`, `from query`, inline code or a file. |
+| `PLAY0637` | Error | Identity detail has neither a declarative source nor an implementation. |
+| `PLAY0638` | Error | A claim/query detail has a body; refresh and caching belong to the runtime. |
+| `PLAY0639` | Error | Duplicate identity detail name. |
+| `PLAY0640` | Error | Detail redeclares `id`, `name`, `userName`, `isAuthenticated`, `roles` or `claims`. |
+| `PLAY0641` | Error | Identity query source names an unknown or ambiguous query. |
+| `PLAY0642` | Error | Identity source query is unkeyed or returns a list rather than one result. |
+| `PLAY0643` | Error | Identity query source omits `by <expression>`. |
+| `PLAY0644` | Error | Identity query key reads something other than token built-ins, claims or literals. |
+| `PLAY0645` | Error | Source query's authorization depends on additional identity details. |
+| `PLAY0646` | Error | Query result type or optionality does not match the declared detail type. |
+
+Unknown detail types reuse `PLAY0165`; unknown caller properties reuse `PLAY0155`. Executable detail reads
+report `PLAY0268`, naming the detail and its pending admission (#600). See [identity details](identity.md).
+
 None of these has an automatic repair: each is a composition decision for the author.
 
 ### Read-model keys
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0633` | Error | `key` is marked outside a top-level read-model property, combined with another modifier, or has an optional or collection type. A part of a multipart key cannot have a composite type. |
-| `PLAY0634` | Error | A single-instance lookup omits key parts. The message names the missing parts. Command reads have a typed repair when every missing part has one same-named compatible source. Queries and trigger reads are not repaired. Scalar screen, form and navigation lookups cannot supply composite keys. |
-| `PLAY0635` | Error | A `by` block has fewer than two distinct parts, names an unknown part, uses the wrong key shape or supplies an incompatible, optional, collection or literal source. A single-instance query must agree with the declared key. No automatic repair is offered. |
+| `PLAY0647` | Error | `key` is marked outside a top-level read-model property, combined with another modifier, or has an optional or collection type. A part of a multipart key cannot have a composite type. |
+| `PLAY0648` | Error | A single-instance lookup omits key parts. The message names the missing parts. Command reads have a typed repair when every missing part has one same-named compatible source. Queries and trigger reads are not repaired. Scalar screen, form and navigation lookups cannot supply composite keys. |
+| `PLAY0649` | Error | A `by` block has fewer than two distinct parts, names an unknown part, uses the wrong key shape or supplies an incompatible, optional, collection or literal source. A single-instance query must agree with the declared key. No automatic repair is offered. |
 
 An explicit single `key` binds byte-identically to an inferred identifier. Composite keys and by-block queries are authoring-only: binding reports `PLAY0268` citing [#599](https://github.com/Cratis/Screenplay/issues/599).
 

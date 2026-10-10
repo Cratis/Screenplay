@@ -1,5 +1,5 @@
 ---
-id: 0054
+id: 0055
 title: Filter reactions and reducers by event source and stream
 status: proposed
 stage: none
@@ -20,7 +20,7 @@ applies-to:
 
 A reaction or reducer may declare one leaf `from Source` or `from Source.Stream`. It selects facts by the source's stored name and, when supplied, its source-owned stream's stored name. Stream ids are never filtered. An unrouted fact never matches. Observers without a filter retain their existing behavior.
 
-A filtered reaction has only `when Event` triggers on declared events. Invalid, duplicate, unresolved, ambiguous or child-bearing filters, including non-event triggers, use PLAY0638. The C# compiler warns with PLAY0639 when every statically known producer lies outside the filter. Effective command-production routes are known; reactions, captures and public publication are unrouted. Handler commands and foreign origins are unknown and suppress the warning.
+A filtered reaction has only `when Event` triggers on declared events. Invalid, duplicate, unresolved, ambiguous or child-bearing filters, including non-event triggers, use PLAY0652. The C# compiler warns with PLAY0653 when every statically known producer lies outside the filter. Effective command-production routes are known; reactions, captures and public publication are unrouted. Handler commands and foreign origins are unknown and suppress the warning.
 
 The printer places the filter after description and documentation, before conditions and triggers or rules. Rename repairs source and stream references. A filtered opaque reducer is Unsupported when a matching observed fact reaches it, whether the fact comes from `given` history or the `when` step. Matching history cannot prove that reducer-built state is absent without executing the opaque transition.
 
@@ -46,4 +46,4 @@ Holds until superseded. Only reactions and reducers gain the filter. Reaction id
 
 ## Related
 
-Builds on 0036. Admission is recorded in [0055](0055-admit-production-routes-and-observer-filters-as-esm-v10.md).
+Builds on 0036. Admission is recorded in [0056](0056-admit-production-routes-and-observer-filters-as-esm-v10.md).

@@ -1,5 +1,5 @@
 ---
-id: 0053
+id: 0054
 title: Replace the command route per event production
 status: proposed
 stage: none
@@ -20,7 +20,7 @@ applies-to:
 
 A command event production may declare one `stream Source.Stream` with the command route's scalar or composite `streamId` mappings. It replaces the source, stream and stream id together. Other productions keep the command route. An override does not supply `for`, and its destination type must match its source's identifier type. The command route's destination check excludes overridden productions.
 
-Plain, conditional and inline event productions accept this form. A line containing `=` remains payload, including a payload named `stream`. Reaction and refusal-branch productions refuse it with PLAY0636. Duplicate or invalid routes use PLAY0504. A route identical to the command route warns with PLAY0637 and has a typed removal repair.
+Plain, conditional and inline event productions accept this form. A line containing `=` remains payload, including a payload named `stream`. Reaction and refusal-branch productions refuse it with PLAY0650. Duplicate or invalid routes use PLAY0504. A route identical to the command route warns with PLAY0651 and has a typed removal repair.
 
 All routes resolve eagerly after validation and requirements, before generation. A formatting failure in a skipped production rejects the command atomically as Contract. Mapping inputs follow 0036: direct required non-generated scalar command inputs or literals. Paths remain refused with PLAY0268 (#574); generated inputs use PLAY0273.
 
@@ -49,4 +49,4 @@ Holds until superseded. This increment covers production classification and rout
 
 ## Related
 
-Builds on 0036 and 0033. Admission is recorded in [0055](0055-admit-production-routes-and-observer-filters-as-esm-v10.md).
+Builds on 0036 and 0033. Admission is recorded in [0056](0056-admit-production-routes-and-observer-filters-as-esm-v10.md).

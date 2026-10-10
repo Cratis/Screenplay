@@ -23,6 +23,12 @@ sealed class McpReadOwnership : ScreenplaySyntaxWalker
     }
 
     /// <inheritdoc/>
+    public override void VisitIdentity(IdentitySyntax syntax) => Owned(syntax, () => base.VisitIdentity(syntax));
+
+    /// <inheritdoc/>
+    public override void VisitIdentityDetail(IdentityDetailSyntax syntax) => Owned(syntax, () => base.VisitIdentityDetail(syntax));
+
+    /// <inheritdoc/>
     public override void VisitModule(ModuleSyntax syntax) => Owned(syntax, () => base.VisitModule(syntax));
 
     /// <inheritdoc/>

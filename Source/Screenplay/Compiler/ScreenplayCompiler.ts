@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { validateIdentity } from './Parsing/IdentityValidator';
 import { Diagnostic } from './Diagnostics/Diagnostic';
 import { validateSpecificationCases } from './Parsing/SpecificationCaseValidator';
 import { expandSpecificationExamples } from './Parsing/SpecificationCommandExamples';
@@ -73,6 +74,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
     let value = parseApplication(context, lines, placement);
     // Folder assembly validates declaration-dependent contracts once against the merged inventory.
     if (validateResponseContracts) {
+        validateIdentity(value, context);
         validatePurposes(value, context);
         validateInlineEvents(value, context);
         validateConstraintProperties(value, context);

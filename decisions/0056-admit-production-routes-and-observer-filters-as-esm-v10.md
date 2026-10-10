@@ -1,5 +1,5 @@
 ---
-id: 0055
+id: 0056
 title: Admit production routes and observer filters as ESM v10
 status: proposed
 stage: none
@@ -15,7 +15,7 @@ applies-to:
 
 ## Context
 
-[0053](0053-per-production-route-overrides.md) and [0054](0054-observer-source-and-stream-filters.md) add portable meaning and canonical members. ESM v9 was released in Screenplay 4.117.0. Decisions 0004 and 0025 therefore permit the next single claimed, unreleased version, v10.
+[0054](0054-per-production-route-overrides.md) and [0055](0055-observer-source-and-stream-filters.md) add portable meaning and canonical members. ESM v9 was released in Screenplay 4.117.0. Decisions 0004 and 0025 therefore permit the next single claimed, unreleased version, v10.
 
 ## Decision
 
@@ -39,14 +39,14 @@ v10 remains claimed, unreleased until the release checkpoint. These records rema
 
 Holds until superseded. Covers only production routes and observer source/stream filters. The remaining #302 dispositions are:
 
-- Reaction direct-production routes are refused with PLAY0636. Reactions have no command route and their direct productions remain unrouted.
+- Reaction direct-production routes are refused with PLAY0650. Reactions have no command route and their direct productions remain unrouted.
 - Occurred-at routing remains reserved system metadata. Its admission needs a separate clock, occurrence and ordering contract.
 - New concurrency flags remain unadmitted. Legacy command `concurrency` keeps its PLAY0271 disposition pending decision-consistent reads and a concurrency contract.
 - Constraint scopes and first-append rules remain unadmitted pending Chronicle capability and a ruling on existing marker-event models.
 - Stream closing remains unadmitted pending Chronicle and Arc capability.
 - Property-path stream id mappings remain refused with PLAY0268 under #574. Generated route inputs remain refused with PLAY0273.
 
-Stage must refuse an unkeyed production override under a keyed command route until its Arc adapter can prevent sentinel fallback from inheriting the command stream id, as 0053 requires. Portable Screenplay semantics replace the entire route and do not inherit that id. The Stage adaptation issue for this batch must cover v10 admission and this refusal before a renderer claims support; it is separate from Screenplay's portable admission.
+Stage must refuse an unkeyed production override under a keyed command route until its Arc adapter can prevent sentinel fallback from inheriting the command stream id, as 0054 requires. Portable Screenplay semantics replace the entire route and do not inherit that id. The Stage adaptation issue for this batch must cover v10 admission and this refusal before a renderer claims support; it is separate from Screenplay's portable admission.
 
 ## Verification
 
@@ -56,4 +56,4 @@ Stage must refuse an unkeyed production override under a keyed command route unt
 
 ## Related
 
-Builds on 0004, 0025, 0036, 0053 and 0054.
+Builds on 0004, 0025, 0036, 0054 and 0055.

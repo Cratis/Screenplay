@@ -40,15 +40,15 @@ describe('when parsing production routes', () => {
 describe('when parsing observer filters', () => {
     const prefix = declarations + '      event E\n    slice Automation Follow\n';
     it('should refuse malformed reaction filters', () => {
-        parse(prefix + '      reaction R\n        from Account.All.Extra\n        when E').diagnostics.some(diagnostic => diagnostic.code === 'PLAY0638').should.equal(true);
+        parse(prefix + '      reaction R\n        from Account.All.Extra\n        when E').diagnostics.some(diagnostic => diagnostic.code === 'PLAY0652').should.equal(true);
     });
     it('should refuse duplicate reducer filters', () => {
-        parse(prefix + '      readmodel V\n        id String\n      reducer R => V\n        from Account\n        from Account\n        on E').diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0638']);
+        parse(prefix + '      readmodel V\n        id String\n      reducer R => V\n        from Account\n        from Account\n        on E').diagnostics.map(diagnostic => diagnostic.code).should.deep.equal(['PLAY0652']);
     });
     it('should refuse reducer filter children', () => {
-        parse(prefix + '      readmodel V\n        id String\n      reducer R => V\n        from Account.All\n          streamId = "period"\n        on E').diagnostics.some(diagnostic => diagnostic.code === 'PLAY0638').should.equal(true);
+        parse(prefix + '      readmodel V\n        id String\n      reducer R => V\n        from Account.All\n          streamId = "period"\n        on E').diagnostics.some(diagnostic => diagnostic.code === 'PLAY0652').should.equal(true);
     });
     it('should refuse a stream belonging to another source', () => {
-        parse(prefix + '      reaction R\n        from Account.Missing\n        when E').diagnostics.some(diagnostic => diagnostic.code === 'PLAY0638').should.equal(true);
+        parse(prefix + '      reaction R\n        from Account.Missing\n        when E').diagnostics.some(diagnostic => diagnostic.code === 'PLAY0652').should.equal(true);
     });
 });

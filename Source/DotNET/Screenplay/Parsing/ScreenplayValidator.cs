@@ -73,6 +73,7 @@ internal static class ScreenplayValidator
             .ToHashSet();
 
         ValidateTypes(application, knownTypes, context);
+        IdentityValidator.Validate(application, knownTypes.Union(knownReadModels).ToHashSet(StringComparer.Ordinal), context);
 
         foreach (var persona in application.Personas ?? [])
         {
