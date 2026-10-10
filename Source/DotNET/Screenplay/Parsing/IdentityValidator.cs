@@ -89,7 +89,7 @@ internal static class IdentityValidator
         foreach (var module in application.Modules.Where(module => scope.Segments.Count > 0 && module.Name == scope.Segments[0]))
         {
             if (module.Authorize is not null) yield return module.Authorize;
-            foreach (var authorization in FeatureAuthorizations(module.Features, [.. scope.Segments.Skip(1)])) yield return authorization;
+            foreach (var authorization in FeatureAuthorizations(module.Features, [.. scope.Segments.Skip(1).SkipLast(1)])) yield return authorization;
         }
     }
 

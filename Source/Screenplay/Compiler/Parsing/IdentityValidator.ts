@@ -4,6 +4,7 @@
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { AuthorizeSyntax, PolicyRequirementSyntax } from '../Syntax/Authorization';
 import { AuthoringProductionResolver } from '../Syntax/AuthoringProductionResolver';
+import { dependencySourcesOf } from '../Syntax/DependencySources';
 import { ExpressionSyntax, IdentityExpressionSyntax } from '../Syntax/Expressions';
 import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
 import { ApplicationSyntax, FeatureSyntax } from '../Syntax/Structure';
@@ -15,7 +16,15 @@ export function validateIdentity(application: ApplicationSyntax, context: Parser
     const names = new Set(details.map(detail => detail.name));
     const known = new Set(['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime', ...application.concepts.map(concept => concept.name), ...application.types.map(type => type.name), ...application.imports.map(imported => imported.qualifiedName.split('.').at(-1)!) ]);
     const resolver = new AuthoringProductionResolver(application);
-    for (const { slice } of resolver.slices) for (const model of slice.readModels) known.add(model.name);
+    for (const { slice } of resolver.slices) {
+        for (const model of slice.readModels) known.add(model.name);
+        for (const projection of slice.projections) {
+            // Match C# ProjectionBuiltReadModelNames: direct variants replace the builder's own output.
+            const variants = projection.blocks.filter(block => block.kind === 'ProjectionVariantSyntax');
+            for (const name of variants.length > 0 ? variants.map(variant => variant.name) : [projection.readModel ?? projection.name]) known.add(name);
+        }
+        for (const reducer of dependencySourcesOf(slice).reducers ?? []) known.add(reducer.readModel);
+    }
     new IdentityPaths(names, context).visitApplication(application);
     const declared = new Set<string>();
     for (const detail of details) {
@@ -40,7 +49,7 @@ export function validateIdentity(application: ApplicationSyntax, context: Parser
         const authorizations: AuthorizeSyntax[] = query.authorize === null ? [] : [query.authorize];
         for (const module of application.modules.filter(module => module.name === scope[0])) {
             if (module.authorize !== null) authorizations.push(module.authorize);
-            collectFeatureAuthorizations(module.features, scope.slice(1), authorizations);
+            collectFeatureAuthorizations(module.features, scope.slice(1, -1), authorizations);
         }
         const policies = new Set(authorizations.flatMap(authorization => policyNames(authorization.requirement)));
         const dependency = new DetailReferences(names);
