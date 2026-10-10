@@ -13573,6 +13573,39 @@
       "title": "A source events block does not consist of one or more from \u003CEvent\u003E lines.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0625",
+      "name": "InvalidReadModelKey",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A key modifier has an invalid owner, type or modifier combination.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0626",
+      "name": "IncompleteReadModelKey",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A single-instance lookup omits declared read-model key parts.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0627",
+      "name": "InvalidReadModelKeyLookup",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A read-model lookup has invalid parts, shape or sources.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [

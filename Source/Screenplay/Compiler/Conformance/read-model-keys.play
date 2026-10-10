@@ -1,0 +1,49 @@
+concept ResourceId : String
+concept ScopeId : String
+concept Period : String
+
+module Time
+  feature Reporting
+    slice StateChange Book
+      readmodel MonthRow
+        resourceId ResourceId key
+        reportingScopeId ScopeId key
+        period Period key
+        hours Int
+      query Month => MonthRow optional
+        by
+          resourceId ResourceId
+          reportingScopeId ScopeId
+          period Period
+      query MonthsForResource => MonthRow[]
+        by resourceId ResourceId
+      command Book
+        resourceId ResourceId
+        scopeId ScopeId
+        month Period
+        reads MonthRow as monthRow
+          by
+            resourceId = resourceId
+            reportingScopeId = scopeId
+            period = month
+    slice Automation Refresh
+      event RefreshRequested
+        resourceId ResourceId
+        scopeId ScopeId
+        month Period
+      reaction Refresh
+        when RefreshRequested
+          resourceId
+          scopeId
+          month
+          reads MonthRow
+            by
+              resourceId = resourceId
+              reportingScopeId = scopeId
+              period = month
+    slice StateView Identity
+      readmodel Resource
+        resourceId ResourceId key
+        key String
+      query Resource => Resource optional
+        by resourceId ResourceId

@@ -16,7 +16,7 @@ import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseTriggerData } from './TriggerDataParser';
 import { dependencySources, ReadsSyntax, TriggerDataSyntax } from '../Syntax/DependencySources';
-import { captureReads } from './DependencySourceParser';
+import { parseReads } from './ReadsParser';
 import { parseProduces } from './ProducesParser';
 import { locationOf, SourceLine } from './SourceLine';
 
@@ -139,7 +139,7 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
             context.error(DiagnosticCodes.InvalidRefusalBranch, "A refusal branch belongs inside 'invokes <Command>'.", locationOf(child));
             context.skipBlock(child.indent);
         } else if (keyword === 'reads' || keyword === 'file' || child.content === 'csharp' || child.content.startsWith('```')) {
-            const read = captureReads(child);
+            const read = keyword === 'reads' ? parseReads(context, child) : undefined;
             if (read !== undefined) reads.push(read);
             if (optionalReads.test(child.content)) {
                 context.error(DiagnosticCodes.OptionalReadsNotSupported, 'Optional reads are not yet supported (see #308).', locationOf(child));

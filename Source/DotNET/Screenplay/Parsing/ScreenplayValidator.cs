@@ -149,6 +149,7 @@ internal static class ScreenplayValidator
         ProjectionTargetValidator.Validate(declarations, context);
         IdentifierComplianceValidator.Validate(application, declarations, context);
         EventSubjectValidator.Validate(application, declarations, context);
+        ReadModelKeyValidator.Validate(application, declarations, context);
         SpecificationValueConsistencyValidator.Validate(declarations, context);
         SpecificationOutcomeConsistencyValidator.Validate(declarations, context);
         SpecificationActionValidator.Validate(application, declarations, context);
@@ -1523,7 +1524,7 @@ internal static class ScreenplayValidator
         // parameters resolve against the document's own types.
         foreach (var query in slice.Queries)
         {
-            var parameters = (query.By is null ? [] : new[] { query.By }).Concat(query.Filters)
+            var parameters = (query.By is null ? [] : new[] { query.By }).Concat(query.ByParts).Concat(query.Filters)
                 .Select(parameter => new PropertySyntax(parameter.Name, parameter.Type, parameter.Location));
             ValidatePropertyTypes(parameters, $"query '{query.Name}'", knownTypes, context);
         }

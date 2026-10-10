@@ -18,6 +18,7 @@ const typedValue = pattern('^@?[a-z_]\\w*\\s+[\\w.]+');
 export function parseTriggerData(context: ParserContext, line: SourceLine): void {
     const property = parseProperty(context, line);
     if (property !== undefined) {
+        if (property.isKey) context.error(DiagnosticCodes.InvalidReadModelKey, 'The key modifier is only valid on top-level read-model properties.', property.location);
         if (property.isGenerated) context.error(DiagnosticCodes.GeneratedPropertyOutsideCommand, 'Generated properties can only be declared on commands.', property.location);
         if (property.isSubject) context.error(DiagnosticCodes.InvalidSubjectOwner, 'The subject modifier is only valid on event properties, not trigger or reaction data properties (decision 0008: one data subject per event).', property.location);
         context.triggerData.push(property);

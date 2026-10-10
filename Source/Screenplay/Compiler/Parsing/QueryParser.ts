@@ -38,6 +38,8 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
         reportLegacyOptionalSuffix(context, returnType, line);
     }
     let by: QueryParameterSyntax | null = null;
+    const byParts: QueryParameterSyntax[] = [];
+    let hasBy = false;
     const filters: QueryParameterSyntax[] = [];
     let description: string | null = null;
     let scope: string | null = null;
@@ -48,12 +50,28 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
         if (keyword === 'description') {
             description = parseDescription(context, child, description, `Query '${name}'`);
         } else if (keyword === 'by') {
-            const parameter = parseParameter(context, child, 'by');
-            if (parameter !== undefined) {
-                if (by !== null) {
-                    context.error(DiagnosticCodes.InvalidQueryParameter, `Query '${name}' already declares 'by' - a query can have at most one key parameter`, locationOf(child));
+            if (child.content === 'by') {
+                if (hasBy) context.error(DiagnosticCodes.InvalidReadModelKeyLookup, 'A query cannot combine a by block with another by declaration.', locationOf(child));
+                by = null;
+                byParts.length = 0;
+                for (let part = context.peekChild(child.indent); part !== undefined; part = context.peekChild(child.indent)) {
+                    context.reader.takeSignificant();
+                    const parsed = parseParameter(context, part, '');
+                    if (parsed !== undefined) byParts.push(parsed);
                 }
-                by = parameter;
+                if (byParts.length < 2 || new Set(byParts.map(part => part.name)).size !== byParts.length) {
+                    context.error(DiagnosticCodes.InvalidReadModelKeyLookup, 'A query by block requires at least two distinct named key parts.', locationOf(child));
+                }
+                hasBy = true;
+            } else {
+                const parameter = parseParameter(context, child, 'by');
+                if (parameter !== undefined) {
+                    if (hasBy) context.error(DiagnosticCodes.InvalidQueryParameter, `Query '${name}' already declares 'by' - a query can have at most one key parameter`, locationOf(child));
+                    if (byParts.length > 0) context.error(DiagnosticCodes.InvalidReadModelKeyLookup, 'A query cannot combine a by block with a single by line.', locationOf(child));
+                    byParts.length = 0;
+                    by = parameter;
+                    hasBy = true;
+                }
             }
         } else if (keyword === 'filter') {
             const filter = parseParameter(context, child, 'filter');
@@ -76,6 +94,7 @@ export function parseQuery(context: ParserContext, line: SourceLine): QuerySynta
         name,
         returnType,
         by,
+        ...(byParts.length > 0 ? { byParts } : {}),
         filters,
         description,
         isObservable: match[2] !== undefined,

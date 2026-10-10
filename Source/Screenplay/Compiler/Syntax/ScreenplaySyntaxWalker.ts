@@ -169,7 +169,10 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
         if (syntax.type !== null) this.visitTypeRef(syntax.type);
     }
-    visitReads(syntax: ReadsSyntax): void { this.visitNode(syntax); }
+    visitReads(syntax: ReadsSyntax): void {
+        this.visitNode(syntax);
+        syntax.byParts?.forEach(part => this.visitPropertyMapping(part));
+    }
     visitConcurrency(syntax: ConcurrencySyntax): void { this.visitNode(syntax); }
     visitReducer(syntax: ReducerSyntax): void {
         this.visitNode(syntax);
@@ -354,6 +357,7 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
         this.visitTypeRef(syntax.returnType);
         if (syntax.by !== null) this.visitQueryParameter(syntax.by);
+        syntax.byParts?.forEach(part => this.visitQueryParameter(part));
         syntax.filters.forEach(node => this.visitQueryParameter(node));
         if (syntax.authorize !== null) this.visitAuthorize(syntax.authorize);
     }

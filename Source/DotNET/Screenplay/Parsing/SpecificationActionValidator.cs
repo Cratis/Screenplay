@@ -70,7 +70,7 @@ internal static class SpecificationActionValidator
             return;
         }
 
-        var parameters = (resolved.Node.By is null ? Enumerable.Empty<QueryParameterSyntax>() : [resolved.Node.By]).Concat(resolved.Node.Filters).ToList();
+        var parameters = (resolved.Node.By is null ? Enumerable.Empty<QueryParameterSyntax>() : [resolved.Node.By]).Concat(resolved.Node.ByParts).Concat(resolved.Node.Filters).ToList();
         foreach (var argument in performed.Arguments.Where(argument => !parameters.Exists(parameter => parameter.Name == argument.Property)))
         {
             context.Error(

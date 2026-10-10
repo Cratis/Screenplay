@@ -38,6 +38,7 @@ internal static partial class PropertyLineParser
         {
             IsGenerated = match.Groups[3].Success,
             IsSubject = match.Groups[5].Success,
+            IsKey = match.Groups[6].Success,
             NameWasEscaped = match.Groups[1].Value.StartsWith('@')
         };
     }
@@ -79,6 +80,10 @@ internal static partial class PropertyLineParser
         if (property is not null)
         {
             ReportLegacyOptionalSuffix(context, property.Type, line);
+            if (property.IsKey && (property.Type.IsOptional || property.Type.IsCollection || property.IsGenerated || property.IsIdentifier || property.IsSubject))
+            {
+                context.Error(DiagnosticCodes.InvalidReadModelKey, "A read-model key part must be required, not a collection, and cannot combine key with generated, identifier or subject.", line.Location);
+            }
         }
         else
         {
@@ -117,6 +122,13 @@ internal static partial class PropertyLineParser
     /// <returns>Whether a property modifier diagnostic was reported.</returns>
     public static bool ReportInvalidModifierOrder(ParserContext context, SourceLine line)
     {
+        if (InvalidGeneratedModifiersRegex().Match(line.Content) is { Success: true } keyModifiers &&
+            keyModifiers.Groups[1].Value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Contains("key"))
+        {
+            context.Error(DiagnosticCodes.InvalidReadModelKey, "Write 'key' once, without other modifiers: '<name> <Type> key'.", line.Location);
+            return true;
+        }
+
         if (InvalidGeneratedModifiersRegex().Match(line.Content) is { Success: true } subjectModifiers &&
             subjectModifiers.Groups[1].Value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Contains("subject"))
         {
@@ -140,12 +152,20 @@ internal static partial class PropertyLineParser
         return false;
     }
 
-    [GeneratedRegex(@"^(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(?:\s+(generated))?(?:\s+(identifier))?(?:\s+(subject))?$", RegexOptions.None, 1000)]
+    internal static PropertySyntax WithoutKey(ParserContext context, PropertySyntax property)
+    {
+        if (!property.IsKey) return property;
+        context.Error(DiagnosticCodes.InvalidReadModelKey, "The key modifier is only valid on top-level read-model properties.", property.Location);
+
+        return property with { IsKey = false };
+    }
+
+    [GeneratedRegex(@"^(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(?:\s+(generated))?(?:\s+(identifier))?(?:\s+(subject))?(?:\s+(key))?$", RegexOptions.None, 1000)]
     private static partial Regex PropertyRegex();
 
     [GeneratedRegex(@"^@?[a-z_]\w*\s+[\w.]+(?:\[\])?\s+identifier\s+optional(?:\s*=.*)?$", RegexOptions.None, 1000)]
     private static partial Regex ReversedModifiersRegex();
 
-    [GeneratedRegex(@"^@?[a-z_]\w*\s+[\w.]+(?:\[\])?\??\s+((?:optional|generated|identifier|subject)(?:\s+(?:optional|generated|identifier|subject))*)$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^@?[a-z_]\w*\s+[\w.]+(?:\[\])?\??\s+((?:optional|generated|identifier|subject|key)(?:\s+(?:optional|generated|identifier|subject|key))*)$", RegexOptions.None, 1000)]
     private static partial Regex InvalidGeneratedModifiersRegex();
 }

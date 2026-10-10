@@ -98,9 +98,18 @@ sealed class WorkspaceAbsenceKeyBindings
             dependencies.AddRange(Children(query, "by"));
         }
 
-        var names = keyed.Select(query => ((QuerySyntax)query.Node).By!.Name).Distinct(StringComparer.Ordinal).ToArray();
+        var declared = Children(readModelEntry, "properties").Where(entry => ((PropertySyntax)entry.Node).IsKey).ToArray();
+        dependencies.AddRange(declared);
+        string[] names = declared.Length > 0
+            ? [.. declared.Select(entry => ((PropertySyntax)entry.Node).Name)]
+            : [.. keyed.Select(query => ((QuerySyntax)query.Node).By!.Name).Distinct(StringComparer.Ordinal)];
         if (names.Length != 1)
         {
+            if (declared.Length > 1)
+            {
+                reason = $"read model '{readModel.Name}' declares a composite key; executable key binding is tracked in #599";
+                return null;
+            }
             reason = names.Length == 0
                 ? $"read model '{readModel.Name}' has no keyed query that names its identifier; give its slice a query that returns '{readModel.Name}' with 'by <property> <Type>' naming the property that identifies an instance"
                 : $"read model '{readModel.Name}' has ambiguous keyed-query identifiers; keep the keyed queries that return '{readModel.Name}' on one 'by' property";

@@ -118,13 +118,22 @@ static class McpFixtureQueries
                 occurrence.Reference.Name,
                 candidates,
                 "for",
-                null,
+                occurrence.Role == "thenAbsentReadModel" ? McpFixtureTypes.For(index, occurrence, "for") : null,
                 destination.GetType().Name,
                 Value(destination),
                 destination.Location,
                 Origin(occurrence, "for")?.Origin.ToString().ToLowerInvariant() ?? "authored",
                 occurrence.Step?.Example?.Name,
                 Origin(occurrence, "for")?.OverriddenValue is { } replaced ? Value(replaced) : null);
+        }
+
+        if (occurrence.Role == "thenAbsentReadModel" && occurrence.For is ObjectExpressionSyntax objectKey &&
+            index.Resolve(occurrence.Reference) is [var view] && view.Syntax is ReadModelSyntax model && model.Properties.Count(property => property.IsKey) > 1)
+        {
+            foreach (var part in objectKey.Members)
+            {
+                yield return new(occurrence.Specification, "thenAbsentReadModelKeyPart", occurrence.Ordinal, occurrence.Reference.Name, candidates, part.Name, McpFixtureTypes.For(index, occurrence, part.Name), part.Value.GetType().Name, Value(part.Value), part.Location, "authored", null, null);
+            }
         }
 
         var routeOrigin = occurrence.Step?.Route?.Origin.ToString().ToLowerInvariant() ?? "authored";

@@ -59,6 +59,7 @@ static class McpDeclarationDetails
                     property.IsIdentifier,
                     property.IsGenerated,
                     property.IsSubject,
+                    property.IsKey,
                     property.Location
                 },
                 arguments,

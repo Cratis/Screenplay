@@ -43,6 +43,7 @@ internal static partial class QueryParser
             PropertyLineParser.ReportLegacyOptionalSuffix(context, returnType, header);
         }
         QueryParameterSyntax? by = null;
+        var byParts = new List<QueryParameterSyntax>();
         var filters = new List<QueryParameterSyntax>();
         AuthorizeSyntax? authorize = null;
         PerformerSyntax? performer = null;
@@ -65,7 +66,26 @@ internal static partial class QueryParser
 
                     break;
                 case "by":
-                    if (ParseParameter(context, line, "by") is { } parameter)
+                    if (line.Content == "by")
+                    {
+                        if (directiveLocations.ContainsKey("by"))
+                        {
+                            context.Error(DiagnosticCodes.InvalidReadModelKeyLookup, "A query cannot combine a by block with another by declaration.", line.Location);
+                        }
+                        by = null;
+                        byParts.Clear();
+                        while (context.TryPeekChild(line.Indent, out var part))
+                        {
+                            context.Reader.TakeSignificant();
+                            if (ParseParameter(context, part, string.Empty) is { } parsed) byParts.Add(parsed);
+                        }
+                        if (byParts.Count < 2 || byParts.Select(part => part.Name).Distinct(StringComparer.Ordinal).Count() != byParts.Count)
+                        {
+                            context.Error(DiagnosticCodes.InvalidReadModelKeyLookup, "A query by block requires at least two distinct named key parts.", line.Location);
+                        }
+                        directiveLocations["by"] = line.Location;
+                    }
+                    else if (ParseParameter(context, line, "by") is { } parameter)
                     {
                         if (directiveLocations.TryGetValue("by", out var previousBy))
                         {
@@ -73,6 +93,11 @@ internal static partial class QueryParser
                             directiveLocations[$"omitted:by:{previousBy.Line}"] = previousBy;
                         }
 
+                        if (byParts.Count > 0)
+                        {
+                            context.Error(DiagnosticCodes.InvalidReadModelKeyLookup, "A query cannot combine a by block with a single by line.", line.Location);
+                        }
+                        byParts.Clear();
                         by = parameter;
                         directiveLocations["by"] = line.Location;
                     }
@@ -109,6 +134,7 @@ internal static partial class QueryParser
         return new(name, returnType, by, filters, authorize, header.Location, description, performer, isObservable)
         {
             Scope = scope,
+            ByParts = byParts,
             DirectiveLocations = directiveLocations
         };
     }

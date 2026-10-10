@@ -2859,4 +2859,19 @@ public static class DiagnosticCodes
     /// A <c>source events</c> block does not consist of one or more <c>from &lt;Event&gt;</c> lines.
     /// </summary>
     public const string InvalidCaptureEventsSource = "PLAY0620";
+
+    /// <summary>
+    /// A key modifier has an invalid owner, type or modifier combination.
+    /// </summary>
+    public const string InvalidReadModelKey = "PLAY0625";
+
+    /// <summary>
+    /// A single-instance lookup omits declared read-model key parts.
+    /// </summary>
+    public const string IncompleteReadModelKey = "PLAY0626";
+
+    /// <summary>
+    /// A read-model lookup has invalid parts, shape or sources.
+    /// </summary>
+    public const string InvalidReadModelKeyLookup = "PLAY0627";
 }

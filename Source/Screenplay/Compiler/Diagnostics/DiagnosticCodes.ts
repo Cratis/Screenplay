@@ -362,4 +362,8 @@ export const DiagnosticCodes = {
     CommandWithProducesAndHandler: 'PLAY0035',
     AbsoluteFileReference: 'PLAY0264',
     InvalidTriggerData: 'PLAY0246',
+    InvalidReadModelKey: 'PLAY0625',
+    IncompleteReadModelKey: 'PLAY0626', // C# only: scoped read-model key resolution.
+    InvalidReadModelKeyLookup: 'PLAY0627', // Shape checks shared; scoped lookup checks are C# only.
+    ReadsWithChildren: 'PLAY0451',
 } as const;

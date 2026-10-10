@@ -461,13 +461,13 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0175` | Error | A `reads` line is not `reads <ReadModel> [as <alias>] [by <value>]`, or uses `as`, `by`, or `reads` as an alias. Under a reaction trigger, a bare `reads` line suggests `@reads` for a value named `reads`. |
+| `PLAY0175` | Error | A `reads` line is not `reads <ReadModel> [as <alias>] [by <value>]` (or the header of a child `by` mapping block), or uses `as`, `by`, or `reads` as an alias. Under a reaction trigger, a bare `reads` line suggests `@reads` for a value named `reads`. |
 | `PLAY0177` | Warning | A command or reaction trigger reads a read model no projection in the document produces. |
 | `PLAY0178` | Warning | The `by` of a command's `reads` declaration does not name a property of the command. |
 | `PLAY0442` | Warning | A reaction trigger reads by a value it does not take. |
 | `PLAY0443` | Error | A clock trigger reads by a value, but clock triggers take no values. |
 | `PLAY0444` | Warning | A reaction trigger reads a primitive type name as a view; use `@reads <PrimitiveType>` if `reads` is a trigger value. |
-| `PLAY0451` | Error | A `reads` line in a command or reaction trigger has indented children; the block is skipped, not parsed as owner values or properties. |
+| `PLAY0451` | Error | A `reads` line in a command or reaction trigger has children other than one `by` block, or combines that block with a single `by` value. Invalid children are skipped, not parsed as owner values or properties. |
 
 ### Rules about the whole artifact
 
@@ -598,6 +598,16 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 | `PLAY0242` | Error | A `place` line is not `place <Slot> hidden` or `place <Slot> at x,y size w,h`. |
 | `PLAY0243` | Error | A `variant` places (or hides) the same slot more than once. |
 | `PLAY0244` | Warning | A `freeform` arrangement's `variant` does not mention (place or hide) a slot another variant of the same arrangement places. |
+
+### Read-model keys
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0625` | Error | `key` is marked outside a top-level read-model property, combined with another modifier, or has an optional or collection type. A part of a multipart key cannot have a composite type. |
+| `PLAY0626` | Error | A single-instance lookup omits key parts. The message names the missing parts. Reads and queries have a typed repair when every missing part has one same-named compatible source. Scalar screen, form and navigation lookups cannot supply composite keys. |
+| `PLAY0627` | Error | A `by` block has fewer than two distinct parts, names an unknown part, uses the wrong key shape or supplies an incompatible, optional, collection or literal source. A single-instance query must agree with the declared key. No automatic repair is offered. |
+
+An explicit single `key` binds byte-identically to an inferred identifier. Composite keys and by-block queries are authoring-only: binding reports `PLAY0268` citing [#599](https://github.com/Cratis/Screenplay/issues/599).
 
 ### Public event boundaries
 
@@ -787,7 +797,7 @@ Every `$eventContext.<path>` - in a projection expression or in a dynamic dictio
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0350` | Error | A command or event specification value is `null`; in Chronicle an optional fact is a separate event. Optional read-model values may be null. |
-| `PLAY0351` | Error | A `given readmodel` or `then readmodel` block does not state the identifier inferred from its keyed query. A `then query … result` block may derive it from the argument. |
+| `PLAY0351` | Error | A `given readmodel` or `then readmodel` block does not state every declared key part, or its inferred identifier when no key is declared. A scalar `then query … result` block may derive its identifier from the argument. |
 | `PLAY0352` | Error | A specification without `when` asserts an event or error, or has no `then query` or `then readmodel` outcome. |
 | `PLAY0353` | Error | A specification value is null for a required property, or a nested command/event property is null; only optional read-model properties admit null. |
 | `PLAY0354` | Error | A structured specification object omits a required property of its declared composite type. |

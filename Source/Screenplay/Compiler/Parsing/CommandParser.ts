@@ -26,7 +26,8 @@ import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { commandReadSources } from './CommandReadSources';
 import { dependencySources, ReadsSyntax, ConcurrencySyntax } from '../Syntax/DependencySources';
-import { captureReads, captureConcurrency } from './DependencySourceParser';
+import { captureConcurrency } from './DependencySourceParser';
+import { parseReads } from './ReadsParser';
 import { parseProduces } from './ProducesParser';
 import { reportInvalidModifierOrder, reportLegacyOptionalSuffix, tryParseProperty } from './PropertyLineParser';
 import { locationOf, SourceLine } from './SourceLine';
@@ -143,7 +144,7 @@ function parseCommandBody(context: ParserContext, line: SourceLine, responseName
         } else if (keyword === 'handler') {
             handler = parseHandler(context, child);
         } else if (opaqueDirectives.has(keyword)) {
-            const reference = captureReads(child);
+            const reference = keyword === 'reads' ? parseReads(context, child) : undefined;
             if (reference !== undefined) referenceReads.push(reference);
             if (keyword === 'concurrency' && concurrency === undefined) concurrency = captureConcurrency(context, child);
             const read = /^reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?$/.exec(child.content);

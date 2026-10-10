@@ -9,6 +9,7 @@
     "serverVersion": { "type": "string", "minLength": 1 },
     "repairContractVersion": { "const": 1 },
     "actions": {
+      "description": "PLAY0626 completes command-read and query keys with unique same-named compatible sources. Trigger-read repairs are unsupported. PLAY0625 and PLAY0627 are not repairable.",
       "type": "array",
       "items": {
         "type": "object",

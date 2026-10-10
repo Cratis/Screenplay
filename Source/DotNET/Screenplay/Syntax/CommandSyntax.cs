@@ -195,6 +195,11 @@ public record ReadsSyntax(string ReadModel, string? By, SourceLocation Location)
     /// An init member preserves the published positional constructor and deconstruction contract.
     /// </summary>
     public string? Alias { get; init; }
+
+    /// <summary>
+    /// Gets the named composite lookup mappings, mutually exclusive with <see cref="By"/>.
+    /// </summary>
+    public IEnumerable<PropertyMappingSyntax> ByParts { get; init; } = [];
 }
 
 /// <summary>

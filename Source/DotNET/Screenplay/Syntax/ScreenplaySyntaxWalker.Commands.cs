@@ -70,7 +70,14 @@ public abstract partial class ScreenplaySyntaxWalker
     /// Visits a <see cref="ReadsSyntax"/> node.
     /// </summary>
     /// <param name="syntax">The <see cref="ReadsSyntax"/> to visit.</param>
-    public virtual void VisitReads(ReadsSyntax syntax) => VisitNode(syntax);
+    public virtual void VisitReads(ReadsSyntax syntax)
+    {
+        VisitNode(syntax);
+        foreach (var part in syntax.ByParts)
+        {
+            VisitPropertyMapping(part);
+        }
+    }
 
     /// <summary>
     /// Visits an <see cref="AuthorizeSyntax"/> node and its children.

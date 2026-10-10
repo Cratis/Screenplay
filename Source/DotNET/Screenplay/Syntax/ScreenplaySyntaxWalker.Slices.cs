@@ -22,6 +22,11 @@ public abstract partial class ScreenplaySyntaxWalker
             VisitQueryParameter(syntax.By);
         }
 
+        foreach (var part in syntax.ByParts)
+        {
+            VisitQueryParameter(part);
+        }
+
         foreach (var filter in syntax.Filters)
         {
             VisitQueryParameter(filter);

@@ -31,6 +31,7 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
     readonly ILookup<string, (ReadModelSyntax Node, Declaration Declaration)> _viewsByName = slices.SelectMany(entry => (entry.Slice.ReadModels ?? [])
         .Select(node => (Node: node, Declaration: new Declaration(node.Name, entry.Scope)))).ToLookup(entry => entry.Node.Name, StringComparer.Ordinal);
     readonly Dictionary<(string Name, DeclarationScope Scope), IEnumerable<PropertySyntax>?> _resolvedViewProperties = [];
+    readonly Dictionary<(string Name, DeclarationScope Scope), PropertySyntax[]> _resolvedViewKeys = [];
 
     /// <summary>
     /// Gets the scoped slices.
@@ -136,6 +137,23 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
     }
 
     /// <summary>
+    /// Resolves a view's declared key, or its unique single-instance query key shape.
+    /// </summary>
+    /// <param name="name">The read model name.</param>
+    /// <param name="scope">The referring scope.</param>
+    /// <returns>Key properties in authored order, or an empty list for an unknown identity.</returns>
+    public PropertySyntax[] ViewKey(string name, DeclarationScope scope)
+    {
+        if (!_resolvedViewKeys.TryGetValue((name, scope), out var key))
+        {
+            key = ResolveViewKey(name, scope);
+            _resolvedViewKeys[(name, scope)] = key;
+        }
+
+        return key;
+    }
+
+    /// <summary>
     /// Resolves a composite type's properties.
     /// </summary>
     /// <param name="name">The type name.</param>
@@ -221,12 +239,31 @@ internal sealed class ConsistencyDeclarations(ApplicationSyntax application, IRe
         return source.Name == target.Name && source.IsCollection == target.IsCollection && (!source.IsOptional || target.IsOptional);
     }
 
+    static string[] QueryKeyNames(QuerySyntax query) => query.By is { } by ? [by.Name] : [.. query.ByParts.Select(part => part.Name)];
+
     static IEnumerable<string> ViewNames(SliceSyntax slice) =>
         (slice.ReadModels ?? []).Select(model => model.Name)
             .Concat((slice.Reducers ?? []).Select(reducer => reducer.ReadModel))
             .Concat(slice.Projections.SelectMany(projection => projection.Blocks.OfType<ProjectionVariantSyntax>().Any()
                 ? projection.Blocks.OfType<ProjectionVariantSyntax>().Select(variant => variant.Name)
                 : [projection.ReadModel ?? projection.Name]));
+
+    PropertySyntax[] ResolveViewKey(string name, DeclarationScope scope)
+    {
+        var properties = ViewProperties(name, scope)?.ToArray() ?? [];
+        var declared = properties.Where(property => property.IsKey).ToArray();
+        if (declared.Length > 0) return declared;
+        var view = View(name, scope);
+        if (view is null) return [];
+        var shapes = slices.SelectMany(entry => entry.Slice.Queries
+            .Where(query => !query.ReturnType.IsCollection && View(query.ReturnType.Name, entry.Scope) == view)
+            .Select(QueryKeyNames))
+            .Where(shape => shape.Length > 0).ToArray();
+        if (shapes.Length == 0 || shapes.Any(shape => !shape.ToHashSet(StringComparer.Ordinal).SetEquals(shapes[0]))) return [];
+        var key = shapes[0].Select(name => properties.Where(property => property.Name == name).ToArray() is [var property] ? property : null).ToArray();
+
+        return key.All(property => property is not null) ? [.. key.OfType<PropertySyntax>()] : [];
+    }
 
     (EventSyntax Node, Declaration Declaration)[] EventCandidates(string reference) =>
         [.. _eventsByName[reference.Split('.', StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? string.Empty]];
