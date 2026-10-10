@@ -177,7 +177,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
                 (_, SpecificationSyntax specification) => McpFixtureOccurrences.Role(specification, node, reference.Role),
                 _ => reference.Role
             };
-            _references.Add(new(reference.Name, reference.Kinds, [.. _scope], ReferenceLocation(node), role, owner?.Owner)
+            _references.Add(new(reference.Name, reference.Kinds, owningSyntax is IdentityDetailSyntax ? [] : [.. _scope], ReferenceLocation(node), role, owner?.Owner)
             {
                 UseProductionCandidates = node is ProducesSyntax or SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax,
                 AmbiguousSourceOwner = node is CommandStreamSyntax { PropertyCandidate: not null }

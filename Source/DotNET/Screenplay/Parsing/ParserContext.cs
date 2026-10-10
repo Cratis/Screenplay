@@ -24,11 +24,6 @@ internal sealed class ParserContext(LineReader reader, string? path = null, IScr
     public SourceOptions SourceOptions { get; internal set; } = SourceOptions.Legacy;
 
     /// <summary>
-    /// Gets or sets whether caller paths are checked after the whole application is assembled.
-    /// </summary>
-    internal bool DeferIdentityValidation { get; set; }
-
-    /// <summary>
     /// Gets the <see cref="LineReader"/> providing the source lines.
     /// </summary>
     public LineReader Reader => reader;
@@ -68,6 +63,11 @@ internal sealed class ParserContext(LineReader reader, string? path = null, IScr
     /// Gets the directive-shaped lines below the top level, keyed by line number, still unclaimed as a field.
     /// </summary>
     internal Dictionary<int, Diagnostic> NestedNumericDirectives { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets whether caller paths are checked after the whole application is assembled.
+    /// </summary>
+    internal bool DeferIdentityValidation { get; set; }
 
     /// <summary>
     /// Creates a context for work that produces diagnostics without reading source lines, such as merging

@@ -37,10 +37,12 @@ public class when_binding_identity_metadata : given.a_semantic_binder
     [Theory]
     [InlineData("produces ProjectRegistered\n          for projectId\n          name = $identity.department")]
     [InlineData("produces when projectId == $identity.department\n          ProjectRegistered\n            for projectId\n            name = \"Example\"")]
-    [InlineData("tag $identity.department\n        produces ProjectRegistered\n          for projectId\n          name = \"Example\"")]
+    [InlineData("produces ProjectRegistered\n          for projectId\n          tag $identity.department\n          name = \"Example\"")]
     void should_refuse_executable_detail_reads(string production)
     {
         var source = Metadata + "module Projects\n  feature Registration\n    slice StateChange RegisterProject\n      command RegisterProject\n        projectId Uuid identifier\n        " + production + "\n      event ProjectRegistered\n        name String";
+        var parsed = new ScreenplayCompiler().Compile(source);
+        parsed.Diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).ShouldBeEmpty();
         var result = Bind(source);
         result.Success.ShouldBeFalse();
         result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message.Contains("department", StringComparison.Ordinal) && diagnostic.Message.Contains("#600", StringComparison.Ordinal)).ShouldBeTrue();
