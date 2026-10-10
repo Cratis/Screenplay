@@ -32,6 +32,8 @@ The root glob matches every file, including the step files. A file is compiled o
 | `Timesheets/Screens.play` | the root and `import "Screens.play"` in the module | `module Timesheets` |
 | `Timesheets/Recording/RecordingHours.play` | the root and `import "Recording/*.play"` in `feature Recording` | `Timesheets.Recording` |
 
+The approved-week reaction declares the `PayrollOfficer` and `PayrollAutomation` system roles. The latter is the explicit alternative to the finance department claim, which remains required for ordinary human payroll callers. System claims are unknown in reference execution; this trusted role path selects ESM v10 (claimed, unreleased).
+
 Gates compose along that path. `RecordTime` must pass `HasWorkspaceAccess` (the module) and `IsConsultant` (the feature) without restating either.
 
 ```text

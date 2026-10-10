@@ -14,12 +14,12 @@ public class when_binding_reaction_identity : given.a_semantic_binder
     [InlineData("claim \"actor\" matches \"system\"", "A", null)]
     [InlineData("not claim \"actor\" matches \"system\"", "A", null)]
     [InlineData("role \"A\" or claim \"actor\" matches \"system\"", "A", null)]
-    void should_refuse_admission_and_only_warn_on_definite_denial(string condition, string role, string? warning)
+    void should_admit_identity_and_only_warn_on_definite_denial(string condition, string role, string? warning)
     {
         var result = Bind(Source(condition, role));
-        var refusal = result.Diagnostics.Single(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax);
-        refusal.Message.ToLowerInvariant().ShouldContain("reaction command identity");
-        refusal.Message.ShouldContain("#383");
+        result.Success.ShouldBeTrue();
+        result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V10);
+        result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax).ShouldBeFalse();
         result.Diagnostics.Count(diagnostic => diagnostic.Code == DiagnosticCodes.UnsatisfiedReactionIdentity).ShouldEqual(warning is null ? 0 : 1);
     }
 

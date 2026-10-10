@@ -134,8 +134,6 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
                     .SelectMany(occurrence => FixtureFeatures(occurrence.Stream, occurrence.NoStream)))
                 .Concat(Feature(!SemanticModelBinder.SpecificationRoutesJoin && HasSpecificationRoute(specification), "specification event routes (#457)"))
                 .Concat(ActionCommands(specification).SelectMany(entry => UnadmittedFeatures(entry.Command))),
-            ReactionIdentitySyntax => ["reaction command identity ('runs as', #383)"],
-            ReactionSyntax reaction => reaction.RunsAs is { } identity ? UnadmittedFeatures(identity) : [],
             SliceSyntax slice => slice.Commands.Cast<SyntaxNode>().Concat(slice.Reactions).Concat(slice.Specifications).Concat(slice.Examples).SelectMany(UnadmittedFeatures),
             ApplicationSyntax => application.EventSources.SelectMany(UnadmittedFeatures)
                 .Concat(_owners.Keys.OfType<SliceSyntax>().SelectMany(UnadmittedFeatures))
