@@ -24,7 +24,8 @@ import { ScreenContributionSyntax } from '../Syntax/CompositionSyntax';
 import { locationOf, SourceLine } from './SourceLine';
 
 // Parses 'screen' declarations the way the C# ScreenParser does - intent level directives, the template
-// whose slots they fill, and inline code. Interaction ('on' and 'uses') is recognized but not modeled.
+// whose slots they fill, and inline code. Interaction bodies remain opaque in the AST, but 'on' alternatives
+// are checked for structure, condition operands and shadowing; 'uses' attachments are recognized.
 
 const operand = `(?:"(${stringBodyPattern})"|(\\$strings\\.\\w+(?:\\.\\w+)*))`;
 const header = pattern('^screen\\s+([A-Za-z_]\\w*)$');

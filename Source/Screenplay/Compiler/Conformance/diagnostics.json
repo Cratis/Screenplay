@@ -272,6 +272,27 @@
             "messages": ["Alternative executing 'Retry' is shadowed by earlier alternatives in this action", "Alternative executing 'Retry' is shadowed by earlier alternatives in this action", "Alternative executing 'Retry' is shadowed by earlier alternatives in this action"]
         },
         {
+            "name": "Interaction shadowing follows parse errors and validates named behaviors first",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      readmodel Item", "        status String", "        ready Bool", "      query Details => Item", "      screen Details", "        data Item via query Details", "        on click", "          when item.status == \"open\"", "            notify info \"Open\"", "          when item.status == \"open\" and item.ready == true", "            notify info \"Ready\"", "        unexpected", "behavior Shared", "  on click", "    when item.ready == true", "      notify info \"First\"", "    when item.ready == true", "      notify info \"Second\""],
+            "diagnostics": ["PLAY0103@15", "PLAY0347@20", "PLAY0347@13"],
+            "messages": ["Unexpected 'unexpected' in screen body", "This 'when' alternative is shadowed by earlier alternatives in this interaction", "This 'when' alternative is shadowed by earlier alternatives in this interaction"]
+        },
+        {
+            "name": "Guarded interactions preserve distinct alternatives and cover select and double click",
+            "validate": true,
+            "source": ["module M", "  feature F", "    slice StateView S", "      readmodel Item", "        status String", "      query Details => Item", "      screen Details", "        data Item via query Details", "        on select", "          when item.status == \"open\"", "            notify info \"Open\"", "          when item.status == \"closed\"", "            notify info \"Closed\"", "        on double click", "          when item.status == \"open\"", "            notify info \"First\"", "          when item.status == \"open\"", "            notify info \"Second\""],
+            "diagnostics": ["PLAY0347@17"],
+            "messages": ["This 'when' alternative is shadowed by earlier alternatives in this interaction"]
+        },
+        {
+            "name": "Interaction shadowing retains unsupported literal conditions and triggers",
+            "validate": true,
+            "source": ["behavior Shared", "  on submit", "    when status == \"open\"", "      notify info \"First\"", "    when status == \"open\"", "      notify info \"Second\""],
+            "diagnostics": ["PLAY0344@3", "PLAY0344@5", "PLAY0560@2", "PLAY0347@5"],
+            "messages": ["Guarded action conditions compare 'item.<field>' with a literal; ordering requires a number and text operators require a string", "Guarded action conditions compare 'item.<field>' with a literal; ordering requires a number and text operators require a string", "Interaction alternatives are only supported on click, double click and select", "This 'when' alternative is shadowed by earlier alternatives in this interaction"]
+        },
+        {
             "name": "Several earlier guarded alternatives together prove coverage",
             "validate": true,
             "source": ["module Work", "  feature Items", "    slice StateView Details", "      readmodel Item", "        status String", "      query Details => Item", "      command Retry", "      screen Details", "        data Item via query Details", "        action \"Again\"", "          when item.status == \"open\" execute Retry", "          when item.status == \"failed\" execute Retry", "          when item.status == \"open\" or item.status == \"failed\" execute Retry"],
