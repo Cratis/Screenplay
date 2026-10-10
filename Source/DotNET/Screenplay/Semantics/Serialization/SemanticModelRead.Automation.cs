@@ -24,6 +24,7 @@ internal static partial class SemanticModelRead
         string? name = null;
         ImmutableArray<SemanticReactionTrigger> triggers = default;
         SemanticObserverFilter? from = null;
+        SemanticReactionIdentity? runsAs = null;
         while (NextProperty(ref reader, seen, "reaction") is { } property)
         {
             switch (property)
@@ -32,12 +33,35 @@ internal static partial class SemanticModelRead
                 case "name": name = String(ref reader, property); break;
                 case "triggers": triggers = Array(ref reader, (ref Utf8JsonReader item) => ReactionTrigger(ref item, schemaVersion), property); break;
                 case "from" when schemaVersion >= 10: RequiredToken(ref reader, JsonTokenType.StartObject, property); from = ObserverFilter(ref reader); break;
+                case "runsAs" when schemaVersion >= 10: RequiredToken(ref reader, JsonTokenType.StartObject, property); runsAs = ReactionIdentity(ref reader); break;
                 default: throw Unknown(property, "reaction");
             }
         }
 
         Required(id.IsSet && name is not null && !triggers.IsDefault, "reaction");
-        return new(id, name!, triggers) { From = from };
+        return new(id, name!, triggers) { From = from, RunsAs = runsAs };
+    }
+
+    internal static SemanticReactionIdentity ReactionIdentity(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "reaction identity");
+        var seen = NewSeen();
+        SemanticReactionIdentityKind? kind = null;
+        ImmutableArray<string> roles = default;
+        while (NextProperty(ref reader, seen, "reaction identity") is { } property)
+        {
+            switch (property)
+            {
+                case "kind":
+                    kind = String(ref reader, property) == "system" ? SemanticReactionIdentityKind.System : throw new InvalidSemanticContract("Unknown reaction identity kind.");
+                    break;
+                case "roles": roles = StringArray(ref reader, property); break;
+                default: throw Unknown(property, "reaction identity");
+            }
+        }
+
+        Required(kind is not null && !roles.IsDefault, "reaction identity");
+        return new(kind!.Value, roles);
     }
 
     internal static SemanticReactionTrigger ReactionTrigger(ref Utf8JsonReader reader, uint schemaVersion)

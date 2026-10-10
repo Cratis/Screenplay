@@ -64,7 +64,7 @@ export function eventSourceHover(lines: string[], line: number, start: number, e
     const filter = analysis.contexts.get(line)?.observer?.from;
     if (filter?.location.line === line + 1 && /^\s*from\s+/.test(withoutComment(lines[line] ?? ''))) {
         const resolved = analysis.resolve(filter.eventSource, filter.stream ?? undefined);
-        return resolved.source ? `${eventSourceDetails(resolved.source, resolved.stream)}\n\nObserves routed facts only. Stream ids are not filtered. Admitted by ESM v10.` : 'Unresolved observer filter (PLAY0652).';
+        return resolved.source ? `${eventSourceDetails(resolved.source, resolved.stream)}\n\nObserves routed facts only. Stream ids are not filtered. Admitted by ESM v10.` : 'Unresolved observer filter (PLAY0665).';
     }
     const reference = eventSourceReferenceAt(lines, line, start, end, symbols);
     if (reference) return reference.resolution.source && reference.resolution.stream ? eventSourceDetails(reference.resolution.source, reference.resolution.stream) + (analysis.contexts.get(line)?.event ? `\n\n${specificationRouteAvailability}` : '')

@@ -83,7 +83,7 @@ A scalar keyed stream requires `streamId = <value>`; a composite stream requires
 
 A command event production may declare one `stream Source.Stream` line. Its scalar or composite `streamId` mappings use the command-route rules. The override replaces the source, stream and stream id together. Other productions keep the command route. An override never supplies `for`, and its destination type must match its source's identifier type.
 
-Plain, conditional and inline event productions accept overrides. A line with `=` remains payload, including a payload named `stream`. Reaction and refusal-branch productions reject routes with `PLAY0650`. Duplicate and invalid routes use `PLAY0504`. An identical override warns with `PLAY0651`; a typed repair removes it.
+Plain, conditional and inline event productions accept overrides. A line with `=` remains payload, including a payload named `stream`. Reaction and refusal-branch productions reject routes with `PLAY0663`. Duplicate and invalid routes use `PLAY0504`. An identical override warns with `PLAY0664`; a typed repair removes it.
 
 There is no `no stream` override. An unkeyed override under a keyed command is valid portable semantics. Stage must refuse it until its Arc adapter can prevent sentinel fallback from inheriting the command stream id. Screenplay replaces the whole route and does not inherit that id.
 
@@ -93,7 +93,7 @@ There is no `no stream` override. An unkeyed override under a keyed command is v
 
 A reaction or reducer may declare one leaf `from Source` or `from Source.Stream`. It observes only facts with matching stored source and stream names. Stream ids are never filtered. Unrouted facts never match. An observer without a filter is unchanged. A filtered reaction uses only declared-event triggers. Projections and captures do not gain metadata filters.
 
-`PLAY0652` rejects malformed, duplicate, child-bearing or unresolved filters. The C# compiler warns with `PLAY0653` when every statically known producer lands outside the filter. Command productions use their effective routes. Reaction productions, captures and public publication are unrouted. Handler and foreign origins are unknown and suppress the warning.
+`PLAY0665` rejects malformed, duplicate, child-bearing or unresolved filters. The C# compiler warns with `PLAY0666` when every statically known producer lands outside the filter. Command productions use their effective routes. Reaction productions, captures and public publication are unrouted. Handler and foreign origins are unknown and suppress the warning.
 
 Filters select ESM v10. The reference runner applies them to given history and newly appended facts. Reaching a matching opaque reducer still returns Unsupported; routing does not execute its code.
 

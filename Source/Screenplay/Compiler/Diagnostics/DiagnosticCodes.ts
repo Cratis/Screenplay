@@ -18,6 +18,12 @@ export const DiagnosticCodes = {
     InvalidIdentityQueryKey: 'PLAY0644',
     IdentityQueryAuthorizationDependency: 'PLAY0645',
     IdentityQueryTypeMismatch: 'PLAY0646',
+    InvalidReactionIdentity: 'PLAY0647',
+    GatedInvocationWithoutIdentity: 'PLAY0648',
+    UnusedReactionIdentity: 'PLAY0649',
+    UnusedReactionRole: 'PLAY0650',
+    UnsatisfiedReactionIdentity: 'PLAY0651',
+    ReactionPrivilegeEscalation: 'PLAY0652',
     // C#-only whole-model public event boundaries; membership is not TypeScript validation support.
     CommandProducesPublicEvent: 'PLAY0607',
     PublicEventRequiresOutboundTranslation: 'PLAY0608',
@@ -389,12 +395,12 @@ export const DiagnosticCodes = {
     CommandWithProducesAndHandler: 'PLAY0035',
     AbsoluteFileReference: 'PLAY0264',
     InvalidTriggerData: 'PLAY0246',
-    InvalidReadModelKey: 'PLAY0647',
-    IncompleteReadModelKey: 'PLAY0648', // C# only: scoped read-model key resolution.
-    InvalidReadModelKeyLookup: 'PLAY0649', // Shape checks shared; scoped lookup checks are C# only.
-    ProductionRouteOutsideCommand: 'PLAY0650',
-    RedundantProductionRoute: 'PLAY0651',
-    InvalidObserverFilter: 'PLAY0652',
-    ObserverFilterExcludesEveryProducer: 'PLAY0653', // C# only: statically known producer routes.
+    InvalidReadModelKey: 'PLAY0660',
+    IncompleteReadModelKey: 'PLAY0661', // C# only: scoped read-model key resolution.
+    InvalidReadModelKeyLookup: 'PLAY0662', // Shape checks shared; scoped lookup checks are C# only.
+    ProductionRouteOutsideCommand: 'PLAY0663',
+    RedundantProductionRoute: 'PLAY0664',
+    InvalidObserverFilter: 'PLAY0665',
+    ObserverFilterExcludesEveryProducer: 'PLAY0666', // C# only: statically known producer routes.
     ReadsWithChildren: 'PLAY0451',
 } as const;

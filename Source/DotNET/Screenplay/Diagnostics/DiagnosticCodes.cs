@@ -2923,37 +2923,37 @@ public static class DiagnosticCodes
     /// <summary>
     /// A key modifier has an invalid owner, type or modifier combination.
     /// </summary>
-    public const string InvalidReadModelKey = "PLAY0647";
+    public const string InvalidReadModelKey = "PLAY0660";
 
     /// <summary>
     /// A single-instance lookup omits declared read-model key parts.
     /// </summary>
-    public const string IncompleteReadModelKey = "PLAY0648";
+    public const string IncompleteReadModelKey = "PLAY0661";
 
     /// <summary>
     /// A read-model lookup has invalid parts, shape or sources.
     /// </summary>
-    public const string InvalidReadModelKeyLookup = "PLAY0649";
+    public const string InvalidReadModelKeyLookup = "PLAY0662";
 
     /// <summary>
     /// A route is declared on a production outside a command.
     /// </summary>
-    public const string ProductionRouteOutsideCommand = "PLAY0650";
+    public const string ProductionRouteOutsideCommand = "PLAY0663";
 
     /// <summary>
     /// A production route repeats its command's route.
     /// </summary>
-    public const string RedundantProductionRoute = "PLAY0651";
+    public const string RedundantProductionRoute = "PLAY0664";
 
     /// <summary>
     /// An observer filter is malformed, unresolved or used with a non-event trigger.
     /// </summary>
-    public const string InvalidObserverFilter = "PLAY0652";
+    public const string InvalidObserverFilter = "PLAY0665";
 
     /// <summary>
     /// An observer filter excludes every statically known producer.
     /// </summary>
-    public const string ObserverFilterExcludesEveryProducer = "PLAY0653";
+    public const string ObserverFilterExcludesEveryProducer = "PLAY0666";
 
     /// <summary>
     /// An identity block has an invalid header.
@@ -3024,4 +3024,34 @@ public static class DiagnosticCodes
     /// An identity detail's type does not match its query result type or nullability.
     /// </summary>
     public const string IdentityQueryTypeMismatch = "PLAY0646";
+
+    /// <summary>
+    /// A runs as declaration is malformed, repeated, misplaced, or has empty or duplicate roles.
+    /// </summary>
+    public const string InvalidReactionIdentity = "PLAY0647";
+
+    /// <summary>
+    /// A reaction invokes a gated command without declaring a command identity.
+    /// </summary>
+    public const string GatedInvocationWithoutIdentity = "PLAY0648";
+
+    /// <summary>
+    /// A declared reaction identity has neither invocations nor an implementation body.
+    /// </summary>
+    public const string UnusedReactionIdentity = "PLAY0649";
+
+    /// <summary>
+    /// A declared reaction role is referenced by no invoked command's effective gate.
+    /// </summary>
+    public const string UnusedReactionRole = "PLAY0650";
+
+    /// <summary>
+    /// A declared reaction identity definitely cannot satisfy an invoked command's effective gate.
+    /// </summary>
+    public const string UnsatisfiedReactionIdentity = "PLAY0651";
+
+    /// <summary>
+    /// A trigger producer does not require every role of an elevated reaction, or its gate is opaque.
+    /// </summary>
+    public const string ReactionPrivilegeEscalation = "PLAY0652";
 }

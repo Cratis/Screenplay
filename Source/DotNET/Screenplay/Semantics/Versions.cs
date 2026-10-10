@@ -53,7 +53,7 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V9 = new(9, 0);
 
     /// <summary>
-    /// The language version for production routes and observer filters.
+    /// The language version for reaction system identity, production routes and observer filters.
     /// </summary>
     public static readonly LanguageVersion V10 = new(10, 0);
 
@@ -133,7 +133,7 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     public static readonly SemanticVersion V9 = new(9, 0);
 
     /// <summary>
-    /// The semantic version for production routes and observer filters.
+    /// The semantic version for reaction system identity, production routes and observer filters.
     /// </summary>
     public static readonly SemanticVersion V10 = new(10, 0);
 
@@ -486,6 +486,46 @@ public static class EsmSchemaV9Support
         if (!Supports(languageVersion, semanticVersion))
         {
             throw new InvalidSemanticContract($"The ESM schema-v9 contract does not declare language version '{languageVersion}' and semantic version '{semanticVersion}'.");
+        }
+    }
+}
+
+/// <summary>
+/// Defines version pairs admitted by ESM schema v10.
+/// </summary>
+public static class EsmSchemaV10Support
+{
+    /// <summary>
+    /// Gets the supported language versions.
+    /// </summary>
+    public static ImmutableArray<LanguageVersion> LanguageVersions { get; } = [.. EsmSchemaV9Support.LanguageVersions, LanguageVersion.V10];
+
+    /// <summary>
+    /// Gets the supported semantic versions.
+    /// </summary>
+    public static ImmutableArray<SemanticVersion> SemanticVersions { get; } = [.. EsmSchemaV9Support.SemanticVersions, SemanticVersion.V10];
+
+    /// <summary>
+    /// Determines whether the exact pair is supported.
+    /// </summary>
+    /// <param name="languageVersion">The source language version.</param>
+    /// <param name="semanticVersion">The portable semantic version.</param>
+    /// <returns>Whether the pair has defined meaning.</returns>
+    public static bool Supports(LanguageVersion languageVersion, SemanticVersion semanticVersion) =>
+        EsmSchemaV9Support.Supports(languageVersion, semanticVersion) ||
+        (languageVersion == LanguageVersion.V10 && semanticVersion == SemanticVersion.V10);
+
+    /// <summary>
+    /// Rejects unsupported version pairs.
+    /// </summary>
+    /// <param name="languageVersion">The source language version.</param>
+    /// <param name="semanticVersion">The portable semantic version.</param>
+    /// <exception cref="InvalidSemanticContract">The version pair is unsupported.</exception>
+    public static void EnsureSupported(LanguageVersion languageVersion, SemanticVersion semanticVersion)
+    {
+        if (!Supports(languageVersion, semanticVersion))
+        {
+            throw new InvalidSemanticContract($"The ESM schema-v10 contract does not declare language version '{languageVersion}' and semantic version '{semanticVersion}'.");
         }
     }
 }

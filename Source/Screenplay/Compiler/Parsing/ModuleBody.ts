@@ -19,6 +19,7 @@ import { collectInputUses } from './InputUses';
 import { firstWord } from './LineText';
 import { parseExample } from './SpecificationExampleParser';
 import { ParserContext } from './ParserContext';
+import { misplacedReactionIdentity } from './ReactionIdentityParser';
 import { locationOf, SourceLine } from './SourceLine';
 
 export const modulePattern = pattern('^module\\s+([A-Za-z_]\\w*)$');
@@ -48,6 +49,9 @@ export class ModuleBody {
     tryParse(context: ParserContext, line: SourceLine): boolean {
         const keyword = firstWord(line.content);
         switch (keyword) {
+            case 'runs':
+                misplacedReactionIdentity(context, line);
+                return true;
             case 'description':
                 this.#description = parseDescription(context, line, this.#description, `Module '${this.name}'`);
                 return true;

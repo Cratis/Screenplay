@@ -46,5 +46,10 @@ public enum CompletenessCheck
     /// <summary>
     /// Checks declared processing purposes without assessing lawfulness.
     /// </summary>
-    Purposes
+    Purposes,
+
+    /// <summary>
+    /// Checks event producers against elevated reactions' declared roles.
+    /// </summary>
+    Privilege
 }

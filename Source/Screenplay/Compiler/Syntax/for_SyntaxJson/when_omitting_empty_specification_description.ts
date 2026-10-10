@@ -11,7 +11,8 @@ describe('when omitting an empty specification description', () => {
         const authored = { ...specification, description: null };
         expect(toSyntaxJson(authored)).not.toHaveProperty('description');
         expect(toCompleteSyntaxJson(authored)).not.toHaveProperty('description');
-        expect(toSyntaxJson({ ...specification, description: 'One scenario' })).toHaveProperty('description', 'One scenario');
-        expect(toCompleteSyntaxJson({ ...specification, description: 'One scenario' })).toHaveProperty('description', 'One scenario');
+        const described = { ...specification, description: 'One scenario' };
+        expect(toSyntaxJson(described)).toHaveProperty('description', 'One scenario');
+        expect(toCompleteSyntaxJson(described)).toHaveProperty('description', 'One scenario');
     });
 });

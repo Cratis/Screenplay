@@ -16,8 +16,8 @@ module Payroll
     Absences reported in the HR system flow in as time off.
     ```
 
-  // The role AND the finance department claim. A payroll officer whose token
-  // says another department is turned away at the module.
+  // The payroll role AND either the human finance claim or the dedicated
+  // automation role. Ordinary officers from another department are turned away.
   authorize IsPayrollOfficer and IsFinanceDepartment
 
   import "Screens.play"

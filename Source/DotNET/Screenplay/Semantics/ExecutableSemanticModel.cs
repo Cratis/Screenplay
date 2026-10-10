@@ -104,6 +104,7 @@ internal static partial class SemanticModelValidator
         context.RegisterApplication(application);
         ValidateEventRoutesVersion(application, semanticVersion);
         ValidatePublicEventsVersion(application, semanticVersion);
+        ValidateReactionIdentityVersion(application, semanticVersion);
         context.ValidateReferences(application);
         if (semanticVersion == SemanticVersion.V2 && !application.Modules.SelectMany(module => module.Features)
             .SelectMany(AllSlices).Any(slice => slice.Commands.Any(command => command.Destination is not null ||

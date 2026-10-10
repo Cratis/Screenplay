@@ -45,6 +45,7 @@ public static class ModelCompleteness
         if (checks.Selected.Contains(CompletenessCheck.Navigation)) findings.AddRange(NavigationCompleteness.Check(application, declarations));
         if (checks.Selected.Contains(CompletenessCheck.Personas)) findings.AddRange(PersonaCompleteness.Check(application));
         if (checks.Selected.Contains(CompletenessCheck.Purposes)) findings.AddRange(PurposeCompleteness.Check(application));
+        if (checks.Selected.Contains(CompletenessCheck.Privilege)) findings.AddRange(PrivilegeCompleteness.Check(application, declarations));
 
         return findings.ToImmutable();
     }

@@ -1189,8 +1189,14 @@ ConstraintOption = "released", "by", Ident, NL
 
 ReactionDecl   = "reaction", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | DocumentationDecl | ObserverFilter | TriggerClause | WhereDecl },
+                   { DescriptionDecl | DocumentationDecl | ObserverFilter | ReactionIdentityDecl | TriggerClause | WhereDecl },
                  DEDENT ;
+
+ReactionIdentityDecl = "runs", "as", "system",
+                       [ "role", String, { "and", "role", String } ], NL ;
+(* Identity is one reaction-level line, at most once; roles are nonempty, distinct
+   quoted literals. It prints after documentation and before the first trigger.
+   Admitted by ESM v10 (claimed, unreleased); system claim conditions are unknown. *)
 
 ObserverFilter = "from", Ident, [ ".", Ident ], NL ;
 (* At most one leaf filter. Source and optional stream use stored names.

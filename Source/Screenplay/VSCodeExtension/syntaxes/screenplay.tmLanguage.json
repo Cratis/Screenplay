@@ -208,6 +208,11 @@
         "keywords": {
             "patterns": [
                 {
+                    "comment": "Reaction command identity is syntax-only.",
+                    "match": "^\\s*(runs)\\s+(as)\\s+(system)\\b",
+                    "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "keyword.other.screenplay" } }
+                },
+                {
                     "comment": "Ordered invocation refusal selectors are syntax-only.",
                     "match": "^\\s*(on)\\s+(refused)(?:\\s+(by)\\s+(validation|constraint|authorization)(?:\\s+([\\w.]+))?)?(?=\\s*(?://.*)?$)",
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" }, "3": { "name": "keyword.other.screenplay" }, "4": { "name": "keyword.other.screenplay" }, "5": { "name": "entity.name.type.screenplay" } }

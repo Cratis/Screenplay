@@ -10,6 +10,7 @@ import { OperationSyntax } from './Operations';
 import { InvocationRefusalSyntax } from './InvocationRefusalSyntax';
 import { CommandStreamSyntax } from './CommandStreamSyntax';
 import { ObserverFilterSyntax } from './ObserverFilterSyntax';
+import { ReactionIdentitySyntax } from './ReactionIdentitySyntax';
 
 // 'when <Name>' - an event, a declared trigger, or one a consumer registered.
 export interface NamedTriggerSourceSyntax extends SyntaxNode {
@@ -77,6 +78,7 @@ export interface ReactionSyntax extends SyntaxNode {
     readonly kind: 'ReactionSyntax';
     readonly documentation?: string | null;
     readonly from?: ObserverFilterSyntax | null;
+    readonly runsAs?: ReactionIdentitySyntax | null;
     readonly name: string;
     readonly where?: ConditionSyntax | null;
     readonly description: string | null;

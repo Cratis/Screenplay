@@ -34,6 +34,11 @@ public record ReactionSyntax(
     /// Gets the event source and optional stream this reaction observes.
     /// </summary>
     public ObserverFilterSyntax? From { get; init; }
+
+    /// <summary>
+    /// Gets the declared identity for every command returned or invoked by this reaction.
+    /// </summary>
+    public ReactionIdentitySyntax? RunsAs { get; init; }
 }
 
 /// <summary>

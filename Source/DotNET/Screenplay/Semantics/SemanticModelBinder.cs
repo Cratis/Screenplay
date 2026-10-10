@@ -75,7 +75,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
             var languageVersion = LanguageVersion.V1;
             var semanticVersion = SemanticVersion.V1;
-            if (context.UsesV10)
+            if (context.UsesV10 || context.UsesReactionIdentity)
             {
                 languageVersion = LanguageVersion.V10;
                 semanticVersion = SemanticVersion.V10;
@@ -244,6 +244,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var modules = AttachAutomation([.. syntax.Modules.Select(BindModule)]);
             var policies = BindPolicies();
             VerifyPersonaCallers(policies);
+            ValidateReactionIdentities(modules, policies);
             var application = new SemanticApplication(
                 applicationId,
                 applicationName,

@@ -45,7 +45,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         var subject = command.Properties.Where(property => property.IsIdentifier && !property.IsGenerated)
             .Select(property => authorizationValues.FirstOrDefault(value => value.TargetProperty == property.Id)?.Value)
             .FirstOrDefault(value => value is not null);
-        var authorization = SemanticPolicyEvaluation.Evaluate(command.Authorization, plan, request.Caller, artifact, subject, command.Properties);
+        var authorization = SemanticPolicyEvaluation.Evaluate(command.Authorization, plan, request.Caller, artifact, subject, command.Properties, request.RunsAs);
         if (authorization.Outcome == SemanticPolicyOutcome.Unsupported)
         {
             return new SemanticUnsupported(

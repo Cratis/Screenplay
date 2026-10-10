@@ -1,0 +1,35 @@
+module Work
+  feature Completion
+    slice Automation CompleteWork
+      command Complete
+        item String identifier
+        authorize CanComplete
+        produces Completed
+          for item
+      event Started
+        item String
+      event UntrustedStart
+        item String
+      event Completed
+      reaction TrustedWorker
+        runs as system role "Automation"
+        when Started
+          item
+          invokes Complete
+            item = item
+      reaction UnmarkedWorker
+        when UntrustedStart
+          item
+          invokes Complete
+            item = item
+      specification DeclaredIdentityAllows
+        when append Started
+          item = "one"
+        then Completed
+      specification NoIdentityDenies
+        given caller
+          authenticated
+          role "Automation"
+        when append UntrustedStart
+          item = "two"
+        then denied

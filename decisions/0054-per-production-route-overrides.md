@@ -20,7 +20,7 @@ applies-to:
 
 A command event production may declare one `stream Source.Stream` with the command route's scalar or composite `streamId` mappings. It replaces the source, stream and stream id together. Other productions keep the command route. An override does not supply `for`, and its destination type must match its source's identifier type. The command route's destination check excludes overridden productions.
 
-Plain, conditional and inline event productions accept this form. A line containing `=` remains payload, including a payload named `stream`. Reaction and refusal-branch productions refuse it with PLAY0650. Duplicate or invalid routes use PLAY0504. A route identical to the command route warns with PLAY0651 and has a typed removal repair.
+Plain, conditional and inline event productions accept this form. A line containing `=` remains payload, including a payload named `stream`. Reaction and refusal-branch productions refuse it with PLAY0663. Duplicate or invalid routes use PLAY0504. A route identical to the command route warns with PLAY0664 and has a typed removal repair.
 
 All routes resolve eagerly after validation and requirements, before generation. A formatting failure in a skipped production rejects the command atomically as Contract. Mapping inputs follow 0036: direct required non-generated scalar command inputs or literals. Paths remain refused with PLAY0268 (#574); generated inputs use PLAY0273.
 

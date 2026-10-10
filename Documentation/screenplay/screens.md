@@ -49,7 +49,7 @@ issues the command and discovers its command-bound form. An action's `navigate t
 **after success**, never a route to that command's own input screen. For example, the action on
 `RegisterInvoiceScreen` can return to `InvoiceList` after registration.
 
-Screen `data ... via query ... by value` and `navigate ... by value` remain scalar lookups. They cannot supply a composite read-model key to a single-instance query. The compiler reports `PLAY0648`; no automatic screen repair is offered. Collection queries may filter by a subset. See [Read-model keys](readmodels.md#keys).
+Screen `data ... via query ... by value` and `navigate ... by value` remain scalar lookups. They cannot supply a composite read-model key to a single-instance query. The compiler reports `PLAY0661`; no automatic screen repair is offered. Collection queries may filter by a subset. See [Read-model keys](readmodels.md#keys).
 
 ## One action, several commands
 

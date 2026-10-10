@@ -3,12 +3,17 @@
 
 import { spawnSync } from 'node:child_process';
 import { rm } from 'node:fs/promises';
-import { build } from 'esbuild';
+import { dirname, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { rolldown } from 'rolldown';
 import { checkPackage } from './check-package.mjs';
 
 // This package is also built on its own for npm publication. The compiler stays private: emit the
-// declarations against its build, then bundle its browser-safe parser rather than publishing a runtime
-// dependency that consumers cannot install. Every public entry shares one set of bundled modules.
+// declarations against its build, then include its browser-safe modules rather than publishing a runtime
+// dependency that consumers cannot install. Rolldown is already installed by the workspace's Vite build.
+// Preserve the module graph so consumers can tree-shake and split it with their own chunk budgets.
+const packageRoot = dirname(fileURLToPath(import.meta.url));
+const compilerRoot = resolve(packageRoot, '../../Compiler');
 for (const [command, args] of [
     ['yarn', ['workspace', '@cratis/screenplay-compiler', 'build']],
     ['yarn', ['exec', 'tsc', '-p', 'tsconfig.build.json', '--emitDeclarationOnly']],
@@ -20,23 +25,34 @@ for (const [command, args] of [
 
 // Only this build's owned runtime output is replaced; declaration/source output is not published as JS.
 await rm('dist/bundles', { recursive: true, force: true });
-await build({
-    entryPoints: ['index.ts', 'sub-languages/capture/index.ts', 'sub-languages/projection/index.ts'],
-    outdir: 'dist/bundles',
-    outbase: '.',
-    splitting: true,
-    bundle: true,
-    format: 'esm',
-    platform: 'browser',
-    target: 'es2022',
+const graph = await rolldown({
+    input: ['index.ts', 'sub-languages/capture/index.ts', 'sub-languages/projection/index.ts'],
     external: ['monaco-editor'],
-    sourcemap: true,
-    // Minify local identifiers as the authoring surface grows, but preserve callable names
-    // and source maps for readable stack traces. Public export names remain unchanged.
-    minifyWhitespace: true,
-    minifySyntax: true,
-    minifyIdentifiers: true,
-    keepNames: true,
+    platform: 'browser',
+    transform: { target: 'es2022' },
+    resolve: { alias: { '@cratis/screenplay-compiler': resolve(compilerRoot, 'index.ts') } },
 });
+try {
+    await graph.write({
+        dir: 'dist/bundles',
+        format: 'esm',
+        preserveModules: true,
+        // Keep every public entry at its existing exports-map path. Compiler files are private,
+        // relative modules inside the tarball, never workspace paths or bare compiler imports.
+        entryFileNames(chunk) {
+            if (!chunk.facadeModuleId || chunk.facadeModuleId.startsWith('\0')) return '_virtual/[name].js';
+            const compilerPath = relative(compilerRoot, chunk.facadeModuleId);
+            const modulePath = compilerPath.startsWith('..')
+                ? relative(packageRoot, chunk.facadeModuleId)
+                : `compiler/${compilerPath}`;
+            return modulePath.replaceAll('\\', '/').replace(/\.ts$/, '.js');
+        },
+        sourcemap: true,
+        minify: true,
+        keepNames: true,
+    });
+} finally {
+    await graph.close();
+}
 
 await checkPackage();

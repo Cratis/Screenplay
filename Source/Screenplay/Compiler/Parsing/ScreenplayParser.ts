@@ -3,6 +3,7 @@
 
 import { IdentitySyntax } from '../Syntax/IdentitySyntax';
 import { parseIdentity } from './IdentityParser';
+import { misplacedReactionIdentity } from './ReactionIdentityParser';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { recordAuthoredDocument } from '../Syntax/SourceOptions';
 import { SourceLocation } from '../Diagnostics/SourceLocation';
@@ -88,6 +89,10 @@ export function parseApplication(context: ParserContext, lines: readonly SourceL
     for (let line = context.reader.peekSignificant(); line !== undefined; line = context.reader.peekSignificant()) {
         context.reader.takeSignificant();
         const keyword = firstWord(line.content);
+        if (keyword === 'runs') {
+            misplacedReactionIdentity(context, line);
+            continue;
+        }
         if (keyword === 'domain') {
             context.authoredDeclarations = true;
             domain = parseDomain(context, line, domain, sawOtherConstruct);

@@ -44,7 +44,7 @@
 | [0040](0040-description-on-concepts-rules-and-ui.md) | Accept body-line descriptions on concepts, policies, constraints, projections, screens and forms | accepted | implemented | 2026-10-08 | Sindre Alstad Wilting |
 | [0041](0041-personal-data-secrets-and-processing-purposes.md) | Mark personal data and secrets on concepts, and declare processing purposes once | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0042](0042-persona-callers-in-specifications.md) | Expand persona callers in specifications and check persona coverage on request | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
-| [0043](0043-reaction-identity-runs-as.md) | Declare the system identity under which a reaction's invoked commands run | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
+| [0043](0043-reaction-identity-runs-as.md) | Declare the system identity under which a reaction's invoked commands run | accepted | implemented | 2026-10-08 | Sindre Alstad Wilting |
 | [0044](0044-evolve-event-properties-through-mcp.md) | Add, rename and remove a property along its mapping chain through a planned proposal, with an explicit event-evolution choice | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0045](0045-model-notes-sidecar.md) | Record questions, tasks and notes against model elements in a committed sidecar outside the semantic model | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
 | [0046](0046-specification-case-tables.md) | Run one specification over named cases, expanded in the front end | accepted | none | 2026-10-08 | Sindre Alstad Wilting |
@@ -57,4 +57,4 @@
 | [0053](0053-declare-read-model-keys-and-bind-lookups-by-name.md) | Declare read-model keys on properties and supply every key part by name in lookups | proposed | none | | |
 | [0054](0054-per-production-route-overrides.md) | Replace the command route per event production | proposed | none | | |
 | [0055](0055-observer-source-and-stream-filters.md) | Filter reactions and reducers by event source and stream | proposed | none | | |
-| [0056](0056-admit-production-routes-and-observer-filters-as-esm-v10.md) | Admit production routes and observer filters as ESM v10 | proposed | none | | |
+| [0056](0056-admit-production-routes-and-observer-filters-as-esm-v10.md) | Join the claimed unreleased ESM v10 with production routes and observer filters | proposed | none | | |

@@ -5370,6 +5370,7 @@
                   "kind": "ReactionSyntax",
                   "description": "Emails the billing contact once an invoice is registered",
                   "name": "NotifyCustomer",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",
@@ -5405,6 +5406,7 @@
                   "kind": "ReactionSyntax",
                   "description": null,
                   "name": "OverdueInvoiceDetector",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",
@@ -5467,6 +5469,7 @@
                   "kind": "ReactionSyntax",
                   "description": "Matches settled payments against outstanding invoices and closes them out",
                   "name": "PaymentReconciler",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",
@@ -5512,6 +5515,7 @@
                   "kind": "ReactionSyntax",
                   "description": "Reminds the billing contact every morning while an invoice is late",
                   "name": "OverdueChaser",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",
@@ -5568,6 +5572,7 @@
                   "kind": "ReactionSyntax",
                   "description": "Reconciles the billing contact list against the external directory",
                   "name": "BillingDirectorySync",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",

@@ -107,7 +107,7 @@ That query is already scoped to the current tenant. Nothing states it, because n
 
 A bare `by` header declares at least two `name Type [from source]` children. It cannot combine with the single `by name Type` form. Names are read-model key property names. A single-instance query supplies every part with its required compatible nominal type. A collection query may name a subset. See the complete example in [Read-model keys](readmodels.md#keys).
 
-Composite read-model keys and by-block queries are authoring-only. Binding reports `PLAY0268` citing [#599](https://github.com/Cratis/Screenplay/issues/599). Missing parts use `PLAY0648`; invalid shapes and parts use `PLAY0649`. Queries have no key-completion repair.
+Composite read-model keys and by-block queries are authoring-only. Binding reports `PLAY0268` citing [#599](https://github.com/Cratis/Screenplay/issues/599). Missing parts use `PLAY0661`; invalid shapes and parts use `PLAY0662`. Queries have no key-completion repair.
 
 ## Parameters
 

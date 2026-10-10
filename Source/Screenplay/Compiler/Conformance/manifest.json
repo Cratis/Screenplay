@@ -2,6 +2,7 @@
     "description": "The .play documents whose syntax the TypeScript and C# compilers must agree on. Paths are relative to the repository root. Each document's golden syntax is written by the TypeScript compiler beside this manifest as <name>.syntax.json; the C# compiler is held to it by Syntax/Serialization/for_SyntaxJson/when_holding_the_typescript_compiler_to_it.",
     "documents": [
         { "name": "read-model-keys", "path": "Source/Screenplay/Compiler/Conformance/read-model-keys.play" },
+        { "name": "reaction-identity", "path": "Source/Screenplay/Compiler/Conformance/reaction-identity.play" },
         { "name": "identity", "path": "Source/Screenplay/Compiler/Conformance/identity.play" },
         { "name": "public-events", "path": "Source/Screenplay/Compiler/Conformance/public-events.play" },
         { "name": "public-events-admission", "path": "Source/Screenplay/Compiler/Conformance/public-events-admission.play" },

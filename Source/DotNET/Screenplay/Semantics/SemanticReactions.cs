@@ -125,4 +125,16 @@ public sealed record SemanticReaction(SemanticId Id, string Name, ImmutableArray
     /// Gets the event source and optional stream filter.
     /// </summary>
     public SemanticObserverFilter? From { get; init; }
+
+    /// <summary>
+    /// Gets the authorization identity used by invoked commands, independently of audit identity.
+    /// </summary>
+    public SemanticReactionIdentity? RunsAs { get; init; }
 }
+
+/// <summary>
+/// Represents the authorization identity under which a reaction invokes commands.
+/// </summary>
+/// <param name="Kind">The identity kind.</param>
+/// <param name="Roles">The distinct, ordinally sorted roles, which may be empty.</param>
+public sealed record SemanticReactionIdentity(SemanticReactionIdentityKind Kind, ImmutableArray<string> Roles);

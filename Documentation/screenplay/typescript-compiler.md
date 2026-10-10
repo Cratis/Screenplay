@@ -92,7 +92,7 @@ The ids in that document are derived from where each element sits in the model. 
 
 Both source parsers retain trailing read-model `key` marks, query and reads `by` blocks, production `stream` overrides and reaction/reducer `from` filters. Structural JSON uses `isKey`, `byParts`, `stream` and `from`. The narrow parser exposes reducer evidence through `dependencySourcesOf(slice).reducers` and command/trigger reads through `dependencySourcesOf(node).reads`. Full typed AST transport carries `ReducerSyntax` and `ReadsSyntax`.
 
-Shared validation reports `PLAY0647`, shape-only `PLAY0649`, `PLAY0650`, `PLAY0651` and `PLAY0652`. Scoped key completeness and compatibility checks remain C# only, as does `PLAY0653`. Editor clients preserve supplied native diagnostics rather than inventing those checks. See [Editor diagnostics](editor-diagnostics.md).
+Shared validation reports `PLAY0660`, shape-only `PLAY0662`, `PLAY0663`, `PLAY0664` and `PLAY0665`. Scoped key completeness and compatibility checks remain C# only, as does `PLAY0666`. Editor clients preserve supplied native diagnostics rather than inventing those checks. See [Editor diagnostics](editor-diagnostics.md).
 
 The C# binder admits production routes and observer filters as ESM v10. Composite read-model keys and by-block queries remain authoring-only and are refused with `PLAY0268` (#599). TypeScript has no executable binder or runner.
 

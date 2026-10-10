@@ -76,6 +76,7 @@ describe('when authoring refusals and redelivery', () => {
         const tokenizer = new MonarchTokenizer({}, {}, 'screenplay', compile('screenplay', createTokensProvider([])), { getValue: () => 20000, onDidChangeConfiguration: () => ({ dispose() {} }) });
         try {
             for (const [line, word, type] of [
+                ['runs as system role "Automation"', 'runs', 'keyword.play'],
                 ['on refused by validation', 'refused', 'keyword.play'],
                 ['on refused by authorization', 'authorization', 'keyword.play'],
                 ['acknowledge', 'acknowledge', 'keyword.play'],

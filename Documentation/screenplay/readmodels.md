@@ -66,7 +66,7 @@ module Reporting
 
 A single-instance lookup supplies every part exactly once. Collection queries may filter by a subset. Query parts declare `name Type`; read parts map `name = source`. Sources for reads are required, noncollection property paths of compatible nominal types, not literals.
 
-`PLAY0647` rejects invalid key declarations. `PLAY0648` names missing parts. `PLAY0649` rejects invalid lookup shapes or values. The typed `PLAY0648` repair covers command reads only. Queries and trigger reads are not repaired.
+`PLAY0660` rejects invalid key declarations. `PLAY0661` names missing parts. `PLAY0662` rejects invalid lookup shapes or values. The typed `PLAY0661` repair covers command reads only. Queries and trigger reads are not repaired.
 
 An explicit single key binds byte-identically to the equivalent inferred identifier. Composite keys, by-block queries and their fixtures remain authoring-only. Binding reports `PLAY0268` citing [#599](https://github.com/Cratis/Screenplay/issues/599).
 

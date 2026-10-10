@@ -21,6 +21,8 @@ public sealed partial class SemanticModelBinder
 
         internal bool UsesV6 { get; set; }
 
+        internal bool UsesReactionIdentity { get; private set; }
+
         static IEnumerable<SemanticSlice> AllBoundSlices(SemanticFeature feature) =>
             feature.Slices.Concat(feature.Features.SelectMany(AllBoundSlices));
 
@@ -97,6 +99,21 @@ public sealed partial class SemanticModelBinder
         SemanticReaction BindReaction(SemanticAddress slice, ReactionSyntax reaction, Dictionary<string, SemanticCommand?> commands)
         {
             UsesV6 = true;
+            SemanticReactionIdentity? runsAs = null;
+            if (reaction.RunsAs is { } identity)
+            {
+                var roles = identity.Roles.ToImmutableArray();
+                if (identity.Kind != "system" || roles.Any(string.IsNullOrWhiteSpace) || roles.Distinct(StringComparer.Ordinal).Count() != roles.Length)
+                {
+                    Error(DiagnosticCodes.InvalidSemanticBinding, "A reaction identity must be system with non-blank, distinct roles.", identity.Location);
+                }
+                else
+                {
+                    runsAs = new(SemanticReactionIdentityKind.System, [.. roles.Order(StringComparer.Ordinal)]);
+                    UsesReactionIdentity = true;
+                }
+            }
+
             if (reaction.Documentation is not null)
             {
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Reaction '{reaction.Name}' documentation is authoring metadata.", reaction.Location);
@@ -115,7 +132,7 @@ public sealed partial class SemanticModelBinder
                 Error(DiagnosticCodes.InvalidObserverFilter, "A filtered reaction requires only declared event triggers.", reaction.From.Location);
             }
 
-            return new(id, reaction.Name, boundTriggers) { From = BindObserverFilter(reaction.From) };
+            return new(id, reaction.Name, boundTriggers) { From = BindObserverFilter(reaction.From), RunsAs = runsAs };
         }
 
         SemanticReactionTrigger? BindReactionTrigger(

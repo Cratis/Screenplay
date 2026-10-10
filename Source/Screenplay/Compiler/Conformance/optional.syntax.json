@@ -239,6 +239,7 @@
                   "kind": "ReactionSyntax",
                   "description": null,
                   "name": "React",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",

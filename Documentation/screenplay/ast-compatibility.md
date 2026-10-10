@@ -33,6 +33,10 @@ Authoring metadata follows this rule: `SpecificationSyntax.Description` and the 
 
 `ObserverFilterSyntax` carries an event source name, optional stream name and location. Routes and filters select ESM v10. Explicit single read-model keys preserve ESM bytes; composite read-model keys remain refused with `PLAY0268` (#599). See [AST authoring](ast-authoring.md#keys-production-routes-and-observer-filters).
 
+## Reaction command identity member
+
+`ReactionSyntax.RunsAs` is a nullable init-only `ReactionIdentitySyntax`, not a new constructor or Deconstruct parameter. `ReactionIdentitySyntax(Kind, Roles, Location)` is an additive node; its CLR `Kind` uses `syntaxKind` in typed syntax JSON to avoid the node discriminator. The walker gains `VisitReactionIdentity`, and generated transport and collection schemas describe the roles. Preserve `RunsAs` when rewriting a reaction. Old syntax JSON may omit the member; its default is null. A declared identity binds to the reaction's `runsAs` member and selects ESM v10; omission preserves existing ESM bytes and revisions.
+
 ## Public event source-authoring members
 
 `EventSyntax` and `ImportSyntax` gain init-only `Visibility` (`EventVisibility.Private` by default)

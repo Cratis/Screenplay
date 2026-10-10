@@ -167,7 +167,7 @@ export class RepairSession {
             const choices: RepairChoice[] = [];
             for (const value of await read('repairs')) {
                 const item = object(value);
-                if (!['PLAY0166', 'PLAY0478', 'PLAY0648', 'PLAY0651'].includes(String(item.diagnosticCode))) continue;
+                if (!['PLAY0166', 'PLAY0478', 'PLAY0661', 'PLAY0664'].includes(String(item.diagnosticCode))) continue;
                 const subject = object(item.subject);
                 const source = location(item.location);
                 const code = text(item.diagnosticCode);
@@ -175,7 +175,7 @@ export class RepairSession {
                 const handle = { revision: text(subject.revision), documentId: text(subject.documentId), path: text(subject.path) };
                 if (handle.revision !== opened.revision || !source.path || documents.get(handle.documentId) !== source.path ||
                     !diagnostics.some(issue => issue.code === code && issue.location.path === source.path && issue.location.line === source.line && issue.location.column === source.column)) continue;
-                choices.push({ token: randomUUID(), code, title: code === 'PLAY0478' ? 'Change routing: explicitly route to the command identifier' : code === 'PLAY0648' ? 'Supply every command-read key part by name' : code === 'PLAY0651' ? 'Remove the redundant production route' : 'Declare the missing produced event', location: source, subject: handle });
+                choices.push({ token: randomUUID(), code, title: code === 'PLAY0478' ? 'Change routing: explicitly route to the command identifier' : code === 'PLAY0661' ? 'Supply every command-read key part by name' : code === 'PLAY0664' ? 'Remove the redundant production route' : 'Declare the missing produced event', location: source, subject: handle });
             }
             this.#check(epoch, versions);
             this.#snapshot = { epoch, versions, revision: opened.revision, catalog: opened.catalog, evidence: evidence(pinnedEvidence), diagnostics, choices };

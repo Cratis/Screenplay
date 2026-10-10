@@ -198,6 +198,7 @@
                   "kind": "ReactionSyntax",
                   "description": null,
                   "name": "Claimer",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",

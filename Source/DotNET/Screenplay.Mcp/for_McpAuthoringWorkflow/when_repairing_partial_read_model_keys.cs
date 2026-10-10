@@ -16,12 +16,12 @@ public class when_repairing_partial_read_model_keys : given.an_authoring_connect
         Initialize();
         var opened = Open();
         var revision = opened.GetProperty("revision").GetString();
-        var repair = Page("repairs", revision).EnumerateArray().Single(item => item.GetProperty("diagnosticCode").GetString() == "PLAY0648");
+        var repair = Page("repairs", revision).EnumerateArray().Single(item => item.GetProperty("diagnosticCode").GetString() == "PLAY0661");
         var proposal = Result("propose-repair", new
         {
             expectedRevision = revision,
             expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
-            diagnosticCode = "PLAY0648",
+            diagnosticCode = "PLAY0661",
             subject = repair.GetProperty("subject"),
             formatting = "CanonicalizeTouchedDocuments"
         });
@@ -61,8 +61,8 @@ public class when_repairing_partial_read_model_keys : given.an_authoring_connect
     {
         Initialize();
         var codes = Result("repair-capabilities").GetProperty("actions").EnumerateArray().Select(action => action.GetProperty("diagnosticCode").GetString()).ToArray();
-        codes.ShouldContain("PLAY0648");
-        codes.ShouldNotContain("PLAY0647");
-        codes.ShouldNotContain("PLAY0649");
+        codes.ShouldContain("PLAY0661");
+        codes.ShouldNotContain("PLAY0660");
+        codes.ShouldNotContain("PLAY0662");
     }
 }

@@ -136,7 +136,7 @@ sealed class McpAuthoringReadiness(ApplicationSyntax application)
                     .SelectMany(occurrence => FixtureFeatures(occurrence.Stream, occurrence.NoStream)))
                 .Concat(Feature(!SemanticModelBinder.SpecificationRoutesJoin && HasSpecificationRoute(specification), "specification event routes (#457)"))
                 .Concat(ActionCommands(specification).SelectMany(entry => UnadmittedFeatures(entry.Command))),
-            SliceSyntax slice => slice.Commands.Cast<SyntaxNode>().Concat(slice.ReadModels ?? []).Concat(slice.Queries).Concat(slice.Specifications).Concat(slice.Examples).SelectMany(UnadmittedFeatures),
+            SliceSyntax slice => slice.Commands.Cast<SyntaxNode>().Concat(slice.Reactions).Concat(slice.ReadModels ?? []).Concat(slice.Queries).Concat(slice.Specifications).Concat(slice.Examples).SelectMany(UnadmittedFeatures),
             ApplicationSyntax => application.EventSources.SelectMany(UnadmittedFeatures)
                 .Concat(_owners.Keys.OfType<SliceSyntax>().SelectMany(UnadmittedFeatures))
                 .Concat(_effective.ResolvedExamples.Select(example => example.Example).SelectMany(UnadmittedFeatures)),

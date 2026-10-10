@@ -745,6 +745,7 @@
                     "stream": "Transactions"
                   },
                   "name": "Alert",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",
@@ -767,6 +768,7 @@
                     "stream": null
                   },
                   "name": "SourceAlert",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",

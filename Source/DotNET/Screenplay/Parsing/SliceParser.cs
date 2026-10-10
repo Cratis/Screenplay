@@ -76,6 +76,9 @@ internal static partial class SliceParser
 
             switch (FirstSliceWord(line.Content))
             {
+                case "runs":
+                    ReactionIdentityParser.Misplaced(context, line);
+                    break;
                 case "description":
                     var previousDescription = description;
                     description = DescriptionParser.Parse(context, line, description, $"Slice '{name}'", out var descriptionSpan);

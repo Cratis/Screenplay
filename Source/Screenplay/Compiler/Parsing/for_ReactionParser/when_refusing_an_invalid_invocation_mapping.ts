@@ -10,6 +10,6 @@ describe('when refusing an invalid invocation mapping', () => {
         const result = parse('module M\n  feature F\n    slice Automation S\n      reaction R\n        when Changed\n          invokes C\n            invalid mapping\n            value = "kept"');
         expect(result.diagnostics.map(diagnostic => diagnostic.code)).toContain(DiagnosticCodes.InvalidPropertyMapping);
         const invocation = result.value.modules[0].features[0].slices[0].reactions[0].triggers[0].invokes[0];
-        expect(invocation.mappings.map(mapping => mapping.property)).toEqual(['value']);
+        expect(invocation.mappings?.map(mapping => mapping.property)).toEqual(['value']);
     });
 });

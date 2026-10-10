@@ -308,6 +308,7 @@
                   "kind": "ReactionSyntax",
                   "description": null,
                   "name": "Refresh",
+                  "runsAs": null,
                   "triggers": [
                     {
                       "kind": "ReactionTriggerSyntax",

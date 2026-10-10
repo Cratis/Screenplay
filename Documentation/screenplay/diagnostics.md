@@ -648,10 +648,10 @@ direction; `PLAY0610`, `PLAY0615`, `PLAY0618` and `PLAY0619` would move a constr
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0650` | Error | A reaction or refusal-branch production declares a `stream` route. Only command event productions can override a route. |
-| `PLAY0651` | Warning | A production repeats its command's source, stream and stream-id mappings. The typed workspace repair removes the override. |
-| `PLAY0652` | Error | An observer filter is malformed, duplicated, has children, names an unresolved or ambiguous source/stream, or a filtered reaction has a non-event trigger. |
-| `PLAY0653` | Warning | A reaction or reducer filter excludes every statically known producer's effective route. Handlers and foreign origins are unknown and suppress this C#-only warning. |
+| `PLAY0663` | Error | A reaction or refusal-branch production declares a `stream` route. Only command event productions can override a route. |
+| `PLAY0664` | Warning | A production repeats its command's source, stream and stream-id mappings. The typed workspace repair removes the override. |
+| `PLAY0665` | Error | An observer filter is malformed, duplicated, has children, names an unresolved or ambiguous source/stream, or a filtered reaction has a non-event trigger. |
+| `PLAY0666` | Warning | A reaction or reducer filter excludes every statically known producer's effective route. Handlers and foreign origins are unknown and suppress this C#-only warning. |
 
 Overrides reuse `PLAY0504` for route shape, mapping, destination type and duplicate-route errors. Protected sources reuse `PLAY0515`. Property paths remain refused at binding with `PLAY0268` (#574), and generated route inputs with `PLAY0273`.
 
@@ -702,9 +702,9 @@ None of these has an automatic repair: each is a composition decision for the au
 
 | Code | Severity | Reported when |
 |---|---|---|
-| `PLAY0647` | Error | `key` is marked outside a top-level read-model property, combined with another modifier, or has an optional or collection type. A part of a multipart key cannot have a composite type. |
-| `PLAY0648` | Error | A single-instance lookup omits key parts. The message names the missing parts. Command reads have a typed repair when every missing part has one same-named compatible source. Queries and trigger reads are not repaired. Scalar screen, form and navigation lookups cannot supply composite keys. |
-| `PLAY0649` | Error | A `by` block has fewer than two distinct parts, names an unknown part, uses the wrong key shape or supplies an incompatible, optional, collection or literal source. A single-instance query must agree with the declared key. No automatic repair is offered. |
+| `PLAY0660` | Error | `key` is marked outside a top-level read-model property, combined with another modifier, or has an optional or collection type. A part of a multipart key cannot have a composite type. |
+| `PLAY0661` | Error | A single-instance lookup omits key parts. The message names the missing parts. Command reads have a typed repair when every missing part has one same-named compatible source. Queries and trigger reads are not repaired. Scalar screen, form and navigation lookups cannot supply composite keys. |
+| `PLAY0662` | Error | A `by` block has fewer than two distinct parts, names an unknown part, uses the wrong key shape or supplies an incompatible, optional, collection or literal source. A single-instance query must agree with the declared key. No automatic repair is offered. |
 
 An explicit single `key` binds byte-identically to an inferred identifier. Composite keys and by-block queries are authoring-only: binding reports `PLAY0268` citing [#599](https://github.com/Cratis/Screenplay/issues/599).
 
@@ -1025,10 +1025,23 @@ Refusal branches, `$refusal` values, redelivery and `then no events` are syntax-
 | `PLAY0540` | Warning | A refusal branch is shadowed by an earlier selector, or its declared constraint targets none of the invoked command's events. Bare refusal covers validation and constraints, not authorization. |
 | `PLAY0541` | Error | A `$refusal` value is outside a branch's event mapping, has an unknown member, uses `constraint` outside a constraint selector, or targets an incompatible property type. The values `reason`, `constraint` and `message` are String values. |
 | `PLAY0542` | Error | A named constraint in a refusal selector does not resolve to a declared constraint. |
-| `PLAY0557` | Warning | An `on refused by authorization` branch invokes a command gated by its own, feature or module authorization without a declared invoking identity. With no caller the reference runner always refuses the command, while Arc runs reactor commands as the system. Declare an invoking identity once [#383](https://github.com/Cratis/Screenplay/issues/383) supports it; identity syntax is not available yet. |
+| `PLAY0557` | Warning | An `on refused by authorization` branch invokes a command gated by its own, feature or module authorization without a declared invoking identity. With no caller the reference runner always refuses the command. Arc runs commands as the system only for a reactor carrying `[ExecuteCommandsAsSystem]`. Declare `runs as system role "<Role>"` to state the intended identity; it suppresses this warning and selects ESM v10 (claimed, unreleased). Refusal branches remain syntax-only. |
 | `PLAY0543` | Error | `when redelivered <Event> to <Reaction>` is malformed, or its values, optional `for` and route locator do not identify exactly one definitely matching given event occurrence with no undecidable candidates. Use `for`, values, `stream` or `no stream` to narrow the locator. |
 | `PLAY0544` | Error | The redelivery reaction is unknown or ambiguous, or has no event trigger on the stated event. |
 | `PLAY0545` | Error | `then no events` is malformed, repeated, has child mappings, follows `when append`, or accompanies event, event-order, error or denial expectations. Use one leaf assertion after a non-append action; read-model, query and response assertions may accompany it. |
+
+### Reaction command identity
+
+`runs as` is admitted by ESM v10 (claimed, unreleased); `PLAY0268` no longer refuses reaction command identity. Omitting it preserves existing executable bytes. System claim conditions evaluate to unknown and a final unknown denies.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `PLAY0647` | Error | `runs as` is malformed, repeated or misplaced, or contains an empty or duplicate role. Use one reaction-level `runs as system [role "<Role>" and role "<Role>"]` line. Roles are quoted literals; zero roles is allowed. |
+| `PLAY0648` | Warning | A reaction invokes a command with its own or inherited authorization gate without declaring `runs as`. Both compilers report at most one finding per invocation; an authorization refusal branch receives `PLAY0557` instead. |
+| `PLAY0649` | Warning | The reaction declares identity but has neither invocations nor an inline or `file` implementation body. Both compilers check this. |
+| `PLAY0650` | Warning | C# binder only: a declared role is referenced by no invoked command's effective gate. Opaque gates and inline or `file` reaction bodies suppress this least-privilege finding. |
+| `PLAY0651` | Warning | C# binder only: the declared system identity definitely cannot satisfy an invoked command's effective gate. Claim conditions and other unknown results are not treated as definite denial. |
+| `PLAY0652` | Warning / Information | Opt-in `privilege` completeness: each producer of an elevated reaction's trigger event must require every declared system role. Ungated commands, captures and reaction productions produce Warning; opaque gates produce Information because they cannot be compared. Clock and application triggers have no producer and are silent. |
 
 See [Refusal branches](reactions.md#refusal-branches-syntax-only), [Redelivery specifications](specifications.md#redelivery-specifications-syntax-only) and [Specification syntax](specifications.md#syntax).
 
