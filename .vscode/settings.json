@@ -53,6 +53,7 @@
     "typescript.tsdk": "./node_modules/typescript/lib",
     "npm.packageManager": "yarn",
     "cSpell.words": [
+        "identity",
         "legalObligation",
         "vitalInterests",
         "publicTask",

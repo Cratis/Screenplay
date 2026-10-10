@@ -7,7 +7,7 @@ import { namedRuleContext } from './named-rule-context';
 import { eventSourceHover } from './event-source-authoring';
 import { exampleHover } from './example-authoring';
 import { operationHover } from './operation-authoring';
-import { DocumentSymbols } from './symbols';
+import { DocumentSymbols, symbolsForBuffer } from './symbols';
 import { responseAnalysis, responseAvailability } from './response-analysis';
 import { enclosingChain, enclosingHeaders, fenceMap, indentOf, withoutComment } from './document-context';
 import { directBody, propertyTypeReference, scanDocument } from './symbols';
@@ -74,6 +74,11 @@ export function hoverContent(
                 const member = variable.substring('$refusal.'.length);
                 const descriptions: Record<string, string> = { reason: 'Refusal kind as a String: validation, constraint or authorization.', message: 'Rejection details verbatim, including unresolved $strings keys.', constraint: 'Violated constraint name as a String, only in a by constraint branch.' };
                 return branch !== undefined && descriptions[member] !== undefined ? `**${variable}** — ${descriptions[member]} Syntax-only, not yet executable (PLAY0268).` : null;
+            }
+            if (variable.startsWith('$identity.')) {
+                const name = variable.substring('$identity.'.length).split('.')[0];
+                const detail = symbolsForBuffer(lines, application).identityDetails?.find(detail => detail.name === name);
+                if (detail) return `**$identity.${detail.name}** — ${detail.type}. Declared caller detail; authoring metadata only, not executable until admitted (#600).`;
             }
             const doc =
                 contextVariableDocs[variable] ??

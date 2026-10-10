@@ -172,7 +172,9 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
     const complianceCodes = new Set<string>([DiagnosticCodes.InvalidPurposeDeclaration, DiagnosticCodes.InvalidPurposeVocabulary, DiagnosticCodes.DuplicatePurposeField, DiagnosticCodes.DuplicatePurposeDeclaration, DiagnosticCodes.UnknownPurpose, DiagnosticCodes.PurposeInterestMismatch, DiagnosticCodes.PersonalDataWithoutPurpose, DiagnosticCodes.SpecialDataWithoutCondition, DiagnosticCodes.CriminalDataWithoutAuthorization, DiagnosticCodes.PurposeWithoutBasis, DiagnosticCodes.UnusedPurpose, DiagnosticCodes.UnknownConceptDirective, DiagnosticCodes.AttributeReasonWithoutAttribute, DiagnosticCodes.DuplicateAttributeReason, DiagnosticCodes.LegacyComplianceMarker, DiagnosticCodes.UnknownComplianceMarker, DiagnosticCodes.InvalidSecretScope, DiagnosticCodes.DuplicateSecretScope, DiagnosticCodes.SecretScopeIgnoredForPii, DiagnosticCodes.InvalidPersonalDataQualifier, DiagnosticCodes.DuplicateSpecialCategory]);
     const compilerUnknownEventLines = new Set<number>();
     for (const diagnostic of context.compilerDiagnostics ?? analysis.diagnostics) {
-        if (!complianceCodes.has(diagnostic.code) && !optionalCodes.has(diagnostic.code) && !policyCodes.has(diagnostic.code) && !consistencyCodes.has(diagnostic.code) && !timelineCodes.has(diagnostic.code) && !dependencyCodes.has(diagnostic.code) && !authoringCodes.has(diagnostic.code) && diagnostic.code !== DiagnosticCodes.InvalidSpecificationExampleBody && diagnostic.code !== DiagnosticCodes.UnknownRuleImplementationDirective && diagnostic.code !== DiagnosticCodes.InvalidValidationRule && diagnostic.code !== DiagnosticCodes.RepeatedDeclarationAcrossFiles && !/^PLAY049[0-9]$|^PLAY050[0-7]$|^PLAY054[7-9]$|^PLAY055[01]$|^PLAY048[2-9]$|^PLAY004[56]$|^PLAY053[0-9]$|^PLAY054[0-6]$|^PLAY034[1-8]$|^PLAY0557$|^PLAY060[7-9]$|^PLAY061[0-9]$|^PLAY0620$/.test(diagnostic.code)) continue;
+        const identityType = diagnostic.code === DiagnosticCodes.UnknownType && (analysis.identityDetails ?? []).some(detail => detail.line === diagnostic.location.line - 1);
+        const identityDuplicate = diagnostic.code === DiagnosticCodes.RepeatedSingularDeclarationAcrossFiles && diagnostic.message.includes('identity block');
+        if (!identityType && !identityDuplicate && !complianceCodes.has(diagnostic.code) && !optionalCodes.has(diagnostic.code) && !policyCodes.has(diagnostic.code) && !consistencyCodes.has(diagnostic.code) && !timelineCodes.has(diagnostic.code) && !dependencyCodes.has(diagnostic.code) && !authoringCodes.has(diagnostic.code) && diagnostic.code !== DiagnosticCodes.InvalidSpecificationExampleBody && diagnostic.code !== DiagnosticCodes.UnknownRuleImplementationDirective && diagnostic.code !== DiagnosticCodes.InvalidValidationRule && diagnostic.code !== DiagnosticCodes.RepeatedDeclarationAcrossFiles && !/^PLAY049[0-9]$|^PLAY050[0-7]$|^PLAY054[7-9]$|^PLAY055[01]$|^PLAY048[2-9]$|^PLAY004[56]$|^PLAY053[0-9]$|^PLAY054[0-6]$|^PLAY034[1-8]$|^PLAY0557$|^PLAY060[7-9]$|^PLAY061[0-9]$|^PLAY0620$|^PLAY063[3-9]$|^PLAY064[0-6]$/.test(diagnostic.code)) continue;
         const line = diagnostic.location.line - 1;
         if (diagnostic.code === DiagnosticCodes.OmittedProductionDestination && issues.some(existing => existing.code === diagnostic.code && existing.line === line)) continue;
         if (diagnostic.code === DiagnosticCodes.UnknownEvent) {
@@ -323,9 +325,10 @@ export function validateLines(lines: string[], context: ValidationContext = {}):
         // A bare $identity is left to the compilers, which see it only where an expression is expected.
         for (const path of line.match(/\$identity\.[\w.]+/g) ?? []) {
             const member = path.substring('$identity.'.length).split('.')[0];
-            if (!identityProperties.includes(member)) {
+            const knownIdentity = [...identityProperties, ...(analysis.identityDetails ?? []).map(detail => detail.name)];
+            if (!knownIdentity.includes(member)) {
                 issues.push(tokenIssue('warning', index, line, path,
-                    `Unknown $identity property '${member}' — expected ${identityProperties.join(', ')}.`,
+                    `Unknown $identity property '${member}' — expected ${knownIdentity.join(', ')}.`,
                     diagnosticCodes.unknownContextIdentityProperty));
             }
         }

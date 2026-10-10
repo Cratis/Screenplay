@@ -43,7 +43,7 @@ function authoringSource(lines: string[], headers: readonly string[]) {
     const body: number[] = [];
     let global = false;
     lines.forEach((line, index) => {
-        if (!fences[index] && indentOf(line) === 0 && /^\w/.test(line)) global = /^(?:concept|type|import|domain|system|eventsource|policy|persona)\b/.test(line);
+        if (!fences[index] && indentOf(line) === 0 && /^\w/.test(line)) global = /^(?:concept|type|import|domain|system|eventsource|policy|persona|identity)\b/.test(line);
         (global ? globals : body).push(index);
     });
     const depth = roots.includes('feature') ? 1 : roots.includes('slice') ? 2 : 3;
@@ -266,7 +266,8 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
             return dependencyAnalysis.completions(line, qualifier, placement);
         },
     };
-    return { commands, specifications, diagnostics, operationProductionLines, operations, eventSources, examples, personas: personaAnalysis(parsed.value, lines), dependencies };
+    const identityDetails = (parsed.value.identity?.details ?? []).map(detail => ({ name: detail.name, type: `${detail.type.name}${detail.type.isCollection ? '[]' : ''}${detail.type.isOptional ? ' optional' : ''}`, line: detail.location.line - 1 }));
+    return { identityDetails, commands, specifications, diagnostics, operationProductionLines, operations, eventSources, examples, personas: personaAnalysis(parsed.value, lines), dependencies };
 }
 
 export function responseAnalysis(lines: string[], otherSources: readonly (string | AuthoringDocument)[] = [], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis; readonly examples: ExampleAnalysis; readonly personas: ReturnType<typeof personaAnalysis>; readonly dependencies: ReturnType<typeof dependencyTargetAnalysis> } {

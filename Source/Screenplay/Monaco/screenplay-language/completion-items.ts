@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import type { DocumentSymbols } from './symbols';
 import { documentationItem } from './documentation-item';
 import { purposeReferenceItem } from './purpose-items';
 
@@ -24,7 +25,21 @@ const fenced = (tag: string) => `\`\`\`${tag}\n\${1}\n\`\`\``;
 
 export { exampleDeclarationItems } from './example-declaration-items';
 
+export const identityItems: CompletionEntry[] = [
+    { label: 'description', insertText: 'description "${1:caller details}"', documentation: 'Describes the caller metadata.' },
+    { label: 'detail from claim', insertText: '${1:detail} ${2:Type} from claim "${3:claim}"', documentation: 'One typed detail sourced from a token claim.' },
+    { label: 'detail from query', insertText: '${1:detail} ${2:Type} from query ${3:Query} by \\$identity.id', documentation: 'A keyed, single-result query authorized without additional caller details.' },
+    { label: 'detail from code', insertText: '${1:detail} ${2:Type}\n    ```csharp\n    ${3:return value;}\n    ```', documentation: 'An opaque inline source; authoring metadata, not executable.' },
+    { label: 'detail from file', insertText: '${1:detail} ${2:Type}\n    file ${3:Path}', documentation: 'One file source; no refresh or cache directives.' },
+];
+
+export function contextVariableEntries(symbols: DocumentSymbols): CompletionEntry[] {
+    const details = [...new Map((symbols.identityDetails ?? []).map(detail => [detail.name, detail])).values()];
+    return [...contextVariableItems, ...details.filter(detail => !identityProperties.includes(detail.name)).map(detail => ({ label: `$identity.${detail.name}`, insertText: `\\$identity.${detail.name}`, detail: detail.type, documentation: 'Declared caller detail. Authoring metadata only; executable reads report PLAY0268 until admitted (#600).' }))];
+}
+
 export const topLevelItems: CompletionEntry[] = [
+    { label: 'identity', insertText: 'identity\n    ${1:detail} ${2:Type} from claim "${3:claim}"', documentation: 'Typed additional caller details; authoring metadata only, at most one block per application.' },
     { label: 'purpose', insertText: 'purpose ${1:Name}\n    description "${2:processing intent}"\n    basis ${3|consent,contract,legalObligation,vitalInterests,publicTask,legitimateInterests|}', documentation: 'Report-only processing metadata. Not legal advice; referenced by module, feature and slice.' },
     ...exampleDeclarationItems,
     { label: 'eventsource', insertText: 'eventsource ${1:Name}\n    identifier ${2:Type}\n    stream ${3:Name}', documentation: 'Application-owned source with nested streams, admitted by ESM v8. Pin the stored name before renaming a source with stored events; Default is reserved.' },
