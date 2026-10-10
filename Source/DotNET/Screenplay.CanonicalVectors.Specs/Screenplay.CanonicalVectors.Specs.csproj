@@ -5,6 +5,8 @@
         <IsTestProject>true</IsTestProject>
         <IsPackable>false</IsPackable>
         <EnablePackageValidation>false</EnablePackageValidation>
+        <!-- PublishedCorpus is a standalone tool that consumes the published corpus package; it is not part of these specs. -->
+        <DefaultItemExcludes>$(DefaultItemExcludes);BrowserHarness/PublishedCorpus/**</DefaultItemExcludes>
     </PropertyGroup>
 
     <ItemGroup>
