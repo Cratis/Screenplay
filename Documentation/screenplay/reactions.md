@@ -26,6 +26,14 @@ reaction <Name>
 
 A reaction declares at least one trigger. Everything under a trigger is optional.
 
+## Observer filters
+
+A reaction may declare one leaf `from Source` or `from Source.Stream`. The filter belongs to the reaction, not its trigger. It observes only facts whose stored routing names match. Unrouted facts never match. Stream ids are not filtered. Without `from`, observation is unchanged.
+
+A filtered reaction uses only `when Event` triggers on declared events. It cannot use clock or host-signal triggers. Invalid filters use `PLAY0652`. The C# compiler warns with `PLAY0653` when every known producer lands outside the filter. Handlers and foreign origins are unknown and suppress that warning. Filters select ESM v10. Projections and captures do not gain metadata filters. See [Event sources](event-sources.md#observer-filters).
+
+Trigger reads may supply composite keys through a child `by` block with named `part = source` mappings. Sources are required, compatible trigger values. Single-instance reads supply every key part. These reads remain authoring-only and have no automatic key repair. See [Read-model keys](readmodels.md#keys).
+
 ## Trigger → reaction → effects
 
 The model has three parts, and the language gives each its own word:

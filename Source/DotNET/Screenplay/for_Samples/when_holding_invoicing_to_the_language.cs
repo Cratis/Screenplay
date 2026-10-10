@@ -32,15 +32,8 @@ public class when_holding_invoicing_to_the_language : Specification
             ])
     ];
 
-    static readonly (string Construct, string Path, Type[] Nodes)[] AdmittedElsewhere =
-    [
-        ("`eventsource`, `stream`, command routes", "Documentation/screenplay/fixtures/source-streams.play", [typeof(EventSourceSyntax), typeof(EventStreamSyntax), typeof(EventStreamIdPartSyntax), typeof(CommandStreamSyntax)]),
-        ("specification `stream`/`streamId`/`no stream`", "Source/Screenplay/Compiler/Conformance/specification-streams.play", [typeof(SpecificationStreamSyntax), typeof(SpecificationNoStreamSyntax)])
-    ];
-
     static readonly (Type Node, string Path, string Reason)[] CoveredElsewhere =
     [
-        (typeof(ObserverFilterSyntax), "Source/Screenplay/Compiler/Conformance/source-streams.play", "Observer filters are pinned by the compiler conformance vector; Invoicing migration belongs to the next package in this batch."),
         (typeof(FileImportSyntax), "Samples/Commerce/application.play", "Composition is shown by Commerce, not a single-document application."),
         (typeof(FileConstraintSyntax), "Source/DotNET/Screenplay/for_ScreenplayCompiler/invoicing.play", "Legacy file constraints warn with PLAY0396; with_a_file pins the warning, so they cannot enter warning-free Samples."),
         (typeof(TemplateAssignmentSyntax), "Documentation/screenplay/fixtures/screen-release-ui.play", "Hierarchical template assignments are covered by the focused round-trip spec until TypeScript conformance admits them into Samples/Invoicing."),
@@ -100,31 +93,6 @@ public class when_holding_invoicing_to_the_language : Specification
             }
         }
 
-        foreach (var admitted in AdmittedElsewhere)
-        {
-            var source = File.ReadAllText(Path.Combine(root, admitted.Path));
-            var application = compiler.Compile(source);
-            _elsewhereFindings.AddRange(application.Diagnostics.Select(diagnostic => $"{admitted.Path}: {diagnostic.Code} {diagnostic.Message}"));
-            var types = SyntaxNodes.Under(application.Value!).Select(node => node.GetType()).ToHashSet();
-            _elsewhereFindings.AddRange(admitted.Nodes.Where(type => !types.Contains(type)).Select(type => $"{admitted.Path}: missing {type.Name}"));
-            var workspace = ScreenplayWorkspace.Create("Admitted",
-                [WorkspaceDocument.Create("admitted", PortablePlayPath.Parse("admitted.play"), Encoding.UTF8.GetBytes(source))],
-                SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Admitted")));
-            if (admitted.Path.EndsWith("specification-streams.play", StringComparison.Ordinal))
-            {
-                // This compiler conformance fixture deliberately supplies partial event payloads.
-                // Complete executable routes are pinned by when_binding_specification_streams.
-                if (workspace.Compilation.Success || workspace.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code != DiagnosticCodes.MissingSpecificationProperty))
-                {
-                    _elsewhereFindings.Add($"{admitted.Path}: only incomplete payloads, not route admission, may block binding: {string.Join(';', workspace.Compilation.Diagnostics.Select(diagnostic => diagnostic.Code + " " + diagnostic.Message))}");
-                }
-            }
-            else if (!workspace.Compilation.Success || workspace.Compilation.Value!.Model.SemanticVersion != SemanticVersion.V8)
-            {
-                _elsewhereFindings.Add($"{admitted.Path}: must bind at its claimed ESM version");
-            }
-        }
-
         // A placed slice file has no module or feature of its own; give it the ones a root import would.
         var placed = File.ReadAllLines(Path.Combine(root, "Samples/Commerce/Fulfillment/Tracking/ReceiveCarrierDispatches.play"));
         _dispatches = compiler.Parse("module Fulfillment\n  feature Tracking\n" + string.Join('\n', placed.Select(line => line.Length == 0 ? line : "    " + line))).Value!;
@@ -140,10 +108,7 @@ public class when_holding_invoicing_to_the_language : Specification
 
         var section = File.ReadAllText(Path.Combine(root, ".cratis/ai/rules/project/samples.md"))
             .Split("### Preview constructs", StringSplitOptions.None)[1].Split("###", StringSplitOptions.None)[0];
-        // The project table and Invoicing migration are part of the batch claim, outside this integration's ownership.
-        // Admitted fixtures are checked above, never held to a preview refusal while the table catches up.
-        _documentedPreview = [.. section.Split('\n').Where(line => line.StartsWith("| ", StringComparison.Ordinal)).Skip(2).Select(line => line.Trim())
-            .Where(line => !AdmittedElsewhere.Any(admitted => line.StartsWith($"| {admitted.Construct} |", StringComparison.Ordinal)))];
+        _documentedPreview = [.. section.Split('\n').Where(line => line.StartsWith("| ", StringComparison.Ordinal)).Skip(2).Select(line => line.Trim())];
     }
 
     [Fact] void should_account_for_every_missing_kind_and_remove_obsolete_exemptions() => Names(_missing).ShouldEqual(Names(Classified));
@@ -164,7 +129,7 @@ public class when_holding_invoicing_to_the_language : Specification
     [Fact] void should_keep_the_documented_preview_table_equal_to_the_enforced_list() => _documentedPreview.ShouldEqual(Preview.Select(preview => $"| {preview.Construct} | #{preview.Issue} | {string.Join(", ", preview.Fixtures.Select(fixture => $"`{fixture.Path}`"))} |"));
 
     static IEnumerable<Type> Classified => Preview.SelectMany(preview => preview.Fixtures).SelectMany(fixture => fixture.Nodes)
-        .Concat(AdmittedElsewhere.SelectMany(admitted => admitted.Nodes)).Concat(CoveredElsewhere.Select(elsewhere => elsewhere.Node)).Concat(Infrastructure);
+        .Concat(CoveredElsewhere.Select(elsewhere => elsewhere.Node)).Concat(Infrastructure);
 
     static string Names(IEnumerable<Type> types) => string.Join(", ", types.Select(type => type.Name).Order(StringComparer.Ordinal));
 }

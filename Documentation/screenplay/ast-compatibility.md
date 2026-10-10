@@ -27,6 +27,12 @@ Appending a trailing optional parameter instead looks equivalent and is not. It 
 Authoring metadata follows this rule: `SpecificationSyntax.Description` and the `Documentation` members on modules, features, slices, commands, read models and reactions are nullable init-only properties. They appear in the syntax transport schema, not in the executable semantic model. Preserve them when rewriting a declaration.
 
 `SpecificationSyntax.GivenCallerPersona` is an additive init-only reference with a name and location, distinct from `GivenCaller`. It is omitted from syntax JSON when absent, preserving untouched documents' bytes. A reader that predates the persona member must reject the new member rather than silently interpret an unauthenticated caller. Effective syntax expands the reference and carries `SpecificationValueOrigin.Persona` with persona and policy provenance; it adds no ESM member or version.
+## Key and routing members
+
+`PropertySyntax.IsKey`, `QuerySyntax.ByParts`, `ReadsSyntax.ByParts`, `ProducesSyntax.Stream`, `ReactionSyntax.From` and `ReducerSyntax.From` are additive init-only properties. Constructors and Deconstruct signatures stay unchanged. Missing members default to false, empty collections or null. Writers omit those defaults. Preserve authored key-part and mapping order when rewriting nodes.
+
+`ObserverFilterSyntax` carries an event source name, optional stream name and location. Routes and filters select ESM v10. Explicit single read-model keys preserve ESM bytes; composite read-model keys remain refused with `PLAY0268` (#599). See [AST authoring](ast-authoring.md#keys-production-routes-and-observer-filters).
+
 ## Public event source-authoring members
 
 `EventSyntax` and `ImportSyntax` gain init-only `Visibility` (`EventVisibility.Private` by default)

@@ -16,7 +16,8 @@ export function toAutomationTrigger(reactions: readonly ReactionSyntax[], owners
     if (trigger === undefined) {
         return undefined;
     }
-    const description = trigger.description ?? reaction.description ?? describe(trigger.source);
+    const description = [trigger.description ?? reaction.description ?? describe(trigger.source),
+        reaction.from ? `Observes ${reaction.from.eventSource}${reaction.from.stream ? `.${reaction.from.stream}` : ''}` : ''].filter(Boolean).join('\n');
     const source = trigger.source;
     if (source.kind === 'NamedTriggerSourceSyntax') {
         const eventId = owners.idFor(source.name);

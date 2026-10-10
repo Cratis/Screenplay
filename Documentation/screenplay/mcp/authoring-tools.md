@@ -95,6 +95,10 @@ The top-level [identity block](../identity.md) is also authoring metadata. `synt
 
 Descriptions, documentation, and optional rename-only `id` remain syntax metadata. They do not replace the workspace identity catalog or the portable hashed event contract id. Workspace repair and rename proposals remain separate, explicit transactions; querying or visualizing an inline event never applies a repair.
 
+## Read-model key authoring
+
+Typed ASTs retain `PropertySyntax.isKey`, `QuerySyntax.byParts` and `ReadsSyntax.byParts`. Single and block lookup forms are mutually exclusive. Declaration details and fixtures retain every named part. A single explicit key binds without changing ESM bytes. Composite keys remain authoring-only and report `PLAY0268` citing #599. See [Read-model keys](../readmodels.md#keys).
+
 ## Event source and stream authoring
 
 After opening the workspace, use these paged `read-workspace` views with `expectedRevision`:
@@ -104,7 +108,7 @@ After opening the workspace, use these paged `read-workspace` views with `expect
 | `event-sources` | Application-owned source keys, identifier types, pins and physical handles |
 | `event-streams` | Exact source-owned stream keys, key types, pins and ownership status |
 | `event-source-details`, `event-stream-details` | Exact `authoringKey`; compact header with metadata sizes and source/AST read pointers, followed by independently paged children; rejects ambiguous or incomplete ownership |
-| `command-routes` | Authored routes and all retained ambiguity candidates, never inferred effective routing |
+| `command-routes` | Authored command routes, production override references and retained ambiguity candidates, never inferred effective routing |
 | `event-source-diagnostics` | Paged physical parser/import and whole-assembly diagnostics, including errorful and unresolved files |
 
 Continuation also requires `expectedCatalogRevision`. The immutable physical inventory retains partial declarations, duplicate routes and route/property candidates from all parsed files, independently of editable AST eligibility. `inventoryComplete`, `authoringDiagnosticsView` and `authoringDiagnosticsCount` disclose parser/import and whole-assembly evidence. Unknown extent reports `ownership: "incomplete"`; details refuse with `IncompleteSource`. Duplicate physical parents make every child ambiguous, including parents in errorful files. Unresolved-placement entries name refused documents, and retained nodes in those files have a null `authoringKey` rather than a fabricated owner. Keys include application, declaration kind, full owner path and name; they are not persistent semantic identities. ESM v8 admits source and stream declarations, scalar/composite direct-property or literal routes, and specification routes. Inventories report construct readiness independently of whole-workspace binding: `executionAvailable` is true only when that binding succeeds. A command/specification/slice readiness message describes that member's constructs and command dependencies; model readiness also includes unrelated source declarations.
@@ -115,7 +119,9 @@ Generic source details, dependency resolution and editor navigation share physic
 
 Generic `EventSource`/`EventStream` declaration queries and dependencies include source identifier/stream-id type references and separate `commandEventSource`/`commandStream` links. Stream references accept exactly `Source.Stream`, not arbitrary suffixes. Combined type/declaration collisions remain blocking and are not navigated confidently.
 
-For edits, read the actual `read-ast` handles and `syntax-schema` kinds, then use Authoring Add/Replace/Remove with preview and explicit apply. The member paths and candidate-selection rules are in [AST authoring](../ast-authoring.md#source-and-stream-edits). Use `propose-rename` for source and stream renames with bound command and specification route repair. Catalog identities are enrolled and migrate atomically with source/stream renames; automatic routing quick fixes remain unavailable. Property-path routes and handler commands still refuse with `PLAY0268`. Executable validation requires every construct in the workspace to bind.
+For edits, read the actual `read-ast` handles and `syntax-schema` kinds, then use Authoring Add/Replace/Remove with preview and explicit apply. The member paths and candidate-selection rules are in [AST authoring](../ast-authoring.md#source-and-stream-edits). Use `propose-rename` for source and stream renames with bound command, production, observer-filter and specification reference repair. Catalog identities are enrolled and migrate atomically with source/stream renames; route selection remains an explicit authoring decision. `PLAY0651` has a typed repair that removes an identical production override. Other route diagnostics have no automatic repair. Property-path routes and handler commands still refuse with `PLAY0268`. Executable validation requires every construct in the workspace to bind.
+
+`ProducesSyntax.stream` carries a production override. `ReactionSyntax.from` and `ReducerSyntax.from` carry observer filters. These constructs select ESM v10. Each override replaces the whole command route. A filter matches stored source and optional stream names, never stream ids or unrouted facts.
 
 ## Operation and system intent
 

@@ -83,6 +83,16 @@ concept IsProForma    : Bool
 concept InvoiceDate   : Date
 concept OccurredAt    : DateTime
 
+// Payment facts use one source and two differently keyed streams.
+eventsource Payment
+  identifier PaymentId
+  stream Transactions
+    streamId InvoiceId
+  stream Audit
+    streamId
+      invoice InvoiceId
+      payment PaymentId
+
 concept PersonName : String pii
   pii reason "The name identifies the person to contact about an invoice."
 
@@ -1036,6 +1046,7 @@ module Invoicing
           tag       = "priority"
         then InvoiceTagged
           for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          no stream
           tag = "priority"
 
       specification RejectingAnEmptyTag
@@ -1341,7 +1352,7 @@ module Invoicing
           ```
         description "One row per invoice in the invoice list"
         file Invoicing/InvoiceList/InvoiceListReadModel.cs
-        invoiceId      InvoiceId
+        invoiceId      InvoiceId key
         customerId     CustomerId
         invoiceNumber  InvoiceNumber
         currency       CurrencyCode
@@ -1352,7 +1363,7 @@ module Invoicing
         touched        Bool optional
         lastActivityAt DateTime optional
 
-      // A keyed query is what identifies a read model instance in specifications.
+      // The explicit key identifies an invoice-list instance in specifications.
       query GetInvoiceListEntry => InvoiceListReadModel optional
         description "One row of the invoice list"
         by invoiceId InvoiceId
@@ -2095,6 +2106,12 @@ module Invoicing
 
         // The read-model-to-command arrow: the state the command decides against.
         reads InvoiceBalanceReadModel as balance by invoiceId
+        reads InvoicePaymentMethodTotals as methodTotals
+          by
+            invoiceId = invoiceId
+            method = method
+        stream Payment.Transactions
+          streamId = invoiceId
 
         authorize IsAccountant
 
@@ -2113,8 +2130,32 @@ module Invoicing
         produces when method == "cash"
           CashPaymentRecorded
             for paymentId
+            stream Payment.Audit
+              streamId
+                invoice = invoiceId
+                payment = paymentId
             receivedBy      = $context.identity.name
             requiresReceipt = true
+
+      readmodel InvoicePaymentMethodTotals
+        invoiceId InvoiceId key
+        method PaymentMethod key
+        total Money
+
+      query ListInvoicePaymentMethodTotals => InvoicePaymentMethodTotals[]
+        authorize IsAccountant
+        performer
+          file Queries/InvoicePaymentMethodTotals.cs
+
+      readmodel PaymentAuditReadModel
+        paymentId PaymentId key
+        receivedBy String
+        requiresReceipt Bool
+
+      reducer PaymentAudit => PaymentAuditReadModel
+        from Payment
+        on CashPaymentRecorded
+          file Reducers/PaymentAudit.cs
 
       event PaymentRecorded
         invoiceId  InvoiceId
@@ -2160,9 +2201,40 @@ module Invoicing
           method    = "card"
         then PaymentRecorded
           for "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          stream Payment.Transactions
+            streamId = "9c858901-8a57-4791-81fe-4c455b099bc9"
           invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
           amount    = 12000
           method    = "card"
+
+      specification AuditingACashPayment
+        given caller
+          authenticated
+          role "Accountant"
+          claim "name" = "Ada"
+        given clock "2026-10-05T09:00:00Z"
+        given readmodel InvoiceBalanceReadModel
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          total = 100
+          paid = 0
+          outstanding = 100
+        given readmodel InvoicePaymentMethodTotals
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          method = "cash"
+          total = 0
+        when RecordPayment
+          paymentId = "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          invoiceId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount = 100
+          method = "cash"
+        then CashPaymentRecorded
+          for "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          stream Payment.Audit
+            streamId
+              invoice = "9c858901-8a57-4791-81fe-4c455b099bc9"
+              payment = "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          receivedBy = "Ada"
+          requiresReceipt = true
 
       specification RejectingAnOverpayment
         given caller
@@ -2531,6 +2603,7 @@ module Invoicing
           Payment recording and invoice closure are separate facts so reconciliation can be reviewed.
           ```
         description "Marks an invoice paid when a payment covers what is outstanding"
+        from Payment.Transactions
         when PaymentRecorded
           description "A payment arrived - is the invoice settled now?"
           invoiceId

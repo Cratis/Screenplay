@@ -2,7 +2,7 @@
 
 > Systems, operations, operation phases and their specification forms below are syntax-only authoring. These constructs are not admitted by any supported executable model (ESM) version yet (`PLAY0268`); see [Operations and external systems](operations.md). A phase source or wrapper is not an admitted executable implementation role.
 
-> [Event sources, source-owned streams and command stream routes](event-sources.md), specification routes and composite stream ids are admitted by executable semantic model (ESM) v8. Command mappings may read direct, required, non-collection, non-generated inputs or literals; property paths and handler routes remain refused with `PLAY0268`. Per-event overrides, observer filters, new concurrency flags, occurrence time and constraint scopes are not part of this increment.
+> [Event sources, source-owned streams and command stream routes](event-sources.md), specification routes and composite stream ids are admitted by executable semantic model (ESM) v8. Command mappings may read direct, required, non-collection, non-generated inputs or literals; property paths and handler routes remain refused with `PLAY0268`. Production route overrides and reaction/reducer observer filters select ESM v10. Composite read-model keys and by-block queries are authoring-only and report `PLAY0268` (#599). New concurrency flags, occurrence time and constraint scopes remain unadmitted.
 
 The Screenplay syntax reference in EBNF. `INDENT`/`DEDENT` represent indented bodies: parsers read lines at greater indentation until the body ends. PDL and CDL have their own [sub-grammars](sub-languages.md). The C# compiler validates the full language; the TypeScript compiler models a subset and recognizes the remaining shipped constructs as opaque bodies.
 
@@ -564,7 +564,7 @@ ReadModelDecl  = "readmodel", Ident, NL,
                  INDENT, { DescriptionDecl | DocumentationDecl | FileDirective | PropertyLine }, DEDENT ;
 
 ReducerDecl    = "reducer", Ident, "=>", Ident, NL,
-                 INDENT, { DescriptionDecl | ReducerRule }, DEDENT ;
+                 INDENT, { DescriptionDecl | ObserverFilter | ReducerRule }, DEDENT ;
 
 ReducerRule    = "on", Ident, NL,
                  [ INDENT, [ DescriptionDecl ], [ FileDirective | InlineBlock ], DEDENT ] ;
@@ -617,7 +617,10 @@ TagValue       = Ident
 
 Path           = Ident, { ".", Ident } ;
 
-PropertyLine   = [ "@" ], Ident, TypeRef, [ "generated" ], [ "identifier" ], [ "subject" ], NL ;
+PropertyLine   = [ "@" ], Ident, TypeRef,
+                 ( [ "generated" ], [ "identifier" ], [ "subject" ] | "key" ), NL ;
+(* key is valid only on required, noncollection, top-level read-model properties.
+   Explicit keys replace inference. Multipart key parts must be scalar. *)
 (* subject is last and only valid on event properties: one required scalar identity
    per event generation, not pii/secret. It is report-only (PLAY0270), adding no ESM bytes.
    Read models are not yet supported; commands, types and responses refuse it. *)
@@ -680,7 +683,12 @@ ResponseField  = [ "@" ], LowerIdent, [ TypeRef ], "=", [ "@" ], LowerIdent, NL 
    a property declaration. @returns Type forces a property; returns @name forces
    a response. Types are inferred or must exactly match the direct source. *)
 
-ReadsDecl      = "reads", Ident, [ "as", LowerIdent ], [ "by", LowerIdent ], NL ;
+ReadsDecl      = "reads", Ident, [ "as", LowerIdent ],
+                 ( [ "by", LowerIdent ], NL | NL, INDENT, ReadsByParts, DEDENT ) ;
+ReadsByParts   = "by", NL, INDENT, ReadsKeyPart, ReadsKeyPart, { ReadsKeyPart }, DEDENT ;
+ReadsKeyPart   = LowerIdent, "=", Path, NL ;
+(* Named parts supply every read-model key part exactly once, from required
+   noncollection compatible property paths. Literals are refused. *)
 
 (* The read model a command consults before it decides. Declaring it puts the
    read model in scope for the rest of the command body, so a produces mapping
@@ -793,10 +801,10 @@ Value          = Number | StringLiteral | "today" | "true" | "false" | "null" | 
 (* -------------------------------------------------------------- *)
 
 ProducesDecl   = "produces", ProductionReference, NL,
-                   [ INDENT, { ForDecl | TagDecl | PropertyMapping }, DEDENT ]
+                   [ INDENT, { ForDecl | CommandStreamDecl | TagDecl | PropertyMapping }, DEDENT ]
                | "produces", "when", Condition, NL,
                    INDENT, ProductionReference, NL,
-                   [ INDENT, { ForDecl | TagDecl | PropertyMapping }, DEDENT ],
+                   [ INDENT, { ForDecl | CommandStreamDecl | TagDecl | PropertyMapping }, DEDENT ],
                    DEDENT
                | InlineEventProduction
                | InlineOperationProduction ;
@@ -809,7 +817,7 @@ QualifiedOperationReference = Ident, ".", Ident, { ".", Ident } ;
    in event destination defaults. Plain references never declare a target. *)
 
 InlineEventProduction = "produces", "event", Ident, NL,
-                        [ INDENT, { ForDecl | TagDecl | EventMetadata | TypedMapping }, DEDENT ] ;
+                        [ INDENT, { ForDecl | CommandStreamDecl | TagDecl | EventMetadata | TypedMapping }, DEDENT ] ;
 TypedMapping   = [ "@" ], Ident, TypeRef, [ "subject" ], "=", MappingSource, NL ;
 (* subject applies only to inline event mappings, not operation inputs. *)
 ForDecl        = "for", MappingSource, NL ;
@@ -947,7 +955,11 @@ ScopeDecl      = "scoped", "to", Ident, NL ;
    the caller. The scope is a name rather than a closed set, because what
    scopes exist follows the identity model of whatever runs the document.   *)
 
-ByClause       = "by", Ident, TypeRef, [ FromClause ], NL ;
+ByClause       = "by", Ident, TypeRef, [ FromClause ], NL
+               | "by", NL, INDENT, QueryKeyPart, QueryKeyPart, { QueryKeyPart }, DEDENT ;
+QueryKeyPart   = Ident, TypeRef, [ FromClause ], NL ;
+(* Single and block by forms are mutually exclusive. Single-instance queries
+   supply every declared key part; collection queries may filter by a subset. *)
 FilterClause   = "filter", Ident, TypeRef, [ FromClause ], NL ;
 
 (* "from" fills a parameter from the query context instead of the caller.     *)
@@ -1177,8 +1189,14 @@ ConstraintOption = "released", "by", Ident, NL
 
 ReactionDecl   = "reaction", Ident, NL,
                  INDENT,
-                   { DescriptionDecl | DocumentationDecl | TriggerClause | WhereDecl },
+                   { DescriptionDecl | DocumentationDecl | ObserverFilter | TriggerClause | WhereDecl },
                  DEDENT ;
+
+ObserverFilter = "from", Ident, [ ".", Ident ], NL ;
+(* At most one leaf filter. Source and optional stream use stored names.
+   Stream ids are not filtered; unrouted facts never match. A filtered reaction
+   uses only declared-event triggers. Production routes are command-event-only,
+   occur at most once per production, and replace the whole command route. *)
 
 (* A reaction needs at least one trigger and at most one where condition.
    A trigger with no body is a complete statement of intent - the reaction runs

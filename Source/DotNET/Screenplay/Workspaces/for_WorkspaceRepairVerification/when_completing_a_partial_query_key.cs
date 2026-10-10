@@ -17,7 +17,9 @@ public class when_completing_a_partial_query_key : Specification
     [InlineData("resourceId Int")]
     void should_offer_no_query_repair(string parameter)
     {
-        var document = WorkspaceDocument.Create("source", PortablePlayPath.Parse("source.play"),
+        var document = WorkspaceDocument.Create(
+            "source",
+            PortablePlayPath.Parse("source.play"),
             Encoding.UTF8.GetBytes(Source.Replace("by resourceId String", "by " + parameter, StringComparison.Ordinal)));
         var workspace = ScreenplayWorkspace.Create("Keys", [document], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Keys")));
         var index = WorkspaceSyntaxIndex.Create(workspace);

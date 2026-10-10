@@ -22,7 +22,7 @@ const scopes: Record<string, [string, string[]]> = {
     'an automation slice': ['module M\n  feature F\n    slice Automation S\n      ', ['command', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'operation', 'public event', 'reaction', 'readmodel', 'reducer', 'specification']],
     'a translate slice': ['module M\n  feature F\n    slice Translate S\n      ', ['capture', 'direction', 'documentation', 'event', 'event from', 'event generation', 'example', 'file', 'public event', 'specification']],
     'a read model': ['module M\n  feature F\n    slice StateView S\n      readmodel R\n        ', ['description', 'documentation', 'file', 'property']],
-    'a reducer': ['module M\n  feature F\n    slice StateView S\n      reducer R => V\n        ', ['description', 'on']],
+    'a reducer': ['module M\n  feature F\n    slice StateView S\n      reducer R => V\n        ', ['description', 'from', 'on']],
     'a form': ['module M\n  form F for C\n    ', ['description', 'field', 'on', 'populate from item', 'populate via query', 'uses']],
     'a contribution': ['module M\n  contribute to Navigation\n    ', ['label', 'navigate to', 'order']],
     'a behavior': ['behavior B\n  ', ['description', 'on', 'order', 'parameter']],

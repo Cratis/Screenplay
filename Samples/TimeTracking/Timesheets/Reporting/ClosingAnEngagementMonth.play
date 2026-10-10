@@ -1,0 +1,43 @@
+// Closing billing uses the same named parts as the monthly report.
+
+contribute to Navigation
+  navigate to CloseEngagementMonthScreen
+  label "Close billing month"
+
+slice StateChange CloseEngagementMonth
+  command CloseEngagementMonth
+    engagementId EngagementId identifier
+    month ReportingMonth
+    reads EngagementMonthHours as totals
+      by
+        engagementId = engagementId
+        month = month
+    authorize IsEngagementManager
+    validate
+      require totals.hours >= 0
+        message "Monthly hours cannot be negative"
+    produces event EngagementMonthClosed
+      month ReportingMonth = month
+      hours Decimal = totals.hours
+
+  screen CloseEngagementMonthScreen
+    data EngagementMonthHours[] via query ListEngagementMonths
+    table EngagementMonthHours
+      column engagementId label "Engagement"
+      column month label "Month"
+      on select
+        execute CloseEngagementMonth
+
+  specification ClosingAnEngagementMonth
+    given caller as EngagementManager
+    given readmodel EngagementMonthHours
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      month = "2026-10"
+      hours = 120
+    when CloseEngagementMonth
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      month = "2026-10"
+    then EngagementMonthClosed
+      for "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      month = "2026-10"
+      hours = 120

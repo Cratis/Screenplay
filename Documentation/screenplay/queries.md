@@ -103,6 +103,12 @@ That query is already scoped to the current tenant. Nothing states it, because n
 
 `identity` and `global` are the two the language documents, but the grammar accepts any name. What scopes exist follows the identity model of whatever runs the document — Screenplay states that a query is scoped and to what, and leaves enforcing it to the runtime. A query declares at most one scope; results are narrowed one way.
 
+## Composite lookups
+
+A bare `by` header declares at least two `name Type [from source]` children. It cannot combine with the single `by name Type` form. Names are read-model key property names. A single-instance query supplies every part with its required compatible nominal type. A collection query may name a subset. See the complete example in [Read-model keys](readmodels.md#keys).
+
+Composite read-model keys and by-block queries are authoring-only. Binding reports `PLAY0268` citing [#599](https://github.com/Cratis/Screenplay/issues/599). Missing parts use `PLAY0648`; invalid shapes and parts use `PLAY0649`. Queries have no key-completion repair.
+
 ## Parameters
 
 `by` names the identifying parameter; `filter` narrows the result set. Both are supplied by the caller — a screen, an API client — unless they declare a source with `from`:

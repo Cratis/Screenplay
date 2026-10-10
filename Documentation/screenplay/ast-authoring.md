@@ -9,6 +9,14 @@ description: Typed syntax serialization, original-document node handles, atomic 
 
 Use nullable `description` on `SpecificationSyntax` and nullable `documentation` on `ModuleSyntax`, `FeatureSyntax`, `SliceSyntax`, `CommandSyntax`, `ReadModelSyntax` and `ReactionSyntax`. `EventSyntax` retains its existing fields. The typed AST carries the text without changing executable semantics; preserve these members during replacements. MCP `declaration-details` includes both fields in the summary for supporting kinds. See [Descriptions and documentation](slices.md#descriptions-and-documentation) for the source forms.
 
+## Keys, production routes and observer filters
+
+`PropertySyntax.isKey` is an optional Boolean. It defaults to false and is omitted when false. `QuerySyntax.byParts` holds ordered query parameters. `ReadsSyntax.byParts` holds ordered property mappings. Each defaults to an empty collection and is mutually exclusive with `by`.
+
+`ProducesSyntax.stream` is nullable `CommandStreamSyntax`. It replaces the whole command route for that production. `ReactionSyntax.from` and `ReducerSyntax.from` are nullable `ObserverFilterSyntax` nodes with `eventSource`, optional `stream` and `location`. Preserve these members during replacements. Source and stream rename includes production overrides and filters.
+
+Explicit single read-model keys preserve ESM bytes. Composite keys and by-block queries are refused at binding with `PLAY0268` (#599). Production routes and observer filters select ESM v10. `PLAY0648` repairs command reads only; queries and trigger reads are not repaired. Read-model property rename remains unsupported. See [Read-model keys](readmodels.md#keys) and [Event sources](event-sources.md).
+
 ## Validation contracts
 
 `Cratis.Screenplay.Workspaces.ScreenplayWorkspace` exposes two distinct proposal

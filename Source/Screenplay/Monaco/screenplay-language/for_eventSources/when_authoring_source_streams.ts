@@ -130,8 +130,8 @@ describe('when authoring source streams', () => {
             expect(analysis.eventSources.resolve('Account', 'transactions').state).toBe('notFound');
         }
     });
-    it('should not offer routes inside event or operation payloads', () => {
-        for (const production of ['produces event Recorded', 'produces operation Send\n    uses Mailer']) {
+    it('should not offer routes inside operation payloads', () => {
+        for (const production of ['produces operation Send\n    uses Mailer']) {
             const current = 'system Mailer\ncommand C\n  ' + production + '\n    stream Account.Tr';
             expect(complete(current, 'stream Account.Tr', symbols())).toBeNull();
         }
