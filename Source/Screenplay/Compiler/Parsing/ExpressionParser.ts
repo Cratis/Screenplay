@@ -15,7 +15,7 @@ const nativePathPattern = nativePattern('^@?[A-Za-z_]\\w*(\\.@?[A-Za-z_$]\\w*)*$
 const numberPattern = pattern('^-?\\d+(\\.\\d+)?$');
 const contextRoots = ['command', 'arguments', 'tenant', 'causedBy', 'causation', 'occurred', 'identity'];
 const causedByProperties = ['subject', 'name', 'userName'];
-const identityProperties = ['id', 'name', 'userName', 'isAuthenticated', 'roles', 'claims'];
+export const identityProperties = ['id', 'name', 'userName', 'isAuthenticated', 'roles', 'claims'];
 
 // Reads the right-hand side of a mapping or a rule operand - the port of the C# ExpressionParser's
 // ParseMappingSource. With a context it also reports what the C# compiler reports while reading one: an
@@ -35,7 +35,7 @@ export function parseMappingSource(text: string, location: SourceLocation, conte
     }
     if (text.startsWith('$identity.')) {
         const path = text.substring('$identity.'.length);
-        warnOnUnknownIdentityProperty(path.split('.')[0], '$identity', location, context);
+        if (context?.deferIdentityValidation !== true) warnOnUnknownIdentityProperty(path.split('.')[0], '$identity', location, context);
         return { kind: 'IdentityExpressionSyntax', path, location };
     }
     if (text.startsWith('$context.')) {

@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import type { IdentitySyntax } from './IdentitySyntax';
 import type { ExposureSyntax, InstanceContributionsSyntax } from './CompositionSyntax';
 import { AuthorizeSyntax, PersonaSyntax } from './Authorization';
 import { CaptureSyntax } from './Captures';
@@ -97,6 +98,7 @@ export interface ModuleSyntax extends SyntaxNode {
 }
 
 export interface ApplicationSyntax extends SyntaxNode {
+    readonly identity?: IdentitySyntax | null;
     readonly purposes?: readonly PurposeSyntax[];
     readonly kind: 'ApplicationSyntax';
     readonly examples?: readonly SpecificationExampleSyntax[];

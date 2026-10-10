@@ -302,6 +302,79 @@
     }
   ],
   "fileImports": [],
+  "identity": {
+    "kind": "IdentitySyntax",
+    "description": "What billing knows about whoever is calling",
+    "details": [
+      {
+        "kind": "IdentityDetailSyntax",
+        "name": "department",
+        "source": {
+          "kind": "ClaimIdentitySourceSyntax",
+          "claim": "department"
+        },
+        "type": {
+          "kind": "TypeRefSyntax",
+          "isCollection": false,
+          "isOptional": true,
+          "name": "String"
+        }
+      },
+      {
+        "kind": "IdentityDetailSyntax",
+        "name": "creditStatus",
+        "source": {
+          "kind": "QueryIdentitySourceSyntax",
+          "by": {
+            "kind": "IdentityExpressionSyntax",
+            "path": "claims.customerId"
+          },
+          "query": "GetMyCreditStatus"
+        },
+        "type": {
+          "kind": "TypeRefSyntax",
+          "isCollection": false,
+          "isOptional": true,
+          "name": "CustomerCreditReadModel"
+        }
+      },
+      {
+        "kind": "IdentityDetailSyntax",
+        "name": "isPartner",
+        "source": {
+          "kind": "CodeIdentitySourceSyntax",
+          "code": {
+            "kind": "CodeBlockSyntax",
+            "code": "return context.Identity.HasRole(\"Partner\");",
+            "language": "csharp"
+          }
+        },
+        "type": {
+          "kind": "TypeRefSyntax",
+          "isCollection": false,
+          "isOptional": false,
+          "name": "Bool"
+        }
+      },
+      {
+        "kind": "IdentityDetailSyntax",
+        "name": "contactEmail",
+        "source": {
+          "kind": "FileIdentitySourceSyntax",
+          "file": {
+            "kind": "FileReferenceSyntax",
+            "path": "Identity/BillingContactEmail.cs"
+          }
+        },
+        "type": {
+          "kind": "TypeRefSyntax",
+          "isCollection": false,
+          "isOptional": false,
+          "name": "EmailAddress"
+        }
+      }
+    ]
+  },
   "imports": [
     {
       "kind": "ImportSyntax",

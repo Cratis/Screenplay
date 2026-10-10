@@ -2,6 +2,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 export * from './SyntaxNode';
+export * from './IdentitySyntax';
+export * from './IdentityDetailSyntax';
+export * from './IdentitySourceSyntax';
+export * from './ClaimIdentitySourceSyntax';
+export * from './QueryIdentitySourceSyntax';
+export * from './CodeIdentitySourceSyntax';
+export * from './FileIdentitySourceSyntax';
 export * from './Declarations';
 export * from './EventVisibility';
 export * from './TranslationDirection';
