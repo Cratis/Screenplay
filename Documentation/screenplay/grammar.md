@@ -398,7 +398,9 @@ ContributionDecl = "contribute", "to", Ident, NL,
 
 ContributionDirective = NavigateDecl
                       | "label", LocalizableString, NL
-                      | "order", Integer, NL ;
+                      | "order", Integer, NL
+                      | ( "id" | "icon" | "presentation" | "group" ), ( Ident | String ), NL
+                      | "destination", ( "outlet", Ident | "dialog", Ident | "external", String ), NL ;
 
 (* Forms describe command input and optional query-backed population. A
    contribution adds one navigable item to a named contribution point. Forms

@@ -455,6 +455,11 @@ module Invoicing
     navigate to InvoiceList
     label $strings.navigation.invoices
     order 10
+    id "nav:invoices"
+    icon receipt
+    presentation primary
+    group "Billing"
+    destination outlet detail
 
   // Screen templates fit a slot of the shell; dialog templates open over it.
   screen template MasterDetail
@@ -2875,6 +2880,8 @@ module Invoicing
       navigate to CancelledInvoices
       label "Audit"
       order 90
+      group "Billing"
+      destination dialog CommandDialog
 
     slice StateView CancelledInvoices
       description "Archive of cancelled invoices - every property auto-maps from the event"

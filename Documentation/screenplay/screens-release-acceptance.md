@@ -229,7 +229,7 @@ change from expecting an input to verifying the generated identifier in the proj
 
 | # | Criterion | Status | Evidence or remaining work |
 | --- | --- | --- | --- |
-| 536.1 | A capability matrix from the release tracker to syntax, semantics, missing constructs and diagnostics. | PARTIAL | This page maps criteria to proof. A construct-level capability matrix is not published. |
+| 536.1 | A capability matrix from the release tracker to syntax, semantics, missing constructs and diagnostics. | PARTIAL | This page maps criteria to proof; the construct-level [capability matrix](screens-capability-matrix.md) maps each criterion to syntax, semantics, diagnostics and what is not expressible. |
 | 536.2 | Express identity, bindings, forms, template categories, exposed values, packages, icons and toolbar presentation. | PASS | [Screenplay#553](https://github.com/Cratis/Screenplay/pull/553) and [Screenplay#592](https://github.com/Cratis/Screenplay/pull/592), plus exposures, instances and template content in [Screenplay#602](https://github.com/Cratis/Screenplay/pull/602); the positive typed source case parses. |
 | 536.3 | Hierarchical template assignment, recursive outlets, navigation targets, URL overrides and dialog placement. | PASS | Authored in the folder corpus and parsed ([#553](https://github.com/Cratis/Screenplay/pull/553)). |
 | 536.4 | Parser-printer-parser preservation and multi-file edits; validate references and cycles. | PARTIAL | Round-trip and multi-file MCP edits pass. Re-exposure cycles and broken references are diagnosed (`PLAY0621` to `PLAY0632`, [Screenplay#602](https://github.com/Cratis/Screenplay/pull/602)), but no corpus vector pins them. |

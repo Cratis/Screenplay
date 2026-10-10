@@ -73,6 +73,55 @@ internal static partial class ScreenParser
         return directives;
     }
 
+    /// <summary>
+    /// Parses a <c>navigate to &lt;Screen&gt; [by &lt;param&gt;]</c> line and its <c>route</c>, <c>outlet</c> and <c>parameter</c> children.
+    /// </summary>
+    /// <param name="context">The <see cref="ParserContext"/> to parse in.</param>
+    /// <param name="text">The navigation text.</param>
+    /// <param name="line">The consumed line the navigation is on.</param>
+    /// <returns>The parsed <see cref="ScreenNavigateSyntax"/>, or <c>null</c> when it is malformed.</returns>
+    internal static ScreenNavigateSyntax? ParseNavigate(ParserContext context, string text, SourceLine line)
+    {
+        var match = NavigateRegex().Match(text);
+        if (!match.Success)
+        {
+            context.Error(DiagnosticCodes.InvalidNavigation, $"Invalid navigation '{text}' - expected 'navigate to <Screen> [by <param>]'", line.Location);
+            return null;
+        }
+
+        var parameters = new List<ScreenNavigationParameterSyntax>();
+        string? route = null;
+        string? outlet = null;
+        while (context.TryPeekChild(line.Indent, out var child))
+        {
+            context.Reader.TakeSignificant();
+            var parameter = ParameterRegex().Match(child.Content);
+            if (parameter.Success)
+            {
+                parameters.Add(new(parameter.Groups[1].Value, UiBindingParser.ParseFromClause(context, parameter.Groups[2].Value, child.Location), child.Location));
+                continue;
+            }
+
+            var routeMatch = RouteRegex().Match(child.Content);
+            if (routeMatch.Success)
+            {
+                route = OperandText(routeMatch, 1);
+                continue;
+            }
+
+            var outletMatch = OutletRegex().Match(child.Content);
+            if (outletMatch.Success)
+            {
+                outlet = outletMatch.Groups[1].Value;
+                continue;
+            }
+
+            context.Error(DiagnosticCodes.InvalidNavigation, $"Unexpected '{child.Content}' in navigation - expected 'route \"...\"', 'outlet <name>' or 'parameter <name> from <binding>'", child.Location);
+        }
+
+        return new(match.Groups[1].Value, match.Groups[2].Success ? match.Groups[2].Value : null, line.Location) { Route = route, Outlet = outlet, Parameters = parameters };
+    }
+
     static ScreenContributionSyntax? ParseContribution(ParserContext context, SourceLine line)
     {
         var match = ContributionRegex().Match(line.Content);
@@ -188,48 +237,6 @@ internal static partial class ScreenParser
         {
             DirectiveLocations = labelLocation is null ? [] : new Dictionary<string, SourceLocation> { ["label"] = labelLocation }
         };
-    }
-
-    static ScreenNavigateSyntax? ParseNavigate(ParserContext context, string text, SourceLine line)
-    {
-        var match = NavigateRegex().Match(text);
-        if (!match.Success)
-        {
-            context.Error(DiagnosticCodes.InvalidNavigation, $"Invalid navigation '{text}' - expected 'navigate to <Screen> [by <param>]'", line.Location);
-            return null;
-        }
-
-        var parameters = new List<ScreenNavigationParameterSyntax>();
-        string? route = null;
-        string? outlet = null;
-        while (context.TryPeekChild(line.Indent, out var child))
-        {
-            context.Reader.TakeSignificant();
-            var parameter = ParameterRegex().Match(child.Content);
-            if (parameter.Success)
-            {
-                parameters.Add(new(parameter.Groups[1].Value, UiBindingParser.ParseFromClause(context, parameter.Groups[2].Value, child.Location), child.Location));
-                continue;
-            }
-
-            var routeMatch = RouteRegex().Match(child.Content);
-            if (routeMatch.Success)
-            {
-                route = OperandText(routeMatch, 1);
-                continue;
-            }
-
-            var outletMatch = OutletRegex().Match(child.Content);
-            if (outletMatch.Success)
-            {
-                outlet = outletMatch.Groups[1].Value;
-                continue;
-            }
-
-            context.Error(DiagnosticCodes.InvalidNavigation, $"Unexpected '{child.Content}' in navigation - expected 'route \"...\"', 'outlet <name>' or 'parameter <name> from <binding>'", child.Location);
-        }
-
-        return new(match.Groups[1].Value, match.Groups[2].Success ? match.Groups[2].Value : null, line.Location) { Route = route, Outlet = outlet, Parameters = parameters };
     }
 
     static ScreenTemplateReferenceSyntax ParseTemplateReference(ParserContext context, SourceLine line)

@@ -1,0 +1,12 @@
+module Workspaces
+  screen template Shell
+    header contributes WorkspaceActions
+    body
+
+  feature Tracking
+    slice StateView WorkItemList
+      screen WorkItemList
+        template Shell
+        navigate to Billing.Invoices.InvoiceList
+        contribute to BillingActions order 10
+          title "Elsewhere"

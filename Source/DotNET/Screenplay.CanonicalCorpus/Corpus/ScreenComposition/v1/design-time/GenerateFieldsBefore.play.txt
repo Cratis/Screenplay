@@ -1,0 +1,31 @@
+ui profile Web
+  target platform web
+  packages
+    Acme.Inspections
+    scene.web
+
+exposure for InspectionShell
+  property "inspection:checklist".columns label "Columns"
+  property "inspection:checklist".items label "Checks" operations add, remove, reorder fields label, required
+
+module Inspections
+  screen template InspectionShell
+    scopes slice
+    checklist
+
+    content checklist
+      component Acme.Inspections.Checklist checklist
+        id "inspection:checklist"
+        property columns = 1
+        property items = []
+
+  feature Sites
+    slice StateChange RecordInspection
+      command RecordInspection
+        inspectionId String identifier
+        site String
+        inspector String
+        passed Bool
+
+      screen RecordInspection
+        template InspectionShell
