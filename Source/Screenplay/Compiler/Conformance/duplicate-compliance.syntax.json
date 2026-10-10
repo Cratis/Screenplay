@@ -1,0 +1,66 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "pii",
+          "reason": "The reason stays on the first marker"
+        }
+      ],
+      "name": "Alias",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "pii",
+          "reason": null
+        }
+      ],
+      "name": "Personal",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "sensitive",
+          "reason": null,
+          "scope": "namespace"
+        }
+      ],
+      "name": "Secret",
+      "type": "String",
+      "values": []
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [
+        {
+          "kind": "ConceptAttributeSyntax",
+          "name": "pii",
+          "reason": null
+        }
+      ],
+      "name": "Legacy",
+      "type": "String",
+      "values": []
+    }
+  ],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [],
+  "personas": [],
+  "systems": [],
+  "types": []
+}

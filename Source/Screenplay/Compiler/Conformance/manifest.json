@@ -11,6 +11,7 @@
         { "name": "specification-tables", "path": "Source/Screenplay/Compiler/Conformance/specification-tables.play" },
         { "name": "persona-callers", "path": "Source/Screenplay/Compiler/Conformance/persona-callers.play" },
         { "name": "event-subject", "path": "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/EventSubject/source.play" },
+        { "name": "duplicate-compliance", "path": "Source/Screenplay/Compiler/Conformance/duplicate-compliance.play" },
         { "name": "compliance", "path": "Source/Screenplay/Compiler/Conformance/compliance.play" },
         { "name": "authoring-metadata", "path": "Source/Screenplay/Compiler/Conformance/authoring-metadata.play" },
         { "name": "specification-examples", "path": "Source/Screenplay/Compiler/Conformance/specification-examples.play" },

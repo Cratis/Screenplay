@@ -52,6 +52,7 @@ export const DiagnosticCodes = {
     UnknownNavigationOutlet: 'PLAY0630',
     TemplateScopeMismatch: 'PLAY0631',
     IncompatibleComponentPackage: 'PLAY0632',
+    DuplicateComplianceMarker: 'PLAY0653',
     LegacyComplianceMarker: 'PLAY0565',
     UnknownComplianceMarker: 'PLAY0566',
     InvalidSecretScope: 'PLAY0567',

@@ -21,11 +21,14 @@ internal static partial class ConceptComplianceParser
 
     internal static string CanonicalName(string marker) => WireName(marker) == ConceptAttributeSyntax.Sensitive ? "secret" : WireName(marker);
 
-    internal static List<ConceptAttributeSyntax> ParseMarkers(ParserContext context, SourceLine line, string text)
+    internal static List<ConceptAttributeSyntax> ParseMarkers(ParserContext context, SourceLine line, string concept, string text)
     {
         var markers = WhitespaceRegex().Split(text.Trim()).Where(marker => marker.Length > 0).ToArray();
         ReportLegacy(context, line, markers);
-        return [.. markers.Select(marker =>
+        var attributes = new List<ConceptAttributeSyntax>();
+        var firstMarkers = new Dictionary<string, string>();
+        var reported = false;
+        foreach (var marker in markers)
         {
             var name = WireName(marker);
             if (name is not (ConceptAttributeSyntax.Pii or ConceptAttributeSyntax.Sensitive) || marker == "@personal" || marker == "@secret")
@@ -33,8 +36,24 @@ internal static partial class ConceptComplianceParser
                 context.Error(DiagnosticCodes.UnknownComplianceMarker, $"Unknown concept marker '{marker}' - expected pii, personal or secret", line.Location);
             }
 
-            return new ConceptAttributeSyntax(name, line.Location);
-        })];
+            if (firstMarkers.TryGetValue(name, out var first))
+            {
+                if (!reported)
+                {
+                    var canonical = CanonicalName(marker);
+                    var alias = first == marker ? string.Empty : $" - '{(marker == canonical ? first : marker)}' is the same marker as '{canonical}'";
+                    context.Warning(DiagnosticCodes.DuplicateComplianceMarker, $"Concept '{concept}' repeats the '{canonical}' marker{alias} - remove the duplicate", line.Location);
+                    reported = true;
+                }
+
+                continue;
+            }
+
+            firstMarkers.Add(name, marker);
+            attributes.Add(new(name, line.Location));
+        }
+
+        return attributes;
     }
 
     internal static bool TryParseDirective(ParserContext context, SourceLine line, string concept, List<ConceptAttributeSyntax> attributes, Dictionary<string, SourceLocation> locations)

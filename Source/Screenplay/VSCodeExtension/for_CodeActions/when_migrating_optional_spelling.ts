@@ -78,6 +78,17 @@ describe('when migrating optional spelling in VS Code', () => {
         expect(editor.applied).toBe(1);
     });
 
+    it('should offer a duplicate compliance header fix with explicit version-checked apply', async () => {
+        const text = '// keep\nconcept Café : String pii personal\n  pii reason "pii personal"';
+        const duplicate = { code: 'PLAY0653', range: new vscode.Range(1, 0, 1, 36) } as vscode.Diagnostic;
+        const fixes = await actions({ diagnostics: [duplicate] }, text);
+        expect(fixes.map(fix => fix.kind?.value)).toEqual(['quickfix']);
+        expect(fixes[0].title).toBe('Remove duplicate compliance markers');
+        expect(editor.applied).toBe(0);
+        expect(await editor.apply!(...fixes[0].command!.arguments!)).toBe(true);
+        expect(editor.applied).toBe(1);
+    });
+
     it('should offer single and document fixes without writing until explicitly requested', async () => {
         const fixes = await actions();
         expect(fixes).toHaveLength(2);

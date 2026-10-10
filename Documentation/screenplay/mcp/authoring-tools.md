@@ -355,11 +355,12 @@ compilation diagnostics belong to the paged diagnostics view. Available typed re
 | `PLAY0469` on an inline mapping | Remove the payload property and its mapping together, retiring the property address. The label says “changes the event contract”; `canFixAll` is false. This narrow repair requires an executable model without other consumers of that event (including constraint releases, projection subscriptions and `on event` triggers) or opaque syntax/attachments. It refuses changed routing or lost comments. Plain productions receive guidance only. |
 | `PLAY0471` | Remove a redundant event `id`, inline or standalone, only when the executable model, catalog and comments are preserved. |
 | `PLAY0397` on `validate csharp` | Replace the validation with itself so canonical printing migrates its legacy fence. Other forms of `PLAY0397` have no individual repair. |
+| `PLAY0653` (Warning) | Remove duplicate compliance markers from one concept header, keeping the first occurrence of each marker, all body settings and trivia. Use the discovered concept subject and `PreserveTrivia`; no document-root repair is offered. |
 | `PLAY0565` (Information) | Migrate one legacy compliance line or the entire document to bare `pii`/`secret`, retaining quoted notes and trivia. For one line, pass its discovered `location.line` as `line` alongside the concept subject. |
 | `PLAY0479` (Information) | Write `optional` after the type. An occurrence repair changes one type; a document repair contains all spelling changes in one transaction. Both preserve syntax structure. |
 | `PLAY0516` (Information) | Move a sibling declaration or explicit file import, or pin an already placed file before a retained glob. The proposal removes the selected backward edge without new timeline findings. Own-sub-feature findings, cycle groups, unranked members and mixed/different-parent boundaries have no repair. |
 
-Discovery verifies listed `PLAY0166`, `PLAY0478`, `PLAY0469`, `PLAY0471`, `PLAY0479`, `PLAY0516`, `PLAY0563`, strict-condition `PLAY0564` and `PLAY0614` repairs. `PLAY0614` adds the one `direction inbound|outbound` consistent with the slice's events and constructs; it is offered only when exactly one direction fits and requires individual review. Interaction repairs expand a one-line alternative or replace opaque `where` with one block-form `when`, respectively; both require individual review and refuse trailing-comment relocation.
+Discovery verifies listed `PLAY0166`, `PLAY0478`, `PLAY0469`, `PLAY0471`, `PLAY0479`, `PLAY0516`, `PLAY0563`, strict-condition `PLAY0564`, `PLAY0614` and `PLAY0653` repairs. `PLAY0614` adds the one `direction inbound|outbound` consistent with the slice's events and constructs; it is offered only when exactly one direction fits and requires individual review. Interaction repairs expand a one-line alternative or replace opaque `where` with one block-form `when`, respectively; both require individual review and refuse trailing-comment relocation.
 It checks authoring acceptance and comment preservation, plus routing safety for
 `PLAY0478`, consumer/routing impact and executable readiness for `PLAY0469`, and
 executable-model/catalog preservation for `PLAY0471`. For example, an inferred
@@ -398,7 +399,7 @@ production's routing or the model version; it does not mean the repair is unknow
 
 Pass the selected repair's `diagnosticCode` and `subject` to `propose-repair` with
 both current revisions and the returned `requiredFormatting`.
-For `PLAY0479` and `PLAY0565`, this is `"PreserveTrivia"`: only selected type or compliance spellings change. `PLAY0565` line repairs require the discovered `line` when several diagnostics share a concept subject; a document-root subject migrates every legacy compliance line. Notes and legal text never move.
+For `PLAY0479`, `PLAY0565` and `PLAY0653`, this is `"PreserveTrivia"`: only selected type or compliance spellings change. `PLAY0565` line repairs require the discovered `line` when several diagnostics share a concept subject; a document-root subject migrates every legacy compliance line. Notes and legal text never move.
 Choose `scope: "document"` in the discovered results to migrate the whole document
 using its root `subject` handle; pass that handle, not a scope argument, to
 `propose-repair`. All splices are verified together in one transaction. The server

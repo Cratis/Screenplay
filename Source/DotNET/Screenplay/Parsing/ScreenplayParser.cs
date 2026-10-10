@@ -490,7 +490,7 @@ internal static partial class ScreenplayParser
 
         var name = match.Groups[1].Value;
         var type = match.Groups[2].Value;
-        var attributes = ConceptComplianceParser.ParseMarkers(context, line, match.Groups[3].Value);
+        var attributes = ConceptComplianceParser.ParseMarkers(context, line, name, match.Groups[3].Value);
 
         if (type != "Enum" && !ConceptSyntax.PrimitiveTypes.Contains(type))
         {

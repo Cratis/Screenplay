@@ -14,6 +14,7 @@ static class McpAstOperations
 {
     internal static object Describe(WorkspaceAstOperation operation) => operation switch
     {
+        RemoveDuplicateComplianceMarkers duplicates => new { operation = "remove-duplicate-compliance-markers", target = McpAstHandles.Describe(duplicates.Target) },
         MigrateComplianceMarkerSpelling compliance => new { operation = "migrate-compliance-marker", target = McpAstHandles.Describe(compliance.Target), compliance.Line },
         MigrateOptionalTypeSpelling migrate => new { operation = "migrate-optional-type", target = McpAstHandles.Describe(migrate.Target) },
         AddWorkspaceNode add => new { operation = "add", parent = McpAstHandles.Describe(add.Parent), add.Member, add.Index },

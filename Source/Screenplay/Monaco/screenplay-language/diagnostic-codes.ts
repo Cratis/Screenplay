@@ -52,6 +52,7 @@ export const diagnosticCodes = {
     unknownConceptDirective: 'PLAY0010',
     attributeReasonWithoutAttribute: 'PLAY0012',
     duplicateAttributeReason: 'PLAY0013',
+    duplicateComplianceMarker: 'PLAY0653',
     legacyComplianceMarker: 'PLAY0565',
     unknownComplianceMarker: 'PLAY0566',
     invalidSecretScope: 'PLAY0567',

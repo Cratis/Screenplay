@@ -47,6 +47,21 @@ describe('when editing compliance markers', () => {
         expect(validateLines(['concept Value : String @encrypted']).filter(issue => issue.code === 'PLAY0566')).toMatchObject([{ severity: 'error' }]);
         expect(validateLines(['concept Value : String personal'])).toEqual([]);
     });
+    it('should warn and offer a version-pinned duplicate header repair', async () => {
+        const source = 'concept Café : String pii personal\n  pii reason "pii personal"';
+        expect(validateLines(source.split('\n')).filter(issue => issue.code === 'PLAY0653')).toMatchObject([{ severity: 'warning' }]);
+        const model = {
+            uri: { toString: () => 'file:///model.play' },
+            getValue: () => source,
+            getVersionId: () => 3,
+            getPositionAt: (offset: number) => ({ lineNumber: 1, column: offset + 1 }),
+        } as unknown as editor.ITextModel;
+        const range = { startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 35 } as Range;
+        const context = { markers: [{ ...range, code: 'PLAY0653', severity: 4, message: 'Duplicate' }], trigger: 1 } as languages.CodeActionContext;
+        const result = await createCodeActionProvider().provideCodeActions(model, range, context, { isCancellationRequested: false } as CancellationToken);
+        expect(result?.actions.map(action => action.kind)).toEqual(['quickfix']);
+        expect(result?.actions[0].edit?.edits[0]).toMatchObject({ versionId: 3, textEdit: { text: ' pii' } });
+    });
     it('should offer line and whole-document migrations pinned to the buffer version', async () => {
         const source = 'concept Café : String @pii @sensitive\n  sensitive reason "Keep @pii in this note"';
         const model = {
