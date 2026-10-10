@@ -599,16 +599,6 @@ These are structural findings, not legal verdicts. See [Processing purposes](pur
 | `PLAY0243` | Error | A `variant` places (or hides) the same slot more than once. |
 | `PLAY0244` | Warning | A `freeform` arrangement's `variant` does not mention (place or hide) a slot another variant of the same arrangement places. |
 
-### Read-model keys
-
-| Code | Severity | Reported when |
-|---|---|---|
-| `PLAY0633` | Error | `key` is marked outside a top-level read-model property, combined with another modifier, or has an optional or collection type. A part of a multipart key cannot have a composite type. |
-| `PLAY0634` | Error | A single-instance lookup omits key parts. The message names the missing parts. Reads and queries have a typed repair when every missing part has one same-named compatible source. Scalar screen, form and navigation lookups cannot supply composite keys. |
-| `PLAY0635` | Error | A `by` block has fewer than two distinct parts, names an unknown part, uses the wrong key shape or supplies an incompatible, optional, collection or literal source. A single-instance query must agree with the declared key. No automatic repair is offered. |
-
-An explicit single `key` binds byte-identically to an inferred identifier. Composite keys and by-block queries are authoring-only: binding reports `PLAY0268` citing [#599](https://github.com/Cratis/Screenplay/issues/599).
-
 ### Public event boundaries
 
 These whole-model C# checks run after file assembly and also on programmatic syntax passed to the semantic binder.
@@ -685,6 +675,16 @@ These checks run on the assembled model. The source stays in the syntax tree, so
 | `PLAY0632` | Error | A component comes from a package no `ui profile` declares. Only checked when at least one profile declares packages. |
 
 None of these has an automatic repair: each is a composition decision for the author.
+
+### Read-model keys
+
+| Code | Severity | Reported when |
+|---|---|---|
+| `PLAY0633` | Error | `key` is marked outside a top-level read-model property, combined with another modifier, or has an optional or collection type. A part of a multipart key cannot have a composite type. |
+| `PLAY0634` | Error | A single-instance lookup omits key parts. The message names the missing parts. Command reads have a typed repair when every missing part has one same-named compatible source. Queries and trigger reads are not repaired. Scalar screen, form and navigation lookups cannot supply composite keys. |
+| `PLAY0635` | Error | A `by` block has fewer than two distinct parts, names an unknown part, uses the wrong key shape or supplies an incompatible, optional, collection or literal source. A single-instance query must agree with the declared key. No automatic repair is offered. |
+
+An explicit single `key` binds byte-identically to an inferred identifier. Composite keys and by-block queries are authoring-only: binding reports `PLAY0268` citing [#599](https://github.com/Cratis/Screenplay/issues/599).
 
 ### Triggers
 

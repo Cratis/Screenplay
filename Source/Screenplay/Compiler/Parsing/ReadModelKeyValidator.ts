@@ -29,7 +29,7 @@ export function validateReadModelKeys(application: ApplicationSyntax, context: P
             names.add(property.name);
         }
         for (const property of keys) {
-            if (keys.length > 1 && application.types.some(type => type.name === property.type.name)) {
+            if (keys.length > 1 && application.types.filter(type => type.name === property.type.name).length === 1) {
                 context.error(DiagnosticCodes.InvalidReadModelKey, 'A read-model key part must be required and noncollection, cannot combine modifiers, and a multipart key must have scalar parts.', property.location);
             }
         }

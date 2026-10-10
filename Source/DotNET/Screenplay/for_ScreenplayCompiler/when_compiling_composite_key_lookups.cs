@@ -31,6 +31,13 @@ public class when_compiling_composite_key_lookups : given.a_compiler
     void should_allow_collection_queries_to_filter_on_a_subset() => _compiler.Compile(Source.Replace("Row optional", "Row[]", StringComparison.Ordinal).Replace("        by\n          resourceId String\n          period Int", "        by resourceId String", StringComparison.Ordinal)).Diagnostics.ShouldBeEmpty();
 
     [Fact]
+    void should_refuse_collection_queries_that_filter_on_a_non_key_property() => _compiler.Compile(Source
+        .Replace("        period Int key", "        period Int key\n        label String", StringComparison.Ordinal)
+        .Replace("Row optional", "Row[]", StringComparison.Ordinal)
+        .Replace("        by\n          resourceId String\n          period Int", "        by label String", StringComparison.Ordinal))
+        .Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidReadModelKeyLookup).ShouldBeTrue();
+
+    [Fact]
     void should_refuse_a_partial_screen_lookup() => _compiler.Compile(Source + "      screen Details\n        data Row via query Find by resourceId").Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.IncompleteReadModelKey).ShouldBeTrue();
 
     [Fact]
