@@ -26,6 +26,8 @@ public partial class ScreenplayPrinter
             {
                 WriteScreenDirective(writer, directive);
             }
+
+            WriteScreenContributions(writer, screen.Contributions);
         }
     }
 
@@ -45,6 +47,11 @@ public partial class ScreenplayPrinter
                 break;
             case ScreenNavigateSyntax navigate:
                 writer.Line(WriteScreenNavigate(navigate));
+                using (writer.Indent())
+                {
+                    WriteScreenNavigateBody(writer, navigate);
+                }
+
                 break;
             case ScreenTemplateReferenceSyntax template:
                 WriteScreenTemplateReference(writer, template);
@@ -98,6 +105,11 @@ public partial class ScreenplayPrinter
         if (navigate.Route is not null)
         {
             writer.Line($"route {ScreenplaySyntaxText.LocalizableString(navigate.Route)}", navigate);
+        }
+
+        if (navigate.Outlet is not null)
+        {
+            writer.Line($"outlet {navigate.Outlet}", navigate);
         }
 
         foreach (var parameter in navigate.Parameters)

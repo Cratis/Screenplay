@@ -312,6 +312,16 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             {
                 Information(DiagnosticCodes.DeferredSemanticSyntax, $"Behavior '{behavior.Name}' is explicitly deferred from the backend ESM v1 profile.", behavior.Location);
             }
+
+            foreach (var exposure in syntax.Exposures)
+            {
+                Information(DiagnosticCodes.DeferredSemanticSyntax, $"Exposure for '{exposure.Owner}' is explicitly deferred from the backend ESM v1 profile.", exposure.Location);
+            }
+
+            foreach (var instance in syntax.InstanceContributions)
+            {
+                Information(DiagnosticCodes.DeferredSemanticSyntax, $"Instance contributions for '{instance.Instance}' are explicitly deferred from the backend ESM v1 profile.", instance.Location);
+            }
         }
 
         void RegisterTypeDeclarations()

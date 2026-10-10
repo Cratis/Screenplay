@@ -162,6 +162,69 @@ module Invoicing
 
 Use scoped template assignments when a whole feature area shares the same shape. Use a screen-local `template <Name>` body when the screen fills slots directly. The assignment is preserved as authored metadata; a renderer that cannot apply a scoped template must report that limitation instead of falling back to an unstructured screen.
 
+## Template content and picker metadata
+
+A screen or dialog template can provide its own chrome for a slot with `content <slot>`, and say how a template picker presents it:
+
+```screenplay
+module Invoicing
+  screen template MasterDetail
+    display "Master / detail"
+    description "A list beside the selected item"
+    scopes feature, slice
+
+    header
+    list
+    details
+
+    content header
+      title "Invoices"
+```
+
+- `content <slot>` holds screen directives the template renders in that slot itself. The slot must be one the template declares (`PLAY0629`).
+- `display` and `description` are the name and one-line description a picker shows.
+- `scopes` restricts where the template may be used: `application`, `module`, `feature`, `subfeature` or `slice`, or `none`. Without it the structural role decides. Using a restricted template outside its scopes is `PLAY0631`. A layout may declare `scopes` too.
+
+These map to Scene's `ScreenTemplate.Content`, `DisplayName`, `Description` and `Metadata.Scopes`.
+
+## `exposure` — letting a template be configured
+
+A template author decides which of its components a screen inside it may configure. That is an **exposure**, declared at the top level and keyed by the layout or template that owns the component:
+
+```screenplay
+exposure for MasterDetail
+  property navigation.items label "Navigation" operations add, reorder fields label, icon
+  property "invoices:list".pageSize label "Page size"
+
+exposure for DetailPane
+  property navigation.items reexposes MasterDetail operations add
+```
+
+- The component is an identifier or a quoted exact stable id, followed by the property path.
+- `operations` marks the property as a collection and grants `add`, `remove`, `reorder` and `edit-fields` one by one (`operations none` grants nothing). Without `operations` the property is a single value.
+- `fields` restricts which item fields a consumer may change.
+- `reexposes <Owner>` passes an outer owner's exposure through a nested template. The outer owner must expose the same property (`PLAY0624`), and re-exposures may not form a cycle (`PLAY0623`).
+
+The owner must be a layout, screen template or dialog template (`PLAY0622`).
+
+## `instance` — configuring what was exposed
+
+A screen, or a template nested in an owner's slot, stores values for what was exposed to it:
+
+```screenplay
+instance InvoiceList
+  set "invoices:list".pageSize = 50
+  items navigation.items
+    item open
+      label = "Open"
+      icon = "folder"
+```
+
+- `set <component>.<path> = <value>` stores a typed literal for a single-value exposure.
+- `items <component>.<path>` adds items to a collection exposure; each `item <id>` holds `<field> = <value>` lines.
+
+The instance must be a screen, screen template or dialog template (`PLAY0626`). Storing a value no exposure exposes is `PLAY0627`; using `set` on a collection or `items` on a single value is `PLAY0628`. These map to Scene's `ExposureDeclaration` and `InstanceContribution`.
+
 ## See also
 
 - [Layout arrangement](layout-arrangement.md) — how a layout or template arranges the slots it declares.

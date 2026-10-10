@@ -57,6 +57,8 @@ export const constructKeywords = [
     'example',
     'seed',
     'behavior',
+    'exposure',
+    'instance',
 ];
 
 // Type modifiers are contextual, never excluded from property or declaration names.
@@ -120,6 +122,11 @@ export const clauseKeywords = [
     'icons',
     'packages',
     'outlet',
+    'display',
+    'scopes',
+    'reexposes',
+    'operations',
+    'items',
     'toolbar',
     'item',
     'presentation',

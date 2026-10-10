@@ -20,6 +20,7 @@ import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseTypeRef } from './PropertyLineParser';
 import { parseFromClause } from './UiBindingParser';
+import { ScreenContributionSyntax } from '../Syntax/CompositionSyntax';
 import { locationOf, SourceLine } from './SourceLine';
 
 // Parses 'screen' declarations the way the C# ScreenParser does - intent level directives, the template
@@ -33,6 +34,8 @@ const label = pattern(`^label\\s+${operand}$`);
 const guardedAction = pattern(`^action\\s+${operand}$`);
 const navigate = pattern('^navigate\\s+to\\s+(\\w+(?:\\.\\w+)*)(?:\\s+by\\s+(\\w+))?$');
 const route = pattern(`^route\\s+${operand}$`);
+const outletPattern = pattern('^outlet\\s+([A-Za-z_]\\w*)$');
+const contributionPattern = pattern('^contribute\\s+to\\s+([A-Za-z_]\\w*)(?:\\s+order\\s+(-?\\d+))?$');
 const parameter = pattern('^parameter\\s+([A-Za-z_]\\w*)\\s+from\\s+(.+)$');
 const component = pattern('^component\\s+([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)\\s+([A-Za-z_]\\w*)$');
 const stableId = pattern(`^id\\s+(?:"(${stringBodyPattern})"|(\\S+))$`);
@@ -60,16 +63,30 @@ export function parseScreen(context: ParserContext, line: SourceLine): ScreenSyn
         context.error(DiagnosticCodes.InvalidScreenDeclaration, `Invalid screen declaration '${line.content}' - expected 'screen <Name>'`, locationOf(line));
     }
     const directives: ScreenDirectiveSyntax[] = [];
+    const contributions: ScreenContributionSyntax[] = [];
     let description: string | null = null;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
-        if (firstWord(child.content) === 'description') {
+        if (firstWord(child.content) === 'contribute') {
+            const parsed = parseScreenContribution(context, child);
+            if (parsed !== undefined) contributions.push(parsed);
+        } else if (firstWord(child.content) === 'description') {
             description = parseDescription(context, child, description, `Screen '${match?.[1] ?? ''}'`);
         } else if (!isFileDirective(child)) {
             pushDirective(context, child, directives);
         }
     }
-    return { kind: 'ScreenSyntax', name: match?.[1] ?? '', directives, description, location: locationOf(line) };
+    return { kind: 'ScreenSyntax', name: match?.[1] ?? '', directives, description, ...(contributions.length > 0 ? { contributions } : {}), location: locationOf(line) };
+}
+
+function parseScreenContribution(context: ParserContext, line: SourceLine): ScreenContributionSyntax | undefined {
+    const match = contributionPattern.exec(line.content);
+    if (match === null) {
+        context.error(DiagnosticCodes.UnknownScreenDirective, `Invalid screen contribution '${line.content}' - expected 'contribute to <Point> [order <n>]'`, locationOf(line));
+        context.skipBlock(line.indent);
+        return undefined;
+    }
+    return { kind: 'ScreenContributionSyntax', contributionPoint: match[1], order: match[2] === undefined ? null : Number(match[2]), directives: parseDirectives(context, line), location: locationOf(line) };
 }
 
 function pushDirective(context: ParserContext, line: SourceLine, directives: ScreenDirectiveSyntax[]): void {
@@ -168,6 +185,7 @@ function parseNavigate(context: ParserContext, text: string, line: SourceLine): 
     }
     const parameters: ScreenNavigationParameterSyntax[] = [];
     let routeValue: string | null = null;
+    let outletValue: string | null = null;
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
         const parameterMatch = parameter.exec(child.content);
@@ -180,9 +198,14 @@ function parseNavigate(context: ParserContext, text: string, line: SourceLine): 
             routeValue = operandText(routeMatch, 1);
             continue;
         }
-        context.error(DiagnosticCodes.InvalidNavigation, `Unexpected '${child.content}' in navigation - expected 'route "..."' or 'parameter <name> from <binding>'`, locationOf(child));
+        const outletMatch = outletPattern.exec(child.content);
+        if (outletMatch !== null) {
+            outletValue = outletMatch[1];
+            continue;
+        }
+        context.error(DiagnosticCodes.InvalidNavigation, `Unexpected '${child.content}' in navigation - expected 'route "..."', 'outlet <name>' or 'parameter <name> from <binding>'`, locationOf(child));
     }
-    return { kind: 'ScreenNavigateSyntax', screen: match[1], by: match[2] ?? null, route: routeValue, parameters, location: locationOf(line) };
+    return { kind: 'ScreenNavigateSyntax', screen: match[1], by: match[2] ?? null, route: routeValue, ...(outletValue === null ? {} : { outlet: outletValue }), parameters, location: locationOf(line) };
 }
 
 function parseTemplateReference(context: ParserContext, line: SourceLine): ScreenTemplateReferenceSyntax {
