@@ -52,6 +52,10 @@ These details make the guarantee hold for values you did not type yourself:
 - **Numbers are culture-invariant.** Every numeric literal - `decimal`, `float`, `int`, `long` or `double` - prints with a `.` decimal separator regardless of `CurrentCulture`, so output produced on a machine set to `nb-NO` compiles anywhere. Legacy `double` literals print as decimal text, not exponent notation, even for large integers and small fractions. Recompiling preserves their represented double value; exact-mode literals keep their exact canonical text.
 - **Grouping is written out.** Every condition - a [policy](policies.md) `require`, a `produces when` - binds `and` tighter than `or`, so the printer adds the parentheses a condition needs to compile back to the tree it came from, and adds them again wherever `or` and `and` mix so the text does not rely on the reader knowing which binds tighter. You build the tree you mean and the text follows - there is no flag to remember to set.
 
+## Key and route ordering
+
+The printer retains trailing read-model `key` marks and writes query and reads `by` blocks in authored part order. A production prints `for`, then its `stream` and `streamId`, then tags and payload mappings. A reaction or reducer prints its `from` filter after description and documentation, before conditions, triggers or rules. These forms survive print/parse round trips.
+
 ## What printing does not keep
 
 The printer is faithful to the syntax tree, and the tree does not hold everything

@@ -24,6 +24,8 @@ applies-to:
   - Samples/**
 ---
 
+> **2026-10-09: read-model alignment adopted.** [0060](0060-declare-read-model-keys-and-bind-lookups-by-name.md) adopts named parts for composite read-model lookups. Read-model keys remain object keys, not encoded stream-id strings. Composite executable admission is tracked in #599.
+
 ## Context
 
 **Stream ids today.** An event source declares streams. A keyed stream names one id type, as in `streamId Month`. A command routes to it with `stream Account.Transactions` and one child mapping, `streamId = month` ([event sources](../Documentation/screenplay/event-sources.md)).

@@ -195,6 +195,11 @@ public record ReadsSyntax(string ReadModel, string? By, SourceLocation Location)
     /// An init member preserves the published positional constructor and deconstruction contract.
     /// </summary>
     public string? Alias { get; init; }
+
+    /// <summary>
+    /// Gets the named composite lookup mappings, mutually exclusive with <see cref="By"/>.
+    /// </summary>
+    public IEnumerable<PropertyMappingSyntax> ByParts { get; init; } = [];
 }
 
 /// <summary>
@@ -353,6 +358,11 @@ public record ProducesSyntax(
     /// Gets the event declared by this production, owned by the containing slice.
     /// </summary>
     public EventSyntax? InlineEvent { get; init; }
+
+    /// <summary>
+    /// Gets the route replacing the command route for this production.
+    /// </summary>
+    public CommandStreamSyntax? Stream { get; init; }
 
     /// <summary>
     /// Gets the operation declared by this production, owned by the containing slice.

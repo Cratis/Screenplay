@@ -85,6 +85,7 @@ export function createTokensProvider(subLanguages: SubLanguage[]): languages.IMo
             [/^(\s*)(then)(\s+)(returns)\b/, ['white', 'keyword', 'white', 'keyword']],
             // Only unambiguous response headers: two-token property declarations keep their names.
             [/^(\s*)(returns)(?=\s*(?:\/\/.*)?$|\s+@\w+\s*(?:\/\/.*)?$)/, ['white', 'keyword']],
+            [/^(\s*@?[a-z_]\w*\s+)([\w.]+)(\s+)(key)(?=\s*(?:\/\/.*)?$)/, ['identifier', 'type.identifier', 'white', 'keyword']],
             // A modifier only after a complete type; names called optional remain ordinary names.
             [/^(\s*(?:by|filter)\s+[a-z_]\w*\s+)([\w.]+(?:\[\])?)(\s+)(optional)\b(?=\s*(?:from\b|\/\/|$))/,
                 ['identifier', 'type.identifier', 'white', 'keyword']],

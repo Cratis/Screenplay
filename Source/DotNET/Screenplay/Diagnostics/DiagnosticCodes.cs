@@ -2921,6 +2921,41 @@ public static class DiagnosticCodes
     public const string IncompatibleComponentPackage = "PLAY0632";
 
     /// <summary>
+    /// A key modifier has an invalid owner, type or modifier combination.
+    /// </summary>
+    public const string InvalidReadModelKey = "PLAY0660";
+
+    /// <summary>
+    /// A single-instance lookup omits declared read-model key parts.
+    /// </summary>
+    public const string IncompleteReadModelKey = "PLAY0661";
+
+    /// <summary>
+    /// A read-model lookup has invalid parts, shape or sources.
+    /// </summary>
+    public const string InvalidReadModelKeyLookup = "PLAY0662";
+
+    /// <summary>
+    /// A route is declared on a production outside a command.
+    /// </summary>
+    public const string ProductionRouteOutsideCommand = "PLAY0663";
+
+    /// <summary>
+    /// A production route repeats its command's route.
+    /// </summary>
+    public const string RedundantProductionRoute = "PLAY0664";
+
+    /// <summary>
+    /// An observer filter is malformed, unresolved or used with a non-event trigger.
+    /// </summary>
+    public const string InvalidObserverFilter = "PLAY0665";
+
+    /// <summary>
+    /// An observer filter excludes every statically known producer.
+    /// </summary>
+    public const string ObserverFilterExcludesEveryProducer = "PLAY0666";
+
+    /// <summary>
     /// An identity block has an invalid header.
     /// </summary>
     public const string InvalidIdentityDeclaration = "PLAY0633";

@@ -113,6 +113,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitReducer(ReducerSyntax syntax)
     {
         VisitNode(syntax);
+        if (syntax.From is not null) VisitObserverFilter(syntax.From);
 
         foreach (var rule in syntax.Rules)
         {

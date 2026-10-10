@@ -199,6 +199,27 @@ public class when_renaming_event_sources_and_streams
         Rejected(result, "binding");
     }
 
+    [Theory]
+    [InlineData(WorkspaceAuthoringFormatting.PreserveTrivia)]
+    [InlineData(WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments)]
+    void should_rename_sources_and_streams_in_production_routes_and_observer_filters(WorkspaceAuthoringFormatting formatting)
+    {
+        var source = Source.Replace("        produces E\n          for id\n      command D", "        produces E\n          for id\n          stream Account.Profile\n      command D", StringComparison.Ordinal) +
+            "\n    slice Automation Follow\n      reaction R\n        from Account.Profile\n        when E\n      reducer Fold => Snapshot\n        from Account\n        on E\n          file Reducers/Fold.cs\n      readmodel Snapshot\n        id String key\n";
+        var workspace = Workspace(source);
+        var renamed = Rename<EventSourceSyntax>(workspace, "Account", "Customer", formatting);
+        Accepted(renamed);
+        var nodes = Nodes(renamed);
+        nodes.OfType<ObserverFilterSyntax>().All(filter => filter.EventSource == "Customer").ShouldBeTrue();
+        nodes.OfType<ProducesSyntax>().Where(produced => produced.Stream is not null).Single().Stream!.EventSource.ShouldEqual("Customer");
+        var streamRename = Rename<EventStreamSyntax>(renamed.Workspace!, "Profile", "Details", formatting);
+        Accepted(streamRename);
+        var renamedNodes = Nodes(streamRename);
+        renamedNodes.OfType<ObserverFilterSyntax>().Single(filter => filter.Stream is not null).Stream.ShouldEqual("Details");
+        renamedNodes.OfType<ProducesSyntax>().Single(produced => produced.Stream is not null).Stream!.Stream.ShouldEqual("Details");
+        CatalogContinuity(workspace, renamed.Workspace!);
+    }
+
     static void CatalogContinuity(ScreenplayWorkspace before, ScreenplayWorkspace after)
     {
         // Names are catalog addresses, not stored-name pins: migrate addresses while preserving

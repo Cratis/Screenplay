@@ -142,7 +142,7 @@ internal static class SpecificationValueConsistencyValidator
                 continue;
             }
 
-            var parameters = (resolved.Node.By is null ? Enumerable.Empty<QueryParameterSyntax>() : [resolved.Node.By]).Concat(resolved.Node.Filters);
+            var parameters = (resolved.Node.By is null ? Enumerable.Empty<QueryParameterSyntax>() : [resolved.Node.By]).Concat(resolved.Node.ByParts).Concat(resolved.Node.Filters);
             ValidateValues(step.Arguments, parameters.Select(parameter => new PropertySyntax(parameter.Name, parameter.Type, parameter.Location)), declarations, context);
             foreach (var result in step.Results)
             {

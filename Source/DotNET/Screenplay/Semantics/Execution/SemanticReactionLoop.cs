@@ -114,7 +114,7 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
         while (_pending.TryDequeue(out var item))
         {
             var values = item.Fact.Values.ToDictionary(value => value.TargetProperty, value => value.Value);
-            foreach (var reaction in plan.Reactions)
+            foreach (var reaction in plan.Reactions.Where(reaction => reaction.From?.Matches(plan.Model.Application, item.Fact.Route) != false))
             {
                 foreach (var trigger in reaction.Triggers.Where(trigger => trigger.Kind == SemanticReactionTriggerKind.Event && trigger.Source == item.Fact.EventContract))
                 {

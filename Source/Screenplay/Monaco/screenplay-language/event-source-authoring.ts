@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { CompletionEntry } from './completion-items';
-import { fenceMap, indentOf, withoutComment } from './document-context';
+import { enclosingChain, fenceMap, indentOf, withoutComment } from './document-context';
 import { AuthoredEventSource } from './AuthoredEventSource';
 import { AuthoredStream } from './AuthoredStream';
 import { isSourceStreamName, isSourceStreamTypeName, sourceStreamPattern } from '@cratis/screenplay-compiler';
@@ -61,6 +61,11 @@ export function eventSourceIdentifier(location: { line: number; column: number; 
 export function eventSourceHover(lines: string[], line: number, start: number, end: number, symbols?: DocumentSymbols): string | null {
     symbols = symbolsForBuffer(lines, symbols);
     const analysis = analyzeEventSources(lines, symbols);
+    const filter = analysis.contexts.get(line)?.observer?.from;
+    if (filter?.location.line === line + 1 && /^\s*from\s+/.test(withoutComment(lines[line] ?? ''))) {
+        const resolved = analysis.resolve(filter.eventSource, filter.stream ?? undefined);
+        return resolved.source ? `${eventSourceDetails(resolved.source, resolved.stream)}\n\nObserves routed facts only. Stream ids are not filtered. Admitted by ESM v10.` : 'Unresolved observer filter (PLAY0665).';
+    }
     const reference = eventSourceReferenceAt(lines, line, start, end, symbols);
     if (reference) return reference.resolution.source && reference.resolution.stream ? eventSourceDetails(reference.resolution.source, reference.resolution.stream) + (analysis.contexts.get(line)?.event ? `\n\n${specificationRouteAvailability}` : '')
         : `Physical stream owner: ${reference.resolution.state}; no route selected. ${'reasons' in reference.resolution ? reference.resolution.reasons.join(' ') : ''} ${eventSourceAvailability}`;
@@ -135,6 +140,16 @@ export function eventSourceCompletions(lines: string[], line: number, before: st
     const analysis = analyzeEventSources(lines, symbols);
     const context = analysis.contexts.get(line);
     const indent = before.trim() ? indentOf(lines[line]) : before.length;
+    const chain = enclosingChain(lines, fenceMap(lines), line, indent);
+    if (context?.observer && ['reaction', 'reducer'].includes(chain[0])) {
+        if (/^\s*from\s+[\w.]*$/.test(before) && (!context.observer.from || context.observer.from.location.line === line + 1)) {
+            const prefix = before.trim().split(/\s+/)[1] ?? '';
+            return analysis.declarations.filter(source => analysis.resolve(source.name).state === 'unique').flatMap(source => [
+                { name: source.name, source, stream: undefined },
+                ...source.streams.filter(stream => analysis.resolve(source.name, stream.name).state === 'unique').map(stream => ({ name: `${source.name}.${stream.name}`, source, stream }))
+            ]).filter(target => target.name.startsWith(prefix)).map(target => ({ label: target.name, insertText: prefix.includes('.') ? target.stream?.name ?? target.name : target.name, documentation: 'Observes routed facts from this source or stream. Stream ids are not filtered. ESM v10.' }));
+        }
+    }
     if (context?.route && indent > indentOf(lines[context.route.location.line - 1])) {
         const stream = analysis.resolve(context.route.eventSource, context.route.stream).stream;
         if (stream?.streamIdParts.length) {
@@ -208,7 +223,7 @@ export function eventSourceCompletions(lines: string[], line: number, before: st
         // targets already exclude competing imports from the authoritative parsed documents.
         // Scanned symbols can retain an import removed from the current unsaved buffer.
         const qualified = before.trim().split(/\s+/)[1] ?? '';
-        return analysis.targets.filter(target => isSourceStreamName(target.source.name) && isSourceStreamName(target.stream.name) && !names.has(target.name) && (!qualified.includes('.') || target.name.startsWith(qualified.slice(0, qualified.lastIndexOf('.') + 1))))
+        return analysis.targets.filter(target => isSourceStreamName(target.source.name) && isSourceStreamName(target.stream.name) && (context.production || !names.has(target.name)) && (!qualified.includes('.') || target.name.startsWith(qualified.slice(0, qualified.lastIndexOf('.') + 1))))
             .map(target => ({ label: target.name, insertText: qualified.includes('.') ? target.stream.name : target.name, documentation: eventSourceDetails(target.source, target.stream) }));
     }
     if (context?.route && context.command && indent > indentOf(lines[context.route.location.line - 1]) && keyPrefix.test(before)) {

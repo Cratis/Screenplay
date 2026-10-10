@@ -35,6 +35,11 @@ public record PropertySyntax(
     /// </summary>
     public bool IsSubject { get; init; }
 
+    /// <summary>
+    /// Gets whether this top-level read-model property is a lookup key part.
+    /// </summary>
+    public bool IsKey { get; init; }
+
     /// <summary>Gets whether the authored property name had an explicit escape, not a structural modifier.</summary>
     [SourceSpanMetadata]
     public bool NameWasEscaped { get; init; }

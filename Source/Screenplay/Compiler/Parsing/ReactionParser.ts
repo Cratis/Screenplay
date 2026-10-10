@@ -6,6 +6,8 @@ import { ConditionSyntax } from '../Syntax/Conditions';
 import { PropertyMappingSyntax } from '../Syntax/Expressions';
 import { InvocationRefusalSyntax } from '../Syntax/InvocationRefusalSyntax';
 import { parseCondition } from './ConditionParser';
+import { ObserverFilterSyntax } from '../Syntax/ObserverFilterSyntax';
+import { parseObserverFilter } from './ObserverFilterParser';
 import { parseModeledMappingSource as parseMappingSource } from './ExpressionParser';
 import { DayOfWeek, IntervalUnit, InvokesSyntax, ProducesSyntax, ReactionSyntax, ReactionTriggerSyntax, TriggerSourceSyntax } from '../Syntax/Reactions';
 import { nativePattern, pattern } from '../Text/patterns';
@@ -18,7 +20,7 @@ import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { parseTriggerData } from './TriggerDataParser';
 import { dependencySources, ReadsSyntax, TriggerDataSyntax } from '../Syntax/DependencySources';
-import { captureReads } from './DependencySourceParser';
+import { parseReads } from './ReadsParser';
 import { parseProduces } from './ProducesParser';
 import { locationOf, SourceLine } from './SourceLine';
 
@@ -41,6 +43,7 @@ export function parseReaction(context: ParserContext, line: SourceLine): Reactio
     let description: string | null = null;
     let documentation: string | null = null;
     let where: ConditionSyntax | null = null;
+    let from: ObserverFilterSyntax | null = null;
     let runsAs: ReactionIdentitySyntax | null = null;
     let identityDeclared = false;
     const triggers: ReactionTriggerSyntax[] = [];
@@ -57,6 +60,10 @@ export function parseReaction(context: ParserContext, line: SourceLine): Reactio
         }
         if (keyword === 'documentation') {
             documentation = parseDocumentation(context, child, documentation, `Reaction '${name}'`);
+            continue;
+        }
+        if (keyword === 'from') {
+            from = parseObserverFilter(context, child, from);
             continue;
         }
         if (keyword === 'runs') {
@@ -97,7 +104,7 @@ export function parseReaction(context: ParserContext, line: SourceLine): Reactio
     if (triggers.length === 0 && !reported) {
         context.error(DiagnosticCodes.ReactionWithoutTrigger, `Reaction '${name}' must declare at least one trigger - nothing sets it off`, locationOf(line));
     }
-    return { kind: 'ReactionSyntax', name, description, documentation, runsAs, where, triggers, location: locationOf(line) };
+    return { kind: 'ReactionSyntax', name, description, documentation, from, runsAs, where, triggers, location: locationOf(line) };
 }
 
 // What a trigger does - the events it produces and the commands it invokes - is read by name; its reads,
@@ -156,7 +163,7 @@ function parseTrigger(context: ParserContext, line: SourceLine, source: TriggerS
             context.skipBlock(child.indent);
         } else if (keyword === 'reads' || keyword === 'file' || child.content === 'csharp' || child.content.startsWith('```')) {
             implementation ||= keyword === 'file' || child.content === 'csharp' || child.content.startsWith('```');
-            const read = captureReads(child);
+            const read = keyword === 'reads' ? parseReads(context, child) : undefined;
             if (read !== undefined) reads.push(read);
             if (optionalReads.test(child.content)) {
                 context.error(DiagnosticCodes.OptionalReadsNotSupported, 'Optional reads are not yet supported (see #308).', locationOf(child));

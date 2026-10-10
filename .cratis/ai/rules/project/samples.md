@@ -46,8 +46,6 @@ outside `Samples/` so Invoicing continues to exercise its individual binding dis
 | Construct | Issue | Fixture |
 | --- | --- | --- |
 | `numbers exact` | #285 | `Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play` |
-| `eventsource`, `stream`, command routes | #302 | `Documentation/screenplay/fixtures/source-streams.play` |
-| specification `stream`/`streamId`/`no stream` | #457 | `Source/Screenplay/Compiler/Conformance/specification-streams.play` |
 | `system`, `operation`, operation specifications | #301 | `Documentation/screenplay/fixtures/operations.play` |
 | refusals, redelivery, `then no events` | #433 | `Source/Screenplay/Compiler/Conformance/reaction-refusals-redelivery.play`, `Source/Screenplay/Compiler/Conformance/no-events.play` |
 

@@ -178,6 +178,7 @@ export const handlerItems: CompletionEntry[] = [
 export const queryItems: CompletionEntry[] = [
     { label: 'description', insertText: 'description "${1:what this query is trying to accomplish}"', documentation: 'What the query is for, in prose — what a generator or reviewer works from.' },
     { label: 'by', insertText: 'by ${1:param} ${2:Type}', documentation: 'Declares the identifying parameter of the query.' },
+    { label: 'by parts', insertText: 'by\n  ${1:part} ${2:Type}\n  ${3:part} ${4:Type}', documentation: 'Declares a composite lookup. Supply every key part for a single instance.' },
     { label: 'filter', insertText: 'filter ${1:param} ${2:Type} optional', documentation: 'Declares an optional filter parameter supplied by the caller.' },
     { label: 'filter from context', insertText: 'filter ${1:param} ${2:Type} from $context.${3|tenant,causedBy.subject,occurred|}', documentation: 'Declares a parameter filled from the query context instead of the caller.' },
     { label: 'authorize', insertText: 'authorize ${1:PolicyName}', documentation: 'References the policies that must pass for the query to execute.' },
@@ -199,6 +200,7 @@ export const constraintItems: CompletionEntry[] = [
 
 export const reactionItems: CompletionEntry[] = [
     documentationItem,
+    { label: 'from', insertText: 'from ${1:Source.Stream}', documentation: 'Observe matching routed facts only, without filtering stream ids. ESM v10.' },
     { label: 'runs as system', insertText: 'runs as system', documentation: 'Authenticated system identity with no roles for returned commands. Admitted by ESM v10 (claimed, unreleased); claims are unknown.' },
     { label: 'runs as system role', insertText: 'runs as system role "${1:Role}"', documentation: 'Exact system roles for every returned or invoked command, not imperative pipeline calls. Admitted by ESM v10 (claimed, unreleased); claims are unknown.' },
     { label: 'description', insertText: 'description "${1:what this reaction does}"', documentation: 'What the reaction does — a complete statement of intent before any code exists.' },

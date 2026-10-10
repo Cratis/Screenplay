@@ -9,7 +9,7 @@ public class a_model_to_corrupt : Specification
 {
     protected SemanticApplication _application;
 
-    void Establish() => _application = canonical_serialization_golden_vectors.CreateSemanticModelV10().Application;
+    void Establish() => _application = canonical_serialization_golden_vectors.CreateReactionIdentityModelV10().Application;
 
     protected SemanticApplication WithIdentity(SemanticReactionIdentity? identity) => _application with
     {

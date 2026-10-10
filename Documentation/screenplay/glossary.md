@@ -26,6 +26,9 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Concept** — a formalized value type that wraps a primitive (`concept InvoiceId : Uuid`) and carries compliance attributes, optionally with the reason each one applies; every usage inherits them.
 - **Type** — a composite value type: a named shape built from several properties (`type InvoiceLine`), referenced by events, commands and other types.
 - **Identifier** — the `identifier` modifier on a command property, marking the value a runtime resolves the event source id from. At most one per command.
+- **Read-model key**: one or more top-level properties marked with trailing `key`. Explicit marks replace inferred identity. Single-instance lookups supply every part by name.
+- **Production route override**: a command event production's `stream Source.Stream` and key mappings. It replaces the whole command route for that event.
+- **Observer filter**: a reaction or reducer's `from Source[.Stream]`. It observes matching routed facts, without filtering stream ids.
 - **Policy** — a named authorization rule (role-based, claim-based, or custom) that commands and queries reference by name via `authorize`.
 - **Command** — an imperative intent with properties, `authorize`, `validate`, and a `produces` block declaring the events it appends.
 - **Event** — a past-tense fact declaration: a named type and its properties.

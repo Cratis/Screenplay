@@ -44,4 +44,9 @@ public sealed record SemanticReducer(string Name, SemanticId ReadModel, Immutabl
     /// identity of the public event declaration the folded state is published as.
     /// </summary>
     public SemanticProjectionTargetKind Target { get; init; } = SemanticProjectionTargetKind.ReadModel;
+
+    /// <summary>
+    /// Gets the event source and optional stream filter.
+    /// </summary>
+    public SemanticObserverFilter? From { get; init; }
 }

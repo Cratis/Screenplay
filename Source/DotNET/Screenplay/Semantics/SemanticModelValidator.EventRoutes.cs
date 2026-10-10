@@ -10,6 +10,13 @@ internal static partial class SemanticModelValidator
     static void ValidateEventRoutesVersion(SemanticApplication application, SemanticVersion version)
     {
         var uses = SemanticEventRouting.Uses(application);
+        var usesV10 = application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices).Any(slice =>
+            slice.Commands.Any(command => command.Produces.Any(produced => produced.Route is not null)) ||
+            slice.Reactions.Any(reaction => reaction.From is not null) || slice.Reducers.Any(reducer => reducer.From is not null));
+        if (usesV10 && !version.IsAtLeast(SemanticVersion.V10)) throw new InvalidSemanticContract("Production routes and observer filters require ESM v10.");
+        var usesReactionIdentity = application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices)
+            .Any(slice => slice.Reactions.Any(reaction => reaction.RunsAs is not null));
+        if (!usesV10 && !usesReactionIdentity && version == SemanticVersion.V10) throw new InvalidSemanticContract("An ESM v10 model must use a reaction system identity, production route or observer filter.");
         if (version == SemanticVersion.V8 && !uses)
         {
             throw new InvalidSemanticContract("An event routes model must declare an event source, command route or specification route.");
@@ -82,21 +89,51 @@ internal static partial class SemanticModelValidator
 
         void ValidateCommandRoute(SemanticCommand command)
         {
+            foreach (var produced in command.Produces.Where(produced => produced.Route is not null))
+            {
+                var productionRoute = produced.Route!;
+                ValidateBoundRoute(command, productionRoute);
+                var (productionSource, _) = SemanticEventRouting.Resolve(_eventRoutesApplication, productionRoute.Source, productionRoute.Stream);
+                if (productionSource.IdentifierType is { } type && ProducedEventSourceType(command, produced) != type)
+                {
+                    throw new InvalidSemanticContract("A production destination must have its override source's identifier type.");
+                }
+            }
             if (command.Route is not { } route) return;
+            ValidateBoundRoute(command, route);
             var (source, stream) = SemanticEventRouting.Resolve(_eventRoutesApplication, route.Source, route.Stream);
             RequireObjects(route.StreamIdParts, nameof(route.StreamIdParts), "command stream identity part");
             ValidateRouteShape(stream, route.StreamId is not null, [.. route.StreamIdParts.Select(part => part.Part)]);
             if (source.IdentifierType is { } identifier &&
                 (command.Properties.Any(property => property.IsIdentifier && property.Type != identifier) ||
                 (command.Destination is { } destination && destination.Type != identifier) ||
-                command.Produces.Any(produced => ProducedEventSourceType(command, produced) is { } type && type != identifier)))
+                command.Produces.Any(produced => produced.Route is null && ProducedEventSourceType(command, produced) is { } type && type != identifier)))
             {
                 throw new InvalidSemanticContract("A routed command identifier and production destinations must have the source's identifier type.");
             }
+        }
+
+        void ValidateBoundRoute(SemanticCommand command, SemanticCommandRoute route)
+        {
+            var (_, stream) = SemanticEventRouting.Resolve(_eventRoutesApplication, route.Source, route.Stream);
+            RequireObjects(route.StreamIdParts, nameof(route.StreamIdParts), "production stream identity part");
+            ValidateRouteShape(stream, route.StreamId is not null, [.. route.StreamIdParts.Select(part => part.Part)]);
             if (route.StreamId is { } expression) ValidateRouteMapping(command, expression, stream.StreamIdType!);
             for (var index = 0; index < route.StreamIdParts.Length; index++)
             {
                 ValidateRouteMapping(command, route.StreamIdParts[index].Value, stream.StreamIdParts[index].Type);
+            }
+        }
+
+        void ValidateObserverFilter(SemanticObserverFilter? filter)
+        {
+            if (filter is null) return;
+            if (!_semanticVersion.IsAtLeast(SemanticVersion.V10)) throw new InvalidSemanticContract("Observer filters require ESM v10.");
+            var source = _eventRoutesApplication.EventSources.SingleOrDefault(source => source.Id == filter.Source) ??
+                throw new InvalidSemanticContract("An observer filter requires a declared event source.");
+            if (filter.Stream is { } stream && !source.Streams.Any(value => value.Id == stream))
+            {
+                throw new InvalidSemanticContract("An observer filter stream must belong to its event source.");
             }
         }
 

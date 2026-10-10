@@ -116,6 +116,8 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
                 .Concat(Feature(!SemanticModelBinder.CompositeStreamIdsJoin && route?.StreamIdParts.Any() == true, "composite stream ids (#462)"));
         IEnumerable<string> LocalFeatures() => node switch
         {
+            ReadModelSyntax model => Feature(model.Properties.Count(property => property.IsKey) > 1, "composite read-model keys (#599)"),
+            QuerySyntax query => Feature(query.ByParts.Any(), "composite read-model keys (#599)"),
             EventSourceSyntax source => source.Streams.SelectMany(UnadmittedFeatures),
             EventStreamSyntax stream => Feature(!SemanticModelBinder.CompositeStreamIdsJoin && stream.StreamIdParts.Any(), "composite stream ids (#462)"),
             EventStreamIdPartSyntax => Feature(!SemanticModelBinder.CompositeStreamIdsJoin, "composite stream ids (#462)"),
@@ -134,7 +136,7 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
                     .SelectMany(occurrence => FixtureFeatures(occurrence.Stream, occurrence.NoStream)))
                 .Concat(Feature(!SemanticModelBinder.SpecificationRoutesJoin && HasSpecificationRoute(specification), "specification event routes (#457)"))
                 .Concat(ActionCommands(specification).SelectMany(entry => UnadmittedFeatures(entry.Command))),
-            SliceSyntax slice => slice.Commands.Cast<SyntaxNode>().Concat(slice.Reactions).Concat(slice.Specifications).Concat(slice.Examples).SelectMany(UnadmittedFeatures),
+            SliceSyntax slice => slice.Commands.Cast<SyntaxNode>().Concat(slice.Reactions).Concat(slice.ReadModels ?? []).Concat(slice.Queries).Concat(slice.Specifications).Concat(slice.Examples).SelectMany(UnadmittedFeatures),
             ApplicationSyntax => application.EventSources.SelectMany(UnadmittedFeatures)
                 .Concat(_owners.Keys.OfType<SliceSyntax>().SelectMany(UnadmittedFeatures))
                 .Concat(_effective.ResolvedExamples.Select(example => example.Example).SelectMany(UnadmittedFeatures)),

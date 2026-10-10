@@ -1,0 +1,56 @@
+module M
+  feature F
+    slice Automation S
+      event Recorded
+      event Followed
+      event Folded
+      command Record
+        id String identifier
+        stream Account.Notes
+          streamId = "period"
+        produces Recorded
+          for id
+      command Fold
+        id String identifier
+        stream Account.All
+        produces Folded
+          for id
+      readmodel Snapshot
+        id String key
+      reaction Follow
+        from Account.Notes
+        when Recorded
+          produces Followed
+      reducer Fold => Snapshot
+        from Account
+        on Folded
+          ```csharp
+          return context.State;
+          ```
+      specification RoutedReaction
+        given Recorded
+          for "history"
+        when append Recorded
+          for "other"
+          stream Account.Notes
+            streamId = "period"
+        then Followed
+          no stream
+      specification UnroutedReaction
+        when append Recorded
+          for "other"
+        then no readmodel Snapshot for "other"
+      specification UnroutedReducer
+        when append Folded
+          for "other"
+        then no readmodel Snapshot for "other"
+      specification WrongStreamReaction
+        when append Recorded
+          for "other"
+          stream Account.All
+        then no readmodel Snapshot for "other"
+      specification MatchingReducer
+        when append Folded
+          for "other"
+          stream Account.All
+        then no readmodel Snapshot for "other"

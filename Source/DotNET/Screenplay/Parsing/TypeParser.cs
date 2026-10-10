@@ -61,6 +61,7 @@ internal static partial class TypeParser
                 continue;
             }
 
+            property = PropertyLineParser.WithoutKey(context, property);
             if (property.IsIdentifier)
             {
                 context.Error(DiagnosticCodes.IdentifierOutsideCommand, $"Property '{property.Name}' of type '{name.Groups[1].Value}' cannot be marked identifier - only a command property can be", line.Location);

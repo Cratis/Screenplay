@@ -84,6 +84,26 @@ internal static partial class SemanticModelRead
         return new(name!, type!);
     }
 
+    static SemanticObserverFilter ObserverFilter(ref Utf8JsonReader reader)
+    {
+        Object(ref reader, "observer filter");
+        var seen = NewSeen();
+        SemanticId source = default;
+        SemanticId? stream = null;
+        while (NextProperty(ref reader, seen, "observer filter") is { } property)
+        {
+            switch (property)
+            {
+                case "source": source = SemanticId.Parse(String(ref reader, property)); break;
+                case "stream": stream = SemanticId.Parse(String(ref reader, property)); break;
+                default: throw Unknown(property, "observer filter");
+            }
+        }
+        Required(source.IsSet && stream?.IsSet != false, "observer filter");
+
+        return new(source, stream);
+    }
+
     static SemanticCommandRoute CommandRoute(ref Utf8JsonReader reader)
     {
         var (source, stream, scalar, parts) = Route(ref reader, Expression);

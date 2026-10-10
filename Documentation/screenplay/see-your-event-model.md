@@ -42,6 +42,8 @@ You have succeeded when you can find `PlaceOrder`, the `OrderPlaced` event it
 produces, and the specifications below the slice. The text remains the source of
 truth. See [VS Code extension](vscode.md) for editor associations and folder rules.
 
+Command details list each production route override on its own line. They also show composite reads as named mappings. Query details include every named key part. Read-model key fields carry a key label in their schema. Reaction descriptions show `Observes Source.Stream`; reducer observation appears in slice details. These are authored declarations, not inferred runtime outcomes.
+
 Explicit specification routes appear in the specification header, labeled by
 `given`, `when append` or `then` occurrence. The summary retains `for`,
 `stream Source.Stream`, scalar `streamId` values, named composite part mappings in authored order and `no stream` assertions,

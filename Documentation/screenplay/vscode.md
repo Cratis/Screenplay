@@ -31,6 +31,14 @@ ignores workspace overrides for `screenplay.sourceRoot` and the repair settings
 until you trust the workspace. A source-root override can point outside the
 workspace, so review it before granting trust.
 
+## Read-model keys and event routing
+
+Monaco and VS Code recognize trailing read-model `key` modifiers, query and reads `by` blocks, production `stream` overrides and observer `from` filters. Completion offers key parts in a by block and sources and streams in route/filter positions. Hover distinguishes authoring-only composite keys from ESM v10 routes and filters.
+
+The editors preserve native `PLAY0661`, scoped `PLAY0662` and `PLAY0666` findings. They do not synthesize these whole-model C# checks. Saved-file C# code actions can preview deterministic command-read key completion (`PLAY0661`) and removal of a redundant production route (`PLAY0664`). Queries and trigger reads are not repaired. These actions use revision-checked proposals without the PLAY0166/PLAY0478 attachment-evidence pins. Review all source and identity bytes before explicit Apply.
+
+The board shows named key parts, each production override and observer descriptions. See [Read-model keys](readmodels.md#keys) and [Event sources](event-sources.md).
+
 ## Generated values and responses
 
 The editor recognizes [generated command values and response contracts](commands.md#generated-values-and-responses), including fixture and assertion fields, inferred response types and generated-not-input hints. Completion uses the current source, including unsaved edits. Hover and completion identify these constructs as executable in ESM v7; the editor no longer reports syntax-only response information markers. Compiler diagnostics validate syntax, not semantic binding or execution: pre-generation references and generated-concept rules are checked by the C# semantic binder. Missing reference-execution fixtures and other unadmitted constructs still prevent successful execution.
@@ -49,7 +57,7 @@ This is authoring support, not transport or execution support. The board documen
 
 Monaco and VS Code use typed source declarations and command routes from the complete input, including current unsaved buffers. They offer exact `Source.Stream` references and proven compatible command sources for `streamId`, with nominal types preserved. Composite `streamId` blocks offer scalar-subset declaration types, unmapped route part names, compatible command paths and specification literal snippets. Hover exposes declared parts, part types and mapping sources. Contextual highlighting distinguishes the header from part names, including parts named `streamId` or `stream`. Source/stream hover describes authored identifier/key types; contextual tokens do not globally reserve property names. Navigation requires a unique physical source and stream plus authoritative placement, and points to the actual identifier in its original document. Duplicate parents, competing value-type interpretations, comments and fences do not become guessed links.
 
-The C# binder and reference runner admit routing in executable semantic model (ESM) v8, including specification routes and composite stream ids. Editor validation and the board do not execute routes. Existing command details show the authored stream and readable key expression, never inferred effective destinations, new event cards or successful execution states. No source/stream automatic rename, routing quick fix or inferred-routing inlay is provided. See [the source/stream support matrix](event-sources.md#tooling-support).
+The C# binder and reference runner admit routing in executable semantic model (ESM) v8, including specification routes and composite stream ids. Editor validation and the board do not execute routes. Existing command details show the authored stream and readable key expression, never inferred effective destinations, new event cards or successful execution states. No automatic source/stream rename, route selection or inferred-routing inlay is provided. Saved-file C# repairs can remove an identical production override with `PLAY0664`. See [the source/stream support matrix](event-sources.md#tooling-support).
 
 ## Operation and system intent (syntax-only)
 

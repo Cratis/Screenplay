@@ -38,11 +38,18 @@ internal static class EventSourceValidator
             }
         }
 
+        ObserverFilterValidator.Validate(application, declarations, context);
         var catalog = new EventSourceCatalog(application);
         var values = new ResponseValueTypes(application);
-        foreach (var (slice, command) in declarations.Slices.SelectMany(entry => entry.Slice.Commands.Select(command => (entry.Slice, Command: command))))
+        foreach (var (slice, command, route, overrideProduction) in declarations.Slices.SelectMany(entry => entry.Slice.Commands.SelectMany(command =>
+            (command.Stream is { } commandRoute ? new[] { (entry.Slice, Command: command, Route: commandRoute, Production: (ProducesSyntax?)null) } : [])
+                .Concat(command.Produces.Where(produced => produced.Stream is not null).Select(produced => (entry.Slice, Command: command, Route: produced.Stream!, Production: (ProducesSyntax?)produced))))))
         {
-            if (command.Stream is not { } route || route.PropertyCandidate is not null) continue;
+            if (route.PropertyCandidate is not null) continue;
+            if (overrideProduction is not null && command.Stream is { } inherited && SameRoute(route, inherited))
+            {
+                context.Warning(DiagnosticCodes.RedundantProductionRoute, "The production route repeats its command route; omit the override.", route.Location);
+            }
             var resolution = catalog.Resolve(route.EventSource, route.Stream);
             if (resolution.Kind != EventSourceResolutionKind.Unique)
             {
@@ -51,18 +58,18 @@ internal static class EventSourceValidator
             }
             var source = resolution.Sources[0];
             var stream = resolution.Streams[0];
-            if (source.Identifier is { } expected && command.Properties.Where(property => property.IsIdentifier).ToArray() is [var identifier] && declarations.Compatible(identifier.Type, expected) == false)
+            if (overrideProduction is null && source.Identifier is { } expected && command.Properties.Where(property => property.IsIdentifier).ToArray() is [var identifier] && declarations.Compatible(identifier.Type, expected) == false)
             {
                 context.Error(DiagnosticCodes.InvalidCommandStream, $"Command identifier '{identifier.Name}' does not have the source's nominal identifier type '{expected.Name}'. The stream does not supply a destination.", identifier.Location);
             }
             var productions = command.Produces.Where(produced => declarations.Productions.IsEventProduction(produced, slice)).ToArray();
-            foreach (var produced in productions)
+            foreach (var produced in productions.Where(produced => overrideProduction is null ? produced.Stream is null : ReferenceEquals(produced, overrideProduction)))
             {
                 if (source.Identifier is not { } expectedType) continue;
                 var destination = CommandDestinationTypes.DestinationType(command, produced, productions, declarations);
                 if (destination is null) continue;
                 var identifierProperty = command.Properties.Where(property => property.IsIdentifier).ToArray();
-                if (produced.For is null && produced.InlineEvent is not null && identifierProperty is [var implicitIdentifier] && declarations.Compatible(implicitIdentifier.Type, expectedType) == false) continue;
+                if (overrideProduction is null && produced.For is null && produced.InlineEvent is not null && identifierProperty is [var implicitIdentifier] && declarations.Compatible(implicitIdentifier.Type, expectedType) == false) continue;
                 var allocated = produced.For is null && produced.InlineEvent is null && !command.Properties.Any(property => property.IsGenerated && property.IsIdentifier);
                 var compatible = declarations.Compatible(destination, expectedType);
                 if (allocated)
@@ -72,7 +79,7 @@ internal static class EventSourceValidator
                 }
                 if (compatible == false)
                 {
-                    context.Error(DiagnosticCodes.InvalidCommandStream, $"Command production destination does not have the source's nominal identifier type '{expectedType.Name}'. The stream does not supply a destination.", produced.For?.Location ?? produced.Location);
+                    context.Error(DiagnosticCodes.InvalidCommandStream, $"Command production destination does not have the source's nominal identifier type '{expectedType.Name}'. The stream does not supply a destination.", overrideProduction?.Stream?.Location ?? produced.For?.Location ?? produced.Location);
                 }
             }
             if (stream.StreamIdParts.Any())
@@ -99,6 +106,20 @@ internal static class EventSourceValidator
             if (stream.StreamId is { } target && route.StreamId is { } mapping) ValidateMapping(command, mapping, target, application, declarations, values, context);
         }
     }
+
+    internal static bool SameRoute(CommandStreamSyntax left, CommandStreamSyntax right) =>
+        left.EventSource == right.EventSource && left.Stream == right.Stream &&
+        SameExpression(left.StreamId?.Source, right.StreamId?.Source) &&
+        left.StreamIdParts.Count() == right.StreamIdParts.Count() &&
+        left.StreamIdParts.All(part => right.StreamIdParts.Any(other => part.Property == other.Property && SameExpression(part.Source, other.Source)));
+
+    internal static bool SameExpression(ExpressionSyntax? left, ExpressionSyntax? right) => (left, right) switch
+    {
+        (null, null) => true,
+        (PathExpressionSyntax first, PathExpressionSyntax second) => first.Path == second.Path,
+        (LiteralExpressionSyntax first, LiteralExpressionSyntax second) => Equals(first.Value, second.Value),
+        _ => false
+    };
 
     internal static void ValidateParts(EventStreamSyntax stream, IEnumerable<PropertyMappingSyntax> mappings, bool scalar, SourceLocation location, string code, ParserContext context, Action<PropertyMappingSyntax, TypeRefSyntax> validate)
     {

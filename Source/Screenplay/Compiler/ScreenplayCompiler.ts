@@ -23,6 +23,7 @@ import { validateEventSources } from './Parsing/EventSourceValidator';
 import { validateProjectionTargets } from './Parsing/ProjectionTargetValidator';
 import { validateIdentifierCompliance } from './Parsing/IdentifierComplianceValidator';
 import { validateEventSubjects } from './Parsing/EventSubjectValidator';
+import { validateReadModelKeys } from './Parsing/ReadModelKeyValidator';
 import { validateReactionRefusals } from './Parsing/ReactionRefusalValidator';
 import { validateSpecificationRedelivery } from './Parsing/SpecificationRedeliveryValidator';
 import { validateGuardedActions } from './Parsing/GuardedActionValidator';
@@ -88,6 +89,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateProjectionTargets(value, context);
         validateIdentifierCompliance(effective, context);
         validateEventSubjects(value, context);
+        validateReadModelKeys(value, context);
         validateReactionRefusals(value, context);
         validateSpecificationRedelivery(value, context);
         validateGuardedActions(value, context);

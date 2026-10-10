@@ -1,0 +1,43 @@
+// Monthly billing rows have a named key for each engagement and period.
+
+slice StateView EngagementMonths
+  description "Monthly hours ready for engagement billing"
+
+  readmodel EngagementMonthHours
+    engagementId EngagementId key
+    month ReportingMonth key
+    hours Decimal
+
+  query EngagementMonth => EngagementMonthHours optional
+    by
+      engagementId EngagementId
+      month ReportingMonth
+    authorize IsEngagementManager
+    performer
+      file Queries/EngagementMonth.cs
+
+  query ListEngagementMonths => EngagementMonthHours[]
+    authorize IsEngagementManager
+    performer
+      file Queries/ListEngagementMonths.cs
+
+  screen EngagementMonthsScreen
+    data EngagementMonthHours[] via query ListEngagementMonths
+    table EngagementMonthHours
+      column engagementId label "Engagement"
+      column month label "Month"
+      column hours label "Hours"
+
+  specification FindingAnEngagementMonth
+    given caller as EngagementManager
+    given readmodel EngagementMonthHours
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      month = "2026-10"
+      hours = 120
+    when query EngagementMonth
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      month = "2026-10"
+    then result
+      engagementId = "4f6b2c1e-8a3d-4c7e-9b2f-5d1a0e3c7b11"
+      month = "2026-10"
+      hours = 120

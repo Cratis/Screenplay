@@ -2,8 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { ConcurrencySyntax, ReadsSyntax, ReducerRuleSyntax, ReducerSyntax } from '../Syntax/DependencySources';
+import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { dotNetWhitespace, nativePattern } from '../Text/patterns';
 import { parseDescription } from './DescriptionParser';
+import { ObserverFilterSyntax } from '../Syntax/ObserverFilterSyntax';
+import { parseObserverFilter } from './ObserverFilterParser';
 import { firstWord } from './LineText';
 import { ParserContext } from './ParserContext';
 import { locationOf, SourceLine } from './SourceLine';
@@ -59,6 +62,7 @@ export function captureReducer(context: ParserContext, line: SourceLine): Reduce
     const match = nativePattern(`^reducer${dotNetWhitespace}+([A-Za-z_]\\w*)${dotNetWhitespace}*=>${dotNetWhitespace}*([A-Za-z_]\\w*)$`).exec(line.content);
     const body = fork(context);
     const rules: ReducerRuleSyntax[] = [];
+    let from: ObserverFilterSyntax | null = null;
     for (let child = body.peekChild(line.indent); child !== undefined; child = body.peekChild(line.indent)) {
         body.reader.takeSignificant();
         if (firstWord(child.content) === 'description') {
@@ -67,9 +71,15 @@ export function captureReducer(context: ParserContext, line: SourceLine): Reduce
             parseDescription(body, child, null, 'Reducer');
             continue;
         }
+        if (firstWord(child.content) === 'from') {
+            from = parseObserverFilter(body, child, from);
+            continue;
+        }
         const rule = nativePattern(`^on${dotNetWhitespace}+([A-Z]\\w*)$`).exec(child.content);
         if (rule !== null) rules.push({ kind: 'ReducerRuleSyntax', event: rule[1], file: null, code: null, description: null, location: locationOf(child) });
         body.skipOpaqueBlock(child.indent);
     }
-    return { kind: 'ReducerSyntax', name: match?.[1] ?? '', readModel: match?.[2] ?? '', rules, description: null, location: locationOf(line) };
+    for (const diagnostic of body.diagnostics.filter(diagnostic => diagnostic.code === DiagnosticCodes.InvalidObserverFilter))
+        context.error(diagnostic.code, diagnostic.message, diagnostic.location);
+    return { kind: 'ReducerSyntax', from, name: match?.[1] ?? '', readModel: match?.[2] ?? '', rules, description: null, location: locationOf(line) };
 }

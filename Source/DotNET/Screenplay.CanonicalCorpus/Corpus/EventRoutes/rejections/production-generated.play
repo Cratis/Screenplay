@@ -1,0 +1,14 @@
+concept Period : Uuid
+eventsource Account
+  identifier String
+  stream Notes
+    streamId Period
+module M
+  feature F
+    slice StateChange S
+      command Record
+        id String identifier
+        period Period generated
+        produces event Recorded
+          stream Account.Notes
+            streamId = period
