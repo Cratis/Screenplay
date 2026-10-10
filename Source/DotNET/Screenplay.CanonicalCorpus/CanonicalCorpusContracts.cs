@@ -199,6 +199,54 @@ public sealed record CanonicalScreenBehaviorProbe
 }
 
 /// <summary>
+/// Represents the output a package's design-time action produces, as Screenplay source. The action itself - its
+/// code and callbacks - stays in the package; only the canonical edits it produced are recorded, so the vector is
+/// deterministic and runnable without the package's design-time bundle.
+/// </summary>
+public sealed record CanonicalDesignTimeOutputVector
+{
+    /// <summary>
+    /// Gets the stable vector name.
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
+    /// Gets the package that owns the design-time action.
+    /// </summary>
+    public required string Package { get; init; }
+
+    /// <summary>
+    /// Gets the package-qualified design-time action, as declared in the package manifest's <c>designTime.actions</c>.
+    /// </summary>
+    public required string Action { get; init; }
+
+    /// <summary>
+    /// Gets the exact stable id of the component the action ran against.
+    /// </summary>
+    public required string Component { get; init; }
+
+    /// <summary>
+    /// Gets the source before the action ran.
+    /// </summary>
+    public required CanonicalCorpusDocument Before { get; init; }
+
+    /// <summary>
+    /// Gets the canonical source after the action's edits were applied.
+    /// </summary>
+    public required CanonicalCorpusDocument After { get; init; }
+
+    /// <summary>
+    /// Gets the typed syntax node kinds the action's output consists of.
+    /// </summary>
+    public ImmutableArray<string> OutputSyntaxKinds { get; init; } = [];
+
+    /// <summary>
+    /// Gets the exposed settings the output configures on the inherited template, as <c>&lt;component&gt;.&lt;path&gt;</c>.
+    /// </summary>
+    public ImmutableArray<string> InheritedSettings { get; init; } = [];
+}
+
+/// <summary>
 /// Represents one positive typed-screen authoring source case.
 /// </summary>
 public sealed record CanonicalTypedScreenSourceCase
@@ -643,6 +691,11 @@ public sealed record CanonicalScreenCorpusVector
     /// source order and an empty artifact list: a rejected composition never reaches Stage planning.
     /// </summary>
     public ImmutableArray<CanonicalCorpusRejectionVector> RejectionVectors { get; init; } = [];
+
+    /// <summary>
+    /// Gets the recorded output of package design-time actions, such as a designer's generate-fields result.
+    /// </summary>
+    public ImmutableArray<CanonicalDesignTimeOutputVector> DesignTimeOutputs { get; init; } = [];
 
     /// <summary>
     /// Gets behavior expectations that browser, CLI, Studio and Stage harnesses must assert.

@@ -130,6 +130,25 @@ module Workspaces
       navigate to WorkItemList
       label "Work items"
       order 10
+      id "nav:work-items"
+      icon folder
+      presentation primary
+      group "Tracking"
+      destination outlet details
+
+    contribute to Navigation
+      navigate to WorkItemList
+      label "Edit work item"
+      order 20
+      id "nav:edit"
+      group "Tracking"
+      destination dialog EditWorkItemDialog
+
+    contribute to Navigation
+      navigate to WorkItemList
+      label "Help"
+      order 90
+      destination external "https://cratis.io/help"
 
     slice StateChange CreateWorkItem
       command CreateWorkItem

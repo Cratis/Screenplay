@@ -143,4 +143,28 @@ public partial class ScreenplayPrinter
         id.Length > 0 && (char.IsLetter(id[0]) || id[0] == '_') && id.All(character => char.IsLetterOrDigit(character) || character is '_' or '-')
             ? id
             : StringLiteral.Quote(id);
+
+    void WriteNavigationItem(ScreenplayWriter writer, ContributionSyntax contribution)
+    {
+        if (contribution.Id is not null) writer.Line($"id {WriteItemValue(contribution.Id)}", contribution);
+        if (contribution.Icon is not null) writer.Line($"icon {WriteItemValue(contribution.Icon)}", contribution);
+        if (contribution.Presentation is not null) writer.Line($"presentation {WriteItemValue(contribution.Presentation)}", contribution);
+        if (contribution.Group is not null) writer.Line($"group {WriteItemValue(contribution.Group)}", contribution);
+        if (contribution.Destination is { } destination)
+        {
+            writer.Line(
+                destination.Kind switch
+                {
+                    ContributionDestinationKind.Outlet => $"destination outlet {destination.Target}",
+                    ContributionDestinationKind.Dialog => $"destination dialog {destination.Target}",
+                    _ => $"destination external {StringLiteral.Quote(destination.Target)}"
+                },
+                destination);
+        }
+    }
+
+    string WriteItemValue(string value) =>
+        value.Length > 0 && (char.IsLetter(value[0]) || value[0] == '_') && value.All(character => char.IsLetterOrDigit(character) || character is '_' or '.' or '-')
+            ? value
+            : StringLiteral.Quote(value);
 }

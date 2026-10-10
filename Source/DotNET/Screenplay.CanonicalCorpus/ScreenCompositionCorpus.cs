@@ -108,8 +108,35 @@ public static class ScreenCompositionCorpus
                         "ContributedItemValueSyntax",
                         "ScreenContributionSyntax",
                         "TemplateSlotContentSyntax",
-                        "ArrangementContainerSyntax"
+                        "ArrangementContainerSyntax",
+                        "ContributionDestinationSyntax"
                     ]
+                }
+            ],
+            DesignTimeOutputs =
+            [
+                new CanonicalDesignTimeOutputVector
+                {
+                    Name = "screen-composition/v1/design-time/generate-fields",
+                    Package = "Acme.Inspections",
+                    Action = "Acme.Inspections.checklist.generateFields",
+                    Component = "inspection:checklist",
+                    Before = Document("design-time-generate-fields-before", "design-time/GenerateFieldsBefore.play", $"{Prefix}.design_time.GenerateFieldsBefore.play.txt"),
+                    After = Document("design-time-generate-fields-after", "design-time/GenerateFieldsAfter.play", $"{Prefix}.design_time.GenerateFieldsAfter.play.txt"),
+                    OutputSyntaxKinds =
+                    [
+                        "InstanceContributionsSyntax",
+                        "InstanceContributionSyntax",
+                        "ContributedItemSyntax",
+                        "ContributedItemValueSyntax",
+                        "FormSyntax",
+                        "FormFieldSyntax",
+                        "CommandFormLayoutSyntax",
+                        "FormLayoutColumnSyntax",
+                        "FormFieldPlacementSyntax",
+                        "FormWidthSyntax"
+                    ],
+                    InheritedSettings = ["inspection:checklist.columns", "inspection:checklist.items"]
                 }
             ],
             RejectionVectors =
@@ -141,7 +168,22 @@ public static class ScreenCompositionCorpus
                     "re-exposure-cycle",
                     "ReExposureCycle",
                     Diagnostic("PLAY0623", "Re-exposing 'shell:header.title' from 'Outer' forms a cycle - a re-exposure must lead back to the owner that exposes it first"),
-                    Diagnostic("PLAY0623", "Re-exposing 'shell:header.title' from 'Inner' forms a cycle - a re-exposure must lead back to the owner that exposes it first"))
+                    Diagnostic("PLAY0623", "Re-exposing 'shell:header.title' from 'Inner' forms a cycle - a re-exposure must lead back to the owner that exposes it first")),
+                Rejection(
+                    "template-nesting-cycle",
+                    "TemplateNestingCycle",
+                    Diagnostic("PLAY0649", "The screen template 'Outer' uses 'Inner' in its content, which leads back to 'Outer' - template content cannot nest in a cycle"),
+                    Diagnostic("PLAY0649", "The screen template 'Inner' uses 'Outer' in its content, which leads back to 'Inner' - template content cannot nest in a cycle")),
+                Rejection(
+                    "out-of-scope-screen-references",
+                    "OutOfScopeScreenReferences",
+                    Diagnostic("PLAY0197", "Unknown screen 'Billing.Invoices.InvoiceList' - nothing in scope declares it"),
+                    Diagnostic("PLAY0648", "Unknown contribution point 'BillingActions' - no layout or template slot declares 'contributes BillingActions'")),
+                Rejection(
+                    "unknown-navigation-destination",
+                    "UnknownNavigationDestination",
+                    Diagnostic("PLAY0647", "Unknown destination outlet 'sidebar' - nothing declares it"),
+                    Diagnostic("PLAY0647", "Unknown destination dialog template 'ConfirmDialog' - nothing declares it"))
             ],
             BehaviorExpectations =
             [

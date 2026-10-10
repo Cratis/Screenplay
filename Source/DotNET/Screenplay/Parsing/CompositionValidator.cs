@@ -29,6 +29,9 @@ internal static class CompositionValidator
         ValidateExposures(application, collector, context);
         ValidateInstances(application, collector, context);
         ValidateOutlets(collector, context);
+        ValidateDestinations(collector, context);
+        ValidateScreenContributions(application, collector, context);
+        ValidateTemplateNesting(application, context);
         ValidateTemplateScopes(application, context);
         ValidatePackages(application, collector, context);
     }
@@ -145,6 +148,92 @@ internal static class CompositionValidator
         }
     }
 
+    static void ValidateDestinations(CompositionCollector collector, ParserContext context)
+    {
+        foreach (var destination in collector.Destinations)
+        {
+            var known = destination.Kind switch
+            {
+                ContributionDestinationKind.Outlet => collector.Outlets.Contains(destination.Target),
+                ContributionDestinationKind.Dialog => collector.Dialogs.Contains(destination.Target),
+                _ => true
+            };
+            if (!known)
+            {
+                var kind = destination.Kind == ContributionDestinationKind.Outlet ? "outlet" : "dialog template";
+                context.Error(
+                    DiagnosticCodes.UnknownNavigationDestination,
+                    $"Unknown destination {kind} '{destination.Target}' - nothing declares it",
+                    destination.Location);
+            }
+        }
+    }
+
+    static void ValidateScreenContributions(ApplicationSyntax application, CompositionCollector collector, ParserContext context)
+    {
+        var contributions = application.Modules
+            .SelectMany(module => Features(module.Features, 0))
+            .SelectMany(entry => entry.Feature.Slices)
+            .SelectMany(slice => slice.Screens)
+            .SelectMany(screen => screen.Contributions);
+        foreach (var contribution in contributions.Where(contribution => !collector.ContributionPoints.Contains(contribution.ContributionPoint)))
+        {
+            context.Error(
+                DiagnosticCodes.UnknownScreenContributionPoint,
+                $"Unknown contribution point '{contribution.ContributionPoint}' - no layout or template slot declares 'contributes {contribution.ContributionPoint}'",
+                contribution.Location);
+        }
+    }
+
+    static void ValidateTemplateNesting(ApplicationSyntax application, ParserContext context)
+    {
+        var templates = application.Modules
+            .SelectMany(module => module.ScreenTemplates)
+            .GroupBy(template => template.Name, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+        var uses = templates.ToDictionary(
+            entry => entry.Key,
+            entry => entry.Value.Content
+                .SelectMany(content => content.Directives)
+                .OfType<ScreenTemplateReferenceSyntax>()
+                .ToList(),
+            StringComparer.Ordinal);
+
+        foreach (var (name, references) in uses)
+        {
+            foreach (var reference in references.Where(reference => Reaches(reference.Name, name, uses)))
+            {
+                context.Error(
+                    DiagnosticCodes.TemplateNestingCycle,
+                    $"The screen template '{name}' uses '{reference.Name}' in its content, which leads back to '{name}' - template content cannot nest in a cycle",
+                    reference.Location);
+            }
+        }
+    }
+
+    static bool Reaches(string from, string target, Dictionary<string, List<ScreenTemplateReferenceSyntax>> uses)
+    {
+        var visited = new HashSet<string>(StringComparer.Ordinal);
+        var pending = new Stack<string>([from]);
+        while (pending.TryPop(out var current))
+        {
+            if (string.Equals(current, target, StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            if (visited.Add(current) && uses.TryGetValue(current, out var next))
+            {
+                foreach (var reference in next)
+                {
+                    pending.Push(reference.Name);
+                }
+            }
+        }
+
+        return false;
+    }
+
     static void ValidateTemplateScopes(ApplicationSyntax application, ParserContext context)
     {
         var scopes = application.Modules
@@ -242,6 +331,12 @@ internal static class CompositionValidator
 
         public List<ScreenComponentSyntax> Components { get; } = [];
 
+        public HashSet<string> Dialogs { get; } = new(StringComparer.Ordinal);
+
+        public HashSet<string> ContributionPoints { get; } = new(StringComparer.Ordinal);
+
+        public List<ContributionDestinationSyntax> Destinations { get; } = [];
+
         public override void VisitNode(SyntaxNode node)
         {
             switch (node)
@@ -257,11 +352,15 @@ internal static class CompositionValidator
                     break;
                 case DialogTemplateSyntax template:
                     Structures.Add(template.Name);
+                    Dialogs.Add(template.Name);
                     Templates.Add(template.Name);
                     Outlets.UnionWith(template.Outlets.Select(outlet => outlet.Name));
                     break;
                 case ScreenSyntax screen:
                     Screens.Add(screen.Name);
+                    break;
+                case SlotSyntax { Contributes: { } point }:
+                    ContributionPoints.Add(point);
                     break;
                 case ComponentOutletSyntax outlet:
                     Outlets.Add(outlet.Name);
@@ -271,6 +370,9 @@ internal static class CompositionValidator
                     break;
                 case ScreenComponentSyntax component:
                     Components.Add(component);
+                    break;
+                case ContributionDestinationSyntax destination:
+                    Destinations.Add(destination);
                     break;
             }
         }

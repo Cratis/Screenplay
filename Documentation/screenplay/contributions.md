@@ -49,6 +49,27 @@ module Invoicing
       order 10
 ```
 
+## Navigation item metadata
+
+A navigation entry can carry the rest of Scene's `NavigationItem`: a stable id, an icon, a presentation hint, a group and where it opens.
+
+```screenplay
+contribute to Navigation
+  navigate to InvoiceList
+  label "Invoices"
+  order 10
+  id "nav:invoices"
+  icon receipt
+  presentation primary
+  group "Billing"
+  destination outlet main
+```
+
+- `id`, `icon`, `presentation` and `group` take an identifier or a quoted string, kept exactly as written.
+- `destination outlet <name>` opens the item in a named outlet, `destination dialog <DialogTemplate>` opens a dialog, and `destination external "<route>"` leaves the application. These map to Scene's `DestinationKind` `Outlet`, `Dialog` and `External`.
+- An outlet or dialog template nothing declares is reported as `PLAY0647`.
+- A `navigate to` inside a contribution accepts the same `route`, `outlet` and `parameter` lines as a screen's navigation.
+
 ## How a contribution resolves
 
 A contribution attaches to the **nearest enclosing structure that declares a matching contribution point**, walking outward the same way a bare name already resolves elsewhere in the document - just through the module/feature containment tree rather than by declaration scope. Concretely: a contribution first looks for a `contributes <ContributionPoint>` slot among its **own module's** templates. A module with its own matching slot stops contributions inside it from bubbling any further - that module owns the point. Only when the module has no matching slot does the search continue outward, across every other module in the document, and finally to the application's own `layout`s, which belong to no module and are the outermost shell of all.

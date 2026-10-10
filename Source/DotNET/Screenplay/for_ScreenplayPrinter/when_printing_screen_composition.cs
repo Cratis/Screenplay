@@ -33,6 +33,7 @@ public class when_printing_screen_composition : given.a_printer
             header contributes Actions
             list
             detail
+            navigation contributes Navigation
 
             content header
               component scene.web.Header shellHeader

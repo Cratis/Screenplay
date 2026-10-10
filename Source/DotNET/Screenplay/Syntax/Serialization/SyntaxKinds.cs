@@ -67,6 +67,7 @@ internal static class SyntaxKinds
         typeof(ContextExpressionSyntax),
         typeof(IdentityExpressionSyntax),
         typeof(ContributionSyntax),
+        typeof(ContributionDestinationSyntax),
         typeof(CountMappingSyntax),
         typeof(DeclarativeValidateSyntax),
         typeof(DecrementMappingSyntax),

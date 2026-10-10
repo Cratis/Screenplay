@@ -181,7 +181,7 @@ module Invoicing
       title "Invoices"
 ```
 
-- `content <slot>` holds screen directives the template renders in that slot itself. The slot must be one the template declares (`PLAY0629`).
+- `content <slot>` holds screen directives the template renders in that slot itself. The slot must be one the template declares (`PLAY0629`). Content may use another template, but templates cannot nest in a cycle (`PLAY0649`).
 - `display` and `description` are the name and one-line description a picker shows.
 - `scopes` restricts where the template may be used: `application`, `module`, `feature`, `subfeature` or `slice`, or `none`. Without it the structural role decides. Using a restricted template outside its scopes is `PLAY0631`. A layout may declare `scopes` too.
 

@@ -1,0 +1,59 @@
+exposure for InspectionShell
+  property "inspection:checklist".columns label "Columns"
+  property "inspection:checklist".items label "Checks" operations add, remove, reorder fields label, required
+
+instance RecordInspection
+  set "inspection:checklist".columns = 2
+  items "inspection:checklist".items
+    item site
+      label = "Site"
+      required = true
+    item inspector
+      label = "Inspector"
+      required = true
+    item passed
+      label = "Passed"
+      required = false
+
+ui profile Web
+  target platform web
+
+  packages
+    Acme.Inspections
+    scene.web
+
+module Inspections
+
+  screen template InspectionShell
+    scopes slice
+    checklist
+    content checklist
+      component Acme.Inspections.Checklist checklist
+        id "inspection:checklist"
+        property columns = 1
+        property items = []
+
+  form RecordInspectionForm for RecordInspection
+    generation auto
+    field site label "Site"
+    field inspector label "Inspector"
+    field passed label "Passed"
+    layout
+      column 1 width 1fr
+      column 2 width 1fr
+      place site row 1 column 1
+      place inspector row 1 column 2
+      place passed row 2 column 1 columnSpan 2
+
+  feature Sites
+
+    slice StateChange RecordInspection
+
+      command RecordInspection
+        inspectionId String identifier
+        site String
+        inspector String
+        passed Bool
+
+      screen RecordInspection
+        template InspectionShell

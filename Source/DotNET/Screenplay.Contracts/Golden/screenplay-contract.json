@@ -74,6 +74,7 @@
     "denied",
     "depends",
     "description",
+    "destination",
     "dialog",
     "direction",
     "display",
@@ -101,6 +102,7 @@
     "exposes",
     "exposure",
     "expression",
+    "external",
     "fails",
     "failure",
     "false",
@@ -123,6 +125,7 @@
     "given",
     "global",
     "grid",
+    "group",
     "grow",
     "handler",
     "header",
@@ -14323,6 +14326,39 @@
         "error"
       ],
       "title": "An identity detail\u0027s type does not match its query result type or nullability.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0647",
+      "name": "UnknownNavigationDestination",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A navigation contribution\u0027s destination outlet or destination dialog names an outlet or dialog template nothing declares.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0648",
+      "name": "UnknownScreenContributionPoint",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A screen\u0027s contribute to \u003CPoint\u003E names a contribution point no layout or template slot declares.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0649",
+      "name": "TemplateNestingCycle",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "Template content nests templates in a cycle - a template\u0027s content uses itself, directly or through other templates.",
       "reserved": false,
       "retired": false
     }
