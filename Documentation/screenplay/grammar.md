@@ -773,7 +773,8 @@ RuleOp         = "not empty"
 
 (* "email" is the one defined named match pattern. StringLiteral here holds an
    ECMAScript regular expression, not another named pattern; see Commands for
-   its definition and substring-matching semantics.                         *)
+   its definition and substring-matching semantics.
+   The $ anchor means end of input, never before a trailing newline.        *)
 
 (* RuleImplementation is only meaningful after "rule", Ident - the other RuleOp
    forms are already fully declarative and take no implementation body. *)
