@@ -84,7 +84,28 @@ public record ArrangementContainerSyntax(
     ArrangementContainerKind Kind,
     IEnumerable<ArrangementNodeSyntax> Children,
     SourceLocation Location,
-    int? Gap = null) : ArrangementNodeSyntax(Location);
+    int? Gap = null) : ArrangementNodeSyntax(Location)
+{
+    /// <summary>
+    /// Gets the number of grid columns, or <c>null</c> to size columns from content.
+    /// </summary>
+    public int? Columns { get; init; }
+
+    /// <summary>
+    /// Gets the number of grid rows, or <c>null</c> to size rows from content.
+    /// </summary>
+    public int? Rows { get; init; }
+
+    /// <summary>
+    /// Gets how much the container grows relative to its siblings, or <c>null</c> to not participate in growth.
+    /// </summary>
+    public double? Grow { get; init; }
+
+    /// <summary>
+    /// Gets how many tracks the container spans in an ancestor grid, or <c>null</c> for a single track.
+    /// </summary>
+    public int? Span { get; init; }
+}
 
 /// <summary>
 /// Represents a slot positioned as a leaf within an arrangement tree.
@@ -106,7 +127,13 @@ public record ArrangementSlotSyntax(
     int? Width = null,
     int? Height = null,
     bool Grow = false,
-    int? Span = null) : ArrangementNodeSyntax(Location);
+    int? Span = null) : ArrangementNodeSyntax(Location)
+{
+    /// <summary>
+    /// Gets the explicit grow weight from <c>grow &lt;number&gt;</c>, or <c>null</c> when <see cref="Grow"/> uses the default weight.
+    /// </summary>
+    public double? GrowFactor { get; init; }
+}
 
 /// <summary>
 /// Represents a <c>when</c> override that replaces an <see cref="ArrangementSyntax"/>'s root tree for a given width/height size class.

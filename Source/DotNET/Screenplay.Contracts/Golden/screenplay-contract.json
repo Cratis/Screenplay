@@ -9,6 +9,7 @@
     "and",
     "any",
     "append",
+    "application",
     "archiving",
     "arguments",
     "arrangement",
@@ -57,6 +58,7 @@
     "consent",
     "constraint",
     "contains",
+    "content",
     "context",
     "contract",
     "contribute",
@@ -74,6 +76,7 @@
     "description",
     "dialog",
     "direction",
+    "display",
     "documentation",
     "domain",
     "employmentLaw",
@@ -96,12 +99,14 @@
     "expected",
     "explicitConsent",
     "exposes",
+    "exposure",
     "expression",
     "fails",
     "failure",
     "false",
     "feature",
     "field",
+    "fields",
     "file",
     "fill",
     "filter",
@@ -142,10 +147,12 @@
     "increment",
     "info",
     "information",
+    "instance",
     "interest",
     "interval",
     "invokes",
     "item",
+    "items",
     "join",
     "key",
     "label",
@@ -174,6 +181,7 @@
     "navigate",
     "nested",
     "no",
+    "none",
     "not",
     "notForProfit",
     "notify",
@@ -185,6 +193,7 @@
     "oneWay",
     "open",
     "operation",
+    "operations",
     "optional",
     "or",
     "order",
@@ -225,6 +234,7 @@
     "recipient",
     "redelivered",
     "reducer",
+    "reexposes",
     "refresh",
     "refused",
     "regular",
@@ -232,6 +242,7 @@
     "religiousOrPhilosophicalBeliefs",
     "remove",
     "removed",
+    "reorder",
     "require",
     "research",
     "result",
@@ -242,10 +253,12 @@
     "row",
     "rowGap",
     "rowSpan",
+    "rows",
     "rule",
     "safeguard",
     "scope",
     "scoped",
+    "scopes",
     "screen",
     "second",
     "seconds",
@@ -271,6 +284,7 @@
     "stream",
     "streamId",
     "streamType",
+    "subfeature",
     "subject",
     "subjects",
     "submit",
@@ -318,7 +332,9 @@
     "domain",
     "eventsource",
     "example",
+    "exposure",
     "import",
+    "instance",
     "layout",
     "module",
     "numbers",
@@ -2913,6 +2929,135 @@
       ]
     },
     {
+      "name": "exposure",
+      "parseStatus": "accepted",
+      "probes": [
+        {
+          "source": "layout Shell\n  content\nexposure for Shell\n  property header.title\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": "PLAY0269",
+          "diagnostics": [
+            {
+              "code": "PLAY0269",
+              "severity": "information"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            }
+          ]
+        }
+      ],
+      "admission": [
+        {
+          "esmVersion": 1,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 2,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 3,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 4,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 5,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 6,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 7,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        }
+      ]
+    },
+    {
       "name": "feature",
       "parseStatus": "accepted",
       "probes": [
@@ -3447,6 +3592,135 @@
           "condition": [
             1
           ]
+        }
+      ]
+    },
+    {
+      "name": "instance",
+      "parseStatus": "accepted",
+      "probes": [
+        {
+          "source": "module M\n  screen template Shell\n    body\nexposure for Shell\n  property header.title\ninstance Shell\n  set header.title = \u0022Home\u0022\n",
+          "minimumSemanticVersion": "1.0",
+          "diagnostic": "PLAY0269",
+          "diagnostics": [
+            {
+              "code": "PLAY0269",
+              "severity": "information"
+            }
+          ],
+          "admission": [
+            {
+              "esmVersion": 1,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 2,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 3,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 4,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 5,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 6,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 7,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 8,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            },
+            {
+              "esmVersion": 9,
+              "status": "refused",
+              "diagnostic": "PLAY0269",
+              "issue": null
+            }
+          ]
+        }
+      ],
+      "admission": [
+        {
+          "esmVersion": 1,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 2,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 3,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 4,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 5,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 6,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 7,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 8,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
+        },
+        {
+          "esmVersion": 9,
+          "status": "refused",
+          "diagnostic": "PLAY0269",
+          "issue": null
         }
       ]
     },
@@ -13571,6 +13845,138 @@
         "error"
       ],
       "title": "A source events block does not consist of one or more from \u003CEvent\u003E lines.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0621",
+      "name": "InvalidExposureDeclaration",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An exposure for \u003COwner\u003E declaration, or one of its property lines, is malformed.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0622",
+      "name": "UnknownExposureOwner",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An exposure for \u003COwner\u003E names something that is not a layout, screen template or dialog template.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0623",
+      "name": "ReExposureCycle",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "Re-exposures of one component property form a cycle.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0624",
+      "name": "ReExposureBroken",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A reexposes \u003COwner\u003E names an owner that does not expose the same component property.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0625",
+      "name": "InvalidInstanceContribution",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An instance \u003CInstance\u003E block, or one of its set, items or item lines, is malformed.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0626",
+      "name": "UnknownContributionInstance",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An instance \u003CInstance\u003E names something that is not a screen, screen template or dialog template.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0627",
+      "name": "ContributionNotExposed",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An instance stores a value for a component property no exposure exposes.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0628",
+      "name": "ContributionTypeMismatch",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An instance sets a single value on a collection exposure, or adds items to a property not exposed as a collection.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0629",
+      "name": "UnknownTemplateContentSlot",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A template\u0027s content \u003Cslot\u003E names a slot the template does not declare.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0630",
+      "name": "UnknownNavigationOutlet",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A navigation\u0027s outlet \u003Cname\u003E names an outlet no layout, template or component declares.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0631",
+      "name": "TemplateScopeMismatch",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A screen uses a template whose scopes do not include the screen\u0027s scope.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0632",
+      "name": "IncompatibleComponentPackage",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A component\u0027s package is not declared by any ui profile.",
       "reserved": false,
       "retired": false
     }

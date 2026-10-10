@@ -639,6 +639,12 @@ public sealed record CanonicalScreenCorpusVector
     public ImmutableArray<CanonicalTypedScreenSourceCase> TypedSourceCases { get; init; } = [];
 
     /// <summary>
+    /// Gets screen-composition sources the authoring compiler rejects. Each pins its exact compiler diagnostics in
+    /// source order and an empty artifact list: a rejected composition never reaches Stage planning.
+    /// </summary>
+    public ImmutableArray<CanonicalCorpusRejectionVector> RejectionVectors { get; init; } = [];
+
+    /// <summary>
     /// Gets behavior expectations that browser, CLI, Studio and Stage harnesses must assert.
     /// </summary>
     public ImmutableArray<CanonicalScreenBehaviorExpectation> BehaviorExpectations { get; init; } = [];

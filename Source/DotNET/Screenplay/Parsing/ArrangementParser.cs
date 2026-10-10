@@ -41,6 +41,7 @@ internal static partial class ArrangementParser
         string? templateType = null;
         var exposes = new List<TemplateExposedValueSyntax>();
         var outlets = new List<TemplateOutletSyntax>();
+        var metadata = new TemplateMetadata();
 
         while (context.TryPeekChild(header.Indent, out var child))
         {
@@ -76,6 +77,10 @@ internal static partial class ArrangementParser
                 case "outlet":
                     outlets.Add(new TemplateOutletSyntax(child.Content["outlet".Length..].Trim(), child.Location));
                     break;
+                case "scopes" or "display" or "description" or "content" when !SlotDeclarationRegex().IsMatch(child.Content):
+                    // A bare word is a slot declaration, so a slot may still be named 'content' or 'display'.
+                    ParseMetadata(context, child, keyword, metadata);
+                    break;
                 case "on":
                 case "uses":
                     // A behavior here applies to every screen using this structure, which is how a template
@@ -88,7 +93,15 @@ internal static partial class ArrangementParser
             }
         }
 
-        return new(slots, arrangement, fitsSlot, fitsSlotLocation, behaviors, usedBehaviors, category, templateType, exposes, outlets);
+        ValidateContentSlots(context, keyword, name, slots, metadata.Content);
+        return new(slots, arrangement, fitsSlot, fitsSlotLocation, behaviors, usedBehaviors, category, templateType, exposes, outlets)
+        {
+            RestrictsScopes = metadata.Scopes is not null,
+            Scopes = metadata.Scopes ?? [],
+            DisplayName = metadata.DisplayName,
+            Description = metadata.Description,
+            Content = metadata.Content
+        };
     }
 
     static TemplateExposedValueSyntax? ParseTemplateExposes(ParserContext context, SourceLine line)
@@ -294,12 +307,22 @@ internal static partial class ArrangementParser
             : ParseSlotLeaf(context, line);
     }
 
+    static double? ContainerGrow(Match match)
+    {
+        if (!match.Groups[5].Success)
+        {
+            return null;
+        }
+
+        return match.Groups[6].Success ? double.Parse(match.Groups[6].Value, CultureInfo.InvariantCulture) : 1d;
+    }
+
     static ArrangementContainerSyntax? ParseContainer(ParserContext context, SourceLine line, string keyword)
     {
         var match = ContainerRegex().Match(line.Content);
         if (!match.Success)
         {
-            context.Error(DiagnosticCodes.InvalidArrangementContainer, $"Invalid '{keyword}' declaration '{line.Content}' - expected '{keyword}', optionally followed by 'gap <number>'", line.Location);
+            context.Error(DiagnosticCodes.InvalidArrangementContainer, $"Invalid '{keyword}' declaration '{line.Content}' - expected '{keyword}', optionally followed by 'gap <number>', 'columns <n>', 'rows <n>', 'grow [<number>]' and 'span <n>'", line.Location);
             context.SkipBlock(line.Indent);
             return null;
         }
@@ -312,6 +335,11 @@ internal static partial class ArrangementParser
             _ => ArrangementContainerKind.Grid,
         };
 
+        if (kind != ArrangementContainerKind.Grid && (match.Groups[3].Success || match.Groups[4].Success))
+        {
+            context.Error(DiagnosticCodes.InvalidArrangementContainer, $"Invalid '{keyword}' declaration '{line.Content}' - 'columns' and 'rows' apply to a 'grid' only", line.Location);
+        }
+
         var children = new List<ArrangementNodeSyntax>();
         while (context.TryPeekChild(line.Indent, out var child))
         {
@@ -322,7 +350,13 @@ internal static partial class ArrangementParser
             }
         }
 
-        return new(kind, children, line.Location, gap);
+        return new(kind, children, line.Location, gap)
+        {
+            Columns = kind == ArrangementContainerKind.Grid && match.Groups[3].Success ? int.Parse(match.Groups[3].Value, CultureInfo.InvariantCulture) : null,
+            Rows = kind == ArrangementContainerKind.Grid && match.Groups[4].Success ? int.Parse(match.Groups[4].Value, CultureInfo.InvariantCulture) : null,
+            Grow = ContainerGrow(match),
+            Span = match.Groups[7].Success ? int.Parse(match.Groups[7].Value, CultureInfo.InvariantCulture) : null
+        };
     }
 
     static ArrangementSlotSyntax? ParseSlotLeaf(ParserContext context, SourceLine line)
@@ -332,7 +366,7 @@ internal static partial class ArrangementParser
         {
             context.Error(
                 DiagnosticCodes.InvalidArrangementSlotAttributes,
-                $"Invalid slot '{line.Content}' - expected an identifier, optionally followed by 'width <n>', 'height <n>', 'grow' or 'span <n>'",
+                $"Invalid slot '{line.Content}' - expected an identifier, optionally followed by 'width <n>', 'height <n>', 'grow [<number>]' or 'span <n>'",
                 line.Location);
             return null;
         }
@@ -343,7 +377,10 @@ internal static partial class ArrangementParser
             match.Groups[2].Success ? int.Parse(match.Groups[2].Value, CultureInfo.InvariantCulture) : null,
             match.Groups[3].Success ? int.Parse(match.Groups[3].Value, CultureInfo.InvariantCulture) : null,
             match.Groups[4].Success,
-            match.Groups[5].Success ? int.Parse(match.Groups[5].Value, CultureInfo.InvariantCulture) : null);
+            match.Groups[6].Success ? int.Parse(match.Groups[6].Value, CultureInfo.InvariantCulture) : null)
+        {
+            GrowFactor = match.Groups[5].Success ? double.Parse(match.Groups[5].Value, CultureInfo.InvariantCulture) : null
+        };
     }
 
     static VariantSyntax ParseVariant(ParserContext context, SourceLine header, List<SlotSyntax> slots)
@@ -453,10 +490,10 @@ internal static partial class ArrangementParser
     [GeneratedRegex(@"^([a-z_]\w*)(?:\s+contributes\s+([A-Za-z_]\w*))?$", RegexOptions.None, 1000)]
     private static partial Regex SlotDeclarationRegex();
 
-    [GeneratedRegex(@"^(row|column|grid)(?:\s+gap\s+(\d+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^(row|column|grid)(?:\s+gap\s+(\d+))?(?:\s+columns\s+(\d+))?(?:\s+rows\s+(\d+))?(?:\s+(grow)(?:\s+(\d+(?:\.\d+)?))?)?(?:\s+span\s+(\d+))?$", RegexOptions.None, 1000)]
     private static partial Regex ContainerRegex();
 
-    [GeneratedRegex(@"^([a-z_]\w*)(?:\s+width\s+(\d+))?(?:\s+height\s+(\d+))?(?:\s+(grow))?(?:\s+span\s+(\d+))?$", RegexOptions.None, 1000)]
+    [GeneratedRegex(@"^([a-z_]\w*)(?:\s+width\s+(\d+))?(?:\s+height\s+(\d+))?(?:\s+(grow)(?:\s+(\d+(?:\.\d+)?))?)?(?:\s+span\s+(\d+))?$", RegexOptions.None, 1000)]
     private static partial Regex SlotLeafRegex();
 
     [GeneratedRegex(@"^when\s+(?:width\s+(compact|regular)(?:\s*,\s*height\s+(compact|regular))?|height\s+(compact|regular))$", RegexOptions.None, 1000)]
@@ -485,5 +522,31 @@ internal static partial class ArrangementParser
         string? Category,
         string? TemplateType,
         IReadOnlyList<TemplateExposedValueSyntax> Exposes,
-        IReadOnlyList<TemplateOutletSyntax> Outlets);
+        IReadOnlyList<TemplateOutletSyntax> Outlets)
+    {
+        /// <summary>
+        /// Gets a value indicating whether the body restricts the template's scopes.
+        /// </summary>
+        public bool RestrictsScopes { get; init; }
+
+        /// <summary>
+        /// Gets the scopes the template may be used at when <see cref="RestrictsScopes"/> is set.
+        /// </summary>
+        public IReadOnlyList<string> Scopes { get; init; } = [];
+
+        /// <summary>
+        /// Gets the template picker display name, or <c>null</c>.
+        /// </summary>
+        public string? DisplayName { get; init; }
+
+        /// <summary>
+        /// Gets the template picker description, or <c>null</c>.
+        /// </summary>
+        public string? Description { get; init; }
+
+        /// <summary>
+        /// Gets the content the template provides for its own slots.
+        /// </summary>
+        public IReadOnlyList<TemplateSlotContentSyntax> Content { get; init; } = [];
+    }
 }

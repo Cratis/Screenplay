@@ -266,6 +266,41 @@
     "name": "Acme.Invoicing"
   },
   "eventSources": [],
+  "exposures": [
+    {
+      "kind": "ExposureSyntax",
+      "owner": "Board",
+      "properties": [
+        {
+          "kind": "ExposedPropertySyntax",
+          "component": "board:toolbar",
+          "editableFields": [],
+          "isCollection": false,
+          "label": "Compact toolbar",
+          "operations": [],
+          "path": "dense",
+          "reExposes": null,
+          "restrictsFields": false
+        },
+        {
+          "kind": "ExposedPropertySyntax",
+          "component": "board:toolbar",
+          "editableFields": [
+            "label"
+          ],
+          "isCollection": true,
+          "label": "Board actions",
+          "operations": [
+            "add",
+            "reorder"
+          ],
+          "path": "actions",
+          "reExposes": null,
+          "restrictsFields": true
+        }
+      ]
+    }
+  ],
   "fileImports": [],
   "imports": [
     {
@@ -287,6 +322,54 @@
     {
       "kind": "ImportSyntax",
       "qualifiedName": "Payments.PaymentSettled"
+    }
+  ],
+  "instanceContributions": [
+    {
+      "kind": "InstanceContributionsSyntax",
+      "contributions": [
+        {
+          "kind": "InstanceContributionSyntax",
+          "component": "board:toolbar",
+          "items": [],
+          "path": "dense",
+          "value": {
+            "kind": "LiteralExpressionSyntax",
+            "value": false
+          }
+        },
+        {
+          "kind": "InstanceContributionSyntax",
+          "component": "board:toolbar",
+          "items": [
+            {
+              "kind": "ContributedItemSyntax",
+              "id": "refresh",
+              "values": [
+                {
+                  "kind": "ContributedItemValueSyntax",
+                  "field": "label",
+                  "value": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": "Refresh"
+                  }
+                },
+                {
+                  "kind": "ContributedItemValueSyntax",
+                  "field": "icon",
+                  "value": {
+                    "kind": "LiteralExpressionSyntax",
+                    "value": "refresh"
+                  }
+                }
+              ]
+            }
+          ],
+          "path": "actions",
+          "value": null
+        }
+      ],
+      "instance": "CollectionsBoard"
     }
   ],
   "modules": [
@@ -11027,6 +11110,28 @@
               "screens": [
                 {
                   "kind": "ScreenSyntax",
+                  "contributions": [
+                    {
+                      "kind": "ScreenContributionSyntax",
+                      "contributionPoint": "BoardActions",
+                      "directives": [
+                        {
+                          "kind": "ScreenActionSyntax",
+                          "command": "RecordPayment",
+                          "label": null,
+                          "navigate": {
+                            "kind": "ScreenNavigateSyntax",
+                            "by": null,
+                            "outlet": "detail",
+                            "parameters": [],
+                            "route": null,
+                            "screen": "InvoiceDetails"
+                          }
+                        }
+                      ],
+                      "order": 10
+                    }
+                  ],
                   "directives": [
                     {
                       "kind": "ScreenTitleSyntax",

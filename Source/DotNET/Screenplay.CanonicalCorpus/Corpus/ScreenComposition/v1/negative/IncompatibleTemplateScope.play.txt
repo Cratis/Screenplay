@@ -1,0 +1,11 @@
+module Workspaces
+  screen template FeatureShell
+    scopes feature
+    list
+
+  feature Tracking
+    slice StateView WorkItemList
+      screen WorkItemList
+        template FeatureShell
+          list
+            title "Work items"

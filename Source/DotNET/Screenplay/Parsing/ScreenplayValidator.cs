@@ -188,6 +188,7 @@ internal static class ScreenplayValidator
         ValidateThemes(application, context);
         ValidateProfileLayouts(application, context);
         ValidateArrangements(application, context);
+        CompositionValidator.Validate(application, context);
         foreach (var diagnostic in expansion.Diagnostics.Where(diagnostic => diagnostic.Code != DiagnosticCodes.UnsynthesizablePersonaCaller && !context.Diagnostics.Contains(diagnostic))) context.Add(diagnostic);
 
         authored = DeclaredDependencyTargets.Validate(authored, context);
