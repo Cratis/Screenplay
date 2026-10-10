@@ -40,11 +40,6 @@ internal static class McpWorktreeRoots
 
         var relative = Path.GetRelativePath(approved.Checkout.DirectoryPath, configured.DirectoryPath);
         var modelPath = Path.Combine(candidate.Checkout.DirectoryPath, relative);
-        if (!Directory.Exists(modelPath))
-        {
-            throw Refused($"The worktree has no '{relative}' model folder.");
-        }
-
         var model = new McpRoot(modelPath);
         if (!McpDirectoryIdentity.Same(requested, candidate.Checkout) && !McpDirectoryIdentity.Same(requested, model))
         {

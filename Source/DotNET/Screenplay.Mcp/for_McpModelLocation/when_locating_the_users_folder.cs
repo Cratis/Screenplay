@@ -10,5 +10,5 @@ public class when_locating_the_users_folder : given_a_project
     void Because() => _located = McpModelLocation.User(Project);
 
     [Fact] void should_use_screenplay_inside_documents() => _located.ShouldEqual(PathOf("Screenplay"));
-    [Fact] void should_create_it() => Directory.Exists(_located).ShouldBeTrue();
+    [Fact] void should_not_create_it() => Directory.Exists(_located).ShouldBeFalse();
 }

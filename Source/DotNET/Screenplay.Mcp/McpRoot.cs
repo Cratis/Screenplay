@@ -18,11 +18,7 @@ sealed class McpRoot
     internal McpRoot(string path)
     {
         _path = Path.GetFullPath(path);
-        CheckAncestors(_path);
-        if (!Directory.Exists(_path))
-        {
-            throw new McpFailure("The MCP root must be an existing directory.");
-        }
+        CheckDirectory();
     }
 
     internal string ApplicationName => new DirectoryInfo(_path).Name;
@@ -34,7 +30,7 @@ sealed class McpRoot
     {
         get
         {
-            CheckAncestors(_path);
+            CheckDirectory();
             return _path;
         }
     }
@@ -65,11 +61,21 @@ sealed class McpRoot
 
     internal bool SamePath(McpRoot other) => string.Equals(_path, other._path, StringComparison.Ordinal);
 
+    internal void Create()
+    {
+        CheckDirectory();
+        Directory.CreateDirectory(_path);
+        CheckAncestors(_path);
+    }
+
     internal ImmutableArray<WorkspaceDocument> Read(bool allowEmpty = false)
     {
-        CheckAncestors(_path);
+        CheckDirectory();
         var directories = new Stack<(string Path, int Depth)>();
-        directories.Push((_path, 0));
+        if (Exists)
+        {
+            directories.Push((_path, 0));
+        }
         var documents = ImmutableArray.CreateBuilder<WorkspaceDocument>();
         var entries = 0;
         var bytes = 0;
@@ -149,7 +155,7 @@ sealed class McpRoot
 
     internal string PathFor(PortablePlayPath path, bool createParents = false)
     {
-        CheckAncestors(_path);
+        CheckDirectory();
         var segments = path.Value.Split('/');
         if (segments.Length > 17 || segments.Any(_excludedDirectories.Contains))
         {
@@ -160,6 +166,11 @@ sealed class McpRoot
         if (!full.StartsWith(_path.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.Ordinal))
         {
             throw new McpFailure($"Path '{path}' escapes the root.");
+        }
+
+        if (createParents)
+        {
+            Create();
         }
 
         var current = _path;
@@ -233,5 +244,29 @@ sealed class McpRoot
 
         CheckAncestors(path);
         return content;
+    }
+
+    void CheckDirectory()
+    {
+        try
+        {
+            CheckAncestors(_path);
+        }
+        catch (Exception exception) when (exception is FileNotFoundException or DirectoryNotFoundException)
+        {
+            var parent = Path.GetDirectoryName(_path);
+            if (parent is null || !Directory.Exists(parent))
+            {
+                throw new McpFailure("The MCP root must be a directory, or a missing directory whose parent exists.");
+            }
+
+            CheckAncestors(parent);
+            return;
+        }
+
+        if (!Exists)
+        {
+            throw new McpFailure("The MCP root must be a directory, or a missing directory whose parent exists.");
+        }
     }
 }

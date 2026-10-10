@@ -80,6 +80,7 @@ sealed class McpManagedFiles(McpRoot root)
         CheckExisting(directory);
         if (create && !Directory.Exists(directory))
         {
+            root.Create();
             McpFileAccess.CreatePrivateDirectory(directory);
         }
 
