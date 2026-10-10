@@ -71,11 +71,7 @@ sealed class McpRoot
     internal ImmutableArray<WorkspaceDocument> Read(bool allowEmpty = false)
     {
         CheckDirectory();
-        var directories = new Stack<(string Path, int Depth)>();
-        if (Exists)
-        {
-            directories.Push((_path, 0));
-        }
+        var directories = TraversalStart();
         var documents = ImmutableArray.CreateBuilder<WorkspaceDocument>();
         var entries = 0;
         var bytes = 0;
@@ -168,31 +164,7 @@ sealed class McpRoot
             throw new McpFailure($"Path '{path}' escapes the root.");
         }
 
-        if (createParents)
-        {
-            Create();
-        }
-
-        var current = _path;
-        foreach (var segment in segments[..^1])
-        {
-            current = Path.Combine(current, segment);
-            McpManagedFiles.CheckExisting(current);
-            if (Directory.Exists(current) || File.Exists(current))
-            {
-                CheckAncestors(current);
-                if (!Directory.Exists(current))
-                {
-                    throw new McpFailure($"A file blocks directory '{current}'.");
-                }
-            }
-            else if (createParents)
-            {
-                Directory.CreateDirectory(current);
-                CheckAncestors(current);
-            }
-        }
-
+        CheckParents(segments[..^1], createParents);
         McpManagedFiles.CheckExisting(full);
         if (File.Exists(full) || Directory.Exists(full))
         {
@@ -244,6 +216,46 @@ sealed class McpRoot
 
         CheckAncestors(path);
         return content;
+    }
+
+    void CheckParents(string[] parents, bool create)
+    {
+        if (create)
+        {
+            Create();
+        }
+
+        var current = _path;
+        foreach (var segment in parents)
+        {
+            current = Path.Combine(current, segment);
+            McpManagedFiles.CheckExisting(current);
+            if (Directory.Exists(current) || File.Exists(current))
+            {
+                CheckAncestors(current);
+                if (!Directory.Exists(current))
+                {
+                    throw new McpFailure($"A file blocks directory '{current}'.");
+                }
+            }
+            else if (create)
+            {
+                Directory.CreateDirectory(current);
+                CheckAncestors(current);
+            }
+        }
+    }
+
+    // A root that does not exist yet reads as an empty model, so traversal starts with nothing to visit.
+    Stack<(string Path, int Depth)> TraversalStart()
+    {
+        var directories = new Stack<(string Path, int Depth)>();
+        if (Exists)
+        {
+            directories.Push((_path, 0));
+        }
+
+        return directories;
     }
 
     void CheckDirectory()
