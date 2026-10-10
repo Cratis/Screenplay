@@ -102,6 +102,8 @@
   href: interoperability.md
 - name: Screens release acceptance
   href: screens-release-acceptance.md
+- name: Screens capability matrix
+  href: screens-capability-matrix.md
 - name: Workspace transport
   href: workspace-transport.md
 - name: Visitors and traversal
