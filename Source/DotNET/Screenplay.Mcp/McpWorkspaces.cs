@@ -64,13 +64,10 @@ internal sealed partial class McpWorkspaces
         var requestedPath = McpJson.OptionalString(arguments, "path");
         if (requestedPath is not null)
         {
-            var requestedRoot = new McpRoot(Path.GetFullPath(requestedPath, CurrentDirectoryHint ?? Environment.CurrentDirectory));
+            var requestedRoot = ResolveRequestedRoot(requestedPath);
             if (_configuredRoot is not null)
             {
-                // Check the approved root before touching an old worktree that may have been removed.
-                var resolved = McpDirectoryIdentity.Same(_configuredRoot, requestedRoot)
-                    ? _configuredRoot : McpWorktreeRoots.Resolve(_configuredRoot, requestedRoot);
-                BindRoot(resolved);
+                BindRoot(requestedRoot);
             }
             else
             {
@@ -254,10 +251,48 @@ internal sealed partial class McpWorkspaces
         return properties;
     }
 
+    internal ScreenplayWorkspace ReadComparisonWorkspace()
+    {
+        if (_workspace is null)
+        {
+            throw new McpFailure("Open a workspace first.");
+        }
+
+        return Current();
+    }
+
+    internal ScreenplayWorkspace ReadComparisonPath(string path)
+    {
+        var root = ResolveRequestedRoot(path);
+        McpRecoveryJournal.RefusePending(root);
+        var files = new McpManagedFiles(root);
+        var persisted = files.Read(McpState.FileName);
+        var state = persisted is null ? null : McpState.Deserialize(persisted);
+        var workspace = state?.Open(root) ?? OpenFromDisk(root, root.ApplicationName);
+        root.Verify(workspace);
+        files.Verify(McpState.FileName, persisted);
+        McpRecoveryJournal.RefusePending(root);
+
+        return workspace;
+    }
+
     internal void RefusePendingWorkspace()
     {
         RefuseCompetingPending();
         McpRecoveryJournal.RefusePending(Root);
+    }
+
+    static ScreenplayWorkspace OpenFromDisk(McpRoot root, string name)
+    {
+        var documents = root.Read(allowEmpty: true);
+        var identity = ApplicationIdentity.Create(name);
+        if (documents.IsEmpty)
+        {
+            return ScreenplayWorkspace.CreateEmpty(identity, name);
+        }
+
+        var loaded = McpAttachmentContents.Load(root, documents);
+        return ScreenplayWorkspace.Create(identity, name, documents, SemanticIdentityCatalog.Empty(identity), loaded.Contents, loaded.Diagnostics);
     }
 
     static object? DescribeMove(WorkspaceMoveReport? report) => report is null ? null : new
@@ -551,18 +586,21 @@ internal sealed partial class McpWorkspaces
         return workspace;
     }
 
-    ScreenplayWorkspace OpenFromDisk(string name)
+    McpRoot ResolveRequestedRoot(string path)
     {
-        var documents = Root.Read(allowEmpty: true);
-        var identity = ApplicationIdentity.Create(name);
-        if (documents.IsEmpty)
+        var requested = new McpRoot(Path.GetFullPath(path, CurrentDirectoryHint ?? Environment.CurrentDirectory));
+
+        if (_configuredRoot is null)
         {
-            return ScreenplayWorkspace.CreateEmpty(identity, name);
+            return requested;
         }
 
-        var loaded = McpAttachmentContents.Load(Root, documents);
-        return ScreenplayWorkspace.Create(identity, name, documents, SemanticIdentityCatalog.Empty(identity), loaded.Contents, loaded.Diagnostics);
+        // Check the approved root before touching an old worktree that may have been removed.
+        return McpDirectoryIdentity.Same(_configuredRoot, requested)
+            ? _configuredRoot : McpWorktreeRoots.Resolve(_configuredRoot, requested);
     }
+
+    ScreenplayWorkspace OpenFromDisk(string name) => OpenFromDisk(Root, name);
 
     ScreenplayWorkspace Current()
     {

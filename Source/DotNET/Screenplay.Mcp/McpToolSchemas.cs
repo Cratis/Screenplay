@@ -63,9 +63,10 @@ static class McpToolSchemas
 
         if (tool.Name == "semantic-diff")
         {
+            schema["allOf"] = new JsonArray(SourceSelection("before"), SourceSelection("after"));
             properties["beforeWorkspaceJson"]!["description"] = "Complete canonical UTF-8 export-workspace JSON for the baseline, decoded and reassembled from export pages; not a Git ref or path.";
             properties["afterWorkspaceJson"]!["description"] = "Complete canonical UTF-8 export-workspace JSON for the candidate, with the same application identity; not a Git ref or path.";
-            properties["expectedSourceRevision"]!["description"] = "Echo the ordered-pair sourceRevision on continuation. Both snapshot revisions are pinned, including catalogs and exact source.";
+            properties["expectedSourceRevision"]!["description"] = "Echo the ordered-pair sourceRevision on continuation. Both source revisions are pinned, including catalogs and exact source; sources reload on each page and a change refuses continuation as stale.";
         }
 
         return schema;
@@ -73,6 +74,7 @@ static class McpToolSchemas
 
     internal static JsonObject Argument(string tool, string property) => property switch
     {
+        "before" or "after" when tool == "semantic-diff" => RevisionSource(),
         "includeTestOnly" or "includeContent" or "eventNeverPersisted" or "pinRepairEvidence" => new() { ["type"] = "boolean", ["default"] = false },
         "descendants" => new() { ["type"] = "boolean", ["default"] = tool != "dependencies" },
         "line" when tool == "propose-repair" => new() { ["type"] = "integer", ["minimum"] = 1 },
@@ -109,6 +111,31 @@ static class McpToolSchemas
         "view" when tool == "read-proposal" => McpAstSchemas.Choice("changes", "before", "after", "diagnostics", "executable-diagnostics", "implementation-requirements", "typed-contexts", "dropped-comments", "semantic-diff"),
         "view" when tool == "read-ast" => McpAstSchemas.Choice("nodes", "children"),
         _ => McpAstSchemas.String()
+    };
+
+    static JsonObject RevisionSource()
+    {
+        var properties = new JsonObject
+        {
+            ["workspace"] = McpAstSchemas.Choice("active"),
+            ["path"] = McpAstSchemas.String(),
+            ["workspaceJson"] = McpAstSchemas.String()
+        };
+        var schema = McpAstSchemas.Object(properties);
+        schema["description"] = "Select exactly one source: the open workspace, a read-only model folder/worktree path admitted like open-workspace, or a complete canonical export. Relative paths use the server working directory; Git refs are not resolved.";
+        schema["oneOf"] = new JsonArray(
+            new JsonObject { ["required"] = new JsonArray("workspace") },
+            new JsonObject { ["required"] = new JsonArray("path") },
+            new JsonObject { ["required"] = new JsonArray("workspaceJson") });
+
+        return schema;
+    }
+
+    static JsonObject SourceSelection(string side) => new()
+    {
+        ["oneOf"] = new JsonArray(
+            new JsonObject { ["required"] = new JsonArray(side) },
+            new JsonObject { ["required"] = new JsonArray($"{side}WorkspaceJson") })
     };
 
     static JsonObject Limit(int maximum) => new() { ["type"] = "integer", ["minimum"] = 1, ["maximum"] = maximum };
