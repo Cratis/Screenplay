@@ -176,7 +176,8 @@ function declaresConstruct(keyword: string, line: SourceLine, placement: PlayPla
     if (keyword === 'module') {
         return isDocumentPlacement(placement);
     }
-    return keyword === 'identity' || keyword === 'purpose' || keyword === 'example' || keyword === 'exposure' || keyword === 'instance' || keyword === 'eventsource' || keyword === 'system' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || opaqueTopLevel.has(keyword);
+    if (keyword === 'identity') return line.content === 'identity';
+    return keyword === 'purpose' || keyword === 'example' || keyword === 'exposure' || keyword === 'instance' || keyword === 'eventsource' || keyword === 'system' || keyword === 'concept' || keyword === 'type' || keyword === 'persona' || opaqueTopLevel.has(keyword);
 }
 
 function parseModuleInPlacedFile(context: ParserContext, line: SourceLine, placement: PlayPlacement, moduleBody: ModuleBody | undefined): void {
