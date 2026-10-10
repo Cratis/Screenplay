@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { describe, beforeEach, it } from 'vitest';
 import { parse } from '@cratis/screenplay-compiler';
 import { diagnosticCodes } from '../../diagnostic-codes';
+import { mergeSymbols, scanDocument } from '../../symbols';
 import { ValidationIssue, validateLines } from '../../validation';
 
 // One document holding every condition the editor and the compiler both check, so a condition added
@@ -92,9 +93,11 @@ describe('when validating a document with a problem of every coded kind', () => 
         ];
         issues.push(...sources.flatMap(lines => validateLines(lines)));
         const vectors = JSON.parse(readFileSync(new URL('../../../../Compiler/Conformance/diagnostics.json', import.meta.url), 'utf8')) as { cases: { source: string[]; diagnostics: string[] }[] };
-        const authoring = ['PLAY0596', 'PLAY0597', 'PLAY0598', 'PLAY0599', 'PLAY0600', 'PLAY0601', 'PLAY0010', 'PLAY0012', 'PLAY0013', 'PLAY0560', 'PLAY0561', 'PLAY0562', 'PLAY0563', 'PLAY0564', 'PLAY0565', 'PLAY0566', 'PLAY0567', 'PLAY0568', 'PLAY0569', 'PLAY0570', 'PLAY0571', 'PLAY0572', 'PLAY0577', 'PLAY0581', 'PLAY0582', 'PLAY0583', 'PLAY0584', 'PLAY0586', 'PLAY0587', 'PLAY0590', 'PLAY0591', 'PLAY0592', 'PLAY0593', 'PLAY0594', 'PLAY0595', 'PLAY0558', 'PLAY0514', 'PLAY0515', 'PLAY0518', 'PLAY0519', 'PLAY0341', 'PLAY0342', 'PLAY0343', 'PLAY0344', 'PLAY0391', 'PLAY0453', 'PLAY0538', 'PLAY0539', 'PLAY0543', 'PLAY0545']
+        const authoring = ['PLAY0633', 'PLAY0634', 'PLAY0635', 'PLAY0636', 'PLAY0637', 'PLAY0638', 'PLAY0639', 'PLAY0640', 'PLAY0641', 'PLAY0642', 'PLAY0643', 'PLAY0644', 'PLAY0645', 'PLAY0646', 'PLAY0596', 'PLAY0597', 'PLAY0598', 'PLAY0599', 'PLAY0600', 'PLAY0601', 'PLAY0010', 'PLAY0012', 'PLAY0013', 'PLAY0560', 'PLAY0561', 'PLAY0562', 'PLAY0563', 'PLAY0564', 'PLAY0565', 'PLAY0566', 'PLAY0567', 'PLAY0568', 'PLAY0569', 'PLAY0570', 'PLAY0571', 'PLAY0572', 'PLAY0577', 'PLAY0581', 'PLAY0582', 'PLAY0583', 'PLAY0584', 'PLAY0586', 'PLAY0587', 'PLAY0590', 'PLAY0591', 'PLAY0592', 'PLAY0593', 'PLAY0594', 'PLAY0595', 'PLAY0558', 'PLAY0514', 'PLAY0515', 'PLAY0518', 'PLAY0519', 'PLAY0341', 'PLAY0342', 'PLAY0343', 'PLAY0344', 'PLAY0391', 'PLAY0453', 'PLAY0538', 'PLAY0539', 'PLAY0543', 'PLAY0545']
             .map(code => vectors.cases.find(vector => vector.diagnostics.some(diagnostic => diagnostic.startsWith(code + '@')))!.source);
         issues.push(...authoring.flatMap(lines => validateLines(lines)));
+        const identity = ['identity', '  department String from claim "department"'];
+        issues.push(...validateLines(identity, { application: mergeSymbols(scanDocument(['identity'])) }));
         issues.push(...validateLines(['concept C : String', '  description invalid', '  description', '    ```text', '    ```', '  description "One"', '  description "Two"']));
         // Catalogue entries for C#-only checks are not promises of local TypeScript validation.
         // A host may supply them; the adapter must preserve their codes rather than drop them.

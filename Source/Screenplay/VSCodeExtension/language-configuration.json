@@ -21,7 +21,7 @@
     },
     "onEnterRules": [
         {
-            "beforeText": "^\\s*(?:module|feature|slice\\s+\\w+|type|command|event|readmodel|reducer|projection|capture|reaction|screen|dialog|form|contribute|specification|case|constraint|persona|policy|behavior|layout|theme|ui\\s+profile|trigger|authentication|seed|system|eventsource|operation|screen\\s+template|dialog\\s+template|produces\\s+event|validate|handler|on)\\b[^=]*$",
+            "beforeText": "^\\s*(?:module|feature|slice\\s+\\w+|type|command|event|readmodel|reducer|projection|capture|reaction|screen|dialog|form|contribute|specification|case|constraint|persona|policy|behavior|layout|theme|ui\\s+profile|trigger|authentication|identity|seed|system|eventsource|operation|screen\\s+template|dialog\\s+template|produces\\s+event|validate|handler|on)\\b[^=]*$",
             "action": { "indent": "indent" }
         }
     ],
