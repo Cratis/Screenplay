@@ -1,0 +1,26 @@
+concept Code : String
+  validate
+    matches "^[A-Z]{3}$" message "Code must be three uppercase letters"
+module Codes
+  feature Registration
+    slice StateChange RegisterCode
+      command RegisterCode
+        id String identifier
+        code Code
+        produces CodeRegistered
+          for id
+          code = code
+      event CodeRegistered
+        code Code
+      specification AcceptingTheWholeInput
+        when RegisterCode
+          id = "code-1"
+          code = "ABC"
+        then CodeRegistered
+          for "code-1"
+          code = "ABC"
+      specification RejectingATrailingNewline
+        when RegisterCode
+          id = "code-1"
+          code = "ABC\n"
+        then error "Code must be three uppercase letters"
