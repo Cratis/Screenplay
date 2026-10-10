@@ -40,8 +40,8 @@ internal static class SemanticMatchPattern
 
             if (character == '[' && classStart < 0)
             {
-                // A leading ']' (also after '^') is literal in a .NET character class.
-                classStart = index + 1 + (pattern[index + 1] == '^' ? 1 : 0);
+                // A leading ']' is literal in a .NET character class; after '^' it closes '[^]', the any-character class.
+                classStart = index + 1;
             }
             else if (character == ']' && index > classStart)
             {
