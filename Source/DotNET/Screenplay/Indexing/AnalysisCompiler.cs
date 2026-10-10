@@ -9,21 +9,21 @@ using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Specifications;
 
-namespace Cratis.Screenplay.Mcp;
+namespace Cratis.Screenplay.Indexing;
 
 // Retain original fragments, including recoverable erroneous trees, while the existing
 // folder compiler performs its normal merge and validation. No parser behavior is replaced.
-sealed class McpAnalysisCompiler : IScreenplayCompiler, ICommandStreamCandidateParser, ILanguageRegistryOwner
+sealed class AnalysisCompiler : IScreenplayCompiler, ICommandStreamCandidateParser, ILanguageRegistryOwner
 {
     readonly ScreenplayCompiler _compiler;
     readonly List<(string? Path, CompilationResult<ApplicationSyntax> Result)> _documents = [];
 
-    internal McpAnalysisCompiler()
+    internal AnalysisCompiler()
         : this(ScreenplayLanguageRegistry.Default)
     {
     }
 
-    internal McpAnalysisCompiler(IScreenplayLanguageRegistry languages) => _compiler = new(languages);
+    internal AnalysisCompiler(IScreenplayLanguageRegistry languages) => _compiler = new(languages);
 
     public IScreenplayLanguageRegistry Languages => _compiler.Languages;
 

@@ -6,9 +6,9 @@ using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Specifications;
 
-namespace Cratis.Screenplay.Mcp;
+namespace Cratis.Screenplay.Indexing;
 
-static class McpReferenceKinds
+static class ReferenceKinds
 {
     internal const string Coverage = "Explicit declaration references in source identifier/stream-id types, authored command and specification event source/stream routes, types, identity query sources, policies, processing purposes, commands, queries, screen data, forms, contribution points, specifications, projections, reducers, reactions, captures, constraints, seeds and concurrency event lists. Not code, property paths, imports, profile settings, external host registrations or expression identifiers. Read models include projection output aliases and variants, not the projection builder's name when it produces a different view.";
     static readonly string[] _eventKinds = ["Event"];

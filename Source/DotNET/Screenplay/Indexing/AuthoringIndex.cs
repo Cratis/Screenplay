@@ -7,30 +7,30 @@ using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Specifications;
 
-namespace Cratis.Screenplay.Mcp;
+namespace Cratis.Screenplay.Indexing;
 
-sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
+sealed class AuthoringIndex : ScreenplaySyntaxWalker
 {
-    readonly List<McpDeclaration> _declarations = [];
-    readonly List<McpReference> _references = [];
+    readonly List<AuthoredDeclaration> _declarations = [];
+    readonly List<AuthoredReference> _references = [];
     readonly List<string> _scope = [];
-    readonly List<McpReadOwner> _hierarchy = [];
-    readonly McpReadOwnership _ownership = new();
-    readonly Dictionary<SyntaxNode, McpDeclaration> _owners = new(ReferenceEqualityComparer.Instance);
-    readonly Dictionary<(string Kind, string Name, string Scope), McpDeclaration> _scaffolds = [];
-    McpQueryIndex _queries = null!;
+    readonly List<ReadOwner> _hierarchy = [];
+    readonly ReadOwnership _ownership = new();
+    readonly Dictionary<SyntaxNode, AuthoredDeclaration> _owners = new(ReferenceEqualityComparer.Instance);
+    readonly Dictionary<(string Kind, string Name, string Scope), AuthoredDeclaration> _scaffolds = [];
+    AuthoringReferences _queries = null!;
     bool _inRefusal;
     ConstraintSyntax? _constraint;
     SpecificationSyntax? _specification;
 
     internal EventSourceReadConfidence? SourceConfidence { get; set; }
 
-    internal McpAuthoringReadiness Readiness { get; private set; } = null!;
+    internal AuthoringReadiness Readiness { get; private set; } = null!;
 
-    internal IEnumerable<McpDeclaration> Declarations => _declarations;
-    internal IEnumerable<McpReference> References => _references;
+    internal IEnumerable<AuthoredDeclaration> Declarations => _declarations;
+    internal IEnumerable<AuthoredReference> References => _references;
 
-    internal IEnumerable<McpQueryIndexResolution> ResolvedReferences => _queries.ResolvedReferences;
+    internal IEnumerable<ReferenceResolution> ResolvedReferences => _queries.ResolvedReferences;
 
     internal int ResolutionCount => _queries.ResolutionCount;
 
@@ -168,13 +168,13 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
 
         var owningSyntax = _ownership.For(node);
         var owner = owningSyntax is null ? null : _owners.GetValueOrDefault(owningSyntax);
-        foreach (var reference in McpReferenceKinds.For(node, owningSyntax))
+        foreach (var reference in ReferenceKinds.For(node, owningSyntax))
         {
             var refusalProduction = _inRefusal && node is ProducesSyntax;
             var role = (refusalProduction, owner?.Syntax) switch
             {
                 (true, _) => "refusalProduces",
-                (_, SpecificationSyntax specification) => McpFixtureOccurrences.Role(specification, node, reference.Role),
+                (_, SpecificationSyntax specification) => SpecificationReferenceRoles.For(specification, node, reference.Role),
                 _ => reference.Role
             };
             _references.Add(new(reference.Name, reference.Kinds, owningSyntax is IdentityDetailSyntax ? [] : [.. _scope], ReferenceLocation(node), role, owner?.Owner)
@@ -227,11 +227,11 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
     {
         if (application is not null)
         {
-            McpLogicalDeclarations.Complete(_declarations, application);
+            LogicalDeclarations.Complete(_declarations, application);
         }
 
-        _declarations.AddRange([.. McpLogicalReadModels.From(_declarations)]);
-        var productions = new McpProductionInventory([.. _declarations]);
+        _declarations.AddRange([.. LogicalReadModels.From(_declarations)]);
+        var productions = new ProductionInventory([.. _declarations]);
         var sources = _declarations.Where(declaration => declaration.Kind == "EventSource" && declaration.Scope.Length == 0)
             .ToLookup(declaration => declaration.Name, StringComparer.Ordinal);
         for (var referenceIndex = 0; referenceIndex < _references.Count; referenceIndex++)
@@ -259,11 +259,11 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         _queries = new(_declarations, _references, productions, application?.Imports.Select(import => import.Name) ?? []);
     }
 
-    internal McpDeclaration[] Resolve(McpReference reference) => _queries.Resolve(reference);
+    internal AuthoredDeclaration[] Resolve(AuthoredReference reference) => _queries.Resolve(reference);
 
-    internal McpReferenceEdge ResolveProduction(string name, string[] scope)
+    internal ReferenceEdge ResolveProduction(string name, string[] scope)
     {
-        var reference = new McpReference(name, ["Event", "Operation"], scope, new(0, 0, string.Empty), "production", null)
+        var reference = new AuthoredReference(name, ["Event", "Operation"], scope, new(0, 0, string.Empty), "production", null)
         {
             UseProductionCandidates = true
         };
@@ -271,7 +271,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         return new(reference, Resolve(reference));
     }
 
-    internal McpDeclaration[] Find(string address, string kind)
+    internal AuthoredDeclaration[] Find(string address, string kind)
     {
         var matches = _queries.Find(address, kind);
         if (matches.Length > 0 || kind != "Specification") return matches;
@@ -283,11 +283,11 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
 
     internal bool HasExactOwnershipCollision(string kind, string name, string[] scope) => _queries.HasExactOwnershipCollision(kind, name, scope);
 
-    internal IEnumerable<McpQueryIndexResolution> Incoming(McpDeclaration declaration) => _queries.Incoming(declaration);
+    internal IEnumerable<ReferenceResolution> Incoming(AuthoredDeclaration declaration) => _queries.Incoming(declaration);
 
-    internal IEnumerable<McpReference> Outgoing(McpReadOwner owner) => _queries.Outgoing(owner);
+    internal IEnumerable<AuthoredReference> Outgoing(ReadOwner owner) => _queries.Outgoing(owner);
 
-    internal IEnumerable<McpReference> Outgoing(string ownerAddress) => _queries.Outgoing(ownerAddress);
+    internal IEnumerable<AuthoredReference> Outgoing(string ownerAddress) => _queries.Outgoing(ownerAddress);
 
     static SourceLocation ReferenceLocation(SyntaxNode node) => node switch
     {
@@ -296,9 +296,9 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
         _ => node.Location
     };
 
-    McpDeclaration Declare(string kind, string name, SyntaxNode node, string? description = null, object? details = null)
+    AuthoredDeclaration Declare(string kind, string name, SyntaxNode node, string? description = null, object? details = null)
     {
-        var key = (kind, name, McpQueryIndex.ScopeKey(_scope));
+        var key = (kind, name, AuthoringReferences.ScopeKey(_scope));
         var isScaffold = kind == "Module" || kind == "Feature";
         if (isScaffold && _scaffolds.TryGetValue(key, out var scaffold))
         {
@@ -307,7 +307,7 @@ sealed class McpSyntaxIndex : ScreenplaySyntaxWalker
             return scaffold;
         }
 
-        var declaration = new McpDeclaration(kind, name, [.. _scope], node.Location, description, details, node) { Hierarchy = [.. _hierarchy] };
+        var declaration = new AuthoredDeclaration(kind, name, [.. _scope], node.Location, description, details, node) { Hierarchy = [.. _hierarchy] };
         _declarations.Add(declaration);
         _owners[node] = declaration;
         if (isScaffold)

@@ -3,11 +3,11 @@
 
 using Cratis.Screenplay.Syntax;
 
-namespace Cratis.Screenplay.Mcp;
+namespace Cratis.Screenplay.Indexing;
 
-static class McpLogicalDeclarations
+static class LogicalDeclarations
 {
-    internal static void Complete(List<McpDeclaration> declarations, ApplicationSyntax application)
+    internal static void Complete(List<AuthoredDeclaration> declarations, ApplicationSyntax application)
     {
         var positions = declarations.Select((declaration, index) => (declaration, index))
             .Where(item => item.declaration.Kind == "Module" || item.declaration.Kind == "Feature")
@@ -20,7 +20,7 @@ static class McpLogicalDeclarations
         }
     }
 
-    static void Features(List<McpDeclaration> declarations, IReadOnlyDictionary<(string Kind, string Address), int> positions, IEnumerable<FeatureSyntax> features, string parent)
+    static void Features(List<AuthoredDeclaration> declarations, IReadOnlyDictionary<(string Kind, string Address), int> positions, IEnumerable<FeatureSyntax> features, string parent)
     {
         foreach (var feature in features)
         {
@@ -30,7 +30,7 @@ static class McpLogicalDeclarations
         }
     }
 
-    static void Replace(List<McpDeclaration> declarations, IReadOnlyDictionary<(string Kind, string Address), int> positions, string kind, string address, SyntaxNode syntax, string? description)
+    static void Replace(List<AuthoredDeclaration> declarations, IReadOnlyDictionary<(string Kind, string Address), int> positions, string kind, string address, SyntaxNode syntax, string? description)
     {
         if (positions.TryGetValue((kind, address), out var position))
         {

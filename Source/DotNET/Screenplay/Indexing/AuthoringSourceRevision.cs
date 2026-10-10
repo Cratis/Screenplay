@@ -6,9 +6,9 @@ using System.Security.Cryptography;
 using System.Text;
 using Cratis.Screenplay.Workspaces;
 
-namespace Cratis.Screenplay.Mcp;
+namespace Cratis.Screenplay.Indexing;
 
-static class McpSourceRevision
+static class AuthoringSourceRevision
 {
     internal static string For(IEnumerable<WorkspaceDocument> documents)
     {

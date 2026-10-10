@@ -4,9 +4,9 @@
 using System.Text.Json.Serialization;
 using Cratis.Screenplay.Diagnostics;
 
-namespace Cratis.Screenplay.Mcp;
+namespace Cratis.Screenplay.Indexing;
 
-sealed record McpReference(string Name, string[] Kinds, string[] Scope, SourceLocation Location, string Role = "reference", McpReadOwner? Owner = null)
+sealed record AuthoredReference(string Name, string[] Kinds, string[] Scope, SourceLocation Location, string Role = "reference", ReadOwner? Owner = null)
 {
     // Resolve event/operation names before validating the reference's required kind.
     // Use the snapshot's complete physical candidate view, not an assembled selection.

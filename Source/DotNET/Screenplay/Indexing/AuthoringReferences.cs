@@ -1,30 +1,30 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Cratis.Screenplay.Mcp;
+namespace Cratis.Screenplay.Indexing;
 
 // Built only after merged scaffolds and implicit read models have their final meaning.
 // Prefixes implement nearest shared scope; suffixes implement explicit qualification.
-sealed class McpQueryIndex
+sealed class AuthoringReferences
 {
-    readonly Dictionary<(string Name, string Scope), List<McpDeclaration>> _prefixes = [];
-    readonly Dictionary<(string Name, string Scope), List<McpDeclaration>> _suffixes = [];
-    readonly Dictionary<(string Kind, string Address), McpDeclaration[]> _addresses;
-    readonly McpProductionInventory _productions;
+    readonly Dictionary<(string Name, string Scope), List<AuthoredDeclaration>> _prefixes = [];
+    readonly Dictionary<(string Name, string Scope), List<AuthoredDeclaration>> _suffixes = [];
+    readonly Dictionary<(string Kind, string Address), AuthoredDeclaration[]> _addresses;
+    readonly ProductionInventory _productions;
     readonly HashSet<string> _imports;
-    readonly ILookup<string, McpDeclaration> _sources;
-    readonly ILookup<string, McpDeclaration> _streams;
-    readonly ILookup<string, McpDeclaration> _sourceValueTypes;
-    readonly Dictionary<McpReference, McpDeclaration[]> _resolutions = new(ReferenceEqualityComparer.Instance);
-    readonly Dictionary<(string Name, string Kinds, string Scope), McpDeclaration[]> _names = [];
-    readonly Dictionary<(string Name, string Kinds, string Scope), McpDeclaration[]> _productionNames = [];
+    readonly ILookup<string, AuthoredDeclaration> _sources;
+    readonly ILookup<string, AuthoredDeclaration> _streams;
+    readonly ILookup<string, AuthoredDeclaration> _sourceValueTypes;
+    readonly Dictionary<AuthoredReference, AuthoredDeclaration[]> _resolutions = new(ReferenceEqualityComparer.Instance);
+    readonly Dictionary<(string Name, string Kinds, string Scope), AuthoredDeclaration[]> _names = [];
+    readonly Dictionary<(string Name, string Kinds, string Scope), AuthoredDeclaration[]> _productionNames = [];
     readonly Lock _resolutionLock = new();
-    readonly Dictionary<McpDeclaration, List<McpQueryIndexResolution>> _incoming = new(ReferenceEqualityComparer.Instance);
-    readonly Dictionary<McpReadOwner, List<McpReference>> _outgoing = [];
-    readonly Dictionary<string, List<McpReference>> _outgoingByAddress = new(StringComparer.Ordinal);
-    readonly List<McpQueryIndexResolution> _resolvedReferences = [];
+    readonly Dictionary<AuthoredDeclaration, List<ReferenceResolution>> _incoming = new(ReferenceEqualityComparer.Instance);
+    readonly Dictionary<ReadOwner, List<AuthoredReference>> _outgoing = [];
+    readonly Dictionary<string, List<AuthoredReference>> _outgoingByAddress = new(StringComparer.Ordinal);
+    readonly List<ReferenceResolution> _resolvedReferences = [];
 
-    internal McpQueryIndex(IEnumerable<McpDeclaration> declarations, IEnumerable<McpReference> references, McpProductionInventory productions, IEnumerable<string> imports)
+    internal AuthoringReferences(IEnumerable<AuthoredDeclaration> declarations, IEnumerable<AuthoredReference> references, ProductionInventory productions, IEnumerable<string> imports)
     {
         var declared = declarations.ToArray();
         _addresses = declared.GroupBy(declaration => (declaration.Kind, declaration.Address)).ToDictionary(group => group.Key, group => group.ToArray());
@@ -46,7 +46,7 @@ sealed class McpQueryIndex
         {
             var candidates = Resolve(reference);
             _resolutions.Add(reference, candidates);
-            var resolution = new McpQueryIndexResolution(reference, candidates);
+            var resolution = new ReferenceResolution(reference, candidates);
             _resolvedReferences.Add(resolution);
             foreach (var candidate in candidates)
             {
@@ -61,7 +61,7 @@ sealed class McpQueryIndex
         }
     }
 
-    internal IEnumerable<McpQueryIndexResolution> ResolvedReferences => _resolvedReferences;
+    internal IEnumerable<ReferenceResolution> ResolvedReferences => _resolvedReferences;
 
     internal int ResolutionCount { get; private set; }
 
@@ -69,17 +69,17 @@ sealed class McpQueryIndex
 
     internal static string ScopeKey(IEnumerable<string> scope) => string.Concat(scope.Select(segment => $"{segment.Length}:{segment}"));
 
-    internal McpDeclaration[] Find(string address, string kind) => _addresses.GetValueOrDefault((kind, address)) ?? [];
+    internal AuthoredDeclaration[] Find(string address, string kind) => _addresses.GetValueOrDefault((kind, address)) ?? [];
 
     internal bool HasExactOwnershipCollision(string kind, string name, string[] scope) => _productions.HasExactOwnershipCollision(kind, name, scope);
 
-    internal IEnumerable<McpQueryIndexResolution> Incoming(McpDeclaration declaration) => _incoming.GetValueOrDefault(declaration) ?? [];
+    internal IEnumerable<ReferenceResolution> Incoming(AuthoredDeclaration declaration) => _incoming.GetValueOrDefault(declaration) ?? [];
 
-    internal IEnumerable<McpReference> Outgoing(McpReadOwner owner) => _outgoing.GetValueOrDefault(owner) ?? [];
+    internal IEnumerable<AuthoredReference> Outgoing(ReadOwner owner) => _outgoing.GetValueOrDefault(owner) ?? [];
 
-    internal IEnumerable<McpReference> Outgoing(string ownerAddress) => _outgoingByAddress.GetValueOrDefault(ownerAddress) ?? [];
+    internal IEnumerable<AuthoredReference> Outgoing(string ownerAddress) => _outgoingByAddress.GetValueOrDefault(ownerAddress) ?? [];
 
-    internal McpDeclaration[] Resolve(McpReference reference)
+    internal AuthoredDeclaration[] Resolve(AuthoredReference reference)
     {
         if (_resolutions.TryGetValue(reference, out var resolved))
         {
@@ -118,7 +118,7 @@ sealed class McpQueryIndex
         values.Add(value);
     }
 
-    McpDeclaration[] ResolveCachedName(McpReference reference)
+    AuthoredDeclaration[] ResolveCachedName(AuthoredReference reference)
     {
         // Fixture queries also construct equivalent references on demand. Cache those
         // by meaning, not object identity, and serialize cache misses across readers.
@@ -136,7 +136,7 @@ sealed class McpQueryIndex
         }
     }
 
-    McpDeclaration[] ResolveName(McpReference reference)
+    AuthoredDeclaration[] ResolveName(AuthoredReference reference)
     {
         if (reference.Kinds.Contains("EventSource", StringComparer.Ordinal))
         {
@@ -173,7 +173,7 @@ sealed class McpQueryIndex
         return [];
     }
 
-    McpDeclaration[] Candidates(List<McpDeclaration>? declarations, McpReference reference)
+    AuthoredDeclaration[] Candidates(List<AuthoredDeclaration>? declarations, AuthoredReference reference)
     {
         CandidateInspectionCount += declarations?.Count ?? 0;
         return declarations is null ? [] : [.. declarations.Where(declaration => reference.Kinds.Contains(declaration.Kind, StringComparer.Ordinal))];

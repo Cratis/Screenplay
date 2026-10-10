@@ -8,32 +8,7 @@ namespace Cratis.Screenplay.Mcp;
 
 static class McpFixtureOccurrences
 {
-    internal static string Role(SpecificationSyntax specification, SyntaxNode node, string fallback)
-    {
-        if (node is SpecificationEventSyntax)
-        {
-            if (specification.Given.Any(item => ReferenceEquals(item, node)))
-            {
-                return "givenEvent";
-            }
-
-            if (ReferenceEquals(specification.WhenAppended, node))
-            {
-                return "whenAppendedEvent";
-            }
-
-            return "thenEvent";
-        }
-
-        if (node is SpecificationReadModelSyntax)
-        {
-            return (specification.GivenReadModels ?? []).Any(item => ReferenceEquals(item, node)) ? "givenReadModel" : "thenReadModel";
-        }
-
-        if (node is SpecificationAbsentReadModelSyntax) return "thenAbsentReadModel";
-
-        return fallback;
-    }
+    internal static string Role(SpecificationSyntax specification, SyntaxNode node, string fallback) => Indexing.SpecificationReferenceRoles.For(specification, node, fallback);
 
     internal static IEnumerable<McpFixtureOccurrence> All(McpSyntaxIndex index, ApplicationSyntax? application)
     {

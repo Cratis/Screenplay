@@ -3,6 +3,6 @@
 
 using Cratis.Screenplay.Diagnostics;
 
-namespace Cratis.Screenplay.Mcp;
+namespace Cratis.Screenplay.Indexing;
 
-sealed record McpReadOwner(string Kind, string Name, string Address, SourceLocation Location);
+sealed record ReadOwner(string Kind, string Name, string Address, SourceLocation Location);

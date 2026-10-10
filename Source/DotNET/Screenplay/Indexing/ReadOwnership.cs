@@ -6,9 +6,9 @@ using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Specifications;
 
-namespace Cratis.Screenplay.Mcp;
+namespace Cratis.Screenplay.Indexing;
 
-sealed class McpReadOwnership : ScreenplaySyntaxWalker
+sealed class ReadOwnership : ScreenplaySyntaxWalker
 {
     readonly Dictionary<SyntaxNode, SyntaxNode> _owners = new(ReferenceEqualityComparer.Instance);
     SyntaxNode? _owner;

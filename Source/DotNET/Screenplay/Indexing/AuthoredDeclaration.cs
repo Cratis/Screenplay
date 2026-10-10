@@ -5,9 +5,9 @@ using System.Collections.Immutable;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
-namespace Cratis.Screenplay.Mcp;
+namespace Cratis.Screenplay.Indexing;
 
-sealed record McpDeclaration(string Kind, string Name, string[] Scope, SourceLocation Location, string? Description, object? Details, SyntaxNode Syntax)
+sealed record AuthoredDeclaration(string Kind, string Name, string[] Scope, SourceLocation Location, string? Description, object? Details, SyntaxNode Syntax)
 {
     public string Address => string.Join('.', Scope.Append(Name));
 
@@ -19,7 +19,7 @@ sealed record McpDeclaration(string Kind, string Name, string[] Scope, SourceLoc
 
     internal List<SyntaxNode> Parts { get; } = [Syntax];
 
-    internal ImmutableArray<McpReadOwner> Hierarchy { get; init; } = [];
+    internal ImmutableArray<ReadOwner> Hierarchy { get; init; } = [];
 
-    internal McpReadOwner Owner => new(Kind, Name, Address, Location);
+    internal ReadOwner Owner => new(Kind, Name, Address, Location);
 }

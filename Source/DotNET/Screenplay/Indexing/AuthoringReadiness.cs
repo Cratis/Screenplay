@@ -7,9 +7,9 @@ using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Specifications;
 
-namespace Cratis.Screenplay.Mcp;
+namespace Cratis.Screenplay.Indexing;
 
-sealed class McpAuthoringReadiness(ApplicationSyntax application)
+sealed class AuthoringReadiness(ApplicationSyntax application)
 {
     readonly AuthoringProductionResolver _productions = new(application);
     readonly EffectiveSpecificationApplication _effective = SpecificationExamples.Expand(application);

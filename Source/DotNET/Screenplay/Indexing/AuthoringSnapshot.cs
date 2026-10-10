@@ -10,39 +10,39 @@ using Cratis.Screenplay.Languages;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
 
-namespace Cratis.Screenplay.Mcp;
+namespace Cratis.Screenplay.Indexing;
 
-sealed class McpSnapshot : IPlayFiles
+sealed class AuthoringSnapshot : IPlayFiles
 {
-    readonly McpAnalysisCompiler _compiler;
+    readonly AnalysisCompiler _compiler;
     readonly Dictionary<string, ImmutableArray<Diagnostic>> _completeness = [];
     readonly Lazy<CompilationResult<ApplicationSyntax>> _compilation;
-    readonly Lazy<McpSyntaxIndex> _index;
+    readonly Lazy<AuthoringIndex> _index;
     readonly Lazy<IReadOnlyList<PlacedPlayDocument>> _placements;
     readonly Lazy<DependencyGraph> _dependencyGraph;
     AuthoredTimeline _timeline = null!;
 
-    internal McpSnapshot(ImmutableArray<WorkspaceDocument> documents)
+    internal AuthoringSnapshot(ImmutableArray<WorkspaceDocument> documents)
         : this(documents, ScreenplayLanguageRegistry.Default)
     {
     }
 
-    internal McpSnapshot(ImmutableArray<WorkspaceDocument> documents, IScreenplayLanguageRegistry languages)
-        : this(documents.ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal), McpSourceRevision.For(documents), languages)
+    internal AuthoringSnapshot(ImmutableArray<WorkspaceDocument> documents, IScreenplayLanguageRegistry languages)
+        : this(documents.ToDictionary(document => document.Path.Value, document => document.Text, StringComparer.Ordinal), AuthoringSourceRevision.For(documents), languages)
     {
     }
 
     // CLI source paths and encodings follow PlayFileCompiler, not workspace admission rules.
-    internal McpSnapshot(IReadOnlyDictionary<string, string> sources)
+    internal AuthoringSnapshot(IReadOnlyDictionary<string, string> sources)
         : this(sources, string.Empty, ScreenplayLanguageRegistry.Default)
     {
     }
 
-    internal McpSnapshot(
+    internal AuthoringSnapshot(
         IReadOnlyDictionary<string, string> sources,
         string revision,
         IScreenplayLanguageRegistry languages,
-        McpAnalysisCompiler? compiler = null,
+        AnalysisCompiler? compiler = null,
         (CompilationResult<ApplicationSyntax> Result, AuthoredTimeline Timeline)? compilation = null,
         IEnumerable<string>? roots = null)
     {
@@ -76,7 +76,7 @@ sealed class McpSnapshot : IPlayFiles
 
     internal CompilationResult<ApplicationSyntax> Compilation => _compilation.Value;
 
-    internal McpSyntaxIndex Index => _index.Value;
+    internal AuthoringIndex Index => _index.Value;
 
     internal DependencyGraph DependencyGraph => _dependencyGraph.Value;
 
@@ -112,9 +112,9 @@ sealed class McpSnapshot : IPlayFiles
     /// <inheritdoc/>
     public string ReadContent(PlayFile file) => Sources[file.RelativePath];
 
-    internal static McpSnapshot Compile(string target, bool isFile)
+    internal static AuthoringSnapshot Compile(string target, bool isFile)
     {
-        var compiler = new McpAnalysisCompiler();
+        var compiler = new AnalysisCompiler();
         var files = new PlayFileCompiler(new PlayFiles(), compiler);
         var compilation = isFile ? files.CompileApplication(target) : files.CompileFolder(target);
         var sources = compilation.Sources.ToDictionary(source => source.File.RelativePath, source => source.Source, StringComparer.Ordinal);
@@ -134,10 +134,10 @@ sealed class McpSnapshot : IPlayFiles
         return diagnostics;
     }
 
-    McpSyntaxIndex CreateIndex()
+    AuthoringIndex CreateIndex()
     {
         var compilation = Compilation;
-        var index = new McpSyntaxIndex();
+        var index = new AuthoringIndex();
 
         // Compilation retains provisional trees for diagnostics. Physical authoring candidates
         // require an authoritative placement, including descendants of conflicting barrels.

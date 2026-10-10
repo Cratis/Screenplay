@@ -1,6 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Cratis.Screenplay.Mcp;
+namespace Cratis.Screenplay.Indexing;
 
-sealed record McpQueryIndexResolution(McpReference Reference, McpDeclaration[] Candidates);
+sealed record ReferenceResolution(AuthoredReference Reference, AuthoredDeclaration[] Candidates);
