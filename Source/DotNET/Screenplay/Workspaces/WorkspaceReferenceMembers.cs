@@ -181,11 +181,19 @@ static class WorkspaceReferenceMembers
         return false;
     }
 
-    static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> OtherMembers(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index) => entry.Node switch
+    static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)> OtherMembers(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index) =>
+        FixtureMembers(entry, index) ?? RouteMembers(entry.Node) ?? TypeMembers(entry, index) ?? ViewMembers(entry.Node) ?? InteractionMembers(entry.Node) ?? AccessMembers(entry.Node) ?? [];
+
+    static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)>? FixtureMembers(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index) => entry.Node switch
     {
         QueryIdentitySourceSyntax => [("query", WorkspaceReferenceDomain.Query)],
         CaseValueExpressionSyntax => [("parameter", WorkspaceReferenceDomain.SpecificationParameter)],
         PropertyMappingSyntax when entry.Parent is { } caseParent && index.Find(caseParent)?.Node is SpecificationCaseSyntax => [("property", WorkspaceReferenceDomain.SpecificationParameter)],
+        _ => null
+    };
+
+    static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)>? RouteMembers(SyntaxNode node) => node switch
+    {
         DependsOnSyntax => [("target", WorkspaceReferenceDomain.Container)],
         SpecificationStreamSyntax => [("eventSource", WorkspaceReferenceDomain.EventSource), ("stream", WorkspaceReferenceDomain.EventStream)],
         ObserverFilterSyntax => [("eventSource", WorkspaceReferenceDomain.EventSource), ("stream", WorkspaceReferenceDomain.EventStream)],
@@ -193,26 +201,55 @@ static class WorkspaceReferenceMembers
         OperationSyntax => [("uses", WorkspaceReferenceDomain.System)],
         InvocationRefusalSyntax => [("constraint", WorkspaceReferenceDomain.Constraint)],
         SpecificationRedeliverySyntax => [("reaction", WorkspaceReferenceDomain.Reaction)],
-        SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax => [("operation", WorkspaceReferenceDomain.Operation)],
+        _ => null
+    };
+
+    static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)>? TypeMembers(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index) => entry.Node switch
+    {
         ObjectMemberSyntax => [("name", WorkspaceReferenceDomain.Property)],
-        TypeRefSyntax => [("name", entry.Parent is { } parent && index.Find(parent)?.Node is QuerySyntax or ScreenDataSyntax or IdentityDetailSyntax { Source: QueryIdentitySourceSyntax }
-            ? WorkspaceReferenceDomain.View : WorkspaceReferenceDomain.Type)],
+        PropertyMappingSyntax => [("property", WorkspaceReferenceDomain.Property)],
+        TypeRefSyntax => [("name", TypeDomain(entry, index))],
         CompositeKeySyntax => [("type", WorkspaceReferenceDomain.Type)],
         SpecificationExampleSyntax => [("type", WorkspaceReferenceDomain.Fixture)],
         SpecificationCommandSyntax => [("commandType", WorkspaceReferenceDomain.Fixture)],
-        InvokesSyntax or ScreenActionSyntax or ScreenActionAlternativeSyntax or ScreenActionOtherwiseSyntax or ExecuteCommandActionSyntax => [("command", WorkspaceReferenceDomain.Command)],
-        FormSyntax => [("for", WorkspaceReferenceDomain.Command)],
+        _ => null
+    };
+
+    static WorkspaceReferenceDomain TypeDomain(WorkspaceSyntaxEntry entry, WorkspaceSyntaxIndex index) =>
+        entry.Parent is { } parent && index.Find(parent)?.Node is QuerySyntax or ScreenDataSyntax or IdentityDetailSyntax { Source: QueryIdentitySourceSyntax }
+            ? WorkspaceReferenceDomain.View : WorkspaceReferenceDomain.Type;
+
+    static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)>? ViewMembers(SyntaxNode node) => node switch
+    {
         ReadsSyntax or ProjectionSyntax or ReducerSyntax => [("readModel", WorkspaceReferenceDomain.View)],
         SpecificationReadModelSyntax => [("name", WorkspaceReferenceDomain.Fixture)],
         SpecificationAbsentReadModelSyntax => [("name", WorkspaceReferenceDomain.View)],
         ScreenDataSyntax or FormPopulateViaQuerySyntax or SpecificationQuerySyntax => [("query", WorkspaceReferenceDomain.Query)],
+        _ => null
+    };
+
+    static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)>? InteractionMembers(SyntaxNode node) => node switch
+    {
         ScreenNavigateSyntax or NavigateActionSyntax => [("screen", WorkspaceReferenceDomain.Screen)],
         OpenDialogActionSyntax => [("dialogTemplate", WorkspaceReferenceDomain.DialogTemplate)],
         RefreshQueryActionSyntax => [("query", WorkspaceReferenceDomain.Query)],
         RaiseTriggerActionSyntax => [("trigger", WorkspaceReferenceDomain.Trigger)],
+        _ => null
+    };
+
+    static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)>? AccessMembers(SyntaxNode node) => node switch
+    {
+        InvokesSyntax or ScreenActionSyntax or ScreenActionAlternativeSyntax or ScreenActionOtherwiseSyntax or ExecuteCommandActionSyntax => [("command", WorkspaceReferenceDomain.Command)],
+        FormSyntax => [("for", WorkspaceReferenceDomain.Command)],
+        _ => AuthorizationMembers(node)
+    };
+
+    static IEnumerable<(string Member, WorkspaceReferenceDomain Domain)>? AuthorizationMembers(SyntaxNode node) => node switch
+    {
+        SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax => [("operation", WorkspaceReferenceDomain.Operation)],
         PolicyReferenceSyntax => [("name", WorkspaceReferenceDomain.Policy)],
         PersonaSyntax => [("policies", WorkspaceReferenceDomain.Policy)],
         SpecificationCallerPersonaSyntax => [("name", WorkspaceReferenceDomain.Persona)],
-        _ => []
+        _ => null
     };
 }

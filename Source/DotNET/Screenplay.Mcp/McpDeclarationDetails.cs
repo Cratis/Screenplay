@@ -165,22 +165,24 @@ static class McpDeclarationDetails
     {
         var address = McpJson.RequiredString(arguments, "address");
         var kind = McpJson.RequiredString(arguments, "kind");
-        var matches = snapshot.Index.Find(address, kind);
-        if (kind == "EventSource" || kind == "EventStream")
-        {
-            var parts = address.Split('.');
-            var stream = kind == "EventStream" ? parts.ElementAtOrDefault(1) ?? string.Empty : null;
-            var confidence = snapshot.Index.SourceConfidence?.Resolve(parts[0], stream);
-            if (confidence?.State == "ambiguous" || confidence?.State == "incomplete")
-            {
-                var candidates = confidence.Sources.Select(source => new { source.Name, source.Location });
-                throw new McpFailure($"{(confidence.State == "ambiguous" ? "AmbiguousDeclaration" : "IncompleteSource")}: {string.Join(' ', confidence.Reasons)} Physical candidates: {JsonSerializer.Serialize(candidates)}")
-                {
-                    FailureKind = confidence.State == "ambiguous" ? "AmbiguousDeclaration" : "IncompleteSource"
-                };
-            }
-        }
+        var matches = kind == "Property" ? snapshot.Index.PropertyLinks.Find(address) : snapshot.Index.Find(address, kind);
+        if (kind == "EventSource" || kind == "EventStream") RequireSourceConfidence(snapshot, address, kind);
+
         return matches.Length == 1 ? matches[0] : throw new McpFailure($"Declaration target must identify exactly one logical declaration; found {matches.Length}.");
+    }
+
+    static void RequireSourceConfidence(McpSnapshot snapshot, string address, string kind)
+    {
+        var parts = address.Split('.');
+        var stream = kind == "EventStream" ? parts.ElementAtOrDefault(1) ?? string.Empty : null;
+        var confidence = snapshot.Index.SourceConfidence?.Resolve(parts[0], stream);
+        if (confidence?.State is not ("ambiguous" or "incomplete")) return;
+        var candidates = confidence.Sources.Select(source => new { source.Name, source.Location });
+        var failureKind = confidence.State == "ambiguous" ? "AmbiguousDeclaration" : "IncompleteSource";
+        throw new McpFailure($"{failureKind}: {string.Join(' ', confidence.Reasons)} Physical candidates: {JsonSerializer.Serialize(candidates)}")
+        {
+            FailureKind = failureKind
+        };
     }
 
     static object? RunsAs(McpSnapshot snapshot, McpDeclaration declaration)

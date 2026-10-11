@@ -129,7 +129,7 @@ internal static class OperationValidator
             {
                 var supplied = PathType(command.Properties, path.Path, declarations, out var sourceMissing);
                 var segments = path.Path.Split('.');
-                var reads = (command.Reads ?? []).Where(read => (read.Alias ?? read.ReadModel) == segments[0]).ToArray();
+                var reads = CommandReadReferences.OperationSources(command.Reads ?? [], segments[0]);
                 if (sourceMissing && reads.Length > 0)
                 {
                     sourceMissing = false;
