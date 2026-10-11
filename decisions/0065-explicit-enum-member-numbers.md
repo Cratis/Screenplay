@@ -36,7 +36,7 @@ Every application that stores the enum does store a number, though. Fundamentals
 
 Today a member line such as `draft = 1` is refused with `PLAY0009` (invalid enumeration value), so no valid model changes meaning.
 
-[0025](0025-allocate-esm-v7-to-responses-and-number-later-versions-at-admission.md), as amended by [0066](0066-published-esm-versions-are-frozen.md), freezes a version when any release or prerelease NuGet or npm package exposing it is published. ESM v10 first shipped in Screenplay v4.125.0; 0063's v4.130.0 extension is a retroactive exception, now part of frozen v10. Enum member numbers take the version after exact number literals' version at admission. Under 0025 item 3, a feature without a claim names itself, not a number.
+[0025](0025-allocate-esm-v7-to-responses-and-number-later-versions-at-admission.md), as amended by [0066](0066-published-esm-versions-are-frozen.md), freezes a version when any release or prerelease NuGet or npm package exposing it is published. ESM v10 first shipped in Screenplay v4.125.0; 0063's v4.129.0 extension is a retroactive exception, now part of frozen v10. Enum member numbers take the version after exact number literals' version at admission. Under 0025 item 3, a feature without a claim names itself, not a number.
 
 ## Decision
 
@@ -109,7 +109,7 @@ After acceptance, create issues in Stage, the Arc generator, CritterStack, Studi
 
 **Done when:** `draft = 1` / `issued = 4` compiles in both compilers, prints identically and round-trips through the AST/MCP JSON, and C# printer round-trips. Mixed numbering, duplicate numbers, values outside int32 and malformed literals each report their own diagnostic in both compilers, and `-0` prints as `0`. The numbering refactoring proposes `= 0..n-1` for a wholly unnumbered enum and nothing for a numbered or mixed one. The pinning hint is information-level, suggests that refactoring only for unnumbered enums used by event properties, and stays silent for other enums. Numbers on a non-enum are rejected. A sparse enum binds `numbers: [1, 4]` once admitted and is refused with the typed not-admitted outcome before. An enum pinned to its positions and an unnumbered enum keep their previous version, bytes and revision. Specifications naming members of a numbered enum have unchanged outcomes. The strict reader and programmatic validation refuse `numbers` below the admitting version, on non-enums, with a length mismatch, with duplicates, outside int32 and when it equals the positions. Released v1 to v10 goldens, corpus bytes, revisions and outcomes are unchanged, and the legacy syntax JSON is unchanged for documents without numbers.
 
-**Verify by:** parser and printer specifications in both compilers, the refactoring specification, `for_SemanticModelBinder` concept binding specifications, `for_ExecutableSemanticModel` strict-reader and validation refusals, transport and conformance vectors, a source-backed corpus vector and a feature-named golden, the existing golden and corpus compatibility specifications, and the CI-equivalent local gates.
+**Verify by:** parser specifications in both compilers, C# printer round-trip specifications, the refactoring specification, `for_SemanticModelBinder` concept binding specifications, `for_ExecutableSemanticModel` strict-reader and validation refusals, transport and conformance vectors, a source-backed corpus vector and a feature-named golden, the existing golden and corpus compatibility specifications, and the CI-equivalent local gates.
 
 ## Consequences
 

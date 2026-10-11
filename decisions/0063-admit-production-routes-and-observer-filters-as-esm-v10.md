@@ -15,7 +15,7 @@ applies-to:
   - Documentation/screenplay/interoperability.md
 ---
 
-> **2026-10-11 — published v10 exception recorded by [0066](0066-published-esm-versions-are-frozen.md).** ESM v10 was already published in Screenplay v4.125.0 under 0043, contrary to the unreleased premise below. This record's extension shipped in v4.130.0 and is a retroactive exception: its bytes are now part of frozen v10, and consumers admitting v10 must include them. The original decision text is preserved; no further byte-changing extension may join published v10.
+> **2026-10-11 — published v10 exception recorded by [0066](0066-published-esm-versions-are-frozen.md).** ESM v10 was already published in Screenplay v4.125.0 under 0043, contrary to the unreleased premise below. This record's extension shipped in v4.129.0 and is a retroactive exception: its bytes are now part of frozen v10, and consumers admitting v10 must include them. The original decision text is preserved; no further byte-changing extension may join published v10.
 
 ## Context
 
