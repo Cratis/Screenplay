@@ -44,63 +44,10 @@ public static class golden_vector_regeneration
             throw new GoldenVectorsRegenerated($"The golden vector directory '{directory}' does not exist, so nothing was regenerated. Regenerate from a source checkout, not from a build with mapped source paths.");
         }
 
-        if (Environment.GetEnvironmentVariable(Variable) == "12")
+        var version = Environment.GetEnvironmentVariable(Variable);
+        if (VersionBuilder(version) is { } build)
         {
-            var name = Write(directory, "full-esm-v12.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV12()));
-            throw new GoldenVectorsRegenerated($"Golden vector regenerated ({name}) in '{directory}'. Review the diff, then rebuild and rerun without {Variable}.");
-        }
-
-        if (Environment.GetEnvironmentVariable(Variable) == "11")
-        {
-            var name = Write(directory, "full-esm-v11.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV11()));
-            throw new GoldenVectorsRegenerated($"Golden vector regenerated ({name}) in '{directory}'. Review the diff, then rebuild and rerun without {Variable}.");
-        }
-
-        if (Environment.GetEnvironmentVariable(Variable) == "10")
-        {
-            var name = Write(directory, "full-esm-v10.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV10()));
-            throw new GoldenVectorsRegenerated($"Golden vector regenerated ({name}) in '{directory}'. Review the diff, then rebuild and rerun without {Variable}.");
-        }
-
-        if (Environment.GetEnvironmentVariable(Variable) == "9")
-        {
-            var name = Write(directory, "full-esm-v9.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV9()));
-            throw new GoldenVectorsRegenerated($"Golden vector regenerated ({name}) in '{directory}'. Review the diff, then rebuild and rerun without {Variable}.");
-        }
-
-        if (Environment.GetEnvironmentVariable(Variable) == "8")
-        {
-            var name = Write(directory, "full-esm-v8.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV8()));
-            throw new GoldenVectorsRegenerated($"Golden vector regenerated ({name}) in '{directory}'. Review the diff, then rebuild and rerun without {Variable}.");
-        }
-
-        if (Environment.GetEnvironmentVariable(Variable) == "7")
-        {
-            var name = Write(directory, "full-esm-v7.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV7()));
-            throw new GoldenVectorsRegenerated($"Golden vector regenerated ({name}) in '{directory}'. Review the diff, then rebuild and rerun without {Variable}.");
-        }
-
-        if (Environment.GetEnvironmentVariable(Variable) == "6")
-        {
-            var name = Write(directory, "full-esm-v6.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV6()));
-            throw new GoldenVectorsRegenerated($"Golden vector regenerated ({name}) in '{directory}'. Review the diff, then rebuild and rerun without {Variable}.");
-        }
-
-        if (Environment.GetEnvironmentVariable(Variable) == "5")
-        {
-            var name = Write(directory, "full-esm-v5.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV5()));
-            throw new GoldenVectorsRegenerated($"Golden vector regenerated ({name}) in '{directory}'. Review the diff, then rebuild and rerun without {Variable}.");
-        }
-
-        if (Environment.GetEnvironmentVariable(Variable) == "4")
-        {
-            var name = Write(directory, "full-esm-v4.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV4()));
-            throw new GoldenVectorsRegenerated($"Golden vector regenerated ({name}) in '{directory}'. Review the diff, then rebuild and rerun without {Variable}.");
-        }
-
-        if (Environment.GetEnvironmentVariable(Variable) == "3")
-        {
-            var name = Write(directory, "full-esm-v3.json", SemanticModelSerializer.Serialize(canonical_serialization_golden_vectors.CreateSemanticModelV3()));
+            var name = Write(directory, $"full-esm-v{version}.json", SemanticModelSerializer.Serialize(build()));
             throw new GoldenVectorsRegenerated($"Golden vector regenerated ({name}) in '{directory}'. Review the diff, then rebuild and rerun without {Variable}.");
         }
 
@@ -123,6 +70,21 @@ public static class golden_vector_regeneration
             $"Golden vectors regenerated ({string.Join(", ", written)}) in '{directory}'. " +
             $"Review the diff - every revision hash inside changes with the model - then rebuild and rerun without {Variable}.");
     }
+
+    static Func<ExecutableSemanticModel>? VersionBuilder(string? version) => version switch
+    {
+        "12" => canonical_serialization_golden_vectors.CreateSemanticModelV12,
+        "11" => canonical_serialization_golden_vectors.CreateSemanticModelV11,
+        "10" => canonical_serialization_golden_vectors.CreateSemanticModelV10,
+        "9" => canonical_serialization_golden_vectors.CreateSemanticModelV9,
+        "8" => canonical_serialization_golden_vectors.CreateSemanticModelV8,
+        "7" => canonical_serialization_golden_vectors.CreateSemanticModelV7,
+        "6" => canonical_serialization_golden_vectors.CreateSemanticModelV6,
+        "5" => canonical_serialization_golden_vectors.CreateSemanticModelV5,
+        "4" => canonical_serialization_golden_vectors.CreateSemanticModelV4,
+        "3" => canonical_serialization_golden_vectors.CreateSemanticModelV3,
+        _ => null
+    };
 
     static string Write(string directory, string name, byte[] bytes)
     {
