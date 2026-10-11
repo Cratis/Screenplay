@@ -18,9 +18,6 @@ public static partial class SpecificationExamples
     /// <returns>The effective syntax, value provenance, and resolution diagnostics.</returns>
     public static EffectiveSpecificationApplication Expand(ApplicationSyntax application) => new Expansion(application).Expand();
 
-    internal static EffectiveSpecificationApplication ExpandForValidation(ApplicationSyntax application, bool deferImportedTypes) =>
-        new Expansion(application, deferImportedTypes: deferImportedTypes).Expand();
-
     /// <summary>
     /// Expands a standalone specification against its owning application's declarations.
     /// </summary>
@@ -53,6 +50,9 @@ public static partial class SpecificationExamples
     /// </remarks>
     public static CompilationResult<IReadOnlyList<EffectiveSpecification>> ExpandAll(SpecificationSyntax specification, ApplicationSyntax declarations, IReadOnlyList<string> scope) =>
         new Expansion(declarations, specification.Examples, new(scope)).ExpandStandalone(specification, new(scope));
+
+    internal static EffectiveSpecificationApplication ExpandForValidation(ApplicationSyntax application, bool deferImportedTypes) =>
+        new Expansion(application, deferImportedTypes: deferImportedTypes).Expand();
 
     private sealed partial class Expansion
     {
