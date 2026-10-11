@@ -18,7 +18,7 @@ Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNu
 
 ## Stored enum numbers
 
-Invoice status, payment terms and payment method pin their current zero-based positions, preserving executable bytes. AgingBucket demonstrates the external aging contract's sparse `0, 30, 90` numbers. It compiles without warnings, but its enum member numbers are not admitted by any supported ESM version yet (`PLAY0268`, #643). Member names, not numbers, remain the values in specifications and conditions. Never renumber or reuse a published member number.
+Invoice status, payment terms and payment method pin their current zero-based positions, preserving executable bytes. AgingBucket demonstrates the external aging contract's sparse `0, 30, 90` numbers. Its non-positional enum member numbers select ESM v12; consumers must explicitly admit the contract before rendering them. Member names, not numbers, remain the values in specifications and conditions. Never renumber or reuse a published member number.
 
 ## Keys and event routing
 

@@ -30,6 +30,10 @@ The optional `file` line names the repository relative file this declaration is 
 
 For an existing catalog, advance a contract only with `SemanticIdentityCatalog.PlanEventRevisionAdvancement(previous, expectedRevision, documentKeys, semanticAddresses, eventAddresses, advancements)`. Supply the complete current addresses and an explicit `(event address, new revision)` advancement. The plan checks the exact previous catalog revision, retains the contract id, carries generation-1 property IDs to revision-qualified addresses, and refuses backward or stale advancement. A fresh compile can bootstrap all property identities for each declared revision and record revision N in its returned `SemanticCompilation.Documents.IdentityCatalog`; persist that catalog before subsequent edits. Workspace transactions can supply the same explicit advancement through `WorkspaceTransactionRequest.EventRevisionAdvancements`, checked against `ExpectedCatalogRevision`. Newly introduced events receive their declared revision without an advancement. Declaring fewer generations than a persisted catalog records fails binding.
 
+### Chronicle projection registration
+
+For projections that opt in to Chronicle's generation support, bare PDL event names pin the latest registered generation when the projection is registered: one generation per event type per projection. This is provider registration behavior, not a change to Screenplay's resolution to the highest declared generation described above and in [decision 0015](https://github.com/Cratis/Screenplay/blob/main/decisions/0015-event-generations-in-the-executable-model.md). There is no `X+N` syntax. Explicit generation-qualified projection references remain tracked in [Screenplay#642](https://github.com/Cratis/Screenplay/issues/642).
+
 ## Change an event property through MCP
 
 Use `propose-property` to rename or remove a current event property, with an
