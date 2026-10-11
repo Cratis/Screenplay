@@ -66,6 +66,13 @@ module Workspaces
 
     on submit navigate to WorkItemDetails by workItemId
 
+  contribute to Navigation
+    navigate to WorkItemList
+    label "Overview"
+    order 5
+    icon home
+    presentation text
+
   feature Tracking
     slice StateChange CreateWorkItem
       command CreateWorkItem
@@ -181,6 +188,14 @@ module Workspaces
         template MasterDetail
           list
             title "Work items"
+            toolbar main
+              item create dialog EditDialog
+                label "New work item"
+                icon add
+                presentation mode "icon"
+              item refresh navigate to WorkItemList
+                label "Refresh"
+                presentation placement "secondary"
             data WorkItemSummary[] via query AllWorkItems
             table WorkItemSummary
               column title label "Title"

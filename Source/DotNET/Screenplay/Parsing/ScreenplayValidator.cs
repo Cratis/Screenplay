@@ -25,14 +25,15 @@ internal static partial class ScreenplayValidator
     /// <param name="application">The <see cref="ApplicationSyntax"/> to validate.</param>
     /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
     /// <param name="allowUnresolvedPersonaPolicies">Whether draft authoring may retain unresolved persona references as warnings.</param>
+    /// <param name="deferImportedExampleTypes">Whether a single document may defer example types declared in imported documents.</param>
     /// <returns>The application with repeated dependency targets kept once.</returns>
-    public static ApplicationSyntax Validate(ApplicationSyntax application, ParserContext context, bool allowUnresolvedPersonaPolicies = false)
+    public static ApplicationSyntax Validate(ApplicationSyntax application, ParserContext context, bool allowUnresolvedPersonaPolicies = false, bool deferImportedExampleTypes = false)
     {
         foreach (var error in SourceNumericModes.Errors(application)) context.Add(error);
         new PublicEventMetadataValidator(context).VisitApplication(application);
         PurposeValidator.Validate(application, context);
         var authored = application;
-        var expansion = SpecificationExamples.Expand(application);
+        var expansion = SpecificationExamples.ExpandForValidation(application, deferImportedExampleTypes);
         application = EffectiveApplication(application, expansion);
 
         var slices = application.Modules

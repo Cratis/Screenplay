@@ -83,7 +83,9 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
     const locations = new Map(preparedDocuments.map(document => [document.path, document.locations]));
     // Put the buffer after its supplied context so duplicate real declarations are reported at
     // the current source, not silently dropped from its source-local diagnostic view.
-    const parsed = parsePlacedDocuments([...preparedDocuments.slice(1), prepared]);
+    // Editor context can omit imported declarations. Defer only those missing types; imports whose
+    // targets are present in the merged inventory still receive declaration-dependent validation.
+    const parsed = parsePlacedDocuments([...preparedDocuments.slice(1), prepared], undefined, true);
     const commands = new Map<number, CommandSyntax>();
     const specifications = new Map<number, SpecificationSyntax>();
     const visited = new WeakSet<object>();

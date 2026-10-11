@@ -8,7 +8,7 @@ import { ScreenplaySyntaxWalker } from '../../Syntax/ScreenplaySyntaxWalker';
 import { SyntaxNode } from '../../Syntax/SyntaxNode';
 import { toSyntaxJson } from '../../Syntax/SyntaxJson';
 
-const declarations = 'example Root : E\n  p = 1\nmodule M\n  example Module : E\n    p = 2\n  feature F\n    example Feature : E\n      p = 3\n    slice StateChange S\n      example Slice : E\n        p = 4';
+const declarations = 'import Shared.Facts.Recording.E\nexample Root : E\n  p = 1\nmodule M\n  example Module : E\n    p = 2\n  feature F\n    example Feature : E\n      p = 3\n    slice StateChange S\n      example Slice : E\n        p = 4';
 
 describe('when parsing typed examples', () => {
     it('should retain examples in every declaration scope', () => {
@@ -53,11 +53,11 @@ describe('when parsing typed examples', () => {
 
     it('should preserve every example while merging placed files', () => {
         const merged = mergeDocuments([
-            parse('example Root : E\n  p = 1', 'root.play'),
-            parse('example ModuleOne : E\n  p = 2', 'one.play', ['M']),
-            parse('example ModuleTwo : E\n  p = 3', 'two.play', ['M']),
-            parse('example FeatureOne : E\n  p = 4', 'feature-one.play', ['M', 'F']),
-            parse('example FeatureTwo : E\n  p = 5', 'feature-two.play', ['M', 'F'])
+            parse('import Shared.Facts.Recording.E\nexample Root : E\n  p = 1', 'root.play'),
+            parse('import Shared.Facts.Recording.E\nexample ModuleOne : E\n  p = 2', 'one.play', ['M']),
+            parse('import Shared.Facts.Recording.E\nexample ModuleTwo : E\n  p = 3', 'two.play', ['M']),
+            parse('import Shared.Facts.Recording.E\nexample FeatureOne : E\n  p = 4', 'feature-one.play', ['M', 'F']),
+            parse('import Shared.Facts.Recording.E\nexample FeatureTwo : E\n  p = 5', 'feature-two.play', ['M', 'F'])
         ]);
         merged.diagnostics.should.deep.equal([]);
         merged.value.examples!.length.should.equal(1);

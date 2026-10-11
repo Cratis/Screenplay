@@ -29,3 +29,10 @@ module Workspaces
     field title label "New title"
 
     on submit navigate to WorkItemDetails by workItemId
+
+  contribute to Navigation
+    navigate to WorkItemList
+    label "Overview"
+    order 5
+    icon home
+    presentation text
