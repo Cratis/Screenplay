@@ -18,14 +18,6 @@ internal static partial class SemanticModelValidator
         return context.UsesExactNumberLiterals;
     }
 
-    static void ValidateNumberLiteralsVersion(SemanticVersion version, bool usesExactNumberLiterals)
-    {
-        if (version == SemanticVersion.V11 && !usesExactNumberLiterals)
-        {
-            throw new InvalidSemanticContract("An ESM v11 model must use exact Double-mode number literal lowering.");
-        }
-    }
-
     internal static bool DiffersFromLegacyLowering(decimal value)
     {
         try
@@ -37,6 +29,14 @@ internal static partial class SemanticModelValidator
             // A decimal at the boundary can round outside the decimal range as a double;
             // it cannot have been produced by the legacy lowering either.
             return true;
+        }
+    }
+
+    static void ValidateNumberLiteralsVersion(SemanticVersion version, bool usesExactNumberLiterals)
+    {
+        if (version == SemanticVersion.V11 && !usesExactNumberLiterals)
+        {
+            throw new InvalidSemanticContract("An ESM v11 model must use exact Double-mode number literal lowering.");
         }
     }
 
