@@ -1,8 +1,8 @@
 // The queue's own lifecycle - nothing outside this slice uses it.
 concept ShipmentStatus : Enum
-  awaitingDispatch
-  dispatched
-  delivered
+  awaitingDispatch = 0
+  dispatched = 1
+  delivered = 2
 
 slice StateView ShipmentQueue
   description "What the warehouse has to pack and send today"

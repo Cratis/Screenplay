@@ -653,6 +653,11 @@ direction; `PLAY0610`, `PLAY0615`, `PLAY0618` and `PLAY0619` would move a constr
 | `PLAY0664` | Warning | A production repeats its command's source, stream and stream-id mappings. The typed workspace repair removes the override. |
 | `PLAY0665` | Error | An observer filter is malformed, duplicated, has children, names an unresolved or ambiguous source/stream, or a filtered reaction has a non-event trigger. |
 | `PLAY0666` | Warning | A reaction or reducer filter excludes every statically known producer's effective route. Handlers and foreign origins are unknown and suppress this C#-only warning. |
+| `PLAY0667` | Error | Enum members mix explicit numbers with unnumbered members. Number all members or none. |
+| `PLAY0668` | Error | An enum declares the same number more than once; aliases are not supported. |
+| `PLAY0669` | Error | An enum member number is outside the int32 range. |
+| `PLAY0670` | Error | An enum member number is malformed: use decimal digits with an optional minus, no leading zero, fraction, exponent or plus. |
+| `PLAY0671` | Information | An unnumbered enum is used by an event property. The opt-in numbering refactoring pins each member's current position; this is not a correctness repair. |
 
 Overrides reuse `PLAY0504` for route shape, mapping, destination type and duplicate-route errors. Protected sources reuse `PLAY0515`. Property paths remain refused at binding with `PLAY0268` (#574), and generated route inputs with `PLAY0273`.
 

@@ -1,5 +1,7 @@
 # Library
 
+`LoanStatus` pins its stored member numbers to the current positions (`0, 1`). Names remain the specification values; positional pins preserve executable bytes. Never renumber or reuse a published number.
+
 A small lending library in one file, the place to start if you have never read a `.play` document. It has eight
 slices across three features, and two people who use it.
 

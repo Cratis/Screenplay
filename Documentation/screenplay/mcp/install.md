@@ -526,7 +526,7 @@ See [identity state and recovery](recovery.md).
 - **Identity conflict:** retain the state file; do not bootstrap over it. Restore externally changed declaration names or paths before making an explicit refactoring proposal.
 - **Pending operation:** inspect recovery status before opening or editing the model.
 
-The [MCP reference](reference.md) lists tools, validation policies and limits.
+The [MCP reference](reference.md) lists tools, validation policies and limits, including the opt-in `propose-number-enum-members` refactoring. It previews positional enum pins and writes nothing until explicit `apply`.
 
 [cli-installation]: /cli/getting-started/#install-it
 [cli-desktop-mcp]: /cli/reference/screenplay-desktop-mcp/

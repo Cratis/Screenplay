@@ -16,6 +16,10 @@ Processing purposes are declared at the top level: Billing covers the module, Bo
 
 Descriptions on InvoiceId, IsAuthenticated, RegisterInvoiceForm, UniqueInvoiceNumber, InvoiceList and RegisterInvoiceScreen explain values, rules, builders and input/view surfaces. They are report-only metadata, not UI titles, validation or generated code comments.
 
+## Stored enum numbers
+
+Invoice status, payment terms and payment method pin their current zero-based positions, preserving executable bytes. AgingBucket demonstrates the external aging contract's sparse `0, 30, 90` numbers. It compiles without warnings, but its enum member numbers are not admitted by any supported ESM version yet (`PLAY0268`, #643). Member names, not numbers, remain the values in specifications and conditions. Never renumber or reuse a published member number.
+
 ## Keys and event routing
 
 `InvoiceListReadModel` declares an explicit single key. `InvoicePaymentMethodTotals` uses invoice and payment method as a composite key. `RecordPayment` supplies both parts in a named reads block. Composite keys remain authoring-only and refuse executable binding with `PLAY0268` (#599).

@@ -61,6 +61,8 @@ type InvoiceLine
 
 A specification value for a `lines InvoiceLine[]` field can then be `lines = [{"sku":"A-1","quantity":2}]` or `lines = []`. The compiler checks each key against `InvoiceLine`, including nested declared types and enum members. A missing declaration or an imported type is not guessed; a key absent from a known shape is an error.
 
+An enum is a concept, not a composite type. Its member names remain the values in specifications and conditions even when every member has an explicit number. An unnumbered enum reached through a composite event property also receives the stored-identity pinning hint. See [Enum concepts](concepts.md#enum-concepts) for numbering rules and executable admission.
+
 ## Types compose
 
 A type may reference another type, which is how a nested shape is expressed — by reference rather than by nesting the declaration:
