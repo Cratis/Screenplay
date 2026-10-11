@@ -15515,6 +15515,61 @@
       "title": "An observer filter excludes every statically known producer.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0667",
+      "name": "MixedEnumerationNumbering",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An enum mixes explicitly numbered and positional members.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0668",
+      "name": "DuplicateEnumerationNumber",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An enum declares the same number for more than one member.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0669",
+      "name": "EnumerationNumberOutsideInt32",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An enum member number is outside the int32 range.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0670",
+      "name": "MalformedEnumerationNumber",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "An enum member number is not an optionally negative decimal integer without leading zeros.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0671",
+      "name": "UnpinnedStoredEnumeration",
+      "severity": "information",
+      "severities": [
+        "information"
+      ],
+      "title": "A positional enum used by an event property can be pinned to its current numbers.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [
@@ -18695,6 +18750,74 @@
           "expectedCatalogRevision",
           "target",
           "newParent"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "propose-number-enum-members",
+      "requiredParameters": [
+        "expectedCatalogRevision",
+        "expectedRevision",
+        "formatting",
+        "subject"
+      ],
+      "optionalParameters": [
+        "includeContent",
+        "validation"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "string"
+          },
+          "expectedCatalogRevision": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "object",
+            "properties": {
+              "revision": {
+                "type": "string"
+              },
+              "documentId": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "revision",
+              "documentId",
+              "path"
+            ],
+            "additionalProperties": false
+          },
+          "formatting": {
+            "type": "string",
+            "enum": [
+              "CanonicalizeTouchedDocuments"
+            ]
+          },
+          "validation": {
+            "type": "string",
+            "enum": [
+              "Authoring",
+              "Executable"
+            ]
+          },
+          "includeContent": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "expectedCatalogRevision",
+          "subject",
+          "formatting"
         ],
         "additionalProperties": false
       }

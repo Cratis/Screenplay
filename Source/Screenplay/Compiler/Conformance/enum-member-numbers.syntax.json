@@ -1,0 +1,52 @@
+{
+  "kind": "ApplicationSyntax",
+  "concepts": [
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "description": "Stored status identity",
+      "name": "Status",
+      "type": "Enum",
+      "valueNumbers": [
+        -2147483648,
+        4,
+        2147483647
+      ],
+      "values": [
+        "draft",
+        "issued",
+        "validate"
+      ]
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "Zero",
+      "type": "Enum",
+      "valueNumbers": [
+        0
+      ],
+      "values": [
+        "zero"
+      ]
+    },
+    {
+      "kind": "ConceptSyntax",
+      "attributes": [],
+      "name": "Positional",
+      "type": "Enum",
+      "values": [
+        "first",
+        "second"
+      ]
+    }
+  ],
+  "domain": null,
+  "eventSources": [],
+  "fileImports": [],
+  "imports": [],
+  "modules": [],
+  "personas": [],
+  "systems": [],
+  "types": []
+}
