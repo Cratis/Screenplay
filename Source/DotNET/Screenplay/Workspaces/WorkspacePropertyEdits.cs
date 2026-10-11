@@ -57,7 +57,8 @@ sealed class WorkspacePropertyEdits(
 
     void MoveOwnerProperties(WorkspaceSyntaxEntry owner)
     {
-        foreach (var property in index.Entries.Where(entry => entry.Parent == owner.Handle && entry.Address is { } address && address.Parts[^3].Kind != SemanticAddressPartKind.Generation))
+        foreach (var property in index.Entries.Where(entry => entry.Parent == owner.Handle)
+            .Where(entry => entry.Address is { } address && address.Parts[^3].Kind != SemanticAddressPartKind.Generation))
         {
             _renames[property.Address!] = SemanticAddress.ForEventProperty(owner.Address!, EventContractRevision.Initial, property.Address!.Name);
         }
