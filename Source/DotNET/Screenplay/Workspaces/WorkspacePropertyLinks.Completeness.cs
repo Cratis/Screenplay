@@ -4,6 +4,7 @@
 using Cratis.Screenplay.Indexing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
+using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Serialization;
 using Cratis.Screenplay.Syntax.Specifications;
 
@@ -59,16 +60,16 @@ internal sealed partial class WorkspacePropertyLinks
                 foreach (var comment in entry.Node.SourceComments)
                 {
                     var occurrence = entry with { Node = entry.Node with { Location = entry.Location with { Line = comment.Line } } };
-                    IndexUnclassified(occurrence, properties, [comment.Text]);
+                    IndexUnclassified(occurrence, properties, [comment.Text], classifiedOccurrence: false);
                 }
             }
         }
     }
 
-    void IndexUnclassified(WorkspaceSyntaxEntry entry, AuthoredDeclaration[] properties, IEnumerable<string> texts)
+    void IndexUnclassified(WorkspaceSyntaxEntry entry, AuthoredDeclaration[] properties, IEnumerable<string> texts, bool classifiedOccurrence = true)
     {
         var identifiers = texts.SelectMany(WorkspaceOpaqueText.Identifiers).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        foreach (var property in properties.Where(property => identifiers.Contains(property.Name) && !Covered(entry, property)))
+        foreach (var property in properties.Where(property => identifiers.Contains(property.Name) && !Covered(entry, property, classifiedOccurrence)))
         {
             Add(entry, "unclassified", new(property.Name, [property], Incomplete: true));
         }
@@ -91,9 +92,19 @@ internal sealed partial class WorkspacePropertyLinks
         return Current(context);
     }
 
-    bool Covered(WorkspaceSyntaxEntry entry, AuthoredDeclaration property)
+    bool Covered(WorkspaceSyntaxEntry entry, AuthoredDeclaration property, bool classifiedOccurrence)
     {
         if (new[] { entry }.Concat(Parents(entry)).Any(item => item.Node is PropertySyntax && item.Location == property.Location)) return true;
+
+        // A typed mapping/reader occurrence with one resolved same-named member is not evidence
+        // of every other same-named member in a fan-out context. Use the existing classified link,
+        // not a name-based inferred mapping; unknown text and comments still reach the backstop.
+        if (classifiedOccurrence && (entry.Node is PropertyMappingSyntax or MappingSyntax or PathExpressionSyntax or ContextExpressionSyntax or SourceItemExpressionSyntax) &&
+            _links.Exists(link => link.Reference.Location == entry.Location && link.Resolution == "resolved" &&
+                link.Reference.Role != "unclassified" && link.Candidates is [var candidate] && candidate.Name == property.Name && link.Reference.Name.Split('.')[^1] == property.Name))
+        {
+            return true;
+        }
         var locations = new[] { entry }.Concat(Parents(entry).TakeWhile(parent => DeclarationOwner(parent) is null)).Select(item => item.Location).ToHashSet();
 
         return Incoming(property).Any(link => locations.Contains(link.Reference.Location));

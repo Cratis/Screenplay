@@ -50,6 +50,9 @@ static class WorkspaceAuthoringIdentity
             events = [.. sourceAddresses.Where(retainedEvents.Contains)];
         }
 
+        RequireAdvancements(workspace, request, syntax);
+        var movedProperties = InitialPropertyMigrations(workspace, request, addresses);
+
         // Failed ESM admission may leave document assignments provisional. Establish those exact existing
         // identities before key migration; the request was already gated against the authoritative base revision.
         var previous = SemanticIdentityCatalog.Create(
@@ -67,12 +70,44 @@ static class WorkspaceAuthoringIdentity
             addresses,
             events,
             documentRenames,
-            request.SemanticRenames,
+            [.. request.SemanticRenames, .. movedProperties],
             request.EventRenames,
             retiredDocuments,
             request.RetiredSemanticAddresses,
             request.RetiredEventAddresses).Catalog;
-        return newGenerations.IsEmpty ? catalog : SemanticIdentityCatalog.PlanEventRevisionAdvancement(
-            catalog, catalog.Revision, keys, addresses, events, newGenerations).Catalog;
+        var advancements = newGenerations.AddRange(request.EventRevisionAdvancements);
+        return advancements.IsEmpty ? catalog : SemanticIdentityCatalog.PlanEventRevisionAdvancement(
+            catalog, catalog.Revision, keys, addresses, events, advancements).Catalog;
+    }
+
+    static ImmutableArray<SemanticIdentityRename> InitialPropertyMigrations(ScreenplayWorkspace workspace, WorkspaceAuthoringRequest request, ImmutableArray<SemanticAddress> addresses) =>
+        [.. workspace.IdentityCatalog.Semantics
+            .Where(assignment => assignment.Address.Kind == SemanticKind.Property && assignment.Address.OwnerKind == SemanticKind.EventContract &&
+                assignment.Address.Parts[^3].Kind != SemanticAddressPartKind.Generation && request.EventRevisionAdvancements.Any(advancement =>
+                    assignment.Address.Parts[..^2].SequenceEqual(advancement.Address.Parts) || request.EventRenames.Any(rename => rename.PreviousAddress.Parts.SequenceEqual(assignment.Address.Parts[..^2]) && rename.CurrentAddress.Equals(advancement.Address))))
+            .Select(assignment => InitialPropertyRename(assignment.Address, request))
+            .Where(rename => addresses.Contains(rename.CurrentAddress) && !request.SemanticRenames.Any(explicitRename => explicitRename.PreviousAddress.Equals(rename.PreviousAddress)))];
+
+    static SemanticIdentityRename InitialPropertyRename(SemanticAddress property, WorkspaceAuthoringRequest request)
+    {
+        var owner = SemanticAddress.FromCanonical(SemanticKind.EventContract, property.Parts[..^2]);
+        var renamedOwner = request.EventRenames.FirstOrDefault(rename => rename.PreviousAddress.Equals(owner))?.CurrentAddress ?? owner;
+        return new(property, SemanticAddress.ForEventProperty(renamedOwner, EventContractRevision.Initial, property.Name));
+    }
+
+    static void RequireAdvancements(ScreenplayWorkspace workspace, WorkspaceAuthoringRequest request, ApplicationSyntax syntax)
+    {
+        var events = WorkspaceSyntaxIndex.ForSyntax(syntax, workspace.IdentityCatalog)
+            .Where(entry => entry.Node is EventSyntax && entry.Address is not null)
+            .GroupBy(entry => entry.Address!).ToDictionary(group => group.Key, group => group.Max(entry => ((EventSyntax)entry.Node).Generation));
+        foreach (var advancement in request.EventRevisionAdvancements)
+        {
+            if (!events.TryGetValue(advancement.Address, out var revision) || revision != advancement.Revision.Value ||
+                (!workspace.IdentityCatalog.EventContracts.Any(assignment => assignment.Address.Equals(advancement.Address)) &&
+                 !request.EventRenames.Any(rename => rename.CurrentAddress.Equals(advancement.Address) && workspace.IdentityCatalog.EventContracts.Any(assignment => assignment.Address.Equals(rename.PreviousAddress)))))
+            {
+                throw new InvalidSemanticContract("An event revision advancement must match a persisted event and its declared revision.");
+            }
+        }
     }
 }

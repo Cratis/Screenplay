@@ -170,6 +170,14 @@ public sealed class ScreenplayWorkspace
     public WorkspaceAuthoringResult ProposeMove(WorkspaceMoveRequest request) =>
         new WorkspaceRefactoring(this).Move(request);
 
+    /// <summary>
+    /// Proposes a selected-set property change along a resolved mapping chain without writing source or identities.
+    /// </summary>
+    /// <param name="request">The original handles, expected names and explicit event evolution choice.</param>
+    /// <returns>The atomic authoring verdict and retained property report.</returns>
+    public WorkspaceAuthoringResult ProposeProperty(WorkspacePropertyRequest request) =>
+        new WorkspaceRefactoring(this).Property(request);
+
     internal static ScreenplayWorkspace CreateEmpty(ApplicationIdentity applicationIdentity, string applicationName, SemanticIdentityCatalog catalog)
     {
         var name = SemanticDocumentText.NormalizeRequiredUnicode(applicationName, "workspace application name");

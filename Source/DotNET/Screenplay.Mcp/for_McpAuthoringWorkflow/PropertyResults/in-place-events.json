@@ -1,0 +1,468 @@
+{
+  "action": "rename",
+  "target": {
+    "address": {
+      "kind": "Property",
+      "parts": [
+        {
+          "kind": "Application",
+          "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+        },
+        {
+          "kind": "Module",
+          "key": "Projects"
+        },
+        {
+          "kind": "Feature",
+          "key": "Registration"
+        },
+        {
+          "kind": "Slice",
+          "key": "Register"
+        },
+        {
+          "kind": "Declaration",
+          "key": "Register"
+        },
+        {
+          "kind": "OwnerKind",
+          "key": "7"
+        },
+        {
+          "kind": "Member",
+          "key": "name"
+        }
+      ]
+    },
+    "kind": "Command",
+    "generation": null
+  },
+  "changed": [
+    {
+      "address": {
+        "kind": "Property",
+        "parts": [
+          {
+            "kind": "Application",
+            "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+          },
+          {
+            "kind": "Module",
+            "key": "Projects"
+          },
+          {
+            "kind": "Feature",
+            "key": "Registration"
+          },
+          {
+            "kind": "Slice",
+            "key": "Register"
+          },
+          {
+            "kind": "Declaration",
+            "key": "Audited"
+          },
+          {
+            "kind": "Generation",
+            "key": "2"
+          },
+          {
+            "kind": "OwnerKind",
+            "key": "8"
+          },
+          {
+            "kind": "Member",
+            "key": "name"
+          }
+        ]
+      },
+      "kind": "Event",
+      "role": "mapping-target",
+      "change": "mappingRewritten",
+      "location": {
+        "line": 12,
+        "column": 11,
+        "path": "application.play"
+      },
+      "weakensAssertion": false
+    },
+    {
+      "address": {
+        "kind": "Property",
+        "parts": [
+          {
+            "kind": "Application",
+            "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+          },
+          {
+            "kind": "Module",
+            "key": "Projects"
+          },
+          {
+            "kind": "Feature",
+            "key": "Registration"
+          },
+          {
+            "kind": "Slice",
+            "key": "Register"
+          },
+          {
+            "kind": "Declaration",
+            "key": "Audited"
+          },
+          {
+            "kind": "Generation",
+            "key": "2"
+          },
+          {
+            "kind": "OwnerKind",
+            "key": "8"
+          },
+          {
+            "kind": "Member",
+            "key": "name"
+          }
+        ]
+      },
+      "kind": "Event",
+      "role": "declaration",
+      "change": "renamed",
+      "location": {
+        "line": 18,
+        "column": 9,
+        "path": "application.play"
+      },
+      "weakensAssertion": false
+    },
+    {
+      "address": {
+        "kind": "Property",
+        "parts": [
+          {
+            "kind": "Application",
+            "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+          },
+          {
+            "kind": "Module",
+            "key": "Projects"
+          },
+          {
+            "kind": "Feature",
+            "key": "Registration"
+          },
+          {
+            "kind": "Slice",
+            "key": "Register"
+          },
+          {
+            "kind": "Declaration",
+            "key": "Register"
+          },
+          {
+            "kind": "OwnerKind",
+            "key": "7"
+          },
+          {
+            "kind": "Member",
+            "key": "name"
+          }
+        ]
+      },
+      "kind": "Command",
+      "role": "declaration",
+      "change": "renamed",
+      "location": {
+        "line": 6,
+        "column": 9,
+        "path": "application.play"
+      },
+      "weakensAssertion": false
+    },
+    {
+      "address": {
+        "kind": "Property",
+        "parts": [
+          {
+            "kind": "Application",
+            "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+          },
+          {
+            "kind": "Module",
+            "key": "Projects"
+          },
+          {
+            "kind": "Feature",
+            "key": "Registration"
+          },
+          {
+            "kind": "Slice",
+            "key": "Register"
+          },
+          {
+            "kind": "Declaration",
+            "key": "Register"
+          },
+          {
+            "kind": "OwnerKind",
+            "key": "7"
+          },
+          {
+            "kind": "Member",
+            "key": "name"
+          }
+        ]
+      },
+      "kind": "Command",
+      "role": "mapping-source",
+      "change": "mappingRewritten",
+      "location": {
+        "line": 9,
+        "column": 11,
+        "path": "application.play"
+      },
+      "weakensAssertion": false
+    },
+    {
+      "address": {
+        "kind": "Property",
+        "parts": [
+          {
+            "kind": "Application",
+            "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+          },
+          {
+            "kind": "Module",
+            "key": "Projects"
+          },
+          {
+            "kind": "Feature",
+            "key": "Registration"
+          },
+          {
+            "kind": "Slice",
+            "key": "Register"
+          },
+          {
+            "kind": "Declaration",
+            "key": "Register"
+          },
+          {
+            "kind": "OwnerKind",
+            "key": "7"
+          },
+          {
+            "kind": "Member",
+            "key": "name"
+          }
+        ]
+      },
+      "kind": "Command",
+      "role": "mapping-source",
+      "change": "mappingRewritten",
+      "location": {
+        "line": 12,
+        "column": 11,
+        "path": "application.play"
+      },
+      "weakensAssertion": false
+    },
+    {
+      "address": {
+        "kind": "Property",
+        "parts": [
+          {
+            "kind": "Application",
+            "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+          },
+          {
+            "kind": "Module",
+            "key": "Projects"
+          },
+          {
+            "kind": "Feature",
+            "key": "Registration"
+          },
+          {
+            "kind": "Slice",
+            "key": "Register"
+          },
+          {
+            "kind": "Declaration",
+            "key": "Registered"
+          },
+          {
+            "kind": "OwnerKind",
+            "key": "8"
+          },
+          {
+            "kind": "Member",
+            "key": "name"
+          }
+        ]
+      },
+      "kind": "Event",
+      "role": "mapping-target",
+      "change": "mappingRewritten",
+      "location": {
+        "line": 9,
+        "column": 11,
+        "path": "application.play"
+      },
+      "weakensAssertion": false
+    },
+    {
+      "address": {
+        "kind": "Property",
+        "parts": [
+          {
+            "kind": "Application",
+            "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+          },
+          {
+            "kind": "Module",
+            "key": "Projects"
+          },
+          {
+            "kind": "Feature",
+            "key": "Registration"
+          },
+          {
+            "kind": "Slice",
+            "key": "Register"
+          },
+          {
+            "kind": "Declaration",
+            "key": "Registered"
+          },
+          {
+            "kind": "OwnerKind",
+            "key": "8"
+          },
+          {
+            "kind": "Member",
+            "key": "name"
+          }
+        ]
+      },
+      "kind": "Event",
+      "role": "declaration",
+      "change": "renamed",
+      "location": {
+        "line": 14,
+        "column": 9,
+        "path": "application.play"
+      },
+      "weakensAssertion": false
+    }
+  ],
+  "notChanged": [
+    {
+      "address": {
+        "kind": "Property",
+        "parts": [
+          {
+            "kind": "Application",
+            "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+          },
+          {
+            "kind": "Module",
+            "key": "Projects"
+          },
+          {
+            "kind": "Feature",
+            "key": "Registration"
+          },
+          {
+            "kind": "Slice",
+            "key": "Register"
+          },
+          {
+            "kind": "Declaration",
+            "key": "Audited"
+          },
+          {
+            "kind": "Generation",
+            "key": "1"
+          },
+          {
+            "kind": "OwnerKind",
+            "key": "8"
+          },
+          {
+            "kind": "Member",
+            "key": "name"
+          }
+        ]
+      },
+      "kind": "Event",
+      "reason": "offChain"
+    }
+  ],
+  "needsDecision": [],
+  "chainCandidates": [],
+  "generations": [
+    {
+      "event": {
+        "kind": "EventContract",
+        "parts": [
+          {
+            "kind": "Application",
+            "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+          },
+          {
+            "kind": "Module",
+            "key": "Projects"
+          },
+          {
+            "kind": "Feature",
+            "key": "Registration"
+          },
+          {
+            "kind": "Slice",
+            "key": "Register"
+          },
+          {
+            "kind": "Declaration",
+            "key": "Audited"
+          }
+        ]
+      },
+      "from": 2,
+      "to": 2,
+      "mode": "eventNeverPersisted"
+    },
+    {
+      "event": {
+        "kind": "EventContract",
+        "parts": [
+          {
+            "kind": "Application",
+            "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+          },
+          {
+            "kind": "Module",
+            "key": "Projects"
+          },
+          {
+            "kind": "Feature",
+            "key": "Registration"
+          },
+          {
+            "kind": "Slice",
+            "key": "Register"
+          },
+          {
+            "kind": "Declaration",
+            "key": "Registered"
+          }
+        ]
+      },
+      "from": 1,
+      "to": 1,
+      "mode": "eventNeverPersisted"
+    }
+  ],
+  "deployableWithoutTransformation": false,
+  "esmVersionChange": null,
+  "esmVersionKnown": true
+}

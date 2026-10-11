@@ -1,0 +1,80 @@
+// Copyright (c) Cratis. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Collections.Immutable;
+using Cratis.Screenplay.Semantics;
+
+namespace Cratis.Screenplay.Workspaces;
+
+/// <summary>
+/// Selects one original property occurrence explicitly.
+/// </summary>
+/// <param name="Target">The revision-bound property handle.</param>
+/// <param name="ExpectedName">The exact original name.</param>
+public sealed record WorkspacePropertySelection(WorkspaceNodeHandle Target, string ExpectedName);
+
+/// <summary>
+/// Requests a safe rename or removal of explicitly selected properties on one resolved mapping chain.
+/// </summary>
+public sealed record WorkspacePropertyRequest
+{
+    /// <summary>
+    /// Gets the original workspace revision.
+    /// </summary>
+    public required WorkspaceRevision ExpectedRevision { get; init; }
+
+    /// <summary>
+    /// Gets the original catalog revision.
+    /// </summary>
+    public required CatalogRevision ExpectedCatalogRevision { get; init; }
+
+    /// <summary>
+    /// Gets the action, rename or remove.
+    /// </summary>
+    public required string Action { get; init; }
+
+    /// <summary>
+    /// Gets the original property occurrence.
+    /// </summary>
+    public required WorkspaceNodeHandle Target { get; init; }
+
+    /// <summary>
+    /// Gets the exact original name.
+    /// </summary>
+    public required string ExpectedName { get; init; }
+
+    /// <summary>
+    /// Gets the new unqualified name for rename.
+    /// </summary>
+    public string? NewName { get; init; }
+
+    /// <summary>
+    /// Gets additional explicitly selected properties for rename.
+    /// </summary>
+    public ImmutableArray<WorkspacePropertySelection> AlsoRename { get; init; } = [];
+
+    /// <summary>
+    /// Gets additional explicitly selected properties for removal.
+    /// </summary>
+    public ImmutableArray<WorkspacePropertySelection> AlsoRemove { get; init; } = [];
+
+    /// <summary>
+    /// Gets whether each selected current event contract advances exactly once.
+    /// </summary>
+    public bool NewGeneration { get; init; }
+
+    /// <summary>
+    /// Gets the caller's assertion that selected current event generations were never stored.
+    /// </summary>
+    public bool EventNeverPersisted { get; init; }
+
+    /// <summary>
+    /// Gets explicit formatting consent; unsupported trivia edits never fall back to printing.
+    /// </summary>
+    public WorkspaceAuthoringFormatting Formatting { get; init; } = WorkspaceAuthoringFormatting.PreserveTrivia;
+
+    /// <summary>
+    /// Gets the requested acceptance level, separate from executable readiness.
+    /// </summary>
+    public WorkspaceAuthoringValidation Validation { get; init; } = WorkspaceAuthoringValidation.Authoring;
+}

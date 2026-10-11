@@ -66,6 +66,41 @@ set `eventNeverPersisted: true` on `propose-rename` when you know no events have
 been stored. That option omits a new pin and removes a redundant pin equal to the current
 name; a pin naming an earlier identity is kept.
 
+## Change a property everywhere it flows
+
+```text
+Rename the AddBook command's title input to bookTitle. Use propose-property,
+keep the connected event fields unchanged, and show me the mappings and fixtures
+that change. Do not apply yet.
+```
+
+Select the target property from `read-ast`. Add `alsoRename` or `alsoRemove` handles
+only for other properties you intend to change on its resolved mapping chain.
+Being connected is not permission to rename or remove a field. Unrelated
+same-named fields are listed in `property.notChanged`, never edited.
+
+Rename repairs proven mappings and fixture assignments. If only one end of an
+AutoMap link is renamed, the proposal inserts an explicit mapping to preserve the
+flow. Remove refuses while readers remain; removed expected values are disclosed
+with `weakensAssertion: true`. Unselected upstream inputs remain follow-up
+candidates rather than being deleted.
+
+For selected event fields, choose `eventNeverPersisted: true` only when the current
+generation has never been stored, or choose `newGeneration: true` to keep the old
+shape and append one new generation. Historical generations cannot be edited;
+extract inline events first. New generations require a transformation before
+Chronicle deployment, which Screenplay does not yet express.
+
+Review the required `property.generations` array in the proposal and in
+`read-proposal`, including `view: "semantic-diff"`. It reports each selected event's
+own `from`, `to` and `mode`, once per event in canonical address order. An in-place
+edit has equal revisions. `[]` means no accepted planned event-contract edits,
+not that the proposal succeeded. There is no singular `property.generation` field.
+
+Structural changes need explicit `CanonicalizeTouchedDocuments` formatting consent;
+trivia preservation never falls back to printing. Inspect exact bytes and identity
+changes, then apply the reviewed proposal. See the [property planner contract](reference.md#property-change-planner).
+
 ## Move things between files
 
 ```text

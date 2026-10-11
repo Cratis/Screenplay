@@ -122,9 +122,11 @@ internal sealed partial class McpWorkspaces
                 WorkspaceConflictKind.StaleWorkspaceRevision or WorkspaceConflictKind.StaleCatalogRevision => "StaleRevision",
                 WorkspaceConflictKind.FormattingConsentRequired => "FormattingConsentRequired",
                 WorkspaceConflictKind.UnknownRepair => "UnknownRepair",
+                { } kind when result.PropertyReport is not null => kind.ToString(),
                 _ => "ProposalRejected"
             },
             result.Conflicts,
+            property = DescribeProperty(result.PropertyReport),
             identityMigrationIssues = result.Conflicts.SelectMany(conflict => conflict.IdentityMigrationIssues).Select(issue => issue.Describe()),
             result.AuthoringDiagnostics,
             result.ExecutableReady,

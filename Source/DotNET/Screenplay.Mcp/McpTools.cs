@@ -62,6 +62,7 @@ sealed class McpTools
                 "recover-workspace" => _workspaces.Recover(arguments),
                 "propose-rename" => _workspaces.Rename(arguments),
                 "propose-move" => _workspaces.Move(arguments),
+                "propose-property" => _workspaces.Property(arguments),
                 "propose-extract-inline-event" => _workspaces.ExtractInlineEvent(arguments),
                 "propose-number-enum-members" => _workspaces.NumberEnumMembers(arguments),
                 "read-workspace" => _workspaces.ReadWorkspace(arguments),

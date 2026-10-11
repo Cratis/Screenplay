@@ -50,13 +50,14 @@ sealed class WorkspaceAuthoringTransaction(
 
         if (!Enum.IsDefined(request.Validation) || !Enum.IsDefined(request.Formatting) || !Enum.IsDefined(request.ReferencePolicy) ||
             request.Operations.IsDefault || request.Documents.IsDefault || request.SemanticRenames.IsDefault ||
-            request.EventRenames.IsDefault || request.RetiredSemanticAddresses.IsDefault || request.RetiredEventAddresses.IsDefault)
+            request.EventRenames.IsDefault || request.EventRevisionAdvancements.IsDefault || request.RetiredSemanticAddresses.IsDefault || request.RetiredEventAddresses.IsDefault)
         {
             return Failure(WorkspaceConflictKind.InvalidOperation, "Authoring options must be known and request arrays must be non-default.");
         }
 
         if (request.SemanticRenames.Any(rename => rename is null || rename.PreviousAddress is null || rename.CurrentAddress is null) ||
             request.EventRenames.Any(rename => rename is null || rename.PreviousAddress is null || rename.CurrentAddress is null) ||
+            request.EventRevisionAdvancements.Any(advancement => advancement is null || advancement.Address is null) ||
             request.RetiredSemanticAddresses.Any(address => address is null) || request.RetiredEventAddresses.Any(address => address is null))
         {
             return Failure(WorkspaceConflictKind.InvalidIdentityMigration, "Identity migration endpoints and retirement addresses must be present.");

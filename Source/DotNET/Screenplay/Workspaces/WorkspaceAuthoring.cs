@@ -172,6 +172,11 @@ public sealed record WorkspaceAuthoringRequest
     public ImmutableArray<EventContractIdentityRename> EventRenames { get; init; } = [];
 
     /// <summary>
+    /// Gets explicit forward-only advancements matching selected persisted events and their declared revisions.
+    /// </summary>
+    public ImmutableArray<EventContractRevisionAdvancement> EventRevisionAdvancements { get; init; } = [];
+
+    /// <summary>
     /// Gets semantic assignments explicitly retired by deliberate removals.
     /// </summary>
     public ImmutableArray<SemanticAddress> RetiredSemanticAddresses { get; init; } = [];
@@ -229,6 +234,11 @@ public sealed record WorkspaceAuthoringResult
     /// Gets the move planner's identity, reference and fragment report, when this is a move proposal.
     /// </summary>
     public WorkspaceMoveReport? MoveReport { get; init; }
+
+    /// <summary>
+    /// Gets the property planner's retained selected-set report.
+    /// </summary>
+    public WorkspacePropertyReport? PropertyReport { get; init; }
 
     /// <summary>
     /// Gets diagnostics from executable semantic compilation, independently of source acceptance.
