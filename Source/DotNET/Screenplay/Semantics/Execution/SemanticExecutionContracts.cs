@@ -272,7 +272,10 @@ public sealed record SemanticExecutionRequest(
 /// Represents the base of every normalized execution result.
 /// </summary>
 /// <param name="Kind">The outcome kind.</param>
-/// <param name="World">The resulting world. A failed command leaves its input world unchanged; a failed v6 cascade retains facts accepted before the failure.</param>
+/// <param name="World">
+/// The resulting world. A failed command leaves its input world unchanged; a failed v6 cascade retains facts
+/// accepted before the failure. <see cref="SemanticReactionSettlement"/> returns the input world instead.
+/// </param>
 public abstract record SemanticExecutionResult(SemanticExecutionOutcomeKind Kind, SemanticWorld World);
 
 /// <summary>

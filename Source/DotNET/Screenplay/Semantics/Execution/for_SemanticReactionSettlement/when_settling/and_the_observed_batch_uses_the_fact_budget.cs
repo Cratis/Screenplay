@@ -21,5 +21,5 @@ public class and_the_observed_batch_uses_the_fact_budget : given.a_settlement
     void Because() => _unsupported = (SemanticUnsupported)_settlement.Settle(_plan, _world, _world.Facts, null);
 
     [Fact] void should_count_the_input_facts_toward_the_cascade_limit() => _unsupported.Capability.ShouldEqual(SemanticExecutionCapability.Reaction);
-    [Fact] void should_keep_the_input_world() => ReferenceEquals(_unsupported.World, _world).ShouldBeTrue();
+    [Fact] void should_keep_the_input_world() => _unsupported.World.ShouldBeSame(_world);
 }

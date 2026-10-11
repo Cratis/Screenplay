@@ -11,7 +11,7 @@ public class and_there_are_no_reactions : given.a_settlement
 
     void Because() => _accepted = (SemanticAccepted)_settlement.Settle(_plan, _world, [_input], null);
 
-    [Fact] void should_accept_without_changing_the_world() => ReferenceEquals(_accepted.World, _world).ShouldBeTrue();
+    [Fact] void should_accept_without_changing_the_world() => _accepted.World.ShouldBeSame(_world);
     [Fact] void should_return_no_facts() => _accepted.Facts.ShouldBeEmpty();
     [Fact] void should_not_invoke_a_command() => _evaluator.DidNotReceive().Execute(Arg.Any<SemanticExecutionPlan>(), Arg.Any<SemanticWorld>(), Arg.Any<SemanticExecutionRequest>());
 }

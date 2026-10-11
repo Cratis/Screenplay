@@ -331,19 +331,22 @@ Durable collection fan-out, acknowledgement and delivery guarantees remain outsi
 
 ### Settle reactions in a live host
 
-Use `SemanticReactionSettlement` after an append to run event-triggered reactions and their cascades through
-invoked commands. It shares the specification runner's reaction semantics, including `from`, `where`, append
-order and the 1,000-fact limit. The limit counts the observed input facts as well as reaction effects, not
-established history.
+Use `SemanticReactionSettlement` after `SemanticEvaluator.Execute` accepts a command, before persisting its
+facts, to run event-triggered reactions and their cascades through invoked commands. It shares the
+specification runner's reaction semantics, including `from`, `where`, append order and the 1,000-fact limit.
+The limit counts the observed input facts as well as reaction effects, not established history.
 
-Pass a `world` that already contains `appended`, with any projection changes from that append applied. An
-accepted result contains the settled world and **only the additional reaction facts**, in append order, with
-no queries or response. You persist those returned facts yourself; settlement performs no storage writes.
-Unlike the specification runner, this API is all-or-nothing: a rejected or unsupported cascade returns the
-input world, without partial reaction effects. Empty input or no matching reaction accepts the unchanged
-world with no additional facts.
+Pass the accepted command result's `World` and `Facts`. That world already contains the command's facts and
+any projection changes from them. Appending facts outside a command has no public path today.
 
-This host helper takes an admitted plan, your evaluator and an accepted append result:
+An accepted settlement contains the settled world and **only the additional reaction facts**, in append
+order, with no queries or response. Append the command's facts followed by the settlement's facts together
+in one batch; settlement performs no storage writes. Unlike the specification runner, this API is
+all-or-nothing: a rejected, unsupported or conflict result returns the input world without partial reaction
+effects. The host must refuse the whole command, appending neither the command's facts nor any reaction
+facts. Empty input or no matching reaction accepts the unchanged world with no additional facts.
+
+This host helper takes an admitted plan, your evaluator and the accepted result of `SemanticEvaluator.Execute`:
 
 ```csharp
 using Cratis.Screenplay.Semantics.Execution;
@@ -351,18 +354,18 @@ using Cratis.Screenplay.Semantics.Execution;
 static SemanticExecutionResult EvaluateReactions(
     ISemanticEvaluator evaluator,
     SemanticExecutionPlan plan,
-    SemanticAccepted append,
+    SemanticAccepted accepted,
     DateTimeOffset? occurred)
 {
     var settlement = new SemanticReactionSettlement(evaluator);
 
-    return settlement.Settle(plan, append.World, append.Facts, occurred);
+    return settlement.Settle(plan, accepted.World, accepted.Facts, occurred);
 }
 ```
 
 Invoked commands run through the supplied `ISemanticEvaluator` with the reaction's declared `runs as`
-identity. Wrap that evaluator to preserve your host's pre-checks on invoked commands too. Treat a rejected
-or unsupported result as failure, not as an empty successful append.
+identity. Wrap that evaluator to preserve your host's pre-checks on invoked commands too. Treat a rejected,
+unsupported or conflict result as failure, not as an empty successful append.
 
 This API does not fire clock, startup, shutdown or application triggers, and it does not execute captures.
 A reached opaque reaction body returns `SemanticUnsupported`; it is still the target provider's to run.

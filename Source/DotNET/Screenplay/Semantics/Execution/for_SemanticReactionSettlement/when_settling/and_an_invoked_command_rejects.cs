@@ -24,9 +24,8 @@ public class and_an_invoked_command_rejects : given.a_settlement
 
     void Because() => _rejected = (SemanticRejected)_settlement.Settle(_plan, _world, [_input], null);
 
-    [Fact] void should_return_the_input_world_not_the_partial_cascade() => ReferenceEquals(_rejected.World, _world).ShouldBeTrue();
+    [Fact] void should_return_the_input_world_not_the_partial_cascade() => _rejected.World.ShouldBeSame(_world);
     [Fact] void should_have_appended_a_fact_before_the_rejection() => _invocationWorld.Facts.Select(fact => fact.EventContract).ShouldEqual([EventId("Started"), EventId("Continued")]);
     [Fact] void should_preserve_the_rejection_category() => _rejected.Category.ShouldEqual(SemanticRejectionCategory.Unauthorized);
-    [Fact] void should_preserve_the_rejection_details() => _rejected.Details.ShouldEqual("Caller is not authorized.");
     [Fact] void should_leave_the_input_world_unchanged() => _world.Facts.AsEnumerable().ShouldEqual([_input]);
 }

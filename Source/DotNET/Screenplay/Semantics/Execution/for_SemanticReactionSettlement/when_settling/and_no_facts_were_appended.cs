@@ -16,6 +16,6 @@ public class and_no_facts_were_appended : given.a_settlement
 
     void Because() => _accepted = (SemanticAccepted)_settlement.Settle(_plan, _world, [], null);
 
-    [Fact] void should_not_reobserve_existing_history() => ReferenceEquals(_accepted.World, _world).ShouldBeTrue();
+    [Fact] void should_not_reobserve_existing_history() => _accepted.World.ShouldBeSame(_world);
     [Fact] void should_return_no_facts() => _accepted.Facts.ShouldBeEmpty();
 }
