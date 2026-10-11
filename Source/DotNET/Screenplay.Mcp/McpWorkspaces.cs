@@ -417,7 +417,7 @@ internal sealed partial class McpWorkspaces
             before = McpWorkspaceTransport.Describe(proposal.Before, includeContent),
             after = McpWorkspaceTransport.Describe(candidate, includeContent),
             moveReport = proposal is McpAuthoringProposal moved ? DescribeMove(moved.Result.MoveReport) : null,
-            property = proposal is McpAuthoringProposal property ? DescribeProperty(property.Result.PropertyReport) : null,
+            property = DescribeProperty(proposal),
             changeCount = proposal.WritePlan.Entries.Length,
             stateChange = statePlan.Describe(),
             authoringDiagnosticCount = proposal is McpAuthoringProposal authored ? authored.Result.AuthoringDiagnostics.Length : 0,

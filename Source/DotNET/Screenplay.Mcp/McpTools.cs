@@ -60,9 +60,7 @@ sealed class McpTools
                 "run-specifications" => _workspaces.RunSpecifications(arguments),
                 "workspace-state" => _workspaces.State(arguments),
                 "recover-workspace" => _workspaces.Recover(arguments),
-                "propose-rename" => _workspaces.Rename(arguments),
-                "propose-move" => _workspaces.Move(arguments),
-                "propose-property" => _workspaces.Property(arguments),
+                "propose-rename" or "propose-move" or "propose-property" => Refactor(name, arguments),
                 "propose-extract-inline-event" => _workspaces.ExtractInlineEvent(arguments),
                 "propose-number-enum-members" => _workspaces.NumberEnumMembers(arguments),
                 "read-workspace" => _workspaces.ReadWorkspace(arguments),
@@ -102,6 +100,14 @@ sealed class McpTools
     static object Schema(JsonElement arguments) => McpJson.ToolResult(McpJson.OptionalString(arguments, "kind") is { } kind
         ? SyntaxSchema.For(kind)
         : McpPaging.Page(SyntaxSchema.Kinds, arguments, $"syntax:{typeof(SyntaxJson).Assembly.GetName().Version}"));
+
+    object Refactor(string name, JsonElement arguments) => name switch
+    {
+        "propose-rename" => _workspaces.Rename(arguments),
+        "propose-move" => _workspaces.Move(arguments),
+        "propose-property" => _workspaces.Property(arguments),
+        _ => throw new McpFailure($"Unknown tool '{name}'.", -32602)
+    };
 
     object Read(string name, JsonElement arguments)
     {

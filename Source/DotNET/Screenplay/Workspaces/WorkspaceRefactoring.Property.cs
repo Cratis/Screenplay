@@ -14,12 +14,7 @@ internal sealed partial class WorkspaceRefactoring
         var report = new WorkspacePropertyReport { Action = request.Action };
         if (request.ExpectedRevision != workspace.Revision) return PropertyFailure(WorkspaceConflictKind.StaleWorkspaceRevision, report);
         if (request.ExpectedCatalogRevision != workspace.IdentityCatalog.Revision) return PropertyFailure(WorkspaceConflictKind.StaleCatalogRevision, report);
-        if (request.Action is not ("rename" or "remove") || (request.NewGeneration && request.EventNeverPersisted) ||
-            request.AlsoRename.IsDefault || request.AlsoRemove.IsDefault ||
-            (request.Action == "rename" && (!Identifier(request.NewName) || !request.AlsoRemove.IsEmpty)) || (request.Action == "remove" && (!request.AlsoRename.IsEmpty || request.NewName is not null)))
-        {
-            return PropertyFailure(WorkspaceConflictKind.InvalidOperation, report);
-        }
+        if (!ValidPropertyOptions(request)) return PropertyFailure(WorkspaceConflictKind.InvalidOperation, report);
 
         try
         {
@@ -31,6 +26,17 @@ internal sealed partial class WorkspaceRefactoring
         }
     }
 
+    static bool ValidPropertyOptions(WorkspacePropertyRequest request)
+    {
+        if (request.Action is not ("rename" or "remove")) return false;
+        if (request.NewGeneration && request.EventNeverPersisted) return false;
+        if (request.AlsoRename.IsDefault || request.AlsoRemove.IsDefault) return false;
+        return request.Action == "rename" ? ValidPropertyRename(request) : ValidPropertyRemoval(request);
+    }
+
+    static bool ValidPropertyRename(WorkspacePropertyRequest request) => Identifier(request.NewName) && request.AlsoRemove.IsEmpty;
+    static bool ValidPropertyRemoval(WorkspacePropertyRequest request) => request.AlsoRename.IsEmpty && request.NewName is null;
+
     static WorkspaceAuthoringResult PropertyFailure(WorkspaceConflictKind kind, WorkspacePropertyReport report, IEnumerable<WorkspacePropertyCandidate>? candidates = null)
     {
         var evidence = candidates?.Distinct().ToImmutableArray() ?? [];
@@ -41,51 +47,38 @@ internal sealed partial class WorkspaceRefactoring
         };
     }
 
+    static WorkspaceSyntaxEntry[] PropertyEventOwners(IReadOnlyList<WorkspacePropertyPlan.PropertyMember> selected) =>
+        [.. selected.Where(member => member.Owner.Node is EventSyntax).Select(member => member.Owner).DistinctBy(owner => owner.Address)
+            .OrderBy(owner => owner.Address!, WorkspaceSemanticAddressComparer.Instance)];
+
+    static WorkspacePropertyRefusal? InspectPropertySelections(WorkspacePropertyPlan plan, WorkspacePropertyRequest request, IReadOnlyList<WorkspacePropertyPlan.PropertyMember> selected)
+    {
+        var declarations = selected.Select(member => member.Declaration).ToHashSet();
+        foreach (var member in selected)
+        {
+            if (WorkspacePropertySafety.Inspect(plan, member, request, declarations) is { } refusal) return refusal;
+        }
+        return null;
+    }
+
+    static bool EventDecisionRequired(WorkspaceSyntaxEntry[] events, WorkspacePropertyRequest request) => events.Length > 0 && !request.NewGeneration && !request.EventNeverPersisted;
+
     WorkspaceAuthoringResult PropertyCore(WorkspacePropertyRequest request, WorkspacePropertyReport report)
     {
         var index = WorkspaceSyntaxIndex.Create(workspace);
         var plan = new WorkspacePropertyPlan(index);
-        var selections = new[] { new WorkspacePropertySelection(request.Target, request.ExpectedName) }
-            .Concat(request.Action == "rename" ? request.AlsoRename : request.AlsoRemove).ToArray();
-        var selected = new List<WorkspacePropertyPlan.PropertyMember>();
-        foreach (var selection in selections)
-        {
-            var entry = selection?.Target is { } handle ? index.Find(handle) : null;
-            if (entry?.Node is not PropertySyntax property || property.Name != selection!.ExpectedName || plan.Member(entry) is not { } member)
-            {
-                return PropertyFailure(WorkspaceConflictKind.UnsupportedPropertySpan, report);
-            }
-            if (selection == selections[0]) report = report with { Target = member.Target };
-            if (member.Owner.Member == "inlineEvent") return PropertyFailure(WorkspaceConflictKind.InlineEventRequiresExtraction, report);
-            if (member.Owner.Node is EventSyntax @event && index.Entries.Any(other => member.Owner.Address!.Equals(other.Address) && other.Node is EventSyntax later && later.Generation > @event.Generation))
-            {
-                return PropertyFailure(WorkspaceConflictKind.HistoricalGenerationImmutable, report, [new(member.Entry.Address!, member.Kind, "declaration", entry.Location)]);
-            }
-            if (!selected.Contains(member)) selected.Add(member);
-        }
-
-        var chain = plan.Chain(selected[0].Declaration);
-        var offChain = selected.Where(member => !chain.Contains(member.Declaration)).ToArray();
-        if (offChain.Length > 0) return PropertyFailure(WorkspaceConflictKind.HopNotOnChain, report, offChain.Select(member => new WorkspacePropertyCandidate(member.Entry.Address!, member.Kind, "declaration", member.Entry.Location)));
-        var untouched = plan.Members.Where(member => !chain.Contains(member.Declaration) && member.Declaration.Name == request.ExpectedName)
-            .OrderBy(member => member.Entry.Address!, WorkspaceSemanticAddressComparer.Instance).Select(member => new WorkspacePropertyUnchanged(member.Entry.Address!, member.Kind, "offChain")).ToImmutableArray();
-        report = report with
-        {
-            NotChanged = untouched,
-            ChainCandidates = [.. chain.Where(declaration => !selected.Exists(member => member.Declaration == declaration)).Select(plan.Member).OfType<WorkspacePropertyPlan.PropertyMember>()
-                .OrderBy(member => member.Entry.Address!, WorkspaceSemanticAddressComparer.Instance).Select(member => new WorkspacePropertyUnchanged(member.Entry.Address!, member.Kind, "notSelected", "property"))]
-        };
-        var selectedDeclarations = selected.Select(member => member.Declaration).ToHashSet();
-        foreach (var member in selected)
-        {
-            if (WorkspacePropertySafety.Inspect(plan, member, request, selectedDeclarations) is { } refusal) return PropertyFailure(refusal.Kind, report, refusal.Candidates);
-        }
-        var events = selected.Where(member => member.Owner.Node is EventSyntax).Select(member => member.Owner).DistinctBy(owner => owner.Address)
-            .OrderBy(owner => owner.Address!, WorkspaceSemanticAddressComparer.Instance).ToArray();
-        if (events.Length > 0 && !request.NewGeneration && !request.EventNeverPersisted) return PropertyFailure(WorkspaceConflictKind.EventContractChangeRequiresDecision, report, events.Select(owner => new WorkspacePropertyCandidate(owner.Address!, "Event", "declaration", owner.Location)));
-
+        var selections = new WorkspacePropertySelections(index, plan, request, report);
+        if (selections.Resolve() is { } selectionRefusal) return PropertyFailure(selectionRefusal.Kind, selections.Report, selectionRefusal.Candidates);
+        report = selections.Report;
+        if (InspectPropertySelections(plan, request, selections.Selected) is { } safetyRefusal) return PropertyFailure(safetyRefusal.Kind, report, safetyRefusal.Candidates);
+        var events = PropertyEventOwners(selections.Selected);
+        if (EventDecisionRequired(events, request)) return PropertyFailure(WorkspaceConflictKind.EventContractChangeRequiresDecision, report, events.Select(owner => new WorkspacePropertyCandidate(owner.Address!, "Event", "declaration", owner.Location)));
         var generations = WorkspaceEventGenerations.Plan(events, request.NewGeneration);
-        var edits = new WorkspacePropertyEdits(index, plan, selected, request);
+        return ProposePropertyEdits(request, new WorkspacePropertyEdits(index, plan, selections.Selected, request), generations, report);
+    }
+
+    WorkspaceAuthoringResult ProposePropertyEdits(WorkspacePropertyRequest request, WorkspacePropertyEdits edits, ImmutableArray<WorkspacePropertyGeneration> generations, WorkspacePropertyReport report)
+    {
         var changed = edits.Apply();
         var result = new WorkspaceAuthoringTransaction(workspace, edits.Renames).Propose(new()
         {
@@ -96,8 +89,7 @@ internal sealed partial class WorkspaceRefactoring
             Documents = edits.Documents(generations),
             SemanticRenames = [.. edits.Renames.Where(pair => workspace.IdentityCatalog.Semantics.Any(assignment => assignment.Address.Equals(pair.Key))).Select(pair => new SemanticIdentityRename(pair.Key, pair.Value))],
             RetiredSemanticAddresses = edits.Retirements,
-            EventRevisionAdvancements = [.. generations.Where(generation => generation.Mode == "newGeneration" && workspace.IdentityCatalog.EventContracts.Any(assignment => assignment.Address.Equals(generation.Event)))
-                .Select(generation => new EventContractRevisionAdvancement(generation.Event, new(generation.To)))]
+            EventRevisionAdvancements = PropertyAdvancements(generations)
         });
         if (!result.Accepted)
         {
@@ -106,9 +98,14 @@ internal sealed partial class WorkspaceRefactoring
                 PropertyReport = report with { NeedsDecision = [.. result.Conflicts.Select(conflict => new WorkspacePropertyDecision(conflict.Kind.ToString(), report.Target, conflict.Candidates))] }
             };
         }
+        if (edits.InspectAutoMapContinuity(result.Workspace!) is { } refusal) return PropertyFailure(refusal.Kind, report, refusal.Candidates);
         return result with
         {
             PropertyReport = WorkspacePropertyReports.Readiness(workspace, result.Workspace!, report with { Changed = changed, Generations = generations })
         };
     }
+
+    ImmutableArray<EventContractRevisionAdvancement> PropertyAdvancements(ImmutableArray<WorkspacePropertyGeneration> generations) =>
+        [.. generations.Where(generation => generation.Mode == "newGeneration" && workspace.IdentityCatalog.EventContracts.Any(assignment => assignment.Address.Equals(generation.Event)))
+            .Select(generation => new EventContractRevisionAdvancement(generation.Event, new(generation.To)))];
 }

@@ -33,6 +33,14 @@ internal sealed partial class WorkspacePropertyLinks
 
     static bool NamesProperty(IEnumerable<string> texts, string name) => texts.SelectMany(WorkspaceOpaqueText.Identifiers).Contains(name, StringComparer.OrdinalIgnoreCase);
 
+    static bool ClassifiedPropertySpan(SyntaxNode node) => node is PropertyMappingSyntax or MappingSyntax or PathExpressionSyntax or ContextExpressionSyntax or SourceItemExpressionSyntax;
+
+    static bool SameNamedResolvedMember(WorkspacePropertyLink link, AuthoredDeclaration property)
+    {
+        if (link.Candidates is not [var candidate]) return false;
+        return candidate.Name == property.Name && link.Reference.Name.Split('.')[^1] == property.Name;
+    }
+
     IEnumerable<string> AuthoredTexts(WorkspaceSyntaxEntry entry) => _textMembers[entry.Node.GetType()]
         .Where(member => !DeclaresName(entry, member))
         .SelectMany(member => TextValues(member.Property.GetValue(entry.Node)));
@@ -92,6 +100,13 @@ internal sealed partial class WorkspacePropertyLinks
         return Current(context);
     }
 
+    bool ClassifiedSiblingReference(WorkspaceSyntaxEntry entry, AuthoredDeclaration property)
+    {
+        if (!ClassifiedPropertySpan(entry.Node)) return false;
+        return _links.Exists(link => link.Reference.Location == entry.Location && link.Resolution == "resolved" &&
+            link.Reference.Role != "unclassified" && SameNamedResolvedMember(link, property));
+    }
+
     bool Covered(WorkspaceSyntaxEntry entry, AuthoredDeclaration property, bool classifiedOccurrence)
     {
         if (new[] { entry }.Concat(Parents(entry)).Any(item => item.Node is PropertySyntax && item.Location == property.Location)) return true;
@@ -99,9 +114,7 @@ internal sealed partial class WorkspacePropertyLinks
         // A typed mapping/reader occurrence with one resolved same-named member is not evidence
         // of every other same-named member in a fan-out context. Use the existing classified link,
         // not a name-based inferred mapping; unknown text and comments still reach the backstop.
-        if (classifiedOccurrence && (entry.Node is PropertyMappingSyntax or MappingSyntax or PathExpressionSyntax or ContextExpressionSyntax or SourceItemExpressionSyntax) &&
-            _links.Exists(link => link.Reference.Location == entry.Location && link.Resolution == "resolved" &&
-                link.Reference.Role != "unclassified" && link.Candidates is [var candidate] && candidate.Name == property.Name && link.Reference.Name.Split('.')[^1] == property.Name))
+        if (classifiedOccurrence && ClassifiedSiblingReference(entry, property))
         {
             return true;
         }

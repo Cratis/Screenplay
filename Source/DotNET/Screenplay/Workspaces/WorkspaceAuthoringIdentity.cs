@@ -95,6 +95,15 @@ static class WorkspaceAuthoringIdentity
         return new(property, SemanticAddress.ForEventProperty(renamedOwner, EventContractRevision.Initial, property.Name));
     }
 
+    static bool MatchesDeclaredRevision(Dictionary<SemanticAddress, uint> events, EventContractRevisionAdvancement advancement) =>
+        events.TryGetValue(advancement.Address, out var revision) && revision == advancement.Revision.Value;
+
+    static bool AdvancesPersistedEvent(ScreenplayWorkspace workspace, WorkspaceAuthoringRequest request, SemanticAddress address)
+    {
+        bool Persisted(SemanticAddress owner) => workspace.IdentityCatalog.EventContracts.Any(assignment => assignment.Address.Equals(owner));
+        return Persisted(address) || request.EventRenames.Any(rename => rename.CurrentAddress.Equals(address) && Persisted(rename.PreviousAddress));
+    }
+
     static void RequireAdvancements(ScreenplayWorkspace workspace, WorkspaceAuthoringRequest request, ApplicationSyntax syntax)
     {
         var events = WorkspaceSyntaxIndex.ForSyntax(syntax, workspace.IdentityCatalog)
@@ -102,9 +111,7 @@ static class WorkspaceAuthoringIdentity
             .GroupBy(entry => entry.Address!).ToDictionary(group => group.Key, group => group.Max(entry => ((EventSyntax)entry.Node).Generation));
         foreach (var advancement in request.EventRevisionAdvancements)
         {
-            if (!events.TryGetValue(advancement.Address, out var revision) || revision != advancement.Revision.Value ||
-                (!workspace.IdentityCatalog.EventContracts.Any(assignment => assignment.Address.Equals(advancement.Address)) &&
-                 !request.EventRenames.Any(rename => rename.CurrentAddress.Equals(advancement.Address) && workspace.IdentityCatalog.EventContracts.Any(assignment => assignment.Address.Equals(rename.PreviousAddress)))))
+            if (!MatchesDeclaredRevision(events, advancement) || !AdvancesPersistedEvent(workspace, request, advancement.Address))
             {
                 throw new InvalidSemanticContract("An event revision advancement must match a persisted event and its declared revision.");
             }

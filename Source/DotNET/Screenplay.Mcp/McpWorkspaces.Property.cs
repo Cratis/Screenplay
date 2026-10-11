@@ -12,34 +12,29 @@ internal sealed partial class McpWorkspaces
 {
     internal object Property(JsonElement arguments)
     {
-        var action = McpJson.RequiredString(arguments, "action");
-        var newGeneration = McpJson.Boolean(arguments, "newGeneration");
-        var neverPersisted = McpJson.Boolean(arguments, "eventNeverPersisted");
-        if ((newGeneration && neverPersisted) || (action == "rename" && arguments.TryGetProperty("alsoRemove", out _)) ||
-            (action == "remove" && (arguments.TryGetProperty("alsoRename", out _) || arguments.TryGetProperty("newName", out _))))
-        {
-            throw new McpFailure("Select one action and at most one event evolution mode.", -32602);
-        }
+        var options = McpPropertyOptions.Read(arguments);
         var workspace = Current();
-        var request = new WorkspacePropertyRequest
-        {
-            ExpectedRevision = WorkspaceRevision.Parse(McpJson.RequiredString(arguments, "expectedRevision")),
-            ExpectedCatalogRevision = CatalogRevision.Parse(McpJson.RequiredString(arguments, "expectedCatalogRevision")),
-            Action = action,
-            Target = arguments.TryGetProperty("target", out var target) ? McpAstHandles.Read(target) : throw new McpFailure("Property changes require a target handle.", -32602),
-            ExpectedName = McpJson.RequiredString(arguments, "expectedName"),
-            NewName = action == "rename" ? McpJson.RequiredString(arguments, "newName") : null,
-            AlsoRename = PropertySelections(arguments, "alsoRename"),
-            AlsoRemove = PropertySelections(arguments, "alsoRemove"),
-            NewGeneration = newGeneration,
-            EventNeverPersisted = neverPersisted,
-            Formatting = McpJson.Enumeration(arguments, "formatting", WorkspaceAuthoringFormatting.PreserveTrivia),
-            Validation = McpJson.Enumeration(arguments, "validation", WorkspaceAuthoringValidation.Authoring)
-        };
+        var request = ReadPropertyRequest(arguments, options);
         Root.Verify(workspace);
         var result = workspace.ProposeProperty(request);
         return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation), arguments) : Rejected(result);
     }
+
+    static WorkspacePropertyRequest ReadPropertyRequest(JsonElement arguments, McpPropertyOptions options) => new()
+        {
+            ExpectedRevision = WorkspaceRevision.Parse(McpJson.RequiredString(arguments, "expectedRevision")),
+            ExpectedCatalogRevision = CatalogRevision.Parse(McpJson.RequiredString(arguments, "expectedCatalogRevision")),
+            Action = options.Action,
+            Target = arguments.TryGetProperty("target", out var target) ? McpAstHandles.Read(target) : throw new McpFailure("Property changes require a target handle.", -32602),
+            ExpectedName = McpJson.RequiredString(arguments, "expectedName"),
+            NewName = options.NewName(arguments),
+            AlsoRename = PropertySelections(arguments, "alsoRename"),
+            AlsoRemove = PropertySelections(arguments, "alsoRemove"),
+            NewGeneration = options.NewGeneration,
+            EventNeverPersisted = options.NeverPersisted,
+            Formatting = McpJson.Enumeration(arguments, "formatting", WorkspaceAuthoringFormatting.PreserveTrivia),
+            Validation = McpJson.Enumeration(arguments, "validation", WorkspaceAuthoringValidation.Authoring)
+        };
 
     static ImmutableArray<WorkspacePropertySelection> PropertySelections(JsonElement arguments, string name)
     {
@@ -50,6 +45,8 @@ internal sealed partial class McpWorkspaces
             return new WorkspacePropertySelection(McpAstHandles.Read(value.GetProperty("target")), McpJson.RequiredString(value, "expectedName"));
         })];
     }
+
+    static object? DescribeProperty(IMcpProposal proposal) => proposal is McpAuthoringProposal authored ? DescribeProperty(authored.Result.PropertyReport) : null;
 
     static object? DescribeProperty(WorkspacePropertyReport? report) => report is null ? null : new
     {

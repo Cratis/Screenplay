@@ -79,7 +79,20 @@ static class McpToolSchemas
         return schema;
     }
 
-    internal static JsonObject Argument(string tool, string property) => property switch
+    internal static JsonObject Argument(string tool, string property) => PropertyArgument(tool, property) ?? StandardArgument(tool, property);
+
+    static JsonObject? PropertyArgument(string tool, string property)
+    {
+        if (tool != "propose-property") return null;
+        return property switch
+        {
+            "action" => McpAstSchemas.Choice("rename", "remove"),
+            "alsoRename" or "alsoRemove" => McpAstSchemas.Array(McpAstSchemas.Object(new JsonObject { ["target"] = McpAstSchemas.Handle(), ["expectedName"] = McpAstSchemas.String() }, "target", "expectedName")),
+            _ => null
+        };
+    }
+
+    static JsonObject StandardArgument(string tool, string property) => property switch
     {
         "before" or "after" when tool == "semantic-diff" => RevisionSource(),
         "includeTestOnly" or "includeContent" or "eventNeverPersisted" or "newGeneration" or "pinRepairEvidence" => new() { ["type"] = "boolean", ["default"] = false },
@@ -98,8 +111,6 @@ static class McpToolSchemas
         "documents" => McpAstSchemas.Array(McpAstSchemas.Documents(tool == "propose-source")),
         "sketch" => McpVisualization.SketchSchema(),
         "target" or "newParent" when tool == "propose-move" => Address(),
-        "action" when tool == "propose-property" => McpAstSchemas.Choice("rename", "remove"),
-        "alsoRename" or "alsoRemove" when tool == "propose-property" => McpAstSchemas.Array(McpAstSchemas.Object(new JsonObject { ["target"] = McpAstSchemas.Handle(), ["expectedName"] = McpAstSchemas.String() }, "target", "expectedName")),
         "targetHandle" or "newParentHandle" => McpAstSchemas.Handle(),
         "target" or "subject" => McpAstSchemas.Handle(),
         "semanticRenames" or "eventRenames" => McpAstSchemas.Array(Rename()),
