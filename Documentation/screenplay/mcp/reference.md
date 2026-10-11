@@ -195,8 +195,8 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `search-declarations` | Optional `name`, `match`: exact/prefix/contains, kind/scope/document | Compact scoped search |
 | `declaration-details` | `address`, `kind`; optional `view` | Summary (including `description` and `documentation` wherever supported) or paged properties, occurrences, commands, specifications, produces, enum values, module/feature dependencies; explicit syntax view |
 | `processing-record` | Optional `controllerName`, `controllerContact`, `offset`, `limit`, `expectedSourceRevision` | Paged declaration-derived controller inventory; not legal advice |
-| `find-references` | `address`, `kind` | Paged resolved incoming references and ambiguities, with owners/roles |
-| `dependencies` | `address`, `kind`, direction incoming/outgoing; optional descendants/document | Direct indexed dependencies and resolution candidates |
+| `find-references` | `address`, `kind` (including `Property`) | Paged resolved incoming references, ambiguities and incomplete property links, with owners/roles |
+| `dependencies` | `address`, `kind` (including `Property`), direction incoming/outgoing; optional descendants/document | Direct indexed dependencies and resolution candidates; property outgoing follows mapping counterparts |
 | `dependency-graph` | Optional view, from/to levels, scope, direction, kinds, includeTestOnly, evidenceLimit | Inferred slice/container/context edges, ordering cycles, story-order suggestions, unresolved references or checked dependency declarations |
 | `find-fixtures` | Specification address, role, property, value, scope/document | Paged effective assignments with type, value, location and authored/example/override origin, including `when append` event payloads (`whenAppendedEvent`) and `for` destinations (`whenAppendedEventDestination`) |
 | `find-assertion-gaps` | Optional scope/document | Slices without specifications declaring a `then` assertion, including `then denied` |
@@ -217,9 +217,25 @@ available. Duplicate leaf declarations remain visible with diagnostics.
 
 Navigation `scope` includes descendants unless `descendants: false` is specified. Dependency
 aggregation uses `descendants: true` explicitly and does not imply transitive
-runtime impact. Reference coverage excludes code, expression identifiers,
-property paths, imports, profile settings and external registrations; results
-state their coverage.
+runtime impact. For a property, pass `kind: "Property"` and append its member name to the owner's
+address, for example `Projects.Registration.RegisterProject.RegisterProject.name`.
+Properties remain absent from declaration listings. Event members at that address belong to the
+current generation; historical shapes use `Owner.generationN.member` and carry `historical: true`
+in their target details.
+
+Property links cover command/event/read-model mappings, case-insensitive projection AutoMap,
+conditions, screen/form bindings, and specification/example fixtures and assertions. Roles are
+`mapping-source`, `mapping-target`, `automap`, `condition`, `screen-binding`, `fixture`, `assertion`
+and `opaque`. Links retain owner, location, resolution candidates and a resolved `otherEnd` when
+known. An unresolved counterpart or opaque occurrence makes the property's `complete` result false,
+with incomplete evidence retained at its source location. `dependencies` outgoing follows direct
+mapping counterparts, not transitive property chains. Nested composite paths remain incomplete
+evidence, not resolved member chains.
+
+Opaque text naming a property is reported as `opaque`, never resolved as code. Coverage excludes
+external code contents, arbitrary expression identifiers, imports, profile settings and external
+registrations; results state their coverage. Declaration dependency graphs retain their explicit
+declaration-reference coverage; property links do not add inferred slice edges.
 
 ### Specification obligations
 

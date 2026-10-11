@@ -8,7 +8,7 @@ using Cratis.Screenplay.Syntax.Specifications;
 namespace Cratis.Screenplay.Workspaces;
 
 /// <summary>
-/// Resolves a structured-value key to the declared composite type that owns it.
+/// Resolves structured keys to their declared property owner, including payloads and composite values.
 /// </summary>
 static class WorkspaceStructuredReferences
 {
@@ -18,6 +18,24 @@ static class WorkspaceStructuredReferences
         for (var current = entry.Parent is { } parent ? index.Find(parent) : null; current is not null; current = current.Parent is { } ancestor ? index.Find(ancestor) : null)
         {
             ancestors.Add(current);
+        }
+
+        if (entry.Node is PropertyMappingSyntax && ancestors.FirstOrDefault() is { } payload)
+        {
+            var name = payload.Node switch
+            {
+                ProducesSyntax produced => produced.Event,
+                CaptureAppendSyntax appended => appended.Event,
+                SpecificationExampleSyntax example => example.Type,
+                SpecificationCommandSyntax command => command.CommandType,
+                SpecificationEventSyntax @event => @event.EventType,
+                SpecificationReadModelSyntax model => model.Name,
+                _ => null
+            };
+            var target = name is null ? null : WorkspaceFixtureDeclarations.Resolve(name, payload, index);
+            if (target?.Node is SpecificationExampleSyntax exampleTarget) target = WorkspaceFixtureDeclarations.Resolve(exampleTarget.Type, target, index);
+
+            return target is null ? null : WorkspaceReferenceBindings.Key(target);
         }
 
         var mappingIndex = ancestors.FindIndex(ancestor => ancestor.Node is PropertyMappingSyntax);

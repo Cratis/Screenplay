@@ -34,7 +34,7 @@ static class WorkspaceFixtureDeclarations
         };
     }
 
-    static WorkspaceSyntaxEntry? Resolve(string name, WorkspaceSyntaxEntry use, WorkspaceSyntaxIndex index)
+    internal static WorkspaceSyntaxEntry? Resolve(string name, WorkspaceSyntaxEntry use, WorkspaceSyntaxIndex index)
     {
         var entries = index.Entries.Where(entry => entry.Node is SpecificationExampleSyntax or CommandSyntax or EventSyntax or ReadModelSyntax)
             .Where(entry => entry.Node is not EventSyntax historical || !index.Entries.Any(other => other.Node is EventSyntax current &&

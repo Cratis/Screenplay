@@ -10,6 +10,7 @@ static class McpDependencyQueries
     internal static object Legacy(McpSnapshot snapshot, JsonElement arguments)
     {
         var target = McpDeclarationDetails.Target(snapshot, arguments);
+        if (target.Kind == "Property") return McpPropertyDependencies.Legacy(snapshot, target, arguments);
         var edges = snapshot.Index.Incoming(target).Select(edge => new McpReferenceEdge(edge.Reference, edge.Candidates));
         var page = McpPaging.Page(edges, arguments, snapshot.SourceRevision);
         var diagnostics = snapshot.Compilation.Diagnostics.ToArray();
@@ -35,6 +36,7 @@ static class McpDependencyQueries
     internal static object Read(McpSnapshot snapshot, JsonElement arguments)
     {
         var target = McpDeclarationDetails.Target(snapshot, arguments);
+        if (target.Kind == "Property") return McpPropertyDependencies.Read(snapshot, target, arguments);
         var direction = McpJson.OptionalString(arguments, "direction") ?? "incoming";
         var descendants = McpJson.Boolean(arguments, "descendants");
         var references = (direction, descendants) switch

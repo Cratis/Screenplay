@@ -195,6 +195,7 @@ static class WorkspaceReferenceMembers
         SpecificationRedeliverySyntax => [("reaction", WorkspaceReferenceDomain.Reaction)],
         SpecificationOperationSyntax or SpecificationOperationFailureSyntax or SpecificationCompensatedSyntax => [("operation", WorkspaceReferenceDomain.Operation)],
         ObjectMemberSyntax => [("name", WorkspaceReferenceDomain.Property)],
+        PropertyMappingSyntax => [("property", WorkspaceReferenceDomain.Property)],
         TypeRefSyntax => [("name", entry.Parent is { } parent && index.Find(parent)?.Node is QuerySyntax or ScreenDataSyntax or IdentityDetailSyntax { Source: QueryIdentitySourceSyntax }
             ? WorkspaceReferenceDomain.View : WorkspaceReferenceDomain.Type)],
         CompositeKeySyntax => [("type", WorkspaceReferenceDomain.Type)],

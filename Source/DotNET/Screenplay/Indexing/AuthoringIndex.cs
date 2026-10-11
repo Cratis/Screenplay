@@ -6,6 +6,7 @@ using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
 using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Specifications;
+using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Indexing;
 
@@ -13,12 +14,14 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
 {
     readonly List<AuthoredDeclaration> _declarations = [];
     readonly List<AuthoredReference> _references = [];
+    readonly List<ApplicationSyntax> _applications = [];
     readonly List<string> _scope = [];
     readonly List<ReadOwner> _hierarchy = [];
     readonly ReadOwnership _ownership = new();
     readonly Dictionary<SyntaxNode, AuthoredDeclaration> _owners = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<(string Kind, string Name, string Scope), AuthoredDeclaration> _scaffolds = [];
     AuthoringReferences _queries = null!;
+    Lazy<WorkspacePropertyLinks> _propertyLinks = null!;
     bool _inRefusal;
     ConstraintSyntax? _constraint;
     SpecificationSyntax? _specification;
@@ -30,6 +33,8 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
     internal IEnumerable<AuthoredDeclaration> Declarations => _declarations;
     internal IEnumerable<AuthoredReference> References => _references;
 
+    internal WorkspacePropertyLinks PropertyLinks => _propertyLinks.Value;
+
     internal IEnumerable<ReferenceResolution> ResolvedReferences => _queries.ResolvedReferences;
 
     internal int ResolutionCount => _queries.ResolutionCount;
@@ -39,6 +44,7 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
     /// <inheritdoc/>
     public override void VisitApplication(ApplicationSyntax syntax)
     {
+        _applications.Add(syntax);
         Readiness ??= new(syntax);
         _ownership.VisitApplication(syntax);
         base.VisitApplication(syntax);
@@ -257,6 +263,7 @@ sealed class AuthoringIndex : ScreenplaySyntaxWalker
             _references[index] = reference with { Kinds = targets is [var target] ? [target.Kind] : ["Event", "Operation"] };
         }
         _queries = new(_declarations, _references, productions, application?.Imports.Select(import => import.Name) ?? []);
+        _propertyLinks = new(() => new(WorkspacePropertyLinks.Entries(_applications), this));
     }
 
     internal AuthoredDeclaration[] Resolve(AuthoredReference reference) => _queries.Resolve(reference);

@@ -165,7 +165,7 @@ static class McpDeclarationDetails
     {
         var address = McpJson.RequiredString(arguments, "address");
         var kind = McpJson.RequiredString(arguments, "kind");
-        var matches = snapshot.Index.Find(address, kind);
+        var matches = kind == "Property" ? snapshot.Index.PropertyLinks.Find(address) : snapshot.Index.Find(address, kind);
         if (kind == "EventSource" || kind == "EventStream")
         {
             var parts = address.Split('.');
