@@ -569,6 +569,7 @@ public abstract partial class ScreenplaySyntaxWalker
     public virtual void VisitContribution(ContributionSyntax syntax)
     {
         VisitNode(syntax);
+        if (syntax.Destination is not null) VisitNode(syntax.Destination);
 
         if (syntax.Navigate is not null)
         {

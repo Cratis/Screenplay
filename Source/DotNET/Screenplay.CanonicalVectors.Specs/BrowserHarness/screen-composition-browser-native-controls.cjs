@@ -5,7 +5,8 @@ const { execFileSync, spawn } = require('node:child_process');
 const { writeFileSync } = require('node:fs');
 
 const root = process.cwd();
-const source = `${root}/Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ScreenComposition/v1/source/folder`;
+// SCREENPLAY_CORPUS_SOURCE points at a folder materialized from the published corpus package; unset reads this repository.
+const source = process.env.SCREENPLAY_CORPUS_SOURCE ?? `${root}/Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ScreenComposition/v1/source/folder`;
 const port = Number(process.env.SCREENPLAY_BROWSER_PORT ?? '19109');
 const workbenchPort = Number(process.env.SCREENPLAY_BROWSER_WORKBENCH_PORT ?? '35109');
 // Unset (or 'cli-default') runs the Stage image the installed CLI defaults to, so a CLI release that moves its default

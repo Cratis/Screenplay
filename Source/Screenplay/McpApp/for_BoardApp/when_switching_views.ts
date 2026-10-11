@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { beforeEach, describe, it, vi } from 'vitest';
-import { EventModelBoard } from '@cratis/event-models';
+import { BoardViewMenu, EventModelBoard } from '@cratis/event-models';
 import { DependencyMapView, DependencyView } from '@cratis/screenplay-views';
 import { dependencyMapFor } from '@cratis/screenplay-event-models';
 import { parse } from '@cratis/screenplay-compiler';
@@ -12,7 +12,7 @@ import { ShownModel } from '../ShownModel';
 import { hooks, invoke } from '../../Views/for_DependencyMapView/given/component_hooks';
 
 vi.mock('react', async importOriginal => ({ ...await importOriginal<typeof import('react')>(), ...(await import('../../Views/for_DependencyMapView/given/component_hooks')).componentHooks }));
-vi.mock('@cratis/event-models', () => ({ EventModelBoard: () => null, MenuDropdownOpenProvider: () => null, readEventModelDocument: (document: unknown) => document }));
+vi.mock('@cratis/event-models', () => ({ BoardToolbarFrame: () => null, BoardViewMenu: () => null, EventModelBoard: () => null, MenuDropdownOpenProvider: () => null, readEventModelDocument: (document: unknown) => document }));
 vi.mock('../BoardTools', () => ({ BoardTools: () => null }));
 vi.mock('../boardChrome', () => ({ boardChrome: {} }));
 vi.mock('../useHost', () => ({ useHost: () => ({ model: {}, refresh: vi.fn(), toggleFullscreen: vi.fn() }) }));
@@ -43,5 +43,17 @@ describe('when switching between the board and dependency map', () => {
         const current = render().find(element => element.type === DependencyMapView)!;
         (current.key === originalKey).should.be.true;
         (current.props.map === compiled.current.dependencies).should.be.true;
+    });
+});
+
+describe('when the dependency map is visible', () => {
+    beforeEach(() => invoke(tools(), 'onView', DependencyView.Map));
+
+    it('should offer the map\'s own settings under the view menu', () => {
+        const items = (render().find(element => element.type === BoardViewMenu)!.props.items as { id: string }[]).map(item => item.id);
+        items.should.include('level-module').and.include('kind-reactsTo');
+    });
+    it('should hand the chosen settings to the map instead of letting it draw its own controls', () => {
+        (render().find(element => element.type === DependencyMapView)!.props.options !== undefined).should.be.true;
     });
 });

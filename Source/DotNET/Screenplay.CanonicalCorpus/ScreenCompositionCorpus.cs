@@ -108,8 +108,35 @@ public static class ScreenCompositionCorpus
                         "ContributedItemValueSyntax",
                         "ScreenContributionSyntax",
                         "TemplateSlotContentSyntax",
-                        "ArrangementContainerSyntax"
+                        "ArrangementContainerSyntax",
+                        "ContributionDestinationSyntax"
                     ]
+                }
+            ],
+            DesignTimeOutputs =
+            [
+                new CanonicalDesignTimeOutputVector
+                {
+                    Name = "screen-composition/v1/design-time/generate-fields",
+                    Package = "Acme.Inspections",
+                    Action = "Acme.Inspections.checklist.generateFields",
+                    Component = "inspection:checklist",
+                    Before = Document("design-time-generate-fields-before", "design-time/GenerateFieldsBefore.play", $"{Prefix}.design_time.GenerateFieldsBefore.play.txt"),
+                    After = Document("design-time-generate-fields-after", "design-time/GenerateFieldsAfter.play", $"{Prefix}.design_time.GenerateFieldsAfter.play.txt"),
+                    OutputSyntaxKinds =
+                    [
+                        "InstanceContributionsSyntax",
+                        "InstanceContributionSyntax",
+                        "ContributedItemSyntax",
+                        "ContributedItemValueSyntax",
+                        "FormSyntax",
+                        "FormFieldSyntax",
+                        "CommandFormLayoutSyntax",
+                        "FormLayoutColumnSyntax",
+                        "FormFieldPlacementSyntax",
+                        "FormWidthSyntax"
+                    ],
+                    InheritedSettings = ["inspection:checklist.columns", "inspection:checklist.items"]
                 }
             ],
             RejectionVectors =
@@ -141,7 +168,22 @@ public static class ScreenCompositionCorpus
                     "re-exposure-cycle",
                     "ReExposureCycle",
                     Diagnostic("PLAY0623", "Re-exposing 'shell:header.title' from 'Outer' forms a cycle - a re-exposure must lead back to the owner that exposes it first"),
-                    Diagnostic("PLAY0623", "Re-exposing 'shell:header.title' from 'Inner' forms a cycle - a re-exposure must lead back to the owner that exposes it first"))
+                    Diagnostic("PLAY0623", "Re-exposing 'shell:header.title' from 'Inner' forms a cycle - a re-exposure must lead back to the owner that exposes it first")),
+                Rejection(
+                    "template-nesting-cycle",
+                    "TemplateNestingCycle",
+                    Diagnostic("PLAY0656", "The screen template 'Outer' uses 'Inner' in its content, which leads back to 'Outer' - template content cannot nest in a cycle"),
+                    Diagnostic("PLAY0656", "The screen template 'Inner' uses 'Outer' in its content, which leads back to 'Inner' - template content cannot nest in a cycle")),
+                Rejection(
+                    "out-of-scope-screen-references",
+                    "OutOfScopeScreenReferences",
+                    Diagnostic("PLAY0197", "Unknown screen 'Billing.Invoices.InvoiceList' - nothing in scope declares it"),
+                    Diagnostic("PLAY0655", "Unknown contribution point 'BillingActions' - no layout or template slot declares 'contributes BillingActions'")),
+                Rejection(
+                    "unknown-navigation-destination",
+                    "UnknownNavigationDestination",
+                    Diagnostic("PLAY0654", "Unknown destination outlet 'sidebar' - nothing declares it"),
+                    Diagnostic("PLAY0654", "Unknown destination dialog template 'ConfirmDialog' - nothing declares it"))
             ],
             BehaviorExpectations =
             [
@@ -758,17 +800,41 @@ public static class ScreenCompositionCorpus
                         Assertion("browser.guarded.doubleClick", "pending", "STAGE-SCENE-INTERACTION-001")
                     ]),
                 ReleasedVector(
+                    "browser-native-controls-runtime-3.43.0-4.52.0",
+                    "Browser native controls and render audit",
+                    "CLI 3.43.0 (23e5a242172a960be13d447525290c6ba2b24727, public Homebrew formula) + cratis/stage:4.52.0 (CLI default) + bundled Screenplay 4.127.0",
+                    "SCREENPLAY_EXPECTED_CLI_VERSION=3.43.0 SCREENPLAY_EXPECTED_STAGE_TAG=4.52.0 Source/DotNET/Screenplay.CanonicalVectors.Specs/BrowserHarness/run-public-acceptance.sh",
+                    "passed",
+                    "The first public vector whose render includes the generated React application on the Stage frontend runtime: the render publishes 57 artifacts instead of 38, still byte-identical across two renders and free of timestamps, foreign GUIDs, absolute paths and environment bytes. Every browser assertion passes against the live Stage runtime (51 passed, none blocked), profile rejection still publishes nothing, and the rendered application still recovers to all 45 declarations. Guarded Close and the double-click interaction remain fail-closed.",
+                    [
+                        Assertion("released.cli.version", "equals", "3.43.0"),
+                        Assertion("released.cli.commit", "equals", "23e5a242172a960be13d447525290c6ba2b24727"),
+                        Assertion("released.stage.version", "equals", "4.52.0"),
+                        Assertion("browser.result.sha256", "equals", "f8570f69dacc2a9b7f28fcdfa263353dde1111bb1069a8e8a193d32d504080ea"),
+                        Assertion("browser.assertions.passed", "equals", "51"),
+                        Assertion("browser.assertions.blocked", "equals", "0"),
+                        Assertion("render.artifactCount", "equals", "57"),
+                        Assertion("render.deterministic", "equals", "57 artifacts byte-identical"),
+                        Assertion("render.portableArtifacts", "passes", "true"),
+                        Assertion("profile.unknownPackage", "equals", "CLI-RENDER-007, nothing published"),
+                        Assertion("profile.missingLayout", "equals", "CLI-RENDER-008, nothing published"),
+                        Assertion("profile.staleManagedArtifact", "passes", "true"),
+                        Assertion("recover.contracts", "equals", "45 declarations recovered"),
+                        Assertion("browser.guarded.Close", "pending", "STAGE-SCENE-ACTION-001"),
+                        Assertion("browser.guarded.doubleClick", "pending", "STAGE-SCENE-INTERACTION-001")
+                    ]),
+                ReleasedVector(
                     "mcp-released-typed-transcript",
                     "Screenplay MCP",
-                    "AI #563 merged a real stdio JSON-RPC transcript harness; conformance reran it with packaged public CLI 3.41.0 against the canonical screen corpus.",
+                    "AI #563 merged a real stdio JSON-RPC transcript harness; conformance reran it with packaged public CLI 3.43.0 against the canonical screen corpus.",
                     "SCREENPLAY_AI_VERIFICATION=<Cratis/AI>/Source/Verification Source/DotNET/Screenplay.CanonicalVectors.Specs/BrowserHarness/run-public-acceptance.sh",
-                    "passed-stdio-transcript-public-cli-3.41.0",
-                    "The real AI-owned stdio MCP transcript initializes the packaged CLI MCP server, lists tools, opens a scratch corpus, proposes a source edit, proves stale apply fails closed with StaleRevision, applies with the correct revision, reopens, observes revision change and preserves a source comment. The public CLI 3.41.0 run returned 9 requests/responses, 37 tools and executableReady true.",
+                    "passed-stdio-transcript-public-cli-3.43.0",
+                    "The real AI-owned stdio MCP transcript initializes the packaged CLI MCP server, lists tools, opens a scratch corpus, proposes a source edit, proves stale apply fails closed with StaleRevision, applies with the correct revision, reopens, observes revision change and preserves a source comment. The public CLI 3.43.0 run returned 9 requests/responses, 37 tools and executableReady true.",
                     [
                         Assertion("mcp.typedTranscript.specs.passed", "equals", "6"),
                         Assertion("mcp.ai563.issue", "equals", "Cratis/AI#563"),
                         Assertion("mcp.stdioTranscript.implemented", "equals", "Source/Verification/screenplay-mcp-transcript.ts"),
-                        Assertion("mcp.stdioTranscript.cli.version", "equals", "3.41.0"),
+                        Assertion("mcp.stdioTranscript.cli.version", "equals", "3.43.0"),
                         Assertion("mcp.stdioTranscript.requests", "equals", "9"),
                         Assertion("mcp.stdioTranscript.responses", "equals", "9"),
                         Assertion("mcp.stdioTranscript.tools", "equals", "37"),

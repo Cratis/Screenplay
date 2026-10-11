@@ -5,3 +5,7 @@ export { DependencyMapView } from './DependencyMapView';
 export type { DependencyMapViewProps } from './DependencyMapView';
 export { DependencyView } from './DependencyView';
 export { DependencyMapLevel } from './DependencyMapLevel';
+export { defaultDependencyMapOptions } from './DependencyMapOptions';
+export type { DependencyMapOptions } from './DependencyMapOptions';
+export { dependencyMapMenuItems } from './dependencyMapMenuItems';
+export type { DependencyMapMenuItem } from './dependencyMapMenuItems';

@@ -63,7 +63,7 @@ module Claims
 
 The identity covers every command returned or `invokes` under every trigger. It does not cover imperative `ICommandPipeline` calls inside an inline or `file` implementation, `produces`, `reads`, refusal-branch productions or causation. It is authorization identity, not caller audit identity; `given caller` never supplies an actor to invocations.
 
-Declaring `runs as` selects **ESM v10 (claimed, unreleased)**. The reference evaluator authenticates this system principal and grants exactly its declared roles. Every claim condition remains unknown, including under `not`; a satisfied role alternative can allow, but a final unknown denies. This is a deliberate deny-only divergence from Arc: Arc's system principal carries `[System]` subject claims, but the portable contract does not pin those claims. Clock and application triggers may declare the identity, but Stage has no Arc realization for either trigger kind yet. MCP reports that as readiness, not a source diagnostic.
+Declaring `runs as` selects **released ESM v10**. The reference evaluator authenticates this system principal and grants exactly its declared roles. Every claim condition remains unknown, including under `not`; a satisfied role alternative can allow, but a final unknown denies. This is a deliberate deny-only divergence from Arc: Arc's system principal carries `[System]` subject claims, but the portable contract does not pin those claims. Clock and application triggers may declare the identity, but Stage has no Arc realization for either trigger kind yet. MCP reports that as readiness, not a source diagnostic.
 
 Without the line, invocations retain their no-caller behavior and existing executable bytes. Arc runs returned commands as the system only for a reactor carrying `[ExecuteCommandsAsSystem]`; an unmarked reactor has no principal and authorization gates deny.
 
@@ -328,6 +328,47 @@ so a specification can assert what a reaction does. In the reference evaluator:
 
 Durable collection fan-out, acknowledgement and delivery guarantees remain outside v6
 ([#286](https://github.com/Cratis/Screenplay/issues/286)); the reference does not approximate them as success.
+
+### Settle reactions in a live host
+
+Use `SemanticReactionSettlement` after `SemanticEvaluator.Execute` accepts a command, before persisting its
+facts, to run event-triggered reactions and their cascades through invoked commands. It shares the
+specification runner's reaction semantics, including `from`, `where`, append order and the 1,000-fact limit.
+The limit counts the observed input facts as well as reaction effects, not established history.
+
+Pass the accepted command result's `World` and `Facts`. That world already contains the command's facts and
+any projection changes from them. Appending facts outside a command has no public path today.
+
+An accepted settlement contains the settled world and **only the additional reaction facts**, in append
+order, with no queries or response. Append the command's facts followed by the settlement's facts together
+in one batch; settlement performs no storage writes. Unlike the specification runner, this API is
+all-or-nothing: a rejected, unsupported or conflict result returns the input world without partial reaction
+effects. The host must refuse the whole command, appending neither the command's facts nor any reaction
+facts. Empty input or no matching reaction accepts the unchanged world with no additional facts.
+
+This host helper takes an admitted plan, your evaluator and the accepted result of `SemanticEvaluator.Execute`:
+
+```csharp
+using Cratis.Screenplay.Semantics.Execution;
+
+static SemanticExecutionResult EvaluateReactions(
+    ISemanticEvaluator evaluator,
+    SemanticExecutionPlan plan,
+    SemanticAccepted accepted,
+    DateTimeOffset? occurred)
+{
+    var settlement = new SemanticReactionSettlement(evaluator);
+
+    return settlement.Settle(plan, accepted.World, accepted.Facts, occurred);
+}
+```
+
+Invoked commands run through the supplied `ISemanticEvaluator` with the reaction's declared `runs as`
+identity. Wrap that evaluator to preserve your host's pre-checks on invoked commands too. Treat a rejected,
+unsupported or conflict result as failure, not as an empty successful append.
+
+This API does not fire clock, startup, shutdown or application triggers, and it does not execute captures.
+A reached opaque reaction body returns `SemanticUnsupported`; it is still the target provider's to run.
 
 ## Examples
 

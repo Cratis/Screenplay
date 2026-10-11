@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { BoardToolbarFrame } from '@cratis/event-models';
+import { boardChrome } from './boardChrome';
 
 export interface BoardErrorBoundaryProps {
     readonly children: ReactNode;
@@ -46,7 +48,7 @@ export class BoardErrorBoundary extends Component<BoardErrorBoundaryProps, Board
         const subject = this.props.subject ?? 'board';
         return (
             <>
-            {this.props.tools && <div className='screenplay-dependency-map-toolbar' role='toolbar' aria-label='Model and view'>{this.props.tools}</div>}
+            {this.props.tools && <BoardToolbarFrame showLogo chrome={boardChrome} label='Model and view'>{this.props.tools}</BoardToolbarFrame>}
             <div className='screenplay-mcp-board__message screenplay-mcp-board__failure'>
                 <p>The {subject} failed to draw: {error.message}</p>
                 <button type='button' onClick={() => {

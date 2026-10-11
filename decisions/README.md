@@ -55,9 +55,11 @@
 | [0051](0051-admit-public-events-as-esm-v9.md) | Admit public events, translation direction, event-target projections and event-source captures as ESM v9 | accepted | none | 2026-10-09 | Einar Ingebrigtsen |
 | [0052](0052-identity-details-as-authoring-metadata.md) | Declare one caller detail shape as authoring metadata before executable admission | accepted | implemented | 2026-10-09 | Sindre Alstad Wilting |
 | [0053](0053-public-structural-model-comparison.md) | Share typed structural model comparison from the Screenplay library | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |
-| [0054](0054-concept-generation-strategies-and-freshness.md) | Declare how a concept generates its values, and refuse a generated value that is not fresh | proposed | none |  |  |
+| [0054](0054-concept-generation-strategies-and-freshness.md) | Declare how a concept generates its values, and refuse a generated value that is not fresh | accepted | none | 2026-10-11 | Sindre Alstad Wilting |
 | [0060](0060-declare-read-model-keys-and-bind-lookups-by-name.md) | Declare read-model keys on properties and supply every key part by name in lookups | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |
 | [0061](0061-per-production-route-overrides.md) | Replace the command route per event production | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |
 | [0062](0062-observer-source-and-stream-filters.md) | Filter reactions and reducers by event source and stream | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |
 | [0063](0063-admit-production-routes-and-observer-filters-as-esm-v10.md) | Join the claimed unreleased ESM v10 with production routes and observer filters | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |
 | [0064](0064-exact-number-literals-join-esm-v10.md) | Join the claimed unreleased ESM v10 with exact Double-mode number literal lowering | proposed | none | — | — |
+| [0065](0065-explicit-enum-member-numbers.md) | Give enum members optional explicit numbers, all or none, and carry them in a later ESM version | accepted | none | 2026-10-11 | Sindre Alstad Wilting |
+| [0066](0066-published-esm-versions-are-frozen.md) | Freeze an ESM version when any package exposing it is published | accepted | implemented | 2026-10-11 | Sindre Alstad Wilting |

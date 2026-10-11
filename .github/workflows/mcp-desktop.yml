@@ -1,6 +1,7 @@
 name: MCP desktop packages
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - 'Source/DotNET/**'
@@ -29,12 +30,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { rid: osx-arm64, runner: macos-15 }
-          - { rid: osx-x64, runner: macos-15-intel }
-          - { rid: win-x64, runner: windows-latest }
-          - { rid: linux-x64, runner: ubuntu-latest }
-          - { rid: linux-arm64, runner: ubuntu-24.04-arm }
+        # Publish calls this workflow on push to main (or manual release), so
+        # every native platform is built and smoke-tested before attach can run.
+        # Even a release call from a PR must use the full matrix.
+        include: ${{ fromJSON(github.event_name == 'pull_request' && !inputs.release && '[{"rid":"osx-arm64","runner":"macos-15"},{"rid":"win-x64","runner":"windows-latest"},{"rid":"linux-x64","runner":"ubuntu-latest"}]' || '[{"rid":"osx-arm64","runner":"macos-15"},{"rid":"osx-x64","runner":"macos-15-intel"},{"rid":"win-x64","runner":"windows-latest"},{"rid":"linux-x64","runner":"ubuntu-latest"},{"rid":"linux-arm64","runner":"ubuntu-24.04-arm"}]') }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     defaults:

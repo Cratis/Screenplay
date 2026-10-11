@@ -3,7 +3,7 @@
 
 import { dependencySourcesOf, eventDeclarations, CommandSyntax, EventVisibility, QueryParameterSyntax, SliceSyntax } from '@cratis/screenplay-compiler';
 import {
-    CommandItemDocument, EventItemDocument, QueryItemDocument, QueryParameterType, ReadModelItemDocument, SliceDocument, SliceStatus, SliceType,
+    CommandItemDocument, EventItemDocument, EventItemVisibility, QueryItemDocument, QueryParameterType, ReadModelItemDocument, SliceDocument, SliceStatus, SliceType,
 } from '../Document/EventModelDocument';
 import { toUserExperience } from '../Prototypes/toUserExperience';
 import { capturedEvents, consumedEvents } from './consumedEvents';
@@ -81,7 +81,7 @@ function eventsOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): E
         id: scope.idOf('event', event.name),
         name: event.name,
         schema: owners.schemas.forProperties(event.properties),
-        ...(event.visibility === EventVisibility.Public ? { visibility: event.visibility } : {}),
+        ...(event.visibility === EventVisibility.Public ? { visibility: EventItemVisibility.public } : {}),
         ...(event.origin != null ? { origin: event.origin } : {}),
     }, constraintsByEvent.get(event.name.toLowerCase()) ?? []));
     if (slice.type === 'StateChange') {
@@ -96,7 +96,7 @@ function eventsOf(slice: SliceSyntax, scope: SliceScope, owners: EventOwners): E
     const consumed = consumedEvents(slice).filter(name => !declaredNames.has(name.toLowerCase())).map(name => {
         const producer = owners.idFor(name);
         // 'source events' consumes another application's public events.
-        const event: EventItemDocument = { id: scope.idOf('consumes', name), name, schema: owners.schemaFor(name), ...(captured.has(name.toLowerCase()) ? { visibility: EventVisibility.Public } : {}) };
+        const event: EventItemDocument = { id: scope.idOf('consumes', name), name, schema: owners.schemaFor(name), ...(captured.has(name.toLowerCase()) ? { visibility: EventItemVisibility.public } : {}) };
         return producer === undefined ? event : { ...event, sourceEventId: producer };
     });
     return [...declared, ...produced, ...consumed];

@@ -3059,4 +3059,19 @@ public static class DiagnosticCodes
     /// A concept header repeats a compliance marker with the same wire identity.
     /// </summary>
     public const string DuplicateComplianceMarker = "PLAY0653";
+
+    /// <summary>
+    /// A navigation contribution's <c>destination outlet</c> or <c>destination dialog</c> names an outlet or dialog template nothing declares.
+    /// </summary>
+    public const string UnknownNavigationDestination = "PLAY0654";
+
+    /// <summary>
+    /// A screen's <c>contribute to &lt;Point&gt;</c> names a contribution point no layout or template slot declares.
+    /// </summary>
+    public const string UnknownScreenContributionPoint = "PLAY0655";
+
+    /// <summary>
+    /// Template content nests templates in a cycle - a template's content uses itself, directly or through other templates.
+    /// </summary>
+    public const string TemplateNestingCycle = "PLAY0656";
 }
