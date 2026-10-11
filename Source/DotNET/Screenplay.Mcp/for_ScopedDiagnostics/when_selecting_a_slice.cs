@@ -18,5 +18,5 @@ public class when_selecting_a_slice : given.a_model
     [Fact] void should_exclude_transitive_errors() => _result.Diagnostics.Any(diagnostic => diagnostic.Message.Contains("UnknownTransitive", StringComparison.Ordinal)).ShouldBeFalse();
     [Fact] void should_not_match_a_partial_module_name() => _result.Diagnostics.Any(diagnostic => diagnostic.Message.Contains("UnknownPrefix", StringComparison.Ordinal)).ShouldBeFalse();
     [Fact] void should_report_the_affected_scope() => _result.AffectedScopes.ShouldContainOnly("Reporting.Views.Consume");
-    [Fact] void should_disclose_reference_coverage_limits() => _result.DependencyCoverage.ShouldContain("Not code");
+    [Fact] void should_disclose_reference_coverage_limits() => _result.DependencyCoverage.ShouldContain("Opaque code naming a property is reported as opaque, not resolved.");
 }

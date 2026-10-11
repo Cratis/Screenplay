@@ -118,14 +118,14 @@ sealed class WorkspaceReferenceBindings
                 TriggerSyntax => WorkspaceReferenceDomain.Trigger,
                 ReactionSyntax => WorkspaceReferenceDomain.Reaction,
                 ConstraintSyntax when entry.Parent is { } constraintParent && index.Find(constraintParent)?.Node is SliceSyntax => WorkspaceReferenceDomain.Constraint,
-                PropertySyntax when entry.Parent is { } parent && index.Find(parent)?.Node is TypeSyntax => WorkspaceReferenceDomain.Property,
+                PropertySyntax when entry.Parent is { } parent && index.Find(parent)?.Node is TypeSyntax or CommandSyntax or EventSyntax or ReadModelSyntax => WorkspaceReferenceDomain.Property,
                 _ => null
             };
             if (domain is { } actual)
             {
                 var owner = actual switch
                 {
-                    WorkspaceReferenceDomain.Property => ((TypeSyntax)index.Find(entry.Parent!)!.Node).Name,
+                    WorkspaceReferenceDomain.Property => index.Find(entry.Parent!)!.Node is TypeSyntax type ? type.Name : Key(index.Find(entry.Parent!)!),
                     WorkspaceReferenceDomain.SpecificationParameter => WorkspaceReferenceMembers.TableOwner(entry, index),
                     WorkspaceReferenceDomain.EventStream when entry.Parent is { } parent && index.Find(parent)?.Node is EventSourceSyntax source => source.Name,
                     _ => null
