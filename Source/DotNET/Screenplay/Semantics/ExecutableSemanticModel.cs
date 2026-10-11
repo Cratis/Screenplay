@@ -1276,13 +1276,13 @@ internal static partial class SemanticModelValidator
         void ValidateValue(SemanticValue value, SemanticTypeReference target, string description, bool routeInput = false)
         {
             _valueValidator.Validate(value, target, description);
-            if (!routeInput && _semanticVersion == SemanticVersion.V10) UsesExactNumberLiterals = UsesExactNumberLiterals || ContainsExactNumberLiteral(value);
+            if (!routeInput) UsesExactNumberLiterals = UsesExactNumberLiterals || ContainsExactNumberLiteral(value);
         }
 
         void ValidateValueVariant(SemanticValue value)
         {
             _valueValidator.ValidateVariant(value);
-            if (_semanticVersion == SemanticVersion.V10) UsesExactNumberLiterals = UsesExactNumberLiterals || ContainsExactNumberLiteral(value);
+            UsesExactNumberLiterals = UsesExactNumberLiterals || ContainsExactNumberLiteral(value);
         }
 
         SemanticTypeReference? TypeOf(SemanticValue value) => _valueValidator.TypeOf(value);

@@ -7,15 +7,18 @@ namespace Cratis.Screenplay.Semantics;
 
 internal static partial class SemanticModelValidator
 {
-    static bool ContainsExactNumberLiteral(SemanticValue value) => value switch
+    internal static bool UsesExactNumberLiterals(SemanticApplication application, SemanticVersion version)
     {
-        SemanticNumberValue number => DiffersFromLegacyLowering(number.Value),
-        SemanticArrayValue array => array.Values.Any(ContainsExactNumberLiteral),
-        SemanticCompositeValue composite => composite.Properties.Any(property => ContainsExactNumberLiteral(property.Value)),
-        _ => false
-    };
+        // Reuse reference validation's value walk, including its route exclusions. Only retained
+        // values count; admission-only binding of examples and case values never reaches this walk.
+        var context = new ValidationContext(version, application);
+        context.RegisterApplication(application);
+        context.ValidateReferences(application);
 
-    static bool DiffersFromLegacyLowering(decimal value)
+        return context.UsesExactNumberLiterals;
+    }
+
+    internal static bool DiffersFromLegacyLowering(decimal value)
     {
         try
         {
@@ -28,6 +31,14 @@ internal static partial class SemanticModelValidator
             return true;
         }
     }
+
+    static bool ContainsExactNumberLiteral(SemanticValue value) => value switch
+    {
+        SemanticNumberValue number => DiffersFromLegacyLowering(number.Value),
+        SemanticArrayValue array => array.Values.Any(ContainsExactNumberLiteral),
+        SemanticCompositeValue composite => composite.Properties.Any(property => ContainsExactNumberLiteral(property.Value)),
+        _ => false
+    };
 
     private sealed partial class ValidationContext
     {

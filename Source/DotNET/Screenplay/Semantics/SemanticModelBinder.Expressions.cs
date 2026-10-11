@@ -12,6 +12,17 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        static decimal BindNumber(double value)
+        {
+            var legacy = Convert.ToDecimal(value, CultureInfo.InvariantCulture);
+
+            // Decimal scale can round the shortest round-trip form. Keep it only when the shared
+            // activation predicate can distinguish it from legacy lowering in the retained model.
+            var exact = decimal.Parse(value.ToString("R", CultureInfo.InvariantCulture), NumberStyles.Float, CultureInfo.InvariantCulture);
+
+            return SemanticModelValidator.DiffersFromLegacyLowering(exact) ? exact : legacy;
+        }
+
         SemanticExpression? BindPropertyExpression(
             ExpressionSyntax expression,
             Dictionary<string, SemanticProperty> properties,
@@ -51,21 +62,6 @@ public sealed partial class SemanticModelBinder
             double.IsFinite(value) && Math.Truncate(value) == value
                 ? SemanticValue.Number((decimal)new BigInteger(value))
                 : BindLiteral(expression);
-
-        decimal BindNumber(double value)
-        {
-            var legacy = Convert.ToDecimal(value, CultureInfo.InvariantCulture);
-
-            // The shortest round-trip form is the authored value for every literal of up to 17 significant digits.
-            // The double's full binary expansion is not: 7e28 must stay 7e28, not 69999999999999999280861413376.
-            var exact = decimal.Parse(value.ToString("R", CultureInfo.InvariantCulture), NumberStyles.Float, CultureInfo.InvariantCulture);
-
-            // Equal lowerings preserve released bytes. A changed value selects the unreleased v10 contract,
-            // regardless of declaration order or which other feature selects v10.
-            if (exact != legacy) UsesV10 = true;
-
-            return exact;
-        }
 
         SemanticExpression? UnsupportedExpression(ExpressionSyntax expression, string description)
         {
