@@ -36,6 +36,7 @@ internal static partial class ContributionParser
         var hasNavigate = false;
         var hasLabel = false;
         var hasOrder = false;
+        var item = new NavigationItem();
         var directiveLocations = new Dictionary<string, SourceLocation>();
 
         while (context.TryPeekChild(header.Indent, out var line))
@@ -51,7 +52,10 @@ internal static partial class ContributionParser
                     }
 
                     hasNavigate = true;
-                    navigate = ParseNavigate(context, line);
+                    navigate = ScreenParser.ParseNavigate(context, line.Content, line);
+                    break;
+                case "id" or "icon" or "presentation" or "group" or "destination":
+                    ParseItemDirective(context, line, item);
                     break;
                 case "label":
                     if (hasLabel)
@@ -82,25 +86,70 @@ internal static partial class ContributionParser
                     }
                     break;
                 default:
-                    context.Error(DiagnosticCodes.UnknownContributionDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in contribution body - expected navigate, label or order", line.Location);
+                    context.Error(DiagnosticCodes.UnknownContributionDirective, $"Unexpected '{LineText.FirstWord(line.Content)}' in contribution body - expected navigate, label, order, id, icon, presentation, group or destination", line.Location);
                     context.SkipBlock(line.Indent);
                     break;
             }
         }
 
-        return new(contributionPoint, navigate, label, order, header.Location) { DirectiveLocations = directiveLocations };
+        return new(contributionPoint, navigate, label, order, header.Location)
+        {
+            DirectiveLocations = directiveLocations,
+            Id = item.Id,
+            Icon = item.Icon,
+            Presentation = item.Presentation,
+            Group = item.Group,
+            Destination = item.Destination
+        };
     }
 
-    static ScreenNavigateSyntax? ParseNavigate(ParserContext context, SourceLine line)
+    static void ParseItemDirective(ParserContext context, SourceLine line, NavigationItem item)
     {
-        var match = NavigateRegex().Match(line.Content);
-        if (!match.Success)
+        var directive = LineText.FirstWord(line.Content);
+        if (item.Seen.Contains(directive))
         {
-            context.Error(DiagnosticCodes.InvalidNavigation, $"Invalid navigation '{line.Content}' - expected 'navigate to <Screen> [by <param>]'", line.Location);
-            return null;
+            context.Error(DiagnosticCodes.UnknownContributionDirective, $"This contribution already declares '{directive}' - at most one is allowed", line.Location);
+            context.SkipBlock(line.Indent);
+            return;
         }
 
-        return new(match.Groups[1].Value, match.Groups[2].Success ? match.Groups[2].Value : null, line.Location);
+        item.Seen.Add(directive);
+        context.SkipBlock(line.Indent);
+        if (directive == "destination")
+        {
+            var destination = DestinationRegex().Match(line.Content);
+            if (!destination.Success)
+            {
+                context.Error(DiagnosticCodes.UnknownContributionDirective, $"Invalid destination '{line.Content}' - expected 'destination outlet <name>', 'destination dialog <Name>' or 'destination external \"<route>\"'", line.Location);
+                return;
+            }
+
+            var kind = destination.Groups[1].Value switch
+            {
+                "outlet" => ContributionDestinationKind.Outlet,
+                "dialog" => ContributionDestinationKind.Dialog,
+                _ => ContributionDestinationKind.External
+            };
+            var target = destination.Groups[2].Success ? destination.Groups[2].Value : StringLiteral.Unescape(destination.Groups[3].Value);
+            item.Destination = new(kind, target, line.Location);
+            return;
+        }
+
+        var value = ItemValueRegex().Match(line.Content[directive.Length..].Trim());
+        if (!value.Success)
+        {
+            context.Error(DiagnosticCodes.UnknownContributionDirective, $"Invalid {directive} '{line.Content}' - expected '{directive} <name>' or '{directive} \"<text>\"'", line.Location);
+            return;
+        }
+
+        var text = value.Groups[1].Success ? value.Groups[1].Value : StringLiteral.Unescape(value.Groups[2].Value);
+        switch (directive)
+        {
+            case "id": item.Id = text; break;
+            case "icon": item.Icon = text; break;
+            case "presentation": item.Presentation = text; break;
+            default: item.Group = text; break;
+        }
     }
 
     static string? ParseLabel(ParserContext context, SourceLine line)
@@ -130,12 +179,33 @@ internal static partial class ContributionParser
     [GeneratedRegex(@"^contribute\s+to\s+([A-Za-z_]\w*)$", RegexOptions.None, 1000)]
     private static partial Regex HeaderRegex();
 
-    [GeneratedRegex(@"^navigate\s+to\s+(\w+(?:\.\w+)*)(?:\s+by\s+(\w+))?$", RegexOptions.None, 1000)]
-    private static partial Regex NavigateRegex();
+    [GeneratedRegex("^destination\\s+(?:(outlet|dialog)\\s+([A-Za-z_][\\w.]*)|(?:external)\\s+\"(" + StringLiteral.BodyPattern + ")\")$", RegexOptions.None, 1000)]
+    private static partial Regex DestinationRegex();
+
+    [GeneratedRegex("^(?:([A-Za-z_][\\w.-]*)|\"(" + StringLiteral.BodyPattern + ")\")$", RegexOptions.None, 1000)]
+    private static partial Regex ItemValueRegex();
 
     [GeneratedRegex("^label\\s+(?:\"(" + StringLiteral.BodyPattern + ")\"|(\\$strings\\.\\w+(?:\\.\\w+)*))$", RegexOptions.None, 1000)]
     private static partial Regex LabelRegex();
 
     [GeneratedRegex(@"^order\s+(\d+)$", RegexOptions.None, 1000)]
     private static partial Regex OrderRegex();
+
+    /// <summary>
+    /// Collects the navigation item directives while a contribution body is parsed.
+    /// </summary>
+    sealed class NavigationItem
+    {
+        public HashSet<string> Seen { get; } = new(StringComparer.Ordinal);
+
+        public string? Id { get; set; }
+
+        public string? Icon { get; set; }
+
+        public string? Presentation { get; set; }
+
+        public string? Group { get; set; }
+
+        public ContributionDestinationSyntax? Destination { get; set; }
+    }
 }

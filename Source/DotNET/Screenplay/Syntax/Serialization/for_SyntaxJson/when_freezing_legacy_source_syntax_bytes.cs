@@ -258,6 +258,7 @@ public class when_freezing_legacy_source_syntax_bytes
 
             // Screen composition has its own round-trip and corpus specs; the frozen bytes predate it.
             ScreenTemplates = module.ScreenTemplates.Select(WithoutComposition),
+            Contributions = module.Contributions?.Select(WithoutNavigationItem),
 
             // The samples-policy coverage spec protects TagInvoiceForm's newly restored item population.
             Forms = module.Forms?.Where(form => form.Name != "TagInvoiceForm").Select(form =>
@@ -285,6 +286,7 @@ public class when_freezing_legacy_source_syntax_bytes
                 })
             } : feature).Select(WithoutPublicationSlice).Select(feature => feature with
             {
+                Contributions = feature.Contributions?.Select(WithoutNavigationItem),
                 Slices = feature.Slices.Select(slice => slice with
                 {
                     Screens = slice.Screens.Select(screen => screen with { Directives = WithoutSampleInputNavigation(RestoreCollectionsToolbar(screen)), Contributions = [] })
@@ -292,6 +294,9 @@ public class when_freezing_legacy_source_syntax_bytes
             })
         })
     };
+
+    static ContributionSyntax WithoutNavigationItem(ContributionSyntax contribution) =>
+        contribution with { Id = null, Icon = null, Presentation = null, Group = null, Destination = null };
 
     static ScreenTemplateSyntax WithoutComposition(ScreenTemplateSyntax template) => template with
     {

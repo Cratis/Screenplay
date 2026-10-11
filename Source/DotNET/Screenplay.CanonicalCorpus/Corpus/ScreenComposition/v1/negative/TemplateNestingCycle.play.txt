@@ -1,0 +1,12 @@
+module Workspaces
+  screen template Outer
+    header
+
+    content header
+      template Inner
+
+  screen template Inner
+    body
+
+    content body
+      template Outer
