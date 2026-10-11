@@ -27,6 +27,10 @@ Appending a trailing optional parameter instead looks equivalent and is not. It 
 Authoring metadata follows this rule: `SpecificationSyntax.Description` and the `Documentation` members on modules, features, slices, commands, read models and reactions are nullable init-only properties. They appear in the syntax transport schema, not in the executable semantic model. Preserve them when rewriting a declaration.
 
 `SpecificationSyntax.GivenCallerPersona` is an additive init-only reference with a name and location, distinct from `GivenCaller`. It is omitted from syntax JSON when absent, preserving untouched documents' bytes. A reader that predates the persona member must reject the new member rather than silently interpret an unauthenticated caller. Effective syntax expands the reference and carries `SpecificationValueOrigin.Persona` with persona and policy provenance; it adds no ESM member or version.
+## Enum member numbers
+
+`ConceptSyntax.ValueNumbers` is a nullable init-only collection of int32, not a positional constructor parameter. Absent numbers stay null and the syntax JSON omits `valueNumbers`, keeping existing documents' bytes. Populated numbers parallel `values` in authored order; cardinality must match, numbers must be unique, and the concept must be an enum. Preserve the distinction between absent and populated numbers when rewriting. Positional pins retain the original executable bytes; other numbers are not admitted by any supported ESM version yet (`PLAY0268`, #643).
+
 ## Key and routing members
 
 `PropertySyntax.IsKey`, `QuerySyntax.ByParts`, `ReadsSyntax.ByParts`, `ProducesSyntax.Stream`, `ReactionSyntax.From` and `ReducerSyntax.From` are additive init-only properties. Constructors and Deconstruct signatures stay unchanged. Missing members default to false, empty collections or null. Writers omit those defaults. Preserve authored key-part and mapping order when rewriting nodes.

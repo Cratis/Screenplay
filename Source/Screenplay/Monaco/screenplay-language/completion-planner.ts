@@ -79,7 +79,7 @@ export function completionEntriesFor(chain: string[], where: CompletionScope = {
         case 'slice':
             return items.sliceItemsFor(header?.split(/\s+/)[1]);
         case 'concept':
-            return items.conceptItems;
+            return /:\s*Enum\b/.test(header ?? '') ? [...items.conceptItems, { label: 'enum member (numbered)', insertText: '${1:value} = ${2:0}', documentation: 'Every member must declare a unique int32 number. Keep published numbers unchanged; specifications name members, not numbers.' }] : items.conceptItems;
         case 'type':
             return items.typeItems;
         case 'command':

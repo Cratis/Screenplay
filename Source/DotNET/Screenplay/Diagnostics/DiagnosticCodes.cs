@@ -3074,4 +3074,29 @@ public static class DiagnosticCodes
     /// Template content nests templates in a cycle - a template's content uses itself, directly or through other templates.
     /// </summary>
     public const string TemplateNestingCycle = "PLAY0656";
+
+    /// <summary>
+    /// An enum mixes explicitly numbered and positional members.
+    /// </summary>
+    public const string MixedEnumerationNumbering = "PLAY0667";
+
+    /// <summary>
+    /// An enum declares the same number for more than one member.
+    /// </summary>
+    public const string DuplicateEnumerationNumber = "PLAY0668";
+
+    /// <summary>
+    /// An enum member number is outside the int32 range.
+    /// </summary>
+    public const string EnumerationNumberOutsideInt32 = "PLAY0669";
+
+    /// <summary>
+    /// An enum member number is not an optionally negative decimal integer without leading zeros.
+    /// </summary>
+    public const string MalformedEnumerationNumber = "PLAY0670";
+
+    /// <summary>
+    /// A positional enum used by an event property can be pinned to its current numbers.
+    /// </summary>
+    public const string UnpinnedStoredEnumeration = "PLAY0671";
 }

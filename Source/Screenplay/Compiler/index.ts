@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 export * from './Authoring/QuickFixes';
+export * from './Completeness/ModelCompleteness';
 export * from './Diagnostics';
 export * from './Dependencies';
 export * from './Syntax';

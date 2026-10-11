@@ -131,27 +131,29 @@ concept DiscountPercentage : Decimal
     >= 0    message "A discount cannot be negative"
     <= 100  message "A discount cannot exceed 100 percent"
 
+// Pin stored enum identities before reordering or inserting members.
 concept InvoiceStatus : Enum
-  draft
-  sent
-  paid
-  overdue
-  cancelled
+  draft = 0
+  sent = 1
+  paid = 2
+  overdue = 3
+  cancelled = 4
 
 concept PaymentTerms : Enum
-  net30
-  net60
-  immediate
+  net30 = 0
+  net60 = 1
+  immediate = 2
 
 concept PaymentMethod : Enum
-  card
-  transfer
-  cash
+  card = 0
+  transfer = 1
+  cash = 2
 
+// Sparse numbers preserve an external aging contract; binding refuses these pins (PLAY0268, #643).
 concept AgingBucket : Enum
-  current
-  late
-  severe
+  current = 0
+  late = 30
+  severe = 90
 
 // ------------------------------------------------------------
 // Composite value types

@@ -34,6 +34,10 @@ export function validateSyntaxInvariants(node: SyntaxNode): void {
     if (metadataError !== undefined) refuse(metadataError);
     if (node.kind === 'ConceptSyntax') {
         const concept = node as ConceptSyntax;
+        if (concept.valueNumbers != null) {
+            const numbers = concept.valueNumbers;
+            if (concept.type !== 'Enum' || !Array.isArray(numbers) || numbers.length !== concept.values.length || numbers.some(number => !Number.isInteger(number) || number < -2147483648 || number > 2147483647) || new Set(numbers).size !== numbers.length) refuse('Explicit enum numbers require an Enum concept, one number per value, and unique int32 numbers.');
+        }
         for (const validation of concept.validations ?? []) {
             if (validation.kind === 'DeclarativeValidateSyntax' && validation.rules.some(rule => rule.implementation != null)) refuse('Implementation wrappers on named rules are supported only on commands.');
         }

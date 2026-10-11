@@ -28,6 +28,8 @@ applies-to:
   - Documentation/screenplay/diagnostics.md
 ---
 
+> **2026-10-11 — implementation note.** The pinning hint is reported by the opt-in completeness checks (`enum-pinning`, `PLAY0671` or `all`), not by ordinary compilation, so it adds no noise to models that do not ask for it. Its severity, code and eligibility are as decided below.
+
 ## Context
 
 An enum concept is an indented list of member names (`[ "@" ], LowerIdent` in `ConceptDecl`, grammar.md). `SemanticConcept.Values` holds the names in declaration order, and the executable model treats an enum as a text concept whose values the reference evaluator compares by name. No member carries a number.
