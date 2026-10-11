@@ -140,7 +140,8 @@ internal static partial class SemanticModelValidator
         void ValidatePropertyValues(
             ImmutableArray<SemanticPropertyValue> values,
             ImmutableArray<SemanticProperty> targetProperties,
-            bool requireExact)
+            bool requireExact,
+            HashSet<SemanticId>? routedInputs = null)
         {
             RequireObjects(values, nameof(values), "property value");
             var targets = Properties(targetProperties);
@@ -158,7 +159,7 @@ internal static partial class SemanticModelValidator
                     throw new InvalidSemanticContract($"Property value target '{value.TargetProperty}' is unresolved.");
                 }
 
-                ValidateValue(value.Value, target.Type, "property value");
+                ValidateValue(value.Value, target.Type, "property value", routedInputs?.Contains(target.Id) == true);
             }
 
             if (requireExact && assigned.Count != targets.Count)

@@ -60,6 +60,18 @@ static class SemanticEventPublication
             plan.Model.Application.Types.ToDictionary(type => type.Id));
         foreach (var projection in projections)
         {
+            if (plan.UnadmittedArtifacts.Contains(projection.Id))
+            {
+                failure = SemanticDeferredProjections.FailureFor(projection, history.Concat(added));
+                if (failure is not null)
+                {
+                    return false;
+                }
+
+                // An unrelated deferred projection must not enter the folding engine either.
+                continue;
+            }
+
             var target = plan.Events[projection.ReadModel];
             var states = new List<(SemanticValue Key, Dictionary<SemanticId, SemanticValue> State)>();
             var last = new List<(SemanticValue Key, ImmutableArray<SemanticPropertyValue> Values)>();

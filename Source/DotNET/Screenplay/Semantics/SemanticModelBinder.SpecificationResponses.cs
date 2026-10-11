@@ -12,7 +12,7 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
-        SemanticSpecificationCommand BindSpecificationCommand(SpecificationCommandSyntax when, SemanticCommand command)
+        SemanticSpecificationCommand BindSpecificationCommand(SpecificationCommandSyntax when, SemanticCommand command, IReadOnlySet<SemanticId> routedInputs)
         {
             var properties = command.Properties.ToDictionary(property => property.Name, StringComparer.Ordinal);
             var inputs = new List<PropertyMappingSyntax>();
@@ -47,7 +47,7 @@ public sealed partial class SemanticModelBinder
                 if (BindGeneratedValue(value.Source, property) is { } generatedFixture) generated.Add(new(property.Id, generatedFixture));
             }
 
-            return new(command.Id, BindPropertyValues(inputs, properties.Where(entry => !entry.Value.IsGenerated).ToDictionary(entry => entry.Key, entry => entry.Value, StringComparer.Ordinal), "specification command"))
+            return new(command.Id, BindPropertyValues(inputs, properties.Where(entry => !entry.Value.IsGenerated).ToDictionary(entry => entry.Key, entry => entry.Value, StringComparer.Ordinal), "specification command", routedInputs))
             {
                 GeneratedValues = generated.ToImmutable(),
                 EventSource = identifier is not null || when.For is null ? null : BindEventSource(when.For, command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type)

@@ -31,6 +31,11 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticUnsupported(world, SemanticExecutionCapability.Command, $"Command '{request.Command}' is not in the execution plan.");
         }
 
+        if (plan.UnadmittedArtifacts.Contains(command.Id))
+        {
+            return new SemanticUnsupported(world, SemanticExecutionCapability.Command, $"Command '{command.Name}' was not admitted by scoped execution-plan compilation.");
+        }
+
         if (request.Queries.IsDefault)
         {
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default.");
@@ -223,6 +228,11 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         }
 
         facts.AddRange(publications);
+        if (SemanticDeferredProjections.FindFailure(plan, facts) is { } deferredFailure)
+        {
+            return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, deferredFailure);
+        }
+
         var tentative = world.Commit(facts.ToImmutable(), readModels);
         var execution = ExecuteQueries(plan, world, tentative, facts.ToImmutable(), request.Queries, request.Caller);
         return execution is SemanticAccepted accepted ? accepted with { Response = response } : execution;
@@ -270,6 +280,11 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         }
 
         facts = facts.AddRange(publications);
+        if (SemanticDeferredProjections.FindFailure(plan, facts) is { } deferredFailure)
+        {
+            return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, deferredFailure);
+        }
+
         return ExecuteQueries(plan, world, world.Commit(facts, readModels), facts, queries, caller);
     }
 
@@ -312,6 +327,11 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             if (!plan.Queries.TryGetValue(queryRequest.Query, out var query))
             {
                 return new SemanticUnsupported(original, SemanticExecutionCapability.Query, $"Query '{queryRequest.Query}' is not in the execution plan.");
+            }
+
+            if (plan.UnadmittedArtifacts.Contains(query.Id) || plan.IsUnadmittedReadModel(query.ReadModel))
+            {
+                return new SemanticUnsupported(original, SemanticExecutionCapability.Query, $"Query '{query.Name}' or its read model was not admitted by scoped execution-plan compilation.");
             }
 
             if (ReducerFor(plan, query.ReadModel) is { } reducer)
@@ -362,6 +382,11 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
 
         foreach (var instance in tentative.ReadModels)
         {
+            if (plan.IsUnadmittedReadModel(instance.ReadModel))
+            {
+                return new SemanticUnsupported(original, SemanticExecutionCapability.Projection, $"Read model '{instance.ReadModel}' was not admitted by scoped execution-plan compilation.");
+            }
+
             if (ReducerFor(plan, instance.ReadModel) is { } reducer)
             {
                 return new SemanticUnsupported(
@@ -763,6 +788,13 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         out ImmutableArray<SemanticReadModelInstance> readModels,
         out string? failure)
     {
+        if (SemanticDeferredProjections.FindFailure(plan, facts) is { } deferredFailure)
+        {
+            failure = deferredFailure;
+            readModels = current;
+            return false;
+        }
+
         var instances = current.ToList();
         var concepts = plan.Model.Application.Concepts.ToDictionary(_ => _.Id);
         var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
@@ -774,7 +806,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             foreach (var projection in plan.Projections.Values.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal))
             {
                 // An event-target projection publishes its state as an event; it builds no read-model instance.
-                if (projection.Target == SemanticProjectionTargetKind.Event)
+                if (projection.Target == SemanticProjectionTargetKind.Event || plan.UnadmittedArtifacts.Contains(projection.Id))
                 {
                     continue;
                 }
