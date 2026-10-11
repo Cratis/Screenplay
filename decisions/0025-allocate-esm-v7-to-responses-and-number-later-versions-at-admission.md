@@ -20,6 +20,8 @@ applies-to:
   - Samples/**
 ---
 
+> **2026-10-11 — publication boundary amended by [0066](0066-published-esm-versions-are-frozen.md).** Item 2 now treats any release or prerelease NuGet or npm package exposing an ESM version as publication: the version is released and frozen, and its claimed entry moves to the released table with the first publishing merge. Only a new version or a byte-preserving extension under 0004 may extend it. ESM v10 first shipped in Screenplay v4.125.0; 0066 records 0063's v4.129.0 extension as a retroactive exception. The decision text below is preserved.
+
 ## Context
 
 Accepted [0023](0023-command-production-model.md) fixes the delivery order of ESM v7–v11 in its *ESM allocation* section: v7 exact numbers (#285), v8 generated values and responses (#300, #303), v9 operations, v10 event sources and streams, v11 reads. Versions are cumulative and ship in that order, so the first slot gates everything after it.

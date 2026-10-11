@@ -15,6 +15,8 @@ applies-to:
   - Documentation/screenplay/interoperability.md
 ---
 
+> **2026-10-11 — published v10 exception recorded by [0066](0066-published-esm-versions-are-frozen.md).** ESM v10 was already published in Screenplay v4.125.0 under 0043, contrary to the unreleased premise below. This record's extension shipped in v4.129.0 and is a retroactive exception: its bytes are now part of frozen v10, and consumers admitting v10 must include them. The original decision text is preserved; no further byte-changing extension may join published v10.
+
 ## Context
 
 [0061](0061-per-production-route-overrides.md) and [0062](0062-observer-source-and-stream-filters.md) add portable meaning and canonical members. ESM v9 was released in Screenplay 4.117.0. Decision 0043 has already claimed the single unreleased ESM v10 for reaction system identity. Decision 0025 permits only one unreleased entry. No v10 bytes have been released or frozen, so these features join that claim instead of allocating v11.
