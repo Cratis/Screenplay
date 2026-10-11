@@ -313,10 +313,7 @@ public sealed partial class SemanticModelBinder
             }
 
             var properties = command.Properties.ToDictionary(_ => _.Name, StringComparer.Ordinal);
-            var routedInputs = command.Route is { } route
-                ? route.StreamIdParts.Select(part => part.Value).Concat(route.StreamId is { } scalar ? [scalar] : [])
-                    .OfType<SemanticResolvedExpression>().Select(expression => expression.Target).ToHashSet()
-                : [];
+            var routedInputs = SemanticEventRouting.RoutedInputs(command);
             var mappings = ImmutableArray.CreateBuilder<SemanticPropertyMapping>();
             foreach (var mapping in invoked.Mappings)
             {
@@ -332,12 +329,8 @@ public sealed partial class SemanticModelBinder
                     continue;
                 }
 
-                if (BindOccurrenceSource(mapping.Source, target.Type, root, values, "invocation mapping") is { } source)
+                if (BindOccurrenceSource(mapping.Source, target.Type, root, values, "invocation mapping", routedInputs.Contains(target.Id)) is { } source)
                 {
-                    if (routedInputs.Contains(target.Id) && mapping.Source is LiteralExpressionSyntax { Value: double } literal)
-                    {
-                        source = SemanticExpression.FromValue(BindRouteLiteral(literal));
-                    }
                     mappings.Add(new(target.Id, source));
                 }
             }
@@ -355,11 +348,12 @@ public sealed partial class SemanticModelBinder
             SemanticTypeReference target,
             SemanticExpressionRootKind root,
             Dictionary<string, SemanticProperty> values,
-            string description) => source switch
+            string description,
+            bool routeInput = false) => source switch
             {
                 ContextExpressionSyntax context => BindOccurrence(context, target),
                 IdentityExpressionSyntax identity => BindOccurrence(identity, target),
-                LiteralExpressionSyntax literal => BindConcreteValue(literal, target, description, false) is { } value ? SemanticExpression.FromValue(value) : null,
+                LiteralExpressionSyntax literal => BindConcreteValue(literal, target, description, false, routeInput) is { } value ? SemanticExpression.FromValue(value) : null,
                 PathExpressionSyntax path when !values.ContainsKey(path.Path) && EnumerationMember(path.Path, target) is { } member =>
                     SemanticExpression.FromValue(SemanticValue.Text(member)),
                 _ => BindExpression(source, values, root, description)

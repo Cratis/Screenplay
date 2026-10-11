@@ -75,6 +75,11 @@ static class SemanticEventRouting
             slice.Specifications.Any(specification => specification.GivenEvents.Concat(specification.ThenEvents)
                 .Any(value => value.Route is not null || value.Unrouted) || specification.WhenAppended?.Route is not null));
 
+    internal static HashSet<SemanticId> RoutedInputs(SemanticCommand command) =>
+        [.. command.Produces.Select(produced => produced.Route).Append(command.Route).OfType<SemanticCommandRoute>()
+            .SelectMany(route => route.StreamIdParts.Select(part => part.Value).Concat(route.StreamId is { } scalar ? [scalar] : []))
+            .OfType<SemanticResolvedExpression>().Select(expression => expression.Target)];
+
     internal static string StoredName(string? id, string name) => id ?? name;
 
     internal static (SemanticEventSource Source, SemanticEventStream Stream) Resolve(SemanticApplication application, SemanticId sourceId, SemanticId streamId)
