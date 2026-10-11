@@ -515,9 +515,14 @@ The minimum evaluator currently admits the RegisterProject-style vertical: decla
 ```csharp
 var semanticCompilation = semanticCompiler.Compile("Projects", documents);
 var planCompilation = SemanticExecutionPlan.Compile(semanticCompilation.Value!.Model);
-var specificationId = planCompilation.Plan!.Specifications.Keys.First();
-var run = new SemanticSpecificationRunner().Run(planCompilation.Plan, specificationId);
+if (planCompilation.Success)
+{
+    var specificationId = planCompilation.Plan!.Specifications.Keys.First();
+    var run = new SemanticSpecificationRunner().Run(planCompilation.Plan, specificationId);
+}
 ```
+
+For scoped work, use `SemanticExecutionPlan.Compile(model, selectedSlices)`, where `selectedSlices` contains the selected slice semantic identities. `Issues` still reports blocking issues; `UnselectedIssues` reports admission issues in other slices without preventing plan creation. Shared application-level issues always block, and empty or unknown selections are refused. The plan keeps the original model and revision. A specification that reaches a deferred command, query, or projection returns `SemanticUnsupported`, not guessed state. See the [execution plan API reference](interoperability.md#execution-plan-compilation).
 
 Tags are append metadata: `then` event assertions compare payload properties and ignore tags unless explicitly asserted by a future tag-aware assertion contract. A command with all production conditions false is accepted with zero facts. A rejected execution returns the unchanged world. An accepted execution commits its facts and projected state once, then evaluates the requested queries against that tentative committed state. The same normalized specification run is the conformance input for Stage and generated applications.
 

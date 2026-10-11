@@ -93,6 +93,24 @@ The contract ships in `Cratis.Stage.Contracts` under `Cratis.Stage.Contracts.Ren
 
 A scope identifies the application, one module, one feature, or one slice. The fully resolved profile identifies the target, renderer, versions, and immutable inputs.
 
+### Execution plan compilation
+
+`SemanticExecutionPlan` and `SemanticExecutionPlanCompilation` ship in `Cratis.Screenplay.Semantics.Execution`.
+
+| Operation or member | Contract |
+| --- | --- |
+| `SemanticExecutionPlan.Compile(ExecutableSemanticModel model)` | Compiles the whole model; any admission issue blocks plan creation. |
+| `SemanticExecutionPlan.Compile(ExecutableSemanticModel model, IEnumerable<SemanticId> selectedSlices)` | Compiles for a non-empty selection of slice identities. Unknown identities or an empty selection produce `InvalidSliceSelection` issues. |
+| `SemanticExecutionPlanCompilation.Plan` | The indexed plan, or `null` when blocking issues exist. |
+| `SemanticExecutionPlanCompilation.Issues` | Blocking admission issues: selected-slice issues and all application-level issues. |
+| `SemanticExecutionPlanCompilation.UnselectedIssues` | Non-blocking issues owned by unselected slices; empty for whole-model compilation. |
+| `SemanticExecutionPlanCompilation.Success` | `true` only when a plan exists and `Issues` is empty. |
+| `SemanticExecutionPlan.Model` / `Revision` | The original model and its unchanged semantic revision, including during scoped compilation. |
+
+Use the selection overload for scoped rendering when an unrelated slice fails portable execution admission. Expand module or feature selections to their slice identities before calling it; nested features are traversed, but only explicitly selected slices are selected. The plan retains every declaration, rather than manufacturing a subset model with a different revision. Application-level issues always block because selected declarations may depend on shared concepts or types.
+
+A successful scoped compilation does not admit the deferred artifacts for execution. The reference evaluator returns `SemanticUnsupported` with the existing `Command`, `Query`, or `Projection` capability when a deferred command or query is requested, a query reads a deferred projection's read model, or appended/replayed facts would reach a deferred projection. This includes event-target projections and all facts that would be committed, both original and published. Reachability is conservative: any `every` or `all` block is treated as observing every event, regardless of whether a read-model instance exists. Deferred projections never enter either evaluation engine; refusal returns the input world without committing facts or read-model state. Reaction settlement likewise rolls back cascading effects when an invoked command is deferred. Inspect `UnselectedIssues` to report these limitations to the caller.
+
 ### Executable semantic model versions
 
 The table below is the authoritative version allocation under [decision 0025](https://github.com/Cratis/Screenplay/blob/main/decisions/0025-allocate-esm-v7-to-responses-and-number-later-versions-at-admission.md), as amended by [0066](https://github.com/Cratis/Screenplay/blob/main/decisions/0066-published-esm-versions-are-frozen.md). Versions are cumulative and select only when their constructs are used. Read, reference-execute, render and reverse-recover admission are separate consumer choices; a package update admits none of them automatically.
