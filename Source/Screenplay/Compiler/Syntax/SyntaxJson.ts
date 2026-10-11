@@ -83,8 +83,7 @@ function preserveRejectedSourceOptions(copy: Record<string, unknown>, name: stri
 }
 
 function hasExoticShape(member: object): boolean {
-    const prototype = Object.getPrototypeOf(member);
-    return (prototype !== Object.prototype && prototype !== null) || Reflect.ownKeys(member).length !== Object.keys(member).length;
+    return (Object.getPrototypeOf(member) !== Object.prototype && Object.getPrototypeOf(member) !== null) || Reflect.ownKeys(member).length !== Object.keys(member).length;
 }
 
 function dataArray<T>(): T[] {
@@ -94,8 +93,6 @@ function dataArray<T>(): T[] {
     Object.defineProperty(items, 'toJSON', { value: undefined });
     return items;
 }
-
-type Json = { [member: string]: SyntaxJsonValue };
 
 // Members omitted from the wire form when null (or undefined), by node kind.
 const omittedWhenNull: Record<string, readonly string[]> = {
@@ -209,7 +206,7 @@ function writeNode(value: SyntaxNode, owningMode: string, complete: boolean): Sy
     if (sourceRoots.has(value.kind)) owningMode = validatedSourceOptions((value as unknown as { sourceOptions?: unknown }).sourceOptions ?? legacySourceOptions).numericMode;
     validateSyntaxInvariants(value);
     validateClosedImplementationShapes(value);
-    const result = Object.create(null) as Json;
+    const result = Object.create(null) as Record<string, SyntaxJsonValue>;
     result.kind = value.kind;
     const structural = structuralMembers(value);
     for (const member of projectedMemberNames(value, structural, owningMode, complete)) {
@@ -222,7 +219,7 @@ function writeNode(value: SyntaxNode, owningMode: string, complete: boolean): Sy
 
 function writeRecord(record: Record<string, unknown>, owningMode: string, complete: boolean): SyntaxJsonValue {
     // The ordered ExactNumber form, whatever the input key order; other objects are copied without any toJSON hook.
-    const copy = Object.create(null) as Json;
+    const copy = Object.create(null) as Record<string, SyntaxJsonValue>;
     if (record.literalType === 'ExactNumber') {
         copy.literalType = 'ExactNumber';
         copy.value = record.value as string;
