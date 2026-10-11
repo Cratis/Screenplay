@@ -3,7 +3,7 @@
 
 namespace Cratis.Screenplay.Semantics.for_ExecutableSemanticModel.when_validating_reaction_identity;
 
-public class a_v10_model_without_identity : given.a_model_to_corrupt
+public class a_v10_model_without_identity : given.a_model_without_v10_features
 {
     Exception _error;
     void Because() => _error = Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V10, SemanticVersion.V10, WithIdentity(null)));
