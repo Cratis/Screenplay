@@ -164,7 +164,7 @@ internal sealed partial class WorkspacePropertyLinks
         {
             return Current(_index.ResolveProduction(production.Event, Owner(step)?.Scope ?? []).Targets.Where(target => target.Kind == "Event"));
         }
-        (string name, string[] kinds) = step.Node switch
+        (string Name, string[] Kinds) reference = step.Node switch
         {
             CaptureAppendSyntax value => (value.Event, ["Event"]),
             InvokesSyntax value => (value.Command, ["Command"]),
@@ -177,7 +177,7 @@ internal sealed partial class WorkspacePropertyLinks
             SpecificationWhenQuerySyntax value => (value.Query, ["Query"]),
             _ => (string.Empty, [])
         };
-        var targets = Resolve(name, kinds, step);
+        var targets = Resolve(reference.Name, reference.Kinds, step);
         if (targets is [var target] && target.Syntax is SpecificationExampleSyntax example) targets = ResolveAtOwner(example.Type, ["Command", "Event", "ReadModel"], target, step.Location);
         if (targets is [var query] && query.Syntax is QuerySyntax declared) targets = ResolveAtOwner(declared.ReturnType.Name, ["ReadModel"], query, step.Location);
         return targets;
@@ -196,8 +196,7 @@ internal sealed partial class WorkspacePropertyLinks
 
     IEnumerable<(WorkspaceSyntaxEntry Entry, string Path, AuthoredDeclaration[] Candidates, bool Incomplete)> ExpressionSources(ExpressionSyntax expression, WorkspaceSyntaxEntry use)
     {
-        var expressions = _entries.Where(entry => ReferenceEquals(entry.Node, expression) || Parents(entry).Any(parent => ReferenceEquals(parent.Node, expression)));
-        foreach (var entry in expressions)
+        foreach (var entry in _entries.Where(entry => ReferenceEquals(entry.Node, expression) || Parents(entry).Any(parent => ReferenceEquals(parent.Node, expression))))
         {
             var path = entry.Node switch
             {
