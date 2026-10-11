@@ -1,8 +1,10 @@
 ---
 id: 0054
 title: Declare how a concept generates its values, and refuse a generated value that is not fresh
-status: proposed
+status: accepted
 stage: none
+decided: 2026-10-11
+decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
 applies-to:
