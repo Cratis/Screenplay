@@ -4,7 +4,7 @@
 import { validateIdentity } from './Parsing/IdentityValidator';
 import { Diagnostic } from './Diagnostics/Diagnostic';
 import { validateSpecificationCases } from './Parsing/SpecificationCaseValidator';
-import { expandSpecificationExamples } from './Parsing/SpecificationCommandExamples';
+import { expandSpecificationExamples, validateSpecificationExampleTypes } from './Parsing/SpecificationCommandExamples';
 import { productionDestinationDiagnostics } from './Diagnostics/ProductionDestinationDiagnostics';
 import { validateConstraintProperties } from './Parsing/ConstraintPropertyValidator';
 import { validateDependencyDeclarations } from './Dependencies/DeclaredDependencyTargets';
@@ -83,6 +83,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
         validateOperations(value, context);
         validatePublicEventUsage(value, context);
         validateSpecificationCases(value, context);
+        validateSpecificationExampleTypes(value, context, true);
         const effective = expandSpecificationExamples(value);
         validateResponses(effective, context);
         validateEventSources(value, context);

@@ -4,13 +4,18 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, it } from 'vitest';
-import { parse } from '../../ScreenplayCompiler';
+import { parseForAuthoring } from '../../ScreenplayCompiler';
 
 interface DiagnosticVector {
     readonly name: string;
     readonly source: readonly string[];
     readonly diagnostics: readonly string[];
     readonly messages?: readonly string[];
+    readonly validate?: boolean;
+}
+
+function diagnosticResult(vector: DiagnosticVector) {
+    return parseForAuthoring(vector.source.join('\n'), undefined, undefined, vector.validate === true);
 }
 
 const filename = join(resolve(__dirname, '..'), 'diagnostics.json');
@@ -22,7 +27,7 @@ const regenerating = process.env.SCREENPLAY_REGENERATE_DIAGNOSTIC_VECTORS === '1
 function regenerateDiagnostics(source: string, vectors: readonly DiagnosticVector[]): string {
     let updated = source;
     for (const vector of vectors) {
-        const actual = parse(vector.source.join('\n')).diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`);
+        const actual = diagnosticResult(vector).diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`);
         if (JSON.stringify(actual) === JSON.stringify(vector.diagnostics)) continue;
         const name = updated.indexOf(JSON.stringify(vector.name));
         const property = updated.indexOf('"diagnostics"', name);
@@ -37,8 +42,8 @@ function regenerateDiagnostics(source: string, vectors: readonly DiagnosticVecto
 if (regenerating) writeFileSync(filename, regenerateDiagnostics(source, vectors));
 
 // Every invalid document in the vectors is reported with the same codes, on the same lines and in the same
-// order as the C# compiler reports it - the C# compiler is held to the same file. Its validate cases
-// use Compile; TypeScript parse always includes the validation checks this compiler models.
+// order as the C# compiler reports it - the C# compiler is held to the same file. Both compilers
+// validate declaration-dependent contracts only for validate cases; the other cases exercise parsing.
 describe('when holding the compilers to the diagnostic vectors', () => {
     it('should not be regenerating', () => {
         regenerating.should.equal(false, 'Diagnostic vectors regenerated; review and rerun without SCREENPLAY_REGENERATE_DIAGNOSTIC_VECTORS.');
@@ -57,7 +62,7 @@ describe('when holding the compilers to the diagnostic vectors', () => {
 
     for (const vector of vectors) {
         it(`should report ${vector.diagnostics.join(', ')} for ${vector.name}`, () => {
-            const diagnostics = parse(vector.source.join('\n')).diagnostics;
+            const diagnostics = diagnosticResult(vector).diagnostics;
             diagnostics.map(diagnostic => `${diagnostic.code}@${diagnostic.location.line}`)
                 .should.deep.equal(vector.diagnostics);
             if (vector.messages !== undefined) diagnostics.map(diagnostic => diagnostic.message).should.deep.equal(vector.messages);

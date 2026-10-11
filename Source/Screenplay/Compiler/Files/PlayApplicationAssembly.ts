@@ -3,7 +3,7 @@
 
 import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { validateSpecificationCases } from '../Parsing/SpecificationCaseValidator';
-import { expandSpecificationExamples } from '../Parsing/SpecificationCommandExamples';
+import { expandSpecificationExamples, validateSpecificationExampleTypes } from '../Parsing/SpecificationCommandExamples';
 import { productionDestinationDiagnostics } from '../Diagnostics/ProductionDestinationDiagnostics';
 import { validateConstraintProperties } from '../Parsing/ConstraintPropertyValidator';
 import { validateDependencyDeclarations } from '../Dependencies/DeclaredDependencyTargets';
@@ -85,6 +85,7 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     if (merged.value.sourceOptions !== undefined) context.sourceOptions = merged.value.sourceOptions;
     context.guardedInteractions.push(...parsed.flatMap(document => document.guardedInteractions));
     validateSpecificationCases(merged.value, context);
+    validateSpecificationExampleTypes(merged.value, context);
     const effective = expandSpecificationExamples(merged.value);
     validateEventSources(merged.value, context);
     validateOperations(merged.value, context);
