@@ -119,7 +119,7 @@ internal static partial class SemanticModelValidator
                     command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type);
             }
 
-            ValidatePropertyValues(specification.When.Values, [.. command.Properties.Where(property => !property.IsGenerated)], true, RoutedInputs(command));
+            ValidatePropertyValues(specification.When.Values, [.. command.Properties.Where(property => !property.IsGenerated)], true, SemanticEventRouting.RoutedInputs(command));
             ValidateGeneratedValues(specification.When, command);
             return command;
         }

@@ -31,11 +31,6 @@ internal static partial class SemanticModelValidator
     {
         readonly SemanticApplication _eventRoutesApplication;
 
-        static HashSet<SemanticId> RoutedInputs(SemanticCommand command) =>
-            [.. command.Produces.Select(produced => produced.Route).Append(command.Route).OfType<SemanticCommandRoute>()
-                .SelectMany(route => route.StreamIdParts.Select(part => part.Value).Concat(route.StreamId is { } scalar ? [scalar] : []))
-                .OfType<SemanticResolvedExpression>().Select(expression => expression.Target)];
-
         void RegisterEventSources(SemanticApplication application)
         {
             RequireObjects(application.EventSources, nameof(application.EventSources), "event source");

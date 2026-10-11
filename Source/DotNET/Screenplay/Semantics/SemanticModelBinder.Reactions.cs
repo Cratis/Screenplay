@@ -313,10 +313,7 @@ public sealed partial class SemanticModelBinder
             }
 
             var properties = command.Properties.ToDictionary(_ => _.Name, StringComparer.Ordinal);
-            var routedInputs = command.Route is { } route
-                ? route.StreamIdParts.Select(part => part.Value).Concat(route.StreamId is { } scalar ? [scalar] : [])
-                    .OfType<SemanticResolvedExpression>().Select(expression => expression.Target).ToHashSet()
-                : [];
+            var routedInputs = SemanticEventRouting.RoutedInputs(command);
             var mappings = ImmutableArray.CreateBuilder<SemanticPropertyMapping>();
             foreach (var mapping in invoked.Mappings)
             {

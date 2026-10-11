@@ -118,14 +118,8 @@ public sealed partial class SemanticModelBinder
             return valid;
         }
 
-        SemanticSpecificationCommand BindRoutedSpecificationCommand(SpecificationCommandSyntax when, SemanticCommand command)
-        {
-            var routes = command.Produces.Select(produced => produced.Route).Append(command.Route).OfType<SemanticCommandRoute>();
-            var routedInputs = routes.SelectMany(route => route.StreamIdParts.Select(part => part.Value).Concat(route.StreamId is { } scalar ? [scalar] : []))
-                .OfType<SemanticResolvedExpression>().Select(expression => expression.Target).ToHashSet();
-
-            return BindSpecificationCommand(when, command, routedInputs);
-        }
+        SemanticSpecificationCommand BindRoutedSpecificationCommand(SpecificationCommandSyntax when, SemanticCommand command) =>
+            BindSpecificationCommand(when, command, SemanticEventRouting.RoutedInputs(command));
 
         SemanticFixtureRoute? BindFixtureRoute(SpecificationEventSyntax fixture)
         {
