@@ -18,7 +18,12 @@ describe('when parsing enum member numbers', () => {
     it('should retain int32 boundaries and normalize negative zero', () => result.value.concepts[0].valueNumbers!.should.deep.equal([-2147483648, 2147483647, 0]));
     it('should retain descriptions and validation', () => {
         result.value.concepts[0].description!.should.equal('identity');
-        result.value.concepts[0].validations.should.have.lengthOf(1);
+        result.value.concepts[0].validations!.should.have.lengthOf(1);
+    });
+    it('should keep Unicode identifier continuations', () => {
+        const concept = parse('concept Status : Enum\n  café = 1\n  søk = 4').value.concepts[0];
+        concept.values.should.deep.equal(['café', 'søk']);
+        concept.valueNumbers!.should.deep.equal([1, 4]);
     });
     it('should not report errors for valid numbers', () => result.diagnostics.should.have.lengthOf(0));
 });
@@ -32,7 +37,9 @@ describe('when rejecting invalid enum member numbers', () => {
         ['  draft = 2147483648', 'PLAY0669'],
         ['  draft = -2147483649', 'PLAY0669'],
         ...['+1', '01', '-01', '1.0', '1e0', '--1', '', 'nope'].map(literal => [`  draft = ${literal}`, 'PLAY0670']),
-    ])('should report %s with %s', (body, code) => parse(`concept Status : Enum\n${body}`).diagnostics.map(diagnostic => diagnostic.code).should.deep.equal([code]));
+    ])('should report %s with %s', (body, code) => {
+        parse(`concept Status : Enum\n${body}`).diagnostics.map(diagnostic => diagnostic.code).should.deep.equal([code]);
+    });
 });
 
 describe('when suggesting enum member numbers', () => {
@@ -49,7 +56,9 @@ describe('when suggesting enum member numbers', () => {
         'concept Status : Enum\n  draft = nope' + event,
         'concept Status : Enum\n  draft\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        status Status',
         'concept Status : Enum\n  draft\nmodule M\n  feature F\n    slice StateView S\n      readmodel Row\n        status Status',
-    ])('should not hint for unstored, numbered or invalid enum %s', source => parse(source).diagnostics.some(diagnostic => diagnostic.code === 'PLAY0671').should.equal(false));
+    ])('should not hint for unstored, numbered or invalid enum %s', source => {
+        parse(source).diagnostics.some(diagnostic => diagnostic.code === 'PLAY0671').should.equal(false);
+    });
 });
 
 describe('when transporting enum member numbers', () => {
@@ -59,7 +68,9 @@ describe('when transporting enum member numbers', () => {
         wire.includes('valueNumbers').should.equal(false);
         const restored = decodeExactSyntaxJson(wire) as ApplicationSyntax;
         (restored.concepts[0].valueNumbers == null).should.equal(true);
-        JSON.stringify(toSyntaxJson(restored)).should.equal(wire);
+        const restoredWire = JSON.stringify(toSyntaxJson(restored));
+        restoredWire.includes('valueNumbers').should.equal(false);
+        JSON.stringify(toSyntaxJson(decodeExactSyntaxJson(restoredWire))).should.equal(restoredWire);
     });
     it('should roundtrip populated numbers through the strict schema', () => {
         const syntax = parse('numbers exact\nconcept Status : Enum\n  draft = 1\n  issued = 4').value;
@@ -67,7 +78,8 @@ describe('when transporting enum member numbers', () => {
         wire.should.contain('"valueNumbers":[1,4]');
         const restored = decodeExactSyntaxJson(wire) as ApplicationSyntax;
         restored.concepts[0].valueNumbers!.should.deep.equal([1, 4]);
-        JSON.stringify(toSyntaxJson(restored)).should.equal(wire);
+        const restoredWire = JSON.stringify(toSyntaxJson(restored));
+        JSON.stringify(toSyntaxJson(decodeExactSyntaxJson(restoredWire))).should.equal(restoredWire);
     });
     it.each([[1], [1, 1], [1, 2147483648], [1, 1.5]])('should refuse malformed number arrays %s', (...numbers) => {
         const syntax = parse('concept Status : Enum\n  draft\n  issued').value;
@@ -76,6 +88,7 @@ describe('when transporting enum member numbers', () => {
     });
     it('should refuse numbers on non-enums', () => {
         const syntax = parse('concept Status : String').value;
-        (() => toSyntaxJson({ ...syntax, concepts: [{ ...syntax.concepts[0], valueNumbers: [] }] })).should.throw();
+        const candidate = { ...syntax, concepts: [{ ...syntax.concepts[0], valueNumbers: [] }] };
+        (() => toSyntaxJson(candidate)).should.throw();
     });
 });

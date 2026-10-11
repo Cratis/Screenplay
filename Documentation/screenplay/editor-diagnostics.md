@@ -11,6 +11,7 @@ The diagnostic catalogues share the C# names and codes. A catalogue entry does n
 
 | Codes | TypeScript and editor support |
 |---|---|
+| PLAY0667–PLAY0671 | Enum numbering syntax, uniqueness and int32 bounds, plus an Information hint for unnumbered enums used by event properties. Numbering is opt-in through a refactoring, not an automatic correctness repair. |
 | PLAY0663–PLAY0665 | Command-only production routes, redundant overrides, and observer filter syntax, source/stream resolution and event-only triggers. |
 | PLAY0660, PLAY0662 (shape checks) | Read-model key modifiers and key-part types; `by` block arity and duplicate names. Scoped lookup resolution remains a C# check. |
 | PLAY0647–PLAY0649 | Reaction `runs as` syntax, gated invocations without identity and unused identity. Both editors forward the TypeScript checks; declared identity suppresses PLAY0557. PLAY0650–PLAY0651 are C# bound-gate analyses, and PLAY0652 is the opt-in `privilege` completeness finding. Supplied C# findings are preserved. |

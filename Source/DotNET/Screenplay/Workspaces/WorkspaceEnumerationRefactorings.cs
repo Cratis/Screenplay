@@ -33,14 +33,14 @@ public static class WorkspaceEnumerationRefactorings
 
         var entry = WorkspaceSyntaxIndex.Create(workspace).Find(subject);
         if (entry?.Node is not ConceptSyntax { IsEnum: true, ValueNumbers: null } concept || !concept.Values.Any() ||
-            workspace.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code is DiagnosticCodes.MixedEnumerationNumbering or DiagnosticCodes.DuplicateEnumerationNumber or DiagnosticCodes.EnumerationNumberOutsideInt32 or DiagnosticCodes.MalformedEnumerationNumber))
+            workspace.Compilation.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.MixedEnumerationNumbering || diagnostic.Code == DiagnosticCodes.DuplicateEnumerationNumber || diagnostic.Code == DiagnosticCodes.EnumerationNumberOutsideInt32 || diagnostic.Code == DiagnosticCodes.MalformedEnumerationNumber))
         {
             return Refuse(WorkspaceConflictKind.InvalidOperation, "The subject must be a wholly unnumbered enum with members; numbered, mixed and invalid enums cannot be renumbered.");
         }
 
         var result = WorkspaceRepairVerification.RequireComments(WorkspaceRepairVerification.Propose(workspace, request with
         {
-            Operations = [new ReplaceWorkspaceNode(entry.Handle, concept, concept with { ValueNumbers = Enumerable.Range(0, concept.Values.Count()).ToArray() })]
+            Operations = [new ReplaceWorkspaceNode(entry.Handle, concept, concept with { ValueNumbers = [.. Enumerable.Range(0, concept.Values.Count())] })]
         }));
         if (result.Accepted && (!WorkspaceRepairVerification.KeepsCatalog(workspace, result.Workspace!) ||
             (workspace.Compilation.Value is not null && !WorkspaceRepairVerification.SameModel(workspace, result.Workspace!))))

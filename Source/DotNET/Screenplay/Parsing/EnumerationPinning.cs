@@ -10,7 +10,7 @@ internal static class EnumerationPinning
 {
     internal static void Validate(ApplicationSyntax application, ParserContext context)
     {
-        if (context.Diagnostics.Any(diagnostic => diagnostic.Code is DiagnosticCodes.MixedEnumerationNumbering or DiagnosticCodes.DuplicateEnumerationNumber or DiagnosticCodes.EnumerationNumberOutsideInt32 or DiagnosticCodes.MalformedEnumerationNumber)) return;
+        if (context.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.MixedEnumerationNumbering || diagnostic.Code == DiagnosticCodes.DuplicateEnumerationNumber || diagnostic.Code == DiagnosticCodes.EnumerationNumberOutsideInt32 || diagnostic.Code == DiagnosticCodes.MalformedEnumerationNumber)) return;
         var walker = new StoredTypes(application);
         walker.VisitApplication(application);
         foreach (var concept in application.Concepts.Where(concept => concept.IsEnum && concept.ValueNumbers is null && walker.Names.Contains(concept.Name)))

@@ -7,6 +7,7 @@ import { eventAnalysisSource } from './event-analysis-source';
 import { CommandResponseSymbol, responseAnalysis } from './response-analysis';
 import { fileReferenceOn } from './file-references';
 import { clauseKeywords } from './language';
+import { bmpWordCharacters } from './bmp-word-characters';
 import { AuthoringDocument } from './AuthoringDocument';
 import { AuthoredEventSource } from './AuthoredEventSource';
 import { ProductionSymbol } from './ProductionSymbol';
@@ -109,6 +110,7 @@ export interface DocumentSymbols {
 }
 
 const conceptPattern = /^concept\s+(\w+)\s*:\s*(\w+)((?:\s+@\w+)*)\s*$/;
+const enumerationMemberPattern = new RegExp(`^@?([a-z_][${bmpWordCharacters}]*)(?:\\s*=\\s*(-?(?:0|[1-9][0-9]*)))?(?:\\s*//.*)?$`);
 const propertyPattern = /^\s*(@?[a-z_]\w*)\s+([\w.]+(?:\[\])?(?:\?|\s+optional)?)(\s+generated)?(\s+identifier)?(\s+subject)?\s*$/;
 const attributeReasonPattern = /^([a-z_]\w*)\s+reason\s+"((?:[^"\\]|\\.)*)"\s*$/;
 const readPattern = /^\s*reads\s+([A-Z]\w*)(?:\s+as\s+([a-z_]\w*))?(?:\s+by\s+([a-z_]\w*))?\s*$/;
@@ -242,7 +244,7 @@ export function scanDocument(lines: string[]): DocumentSymbols {
                 }
             }
             const members = conceptMatch[2] === 'Enum'
-                ? body.map(line => /^@?([a-z_]\w*)(?:\s*=\s*(-?(?:0|[1-9][0-9]*)))?(?:\s*\/\/.*)?$/.exec(line)).filter(match => match !== null)
+                ? body.filter(line => line !== 'validate').map(line => enumerationMemberPattern.exec(line)).filter(match => match !== null)
                 : [];
             const enumValues = members.map(member => member[1]);
             const enumNumbers = members.length > 0 && members.every(member => member[2] !== undefined) ? members.map(member => Number(member[2])) : undefined;

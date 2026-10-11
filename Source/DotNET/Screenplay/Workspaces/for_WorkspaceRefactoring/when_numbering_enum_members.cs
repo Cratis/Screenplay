@@ -39,7 +39,9 @@ public class when_numbering_enum_members : Specification
     void should_never_renumber_or_number_non_enums(string source)
     {
         var workspace = Create(source);
-        var subject = WorkspaceSyntaxIndex.Create(workspace).Entries.Single(entry => entry.Node is ConceptSyntax).Handle;
+
+        // Errorful documents expose no editable concept handle; a previous handle cannot make them editable.
+        var subject = WorkspaceSyntaxIndex.Create(workspace).Entries.SingleOrDefault(entry => entry.Node is ConceptSyntax)?.Handle ?? _subject;
         WorkspaceEnumerationRefactorings.ProposeNumberMembers(workspace, subject, Request(workspace)).Accepted.ShouldBeFalse();
     }
 
