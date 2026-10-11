@@ -1,0 +1,45 @@
+module Numbers
+  feature Recording
+    slice StateChange Record
+      command RecordLiterals
+        id RecordId identifier
+        produces event NumbersRecorded
+          for id
+          largest Int = 9007199254740991
+          smallest Int = -9007199254740991
+          whole Int = 1234567890123456
+          fraction Decimal = 0.10000000000000002
+      command RecordInputs
+        id RecordId identifier
+        largest Int
+        smallest Int
+        whole Int
+        fraction Decimal
+        produces NumbersRecorded
+          for id
+          largest = largest
+          smallest = smallest
+          whole = whole
+          fraction = fraction
+      specification LiteralValues
+        when RecordLiterals
+          id = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        then NumbersRecorded
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          largest = 9007199254740991
+          smallest = -9007199254740991
+          whole = 1234567890123456
+          fraction = 0.10000000000000002
+      specification InputValues
+        when RecordInputs
+          id = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          largest = 9007199254740991
+          smallest = -9007199254740991
+          whole = 1234567890123456
+          fraction = 0.10000000000000002
+        then NumbersRecorded
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          largest = 9007199254740991
+          smallest = -9007199254740991
+          whole = 1234567890123456
+          fraction = 0.10000000000000002
