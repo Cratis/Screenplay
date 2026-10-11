@@ -23,6 +23,8 @@ applies-to:
 <!-- Copyright (c) Cratis. All rights reserved. -->
 <!-- Licensed under the MIT license. See LICENSE file in the project root for full license information. -->
 
+> **2026-10-11 — amendment.** [0067](0067-report-every-selected-event-property-evolution.md) replaces the unimplemented singular `property.generation` report with one required ordered `property.generations` array and clarifies explicit event-property selection. The original decision text below is preserved as history; all other 0044 safeguards remain in force.
+
 ## Context
 
 [#389](https://github.com/Cratis/Screenplay/issues/389) asks to add, rename or remove a property everywhere it flows. Today `propose-rename` renames only composite `type` properties. Reference coverage leaves out expression identifiers and property paths, which is where mappings live (`mcp/reference.md`). AutoMap is on by default in `from` blocks, so a same-named event and read-model property is an implicit mapping.
