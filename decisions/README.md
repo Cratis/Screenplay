@@ -60,3 +60,4 @@
 | [0061](0061-per-production-route-overrides.md) | Replace the command route per event production | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |
 | [0062](0062-observer-source-and-stream-filters.md) | Filter reactions and reducers by event source and stream | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |
 | [0063](0063-admit-production-routes-and-observer-filters-as-esm-v10.md) | Join the claimed unreleased ESM v10 with production routes and observer filters | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |
+| [0065](0065-explicit-enum-member-numbers.md) | Give enum members optional explicit numbers, all or none, and carry them in the claimed unreleased ESM v10 | proposed | none |  |  |
