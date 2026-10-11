@@ -46,14 +46,7 @@ internal static class ScreenplayValidator
             .Concat(application.Imports.Select(import => import.Name))
             .ToHashSet();
         var knownPolicies = application.Policies.Select(policy => policy.Name).ToHashSet();
-        foreach (var module in application.Modules)
-        {
-            ValidateAuthorize(module.Authorize, knownPolicies, context);
-            foreach (var feature in module.Features.SelectMany(AllFeatures))
-            {
-                ValidateAuthorize(feature.Authorize, knownPolicies, context);
-            }
-        }
+        ValidateAuthorizations(application, knownPolicies, context);
 
         // A read model is whatever a builder names with '=>', plus anything declared on its own. A
         // projection with variants produces no read model of its own name - each variant is its own,
@@ -75,42 +68,9 @@ internal static class ScreenplayValidator
         ValidateTypes(application, knownTypes, context);
         IdentityValidator.Validate(application, knownTypes.Union(knownReadModels).ToHashSet(StringComparer.Ordinal), context);
 
-        foreach (var persona in application.Personas ?? [])
-        {
-            foreach (var policy in persona.Policies.Where(policy => !knownPolicies.Contains(policy)))
-            {
-                if (allowUnresolvedPersonaPolicies)
-                {
-                    context.Warning(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
-                }
-                else
-                {
-                    context.Error(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
-                }
-            }
-        }
-
-        foreach (var duplicate in (application.Authentication?.Providers ?? [])
-            .GroupBy(provider => provider.Identity, StringComparer.Ordinal)
-            .Where(group => group.Count() > 1)
-            .SelectMany(group => group.Skip(1)))
-        {
-            context.Error(DiagnosticCodes.DuplicateProvider, $"Duplicate provider '{duplicate.Identity}' - a provider must be distinguishable, so give one of them a name", duplicate.Location);
-        }
-
-        foreach (var seed in application.Seeds ?? [])
-        {
-            if (!seed.Groups.Any())
-            {
-                context.Error(DiagnosticCodes.EmptySeed, "Empty 'seed' block - declare at least one 'for' group", seed.Location);
-            }
-
-            foreach (var @event in seed.Groups.SelectMany(group => group.Events)
-                .Where(@event => !knownEvents.Contains(@event.Event)))
-            {
-                context.Warning(DiagnosticCodes.UnknownEvent, $"Unknown event '{@event.Event}' - declare it with 'event {@event.Event}'", @event.Location);
-            }
-        }
+        ValidatePersonaPolicies(application, knownPolicies, allowUnresolvedPersonaPolicies, context);
+        ValidateDuplicateProviders(application, context);
+        ValidateSeeds(application, knownEvents, context);
 
         var knownCommands = slices.SelectMany(slice => slice.Commands.Select(command => command.Name))
             .Concat(application.Imports.Select(import => import.Name))
@@ -137,41 +97,12 @@ internal static class ScreenplayValidator
         var declarations = new ConsistencyDeclarations(application, scopedSlices);
         PublicEventUsageValidator.Validate(application, context);
         ValidateAdditionalEventReferences(application, declarations, knownEvents, context);
-        EventSourceValidator.Validate(application, declarations, context);
-        SpecificationStreamValidator.Validate(application, declarations, context, expansion);
-        OperationValidator.Validate(application, declarations, context);
-        ImportValidator.Validate(application, declarations, context);
-        CommandConsistencyValidator.Validate(declarations, context);
-        CommandResponseValidator.Validate(application, declarations, context);
-        SpecificationResponseValidator.Validate(application, declarations, context);
-        EventFieldConsistencyValidator.Validate(declarations, context);
-        ProjectionCompletenessValidator.Validate(declarations, context);
-        ProjectionVariantValidator.Validate(declarations, context);
-        ProjectionTargetValidator.Validate(declarations, context);
-        IdentifierComplianceValidator.Validate(application, declarations, context);
-        EventSubjectValidator.Validate(application, declarations, context);
-        ReadModelKeyValidator.Validate(application, declarations, context);
-        SpecificationValueConsistencyValidator.Validate(declarations, context);
-        SpecificationOutcomeConsistencyValidator.Validate(declarations, context);
-        SpecificationActionValidator.Validate(application, declarations, context);
-        ReactionRefusalValidator.Validate(application, declarations, context);
-        SpecificationRedeliveryValidator.Validate(application, declarations, context);
+        RunConsistencyValidators(application, declarations, expansion, context);
         var knownQueries = scopedSlices.SelectMany(entry => entry.Slice.Queries.Select(query => new Declaration(query.Name, entry.Scope))).ToList();
         var knownScreenDeclarations = scopedSlices.SelectMany(entry => entry.Slice.Screens.Select(screen => new Declaration(screen.Name, entry.Scope))).ToList();
         ValidateSpecificationQueries(scopedSlices, knownQueries, context);
 
-        var knownCommandDeclarations = new List<Declaration>();
-        var commandsByDeclaration = new Dictionary<Declaration, CommandSyntax>();
-        foreach (var entry in scopedSlices)
-        {
-            foreach (var command in entry.Slice.Commands)
-            {
-                var declaration = new Declaration(command.Name, entry.Scope);
-                knownCommandDeclarations.Add(declaration);
-                commandsByDeclaration[declaration] = command;
-            }
-        }
-
+        var (knownCommandDeclarations, commandsByDeclaration) = CommandDeclarations(scopedSlices);
         ValidateScreenReferences(scopedSlices, knownQueries, knownCommandDeclarations, knownScreenDeclarations, context);
         GuardedActionValidator.Validate(application, declarations, context);
         ValidateInteractions(
@@ -213,6 +144,104 @@ internal static class ScreenplayValidator
                 yield return entry;
             }
         }
+    }
+
+    static void ValidateAuthorizations(ApplicationSyntax application, HashSet<string> knownPolicies, ParserContext context)
+    {
+        foreach (var module in application.Modules)
+        {
+            ValidateAuthorize(module.Authorize, knownPolicies, context);
+            foreach (var feature in module.Features.SelectMany(AllFeatures))
+            {
+                ValidateAuthorize(feature.Authorize, knownPolicies, context);
+            }
+        }
+    }
+
+    static void ValidatePersonaPolicies(ApplicationSyntax application, HashSet<string> knownPolicies, bool allowUnresolvedPersonaPolicies, ParserContext context)
+    {
+        foreach (var persona in application.Personas ?? [])
+        {
+            foreach (var policy in persona.Policies.Where(policy => !knownPolicies.Contains(policy)))
+            {
+                if (allowUnresolvedPersonaPolicies)
+                {
+                    context.Warning(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
+                }
+                else
+                {
+                    context.Error(DiagnosticCodes.UnknownPolicy, $"Unknown policy '{policy}' - declare it with 'policy {policy}'", persona.Location);
+                }
+            }
+        }
+    }
+
+    static void ValidateDuplicateProviders(ApplicationSyntax application, ParserContext context)
+    {
+        foreach (var duplicate in (application.Authentication?.Providers ?? [])
+            .GroupBy(provider => provider.Identity, StringComparer.Ordinal)
+            .Where(group => group.Count() > 1)
+            .SelectMany(group => group.Skip(1)))
+        {
+            context.Error(DiagnosticCodes.DuplicateProvider, $"Duplicate provider '{duplicate.Identity}' - a provider must be distinguishable, so give one of them a name", duplicate.Location);
+        }
+    }
+
+    static void ValidateSeeds(ApplicationSyntax application, HashSet<string> knownEvents, ParserContext context)
+    {
+        foreach (var seed in application.Seeds ?? [])
+        {
+            if (!seed.Groups.Any())
+            {
+                context.Error(DiagnosticCodes.EmptySeed, "Empty 'seed' block - declare at least one 'for' group", seed.Location);
+            }
+
+            foreach (var @event in seed.Groups.SelectMany(group => group.Events)
+                .Where(@event => !knownEvents.Contains(@event.Event)))
+            {
+                context.Warning(DiagnosticCodes.UnknownEvent, $"Unknown event '{@event.Event}' - declare it with 'event {@event.Event}'", @event.Location);
+            }
+        }
+    }
+
+    static (List<Declaration> Declarations, Dictionary<Declaration, CommandSyntax> ByDeclaration) CommandDeclarations(IEnumerable<(SliceSyntax Slice, DeclarationScope Scope)> scopedSlices)
+    {
+        var knownCommandDeclarations = new List<Declaration>();
+        var commandsByDeclaration = new Dictionary<Declaration, CommandSyntax>();
+        foreach (var entry in scopedSlices)
+        {
+            foreach (var command in entry.Slice.Commands)
+            {
+                var declaration = new Declaration(command.Name, entry.Scope);
+                knownCommandDeclarations.Add(declaration);
+                commandsByDeclaration[declaration] = command;
+            }
+        }
+
+        return (knownCommandDeclarations, commandsByDeclaration);
+    }
+
+    static void RunConsistencyValidators(ApplicationSyntax application, ConsistencyDeclarations declarations, EffectiveSpecificationApplication expansion, ParserContext context)
+    {
+        EventSourceValidator.Validate(application, declarations, context);
+        SpecificationStreamValidator.Validate(application, declarations, context, expansion);
+        OperationValidator.Validate(application, declarations, context);
+        ImportValidator.Validate(application, declarations, context);
+        CommandConsistencyValidator.Validate(declarations, context);
+        CommandResponseValidator.Validate(application, declarations, context);
+        SpecificationResponseValidator.Validate(application, declarations, context);
+        EventFieldConsistencyValidator.Validate(declarations, context);
+        ProjectionCompletenessValidator.Validate(declarations, context);
+        ProjectionVariantValidator.Validate(declarations, context);
+        ProjectionTargetValidator.Validate(declarations, context);
+        IdentifierComplianceValidator.Validate(application, declarations, context);
+        EventSubjectValidator.Validate(application, declarations, context);
+        ReadModelKeyValidator.Validate(application, declarations, context);
+        SpecificationValueConsistencyValidator.Validate(declarations, context);
+        SpecificationOutcomeConsistencyValidator.Validate(declarations, context);
+        SpecificationActionValidator.Validate(application, declarations, context);
+        ReactionRefusalValidator.Validate(application, declarations, context);
+        SpecificationRedeliveryValidator.Validate(application, declarations, context);
     }
 
     static void ValidateAdditionalEventReferences(ApplicationSyntax application, ConsistencyDeclarations declarations, HashSet<string> knownEvents, ParserContext context)
