@@ -39,33 +39,12 @@ static class McpDependencyQueries
         if (target.Kind == "Property") return McpPropertyDependencies.Read(snapshot, target, arguments);
         var direction = McpJson.OptionalString(arguments, "direction") ?? "incoming";
         var descendants = McpJson.Boolean(arguments, "descendants");
-        var references = (direction, descendants) switch
-        {
-            ("incoming", false) => snapshot.Index.Incoming(target).Select(edge => edge.Reference),
-            ("outgoing", false) => snapshot.Index.Outgoing(target.Owner),
-            _ => snapshot.Index.References
-        };
-        if (direction == "outgoing")
-        {
-            references = references.Where(reference => reference.Owner is not null &&
-                (reference.Owner.Address == target.Address || (descendants && reference.Owner.Address.StartsWith(target.Address + ".", StringComparison.Ordinal))));
-        }
-        else if (direction != "incoming")
-        {
-            throw new McpFailure("Reference direction must be incoming or outgoing.", -32602);
-        }
-
+        var references = References(snapshot, target, direction, descendants);
         if (McpJson.OptionalString(arguments, "document") is { } document)
         {
             references = references.Where(reference => reference.Location.Path == document);
         }
-
-        var edges = references.Select(reference => new McpReferenceEdge(reference, snapshot.Index.Resolve(reference)));
-        if (direction == "incoming")
-        {
-            edges = edges.Where(edge => edge.Targets.Any(candidate => candidate == target ||
-                (descendants && candidate.Address.StartsWith(target.Address + ".", StringComparison.Ordinal))));
-        }
+        var edges = Edges(snapshot, target, references, new(direction, descendants));
 
         return new
         {
@@ -88,4 +67,35 @@ static class McpDependencyQueries
                 snapshot.SourceRevision)
         };
     }
+
+    static IEnumerable<McpReference> References(McpSnapshot snapshot, McpDeclaration target, string direction, bool descendants)
+    {
+        var references = (direction, descendants) switch
+        {
+            ("incoming", false) => snapshot.Index.Incoming(target).Select(edge => edge.Reference),
+            ("outgoing", false) => snapshot.Index.Outgoing(target.Owner),
+            _ => snapshot.Index.References
+        };
+        if (direction == "outgoing") return references.Where(reference => Outgoing(reference, target, descendants));
+        if (direction != "incoming") throw new McpFailure("Reference direction must be incoming or outgoing.", -32602);
+
+        return references;
+    }
+
+    static bool Outgoing(McpReference reference, McpDeclaration target, bool descendants) => reference.Owner is not null &&
+        (reference.Owner.Address == target.Address || (descendants && reference.Owner.Address.StartsWith(target.Address + ".", StringComparison.Ordinal)));
+
+    static IEnumerable<McpReferenceEdge> Edges(McpSnapshot snapshot, McpDeclaration target, IEnumerable<McpReference> references, DependencyDirection direction)
+    {
+        var edges = references.Select(reference => new McpReferenceEdge(reference, snapshot.Index.Resolve(reference)));
+        if (direction.Name == "incoming")
+        {
+            edges = edges.Where(edge => edge.Targets.Any(candidate => candidate == target ||
+                (direction.Descendants && candidate.Address.StartsWith(target.Address + ".", StringComparison.Ordinal))));
+        }
+
+        return edges;
+    }
+
+    sealed record DependencyDirection(string Name, bool Descendants);
 }

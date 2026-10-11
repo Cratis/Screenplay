@@ -9,48 +9,58 @@ namespace Cratis.Screenplay.Workspaces;
 
 internal sealed partial class WorkspacePropertyLinks
 {
+    static string? BindingPath(SyntaxNode node) => node switch
+    {
+        ScreenColumnSyntax column => column.Property,
+        ScreenFieldSyntax field => field.Property,
+        FormFieldSyntax field => field.Property,
+        FormColumnSyntax column => column.Property,
+        FormFieldPlacementSyntax placement => placement.Field,
+        UiBindingSyntax { BindingKind: UiBindingKind.DataContext or UiBindingKind.QueryResult } binding => binding.Path,
+        _ => null
+    };
+
+    static bool IncompleteBinding(AuthoredDeclaration[] owners, string path, string? from, AuthoredDeclaration[] sources) =>
+        owners.Length != 1 || path.Contains('.') || (from is not null && sources.Length != 1);
+
     void IndexReaders()
     {
         foreach (var entry in _entries)
         {
-            var path = entry.Node switch
-            {
-                ComparisonConditionSyntax condition => condition.Left,
-                ValidationRuleSyntax validation => validation.Property,
-                PathExpressionSyntax expression when Parents(entry).Any(parent => parent.Node is ConditionSyntax or PolicyConditionSyntax) => expression.Path,
-                _ => null
-            };
-            if (path is not null) Add(entry, "condition", SourceMembers(entry, path), path, incomplete: NestedSource(entry, path));
+            var path = ConditionPath(entry);
+            if (path is not null) Add(entry, "condition", new(path, SourceMembers(entry, path), Incomplete: NestedSource(entry, path)));
             IndexBinding(entry);
             IndexOpaque(entry);
         }
     }
 
+    string? ConditionPath(WorkspaceSyntaxEntry entry) => entry.Node switch
+    {
+        ComparisonConditionSyntax condition => condition.Left,
+        ValidationRuleSyntax validation => validation.Property,
+        PathExpressionSyntax expression when Parents(entry).Any(parent => parent.Node is ConditionSyntax or PolicyConditionSyntax) => expression.Path,
+        _ => null
+    };
+
     void IndexBinding(WorkspaceSyntaxEntry entry)
     {
-        var path = entry.Node switch
-        {
-            ScreenColumnSyntax column => column.Property,
-            ScreenFieldSyntax field => field.Property,
-            FormFieldSyntax field => field.Property,
-            FormColumnSyntax column => column.Property,
-            FormFieldPlacementSyntax placement => placement.Field,
-            UiBindingSyntax { BindingKind: UiBindingKind.DataContext or UiBindingKind.QueryResult } binding => binding.Path,
-            _ => null
-        };
+        var path = BindingPath(entry.Node);
         if (string.IsNullOrEmpty(path)) return;
         var ancestors = Parents(entry).ToArray();
         var form = ancestors.Select(parent => parent.Node).OfType<FormSyntax>().FirstOrDefault();
         var owners = form is not null ? Resolve(form.For, ["Command"], entry) : BindingOwners(entry, ancestors);
         var targets = Members(owners, path);
         var from = (entry.Node as FormFieldSyntax)?.From;
-        var sources = from is not null && form?.Populate is FormPopulateViaQuerySyntax query ? Members(QueryView(query.Query, entry), from) : [];
-        Add(entry, "screen-binding", targets, path, sources is [var source] ? source : null, owners.Length != 1 || path.Contains('.') || (from is not null && sources.Length != 1));
+        var sources = BindingSources(entry, form, from);
+        Add(entry, "screen-binding", new(path, targets, sources is [var source] ? source : null, IncompleteBinding(owners, path, from, sources)));
         if (from is not null)
         {
-            Add(entry, "screen-binding", sources, from, targets is [var target] ? target : null, targets.Length != 1 || from.Contains('.'));
+            Add(entry, "screen-binding", new(from, sources, targets is [var target] ? target : null, targets.Length != 1 || from.Contains('.')));
         }
     }
+
+    AuthoredDeclaration[] BindingSources(WorkspaceSyntaxEntry entry, FormSyntax? form, string? from) =>
+        from is not null && form?.Populate is FormPopulateViaQuerySyntax query ? Members(QueryView(query.Query, entry), from) : [];
 
     AuthoredDeclaration[] BindingOwners(WorkspaceSyntaxEntry entry, WorkspaceSyntaxEntry[] ancestors)
     {
@@ -81,7 +91,7 @@ internal sealed partial class WorkspacePropertyLinks
         var properties = context.SelectMany(declaration => _properties.GetValueOrDefault(declaration) ?? []).Distinct().ToArray();
         foreach (var group in properties.Where(property => WorkspaceOpaqueText.Named(entry.Node, property.Name) is not null).GroupBy(property => property.Name))
         {
-            Add(entry, "opaque", [.. group], group.Key);
+            Add(entry, "opaque", new(group.Key, [.. group]));
         }
     }
 }
