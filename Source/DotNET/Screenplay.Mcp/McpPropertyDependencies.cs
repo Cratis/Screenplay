@@ -8,6 +8,8 @@ namespace Cratis.Screenplay.Mcp;
 
 static class McpPropertyDependencies
 {
+    const string Coverage = "Authored command/current-event/read-model property links in explicit production, capture-append and projection mappings, case-insensitive AutoMap, declarative conditions, query filters, command read/query lookup/from/removal/parent keys and join on fields, screen/form bindings and specification/example values. Event-source captures resolve source-item paths against their declared input events. Inherited module/feature/command policy readers retain all caller candidates. Legacy command reads, nested paths, external source items and named opaque text are incomplete evidence, not executable or code resolution. Not projection-level keys or child identity expressions, command response/route sources, arbitrary expression identifiers, imports, profile settings, external registrations or external code contents.";
+
     internal static object Legacy(McpSnapshot snapshot, McpDeclaration target, JsonElement arguments)
     {
         var links = snapshot.Index.PropertyLinks;
@@ -29,7 +31,7 @@ static class McpPropertyDependencies
             ambiguous = page.Items.Where(link => link.Resolution == "ambiguous").Select(link => new { reference = Reference(link), candidates = link.Candidates.Select(Summary).ToArray() }).ToArray(),
             incomplete = page.Items.Where(link => link.Resolution == "incomplete").Select(link => new { reference = Reference(link), candidates = link.Candidates.Select(Summary).ToArray() }).ToArray(),
             wrongKind = Array.Empty<object>(),
-            coverage = McpReferenceKinds.Coverage
+            coverage = Coverage
         };
     }
 
@@ -53,7 +55,7 @@ static class McpPropertyDependencies
             descendants = McpJson.Boolean(arguments, "descendants"),
             complete = links.Complete(target),
             diagnostics = McpModelQueries.DiagnosticSummary(snapshot),
-            coverage = $"Direct indexed dependencies only, not transitive runtime impact. {McpReferenceKinds.Coverage}",
+            coverage = $"Direct indexed dependencies only, not transitive runtime impact. {Coverage}",
             page = McpPaging.Page(
                 selected,
                 link => new

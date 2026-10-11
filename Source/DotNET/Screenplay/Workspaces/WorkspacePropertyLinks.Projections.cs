@@ -43,6 +43,7 @@ internal sealed partial class WorkspacePropertyLinks
 
     void ProjectBlock(ProjectionBlockSyntax block, PropertyProjectionScope feeds, PropertyProjectionScope children)
     {
+        IndexProjectionKeys(block, feeds);
         var rootAutoMap = ((ProjectionSyntax)feeds.Entry.Node).AutoMap != AutoMapMode.Disabled;
         switch (block)
         {
@@ -66,7 +67,11 @@ internal sealed partial class WorkspacePropertyLinks
 
     void ProjectFrom(PropertyProjectionScope scope, FromSyntax from)
     {
-        foreach (var spec in from.Events) Feed(scope, new(Resolve(spec.Event, ["Event"], scope.Entry), from.Mappings, false, spec));
+        IndexFromKeys(scope, from);
+        foreach (var spec in from.Events)
+        {
+            Feed(scope, new(Resolve(spec.Event, ["Event"], scope.Entry), from.Mappings, false, spec));
+        }
     }
 
     void ProjectJoin(PropertyProjectionScope scope, JoinSyntax join)

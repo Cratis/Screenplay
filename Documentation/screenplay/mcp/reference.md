@@ -223,18 +223,23 @@ Properties remain absent from declaration listings. Event members at that addres
 current generation; historical shapes use `Owner.generationN.member` and carry `historical: true`
 in their target details.
 
-Property links cover command/event/read-model mappings, case-insensitive projection AutoMap,
-conditions, screen/form bindings, and specification/example fixtures and assertions. Roles are
-`mapping-source`, `mapping-target`, `automap`, `condition`, `screen-binding`, `fixture`, `assertion`
-and `opaque`. Links retain owner, location, resolution candidates and a resolved `otherEnd` when
+Property links cover explicit production, capture-append and projection mappings, case-insensitive
+projection AutoMap, declarative conditions, query filter and lookup parameters, command read keys,
+projection `from`, parent and removal keys, join `on` fields, screen/form bindings, and specification/example fixtures and assertions. Roles are
+`mapping-source`, `mapping-target`, `automap`, `condition`, `key`, `screen-binding`, `fixture`,
+`assertion` and `opaque`. Links retain owner, location, resolution candidates and a resolved `otherEnd` when
 known. An unresolved counterpart or opaque occurrence makes the property's `complete` result false,
 with incomplete evidence retained at its source location. `dependencies` outgoing follows direct
 mapping counterparts, not transitive property chains. Nested composite paths remain incomplete
-evidence, not resolved member chains.
+evidence, not resolved member chains. Legacy command `reads` retains alias and qualified-view
+candidates as incomplete evidence: the binder does not admit those reads. Event-source captures
+link `$.member` through their declared `source events` inputs; external source items remain
+incomplete. Policy readers include commands gated at module, feature and command levels, including
+logical combinations of policies. These are authored links, not proof of executable admission.
 
 Opaque text naming a property is reported as `opaque`, never resolved as code. Coverage excludes
-external code contents, arbitrary expression identifiers, imports, profile settings and external
-registrations; results state their coverage. Declaration dependency graphs retain their explicit
+external code contents, arbitrary expression identifiers, projection-level keys, child identity
+expressions, command response and route sources, imports, profile settings and external registrations; results state their coverage. Declaration dependency graphs retain their explicit
 declaration-reference coverage; property links do not add inferred slice edges.
 
 ### Specification obligations

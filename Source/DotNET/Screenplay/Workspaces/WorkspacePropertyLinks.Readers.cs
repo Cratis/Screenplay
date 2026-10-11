@@ -29,6 +29,7 @@ internal sealed partial class WorkspacePropertyLinks
         {
             var path = ConditionPath(entry);
             if (path is not null) Add(entry, "condition", new(path, SourceMembers(entry, path), Incomplete: NestedSource(entry, path)));
+            IndexTypedReader(entry);
             IndexBinding(entry);
             IndexOpaque(entry);
         }
@@ -86,7 +87,7 @@ internal sealed partial class WorkspacePropertyLinks
         if (entry.Node is not (CodeBlockSyntax or RawExpressionSyntax or FileReferenceSyntax or FormFieldSyntax { ComposeUsing: not null })) return;
         var owner = Owner(entry);
         if (owner is null) return;
-        var callers = owner.Syntax is PolicySyntax ? _index.Incoming(owner).SelectMany(reference => _index.Declarations.Where(declaration => declaration.Owner == reference.Reference.Owner)) : [];
+        var callers = owner.Syntax is PolicySyntax ? PolicyCallers(owner) : [];
         var context = Current(new[] { owner }.Concat(callers).Concat(_index.Outgoing(owner.Owner).SelectMany(_index.Resolve))).ToArray();
         var properties = context.SelectMany(declaration => _properties.GetValueOrDefault(declaration) ?? []).Distinct().ToArray();
         foreach (var group in properties.Where(property => WorkspaceOpaqueText.Named(entry.Node, property.Name) is not null).GroupBy(property => property.Name))

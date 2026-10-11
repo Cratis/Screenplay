@@ -3,6 +3,7 @@
 
 using Cratis.Screenplay.Indexing;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Captures;
 
 namespace Cratis.Screenplay.Workspaces;
 
@@ -24,6 +25,8 @@ internal sealed partial class WorkspacePropertyLinks
     bool NestedSource(WorkspaceSyntaxEntry use, string path)
     {
         if (path.StartsWith("$context.command.", StringComparison.Ordinal)) path = path[17..];
+        if (path.StartsWith("$.", StringComparison.Ordinal)) return path[2..].Contains('.');
+        if (LegacyReadSource(use, path)) return true;
         var parts = path.Split('.');
         if (parts.Length == 1) return false;
 
@@ -33,6 +36,7 @@ internal sealed partial class WorkspacePropertyLinks
     AuthoredDeclaration[] SourceMembers(WorkspaceSyntaxEntry use, string path)
     {
         if (path.StartsWith("$context.command.", StringComparison.Ordinal)) path = path[17..];
+        if (path.StartsWith("$.", StringComparison.Ordinal)) return CaptureMembers(use, path[2..]);
         var command = new[] { use }.Concat(Parents(use)).FirstOrDefault(entry => entry.Node is CommandSyntax);
         if (command is not null && Owner(command) is { } declared) return CommandMembers(use, path, command, declared);
         var trigger = Parents(use).Select(entry => entry.Node).OfType<ReactionTriggerSyntax>().FirstOrDefault();
@@ -45,11 +49,10 @@ internal sealed partial class WorkspacePropertyLinks
     {
         var local = Members([declared], path);
         if (local.Length > 0 || !path.Contains('.')) return local;
-        var reads = ((CommandSyntax)command.Node).Reads ?? [];
-        var parts = path.Split('.', 2);
-        var read = reads.Where(read => read.ReadModel == parts[0]).ToArray();
+        var reads = CommandReadReferences.Paths(((CommandSyntax)command.Node).Reads ?? [], path).ToArray();
+        if (reads.Length == 0) return QualifiedReadMembers(use, path, (CommandSyntax)command.Node);
 
-        return read.Length == 1 ? Members(Resolve(read[0].ReadModel, ["ReadModel"], use), parts[1]) : [];
+        return [.. reads.SelectMany(read => Members(Resolve(read.Read.ReadModel, ["ReadModel"], use), read.Path)).Distinct()];
     }
 
     AuthoredDeclaration[] OwnerSourceMembers(WorkspaceSyntaxEntry use, string path)
@@ -60,10 +63,36 @@ internal sealed partial class WorkspacePropertyLinks
             return Members(reaction.Triggers.Select(clause => clause.Source).OfType<NamedTriggerSourceSyntax>().SelectMany(source => Resolve(source.Name, ["Event"], use)), path);
         }
         if (owner?.Syntax is not PolicySyntax) return [];
-        var callers = _index.Incoming(owner).Where(reference => reference.Reference.Role == "authorizes")
-            .SelectMany(reference => _index.Declarations.Where(declaration => declaration.Owner == reference.Reference.Owner && declaration.Kind == "Command"));
+        var callers = PolicyCallers(owner);
 
         return Members(callers, path.Replace("$context.command.", string.Empty, StringComparison.Ordinal));
+    }
+
+    AuthoredDeclaration[] QualifiedReadMembers(WorkspaceSyntaxEntry use, string path, CommandSyntax command)
+    {
+        var parts = path.Split('.');
+        var views = (command.Reads ?? []).SelectMany(read => Resolve(read.ReadModel, ["ReadModel"], use)).ToArray();
+        var qualified = Enumerable.Range(1, parts.Length - 1).Reverse()
+            .Select(count => (Owners: Resolve(string.Join('.', parts.Take(count)), ["ReadModel"], use).Where(views.Contains).ToArray(), Path: string.Join('.', parts.Skip(count))))
+            .FirstOrDefault(prefix => prefix.Owners.Length > 0);
+
+        return qualified.Owners is null ? [] : Members(qualified.Owners, qualified.Path);
+    }
+
+    bool LegacyReadSource(WorkspaceSyntaxEntry use, string path)
+    {
+        var command = Parents(use).Select(entry => entry.Node).OfType<CommandSyntax>().FirstOrDefault();
+
+        return command is not null && CommandReadReferences.Paths(command.Reads ?? [], path).Any();
+    }
+
+    AuthoredDeclaration[] CaptureMembers(WorkspaceSyntaxEntry use, string path)
+    {
+        var capture = Parents(use).Select(entry => entry.Node).OfType<CaptureSyntax>().FirstOrDefault();
+        if (capture?.Source is not { } source) return [];
+        var events = CaptureEventsSource.Events(source).SelectMany(setting => Resolve(setting.Value, ["Event"], use));
+
+        return Members(events, path);
     }
 
     sealed record PropertySource(WorkspaceSyntaxEntry Entry, string Path, AuthoredDeclaration[] Candidates, bool Incomplete);

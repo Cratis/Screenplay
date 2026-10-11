@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Text.Json;
+
 namespace Cratis.Screenplay.Workspaces.for_WorkspacePropertyLinks;
 
 public class when_selecting_the_current_event_generation : given.a_model
@@ -18,5 +20,6 @@ public class when_selecting_the_current_event_generation : given.a_model
 
     [Fact] void should_connect_the_current_property() => _link.OtherEnd.Address.ShouldEqual("Projects.Registration.Register.Registered.name");
     [Fact] void should_not_connect_a_historical_shape_by_name() => _historical.ShouldBeEmpty();
-    [Fact] void should_label_the_historical_target() => _links.Find("Projects.Registration.Register.Registered.generation1.name").Single().Details.ShouldNotBeNull();
+    [Fact] void should_label_the_historical_target() => JsonSerializer.SerializeToElement(_links.Find("Projects.Registration.Register.Registered.generation1.name").Single().Details).GetProperty("historical").GetBoolean().ShouldBeTrue();
+    [Fact] void should_record_the_historical_generation() => JsonSerializer.SerializeToElement(_links.Find("Projects.Registration.Register.Registered.generation1.name").Single().Details).GetProperty("generation").GetInt32().ShouldEqual(1);
 }

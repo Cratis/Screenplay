@@ -112,16 +112,7 @@ public sealed partial class SemanticModelBinder
         SemanticAuthorization? EffectiveAuthorization(AuthorizeSyntax? own, IEnumerable<SemanticProperty> artifactProperties, string moduleName, ImmutableArray<string> featurePath, string? commandName = null)
         {
             var module = syntax.Modules.Single(value => value.Name == moduleName);
-            var scopes = new List<AuthorizeSyntax?> { module.Authorize };
-            var features = module.Features;
-            foreach (var name in featurePath)
-            {
-                var feature = features.Single(value => value.Name == name);
-                scopes.Add(feature.Authorize);
-                features = feature.Features;
-            }
-
-            scopes.Add(own);
+            var scopes = EffectiveAuthorizationScopes.For(module, featurePath, own);
             SemanticAuthorization? result = null;
             foreach (var scope in scopes)
             {
