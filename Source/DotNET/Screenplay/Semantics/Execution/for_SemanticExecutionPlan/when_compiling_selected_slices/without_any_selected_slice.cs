@@ -11,8 +11,10 @@ public class without_any_selected_slice : a_scoped_execution_model
 
     void Because() => _result = SemanticExecutionPlan.Compile(_model, []);
 
-    [Fact] void should_block_compilation() => _result.Success.ShouldBeFalse();
-    [Fact] void should_not_create_a_plan() => _result.Plan.ShouldBeNull();
-    [Fact] void should_report_an_invalid_selection() => _result.Issues.Single().Kind.ShouldEqual(SemanticPlanIssueKind.InvalidSliceSelection);
-    [Fact] void should_explain_the_empty_selection() => _result.Issues.Single().Details.ShouldContain("at least one slice");
+    [Fact] void should_succeed() => _result.Success.ShouldBeTrue();
+    [Fact] void should_create_a_plan() => _result.Plan.ShouldNotBeNull();
+    [Fact] void should_have_no_blocking_issues() => _result.Issues.ShouldBeEmpty();
+    [Fact] void should_have_no_unselected_issues() => _result.UnselectedIssues.ShouldBeEmpty();
+    [Fact] void should_keep_the_original_model() => ReferenceEquals(_result.Plan!.Model, _model).ShouldBeTrue();
+    [Fact] void should_keep_the_original_revision() => _result.Plan!.Revision.ShouldEqual(_model.Revision);
 }
