@@ -22,6 +22,20 @@ public static class golden_vector_regeneration
     /// </summary>
     public const string Variable = "SCREENPLAY_REGENERATE_GOLDEN";
 
+    static readonly IReadOnlyDictionary<string, Func<ExecutableSemanticModel>> _versionBuilders = new Dictionary<string, Func<ExecutableSemanticModel>>(StringComparer.Ordinal)
+    {
+        ["3"] = canonical_serialization_golden_vectors.CreateSemanticModelV3,
+        ["4"] = canonical_serialization_golden_vectors.CreateSemanticModelV4,
+        ["5"] = canonical_serialization_golden_vectors.CreateSemanticModelV5,
+        ["6"] = canonical_serialization_golden_vectors.CreateSemanticModelV6,
+        ["7"] = canonical_serialization_golden_vectors.CreateSemanticModelV7,
+        ["8"] = canonical_serialization_golden_vectors.CreateSemanticModelV8,
+        ["9"] = canonical_serialization_golden_vectors.CreateSemanticModelV9,
+        ["10"] = canonical_serialization_golden_vectors.CreateSemanticModelV10,
+        ["11"] = canonical_serialization_golden_vectors.CreateSemanticModelV11,
+        ["12"] = canonical_serialization_golden_vectors.CreateSemanticModelV12
+    };
+
     /// <summary>
     /// Gets a value indicating whether regeneration was explicitly requested.
     /// </summary>
@@ -71,20 +85,8 @@ public static class golden_vector_regeneration
             $"Review the diff - every revision hash inside changes with the model - then rebuild and rerun without {Variable}.");
     }
 
-    static Func<ExecutableSemanticModel>? VersionBuilder(string? version) => version switch
-    {
-        "12" => canonical_serialization_golden_vectors.CreateSemanticModelV12,
-        "11" => canonical_serialization_golden_vectors.CreateSemanticModelV11,
-        "10" => canonical_serialization_golden_vectors.CreateSemanticModelV10,
-        "9" => canonical_serialization_golden_vectors.CreateSemanticModelV9,
-        "8" => canonical_serialization_golden_vectors.CreateSemanticModelV8,
-        "7" => canonical_serialization_golden_vectors.CreateSemanticModelV7,
-        "6" => canonical_serialization_golden_vectors.CreateSemanticModelV6,
-        "5" => canonical_serialization_golden_vectors.CreateSemanticModelV5,
-        "4" => canonical_serialization_golden_vectors.CreateSemanticModelV4,
-        "3" => canonical_serialization_golden_vectors.CreateSemanticModelV3,
-        _ => null
-    };
+    static Func<ExecutableSemanticModel>? VersionBuilder(string? version) =>
+        _versionBuilders.TryGetValue(version ?? string.Empty, out var builder) ? builder : null;
 
     static string Write(string directory, string name, byte[] bytes)
     {
