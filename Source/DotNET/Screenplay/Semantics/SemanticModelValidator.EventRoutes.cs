@@ -10,13 +10,7 @@ internal static partial class SemanticModelValidator
     static void ValidateEventRoutesVersion(SemanticApplication application, SemanticVersion version)
     {
         var uses = SemanticEventRouting.Uses(application);
-        var usesV10 = application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices).Any(slice =>
-            slice.Commands.Any(command => command.Produces.Any(produced => produced.Route is not null)) ||
-            slice.Reactions.Any(reaction => reaction.From is not null) || slice.Reducers.Any(reducer => reducer.From is not null));
-        if (usesV10 && !version.IsAtLeast(SemanticVersion.V10)) throw new InvalidSemanticContract("Production routes and observer filters require ESM v10.");
-        var usesReactionIdentity = application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices)
-            .Any(slice => slice.Reactions.Any(reaction => reaction.RunsAs is not null));
-        if (!usesV10 && !usesReactionIdentity && version == SemanticVersion.V10) throw new InvalidSemanticContract("An ESM v10 model must use a reaction system identity, production route or observer filter.");
+        if (UsesProductionRoutesOrObserverFilters(application) && !version.IsAtLeast(SemanticVersion.V10)) throw new InvalidSemanticContract("Production routes and observer filters require ESM v10.");
         if (version == SemanticVersion.V8 && !uses)
         {
             throw new InvalidSemanticContract("An event routes model must declare an event source, command route or specification route.");
@@ -27,9 +21,27 @@ internal static partial class SemanticModelValidator
         }
     }
 
+    static bool UsesProductionRoutesOrObserverFilters(SemanticApplication application) =>
+        application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices).Any(slice =>
+            slice.Commands.Any(command => command.Produces.Any(produced => produced.Route is not null)) ||
+            slice.Reactions.Any(reaction => reaction.From is not null) || slice.Reducers.Any(reducer => reducer.From is not null));
+
+    static void ValidateV10Use(SemanticApplication application, SemanticVersion version, bool usesExactNumberLiterals)
+    {
+        if (version != SemanticVersion.V10 || usesExactNumberLiterals || UsesProductionRoutesOrObserverFilters(application)) return;
+        var usesReactionIdentity = application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices)
+            .Any(slice => slice.Reactions.Any(reaction => reaction.RunsAs is not null));
+        if (!usesReactionIdentity) throw new InvalidSemanticContract("An ESM v10 model must use a reaction system identity, production route, observer filter or exact Double-mode number literal lowering.");
+    }
+
     private sealed partial class ValidationContext
     {
         readonly SemanticApplication _eventRoutesApplication;
+
+        static HashSet<SemanticId> RoutedInputs(SemanticCommand command) =>
+            [.. command.Produces.Select(produced => produced.Route).Append(command.Route).OfType<SemanticCommandRoute>()
+                .SelectMany(route => route.StreamIdParts.Select(part => part.Value).Concat(route.StreamId is { } scalar ? [scalar] : []))
+                .OfType<SemanticResolvedExpression>().Select(expression => expression.Target)];
 
         void RegisterEventSources(SemanticApplication application)
         {
@@ -153,7 +165,7 @@ internal static partial class SemanticModelValidator
 
         void ValidateRouteLiteral(SemanticTypeReference type, SemanticValue value)
         {
-            ValidateValueVariant(value);
+            _valueValidator.ValidateVariant(value);
             var stream = new SemanticEventStream(default, "literal", "literal") { StreamIdType = type };
             var source = new SemanticEventSource(default, "literal", "literal", []);
             if (!SemanticEventRouting.TryFormat(source, stream, value, [], _eventRoutesApplication.Concepts, out _, out _))
@@ -170,8 +182,8 @@ internal static partial class SemanticModelValidator
             var (source, stream) = SemanticEventRouting.Resolve(_eventRoutesApplication, route.Source, route.Stream);
             RequireObjects(route.StreamIdParts, nameof(route.StreamIdParts), "fixture stream identity part");
             ValidateRouteShape(stream, route.StreamId is not null, [.. route.StreamIdParts.Select(part => part.Part)]);
-            if (route.StreamId is { } scalar) ValidateValueVariant(scalar);
-            foreach (var part in route.StreamIdParts) ValidateValueVariant(part.Value);
+            if (route.StreamId is { } scalar) _valueValidator.ValidateVariant(scalar);
+            foreach (var part in route.StreamIdParts) _valueValidator.ValidateVariant(part.Value);
             if (!SemanticEventRouting.TryFormat(source, stream, route.StreamId, route.StreamIdParts, _eventRoutesApplication.Concepts, out _, out _))
             {
                 throw new InvalidSemanticContract("A fixture route must carry valid portable stream identity literals.");

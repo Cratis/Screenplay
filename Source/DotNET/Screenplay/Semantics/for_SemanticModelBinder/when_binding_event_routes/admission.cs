@@ -24,11 +24,24 @@ public class admission : given.a_semantic_binder
     }
 
     [Fact]
-    void should_keep_v7_payload_literal_lowering()
+    void should_select_v10_for_exact_payload_literal_lowering()
     {
         var result = Bind(Prefix + Command);
         result.Success.ShouldBeTrue();
-        var command = result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Commands.Single();
+        result.Value!.Model.LanguageVersion.ShouldEqual(LanguageVersion.V10);
+        result.Value.Model.SemanticVersion.ShouldEqual(SemanticVersion.V10);
+        var command = result.Value.Model.Application.Modules.Single().Features.Single().Slices.Single().Commands.Single();
+        ((SemanticNumberValue)((SemanticValueExpression)command.Produces.Single().Mappings.Single().Source).Value).Value.ShouldEqual(9007199254740991m);
+    }
+
+    [Fact]
+    void should_keep_existing_payload_lowering_when_the_exact_value_is_unchanged()
+    {
+        var result = Bind(Prefix + Command.Replace("9007199254740991", "9007199254740990"));
+        result.Success.ShouldBeTrue();
+        result.Value!.Model.LanguageVersion.ShouldEqual(LanguageVersion.V8);
+        result.Value.Model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
+        var command = result.Value.Model.Application.Modules.Single().Features.Single().Slices.Single().Commands.Single();
         ((SemanticNumberValue)((SemanticValueExpression)command.Produces.Single().Mappings.Single().Source).Value).Value.ShouldEqual(9007199254740990m);
     }
 
@@ -77,7 +90,7 @@ public class admission : given.a_semantic_binder
     [Fact]
     void should_select_the_event_routes_version_only_when_used()
     {
-        Bind(Prefix + Command).Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
+        Bind(Prefix + Command.Replace("9007199254740991", "9007199254740990")).Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
         Bind("eventsource Account\n  stream All\n").Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V8);
         Bind("module M\n  feature F\n    slice StateChange S\n      command C\n        value String\n").Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V1);
     }
@@ -109,13 +122,15 @@ public class admission : given.a_semantic_binder
     }
 
     [Fact]
-    void should_preserve_fixture_route_integers_without_changing_payload_lowering()
+    void should_preserve_fixture_route_integers_with_exact_v10_payload_lowering()
     {
         var result = Bind(Prefix + Command.Replace("        stream Account.Ledger\n          streamId = key\n", string.Empty) + "      specification History\n        given E\n          for \"other\"\n          stream Account.Ledger\n            streamId = 9007199254740991\n          value = 1\n        when C\n          id = \"other\"\n          key = 1\n        then E\n          no stream\n          value = 9007199254740991\n");
         result.Success.ShouldBeTrue();
-        var spec = result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Specifications.Single();
+        result.Value!.Model.LanguageVersion.ShouldEqual(LanguageVersion.V10);
+        result.Value.Model.SemanticVersion.ShouldEqual(SemanticVersion.V10);
+        var spec = result.Value.Model.Application.Modules.Single().Features.Single().Slices.Single().Specifications.Single();
         ((SemanticNumberValue)spec.GivenEvents.Single().Route!.StreamId!).Value.ShouldEqual(9007199254740991m);
         spec.ThenEvents.Single().Unrouted.ShouldBeTrue();
-        ((SemanticNumberValue)spec.ThenEvents.Single().Values.Single().Value).Value.ShouldEqual(9007199254740990m);
+        ((SemanticNumberValue)spec.ThenEvents.Single().Values.Single().Value).Value.ShouldEqual(9007199254740991m);
     }
 }

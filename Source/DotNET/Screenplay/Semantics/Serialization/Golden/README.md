@@ -17,7 +17,7 @@ The `full-esm-*.json` files pin canonical executable semantic model (ESM) bytes,
 
 `full-esm-v8.json` pins ESM v8 event routes under decision 0036. It is built on the full v7 model by `canonical_serialization_golden_vectors.CreateSemanticModelV8()`: pinned source and stream names, a source without an identifier type, keyed and unkeyed streams, UUID/text/integer routes (including adjacent values at both Double bounds), a literal key, and a command with both response and route. Separate builder methods add specification routes, `unrouted` expectations and composite identities; both conditional parts joined v8 at the claim.
 
-`full-esm-v10.json` pins the single claimed, unreleased ESM v10: reaction system identity under 0043, production route overrides under 0061, and observer filters under 0062 and 0063. `canonical_serialization_golden_vectors.CreateSemanticModelV10()` builds on the full v9 model and the reaction-identity fixture, adding scalar, composite and standalone production overrides, source-only and source/stream reaction filters, and a reducer filter. The shared golden retains reactions with ordinally sorted roles and with no roles. `ReactionIdentityCorpus.V10`, `EventRoutesCorpus.ProductionRoutesV10` and `EventRoutesCorpus.ObserverFiltersV10` separately pin source-backed bytes and outcomes across single-file, folder, reordered and relocated forms. A model selects v10 when it uses any of these three features. Models without them keep their earlier bytes.
+`full-esm-v10.json` pins the single claimed, unreleased ESM v10: reaction system identity under 0043, production route overrides under 0061, observer filters under 0062 and 0063, and exact Double-mode number literal lowering under proposed 0064. `canonical_serialization_golden_vectors.CreateSemanticModelV10()` builds on the full v9 model and the reaction-identity fixture, adding scalar, composite and standalone production overrides, source-only and source/stream reaction filters, a reducer filter, and an event production carrying exact 16-digit integers and a 17-digit fraction. The shared golden retains reactions with ordinally sorted roles and with no roles. `ReactionIdentityCorpus.V10`, `EventRoutesCorpus.ProductionRoutesV10`, `EventRoutesCorpus.ObserverFiltersV10` and `NumberLiteralsCorpus.ExactLiteralsV10` separately pin source-backed bytes and outcomes across single-file, folder, reordered and relocated forms. A model selects v10 when it uses any of these four features. Already-lossless route literals and route inputs do not select v10 by themselves. Models without these features keep their earlier bytes.
 
 The other files pin separate serialization contracts, not ESM bytes:
 
@@ -71,6 +71,12 @@ Regenerate the shared v10 golden or the reaction identity corpus separately, pre
 ```bash
 SCREENPLAY_REGENERATE_GOLDEN=10 dotnet test Source/DotNET/Screenplay/Screenplay.csproj -c Debug --filter FullyQualifiedName~when_checking_for_a_regeneration_request
 SCREENPLAY_REGENERATE_REACTION_IDENTITY_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug -f net10.0 --filter FullyQualifiedName~for_ReactionIdentityCorpus
+```
+
+Regenerate the exact-literal corpus independently:
+
+```bash
+SCREENPLAY_REGENERATE_NUMBER_LITERALS_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug -f net10.0 --filter FullyQualifiedName~for_NumberLiteralsCorpus
 ```
 
 Each command deliberately fails after rewriting its owned vectors. Review the bytes, rebuild, then rerun without the variables.

@@ -394,7 +394,8 @@ public sealed partial class SemanticModelBinder
         ImmutableArray<SemanticPropertyValue> BindPropertyValues(
             IEnumerable<PropertyMappingSyntax> values,
             Dictionary<string, SemanticProperty> properties,
-            string description)
+            string description,
+            IReadOnlySet<SemanticId>? routedInputs = null)
         {
             var bound = ImmutableArray.CreateBuilder<SemanticPropertyValue>();
             foreach (var value in values)
@@ -405,7 +406,7 @@ public sealed partial class SemanticModelBinder
                     continue;
                 }
 
-                if (BindConcreteValue(value.Source, property.Type, description, description == "specification read model") is { } concrete)
+                if (BindConcreteValue(value.Source, property.Type, description, description == "specification read model", routedInputs?.Contains(property.Id) == true) is { } concrete)
                 {
                     bound.Add(new(property.Id, concrete));
                 }
@@ -414,7 +415,7 @@ public sealed partial class SemanticModelBinder
             return bound.ToImmutable();
         }
 
-        SemanticValue? BindConcreteValue(ExpressionSyntax expression, SemanticTypeReference target, string description, bool allowNull)
+        SemanticValue? BindConcreteValue(ExpressionSyntax expression, SemanticTypeReference target, string description, bool allowNull, bool routeInput = false)
         {
             if (expression is LiteralExpressionSyntax { Value: null })
             {
@@ -475,12 +476,15 @@ public sealed partial class SemanticModelBinder
 
             if (expression is LiteralExpressionSyntax literal)
             {
-                return literal.Value is string text && IsDateTime(target) && IsoInstant().IsMatch(text) &&
-                    DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out var instant)
-                        ? SemanticValue.Text(instant.Offset == TimeSpan.Zero
-                            ? instant.UtcDateTime.ToString("O", CultureInfo.InvariantCulture)
-                            : instant.ToString("O", CultureInfo.InvariantCulture))
-                        : BindLiteral(literal);
+                if (literal.Value is string text && IsDateTime(target) && IsoInstant().IsMatch(text) &&
+                    DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out var instant))
+                {
+                    return SemanticValue.Text(instant.Offset == TimeSpan.Zero
+                        ? instant.UtcDateTime.ToString("O", CultureInfo.InvariantCulture)
+                        : instant.ToString("O", CultureInfo.InvariantCulture));
+                }
+
+                return routeInput ? BindRouteLiteral(literal) : BindLiteral(literal);
             }
 
             // An enumeration member may be written bare or qualified by its concept, exactly as the compiler accepts

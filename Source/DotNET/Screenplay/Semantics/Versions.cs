@@ -53,7 +53,7 @@ public readonly record struct LanguageVersion(uint Major, uint Minor) : ISpanFor
     public static readonly LanguageVersion V9 = new(9, 0);
 
     /// <summary>
-    /// The language version for reaction system identity, production routes and observer filters.
+    /// The language version for reaction system identity, production routes, observer filters and exact Double-mode literal lowering.
     /// </summary>
     public static readonly LanguageVersion V10 = new(10, 0);
 
@@ -133,7 +133,7 @@ public readonly record struct SemanticVersion(uint Major, uint Minor) : ISpanFor
     public static readonly SemanticVersion V9 = new(9, 0);
 
     /// <summary>
-    /// The semantic version for reaction system identity, production routes and observer filters.
+    /// The semantic version for reaction system identity, production routes, observer filters and exact Double-mode literal lowering.
     /// </summary>
     public static readonly SemanticVersion V10 = new(10, 0);
 

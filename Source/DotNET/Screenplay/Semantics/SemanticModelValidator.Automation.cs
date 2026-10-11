@@ -154,7 +154,7 @@ internal static partial class SemanticModelValidator
                         }
 
                         var inputs = command.Properties.Where(property => !property.IsGenerated).ToArray();
-                        ValidateMappings(invocation.Mappings, Properties([.. inputs]), root, values);
+                        ValidateMappings(invocation.Mappings, Properties([.. inputs]), root, values, RoutedInputs(command));
                         var mapped = invocation.Mappings.Select(_ => _.TargetProperty).ToHashSet();
                         if (inputs.Any(property => !property.Type.IsOptional && !mapped.Contains(property.Id)))
                         {
