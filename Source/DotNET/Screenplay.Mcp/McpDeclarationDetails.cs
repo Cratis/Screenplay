@@ -197,7 +197,7 @@ static class McpDeclarationDetails
             kind = identity.Kind,
             roles = identity.Roles,
             identity.Location,
-            readiness = "Admitted by ESM v10 (claimed, unreleased); claim conditions evaluate to unknown for the system identity. Clock and application triggers have no Arc realization in Stage yet. It covers returned commands, not imperative pipeline calls inside implementation bodies.",
+            readiness = "Admitted by released ESM v10; claim conditions evaluate to unknown for the system identity. Clock and application triggers have no Arc realization in Stage yet. It covers returned commands, not imperative pipeline calls inside implementation bodies.",
             crossBoundaryRoles = crossBoundary.ToArray()
         };
     }
