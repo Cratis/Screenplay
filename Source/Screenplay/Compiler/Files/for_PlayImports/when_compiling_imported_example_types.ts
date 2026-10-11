@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { beforeEach, describe, it } from 'vitest';
-import { compileApplication } from '../PlayApplicationAssembly';
+import { compileApplication, parsePlacedDocuments } from '../PlayApplicationAssembly';
 import { parse } from '../../ScreenplayCompiler';
 import { expandEffectiveSpecificationExamples } from '../../Parsing/SpecificationCommandExamples';
 
@@ -77,6 +77,18 @@ describe('when parsing imported example types without their declarations', () =>
 
     it.each(['Recorded', 'Billing.Facts.Recording.Recorded'])('should defer the imported name %s', type => {
         parse(`import Billing.Facts.Recording.Recorded\nexample Fact : ${type}`).diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0520').should.deep.equal([]);
+    });
+});
+
+describe('when parsing placed documents with imported example types', () => {
+    const documents = [{ path: 'application.play', source: importing, placement: [] }];
+
+    it('should validate unresolved imported types strictly by default', () => {
+        parsePlacedDocuments(documents).diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0520').length.should.equal(3);
+    });
+
+    it('should defer unresolved imported types when requested by an editor', () => {
+        parsePlacedDocuments(documents, undefined, true).diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0520').should.deep.equal([]);
     });
 });
 

@@ -66,15 +66,16 @@ export function assembleApplication(roots: Iterable<string>, source: PlayDocumen
 }
 
 // Parses documents whose source identities and placements are already known (for example unsaved
-// editor buffers), then validates contracts against the merged declaration inventory.
-export function parsePlacedDocuments(documents: readonly PlacedPlayDocument[], languages?: ReadonlySet<string>): CompilationResult<ApplicationSyntax> & {
+// editor buffers), then validates contracts against the merged declaration inventory. Editor callers may
+// defer example types whose imports are not in that inventory; resolved types are still checked.
+export function parsePlacedDocuments(documents: readonly PlacedPlayDocument[], languages?: ReadonlySet<string>, deferImportedExampleTypes = false): CompilationResult<ApplicationSyntax> & {
     readonly physicalEventSources: readonly { source: EventSourceSyntax; placementResolved: boolean }[];
     readonly sourceInventoryComplete: boolean;
 } {
-    return parsePlacedDocumentsWithSyntax(documents, languages).result;
+    return parsePlacedDocumentsWithSyntax(documents, languages, deferImportedExampleTypes).result;
 }
 
-function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[], languages?: ReadonlySet<string>) {
+function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[], languages?: ReadonlySet<string>, deferImportedExampleTypes = false) {
     const candidates = CommandStreamCandidates.capturePlaced(documents.filter(document => document.isPlacementResolved !== false).map(document => ({ lines: splitLines(document.source, false, document.path), placement: document.placement })), languages);
     const physical = documents.map(document => parseForAuthoring(document.source, document.path, document.isPlacementResolved === false ? [] : document.placement, false, candidates, languages));
     const physicalEventSources = physical.flatMap((result, index) => (result.value.eventSources ?? []).map(source => ({ source, placementResolved: documents[index].isPlacementResolved !== false })));
@@ -85,7 +86,7 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     if (merged.value.sourceOptions !== undefined) context.sourceOptions = merged.value.sourceOptions;
     context.guardedInteractions.push(...parsed.flatMap(document => document.guardedInteractions));
     validateSpecificationCases(merged.value, context);
-    validateSpecificationExampleTypes(merged.value, context);
+    validateSpecificationExampleTypes(merged.value, context, deferImportedExampleTypes);
     const effective = expandSpecificationExamples(merged.value);
     validateEventSources(merged.value, context);
     validateOperations(merged.value, context);
