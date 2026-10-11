@@ -228,6 +228,11 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         }
 
         facts.AddRange(publications);
+        if (SemanticDeferredProjections.FindFailure(plan, facts) is { } deferredFailure)
+        {
+            return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, deferredFailure);
+        }
+
         var tentative = world.Commit(facts.ToImmutable(), readModels);
         var execution = ExecuteQueries(plan, world, tentative, facts.ToImmutable(), request.Queries, request.Caller);
         return execution is SemanticAccepted accepted ? accepted with { Response = response } : execution;
@@ -275,6 +280,11 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         }
 
         facts = facts.AddRange(publications);
+        if (SemanticDeferredProjections.FindFailure(plan, facts) is { } deferredFailure)
+        {
+            return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, deferredFailure);
+        }
+
         return ExecuteQueries(plan, world, world.Commit(facts, readModels), facts, queries, caller);
     }
 
@@ -778,12 +788,9 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         out ImmutableArray<SemanticReadModelInstance> readModels,
         out string? failure)
     {
-        var deferred = plan.Projections.Values.FirstOrDefault(projection =>
-            plan.UnadmittedArtifacts.Contains(projection.Id) && facts.Any(fact =>
-                projection.GetAffectedInstances().Any(affected => affected.EventContract is null || affected.EventContract == fact.EventContract)));
-        if (deferred is not null)
+        if (SemanticDeferredProjections.FindFailure(plan, facts) is { } deferredFailure)
         {
-            failure = $"Projection '{deferred.Name}' was not admitted by scoped execution-plan compilation.";
+            failure = deferredFailure;
             readModels = current;
             return false;
         }
@@ -799,7 +806,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             foreach (var projection in plan.Projections.Values.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal))
             {
                 // An event-target projection publishes its state as an event; it builds no read-model instance.
-                if (projection.Target == SemanticProjectionTargetKind.Event)
+                if (projection.Target == SemanticProjectionTargetKind.Event || plan.UnadmittedArtifacts.Contains(projection.Id))
                 {
                     continue;
                 }
