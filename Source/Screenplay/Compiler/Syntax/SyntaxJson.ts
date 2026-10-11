@@ -15,7 +15,9 @@ export type SyntaxJsonValue = string | number | boolean | null | SyntaxJsonValue
 
 const isNode = (value: unknown): value is SyntaxNode =>
     typeof value === 'object' && value !== null && typeof (value as { kind?: unknown }).kind === 'string';
+const isObject = (value: unknown): value is object => typeof value === 'object' && value !== null;
 const omitted = new Set(['kind', 'location', 'targetLocation', 'referenceLocation', 'referenceLength', 'nameWasEscaped', 'declaredTriggers', 'directiveLocations']);
+const skippedNumberMembers = new Set(['location', 'targetLocation', 'usesLocation']);
 const sourceRoots = new Set(['ApplicationSyntax', 'ProjectionSyntax', 'CaptureSyntax', 'SpecificationSyntax']);
 
 // The canonical JSON form of a syntax tree, the same form the C# SyntaxJson writes: 'kind' first, then the
@@ -42,7 +44,7 @@ function snapshot(value: unknown): unknown {
     const pending: (() => void)[] = [];
     // Schedule depth-first reads without consuming the call stack, including for ignored metadata.
     function detach(value: unknown): unknown {
-        if (typeof value !== 'object' || value === null) return value;
+        if (!isObject(value)) return value;
         if (copies.has(value)) return copies.get(value);
         return Array.isArray(value) ? detachArray(value) : detachObject(value);
     }
@@ -77,7 +79,7 @@ function snapshot(value: unknown): unknown {
 // Source option contracts also reject exotic prototypes and hidden/symbol members. Preserve
 // that rejected shape as data rather than sanitizing it into an apparently valid option record.
 function preserveRejectedSourceOptions(copy: Record<string, unknown>, name: string, member: unknown): void {
-    if (typeof member === 'object' && member !== null && hasExoticShape(member)) {
+    if (isObject(member) && hasExoticShape(member)) {
         copy[name] = Object.assign(Object.create(null), { numericMode: 'invalid' });
     }
 }
@@ -164,7 +166,7 @@ function write(value: unknown, owningMode = 'legacy', complete = false): SyntaxJ
     if (Array.isArray(value)) return writeArray(value, owningMode, complete);
     if (isNode(value)) return writeNode(value, owningMode, complete);
     if (value === undefined) return null;
-    if (typeof value !== 'object' || value === null) return value as SyntaxJsonValue;
+    if (!isObject(value)) return value as SyntaxJsonValue;
     return writeRecord(value as Record<string, unknown>, owningMode, complete);
 }
 
@@ -195,11 +197,17 @@ function structuralMembers(value: SyntaxNode): Record<string, unknown> {
 
 function projectedMemberNames(value: SyntaxNode, structural: Record<string, unknown>, owningMode: string, complete: boolean): string[] {
     const known = owningMode === 'exact' ? syntaxMemberNames(value.kind) : undefined;
-    const hiddenByLegacy = (member: string) => owningMode === 'legacy' && !complete && isLegacyOmittedMember(value, member);
     const isProjected = (member: string) =>
-        (known === undefined || known.has(member)) && !hiddenByLegacy(member) && !omitted.has(member) &&
-        !(value.kind === 'OperationSyntax' && member === 'usesLocation');
+        (known === undefined || known.has(member)) && !isHiddenByLegacy(value, member, owningMode, complete) && !isAlwaysOmitted(value, member);
     return Object.keys(structural).filter(isProjected).sort(ordinal);
+}
+
+function isHiddenByLegacy(value: SyntaxNode, member: string, owningMode: string, complete: boolean): boolean {
+    return owningMode === 'legacy' && !complete && isLegacyOmittedMember(value, member);
+}
+
+function isAlwaysOmitted(value: SyntaxNode, member: string): boolean {
+    return omitted.has(member) || (value.kind === 'OperationSyntax' && member === 'usesLocation');
 }
 
 function writeNode(value: SyntaxNode, owningMode: string, complete: boolean): SyntaxJsonValue {
@@ -235,8 +243,11 @@ function validateNumbers(value: unknown, owningMode: string, depth: number): voi
         for (let index = 0; index < value.length; index++) validateNumbers(value[index], owningMode, depth + 1);
         return;
     }
-    if (typeof value !== 'object' || value === null) return;
-    const node = value as Record<string, unknown>;
+    if (!isObject(value)) return;
+    validateNodeNumbers(value as Record<string, unknown>, owningMode, depth);
+}
+
+function validateNodeNumbers(node: Record<string, unknown>, owningMode: string, depth: number): void {
     owningMode = resolveNumericMode(node, owningMode, depth);
     assertCompleteSourceRoot(node, owningMode, depth);
     if (owningMode === 'exact' && isNode(node)) validateSyntaxMembers(node);
@@ -250,7 +261,11 @@ function assertSupportedDepth(owningMode: string, depth: number): void {
 }
 
 function assertCompleteSourceRoot(node: Record<string, unknown>, owningMode: string, depth: number): void {
-    if (depth === 0 && owningMode === 'exact' && !sourceRoots.has(node.kind as string)) throw new InvalidSyntaxJson('Exact syntax requires a complete source root.');
+    if (isIncompleteExactRoot(node, owningMode, depth)) throw new InvalidSyntaxJson('Exact syntax requires a complete source root.');
+}
+
+function isIncompleteExactRoot(node: Record<string, unknown>, owningMode: string, depth: number): boolean {
+    return depth === 0 && owningMode === 'exact' && !sourceRoots.has(node.kind as string);
 }
 
 function resolveNumericMode(node: Record<string, unknown>, owningMode: string, depth: number): string {
@@ -272,8 +287,11 @@ function isUnsupportedExactPrimitive(value: unknown): boolean {
 
 function validateLiteralValue(value: unknown, owningMode: string): void {
     if (owningMode === 'exact' && isUnsupportedExactPrimitive(value)) throw new InvalidSyntaxJson('Exact source requires supported primitive values or an explicit ExactNumber literal.');
-    if (typeof value !== 'object' || value === null) return;
-    const literal = value as { literalType?: unknown; value?: unknown };
+    if (!isObject(value)) return;
+    validateObjectLiteral(value as { literalType?: unknown; value?: unknown }, owningMode);
+}
+
+function validateObjectLiteral(literal: { literalType?: unknown; value?: unknown }, owningMode: string): void {
     if (literal.literalType === 'ExactNumber') validateExactNumberLiteral(literal, owningMode);
     else if (owningMode === 'exact') throw new InvalidSyntaxJson('Exact source refuses old or plain object literal insertion.');
 }
@@ -288,10 +306,11 @@ function validateExactNumberLiteral(literal: { value?: unknown }, owningMode: st
 
 function validateNumberMembers(node: Record<string, unknown>, owningMode: string, depth: number): void {
     const known = owningMode === 'exact' && isNode(node) ? syntaxMemberNames(node.kind) : undefined;
-    const skipped = new Set(['location', 'targetLocation', 'usesLocation']);
-    const isTraversed = (name: string, member: unknown) =>
-        (known === undefined || known.has(name) || (isNode(member) && sourceRoots.has(member.kind))) && !skipped.has(name);
-    for (const [name, member] of Object.entries(node)) if (isTraversed(name, member)) validateNumbers(member, owningMode, depth + 1);
+    for (const [name, member] of Object.entries(node)) if (isTraversedMember(known, name, member)) validateNumbers(member, owningMode, depth + 1);
+}
+
+function isTraversedMember(known: ReadonlySet<string> | undefined, name: string, member: unknown): boolean {
+    return (known === undefined || known.has(name) || (isNode(member) && sourceRoots.has(member.kind))) && !skippedNumberMembers.has(name);
 }
 
 function ordinal(left: string, right: string): number {
