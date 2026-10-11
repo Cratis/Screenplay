@@ -28,6 +28,8 @@ applies-to:
   - Documentation/screenplay/diagnostics.md
 ---
 
+> **2026-10-11 — implementation note.** The pinning hint is reported by the opt-in completeness checks (`enum-pinning`, `PLAY0671` or `all`), not by ordinary compilation, so it adds no noise to models that do not ask for it. Its severity, code and eligibility are as decided below.
+
 ## Context
 
 An enum concept is an indented list of member names (`[ "@" ], LowerIdent` in `ConceptDecl`, grammar.md). `SemanticConcept.Values` holds the names in declaration order, and the executable model treats an enum as a text concept whose values the reference evaluator compares by name. No member carries a number.
@@ -51,7 +53,7 @@ concept InvoiceStatus : Enum
 
 The number is an optional `-` followed by decimal digits, with no fraction, exponent, `+` sign or leading zero. `-0` is the number 0 and prints canonically as `0`. Its value must lie in the int32 range, because Chronicle casts enum values to `int`. Numbers are unique within the enum; gaps and negative numbers are allowed. Numbering is all or none per enum: once one member carries a number, every member must. Mixing them is a compile error, and there is no C#-style continuation from the previous member. An enum without numbers keeps its positional meaning, the zero-based declaration index, so its source, syntax tree, canonical bytes and revision are unchanged. The `@` escape, descriptions and `validate` blocks keep working.
 
-**Diagnostics.** Four new errors, each with its own code: mixed numbering, duplicate number, number outside int32, and malformed number literal. An information-level pinning hint fires only for a wholly unnumbered enum used by an event property (stored), suggesting the numbering refactoring below. It is silent for enums not used by event properties. The hint is reported by the opt-in completeness checks, not ordinary compilation. All five codes are allocated above the highest existing code at implementation time (currently `PLAY0666` in `DiagnosticCodes.cs`), in C#, TypeScript and Monaco alike, and are permanent.
+**Diagnostics.** Four new errors, each with its own code: mixed numbering, duplicate number, number outside int32, and malformed number literal. An information-level pinning hint fires only for a wholly unnumbered enum used by an event property (stored), suggesting the numbering refactoring below. It is silent for enums not used by event properties. All five codes are allocated above the highest existing code at implementation time (currently `PLAY0666` in `DiagnosticCodes.cs`), in C#, TypeScript and Monaco alike, and are permanent.
 
 Members are still named everywhere else. Specifications, fixtures, validation operands and conditions name members as they do today, a number never names a member, and the evaluator compares by name, so reference outcomes do not change. The printer writes the canonical form `name = N`, so numbers equal to their positions are kept and round-trip, while `-0` prints as `0`. Exact source mode is out of scope. The TypeScript compiler has no printer; only the C# printer round-trips.
 
