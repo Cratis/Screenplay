@@ -100,7 +100,7 @@ describe('when using routes in examples and redelivery', () => {
     });
 
     it('should keep top level streamId as payload', () => {
-        const result = parse('example Fixture : Recorded\n  streamId = "payload"');
+        const result = parse('import M.F.S.Recorded\nexample Fixture : Recorded\n  streamId = "payload"');
         expect(result.diagnostics).toEqual([]);
         expect(result.value.examples![0].values[0].property).toBe('streamId');
     });

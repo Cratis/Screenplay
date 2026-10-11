@@ -128,6 +128,25 @@ describe('when authoring typed examples', () => {
         const rules = createTokensProvider([]).tokenizer.root as unknown as [RegExp, unknown][];
         expect(rules[0][0].test('      example Acmé : Invoice')).toBe(true);
     });
+    it.each(['ImportedEvent', 'M.F.S.ImportedEvent'])('should defer imported example type %s without its declaration', type => {
+        const source = ['import M.F.S.ImportedEvent', `example X : ${type}`, '  amount = 10'];
+        responseAnalysis(source).diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0520').should.deep.equal([]);
+    });
+    it('should validate an imported event example value when its declaration is supplied', () => {
+        const source = ['import M.F.S.ImportedEvent', 'eventsource Account', '  identifier String', '  stream All', 'example X : ImportedEvent', '  for false', '  stream Account.All'];
+        const imported = { path: 'imported.play', source: 'module M\n  feature F\n    slice StateChange S\n      event ImportedEvent' };
+        responseAnalysis(source).diagnostics.should.deep.equal([]);
+        const diagnostics = responseAnalysis(source, [imported]).diagnostics;
+        diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0520').should.deep.equal([]);
+        diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0550').map(diagnostic => [diagnostic.severity, diagnostic.location.path, diagnostic.location.line]).should.deep.equal([['error', 'current.play', 6]]);
+    });
+    it('should still reject an imported example type when its supplied declaration has the wrong kind', () => {
+        const source = ['import M.F.S.ImportedEvent', 'example X : ImportedEvent'];
+        responseAnalysis(source, [{ path: 'imported.play', source: 'concept ImportedEvent : String' }]).diagnostics.map(diagnostic => diagnostic.code).should.contain('PLAY0520');
+    });
+    it('should still report unimported example types without context documents', () => {
+        responseAnalysis(['example X : Missing']).diagnostics.map(diagnostic => diagnostic.code).should.contain('PLAY0520');
+    });
     it('should share the bounded parsed revision with other editor features', () => expect(responseAnalysis(fixture)).toBe(responseAnalysis([...fixture])));
     it('should highlight the example header before generic keyword rules', () => {
         const rules = createTokensProvider([]).tokenizer.root as unknown as [RegExp, unknown][];

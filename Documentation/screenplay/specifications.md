@@ -162,6 +162,8 @@ Use an example when several scenarios repeat the same command input, prior event
 
 `example <Name> : <EventOrCommandOrReadModel>` declares one named, possibly partial fixture. Its body accepts property assignments, an optional `description`, an optional `for` value, and command `generated` fixtures. It cannot contain caller or clock fixtures or Given/When/Then steps. Declare examples at slice, feature, module or document level, or alongside specifications in a specification-only document.
 
+An example may name an imported event, command or read model. Single-document validation defers unresolved imported types; the assembled application resolves them and checks their values, reporting `PLAY0520` if an example type still cannot be resolved.
+
 An example reference occupies the ordinary name slot in `given`, `given readmodel`, `when`, `when append`, `then`, or `then readmodel [exactly]`. Names may be qualified. One concrete assignment may follow the name on the same line, including a structured object or list; other assignments stay indented. There is no `with` keyword.
 
 This excerpt assumes `RegisterInvoice` declares `total` and `currency`, and `InvoiceRegistered` declares `total`. The example is partial: the step must supply any remaining required command inputs.
