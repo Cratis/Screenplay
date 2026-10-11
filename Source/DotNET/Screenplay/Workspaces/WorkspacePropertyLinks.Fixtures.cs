@@ -37,10 +37,14 @@ internal sealed partial class WorkspacePropertyLinks
         var mapping = ancestors.FirstOrDefault(parent => parent.Node is PropertyMappingSyntax);
         var step = ancestors.FirstOrDefault(parent => CaseStep(parent.Node));
         var table = ancestors.FirstOrDefault(parent => parent.Node is SpecificationSyntax);
-        if (mapping is null || step is null || table is null) return;
-        var targets = Members(FixtureOwner(step), ((PropertyMappingSyntax)mapping.Node).Property);
-        var role = FixtureRole(step);
-        foreach (var row in CaseRows(parameter, table)) Add(row, role, new(parameter, targets, Incomplete: targets.Length != 1));
+        if ((mapping, step, table) is not ({ } owningMapping, { } owningStep, { } owningTable))
+        {
+            return;
+        }
+
+        var targets = Members(FixtureOwner(owningStep), ((PropertyMappingSyntax)owningMapping.Node).Property);
+        var role = FixtureRole(owningStep);
+        foreach (var row in CaseRows(parameter, owningTable)) Add(row, role, new(parameter, targets, Incomplete: targets.Length != 1));
     }
 
     IEnumerable<WorkspaceSyntaxEntry> CaseRows(string parameter, WorkspaceSyntaxEntry table) => _entries.Where(row =>
