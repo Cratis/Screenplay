@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Serialization;
 
 namespace Cratis.Screenplay.Printing;
 
@@ -32,11 +33,11 @@ public sealed partial class ScreenplayPrinter
     /// line numbers cannot be compared; in that case the existing kind order is the deterministic fallback.
     /// Layout expansion can supply a temporary parent-relative import position without changing physical
     /// source locations or comment anchors; those positions participate in the same document-local order.
-    /// Start/default locations mark newly authored nodes. Features under modules or features, slices and file imports
-    /// are inserted before their next located sibling in that collection, enabling mid-list timeline moves and pins.
-    /// If there is no next located sibling, use the existing insertion rule: after the last member of the kind,
-    /// or before the first member of a later canonical kind if none exists. Every other collection keeps that
-    /// existing rule exactly, including structurally identical occurrences with distinct comments.
+    /// Start/default locations mark newly authored nodes. An unlocated member is inserted before its next located
+    /// sibling in the same collection, so a typed add or move at an index keeps that index (timeline moves and pins,
+    /// and moves of templates, forms and contributions alike). If there is no next located sibling, it goes after the
+    /// last member of the kind, or before the first member of a later canonical kind if none exists. A typed move drops
+    /// the moved node's location when it disagrees with the requested index, so it is placed by this rule.
     /// Whether a member is located is decided by <see cref="AuthoredPositions"/>, the definition AST edits, comment
     /// ownership and layout expansion share.
     /// Retaining a declaration's location retains its authored position.
@@ -63,7 +64,7 @@ public sealed partial class ScreenplayPrinter
             .ThenBy(member => positions[member].Column).ToList();
         foreach (var member in members.Except(located))
         {
-            var nextSibling = member.Node is FeatureSyntax or SliceSyntax or FileImportSyntax
+            var nextSibling = IsDistinguishable(member, located)
                 ? members.Skip(members.IndexOf(member) + 1).FirstOrDefault(existing => existing.Kind == member.Kind && located.Contains(existing))
                 : null;
             var lastOfKind = ordered.FindLastIndex(existing => existing.Kind == member.Kind);
@@ -79,6 +80,19 @@ public sealed partial class ScreenplayPrinter
         {
             member.Print();
         }
+    }
+
+    // Timeline members always keep their index. Any other member does unless a located sibling of its kind is
+    // structurally identical: then the index cannot tell the two apart and the existing kind rule decides.
+    static bool IsDistinguishable(PrintableMember member, List<PrintableMember> located)
+    {
+        if (member.Node is FeatureSyntax or SliceSyntax or FileImportSyntax)
+        {
+            return true;
+        }
+
+        var shape = SyntaxJson.Serialize(member.Node).GetRawText();
+        return !located.Exists(existing => existing.Kind == member.Kind && string.Equals(SyntaxJson.Serialize(existing.Node).GetRawText(), shape, StringComparison.Ordinal));
     }
 
     sealed record PrintableMember(SyntaxNode Node, int Kind, Action Print);

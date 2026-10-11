@@ -674,6 +674,9 @@ These checks run on the assembled model. The source stays in the syntax tree, so
 | `PLAY0630` | Error | A navigation's `outlet <name>` names an outlet no layout, template or component declares. |
 | `PLAY0631` | Error | A screen or scoped `template` assignment uses a template whose `scopes` exclude that scope. |
 | `PLAY0632` | Error | A component comes from a package no `ui profile` declares. Only checked when at least one profile declares packages. |
+| `PLAY0654` | Error | A navigation contribution's `destination outlet` or `destination dialog` names an outlet or dialog template nothing declares. |
+| `PLAY0655` | Error | A screen's `contribute to <Point>` names a contribution point no layout or template slot declares. Unlike a module or feature `contribute to` (`PLAY0224`, a warning), screen contributions belong to the screen-composition checks. |
+| `PLAY0656` | Error | Template content nests templates in a cycle: a template's `content` uses itself, directly or through other templates. |
 
 ## Identity details
 

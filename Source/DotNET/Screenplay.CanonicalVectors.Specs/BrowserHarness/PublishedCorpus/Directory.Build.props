@@ -1,0 +1,3 @@
+<Project>
+    <!-- Isolates this tool from the repository build so it consumes only the published corpus package. -->
+</Project>

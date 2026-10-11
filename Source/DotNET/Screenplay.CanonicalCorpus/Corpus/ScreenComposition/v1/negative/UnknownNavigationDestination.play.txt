@@ -1,0 +1,20 @@
+layout Shell
+  outlet main
+  navigation contributes Navigation
+  content
+
+module Workspaces
+  contribute to Navigation
+    navigate to WorkItemList
+    label "Work items"
+    destination outlet sidebar
+
+  contribute to Navigation
+    navigate to WorkItemList
+    label "Confirm"
+    destination dialog ConfirmDialog
+
+  feature Tracking
+    slice StateView WorkItemList
+      screen WorkItemList
+        title "Work items"

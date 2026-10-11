@@ -2,7 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { describe, it } from 'vitest';
-import { EventVisibility, parse } from '@cratis/screenplay-compiler';
+import { parse } from '@cratis/screenplay-compiler';
+import { EventItemVisibility } from '../../Document/EventModelDocument';
 import { toEventModelDocument } from '../EventModelDocumentVisitor';
 import { slice_named } from './given/the_constructs_document';
 
@@ -37,14 +38,14 @@ describe('when mapping event translations', () => {
     it('should show the private events an outbound projection consumes next to the public event it publishes', () => {
         const slice = slice_named(document, 'Publish');
         slice.events.map(event => event.name).should.deep.equal(['Packed', 'Shipped']);
-        slice.events.find(event => event.name === 'Shipped')!.visibility!.should.equal(EventVisibility.Public);
+        slice.events.find(event => event.name === 'Shipped')!.visibility!.should.equal(EventItemVisibility.public);
         (slice.readModel === undefined).should.be.true;
     });
 
     it('should show the public events an inbound capture consumes as public', () => {
         const slice = slice_named(document, 'Track');
         const consumed = slice.events.find(event => event.name === 'ShipmentDispatched')!;
-        consumed.visibility!.should.equal(EventVisibility.Public);
+        consumed.visibility!.should.equal(EventItemVisibility.public);
     });
 
     it('should describe the capture trigger by the consumed events', () => {

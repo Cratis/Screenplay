@@ -2,8 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { EventModelBoard, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
-import { DependencyMapView, DependencyView } from '@cratis/screenplay-views';
+import { BoardToolbarFrame, BoardViewMenu, EventModelBoard, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
+import { defaultDependencyMapOptions, dependencyMapMenuItems, DependencyMapView, DependencyView } from '@cratis/screenplay-views';
 import '@cratis/screenplay-views/dependency-map.css';
 import { boardChrome } from './boardChrome';
 import { BoardErrorBoundary } from './BoardErrorBoundary';
@@ -19,6 +19,7 @@ export const BoardApp = () => {
     const host = useHost();
     const [shown, setShown] = useState(ShownModel.Proposed);
     const [view, setView] = useState(DependencyView.Board);
+    const [mapOptions, setMapOptions] = useState(defaultDependencyMapOptions);
     const [attempt, setAttempt] = useState(0);
     const [mapAttempt, setMapAttempt] = useState(0);
     const boardHost = useRef<HTMLDivElement>(null);
@@ -87,7 +88,7 @@ export const BoardApp = () => {
             <MenuDropdownOpenProvider>
                 <div className={`screenplay-board-view${view !== DependencyView.Board ? ' is-hidden' : ''}`} aria-hidden={view !== DependencyView.Board} inert={view !== DependencyView.Board}>
                     {boardProblem !== undefined || model === undefined || model instanceof Error ? <>
-                        <div className='screenplay-dependency-map-toolbar' role='toolbar' aria-label='Model and view'>{tools}</div>
+                        <BoardToolbarFrame showLogo chrome={boardChrome} label='Model and view'>{tools}</BoardToolbarFrame>
                         <div className='screenplay-mcp-board__message'>The board could not be drawn: {boardProblem?.message}</div>
                     </> : (
                         <BoardErrorBoundary resetWhenChanged={board} onReset={() => setAttempt(attempt + 1)} tools={tools}>
@@ -96,11 +97,14 @@ export const BoardApp = () => {
                     )}
                 </div>
                 <div className='screenplay-dependency-map-host' hidden={view !== DependencyView.Map} style={{ display: view !== DependencyView.Map ? 'none' : undefined }}>
-                    <div className='screenplay-dependency-map-toolbar' role='toolbar' aria-label='Model and view'>{tools}</div>
+                    <BoardToolbarFrame showLogo chrome={boardChrome} label='Model and view'>
+                        {tools}
+                        <BoardViewMenu items={dependencyMapMenuItems(mapOptions, setMapOptions)} />
+                    </BoardToolbarFrame>
                     {board === undefined
                         ? <div className='screenplay-mcp-board__message'>The dependency map is unavailable: {(boards as Error).message}</div>
                         : <BoardErrorBoundary resetWhenChanged={board} onReset={() => setMapAttempt(mapAttempt + 1)} subject='dependency map'>
-                            <DependencyMapView key={mapAttempt} map={board.dependencies} modelKey={shown} />
+                            <DependencyMapView key={mapAttempt} map={board.dependencies} modelKey={shown} options={mapOptions} />
                         </BoardErrorBoundary>}
                 </div>
             </MenuDropdownOpenProvider>
