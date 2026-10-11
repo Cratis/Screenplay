@@ -11,6 +11,6 @@ public class when_a_referencing_declaration_has_the_same_name_as_a_property : gi
     void Establish() => _links = Create(Source.Replace("command Register", "command name"));
     void Because() => _complete = _links.Complete(_links.Find("Projects.Registration.Register.Registered.name").Single());
 
-    [Fact] void should_not_treat_the_command_name_as_a_property_reader() => _complete.ShouldBeTrue();
-    [Fact] void should_not_create_an_unclassified_link_for_the_declaration_name() => _links.Incoming(_links.Find("Projects.Registration.Register.Registered.name").Single()).Any(link => link.Reference.Role == "unclassified").ShouldBeFalse();
+    [Fact] void should_refuse_completeness_without_a_proven_field_or_parameter_declaration() => _complete.ShouldBeFalse();
+    [Fact] void should_retain_the_name_as_unclassified_evidence() => _links.Incoming(_links.Find("Projects.Registration.Register.Registered.name").Single()).Any(link => link.Reference.Role == "unclassified").ShouldBeTrue();
 }

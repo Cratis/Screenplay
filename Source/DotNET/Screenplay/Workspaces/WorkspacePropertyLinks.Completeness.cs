@@ -4,7 +4,6 @@
 using Cratis.Screenplay.Indexing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
-using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Serialization;
 using Cratis.Screenplay.Syntax.Specifications;
 
@@ -14,12 +13,10 @@ internal sealed partial class WorkspacePropertyLinks
 {
     static readonly HashSet<Type> _namedMemberDeclarations =
     [
-        typeof(AuthenticationProviderSyntax), typeof(BehaviorSyntax), typeof(BehaviorParameterSyntax), typeof(BehaviorArgumentSyntax),
-        typeof(CaptureSourceSettingSyntax), typeof(ComponentExposedValueSyntax), typeof(ComponentOutletSyntax), typeof(DomainSyntax), typeof(EventStreamIdPartSyntax),
-        typeof(InteractionArgumentSyntax), typeof(ObjectMemberSyntax), typeof(PresentationValueSyntax), typeof(ProjectionVariantSyntax), typeof(PropertySyntax),
-        typeof(QueryParameterSyntax), typeof(ResponseFieldSyntax), typeof(ScreenComponentSyntax), typeof(ScreenNavigationParameterSyntax),
-        typeof(ScreenSectionSyntax), typeof(ScreenToolbarSyntax), typeof(SlotSyntax), typeof(TemplateExposedValueSyntax),
-        typeof(TemplateOutletSyntax), typeof(ToolbarItemSyntax)
+        typeof(PropertySyntax), // Declares a field in its containing shape.
+        typeof(QueryParameterSyntax), // Declares an input parameter of a query.
+        typeof(SpecificationParameterSyntax), // Declares a parameter supplied by specification cases.
+        typeof(BehaviorParameterSyntax) // Declares a parameter supplied by behavior attachments.
     ];
 
     static readonly Dictionary<Type, SyntaxMember[]> _textMembers = SyntaxKinds.All.ToDictionary(
@@ -41,12 +38,14 @@ internal sealed partial class WorkspacePropertyLinks
 
     bool DeclaresName(WorkspaceSyntaxEntry entry, SyntaxMember member)
     {
-        if (member.Property.Name == nameof(ReadsSyntax.Alias)) return entry.Node is ReadsSyntax or AuthenticationProviderSyntax;
+        // A reads alias introduces the local name used by expressions in the command.
+        if (member.Property.Name == nameof(ReadsSyntax.Alias)) return entry.Node is ReadsSyntax;
         if (member.Property.Name != nameof(PropertySyntax.Name)) return false;
-        if (entry.Node is ConstraintSyntax) return true;
+
+        // Trigger data declares occurrence parameters only on a trigger, not on a consuming reaction.
         if (entry.Node is TriggerDataSyntax && Owner(entry)?.Syntax is TriggerSyntax) return true;
 
-        return DeclarationOwner(entry) is not null || _namedMemberDeclarations.Contains(entry.Node.GetType());
+        return _namedMemberDeclarations.Contains(entry.Node.GetType());
     }
 
     void IndexCompleteness()

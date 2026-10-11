@@ -42,6 +42,7 @@ internal sealed partial class WorkspacePropertyLinks
         IndexCaseValues();
         IndexProjections();
         IndexReaders();
+        IndexInteractions();
         IndexCompleteness();
     }
 
