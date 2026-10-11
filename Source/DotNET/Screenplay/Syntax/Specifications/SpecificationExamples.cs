@@ -51,6 +51,9 @@ public static partial class SpecificationExamples
     public static CompilationResult<IReadOnlyList<EffectiveSpecification>> ExpandAll(SpecificationSyntax specification, ApplicationSyntax declarations, IReadOnlyList<string> scope) =>
         new Expansion(declarations, specification.Examples, new(scope)).ExpandStandalone(specification, new(scope));
 
+    internal static EffectiveSpecificationApplication ExpandForValidation(ApplicationSyntax application, bool deferImportedTypes) =>
+        new Expansion(application, deferImportedTypes: deferImportedTypes).Expand();
+
     private sealed partial class Expansion
     {
         readonly ApplicationSyntax _application;
@@ -61,10 +64,12 @@ public static partial class SpecificationExamples
         readonly Dictionary<SpecificationExampleSyntax, Entry> _types = new(ReferenceEqualityComparer.Instance);
         readonly ReferenceDeclarationIndex _index;
         readonly ConsistencyDeclarations? _declarations;
+        readonly bool _deferImportedTypes;
 
-        internal Expansion(ApplicationSyntax application, IEnumerable<SpecificationExampleSyntax>? standaloneExamples = null, DeclarationScope? standaloneScope = null)
+        internal Expansion(ApplicationSyntax application, IEnumerable<SpecificationExampleSyntax>? standaloneExamples = null, DeclarationScope? standaloneScope = null, bool deferImportedTypes = false)
         {
             _application = application;
+            _deferImportedTypes = deferImportedTypes;
             AddExamples(application.Examples, new([]));
             foreach (var concept in application.Concepts) Add(concept.Name, new([]), concept, "concept", []);
             foreach (var type in application.Types ?? []) Add(type.Name, new([]), type, "type", type.Properties);
@@ -194,6 +199,12 @@ public static partial class SpecificationExamples
             return resolution.Resolved is { } declaration ? _entries.First(entry => ReferenceEquals(entry.Declaration, declaration)) : null;
         }
 
+        bool DeferImportedType(string name, DeclarationScope scope) =>
+            _deferImportedTypes &&
+            ReferenceResolver.Resolve(name, scope, _index).IsUnresolved &&
+            _application.Imports.Where(import => import.Name == name || import.QualifiedName == name).ToArray() is [var imported] &&
+            ReferenceResolver.Resolve(imported.QualifiedName, scope, _index).IsUnresolved;
+
         void ValidateExample(Entry entry)
         {
             var example = (SpecificationExampleSyntax)entry.Node;
@@ -211,6 +222,7 @@ public static partial class SpecificationExamples
             var type = Resolve(example.Type, entry.Declaration.Scope);
             if (type is null)
             {
+                if (DeferImportedType(example.Type, entry.Declaration.Scope)) return;
                 _context.Error(DiagnosticCodes.UnresolvedSpecificationExampleType, $"Example '{example.Name}' type '{example.Type}' is unknown or ambiguous; qualify a declared event, command, or read model.", example.Location);
                 return;
             }
