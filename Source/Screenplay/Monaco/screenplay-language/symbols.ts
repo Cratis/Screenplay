@@ -30,6 +30,7 @@ export interface ConceptSymbol {
     attributes: string[];
     attributeReasons: Record<string, string>;
     enumValues: string[];
+    enumNumbers?: number[];
     line: number;
 }
 
@@ -240,16 +241,18 @@ export function scanDocument(lines: string[]): DocumentSymbols {
                     attributeReasons[reason[1]] = reason[2];
                 }
             }
-            const enumValues =
-                conceptMatch[2] === 'Enum'
-                    ? body.filter((line) => !attributeReasonPattern.test(line))
-                    : [];
+            const members = conceptMatch[2] === 'Enum'
+                ? body.map(line => /^@?([a-z_]\w*)(?:\s*=\s*(-?(?:0|[1-9][0-9]*)))?(?:\s*\/\/.*)?$/.exec(line)).filter(match => match !== null)
+                : [];
+            const enumValues = members.map(member => member[1]);
+            const enumNumbers = members.length > 0 && members.every(member => member[2] !== undefined) ? members.map(member => Number(member[2])) : undefined;
             symbols.concepts.push({
                 name: conceptMatch[1],
                 primitive: conceptMatch[2],
                 attributes: conceptMatch[3].trim().split(/\s+/).filter(Boolean),
                 attributeReasons,
                 enumValues,
+                ...(enumNumbers === undefined ? {} : { enumNumbers }),
                 line: index,
             });
             continue;

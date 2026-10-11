@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { validateEnumerationPinning } from './Parsing/EnumerationPinning';
 import { validateIdentity } from './Parsing/IdentityValidator';
 import { Diagnostic } from './Diagnostics/Diagnostic';
 import { validateSpecificationCases } from './Parsing/SpecificationCaseValidator';
@@ -78,6 +79,7 @@ export function parseForAuthoring(source: string, path?: string, placement: Play
     if (validateResponseContracts) {
         validateIdentity(value, context);
         validatePurposes(value, context);
+        validateEnumerationPinning(value, context);
         validateInlineEvents(value, context);
         validateConstraintProperties(value, context);
         validateOperations(value, context);

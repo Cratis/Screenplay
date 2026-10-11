@@ -31,6 +31,7 @@ internal static partial class ScreenplayValidator
         foreach (var error in SourceNumericModes.Errors(application)) context.Add(error);
         new PublicEventMetadataValidator(context).VisitApplication(application);
         PurposeValidator.Validate(application, context);
+        EnumerationPinning.Validate(application, context);
         var authored = application;
         var expansion = SpecificationExamples.Expand(application);
         application = EffectiveApplication(application, expansion);

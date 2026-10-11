@@ -24,6 +24,11 @@ public sealed partial class SemanticModelBinder
                 Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' compliance attributes require portable data-subject semantics.", concept.Location);
             }
 
+            if (concept.ValueNumbers is { } numbers && (!concept.IsEnum || !numbers.SequenceEqual(Enumerable.Range(0, concept.Values.Count()))))
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' explicit enum member numbers are not admitted by any supported executable model (ESM) version yet (#643).", concept.Location);
+            }
+
             var primitive = concept.IsEnum ? SemanticPrimitiveType.Text : Primitive(concept.Type);
             var validations = BindConceptValidations(concept);
             return new(_concepts[concept.Name].Id, concept.Name, primitive, [.. concept.Values], validations);
