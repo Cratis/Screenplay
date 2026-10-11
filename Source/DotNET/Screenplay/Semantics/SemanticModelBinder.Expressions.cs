@@ -12,6 +12,17 @@ public sealed partial class SemanticModelBinder
 {
     private sealed partial class BindingContext
     {
+        static decimal BindNumber(double value)
+        {
+            var legacy = Convert.ToDecimal(value, CultureInfo.InvariantCulture);
+
+            // Decimal scale can round the shortest round-trip form. Keep it only when the shared
+            // activation predicate can distinguish it from legacy lowering in the retained model.
+            var exact = decimal.Parse(value.ToString("R", CultureInfo.InvariantCulture), NumberStyles.Float, CultureInfo.InvariantCulture);
+
+            return SemanticModelValidator.DiffersFromLegacyLowering(exact) ? exact : legacy;
+        }
+
         SemanticExpression? BindPropertyExpression(
             ExpressionSyntax expression,
             Dictionary<string, SemanticProperty> properties,
@@ -43,7 +54,7 @@ public sealed partial class SemanticModelBinder
             null => SemanticValue.Null,
             string value => SemanticValue.Text(value),
             bool value => SemanticValue.Boolean(value),
-            double value => SemanticValue.Number(Convert.ToDecimal(value, CultureInfo.InvariantCulture)),
+            double value => SemanticValue.Number(BindNumber(value)),
             _ => throw new InvalidSemanticContract($"Literal value type '{expression.Value.GetType().Name}' is unsupported during semantic binding.")
         };
 

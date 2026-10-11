@@ -106,6 +106,7 @@ internal static partial class SemanticModelValidator
         ValidatePublicEventsVersion(application, semanticVersion);
         ValidateReactionIdentityVersion(application, semanticVersion);
         context.ValidateReferences(application);
+        ValidateV10Use(application, semanticVersion, context.UsesExactNumberLiterals);
         if (semanticVersion == SemanticVersion.V2 && !application.Modules.SelectMany(module => module.Features)
             .SelectMany(AllSlices).Any(slice => slice.Commands.Any(command => command.Destination is not null ||
                 command.Produces.Any(produced => produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression))) ||
@@ -925,7 +926,7 @@ internal static partial class SemanticModelValidator
                         command.Destination?.Type ?? command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type);
                 }
 
-                ValidatePropertyValues(specification.When.Values, [.. command.Properties.Where(property => !property.IsGenerated)], true);
+                ValidatePropertyValues(specification.When.Values, [.. command.Properties.Where(property => !property.IsGenerated)], true, RoutedInputs(command));
                 ValidateGeneratedValues(specification.When, command);
             }
 
@@ -1160,7 +1161,8 @@ internal static partial class SemanticModelValidator
             ImmutableArray<SemanticPropertyMapping> mappings,
             Dictionary<SemanticId, SemanticProperty> targets,
             SemanticExpressionRootKind root,
-            Dictionary<SemanticId, SemanticProperty> sources)
+            Dictionary<SemanticId, SemanticProperty> sources,
+            HashSet<SemanticId>? routedInputs = null)
         {
             RequireObjects(mappings, nameof(mappings), "property mapping");
             var mapped = new HashSet<SemanticId>();
@@ -1178,7 +1180,7 @@ internal static partial class SemanticModelValidator
 
                 if (mapping.Source is SemanticValueExpression { Kind: SemanticExpressionKind.Value } value)
                 {
-                    ValidateValue(value.Value, target.Type, "property mapping");
+                    ValidateValue(value.Value, target.Type, "property mapping", routedInputs?.Contains(target.Id) == true);
                 }
                 else
                 {
@@ -1191,7 +1193,8 @@ internal static partial class SemanticModelValidator
         void ValidatePropertyValues(
             ImmutableArray<SemanticPropertyValue> values,
             ImmutableArray<SemanticProperty> targetProperties,
-            bool requireExact)
+            bool requireExact,
+            HashSet<SemanticId>? routedInputs = null)
         {
             RequireObjects(values, nameof(values), "property value");
             var targets = Properties(targetProperties);
@@ -1209,7 +1212,7 @@ internal static partial class SemanticModelValidator
                     throw new InvalidSemanticContract($"Property value target '{value.TargetProperty}' is unresolved.");
                 }
 
-                ValidateValue(value.Value, target.Type, "property value");
+                ValidateValue(value.Value, target.Type, "property value", routedInputs?.Contains(target.Id) == true);
             }
 
             if (requireExact && assigned.Count != targets.Count)
@@ -1270,10 +1273,17 @@ internal static partial class SemanticModelValidator
             }
         }
 
-        void ValidateValue(SemanticValue value, SemanticTypeReference target, string description) =>
+        void ValidateValue(SemanticValue value, SemanticTypeReference target, string description, bool routeInput = false)
+        {
             _valueValidator.Validate(value, target, description);
+            if (!routeInput) UsesExactNumberLiterals = UsesExactNumberLiterals || ContainsExactNumberLiteral(value);
+        }
 
-        void ValidateValueVariant(SemanticValue value) => _valueValidator.ValidateVariant(value);
+        void ValidateValueVariant(SemanticValue value)
+        {
+            _valueValidator.ValidateVariant(value);
+            UsesExactNumberLiterals = UsesExactNumberLiterals || ContainsExactNumberLiteral(value);
+        }
 
         SemanticTypeReference? TypeOf(SemanticValue value) => _valueValidator.TypeOf(value);
 

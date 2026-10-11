@@ -26,7 +26,15 @@ public static partial class canonical_serialization_golden_vectors
                 new(Id(10002), "StreamFilter", [new(SemanticReactionTriggerKind.Event) { Source = slice.Events[0].Id }]) { From = new(source.Id, Id(9002)) }
             ]
         };
-        var replacement = feature with { Slices = [slice with { Commands = commands.ToImmutable(), ReadModels = [readModel], Reducers = [reducer] }, automation] };
+        var whole = SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.WholeNumber);
+        var fraction = SemanticTypeReference.ForPrimitive(SemanticPrimitiveType.DecimalNumber);
+        var exactEvent = Event(ApplicationIdentity.Create("Canonical Golden Application"), Id(10100), "ExactNumbersRecorded",
+            [new(Id(10101), "largest", whole, false), new(Id(10102), "smallest", whole, false), new(Id(10103), "whole", whole, false), new(Id(10104), "fraction", fraction, false)]);
+        decimal[] values = [9007199254740991m, -9007199254740991m, 1234567890123456m, 0.10000000000000002m];
+        var exactCommand = new SemanticCommand(Id(10110), "RecordExactNumbers", [], [],
+            [new(exactEvent.Id, null, null, [.. exactEvent.Properties.Select((property, index) => new SemanticPropertyMapping(property.Id, SemanticExpression.FromValue(SemanticValue.Number(values[index]))))])]);
+        var exactSlice = new SemanticSlice(Id(10120), "ExactNumbers", SemanticSliceKind.StateChange, [exactEvent], [exactCommand], [], [], [], []);
+        var replacement = feature with { Slices = [slice with { Commands = commands.ToImmutable(), ReadModels = [readModel], Reducers = [reducer] }, automation, exactSlice] };
         var module = application.Modules[0];
         application = application with { Modules = application.Modules.SetItem(0, module with { Features = [.. module.Features.Select(value => value.Id == replacement.Id ? replacement : value)] }) };
 
