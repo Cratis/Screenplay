@@ -35,6 +35,7 @@ internal sealed class SyntaxMember(PropertyInfo property, ParameterInfo? paramet
         get
         {
             if (Type == typeof(SourceOptions)) return SourceOptions.Legacy;
+            if (Property.DeclaringType == typeof(ConceptSyntax) && Property.Name == nameof(ConceptSyntax.ValueNumbers)) return null;
             if (Property.DeclaringType == typeof(ConceptAttributeSyntax) && Property.Name == nameof(ConceptAttributeSyntax.Criminal)) return false;
             if (Property.DeclaringType == typeof(Specifications.SpecificationSyntax) && Property.Name == nameof(Specifications.SpecificationSyntax.ThenNoEvents)) return false;
             if (CompositionDefaults.IsOptional(Property)) return false;

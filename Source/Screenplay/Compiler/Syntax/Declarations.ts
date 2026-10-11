@@ -54,6 +54,8 @@ export interface ConceptSyntax extends SyntaxNode {
     readonly type: string;
     readonly attributes: readonly ConceptAttributeSyntax[];
     readonly values: readonly string[];
+    /** Explicit int32 numbers parallel to values; absent for positional members. */
+    readonly valueNumbers?: readonly number[] | null;
 }
 
 export interface TypeSyntax extends SyntaxNode {

@@ -46,7 +46,7 @@ public enum SemanticPlanIssueKind
     UnsupportedEventContext = 5,
 
     /// <summary>
-    /// A slice selection is empty or contains an identity that is not a slice in the model.
+    /// A slice selection contains an identity that is not a slice in the model.
     /// </summary>
     InvalidSliceSelection = 6
 }
@@ -177,9 +177,10 @@ public sealed class SemanticExecutionPlan
     /// <summary>
     /// Compiles a plan for selected slice identities without changing the model or its revision.
     /// Issues in selected slices and application-level declarations block compilation; other issues are deferred.
+    /// An empty selection defers every slice-owned issue and blocks only on application-level issues.
     /// </summary>
     /// <param name="model">The validated executable semantic model.</param>
-    /// <param name="selectedSlices">The non-empty selection of slice identities in the model.</param>
+    /// <param name="selectedSlices">The selection of slice identities in the model, which may be empty.</param>
     /// <returns>The plan compilation, blocking issues, and non-blocking issues in unselected slices.</returns>
     public static SemanticExecutionPlanCompilation Compile(ExecutableSemanticModel model, IEnumerable<SemanticId> selectedSlices) =>
         CompileCore(model, [.. selectedSlices]);
@@ -197,11 +198,6 @@ public sealed class SemanticExecutionPlan
         var slices = AllSlices(model.Application).ToArray();
         if (selectedSlices is not null)
         {
-            if (selectedSlices.IsEmpty)
-            {
-                issues.Add(new(model.Application.Id, SemanticPlanIssueKind.InvalidSliceSelection, "Execution plan selection must contain at least one slice."));
-            }
-
             foreach (var selected in selectedSlices.Where(selected => !slices.Any(slice => slice.Id == selected)).OrderBy(selected => selected.ToString(), StringComparer.Ordinal))
             {
                 issues.Add(new(selected, SemanticPlanIssueKind.InvalidSliceSelection, $"Selected slice '{selected}' is not in the model."));

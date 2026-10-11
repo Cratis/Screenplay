@@ -40,7 +40,7 @@ internal static class SyntaxSchemaWriter
 
         if (member.ElementType is not null)
         {
-            shape["default"] = Array.Empty<object>();
+            shape["default"] = member.MissingValue;
         }
         else if (!member.Required)
         {

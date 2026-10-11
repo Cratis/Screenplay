@@ -96,7 +96,7 @@ static class McpToolSchemas
         "semanticRenames" or "eventRenames" => McpAstSchemas.Array(Rename()),
         "retiredSemanticAddresses" or "retiredEventAddresses" => McpAstSchemas.Array(Address()),
         "formatting" when tool == "propose-repair" => McpAstSchemas.Choice("CanonicalizeTouchedDocuments", "PreserveTrivia"),
-        "formatting" when tool == "propose-extract-inline-event" => McpAstSchemas.Choice("CanonicalizeTouchedDocuments"),
+        "formatting" when string.Equals(tool, "propose-extract-inline-event", StringComparison.Ordinal) || string.Equals(tool, "propose-number-enum-members", StringComparison.Ordinal) => McpAstSchemas.Choice("CanonicalizeTouchedDocuments"),
         "formatting" => McpAstSchemas.Choice("CanonicalizeTouchedDocuments", "PreserveExactSource", "PreserveTrivia"),
         "validation" => McpAstSchemas.Choice("Authoring", "Executable"),
         "referencePolicy" => McpAstSchemas.Choice("Safe", "Draft"),

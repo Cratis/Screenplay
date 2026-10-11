@@ -2,6 +2,8 @@
 
 A consultancy's time tracking, written in Screenplay. Engagement managers open client engagements and staff consultants on them. Consultants record their hours each week and submit the timesheet. Managers approve the week or return it, and payroll officers collect the approved hours into payroll runs for an external payroll provider. Absences reported in the HR system come in as time off.
 
+The foundation enums pin their current zero-based member numbers, preserving executable bytes while making stored identities visible. Specifications use member names. Never renumber or reuse a published number.
+
 ## Monthly lookup keys
 
 `Timesheets/Reporting/CheckingEngagementMonths.play` declares a monthly row keyed by engagement and reporting month. Its single-instance query supplies both parts in a `by` block. `ClosingAnEngagementMonth.play` supplies the same parts in a command reads block. Screens use a collection query because scalar screen lookups cannot supply composite keys.

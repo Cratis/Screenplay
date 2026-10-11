@@ -151,7 +151,7 @@ export function hoverContent(
     if (concept) {
         const attributes = concept.attributes.length ? ` ${concept.attributes.join(' ')}` : '';
         const values = concept.enumValues.length
-            ? `\n\nValues: ${concept.enumValues.join(', ')}`
+            ? `\n\nValues: ${concept.enumValues.map((value, index) => concept.enumNumbers === undefined ? value : `${value} = ${concept.enumNumbers[index]}`).join(', ')}`
             : '';
         const reasons = Object.entries(concept.attributeReasons)
             .map(([attribute, reason]) => `\n\n**@${attribute}** — ${reason}`)

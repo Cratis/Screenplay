@@ -258,7 +258,7 @@ Names are case-sensitive. Property sets compare declared names, type names, coll
 
 ### Completeness diagnostics
 
-`diagnostics` accepts `checks: "data-bindings,input-surfaces,field-origins,query-keys,event-consumers,navigation"` or `"all"`. Unknown names are invalid parameters. Selected findings are warnings merged into the ordinary severity summary and paged, source-revision-bound response, including scope and document filtering. Checks run only without whole-application source errors; `completenessStatus` otherwise reports `completeness checks skipped: the model has N error(s)`. `completenessCoverage` is `structure only; a finding is a prompt to look`. See [Completeness checks](../completeness.md) for exact rules and exemptions. No executable admission or code analysis is implied.
+`diagnostics` accepts `checks: "data-bindings,input-surfaces,field-origins,query-keys,event-consumers,navigation"`, `"enum-pinning"` (or `"PLAY0671"`) or `"all"`. Unknown names are invalid parameters. Selected findings are warnings and information merged into the ordinary severity summary and paged, source-revision-bound response, including scope and document filtering. Checks run only without whole-application source errors; `completenessStatus` otherwise reports `completeness checks skipped: the model has N error(s)`. `completenessCoverage` is `structure only; a finding is a prompt to look`. See [Completeness checks](../completeness.md) for exact rules and exemptions. No executable admission or code analysis is implied.
 
 ### Scoped diagnostics
 
@@ -428,6 +428,7 @@ An unbound model returns `outcome: "unbound"`, executable diagnostics and `page:
 | `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | `line` for a `PLAY0565` concept-line repair, `pinRepairEvidence`, `expectedRepairEvidenceRevision`, includeContent; use the discovered `requiredFormatting`. `PLAY0479`, `PLAY0565` and `PLAY0653` support `PreserveTrivia` or explicit `CanonicalizeTouchedDocuments`; other repairs require `CanonicalizeTouchedDocuments` |
 | `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent, `eventNeverPersisted` (boolean, default false) |
 | `propose-move` | Expected revisions, target address, newParent address | targetHandle, newParentHandle, formatting, validation, includeContent |
+| `propose-number-enum-members` | `expectedRevision`, `expectedCatalogRevision`, unnumbered enum `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted; never renumbers numbered or mixed enums |
 | `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
 | `expand-layout` | Expected revisions | layout (`single`, `module`, `feature`, `slice`; default `slice`, one file per slice), validation, formatting, referencePolicy, includeContent |
 | `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`semantic-diff` for structural impact; `implementation-requirements` for attachments), documentId, offset, limit, expectedSourceRevision |

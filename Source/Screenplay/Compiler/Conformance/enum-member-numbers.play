@@ -1,0 +1,15 @@
+// Sparse enum authoring remains refused by binding (PLAY0268, #643).
+concept Status : Enum
+  description "Stored status identity"
+  draft = -2147483648
+  issued = 4
+  @validate = 2147483647
+  validate
+    not empty
+
+concept Zero : Enum
+  zero = -0
+
+concept Positional : Enum
+  first
+  second

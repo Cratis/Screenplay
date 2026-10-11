@@ -29,6 +29,7 @@ MCP `diagnostics` accepts the same comma-separated selection as `checks`. Findin
 | `personas` | PLAY0574, PLAY0575, PLAY0576 | Warns when none of a persona's policies gates a command, query or inherited screen scope; warns when an effective command or query gate definitely denies every synthesized persona. Unsynthesizable personas and undecidable claim targets count as unknown, not denial. Reports unpinned `or` choices with multiple buildable alternatives as information, naming an unchosen alternative and suggesting a policy that pins it. No findings without personas. |
 
 | `privilege` | PLAY0652 | Checks each producer of the trigger event against an elevated reaction's exact roles. Warning for unprivileged producers; Information for opaque gates. Clock and application triggers are silent. |
+| `enum-pinning` | PLAY0671 | Information hint for a wholly unnumbered enum used by an event property, including nested composite types. Suggests numbering members by their current positions; not a correctness repair. |
 | `purposes` | PLAY0602–PLAY0606 | [Processing purposes](purposes.md): prompts for uncovered personal data, missing special-category conditions or criminal authorization, missing bases and unused purposes. Coverage is the union of references on slices and their ancestors; composite types are traversed. Findings do not assess lawfulness or enforce retention. |
 
 ## Elevated reaction paths

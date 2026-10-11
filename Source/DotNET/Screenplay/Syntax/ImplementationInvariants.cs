@@ -11,6 +11,15 @@ internal static partial class ImplementationInvariants
 {
     internal static void Validate(SyntaxNode node)
     {
+        if (node is ConceptSyntax { ValueNumbers: not null } numbered)
+        {
+            var numbers = numbered.ValueNumbers.ToArray();
+            if (!numbered.IsEnum || numbers.Length != numbered.Values.Count() || numbers.Distinct().Count() != numbers.Length)
+            {
+                throw new InvalidSyntaxJson("Explicit enum numbers require an Enum concept, one number per value, and unique int32 numbers.");
+            }
+        }
+
         OperationInvariants.Validate(node);
         EventSourceInvariants.Validate(node);
         if (PublicEventInvariants.Error(node) is { } publicEventError)

@@ -51,5 +51,10 @@ public enum CompletenessCheck
     /// <summary>
     /// Checks event producers against elevated reactions' declared roles.
     /// </summary>
-    Privilege
+    Privilege,
+
+    /// <summary>
+    /// Checks stored enums for positional member identity.
+    /// </summary>
+    EnumPinning
 }

@@ -54,6 +54,10 @@
       "attributes": [],
       "name": "LoanStatus",
       "type": "Enum",
+      "valueNumbers": [
+        0,
+        1
+      ],
       "values": [
         "onLoan",
         "returned"
