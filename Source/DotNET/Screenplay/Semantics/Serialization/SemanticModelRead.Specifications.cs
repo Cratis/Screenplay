@@ -80,8 +80,6 @@ internal static partial class SemanticModelRead
 
     sealed class SpecificationState(uint schemaVersion) : IdentifiedReadState(schemaVersion)
     {
-        static readonly string[] _automationFields = ["givenClock", "givenCaptures", "whenClock", "whenTrigger", "whenCapture"];
-
         public static readonly FieldTable<SpecificationState> Fields = TableFor<SpecificationState>("specification")
             .Add("givenEvents", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.GivenEvents = Array(ref reader, (ref Utf8JsonReader item) => SpecificationEvent(ref item, state.SchemaVersion, false), property))
             .Add("givenReadModels", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.GivenReadModels = Array(ref reader, SpecificationReadModel, property))
@@ -96,7 +94,7 @@ internal static partial class SemanticModelRead
             .Add("thenErrors", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenErrors = Array(ref reader, SpecificationError, property))
             .Add("thenDenied", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenDenied = OnlyTrue(ref reader, property, "specification"))
             .Add("thenReturns", 7, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Returns = Nested(ref reader, ThenReturns, property))
-            .AddAll(_automationFields, 6, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Automation.Read(ref reader, property));
+            .AddAll(["givenClock", "givenCaptures", "whenClock", "whenTrigger", "whenCapture"], 6, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Automation.Read(ref reader, property));
 
         public ImmutableArray<SemanticSpecificationEvent> GivenEvents { get; set; }
 
