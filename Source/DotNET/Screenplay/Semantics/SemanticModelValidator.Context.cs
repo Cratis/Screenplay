@@ -88,6 +88,7 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract($"Enumeration concept '{concept.Name}' must use the text primitive representation.");
             }
 
+            ValidateEnumMemberNumbers(concept);
             var conceptType = SemanticTypeReference.ForConcept(concept.Id);
             foreach (var validation in concept.Validations)
             {

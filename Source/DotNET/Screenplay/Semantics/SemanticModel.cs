@@ -64,7 +64,14 @@ public sealed record SemanticConcept(
     string Name,
     SemanticPrimitiveType Primitive,
     ImmutableArray<string> Values,
-    ImmutableArray<SemanticValidationRule> Validations);
+    ImmutableArray<SemanticValidationRule> Validations)
+{
+    /// <summary>
+    /// Gets the non-positional int32 member identities, parallel to <see cref="Values"/>.
+    /// Absence preserves legacy zero-based positional identity.
+    /// </summary>
+    public ImmutableArray<int>? Numbers { get; init; }
+}
 
 /// <summary>
 /// Represents a named composite value type.

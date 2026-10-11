@@ -5,12 +5,18 @@ import { completenessDiagnostics, parse } from '@cratis/screenplay-compiler';
 import { describe, it } from 'vitest';
 import { planCompletions } from '../completion-planner';
 import { hoverContent } from '../hover-content';
+import { keywordDocs } from '../keyword-docs';
 import { createTokensProvider } from '../tokens';
 import { validateLines } from '../validation';
 
 const lines = ['concept Status : Enum', '  draft = -1', '  @validate = 4'];
 
 describe('when authoring enum member numbers', () => {
+    it('should describe non-positional numbers as admitted by ESM v12', () => {
+        keywordDocs.Enum.should.contain('v12');
+        keywordDocs.Enum.should.not.contain('not admitted');
+        keywordDocs.Enum.should.contain('Specifications still name members');
+    });
     it('should complete an explicitly numbered member', () => {
         const plan = planCompletions([lines[0], '  '], 1, '  ');
         (plan.kind === 'entries' && plan.entries.some(entry => entry.insertText === '${1:value} = ${2:0}')).should.equal(true);

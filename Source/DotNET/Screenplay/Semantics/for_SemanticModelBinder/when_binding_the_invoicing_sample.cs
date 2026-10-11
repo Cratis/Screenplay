@@ -97,13 +97,11 @@ public class when_binding_the_invoicing_sample : given.a_semantic_binder
     }
 
     [Fact]
-    void should_refuse_the_living_samples_sparse_enum_numbers_without_claiming_a_version()
+    void should_admit_the_living_samples_sparse_enum_numbers()
     {
         var root = Directory.GetParent(DocumentationExamples.Root())!.FullName;
         var source = File.ReadAllText(Path.Combine(root, "Samples/Invoicing/invoicing.play"));
-        var diagnostic = Bind(source).Diagnostics.Single(diagnostic => diagnostic.Code == Unsupported && diagnostic.Message.Contains("Concept 'AgingBucket' explicit enum member numbers", StringComparison.Ordinal));
-        diagnostic.Message.ShouldContain("not admitted by any supported");
-        diagnostic.Message.ShouldContain("#643");
+        Bind(source).Diagnostics.Any(diagnostic => diagnostic.Code == Unsupported && diagnostic.Message.Contains("Concept 'AgingBucket' explicit enum member numbers", StringComparison.Ordinal)).ShouldBeFalse();
     }
 
     [Fact] void should_report_partial_design_fixtures_at_their_steps() => _incompleteSteps.ShouldNotBeEmpty();

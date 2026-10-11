@@ -121,12 +121,10 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 semanticVersion = SemanticVersion.V2;
             }
 
-            // Number lowering is pure. Select v11 from the retained graph with the validator's own
-            // value walk, after examples and routed fixtures have reached their final bound shape.
-            if (SemanticModelValidator.UsesExactNumberLiterals(application, semanticVersion))
+            if (SelectNumberVersions(application, semanticVersion) is { } numberVersions)
             {
-                languageVersion = LanguageVersion.V11;
-                semanticVersion = SemanticVersion.V11;
+                languageVersion = numberVersions.Language;
+                semanticVersion = numberVersions.Semantic;
                 application = BindingContext.PromoteV2Destinations(application);
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
@@ -170,6 +168,23 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             context.Error(DiagnosticCodes.InvalidSemanticBinding, exception.Message, syntax.Location);
             return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements };
         }
+    }
+
+    static (LanguageVersion Language, SemanticVersion Semantic)? SelectNumberVersions(SemanticApplication application, SemanticVersion semanticVersion)
+    {
+        if (SemanticModelValidator.UsesEnumMemberNumbers(application))
+        {
+            return (LanguageVersion.V12, SemanticVersion.V12);
+        }
+
+        // Number lowering is pure. Select v11 from the retained graph with the validator's own
+        // value walk, after examples and routed fixtures have reached their final bound shape.
+        if (!semanticVersion.IsAtLeast(SemanticVersion.V12) && SemanticModelValidator.UsesExactNumberLiterals(application, semanticVersion))
+        {
+            return (LanguageVersion.V11, SemanticVersion.V11);
+        }
+
+        return null;
     }
 
     sealed class IdentityAdmission(ApplicationSyntax application) : ScreenplaySyntaxWalker
