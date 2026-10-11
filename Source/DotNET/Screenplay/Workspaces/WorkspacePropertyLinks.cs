@@ -5,10 +5,11 @@ using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Indexing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
+using Cratis.Screenplay.Syntax.Projections;
 
 namespace Cratis.Screenplay.Workspaces;
 
-sealed record WorkspacePropertyLink(AuthoredReference Reference, AuthoredDeclaration[] Candidates, AuthoredDeclaration? OtherEnd)
+sealed record WorkspacePropertyLink(AuthoredReference Reference, AuthoredDeclaration[] Candidates, AuthoredDeclaration? OtherEnd, WorkspaceNodeHandle Occurrence)
 {
     internal string Resolution => new ReferenceEdge(Reference, Candidates).Resolution;
 }
@@ -77,17 +78,23 @@ internal sealed partial class WorkspacePropertyLinks
     internal IEnumerable<WorkspacePropertyLink> Incoming(AuthoredDeclaration property) => _links.Where(link => link.Candidates.Contains(property));
 
     internal IEnumerable<WorkspacePropertyLink> Outgoing(AuthoredDeclaration property) => _links.Where(link => link.OtherEnd == property)
-        .Concat(Incoming(property).Where(link => link.OtherEnd is not null && !HasCounterpart(property, link.OtherEnd))
+        .Concat(Incoming(property).Where(link => link.OtherEnd is not null && !HasCounterpart(property, link))
             .Select(link => link with { Candidates = [link.OtherEnd!], OtherEnd = property }));
 
     internal bool Complete(AuthoredDeclaration property) => Incoming(property).All(link => link.Resolution == "resolved");
+
+    static bool Connects(WorkspacePropertyLink link, AuthoredDeclaration property, AuthoredDeclaration? other) => link.OtherEnd == property && link.Candidates.Contains(other);
 
     static AuthoredDeclaration[] Current(IEnumerable<AuthoredDeclaration> declarations) => [.. declarations.Where(declaration => !Historical(declaration, declarations))];
 
     static bool Historical(AuthoredDeclaration declaration, IEnumerable<AuthoredDeclaration> declarations) => declaration.Syntax is EventSyntax @event &&
         declarations.Any(other => other.Kind == "Event" && other.Address == declaration.Address && ((EventSyntax)other.Syntax).Generation > @event.Generation);
 
-    bool HasCounterpart(AuthoredDeclaration property, AuthoredDeclaration other) => _links.Exists(link => link.OtherEnd == property && link.Candidates.Contains(other));
+    bool HasCounterpart(AuthoredDeclaration property, WorkspacePropertyLink occurrence) => _links.Exists(link =>
+        link.Occurrence == occurrence.Occurrence && Connects(link, property, occurrence.OtherEnd));
+
+    WorkspaceNodeHandle MappingOccurrence(WorkspaceSyntaxEntry use) => new[] { use }.Concat(Parents(use))
+        .FirstOrDefault(entry => entry.Node is PropertyMappingSyntax or MappingSyntax)?.Handle ?? use.Handle;
 
     void IndexOwners()
     {
@@ -151,7 +158,7 @@ internal sealed partial class WorkspacePropertyLinks
             IncompleteSourceOwner = property.Incomplete || role == "opaque",
             SourceConfidenceReasons = role == "unclassified" ? ["Property name occurs in referencing declaration text without a classified link."] : []
         };
-        _links.Add(new(reference, property.Candidates, property.Other));
+        _links.Add(new(reference, property.Candidates, property.Other, MappingOccurrence(use)));
     }
 
     sealed record PropertyReference(string Text, AuthoredDeclaration[] Candidates, AuthoredDeclaration? Other = null, bool Incomplete = false);

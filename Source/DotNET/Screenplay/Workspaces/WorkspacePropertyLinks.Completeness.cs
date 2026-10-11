@@ -4,6 +4,7 @@
 using Cratis.Screenplay.Indexing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
+using Cratis.Screenplay.Syntax.Projections;
 using Cratis.Screenplay.Syntax.Serialization;
 using Cratis.Screenplay.Syntax.Specifications;
 
@@ -11,12 +12,19 @@ namespace Cratis.Screenplay.Workspaces;
 
 internal sealed partial class WorkspacePropertyLinks
 {
+    static readonly HashSet<Type> _namedMemberDeclarations =
+    [
+        typeof(AuthenticationProviderSyntax), typeof(BehaviorSyntax), typeof(BehaviorParameterSyntax), typeof(BehaviorArgumentSyntax),
+        typeof(CaptureSourceSettingSyntax), typeof(ComponentExposedValueSyntax), typeof(ComponentOutletSyntax), typeof(DomainSyntax), typeof(EventStreamIdPartSyntax),
+        typeof(InteractionArgumentSyntax), typeof(ObjectMemberSyntax), typeof(PresentationValueSyntax), typeof(ProjectionVariantSyntax), typeof(PropertySyntax),
+        typeof(QueryParameterSyntax), typeof(ResponseFieldSyntax), typeof(ScreenComponentSyntax), typeof(ScreenNavigationParameterSyntax),
+        typeof(ScreenSectionSyntax), typeof(ScreenToolbarSyntax), typeof(SlotSyntax), typeof(TemplateExposedValueSyntax),
+        typeof(TemplateOutletSyntax), typeof(ToolbarItemSyntax)
+    ];
+
     static readonly Dictionary<Type, SyntaxMember[]> _textMembers = SyntaxKinds.All.ToDictionary(
         descriptor => descriptor.Type,
         descriptor => descriptor.Members.Where(member => member.Type == typeof(string) || member.ElementType == typeof(string)).ToArray());
-
-    static IEnumerable<string> AuthoredTexts(SyntaxNode node) => _textMembers[node.GetType()]
-        .SelectMany(member => TextValues(member.Property.GetValue(node)));
 
     static IEnumerable<string> TextValues(object? value) => value switch
     {
@@ -27,6 +35,20 @@ internal sealed partial class WorkspacePropertyLinks
 
     static bool NamesProperty(IEnumerable<string> texts, string name) => texts.SelectMany(WorkspaceOpaqueText.Identifiers).Contains(name, StringComparer.OrdinalIgnoreCase);
 
+    IEnumerable<string> AuthoredTexts(WorkspaceSyntaxEntry entry) => _textMembers[entry.Node.GetType()]
+        .Where(member => !DeclaresName(entry, member))
+        .SelectMany(member => TextValues(member.Property.GetValue(entry.Node)));
+
+    bool DeclaresName(WorkspaceSyntaxEntry entry, SyntaxMember member)
+    {
+        if (member.Property.Name == nameof(ReadsSyntax.Alias)) return entry.Node is ReadsSyntax or AuthenticationProviderSyntax;
+        if (member.Property.Name != nameof(PropertySyntax.Name)) return false;
+        if (entry.Node is ConstraintSyntax) return true;
+        if (entry.Node is TriggerDataSyntax && Owner(entry)?.Syntax is TriggerSyntax) return true;
+
+        return DeclarationOwner(entry) is not null || _namedMemberDeclarations.Contains(entry.Node.GetType());
+    }
+
     void IndexCompleteness()
     {
         foreach (var group in _entries.Where(entry => Owner(entry) is not null).GroupBy(entry => Owner(entry)!))
@@ -34,7 +56,7 @@ internal sealed partial class WorkspacePropertyLinks
             var properties = ReaderContext(group.Key).SelectMany(owner => _properties.GetValueOrDefault(owner) ?? []).Distinct().ToArray();
             foreach (var entry in group)
             {
-                IndexUnclassified(entry, properties, AuthoredTexts(entry.Node));
+                IndexUnclassified(entry, properties, AuthoredTexts(entry));
                 foreach (var comment in entry.Node.SourceComments)
                 {
                     var occurrence = entry with { Node = entry.Node with { Location = entry.Location with { Line = comment.Line } } };

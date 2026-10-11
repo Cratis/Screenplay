@@ -23,4 +23,6 @@ public class when_following_an_explicit_mapping : given.a_model
     [Fact] void should_connect_the_command_member() => _target.OtherEnd.Address.ShouldEqual("Projects.Registration.Register.Register.name");
     [Fact] void should_retain_the_mapping_owner() => _source.Reference.Owner.Address.ShouldEqual("Projects.Registration.Register.Register");
     [Fact] void should_retain_the_source_location() => _source.Reference.Location.Path.ShouldEqual("model.play");
+    [Fact] void should_not_treat_the_command_field_declaration_as_an_event_reader() => _links.Incoming(_links.Find("Projects.Registration.Register.Registered.name").Single()).Any(link => link.Reference.Role == "unclassified").ShouldBeFalse();
+    [Fact] void should_keep_the_event_property_complete() => _links.Complete(_links.Find("Projects.Registration.Register.Registered.name").Single()).ShouldBeTrue();
 }
