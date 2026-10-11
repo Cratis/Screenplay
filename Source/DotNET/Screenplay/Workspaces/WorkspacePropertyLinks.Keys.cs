@@ -26,6 +26,7 @@ internal sealed partial class WorkspacePropertyLinks
 
     void IndexTypedReader(WorkspaceSyntaxEntry entry)
     {
+        IndexNamedReader(entry);
         if (entry.Node is ReadsSyntax { By: { } by })
         {
             Add(entry, "key", new(by, SourceMembers(entry, by), Incomplete: true));
@@ -55,6 +56,13 @@ internal sealed partial class WorkspacePropertyLinks
 
     void IndexProjectionKeys(ProjectionBlockSyntax block, PropertyProjectionScope scope)
     {
+        var nested = block switch
+        {
+            ChildrenSyntax child => child.Property,
+            NestedSyntax value => value.Property,
+            _ => null
+        };
+        if (nested is not null) Add(ProjectionUse(scope, block), "mapping-target", new(nested, Members(scope.Models, scope.Nested ?? nested), Incomplete: true));
         switch (block)
         {
             case JoinSyntax join:
@@ -106,7 +114,7 @@ internal sealed partial class WorkspacePropertyLinks
         };
         var candidates = entry.Node is SourceItemExpressionSyntax item ? Members(events, item.Path) :
             [.. events.SelectMany(owner => _properties.GetValueOrDefault(owner) ?? [])
-                .Where(property => WorkspaceOpaqueText.Named(entry.Node, property.Name) is not null)];
+                .Where(property => NamesProperty(WorkspaceOpaqueText.Texts(entry.Node) ?? [], property.Name))];
         Add(entry, "key", new(text, candidates, Incomplete: true));
     }
 

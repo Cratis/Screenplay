@@ -26,12 +26,12 @@ public class when_a_capture_consumes_an_event_property : given.a_model
                 append Received
                   id = $.id
         """);
-    void Because() => _link = _links.Incoming(_links.Find("M.F.S.Arrived.id").Single()).Single();
+    void Because() => _link = _links.Incoming(_links.Find("M.F.S.Arrived.id").Single()).Single(link => link.Reference.Role == "mapping-source");
 
     [Fact] void should_record_the_source_item_reader() => _link.Reference.Name.ShouldEqual("$.id");
     [Fact] void should_resolve_the_current_event_member() => _link.Resolution.ShouldEqual("resolved");
     [Fact] void should_connect_the_appended_member() => _link.OtherEnd.Address.ShouldEqual("M.F.S.Received.id");
-    [Fact] void should_connect_the_reverse_mapping() => _links.Incoming(_links.Find("M.F.S.Received.id").Single()).Single().OtherEnd.Address.ShouldEqual("M.F.S.Arrived.id");
+    [Fact] void should_connect_the_reverse_mapping() => _links.Incoming(_links.Find("M.F.S.Received.id").Single()).Single(link => link.Reference.Role == "mapping-target").OtherEnd.Address.ShouldEqual("M.F.S.Arrived.id");
     [Fact] void should_not_link_the_historical_member() => _links.Incoming(_links.Find("M.F.S.Arrived.generation1.id").Single()).ShouldBeEmpty();
     [Fact] void should_retain_the_capture_owner() => _link.Reference.Owner.Address.ShouldEqual("M.F.S.Arrival");
     [Fact] void should_retain_the_location() => _link.Reference.Location.Path.ShouldEqual("model.play");

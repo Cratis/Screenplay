@@ -27,7 +27,7 @@ public class when_a_capture_has_multiple_event_sources : given.a_model
                 append Received
                   id = $.id
         """);
-    void Because() => _link = _links.Incoming(_links.Find("M.F.S.Arrived.id").Single()).Single();
+    void Because() => _link = _links.Incoming(_links.Find("M.F.S.Arrived.id").Single()).Single(link => link.Reference.Role == "mapping-source");
 
     [Fact] void should_keep_both_candidates() => _link.Candidates.Select(candidate => candidate.Address).ShouldEqual("M.F.S.Arrived.id", "M.F.S.Imported.id");
     [Fact] void should_report_ambiguity() => _link.Resolution.ShouldEqual("ambiguous");

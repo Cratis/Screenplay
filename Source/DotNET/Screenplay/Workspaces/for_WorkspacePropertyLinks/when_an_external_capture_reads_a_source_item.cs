@@ -21,7 +21,7 @@ public class when_an_external_capture_reads_a_source_item : given.a_model
                 append Received
                   id = $.id
         """);
-    void Because() => _link = _links.Incoming(_links.Find("M.F.S.Received.id").Single()).Single();
+    void Because() => _link = _links.Incoming(_links.Find("M.F.S.Received.id").Single()).Single(link => link.Reference.Role == "mapping-target");
 
     [Fact] void should_mark_the_target_incomplete() => _link.Resolution.ShouldEqual("incomplete");
     [Fact] void should_not_guess_a_source_property() => _link.OtherEnd.ShouldBeNull();

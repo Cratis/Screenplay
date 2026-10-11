@@ -12,6 +12,12 @@ internal sealed partial class WorkspacePropertyLinks
 {
     static bool ProductionStep(SyntaxNode node) => node is ProducesSyntax or CaptureAppendSyntax or InvokesSyntax;
 
+    static bool MappingStep(SyntaxNode node) => node switch
+    {
+        CommandStreamSyntax => true,
+        _ => ProductionStep(node) || FixtureStep(node)
+    };
+
     static bool FixtureStep(SyntaxNode node) => node is SpecificationExampleSyntax or SpecificationCommandSyntax or SpecificationEventSyntax or SpecificationReadModelSyntax or SpecificationQueryResultSyntax or SpecificationQuerySyntax or SpecificationWhenQuerySyntax;
 
     static bool IncompleteMapping(PropertyMappingSyntax mapping, AuthoredDeclaration[] targets, PropertySource[] sources) =>
@@ -28,8 +34,16 @@ internal sealed partial class WorkspacePropertyLinks
     {
         var ancestors = Parents(entry).ToArray();
         if (ancestors.Any(ancestor => ancestor.Node is SpecificationStreamSyntax or SpecificationCaseSyntax)) return;
-        var step = ancestors.FirstOrDefault(ancestor => ProductionStep(ancestor.Node) || FixtureStep(ancestor.Node));
+        var step = ancestors.FirstOrDefault(ancestor => MappingStep(ancestor.Node));
         if (step is null) return;
+        if (step.Node is CommandStreamSyntax)
+        {
+            foreach (var source in ExpressionSources(((PropertyMappingSyntax)entry.Node).Source, entry))
+            {
+                Add(source.Entry, "key", new(source.Path, source.Candidates, Incomplete: source.Incomplete || source.Candidates.Length != 1));
+            }
+            return;
+        }
         IndexMapping(entry, step);
     }
 

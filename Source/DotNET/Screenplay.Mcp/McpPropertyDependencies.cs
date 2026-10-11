@@ -8,7 +8,7 @@ namespace Cratis.Screenplay.Mcp;
 
 static class McpPropertyDependencies
 {
-    const string Coverage = "Authored command/current-event/read-model property links in explicit production, capture-append and projection mappings, case-insensitive AutoMap, declarative conditions, query filters, command read/query lookup/from/removal/parent keys and join on fields, screen/form bindings and specification/example values. Event-source captures resolve source-item paths against their declared input events. Inherited module/feature/command policy readers retain all caller candidates. Legacy command reads, nested paths, external source items and named opaque text are incomplete evidence, not executable or code resolution. Not projection-level keys or child identity expressions, command response/route sources, arbitrary expression identifiers, imports, profile settings, external registrations or external code contents.";
+    const string Coverage = "Authored command/current-event/read-model property links in explicit production, capture-append and projection mappings, case-insensitive AutoMap, declarative conditions, query filters, command read/query lookup/from/removal/parent keys and join on fields, screen/form bindings and specification/example values. Event-source captures resolve source-item paths against their declared input events. Inherited module/feature/command policy readers retain all caller candidates. Legacy command reads, nested paths, external source items and named opaque text are incomplete evidence, not executable or code resolution. Constraint keys, command stream-id sources and command response properties are classified. A completeness backstop scans whole-word, case-insensitive property names in the typed text and comments of declarations referencing the property owner (including query/example and effective policy contexts). Uncovered occurrences are unclassified incomplete evidence with owner, location and reason; quoted text is counted conservatively. Same names in unrelated declarations do not affect completeness. Not external code contents or external registrations.";
 
     internal static object Legacy(McpSnapshot snapshot, McpDeclaration target, JsonElement arguments)
     {
@@ -77,6 +77,7 @@ static class McpPropertyDependencies
         link.Reference.Location,
         link.Reference.Role,
         link.Reference.Owner,
+        reasons = link.Reference.SourceConfidenceReasons,
         otherEnd = link.OtherEnd is null ? null : Summary(link.OtherEnd)
     };
 

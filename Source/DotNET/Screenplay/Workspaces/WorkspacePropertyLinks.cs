@@ -41,6 +41,7 @@ internal sealed partial class WorkspacePropertyLinks
         IndexCaseValues();
         IndexProjections();
         IndexReaders();
+        IndexCompleteness();
     }
 
     internal IEnumerable<WorkspacePropertyLink> Links => _links;
@@ -75,7 +76,9 @@ internal sealed partial class WorkspacePropertyLinks
 
     internal IEnumerable<WorkspacePropertyLink> Incoming(AuthoredDeclaration property) => _links.Where(link => link.Candidates.Contains(property));
 
-    internal IEnumerable<WorkspacePropertyLink> Outgoing(AuthoredDeclaration property) => _links.Where(link => link.OtherEnd == property);
+    internal IEnumerable<WorkspacePropertyLink> Outgoing(AuthoredDeclaration property) => _links.Where(link => link.OtherEnd == property)
+        .Concat(Incoming(property).Where(link => link.OtherEnd is not null && !HasCounterpart(property, link.OtherEnd))
+            .Select(link => link with { Candidates = [link.OtherEnd!], OtherEnd = property }));
 
     internal bool Complete(AuthoredDeclaration property) => Incoming(property).All(link => link.Resolution == "resolved");
 
@@ -83,6 +86,8 @@ internal sealed partial class WorkspacePropertyLinks
 
     static bool Historical(AuthoredDeclaration declaration, IEnumerable<AuthoredDeclaration> declarations) => declaration.Syntax is EventSyntax @event &&
         declarations.Any(other => other.Kind == "Event" && other.Address == declaration.Address && ((EventSyntax)other.Syntax).Generation > @event.Generation);
+
+    bool HasCounterpart(AuthoredDeclaration property, AuthoredDeclaration other) => _links.Exists(link => link.OtherEnd == property && link.Candidates.Contains(other));
 
     void IndexOwners()
     {
@@ -143,7 +148,8 @@ internal sealed partial class WorkspacePropertyLinks
         var reference = new AuthoredReference(property.Text, ["Property"], owner?.Scope ?? [], use.Location, role, owner?.Owner)
         {
             AmbiguousSourceOwner = property.Candidates.Length > 1,
-            IncompleteSourceOwner = property.Incomplete || role == "opaque"
+            IncompleteSourceOwner = property.Incomplete || role == "opaque",
+            SourceConfidenceReasons = role == "unclassified" ? ["Property name occurs in referencing declaration text without a classified link."] : []
         };
         _links.Add(new(reference, property.Candidates, property.Other));
     }

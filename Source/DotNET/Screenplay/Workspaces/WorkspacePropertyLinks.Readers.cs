@@ -84,13 +84,12 @@ internal sealed partial class WorkspacePropertyLinks
 
     void IndexOpaque(WorkspaceSyntaxEntry entry)
     {
-        if (entry.Node is not (CodeBlockSyntax or RawExpressionSyntax or FileReferenceSyntax or FormFieldSyntax { ComposeUsing: not null })) return;
+        if (WorkspaceOpaqueText.Texts(entry.Node) is not { } texts) return;
         var owner = Owner(entry);
         if (owner is null) return;
-        var callers = owner.Syntax is PolicySyntax ? PolicyCallers(owner) : [];
-        var context = Current(new[] { owner }.Concat(callers).Concat(_index.Outgoing(owner.Owner).SelectMany(_index.Resolve))).ToArray();
+        var context = ReaderContext(owner);
         var properties = context.SelectMany(declaration => _properties.GetValueOrDefault(declaration) ?? []).Distinct().ToArray();
-        foreach (var group in properties.Where(property => WorkspaceOpaqueText.Named(entry.Node, property.Name) is not null).GroupBy(property => property.Name))
+        foreach (var group in properties.Where(property => NamesProperty(texts, property.Name)).GroupBy(property => property.Name))
         {
             Add(entry, "opaque", new(group.Key, [.. group]));
         }
