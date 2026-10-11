@@ -3,7 +3,7 @@
 
 import 'chai/register-should';
 import { beforeEach, describe, it, vi } from 'vitest';
-import { EventModelBoard } from '@cratis/event-models';
+import { BoardViewMenu, EventModelBoard } from '@cratis/event-models';
 import { ToolbarButton } from '@cratis/components/Toolbar';
 import { DependencyMapView } from '@cratis/screenplay-views';
 import { dependencyMapFor } from '@cratis/screenplay-event-models';
@@ -12,7 +12,7 @@ import { BoardApp } from '../BoardApp';
 import { hooks, invoke } from '../../../Views/for_DependencyMapView/given/component_hooks';
 
 vi.mock('react', async importOriginal => ({ ...await importOriginal<typeof import('react')>(), ...(await import('../../../Views/for_DependencyMapView/given/component_hooks')).componentHooks }));
-vi.mock('@cratis/event-models', () => ({ EventModelBoard: () => null, EventModelPresentationProvider: () => null, MenuDropdownOpenProvider: () => null, readEventModelDocument: (document: unknown) => { if (document === 'unreadable') throw new Error('Invalid document'); return document; } }));
+vi.mock('@cratis/event-models', () => ({ BoardToolbarFrame: () => null, BoardViewMenu: () => null, EventModelBoard: () => null, EventModelPresentationProvider: () => null, MenuDropdownOpenProvider: () => null, readEventModelDocument: (document: unknown) => { if (document === 'unreadable') throw new Error('Invalid document'); return document; } }));
 vi.mock('@cratis/components/Toolbar', () => ({ ToolbarButton: () => null }));
 vi.mock('../boardChrome', () => ({ boardChrome: {} }));
 vi.mock('../usePresentation', () => ({ usePresentation: () => [{}, vi.fn()], defaultPresentation: {} }));
@@ -37,5 +37,17 @@ describe('when the board document cannot be read', () => {
         render().some(element => element.type === ToolbarButton && element.props.text === 'Map').should.be.true;
         invoke(mapButton(), 'onClick');
         render().filter(element => element.type === DependencyMapView).length.should.equal(1);
+    });
+});
+
+describe('when the dependency map is visible', () => {
+    beforeEach(() => invoke(mapButton(), 'onClick'));
+
+    it('should offer the map\'s own settings under the view menu', () => {
+        const items = (render().find(element => element.type === BoardViewMenu)!.props.items as { id: string }[]).map(item => item.id);
+        items.should.include('level-module').and.include('kind-reactsTo');
+    });
+    it('should hand the chosen settings to the map instead of letting it draw its own controls', () => {
+        (render().find(element => element.type === DependencyMapView)!.props.options !== undefined).should.be.true;
     });
 });

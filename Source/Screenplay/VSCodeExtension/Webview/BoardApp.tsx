@@ -2,9 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { EventModelBoard, EventModelPresentationProvider, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
+import { BoardToolbarFrame, BoardViewMenu, EventModelBoard, EventModelPresentationProvider, MenuDropdownOpenProvider, readEventModelDocument } from '@cratis/event-models';
 import { ToolbarButton } from '@cratis/components/Toolbar';
-import { DependencyMapView, DependencyView } from '@cratis/screenplay-views';
+import { defaultDependencyMapOptions, dependencyMapMenuItems, DependencyMapView, DependencyView } from '@cratis/screenplay-views';
 import type { DependencyMap } from '@cratis/screenplay-event-models';
 import '@cratis/screenplay-views/dependency-map.css';
 import { boardChrome } from './boardChrome';
@@ -25,6 +25,7 @@ interface Board {
 export const BoardApp = () => {
     const [board, setBoard] = useState<Board | undefined>();
     const [view, setView] = useState(DependencyView.Board);
+    const [mapOptions, setMapOptions] = useState(defaultDependencyMapOptions);
     const [presentation, changePresentation] = usePresentation();
     const boardHost = useRef<HTMLDivElement>(null);
     const focusAfterSwitch = useRef(false);
@@ -82,7 +83,7 @@ export const BoardApp = () => {
             <div className='screenplay-board__canvas'>
                 <div className={`screenplay-board-view${view !== DependencyView.Board ? ' is-hidden' : ''}`} aria-hidden={view !== DependencyView.Board} inert={view !== DependencyView.Board}>
                     {model instanceof Error ? <>
-                        <div className='screenplay-dependency-map-toolbar' role='toolbar' aria-label='Board view'>{tools}</div>
+                        <BoardToolbarFrame showLogo chrome={boardChrome} label='Board view'>{tools}</BoardToolbarFrame>
                         <div className='screenplay-board__message'>The board could not read this model: {model.message}</div>
                     </> : (
                         <MenuDropdownOpenProvider>
@@ -95,8 +96,11 @@ export const BoardApp = () => {
                     )}
                 </div>
                 <div className='screenplay-dependency-map-host' hidden={view !== DependencyView.Map} style={{ display: view !== DependencyView.Map ? 'none' : undefined }}>
-                    <div className='screenplay-dependency-map-toolbar' role='toolbar' aria-label='Board view'>{tools}</div>
-                    <DependencyMapView map={board.dependencies} onShowSource={showSource} />
+                    <BoardToolbarFrame showLogo chrome={boardChrome} label='Board view'>
+                        {tools}
+                        <BoardViewMenu items={dependencyMapMenuItems(mapOptions, setMapOptions)} />
+                    </BoardToolbarFrame>
+                    <DependencyMapView map={board.dependencies} options={mapOptions} onShowSource={showSource} />
                 </div>
             </div>
         </div>
