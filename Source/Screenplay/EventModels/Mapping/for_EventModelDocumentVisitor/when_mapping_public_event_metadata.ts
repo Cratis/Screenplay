@@ -2,7 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { describe, it } from 'vitest';
-import { EventVisibility, parse, TranslationDirection } from '@cratis/screenplay-compiler';
+import { parse, TranslationDirection } from '@cratis/screenplay-compiler';
+import { EventItemVisibility } from '../../Document/EventModelDocument';
 import { toEventModelDocument } from '../EventModelDocumentVisitor';
 import { slice_named } from './given/the_constructs_document';
 
@@ -11,7 +12,7 @@ describe('when mapping public event metadata', () => {
         const application = parse('module M\n  feature F\n    slice Translate Publish\n      direction outbound\n      public event Published\n        number String\n      event Imported from "billing/Issued.play"\n        number String').value;
         const slice = slice_named(toEventModelDocument(application, 'Contracts'), 'Publish');
         slice.direction!.should.equal(TranslationDirection.Outbound);
-        slice.events[0].visibility!.should.equal(EventVisibility.Public);
+        slice.events[0].visibility!.should.equal(EventItemVisibility.public);
         slice.events[1].origin!.should.equal('billing/Issued.play');
         (slice.automationTrigger === undefined).should.be.true;
     });

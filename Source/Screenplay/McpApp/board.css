@@ -23,6 +23,12 @@ body {
     padding: 1rem;
 }
 
+/* A failure message sits under the logo and toolbar frame, not behind it. */
+.screenplay-board-view .screenplay-mcp-board__message,
+.screenplay-mcp-board__failure {
+    padding-top: calc(var(--event-model-board-chrome-height, 4.75rem) + 1rem);
+}
+
 /* The pinned board truncates specification titles. These titles also carry explicit route
    statements, so wrap the full header rather than hiding assertions behind an ellipsis. */
 .screenplay-board-view .event-modeling-grid-specification-header {

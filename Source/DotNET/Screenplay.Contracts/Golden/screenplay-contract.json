@@ -74,6 +74,7 @@
     "denied",
     "depends",
     "description",
+    "destination",
     "dialog",
     "direction",
     "display",
@@ -101,6 +102,7 @@
     "exposes",
     "exposure",
     "expression",
+    "external",
     "fails",
     "failure",
     "false",
@@ -123,6 +125,7 @@
     "given",
     "global",
     "grid",
+    "group",
     "grow",
     "handler",
     "header",
@@ -15400,6 +15403,39 @@
         "warning"
       ],
       "title": "A concept header repeats a compliance marker with the same wire identity.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0654",
+      "name": "UnknownNavigationDestination",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A navigation contribution\u0027s destination outlet or destination dialog names an outlet or dialog template nothing declares.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0655",
+      "name": "UnknownScreenContributionPoint",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A screen\u0027s contribute to \u003CPoint\u003E names a contribution point no layout or template slot declares.",
+      "reserved": false,
+      "retired": false
+    },
+    {
+      "code": "PLAY0656",
+      "name": "TemplateNestingCycle",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "Template content nests templates in a cycle - a template\u0027s content uses itself, directly or through other templates.",
       "reserved": false,
       "retired": false
     },

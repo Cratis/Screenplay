@@ -28,6 +28,7 @@ static class CompositionDefaults
         [typeof(ApplicationSyntax)] = new(StringComparer.Ordinal) { ["exposures"] = Default.Empty, ["instanceContributions"] = Default.Empty },
         [typeof(ScreenSyntax)] = new(StringComparer.Ordinal) { ["contributions"] = Default.Empty },
         [typeof(ScreenNavigateSyntax)] = new(StringComparer.Ordinal) { ["outlet"] = Default.Null },
+        [typeof(ContributionSyntax)] = new(StringComparer.Ordinal) { ["id"] = Default.Null, ["icon"] = Default.Null, ["presentation"] = Default.Null, ["group"] = Default.Null, ["destination"] = Default.Null },
         [typeof(LayoutSyntax)] = new(StringComparer.Ordinal) { ["restrictsScopes"] = Default.False, ["scopes"] = Default.Empty },
         [typeof(ScreenTemplateSyntax)] = _templateMembers,
         [typeof(DialogTemplateSyntax)] = _templateMembers,

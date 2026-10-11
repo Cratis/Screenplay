@@ -6,6 +6,27 @@ using Cratis.Screenplay.Diagnostics;
 namespace Cratis.Screenplay.Syntax;
 
 /// <summary>
+/// Defines where a navigation item opens. Mirrors Scene's <c>DestinationKind</c>.
+/// </summary>
+public enum ContributionDestinationKind
+{
+    /// <summary>
+    /// The item opens in a named outlet.
+    /// </summary>
+    Outlet = 0,
+
+    /// <summary>
+    /// The item opens a dialog.
+    /// </summary>
+    Dialog = 1,
+
+    /// <summary>
+    /// The item opens an external route.
+    /// </summary>
+    External = 2
+}
+
+/// <summary>
 /// Represents a <c>contribute to &lt;ContributionPoint&gt;</c> declaration - one item contributed into a
 /// named contribution point a <c>layout</c> template's slot accepts.
 /// </summary>
@@ -25,4 +46,38 @@ public record ContributionSyntax(
     ScreenNavigateSyntax? Navigate,
     string? Label,
     int? Order,
-    SourceLocation Location) : SyntaxNode(Location);
+    SourceLocation Location) : SyntaxNode(Location)
+{
+    /// <summary>
+    /// Gets the exact stable id of the navigation item, or <c>null</c>. Maps to Scene's <c>NavigationItem.Id</c>.
+    /// </summary>
+    public string? Id { get; init; }
+
+    /// <summary>
+    /// Gets the icon name, or <c>null</c>. Maps to Scene's <c>NavigationItem.Icon</c>.
+    /// </summary>
+    public string? Icon { get; init; }
+
+    /// <summary>
+    /// Gets the presentation hint, or <c>null</c>. Maps to Scene's <c>NavigationItem.Presentation</c>.
+    /// </summary>
+    public string? Presentation { get; init; }
+
+    /// <summary>
+    /// Gets the group the item belongs to, or <c>null</c>. Maps to Scene's <c>NavigationItem.Group</c>.
+    /// </summary>
+    public string? Group { get; init; }
+
+    /// <summary>
+    /// Gets where the item opens, or <c>null</c> for the default outlet. Maps to Scene's <c>NavigationItem.Destination</c>.
+    /// </summary>
+    public ContributionDestinationSyntax? Destination { get; init; }
+}
+
+/// <summary>
+/// Represents a <c>destination outlet|dialog|external &lt;target&gt;</c> line in a contribution.
+/// </summary>
+/// <param name="Kind">The <see cref="ContributionDestinationKind"/>.</param>
+/// <param name="Target">The outlet name, dialog name, or external route.</param>
+/// <param name="Location">The <see cref="SourceLocation"/> where the node starts in the source text.</param>
+public record ContributionDestinationSyntax(ContributionDestinationKind Kind, string Target, SourceLocation Location) : SyntaxNode(Location);

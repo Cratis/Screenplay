@@ -11,6 +11,7 @@
 #   SCREENPLAY_EXPECTED_CLI_VERSION  fail the run unless `cratis --version` matches (for example 3.40.5)
 #   SCREENPLAY_EXPECTED_STAGE_TAG    fail the run unless the started Stage image has this tag (for example 4.49.9)
 #   SCREENPLAY_STAGE_TAG             pin a Stage image instead of the CLI default
+#   SCREENPLAY_CORPUS_PACKAGE_VERSION  read the corpus from this published Cratis.Screenplay.CanonicalCorpus version
 #   SCREENPLAY_PLAYWRIGHT_NODE_PATH  NODE_PATH that resolves `playwright` (defaults to NODE_PATH)
 #   SCREENPLAY_AI_VERIFICATION       Cratis/AI Source/Verification folder for the MCP stdio transcript
 #   SCREENPLAY_STUDIO_URL            deployed Studio URL for the production save/export/import/Play harness
@@ -51,6 +52,24 @@ for self_tested in screen-composition-browser-native-controls.cjs screen-composi
     fi
 done
 
+# Read the corpus from the published package rather than this repository (Screenplay#173.10).
+corpus_version="${SCREENPLAY_CORPUS_PACKAGE_VERSION:-}"
+if [[ -n "$corpus_version" ]]; then
+    corpus_folder="$(mktemp -d)/ScreenComposition"
+    if ! corpus_line="$(dotnet run --project "${harness}/PublishedCorpus" -p:CorpusPackageVersion="$corpus_version" -- "$corpus_folder" | tail -1)"; then
+        echo "run-public-acceptance: could not materialize Cratis.Screenplay.CanonicalCorpus ${corpus_version}" >&2
+        exit 2
+    fi
+    if [[ "$corpus_line" != *"CanonicalCorpus ${corpus_version}"* ]]; then
+        echo "run-public-acceptance: expected corpus ${corpus_version}, got: ${corpus_line}" >&2
+        exit 2
+    fi
+    export SCREENPLAY_CORPUS_SOURCE="$corpus_folder"
+    echo "run-public-acceptance: corpus from the published package: ${corpus_line}"
+else
+    echo "run-public-acceptance: corpus from this repository (set SCREENPLAY_CORPUS_PACKAGE_VERSION to read the published package)"
+fi
+
 port="${SCREENPLAY_ACCEPTANCE_PORT:-19180}"
 workbench_port=$((port + 16000))
 results=".ai-work/acceptance/cli-${cli_version}-$(date -u +%Y%m%dT%H%M%SZ)"
@@ -84,7 +103,7 @@ run_step render-audit env \
 if [[ -n "${SCREENPLAY_AI_VERIFICATION:-}" ]]; then
     run_step mcp bash -c "cd \"\$1\" && yarn tsx screenplay-mcp-transcript.ts --corpus \"\$2\" --scratch \"\$3\"" _ \
         "$SCREENPLAY_AI_VERIFICATION" \
-        "${root}/Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ScreenComposition/v1/source/folder" \
+        "${SCREENPLAY_CORPUS_SOURCE:-${root}/Source/DotNET/Screenplay.CanonicalCorpus/Corpus/ScreenComposition/v1/source/folder}" \
         "${root}/${results}/mcp-scratch"
 else
     echo "  mcp: not run (set SCREENPLAY_AI_VERIFICATION to the Cratis/AI Source/Verification folder)"

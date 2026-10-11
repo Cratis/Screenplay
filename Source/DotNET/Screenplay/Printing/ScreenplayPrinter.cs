@@ -567,7 +567,13 @@ public sealed partial class ScreenplayPrinter :
             if (contribution.Navigate is not null)
             {
                 writer.Line(WriteScreenNavigate(contribution.Navigate), contribution.Navigate);
+                using (writer.Indent())
+                {
+                    WriteScreenNavigateBody(writer, contribution.Navigate);
+                }
             }
+
+            WriteNavigationItem(writer, contribution);
 
             if (contribution.Label is not null)
             {

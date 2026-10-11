@@ -1,7 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { EventVisibility, TranslationDirection } from '@cratis/screenplay-compiler';
+import { TranslationDirection } from '@cratis/screenplay-compiler';
 
 // The JSON document the event model board reads (@cratis/event-models' event-model-document.schema.json).
 // It is plain data - string ids, numeric enumerations, JSON Schema objects - so it can cross into a webview
@@ -15,6 +15,7 @@ export const AutomationTriggerType = { timer: 0, event: 1, custom: 2, none: 3 } 
 export const ActorType = { uiRole: 0, systemRole: 1 } as const;
 export const PrototypeLayout = { absolute: 0 } as const;
 export const PrototypeVisibility = { visible: 0 } as const;
+export const EventItemVisibility = { private: 0, public: 1 } as const;
 export const PrototypeAnchoring = { none: 0 } as const;
 export const QueryParameterType = { text: 0, number: 1, boolean: 2, date: 3, time: 4, uniqueId: 5 } as const;
 
@@ -120,7 +121,7 @@ export interface EventConstraintDocument {
 }
 
 export interface EventItemDocument {
-    visibility?: EventVisibility;
+    visibility?: number;
     origin?: string;
     id: string;
     name: string;
