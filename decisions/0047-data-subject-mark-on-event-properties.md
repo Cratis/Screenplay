@@ -29,6 +29,8 @@ applies-to:
   - Samples/**
 ---
 
+> **2026-10-12 — phase 2 split (proposed).** [0068](0068-admit-concept-compliance-markers-as-esm-v13.md) proposes splitting phase 2 into **2a**, admitting concept compliance (`pii`, `secret`) as ESM v13 with the event source as the data subject, and **2b**, subject lineage in a later version after [Cratis/Chronicle#4661](https://github.com/Cratis/Chronicle/issues/4661). Until 2b, v13 would refuse a personal value in an event that also carries an explicit `subject` mark. The record below is unchanged.
+
 <!-- Copyright (c) Cratis. All rights reserved. -->
 <!-- Licensed under the MIT license. See LICENSE file in the project root for full license information. -->
 
