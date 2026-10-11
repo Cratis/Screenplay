@@ -9,7 +9,7 @@ using Cratis.Screenplay.Semantics.Execution;
 
 namespace Cratis.Screenplay.CanonicalVectors.Specs.for_NumberLiteralsCorpus;
 
-public class when_loading_v10_source : Specification
+public class when_loading_v11_source : Specification
 {
     SemanticCompilation[] _forms;
 
@@ -18,20 +18,20 @@ public class when_loading_v10_source : Specification
         _forms = [.. NumberLiteralsCorpus.SourceForms.Select(Compile)];
         if (Environment.GetEnvironmentVariable("SCREENPLAY_REGENERATE_NUMBER_LITERALS_CORPUS") == "1")
         {
-            var expected = Path.Combine(Root(), "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/NumberLiterals/v10/expected");
+            var expected = Path.Combine(Root(), "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/NumberLiterals/v11/expected");
             Directory.CreateDirectory(expected);
-            File.WriteAllBytes(Path.Combine(expected, "esm-v10.json"), SemanticModelSerializer.Serialize(_forms[0].Model));
+            File.WriteAllBytes(Path.Combine(expected, "esm-v11.json"), SemanticModelSerializer.Serialize(_forms[0].Model));
             File.WriteAllText(Path.Combine(expected, "semantic-revision.txt"), $"{_forms[0].Model.Revision}\n");
             Assert.Fail("Number literals corpus regenerated; review, rebuild and rerun without SCREENPLAY_REGENERATE_NUMBER_LITERALS_CORPUS.");
         }
     }
 
-    [Fact] void should_select_v10_for_exact_literal_lowering() => _forms.All(form => form.Model.LanguageVersion == LanguageVersion.V10 && form.Model.SemanticVersion == SemanticVersion.V10).ShouldBeTrue();
+    [Fact] void should_select_v11_for_exact_literal_lowering() => _forms.All(form => form.Model.LanguageVersion == LanguageVersion.V11 && form.Model.SemanticVersion == SemanticVersion.V11).ShouldBeTrue();
 
     [Fact]
     void should_pin_bytes_revision_and_strict_round_trip()
     {
-        var vector = NumberLiteralsCorpus.ExactLiteralsV10;
+        var vector = NumberLiteralsCorpus.ExactLiteralsV11;
         foreach (var form in _forms)
         {
             form.Model.Revision.ShouldEqual(vector.SemanticRevision);
@@ -46,7 +46,7 @@ public class when_loading_v10_source : Specification
         foreach (var form in _forms)
         {
             var plan = SemanticExecutionPlan.Compile(form.Model).Plan!;
-            foreach (var expectation in NumberLiteralsCorpus.ExactLiteralsV10.SpecificationExpectations)
+            foreach (var expectation in NumberLiteralsCorpus.ExactLiteralsV11.SpecificationExpectations)
             {
                 plan.Specifications[expectation.Specification].Name.ShouldEqual(expectation.Name);
                 var run = new SemanticSpecificationRunner().Run(plan, expectation.Specification);

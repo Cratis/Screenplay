@@ -9,7 +9,7 @@ public class with_a_fraction_formatted_with_an_exponent : given.a_validated_comm
 
     [Fact] void should_bind() => _result.Success.ShouldBeTrue();
     [Fact] void should_have_no_diagnostics() => _result.Diagnostics.ShouldBeEmpty();
-    [Fact] void should_select_language_v10() => _result.Value!.Model.LanguageVersion.ShouldEqual(LanguageVersion.V10);
-    [Fact] void should_select_semantic_v10() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V10);
+    [Fact] void should_select_language_v11() => _result.Value!.Model.LanguageVersion.ShouldEqual(LanguageVersion.V11);
+    [Fact] void should_select_semantic_v11() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V11);
     [Fact] void should_keep_the_shortest_round_tripping_decimal() => Rule.Operand.ShouldEqual(SemanticValue.Number(0.0000001234567890123456m));
 }

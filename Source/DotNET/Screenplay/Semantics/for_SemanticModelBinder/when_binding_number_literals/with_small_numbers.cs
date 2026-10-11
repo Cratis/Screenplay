@@ -9,8 +9,8 @@ public class with_small_numbers : given.a_validated_command
 
     [Fact] void should_bind() => _result.Success.ShouldBeTrue();
     [Fact] void should_have_no_diagnostics() => _result.Diagnostics.ShouldBeEmpty();
-    [Fact] void should_select_language_v10() => _result.Value!.Model.LanguageVersion.ShouldEqual(LanguageVersion.V10);
-    [Fact] void should_select_semantic_v10() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V10);
+    [Fact] void should_select_language_v11() => _result.Value!.Model.LanguageVersion.ShouldEqual(LanguageVersion.V11);
+    [Fact] void should_select_semantic_v11() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V11);
     [Fact] void should_keep_a_small_positive_integer() => Command.Validations[0].Operand.ShouldEqual(SemanticValue.Number(42));
     [Fact] void should_keep_a_small_negative_integer() => Command.Validations[1].Operand.ShouldEqual(SemanticValue.Number(-42));
     [Fact] void should_keep_a_positive_fraction() => Command.Validations[2].Operand.ShouldEqual(SemanticValue.Number(0.5m));

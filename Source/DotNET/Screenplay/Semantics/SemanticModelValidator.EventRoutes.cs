@@ -10,7 +10,13 @@ internal static partial class SemanticModelValidator
     static void ValidateEventRoutesVersion(SemanticApplication application, SemanticVersion version)
     {
         var uses = SemanticEventRouting.Uses(application);
-        if (UsesProductionRoutesOrObserverFilters(application) && !version.IsAtLeast(SemanticVersion.V10)) throw new InvalidSemanticContract("Production routes and observer filters require ESM v10.");
+        var usesV10 = application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices).Any(slice =>
+            slice.Commands.Any(command => command.Produces.Any(produced => produced.Route is not null)) ||
+            slice.Reactions.Any(reaction => reaction.From is not null) || slice.Reducers.Any(reducer => reducer.From is not null));
+        if (usesV10 && !version.IsAtLeast(SemanticVersion.V10)) throw new InvalidSemanticContract("Production routes and observer filters require ESM v10.");
+        var usesReactionIdentity = application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices)
+            .Any(slice => slice.Reactions.Any(reaction => reaction.RunsAs is not null));
+        if (!usesV10 && !usesReactionIdentity && version == SemanticVersion.V10) throw new InvalidSemanticContract("An ESM v10 model must use a reaction system identity, production route or observer filter.");
         if (version == SemanticVersion.V8 && !uses)
         {
             throw new InvalidSemanticContract("An event routes model must declare an event source, command route or specification route.");
@@ -19,19 +25,6 @@ internal static partial class SemanticModelValidator
         {
             throw new InvalidSemanticContract("Event sources and routes require ESM v8.");
         }
-    }
-
-    static bool UsesProductionRoutesOrObserverFilters(SemanticApplication application) =>
-        application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices).Any(slice =>
-            slice.Commands.Any(command => command.Produces.Any(produced => produced.Route is not null)) ||
-            slice.Reactions.Any(reaction => reaction.From is not null) || slice.Reducers.Any(reducer => reducer.From is not null));
-
-    static void ValidateV10Use(SemanticApplication application, SemanticVersion version, bool usesExactNumberLiterals)
-    {
-        if (version != SemanticVersion.V10 || usesExactNumberLiterals || UsesProductionRoutesOrObserverFilters(application)) return;
-        var usesReactionIdentity = application.Modules.SelectMany(module => module.Features).SelectMany(AllSlices)
-            .Any(slice => slice.Reactions.Any(reaction => reaction.RunsAs is not null));
-        if (!usesReactionIdentity) throw new InvalidSemanticContract("An ESM v10 model must use a reaction system identity, production route, observer filter or exact Double-mode number literal lowering.");
     }
 
     private sealed partial class ValidationContext

@@ -121,12 +121,12 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 semanticVersion = SemanticVersion.V2;
             }
 
-            // Number lowering is pure. Select v10 from the retained graph with the validator's own
+            // Number lowering is pure. Select v11 from the retained graph with the validator's own
             // value walk, after examples and routed fixtures have reached their final bound shape.
-            if (semanticVersion != SemanticVersion.V10 && SemanticModelValidator.UsesExactNumberLiterals(application, semanticVersion))
+            if (SemanticModelValidator.UsesExactNumberLiterals(application, semanticVersion))
             {
-                languageVersion = LanguageVersion.V10;
-                semanticVersion = SemanticVersion.V10;
+                languageVersion = LanguageVersion.V11;
+                semanticVersion = SemanticVersion.V11;
                 application = BindingContext.PromoteV2Destinations(application);
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }

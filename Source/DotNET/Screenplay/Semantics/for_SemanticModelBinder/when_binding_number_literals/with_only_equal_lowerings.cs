@@ -13,5 +13,5 @@ public class with_only_equal_lowerings : given.a_validated_command
     [Fact] void should_keep_semantic_v1() => _result.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V1);
     [Fact] void should_keep_the_fraction() => Command.Validations[0].Operand.ShouldEqual(SemanticValue.Number(0.5m));
     [Fact] void should_keep_the_integer() => Command.Validations[1].Operand.ShouldEqual(SemanticValue.Number(42));
-    [Fact] void should_not_admit_v10_without_a_selecting_construct() => Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V10, SemanticVersion.V10, _result.Value!.Model.Application)).ShouldBeOfExactType<InvalidSemanticContract>();
+    [Fact] void should_not_admit_v11_without_a_selecting_construct() => Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V11, SemanticVersion.V11, _result.Value!.Model.Application)).ShouldBeOfExactType<InvalidSemanticContract>();
 }

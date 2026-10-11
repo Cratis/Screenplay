@@ -14,7 +14,7 @@ namespace Cratis.Screenplay.CanonicalCorpus;
 /// </summary>
 public static class NumberLiteralsCorpus
 {
-    const string Prefix = "Cratis.Screenplay.CanonicalCorpus.Corpus.NumberLiterals.v10";
+    const string Prefix = "Cratis.Screenplay.CanonicalCorpus.Corpus.NumberLiterals.v11";
 
     /// <summary>
     /// Gets equivalent single-file, folder, reordered and relocated source forms.
@@ -40,17 +40,17 @@ public static class NumberLiteralsCorpus
     }
 
     /// <summary>
-    /// Gets the ESM v10 vector for exact integer and shortest round-tripping fractional literals.
+    /// Gets the ESM v11 vector for exact integer and shortest round-tripping fractional literals.
     /// </summary>
-    public static CanonicalCorpusVector ExactLiteralsV10 => new()
+    public static CanonicalCorpusVector ExactLiteralsV11 => new()
     {
-        Name = "number-literals/v10",
+        Name = "number-literals/v11",
         ApplicationName = "NumberLiterals",
         ApplicationIdentity = ApplicationIdentity.Create("NumberLiterals"),
         RuntimeStreamId = "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         SourceForms = SourceForms,
         SpecificationExpectations = Expectations(),
-        EsmBytes = Resource("expected.esm-v10.json"),
+        EsmBytes = Resource("expected.esm-v11.json"),
         SemanticRevision = SemanticRevision.Parse(Encoding.UTF8.GetString(Resource("expected.semantic-revision.txt").AsSpan()).Trim())
     };
 

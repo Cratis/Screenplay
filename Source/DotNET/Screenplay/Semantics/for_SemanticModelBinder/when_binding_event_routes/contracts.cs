@@ -10,12 +10,12 @@ public class contracts : given.a_semantic_binder
     const string Source = "concept Key : Int\neventsource Account\n  identifier String\n  stream Ledger\n    streamId Key\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        id String identifier\n        key Key\n        payload Decimal\n        stream Account.Ledger\n          streamId = key\n        produces event E\n          value Decimal = payload\n      specification History\n        when C\n          id = \"other\"\n          key = 9007199254740991\n          payload = 9007199254740991\n        then E\n          stream Account.Ledger\n            streamId = 9007199254740991\n          value = 9007199254740991\n";
 
     [Fact]
-    void should_lower_route_inputs_and_v10_payload_literals_losslessly()
+    void should_lower_route_inputs_and_v11_payload_literals_losslessly()
     {
         var result = Bind(Source);
         Assert.True(result.Success, string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
-        result.Value!.Model.LanguageVersion.ShouldEqual(LanguageVersion.V10);
-        result.Value.Model.SemanticVersion.ShouldEqual(SemanticVersion.V10);
+        result.Value!.Model.LanguageVersion.ShouldEqual(LanguageVersion.V11);
+        result.Value.Model.SemanticVersion.ShouldEqual(SemanticVersion.V11);
         var slice = result.Value.Model.Application.Modules.Single().Features.Single().Slices.Single();
         var command = slice.Commands.Single();
         var inputs = slice.Specifications.Single().When!.Values;
@@ -38,11 +38,11 @@ public class contracts : given.a_semantic_binder
     }
 
     [Fact]
-    void should_not_admit_v10_for_only_already_lossless_route_inputs()
+    void should_not_admit_v11_for_only_already_lossless_route_inputs()
     {
         var result = Bind(Source.Replace("payload = 9007199254740991", "payload = 42").Replace("value = 9007199254740991", "value = 42"));
         result.Success.ShouldBeTrue();
-        Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V10, SemanticVersion.V10, result.Value!.Model.Application)).ShouldBeOfExactType<InvalidSemanticContract>();
+        Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V11, SemanticVersion.V11, result.Value!.Model.Application)).ShouldBeOfExactType<InvalidSemanticContract>();
     }
 
     [Fact]

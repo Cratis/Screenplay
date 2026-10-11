@@ -17,7 +17,7 @@ public class reaction_integer_bounds : given.a_semantic_binder
     [InlineData(-9007199254740991L, true, true)]
     [InlineData(9007199254740992L, false, true)]
     [InlineData(-9007199254740992L, false, true)]
-    void should_lower_v10_invocation_literals_losslessly_and_enforce_the_double_bound(long integer, bool accepted, bool composite)
+    void should_lower_v11_invocation_literals_losslessly_and_enforce_the_double_bound(long integer, bool accepted, bool composite)
     {
         var literal = integer.ToString(CultureInfo.InvariantCulture);
         var shape = composite ? "    streamId\n      key Key\n      period String" : "    streamId Key";
@@ -53,8 +53,8 @@ public class reaction_integer_bounds : given.a_semantic_binder
             """);
         Assert.True(result.Success, string.Join('\n', result.Diagnostics.Select(diagnostic => diagnostic.Message)));
         var compilation = result.Value!;
-        compilation.Model.LanguageVersion.ShouldEqual(LanguageVersion.V10);
-        compilation.Model.SemanticVersion.ShouldEqual(SemanticVersion.V10);
+        compilation.Model.LanguageVersion.ShouldEqual(LanguageVersion.V11);
+        compilation.Model.SemanticVersion.ShouldEqual(SemanticVersion.V11);
         var slices = compilation.Model.Application.Modules.Single().Features.Single().Slices;
         var command = slices.Single(slice => slice.Name == "S").Commands.Single();
         var automation = slices.Single(slice => slice.Name == "A");

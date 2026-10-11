@@ -18,6 +18,14 @@ internal static partial class SemanticModelValidator
         return context.UsesExactNumberLiterals;
     }
 
+    static void ValidateNumberLiteralsVersion(SemanticVersion version, bool usesExactNumberLiterals)
+    {
+        if (version == SemanticVersion.V11 && !usesExactNumberLiterals)
+        {
+            throw new InvalidSemanticContract("An ESM v11 model must use exact Double-mode number literal lowering.");
+        }
+    }
+
     internal static bool DiffersFromLegacyLowering(decimal value)
     {
         try
