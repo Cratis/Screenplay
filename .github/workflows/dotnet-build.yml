@@ -24,11 +24,30 @@ on:
       - "*.targets"
       - "*.slnx"
       - "global.json"
+      - ".github/workflows/dotnet-build.yml"
+
+# One source of truth for both the coverage guard and the spec matrix. Most projects
+# carry inline specs in Debug; discovering only *.Specs.csproj would miss them.
+env:
+  SPEC_SHARDS: >-
+    {"include":[
+      {"name":"compiler","projects":["Source/DotNET/Screenplay/Screenplay.csproj"]},
+      {"name":"mcp","projects":["Source/DotNET/Screenplay.Mcp/Screenplay.Mcp.csproj"]},
+      {"name":"contracts-tool-vectors","projects":[
+        "Source/DotNET/Screenplay.Contexts/Screenplay.Contexts.csproj",
+        "Source/DotNET/Screenplay.ContractCatalog/Screenplay.ContractCatalog.csproj",
+        "Source/DotNET/Screenplay.Contracts/Screenplay.Contracts.csproj",
+        "Source/DotNET/Tool/Tool.csproj",
+        "Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj"
+      ]}
+    ]}
 
 jobs:
-  build:
+  dotnet-build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      spec-matrix: ${{ steps.specs.outputs.matrix }}
 
     steps:
       - name: Checkout code
@@ -42,6 +61,47 @@ jobs:
             9.0.x
             10.0.x
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.lock.json', '**/*.props', '**/*.targets', '**/*.csproj', 'global.json', 'NuGet.Config', 'nuget.config') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Verify spec shard coverage
+        id: specs
+        run: |
+          python3 - <<'PY'
+          import collections
+          import json
+          import os
+          import subprocess
+          import xml.etree.ElementTree as ET
+
+          matrix = json.loads(os.environ['SPEC_SHARDS'])
+          assigned = collections.Counter(project for shard in matrix['include'] for project in shard['projects'])
+          expected = set()
+          for project in ET.parse('Screenplay.slnx').iter('Project'):
+              path = project.attrib['Path']
+              is_test = subprocess.check_output([
+                  'dotnet', 'msbuild', path, '-nologo',
+                  '-property:Configuration=Debug', '-getProperty:IsTestProject'
+              ], text=True).strip().lower()
+              if is_test == 'true':
+                  expected.add(path)
+
+          missing = expected - assigned.keys()
+          unexpected = assigned.keys() - expected
+          duplicates = {project for project, count in assigned.items() if count != 1}
+          if missing or unexpected or duplicates:
+              raise SystemExit(f'Invalid spec shards: missing={sorted(missing)}, unexpected={sorted(unexpected)}, duplicates={sorted(duplicates)}')
+          print('Every Debug test project is assigned exactly once:')
+          print('\n'.join(sorted(expected)))
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'matrix={json.dumps(matrix, separators=(",", ":"))}\n')
+          PY
+
       - name: Setup node
         uses: actions/setup-node@v4
         with:
@@ -54,8 +114,94 @@ jobs:
       - name: Build event model board
         run: yarn workspaces foreach -Rt --from @cratis/screenplay-mcp-app run build
 
-      - name: Build & run tests
-        run: dotnet test --configuration Debug
+      - name: Build Debug
+        run: dotnet build --configuration Debug
+
+      # A tar preserves executable bits and relative paths. Include the frontend output
+      # for the Release build that embeds and packs the board; do not cache compiled
+      # output across runs or require a cache hit to run specs.
+      - name: Archive build output
+        run: |
+          {
+            find Source/DotNET -type d -name bin -print0
+            find Source/Screenplay -type d -name dist -not -path '*/node_modules/*' -print0
+          } | tar --null -czf build-output.tar.gz -T -
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-build-output
+          path: build-output.tar.gz
+          retention-days: 1
+          if-no-files-found: error
+
+  specs:
+    name: Specs (${{ matrix.name }})
+    needs: dotnet-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.dotnet-build.outputs.spec-matrix) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .Net
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Download build output
+        uses: actions/download-artifact@v4
+        with:
+          name: dotnet-build-output
+
+      - name: Extract build output
+        run: tar -xzf build-output.tar.gz
+
+      - name: Run specs without rebuilding
+        env:
+          PROJECTS: ${{ toJSON(matrix.projects) }}
+        run: |
+          while IFS= read -r project; do
+            dotnet test "$project" --no-build --no-restore --configuration Debug
+          done < <(jq -r '.[]' <<< "$PROJECTS")
+
+  package-validation:
+    needs: dotnet-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .Net
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.lock.json', '**/*.props', '**/*.targets', '**/*.csproj', 'global.json', 'NuGet.Config', 'nuget.config') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Download build output
+        uses: actions/download-artifact@v4
+        with:
+          name: dotnet-build-output
+
+      - name: Extract build output
+        run: tar -xzf build-output.tar.gz
 
       # The version is a sentinel, not a release. Package validation compares assembly versions, and one
       # below the baseline is rejected on that alone before the API surface is ever looked at - so it has to
@@ -74,3 +220,16 @@ jobs:
 
       - name: Verify context package dependencies
         run: python3 Source/DotNET/Screenplay.Contexts/verify-package.py ./Artifacts/NuGet 9999.0.0
+
+  # Preserve the original check name, and never let skipped/failed dependencies
+  # turn the aggregate green. Release/package validation runs alongside the specs.
+  build:
+    if: always()
+    needs: [dotnet-build, specs, package-validation]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Require all build, spec and package checks to pass
+        env:
+          SUCCESS: ${{ needs.dotnet-build.result == 'success' && needs.specs.result == 'success' && needs.package-validation.result == 'success' }}
+        run: test "$SUCCESS" = true
