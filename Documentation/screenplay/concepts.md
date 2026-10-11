@@ -164,7 +164,7 @@ Use numbers for enums stored in event properties and when preserving a legacy sy
 
 Never renumber a published member or reuse its number for another meaning. To pin an existing enum, use its **current stored numbers**, not a newly reordered list. Specifications, fixtures and conditions still refer to member names (for example `status = "sent"`), never their numbers; the reference evaluator compares names.
 
-**Executable admission:** pins equal to `0..n-1` preserve the existing executable version, bytes and revision. Other numbers parse, print and survive AST authoring, but binding refuses them with `PLAY0268` (#643): enum member numbers differing from positions are not admitted by any supported ESM version yet. For example, `draft = 1` / `issued = 4` can describe an extracted contract, but cannot yet become an executable model. See [interoperability](interoperability.md).
+**Executable admission:** pins equal to `0..n-1` preserve the existing executable version, bytes and revision. Other numbers select ESM v12: for example, `draft = 1` / `issued = 4` binds `numbers: [1, 4]` parallel to the member names. Consumers must explicitly admit v12 before rendering or extracting these stored identities. Specifications and conditions still use member names; numbers are not alternative values or flags. See [interoperability](interoperability.md).
 
 ## Validation
 

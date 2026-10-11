@@ -13,9 +13,9 @@ public class when_parsing_unsupported_versions : Specification
     void Because()
     {
         _languageMinor = LanguageVersion.TryParse("1.1", out _);
-        _languageMajor = LanguageVersion.TryParse("12.0", out _);
+        _languageMajor = LanguageVersion.TryParse("13.0", out _);
         _semanticMinor = SemanticVersion.TryParse("1.1", out _);
-        _semanticMajor = SemanticVersion.TryParse("12.0", out _);
+        _semanticMajor = SemanticVersion.TryParse("13.0", out _);
     }
 
     [Fact] void should_reject_unknown_language_minor() => _languageMinor.ShouldBeFalse();

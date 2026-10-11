@@ -1,0 +1,36 @@
+module Invoices
+  feature Lifecycle
+    slice StateChange Record
+      event StatusRecorded
+        status InvoiceStatus
+      command RecordStatus
+        id InvoiceId identifier
+        status InvoiceStatus
+        produces StatusRecorded
+          for id
+          status = status
+      command Issue
+        id InvoiceId identifier
+        produces StatusRecorded
+          for id
+          status = "issued"
+      specification DraftStatus
+        when RecordStatus
+          id = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          status = "draft"
+        then StatusRecorded
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          status = "draft"
+      specification IssuedStatus
+        when Issue
+          id = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        then StatusRecorded
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          status = "issued"
+      specification CancelledStatus
+        when RecordStatus
+          id = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          status = "cancelled"
+        then StatusRecorded
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          status = "cancelled"

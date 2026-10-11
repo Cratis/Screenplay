@@ -121,9 +121,17 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 semanticVersion = SemanticVersion.V2;
             }
 
+            if (SemanticModelValidator.UsesEnumMemberNumbers(application))
+            {
+                languageVersion = LanguageVersion.V12;
+                semanticVersion = SemanticVersion.V12;
+                application = BindingContext.PromoteV2Destinations(application);
+                descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
+            }
+
             // Number lowering is pure. Select v11 from the retained graph with the validator's own
             // value walk, after examples and routed fixtures have reached their final bound shape.
-            if (SemanticModelValidator.UsesExactNumberLiterals(application, semanticVersion))
+            if (!semanticVersion.IsAtLeast(SemanticVersion.V12) && SemanticModelValidator.UsesExactNumberLiterals(application, semanticVersion))
             {
                 languageVersion = LanguageVersion.V11;
                 semanticVersion = SemanticVersion.V11;

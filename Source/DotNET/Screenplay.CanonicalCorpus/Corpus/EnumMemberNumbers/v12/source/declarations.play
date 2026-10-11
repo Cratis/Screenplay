@@ -1,0 +1,5 @@
+concept InvoiceId : Uuid
+concept InvoiceStatus : Enum
+  draft = -1
+  issued = 4
+  cancelled = 90

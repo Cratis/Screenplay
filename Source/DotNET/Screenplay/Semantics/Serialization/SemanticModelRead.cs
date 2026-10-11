@@ -18,10 +18,10 @@ internal static partial class SemanticModelRead
         return state.Build();
     }
 
-    internal static SemanticConcept Concept(ref Utf8JsonReader reader)
+    internal static SemanticConcept Concept(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "concept");
-        var state = new ConceptState();
+        var state = new ConceptState(schemaVersion);
         ConceptState.Fields.Read(ref reader, state);
         return state.Build();
     }
@@ -49,10 +49,20 @@ internal static partial class SemanticModelRead
         return state.Build();
     }
 
+    static int EnumMemberNumber(ref Utf8JsonReader reader)
+    {
+        if (reader.TokenType != JsonTokenType.Number || !reader.TryGetInt32(out var value))
+        {
+            throw Malformed("numbers", "a 32-bit integer");
+        }
+
+        return value;
+    }
+
     sealed class ApplicationState(uint schemaVersion) : IdentifiedReadState(schemaVersion)
     {
         public static readonly FieldTable<ApplicationState> Fields = TableFor<ApplicationState>("application")
-            .Add("concepts", (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Concepts = Array(ref reader, Concept, property))
+            .Add("concepts", (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Concepts = Array(ref reader, (ref Utf8JsonReader item) => Concept(ref item, state.SchemaVersion), property))
             .Add("types", (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Types = Array(ref reader, CompositeType, property))
             .Add("modules", (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Modules = Array(ref reader, (ref Utf8JsonReader item) => Module(ref item, state.SchemaVersion), property))
             .Add("policies", (ref Utf8JsonReader reader, ApplicationState state, string property) => state.Policies = Array(ref reader, Policy, property))
@@ -86,12 +96,13 @@ internal static partial class SemanticModelRead
         }
     }
 
-    sealed class ConceptState() : IdentifiedReadState(0)
+    sealed class ConceptState(uint schemaVersion) : IdentifiedReadState(schemaVersion)
     {
         public static readonly FieldTable<ConceptState> Fields = TableFor<ConceptState>("concept")
             .Add("primitive", (ref Utf8JsonReader reader, ConceptState state, string property) => state.Primitive = ParsePrimitive(String(ref reader, property)))
             .Add("values", (ref Utf8JsonReader reader, ConceptState state, string property) => state.Values = StringArray(ref reader, property))
-            .Add("validations", (ref Utf8JsonReader reader, ConceptState state, string property) => state.Validations = Array(ref reader, Validation, property));
+            .Add("validations", (ref Utf8JsonReader reader, ConceptState state, string property) => state.Validations = Array(ref reader, Validation, property))
+            .Add("numbers", LanguageVersion.V12.Major, (ref Utf8JsonReader reader, ConceptState state, string property) => state.Numbers = Array(ref reader, EnumMemberNumber, property));
 
         public SemanticPrimitiveType? Primitive { get; set; }
 
@@ -99,10 +110,12 @@ internal static partial class SemanticModelRead
 
         public ImmutableArray<SemanticValidationRule> Validations { get; set; }
 
+        public ImmutableArray<int>? Numbers { get; set; }
+
         public SemanticConcept Build()
         {
             Required(HasIdentity && Primitive is not null && !Values.IsDefault && !Validations.IsDefault, "concept");
-            return new(Id, Name!, Primitive!.Value, Values, Validations);
+            return new(Id, Name!, Primitive!.Value, Values, Validations) { Numbers = Numbers };
         }
     }
 
