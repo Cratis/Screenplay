@@ -24,6 +24,7 @@ sealed class WorkspacePropertyEdits(
     readonly Dictionary<SemanticAddress, SemanticAddress> _renames = [];
     readonly List<SemanticAddress> _retirements = [];
     readonly HashSet<(WorkspaceNodeHandle, string)> _autoMaps = [];
+    readonly WorkspacePropertyAssertionProvenance _assertions = new(index);
 
     internal IReadOnlyDictionary<SemanticAddress, SemanticAddress> Renames => _renames;
     internal ImmutableArray<SemanticAddress> Retirements => [.. _retirements];
@@ -36,7 +37,7 @@ sealed class WorkspacePropertyEdits(
         return [.. _changes.Distinct().OrderBy(change => change.Address, WorkspaceSemanticAddressComparer.Instance).ThenBy(change => change.Location.Path, StringComparer.Ordinal).ThenBy(change => change.Location.Line).ThenBy(change => change.Location.Column).ThenBy(change => change.Role, StringComparer.Ordinal)];
     }
 
-    internal WorkspacePropertyRefusal? InspectAutoMapContinuity(ScreenplayWorkspace candidate) => new WorkspacePropertyAutoMapContinuity(plan, request, selected).Inspect(candidate);
+    internal WorkspacePropertyRefusal? InspectProjectionContinuity(ScreenplayWorkspace candidate) => new WorkspacePropertyProjectionContinuity(plan, request, selected).Inspect(candidate);
 
     internal ImmutableArray<WorkspaceOperation> Documents(ImmutableArray<WorkspacePropertyGeneration> generations)
     {
@@ -135,6 +136,7 @@ sealed class WorkspacePropertyEdits(
         _removed.Add(occurrence.Handle);
         _touched.Add(occurrence.Handle.Document);
         Record(source, source.Role == "mapping-target" ? "removed" : "fixtureRemoved", source.Role == "assertion");
+        foreach (var consumer in _assertions.Consumers(occurrence)) Record(source with { Role = "assertion", Location = consumer }, "fixtureRemoved", true);
     }
 
     void RenameReference(WorkspaceSyntaxEntry occurrence, WorkspacePropertyLink link)
@@ -161,7 +163,7 @@ sealed class WorkspacePropertyEdits(
         var source = member.Kind == "Event" ? member : counterpart;
         var targetName = SelectedName(target.Declaration);
         var sourceName = SelectedName(source.Declaration);
-        if (targetName.Equals(sourceName, StringComparison.OrdinalIgnoreCase) || !_autoMaps.Add((link.Occurrence, target.Declaration.Address))) return;
+        if (targetName.Equals(sourceName, StringComparison.OrdinalIgnoreCase) || !_autoMaps.Add((plan.MappingOwner(link.Occurrence).Handle, target.Declaration.Address))) return;
         InsertMapping(link, targetName, sourceName);
         Record(change, "explicitMappingInserted");
     }

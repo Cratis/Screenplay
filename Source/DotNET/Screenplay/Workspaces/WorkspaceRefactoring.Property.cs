@@ -98,7 +98,7 @@ internal sealed partial class WorkspaceRefactoring
                 PropertyReport = report with { NeedsDecision = [.. result.Conflicts.Select(conflict => new WorkspacePropertyDecision(conflict.Kind.ToString(), report.Target, conflict.Candidates))] }
             };
         }
-        if (edits.InspectAutoMapContinuity(result.Workspace!) is { } refusal) return PropertyFailure(refusal.Kind, report, refusal.Candidates);
+        if (edits.InspectProjectionContinuity(result.Workspace!) is { } refusal) return PropertyFailure(refusal.Kind, report, refusal.Candidates);
         return result with
         {
             PropertyReport = WorkspacePropertyReports.Readiness(workspace, result.Workspace!, report with { Changed = changed, Generations = generations })

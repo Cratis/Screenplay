@@ -24,6 +24,7 @@ internal sealed partial class WorkspacePropertyLinks
     readonly Dictionary<SyntaxNode, AuthoredDeclaration> _owners;
     readonly Dictionary<AuthoredDeclaration, AuthoredDeclaration[]> _properties = new(ReferenceEqualityComparer.Instance);
     readonly List<WorkspacePropertyLink> _links = [];
+    readonly List<WorkspacePropertyProjectionEffect> _projectionEffects = [];
 
     internal WorkspacePropertyLinks(WorkspaceSyntaxIndex index)
         : this(index.Entries, new AuthoringSnapshot(index.Workspace.Documents).Index)
@@ -47,6 +48,7 @@ internal sealed partial class WorkspacePropertyLinks
     }
 
     internal IEnumerable<WorkspacePropertyLink> Links => _links;
+    internal IEnumerable<WorkspacePropertyProjectionEffect> ProjectionEffects => _projectionEffects;
 
     internal static IEnumerable<PropertySyntax> Properties(SyntaxNode node) => node switch
     {
