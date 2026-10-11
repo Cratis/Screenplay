@@ -120,11 +120,11 @@ internal static partial class SemanticModelRead
 
         bool HasContracts => !Events.IsDefault && !Commands.IsDefault && !ReadModels.IsDefault;
 
-        bool HasBehaviours => !Projections.IsDefault && !Queries.IsDefault && !Specifications.IsDefault;
+        bool HasBehaviors => !Projections.IsDefault && !Queries.IsDefault && !Specifications.IsDefault;
 
         public SemanticSlice Build()
         {
-            Required(HasIdentity && Kind is not null && HasContracts && HasBehaviours, "slice");
+            Required(HasIdentity && Kind is not null && HasContracts && HasBehaviors, "slice");
             return new(Id, Name!, Kind!.Value, Events, Commands, ReadModels, Projections, Queries, Specifications)
             {
                 Constraints = Constraints,

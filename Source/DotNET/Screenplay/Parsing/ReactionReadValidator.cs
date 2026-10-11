@@ -15,8 +15,8 @@ namespace Cratis.Screenplay.Parsing;
 /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
 internal sealed class ReactionReadValidator(ReactionTriggerSyntax trigger, HashSet<string> knownReadModels, ParserContext context)
 {
-    readonly HashSet<string> _values = trigger.Data.Select(datum => datum.Name).ToHashSet(StringComparer.Ordinal);
     readonly HashSet<string> _aliases = new(StringComparer.Ordinal);
+    HashSet<string> _values = [];
 
     /// <summary>
     /// Validates every read of the trigger.
@@ -26,6 +26,7 @@ internal sealed class ReactionReadValidator(ReactionTriggerSyntax trigger, HashS
         var reads = (trigger.Reads ?? []).ToList();
         var repeated = reads.GroupBy(read => read.ReadModel, StringComparer.Ordinal)
             .Where(group => group.Count() > 1).Select(group => group.Key).ToHashSet(StringComparer.Ordinal);
+        _values = trigger.Data.Select(datum => datum.Name).ToHashSet(StringComparer.Ordinal);
         foreach (var read in reads)
         {
             ReportMissingAlias(read, repeated);

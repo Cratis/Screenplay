@@ -100,7 +100,7 @@ internal static partial class SemanticModelValidator
         SemanticProperty IdentifierProperty(SemanticReadModel readModel)
         {
             var identifiers = readModel.Properties.Where(_ => _.IsIdentifier).ToArray();
-            if (identifiers.Length != 1 || !IsRequiredScalar(identifiers[0].Type))
+            if (identifiers.Length != 1 || identifiers[0].Type.IsCollection || identifiers[0].Type.IsOptional)
             {
                 throw new InvalidSemanticContract($"Read model '{readModel.Name}' must have exactly one required scalar identifier property.");
             }

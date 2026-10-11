@@ -17,6 +17,8 @@ namespace Cratis.Screenplay.Parsing;
 /// </summary>
 internal static partial class ScreenplayValidator
 {
+    static readonly IReadOnlySet<string> _noNames = new HashSet<string>(StringComparer.Ordinal);
+
     /// <summary>
     /// Validates an application and reports diagnostics for unknown references.
     /// </summary>
@@ -152,6 +154,8 @@ internal static partial class ScreenplayValidator
 
     static void ValidateSlices(ApplicationSyntax application, List<SliceSyntax> slices, DocumentNames names, ParserContext context)
     {
+        // The command names are collected before the triggers and events below, as they always were.
+        _ = names.Commands;
         var declaredTriggers = (application.Triggers ?? []).ToDictionary(trigger => trigger.Name, StringComparer.Ordinal);
         var eventsByName = slices.SelectMany(EventDeclarations.In)
             .GroupBy(@event => @event.Name, StringComparer.Ordinal)
@@ -183,15 +187,16 @@ internal static partial class ScreenplayValidator
         ValidateSpecificationQueries(scopedSlices, knownQueries, context);
 
         var (knownCommandDeclarations, commandsByDeclaration) = CommandDeclarations(scopedSlices);
-        var references = new InteractionReferences(
-            knownCommandDeclarations,
-            knownScreenDeclarations,
-            knownQueries,
-            application.Modules.SelectMany(module => module.DialogTemplates ?? []).Select(template => template.Name).ToHashSet(StringComparer.Ordinal),
-            names.Events,
-            (application.Triggers ?? []).Select(trigger => trigger.Name).ToHashSet(StringComparer.Ordinal));
+        var references = new InteractionReferences(knownCommandDeclarations, knownScreenDeclarations, knownQueries, _noNames, names.Events, _noNames);
         ValidateScreenReferences(scopedSlices, references, context);
         GuardedActionValidator.Validate(application, declarations, context);
+
+        // The dialog templates and triggers are only collected once the checks above have run.
+        references = references with
+        {
+            DialogTemplates = application.Modules.SelectMany(module => module.DialogTemplates ?? []).Select(template => template.Name).ToHashSet(StringComparer.Ordinal),
+            Triggers = (application.Triggers ?? []).Select(trigger => trigger.Name).ToHashSet(StringComparer.Ordinal)
+        };
         new InteractionReferenceValidator(application, references, context).Validate(scopedSlices);
         ValidateFormReferences(application, commandsByDeclaration, references, context);
         ValidateContributions(application, knownScreenDeclarations, context);

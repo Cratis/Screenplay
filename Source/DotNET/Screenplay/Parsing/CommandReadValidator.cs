@@ -13,8 +13,6 @@ namespace Cratis.Screenplay.Parsing;
 /// <param name="context">The <see cref="ParserContext"/> to report diagnostics to.</param>
 internal sealed class CommandReadValidator(CommandSyntax command, ParserContext context)
 {
-    readonly List<ReadsSyntax> _declarations = [.. command.Reads ?? []];
-
     /// <summary>
     /// Validates that what the command reads exists, and that the key it reads by is one of its own properties.
     /// </summary>
@@ -22,13 +20,14 @@ internal sealed class CommandReadValidator(CommandSyntax command, ParserContext 
     public void ValidateReads(HashSet<string> knownReadModels)
     {
         var properties = command.Properties.Select(property => property.Name).ToHashSet(StringComparer.Ordinal);
-        var repeatedViews = _declarations.GroupBy(read => read.ReadModel, StringComparer.Ordinal)
+        var declarations = Declarations();
+        var repeatedViews = declarations.GroupBy(read => read.ReadModel, StringComparer.Ordinal)
             .Where(group => group.Count() > 1)
             .Select(group => group.Key)
             .ToHashSet(StringComparer.Ordinal);
         var aliases = new HashSet<string>(StringComparer.Ordinal);
 
-        foreach (var reads in _declarations)
+        foreach (var reads in declarations)
         {
             ReportMissingAlias(reads, repeatedViews);
             if (reads.Alias is { } alias)
@@ -52,9 +51,10 @@ internal sealed class CommandReadValidator(CommandSyntax command, ParserContext 
     public void ValidateRequirements()
     {
         var properties = command.Properties.Select(property => property.Name).ToHashSet();
-        var reads = _declarations.Where(read => _declarations.Count(other => other.ReadModel == read.ReadModel) == 1)
+        var declarations = Declarations();
+        var reads = declarations.Where(read => declarations.Count(other => other.ReadModel == read.ReadModel) == 1)
             .Select(read => read.ReadModel)
-            .Concat(_declarations.Select(read => read.Alias).OfType<string>())
+            .Concat(declarations.Select(read => read.Alias).OfType<string>())
             .ToHashSet(StringComparer.Ordinal);
 
         foreach (var requirement in command.Validations.OfType<DeclarativeValidateSyntax>()
@@ -62,7 +62,7 @@ internal sealed class CommandReadValidator(CommandSyntax command, ParserContext 
         {
             foreach (var operand in Operands(requirement.Condition))
             {
-                ValidateOperand(operand, requirement.Location, properties, reads);
+                ValidateOperand(operand, requirement.Location, properties, reads, declarations);
             }
         }
     }
@@ -78,6 +78,8 @@ internal sealed class CommandReadValidator(CommandSyntax command, ParserContext 
         LogicalConditionSyntax logical => Operands(logical.Left).Concat(Operands(logical.Right)),
         _ => []
     };
+
+    List<ReadsSyntax> Declarations() => [.. command.Reads ?? []];
 
     void ReportMissingAlias(ReadsSyntax reads, HashSet<string> repeatedViews)
     {
@@ -131,7 +133,7 @@ internal sealed class CommandReadValidator(CommandSyntax command, ParserContext 
         }
     }
 
-    void ValidateOperand(string operand, SourceLocation location, HashSet<string> properties, HashSet<string> reads)
+    void ValidateOperand(string operand, SourceLocation location, HashSet<string> properties, HashSet<string> reads, List<ReadsSyntax> declarations)
     {
         var separator = operand.IndexOf('.', StringComparison.Ordinal);
         if (separator < 0)
@@ -150,14 +152,14 @@ internal sealed class CommandReadValidator(CommandSyntax command, ParserContext 
         var source = operand[..separator];
         if (!reads.Contains(source))
         {
-            ReportUnknownOperandSource(operand, source, location);
+            ReportUnknownOperandSource(operand, source, location, declarations);
         }
     }
 
-    void ReportUnknownOperandSource(string operand, string source, SourceLocation location)
+    void ReportUnknownOperandSource(string operand, string source, SourceLocation location, List<ReadsSyntax> declarations)
     {
-        var aliases = _declarations.Where(read => read.ReadModel == source).Select(read => read.Alias).OfType<string>().ToList();
-        var repeated = _declarations.Count(read => read.ReadModel == source) > 1;
+        var aliases = declarations.Where(read => read.ReadModel == source).Select(read => read.Alias).OfType<string>().ToList();
+        var repeated = declarations.Count(read => read.ReadModel == source) > 1;
         context.Warning(
             DiagnosticCodes.UnknownRequirementOperandSource,
             repeated

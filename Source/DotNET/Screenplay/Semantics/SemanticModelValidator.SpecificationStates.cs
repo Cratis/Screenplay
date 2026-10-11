@@ -31,7 +31,7 @@ internal static partial class SemanticModelValidator
 
         void ValidateEventSource(SemanticEventSourceIdentity source, SemanticTypeReference? requiredType)
         {
-            if (!IsRequiredScalar(source.Type) || (requiredType is not null && source.Type != requiredType))
+            if (source.Type.IsCollection || source.Type.IsOptional || (requiredType is not null && source.Type != requiredType))
             {
                 throw new InvalidSemanticContract("A specification event source must have the required scalar destination type.");
             }
