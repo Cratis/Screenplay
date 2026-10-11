@@ -339,13 +339,13 @@ async function selectWorkItem(page, result, path, item) {
 
 // Reach a screen the way a user would: an authored navigation entry first, then browser history. A direct URL is used only
 // when neither exists, and that is recorded so the run shows the screen was not reachable through the UI.
-async function navigateByUi(page, result, path, screen) {
+async function navigateByUi(page, result, path, screen, label = screen) {
     const target = `#/${screen}`;
     const entries = [
-        ['navigation link', page.getByRole('link', { name: screen, exact: true })],
-        ['navigation menu item', page.getByRole('menuitem', { name: screen, exact: true })],
-        ['navigation button', page.getByRole('button', { name: screen, exact: true })],
-        ['navigation text', page.getByRole('navigation').getByText(screen, { exact: true })]
+        ['navigation link', page.getByRole('link', { name: label, exact: true })],
+        ['navigation menu item', page.getByRole('menuitem', { name: label, exact: true })],
+        ['navigation button', page.getByRole('button', { name: label, exact: true })],
+        ['navigation text', page.getByRole('navigation').getByText(label, { exact: true })]
     ];
 
     for (const [method, entry] of entries) {
@@ -431,10 +431,36 @@ async function assertSceneIdentifierFidelity(result) {
     else record(result, 'browser.scene.identifierFidelity.dotted', 'pending', 'rerun after Stage/CLI vector includes dotted stable ids');
 }
 
+// The Tracking feature authors `contribute to Navigation` with the label "Work items" targeting WorkItemList. The menu shows that
+// authored label under the module and feature groups it was declared in (Workspaces > Tracking), not the screen's name.
+async function assertAuthoredNavigation(page, result) {
+    const entry = page.getByRole('navigation').locator('a[href="#/WorkItemList"]').first();
+    try {
+        await entry.waitFor({ timeout: 10_000 });
+        const label = (await entry.textContent())?.trim();
+        if (label === 'Work items') record(result, 'browser.navigation.WorkItemList', 'passed', `${label} -> #/WorkItemList`);
+        else block(result, 'browser.navigation.WorkItemList', `the authored navigation entry shows "${label}", not "Work items"`);
+    } catch {
+        block(result, 'browser.navigation.WorkItemList', 'no navigation entry links to #/WorkItemList');
+        return;
+    }
+
+    const groups = await page.evaluate(() => {
+        const link = document.querySelector('nav a[href="#/WorkItemList"]');
+        const names = [];
+        for (let node = link?.closest('li')?.parentElement?.closest('li'); node; node = node.parentElement?.closest('li')) {
+            names.unshift(node.querySelector(':scope > span, :scope > a, :scope > button')?.textContent?.trim() ?? '');
+        }
+        return names;
+    });
+    if (groups.join('>') === 'Workspaces>Tracking') record(result, 'browser.navigation.hierarchy', 'passed', groups.join(' > '));
+    else block(result, 'browser.navigation.hierarchy', `the entry is nested under [${groups.join(' > ')}], expected [Workspaces > Tracking]`);
+}
+
 async function assertTwoItemSelectionLifecycle(page, result, network) {
     await page.goto(`${baseUrl}/#/WorkItemList`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
     await page.waitForTimeout(3_000);
-    await expectText(page, result, 'browser.navigation.WorkItemList', 'WorkItemList');
+    await assertAuthoredNavigation(page, result);
     await expectText(page, result, 'browser.query.AllWorkItems.titleA', workItemA.title);
     await expectText(page, result, 'browser.query.AllWorkItems.titleB', workItemB.title);
 
@@ -671,7 +697,7 @@ async function runBrowserFlow(result) {
     await assertSceneIdentifierFidelity(result);
     await seedData(result);
     await assertTwoItemSelectionLifecycle(page, result, network);
-    await navigateByUi(page, result, 'browser.navigation.ui.WorkItemList', 'WorkItemList');
+    await navigateByUi(page, result, 'browser.navigation.ui.WorkItemList', 'WorkItemList', 'Work items');
     await assertInvalidThenValidCreate(page, result, network);
     await page.goto(`${baseUrl}/#/WorkItemDetails`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
     await page.waitForTimeout(2_000);
