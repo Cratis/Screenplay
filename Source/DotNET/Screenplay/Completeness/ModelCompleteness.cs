@@ -18,7 +18,7 @@ public static class ModelCompleteness
     /// </summary>
     /// <param name="compilation">The complete application's source compilation.</param>
     /// <param name="checks">The selected checks.</param>
-    /// <returns>Opt-in warnings, or no findings when source compilation failed.</returns>
+    /// <returns>Opt-in warnings and information, or no findings when source compilation failed.</returns>
     public static ImmutableArray<Diagnostic> Check(CompilationResult<ApplicationSyntax> compilation, CompletenessChecks checks) =>
         compilation.Success ? Check(compilation.Value!, checks) : [];
 
@@ -27,7 +27,7 @@ public static class ModelCompleteness
     /// </summary>
     /// <param name="application">The complete application. The caller must first verify that source compilation has no errors.</param>
     /// <param name="checks">The selected checks.</param>
-    /// <returns>The selected structural warnings. These do not prove runtime completeness.</returns>
+    /// <returns>The selected structural warnings and information. These do not prove runtime completeness.</returns>
     public static ImmutableArray<Diagnostic> Check(ApplicationSyntax application, CompletenessChecks checks)
     {
         if (checks.Selected.Count == 0)
@@ -46,6 +46,7 @@ public static class ModelCompleteness
         if (checks.Selected.Contains(CompletenessCheck.Personas)) findings.AddRange(PersonaCompleteness.Check(application));
         if (checks.Selected.Contains(CompletenessCheck.Purposes)) findings.AddRange(PurposeCompleteness.Check(application));
         if (checks.Selected.Contains(CompletenessCheck.Privilege)) findings.AddRange(PrivilegeCompleteness.Check(application, declarations));
+        if (checks.Selected.Contains(CompletenessCheck.EnumPinning)) findings.AddRange(EnumerationPinning.Check(application));
 
         return findings.ToImmutable();
     }

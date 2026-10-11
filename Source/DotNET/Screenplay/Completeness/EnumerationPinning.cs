@@ -4,18 +4,17 @@
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Syntax;
 
-namespace Cratis.Screenplay.Parsing;
+namespace Cratis.Screenplay.Completeness;
 
 internal static class EnumerationPinning
 {
-    internal static void Validate(ApplicationSyntax application, ParserContext context)
+    internal static IEnumerable<Diagnostic> Check(ApplicationSyntax application)
     {
-        if (context.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.MixedEnumerationNumbering || diagnostic.Code == DiagnosticCodes.DuplicateEnumerationNumber || diagnostic.Code == DiagnosticCodes.EnumerationNumberOutsideInt32 || diagnostic.Code == DiagnosticCodes.MalformedEnumerationNumber)) return;
         var walker = new StoredTypes(application);
         walker.VisitApplication(application);
         foreach (var concept in application.Concepts.Where(concept => concept.IsEnum && concept.ValueNumbers is null && walker.Names.Contains(concept.Name)))
         {
-            context.Add(new(DiagnosticSeverity.Information, DiagnosticCodes.UnpinnedStoredEnumeration, $"Enum '{concept.Name}' is used by an event property; use 'Number every member by its current position' to pin stored member identity before reordering or inserting members", concept.Location));
+            yield return new(DiagnosticSeverity.Information, DiagnosticCodes.UnpinnedStoredEnumeration, $"Enum '{concept.Name}' is used by an event property; use 'Number every member by its current position' to pin stored member identity before reordering or inserting members", concept.Location);
         }
     }
 

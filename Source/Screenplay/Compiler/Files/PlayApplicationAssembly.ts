@@ -20,7 +20,6 @@ import { validateReactionRefusals } from '../Parsing/ReactionRefusalValidator';
 import { validateSpecificationRedelivery } from '../Parsing/SpecificationRedeliveryValidator';
 import { validateGuardedActions } from '../Parsing/GuardedActionValidator';
 import { validatePersonaCallers } from '../Parsing/PersonaCallerValidator';
-import { validateEnumerationPinning } from '../Parsing/EnumerationPinning';
 import { validatePurposes } from '../Parsing/PurposeValidator';
 import { splitLines } from '../Parsing/SourceLineSplitter';
 import { ParserContext } from '../Parsing/ParserContext';
@@ -102,7 +101,6 @@ function parsePlacedDocumentsWithSyntax(documents: readonly PlacedPlayDocument[]
     validateGuardedActions(merged.value, context);
     validatePersonaCallers(merged.value, context);
     validatePurposes(merged.value, context);
-    validateEnumerationPinning(merged.value, context);
     const value = validateDependencyDeclarations(merged.value, context);
     DeclaredDependencies.validate(value, context);
     for (const diagnostic of productionDestinationDiagnostics(value)) context.information(diagnostic.code, diagnostic.message, diagnostic.location);

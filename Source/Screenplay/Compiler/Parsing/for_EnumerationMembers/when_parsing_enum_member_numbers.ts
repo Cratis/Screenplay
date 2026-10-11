@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { beforeEach, describe, it } from 'vitest';
+import { completenessDiagnostics } from '../../Completeness/ModelCompleteness';
+import { compileApplication } from '../../Files/PlayApplicationAssembly';
 import { parse } from '../../ScreenplayCompiler';
 import { toSyntaxJson } from '../../Syntax/SyntaxJson';
 import { decodeExactSyntaxJson } from '../../Syntax/StrictSyntaxJson';
@@ -45,19 +47,35 @@ describe('when rejecting invalid enum member numbers', () => {
 describe('when suggesting enum member numbers', () => {
     it('should hint only once for nested and inline stored values', () => {
         const source = 'concept Status : Enum\n  draft\ntype Detail\n  status Status[] optional\ntype Envelope\n  detail Detail\nmodule M\n  feature F\n    slice StateChange S\n      event E\n        envelope Envelope\n      command C\n        produces event Changed\n          status Status = "draft"';
-        const hints = parse(source).diagnostics.filter(diagnostic => diagnostic.code === 'PLAY0671');
+        const result = parse(source);
+        result.diagnostics.some(diagnostic => diagnostic.code === 'PLAY0671').should.equal(false);
+        completenessDiagnostics(result, []).should.have.lengthOf(0);
+        const hints = completenessDiagnostics(result, ['enum-pinning']);
+        completenessDiagnostics(result, ['PLAY0671']).should.deep.equal(hints);
+        completenessDiagnostics(result, ['all']).should.deep.equal(hints);
         hints.should.have.lengthOf(1);
         hints[0].severity.should.equal('information');
         hints[0].message.should.contain('Number every member by its current position');
+    });
+    it('should opt in only after merging declarations across files', () => {
+        const result = compileApplication(new Map([
+            ['types.play', 'concept Status : Enum\n  draft'],
+            ['event.play', event.trimStart()],
+        ]));
+        result.diagnostics.some(diagnostic => diagnostic.code === 'PLAY0671').should.equal(false);
+        const hints = completenessDiagnostics(result, ['enum-pinning']);
+        hints.should.have.lengthOf(1);
+        hints[0].location.path!.should.equal('types.play');
     });
     it.each([
         'concept Status : Enum\n  draft = 0' + event,
         'concept Status : Enum\n  draft = 0\n  issued' + event,
         'concept Status : Enum\n  draft = nope' + event,
+        'concept Status : Enum\n  draft' + event + '\nconcept',
         'concept Status : Enum\n  draft\nmodule M\n  feature F\n    slice StateChange S\n      command C\n        status Status',
         'concept Status : Enum\n  draft\nmodule M\n  feature F\n    slice StateView S\n      readmodel Row\n        status Status',
     ])('should not hint for unstored, numbered or invalid enum %s', source => {
-        parse(source).diagnostics.some(diagnostic => diagnostic.code === 'PLAY0671').should.equal(false);
+        completenessDiagnostics(parse(source), ['enum-pinning']).should.have.lengthOf(0);
     });
 });
 

@@ -1,16 +1,14 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { Diagnostic } from '../Diagnostics/Diagnostic';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { EventSyntax } from '../Syntax/Declarations';
 import { ScreenplaySyntaxWalker } from '../Syntax/ScreenplaySyntaxWalker';
 import { ApplicationSyntax } from '../Syntax/Structure';
-import { ParserContext } from './ParserContext';
 
-const numberingErrors = new Set<string>([DiagnosticCodes.MixedEnumerationNumbering, DiagnosticCodes.DuplicateEnumerationNumber, DiagnosticCodes.EnumerationNumberOutsideInt32, DiagnosticCodes.MalformedEnumerationNumber]);
-
-export function validateEnumerationPinning(application: ApplicationSyntax, context: ParserContext): void {
-    if (context.diagnostics.some(diagnostic => numberingErrors.has(diagnostic.code))) return;
+export function enumerationPinningDiagnostics(application: ApplicationSyntax): readonly Diagnostic[] {
+    const diagnostics: Diagnostic[] = [];
     const names = new Set<string>();
     const add = (name: string): void => {
         if (names.has(name)) return;
@@ -25,6 +23,7 @@ export function validateEnumerationPinning(application: ApplicationSyntax, conte
     }
     new StoredTypes().visitApplication(application);
     for (const concept of application.concepts.filter(concept => concept.type === 'Enum' && concept.valueNumbers == null && names.has(concept.name))) {
-        context.information(DiagnosticCodes.UnpinnedStoredEnumeration, `Enum '${concept.name}' is used by an event property; use 'Number every member by its current position' to pin stored member identity before reordering or inserting members`, concept.location);
+        diagnostics.push({ severity: 'information', code: DiagnosticCodes.UnpinnedStoredEnumeration, message: `Enum '${concept.name}' is used by an event property; use 'Number every member by its current position' to pin stored member identity before reordering or inserting members`, location: concept.location });
     }
+    return diagnostics;
 }

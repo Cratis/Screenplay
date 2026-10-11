@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { completenessDiagnostics, parse } from '@cratis/screenplay-compiler';
 import { describe, it } from 'vitest';
 import { planCompletions } from '../completion-planner';
 import { hoverContent } from '../hover-content';
@@ -37,8 +38,10 @@ describe('when authoring enum member numbers', () => {
     ])('should surface shared numbering errors %s', (source, code) => {
         validateLines(source as string[]).some(issue => issue.code === code && issue.severity === 'error').should.equal(true);
     });
-    it('should retain the stored-enum information hint', () => {
+    it('should retain the stored-enum information hint only when completeness findings are supplied', () => {
         const source = ['concept Status : Enum', '  draft', 'module M', '  feature F', '    slice StateChange S', '      event E', '        status Status'];
-        validateLines(source).filter(issue => issue.code === 'PLAY0671').map(issue => issue.severity).should.deep.equal(['information']);
+        validateLines(source).filter(issue => issue.code === 'PLAY0671').should.have.lengthOf(0);
+        const compilerDiagnostics = completenessDiagnostics(parse(source.join('\n')), ['enum-pinning']);
+        validateLines(source, { compilerDiagnostics }).filter(issue => issue.code === 'PLAY0671').map(issue => issue.severity).should.deep.equal(['information']);
     });
 });

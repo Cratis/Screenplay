@@ -258,7 +258,7 @@ Names are case-sensitive. Property sets compare declared names, type names, coll
 
 ### Completeness diagnostics
 
-`diagnostics` accepts `checks: "data-bindings,input-surfaces,field-origins,query-keys,event-consumers,navigation"` or `"all"`. Unknown names are invalid parameters. Selected findings are warnings merged into the ordinary severity summary and paged, source-revision-bound response, including scope and document filtering. Checks run only without whole-application source errors; `completenessStatus` otherwise reports `completeness checks skipped: the model has N error(s)`. `completenessCoverage` is `structure only; a finding is a prompt to look`. See [Completeness checks](../completeness.md) for exact rules and exemptions. No executable admission or code analysis is implied.
+`diagnostics` accepts `checks: "data-bindings,input-surfaces,field-origins,query-keys,event-consumers,navigation"`, `"enum-pinning"` (or `"PLAY0671"`) or `"all"`. Unknown names are invalid parameters. Selected findings are warnings and information merged into the ordinary severity summary and paged, source-revision-bound response, including scope and document filtering. Checks run only without whole-application source errors; `completenessStatus` otherwise reports `completeness checks skipped: the model has N error(s)`. `completenessCoverage` is `structure only; a finding is a prompt to look`. See [Completeness checks](../completeness.md) for exact rules and exemptions. No executable admission or code analysis is implied.
 
 ### Scoped diagnostics
 
