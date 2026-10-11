@@ -24,6 +24,13 @@ internal sealed partial class WorkspacePropertyLinks
         _ => false
     };
 
+    static string? NestedProperty(ProjectionBlockSyntax block) => block switch
+    {
+        ChildrenSyntax child => child.Property,
+        NestedSyntax value => value.Property,
+        _ => null
+    };
+
     void IndexTypedReader(WorkspaceSyntaxEntry entry)
     {
         IndexNamedReader(entry);
@@ -54,15 +61,19 @@ internal sealed partial class WorkspacePropertyLinks
         }
     }
 
+    void IndexNestedTarget(ProjectionBlockSyntax block, PropertyProjectionScope scope)
+    {
+        if (NestedProperty(block) is not { } nested)
+        {
+            return;
+        }
+
+        Add(ProjectionUse(scope, block), "mapping-target", new(nested, Members(scope.Models, scope.Nested ?? nested), Incomplete: true));
+    }
+
     void IndexProjectionKeys(ProjectionBlockSyntax block, PropertyProjectionScope scope)
     {
-        var nested = block switch
-        {
-            ChildrenSyntax child => child.Property,
-            NestedSyntax value => value.Property,
-            _ => null
-        };
-        if (nested is not null) Add(ProjectionUse(scope, block), "mapping-target", new(nested, Members(scope.Models, scope.Nested ?? nested), Incomplete: true));
+        IndexNestedTarget(block, scope);
         switch (block)
         {
             case JoinSyntax join:
