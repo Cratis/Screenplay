@@ -50,13 +50,13 @@ sealed class WorkspaceAuthoringTransaction(
 
         if (!Enum.IsDefined(request.Validation) || !Enum.IsDefined(request.Formatting) || !Enum.IsDefined(request.ReferencePolicy) ||
             request.Operations.IsDefault || request.Documents.IsDefault || request.SemanticRenames.IsDefault ||
-            EventMigrationArraysAreDefault(request) || request.RetiredSemanticAddresses.IsDefault || request.RetiredEventAddresses.IsDefault)
+            WorkspaceAuthoringEventValidation.ArraysAreDefault(request) || request.RetiredSemanticAddresses.IsDefault || request.RetiredEventAddresses.IsDefault)
         {
             return Failure(WorkspaceConflictKind.InvalidOperation, "Authoring options must be known and request arrays must be non-default.");
         }
 
         if (request.SemanticRenames.Any(rename => rename is null || rename.PreviousAddress is null || rename.CurrentAddress is null) ||
-            EventMigrationEndpointsAreMissing(request) ||
+            WorkspaceAuthoringEventValidation.EndpointsAreMissing(request) ||
             request.RetiredSemanticAddresses.Any(address => address is null) || request.RetiredEventAddresses.Any(address => address is null))
         {
             return Failure(WorkspaceConflictKind.InvalidIdentityMigration, "Identity migration endpoints and retirement addresses must be present.");
@@ -76,12 +76,6 @@ sealed class WorkspaceAuthoringTransaction(
             return Failure(WorkspaceConflictKind.InvalidOperation, exception.Message);
         }
     }
-
-    static bool EventMigrationArraysAreDefault(WorkspaceAuthoringRequest request) => request.EventRenames.IsDefault || request.EventRevisionAdvancements.IsDefault;
-
-    static bool EventMigrationEndpointsAreMissing(WorkspaceAuthoringRequest request) =>
-        request.EventRenames.Any(rename => rename is null || rename.PreviousAddress is null || rename.CurrentAddress is null) ||
-        request.EventRevisionAdvancements.Any(advancement => advancement is null || advancement.Address is null);
 
     // A typed replacement of a keyed query's 'by' argument that changes only its name renames that one argument
     // occurrence. When the query keys a read model named by an absence assertion, this is the absence identifier
