@@ -28,7 +28,7 @@ public class when_reading_reaction_identity : Specification
     [Fact] void should_expose_exact_roles() => _identity.GetProperty("roles").EnumerateArray().Select(role => role.GetString()).ShouldContainOnly("Local", "External");
     [Fact] void should_disclose_only_cross_boundary_roles() => _identity.GetProperty("crossBoundaryRoles").EnumerateArray().Select(role => role.GetString()).ShouldContainOnly("External");
     [Fact] void should_expose_source_location() => _identity.GetProperty("location").GetProperty("line").GetInt32().ShouldEqual(11);
-    [Fact] void should_name_the_admitted_version() => _identity.GetProperty("readiness").GetString().ShouldContain("ESM v10 (claimed, unreleased)");
+    [Fact] void should_name_the_admitted_version() => _identity.GetProperty("readiness").GetString().ShouldContain("released ESM v10");
     [Fact] void should_disclose_clock_and_application_trigger_readiness() => _identity.GetProperty("readiness").GetString().ShouldContain("Clock and application triggers");
     [Fact] void should_admit_the_reaction() => _readiness.SyntaxOnly(_reaction).ShouldBeFalse();
     [Fact] void should_admit_the_model() => _readiness.ModelSyntaxOnly.ShouldBeFalse();
