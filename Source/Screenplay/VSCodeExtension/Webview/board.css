@@ -72,3 +72,9 @@ body {
     font-size: 0.75rem;
     opacity: 0.7;
 }
+
+/* A message shown in the board's place sits under the logo and toolbar frame, not behind it. */
+.screenplay-board-view .screenplay-board__message,
+.screenplay-board__failure {
+    padding-top: calc(var(--event-model-board-chrome-height, 4.75rem) + 1rem);
+}

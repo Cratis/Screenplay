@@ -5,6 +5,7 @@ import { useId, useMemo, useState, type KeyboardEvent } from 'react';
 import { dependencyKinds, type DependencyKind } from '@cratis/screenplay-compiler';
 import { layoutDependencyMap, type DependencyMap, type DependencyMapEdge, type DependencyMapPosition } from '@cratis/screenplay-event-models';
 import { DependencyMapLevel } from './DependencyMapLevel';
+import { defaultDependencyMapOptions, type DependencyMapOptions } from './DependencyMapOptions';
 import { dependencyKindLabels } from './dependencyKindLabels';
 import { visibleDependencyEdges } from './visibleDependencyEdges';
 import { groupDependencyEvidence } from './groupDependencyEvidence';
@@ -14,16 +15,19 @@ export interface DependencyMapViewProps {
     readonly selectedEdgeId?: string;
     /** Identifies which model the map shows (for example Current or Proposed). A refresh of the same model keeps the selection; a different key clears it. */
     readonly modelKey?: unknown;
+    /** The level and kinds drawn. When given, the host owns them - typically behind its View menu - and the map draws no controls of its own. */
+    readonly options?: DependencyMapOptions;
     readonly onShowSource?: (line: number, path?: string) => void;
 }
 
-const orderingKinds: readonly DependencyKind[] = ['usesFactsFrom', 'reactsTo', 'decidesFrom'];
 const nameOf = (node: DependencyMapPosition) => node.kind === 'feature' ? node.scope.join(' / ') : node.scope[0];
 
 /** The same serializable map is drawn in both hosts, without a canvas or a graph-library runtime. */
-export const DependencyMapView = ({ map, selectedEdgeId, modelKey, onShowSource }: DependencyMapViewProps) => {
-    const [level, setLevel] = useState(DependencyMapLevel.Module);
-    const [kinds, setKinds] = useState<readonly DependencyKind[]>(orderingKinds);
+export const DependencyMapView = ({ map, selectedEdgeId, modelKey, options, onShowSource }: DependencyMapViewProps) => {
+    const [own, setOwn] = useState(defaultDependencyMapOptions);
+    const { level, kinds } = options ?? own;
+    const setLevel = (next: DependencyMapLevel) => setOwn({ ...own, level: next });
+    const setKinds = (next: readonly DependencyKind[]) => setOwn({ ...own, kinds: next });
     const [selected, setSelected] = useState({ modelKey, id: selectedEdgeId });
     const [focusedKey, setFocusedKey] = useState<string | undefined>();
     const chosen = selected.modelKey === modelKey ? selected.id : undefined;
@@ -63,14 +67,14 @@ export const DependencyMapView = ({ map, selectedEdgeId, modelKey, onShowSource 
     return (
         <section className='screenplay-dependency-map' aria-label='Dependency map' onKeyDown={event => { if (event.key === 'Escape') setSelection(undefined); }}>
             <div className='screenplay-dependency-map__controls'>
-                <label>Edges between <select value={level} onChange={event => { setLevel(event.target.value as DependencyMapLevel); setSelection(undefined); }}>
+                {options === undefined && <><label>Edges between <select value={level} onChange={event => { setLevel(event.target.value as DependencyMapLevel); setSelection(undefined); }}>
                     <option value={DependencyMapLevel.Module}>Modules</option><option value={DependencyMapLevel.Feature}>Features</option>
                 </select></label>
                 <fieldset><legend>Dependency kinds</legend>{dependencyKinds.map(kind => (
                     <label key={kind}><input type='checkbox' value={kind} checked={kinds.includes(kind)} onChange={event => {
                         setKinds(event.target.checked ? [...kinds, kind] : kinds.filter(selected => selected !== kind));
                     }} />{dependencyKindLabels[kind]}</label>
-                ))}</fieldset>
+                ))}</fieldset></>}
                 <span>Consumer → producer. Dashed edges cross modules or leave the model.</span>
             </div>
             <div className='screenplay-dependency-map__drawing'>
