@@ -32,10 +32,15 @@ sealed class WorkspacePropertyAssertionProvenance(
         if (example is null) return [];
         if (expanded.Value is not { } application) return null;
         if (RelevantErrors(example, application.Diagnostics.Concat(compilationDiagnostics?.Value ?? []))) return null;
-        return application.Specifications.SelectMany(specification => specification.Steps)
-            .Where(step => (step.Role == "then" || step.Role == "then readmodel") && SameExample(step.Example, (SpecificationExampleSyntax)example.Node) && Inherits(step, mapping.Property))
-            .Select(step => step.Authored.Location).Distinct();
+        return ThenConsumers(application, (SpecificationExampleSyntax)example.Node, mapping.Property);
     }
+
+    static IEnumerable<SourceLocation> ThenConsumers(EffectiveSpecificationApplication application, SpecificationExampleSyntax example, string property) =>
+        application.Specifications.SelectMany(specification => specification.Steps)
+            .Where(step => Then(step) && SameExample(step.Example, example) && Inherits(step, property))
+            .Select(step => step.Authored.Location).Distinct();
+
+    static bool Then(EffectiveSpecificationStep step) => step.Role is "then" or "then readmodel";
 
     static string? ExampleName(SyntaxNode node) => node switch
     {
