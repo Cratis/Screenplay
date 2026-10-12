@@ -116,19 +116,23 @@ public static partial class SemanticModelCanonicalJson
     static void WriteCompliance(Utf8JsonWriter writer, SemanticConceptCompliance compliance)
     {
         writer.WriteStartObject("compliance");
-        if (compliance.Personal is { } personal)
-        {
-            writer.WriteStartObject("personal");
-            if (personal.Special is { } special) CanonicalJson.WriteString(writer, "special", special);
-            if (personal.Criminal) writer.WriteBoolean("criminal", true);
-            writer.WriteEndObject();
-        }
-        if (compliance.Secret is { } secret)
-        {
-            writer.WriteStartObject("secret");
-            if (secret.Scope is { } scope) CanonicalJson.WriteString(writer, "scope", scope);
-            writer.WriteEndObject();
-        }
+        if (compliance.Personal is { } personal) WritePersonalData(writer, personal);
+        if (compliance.Secret is { } secret) WriteSecret(writer, secret);
+        writer.WriteEndObject();
+    }
+
+    static void WritePersonalData(Utf8JsonWriter writer, SemanticPersonalData personal)
+    {
+        writer.WriteStartObject("personal");
+        if (personal.Special is { } special) CanonicalJson.WriteString(writer, "special", special);
+        if (personal.Criminal) writer.WriteBoolean("criminal", true);
+        writer.WriteEndObject();
+    }
+
+    static void WriteSecret(Utf8JsonWriter writer, SemanticSecret secret)
+    {
+        writer.WriteStartObject("secret");
+        if (secret.Scope is { } scope) CanonicalJson.WriteString(writer, "scope", scope);
         writer.WriteEndObject();
     }
 

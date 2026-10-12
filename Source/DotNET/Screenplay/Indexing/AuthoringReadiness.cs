@@ -167,22 +167,7 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
         if (_complianceRefusals.IsEmpty) return false;
         if (_complianceReadiness.TryGetValue(node, out var cached)) return cached;
         var walker = new ComplianceReadinessWalker(_complianceRefusals);
-        switch (node)
-        {
-            case ApplicationSyntax value: walker.VisitApplication(value); break;
-            case ModuleSyntax value: walker.VisitModule(value); break;
-            case FeatureSyntax value: walker.VisitFeature(value); break;
-            case SliceSyntax value: walker.VisitSlice(value); break;
-            case ConceptSyntax value: walker.VisitConcept(value); break;
-            case EventSyntax value: walker.VisitEvent(value); break;
-            case EventSourceSyntax value: walker.VisitEventSource(value); break;
-            case EventStreamSyntax value: walker.VisitEventStream(value); break;
-            case CommandSyntax value: walker.VisitCommand(value); break;
-            case ReactionSyntax value: walker.VisitReaction(value); break;
-            case ReactionTriggerSyntax value: walker.VisitReactionTrigger(value); break;
-            case ProducesSyntax value: walker.VisitProduces(value); break;
-            default: walker.VisitNode(node); break;
-        }
+        walker.Visit(node);
         _complianceReadiness[node] = walker.Unadmitted;
 
         return walker.Unadmitted;
@@ -271,6 +256,22 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
 
     sealed class ComplianceReadinessWalker(ImmutableArray<Diagnostic> refusals) : ScreenplaySyntaxWalker
     {
+        static readonly Dictionary<Type, Action<ComplianceReadinessWalker, SyntaxNode>> _visits = new()
+        {
+            [typeof(ApplicationSyntax)] = static (walker, node) => walker.VisitApplication((ApplicationSyntax)node),
+            [typeof(ModuleSyntax)] = static (walker, node) => walker.VisitModule((ModuleSyntax)node),
+            [typeof(FeatureSyntax)] = static (walker, node) => walker.VisitFeature((FeatureSyntax)node),
+            [typeof(SliceSyntax)] = static (walker, node) => walker.VisitSlice((SliceSyntax)node),
+            [typeof(ConceptSyntax)] = static (walker, node) => walker.VisitConcept((ConceptSyntax)node),
+            [typeof(EventSyntax)] = static (walker, node) => walker.VisitEvent((EventSyntax)node),
+            [typeof(EventSourceSyntax)] = static (walker, node) => walker.VisitEventSource((EventSourceSyntax)node),
+            [typeof(EventStreamSyntax)] = static (walker, node) => walker.VisitEventStream((EventStreamSyntax)node),
+            [typeof(CommandSyntax)] = static (walker, node) => walker.VisitCommand((CommandSyntax)node),
+            [typeof(ReactionSyntax)] = static (walker, node) => walker.VisitReaction((ReactionSyntax)node),
+            [typeof(ReactionTriggerSyntax)] = static (walker, node) => walker.VisitReactionTrigger((ReactionTriggerSyntax)node),
+            [typeof(ProducesSyntax)] = static (walker, node) => walker.VisitProduces((ProducesSyntax)node)
+        };
+
         internal bool Unadmitted { get; private set; }
 
         public override void VisitNode(SyntaxNode node) => Unadmitted |= refusals.Any(refusal => refusal.Location == node.Location);
@@ -279,6 +280,12 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
         {
             Unadmitted |= refusals.Any(refusal => refusal.Message.StartsWith($"Concept '{syntax.Name}'", StringComparison.Ordinal));
             base.VisitConcept(syntax);
+        }
+
+        internal void Visit(SyntaxNode node)
+        {
+            var visit = _visits.FirstOrDefault(entry => entry.Key.IsInstanceOfType(node)).Value ?? (static (walker, value) => walker.VisitNode(value));
+            visit(this, node);
         }
     }
 

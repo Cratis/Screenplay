@@ -21,15 +21,23 @@ internal static partial class SemanticModelValidator
         if (concept.Compliance is not { } compliance) return;
         if (compliance.Personal is null && compliance.Secret is null) throw new InvalidSemanticContract($"Concept '{concept.Name}' compliance requires a personal or secret marker.");
         if (!concept.Values.IsDefaultOrEmpty) throw new InvalidSemanticContract($"Enum concept '{concept.Name}' cannot carry compliance.");
-        if (compliance.Personal?.Special is { } special && !ConceptComplianceParser.SpecialCategories.Contains(special, StringComparer.Ordinal))
+        ValidatePersonalCategory(concept.Name, compliance.Personal);
+        ValidateSecretScope(concept.Name, compliance);
+    }
+
+    static void ValidatePersonalCategory(string name, SemanticPersonalData? personal)
+    {
+        if (personal?.Special is { } special && !ConceptComplianceParser.SpecialCategories.Contains(special, StringComparer.Ordinal))
         {
-            throw new InvalidSemanticContract($"Concept '{concept.Name}' has an unknown personal special category '{special}'.");
+            throw new InvalidSemanticContract($"Concept '{name}' has an unknown personal special category '{special}'.");
         }
-        if (compliance.Secret?.Scope is { } scope)
-        {
-            if (compliance.Personal is not null) throw new InvalidSemanticContract($"Concept '{concept.Name}' cannot store secret scope next to personal classification.");
-            if (scope is not ("subject" or "namespace" or "global")) throw new InvalidSemanticContract($"Concept '{concept.Name}' has an unknown secret scope '{scope}'.");
-        }
+    }
+
+    static void ValidateSecretScope(string name, SemanticConceptCompliance compliance)
+    {
+        if (compliance.Secret?.Scope is not { } scope) return;
+        if (compliance.Personal is not null) throw new InvalidSemanticContract($"Concept '{name}' cannot store secret scope next to personal classification.");
+        if (scope is not ("subject" or "namespace" or "global")) throw new InvalidSemanticContract($"Concept '{name}' has an unknown secret scope '{scope}'.");
     }
 
     private sealed partial class ValidationContext

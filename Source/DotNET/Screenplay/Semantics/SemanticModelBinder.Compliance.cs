@@ -37,12 +37,11 @@ public sealed partial class SemanticModelBinder
         bool RequiresDefaultSubject(string name, HashSet<string> visited)
         {
             if (!visited.Add(name)) return false;
-            if (syntax.Concepts.SingleOrDefault(concept => concept.Name == name) is { } concept)
-            {
-                return concept.Attributes.Any(attribute => attribute.Name == ConceptAttributeSyntax.Pii || (attribute.Name == ConceptAttributeSyntax.Sensitive && attribute.Scope == "subject"));
-            }
 
-            return (syntax.Types ?? []).SingleOrDefault(type => type.Name == name)?.Properties.Any(property => RequiresDefaultSubject(property.Type.Name, visited)) == true;
+            return syntax.Concepts.Where(concept => concept.Name == name).SelectMany(concept => concept.Attributes)
+                .Any(attribute => attribute.Name == ConceptAttributeSyntax.Pii || (attribute.Name == ConceptAttributeSyntax.Sensitive && attribute.Scope == "subject")) ||
+                (syntax.Types ?? []).Where(type => type.Name == name).SelectMany(type => type.Properties)
+                    .Any(property => RequiresDefaultSubject(property.Type.Name, visited));
         }
     }
 
