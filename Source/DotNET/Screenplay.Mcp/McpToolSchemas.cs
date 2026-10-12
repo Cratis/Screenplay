@@ -54,6 +54,13 @@ static class McpToolSchemas
                 });
         }
 
+        if (tool.Name == "propose-property")
+        {
+            schema["allOf"] = new JsonArray(
+                PropertyAction("rename", "target", "expectedName", "newName"),
+                PropertyAction("remove", "target", "expectedName"));
+        }
+
         if (tool.Name == "read-proposal")
         {
             schema["if"] = new JsonObject { ["properties"] = new JsonObject { ["view"] = McpAstSchemas.Choice("before", "after") }, ["required"] = new JsonArray("view") };
@@ -72,10 +79,23 @@ static class McpToolSchemas
         return schema;
     }
 
-    internal static JsonObject Argument(string tool, string property) => property switch
+    internal static JsonObject Argument(string tool, string property) => PropertyArgument(tool, property) ?? StandardArgument(tool, property);
+
+    static JsonObject? PropertyArgument(string tool, string property)
+    {
+        if (tool != "propose-property") return null;
+        return property switch
+        {
+            "action" => McpAstSchemas.Choice("rename", "remove"),
+            "alsoRename" or "alsoRemove" => McpAstSchemas.Array(McpAstSchemas.Object(new JsonObject { ["target"] = McpAstSchemas.Handle(), ["expectedName"] = McpAstSchemas.String() }, "target", "expectedName")),
+            _ => null
+        };
+    }
+
+    static JsonObject StandardArgument(string tool, string property) => property switch
     {
         "before" or "after" when tool == "semantic-diff" => RevisionSource(),
-        "includeTestOnly" or "includeContent" or "eventNeverPersisted" or "pinRepairEvidence" => new() { ["type"] = "boolean", ["default"] = false },
+        "includeTestOnly" or "includeContent" or "eventNeverPersisted" or "newGeneration" or "pinRepairEvidence" => new() { ["type"] = "boolean", ["default"] = false },
         "descendants" => new() { ["type"] = "boolean", ["default"] = tool != "dependencies" },
         "line" when tool == "propose-repair" => new() { ["type"] = "integer", ["minimum"] = 1 },
         "offset" => McpAstSchemas.Integer(),
@@ -111,6 +131,12 @@ static class McpToolSchemas
         "view" when tool == "read-proposal" => McpAstSchemas.Choice("changes", "before", "after", "diagnostics", "executable-diagnostics", "implementation-requirements", "typed-contexts", "dropped-comments", "semantic-diff"),
         "view" when tool == "read-ast" => McpAstSchemas.Choice("nodes", "children"),
         _ => McpAstSchemas.String()
+    };
+
+    static JsonObject PropertyAction(string action, params string[] required) => new()
+    {
+        ["if"] = new JsonObject { ["properties"] = new JsonObject { ["action"] = new JsonObject { ["const"] = action } }, ["required"] = new JsonArray("action") },
+        ["then"] = new JsonObject { ["required"] = new JsonArray([.. required.Select(name => (JsonNode?)JsonValue.Create(name))]) }
     };
 
     static JsonObject RevisionSource()

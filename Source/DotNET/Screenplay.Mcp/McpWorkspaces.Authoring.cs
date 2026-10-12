@@ -117,14 +117,9 @@ internal sealed partial class McpWorkspaces
         var response = new
         {
             success = false,
-            failureKind = result.Conflicts.FirstOrDefault()?.Kind switch
-            {
-                WorkspaceConflictKind.StaleWorkspaceRevision or WorkspaceConflictKind.StaleCatalogRevision => "StaleRevision",
-                WorkspaceConflictKind.FormattingConsentRequired => "FormattingConsentRequired",
-                WorkspaceConflictKind.UnknownRepair => "UnknownRepair",
-                _ => "ProposalRejected"
-            },
+            failureKind = AuthoringFailureKind(result),
             result.Conflicts,
+            property = DescribeProperty(result.PropertyReport),
             identityMigrationIssues = result.Conflicts.SelectMany(conflict => conflict.IdentityMigrationIssues).Select(issue => issue.Describe()),
             result.AuthoringDiagnostics,
             result.ExecutableReady,
@@ -132,6 +127,15 @@ internal sealed partial class McpWorkspaces
         };
         return McpJson.ToolResult(response, true);
     }
+
+    static string AuthoringFailureKind(WorkspaceAuthoringResult result) => result.Conflicts.FirstOrDefault()?.Kind switch
+    {
+        WorkspaceConflictKind.StaleWorkspaceRevision or WorkspaceConflictKind.StaleCatalogRevision => "StaleRevision",
+        WorkspaceConflictKind.FormattingConsentRequired => "FormattingConsentRequired",
+        WorkspaceConflictKind.UnknownRepair => "UnknownRepair",
+        { } kind when result.PropertyReport is not null => kind.ToString(),
+        _ => "ProposalRejected"
+    };
 
     static WorkspaceAuthoringResult ProposeComplianceLine(ScreenplayWorkspace workspace, WorkspaceNodeHandle subject, int line, WorkspaceAuthoringRequest request)
     {

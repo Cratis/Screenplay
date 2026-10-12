@@ -417,6 +417,7 @@ internal sealed partial class McpWorkspaces
             before = McpWorkspaceTransport.Describe(proposal.Before, includeContent),
             after = McpWorkspaceTransport.Describe(candidate, includeContent),
             moveReport = proposal is McpAuthoringProposal moved ? DescribeMove(moved.Result.MoveReport) : null,
+            property = DescribeProperty(proposal),
             changeCount = proposal.WritePlan.Entries.Length,
             stateChange = statePlan.Describe(),
             authoringDiagnosticCount = proposal is McpAuthoringProposal authored ? authored.Result.AuthoringDiagnostics.Length : 0,
@@ -531,7 +532,7 @@ internal sealed partial class McpWorkspaces
         return proposal switch
         {
             McpProposal strict => strict with { Transaction = strict.Transaction with { Workspace = refreshed } },
-            McpAuthoringProposal authored => authored with { Result = authored.Result with { Workspace = refreshed, ExecutableReady = refreshed.Compilation.Success, ExecutableDiagnostics = [.. refreshed.Compilation.Diagnostics] } },
+            McpAuthoringProposal authored => authored with { Result = authored.Result with { Workspace = refreshed, ExecutableReady = refreshed.Compilation.Success, ExecutableDiagnostics = [.. refreshed.Compilation.Diagnostics], PropertyReport = authored.Result.PropertyReport is { } report ? WorkspacePropertyReports.Readiness(authored.Before, refreshed, report) : null } },
             _ => proposal
         };
     }

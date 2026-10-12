@@ -21480,6 +21480,216 @@
       }
     },
     {
+      "name": "propose-property",
+      "requiredParameters": [
+        "action",
+        "expectedCatalogRevision",
+        "expectedRevision"
+      ],
+      "optionalParameters": [
+        "alsoRemove",
+        "alsoRename",
+        "eventNeverPersisted",
+        "expectedName",
+        "formatting",
+        "includeContent",
+        "newGeneration",
+        "newName",
+        "target",
+        "validation"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "string"
+          },
+          "expectedCatalogRevision": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "rename",
+              "remove"
+            ]
+          },
+          "target": {
+            "type": "object",
+            "properties": {
+              "revision": {
+                "type": "string"
+              },
+              "documentId": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "revision",
+              "documentId",
+              "path"
+            ],
+            "additionalProperties": false
+          },
+          "expectedName": {
+            "type": "string"
+          },
+          "newName": {
+            "type": "string"
+          },
+          "alsoRename": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "string"
+                    },
+                    "documentId": {
+                      "type": "string"
+                    },
+                    "path": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "documentId",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                },
+                "expectedName": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "target",
+                "expectedName"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 256
+          },
+          "alsoRemove": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "string"
+                    },
+                    "documentId": {
+                      "type": "string"
+                    },
+                    "path": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "documentId",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                },
+                "expectedName": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "target",
+                "expectedName"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 256
+          },
+          "newGeneration": {
+            "type": "boolean",
+            "default": false
+          },
+          "eventNeverPersisted": {
+            "type": "boolean",
+            "default": false
+          },
+          "formatting": {
+            "type": "string",
+            "enum": [
+              "CanonicalizeTouchedDocuments",
+              "PreserveExactSource",
+              "PreserveTrivia"
+            ]
+          },
+          "validation": {
+            "type": "string",
+            "enum": [
+              "Authoring",
+              "Executable"
+            ]
+          },
+          "includeContent": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "expectedCatalogRevision",
+          "action"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "action": {
+                  "const": "rename"
+                }
+              },
+              "required": [
+                "action"
+              ]
+            },
+            "then": {
+              "required": [
+                "target",
+                "expectedName",
+                "newName"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "action": {
+                  "const": "remove"
+                }
+              },
+              "required": [
+                "action"
+              ]
+            },
+            "then": {
+              "required": [
+                "target",
+                "expectedName"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "propose-rename",
       "requiredParameters": [
         "expectedCatalogRevision",

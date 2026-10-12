@@ -232,6 +232,11 @@ public sealed record WorkspaceConflict
     /// </summary>
     public PortablePlayPath? OtherPath { get; init; }
 
+    /// <summary>
+    /// Gets original property-reference evidence for a planner refusal.
+    /// </summary>
+    public ImmutableArray<WorkspacePropertyCandidate> Candidates { get; init; } = [];
+
     internal ImmutableArray<IdentityMigrationIssue> IdentityMigrationIssues { get; init; } = [];
 }
 
