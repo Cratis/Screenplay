@@ -86,9 +86,47 @@ public sealed partial class ScreenplayPrinter :
         return writer;
     }
 
+    static void WriteSection<T>(ScreenplayWriter writer, IEnumerable<T> items, Action<ScreenplayWriter, T> write)
+    {
+        foreach (var item in items)
+        {
+            writer.Blank();
+            write(writer, item);
+        }
+    }
+
+    static void WriteOptionalSection<T>(ScreenplayWriter writer, T? item, Action<ScreenplayWriter, T> write)
+        where T : class
+    {
+        if (item is not null)
+        {
+            writer.Blank();
+            write(writer, item);
+        }
+    }
+
+    static bool IsBareConcept(
+        ConceptSyntax concept,
+        List<ConceptAttributeSyntax> attributes,
+        List<ValidateSyntax> validations,
+        List<ConceptAttributeSyntax> reasoned) =>
+        !concept.IsEnum && validations.Count == 0 && reasoned.Count == 0 && concept.Description is null && concept.File is null &&
+        !attributes.Exists(HasAttributeDirective);
+
+    static bool HasAttributeDirective(ConceptAttributeSyntax attribute) =>
+        attribute.Scope is not null || attribute.SpecialCategory is not null || attribute.Criminal;
+
     void WriteApplication(ScreenplayWriter writer, ApplicationSyntax application)
     {
         using var anchor = writer.Anchor(application);
+        WriteApplicationHeader(writer, application);
+        WriteApplicationDeclarations(writer, application);
+        WriteApplicationExperience(writer, application);
+        WriteApplicationComposition(writer, application);
+    }
+
+    void WriteApplicationHeader(ScreenplayWriter writer, ApplicationSyntax application)
+    {
         if (application.Domain is not null)
         {
             writer.Line($"domain {application.Domain.Name}", application.Domain);
@@ -103,126 +141,38 @@ public sealed partial class ScreenplayPrinter :
         }
 
         WriteFileImports(writer, application.FileImports);
+    }
 
-        foreach (var system in application.Systems)
-        {
-            writer.Blank();
-            WriteSystem(writer, system);
-        }
+    void WriteApplicationDeclarations(ScreenplayWriter writer, ApplicationSyntax application)
+    {
+        WriteSection(writer, application.Systems, WriteSystem);
+        WriteSection(writer, application.EventSources, WriteEventSource);
+        WriteSection(writer, application.Concepts, WriteConcept);
+        WriteSection(writer, application.Types ?? [], WriteType);
+        WriteSection(writer, application.Purposes, WritePurpose);
+        WriteSection(writer, application.Policies, WritePolicy);
+        WriteSection(writer, application.Personas ?? [], WritePersona);
+    }
 
-        foreach (var source in application.EventSources)
-        {
-            writer.Blank();
-            WriteEventSource(writer, source);
-        }
+    void WriteApplicationExperience(ScreenplayWriter writer, ApplicationSyntax application)
+    {
+        WriteOptionalSection(writer, application.Authentication, WriteAuthentication);
+        WriteOptionalSection(writer, application.Identity, WriteIdentity);
+        WriteSection(writer, application.Themes ?? [], WriteTheme);
+        WriteSection(writer, application.Triggers ?? [], WriteTrigger);
+        WriteSection(writer, application.Behaviors, WriteBehavior);
+        WriteSection(writer, application.Layouts ?? [], WriteLayout);
+    }
 
-        foreach (var concept in application.Concepts)
-        {
-            writer.Blank();
-            WriteConcept(writer, concept);
-        }
-
-        foreach (var type in application.Types ?? [])
-        {
-            writer.Blank();
-            WriteType(writer, type);
-        }
-
-        foreach (var purpose in application.Purposes)
-        {
-            writer.Blank();
-            WritePurpose(writer, purpose);
-        }
-
-        foreach (var policy in application.Policies)
-        {
-            writer.Blank();
-            WritePolicy(writer, policy);
-        }
-
-        foreach (var persona in application.Personas ?? [])
-        {
-            writer.Blank();
-            WritePersona(writer, persona);
-        }
-
-        if (application.Authentication is not null)
-        {
-            writer.Blank();
-            WriteAuthentication(writer, application.Authentication);
-        }
-
-        if (application.Identity is not null)
-        {
-            writer.Blank();
-            WriteIdentity(writer, application.Identity);
-        }
-
-        foreach (var theme in application.Themes ?? [])
-        {
-            writer.Blank();
-            WriteTheme(writer, theme);
-        }
-
-        foreach (var trigger in application.Triggers ?? [])
-        {
-            writer.Blank();
-            WriteTrigger(writer, trigger);
-        }
-
-        foreach (var behavior in application.Behaviors)
-        {
-            writer.Blank();
-            WriteBehavior(writer, behavior);
-        }
-
-        foreach (var layout in application.Layouts ?? [])
-        {
-            writer.Blank();
-            WriteLayout(writer, layout);
-        }
-
-        foreach (var exposure in application.Exposures)
-        {
-            writer.Blank();
-            WriteExposure(writer, exposure);
-        }
-
-        foreach (var instance in application.InstanceContributions)
-        {
-            writer.Blank();
-            WriteInstanceContributions(writer, instance);
-        }
-
-        foreach (var uiProfile in application.UiProfiles ?? [])
-        {
-            writer.Blank();
-            WriteUiProfile(writer, uiProfile);
-        }
-
-        foreach (var template in application.Templates)
-        {
-            writer.Blank();
-            WriteTemplateAssignment(writer, template);
-        }
-
-        foreach (var example in application.Examples)
-        {
-            writer.Blank();
-            WriteSpecificationExample(writer, example);
-        }
-
-        foreach (var module in application.Modules)
-        {
-            writer.Blank();
-            WriteModule(writer, module);
-        }
-
-        foreach (var seed in application.Seeds ?? [])
-        {
-            writer.Blank();
-            WriteSeed(writer, seed);
-        }
+    void WriteApplicationComposition(ScreenplayWriter writer, ApplicationSyntax application)
+    {
+        WriteSection(writer, application.Exposures, WriteExposure);
+        WriteSection(writer, application.InstanceContributions, WriteInstanceContributions);
+        WriteSection(writer, application.UiProfiles ?? [], WriteUiProfile);
+        WriteSection(writer, application.Templates, WriteTemplateAssignment);
+        WriteSection(writer, application.Examples, WriteSpecificationExample);
+        WriteSection(writer, application.Modules, WriteModule);
+        WriteSection(writer, application.Seeds ?? [], WriteSeed);
     }
 
     void WriteAuthentication(ScreenplayWriter writer, AuthenticationSyntax authentication)
@@ -255,48 +205,45 @@ public sealed partial class ScreenplayPrinter :
                 writer.DirectiveLine($"target size {uiProfile.DefaultSizeClass}", uiProfile, "target size");
             }
 
-            var packages = uiProfile.Packages.ToList();
-            if (packages.Count > 0)
-            {
-                writer.Blank();
-                writer.DirectiveLine("packages", uiProfile, "packages");
-                using (writer.Indent())
-                {
-                    for (var index = 0; index < packages.Count; index++)
-                    {
-                        writer.DirectiveLine(packages[index], uiProfile, DirectiveLocationKeys.ForValue("package", packages, index));
-                    }
-                }
-            }
+            WriteUiProfileList(writer, uiProfile, ("packages", "package"), [.. uiProfile.Packages]);
+            WriteUiProfileList(writer, uiProfile, ("icons", "icon"), [.. uiProfile.Icons]);
+            WriteUiProfileAppearance(writer, uiProfile);
+        }
+    }
 
-            var icons = uiProfile.Icons.ToList();
-            if (icons.Count > 0)
-            {
-                writer.Blank();
-                writer.DirectiveLine("icons", uiProfile, "icons");
-                using (writer.Indent())
-                {
-                    for (var index = 0; index < icons.Count; index++)
-                    {
-                        writer.DirectiveLine(icons[index], uiProfile, DirectiveLocationKeys.ForValue("icon", icons, index));
-                    }
-                }
-            }
+    void WriteUiProfileList(ScreenplayWriter writer, UiProfileSyntax uiProfile, (string Heading, string ItemKey) names, List<string> items)
+    {
+        if (items.Count == 0)
+        {
+            return;
+        }
 
-            if (uiProfile.Layout is not null || uiProfile.Theme is not null)
+        writer.Blank();
+        writer.DirectiveLine(names.Heading, uiProfile, names.Heading);
+        using (writer.Indent())
+        {
+            for (var index = 0; index < items.Count; index++)
             {
-                writer.Blank();
+                writer.DirectiveLine(items[index], uiProfile, DirectiveLocationKeys.ForValue(names.ItemKey, items, index));
             }
+        }
+    }
 
-            if (uiProfile.Layout is not null)
-            {
-                writer.DirectiveLine($"layout {uiProfile.Layout}", uiProfile, "layout");
-            }
+    void WriteUiProfileAppearance(ScreenplayWriter writer, UiProfileSyntax uiProfile)
+    {
+        if (uiProfile.Layout is not null || uiProfile.Theme is not null)
+        {
+            writer.Blank();
+        }
 
-            if (uiProfile.Theme is not null)
-            {
-                writer.DirectiveLine($"theme {uiProfile.Theme}", uiProfile, "theme");
-            }
+        if (uiProfile.Layout is not null)
+        {
+            writer.DirectiveLine($"layout {uiProfile.Layout}", uiProfile, "layout");
+        }
+
+        if (uiProfile.Theme is not null)
+        {
+            writer.DirectiveLine($"theme {uiProfile.Theme}", uiProfile, "theme");
         }
     }
 
@@ -413,7 +360,7 @@ public sealed partial class ScreenplayPrinter :
         writer.Line($"concept {concept.Name} : {concept.Type}{string.Concat(attributes.Select(attribute => $" {Parsing.ConceptComplianceParser.CanonicalName(attribute.Name)}"))}");
         var validations = concept.Validations?.ToList() ?? [];
         var reasoned = attributes.Where(attribute => attribute.Reason is not null).ToList();
-        if (!concept.IsEnum && validations.Count == 0 && reasoned.Count == 0 && concept.Description is null && concept.File is null && !attributes.Exists(attribute => attribute.Scope is not null || attribute.SpecialCategory is not null || attribute.Criminal))
+        if (IsBareConcept(concept, attributes, validations, reasoned))
         {
             return;
         }
@@ -430,26 +377,36 @@ public sealed partial class ScreenplayPrinter :
 
             foreach (var attribute in attributes)
             {
-                if (attribute.Scope is not null) writer.DirectiveLine($"secret scope {attribute.Scope}", concept, "scope:sensitive");
-                if (attribute.SpecialCategory is not null) writer.DirectiveLine($"pii special {attribute.SpecialCategory}", concept, "special:pii");
-                if (attribute.Criminal) writer.DirectiveLine("pii criminal", concept, "criminal:pii");
+                WriteAttributeDirectives(writer, concept, attribute);
             }
 
             if (concept.IsEnum)
             {
-                var values = concept.Values.ToList();
-                var numbers = concept.ValueNumbers?.ToArray();
-                for (var index = 0; index < values.Count; index++)
-                {
-                    var number = numbers is null ? string.Empty : $" = {numbers[index].ToString(System.Globalization.CultureInfo.InvariantCulture)}";
-                    writer.DirectiveLine(ReservedWords.Escape(values[index], ReservedWords.ConceptBody) + number, concept, DirectiveLocationKeys.ForValue("value", values, index));
-                }
+                WriteEnumValues(writer, concept);
             }
 
             foreach (var validation in validations)
             {
                 WriteValidate(writer, validation, impliedSubject: true);
             }
+        }
+    }
+
+    void WriteAttributeDirectives(ScreenplayWriter writer, ConceptSyntax concept, ConceptAttributeSyntax attribute)
+    {
+        if (attribute.Scope is not null) writer.DirectiveLine($"secret scope {attribute.Scope}", concept, "scope:sensitive");
+        if (attribute.SpecialCategory is not null) writer.DirectiveLine($"pii special {attribute.SpecialCategory}", concept, "special:pii");
+        if (attribute.Criminal) writer.DirectiveLine("pii criminal", concept, "criminal:pii");
+    }
+
+    void WriteEnumValues(ScreenplayWriter writer, ConceptSyntax concept)
+    {
+        var values = concept.Values.ToList();
+        var numbers = concept.ValueNumbers?.ToArray();
+        for (var index = 0; index < values.Count; index++)
+        {
+            var number = numbers is null ? string.Empty : $" = {numbers[index].ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+            writer.DirectiveLine(ReservedWords.Escape(values[index], ReservedWords.ConceptBody) + number, concept, DirectiveLocationKeys.ForValue("value", values, index));
         }
     }
 
@@ -663,11 +620,7 @@ public sealed partial class ScreenplayPrinter :
         {
             foreach (var column in layout.Columns)
             {
-                var text = $"column {column.Index}";
-                if (column.Width is not null) text += $" width {WriteFormWidth(column.Width)}";
-                if (column.MinWidth is not null) text += $" min {WriteFormWidth(column.MinWidth)}";
-                if (column.MaxWidth is not null) text += $" max {WriteFormWidth(column.MaxWidth)}";
-                writer.Line(text, column);
+                writer.Line(WriteFormLayoutColumn(column), column);
             }
 
             if (layout.ColumnGap is not null)
@@ -682,13 +635,27 @@ public sealed partial class ScreenplayPrinter :
 
             foreach (var placement in layout.Placements)
             {
-                var text = $"place {placement.Field} row {placement.Row} column {placement.Column}";
-                if (placement.RowSpan is not null) text += $" rowSpan {placement.RowSpan}";
-                if (placement.ColumnSpan is not null) text += $" columnSpan {placement.ColumnSpan}";
-                if (placement.Width is not null) text += $" width {WriteFormWidth(placement.Width)}";
-                writer.Line(text, placement);
+                writer.Line(WriteFormPlacement(placement), placement);
             }
         }
+    }
+
+    string WriteFormLayoutColumn(FormLayoutColumnSyntax column)
+    {
+        var text = $"column {column.Index}";
+        if (column.Width is not null) text += $" width {WriteFormWidth(column.Width)}";
+        if (column.MinWidth is not null) text += $" min {WriteFormWidth(column.MinWidth)}";
+        if (column.MaxWidth is not null) text += $" max {WriteFormWidth(column.MaxWidth)}";
+        return text;
+    }
+
+    string WriteFormPlacement(FormFieldPlacementSyntax placement)
+    {
+        var text = $"place {placement.Field} row {placement.Row} column {placement.Column}";
+        if (placement.RowSpan is not null) text += $" rowSpan {placement.RowSpan}";
+        if (placement.ColumnSpan is not null) text += $" columnSpan {placement.ColumnSpan}";
+        if (placement.Width is not null) text += $" width {WriteFormWidth(placement.Width)}";
+        return text;
     }
 
     string WriteFormWidth(FormWidthSyntax width) => width.Unit switch
@@ -728,262 +695,6 @@ public sealed partial class ScreenplayPrinter :
 
         return head;
     }
-
-    void WriteLayout(ScreenplayWriter writer, LayoutSyntax layout)
-    {
-        using var anchor = writer.Anchor(layout);
-        writer.Line($"layout {layout.Name}");
-        using (writer.Indent())
-        {
-            WriteTemplateMetadata(writer, layout.Category, layout.TemplateType, layout.Exposes, layout.Outlets);
-            WriteTemplateScopes(writer, layout.RestrictsScopes, layout.Scopes);
-            WriteSlots(writer, layout.Slots);
-            WriteArrangement(writer, layout.Arrangement);
-            WriteAttachments(writer, layout.Behaviors, layout.UsedBehaviors);
-        }
-    }
-
-    void WriteScreenTemplate(ScreenplayWriter writer, ScreenTemplateSyntax template)
-    {
-        using var anchor = writer.Anchor(template);
-        writer.Line($"screen template {template.Name}");
-        using (writer.Indent())
-        {
-            if (template.FitsSlot is not null)
-            {
-                writer.FitsSlotLine($"fits slot {template.FitsSlot}", template);
-                writer.Blank();
-            }
-
-            WriteTemplateMetadata(writer, template.Category, template.TemplateType, template.Exposes, template.Outlets);
-            WriteTemplatePicker(writer, template.DisplayName, template.Description, template.RestrictsScopes, template.Scopes);
-            WriteSlots(writer, template.Slots);
-            WriteTemplateContent(writer, template.Content);
-            WriteArrangement(writer, template.Arrangement);
-            WriteAttachments(writer, template.Behaviors, template.UsedBehaviors);
-        }
-    }
-
-    void WriteDialogTemplate(ScreenplayWriter writer, DialogTemplateSyntax template)
-    {
-        using var anchor = writer.Anchor(template);
-        writer.Line($"dialog template {template.Name}");
-        using (writer.Indent())
-        {
-            WriteTemplateMetadata(writer, template.Category, template.TemplateType, template.Exposes, template.Outlets);
-            WriteTemplatePicker(writer, template.DisplayName, template.Description, template.RestrictsScopes, template.Scopes);
-            WriteSlots(writer, template.Slots);
-            WriteTemplateContent(writer, template.Content);
-            WriteArrangement(writer, template.Arrangement);
-            WriteAttachments(writer, template.Behaviors, template.UsedBehaviors);
-        }
-    }
-
-    void WriteTemplateMetadata(
-        ScreenplayWriter writer,
-        string? category,
-        string? templateType,
-        IEnumerable<TemplateExposedValueSyntax> exposes,
-        IEnumerable<TemplateOutletSyntax> outlets)
-    {
-        if (category is not null)
-        {
-            writer.Line($"category {category}");
-        }
-
-        if (templateType is not null)
-        {
-            writer.Line($"type {templateType}");
-        }
-
-        foreach (var exposed in exposes)
-        {
-            writer.Line(
-                exposed.Type is null
-                    ? $"exposes {exposed.Name}"
-                    : $"exposes {exposed.Name} {ScreenplaySyntaxText.TypeRef(exposed.Type)}",
-                exposed);
-        }
-
-        foreach (var outlet in outlets)
-        {
-            writer.Line($"outlet {outlet.Name}", outlet);
-        }
-    }
-
-    /// <summary>
-    /// Writes every slot the structure declares, one per line.
-    /// </summary>
-    /// <param name="writer">The <see cref="ScreenplayWriter"/> to write to.</param>
-    /// <param name="slots">The <see cref="SlotSyntax">slots</see> to write.</param>
-    /// <remarks>
-    /// Every slot is written, including one only an arrangement named - so a printed document always states
-    /// its slots explicitly, and says each of them exactly once.
-    /// </remarks>
-    void WriteSlots(ScreenplayWriter writer, IEnumerable<SlotSyntax> slots)
-    {
-        foreach (var slot in slots)
-        {
-            writer.Line(slot.Contributes is null ? slot.Name : $"{slot.Name} contributes {slot.Contributes}", slot);
-        }
-    }
-
-    void WriteArrangement(ScreenplayWriter writer, ArrangementSyntax? arrangement)
-    {
-        if (arrangement is null)
-        {
-            return;
-        }
-
-        writer.Blank();
-        using var anchor = writer.Anchor(arrangement);
-        writer.Line(arrangement.Mode == ArrangementMode.Freeform ? "arrangement freeform" : "arrangement flow");
-        using (writer.Indent())
-        {
-            if (arrangement.Mode == ArrangementMode.Freeform)
-            {
-                var first = true;
-                foreach (var variant in arrangement.Variants ?? [])
-                {
-                    if (!first)
-                    {
-                        writer.Blank();
-                    }
-
-                    first = false;
-                    WriteVariant(writer, variant);
-                }
-
-                return;
-            }
-
-            if (arrangement.Root is not null)
-            {
-                WriteArrangementChildren(writer, arrangement.Root);
-            }
-
-            foreach (var arrangementOverride in arrangement.Overrides ?? [])
-            {
-                writer.Blank();
-                WriteArrangementOverride(writer, arrangementOverride);
-            }
-        }
-    }
-
-    void WriteArrangementChildren(ScreenplayWriter writer, ArrangementNodeSyntax node)
-    {
-        if (node is ArrangementContainerSyntax { Kind: ArrangementContainerKind.Flat } flat)
-        {
-            foreach (var child in flat.Children)
-            {
-                WriteArrangementNode(writer, child);
-            }
-
-            return;
-        }
-
-        WriteArrangementNode(writer, node);
-    }
-
-    void WriteArrangementNode(ScreenplayWriter writer, ArrangementNodeSyntax node)
-    {
-        using var anchor = writer.Anchor(node);
-        switch (node)
-        {
-            case ArrangementSlotSyntax slot:
-                writer.Line(WriteArrangementSlotLine(slot));
-                break;
-            case ArrangementContainerSyntax container:
-                var keyword = container.Kind switch
-                {
-                    ArrangementContainerKind.Row => "row",
-                    ArrangementContainerKind.Column => "column",
-                    ArrangementContainerKind.Grid => "grid",
-                    _ => throw new UnsupportedSyntaxForPrinting("nested arrangement container kind", container.Kind.ToString()),
-                };
-                writer.Line(WriteArrangementContainerLine(keyword, container));
-                using (writer.Indent())
-                {
-                    foreach (var child in container.Children)
-                    {
-                        WriteArrangementNode(writer, child);
-                    }
-                }
-
-                break;
-            default:
-                throw new UnsupportedSyntaxForPrinting("arrangement node", node.GetType().Name);
-        }
-    }
-
-    void WriteArrangementOverride(ScreenplayWriter writer, ArrangementOverrideSyntax arrangementOverride)
-    {
-        using var anchor = writer.Anchor(arrangementOverride);
-        writer.Line($"when {WriteOverrideCondition(arrangementOverride)}");
-        using (writer.Indent())
-        {
-            WriteArrangementChildren(writer, arrangementOverride.Root);
-        }
-    }
-
-    void WriteVariant(ScreenplayWriter writer, VariantSyntax variant)
-    {
-        using var anchor = writer.Anchor(variant);
-        writer.Line($"variant width {variant.Width}, height {variant.Height}");
-        using (writer.Indent())
-        {
-            foreach (var place in variant.Places)
-            {
-                writer.Line(WritePlaceLine(place), place);
-            }
-        }
-    }
-
-    string WriteArrangementSlotLine(ArrangementSlotSyntax slot)
-    {
-        var line = slot.Name;
-        if (slot.Width is not null)
-        {
-            line += $" width {slot.Width}";
-        }
-
-        if (slot.Height is not null)
-        {
-            line += $" height {slot.Height}";
-        }
-
-        if (slot.Grow)
-        {
-            line += slot.GrowFactor is null ? " grow" : $" grow {WriteNumber(slot.GrowFactor.Value)}";
-        }
-
-        if (slot.Span is not null)
-        {
-            line += $" span {slot.Span}";
-        }
-
-        return line;
-    }
-
-    string WriteOverrideCondition(ArrangementOverrideSyntax arrangementOverride)
-    {
-        if (arrangementOverride.Width is not null && arrangementOverride.Height is not null)
-        {
-            return $"width {arrangementOverride.Width}, height {arrangementOverride.Height}";
-        }
-
-        if (arrangementOverride.Width is not null)
-        {
-            return $"width {arrangementOverride.Width}";
-        }
-
-        return $"height {arrangementOverride.Height}";
-    }
-
-    string WritePlaceLine(PlaceSyntax place) =>
-        place.Hidden
-            ? $"place {place.SlotName} hidden"
-            : $"place {place.SlotName} at {place.X},{place.Y} size {place.SizeWidth},{place.SizeHeight}";
 
     void WriteFeature(ScreenplayWriter writer, FeatureSyntax feature)
     {
