@@ -11,6 +11,11 @@ internal sealed partial class McpRecoveryJournal
     internal string NotesBackup => OperationPath(_root, Record.OperationId, "notes-backup");
     internal string NotesRestoreStage => OperationPath(_root, Record.OperationId, "notes-rollback");
 
+    internal void VerifyNotes(bool applied)
+    {
+        if (Record.Notes is { } notes) _files.Verify(ModelNotesStore.FileName, applied ? notes.After : notes.Before);
+    }
+
     static int JournalVersion(IMcpProposal proposal) => proposal is McpNotesProposal ? 2 : 1;
 
     static McpNotesJournal? NotesRecord(IMcpProposal proposal, McpManagedFiles files)
@@ -18,13 +23,6 @@ internal sealed partial class McpRecoveryJournal
         if (proposal is not McpNotesProposal notes) return null;
         var access = notes.Notes.Before is null ? null : McpRecoveryAccess.Capture(".screenplay/notes.json", files.PathFor(ModelNotesStore.FileName));
         return new(notes.Notes.Before, notes.Notes.After, access);
-    }
-
-    void VerifyNotesAccess() => Record.Notes?.Access?.Verify(_files.PathFor(ModelNotesStore.FileName));
-
-    internal void VerifyNotes(bool applied)
-    {
-        if (Record.Notes is { } notes) _files.Verify(ModelNotesStore.FileName, applied ? notes.After : notes.Before);
     }
 
     static void RequireJournalVersion(McpRecoveryRecord record)
@@ -84,4 +82,6 @@ internal sealed partial class McpRecoveryJournal
         DeleteKnown(NotesBackup, notes.Before);
         DeleteKnown(NotesRestoreStage, notes.Before);
     }
+
+    void VerifyNotesAccess() => Record.Notes?.Access?.Verify(_files.PathFor(ModelNotesStore.FileName));
 }

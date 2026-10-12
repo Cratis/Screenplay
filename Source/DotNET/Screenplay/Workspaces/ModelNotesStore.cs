@@ -36,7 +36,9 @@ public static class ModelNotesStore
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+#if NET9_0_OR_GREATER
         RespectRequiredConstructorParameters = true
+#endif
     };
 
     /// <summary>

@@ -14,6 +14,8 @@ public sealed class InvalidModelNotes(string message) : Exception(message);
 
 internal static class ModelNotesValidation
 {
+    static readonly string[] _urlSchemes = ["http", "https"];
+
     static readonly string[] _modelEvidence = ["specification", "description"];
 
     internal static void Document(ModelNotesDocument document)
@@ -155,7 +157,7 @@ internal static class ModelNotesValidation
     static void Url(string value)
     {
         if (!Uri.TryCreate(value, UriKind.Absolute, out var uri)) throw new InvalidModelNotes("Reference URLs must be absolute HTTP(S) URLs.");
-        if (!new[] { "http", "https" }.Contains(uri.Scheme, StringComparer.Ordinal)) throw new InvalidModelNotes("Reference URLs must be absolute HTTP(S) URLs.");
+        if (!_urlSchemes.Contains(uri.Scheme, StringComparer.Ordinal)) throw new InvalidModelNotes("Reference URLs must be absolute HTTP(S) URLs.");
     }
 
     static void Address(ModelNotesAddress address)
