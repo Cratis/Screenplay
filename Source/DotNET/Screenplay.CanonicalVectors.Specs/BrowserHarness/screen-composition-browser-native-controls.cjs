@@ -39,6 +39,11 @@ const nativeComment = {
     id: '44444444-4444-4444-4444-444444444444',
     text: 'Added through native browser form'
 };
+// Seeded only for the guarded-action scenario, which closes it, so no other assertion depends on its state.
+const guardedWorkItem = {
+    id: '55555555-5555-5555-5555-555555555555',
+    title: 'Guarded close candidate'
+};
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -735,6 +740,107 @@ async function assertNavigationAndAssets(page, result) {
     }
 }
 
+async function guardedWorkItemRow(page) {
+    await page.goto(`${baseUrl}/#/WorkItemList`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    // WorkItemDetails shows the list too, but without the double-click bindings; wait until it is the List screen.
+    await page.getByText('Select a work item', { exact: false }).first().waitFor({ timeout: 10_000 });
+    const row = page.getByText(guardedWorkItem.title, { exact: false }).first();
+    await row.waitFor({ timeout: 10_000 });
+    return row;
+}
+
+// The authored Close action is guarded (`when item.status == "open" execute CloseWorkItem ... otherwise hidden`) and the
+// row's double-click is guarded the same way. Exercises both on the live Stage runtime, the scenario Stage runs against a
+// generated application: double-click on an open row navigates, Close is offered only while the item is open and posts
+// CloseWorkItem for it, after which Close disappears and double-click runs the otherwise branch.
+async function assertGuardedActions(page, result, network) {
+    const notice = 'This work item is closed';
+    await postJson('/api/workspaces/tracking/create-work-item/create-work-item', { workItemId: guardedWorkItem.id, title: guardedWorkItem.title });
+
+    try {
+        await (await guardedWorkItemRow(page)).dblclick();
+    } catch (error) {
+        block(result, 'browser.guarded.doubleClick.open.navigates', `the seeded open item is not in the list: ${error.message}`);
+        return;
+    }
+
+    await page.waitForTimeout(1_000);
+    if (page.url().includes('WorkItemDetails') && page.url().includes(guardedWorkItem.id)) record(result, 'browser.guarded.doubleClick.open.navigates', 'passed', page.url());
+    else block(result, 'browser.guarded.doubleClick.open.navigates', `double-click on an open item stayed at ${page.url()}`);
+    if (await page.getByText(notice, { exact: false }).count() === 0) record(result, 'browser.guarded.doubleClick.open.noNotice', 'passed');
+    else block(result, 'browser.guarded.doubleClick.open.noNotice', 'the otherwise branch ran for an open item');
+
+    await page.goto(`${baseUrl}/#/WorkItemDetails?workItemId=${guardedWorkItem.id}`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    const close = page.getByRole('button', { name: /^close$/i });
+    try {
+        await close.first().waitFor({ timeout: 10_000 });
+        record(result, 'browser.guarded.close.offeredWhileOpen', 'passed');
+    } catch {
+        block(result, 'browser.guarded.close.offeredWhileOpen', 'no Close control for the open item');
+        return;
+    }
+
+    if (!(await close.first().isEnabled())) {
+        block(result, 'browser.guarded.close.enabledWhileOpen', `Close is disabled for the open item: ${await close.first().getAttribute('title')}`);
+        return;
+    }
+
+    record(result, 'browser.guarded.close.enabledWhileOpen', 'passed');
+
+    const before = commandRequests(network, 'close-work-item').length;
+    await close.first().click();
+    await page.waitForTimeout(2_000);
+    const posts = commandRequests(network, 'close-work-item').slice(before);
+    if (posts.length === 1 && requestContainsWorkItem(posts[0], guardedWorkItem)) record(result, 'browser.guarded.close.postsForItem', 'passed', posts[0].postData ?? posts[0].url);
+    else block(result, 'browser.guarded.close.postsForItem', `expected one CloseWorkItem for the item, got ${JSON.stringify(posts.map(_ => _.postData ?? _.url))}`);
+
+    await page.goto(`${baseUrl}/#/WorkItemDetails?workItemId=${guardedWorkItem.id}`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    const details = await page.request.get(`${baseUrl}/api/workspaces/tracking/work-item-details/get-work-item?workItemId=${guardedWorkItem.id}`);
+    const status = (await details.json().catch(() => ({})))?.data?.status;
+    // The backend sends an enumeration as its ordinal, so closed is 1; a name is accepted too.
+    if ([1, 'closed', 'Closed'].includes(status)) record(result, 'browser.guarded.close.projectsClosed', 'passed', String(status));
+    else block(result, 'browser.guarded.close.projectsClosed', `the item's status after Close is ${JSON.stringify(status)}`);
+    if (await page.getByRole('button', { name: /^close$/i }).count() === 0) record(result, 'browser.guarded.close.hiddenOnceClosed', 'passed');
+    else block(result, 'browser.guarded.close.hiddenOnceClosed', 'Close is still offered for the closed item');
+
+    await (await guardedWorkItemRow(page)).dblclick();
+    await expectText(page, result, 'browser.guarded.doubleClick.closed.notifies', notice);
+    if (!page.url().includes(guardedWorkItem.id)) record(result, 'browser.guarded.doubleClick.closed.staysOnList', 'passed', page.url());
+    else block(result, 'browser.guarded.doubleClick.closed.staysOnList', `double-click on the closed item navigated to ${page.url()}`);
+}
+
+// Selecting a row and clearing it are history entries: back restores the selection, forward clears it again, and a refresh
+// on the selected address restores the selection from the address alone (the deep link) with its comment.
+async function assertBrowserHistory(page, result) {
+    await page.goto(`${baseUrl}/#/WorkItemList`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    await page.waitForTimeout(2_000);
+    // B may have been renamed by the earlier dialog scenario, so the row is found by the title the projection shows now.
+    if (!await selectWorkItem(page, result, 'browser.history.select', workItemB)) return;
+    await page.getByText('Clear selection', { exact: true }).click();
+    await page.waitForTimeout(1_000);
+
+    // Same-document hash navigation resolves goBack and goForward to null; the address and the page are what is asserted.
+    await page.goBack({ waitUntil: 'domcontentloaded', timeout: 10_000 }).catch(() => null);
+    await page.waitForTimeout(1_000);
+    if (page.url().includes(workItemB.id) && await page.getByText('Clear selection', { exact: true }).count() > 0) record(result, 'browser.history.back.restoresSelection', 'passed', page.url());
+    else block(result, 'browser.history.back.restoresSelection', `back did not restore the selection of B: ${page.url()}`);
+    await expectText(page, result, 'browser.history.back.restoresComments', workItemB.comment);
+
+    await page.goForward({ waitUntil: 'domcontentloaded', timeout: 10_000 }).catch(() => null);
+    await page.waitForTimeout(1_000);
+    if (!page.url().includes(workItemB.id) && await page.getByText('Clear selection', { exact: true }).count() === 0) record(result, 'browser.history.forward.clearsSelection', 'passed', page.url());
+    else block(result, 'browser.history.forward.clearsSelection', `forward did not clear the selection: ${page.url()}`);
+
+    await page.goBack({ waitUntil: 'domcontentloaded', timeout: 10_000 }).catch(() => null);
+    await page.waitForTimeout(1_000);
+    await page.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 });
+    await page.waitForTimeout(2_000);
+    if (page.url().includes(workItemB.id)) record(result, 'browser.history.refresh.keepsAddress', 'passed', page.url());
+    else block(result, 'browser.history.refresh.keepsAddress', `refresh lost the selected address: ${page.url()}`);
+    await expectText(page, result, 'browser.history.refresh.restoresSelection', 'Clear selection');
+    await expectText(page, result, 'browser.history.refresh.restoresComments', workItemB.comment);
+}
+
 async function runBrowserFlow(result) {
     const { chromium } = require('playwright');
     const browser = await chromium.launch({ headless: true });
@@ -772,6 +878,8 @@ async function runBrowserFlow(result) {
     await assertAddComment(page, result, network);
     await assertNavigationAndAssets(page, result);
     await assertAuthoredToolbarAndHierarchy(page, result);
+    await assertBrowserHistory(page, result);
+    await assertGuardedActions(page, result, network);
 
     result.network = responses.filter(response => response.url.includes('/api/') || response.url.includes('/stage/'));
     result.commandRequests = network.requests.filter(request => request.method === 'POST' && request.url.includes('/api/'));
