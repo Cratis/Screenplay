@@ -25,6 +25,7 @@ internal sealed partial class WorkspacePropertyLinks
     readonly Dictionary<AuthoredDeclaration, AuthoredDeclaration[]> _properties = new(ReferenceEqualityComparer.Instance);
     readonly List<WorkspacePropertyLink> _links = [];
     readonly List<WorkspacePropertyProjectionEffect> _projectionEffects = [];
+    readonly List<WorkspacePropertyFeed> _additionFeeds = [];
 
     internal WorkspacePropertyLinks(WorkspaceSyntaxIndex index)
         : this(index.Entries, new AuthoringSnapshot(index.Workspace.Documents).Index)
@@ -46,6 +47,8 @@ internal sealed partial class WorkspacePropertyLinks
         IndexInteractions();
         IndexCompleteness();
     }
+
+    internal IEnumerable<WorkspacePropertyFeed> AdditionFeeds => _additionFeeds;
 
     internal IEnumerable<WorkspacePropertyLink> Links => _links;
     internal IEnumerable<WorkspacePropertyProjectionEffect> ProjectionEffects => _projectionEffects;
@@ -75,6 +78,10 @@ internal sealed partial class WorkspacePropertyLinks
             }
         }
     }
+
+    internal AuthoredDeclaration[] AdditionOwners(WorkspaceSyntaxEntry entry) => FixtureOwner(entry);
+    internal string AdditionFixtureRole(WorkspaceSyntaxEntry entry) => FixtureRole(entry);
+    internal AuthoredDeclaration? AdditionOwner(WorkspaceSyntaxEntry entry) => Owner(entry);
 
     internal AuthoredDeclaration[] Find(string address) => [.. _properties.Values.SelectMany(properties => properties).Where(property => property.Address == address)];
 

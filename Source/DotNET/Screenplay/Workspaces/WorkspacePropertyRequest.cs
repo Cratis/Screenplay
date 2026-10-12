@@ -14,7 +14,7 @@ namespace Cratis.Screenplay.Workspaces;
 public sealed record WorkspacePropertySelection(WorkspaceNodeHandle Target, string ExpectedName);
 
 /// <summary>
-/// Requests a safe rename or removal of explicitly selected properties on one resolved mapping chain.
+/// Requests a safe add, rename or removal of explicitly selected properties on one resolved mapping chain.
 /// </summary>
 public sealed record WorkspacePropertyRequest
 {
@@ -29,19 +29,54 @@ public sealed record WorkspacePropertyRequest
     public required CatalogRevision ExpectedCatalogRevision { get; init; }
 
     /// <summary>
-    /// Gets the action, rename or remove.
+    /// Gets the action, add, rename or remove.
     /// </summary>
     public required string Action { get; init; }
 
     /// <summary>
     /// Gets the original property occurrence.
     /// </summary>
-    public required WorkspaceNodeHandle Target { get; init; }
+    public WorkspaceNodeHandle? Target { get; init; }
 
     /// <summary>
     /// Gets the exact original name.
     /// </summary>
-    public required string ExpectedName { get; init; }
+    public string? ExpectedName { get; init; }
+
+    /// <summary>
+    /// Gets the declaration receiving an added property.
+    /// </summary>
+    public WorkspaceNodeHandle? Owner { get; init; }
+
+    /// <summary>
+    /// Gets the exact original owner name for add.
+    /// </summary>
+    public string? ExpectedOwnerName { get; init; }
+
+    /// <summary>
+    /// Gets the added property's unqualified name.
+    /// </summary>
+    public string? Name { get; init; }
+
+    /// <summary>
+    /// Gets the added property's authored type text.
+    /// </summary>
+    public string? Type { get; init; }
+
+    /// <summary>
+    /// Gets whether the added property is optional.
+    /// </summary>
+    public bool Optional { get; init; }
+
+    /// <summary>
+    /// Gets explicitly selected property and mapping additions on the owner's chain.
+    /// </summary>
+    public ImmutableArray<WorkspacePropertyHop> Hops { get; init; } = [];
+
+    /// <summary>
+    /// Gets literal source text to add to every required fixture and assertion.
+    /// </summary>
+    public string? FixtureValue { get; init; }
 
     /// <summary>
     /// Gets the new unqualified name for rename.

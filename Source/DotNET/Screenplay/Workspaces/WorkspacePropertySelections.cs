@@ -15,7 +15,7 @@ sealed class WorkspacePropertySelections(WorkspaceSyntaxIndex index, WorkspacePr
 
     internal WorkspacePropertyRefusal? Resolve()
     {
-        var first = new WorkspacePropertySelection(request.Target, request.ExpectedName);
+        var first = new WorkspacePropertySelection(request.Target!, request.ExpectedName!);
         var additional = request.Action == "rename" ? request.AlsoRename : request.AlsoRemove;
         foreach (var selection in new[] { first }.Concat(additional))
         {

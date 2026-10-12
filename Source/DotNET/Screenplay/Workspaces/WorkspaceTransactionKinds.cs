@@ -123,7 +123,17 @@ public enum WorkspaceConflictKind
     /// <summary>
     /// The property or reference span is not supported by this planner.
     /// </summary>
-    UnsupportedPropertySpan = 21
+    UnsupportedPropertySpan = 21,
+
+    /// <summary>
+    /// An added property needs an explicit producer or consumer mapping.
+    /// </summary>
+    SourcesRequired = 22,
+
+    /// <summary>
+    /// An added required property needs a value in existing fixtures or assertions.
+    /// </summary>
+    FixtureValueRequired = 23
 }
 
 /// <summary>

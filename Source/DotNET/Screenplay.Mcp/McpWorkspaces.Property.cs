@@ -25,8 +25,15 @@ internal sealed partial class McpWorkspaces
             ExpectedRevision = WorkspaceRevision.Parse(McpJson.RequiredString(arguments, "expectedRevision")),
             ExpectedCatalogRevision = CatalogRevision.Parse(McpJson.RequiredString(arguments, "expectedCatalogRevision")),
             Action = options.Action,
-            Target = arguments.TryGetProperty("target", out var target) ? McpAstHandles.Read(target) : throw new McpFailure("Property changes require a target handle.", -32602),
-            ExpectedName = McpJson.RequiredString(arguments, "expectedName"),
+            Target = arguments.TryGetProperty("target", out var target) ? McpAstHandles.Read(target) : null,
+            ExpectedName = arguments.TryGetProperty("expectedName", out _) ? McpJson.RequiredString(arguments, "expectedName") : null,
+            Owner = arguments.TryGetProperty("owner", out var owner) ? McpAstHandles.Read(owner) : null,
+            ExpectedOwnerName = arguments.TryGetProperty("expectedOwnerName", out _) ? McpJson.RequiredString(arguments, "expectedOwnerName") : null,
+            Name = arguments.TryGetProperty("name", out _) ? McpJson.RequiredString(arguments, "name") : null,
+            Type = arguments.TryGetProperty("type", out _) ? McpJson.RequiredString(arguments, "type") : null,
+            Optional = McpJson.Boolean(arguments, "optional"),
+            Hops = PropertyHops(arguments),
+            FixtureValue = arguments.TryGetProperty("fixtureValue", out _) ? McpJson.RequiredString(arguments, "fixtureValue") : null,
             NewName = options.NewName(arguments),
             AlsoRename = PropertySelections(arguments, "alsoRename"),
             AlsoRemove = PropertySelections(arguments, "alsoRemove"),
@@ -43,6 +50,20 @@ internal sealed partial class McpWorkspaces
         {
             McpJson.ValidateObject(value, ["target", "expectedName"], ["target", "expectedName"]);
             return new WorkspacePropertySelection(McpAstHandles.Read(value.GetProperty("target")), McpJson.RequiredString(value, "expectedName"));
+        })];
+    }
+
+    static ImmutableArray<WorkspacePropertyHop> PropertyHops(JsonElement arguments)
+    {
+        if (!arguments.TryGetProperty("hops", out var values)) return [];
+        return [.. values.EnumerateArray().Select(value =>
+        {
+            McpJson.ValidateObject(value, ["at", "name", "value"], ["at"]);
+            if (value.TryGetProperty("name", out _) == value.TryGetProperty("value", out _)) throw new McpFailure("Each property hop requires exactly one name or value.", -32602);
+            return new WorkspacePropertyHop(
+                McpAstHandles.Read(value.GetProperty("at")),
+                value.TryGetProperty("name", out _) ? McpJson.RequiredString(value, "name") : null,
+                value.TryGetProperty("value", out _) ? McpJson.RequiredString(value, "value") : null);
         })];
     }
 
