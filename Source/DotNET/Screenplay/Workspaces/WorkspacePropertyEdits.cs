@@ -23,7 +23,7 @@ sealed class WorkspacePropertyEdits(
     readonly List<WorkspacePropertyChange> _changes = [];
     readonly Dictionary<SemanticAddress, SemanticAddress> _renames = [];
     readonly List<SemanticAddress> _retirements = [];
-    readonly HashSet<(WorkspaceNodeHandle, string)> _autoMaps = [];
+    readonly HashSet<(WorkspaceNodeHandle Owner, string Target, string Source)> _autoMaps = [];
     readonly WorkspacePropertyAssertionProvenance _assertions = new(index);
 
     internal IReadOnlyDictionary<SemanticAddress, SemanticAddress> Renames => _renames;
@@ -163,8 +163,8 @@ sealed class WorkspacePropertyEdits(
         var source = member.Kind == "Event" ? member : counterpart;
         var targetName = SelectedName(target.Declaration);
         var sourceName = SelectedName(source.Declaration);
-        if (targetName.Equals(sourceName, StringComparison.OrdinalIgnoreCase) || !_autoMaps.Add((plan.MappingOwner(link.Occurrence).Handle, target.Declaration.Address))) return;
-        InsertMapping(link, targetName, sourceName);
+        if (targetName.Equals(sourceName, StringComparison.OrdinalIgnoreCase)) return;
+        if (_autoMaps.Add((plan.MappingOwner(link.Occurrence).Handle, targetName, sourceName))) InsertMapping(link, targetName, sourceName);
         Record(change, "explicitMappingInserted");
     }
 
