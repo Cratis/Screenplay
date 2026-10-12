@@ -8,7 +8,7 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// <summary>
 /// Executes the minimum portable semantic plan against immutable in-memory world state.
 /// </summary>
-public sealed class SemanticEvaluator : ISemanticEvaluator
+public sealed partial class SemanticEvaluator : ISemanticEvaluator
 {
     /// <inheritdoc/>
     public SemanticExecutionResult Execute(
@@ -18,12 +18,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
     {
         if (request.IsReadOnly)
         {
-            if (request.Command.IsSet || !request.Values.IsEmpty || !request.AllocatedIdentities.IsEmpty)
-            {
-                return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A read-only request cannot carry command values or allocated identities.");
-            }
-
-            return ExecuteQueries(plan, world, world, [], request.Queries, request.Caller);
+            return ExecuteReadOnly(plan, world, request);
         }
 
         if (!plan.Commands.TryGetValue(request.Command, out var command))
@@ -41,201 +36,7 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default.");
         }
 
-        var authorizationValues = request.Values.IsDefault ? [] : request.Values.Where(value => value is not null).ToArray();
-        var artifact = command.Properties
-            .Where(property => !property.IsGenerated)
-            .Select(property => (property, value: authorizationValues.FirstOrDefault(value => value.TargetProperty == property.Id)?.Value))
-            .Where(pair => pair.value is not null)
-            .ToDictionary(pair => pair.property.Name, pair => pair.value!, StringComparer.Ordinal);
-        var subject = command.Properties.Where(property => property.IsIdentifier && !property.IsGenerated)
-            .Select(property => authorizationValues.FirstOrDefault(value => value.TargetProperty == property.Id)?.Value)
-            .FirstOrDefault(value => value is not null);
-        var authorization = SemanticPolicyEvaluation.Evaluate(command.Authorization, plan, request.Caller, artifact, subject, command.Properties, request.RunsAs);
-        if (authorization.Outcome == SemanticPolicyOutcome.Unsupported)
-        {
-            return new SemanticUnsupported(
-                world,
-                SemanticExecutionCapability.Authorization,
-                $"Policy '{authorization.Policy}' has an opaque predicate and requires a target provider.");
-        }
-        if (authorization.Outcome == SemanticPolicyOutcome.Deny)
-        {
-            return new SemanticRejected(world, SemanticRejectionCategory.Unauthorized, null, "Caller is not authorized.");
-        }
-
-        // Ordering between generated declarative validators and attached code is not portable.
-        // Refuse to infer a validation outcome after authorization, before evaluating any validators.
-        if (UnsupportedValidation(plan, command) is { } rule)
-        {
-            return new SemanticUnsupported(
-                world,
-                SemanticExecutionCapability.Command,
-                $"{rule} has an opaque validation predicate and requires a target provider.");
-        }
-
-        if (ValidateRequest(plan, command, request.Values) is { } contractRejection)
-        {
-            return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, contractRejection);
-        }
-
-        // A generated identifier is never a fallback for a destination-less plain production.
-        var generatedAllocation = command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) && command.Produces.Any(produced => produced.Destination is null);
-        var defaultDestination = generatedAllocation ? null : command.Destination;
-        if (plan.Model.SemanticVersion != SemanticVersion.V1 && defaultDestination is null &&
-            request.AllocatedEventSourceType is { } suppliedType &&
-            command.Properties.SingleOrDefault(property => property.IsIdentifier)?.Type is { } identityType && suppliedType != identityType)
-        {
-            return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Allocated event source type differs from the command identifier type.");
-        }
-
-        var failures = ValidateRules(plan, command, request.Values).ToBuilder();
-        var commandValues = request.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
-        foreach (var requirement in command.Requirements)
-        {
-            if (!SemanticConditionEvaluation.Evaluate(requirement.Condition, commandValues))
-            {
-                failures.Add(new(requirement.Message ?? "Command requirement was not met.", requirement.Severity));
-            }
-        }
-
-        if (failures.Count > 0)
-        {
-            var message = failures[0].Message;
-            return RejectWithMessage(world, SemanticRejectionCategory.Validation, null, message) with { ValidationFailures = failures.ToImmutable() };
-        }
-
-        if (!plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V6) &&
-            command.Produces.Any(produced => produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression)) && request.Occurrence is null)
-        {
-            return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A v2 command using $context needs an occurrence supplied by the execution request.");
-        }
-
-        var resolvedRoutes = new Dictionary<SemanticCommandRoute, SemanticEventRoute>(ReferenceEqualityComparer.Instance);
-        foreach (var declaredRoute in command.Produces.Select(produced => produced.Route).Append(command.Route).OfType<SemanticCommandRoute>())
-        {
-            var (source, stream) = SemanticEventRouting.Resolve(plan.Model.Application, declaredRoute.Source, declaredRoute.Stream);
-            var scalar = declaredRoute.StreamId is null ? null : Evaluate(declaredRoute.StreamId, SemanticExpressionRootKind.Command, commandValues);
-            var parts = declaredRoute.StreamIdParts.Select(part => new SemanticFixtureRoutePart(
-                part.Part,
-                Evaluate(part.Value, SemanticExpressionRootKind.Command, commandValues))).ToImmutableArray();
-            if (!SemanticEventRouting.TryFormat(source, stream, scalar, parts, plan.Model.Application.Concepts, out var route, out var failure))
-            {
-                return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, SemanticStreamIdFormatter.FailureMessage(failure));
-            }
-            resolvedRoutes[declaredRoute] = route!;
-        }
-
-        if (Generate(plan, world, command, request.GeneratedValues, commandValues) is { } generationFailure)
-        {
-            return generationFailure;
-        }
-
-        var facts = ImmutableArray.CreateBuilder<SemanticFact>();
-        foreach (var produced in command.Produces)
-        {
-            if ((produced.When is not null && !SemanticConditionEvaluation.Evaluate(produced.When, commandValues)) ||
-                (produced.Condition is not null && Evaluate(produced.Condition, SemanticExpressionRootKind.Command, commandValues) is SemanticBooleanValue { Value: false }))
-            {
-                continue;
-            }
-
-            if (request.Occurrence is null && produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression))
-            {
-                return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A v2 command using $context needs an occurrence supplied by the execution request.");
-            }
-
-            if (request.Occurrence is { IsTimeOnly: true } && produced.Mappings.Any(mapping =>
-                mapping.Source is SemanticEventContextExpression { Value: not SemanticEventContextValueKind.Occurred }))
-            {
-                return new SemanticUnsupported(world, SemanticExecutionCapability.Command, "The occurrence supplies time only; $context.causedBy needs a caller audit identity the reference does not model.");
-            }
-
-            var destinationExpression = produced.Destination ?? defaultDestination?.Value;
-            var destination = destinationExpression is null
-                ? request.AllocatedIdentities.GetValueOrDefault(command.Id)
-                : Evaluate(destinationExpression, SemanticExpressionRootKind.Command, commandValues);
-            if (destination is null)
-            {
-                return new SemanticUnsupported(
-                    world,
-                    SemanticExecutionCapability.IdentityAllocation,
-                    $"Command '{command.Name}' requires one deterministic allocated destination.");
-            }
-
-            if (plan.Model.SemanticVersion != SemanticVersion.V1 && destinationExpression is null &&
-                defaultDestination is null && request.AllocatedEventSourceType is null)
-            {
-                return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A v2 allocated event source requires its declared scalar identity type.");
-            }
-
-            var values = produced.Mappings
-                .Select(mapping => new SemanticPropertyValue(
-                    mapping.TargetProperty,
-                    Evaluate(mapping.Source, SemanticExpressionRootKind.Command, commandValues, request.Occurrence)))
-                .ToImmutableArray();
-            if (produced.Mappings.Any(mapping => mapping.Source is SemanticEventContextExpression))
-            {
-                var validator = new SemanticValueValidator(
-                    plan.Model.Application.Concepts.ToDictionary(concept => concept.Id),
-                    plan.Model.Application.Types.ToDictionary(type => type.Id));
-                var properties = plan.Events[produced.EventContract].Properties.ToDictionary(property => property.Id);
-                foreach (var mapped in produced.Mappings.Zip(values).Where(pair => pair.First.Source is SemanticEventContextExpression))
-                {
-                    try
-                    {
-                        validator.Validate(mapped.Second.Value, properties[mapped.Second.TargetProperty].Type, "event occurrence mapping");
-                    }
-                    catch (InvalidSemanticContract exception)
-                    {
-                        return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, exception.Message);
-                    }
-                }
-            }
-
-            facts.Add(new SemanticFact(produced.EventContract, destination, values)
-            {
-                Context = plan.Model.SemanticVersion != SemanticVersion.V1
-                    ? new(new(DestinationType(command, destinationExpression, request.AllocatedEventSourceType), destination))
-                    : null,
-                Tags = plan.Events[produced.EventContract].Tags.AddRange(produced.Tags),
-                Occurred = request.Occurrence?.Occurred,
-                ReactionOrigin = request.ReactionOrigin,
-                Route = (produced.Route ?? command.Route) is { } effectiveRoute ? resolvedRoutes[effectiveRoute] : null
-            });
-        }
-
-        var response = Response(command.Response, commandValues);
-
-        // A violation is an outcome, not a failure: the command is rejected and the world is unchanged.
-        if (SemanticConstraintEnforcement.FindViolation(plan, world, facts.ToImmutable()) is { } violated)
-        {
-            return RejectWithMessage(world, SemanticRejectionCategory.Constraint, violated.Name, SemanticConstraintEnforcement.MessageFor(violated));
-        }
-
-        if (ReachedReducer(plan, facts.ToImmutable()) is { } reachedReducer)
-        {
-            return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, $"Reducer '{reachedReducer.Name}' has opaque transitions and requires a target provider.");
-        }
-
-        if (!TryProject(plan, world.Facts, world.ReadModels, facts.ToImmutable(), out var readModels, out var projectionFailure))
-        {
-            return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, projectionFailure!);
-        }
-
-        if (!SemanticEventPublication.TryPublish(plan, world.Facts, facts.ToImmutable(), out var publications, out var publicationFailure))
-        {
-            return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, publicationFailure!);
-        }
-
-        facts.AddRange(publications);
-        if (SemanticDeferredProjections.FindFailure(plan, facts) is { } deferredFailure)
-        {
-            return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, deferredFailure);
-        }
-
-        var tentative = world.Commit(facts.ToImmutable(), readModels);
-        var execution = ExecuteQueries(plan, world, tentative, facts.ToImmutable(), request.Queries, request.Caller);
-        return execution is SemanticAccepted accepted ? accepted with { Response = response } : execution;
+        return new SemanticCommandExecution(plan, world, command, request).Run();
     }
 
     /// <summary>
@@ -321,82 +122,19 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             return new SemanticRejected(original, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default.");
         }
 
+        var run = new SemanticQueryRun(plan, original, tentative, caller);
         var queryResults = ImmutableArray.CreateBuilder<SemanticQueryResult>();
         foreach (var queryRequest in queries)
         {
-            if (!plan.Queries.TryGetValue(queryRequest.Query, out var query))
+            if (run.Answer(queryRequest, out var result) is { } refusal)
             {
-                return new SemanticUnsupported(original, SemanticExecutionCapability.Query, $"Query '{queryRequest.Query}' is not in the execution plan.");
+                return refusal;
             }
 
-            if (plan.UnadmittedArtifacts.Contains(query.Id) || plan.IsUnadmittedReadModel(query.ReadModel))
-            {
-                return new SemanticUnsupported(original, SemanticExecutionCapability.Query, $"Query '{query.Name}' or its read model was not admitted by scoped execution-plan compilation.");
-            }
-
-            if (ReducerFor(plan, query.ReadModel) is { } reducer)
-            {
-                return new SemanticUnsupported(
-                    original,
-                    SemanticExecutionCapability.Query,
-                    $"Reducer '{reducer.Name}' has opaque transitions and requires a target provider to compute read-model state.");
-            }
-
-            var arguments = query.Argument is null
-                ? new Dictionary<string, SemanticValue>(StringComparer.Ordinal)
-                : new Dictionary<string, SemanticValue>(StringComparer.Ordinal) { [query.Argument.Name] = queryRequest.Key };
-            var properties = query.Argument is null
-                ? []
-                : new[] { new SemanticProperty(query.Argument.Id, query.Argument.Name, query.Argument.Type, false) };
-            var authorization = SemanticPolicyEvaluation.Evaluate(
-                query.Authorization,
-                plan,
-                caller,
-                arguments,
-                queryRequest.Key,
-                properties);
-            if (authorization.Outcome == SemanticPolicyOutcome.Unsupported)
-            {
-                return new SemanticUnsupported(
-                    original,
-                    SemanticExecutionCapability.Authorization,
-                    $"Policy '{authorization.Policy}' has an opaque predicate and requires a target provider.");
-            }
-            if (authorization.Outcome == SemanticPolicyOutcome.Deny)
-            {
-                return new SemanticRejected(original, SemanticRejectionCategory.Unauthorized, null, "Caller is not authorized.");
-            }
-
-            if (ValidateQueryKey(plan, query, queryRequest.Key) is { } queryRejection)
-            {
-                return new SemanticRejected(original, SemanticRejectionCategory.Contract, null, queryRejection);
-            }
-
-            var results = tentative.ReadModels
-                .Where(instance => instance.ReadModel == query.ReadModel)
-                .Where(instance => query.KeyProperty is null || instance.Values.Any(value =>
-                    value.TargetProperty == query.KeyProperty && SemanticValueRules.AreEqual(value.Value, queryRequest.Key)))
-                .ToImmutableArray();
-            queryResults.Add(new(query.Id, queryRequest.Key, results));
+            queryResults.Add(result!);
         }
 
-        foreach (var instance in tentative.ReadModels)
-        {
-            if (plan.IsUnadmittedReadModel(instance.ReadModel))
-            {
-                return new SemanticUnsupported(original, SemanticExecutionCapability.Projection, $"Read model '{instance.ReadModel}' was not admitted by scoped execution-plan compilation.");
-            }
-
-            if (ReducerFor(plan, instance.ReadModel) is { } reducer)
-            {
-                return new SemanticUnsupported(
-                    original,
-                    SemanticExecutionCapability.Projection,
-                    $"Reducer '{reducer.Name}' has opaque transitions and requires a target provider to compute read-model state.");
-            }
-        }
-
-        return new SemanticAccepted(tentative, facts, queryResults.ToImmutable());
+        return run.RefuseReducerBackedWorld() ?? new SemanticAccepted(tentative, facts, queryResults.ToImmutable());
     }
 
     internal static SemanticValue Evaluate(
@@ -418,178 +156,24 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
             _ => throw new InvalidSemanticContract("An execution expression is unresolved in its declared root scope.")
         };
 
-    // Specifications also retain legacy given events without an event source; their null destination must not
-    // become a fabricated identity. All supplied identities, payloads, tags and projections use the same core.
-    internal SemanticExecutionResult EstablishSpecificationWorld(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts) =>
-        EstablishWorld(plan, facts, false);
-
-    internal SemanticExecutionResult EstablishWorld(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts, bool publicReplay)
-    {
-        try
-        {
-            // Validate the entire history before any projection can observe an invalid occurrence.
-            if (!facts.IsDefault && facts.Any(fact =>
-                fact is null ||
-                (fact is { Tags.IsDefault: true } or { Context.EventSource: null }) ||
-                (fact is { Tags: var tags } && tags.Any(string.IsNullOrWhiteSpace)) ||
-                (plan.Model.SemanticVersion != SemanticVersion.V1 &&
-                    ((publicReplay && fact.Context is null) ||
-                     (fact.Context is not null && (fact.Destination is SemanticNullValue ||
-                         (fact.Destination is SemanticTextValue text && string.IsNullOrWhiteSpace(text.Value))))))))
-            {
-                return new SemanticRejected(SemanticWorld.Empty, SemanticRejectionCategory.Contract, null, "Fact occurrence metadata is malformed.");
-            }
-
-            SemanticWorld.Create(facts, []);
-            var validator = new SemanticValueValidator(
-                plan.Model.Application.Concepts.ToDictionary(concept => concept.Id),
-                plan.Model.Application.Types.ToDictionary(type => type.Id));
-            foreach (var fact in facts)
-            {
-                if (!plan.Events.TryGetValue(fact.EventContract, out var eventContract) ||
-                    fact.Values.Length != eventContract.Properties.Length ||
-                    fact.Values.Select(value => value.TargetProperty).Distinct().Count() != fact.Values.Length)
-                {
-                    return new SemanticRejected(
-                        SemanticWorld.Empty,
-                        SemanticRejectionCategory.Contract,
-                        null,
-                        $"Fact '{fact.EventContract}' does not match a known event contract and its exact property shape.");
-                }
-
-                var values = fact.Values.ToDictionary(value => value.TargetProperty);
-                foreach (var property in eventContract.Properties)
-                {
-                    if (!values.TryGetValue(property.Id, out var value))
-                    {
-                        return new SemanticRejected(
-                            SemanticWorld.Empty,
-                            SemanticRejectionCategory.Contract,
-                            null,
-                            $"Fact '{fact.EventContract}' is missing event property '{property.Name}'.");
-                    }
-
-                    validator.Validate(value.Value, property.Type, $"event property '{property.Name}'");
-                }
-
-                validator.ValidateVariant(fact.Destination);
-                var routedType = fact.Route is null ? null : plan.RoutedFactSourceType(fact);
-                if (fact.Context is { } context)
-                {
-                    // Routed occurrences are typed by their source, independently of event producers. Legacy v1
-                    // specification events keep their authored source type; unrouted history keeps the producer rule.
-                    var requiredType = routedType ?? (plan.Model.SemanticVersion == SemanticVersion.V1 && !publicReplay
-                        ? context.EventSource.Type
-                        : SemanticModelValidator.DeclaredEventSourceType(plan.Commands.Values, plan.Reactions, plan.Captures.Values, fact.EventContract));
-                    if (context.EventSource.Type != requiredType)
-                    {
-                        throw new InvalidSemanticContract("A specification event source must have the required scalar destination type.");
-                    }
-
-                    validator.Validate(context.EventSource.Value, requiredType, "event source identity");
-                }
-            }
-        }
-        catch (InvalidSemanticContract exception)
-        {
-            return new SemanticRejected(SemanticWorld.Empty, SemanticRejectionCategory.Contract, null, exception.Message);
-        }
-
-        var reducer = plan.Model.Application.Modules.SelectMany(module => Reducers(module.Features))
-            .FirstOrDefault(candidate =>
-            {
-                var matchingFacts = facts.Where(fact => candidate.From?.Matches(plan.Model.Application, fact.Route) != false).ToArray();
-                var observedEvents = matchingFacts.Select(fact => fact.EventContract).ToHashSet();
-
-                return candidate.Transitions.Any(transition => observedEvents.Contains(transition.EventContract)) ||
-                    (matchingFacts.Length > 0 && plan.Projections.Values.Any(projection => projection.ReadModel == candidate.ReadModel &&
-                        projection.GetAffectedInstances().Any(affected => affected.EventContract is null || observedEvents.Contains(affected.EventContract.Value))));
-            });
-        if (publicReplay && reducer is not null)
-        {
-            return new SemanticUnsupported(
-                SemanticWorld.Empty,
-                SemanticExecutionCapability.Projection,
-                $"Reducer '{reducer.Name}' has opaque transitions and requires a target provider to compute read-model state.");
-        }
-
-        try
-        {
-            if (!TryProject(plan, [], [], facts, out var readModels, out var failure))
-            {
-                return new SemanticUnsupported(SemanticWorld.Empty, SemanticExecutionCapability.Projection, failure!);
-            }
-
-            return new SemanticAccepted(SemanticWorld.Create(facts, readModels), facts, []);
-        }
-        catch (InvalidSemanticContract exception)
-        {
-            return new SemanticUnsupported(SemanticWorld.Empty, SemanticExecutionCapability.Projection, exception.Message);
-        }
-    }
-
-    static SemanticRejected RejectWithMessage(SemanticWorld world, SemanticRejectionCategory category, string? code, string message) =>
+    internal static SemanticRejected RejectWithMessage(SemanticWorld world, SemanticRejectionCategory category, string? code, string message) =>
         new(world, category, code, message) { MessageIsStringKey = message.StartsWith("$strings.", StringComparison.Ordinal) };
 
-    static SemanticReducer? ReachedReducer(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts) =>
+    internal static SemanticReducer? ReachedReducer(SemanticExecutionPlan plan, ImmutableArray<SemanticFact> facts) =>
         plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V6)
             ? plan.Model.Application.Modules.SelectMany(module => Reducers(module.Features))
                 .FirstOrDefault(reducer => reducer.Transitions.Any(transition => facts.Any(fact => fact.EventContract == transition.EventContract &&
                      (reducer.From?.Matches(plan.Model.Application, fact.Route) != false))))
             : null;
 
-    static SemanticReducer? ReducerFor(SemanticExecutionPlan plan, SemanticId readModel) =>
+    internal static SemanticReducer? ReducerFor(SemanticExecutionPlan plan, SemanticId readModel) =>
         plan.Model.Application.Modules.SelectMany(module => Reducers(module.Features))
             .FirstOrDefault(reducer => reducer.ReadModel == readModel);
 
-    static IEnumerable<SemanticReducer> Reducers(ImmutableArray<SemanticFeature> features) =>
+    internal static IEnumerable<SemanticReducer> Reducers(ImmutableArray<SemanticFeature> features) =>
         features.SelectMany(feature => feature.Slices.SelectMany(slice => slice.Reducers).Concat(Reducers(feature.Features)));
 
-    // Validate every supplied entry before checking completeness. An invalid later fixture must not be
-    // hidden by an earlier missing property, and fixtures never feed the legacy allocated-destination channel.
-    static SemanticExecutionResult? Generate(
-        SemanticExecutionPlan plan,
-        SemanticWorld world,
-        SemanticCommand command,
-        ImmutableArray<SemanticPropertyValue> fixtures,
-        Dictionary<SemanticId, SemanticValue> values)
-    {
-        var generated = command.Properties.Where(property => property.IsGenerated).ToDictionary(property => property.Id);
-        if (!fixtures.IsDefaultOrEmpty)
-        {
-            var validator = new SemanticValueValidator(
-                plan.Model.Application.Concepts.ToDictionary(concept => concept.Id),
-                plan.Model.Application.Types.ToDictionary(type => type.Id));
-            var seen = new HashSet<SemanticId>();
-            foreach (var fixture in fixtures)
-            {
-                if (fixture is null || !generated.TryGetValue(fixture.TargetProperty, out var property) || !seen.Add(fixture.TargetProperty))
-                {
-                    return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, $"Command '{command.Name}' generated values do not match its generated property shape.");
-                }
-
-                try
-                {
-                    validator.Validate(fixture.Value, property.Type, $"generated command property '{property.Name}'");
-                }
-                catch (InvalidSemanticContract exception)
-                {
-                    return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, exception.Message);
-                }
-
-                values.Add(fixture.TargetProperty, fixture.Value);
-            }
-        }
-
-        if (generated.Values.FirstOrDefault(property => !values.ContainsKey(property.Id)) is { } missing)
-        {
-            return new SemanticUnsupported(world, SemanticExecutionCapability.IdentityAllocation, $"Command '{command.Name}' requires a deterministic generated value for '{missing.Name}'.");
-        }
-
-        return null;
-    }
-
-    static SemanticExecutionResponse? Response(SemanticCommandResponse? response, Dictionary<SemanticId, SemanticValue> values) => response switch
+    internal static SemanticExecutionResponse? Response(SemanticCommandResponse? response, Dictionary<SemanticId, SemanticValue> values) => response switch
     {
         null => null,
         SemanticScalarCommandResponse scalar => new SemanticScalarExecutionResponse(values.GetValueOrDefault(scalar.Source, SemanticValue.Null)),
@@ -598,312 +182,19 @@ public sealed class SemanticEvaluator : ISemanticEvaluator
         _ => throw new InvalidSemanticContract("A command response variant is unsupported.")
     };
 
-    static string? ValidateRequest(
-        SemanticExecutionPlan plan,
-        SemanticCommand command,
-        ImmutableArray<SemanticPropertyValue> values)
-    {
-        if (values.IsDefault || values.Any(_ => _ is null) || values.Length != command.Properties.Count(property => !property.IsGenerated) ||
-            values.Select(_ => _.TargetProperty).Distinct().Count() != values.Length)
-        {
-            return $"Command '{command.Name}' values do not match its exact property shape.";
-        }
-
-        var concepts = plan.Model.Application.Concepts.ToDictionary(_ => _.Id);
-        var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
-        var validator = new SemanticValueValidator(concepts, types);
-        var valuesByTarget = values.ToDictionary(_ => _.TargetProperty);
-        foreach (var property in command.Properties.Where(property => !property.IsGenerated))
-        {
-            if (!valuesByTarget.TryGetValue(property.Id, out var value))
-            {
-                return $"Command '{command.Name}' is missing property '{property.Name}'.";
-            }
-
-            try
-            {
-                validator.Validate(value.Value, property.Type, $"command property '{property.Name}'");
-            }
-            catch (InvalidSemanticContract exception)
-            {
-                return exception.Message;
-            }
-        }
-
-        return null;
-    }
-
-    static string? UnsupportedValidation(SemanticExecutionPlan plan, SemanticCommand command)
-    {
-        if (!command.CodeValidations.IsEmpty)
-        {
-            return $"Command '{command.Name}' code validation 0";
-        }
-
-        if (command.Validations.FirstOrDefault(rule => rule.Kind == SemanticValidationRuleKind.RulePredicate) is { } predicate)
-        {
-            var property = command.Properties.Single(value => value.Id == predicate.Property);
-            return $"Rule '{predicate.Name}' on command '{command.Name}' property '{property.Name}'";
-        }
-
-        var concepts = plan.Model.Application.Concepts.ToDictionary(concept => concept.Id);
-        var types = plan.Model.Application.Types.ToDictionary(type => type.Id);
-        foreach (var property in command.Properties.Where(property => !property.IsGenerated))
-        {
-            if (PredicateInType(property.Type, concepts, types, []) is { } name)
-            {
-                return name;
-            }
-        }
-
-        return null;
-    }
-
-    static string? PredicateInType(
-        SemanticTypeReference type,
-        Dictionary<SemanticId, SemanticConcept> concepts,
-        Dictionary<SemanticId, SemanticCompositeType> types,
-        HashSet<SemanticId> visited)
-    {
-        if (type.Kind == SemanticTypeReferenceKind.Concept)
-        {
-            var concept = concepts[type.Target];
-            if (concept.Validations.FirstOrDefault(rule => rule.Kind is SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) is { } rule)
-            {
-                return rule.Kind == SemanticValidationRuleKind.CodeValidation
-                    ? $"Concept '{concept.Name}' code validation {concept.Validations.Take(concept.Validations.IndexOf(rule)).Count(validation => validation.Kind == SemanticValidationRuleKind.CodeValidation)}"
-                    : $"Rule '{rule.Name}' on concept '{concept.Name}'";
-            }
-
-            return null;
-        }
-
-        if (type.Kind == SemanticTypeReferenceKind.CompositeType && visited.Add(type.Target))
-        {
-            foreach (var property in types[type.Target].Properties)
-            {
-                if (PredicateInType(property.Type, concepts, types, visited) is { } name) return name;
-            }
-        }
-
-        return null;
-    }
-
-    static ImmutableArray<SemanticValidationFailure> ValidateRules(
-        SemanticExecutionPlan plan,
-        SemanticCommand command,
-        ImmutableArray<SemanticPropertyValue> values)
-    {
-        var valuesByTarget = values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
-        var failures = ImmutableArray.CreateBuilder<SemanticValidationFailure>();
-        foreach (var validation in command.Validations)
-        {
-            var value = valuesByTarget[validation.Property];
-            if (!SemanticValidationRules.Satisfies(validation, value))
-            {
-                failures.Add(new(validation.Message ?? SemanticValidationRules.DefaultMessage(validation, value, "A required value is empty."), validation.Severity));
-            }
-        }
-
-        var concepts = plan.Model.Application.Concepts.ToDictionary(_ => _.Id);
-        var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
-        foreach (var property in command.Properties.Where(property => !property.IsGenerated))
-        {
-            ValidateConceptValues(concepts, types, property.Type, valuesByTarget[property.Id], failures);
-        }
-
-        return failures.ToImmutable();
-    }
-
-    // A concept's rules constrain every value of the concept - directly, as each element of a collection and
-    // inside composite values - so they are applied wherever the command carries one.
-    static void ValidateConceptValues(
-        Dictionary<SemanticId, SemanticConcept> concepts,
-        Dictionary<SemanticId, SemanticCompositeType> types,
-        SemanticTypeReference type,
-        SemanticValue value,
-        ImmutableArray<SemanticValidationFailure>.Builder failures)
-    {
-        if (type.IsCollection)
-        {
-            if (value is SemanticArrayValue array)
-            {
-                var elementType = type with { IsCollection = false, IsOptional = false };
-                foreach (var element in array.Values)
-                {
-                    ValidateConceptValues(concepts, types, elementType, element, failures);
-                }
-            }
-
-            return;
-        }
-
-        switch (type.Kind)
-        {
-            case SemanticTypeReferenceKind.Concept:
-                foreach (var validation in concepts[type.Target].Validations)
-                {
-                    if (!SemanticValidationRules.Satisfies(validation, value))
-                    {
-                        failures.Add(new(validation.Message ?? SemanticValidationRules.DefaultMessage(validation, value, "A required concept value is empty."), validation.Severity));
-                    }
-                }
-
-                break;
-            case SemanticTypeReferenceKind.CompositeType when value is SemanticCompositeValue composite:
-                var properties = types[type.Target].Properties.ToDictionary(_ => _.Id);
-                foreach (var property in composite.Properties)
-                {
-                    ValidateConceptValues(concepts, types, properties[property.TargetProperty].Type, property.Value, failures);
-                }
-
-                break;
-        }
-    }
-
-    static string? ValidateQueryKey(
-        SemanticExecutionPlan plan,
-        SemanticKeyedQuery query,
-        SemanticValue key)
-    {
-        try
-        {
-            var validator = new SemanticValueValidator(
-                plan.Model.Application.Concepts.ToDictionary(_ => _.Id),
-                plan.Model.Application.Types.ToDictionary(_ => _.Id));
-            if (query.Argument is not null) validator.Validate(key, query.Argument.Type, $"query '{query.Name}' key");
-            return null;
-        }
-        catch (InvalidSemanticContract exception)
-        {
-            return exception.Message;
-        }
-    }
-
-    static bool TryProject(
-        SemanticExecutionPlan plan,
-        ImmutableArray<SemanticFact> history,
-        ImmutableArray<SemanticReadModelInstance> current,
-        ImmutableArray<SemanticFact> facts,
-        out ImmutableArray<SemanticReadModelInstance> readModels,
-        out string? failure)
-    {
-        if (SemanticDeferredProjections.FindFailure(plan, facts) is { } deferredFailure)
-        {
-            failure = deferredFailure;
-            readModels = current;
-            return false;
-        }
-
-        var instances = current.ToList();
-        var concepts = plan.Model.Application.Concepts.ToDictionary(_ => _.Id);
-        var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
-        var validator = new SemanticValueValidator(concepts, types);
-        var observed = history.ToList();
-
-        foreach (var fact in facts)
-        {
-            foreach (var projection in plan.Projections.Values.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal))
-            {
-                // An event-target projection publishes its state as an event; it builds no read-model instance.
-                if (projection.Target == SemanticProjectionTargetKind.Event || plan.UnadmittedArtifacts.Contains(projection.Id))
-                {
-                    continue;
-                }
-
-                // A scoped projection runs through the reference semantics of every Chronicle projection block.
-                if (projection.Scope is not null)
-                {
-                    try
-                    {
-                        if (new SemanticScopedProjection(plan, projection, validator, observed).Apply(instances, fact) is { } scopedFailure)
-                        {
-                            failure = scopedFailure;
-                            readModels = current;
-                            return false;
-                        }
-                    }
-                    catch (OverflowException) when (plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V6))
-                    {
-                        failure = $"Projection '{projection.Name}' arithmetic exceeds the reference numeric range.";
-                        readModels = current;
-                        return false;
-                    }
-
-                    continue;
-                }
-
-                foreach (var transition in projection.Transitions.Where(_ => _.EventContract == fact.EventContract))
-                {
-                    var eventValues = fact.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value);
-                    var key = Evaluate(transition.AffectedInstance.Key, SemanticExpressionRootKind.Event, eventValues);
-                    var existing = instances.SingleOrDefault(instance =>
-                        instance.ReadModel == projection.ReadModel && SemanticValueRules.AreEqual(instance.Key, key));
-                    var state = existing?.Values.ToDictionary(_ => _.TargetProperty, _ => _.Value) ?? [];
-                    foreach (var mapping in transition.Mappings)
-                    {
-                        state[mapping.TargetProperty] = Evaluate(mapping.Source, SemanticExpressionRootKind.Event, eventValues);
-                    }
-
-                    var readModel = plan.ReadModels[projection.ReadModel];
-                    foreach (var property in readModel.Properties)
-                    {
-                        if (!state.TryGetValue(property.Id, out var value))
-                        {
-                            if (!property.Type.IsOptional)
-                            {
-                                failure = $"Projection '{projection.Name}' did not establish required read-model property '{property.Name}'.";
-                                readModels = current;
-                                return false;
-                            }
-
-                            value = SemanticValue.Null;
-                            state[property.Id] = value;
-                        }
-
-                        try
-                        {
-                            validator.Validate(value, property.Type, $"read-model property '{property.Name}'");
-                        }
-                        catch (InvalidSemanticContract exception)
-                        {
-                            failure = exception.Message;
-                            readModels = current;
-                            return false;
-                        }
-                    }
-
-                    var identifier = readModel.Properties.Single(_ => _.IsIdentifier);
-                    if (!SemanticValueRules.AreEqual(state[identifier.Id], key))
-                    {
-                        failure = $"Projection '{projection.Name}' affected key disagrees with read-model identifier '{identifier.Name}'.";
-                        readModels = current;
-                        return false;
-                    }
-
-                    if (existing is not null)
-                    {
-                        instances.Remove(existing);
-                    }
-
-                    instances.Add(new(
-                        readModel.Id,
-                        key,
-                        [.. readModel.Properties.Select(property => new SemanticPropertyValue(property.Id, state[property.Id]))]));
-                }
-            }
-
-            observed.Add(fact);
-        }
-
-        failure = null;
-        readModels = [.. instances];
-        return true;
-    }
-
-    static SemanticTypeReference DestinationType(SemanticCommand command, SemanticExpression? expression, SemanticTypeReference? allocatedType) =>
+    internal static SemanticTypeReference DestinationType(SemanticCommand command, SemanticExpression? expression, SemanticTypeReference? allocatedType) =>
         expression is SemanticResolvedExpression resolved
             ? command.Properties.Single(property => property.Id == resolved.Target).Type
             : (command.Properties.Any(property => property.IsGenerated && property.IsIdentifier) ? allocatedType : command.Destination?.Type ?? allocatedType) ??
                 throw new InvalidSemanticContract("A v2 fact requires a typed state-change destination.");
+
+    static SemanticExecutionResult ExecuteReadOnly(SemanticExecutionPlan plan, SemanticWorld world, SemanticExecutionRequest request)
+    {
+        if (request.Command.IsSet || !request.Values.IsEmpty || !request.AllocatedIdentities.IsEmpty)
+        {
+            return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "A read-only request cannot carry command values or allocated identities.");
+        }
+
+        return ExecuteQueries(plan, world, world, [], request.Queries, request.Caller);
+    }
 }

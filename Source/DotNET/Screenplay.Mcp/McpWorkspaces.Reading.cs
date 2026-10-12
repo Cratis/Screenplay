@@ -27,18 +27,7 @@ internal sealed partial class McpWorkspaces
             return ReadScopedDiagnostics(workspace, arguments, view, scope);
         }
 
-        return view switch
-        {
-            "executable-model" => ReadExecutableModelView(workspace, arguments, view),
-            _ when _eventSourceViews.Contains(view, StringComparer.Ordinal) => ReadEventSourceView(workspace, arguments, view),
-            _ when _operationIntentViews.Contains(view, StringComparer.Ordinal) => ReadOperationIntentView(workspace, arguments, view),
-            "handler-intents" or "handler-intent-details" => ReadHandlerIntentView(workspace, arguments, view),
-            "named-rule-intents" or "named-rule-intent-details" => ReadNamedRuleIntentView(workspace, arguments, view),
-            "implementation-requirements" => ReadImplementationRequirementsView(workspace, arguments, view),
-            "typed-contexts" => ReadTypedContextsView(workspace, arguments, view),
-            "source-map" => ReadSourceMapView(workspace, arguments, view),
-            _ => ReadListedView(workspace, arguments, view)
-        };
+        return ReadWorkspaceView(workspace, arguments, view);
     }
 
     internal object ReadAst(JsonElement arguments)
@@ -151,35 +140,33 @@ internal sealed partial class McpWorkspaces
     static object ReadProposalView(IMcpProposal proposal, JsonElement arguments, string view) => view switch
     {
         "semantic-diff" => McpSemanticDiff.Read(proposal, arguments),
-        "changes" => McpPaging.Page(
-            proposal.WritePlan.Entries.Select(entry => new
-            {
-                entry.Kind,
-                documentId = entry.Document.ToString(),
-                beforePath = entry.Before?.Path.Value,
-                afterPath = entry.After?.Path.Value,
-                beforeBytes = entry.Before?.Bytes.Length,
-                afterBytes = entry.After?.Bytes.Length
-            }),
-            arguments,
-            proposal.Workspace.Revision.ToString()),
+        "changes" => McpPaging.Page(proposal.WritePlan.Entries, DescribeChangeSummary, arguments, proposal.Workspace.Revision.ToString()),
         "diagnostics" => McpPaging.Page(proposal is McpAuthoringProposal authoring ? authoring.Result.AuthoringDiagnostics : [], arguments, proposal.Workspace.Revision.ToString()),
         "executable-diagnostics" => McpPaging.Page(proposal.Workspace.Compilation.Diagnostics, arguments, proposal.Workspace.Revision.ToString()),
         "implementation-requirements" => McpPaging.Page(proposal.Workspace.Compilation.ImplementationRequirements, requirement => DescribeRequirement(requirement, proposal.Workspace.Compilation.TypedContextDescriptors), arguments, proposal.Workspace.Revision.ToString()),
         "typed-contexts" => ProposalContexts(proposal, arguments),
-        "dropped-comments" => McpPaging.Page(
-            WorkspaceDroppedComments.In(proposal.WritePlan).Select(comment => new
-            {
-                documentId = comment.Document.ToString(),
-                path = comment.Path.Value,
-                comment.Line,
-                comment.Column,
-                comment.Text
-            }),
-            arguments,
-            proposal.Workspace.Revision.ToString()),
+        "dropped-comments" => McpPaging.Page(WorkspaceDroppedComments.In(proposal.WritePlan), DescribeDroppedComment, arguments, proposal.Workspace.Revision.ToString()),
         "before" or "after" => ProposalBytes(proposal, arguments, view),
         _ => throw new McpFailure("Unknown proposal view.", -32602)
+    };
+
+    static object DescribeChangeSummary(WorkspaceWriteEntry entry) => new
+    {
+        entry.Kind,
+        documentId = entry.Document.ToString(),
+        beforePath = entry.Before?.Path.Value,
+        afterPath = entry.After?.Path.Value,
+        beforeBytes = entry.Before?.Bytes.Length,
+        afterBytes = entry.After?.Bytes.Length
+    };
+
+    static object DescribeDroppedComment(WorkspaceDroppedComment comment) => new
+    {
+        documentId = comment.Document.ToString(),
+        path = comment.Path.Value,
+        comment.Line,
+        comment.Column,
+        comment.Text
     };
 
     static object DescribeNamedRuleIntent(WorkspaceNamedRuleIntentEntry entry) => new
@@ -213,7 +200,7 @@ internal sealed partial class McpWorkspaces
     static void CheckContinuation(JsonElement arguments, string name, string revision, bool requireOnContinuation = true)
     {
         var supplied = McpJson.OptionalString(arguments, name);
-        if (requireOnContinuation && McpJson.Integer(arguments, "offset", 0, 0, int.MaxValue) > 0 && supplied is null)
+        if (IsMissingContinuation(arguments, supplied, requireOnContinuation))
         {
             throw new McpFailure($"'{name}' is required for continuation.", -32602);
         }
@@ -223,6 +210,9 @@ internal sealed partial class McpWorkspaces
             throw new McpFailure($"StaleRevision: {name} changed between pages.");
         }
     }
+
+    static bool IsMissingContinuation(JsonElement arguments, string? supplied, bool requireOnContinuation) =>
+        requireOnContinuation && McpJson.Integer(arguments, "offset", 0, 0, int.MaxValue) > 0 && supplied is null;
 
     static object ProposalContexts(IMcpProposal proposal, JsonElement arguments)
     {
@@ -314,7 +304,7 @@ internal sealed partial class McpWorkspaces
         {
             var first = lines[index];
             var count = 1;
-            while (index + count < lines.Length && lines[index + count].Column == first.Column && lines[index + count].Line == first.Line + count)
+            while (ContinuesRun(lines, first, index + count, count))
             {
                 count++;
             }
@@ -323,6 +313,9 @@ internal sealed partial class McpWorkspaces
             index += count;
         }
     }
+
+    static bool ContinuesRun(ImmutableArray<CodeBlockSourceLine> lines, CodeBlockSourceLine first, int next, int count) =>
+        next < lines.Length && lines[next].Column == first.Column && lines[next].Line == first.Line + count;
 
     static object ProposalBytes(IMcpProposal proposal, JsonElement arguments, string view)
     {
@@ -342,6 +335,24 @@ internal sealed partial class McpWorkspaces
             content = McpPaging.Bytes([.. document.Bytes], arguments, view == "before" ? proposal.Before.Revision.ToString() : proposal.Workspace.Revision.ToString())
         };
     }
+
+    object ReadWorkspaceView(ScreenplayWorkspace workspace, JsonElement arguments, string view) => view switch
+    {
+        "executable-model" => ReadExecutableModelView(workspace, arguments, view),
+        _ when _eventSourceViews.Contains(view, StringComparer.Ordinal) => ReadEventSourceView(workspace, arguments, view),
+        _ when _operationIntentViews.Contains(view, StringComparer.Ordinal) => ReadOperationIntentView(workspace, arguments, view),
+        _ => ReadIntentOrListedView(workspace, arguments, view)
+    };
+
+    object ReadIntentOrListedView(ScreenplayWorkspace workspace, JsonElement arguments, string view) => view switch
+    {
+        "handler-intents" or "handler-intent-details" => ReadHandlerIntentView(workspace, arguments, view),
+        "named-rule-intents" or "named-rule-intent-details" => ReadNamedRuleIntentView(workspace, arguments, view),
+        "implementation-requirements" => ReadImplementationRequirementsView(workspace, arguments, view),
+        "typed-contexts" => ReadTypedContextsView(workspace, arguments, view),
+        "source-map" => ReadSourceMapView(workspace, arguments, view),
+        _ => ReadListedView(workspace, arguments, view)
+    };
 
     void VerifyProposalBaseline(IMcpProposal proposal)
     {
