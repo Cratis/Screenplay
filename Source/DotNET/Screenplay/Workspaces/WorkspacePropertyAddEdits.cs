@@ -57,7 +57,7 @@ sealed class WorkspacePropertyAddEdits(WorkspaceSyntaxIndex index, WorkspaceProp
         return [.. _touched.OrderBy(document => document.ToString(), StringComparer.Ordinal).Select(document => new ReplaceWorkspaceSyntaxDocument(document, WorkspaceSyntaxMutation.Syntax(_roots[document])))];
     }
 
-    static bool Fixture(SyntaxNode node) => node is SpecificationExampleSyntax or SpecificationCommandSyntax or SpecificationEventSyntax or SpecificationReadModelSyntax or SpecificationQueryResultSyntax;
+    static bool Fixture(SyntaxNode node) => node is SeedEventSyntax or SpecificationExampleSyntax or SpecificationCommandSyntax or SpecificationEventSyntax or SpecificationReadModelSyntax or SpecificationQueryResultSyntax;
 
     WorkspacePropertyRefusal? Fixtures()
     {
@@ -69,7 +69,7 @@ sealed class WorkspacePropertyAddEdits(WorkspaceSyntaxIndex index, WorkspaceProp
             var entry = occurrence.Entry;
             var value = Parse(entry, request.FixtureValue!, false, literal: true);
             if (value is null) return new(WorkspaceConflictKind.UnsupportedPropertySpan, [WorkspacePropertyAddPlan.Candidate(occurrence.Addition) with { Role = "fixture", Location = entry.Location }]);
-            var member = entry.Node is SpecificationReadModelSyntax or SpecificationQueryResultSyntax ? "properties" : "values";
+            var member = entry.Node is SeedEventSyntax or SpecificationReadModelSyntax or SpecificationQueryResultSyntax ? "properties" : "values";
             Insert(entry, member, new PropertyMappingSyntax(occurrence.Addition.Name, value, entry.Location), new(occurrence.Addition, properties.Links.AdditionFixtureRole(entry), "fixtureAdded"));
         }
         return null;

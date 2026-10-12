@@ -15,6 +15,7 @@ internal sealed partial class WorkspacePropertyLinks
     static (string Name, string[] Kinds) FixtureReference(SyntaxNode node) => node switch
     {
         CaptureAppendSyntax value => (value.Event, ["Event"]),
+        SeedEventSyntax value => (value.Event, ["Event"]),
         InvokesSyntax value => (value.Command, ["Command"]),
         SpecificationExampleSyntax value => (value.Type, ["Command", "Event", "ReadModel"]),
         SpecificationCommandSyntax value => (value.CommandType, ["Command", "Example"]),

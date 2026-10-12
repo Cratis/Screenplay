@@ -159,10 +159,17 @@ internal sealed partial class WorkspacePropertyLinks
     AuthoredDeclaration[] Members(IEnumerable<AuthoredDeclaration> owners, string path) => [.. owners.SelectMany(owner => _properties.GetValueOrDefault(owner) ?? [])
         .Where(property => property.Name == path.Split('.')[0])];
 
+    ReadOwner? ReferenceOwner(WorkspaceSyntaxEntry use)
+    {
+        var seed = new[] { use }.Concat(Parents(use)).Select(entry => entry.Node).OfType<SeedEventSyntax>().FirstOrDefault();
+
+        return seed is not null ? new("SeedEvent", seed.Event, seed.Event, seed.Location) : Owner(use)?.Owner;
+    }
+
     void Add(WorkspaceSyntaxEntry use, string role, PropertyReference property)
     {
         var owner = Owner(use);
-        var reference = new AuthoredReference(property.Text, ["Property"], owner?.Scope ?? [], use.Location, role, owner?.Owner)
+        var reference = new AuthoredReference(property.Text, ["Property"], owner?.Scope ?? [], use.Location, role, ReferenceOwner(use))
         {
             AmbiguousSourceOwner = property.Candidates.Length > 1,
             IncompleteSourceOwner = property.Incomplete || role == "opaque",
