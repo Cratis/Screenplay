@@ -1,9 +1,10 @@
 ---
 id: 0068
 title: Admit concept compliance markers into the executable model as ESM v13
-status: proposed
+status: accepted
 stage: none
-decider: pending (woksin accepts)
+decided: 2026-10-12
+decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
 applies-to:
@@ -104,7 +105,7 @@ Models with `pii` or `secret` concepts keep failing with `PLAY0268`. Studio and 
 
 ## Timeline and scope
 
-Proposed on 2026-10-12. If accepted, it takes effect at admission against current `main`, with the version number rechecked at merge under 0025 and 0066. The decider is pending; Sindre Alstad Wilting (woksin) accepts.
+Proposed and accepted on 2026-10-12 by Sindre Alstad Wilting. It takes effect at admission against current `main`, with the version number rechecked at merge under 0025 and 0066.
 
 In scope: the v13 model shape, binding, canonical writer and strict reader, validator refusals, reference-evaluator neutrality, vectors, MCP readiness text and documentation.
 
