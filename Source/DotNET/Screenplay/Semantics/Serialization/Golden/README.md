@@ -23,6 +23,8 @@ The `full-esm-*.json` files pin canonical executable semantic model (ESM) bytes,
 
 `full-esm-v12.json` pins enum member numbers under 0065, 0025 and 0066. `canonical_serialization_golden_vectors.CreateSemanticModelV12()` adds sparse and negative int32 enum identities to the full v11 model, retaining exact literal lowering and all earlier contracts. `EnumMemberNumbersCorpus.V12` pins source-backed bytes, revision and name-based accepted outcomes across single-file, folder, reordered and relocated forms. Positional pins bind as absent numbers; only non-positional numbering selects v12. Released v1–v11 goldens and corpus vectors remain unchanged.
 
+`full-esm-v13.json` pins concept compliance under 0068, 0025 and 0066. `canonical_serialization_golden_vectors.CreateSemanticModelV13()` adds personal health/criminal data, a namespace-scoped secret and combined personal/secret markers to the full v12 model. `ConceptComplianceCorpus.V13` pins source-backed bytes, revision and reference outcomes across single-file, folder, reordered and relocated forms. Only markers select v13; reasons and event subject marks add no bytes. Personal takes precedence over secret, and no secret scope is stored next to personal. Identity/enum compliance is refused; the binder also refuses personal or explicitly subject-scoped secret values in an event with an explicit subject mark. Released v1–v12 vectors remain unchanged.
+
 The other files pin separate serialization contracts, not ESM bytes:
 
 | File | Source |
@@ -38,7 +40,7 @@ and descriptor sidecars with these bytes.
 
 `Screenplay.CanonicalVectors.Specs.csproj` links the ESM and sidecar files as embedded resources:
 `full-esm-v1.json`, `full-esm-v2.json`, `full-esm-v3.json`, `full-esm-v4.json`, `full-esm-v5.json`, `full-esm-v6.json`, `full-esm-v7.json`,
-`full-esm-v8.json`, `full-esm-v9.json`, `full-esm-v10.json`, `full-esm-v11.json`, `full-esm-v12.json`, `policy-negation-v7.json`, `full-identity-catalog-v1.json`, `typed-contexts-v1.json`, and `unbound-handler-context-v1.json`.
+`full-esm-v8.json`, `full-esm-v9.json`, `full-esm-v10.json`, `full-esm-v11.json`, `full-esm-v12.json`, `full-esm-v13.json`, `policy-negation-v7.json`, `full-identity-catalog-v1.json`, `typed-contexts-v1.json`, and `unbound-handler-context-v1.json`.
 It does not link `full-expressions-v1.json`. The vectors project checks ESM and identity-catalog
 round trips and the presence of both descriptor sidecars. Do not edit the files by hand.
 
@@ -93,6 +95,15 @@ Regenerate only the v12 golden or enum member numbers corpus, leaving released v
 ```bash
 SCREENPLAY_REGENERATE_GOLDEN=12 dotnet test Source/DotNET/Screenplay/Screenplay.csproj -c Debug --filter FullyQualifiedName~when_checking_for_a_regeneration_request
 SCREENPLAY_REGENERATE_ENUM_MEMBER_NUMBERS_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug -f net10.0 --filter FullyQualifiedName~for_EnumMemberNumbersCorpus
+```
+
+Each command deliberately fails after regeneration. Review the bytes, rebuild and rerun without the variables.
+
+Regenerate only the v13 golden or concept compliance corpus, leaving released v1–v12 vectors untouched:
+
+```bash
+SCREENPLAY_REGENERATE_GOLDEN=13 dotnet test Source/DotNET/Screenplay/Screenplay.csproj -c Debug --filter FullyQualifiedName~when_checking_for_a_regeneration_request
+SCREENPLAY_REGENERATE_CONCEPT_COMPLIANCE_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug --filter FullyQualifiedName~for_ConceptComplianceCorpus
 ```
 
 Each command deliberately fails after regeneration. Review the bytes, rebuild and rerun without the variables.

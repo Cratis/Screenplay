@@ -2,7 +2,7 @@
 id: 0068
 title: Admit concept compliance markers into the executable model as ESM v13
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-10-12
 decider: Sindre Alstad Wilting
 class: contract
@@ -15,6 +15,8 @@ applies-to:
   - Source/Screenplay/Compiler/**
   - Documentation/screenplay/**
 ---
+
+> **2026-10-12 — clarification during implementation.** Explicit `subject` marks are authoring metadata and are not written to the executable model (`SemanticModelBinder.Structure.cs`, `when_binding_subject_metadata.cs`). The refusal of a personal or subject-scoped secret value in an event with an explicit `subject` mark is therefore enforced by the binder, from source. A canonical v13 model can never contain that combination, so the model validator and the strict reader have nothing to check for it. The other refusals apply in the binder, the validator and the reader as written. The reader's "`secret.scope` on a concept that is personal without a secret" means a `secret.scope` next to `personal`, which the shape above already rules out. The choice is unchanged.
 
 ## Context
 

@@ -47,7 +47,11 @@ C# providers render these attributes on the concept:
 
 `[NotAudited]` alone leaves event values in plaintext; `[Encrypted]` alone does not withhold command inputs from Arc's causation chain. `[PII]` already withholds the value, and Chronicle refuses `[PII]` combined with `[Encrypted]` (`CHR0053`). An omitted scope retains Chronicle's Subject default. Explicit `secret scope subject|namespace|global` records the requested scope; changing it for concepts used by persisted events requires a new event generation. Stage v4.29.0 implements this mapping ([Stage #197](https://github.com/Cratis/Stage/issues/197)).
 
-Compliance attributes are not admitted by the executable semantic model: binding a concept with either marker reports `PLAY0268`. The mapping above describes C# provider rendering, not reference execution.
+Compliance markers select executable semantic model (ESM) v13 under [decision 0068](https://github.com/Cratis/Screenplay/blob/main/decisions/0068-admit-concept-compliance-markers-as-esm-v13.md). Consumers must explicitly admit v13 before realizing this protection. The reference evaluator runs marked models with unchanged outcomes; it has no storage, encryption or causation chain.
+
+### When to mark a value
+
+Use `pii` when the value is personal data, such as a person's name or email address. Use `secret` for a credential or operational secret that needs encryption without enrollment in personal-data erasure. If both apply, declare both: the executable model retains both markers, but personal-data protection takes precedence. Do not use compliance to classify an enum or an event-source/stream identity; use a surrogate identity and a separate protected value instead.
 
 ## Examples
 
@@ -119,7 +123,21 @@ See [Processing purposes](purposes.md) for the checks and the record, and [Diagn
 
 Qualifiers require the personal-data marker, and an unknown category is an error (`PLAY0570`); more than one `special` line is an error too (`PLAY0571`). The `personal` alias works on all personal-data body lines too.
 
-These facts remain syntax-only: binding reports `PLAY0268`, including scopes and qualifiers. They do not promise lawful processing, retention enforcement or reference execution. Provider support for newly declared details and scope must be checked separately.
+ESM v13 stores the classification, qualifiers and scope on the concept, not on each property. Type references carry that meaning to command, event, read-model, composite-type and response members, including collection elements. Reasons stay report-only (`PLAY0270`) and are not stored. The canonical shapes are:
+
+```json
+{"personal":{"special":"health","criminal":true}}
+{"secret":{"scope":"namespace"}}
+{"personal":{},"secret":{}}
+```
+
+These are the values of the optional concept `compliance` member. Bare `pii` writes `{"personal":{}}`; absent or false qualifiers are omitted. No secret scope is stored next to personal classification. The strict reader refuses such a scope, unknown categories or scopes, and compliance on identity or enum concepts. See [interoperability](interoperability.md) for the wire contract.
+
+### Subject and testing limits
+
+In v13 a personal value's data subject is the event source. Binding refuses an event containing a personal value or an explicitly `secret scope subject` value together with an explicit event-property `subject` mark (`PLAY0268`), including protected values inside composite members and collections. Subject lineage is not admitted yet; remove the explicit mark only when the event source really is the intended subject. Subject marks otherwise remain report-only and add no ESM bytes.
+
+Run your specifications as usual: compliance does not turn a supported specification into typed-unsupported execution, and concept validation rules still check command inputs. Reference execution cannot test encryption or erasure; verify those with the realizing provider. Markers and qualifiers do not promise lawful processing or retention enforcement, and provider support for newly declared details and scope must be checked separately.
 
 ## Legacy spelling
 
