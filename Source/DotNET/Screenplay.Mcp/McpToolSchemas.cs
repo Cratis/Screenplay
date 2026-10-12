@@ -8,6 +8,13 @@ namespace Cratis.Screenplay.Mcp;
 
 static class McpToolSchemas
 {
+    static readonly Dictionary<string, Func<JsonObject>> _propertyAdditionArguments = new(StringComparer.Ordinal)
+    {
+        ["owner"] = McpAstSchemas.Handle,
+        ["optional"] = () => new() { ["type"] = "boolean", ["default"] = false },
+        ["hops"] = () => McpAstSchemas.Array(PropertyHop())
+    };
+
     internal static JsonObject For(McpToolDefinition tool)
     {
         var properties = new JsonObject();
@@ -89,17 +96,9 @@ static class McpToolSchemas
         {
             "action" => McpAstSchemas.Choice("add", "rename", "remove"),
             "alsoRename" or "alsoRemove" => McpAstSchemas.Array(McpAstSchemas.Object(new JsonObject { ["target"] = McpAstSchemas.Handle(), ["expectedName"] = McpAstSchemas.String() }, "target", "expectedName")),
-            _ => PropertyAdditionArgument(property)
+            _ => _propertyAdditionArguments.TryGetValue(property, out var argument) ? argument() : null
         };
     }
-
-    static JsonObject? PropertyAdditionArgument(string property) => property switch
-    {
-        "owner" => McpAstSchemas.Handle(),
-        "optional" => new() { ["type"] = "boolean", ["default"] = false },
-        "hops" => McpAstSchemas.Array(PropertyHop()),
-        _ => null
-    };
 
     static JsonObject StandardArgument(string tool, string property) => property switch
     {
