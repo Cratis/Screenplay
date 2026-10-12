@@ -12,6 +12,11 @@ public sealed partial class SemanticModelBinder
 {
     internal static ImmutableArray<Diagnostic> ComplianceAdmissionDiagnostics(ApplicationSyntax syntax)
     {
+        if (!syntax.Concepts.Any(concept => concept.Attributes.Any()))
+        {
+            return [];
+        }
+
         var slices = ScreenplayValidator.ScopedSlices(syntax).ToArray();
         var context = ParserContext.ForDiagnostics();
         IdentifierComplianceValidator.Validate(syntax, new ConsistencyDeclarations(syntax, slices), context);
@@ -59,7 +64,7 @@ public sealed partial class SemanticModelBinder
 
         void ValidateComplianceAdmission()
         {
-            foreach (var diagnostic in ComplianceAdmissionDiagnostics(syntax)) Error(diagnostic.Code, diagnostic.Message, diagnostic.Location);
+            foreach (var diagnostic in ComplianceAdmissionDiagnostics(syntax)) Error(DiagnosticCodes.UnsupportedSemanticSyntax, diagnostic.Message, diagnostic.Location);
         }
     }
 }
