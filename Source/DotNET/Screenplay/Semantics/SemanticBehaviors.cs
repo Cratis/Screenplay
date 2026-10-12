@@ -460,6 +460,11 @@ public sealed record SemanticKeyedQuery(
 {
     /// <summary>Gets the effective authorization, or null for unrestricted queries.</summary>
     public SemanticAuthorization? Authorization { get; init; }
+
+    /// <summary>
+    /// Gets caller-supplied equality filters in declaration order.
+    /// </summary>
+    public ImmutableArray<SemanticQueryFilter> Filters { get; init; } = [];
 }
 
 /// <summary>
@@ -469,3 +474,12 @@ public sealed record SemanticKeyedQuery(
 /// <param name="Name">The argument name.</param>
 /// <param name="Type">The argument type.</param>
 public sealed record SemanticReadModelQueryArgument(SemanticId Id, string Name, SemanticTypeReference Type);
+
+/// <summary>
+/// Represents a caller-supplied equality filter on a collection query.
+/// </summary>
+/// <param name="Id">The stable argument identity.</param>
+/// <param name="Name">The same-named read-model property.</param>
+/// <param name="Type">The scalar type; optional means the caller may omit the filter.</param>
+/// <param name="Property">The read-model property identity.</param>
+public sealed record SemanticQueryFilter(SemanticId Id, string Name, SemanticTypeReference Type, SemanticId Property);

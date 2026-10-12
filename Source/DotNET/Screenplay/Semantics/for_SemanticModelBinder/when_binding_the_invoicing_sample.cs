@@ -52,11 +52,12 @@ public class when_binding_the_invoicing_sample : given.a_semantic_binder
         (Unsupported, "use '$eventContext.causedBy.subject' instead"),
         (Unsupported, "mapping expression 'TemplateExpressionSyntax'"),
 
-        // Query filters, explicit scopes and performer blocks are still outside the admitted executable query shapes.
-        (Unsupported, "Query 'ListInvoices' uses filtering"),
-        (Unsupported, "Query 'ListLineItems' uses filtering"),
-        (Unsupported, "Query 'GetOverdueInvoices' uses filtering"),
-        (Unsupported, "Query 'GetInvoiceSummary' uses filtering"),
+        // Context-sourced filters, explicit scopes and performer blocks remain outside the admitted query shapes.
+        (Unsupported, "Query 'ListInvoices' filter 'tenantId' uses 'from'"),
+        (Unsupported, "Query 'ListLineItems' filter 'tenantId' uses 'from'"),
+        (Unsupported, "Query 'ListLineItems' uses a performer"),
+        (Unsupported, "Query 'GetOverdueInvoices' uses a performer"),
+        (Unsupported, "Query 'GetInvoiceSummary' uses a performer"),
         (Unsupported, "Query 'GetInvoiceSummary' must"),
         (Unsupported, "Query 'GetSystemActivity' must"),
         (Unsupported, "Read model 'InvoiceListReadModel' must have one unambiguous keyed query"),

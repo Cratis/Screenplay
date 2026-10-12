@@ -88,7 +88,7 @@ static class WorkspaceSyntaxAddresses
             return SemanticAddress.ForProperty(owner, property.Name);
         }
 
-        if (node is QueryParameterSyntax argument && member == "by" && owner?.Kind == SemanticKind.Query)
+        if (node is QueryParameterSyntax argument && (member == "by" || member == "filters") && owner?.Kind == SemanticKind.Query)
         {
             return SemanticAddress.ForQueryArgument(owner, argument.Name);
         }

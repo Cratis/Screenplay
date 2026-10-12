@@ -2,7 +2,7 @@
 id: 0069
 title: Admit caller-supplied equality query filters into the executable model as ESM v14
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-10-12
 decider: Sindre Alstad Wilting
 class: contract

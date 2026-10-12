@@ -479,7 +479,7 @@ internal static partial class SpecificationParser
             return null;
         }
 
-        return new(match.Groups[1].Value, ParseValues(context, line), line.Location);
+        return new(match.Groups[1].Value, ParseValues(context, line, queryArguments: true), line.Location);
     }
 
     static SpecificationQueryResultSyntax? ParseResult(ParserContext context, SourceLine line)
@@ -729,7 +729,7 @@ internal static partial class SpecificationParser
 
                     hasArguments = true;
                     argumentsLocation = child.Location;
-                    arguments.AddRange(ParseValues(context, child));
+                    arguments.AddRange(ParseValues(context, child, queryArguments: true));
                     break;
                 case "result":
                     results.Add(new(ParseValues(context, child), child.Location));
@@ -938,7 +938,7 @@ internal static partial class SpecificationParser
     [GeneratedRegex(@"^streamId\s*=(?!=|>)\s*(.+)$", RegexOptions.None, 1000)]
     private static partial Regex SpecificationStreamIdRegex();
 
-    static List<PropertyMappingSyntax> ParseValues(ParserContext context, SourceLine parent, Match? inline = null)
+    static List<PropertyMappingSyntax> ParseValues(ParserContext context, SourceLine parent, Match? inline = null, bool queryArguments = false)
     {
         var values = new List<PropertyMappingSyntax>();
         AddInlineValue(context, parent, inline, values);
@@ -952,7 +952,19 @@ internal static partial class SpecificationParser
                 continue;
             }
 
-            AddFixtureValue(context, values, ParseSpecificationMapping(context, match.Groups[1].Value, match.Groups[2], child));
+            var value = ParseSpecificationMapping(context, match.Groups[1].Value, match.Groups[2], child);
+            if (queryArguments)
+            {
+                if (values.Exists(existing => existing.Property == value.Property))
+                {
+                    context.Error(DiagnosticCodes.UnknownSpecificationQueryArgument, $"Query argument '{value.Property}' is repeated.", value.Location);
+                }
+                values.Add(value);
+            }
+            else
+            {
+                AddFixtureValue(context, values, value);
+            }
         }
 
         return values;

@@ -121,7 +121,12 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
         IEnumerable<string> LocalFeatures() => node switch
         {
             ReadModelSyntax model => Feature(model.Properties.Count(property => property.IsKey) > 1, "composite read-model keys (#599)"),
-            QuerySyntax query => Feature(query.ByParts.Any(), "composite read-model keys (#599)"),
+            QuerySyntax query => Feature(query.ByParts.Any(), "composite read-model keys (#599)")
+                .Concat(Feature(query.Filters.Any(filter => filter.Source is not null), "context-sourced query filters (#140)"))
+                .Concat(Feature(query.Filters.Any() && !query.ReturnType.IsCollection, "query filters on single results (#140)"))
+                .Concat(Feature(query.By?.Source is not null, "context-sourced query keys"))
+                .Concat(Feature(query.Scope is not null, "explicit query scope"))
+                .Concat(Feature(query.Performer is not null, "query performers")),
             EventSourceSyntax source => source.Streams.SelectMany(UnadmittedFeatures),
             EventStreamSyntax stream => Feature(!SemanticModelBinder.CompositeStreamIdsJoin && stream.StreamIdParts.Any(), "composite stream ids (#462)"),
             EventStreamIdPartSyntax => Feature(!SemanticModelBinder.CompositeStreamIdsJoin, "composite stream ids (#462)"),

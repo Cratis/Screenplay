@@ -186,7 +186,13 @@ public sealed record SemanticReadModelInstance(
 /// </summary>
 /// <param name="Query">The query semantic identity.</param>
 /// <param name="Key">The query key.</param>
-public sealed record SemanticQueryRequest(SemanticId Query, SemanticValue Key);
+public sealed record SemanticQueryRequest(SemanticId Query, SemanticValue Key)
+{
+    /// <summary>
+    /// Gets supplied equality filter values.
+    /// </summary>
+    public ImmutableArray<SemanticQueryFilterValue> Filters { get; init; } = [];
+}
 
 /// <summary>
 /// Represents one normalized query result.
@@ -197,7 +203,13 @@ public sealed record SemanticQueryRequest(SemanticId Query, SemanticValue Key);
 public sealed record SemanticQueryResult(
     SemanticId Query,
     SemanticValue Key,
-    ImmutableArray<SemanticReadModelInstance> Results);
+    ImmutableArray<SemanticReadModelInstance> Results)
+{
+    /// <summary>
+    /// Gets supplied filter values in query declaration order.
+    /// </summary>
+    public ImmutableArray<SemanticQueryFilterValue> Filters { get; init; } = [];
+}
 
 /// <summary>
 /// Represents one command execution request.

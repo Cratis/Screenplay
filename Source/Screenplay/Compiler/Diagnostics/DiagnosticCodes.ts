@@ -244,6 +244,7 @@ export const DiagnosticCodes = {
     InvalidSpecificationTrigger: 'PLAY0462',
     InvalidSpecificationCapture: 'PLAY0463',
     InvalidSpecificationQueryAction: 'PLAY0464',
+    UnknownSpecificationQueryArgument: 'PLAY0468',
     InvalidSpecificationQuery: 'PLAY0265',
     UnknownSpecificationQueryDirective: 'PLAY0266',
     DuplicateSpecificationQueryArguments: 'PLAY0267',
