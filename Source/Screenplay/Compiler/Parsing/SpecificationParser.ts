@@ -280,7 +280,7 @@ function parseWhen(context: ParserContext, line: SourceLine, body: Specification
     }
     if (whenQueryPrefix.test(line.content)) {
         body.whenQuery = parseNamedStep(context, line, whenQueryPattern, DiagnosticCodes.InvalidSpecificationQueryAction, 'when query', 'when query <Query>',
-            (query, values) => ({ kind: 'SpecificationWhenQuerySyntax', query, arguments: values, location: locationOf(line) }));
+            (query, values) => ({ kind: 'SpecificationWhenQuerySyntax', query, arguments: values, location: locationOf(line) }), true);
         return;
     }
     const match = whenPattern.exec(line.content);
@@ -398,7 +398,7 @@ function parseThen(context: ParserContext, line: SourceLine, body: Specification
         let hasArguments = false;
         for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
             context.reader.takeSignificant();
-            if (child.content === 'arguments' && !hasArguments) args.push(...parseValues(context.valueContext, child, true));
+            if (child.content === 'arguments' && !hasArguments) args.push(...parseValues(context.valueContext, child, true, undefined, context));
             else if (child.content === 'arguments') reject(DiagnosticCodes.DuplicateSpecificationQueryArguments, `Query assertion '${match[1]}' already declares arguments`, child);
             else if (child.content === 'result') results.push({ kind: 'SpecificationQueryResultSyntax', properties: parseValues(context.valueContext, child, true), exactly: false, location: locationOf(child) });
             else reject(DiagnosticCodes.UnknownSpecificationQueryDirective, `Unexpected '${firstWord(child.content)}' in 'then query' body - expected arguments or result`, child);
@@ -466,14 +466,14 @@ function parseCapture(context: ParserContext, line: SourceLine, keyword: string)
 // A step naming one thing on its header line, with '<field> = <value>' lines beneath it.
 function parseNamedStep<T>(
     context: ParserContext, line: SourceLine, regex: RegExp, code: string, keyword: string, expected: string,
-    create: (name: string, values: PropertyMappingSyntax[]) => T): T | null {
+    create: (name: string, values: PropertyMappingSyntax[]) => T, queryArguments = false): T | null {
     const match = regex.exec(line.content);
     if (match === null) {
         context.error(code, `Invalid '${keyword}' declaration '${line.content}' - expected '${expected}'`, locationOf(line));
         skipBody(context, line.indent);
         return null;
     }
-    return create(match[1], parseValues(context, line));
+    return create(match[1], parseValues(context, line, false, undefined, queryArguments ? context : undefined));
 }
 
 function parseResult(context: ParserContext, line: SourceLine, body: SpecificationBody): void {
@@ -614,7 +614,7 @@ export function rejectSpecificationRouteChildren(context: ParserContext, line: S
     }
 }
 
-function parseValues(context: ParserContext, parent: SourceLine, nativeIdentifiers = false, inline?: RegExpExecArray): PropertyMappingSyntax[] {
+function parseValues(context: ParserContext, parent: SourceLine, nativeIdentifiers = false, inline?: RegExpExecArray, queryArgumentsContext?: ParserContext): PropertyMappingSyntax[] {
     const values: PropertyMappingSyntax[] = [];
     addInlineValue(context, parent, inline, values);
     for (let child = context.peekChild(parent.indent); child !== undefined; child = context.peekChild(parent.indent)) {
@@ -624,7 +624,15 @@ function parseValues(context: ParserContext, parent: SourceLine, nativeIdentifie
             context.error(DiagnosticCodes.InvalidSpecificationValue, `Invalid property mapping '${child.content}' - expected '<property> = <value>'`, locationOf(child));
             continue;
         }
-        addFixtureValue(context, values, mappingOf(context, child, mapping, nativeIdentifiers));
+        const value = mappingOf(context, child, mapping, nativeIdentifiers);
+        if (queryArgumentsContext !== undefined) {
+            if (values.some(existing => existing.property === value.property)) {
+                queryArgumentsContext.error(DiagnosticCodes.UnknownSpecificationQueryArgument, `Query argument '${value.property}' is repeated.`, value.location);
+            }
+            values.push(value);
+        } else {
+            addFixtureValue(context, values, value);
+        }
     }
     return values;
 }

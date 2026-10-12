@@ -1,0 +1,51 @@
+module Items
+  feature Browsing
+    slice StateView Browse
+      readmodel Item
+        itemId String
+        status Status
+        category String
+      query Filtered => Item[]
+        filter status Status
+        filter category String optional
+      query InCategory => Item[]
+        by category String
+        filter status Status
+      specification ReversedRows
+        given readmodel Item
+          itemId = "a"
+          status = "open"
+          category = "x"
+        given readmodel Item
+          itemId = "b"
+          status = "open"
+          category = "y"
+        given readmodel Item
+          itemId = "c"
+          status = "closed"
+          category = "x"
+        when query Filtered
+          status = "open"
+        then result
+          itemId = "b"
+        then result
+          itemId = "a"
+      specification DistinctCalls
+        given readmodel Item
+          itemId = "a"
+          status = "open"
+          category = "x"
+        given readmodel Item
+          itemId = "c"
+          status = "closed"
+          category = "x"
+        then query Filtered
+          arguments
+            status = "open"
+          result
+            itemId = "a"
+        then query Filtered
+          arguments
+            status = "closed"
+          result
+            itemId = "c"

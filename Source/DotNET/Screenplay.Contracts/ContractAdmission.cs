@@ -75,7 +75,13 @@ static class ContractAdmission
             ]),
         new("operation", "system Outside\n" + Slice + "      operation External\n        uses Outside\n        execute\n          implementation\n            hint \"External work\"\n"),
         new("projection", Slice + Event + ReadModel + Projection + KeyedQuery, [Slice + Event + ReadModel + Projection.Replace("      projection View => View\n", "      projection View => View\n        description \"Projection intent\"\n", StringComparison.Ordinal) + KeyedQuery]),
-        new("query", Slice + Event + ReadModel + Projection + KeyedQuery, [Slice + ReadModel + "      query All => View[]\n"]),
+        new(
+            "query",
+            Slice + Event + ReadModel + Projection + KeyedQuery,
+            [
+                Slice + ReadModel + "      query All => View[]\n",
+                Slice + "      readmodel FilteredView\n        itemId String\n        status String\n        category String optional\n      query Filtered => FilteredView[]\n        filter status String\n        filter category String optional\n"
+            ]),
         new("reaction", Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      reaction FollowUp\n        when Recorded\n          value\n          produces FollowedUp\n            value = value\n      event FollowedUp\n        value String\n", ["eventsource Account\n  identifier String\n  stream All\n" + Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      reaction FollowUp\n        from Account.All\n        when Recorded\n"]),
         new("runs", Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      command C\n      reaction FollowUp\n        runs as system\n        when Recorded\n          invokes C\n"),
         new("readmodel", Slice + Event + ReadModel + Projection + KeyedQuery, [Slice + ReadModel]),

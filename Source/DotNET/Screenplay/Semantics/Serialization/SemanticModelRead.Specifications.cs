@@ -54,10 +54,10 @@ internal static partial class SemanticModelRead
         return state.Build();
     }
 
-    internal static SemanticSpecificationQueryResult SpecificationQuery(ref Utf8JsonReader reader)
+    internal static SemanticSpecificationQueryResult SpecificationQuery(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "specification query result");
-        var state = new SpecificationQueryState();
+        var state = new SpecificationQueryState(schemaVersion);
         SpecificationQueryState.Fields.Read(ref reader, state);
         return state.Build();
     }
@@ -90,7 +90,7 @@ internal static partial class SemanticModelRead
             .Add("thenEvents", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenEvents = Array(ref reader, (ref Utf8JsonReader item) => SpecificationEvent(ref item, state.SchemaVersion, true), property))
             .Add("thenReadModels", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenReadModels = Array(ref reader, SpecificationReadModel, property))
             .Add("thenAbsentReadModels", 5, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenAbsentReadModels = Array(ref reader, SpecificationAbsentReadModel, property))
-            .Add("thenQueries", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenQueries = Array(ref reader, SpecificationQuery, property))
+            .Add("thenQueries", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenQueries = Array(ref reader, (ref Utf8JsonReader item) => SpecificationQuery(ref item, state.SchemaVersion), property))
             .Add("thenErrors", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenErrors = Array(ref reader, SpecificationError, property))
             .Add("thenDenied", (ref Utf8JsonReader reader, SpecificationState state, string property) => state.ThenDenied = OnlyTrue(ref reader, property, "specification"))
             .Add("thenReturns", 7, (ref Utf8JsonReader reader, SpecificationState state, string property) => state.Returns = Nested(ref reader, ThenReturns, property))
@@ -253,17 +253,20 @@ internal static partial class SemanticModelRead
         }
     }
 
-    sealed class SpecificationQueryState() : ReadState(0)
+    sealed class SpecificationQueryState(uint schemaVersion) : ReadState(schemaVersion)
     {
         public static readonly FieldTable<SpecificationQueryState> Fields = new FieldTable<SpecificationQueryState>("specification query result")
             .Add("query", (ref Utf8JsonReader reader, SpecificationQueryState state, string property) => state.Query = Identifier(ref reader, property))
             .Add("key", (ref Utf8JsonReader reader, SpecificationQueryState state, string property) => state.Key = Nested(ref reader, Value, property))
+            .Add("filters", LanguageVersion.V14.Major, (ref Utf8JsonReader reader, SpecificationQueryState state, string property) => state.Filters = Array(ref reader, QueryFilterValue, property))
             .Add("results", (ref Utf8JsonReader reader, SpecificationQueryState state, string property) => state.Results = Array(ref reader, SpecificationReadModel, property))
             .Add("exactly", (ref Utf8JsonReader reader, SpecificationQueryState state, string property) => state.Exactly = OnlyTrue(ref reader, property, "specification query result"));
 
         public SemanticId Query { get; set; }
 
         public SemanticValue? Key { get; set; }
+
+        public ImmutableArray<SemanticQueryFilterValue> Filters { get; set; } = [];
 
         public ImmutableArray<SemanticSpecificationReadModel> Results { get; set; }
 
@@ -272,7 +275,7 @@ internal static partial class SemanticModelRead
         public SemanticSpecificationQueryResult Build()
         {
             Required(Query.IsSet && Key is not null && !Results.IsDefault, "specification query result");
-            return new(Query, Key!, Results) { Exactly = Exactly };
+            return new(Query, Key!, Results) { Exactly = Exactly, Filters = Filters };
         }
     }
 

@@ -67,6 +67,7 @@ internal static partial class SemanticModelValidator
             }
 
             if (query.Argument is not null) ValidateValue(result.Key, query.Argument.Type, "specification query key");
+            SemanticQueryFilterRules.ValidateValues(query, result.Filters, (value, type, description) => ValidateValue(value, type, description));
             RequireObjects(result.Results, nameof(result.Results), "specification query result state");
             if (!IsValidResultCount(query.Cardinality, result.Results.Length))
             {
@@ -176,8 +177,21 @@ internal static partial class SemanticModelValidator
         void RejectDuplicateAbsentReadModels(ImmutableArray<SemanticSpecificationAbsentReadModel> states) =>
             RejectDuplicateKeys(states, state => state.ReadModel, state => state.Key, "A specification contains a duplicated absent read model key.");
 
-        void RejectDuplicateQueryExpectations(ImmutableArray<SemanticSpecificationQueryResult> results) =>
-            RejectDuplicateKeys(results, result => result.Query, result => result.Key, "A specification contains a duplicated query expectation key.");
+        void RejectDuplicateQueryExpectations(ImmutableArray<SemanticSpecificationQueryResult> results)
+        {
+            for (var first = 0; first < results.Length; first++)
+            {
+                for (var second = first + 1; second < results.Length; second++)
+                {
+                    if (results[first].Query == results[second].Query &&
+                        SemanticValueRules.AreEqual(results[first].Key, results[second].Key) &&
+                        SemanticQueryFilterRules.SameValues(results[first].Filters, results[second].Filters))
+                    {
+                        throw new InvalidSemanticContract("A specification contains a duplicated query expectation key.");
+                    }
+                }
+            }
+        }
 
         void RejectDuplicateKeys<T>(ImmutableArray<T> items, Func<T, SemanticId> owner, Func<T, SemanticValue> key, string message)
         {

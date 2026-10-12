@@ -93,7 +93,8 @@ public static partial class SemanticModelCanonicalJson
         CanonicalJson.WriteString(writer, "name", application.Name);
         WriteArray(writer, "concepts", application.Concepts.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteConcept);
         WriteArray(writer, "types", application.Types.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteCompositeType);
-        WriteArray(writer, "modules", application.Modules.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, module) => WriteModule(output, module, version));
+        var queries = application.Modules.SelectMany(module => module.Features).SelectMany(QueryDeclarations).ToDictionary(query => query.Id);
+        WriteArray(writer, "modules", application.Modules.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, module) => WriteModule(output, module, version, queries));
         if (!application.Policies.IsDefaultOrEmpty) WriteArray(writer, "policies", application.Policies.OrderBy(_ => _.Name, StringComparer.Ordinal), WritePolicy);
         if (!application.Triggers.IsDefaultOrEmpty) WriteArray(writer, "triggers", application.Triggers.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteTrigger);
         if (!application.EventSources.IsDefaultOrEmpty) WriteArray(writer, "eventSources", application.EventSources.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteEventSourceDeclaration);
@@ -145,26 +146,28 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    static void WriteModule(Utf8JsonWriter writer, SemanticModule module, SemanticVersion version)
+    static IEnumerable<SemanticKeyedQuery> QueryDeclarations(SemanticFeature feature) => feature.Slices.SelectMany(slice => slice.Queries).Concat(feature.Features.SelectMany(QueryDeclarations));
+
+    static void WriteModule(Utf8JsonWriter writer, SemanticModule module, SemanticVersion version, IReadOnlyDictionary<SemanticId, SemanticKeyedQuery> queries)
     {
         writer.WriteStartObject();
         WriteId(writer, module.Id);
         CanonicalJson.WriteString(writer, "name", module.Name);
-        WriteArray(writer, "features", module.Features.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, feature) => WriteFeature(output, feature, version));
+        WriteArray(writer, "features", module.Features.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, feature) => WriteFeature(output, feature, version, queries));
         writer.WriteEndObject();
     }
 
-    static void WriteFeature(Utf8JsonWriter writer, SemanticFeature feature, SemanticVersion version)
+    static void WriteFeature(Utf8JsonWriter writer, SemanticFeature feature, SemanticVersion version, IReadOnlyDictionary<SemanticId, SemanticKeyedQuery> queries)
     {
         writer.WriteStartObject();
         WriteId(writer, feature.Id);
         CanonicalJson.WriteString(writer, "name", feature.Name);
-        WriteArray(writer, "features", feature.Features.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, nested) => WriteFeature(output, nested, version));
-        WriteArray(writer, "slices", feature.Slices.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, slice) => WriteSlice(output, slice, version));
+        WriteArray(writer, "features", feature.Features.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, nested) => WriteFeature(output, nested, version, queries));
+        WriteArray(writer, "slices", feature.Slices.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, slice) => WriteSlice(output, slice, version, queries));
         writer.WriteEndObject();
     }
 
-    static void WriteSlice(Utf8JsonWriter writer, SemanticSlice slice, SemanticVersion version)
+    static void WriteSlice(Utf8JsonWriter writer, SemanticSlice slice, SemanticVersion version, IReadOnlyDictionary<SemanticId, SemanticKeyedQuery> queries)
     {
         writer.WriteStartObject();
         WriteId(writer, slice.Id);
@@ -176,7 +179,7 @@ public static partial class SemanticModelCanonicalJson
         WriteArray(writer, "projections", slice.Projections.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, projection) => WriteProjection(output, projection, version));
         if (!slice.Reducers.IsEmpty) WriteArray(writer, "reducers", slice.Reducers.OrderBy(_ => _.Name, StringComparer.Ordinal), WriteReducer);
         WriteArray(writer, "queries", slice.Queries.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteQuery);
-        WriteArray(writer, "specifications", slice.Specifications.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, specification) => WriteSpecification(output, specification, version));
+        WriteArray(writer, "specifications", slice.Specifications.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, specification) => WriteSpecification(output, specification, version, queries));
         WriteConstraints(writer, slice.Constraints);
         if (!slice.Reactions.IsDefaultOrEmpty) WriteArray(writer, "reactions", slice.Reactions.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), (output, reaction) => WriteReaction(output, reaction, version));
         if (!slice.Captures.IsDefaultOrEmpty) WriteArray(writer, "captures", slice.Captures.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteCapture);
@@ -411,6 +414,7 @@ public static partial class SemanticModelCanonicalJson
             writer.WriteEndObject();
             writer.WriteString("keyProperty", keyProperty.ToString());
         }
+        if (!query.Filters.IsDefaultOrEmpty) WriteArray(writer, "filters", query.Filters, WriteQueryFilter);
         writer.WriteString("cardinality", QueryCardinality(query.Cardinality));
         writer.WriteString("delivery", QueryDelivery(query.Delivery));
         if (query.Authorization is not null)
@@ -421,7 +425,27 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    static void WriteSpecification(Utf8JsonWriter writer, SemanticSpecification specification, SemanticVersion version)
+    static void WriteQueryFilter(Utf8JsonWriter writer, SemanticQueryFilter filter)
+    {
+        writer.WriteStartObject();
+        WriteId(writer, filter.Id);
+        CanonicalJson.WriteString(writer, "name", filter.Name);
+        writer.WritePropertyName("type");
+        WriteTypeReference(writer, filter.Type);
+        writer.WriteString("property", filter.Property.ToString());
+        writer.WriteEndObject();
+    }
+
+    static void WriteQueryFilterValue(Utf8JsonWriter writer, SemanticQueryFilterValue value)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("filter", value.Filter.ToString());
+        writer.WritePropertyName("value");
+        WriteValue(writer, value.Value);
+        writer.WriteEndObject();
+    }
+
+    static void WriteSpecification(Utf8JsonWriter writer, SemanticSpecification specification, SemanticVersion version, IReadOnlyDictionary<SemanticId, SemanticKeyedQuery> queries)
     {
         writer.WriteStartObject();
         WriteId(writer, specification.Id);
@@ -447,7 +471,7 @@ public static partial class SemanticModelCanonicalJson
         if (specification.ThenEventsInAnyOrder) writer.WriteBoolean("thenEventsInAnyOrder", true);
         WriteArray(writer, "thenReadModels", specification.ThenReadModels, WriteSpecificationReadModel);
         if (version.IsAtLeast(SemanticVersion.V5)) WriteArray(writer, "thenAbsentReadModels", specification.ThenAbsentReadModels, WriteSpecificationAbsentReadModel);
-        WriteArray(writer, "thenQueries", specification.ThenQueries, WriteSpecificationQuery);
+        WriteArray(writer, "thenQueries", specification.ThenQueries, (output, value) => WriteSpecificationQuery(output, value, queries[value.Query]));
         WriteArray(writer, "thenErrors", specification.ThenErrors, WriteSpecificationError);
         if (specification.ThenDenied) writer.WriteBoolean("thenDenied", true);
         if (specification.ThenReturns is not null)
@@ -524,12 +548,13 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteEndObject();
     }
 
-    static void WriteSpecificationQuery(Utf8JsonWriter writer, SemanticSpecificationQueryResult value)
+    static void WriteSpecificationQuery(Utf8JsonWriter writer, SemanticSpecificationQueryResult value, SemanticKeyedQuery query)
     {
         writer.WriteStartObject();
         writer.WriteString("query", value.Query.ToString());
         writer.WritePropertyName("key");
         WriteValue(writer, value.Key);
+        if (!value.Filters.IsDefaultOrEmpty) WriteArray(writer, "filters", query.Filters.Select(filter => value.Filters.SingleOrDefault(supplied => supplied.Filter == filter.Id)).OfType<SemanticQueryFilterValue>(), WriteQueryFilterValue);
         WriteArray(writer, "results", value.Results, WriteSpecificationReadModel);
         if (value.Exactly) writer.WriteBoolean("exactly", true);
         writer.WriteEndObject();

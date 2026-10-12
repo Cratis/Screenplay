@@ -4,6 +4,8 @@
 
 > [Event sources, source-owned streams and command stream routes](event-sources.md), specification routes and composite stream ids are admitted by executable semantic model (ESM) v8. Command mappings may read direct, required, non-collection, non-generated inputs or literals; property paths and handler routes remain refused with `PLAY0268`. Production route overrides and reaction/reducer observer filters select ESM v10. Composite read-model keys and by-block queries are authoring-only and report `PLAY0268` (#599). New concurrency flags, occurrence time and constraint scopes remain unadmitted.
 
+> Caller-supplied equality `filter` parameters on collection queries are admitted by ESM v14. Names match scalar primitive/concept/enum read-model properties, with the same nominal type ignoring optionality. `T optional` permits omission; supplied null is refused. `by` and supplied filters combine with AND. Context-sourced and single-result filters, explicit query scopes and performers remain unadmitted (`PLAY0268`). Collection specification rows compare without regard to order. See [Queries](queries.md).
+
 :::note
 Accepted [decision 0054](https://github.com/Cratis/Screenplay/blob/main/decisions/0054-concept-generation-strategies-and-freshness.md) extends the generation rules described here beyond `Uuid` concepts. Until it is implemented, `generated` keeps its current meaning.
 :::

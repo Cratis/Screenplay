@@ -91,7 +91,7 @@ public sealed record SemanticSpecificationAbsentReadModel(SemanticId ReadModel, 
 /// </summary>
 /// <param name="Query">The query semantic identity.</param>
 /// <param name="Key">The query key.</param>
-/// <param name="Results">The expected results in authored comparison order; each read-model/key pair must be unique.</param>
+/// <param name="Results">The expected results, matched without regard to order by unique read-model/key pairs.</param>
 public sealed record SemanticSpecificationQueryResult(
     SemanticId Query,
     SemanticValue Key,
@@ -99,7 +99,19 @@ public sealed record SemanticSpecificationQueryResult(
 {
     /// <summary>Gets whether every result row must have exactly the authored properties.</summary>
     public bool Exactly { get; init; }
+
+    /// <summary>
+    /// Gets supplied filter values in query declaration order.
+    /// </summary>
+    public ImmutableArray<SemanticQueryFilterValue> Filters { get; init; } = [];
 }
+
+/// <summary>
+/// Represents a supplied query filter value.
+/// </summary>
+/// <param name="Filter">The filter argument identity.</param>
+/// <param name="Value">The non-null scalar value.</param>
+public sealed record SemanticQueryFilterValue(SemanticId Filter, SemanticValue Value);
 
 /// <summary>
 /// Represents an expected validation rejection.

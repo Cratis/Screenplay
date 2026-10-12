@@ -142,7 +142,7 @@ specification <Name>
 - `then events in any order` — once per specification. Compares all asserted events by event type, payload, and optional source without regard to order, still requiring the exact number of new facts. Without it, order matters.
 - `then readmodel <ReadModelType> [exactly]` — zero or more. The read model state after projection. By default, only asserted properties need match; `exactly` also disallows unasserted properties.
 - `then no readmodel <ReadModelType> for <key>` — zero or more. Asserts that precisely the keyed instance is absent, not that it exists with empty or null properties, and not that a query result is empty. The concrete key is required and type-checked against the view identifier. It has no children or `exactly` qualifier. Presence and absence for the same view and key conflict.
-- `then query <Query> [exactly]` — zero or more. Executes the named query with the authored `arguments` and compares its ordered `result` blocks. By default, rows match asserted properties as a subset; `exactly` requires all properties to match. Row count and order are always exact. No `result` blocks means the query is expected to return nothing.
+- `then query <Query> [exactly]` — zero or more. Executes the named query with the authored `arguments` and compares its `result` blocks without regard to order, matching each row by read model and instance key. By default, rows match asserted properties as a subset; `exactly` requires all properties to match. Row count is always exact. No `result` blocks means the query is expected to return nothing.
 - `then denied` — zero or one. Expects the typed `Unauthorized` rejection, not a validation or constraint error. For a read-only query, declare one `then query` with arguments and no `result`, followed by `then denied`; for a command, do not combine it with any success or error outcome.
 - `then error ["<message>"]` — zero or one. An expected rejection, with no success outcomes in the same specification. See [Rejections](#rejections).
 - `file <path>` — zero or one. The repository relative file the specification is realized by. See [File references](file-references.md).
@@ -304,7 +304,7 @@ specification LookingUpARegisteredProject
       name = "Screenplay"
 ```
 
-Repeat `result` for a query that returns several items. Their order is the authored comparison order. To assert that an optional or collection query returns nothing, omit `result`:
+Repeat `result` for a query that returns several items. Rows compare without regard to order, matched by read model and instance key. To assert that an optional or collection query returns nothing, omit `result`:
 
 ```screenplay
 specification NotFindingAnUnknownProject
@@ -316,7 +316,7 @@ specification NotFindingAnUnknownProject
       projectId = "00000000-0000-0000-0000-000000000000"
 ```
 
-The query declaration already states its return read model. A `result` block asserts only the properties it states; the key can be omitted when the query `arguments` supply it. Result row count and order remain exact. A missing asserted property does **not** match an asserted `null`: `null` matches only an explicitly present null value.
+The query declaration already states its return read model. A `result` block asserts only the properties it states; the key can be omitted when the query `arguments` supply it. Result row count remains exact; collection row order does not matter. A missing asserted property does **not** match an asserted `null`: `null` matches only an explicitly present null value.
 
 ## Example
 
@@ -406,6 +406,8 @@ specification LookingUpAnExistingInvoice
 
 The reference runner establishes `given` events, projects them, applies complete `given readmodel` states, then queries and compares. A when-less specification may also assert `then readmodel` or `then no readmodel`, but not events or errors. With a `when`, event, read-model and query assertions can be combined as needed. An appended event can also be rejected by an append-time constraint using `then error`. Before ESM v6, `then` events after `when append` equal the appended fact and nothing reacts to it; since ESM v6, the reactions it sets off run - see [Clocks, triggers and captures](#clocks-triggers-and-captures).
 
+Query arguments name the `by` parameter and caller-supplied equality filters. Both `then query … arguments` and `when query` report unknown, repeated or missing required arguments with `PLAY0468`. An optional filter may be omitted and then does not narrow; supplied `null` is refused. `by` and supplied filters combine with AND. The query, key and supplied filter values identify a call, so two unkeyed calls with different values may be asserted in one specification. Filters select ESM v14; see [Executable equality filters](queries.md#executable-equality-filters).
+
 ## Performing a query
 
 A view nothing builds from events - one a query's `performer` composes from somewhere else - has no command or event to act on. `when query` makes reading the action, and `then result` the outcome:
@@ -421,7 +423,7 @@ specification LookingUpTheEuroRate
     rate = 11.52
 ```
 
-The lines under `when query` are its arguments, each a `by` or `filter` parameter of the query (`PLAY0468` otherwise). Repeat `then result` for a query that returns several rows - their order is the authored order - and add `exactly` to compare every property. `then no result` asserts the query returns nothing, and `then denied` that the caller may not perform it. A `when query` must assert one of the three (`PLAY0465`).
+The lines under `when query` are its arguments, each a `by` or `filter` parameter of the query (`PLAY0468` otherwise). Repeat `then result` for a query that returns several rows: their order does not matter, but each read-model/key pair and the exact row count must match. Add `exactly` to compare every property. `then no result` asserts the query returns nothing, and `then denied` that the caller may not perform it. A `when query` must assert one of the three (`PLAY0465`).
 
 This says the same thing as `then query` with `arguments` and `result` blocks, and binds to the same executable model - choose whichever reads better. `when query` is the Given/When/Then reading: given this state, when someone asks, then this is what they get.
 
@@ -512,7 +514,7 @@ flowchart LR
     Trace --> Compare["compare specification outcomes"]
 ```
 
-The minimum evaluator currently admits the RegisterProject-style vertical: declarative validation rules on command properties and concepts (`not empty`, `max`/`min`, the ordering and equality comparisons, `length ==`, and `all >`/`all >=` — see [what the executable model admits](commands.md#what-the-executable-model-admits)), unconditional and command-property-conditional event production, command-property `require` guards, literal append tags, optional snapshot lookup, and ordered query rows with subset property assertions. A failed rule rejects the command with the rule's message. Projections run with the reference semantics of Chronicle's projection engine - children, nested objects, update-only joins, `every` and `all`, removals and every mapping kind; see [Projections in the semantic model](projections/semantic-model.md). Unsupported reachable declarative capabilities block plan creation rather than producing a partial or stubbed execution. Opaque ESM v3 reducer transitions, rule predicates, code validations, and policy predicates are admitted to the plan; execution that needs them returns Unsupported instead of guessing their outcome.
+The minimum evaluator currently admits the RegisterProject-style vertical: declarative validation rules on command properties and concepts (`not empty`, `max`/`min`, the ordering and equality comparisons, `length ==`, and `all >`/`all >=` — see [what the executable model admits](commands.md#what-the-executable-model-admits)), unconditional and command-property-conditional event production, command-property `require` guards, literal append tags, optional snapshot lookup, collection queries with caller-supplied equality filters (ESM v14), and unordered query rows with subset property assertions. A failed rule rejects the command with the rule's message. Projections run with the reference semantics of Chronicle's projection engine - children, nested objects, update-only joins, `every` and `all`, removals and every mapping kind; see [Projections in the semantic model](projections/semantic-model.md). Unsupported reachable declarative capabilities block plan creation rather than producing a partial or stubbed execution. Opaque ESM v3 reducer transitions, rule predicates, code validations, and policy predicates are admitted to the plan; execution that needs them returns Unsupported instead of guessing their outcome.
 
 ```csharp
 var semanticCompilation = semanticCompiler.Compile("Projects", documents);

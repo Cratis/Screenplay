@@ -63,10 +63,10 @@ internal static partial class SemanticModelRead
         return state.Build();
     }
 
-    internal static SemanticKeyedQuery Query(ref Utf8JsonReader reader)
+    internal static SemanticKeyedQuery Query(ref Utf8JsonReader reader, uint schemaVersion)
     {
         Object(ref reader, "query");
-        var state = new QueryState();
+        var state = new QueryState(schemaVersion);
         QueryState.Fields.Read(ref reader, state);
         return state.Build();
     }
@@ -87,7 +87,7 @@ internal static partial class SemanticModelRead
             .Add("readModels", (ref Utf8JsonReader reader, SliceState state, string property) => state.ReadModels = Array(ref reader, ReadModel, property))
             .Add("projections", (ref Utf8JsonReader reader, SliceState state, string property) => state.Projections = Array(ref reader, (ref Utf8JsonReader item) => Projection(ref item, state.SchemaVersion), property))
             .Add("reducers", (ref Utf8JsonReader reader, SliceState state, string property) => state.Reducers = Array(ref reader, (ref Utf8JsonReader item) => Reducer(ref item, state.SchemaVersion), property))
-            .Add("queries", (ref Utf8JsonReader reader, SliceState state, string property) => state.Queries = Array(ref reader, Query, property))
+            .Add("queries", (ref Utf8JsonReader reader, SliceState state, string property) => state.Queries = Array(ref reader, (ref Utf8JsonReader item) => Query(ref item, state.SchemaVersion), property))
             .Add("specifications", (ref Utf8JsonReader reader, SliceState state, string property) => state.Specifications = Array(ref reader, (ref Utf8JsonReader item) => Specification(ref item, state.SchemaVersion), property))
             .Add("constraints", (ref Utf8JsonReader reader, SliceState state, string property) => state.Constraints = Array(ref reader, Constraint, property))
             .Add("reactions", 6, (ref Utf8JsonReader reader, SliceState state, string property) => state.Reactions = Array(ref reader, (ref Utf8JsonReader item) => Reaction(ref item, state.SchemaVersion), property))
@@ -271,12 +271,13 @@ internal static partial class SemanticModelRead
         }
     }
 
-    sealed class QueryState() : IdentifiedReadState(0)
+    sealed class QueryState(uint schemaVersion) : IdentifiedReadState(schemaVersion)
     {
         public static readonly FieldTable<QueryState> Fields = TableFor<QueryState>("query")
             .Add("readModel", (ref Utf8JsonReader reader, QueryState state, string property) => state.ReadModel = Identifier(ref reader, property))
             .Add("argument", (ref Utf8JsonReader reader, QueryState state, string property) => state.Argument = Nested(ref reader, QueryArgument, property))
             .Add("keyProperty", (ref Utf8JsonReader reader, QueryState state, string property) => state.KeyProperty = Identifier(ref reader, property))
+            .Add("filters", LanguageVersion.V14.Major, (ref Utf8JsonReader reader, QueryState state, string property) => state.Filters = Array(ref reader, QueryFilter, property))
             .Add("cardinality", (ref Utf8JsonReader reader, QueryState state, string property) => state.Cardinality = ParseQueryCardinality(String(ref reader, property)))
             .Add("delivery", (ref Utf8JsonReader reader, QueryState state, string property) => state.Delivery = ParseQueryDelivery(String(ref reader, property)))
             .Add("authorization", (ref Utf8JsonReader reader, QueryState state, string property) => state.Authorization = Nested(ref reader, SemanticModelRead.Authorization, property));
@@ -286,6 +287,8 @@ internal static partial class SemanticModelRead
         public SemanticReadModelQueryArgument? Argument { get; set; }
 
         public SemanticId? KeyProperty { get; set; }
+
+        public ImmutableArray<SemanticQueryFilter> Filters { get; set; } = [];
 
         public SemanticQueryCardinality? Cardinality { get; set; }
 
@@ -297,7 +300,7 @@ internal static partial class SemanticModelRead
         {
             Required(HasIdentity && ReadModel.IsSet && Cardinality is not null && Delivery is not null, "query");
             Required((Argument is null) == (KeyProperty is null), "query");
-            return new(Id, Name!, Argument, ReadModel, KeyProperty, Cardinality!.Value, Delivery!.Value) { Authorization = Authorization };
+            return new(Id, Name!, Argument, ReadModel, KeyProperty, Cardinality!.Value, Delivery!.Value) { Authorization = Authorization, Filters = Filters };
         }
     }
 

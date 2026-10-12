@@ -125,6 +125,7 @@ internal static partial class SemanticModelValidator
                 throw new InvalidSemanticContract("A keyed query must declare both an argument and a key property; an unkeyed query declares neither.");
             }
 
+            ValidateQueryFilters(query, readModel);
             if (query.Argument is null)
             {
                 RequireCollectionResult(query);

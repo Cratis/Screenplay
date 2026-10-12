@@ -55,7 +55,7 @@ public sealed partial class SemanticModelBinder
                 ShortName(query.ReturnType.Name) == readModel.Name &&
                 query.ReturnType.IsCollection &&
                 query.By?.Source is null &&
-                !query.Filters.Any() &&
+                query.Filters.All(filter => filter.Source is null) &&
                 query.Scope is null &&
                 query.Performer is null);
             if (identifierNames.Length == 0 && hasAdmittedListQuery)
@@ -111,9 +111,23 @@ public sealed partial class SemanticModelBinder
                 RequireImplementation(SemanticImplementationRole.QueryPerformer, SemanticAddress.ForQuery(slice, query.Name), query.Performer.File, query.Performer.Code);
             }
 
-            if (query.Filters.Any() || query.Scope is not null || query.Performer is not null)
+            if (query.Scope is not null)
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' uses filtering, scope, or implementation behavior outside the admitted ESM query shapes.", query.Location);
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' uses 'scoped to', which is not admitted into the executable model.", query.Location);
+            }
+
+            if (query.Performer is not null)
+            {
+                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' uses a performer, which is not admitted into the executable model.", query.Location);
+            }
+
+            if (!query.ReturnType.IsCollection && query.Filters.Any())
+            {
+                foreach (var filter in query.Filters)
+                {
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Query '{query.Name}' filter '{filter.Name}' requires a read-model collection.", filter.Location);
+                }
+                return null;
             }
 
             if (query.By?.Source is not null)
@@ -167,7 +181,10 @@ public sealed partial class SemanticModelBinder
                 readModel.Model.Id,
                 keyPropertyId,
                 cardinality,
-                query.IsObservable ? SemanticQueryDelivery.Live : SemanticQueryDelivery.Snapshot);
+                query.IsObservable ? SemanticQueryDelivery.Live : SemanticQueryDelivery.Snapshot)
+            {
+                Filters = BindQueryFilters(address, query, readModel)
+            };
         }
     }
 }

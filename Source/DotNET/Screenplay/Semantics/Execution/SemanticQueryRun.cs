@@ -47,17 +47,25 @@ sealed class SemanticQueryRun(
             return authorizationRefusal;
         }
 
-        if (SemanticEvaluator.ValidateQueryKey(plan, query, queryRequest.Key) is { } queryRejection)
+        if ((SemanticEvaluator.ValidateQueryKey(plan, query, queryRequest.Key) ??
+             SemanticEvaluator.ValidateQueryFilters(plan, query, queryRequest.Filters)) is { } queryRejection)
         {
             return new SemanticRejected(original, SemanticRejectionCategory.Contract, null, queryRejection);
         }
 
         var results = tentative.ReadModels
-            .Where(instance => instance.ReadModel == query.ReadModel)
-            .Where(instance => query.KeyProperty is null || instance.Values.Any(value =>
-                value.TargetProperty == query.KeyProperty && SemanticValueRules.AreEqual(value.Value, queryRequest.Key)))
+            .Where(instance => instance.ReadModel == query.ReadModel &&
+                (query.KeyProperty is null || instance.Values.Any(value =>
+                    value.TargetProperty == query.KeyProperty && SemanticValueRules.AreEqual(value.Value, queryRequest.Key))) &&
+                queryRequest.Filters.All(filterValue => instance.Values.Any(value =>
+                value.TargetProperty == query.Filters.Single(filter => filter.Id == filterValue.Filter).Property &&
+                SemanticValueRules.AreEqual(value.Value, filterValue.Value))))
             .ToImmutableArray();
-        result = new(query.Id, queryRequest.Key, results);
+        result = new(query.Id, queryRequest.Key, results)
+        {
+            Filters = [.. query.Filters.Select(filter => queryRequest.Filters.SingleOrDefault(value => value.Filter == filter.Id))
+                .OfType<SemanticQueryFilterValue>()]
+        };
         return null;
     }
 
