@@ -40,7 +40,10 @@ sealed class WorkspacePropertyAssertionProvenance(
             .Where(step => Then(step) && SameExample(step.Example, example) && Inherits(step, property))
             .Select(step => step.Authored.Location).Distinct();
 
-    static bool Then(EffectiveSpecificationStep step) => step.Role is "then" or "then readmodel";
+    static bool Then(EffectiveSpecificationStep step) => string.Equals(step.Role, "then", StringComparison.Ordinal) || string.Equals(step.Role, "then readmodel", StringComparison.Ordinal);
+
+    // An error that cannot be placed could belong to the example, so it makes provenance unavailable.
+    static bool Unlocated(SourceLocation location) => location.Line <= 0 || string.IsNullOrEmpty(location.Path);
 
     static string? ExampleName(SyntaxNode node) => node switch
     {
@@ -65,15 +68,13 @@ sealed class WorkspacePropertyAssertionProvenance(
     bool RelevantErrors(WorkspaceSyntaxEntry example, IEnumerable<Diagnostic> diagnostics)
     {
         var name = ((SpecificationExampleSyntax)example.Node).Name;
+
         // A specification without parsed steps may have lost the step that names this example.
         var specifications = index.Entries.Where(entry => entry.Node is SpecificationSyntax && (UsesExample(entry, name) || !HasSteps(entry)));
         var regions = specifications.Prepend(example).Select(Region).ToArray();
-        return diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
-            .Any(diagnostic => Unlocated(diagnostic.Location) || regions.Any(region => region.Contains(diagnostic.Location)));
+        return diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error &&
+            (Unlocated(diagnostic.Location) || regions.Any(region => region.Contains(diagnostic.Location))));
     }
-
-    // An error that cannot be placed could belong to the example, so it makes provenance unavailable.
-    static bool Unlocated(SourceLocation location) => location.Line <= 0 || string.IsNullOrEmpty(location.Path);
 
     bool UsesExample(WorkspaceSyntaxEntry specification, string name) => Steps(specification).Any(entry => ExampleName(entry.Node)!.Split('.')[^1] == name);
 
