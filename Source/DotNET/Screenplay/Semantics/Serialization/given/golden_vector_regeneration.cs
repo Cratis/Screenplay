@@ -33,13 +33,14 @@ public static class golden_vector_regeneration
         ["9"] = canonical_serialization_golden_vectors.CreateSemanticModelV9,
         ["10"] = canonical_serialization_golden_vectors.CreateSemanticModelV10,
         ["11"] = canonical_serialization_golden_vectors.CreateSemanticModelV11,
-        ["12"] = canonical_serialization_golden_vectors.CreateSemanticModelV12
+        ["12"] = canonical_serialization_golden_vectors.CreateSemanticModelV12,
+        ["13"] = canonical_serialization_golden_vectors.CreateSemanticModelV13
     };
 
     /// <summary>
     /// Gets a value indicating whether regeneration was explicitly requested.
     /// </summary>
-    public static bool IsRequested => Environment.GetEnvironmentVariable(Variable) == "1" || Environment.GetEnvironmentVariable(Variable) == "3" || Environment.GetEnvironmentVariable(Variable) == "4" || Environment.GetEnvironmentVariable(Variable) == "5" || Environment.GetEnvironmentVariable(Variable) == "6" || Environment.GetEnvironmentVariable(Variable) == "7" || Environment.GetEnvironmentVariable(Variable) == "8" || Environment.GetEnvironmentVariable(Variable) == "9" || Environment.GetEnvironmentVariable(Variable) == "10" || Environment.GetEnvironmentVariable(Variable) == "11" || Environment.GetEnvironmentVariable(Variable) == "12";
+    public static bool IsRequested => Environment.GetEnvironmentVariable(Variable) == "1" || Environment.GetEnvironmentVariable(Variable) == "3" || Environment.GetEnvironmentVariable(Variable) == "4" || Environment.GetEnvironmentVariable(Variable) == "5" || Environment.GetEnvironmentVariable(Variable) == "6" || Environment.GetEnvironmentVariable(Variable) == "7" || Environment.GetEnvironmentVariable(Variable) == "8" || Environment.GetEnvironmentVariable(Variable) == "9" || Environment.GetEnvironmentVariable(Variable) == "10" || Environment.GetEnvironmentVariable(Variable) == "11" || Environment.GetEnvironmentVariable(Variable) == "12" || Environment.GetEnvironmentVariable(Variable) == "13";
 
     /// <summary>
     /// Rewrites every golden vector from its source model when regeneration was requested.

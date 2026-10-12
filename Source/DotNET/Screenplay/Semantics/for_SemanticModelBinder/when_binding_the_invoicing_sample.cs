@@ -30,11 +30,6 @@ public class when_binding_the_invoicing_sample : given.a_semantic_binder
         (DiagnosticCodes.InvalidSemanticBinding, "Event type 'InvoiceShipped' not found"),
         (DiagnosticCodes.InvalidSemanticBinding, "Event type 'InvoiceShippingCleared' not found"),
 
-        // Identity, personas and compliance outside the executable model.
-        (Unsupported, "Concept 'PersonName' compliance attributes"),
-        (Unsupported, "Concept 'BankAccount' compliance attributes"),
-        (Unsupported, "Concept 'EmailAddress' compliance attributes"),
-
         // Code attachments (#139).
         (Unsupported, "Command 'ProcessInvoiceBatch' handler"),
         (Unsupported, "Command 'ArchiveOldInvoices' handler"),

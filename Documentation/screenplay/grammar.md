@@ -157,6 +157,10 @@ NonZeroDigit   = "1".."9" ;
    other numbers select ESM v12 with numbers parallel to values. *)
 
 AttributeReason = AttributeName, "reason", StringLiteral, NL ;
+(* Compliance markers and settings select ESM v13 on primitive concepts only.
+   Reasons remain report-only; enum and identity compliance are refused.
+   Personal data or explicit subject-scoped secrets in an event with an explicit
+   subject mark are refused at binding until lineage is admitted. *)
 ComplianceSetting = ( "pii" | "personal" ), "special", SpecialCategory, NL
                   | ( "pii" | "personal" ), "criminal", NL
                   | "secret", "scope", ( "subject" | "namespace" | "global" ), NL ;

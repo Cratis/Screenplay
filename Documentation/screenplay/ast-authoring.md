@@ -9,6 +9,10 @@ description: Typed syntax serialization, original-document node handles, atomic 
 
 Use nullable `description` on `SpecificationSyntax` and nullable `documentation` on `ModuleSyntax`, `FeatureSyntax`, `SliceSyntax`, `CommandSyntax`, `ReadModelSyntax` and `ReactionSyntax`. `EventSyntax` retains its existing fields. The typed AST carries the text without changing executable semantics; preserve these members during replacements. MCP `declaration-details` includes both fields in the summary for supporting kinds. See [Descriptions and documentation](slices.md#descriptions-and-documentation) for the source forms.
 
+## Concept compliance
+
+Preserve concept attributes and their typed `scope`, `specialCategory` and `criminal` settings during replacements. Source uses `pii`/`personal` and `secret`; AST wire marker names remain `pii` and `sensitive`. These classifications bind as ESM v13, while reasons remain report-only. Personal takes precedence over secret, with no secret scope retained next to personal. Identity and enum compliance are refused, as are events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark. No subject bytes are added; see [Concepts](concepts.md).
+
 ## Enum member numbers
 
 `ConceptSyntax.valueNumbers` is optional and nullable. Omit it for an unnumbered enum; otherwise supply unique int32 numbers parallel to `values`. Non-enums and cardinality mismatches are rejected. Replacements must preserve authored numbers. Use `WorkspaceEnumerationRefactorings.ProposeNumberMembers` or MCP `propose-number-enum-members` to pin a wholly unnumbered enum to its current positions, with the concept's revision-bound handle and explicit `CanonicalizeTouchedDocuments` consent. Numbered and mixed enums are never renumbered. The proposal preserves catalog assignments, comments and known executable bytes; review before explicit apply. Pins equal to positions keep the prior executable version, bytes and revision; non-positional numbers bind as ESM v12. Consumers must explicitly admit v12 before accepting these models.

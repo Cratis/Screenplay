@@ -19,16 +19,12 @@ public sealed partial class SemanticModelBinder
                 Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Concept '{concept.Name}' file reference is realization provenance.", concept.File.Location);
             }
 
-            if (concept.Attributes.Any())
-            {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Concept '{concept.Name}' compliance attributes require portable data-subject semantics.", concept.Location);
-            }
-
             var primitive = concept.IsEnum ? SemanticPrimitiveType.Text : Primitive(concept.Type);
             var validations = BindConceptValidations(concept);
             return new(_concepts[concept.Name].Id, concept.Name, primitive, [.. concept.Values], validations)
             {
-                Numbers = concept.ValueNumbers is { } numbers && SemanticModelValidator.HasNonPositionalEnumNumbers(numbers, concept.Values.Count()) ? [.. numbers] : null
+                Numbers = concept.ValueNumbers is { } numbers && SemanticModelValidator.HasNonPositionalEnumNumbers(numbers, concept.Values.Count()) ? [.. numbers] : null,
+                Compliance = BindCompliance(concept)
             };
         }
 

@@ -65,7 +65,7 @@ resolution against the assembled model, never by the parser. `CaptureEventsSourc
 
 ## Compliance marker members
 
-`ConceptAttributeSyntax.Name` keeps the wire values `pii` and `sensitive`, even though source uses canonical `pii`/`secret` and accepts the `personal` alias. `Scope`, `SpecialCategory` and `Criminal` are additive init-only properties. Old JSON omissions default to null/null/false; writers omit those defaults to preserve existing syntax bytes. Preserve explicitly declared values when rewriting a concept. These members add no executable bytes: compliance markers remain refused with `PLAY0268`.
+`ConceptAttributeSyntax.Name` keeps the wire values `pii` and `sensitive`, even though source uses canonical `pii`/`secret` and accepts the `personal` alias. `Scope`, `SpecialCategory` and `Criminal` are additive init-only properties. Old JSON omissions default to null/null/false; writers omit those defaults to preserve existing syntax bytes. Preserve explicitly declared values when rewriting a concept. Compliance markers select ESM v13 and bind to optional `SemanticConcept.Compliance`; reasons remain report-only. Personal takes precedence over secret, and no secret scope is stored next to personal. Identity and enum compliance, and protected events with an explicit `subject` mark, are refused; see [concepts](concepts.md).
 
 ## Composite stream id members
 

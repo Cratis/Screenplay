@@ -31,6 +31,10 @@ ignores workspace overrides for `screenplay.sourceRoot` and the repair settings
 until you trust the workspace. A source-root override can point outside the
 workspace, so review it before granting trust.
 
+## Concept compliance
+
+Hover describes `pii`/`personal` and `secret` as ESM v13 classifications. Consumers must explicitly admit that version. Identity and enum compliance are refused; events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark are refused by the C# binder until lineage is admitted. Source/editor validation does not perform executable binding. Reasons remain report-only, and reference outcomes are unchanged; see [Concepts](concepts.md).
+
 ## Read-model keys and event routing
 
 Monaco and VS Code recognize trailing read-model `key` modifiers, query and reads `by` blocks, production `stream` overrides and observer `from` filters. Completion offers key parts in a by block and sources and streams in route/filter positions. Hover distinguishes authoring-only composite keys from ESM v10 routes and filters.

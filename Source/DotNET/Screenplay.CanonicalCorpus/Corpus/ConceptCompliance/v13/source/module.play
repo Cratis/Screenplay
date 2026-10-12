@@ -1,0 +1,33 @@
+module Invoices
+  feature Lifecycle
+    slice StateChange Record
+      event InformationRecorded
+        health HealthInformation
+        key ApiKey
+        note PersonalSecret
+        status InvoiceStatus
+      command RecordInformation
+        id InvoiceId identifier
+        health HealthInformation
+        key ApiKey
+        note PersonalSecret
+        status InvoiceStatus
+        produces InformationRecorded
+          for id
+          health = health
+          key = key
+          note = note
+          status = status
+      specification ProtectedInformation
+        when RecordInformation
+          id = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          health = "well"
+          key = "token"
+          note = "private"
+          status = "draft"
+        then InformationRecorded
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          health = "well"
+          key = "token"
+          note = "private"
+          status = "draft"

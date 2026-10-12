@@ -35,6 +35,7 @@ internal static partial class SemanticModelValidator
         {
             ValidateCommandDestination(command);
             ValidateProperties(command.Properties, true);
+            foreach (var identifier in command.Properties.Where(property => property.IsIdentifier)) ValidateComplianceIdentity(identifier.Type);
             ValidateResponse(command);
             ValidateCommandRoute(command);
             var properties = Properties([.. command.Properties.Where(property => !property.IsGenerated)]);
@@ -125,6 +126,7 @@ internal static partial class SemanticModelValidator
         void ValidateProducedDestination(SemanticProducedEvent produced, SemanticCommand command, Dictionary<SemanticId, SemanticProperty> sources)
         {
             var destinationType = ResolveExpression(produced.Destination!, SemanticExpressionRootKind.Command, sources);
+            ValidateComplianceIdentity(destinationType);
             var destinationProperty = DestinationProperty(produced, sources);
             if (!IsScalarDestinationType(destinationType) || !IsIdentityDestination(produced, command, destinationProperty))
             {
