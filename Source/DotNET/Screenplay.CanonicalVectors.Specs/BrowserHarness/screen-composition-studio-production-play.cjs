@@ -153,8 +153,8 @@ async function run() {
 
     if (!studioUrl) {
         result.status = 'blocked-missing-studio-url';
-        result.message = 'Studio v0.136.3 release tag exists, but production deploy proof is blocked by a stale Pulumi lock and no local release-artifact URL was provided.';
-        record(result, 'studio.productionDeploy', 'blocked', 'stale Pulumi lock');
+        result.message = 'No Studio URL: set SCREENPLAY_STUDIO_URL (or start the production principal-header proxy on 127.0.0.1:5156: kubectl port-forward -n studio deploy/core 5155:8080 and tools/studio-prod-proxy.mjs <sub> <name> <tenant> 5156 5155) and SCREENPLAY_STUDIO_CHECKOUT so run-public-acceptance.sh runs the Studio scratch vector.';
+        record(result, 'studio.productionDeploy', 'blocked', 'no Studio URL configured');
         record(result, 'studio.save', 'pending', 'SCREENPLAY_STUDIO_URL not set');
         record(result, 'studio.export', 'pending', 'SCREENPLAY_STUDIO_URL not set');
         record(result, 'studio.import', 'pending', 'SCREENPLAY_STUDIO_URL not set');
