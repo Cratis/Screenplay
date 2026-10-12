@@ -52,19 +52,21 @@ sealed class WorkspacePropertyProjectionContinuity(WorkspacePropertyPlan before,
 
     void RewritePaths(JsonNode node, WorkspacePropertyProjectionSource[] sources, bool planned)
     {
-        if (node is JsonObject value)
+        if (node is JsonObject value) RewritePath(value, sources, planned);
+        JsonNode?[] children = node switch
         {
-            if (value["kind"]?.GetValue<string>() == nameof(PathExpressionSyntax) && value["path"] is { } path)
-            {
-                var source = sources.FirstOrDefault(source => source.Path == path.GetValue<string>());
-                if (source?.Members is [var member]) value["path"] = PlannedName(member, planned);
-            }
-            foreach (var child in value.Select(pair => pair.Value).OfType<JsonNode>().ToArray()) RewritePaths(child, sources, planned);
-        }
-        else if (node is JsonArray array)
-        {
-            foreach (var child in array.OfType<JsonNode>()) RewritePaths(child, sources, planned);
-        }
+            JsonObject @object => [.. @object.Select(pair => pair.Value)],
+            JsonArray array => [.. array],
+            _ => []
+        };
+        foreach (var child in children.OfType<JsonNode>()) RewritePaths(child, sources, planned);
+    }
+
+    void RewritePath(JsonObject value, WorkspacePropertyProjectionSource[] sources, bool planned)
+    {
+        if (value["kind"]?.GetValue<string>() != nameof(PathExpressionSyntax) || value["path"] is not { } path) return;
+        var source = sources.FirstOrDefault(source => source.Path == path.GetValue<string>());
+        if (source?.Members is [var member]) value["path"] = PlannedName(member, planned);
     }
 
     WorkspacePropertyCandidate OriginalCandidate(EffectSnapshot snapshot)
