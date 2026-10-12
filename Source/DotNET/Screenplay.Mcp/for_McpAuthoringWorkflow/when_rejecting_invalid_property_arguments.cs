@@ -16,6 +16,7 @@ public class when_rejecting_invalid_property_arguments : given.an_authoring_conn
         var opened = Open();
         var revision = opened.GetProperty("revision").GetString();
         var catalog = opened.GetProperty("catalogRevision").GetString();
+        var owner = Node("CommandSyntax", revision).GetProperty("handle");
         var target = Result("read-ast", new { expectedRevision = revision, kind = "PropertySyntax", name = "name" }).GetProperty("page").GetProperty("items")[0].GetProperty("handle");
         foreach (var arguments in new object[]
         {
@@ -23,12 +24,24 @@ public class when_rejecting_invalid_property_arguments : given.an_authoring_conn
             new { expectedRevision = revision, expectedCatalogRevision = catalog, action = "rename", target, expectedName = "name" },
             new { expectedRevision = revision, expectedCatalogRevision = catalog, action = "remove", expectedName = "name" },
             new { expectedRevision = revision, expectedCatalogRevision = catalog, action = "add", target, expectedName = "name" },
+            new { expectedRevision = revision, expectedCatalogRevision = catalog, action = "add", expectedOwnerName = "RegisterProject", name = "priority", type = "String" },
+            new { expectedRevision = revision, expectedCatalogRevision = catalog, action = "add", owner, name = "priority", type = "String" },
+            new { expectedRevision = revision, expectedCatalogRevision = catalog, action = "add", owner, expectedOwnerName = "RegisterProject", type = "String" },
+            new { expectedRevision = revision, expectedCatalogRevision = catalog, action = "add", owner, expectedOwnerName = "RegisterProject", name = "priority" },
+            new { expectedRevision = revision, expectedCatalogRevision = catalog, action = "add", owner, expectedOwnerName = "RegisterProject", name = "priority", type = "String", target },
+            new { expectedRevision = revision, expectedCatalogRevision = catalog, action = "add", owner, expectedOwnerName = "RegisterProject", name = "priority", type = "String", hops = new[] { new { name = "priority" } } },
+            new { expectedRevision = revision, expectedCatalogRevision = catalog, action = "add", owner, expectedOwnerName = "RegisterProject", name = "priority", type = "String", hops = new[] { new { at = owner, name = "priority", value = "priority" } } },
+            new { expectedRevision = revision, expectedCatalogRevision = catalog, action = "add", owner, expectedOwnerName = "RegisterProject", name = "priority", type = "String", hops = new[] { new { at = owner } } },
+            new { expectedRevision = revision, expectedCatalogRevision = catalog, action = "rename", target, expectedName = "name", newName = "label", optional = false },
             new { expectedRevision = revision, expectedCatalogRevision = catalog, action = "remove", target, expectedName = "name", alsoRename = Array.Empty<object>() },
             new { expectedRevision = revision, expectedCatalogRevision = catalog, action = "rename", target, expectedName = "name", newName = "label", alsoRename = new[] { new { target, expectedName = 42 } } }
-        }) _rejections.Add(Call("propose-property", arguments));
+        })
+        {
+            _rejections.Add(Call("propose-property", arguments));
+        }
     }
 
-    [Fact] void should_report_invalid_parameters_for_every_malformed_request() => _rejections.All(response => response.GetProperty("error").GetProperty("code").GetInt32() == -32602).ShouldBeTrue();
-    [Fact] void should_check_every_requested_case() => _rejections.Count.ShouldEqual(6);
+    [Fact] void should_report_invalid_parameters_for_every_malformed_request() => _rejections.TrueForAll(response => response.GetProperty("error").GetProperty("code").GetInt32() == -32602).ShouldBeTrue();
+    [Fact] void should_check_every_requested_case() => _rejections.Count.ShouldEqual(15);
     [Fact] void should_not_write_identity_state() => File.Exists(Path.Combine(RootPath, ".screenplay", "identities.json")).ShouldBeFalse();
 }

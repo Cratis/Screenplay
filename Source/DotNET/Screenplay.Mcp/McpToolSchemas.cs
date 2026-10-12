@@ -58,7 +58,8 @@ static class McpToolSchemas
         {
             schema["allOf"] = new JsonArray(
                 PropertyAction("rename", "target", "expectedName", "newName"),
-                PropertyAction("remove", "target", "expectedName"));
+                PropertyAction("remove", "target", "expectedName"),
+                PropertyAction("add", "owner", "expectedOwnerName", "name", "type"));
         }
 
         if (tool.Name == "read-proposal")
@@ -86,7 +87,10 @@ static class McpToolSchemas
         if (tool != "propose-property") return null;
         return property switch
         {
-            "action" => McpAstSchemas.Choice("rename", "remove"),
+            "action" => McpAstSchemas.Choice("add", "rename", "remove"),
+            "owner" => McpAstSchemas.Handle(),
+            "optional" => new() { ["type"] = "boolean", ["default"] = false },
+            "hops" => McpAstSchemas.Array(PropertyHop()),
             "alsoRename" or "alsoRemove" => McpAstSchemas.Array(McpAstSchemas.Object(new JsonObject { ["target"] = McpAstSchemas.Handle(), ["expectedName"] = McpAstSchemas.String() }, "target", "expectedName")),
             _ => null
         };
@@ -132,6 +136,13 @@ static class McpToolSchemas
         "view" when tool == "read-ast" => McpAstSchemas.Choice("nodes", "children"),
         _ => McpAstSchemas.String()
     };
+
+    static JsonObject PropertyHop()
+    {
+        var schema = McpAstSchemas.Object(new JsonObject { ["at"] = McpAstSchemas.Handle(), ["name"] = McpAstSchemas.String(), ["value"] = McpAstSchemas.String() }, "at");
+        schema["oneOf"] = new JsonArray(new JsonObject { ["required"] = new JsonArray("name") }, new JsonObject { ["required"] = new JsonArray("value") });
+        return schema;
+    }
 
     static JsonObject PropertyAction(string action, params string[] required) => new()
     {

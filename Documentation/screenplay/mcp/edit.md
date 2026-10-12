@@ -104,6 +104,40 @@ Structural changes need explicit `CanonicalizeTouchedDocuments` formatting conse
 trivia preservation never falls back to printing. Inspect exact bytes and identity
 changes, then apply the reviewed proposal. See the [property planner contract](reference.md#property-change-planner).
 
+## Add a property along a mapping chain
+
+```text
+Add a required String priority input to RegisterProject, map it into
+ProjectRegistered and add it to ProjectSummary through AutoMap. Use "Normal"
+in every existing fixture and query-result assertion. The current event
+has never been persisted. Propose the change and show me the report before applying.
+```
+
+Read declaration and mapping-block handles at the open revision. For `action: "add"`,
+select `owner`, `expectedOwnerName`, `name` and the authored `type` text. Each `hops`
+entry selects another declaration with `{at, name}`, or a `produces`, `from` or
+capture `append` block with `{at, value}`. A declaration hop uses the same type;
+a mapping hop supplies an expression, not an inferred business rule. AutoMap
+satisfies a same-named projection hop without an explicit `from` value.
+
+Supply `fixtureValue` as literal source text (for example `"\"Normal\""` in JSON)
+for a required property. The planner adds it to every existing command, event and
+read-model fixture, example and result assertion for the selected declarations.
+An optional property (`optional: true`) needs no fixture edits. Missing values
+refuse with `FixtureValueRequired`; missing producer or consumer decisions refuse
+with `SourcesRequired`. Off-chain hops and existing property names refuse atomically.
+Unsupported expressions or shared parameter spans are not guessed.
+
+Even an optional event addition requires one event mode. `eventNeverPersisted`
+edits the highest generation in place; `newGeneration` appends the current shape
+plus the property as N+1. For the RegisterProject v2 model, these mean editing
+generation 2 or appending generation 3. Both keep ESM v4; a new generation reports
+`deployableWithoutTransformation: false` and `esmVersionChange: null`.
+
+Use `CanonicalizeTouchedDocuments` for structural additions. Review `changed`
+(`added` and `fixtureAdded`), `chainCandidates` and `generations` with `read-proposal`,
+then inspect `view: "semantic-diff"` and approve `apply` only for the reviewed plan.
+
 ## Move things between files
 
 ```text

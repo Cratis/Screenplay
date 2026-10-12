@@ -77,14 +77,7 @@ sealed class WorkspacePropertyEdits(
     void AppendGeneration(WorkspacePropertyGeneration generation)
     {
         var owner = selected.First(member => member.Owner.Address!.Equals(generation.Event)).Owner;
-        var current = WorkspaceSyntaxMutation.At(_roots[owner.Handle.Document], owner.Handle.Path);
-        var next = current.DeepClone();
-        next["generation"] = generation.To;
-        next["hasGenerationMarker"] = true;
-        var separator = owner.Handle.Path.LastIndexOf('/');
-        var collection = (JsonArray)WorkspaceSyntaxMutation.At(_roots[owner.Handle.Document], owner.Handle.Path[..separator]);
-        collection[int.Parse(owner.Handle.Path[(separator + 1)..], System.Globalization.CultureInfo.InvariantCulture)] = WorkspaceSyntaxMutation.Json(owner.Node);
-        collection.Add(next);
+        WorkspaceEventGenerations.Append(_roots[owner.Handle.Document], owner, generation.To);
     }
 
     void ChangeDeclaration(WorkspacePropertyPlan.PropertyMember member)

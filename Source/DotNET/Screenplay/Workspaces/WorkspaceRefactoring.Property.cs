@@ -18,7 +18,7 @@ internal sealed partial class WorkspaceRefactoring
 
         try
         {
-            return PropertyCore(request, report, assertions);
+            return request.Action == "add" ? AddProperty(request, report) : PropertyCore(request, report, assertions);
         }
         catch (Exception exception) when (exception is InvalidWorkspaceAuthoring or InvalidSemanticContract)
         {
@@ -28,11 +28,16 @@ internal sealed partial class WorkspaceRefactoring
 
     static bool ValidPropertyOptions(WorkspacePropertyRequest request)
     {
-        if (request.Action is not ("rename" or "remove")) return false;
+        if (request.Action is not ("add" or "rename" or "remove")) return false;
         if (request.NewGeneration && request.EventNeverPersisted) return false;
         if (request.AlsoRename.IsDefault || request.AlsoRemove.IsDefault) return false;
+        if (request.Action == "add") return ValidPropertyAddition(request);
+        if (request.Target is null || request.ExpectedName is null || request.Owner is not null || request.ExpectedOwnerName is not null || request.Name is not null || request.Type is not null || request.Optional || !request.Hops.IsEmpty || request.FixtureValue is not null) return false;
         return request.Action == "rename" ? ValidPropertyRename(request) : ValidPropertyRemoval(request);
     }
+
+    static bool ValidPropertyAddition(WorkspacePropertyRequest request) => request.Owner is not null && request.ExpectedOwnerName is not null && Identifier(request.Name) && !string.IsNullOrWhiteSpace(request.Type) &&
+        request.Target is null && request.ExpectedName is null && request.NewName is null && request.AlsoRename.IsEmpty && request.AlsoRemove.IsEmpty && !request.Hops.IsDefault;
 
     static bool ValidPropertyRename(WorkspacePropertyRequest request) => Identifier(request.NewName) && request.AlsoRemove.IsEmpty;
     static bool ValidPropertyRemoval(WorkspacePropertyRequest request) => request.AlsoRename.IsEmpty && request.NewName is null;

@@ -90,6 +90,7 @@ internal sealed partial class WorkspacePropertyLinks
     void Feed(PropertyProjectionScope scope, PropertyProjectionFeed feed)
     {
         var mappings = feed.Mappings.ToArray();
+        _additionFeeds.Add(new(ProjectionUse(scope, feed.Occurrence), feed.Events, scope.Models, scope.AutoMap, scope.Nested));
         foreach (var mapping in mappings.Concat(scope.Inherited)) ProjectMapping(scope, feed.Events, mapping, ProjectionUse(scope, feed.Occurrence));
         if (scope.AutoMap) AutoMap(scope, feed with { Mappings = mappings });
     }

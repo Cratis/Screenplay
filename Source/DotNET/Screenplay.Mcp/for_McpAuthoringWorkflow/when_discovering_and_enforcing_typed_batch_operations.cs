@@ -66,7 +66,7 @@ public class when_discovering_and_enforcing_typed_batch_operations : given.an_au
     [Fact]
     void should_advertise_only_supported_extraction_formatting() => Schema("propose-extract-inline-event").GetProperty("properties").GetProperty("formatting")
         .GetProperty("enum").EnumerateArray().Select(value => value.GetString()).ToArray().ShouldEqual(["CanonicalizeTouchedDocuments"]);
-    [Fact] void should_advertise_both_property_actions() => Schema("propose-property").GetProperty("allOf").GetArrayLength().ShouldEqual(2);
+    [Fact] void should_advertise_all_three_property_actions() => Schema("propose-property").GetProperty("allOf").GetArrayLength().ShouldEqual(3);
     [Fact] void should_require_property_revision_and_action_arguments() => Schema("propose-property").GetProperty("required").EnumerateArray().Select(value => value.GetString()).ShouldContainOnly("expectedRevision", "expectedCatalogRevision", "action");
     [Fact] void should_advertise_all_five_source_document_operation_shapes() => Names(_source).ShouldContainOnly("create-document", "replace-document", "move-document", "rename-document-key", "remove-document");
     [Fact] void should_advertise_source_strings_instead_of_nodes() => _source.EnumerateArray().Where(shape => NamesOf(shape) == "create-document" || NamesOf(shape) == "replace-document").All(shape => shape.GetProperty("properties").GetProperty("source").GetProperty("type").GetString() == "string" && !shape.GetProperty("properties").TryGetProperty("node", out _)).ShouldBeTrue();

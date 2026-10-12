@@ -22,6 +22,8 @@ public class when_opening_a_hardlinked_worktree_pointer : given.a_worktree_conne
         process.ExitCode.ShouldEqual(0);
     }
     void Because() => _refused = Call("open-workspace", new { path = _forged }).GetProperty("result");
+#pragma warning disable CRSPEC0004 // UnixLinkFact derives FactAttribute; xUnit discovers this platform-dependent fact.
     [UnixLinkFact] void should_require_the_registered_checkout_not_just_marker_file_identity() => _refused.GetProperty("structuredContent").GetProperty("failureKind").GetString().ShouldEqual("RootChangeRefused");
     [UnixLinkFact] void should_refuse_membership_rather_than_a_missing_model() => _refused.GetProperty("structuredContent").GetProperty("message").GetString()!.ShouldContain("registered worktree of the configured repository");
+#pragma warning restore CRSPEC0004
 }
