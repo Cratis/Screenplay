@@ -39,7 +39,11 @@ sealed class WorkspacePropertyAddChain(WorkspaceSyntaxIndex index, WorkspaceProp
     internal bool BlockOnChain(WorkspaceSyntaxEntry block, HashSet<WorkspaceNodeHandle> connected) =>
         Targets(block).Any(target => connected.Contains(target.Handle)) || Feeds.Any(feed => FeedBlock(feed).Handle == block.Handle && feed.Models.Concat(feed.Events).Select(Entry).OfType<WorkspaceSyntaxEntry>().Any(entry => connected.Contains(entry.Handle)));
 
-    IEnumerable<(WorkspaceNodeHandle Source, WorkspaceNodeHandle Target)> Edges()
+    static bool DirectFeed(WorkspacePropertyFeed feed) => (feed.Nested, feed.Events.Length, feed.Models.Length) is (null, 1, 1);
+
+    IEnumerable<(WorkspaceNodeHandle Source, WorkspaceNodeHandle Target)> Edges() => PropertyEdges().Concat(ProductionEdges()).Concat(ProjectionEdges());
+
+    IEnumerable<(WorkspaceNodeHandle Source, WorkspaceNodeHandle Target)> PropertyEdges()
     {
         foreach (var link in plan.Links.Links.Where(link => link.Resolution == "resolved" && link.OtherEnd is not null))
         {
@@ -49,17 +53,23 @@ sealed class WorkspacePropertyAddChain(WorkspaceSyntaxIndex index, WorkspaceProp
                 if (source is not null) yield return (source.Owner.Handle, target.Owner.Handle);
             }
         }
+    }
+
+    IEnumerable<(WorkspaceNodeHandle Source, WorkspaceNodeHandle Target)> ProductionEdges()
+    {
         foreach (var producer in Producers)
         {
             var source = WorkspacePropertyPlan.Parents(producer, index).FirstOrDefault(entry => entry.Node is CommandSyntax);
             var targets = Targets(producer);
-            if (source is not null && targets is [var target]) yield return (source.Handle, target.Handle);
+            if ((source, targets) is ({ } owner, [var target])) yield return (owner.Handle, target.Handle);
         }
-        foreach (var feed in Feeds.Where(feed => feed.Nested is null && feed.Events.Length == 1 && feed.Models.Length == 1))
+    }
+
+    IEnumerable<(WorkspaceNodeHandle Source, WorkspaceNodeHandle Target)> ProjectionEdges()
+    {
+        foreach (var feed in Feeds.Where(DirectFeed))
         {
-            var source = Entry(feed.Events[0]);
-            var target = Entry(feed.Models[0]);
-            if (source is not null && target is not null) yield return (source.Handle, target.Handle);
+            if ((Entry(feed.Events[0]), Entry(feed.Models[0])) is ({ } source, { } target)) yield return (source.Handle, target.Handle);
         }
     }
 }

@@ -88,13 +88,18 @@ static class McpToolSchemas
         return property switch
         {
             "action" => McpAstSchemas.Choice("add", "rename", "remove"),
-            "owner" => McpAstSchemas.Handle(),
-            "optional" => new() { ["type"] = "boolean", ["default"] = false },
-            "hops" => McpAstSchemas.Array(PropertyHop()),
             "alsoRename" or "alsoRemove" => McpAstSchemas.Array(McpAstSchemas.Object(new JsonObject { ["target"] = McpAstSchemas.Handle(), ["expectedName"] = McpAstSchemas.String() }, "target", "expectedName")),
-            _ => null
+            _ => PropertyAdditionArgument(property)
         };
     }
+
+    static JsonObject? PropertyAdditionArgument(string property) => property switch
+    {
+        "owner" => McpAstSchemas.Handle(),
+        "optional" => new() { ["type"] = "boolean", ["default"] = false },
+        "hops" => McpAstSchemas.Array(PropertyHop()),
+        _ => null
+    };
 
     static JsonObject StandardArgument(string tool, string property) => property switch
     {

@@ -36,13 +36,13 @@ sealed class WorkspacePropertyAddEdits(WorkspaceSyntaxIndex index, WorkspaceProp
 
     internal WorkspacePropertyRefusal? Apply()
     {
-        foreach (var addition in plan.Additions) Insert(addition.Owner, "properties", addition.Property, addition, "declaration", "added");
+        foreach (var addition in plan.Additions) Insert(addition.Owner, "properties", addition.Property, new(addition, "declaration", "added"));
         foreach (var mapping in plan.Mappings)
         {
             var expression = Parse(mapping.Block, mapping.Value, mapping.Block.Node is FromSyntax);
             if (expression is null) return new(WorkspaceConflictKind.UnsupportedPropertySpan, [WorkspacePropertyAddPlan.Candidate(mapping.Target) with { Role = "mapping-target", Location = mapping.Block.Location }]);
             SyntaxNode node = mapping.Block.Node is FromSyntax ? new SetMappingSyntax(mapping.Target.Name, expression, mapping.Block.Location) : new PropertyMappingSyntax(mapping.Target.Name, expression, mapping.Block.Location);
-            Insert(mapping.Block, "mappings", node, mapping.Target, "mapping-target", "added");
+            Insert(mapping.Block, "mappings", node, new(mapping.Target, "mapping-target", "added"));
         }
         return request.Optional ? null : Fixtures();
     }
@@ -70,7 +70,7 @@ sealed class WorkspacePropertyAddEdits(WorkspaceSyntaxIndex index, WorkspaceProp
             var value = Parse(entry, request.FixtureValue!, false, literal: true);
             if (value is null) return new(WorkspaceConflictKind.UnsupportedPropertySpan, [WorkspacePropertyAddPlan.Candidate(occurrence.Addition) with { Role = "fixture", Location = entry.Location }]);
             var member = entry.Node is SpecificationReadModelSyntax or SpecificationQueryResultSyntax ? "properties" : "values";
-            Insert(entry, member, new PropertyMappingSyntax(occurrence.Addition.Name, value, entry.Location), occurrence.Addition, properties.Links.AdditionFixtureRole(entry), "fixtureAdded");
+            Insert(entry, member, new PropertyMappingSyntax(occurrence.Addition.Name, value, entry.Location), new(occurrence.Addition, properties.Links.AdditionFixtureRole(entry), "fixtureAdded"));
         }
         return null;
     }
@@ -89,12 +89,14 @@ sealed class WorkspacePropertyAddEdits(WorkspaceSyntaxIndex index, WorkspaceProp
         return expression is RawExpressionSyntax || context.Diagnostics.Count > 0 ? null : expression;
     }
 
-    void Insert(WorkspaceSyntaxEntry entry, string member, SyntaxNode node, WorkspacePropertyAddition addition, string role, string change)
+    void Insert(WorkspaceSyntaxEntry entry, string member, SyntaxNode node, AdditionChange change)
     {
         var target = WorkspaceSyntaxMutation.At(_roots[entry.Handle.Document], entry.Handle.Path);
         if (target[member] is not JsonArray collection) throw new InvalidWorkspaceAuthoring($"UnsupportedPropertySpan: {entry.Kind} has no {member} collection.");
         collection.Add(WorkspaceSyntaxMutation.Json(node));
         _touched.Add(entry.Handle.Document);
-        _changes.Add(new(WorkspacePropertyAddPlan.Address(addition), addition.Kind, role, change, entry.Location));
+        _changes.Add(new(WorkspacePropertyAddPlan.Address(change.Addition), change.Addition.Kind, change.Role, change.Change, entry.Location));
     }
+
+    sealed record AdditionChange(WorkspacePropertyAddition Addition, string Role, string Change);
 }

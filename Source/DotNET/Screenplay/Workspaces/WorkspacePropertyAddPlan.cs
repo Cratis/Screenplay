@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Indexing;
 using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
@@ -55,20 +56,43 @@ sealed class WorkspacePropertyAddPlan(WorkspaceSyntaxIndex index, WorkspacePrope
 
     static bool ValidName(string name) => name.Length > 0 && (char.IsLetter(name[0]) || name[0] == '_') && name.All(character => char.IsLetterOrDigit(character) || character == '_');
 
-    WorkspacePropertyRefusal? Add(WorkspaceSyntaxEntry owner, string name)
+    static WorkspacePropertyRefusal? InspectAdditionOwner(WorkspaceSyntaxEntry owner)
     {
         if (owner.Member == "inlineEvent") return Refuse(WorkspaceConflictKind.InlineEventRequiresExtraction);
-        if (owner.Node is not (CommandSyntax or EventSyntax or ReadModelSyntax) || owner.Address is null) return Refuse(WorkspaceConflictKind.UnsupportedPropertySpan);
+        return SupportsAddition(owner) ? null : Refuse(WorkspaceConflictKind.UnsupportedPropertySpan);
+    }
+
+    static bool SupportsAddition(WorkspaceSyntaxEntry owner) => owner.Address is not null && owner.Node switch
+    {
+        CommandSyntax => true,
+        EventSyntax => true,
+        ReadModelSyntax => true,
+        _ => false
+    };
+
+    static bool ValidAdditionType(TypeRefSyntax type) => !type.IsOptional && type.Name.Split('.').All(ValidName);
+
+    WorkspacePropertyRefusal? Add(WorkspaceSyntaxEntry owner, string name)
+    {
+        if (InspectAdditionOwner(owner) is { } refusal) return refusal;
         var type = PropertyLineParser.ParseTypeRef(request.Type!, owner.Location);
-        if (type.IsOptional || !type.Name.Split('.').All(ValidName)) return Refuse(WorkspaceConflictKind.InvalidOperation);
+        if (!ValidAdditionType(type)) return Refuse(WorkspaceConflictKind.InvalidOperation);
         var authoredOwner = properties.Links.AdditionOwner(owner);
         if (authoredOwner is null) return Refuse(WorkspaceConflictKind.AmbiguousPropertyReference);
         var addition = new WorkspacePropertyAddition(owner, name, new(name, type with { IsOptional = request.Optional }, owner.Location), authoredOwner.Address);
-        if (properties.Historical(owner)) return new(WorkspaceConflictKind.HistoricalGenerationImmutable, [Candidate(addition)]);
-        if (_additions.Exists(existing => existing.Owner.Handle == owner.Handle) || WorkspacePropertyLinks.Properties(owner.Node).Any(property => string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))) return new(WorkspaceConflictKind.InvalidOperation, [Candidate(addition)]);
+        return RetainAddition(addition);
+    }
+
+    WorkspacePropertyRefusal? RetainAddition(WorkspacePropertyAddition addition)
+    {
+        if (properties.Historical(addition.Owner)) return new(WorkspaceConflictKind.HistoricalGenerationImmutable, [Candidate(addition)]);
+        if (AdditionCollides(addition)) return new(WorkspaceConflictKind.InvalidOperation, [Candidate(addition)]);
         _additions.Add(addition);
         return null;
     }
+
+    bool AdditionCollides(WorkspacePropertyAddition addition) => _additions.Exists(existing => existing.Owner.Handle == addition.Owner.Handle) ||
+        WorkspacePropertyLinks.Properties(addition.Owner.Node).Any(property => string.Equals(property.Name, addition.Name, StringComparison.OrdinalIgnoreCase));
 
     WorkspacePropertyRefusal? ResolveHop(WorkspacePropertyHop hop)
     {
@@ -106,19 +130,25 @@ sealed class WorkspacePropertyAddPlan(WorkspaceSyntaxIndex index, WorkspacePrope
         }
     }
 
-    IEnumerable<WorkspacePropertyCandidate> MissingConsumers()
+    IEnumerable<WorkspacePropertyCandidate> MissingConsumers() => _additions.Where(addition => addition.Owner.Node is ReadModelSyntax).SelectMany(MissingConsumerFeeds);
+
+    IEnumerable<WorkspacePropertyCandidate> MissingConsumerFeeds(WorkspacePropertyAddition addition) => _chain.Feeds
+        .Where(feed => ConsumesAddition(feed, addition) && !ConsumerHasSource(feed, addition))
+        .Select(feed => Candidate(addition) with { Role = "automap", Location = _chain.FeedBlock(feed).Location });
+
+    bool ConsumesAddition(WorkspacePropertyFeed feed, WorkspacePropertyAddition addition) => feed.Models.Any(model => _chain.Entry(model)?.Handle == addition.Owner.Handle);
+
+    bool ConsumerHasSource(WorkspacePropertyFeed feed, WorkspacePropertyAddition addition) => ExplicitConsumerSource(_chain.FeedBlock(feed)) || AutoMapConsumerSource(feed, addition);
+
+    bool ExplicitConsumerSource(WorkspaceSyntaxEntry block) => _mappings.Exists(mapping => mapping.Block.Handle == block.Handle);
+
+    bool AutoMapConsumerSource(WorkspacePropertyFeed feed, WorkspacePropertyAddition addition)
     {
-        foreach (var addition in _additions.Where(addition => addition.Owner.Node is ReadModelSyntax))
-        {
-            foreach (var feed in _chain.Feeds.Where(feed => feed.Models.Any(model => _chain.Entry(model)?.Handle == addition.Owner.Handle)))
-            {
-                var block = _chain.FeedBlock(feed);
-                var explicitMapping = _mappings.Exists(mapping => mapping.Block.Handle == block.Handle);
-                var autoMap = feed.Nested is null && feed.AutoMap && feed.Events.Length == 1 && _additions.Exists(source => source.Owner.Handle == _chain.Entry(feed.Events[0])?.Handle && source.Name == addition.Name);
-                if (!explicitMapping && !autoMap) yield return Candidate(addition) with { Role = "automap", Location = block.Location };
-            }
-        }
+        if (feed.Nested is not null || !feed.AutoMap) return false;
+        return feed.Events is [var @event] && MatchingAutoMapSource(@event, addition);
     }
+
+    bool MatchingAutoMapSource(AuthoredDeclaration @event, WorkspacePropertyAddition addition) => _additions.Exists(source => source.Owner.Handle == _chain.Entry(@event)?.Handle && source.Name == addition.Name);
 
     void ReportChain() => Report = Report with
     {
