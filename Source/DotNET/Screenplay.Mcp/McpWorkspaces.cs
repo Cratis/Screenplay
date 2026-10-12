@@ -409,6 +409,7 @@ internal sealed partial class McpWorkspaces
         var id = Guid.NewGuid().ToString("N");
         var statePlan = new McpStatePlan(_stateBytes, McpState.Serialize(candidate));
         var introducedErrors = McpIntroducedErrors.Between(proposal.Before, candidate);
+        var notesImpact = NotesImpact(proposal);
         var result = new
         {
             success = true,
@@ -420,7 +421,8 @@ internal sealed partial class McpWorkspaces
             after = McpWorkspaceTransport.Describe(candidate, includeContent),
             moveReport = proposal is McpAuthoringProposal moved ? DescribeMove(moved.Result.MoveReport) : null,
             property = DescribeProperty(proposal),
-            orphanedNotes = OrphanedNotes(proposal),
+            orphanedNotes = notesImpact.OrphanedNotes,
+            notes = notesImpact.Notes,
             changeCount = proposal.WritePlan.Entries.Length,
             stateChange = statePlan.Describe(),
             authoringDiagnosticCount = proposal is McpAuthoringProposal authored ? authored.Result.AuthoringDiagnostics.Length : 0,

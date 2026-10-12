@@ -11,14 +11,7 @@ static class McpNotesTargets
 {
     internal static ModelNotesAnchor Read(JsonElement value, ScreenplayWorkspace workspace, bool allowOrphan = false)
     {
-        if (value.TryGetProperty("semanticId", out _) || value.TryGetProperty("application", out _))
-        {
-            McpJson.ValidateObject(value, ["semanticId", "application"], []);
-            var anchor = value.Deserialize<ModelNotesAnchor>(ModelNotesStore.Options) ?? throw new McpFailure("Invalid anchor.", -32602);
-            ModelNotesValidation.Anchor(anchor);
-            if (!allowOrphan && ModelNotesAnchors.Resolve(anchor, workspace.IdentityCatalog) is null) throw new McpFailure("Unknown note anchor.", -32602);
-            return anchor;
-        }
+        if (IsAnchor(value)) return ReadAnchor(value, workspace, allowOrphan);
 
         if (value.TryGetProperty("revision", out _))
         {
@@ -26,15 +19,36 @@ static class McpNotesTargets
         }
 
         if (!value.TryGetProperty("parts", out _)) return ReadAddress(value, workspace);
-        var address = McpSemanticAddresses.Read(value);
-        var assignment = workspace.IdentityCatalog.Semantics.SingleOrDefault(assignment => assignment.Address.Equals(address))
-            ?? throw new McpFailure("The address has no current semantic identity; use its source handle to select its owning container.", -32602);
-        return address.Kind == SemanticKind.Application ? new(Application: true) : new(assignment.Id.ToString());
+        return ReadTypedAddress(value, workspace);
     }
 
     internal static bool Substituted(JsonElement value, ModelNotesAnchor anchor, ScreenplayWorkspace workspace) =>
         value.TryGetProperty("revision", out _) ? McpWorkspaceAnalysis.For(workspace).Syntax.Find(McpAstHandles.Read(value))?.SemanticId?.ToString() != anchor.SemanticId
             : value.TryGetProperty("address", out _) && !Enum.TryParse<SemanticKind>(McpJson.RequiredString(value, "kind"), out _);
+
+    static bool IsAnchor(JsonElement value)
+    {
+        string[] properties = ["semanticId", "application"];
+        return properties.Any(property => value.TryGetProperty(property, out _));
+    }
+
+    static ModelNotesAnchor ReadAnchor(JsonElement value, ScreenplayWorkspace workspace, bool allowOrphan)
+    {
+        McpJson.ValidateObject(value, ["semanticId", "application"], []);
+        var anchor = value.Deserialize<ModelNotesAnchor>(ModelNotesStore.Options) ?? throw new McpFailure("Invalid anchor.", -32602);
+        ModelNotesValidation.Anchor(anchor);
+        if (allowOrphan) return anchor;
+        if (ModelNotesAnchors.Resolve(anchor, workspace.IdentityCatalog) is null) throw new McpFailure("Unknown note anchor.", -32602);
+        return anchor;
+    }
+
+    static ModelNotesAnchor ReadTypedAddress(JsonElement value, ScreenplayWorkspace workspace)
+    {
+        var address = McpSemanticAddresses.Read(value);
+        var assignment = workspace.IdentityCatalog.Semantics.SingleOrDefault(assignment => assignment.Address.Equals(address))
+            ?? throw new McpFailure("The address has no current semantic identity; use its source handle to select its owning container.", -32602);
+        return address.Kind == SemanticKind.Application ? new(Application: true) : new(assignment.Id.ToString());
+    }
 
     static ModelNotesAnchor ReadAddress(JsonElement value, ScreenplayWorkspace workspace)
     {

@@ -85,7 +85,7 @@ public static class ModelNotesStore
             using var json = JsonDocument.Parse(bytes);
             ModelNotesValidation.UniqueProperties(json.RootElement);
             var envelope = json.RootElement.Deserialize<Envelope>(Options) ?? throw new InvalidModelNotes("Empty notes document.");
-            if (envelope.Schema != "cratis.screenplay.notes" || envelope.SchemaVersion != 1 || envelope.ApplicationIdentity != application.ToString())
+            if (!MatchesApplication(envelope, application))
             {
                 throw new InvalidModelNotes("Unsupported notes schema/version or another application's identity.");
             }
@@ -122,6 +122,12 @@ public static class ModelNotesStore
     /// <param name="canonical">Canonical notes bytes, or null for absence.</param>
     /// <returns>The nrev1 revision.</returns>
     public static string Revision(byte[]? canonical) => canonical is null ? AbsentRevision : $"nrev1:{Convert.ToHexString(SHA256.HashData(canonical)).ToLowerInvariant()}";
+
+    static bool MatchesApplication(Envelope envelope, ApplicationIdentity application)
+    {
+        bool[] requirements = [envelope.Schema == "cratis.screenplay.notes", envelope.SchemaVersion == 1, envelope.ApplicationIdentity == application.ToString()];
+        return requirements.All(requirement => requirement);
+    }
 
     static string NoteJson(ModelNote note)
     {

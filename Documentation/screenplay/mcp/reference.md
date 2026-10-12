@@ -508,7 +508,11 @@ The response includes `success`, `proposalId`, `notesRevision`,
 on continuation. Existing `apply` journals the retained notes plan; it verifies
 notes revision and exact original bytes without requiring another notes parameter.
 Source/AST/rename/move/property proposals and proposal reviews add `orphanedNotes`
-IDs for notes their resulting catalog would orphan. Rename and move never rewrite
+IDs for notes their resulting catalog would orphan, plus `notes` status/reason/count.
+If notes are unreadable, `orphanedNotes` is null (unknown), not an empty proven set,
+and `notes.status` is `unreadable` with its reason. Unknown note `view` or `state`
+values are rejected as `InvalidArguments`, including direct server-side calls.
+Rename and move never rewrite
 the notes file.
 
 `UnreadableNotes` refuses note reads or writes without auto-repair.

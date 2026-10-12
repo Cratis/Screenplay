@@ -113,7 +113,9 @@ screenplay path/to/model --scope Library.Loans.CheckIn --open-questions fail
 The report emits one `info` finding with code `model-note.open-question` per open
 question. Findings on declarations group under their owning slice or container.
 The scope includes its descendants and ancestor notes, including application notes;
-an unscoped report also includes orphaned open questions.
+an unscoped report also includes orphaned open questions. If identity state is
+absent, the CLI explains that notes cannot be scoped and reports all open questions
+unscoped as orphaned with reason `identity-state-absent`, rather than hiding them.
 
 `report` does not fail because questions remain. `fail` exits `1` when the selected
 set contains an open question. Unreadable notes exit `2` only when the flag is given.

@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Cratis.Screenplay.Completeness;
-using Cratis.Screenplay.Contracts;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Mcp;
 
@@ -12,173 +11,147 @@ static class ModelCheck
 {
     internal static int Run(string[] args, TextWriter output, TextWriter error, bool useColors = false)
     {
-        string? target = null;
-        string? scope = null;
-        string? openQuestions = null;
-        var checks = CompletenessChecks.None;
-        for (var index = 0; index < args.Length; index++)
-        {
-            var argument = args[index];
-            if (argument.StartsWith('-') && !CliCommandCatalog.Check.Options.Any(option => option.Name == argument))
-            {
-                error.WriteLine($"Unexpected argument '{argument}'.");
-                return 2;
-            }
-
-            if (argument == CliCommandCatalog.Scope.Name)
-            {
-                if (scope is not null || index + 1 == args.Length || args[index + 1].StartsWith('-') || string.IsNullOrWhiteSpace(args[index + 1]))
-                {
-                    error.WriteLine("--scope requires one module, feature or slice address.");
-                    return 2;
-                }
-
-                scope = args[++index];
-            }
-            else if (argument == CliCommandCatalog.OpenQuestions.Name)
-            {
-                if (openQuestions is not null || index + 1 == args.Length || (args[index + 1] != "report" && args[index + 1] != "fail"))
-                {
-                    error.WriteLine("--open-questions requires report or fail and cannot be repeated.");
-                    return 2;
-                }
-
-                openQuestions = args[++index];
-            }
-            else if (argument == CliCommandCatalog.Checks.Name)
-            {
-                if (index + 1 == args.Length || !CompletenessChecks.TryParse(args[++index], out var selected))
-                {
-                    error.WriteLine("--check requires recognized completeness check names, diagnostic codes, or all.");
-                    return 2;
-                }
-
-                checks = new(checks.Selected.Union(selected.Selected));
-            }
-            else if (argument != CliCommandCatalog.NoColor.Name && argument != CliCommandCatalog.WarnAsError.Name)
-            {
-                if (argument.StartsWith('-') || target is not null)
-                {
-                    error.WriteLine($"Unexpected argument '{argument}'.");
-                    return 2;
-                }
-
-                target = argument;
-            }
-        }
-
-        target ??= Directory.GetCurrentDirectory();
-        var isFile = File.Exists(target);
-        if (!isFile && !Directory.Exists(target))
-        {
-            error.WriteLine($"'{target}' does not exist");
-            return 2;
-        }
-
-        if (isFile && !target.EndsWith(".play", StringComparison.OrdinalIgnoreCase))
-        {
-            error.WriteLine($"'{target}' is not a .play file");
-            return 2;
-        }
-
+        var options = ModelCheckOptions.Parse(args, error);
+        if (options is null) return 2;
+        options.IsFile = File.Exists(options.Target);
+        if (!ValidateTarget(options, error)) return 2;
         try
         {
-            return Check(target, isFile, scope, checks, openQuestions, args.Contains(CliCommandCatalog.WarnAsError.Name), output, error, useColors && !args.Contains(CliCommandCatalog.NoColor.Name));
+            return Check(options, output, error, useColors && !options.NoColor);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            error.WriteLine($"Could not check '{target}': {exception.Message}");
+            error.WriteLine($"Could not check '{options.Target}': {exception.Message}");
             return 2;
         }
     }
 
-    static int Check(string target, bool isFile, string? scope, CompletenessChecks checks, string? openQuestions, bool warnAsError, TextWriter output, TextWriter error, bool useColors)
+    static bool ValidateTarget(ModelCheckOptions options, TextWriter error)
     {
-        var snapshot = McpSnapshot.Compile(target, isFile);
-        var sources = snapshot.Sources;
+        if (!Exists(options))
+        {
+            error.WriteLine($"'{options.Target}' does not exist");
+            return false;
+        }
+
+        if (!IsPlayInput(options))
+        {
+            error.WriteLine($"'{options.Target}' is not a .play file");
+            return false;
+        }
+
+        return true;
+    }
+
+    static bool Exists(ModelCheckOptions options) => options.IsFile || Directory.Exists(options.Target);
+
+    static bool IsPlayInput(ModelCheckOptions options) => !options.IsFile || options.Target.EndsWith(".play", StringComparison.OrdinalIgnoreCase);
+
+    static int Check(ModelCheckOptions options, TextWriter output, TextWriter error, bool useColors)
+    {
+        var snapshot = McpSnapshot.Compile(options.Target, options.IsFile);
         var compilation = snapshot.Compilation;
-        var additional = snapshot.Completeness(checks);
+        var additional = snapshot.Completeness(options.Checks);
         var wholeDiagnostics = compilation.Diagnostics.Concat(additional).ToArray();
         IEnumerable<Diagnostic> diagnostics = wholeDiagnostics;
-        if (scope is not null)
+        if (options.Scope is { } scope)
         {
-            if (!ScopedDiagnostics.TryValidate(snapshot, scope, checks, out var selection, out var scopeError))
+            if (!ScopedDiagnostics.TryValidate(snapshot, scope, options.Checks, out var selection, out var scopeError))
             {
                 error.WriteLine(scopeError.Message);
                 return 2;
             }
 
             diagnostics = selection.Diagnostics;
-            output.WriteLine($"Scope {scope}: {selection.DeclarationCount} declaration(s), {selection.DependentDeclarationCount} direct dependent declaration(s), {selection.Diagnostics.Length} diagnostic(s)");
-            output.WriteLine($"Affected scopes: {(selection.AffectedScopes.Length == 0 ? "none" : string.Join(", ", selection.AffectedScopes.Select(affected => affected.Length == 0 ? "<application>" : affected)))}");
-            output.WriteLine($"Unresolved event consumers (cannot be attributed to a scope): {selection.UnresolvedEventConsumers.ReferenceCount} reference(s) in {(selection.UnresolvedEventConsumers.Scopes.Length == 0 ? "none" : string.Join(", ", selection.UnresolvedEventConsumers.Scopes.Select(consumerScope => consumerScope.Length == 0 ? "<application>" : consumerScope)))}");
-            output.WriteLine($"Possibly affected: {selection.PossiblyAffectedReferenceCount} other unresolved reference(s) outside the reported declarations");
-            output.WriteLine($"Dependency coverage: {selection.DependencyCoverage}");
-            var wholeErrors = selection.WholeApplicationErrorCount;
-            var wholeWarnings = selection.WholeApplicationWarningCount;
-            var wholeSummary = $"Whole application: {wholeErrors} error(s), {wholeWarnings} warning(s) ({wholeDiagnostics.Length - diagnostics.Count()} outside the reported set)";
-            var wholeFailed = !compilation.Success || (warnAsError && wholeWarnings > 0);
-            output.WriteLine(useColors && wholeFailed ? $"\e[31m{wholeSummary}\e[0m" : wholeSummary);
+            WriteScope(selection, scope, output);
+            WriteWholeApplication(new(snapshot, diagnostics, options, useColors), selection, wholeDiagnostics.Length, output);
         }
 
-        var errorCount = compilation.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-        if (checks.Selected.Count > 0 && errorCount > 0)
+        ReportSkippedChecks(snapshot, options.Checks, output);
+        var report = new ModelCheckReport(snapshot, diagnostics, options, useColors);
+        return ModelOpenQuestions.WithReport(new(snapshot, options), output, error, () => Report(report, output));
+    }
+
+    static void WriteScope(ScopedDiagnosticResult selection, string scope, TextWriter output)
+    {
+        output.WriteLine($"Scope {scope}: {selection.DeclarationCount} declaration(s), {selection.DependentDeclarationCount} direct dependent declaration(s), {selection.Diagnostics.Length} diagnostic(s)");
+        output.WriteLine($"Affected scopes: {(selection.AffectedScopes.Length == 0 ? "none" : string.Join(", ", selection.AffectedScopes.Select(affected => affected.Length == 0 ? "<application>" : affected)))}");
+        output.WriteLine($"Unresolved event consumers (cannot be attributed to a scope): {selection.UnresolvedEventConsumers.ReferenceCount} reference(s) in {(selection.UnresolvedEventConsumers.Scopes.Length == 0 ? "none" : string.Join(", ", selection.UnresolvedEventConsumers.Scopes.Select(consumerScope => consumerScope.Length == 0 ? "<application>" : consumerScope)))}");
+        output.WriteLine($"Possibly affected: {selection.PossiblyAffectedReferenceCount} other unresolved reference(s) outside the reported declarations");
+        output.WriteLine($"Dependency coverage: {selection.DependencyCoverage}");
+    }
+
+    static void WriteWholeApplication(ModelCheckReport report, ScopedDiagnosticResult selection, int wholeCount, TextWriter output)
+    {
+        var wholeErrors = selection.WholeApplicationErrorCount;
+        var wholeWarnings = selection.WholeApplicationWarningCount;
+        var wholeSummary = $"Whole application: {wholeErrors} error(s), {wholeWarnings} warning(s) ({wholeCount - report.Diagnostics.Count()} outside the reported set)";
+        var wholeFailed = IsFailure(report.Snapshot.Compilation.Success ? 0 : 1, wholeWarnings, report.Options.WarnAsError);
+        output.WriteLine(report.UseColors && wholeFailed ? $"\e[31m{wholeSummary}\e[0m" : wholeSummary);
+    }
+
+    static void ReportSkippedChecks(McpSnapshot snapshot, CompletenessChecks checks, TextWriter output)
+    {
+        var errorCount = snapshot.Compilation.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        if (checks.Selected.Count == 0) return;
+        if (errorCount > 0) output.WriteLine($"completeness checks skipped: the model has {errorCount} error(s)");
+    }
+
+    static int Report(ModelCheckReport report, TextWriter output)
+    {
+        if (report.Snapshot.Sources.Count == 0)
         {
-            output.WriteLine($"completeness checks skipped: the model has {errorCount} error(s)");
+            output.WriteLine($"No .play files found beneath {report.Options.Target}");
+            return 0;
         }
 
-        var notesExit = ModelOpenQuestions.Run(new(snapshot, target, isFile, scope, openQuestions), output, error);
-        if (notesExit == 2) return 2;
-        if (sources.Count == 0)
-        {
-            output.WriteLine($"No .play files found beneath {target}");
-            return notesExit;
-        }
+        WriteDiagnostics(report, output);
+        var errors = report.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+        var warnings = report.Diagnostics.Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Warning);
+        if (errors + warnings > 0) output.WriteLine();
+        var failed = IsFailure(errors, warnings, report.Options.WarnAsError);
+        WriteSummary(new(errors, warnings, failed), report, output);
+        return failed ? 1 : 0;
+    }
 
+    static bool IsFailure(int errors, int warnings, bool warnAsError)
+    {
+        if (errors > 0) return true;
+        if (!warnAsError) return false;
+        return warnings > 0;
+    }
+
+    static void WriteDiagnostics(ModelCheckReport report, TextWriter output)
+    {
+        var sources = report.Snapshot.Sources;
         var fallbackFile = sources.Keys.First();
         var formatter = new DiagnosticFormatter();
-        var errors = 0;
-        var warnings = 0;
-        foreach (var diagnostic in diagnostics
-            .OrderBy(diagnostic => diagnostic.Location.Path ?? fallbackFile, StringComparer.Ordinal)
-            .ThenBy(diagnostic => diagnostic.Location.Line)
-            .ThenBy(diagnostic => diagnostic.Location.Column))
+        foreach (var diagnostic in report.Diagnostics.OrderBy(diagnostic => diagnostic.Location.Path ?? fallbackFile, StringComparer.Ordinal)
+            .ThenBy(diagnostic => diagnostic.Location.Line).ThenBy(diagnostic => diagnostic.Location.Column))
         {
-            switch (diagnostic.Severity)
-            {
-                case DiagnosticSeverity.Error:
-                    errors++;
-                    break;
-                case DiagnosticSeverity.Warning:
-                    warnings++;
-                    break;
-            }
-
             var file = diagnostic.Location.Path ?? fallbackFile;
-            output.WriteLine(formatter.Format(file, diagnostic, sources.TryGetValue(file, out var source) ? source : string.Empty, useColors));
+            output.WriteLine(formatter.Format(file, diagnostic, sources.TryGetValue(file, out var source) ? source : string.Empty, report.UseColors));
         }
+    }
 
-        if (errors + warnings > 0)
-        {
-            output.WriteLine();
-        }
-        var failed = errors > 0 || (warnAsError && warnings > 0);
-        var summary = $"{sources.Count} file(s) compiled - {errors} error(s), {warnings} warning(s){(scope is null ? string.Empty : " in scope")}";
-        if (useColors)
-        {
-            var color = (failed, warnings > 0) switch
-            {
-                (true, _) => "\e[31m",
-                (_, true) => "\e[33m",
-                _ => "\e[32m"
-            };
-            output.WriteLine($"{color}{summary}\e[0m");
-        }
-        else
+    static void WriteSummary(ModelCheckCounts counts, ModelCheckReport report, TextWriter output)
+    {
+        var summary = $"{report.Snapshot.Sources.Count} file(s) compiled - {counts.Errors} error(s), {counts.Warnings} warning(s){(report.Options.Scope is null ? string.Empty : " in scope")}";
+        if (!report.UseColors)
         {
             output.WriteLine(summary);
+            return;
         }
 
-        return failed || notesExit == 1 ? 1 : 0;
+        var color = (counts.Failed, counts.Warnings > 0) switch
+        {
+            (true, _) => "\e[31m",
+            (_, true) => "\e[33m",
+            _ => "\e[32m"
+        };
+        output.WriteLine($"{color}{summary}\e[0m");
     }
 }
+
+sealed record ModelCheckReport(McpSnapshot Snapshot, IEnumerable<Diagnostic> Diagnostics, ModelCheckOptions Options, bool UseColors);
+sealed record ModelCheckCounts(int Errors, int Warnings, bool Failed);

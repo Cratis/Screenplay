@@ -31,21 +31,39 @@ public class when_serializing_notes : Specification
     [Fact] void should_use_a_separate_revision() => ModelNotesStore.ReadBytes(_bytes, _application).Revision!.StartsWith("nrev1:", StringComparison.Ordinal).ShouldBeTrue();
 
     [Fact]
-    void should_match_the_published_schema_required_keys_and_constants()
+    void should_include_the_required_document_keys()
+    {
+        using var actual = JsonDocument.Parse(_bytes);
+        RequireKeys(Schema(), actual.RootElement);
+    }
+
+    [Fact]
+    void should_match_the_schema_constants()
+    {
+        using var actual = JsonDocument.Parse(_bytes);
+        foreach (var property in Schema().GetProperty("properties").EnumerateObject().Where(property => property.Value.TryGetProperty("const", out _))) actual.RootElement.GetProperty(property.Name).GetRawText().ShouldEqual(property.Value.GetProperty("const").GetRawText());
+    }
+
+    [Fact]
+    void should_include_the_required_note_keys()
+    {
+        using var actual = JsonDocument.Parse(_bytes);
+        var schema = Schema().GetProperty("$defs").GetProperty("note");
+        foreach (var note in actual.RootElement.GetProperty("notes").EnumerateArray()) RequireKeys(schema, note);
+    }
+
+    static void RequireKeys(JsonElement schema, JsonElement actual)
+    {
+        foreach (var required in schema.GetProperty("required").EnumerateArray()) actual.TryGetProperty(required.GetString()!, out _).ShouldBeTrue();
+    }
+
+    static JsonElement Schema()
     {
         var repository = new DirectoryInfo(Directory.GetCurrentDirectory());
-        while (repository is not null && !File.Exists(Path.Combine(repository.FullName, ".git")) && !Directory.Exists(Path.Combine(repository.FullName, ".git"))) repository = repository.Parent;
+        while (!IsRepository(repository!)) repository = repository!.Parent;
         using var schema = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(repository!.FullName, "Documentation/screenplay/notes-v1.schema.json")));
-        using var actual = JsonDocument.Parse(_bytes);
-        foreach (var required in schema.RootElement.GetProperty("required").EnumerateArray()) actual.RootElement.TryGetProperty(required.GetString()!, out _).ShouldBeTrue();
-        foreach (var property in schema.RootElement.GetProperty("properties").EnumerateObject())
-        {
-            if (property.Value.TryGetProperty("const", out var constant)) actual.RootElement.GetProperty(property.Name).GetRawText().ShouldEqual(constant.GetRawText());
-        }
-
-        foreach (var note in actual.RootElement.GetProperty("notes").EnumerateArray())
-        {
-            foreach (var required in schema.RootElement.GetProperty("$defs").GetProperty("note").GetProperty("required").EnumerateArray()) note.TryGetProperty(required.GetString()!, out _).ShouldBeTrue();
-        }
+        return schema.RootElement.Clone();
     }
+
+    static bool IsRepository(DirectoryInfo directory) => File.Exists(Path.Combine(directory.FullName, ".git")) || Directory.Exists(Path.Combine(directory.FullName, ".git"));
 }

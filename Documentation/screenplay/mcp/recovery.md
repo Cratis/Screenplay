@@ -80,6 +80,13 @@ Before source mutation, apply writes a durable journal. Installation stages
 private bytes, retains original files, installs source and identity state, and
 verifies both. Only then can it discard the journal and backups.
 
+Journals carrying notes use envelope version `2`; source/identity-only journals
+continue to use version `1`. This server reads both, refuses a version-1 journal
+carrying notes, and requires a complete, consistent notes section in version 2.
+Older servers that only support version 1 refuse the newer journal instead of
+completing recovery without restoring notes. Finish an interrupted notes operation
+with the newer server version; do not downgrade or remove the marker.
+
 This detects interruption; it does **not** make multiple filesystem paths become
 visible simultaneously. Other processes can observe intermediate files. Run
 apply with exclusive writer access to a trusted model root.

@@ -87,7 +87,10 @@ questions remain. Tasks and ordinary notes do not trigger this gate.
 Keep the model root as the input. `--scope` selects descendant and ancestor notes,
 including application notes. An unscoped report also includes orphaned questions.
 The notes report uses persisted identity state when present, so anchors follow
-renames. An unreadable notes file exits `2` only when the flag is given; without
+renames. If `identities.json` is absent, the report says notes cannot be scoped,
+keeps all open questions visible unscoped, and marks them orphaned with reason
+`identity-state-absent`; `fail` still gates on that reported set.
+An unreadable notes file exits `2` only when the flag is given; without
 it notes are ignored. This is separate from compiler warnings and `--warnaserror`.
 
 ## Report processing purposes

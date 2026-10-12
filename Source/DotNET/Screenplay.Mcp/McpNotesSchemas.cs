@@ -7,18 +7,20 @@ namespace Cratis.Screenplay.Mcp;
 
 static class McpNotesSchemas
 {
+    static readonly string[] _tools = ["list-model-notes", "propose-model-notes"];
+    static readonly Dictionary<string, Func<JsonObject>> _arguments = new(StringComparer.Ordinal)
+    {
+        ["anchor"] = Target,
+        ["operations"] = () => BoundedArray(Operation(), 200, minimum: 1),
+        ["kind"] = () => McpAstSchemas.Choice("question", "task", "note"),
+        ["state"] = () => McpAstSchemas.Choice("open", "resolved", "orphaned", "all"),
+        ["view"] = () => McpAstSchemas.Choice("items", "findings")
+    };
+
     internal static JsonObject? Argument(string tool, string property)
     {
-        if (tool is not "list-model-notes" and not "propose-model-notes") return null;
-        return property switch
-        {
-            "anchor" => Target(),
-            "operations" => BoundedArray(Operation(), 200, minimum: 1),
-            "kind" => McpAstSchemas.Choice("question", "task", "note"),
-            "state" => McpAstSchemas.Choice("open", "resolved", "orphaned", "all"),
-            "view" => McpAstSchemas.Choice("items", "findings"),
-            _ => null
-        };
+        if (!_tools.Contains(tool, StringComparer.Ordinal)) return null;
+        return _arguments.TryGetValue(property, out var read) ? read() : null;
     }
 
     static JsonObject Target() => new()

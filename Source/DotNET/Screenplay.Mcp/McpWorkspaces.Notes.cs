@@ -15,14 +15,10 @@ internal sealed partial class McpWorkspaces
         var notes = ReadNotes(workspace);
         RefuseUnreadableNotes(notes);
         CheckContinuation(arguments, "expectedNotesRevision", notes.Revision!);
-        var state = McpJson.OptionalString(arguments, "state") ?? "open";
-        var kind = McpJson.OptionalString(arguments, "kind");
-        var reference = McpJson.OptionalString(arguments, "ref");
         var scope = McpJson.OptionalString(arguments, "scope");
-        var anchor = arguments.TryGetProperty("anchor", out var target) ? McpNotesTargets.Read(target, workspace, allowOrphan: true) : null;
-        var filter = new McpNotesFilter(state, kind, anchor, reference, scope);
-        var items = ModelNotesAnchors.Items(notes.Document!, workspace.IdentityCatalog).Where(item => filter.Matches(item, workspace.IdentityCatalog));
-        var view = McpJson.OptionalString(arguments, "view") ?? "items";
+        var filter = McpNotesFilter.Read(arguments, workspace);
+        var items = ModelNotesAnchors.Items(notes.Document!, workspace.IdentityCatalog).Where(filter.Matches);
+        var view = McpNotesArguments.View(arguments);
         object page = view == "findings"
             ? McpPaging.Page(ModelNotesAnchors.Findings(notes.Document! with { Notes = [.. items.Select(item => item.Note)] }, workspace.IdentityCatalog, scope), arguments, notes.Revision!)
             : McpPaging.Page(items, arguments, notes.Revision!);
@@ -85,13 +81,15 @@ internal sealed partial class McpWorkspaces
         return properties;
     }
 
-    string[] OrphanedNotes(IMcpProposal proposal)
+    McpNotesImpact NotesImpact(IMcpProposal proposal)
     {
         var notes = ReadNotes(proposal.Before);
+        var status = new { notes.Status, notes.Reason, count = notes.Document?.Notes.Length };
 
-        // An unreadable nonsemantic file does not block source proposals and is never rewritten.
-        if (notes.Document is null) return [];
-        return [.. notes.Document.Notes.Where(note => ModelNotesAnchors.Resolve(note.Anchor, proposal.Before.IdentityCatalog) is not null && ModelNotesAnchors.Resolve(note.Anchor, proposal.Workspace.IdentityCatalog) is null).Select(note => note.Id).Order(StringComparer.Ordinal)];
+        // Unreadable notes mean unknown impact, not an empty proven orphan set.
+        if (notes.Document is null) return new(null, status);
+        var orphaned = notes.Document.Notes.Where(note => ModelNotesAnchors.Resolve(note.Anchor, proposal.Before.IdentityCatalog) is not null && ModelNotesAnchors.Resolve(note.Anchor, proposal.Workspace.IdentityCatalog) is null);
+        return new([.. orphaned.Select(note => note.Id).Order(StringComparer.Ordinal)], status);
     }
 
     ModelNotesRead ReadNotes(ScreenplayWorkspace workspace) => ReadNotes(workspace.IdentityCatalog.Application);
