@@ -37,7 +37,7 @@ form <Name> for <Command>
 - `populate` - where the form's initial values come from. At most one per form, and optional - a form with no `populate` starts empty.
 - `generation` - preserves Scene's `FormGenerationMode`: `auto` means generate fields from command metadata, while `manual` means the authored fields are the contract. At most one per form.
 - `field` - binds one of the command's properties to the form. Zero or more.
-- `columns` - the legacy display-order hint. `columns auto` lets the package infer columns, while `columns manual` lists the command properties in display order. At most one per form.
+- `columns` - which command properties the form shows, in which order and with which labels. `columns auto` lets the package infer them, while `columns manual` lists the command properties in display order. At most one per form.
 - `layout` - Scene 4.12 command-form geometry: authored columns, field placements and gaps. It is independent of `generation` and does not reinterpret `compose using` as layout metadata.
 - `on submit` - what happens after a successful submit. At most one per form, and optional - a form with no `on submit` stays on the current screen.
 
@@ -92,6 +92,8 @@ A bare `field <property>` binds straight to the command property of the same nam
 `from` and `compose using` are mutually exclusive on one field; either may still carry a `label`. A field's `label` accepts an unquoted `$strings.<key>` token in place of a literal, the same as everywhere else in the document - see [Internationalization](internationalization.md).
 
 ## Columns and layout
+
+`columns` and `layout` answer different questions and can be used together: `columns` decides the order and labels of the fields, and `layout` decides their geometry. Neither replaces the other.
 
 Use `columns auto` when the native command form runtime should derive the display order from the command and package defaults. Use `columns manual` when the business order matters or the screen needs deterministic columns across packages.
 

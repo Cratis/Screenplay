@@ -62,7 +62,7 @@ The vocabulary of the Screenplay language, defined once. For the underlying even
 - **Guarded action** — one labeled screen button selecting the first matching `when … execute` command over its data item or selected row, with an optional fallback; no subject hides it and authorization never falls through. See [Screens](screens.md#one-action-several-commands).
 - **Continuation** — the `on success` / `on failure` / `on result` block of an action, holding the actions that run after it. Only actions that can fail carry one.
 - **Behavior** — a bundle of interaction-trigger-to-action bindings, attachable to an element, form, screen, template, layout, module or feature. Written inline as an anonymous `on` block, or declared as `behavior <Name>` with `parameter`s and attached with `uses`. Attachments are additive: a template's behavior and an element's both run.
-- **Route** — the concrete address a renderer gives a screen. The document says `navigate to <Screen>`; the renderer decides that means `/invoicing/invoices`. Bindings are passed with `with <name> from <binding>`; legacy navigation forms also accept `by <parameter>`.
+- **Route** — the concrete address a renderer gives a screen. The document says `navigate to <Screen>`; the renderer decides that means `/invoicing/invoices`. Screen navigation passes the target's key with `by <parameter>` (for example `on row-click navigate to InvoiceDetail by invoiceId`) and further values with `parameter <name> from <binding>`; navigation actions inside an interaction block pass values with `with <name> from <binding>`.
 
 ## Sub-languages
 
