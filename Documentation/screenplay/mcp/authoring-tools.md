@@ -481,6 +481,55 @@ with `read-proposal` and explicitly call `apply`. After external edits, reopen a
 rediscover repairs rather than reusing stale handles. Applying a repair uses the
 same [identity state and recovery](recovery.md) contract as other proposals.
 
+## Edit a specification
+
+Use the ordinary typed AST transaction to add or change scenarios; no separate
+specification-edit operation is needed. Open the workspace first and keep both
+its workspace and catalog revisions.
+
+1. Call `read-ast` with `expectedRevision`, `kind: "SpecificationSyntax"`,
+   `name` and `includeContent: true`. If the name has several matches, select the
+   intended document and parent from the returned handles rather than guessing.
+   Read `view: "children"` with the specification's `documentId` and `path` to
+   get handles for its steps. `syntax-schema` describes their typed members.
+2. Use `propose-ast` add/replace/remove operations at those handles. The
+   specification's `given` and `givenReadModels` hold prior facts and state;
+   `givenCaller`, `givenCallerPersona`, `givenClock` and `givenCaptures` hold
+   other preconditions. `when`, `whenAppended`, `whenQuery`, `whenClock`,
+   `whenTrigger`, `whenCapture` and `whenRedelivered` describe the action.
+   Expectations live in `thenEvents`, `thenErrors`, `thenReadModels`,
+   `thenAbsentReadModels`, `thenQueries`, `thenResults`, `thenNoResult`,
+   `thenReturns`, `thenDenied` and `thenNoEvents`. Table scenarios use
+   `parameters` and `cases`; case values are typed `PropertyMappingSyntax`
+   assignments. `examples` holds retained document-scoped example declarations;
+   event steps reference a type or example through `eventType`, command steps
+   through `commandType`, and read-model steps through `name`. Their `values`
+   (events/commands) or `properties` (read models) hold authored overrides.
+   For one value, replace its `PropertyMappingSyntax` with
+   `formatting: "PreserveTrivia"` to splice only the changed expression. For
+   structural edits, use the formatting mode the transaction supports.
+3. When removing an assigned specification, include its semantic address in
+   `retiredSemanticAddresses`; include every assigned derived case address for
+   a table. Removing source does not silently retire its catalog identities.
+4. Review `read-proposal` with the returned `proposalId` and
+   `view: "semantic-diff"`. Look at the paged change items whose `section` is
+   `specifications` for additions, removals and changed expected outcomes. This is a static
+   expectation comparison, not execution; also inspect the changed source and
+   diagnostics.
+5. Call `run-specifications` with `proposalId`, optionally selecting a
+   `specification` address/semantic id or `scope`. It runs the retained candidate
+   and its catalog, not the current model. Continue with the same proposal ID and
+   pin its returned `sourceRevision` as `expectedSourceRevision`. An unbound
+   candidate returns executable diagnostics; failed and unsupported scenarios
+   are not passes.
+6. Once the candidate passes and you have reviewed the change, call `apply`
+   with `proposalId` and the **before** workspace/catalog revisions. Check
+   `success`, `status` and `recovery`, then read fresh handles.
+
+Candidate execution never applies, writes or mutates the proposal. An externally
+changed base does not replace the retained snapshot, but it still makes apply
+stale. Reopening the workspace discards outstanding proposals.
+
 ## Review and apply
 
 An accepted proposal returns a `proposalId`, before/after revisions, changed-file
