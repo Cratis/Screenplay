@@ -22,7 +22,10 @@ public class a_RegisterProject_property_workspace : a_property_add_workspace
     {
         var model = Result.Workspace.Compilation.Value.Model;
         var plan = SemanticExecutionPlan.Compile(model).Plan;
-        return [.. model.Application.Modules.SelectMany(module => module.Features).SelectMany(feature => feature.Slices).SelectMany(slice => slice.Specifications).Select(specification => new SemanticSpecificationRunner().Run(plan, specification.Id))];
+        var runs = model.Application.Modules.SelectMany(module => module.Features).SelectMany(feature => feature.Slices).SelectMany(slice => slice.Specifications)
+            .Select(specification => new SemanticSpecificationRunner().Run(plan, specification.Id)).ToArray();
+        runs.Length.ShouldEqual(2);
+        return runs;
     }
 
     protected EventSyntax[] Events => [.. WorkspaceSyntaxIndex.Create(Result.Workspace).Entries.Select(entry => entry.Node).OfType<EventSyntax>()];

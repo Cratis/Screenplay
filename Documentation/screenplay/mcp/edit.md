@@ -123,6 +123,11 @@ satisfies a same-named projection hop without an explicit `from` value.
 Supply `fixtureValue` as literal source text (for example `"\"Normal\""` in JSON)
 for a required property. The planner adds it to every existing command, event and
 read-model fixture, example and result assertion for the selected declarations.
+`fixtureValue` is written to every fixture and assertion occurrence as-is. It does
+not evaluate your mapping expressions: a non-identity `value` hop can make the
+specifications fail even when the candidate binds. Run `run-specifications` on
+the proposal before applying it.
+
 An optional property (`optional: true`) needs no fixture edits. Missing values
 refuse with `FixtureValueRequired`; missing producer or consumer decisions refuse
 with `SourcesRequired`. Off-chain hops and existing property names refuse atomically.

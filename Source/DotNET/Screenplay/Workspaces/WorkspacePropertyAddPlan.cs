@@ -94,6 +94,15 @@ sealed class WorkspacePropertyAddPlan(WorkspaceSyntaxIndex index, WorkspacePrope
     bool AdditionCollides(WorkspacePropertyAddition addition) => _additions.Exists(existing => existing.Owner.Handle == addition.Owner.Handle) ||
         WorkspacePropertyLinks.Properties(addition.Owner.Node).Any(property => string.Equals(property.Name, addition.Name, StringComparison.OrdinalIgnoreCase));
 
+    bool SupportedMappingHop(WorkspaceSyntaxEntry entry) => entry.Node switch
+    {
+        ProducesSyntax or CaptureAppendSyntax => true,
+        FromSyntax => !NestedAdditionFeed(entry),
+        _ => false
+    };
+
+    bool NestedAdditionFeed(WorkspaceSyntaxEntry block) => _chain.Feeds.Any(feed => _chain.FeedBlock(feed).Handle == block.Handle && feed.Nested is not null);
+
     WorkspacePropertyRefusal? ResolveHop(WorkspacePropertyHop hop)
     {
         var entry = index.Find(hop.At);
@@ -103,7 +112,7 @@ sealed class WorkspacePropertyAddPlan(WorkspaceSyntaxIndex index, WorkspacePrope
             if (!ValidName(name)) return Refuse(WorkspaceConflictKind.InvalidOperation);
             return Add(entry, name);
         }
-        if (entry.Node is not (ProducesSyntax or FromSyntax or CaptureAppendSyntax)) return Refuse(WorkspaceConflictKind.UnsupportedPropertySpan);
+        if (!SupportedMappingHop(entry)) return Refuse(WorkspaceConflictKind.UnsupportedPropertySpan);
         if (!_chain.BlockOnChain(entry, _connected)) return new(WorkspaceConflictKind.HopNotOnChain, [new(_additions[0].Owner.Address!, _additions[0].Kind, "mapping-target", entry.Location)]);
         if (_mappings.Exists(mapping => mapping.Block.Handle == entry.Handle)) return Refuse(WorkspaceConflictKind.InvalidOperation);
         _mappings.Add((entry, hop.Value!));
