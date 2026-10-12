@@ -512,8 +512,8 @@ its workspace and catalog revisions.
    `retiredSemanticAddresses`; include every assigned derived case address for
    a table. Removing source does not silently retire its catalog identities.
 4. Review `read-proposal` with the returned `proposalId` and
-   `view: "semantic-diff"`. Inspect its paged changes with
-   `section: "specifications"` for additions, removals and changed expected outcomes. This is a static
+   `view: "semantic-diff"`. Look at the paged change items whose `section` is
+   `specifications` for additions, removals and changed expected outcomes. This is a static
    expectation comparison, not execution; also inspect the changed source and
    diagnostics.
 5. Call `run-specifications` with `proposalId`, optionally selecting a
