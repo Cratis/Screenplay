@@ -381,6 +381,10 @@ parent/child operations. See [the authoring contract](../ast-authoring.md).
 
 `syntax-schema` describes concept `pii`/`personal` and `secret` markers as admitted by ESM v13, including personal special/criminal qualifiers and secret scope. Preserve the AST wire names `pii` and `sensitive`. Reasons are report-only. Personal takes precedence over secret, without a stored secret scope next to personal. `export-executable-model` exports v13 only after binding succeeds: identity/enum compliance and events combining personal or explicitly subject-scoped secret values with an explicit `subject` mark are refused. Subject marks have no ESM bytes, and reference specifications retain their outcomes. Consumers must explicitly admit v13; see [Concepts](../concepts.md).
 
+## Query filter admission
+
+`syntax-schema` describes caller-supplied equality filters on collection queries as admitted by ESM v14. Filter names match scalar primitive/concept/enum read-model properties; their types match ignoring optionality. Optional filters may be omitted, but supplied null is refused. Filters combine with `by` using AND; policies still see only `by`. Context-sourced and single-result filters, explicit scopes and performers remain refused with `PLAY0268`. Query specifications match collection rows by read model and key without regard to order. Consumers must explicitly admit v14; see [Queries](../queries.md).
+
 ## Number enum members
 
 Use `read-ast` to find an unnumbered enum's `ConceptSyntax` handle, then call `propose-number-enum-members` with `subject`, `expectedRevision`, `expectedCatalogRevision` and `formatting: "CanonicalizeTouchedDocuments"`. It writes `= 0..n-1` in current declaration order and never renumbers numbered, mixed or invalid enums. This opt-in refactoring is suggested by Information hint `PLAY0671` for stored enums, reported only when `screenplay_diagnostics` selects `checks: "enum-pinning"`, `PLAY0671` or `all`; it is not a diagnostic-backed correctness repair. Numbering errors `PLAY0667`–`PLAY0670` need a deliberate author decision and have no automatic repair.

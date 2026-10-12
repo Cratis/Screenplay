@@ -26,7 +26,7 @@ query <Name> => [observable] <ReturnType>[[]] [optional]
 | `observable` | The query is a live read — it keeps pushing as the read model changes, instead of answering once. |
 | `description` | What the query is trying to accomplish, in prose. |
 | `by` | The identifying parameter — the query returns the instance it identifies. |
-| `filter` | An optional parameter narrowing the result set. Write `optional` after the type when the caller may omit the filter. |
+| `filter` | A caller-supplied equality parameter narrowing the result set. Write `optional` after the type when the caller may omit the filter; otherwise it is required. |
 | `from` | Fills the parameter from the query context instead of the caller. |
 | `authorize` | The [policies](policies.md) that must pass. |
 | `performer` | The code that performs the query — an external file, or an inline block. |
@@ -71,7 +71,7 @@ A one-shot query returning an optional scalar type named `observable` must keep 
 
 ## What the caller sees
 
-`authorize` says *who may call* a query. In the executable semantic model, declarative gates on optional keyed lookups, unkeyed list queries and keyed list queries run before the lookup. A keyed query compares a supplied caller against the `by` argument; an unkeyed list query has no query-key artifact. A missing caller or failed gate yields `Unauthorized`; module and feature gates also apply by AND. If evaluation reaches an opaque ESM v3 policy predicate, the reference evaluator returns `SemanticUnsupported` instead of guessing a decision. Filtered, scoped and performer-backed queries are still authoring syntax for the implementation and are not yet admitted into the reference evaluator. It says nothing about *what they get back* — and in a real application those are different questions. `All` and `Mine` may admit exactly the same callers and return entirely different rows, and that difference is the access model a reader needs.
+`authorize` says *who may call* a query. In the executable semantic model, declarative gates on optional keyed lookups, unkeyed list queries and keyed list queries run before the lookup. A keyed query compares a supplied caller against the `by` argument; an unkeyed list query has no query-key artifact. A missing caller or failed gate yields `Unauthorized`; module and feature gates also apply by AND. If evaluation reaches an opaque ESM v3 policy predicate, the reference evaluator returns `SemanticUnsupported` instead of guessing a decision. Caller-supplied equality filters on collection queries are admitted by ESM v14. Policies still see only the `by` argument, not filters. Explicit scopes, context-sourced filters and performer-backed queries remain authoring syntax and are not admitted into the reference evaluator. It says nothing about *what they get back* — and in a real application those are different questions. `All` and `Mine` may admit exactly the same callers and return entirely different rows, and that difference is the access model a reader needs.
 
 `scoped to` states it:
 
@@ -124,6 +124,14 @@ query ListInvoices => InvoiceListReadModel[]
 
 `status` and `customerId` come from the UI. `tenantId` comes from the [query context](context.md) — the caller never chooses it, and the document says so once instead of every implementation remembering to. Any [mapping source](commands.md#mapping-sources) works as a `from` source, so `$env.` and constants are available too.
 
+### Executable equality filters
+
+In ESM v14 each supplied filter matches the read-model property with the same name using value equality. The property must be a scalar primitive, concept or enum, and the filter must have the same nominal type, ignoring optionality. Names must be distinct and cannot duplicate `by`. Filters on single-result queries and filters with a `from` source are refused with `PLAY0268`, naming the query, filter and reason.
+
+`by` and every supplied filter combine with AND. An instance missing the filtered property does not match. A required filter must be supplied; an optional filter may be omitted and then does not narrow. Supplied `null` is refused, even for an optional filter. `T optional` is the canonical spelling; `T?` is legacy.
+
+Query specifications name `by` and filters in their arguments. Unknown, repeated or missing required arguments report `PLAY0468`. Collection rows compare without regard to order, matched by read model and instance key, with exact row count. See [Query results](specifications.md#query-results).
+
 ## Examples
 
 A single-instance query identified by a parameter:
@@ -160,7 +168,7 @@ query ListInvoices => InvoiceListReadModel[]
   authorize IsAuthenticated
 ```
 
-The executable semantic model admits the first two collection shapes: unfiltered lists and lists narrowed by one caller-supplied `by` key, including their `observable` form. `filter`, `scoped to`, `performer`, and `by ... from <source>` remain implementation-facing authoring syntax until their executable semantics are defined; binding reports that limitation instead of silently changing the route.
+The executable semantic model admits unfiltered lists, lists narrowed by one caller-supplied `by` key, and caller-supplied equality filters on collections, including their `observable` forms. A model with filters selects ESM v14; models without filters keep their existing bytes, version and revision. `scoped to`, `performer`, `by ... from <source>` and `filter ... from <source>` remain unadmitted (`PLAY0268`), each with its own message. The reference evaluator answers a live query with a snapshot; live change sets, paging and ordering are not part of v14.
 
 ## Executable query shape
 
@@ -192,6 +200,25 @@ An unkeyed list query has no `argument` and no `keyProperty`. It routes to the w
 ```
 
 A keyed list query routes through its caller-supplied `argument` and matches that value against `keyProperty` on the read model. Stage should map `delivery: "live"` to the native observable query lifecycle. `delivery: "snapshot"` uses the same shape without live updates.
+
+A v14 filtered query writes its `filters` after the `argument`/`keyProperty` group, or after `readModel` when unkeyed, and before `cardinality`. This excerpt shows a required status filter and an optional customer filter:
+
+```json
+"filters": [
+  { "id": "<status argument id>", "name": "status", "type": { "kind": "concept", "primitive": null, "target": "<InvoiceStatus id>", "collection": false, "optional": false }, "property": "<status property id>" },
+  { "id": "<customer argument id>", "name": "customerId", "type": { "kind": "concept", "primitive": null, "target": "<CustomerId id>", "collection": false, "optional": true }, "property": "<customerId property id>" }
+]
+```
+
+There is no separate optional flag on the filter: its type reference carries optionality. Query requests, returned results and specification query results carry only supplied values, after `key`, in query filter declaration order:
+
+```json
+"filters": [
+  { "filter": "<status argument id>", "value": { "kind": "string", "value": "issued" } }
+]
+```
+
+A query call is identified by the query, its `by` key and its supplied filter values. Two calls of one unkeyed query with different filters are distinct. Both arrays are omitted when empty. Consumers must explicitly admit v14 or refuse the model rather than drop its filters.
 
 ## The `performer` block
 

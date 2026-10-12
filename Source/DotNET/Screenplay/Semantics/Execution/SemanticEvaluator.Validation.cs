@@ -158,6 +158,20 @@ public sealed partial class SemanticEvaluator
         }
     }
 
+    internal static string? ValidateQueryFilters(SemanticExecutionPlan plan, SemanticKeyedQuery query, ImmutableArray<SemanticQueryFilterValue> filters)
+    {
+        try
+        {
+            var validator = new SemanticValueValidator(plan.Model.Application.Concepts.ToDictionary(concept => concept.Id), plan.Model.Application.Types.ToDictionary(type => type.Id));
+            SemanticQueryFilterRules.ValidateValues(query, filters, validator.Validate);
+            return null;
+        }
+        catch (InvalidSemanticContract exception)
+        {
+            return exception.Message;
+        }
+    }
+
     static bool HasMalformedShape(SemanticCommand command, ImmutableArray<SemanticPropertyValue> values) =>
         values.IsDefault || values.Any(_ => _ is null) || values.Length != command.Properties.Count(property => !property.IsGenerated) ||
         values.Select(_ => _.TargetProperty).Distinct().Count() != values.Length;

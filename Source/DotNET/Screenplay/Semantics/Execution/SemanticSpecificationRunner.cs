@@ -113,7 +113,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
             return new(specification, false, establishment, [details]);
         }
 
-        var queries = expected.ThenQueries.Select(value => new SemanticQueryRequest(value.Query, value.Key)).ToImmutableArray();
+        var queries = expected.ThenQueries.Select(value => new SemanticQueryRequest(value.Query, value.Key) { Filters = value.Filters }).ToImmutableArray();
 
         // Since ESM v6 an action sets reactions off, and a specification can act through the clock, a trigger or a capture.
         var acts = expected.When is not null || expected.WhenAppended is not null || expected.WhenClock is not null ||
@@ -438,7 +438,8 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
 
         for (var index = 0; index < expected.Length; index++)
         {
-            if (expected[index].Query != actual[index].Query || !SemanticValueRules.AreEqual(expected[index].Key, actual[index].Key))
+            if (expected[index].Query != actual[index].Query || !SemanticValueRules.AreEqual(expected[index].Key, actual[index].Key) ||
+                !SemanticQueryFilterRules.SameValues(expected[index].Filters, actual[index].Filters))
             {
                 failures.Add($"Query result at index {index} identifies the wrong query or key.");
                 continue;

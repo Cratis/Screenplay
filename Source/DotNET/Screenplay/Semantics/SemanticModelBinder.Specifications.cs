@@ -358,27 +358,32 @@ public sealed partial class SemanticModelBinder
                 return null;
             }
 
-            var arguments = value.Arguments.ToArray();
-            SemanticValue key;
-            if (query.Argument is null)
+            var parameters = query.Filters.Select(filter => new SemanticReadModelQueryArgument(filter.Id, filter.Name, filter.Type))
+                .Concat(query.Argument is null ? [] : new[] { query.Argument }).ToDictionary(argument => argument.Name, StringComparer.Ordinal);
+            var arguments = new Dictionary<string, SemanticValue>(StringComparer.Ordinal);
+            foreach (var argument in value.Arguments)
             {
-                if (arguments.Length != 0)
+                if (!parameters.TryGetValue(argument.Property, out var parameter) || arguments.ContainsKey(argument.Property))
                 {
-                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Specification query '{value.Query}' is unkeyed and must not state arguments.", value.Location);
+                    Error(DiagnosticCodes.UnknownSpecificationQueryArgument, $"Specification query '{value.Query}' argument '{argument.Property}' is unknown or repeated.", argument.Location);
                     return null;
                 }
+                if (BindConcreteValue(argument.Source, parameter.Type, "specification query argument", false) is not { } concrete) return null;
+                arguments.Add(argument.Property, concrete);
+            }
 
-                key = SemanticValue.Null;
-            }
-            else if (arguments.Length != 1 || arguments[0].Property != query.Argument.Name || BindConcreteValue(arguments[0].Source, query.Argument.Type, "specification query argument", false) is not { } boundKey)
+            foreach (var parameter in parameters.Values.Where(parameter => parameter == query.Argument || !parameter.Type.IsOptional))
             {
-                Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Specification query '{value.Query}' must state exactly its keyed argument in Program v1.", value.Location);
-                return null;
+                if (!arguments.ContainsKey(parameter.Name))
+                {
+                    Error(DiagnosticCodes.UnknownSpecificationQueryArgument, $"Specification query '{value.Query}' required argument '{parameter.Name}' is missing.", value.Location);
+                    return null;
+                }
             }
-            else
-            {
-                key = boundKey;
-            }
+
+            var key = query.Argument is null ? SemanticValue.Null : arguments[query.Argument.Name];
+            var filters = query.Filters.Where(filter => arguments.ContainsKey(filter.Name))
+                .Select(filter => new SemanticQueryFilterValue(filter.Id, arguments[filter.Name])).ToImmutableArray();
 
             var readModel = _readModels.Values.Single(_ => _.Model.Id == query.ReadModel);
             var identifier = readModel.Model.Properties.SingleOrDefault(_ => _.IsIdentifier);
@@ -388,7 +393,7 @@ public sealed partial class SemanticModelBinder
                 .Where(_ => _ is not null)
                 .Select(_ => _!)
                 .ToImmutableArray();
-            return new(query.Id, key, results) { Exactly = value.Exactly };
+            return new(query.Id, key, results) { Exactly = value.Exactly, Filters = filters };
         }
 
         ImmutableArray<SemanticPropertyValue> BindPropertyValues(

@@ -2124,7 +2124,9 @@ public static class DiagnosticCodes
     /// <summary>A <c>given capture</c> or <c>when capture</c> names a capture the application does not declare.</summary>
     public const string UnknownSpecificationCapture = "PLAY0467";
 
-    /// <summary>A <c>when query</c> argument is not a <c>by</c> or <c>filter</c> parameter of the query.</summary>
+    /// <summary>
+    /// A specification query argument is unknown or repeated, or a required by or filter argument is missing.
+    /// </summary>
     public const string UnknownSpecificationQueryArgument = "PLAY0468";
 
     /// <summary>
