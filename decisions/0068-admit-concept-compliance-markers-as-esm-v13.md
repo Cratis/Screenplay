@@ -38,21 +38,20 @@ Admit the compliance markers into the executable model as ESM v13, without subje
 
 ### Model shape
 
-`SemanticConcept` gains an optional `compliance` member, written after `numbers` and only when present:
+`SemanticConcept` gains an optional `compliance` member, written after `numbers` and only when present. Three concepts as examples, `pii special health` plus `pii criminal`, `secret scope namespace`, and `pii secret`:
 
 ```json
-"compliance": {
-  "personal": { "special": ["health"], "criminal": true },
-  "secret": { "scope": "namespace" }
-}
+"compliance": { "personal": { "special": "health", "criminal": true } }
+"compliance": { "secret": { "scope": "namespace" } }
+"compliance": { "personal": {}, "secret": {} }
 ```
 
-- `personal.special` is the closed list of GDPR Article 9 categories that `pii special <category>` accepts. `personal.criminal` is `true` for `pii criminal`. Both are optional.
+- `personal.special` is one of the closed GDPR Article 9 categories that `pii special <category>` accepts (0041 allows at most one). `personal.criminal` is `true` for `pii criminal`. Both are optional; a bare `pii` writes `"personal": {}`.
 - `secret.scope` is `subject`, `namespace` or `global`, optional.
 - Only a model that uses a marker selects v13. A model without markers keeps its bytes and revision.
 - v13 includes the v11 exact-number lowering and the v12 enum member numbers contracts.
 - Free-text reasons (`pii reason`) stay report-only (`PLAY0270`) and are not stored in the model. They can travel as authoring metadata the way descriptions do.
-- `pii secret` keeps both markers in the source so it round-trips, but `personal` takes precedence as in 0034. A secret scope is not stored next to `personal`; the parser already warns about that combination (`ConceptComplianceParser.cs`).
+- `pii secret` writes both markers, `"personal"` and an empty `"secret": {}`, so the model records what was authored, but `personal` takes precedence for realization as in 0034. A secret scope is never stored next to `personal`: the parser already warns about that combination (`ConceptComplianceParser.cs`), the binder drops the scope, and the strict reader refuses it.
 
 ### Meaning and propagation
 
@@ -76,7 +75,7 @@ Compliance changes no outcome. The reference model has no storage, encryption or
 
 ### Test vectors
 
-- `full-esm-v13.json`: the v12 vector plus `pii special health`, `pii criminal`, `secret scope namespace` and `pii secret`.
+- `full-esm-v13.json`: the v12 vector plus `pii special health` with `pii criminal`, `secret scope namespace` and `pii secret`.
 - `ConceptComplianceCorpus.V13`: single-file and folder forms that pin bytes and revision.
 - Specifications show that unmarked models keep identical bytes, that outcomes are identical with and without markers, and that each strict-reader refusal above fires.
 
@@ -105,7 +104,7 @@ Models with `pii` or `secret` concepts keep failing with `PLAY0268`. Studio and 
 
 ## Timeline and scope
 
-Proposed and accepted on 2026-10-12 by Sindre Alstad Wilting. It takes effect at admission against current `main`, with the version number rechecked at merge under 0025 and 0066.
+Proposed and accepted on 2026-10-12 by Sindre Alstad Wilting. Before merge, the model-shape example was corrected to match the text: one example per marker, a single `special` category, and `pii secret` without a scope. It takes effect at admission against current `main`, with the version number rechecked at merge under 0025 and 0066.
 
 In scope: the v13 model shape, binding, canonical writer and strict reader, validator refusals, reference-evaluator neutrality, vectors, MCP readiness text and documentation.
 
