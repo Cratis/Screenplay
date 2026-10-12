@@ -65,21 +65,34 @@ sealed class WorkspacePropertyAssertionProvenance(
     bool RelevantErrors(WorkspaceSyntaxEntry example, IEnumerable<Diagnostic> diagnostics)
     {
         var name = ((SpecificationExampleSyntax)example.Node).Name;
-        var specifications = index.Entries.Where(entry => entry.Node is SpecificationSyntax && UsesExample(entry, name));
-        var regions = specifications.Prepend(example).ToArray();
-        return diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && regions.Any(region => Contains(region, diagnostic.Location)));
+        // A specification without parsed steps may have lost the step that names this example.
+        var specifications = index.Entries.Where(entry => entry.Node is SpecificationSyntax && (UsesExample(entry, name) || !HasSteps(entry)));
+        var regions = specifications.Prepend(example).Select(Region).ToArray();
+        return diagnostics.Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .Any(diagnostic => Unlocated(diagnostic.Location) || regions.Any(region => region.Contains(diagnostic.Location)));
     }
 
-    bool UsesExample(WorkspaceSyntaxEntry specification, string name) => index.Entries.Any(entry =>
-        ExampleName(entry.Node)?.Split('.')[^1] == name && WorkspacePropertyPlan.Parents(entry, index).Any(parent => parent.Handle == specification.Handle));
+    // An error that cannot be placed could belong to the example, so it makes provenance unavailable.
+    static bool Unlocated(SourceLocation location) => location.Line <= 0 || string.IsNullOrEmpty(location.Path);
 
-    bool Contains(WorkspaceSyntaxEntry region, SourceLocation location)
+    bool UsesExample(WorkspaceSyntaxEntry specification, string name) => Steps(specification).Any(entry => ExampleName(entry.Node)!.Split('.')[^1] == name);
+
+    bool HasSteps(WorkspaceSyntaxEntry specification) => Steps(specification).Any();
+
+    IEnumerable<WorkspaceSyntaxEntry> Steps(WorkspaceSyntaxEntry specification) => index.Entries.Where(entry =>
+        ExampleName(entry.Node) is not null && WorkspacePropertyPlan.Parents(entry, index).Any(parent => parent.Handle == specification.Handle));
+
+    SourceRegion Region(WorkspaceSyntaxEntry region)
     {
-        if (location.Path != region.Location.Path || location.Line < region.Location.Line) return false;
         var document = index.Workspace.Documents.Single(document => document.Id == region.Handle.Document);
         var lines = SourceLineSplitter.Split(document.Text, path: document.Path.Value);
         var header = lines.Single(line => line.Number == region.Location.Line);
         var end = lines.FirstOrDefault(line => line.Number > header.Number && !line.IsBlank && line.Indent <= header.Indent)?.Number ?? int.MaxValue;
-        return location.Line < end;
+        return new(region.Location.Path, region.Location.Line, end);
+    }
+
+    sealed record SourceRegion(string? Path, int Start, int End)
+    {
+        internal bool Contains(SourceLocation location) => location.Path == Path && location.Line >= Start && location.Line < End;
     }
 }
