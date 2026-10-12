@@ -486,7 +486,7 @@ internal sealed partial class McpWorkspaces
         return new McpRoot(McpModelLocation.User(DocumentsDirectoryHint), missingLevels: 2);
     }
 
-    IMcpProposal Proposal(JsonElement arguments)
+    IMcpProposal RetainedProposal(JsonElement arguments)
     {
         var id = McpJson.RequiredString(arguments, "proposalId");
         if (!_proposals.TryGetValue(id, out var proposal))
@@ -494,6 +494,13 @@ internal sealed partial class McpWorkspaces
             throw new McpFailure("UnknownProposal: only an outstanding proposal from this connection can be used.") { FailureKind = "UnknownProposal" };
         }
 
+        return proposal;
+    }
+
+    IMcpProposal Proposal(JsonElement arguments)
+    {
+        var id = McpJson.RequiredString(arguments, "proposalId");
+        var proposal = RetainedProposal(arguments);
         var expectedEvidence = McpRepairEvidence.Expected(arguments);
         if (_repairEvidence.TryGetValue(proposal, out var evidence))
         {

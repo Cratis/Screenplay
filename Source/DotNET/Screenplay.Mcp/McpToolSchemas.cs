@@ -8,6 +8,12 @@ namespace Cratis.Screenplay.Mcp;
 
 static class McpToolSchemas
 {
+    static readonly Dictionary<(string Tool, string Property), string> _describedArguments = new()
+    {
+        [("run-specifications", "proposalId")] = "Outstanding proposal from this connection. Runs its retained candidate and identity catalog without refreshing, applying or mutating it; an externally changed base does not replace the snapshot.",
+        [("run-specifications", "expectedSourceRevision")] = "Echo sourceRevision from the first execution response on continuation. With proposalId, pins the candidate source rather than the current model."
+    };
+
     static readonly Dictionary<string, Func<JsonObject>> _propertyAdditionArguments = new(StringComparer.Ordinal)
     {
         ["owner"] = McpAstSchemas.Handle,
@@ -87,7 +93,9 @@ static class McpToolSchemas
         return schema;
     }
 
-    internal static JsonObject Argument(string tool, string property) => McpNotesSchemas.Argument(tool, property) ?? PropertyArgument(tool, property) ?? StandardArgument(tool, property);
+    internal static JsonObject Argument(string tool, string property) =>
+        (_describedArguments.TryGetValue((tool, property), out var description) ? new JsonObject { ["type"] = "string", ["description"] = description } : null) ??
+        McpNotesSchemas.Argument(tool, property) ?? PropertyArgument(tool, property) ?? StandardArgument(tool, property);
 
     internal static JsonObject Address()
     {

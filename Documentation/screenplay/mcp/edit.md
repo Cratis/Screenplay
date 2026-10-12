@@ -125,8 +125,9 @@ for a required property. The planner adds it to every existing command, event an
 read-model fixture, example and result assertion for the selected declarations.
 `fixtureValue` is written to every fixture and assertion occurrence as-is. It does
 not evaluate your mapping expressions: a non-identity `value` hop can make the
-specifications fail even when the candidate binds. Run `run-specifications` on
-the proposal before applying it.
+specifications fail even when the candidate binds. Run `run-specifications` with
+the returned `proposalId` before applying it. This checks the retained candidate,
+not the current model on disk.
 
 An optional property (`optional: true`) needs no fixture edits. Missing values
 refuse with `FixtureValueRequired`; missing producer or consumer decisions refuse
@@ -142,6 +143,27 @@ generation 2 or appending generation 3. Both keep ESM v4; a new generation repor
 Use `CanonicalizeTouchedDocuments` for structural additions. Review `changed`
 (`added` and `fixtureAdded`), `chainCandidates` and `generations` with `read-proposal`,
 then inspect `view: "semantic-diff"` and approve `apply` only for the reviewed plan.
+
+## Edit a specification
+
+```text
+Change the expected priority in RegisterProject's existing specification from
+"Normal" to "High". Preserve comments and formatting, show the expectation diff,
+and run the candidate before applying it.
+```
+
+Read the specification with `read-ast`, `kind: "SpecificationSyntax"`, its `name`
+and `includeContent: true` at the opened revision. Use typed `propose-ast` edits;
+for one assignment, replace its `PropertyMappingSyntax` with
+`formatting: "PreserveTrivia"`. Review `read-proposal` with
+`view: "semantic-diff"` for changed expectations, then call `run-specifications`
+with the same `proposalId`. Pin the returned candidate `sourceRevision` as
+`expectedSourceRevision` for subsequent pages. Failed, unsupported or unbound
+results are not passes; correct the proposal before applying it.
+
+Apply only the reviewed proposal, using its before workspace/catalog revisions.
+For the typed members, case/example edits and specification retirement, follow
+[Edit a specification](authoring-tools.md#edit-a-specification).
 
 ## Move things between files
 

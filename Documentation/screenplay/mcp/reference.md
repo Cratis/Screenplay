@@ -200,7 +200,7 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `dependency-graph` | Optional view, from/to levels, scope, direction, kinds, includeTestOnly, evidenceLimit | Inferred slice/container/context edges, ordering cycles, story-order suggestions, unresolved references or checked dependency declarations |
 | `find-fixtures` | Specification address, role, property, value, scope/document | Paged effective assignments with type, value, location and authored/example/override origin, including `when append` event payloads (`whenAppendedEvent`) and `for` destinations (`whenAppendedEventDestination`) |
 | `find-assertion-gaps` | Optional scope/document | Slices without specifications declaring a `then` assertion, including `then denied` |
-| `run-specifications` | Optional exact specification address or semantic id, scope, offset, limit, expectedSourceRevision | Deterministic reference execution with passed, failed and unsupported results |
+| `run-specifications` | Optional proposalId, exact specification address or semantic id, scope, offset, limit, expectedSourceRevision | Deterministic reference execution with passed, failed and unsupported results |
 | `find-specification-obligations` | Optional module/feature/slice scope, document | Per-declaration specification obligations with met/unmet status and matching specification owners |
 | `find-modeling-smells` | Optional scope/document, eventFanOutThreshold/propertyFanInThreshold | Information-level modeling questions; no compiler diagnostics |
 | `diagnostics` | Optional `checks` (comma-separated names, codes, or `all`), `scope`, document | Paged diagnostics, severity counts, scoped declaration counts and affected scopes |
@@ -427,19 +427,24 @@ is canonicalized.
 
 ## Execute specifications
 
-`run-specifications` is read-only. It executes the current model's scenarios through the existing in-memory reference evaluator, without opening proposals, writing files, executing attached code or contacting external services. An opened workspace keeps its identities; reopen it after source edits. Without an opened workspace, the tool reads the current root and its persisted identity state.
+`run-specifications` is read-only. It executes scenarios through the in-memory reference evaluator without applying or mutating proposals, writing files, executing attached code or contacting external services. With no `proposalId`, it runs the current model: an opened workspace keeps its identities; reopen it after source edits. Without an opened workspace, the tool reads the current root and its persisted identity state.
+
+With `proposalId`, it runs that outstanding proposal's retained candidate, including its identity catalog and planned renames or advancements. The snapshot is not refreshed from disk: an externally changed base still runs the candidate you proposed, not the newer current model. This does not make a stale proposal applicable. Unknown, discarded or applied proposals return `UnknownProposal`; reopening the workspace also discards outstanding proposals.
 
 All arguments are optional:
 
 | Argument | Type | Meaning |
 |---|---|---|
-| `specification` | string | Exact, case-sensitive dotted module/feature/slice/specification address, or semantic id |
+| `proposalId` | string | Outstanding proposal from this connection; omitted to execute the current model |
+| `specification` | string | Exact, case-sensitive dotted module/feature/slice/specification address, or semantic id in the selected model |
 | `scope` | string | Case-sensitive dotted module, feature or slice prefix; selects descendant specifications |
 | `offset` | integer | Result offset, default `0` |
 | `limit` | integer | Page size, default `50`, range `1`–`200` |
-| `expectedSourceRevision` | string | Pin from the first response; required for nonzero offsets |
+| `expectedSourceRevision` | string | Pin `sourceRevision` from the first response; required for nonzero offsets. With `proposalId`, pins candidate source, not current source |
 
 A selection matching no specification is invalid parameters, not a pass. If both selectors are supplied, their intersection is used. Results are sorted by address. Counts and the overall outcome cover the complete selection, not just the returned page. Continue using `page.nextOffset` and pin `sourceRevision`; changed source refuses continuation. Responses exceeding the server's byte budget refuse rather than truncate.
+
+A proposal run also returns `proposalId`; its `sourceRevision` identifies the candidate's source bytes. Use that same proposal ID and source revision for every continuation page. A wrong revision returns `StaleSourceRevision`.
 
 The response contains `sourceRevision`, `outcome`, `discovered` (all specifications), `selected`, `executed`, `passed`, `failed`, `unsupported`, `executableDiagnostics`, `planIssues` and `page`. `executed` excludes unsupported scenarios. Each page item contains `address`, `semanticId`, `outcome` (`passed`, `failed`, `unsupported`), `executionOutcome`, comparison `failures`, and nullable `capability` and `reason`. `executionOutcome` is the evaluator's normalized result, so an expected rejection or denial can pass. Unsupported scenarios name the blocking capability and declared reason. A plan-admission failure returns its typed `planIssues` and marks selected scenarios unsupported.
 
