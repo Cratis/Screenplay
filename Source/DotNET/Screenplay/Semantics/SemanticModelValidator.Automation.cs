@@ -230,6 +230,7 @@ internal static partial class SemanticModelValidator
                 }
 
                 ValidateTypeReference(destinationType);
+                ValidateComplianceIdentity(destinationType);
                 if (produced.Destination is SemanticValueExpression { Kind: SemanticExpressionKind.Value } literal)
                 {
                     ValidateValue(literal.Value, destinationType, "reaction event source");
@@ -308,6 +309,7 @@ internal static partial class SemanticModelValidator
                 }
 
                 ValidateTypeReference(append.EventSourceType);
+                ValidateComplianceIdentity(append.EventSourceType);
                 if (append.EventSourceType.IsCollection || append.EventSourceType.IsOptional)
                 {
                     throw new InvalidSemanticContract($"Capture '{capture}' appends to an event source without a required scalar type.");

@@ -71,6 +71,11 @@ public sealed record SemanticConcept(
     /// Absence preserves legacy zero-based positional identity.
     /// </summary>
     public ImmutableArray<int>? Numbers { get; init; }
+
+    /// <summary>
+    /// Gets the value's compliance classification, when declared (ESM v13).
+    /// </summary>
+    public SemanticConceptCompliance? Compliance { get; init; }
 }
 
 /// <summary>

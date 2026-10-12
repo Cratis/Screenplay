@@ -109,6 +109,26 @@ public static partial class SemanticModelCanonicalJson
         WriteStringArray(writer, "values", concept.Values);
         WriteArray(writer, "validations", concept.Validations, WriteValidation);
         if (concept.Numbers is { } numbers) WriteArray(writer, "numbers", numbers, (output, number) => output.WriteNumberValue(number));
+        if (concept.Compliance is { } compliance) WriteCompliance(writer, compliance);
+        writer.WriteEndObject();
+    }
+
+    static void WriteCompliance(Utf8JsonWriter writer, SemanticConceptCompliance compliance)
+    {
+        writer.WriteStartObject("compliance");
+        if (compliance.Personal is { } personal)
+        {
+            writer.WriteStartObject("personal");
+            if (personal.Special is { } special) CanonicalJson.WriteString(writer, "special", special);
+            if (personal.Criminal) writer.WriteBoolean("criminal", true);
+            writer.WriteEndObject();
+        }
+        if (compliance.Secret is { } secret)
+        {
+            writer.WriteStartObject("secret");
+            if (secret.Scope is { } scope) CanonicalJson.WriteString(writer, "scope", scope);
+            writer.WriteEndObject();
+        }
         writer.WriteEndObject();
     }
 

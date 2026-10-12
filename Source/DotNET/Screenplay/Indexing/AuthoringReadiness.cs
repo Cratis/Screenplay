@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Immutable;
+using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Captures;
@@ -17,6 +19,8 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
     readonly Dictionary<SyntaxNode, bool> _operations = new(ReferenceEqualityComparer.Instance);
     readonly HashSet<string> _identityDetails = (application.Identity?.Details ?? []).Select(detail => detail.Name).ToHashSet(StringComparer.Ordinal);
     readonly Dictionary<SyntaxNode, bool> _identityReads = new(ReferenceEqualityComparer.Instance);
+    readonly ImmutableArray<Diagnostic> _complianceRefusals = SemanticModelBinder.ComplianceAdmissionDiagnostics(application);
+    readonly Dictionary<SyntaxNode, bool> _complianceReadiness = new(ReferenceEqualityComparer.Instance);
     readonly Dictionary<SliceSyntax, string[]> _scopes = Scopes(application);
     readonly ILookup<string, (CommandSyntax Command, string[] Scope)> _commands = Scopes(application)
         .SelectMany(entry => entry.Key.Commands.Select(command => (Command: command, Scope: entry.Value))).ToLookup(entry => entry.Command.Name, StringComparer.Ordinal);
@@ -143,7 +147,8 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
             _ => []
         };
 
-        return [.. LocalFeatures().Concat(Feature(ReactionRefusals(node), "reaction refusal handling and redelivery (#433)"))
+        return [.. LocalFeatures().Concat(Feature(ComplianceRefused(node), "concept compliance on enum/identity concepts or explicit subject lineage (ESM v13)"))
+            .Concat(Feature(ReactionRefusals(node), "reaction refusal handling and redelivery (#433)"))
             .Concat(Feature(IdentityDetailsRead(node), "declared identity detail reads (#600)"))
             .Concat(Feature(Operations(node), "operations and systems (#301)"))
             .Concat(Feature(application.SourceOptions.NumericMode == NumericMode.Exact, "exact numbers (#285)"))
@@ -155,6 +160,32 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
                 streams => 3,
                 _ => 4
             })];
+    }
+
+    bool ComplianceRefused(SyntaxNode node)
+    {
+        if (_complianceRefusals.IsEmpty) return false;
+        if (_complianceReadiness.TryGetValue(node, out var cached)) return cached;
+        var walker = new ComplianceReadinessWalker(_complianceRefusals);
+        switch (node)
+        {
+            case ApplicationSyntax value: walker.VisitApplication(value); break;
+            case ModuleSyntax value: walker.VisitModule(value); break;
+            case FeatureSyntax value: walker.VisitFeature(value); break;
+            case SliceSyntax value: walker.VisitSlice(value); break;
+            case ConceptSyntax value: walker.VisitConcept(value); break;
+            case EventSyntax value: walker.VisitEvent(value); break;
+            case EventSourceSyntax value: walker.VisitEventSource(value); break;
+            case EventStreamSyntax value: walker.VisitEventStream(value); break;
+            case CommandSyntax value: walker.VisitCommand(value); break;
+            case ReactionSyntax value: walker.VisitReaction(value); break;
+            case ReactionTriggerSyntax value: walker.VisitReactionTrigger(value); break;
+            case ProducesSyntax value: walker.VisitProduces(value); break;
+            default: walker.VisitNode(node); break;
+        }
+        _complianceReadiness[node] = walker.Unadmitted;
+
+        return walker.Unadmitted;
     }
 
     bool HasSpecificationRoute(SpecificationSyntax specification)
@@ -236,6 +267,19 @@ sealed class AuthoringReadiness(ApplicationSyntax application)
         _identityReads[node] = walker.Unadmitted;
 
         return walker.Unadmitted;
+    }
+
+    sealed class ComplianceReadinessWalker(ImmutableArray<Diagnostic> refusals) : ScreenplaySyntaxWalker
+    {
+        internal bool Unadmitted { get; private set; }
+
+        public override void VisitNode(SyntaxNode node) => Unadmitted |= refusals.Any(refusal => refusal.Location == node.Location);
+
+        public override void VisitConcept(ConceptSyntax syntax)
+        {
+            Unadmitted |= refusals.Any(refusal => refusal.Message.StartsWith($"Concept '{syntax.Name}'", StringComparison.Ordinal));
+            base.VisitConcept(syntax);
+        }
     }
 
     sealed class IdentityReadinessWalker(IReadOnlySet<string> details) : ScreenplaySyntaxWalker

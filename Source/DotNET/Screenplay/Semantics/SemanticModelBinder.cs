@@ -172,6 +172,11 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectNumberVersions(SemanticApplication application, SemanticVersion semanticVersion)
     {
+        if (SemanticModelValidator.UsesConceptCompliance(application))
+        {
+            return (LanguageVersion.V13, SemanticVersion.V13);
+        }
+
         if (SemanticModelValidator.UsesEnumMemberNumbers(application))
         {
             return (LanguageVersion.V12, SemanticVersion.V12);
@@ -261,6 +266,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             var applicationAddress = SemanticAddress.ForApplication(_applicationIdentity);
             var applicationId = Resolve(applicationAddress, syntax.Location);
 
+            ValidateComplianceAdmission();
             RegisterTypeDeclarations();
             var triggers = RegisterTriggerDeclarations();
             RegisterEventDeclarations();

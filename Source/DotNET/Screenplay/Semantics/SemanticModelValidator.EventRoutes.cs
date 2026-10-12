@@ -68,6 +68,7 @@ internal static partial class SemanticModelValidator
                 if (source.IdentifierType is { } identifier)
                 {
                     ValidateTypeReference(identifier);
+                    ValidateComplianceIdentity(identifier);
                     if (identifier.IsOptional || identifier.IsCollection || identifier.Kind == SemanticTypeReferenceKind.CompositeType)
                     {
                         throw new InvalidSemanticContract("An event source identifier must be a required scalar type.");
@@ -84,6 +85,7 @@ internal static partial class SemanticModelValidator
         void ValidateStreamIdType(SemanticTypeReference type)
         {
             ValidateTypeReference(type);
+            ValidateComplianceIdentity(type);
             _ = SemanticEventRouting.ScalarKind(type, _eventRoutesApplication.Concepts);
         }
 
