@@ -26,7 +26,10 @@ public sealed partial class SemanticModelBinder
 
             var primitive = concept.IsEnum ? SemanticPrimitiveType.Text : Primitive(concept.Type);
             var validations = BindConceptValidations(concept);
-            return new(_concepts[concept.Name].Id, concept.Name, primitive, [.. concept.Values], validations);
+            return new(_concepts[concept.Name].Id, concept.Name, primitive, [.. concept.Values], validations)
+            {
+                Numbers = concept.ValueNumbers is { } numbers && SemanticModelValidator.HasNonPositionalEnumNumbers(numbers, concept.Values.Count()) ? [.. numbers] : null
+            };
         }
 
         ImmutableArray<SemanticValidationRule> BindConceptValidations(ConceptSyntax concept)

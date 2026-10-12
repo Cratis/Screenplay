@@ -19,7 +19,7 @@ concept <Name> : <PrimitiveType> [<attributes>]
 concept <Name> : Enum
   [file <path>]
   [<attribute> reason "<text>"]*
-  <value>+
+  (<value> [= <int32>])+
   [validate ...]*
 ```
 
@@ -145,6 +145,27 @@ concept PaymentTerms : Enum
   immediate
 ```
 
+### Pin stored member identity
+
+An unnumbered enum assigns numbers by zero-based declaration position. Reordering it or inserting a member before existing ones changes the numbers stored by a generated application. Pin every member before making such a change:
+
+```screenplay
+concept InvoiceStatus : Enum
+  draft = 0
+  sent = 1
+  paid = 2
+  overdue = 3
+  cancelled = 4
+```
+
+Numbers are all or none within one enum, unique, and in the int32 range (-2147483648 through 2147483647). Gaps and negative numbers are allowed. Write decimal digits with an optional minus sign, no leading zeros, fraction, exponent or plus sign. `-0` prints as `0`. Escape keyword-named members as usual, for example `@validate = 7`; descriptions and validation blocks still work.
+
+Use numbers for enums stored in event properties and when preserving a legacy system's member identities. A short-lived enum used only in command inputs or views may stay positional. `PLAY0671` is an opt-in Information completeness hint for an unnumbered enum used by an event property, including through a composite type. Select `--check enum-pinning` (or `PLAY0671` or `all`) in the CLI, or `checks: "enum-pinning"` in MCP `screenplay_diagnostics`; ordinary compilation does not report it. The opt-in [numbering refactoring](mcp/authoring-tools.md#number-enum-members) writes the current positions; this is not a correctness repair.
+
+Never renumber a published member or reuse its number for another meaning. To pin an existing enum, use its **current stored numbers**, not a newly reordered list. Specifications, fixtures and conditions still refer to member names (for example `status = "sent"`), never their numbers; the reference evaluator compares names.
+
+**Executable admission:** pins equal to `0..n-1` preserve the existing executable version, bytes and revision. Other numbers select ESM v12: for example, `draft = 1` / `issued = 4` binds `numbers: [1, 4]` parallel to the member names. Consumers must explicitly admit v12 before rendering or extracting these stored identities. Specifications and conditions still use member names; numbers are not alternative values or flags. See [interoperability](interoperability.md).
+
 ## Validation
 
 A concept can declare validation rules in an optional indented body — business rules that travel with the value everywhere it appears. The rules use the same shapes as command validation (see [Commands](commands.md)): declarative `validate` blocks and imperative `validate` blocks with a ` ```csharp ` fence. The one difference is that the rules omit the property subject — the concept's own value is implied.
@@ -172,7 +193,7 @@ The named `email` pattern has the fixed ECMAScript definition documented under [
 
 Inside the block `context` is the [`RuleContext`](context.md) — for a concept rule there is no surrounding artifact, so `context.Artifact` and `context.Value` are both the concept's own value. The block yields the message of every rule the value breaks, and yields nothing when the value is valid.
 
-Enum concepts can combine their values with validate blocks — the values remain bare identifiers and the blocks are recognized by the `validate` keyword:
+Enum concepts can combine their values with validate blocks — the values remain identifiers with optional numbers and the blocks are recognized by the `validate` keyword:
 
 ```screenplay
 concept InvoiceStatus : Enum

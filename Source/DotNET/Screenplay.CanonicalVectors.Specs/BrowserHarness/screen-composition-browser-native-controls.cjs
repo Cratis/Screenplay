@@ -339,13 +339,13 @@ async function selectWorkItem(page, result, path, item) {
 
 // Reach a screen the way a user would: an authored navigation entry first, then browser history. A direct URL is used only
 // when neither exists, and that is recorded so the run shows the screen was not reachable through the UI.
-async function navigateByUi(page, result, path, screen) {
+async function navigateByUi(page, result, path, screen, label = screen) {
     const target = `#/${screen}`;
     const entries = [
-        ['navigation link', page.getByRole('link', { name: screen, exact: true })],
-        ['navigation menu item', page.getByRole('menuitem', { name: screen, exact: true })],
-        ['navigation button', page.getByRole('button', { name: screen, exact: true })],
-        ['navigation text', page.getByRole('navigation').getByText(screen, { exact: true })]
+        ['navigation link', page.getByRole('link', { name: label, exact: true })],
+        ['navigation menu item', page.getByRole('menuitem', { name: label, exact: true })],
+        ['navigation button', page.getByRole('button', { name: label, exact: true })],
+        ['navigation text', page.getByRole('navigation').getByText(label, { exact: true })]
     ];
 
     for (const [method, entry] of entries) {
@@ -431,10 +431,103 @@ async function assertSceneIdentifierFidelity(result) {
     else record(result, 'browser.scene.identifierFidelity.dotted', 'pending', 'rerun after Stage/CLI vector includes dotted stable ids');
 }
 
+// The Tracking feature authors `contribute to Navigation` with the label "Work items" targeting WorkItemList. The menu shows that
+// authored label under the module and feature groups it was declared in (Workspaces > Tracking), not the screen's name.
+async function assertAuthoredNavigation(page, result) {
+    // A module-level entry ("Overview") also opens WorkItemList, so the entry is found by its authored label.
+    const entry = page.getByRole('navigation').locator('a[href="#/WorkItemList"]', { hasText: 'Work items' }).first();
+    try {
+        await entry.waitFor({ timeout: 10_000 });
+        const label = (await entry.textContent())?.trim();
+        if (label === 'Work items') record(result, 'browser.navigation.WorkItemList', 'passed', `${label} -> #/WorkItemList`);
+        else block(result, 'browser.navigation.WorkItemList', `the authored navigation entry shows "${label}", not "Work items"`);
+    } catch {
+        block(result, 'browser.navigation.WorkItemList', 'no navigation entry labelled "Work items" links to #/WorkItemList');
+        return;
+    }
+
+    const groups = await page.evaluate(() => {
+        const link = Array.from(document.querySelectorAll('nav a[href="#/WorkItemList"]')).find(candidate => candidate.textContent?.trim() === 'Work items');
+        const names = [];
+        for (let node = link?.closest('li')?.parentElement?.closest('li'); node; node = node.parentElement?.closest('li')) {
+            names.unshift(node.querySelector(':scope > span, :scope > a, :scope > button')?.textContent?.trim() ?? '');
+        }
+        return names;
+    });
+    if (groups.join('>') === 'Workspaces>Tracking') record(result, 'browser.navigation.hierarchy', 'passed', groups.join(' > '));
+    else block(result, 'browser.navigation.hierarchy', `the entry is nested under [${groups.join(' > ')}], expected [Workspaces > Tracking]`);
+}
+
+// The vector authors a module-level `contribute to Navigation` ("Overview"), a toolbar on the list with an icon-only dialog item and
+// an item carrying a placement hint, and screens no entry lists. Each reaches the running application through the Scene host.
+async function assertAuthoredToolbarAndHierarchy(page, result) {
+    await page.goto(`${baseUrl}/#/WorkItemList`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    await page.waitForTimeout(2_000);
+
+    const groupsOf = href => page.evaluate(target => {
+        const link = document.querySelector(`nav a[href="${target}"]`);
+        const names = [];
+        for (let node = link?.closest('li')?.parentElement?.closest('li'); node; node = node.parentElement?.closest('li')) {
+            names.unshift(node.querySelector(':scope > span, :scope > a, :scope > button')?.textContent?.trim() ?? '');
+        }
+        return link ? names : undefined;
+    }, href);
+
+    const labelled = await page.evaluate(() => Array.from(document.querySelectorAll('nav a')).map(link => `${link.textContent?.trim()}|${link.getAttribute('href')}`));
+    const overview = labelled.find(entry => entry.startsWith('Overview|'));
+    if (overview) record(result, 'browser.navigation.moduleContribution.label', 'passed', overview);
+    else block(result, 'browser.navigation.moduleContribution.label', `no module-level navigation entry "Overview" in [${labelled.join(', ')}]`);
+
+    const overviewGroups = await page.evaluate(() => {
+        const link = Array.from(document.querySelectorAll('nav a')).find(candidate => candidate.textContent?.trim() === 'Overview');
+        const names = [];
+        for (let node = link?.closest('li')?.parentElement?.closest('li'); node; node = node.parentElement?.closest('li')) {
+            names.unshift(node.querySelector(':scope > span, :scope > a, :scope > button')?.textContent?.trim() ?? '');
+        }
+        return link ? names : undefined;
+    });
+    if (overviewGroups?.join('>') === 'Workspaces') record(result, 'browser.navigation.moduleContribution.hierarchy', 'passed', 'Workspaces');
+    else block(result, 'browser.navigation.moduleContribution.hierarchy', `Overview is nested under [${overviewGroups?.join(' > ')}], expected [Workspaces]`);
+
+    const detailsGroups = await groupsOf('#/WorkItemDetails');
+    if (detailsGroups?.join('>') === 'Workspaces>Tracking') record(result, 'browser.navigation.unlistedScreen.hierarchy', 'passed', 'Workspaces > Tracking > WorkItemDetails');
+    else block(result, 'browser.navigation.unlistedScreen.hierarchy', `WorkItemDetails is nested under [${detailsGroups?.join(' > ')}], expected [Workspaces > Tracking]`);
+
+    const toolbar = page.getByRole('toolbar', { name: 'main' });
+    if (await toolbar.count() > 0) record(result, 'browser.toolbar.rendered', 'passed');
+    else {
+        block(result, 'browser.toolbar.rendered', 'the authored toolbar "main" is not rendered');
+        return;
+    }
+
+    const create = toolbar.locator('[data-scene-toolbar-item="create"]');
+    const mode = await create.getAttribute('data-scene-mode').catch(() => null);
+    const text = (await create.textContent().catch(() => null))?.trim();
+    const name = await create.getAttribute('aria-label').catch(() => null);
+    if (mode === 'icon' && text === '' && name === 'New work item') record(result, 'browser.toolbar.presentation.iconOnly', 'passed', `mode ${mode}, accessible name ${name}`);
+    else block(result, 'browser.toolbar.presentation.iconOnly', `expected an icon-only item named "New work item", saw mode ${mode}, text "${text}", name ${name}`);
+
+    const placement = await toolbar.locator('[data-scene-toolbar-item="refresh"]').getAttribute('data-scene-presentation-placement').catch(() => null);
+    if (placement === 'secondary') record(result, 'browser.toolbar.presentation.hint', 'passed', placement);
+    else block(result, 'browser.toolbar.presentation.hint', `expected the placement hint "secondary", saw ${placement}`);
+
+    await create.click();
+    const dialog = page.getByRole('dialog');
+    try {
+        await dialog.first().waitFor({ timeout: 10_000 });
+        record(result, 'browser.toolbar.dialogDestination.opens', 'passed', (await dialog.first().getAttribute('aria-label')) ?? '');
+    } catch {
+        block(result, 'browser.toolbar.dialogDestination.opens', 'the toolbar dialog item did not open its dialog');
+        return;
+    }
+
+    await closeDialog(page, result, 'browser.toolbar.dialogDestination.closes');
+}
+
 async function assertTwoItemSelectionLifecycle(page, result, network) {
     await page.goto(`${baseUrl}/#/WorkItemList`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
     await page.waitForTimeout(3_000);
-    await expectText(page, result, 'browser.navigation.WorkItemList', 'WorkItemList');
+    await assertAuthoredNavigation(page, result);
     await expectText(page, result, 'browser.query.AllWorkItems.titleA', workItemA.title);
     await expectText(page, result, 'browser.query.AllWorkItems.titleB', workItemB.title);
 
@@ -671,13 +764,14 @@ async function runBrowserFlow(result) {
     await assertSceneIdentifierFidelity(result);
     await seedData(result);
     await assertTwoItemSelectionLifecycle(page, result, network);
-    await navigateByUi(page, result, 'browser.navigation.ui.WorkItemList', 'WorkItemList');
+    await navigateByUi(page, result, 'browser.navigation.ui.WorkItemList', 'WorkItemList', 'Work items');
     await assertInvalidThenValidCreate(page, result, network);
     await page.goto(`${baseUrl}/#/WorkItemDetails`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
     await page.waitForTimeout(2_000);
     await assertRenameDialog(page, result, network);
     await assertAddComment(page, result, network);
     await assertNavigationAndAssets(page, result);
+    await assertAuthoredToolbarAndHierarchy(page, result);
 
     result.network = responses.filter(response => response.url.includes('/api/') || response.url.includes('/stage/'));
     result.commandRequests = network.requests.filter(request => request.method === 'POST' && request.url.includes('/api/'));

@@ -15,6 +15,13 @@ public sealed partial class SemanticEvaluator
         out ImmutableArray<SemanticReadModelInstance> readModels,
         out string? failure)
     {
+        if (SemanticDeferredProjections.FindFailure(plan, facts) is { } deferredFailure)
+        {
+            failure = deferredFailure;
+            readModels = current;
+            return false;
+        }
+
         var instances = current.ToList();
         var concepts = plan.Model.Application.Concepts.ToDictionary(_ => _.Id);
         var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);

@@ -354,6 +354,7 @@ public sealed partial class ScreenplayPrinter :
 
     void WriteConcept(ScreenplayWriter writer, ConceptSyntax concept)
     {
+        ImplementationInvariants.Validate(concept);
         using var anchor = writer.Anchor(concept);
         var attributes = concept.Attributes.ToList();
         writer.Line($"concept {concept.Name} : {concept.Type}{string.Concat(attributes.Select(attribute => $" {Parsing.ConceptComplianceParser.CanonicalName(attribute.Name)}"))}");
@@ -401,9 +402,11 @@ public sealed partial class ScreenplayPrinter :
     void WriteEnumValues(ScreenplayWriter writer, ConceptSyntax concept)
     {
         var values = concept.Values.ToList();
+        var numbers = concept.ValueNumbers?.ToArray();
         for (var index = 0; index < values.Count; index++)
         {
-            writer.DirectiveLine(ReservedWords.Escape(values[index], ReservedWords.ConceptBody), concept, DirectiveLocationKeys.ForValue("value", values, index));
+            var number = numbers is null ? string.Empty : $" = {numbers[index].ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+            writer.DirectiveLine(ReservedWords.Escape(values[index], ReservedWords.ConceptBody) + number, concept, DirectiveLocationKeys.ForValue("value", values, index));
         }
     }
 

@@ -34,6 +34,7 @@ internal static class syntax_examples
         // while still independently populating every other structural member.
         return node switch
         {
+            ConceptSyntax concept => concept with { Type = "Enum" },
             EventSyntax @event => @event with { Visibility = EventVisibility.Public },
             ImportSyntax import => import with { Visibility = EventVisibility.Public },
             SliceSyntax slice => slice with { Type = SliceType.Translate },

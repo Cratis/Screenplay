@@ -26,7 +26,7 @@ sealed class SemanticFactProjection(
         foreach (var projection in plan.Projections.Values.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal))
         {
             // An event-target projection publishes its state as an event; it builds no read-model instance.
-            if (projection.Target == SemanticProjectionTargetKind.Event)
+            if (projection.Target == SemanticProjectionTargetKind.Event || plan.UnadmittedArtifacts.Contains(projection.Id))
             {
                 continue;
             }

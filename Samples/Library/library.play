@@ -20,8 +20,8 @@ concept MemberName : String pii
   pii reason "The member's name, needed to lend books to them; lawful basis: contract performance."
 
 concept LoanStatus : Enum
-  onLoan
-  returned
+  onLoan = 0
+  returned = 1
 
 policy IsLibrarian
   require role "Librarian"

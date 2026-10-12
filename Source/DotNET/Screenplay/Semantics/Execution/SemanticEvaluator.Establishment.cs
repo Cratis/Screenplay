@@ -26,7 +26,8 @@ public sealed partial class SemanticEvaluator
             return new SemanticRejected(SemanticWorld.Empty, SemanticRejectionCategory.Contract, null, exception.Message);
         }
 
-        if (publicReplay && ReachedByHistory(plan, facts) is { } reducer)
+        var reducer = ReachedByHistory(plan, facts);
+        if (publicReplay && reducer is not null)
         {
             return new SemanticUnsupported(
                 SemanticWorld.Empty,

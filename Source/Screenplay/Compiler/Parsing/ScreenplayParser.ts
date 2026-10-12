@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { EnumerationMembers } from './EnumerationMembers';
 import { IdentitySyntax } from '../Syntax/IdentitySyntax';
 import { parseIdentity } from './IdentityParser';
 import { misplacedReactionIdentity } from './ReactionIdentityParser';
@@ -271,11 +272,15 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
         context.error(DiagnosticCodes.UnknownPrimitiveType, `Unknown primitive type '${type}' - expected ${primitiveTypes.join(', ')} or Enum`, locationOf(line));
     }
     const values: string[] = [];
+    const members = new EnumerationMembers();
     let description: string | null = null;
     const validations: ValidateSyntax[] = [];
     for (let child = context.peekChild(line.indent); child !== undefined; child = context.peekChild(line.indent)) {
         context.reader.takeSignificant();
-        if (firstWord(child.content) === 'description' && (type !== 'Enum' || child.content !== 'description' || context.peekChild(child.indent)?.content.startsWith('```') === true)) {
+        const memberName = type === 'Enum' ? members.tryNumbered(context, child) : undefined;
+        if (memberName !== undefined) {
+            values.push(memberName);
+        } else if (firstWord(child.content) === 'description' && (type !== 'Enum' || child.content !== 'description' || context.peekChild(child.indent)?.content.startsWith('```') === true)) {
             description = parseDescription(context, child, description, `Concept '${name}'`);
         } else if (isFileDirective(child)) {
             continue;
@@ -298,7 +303,8 @@ function parseConcept(context: ParserContext, line: SourceLine): ConceptSyntax {
             context.skipBlock(child.indent);
         }
     }
-    return { kind: 'ConceptSyntax', name, type, attributes, values, validations, description, location: locationOf(line) };
+    const valueNumbers = members.finish(context, line, values.length);
+    return { kind: 'ConceptSyntax', name, type, attributes, values, validations, description, ...(valueNumbers === undefined ? {} : { valueNumbers }), location: locationOf(line) };
 }
 
 // 'persona <Name>' with an optional description and the policies it holds - the port of the C# ParsePersona.

@@ -162,6 +162,8 @@ Use an example when several scenarios repeat the same command input, prior event
 
 `example <Name> : <EventOrCommandOrReadModel>` declares one named, possibly partial fixture. Its body accepts property assignments, an optional `description`, an optional `for` value, and command `generated` fixtures. It cannot contain caller or clock fixtures or Given/When/Then steps. Declare examples at slice, feature, module or document level, or alongside specifications in a specification-only document.
 
+An example may name an imported event, command or read model. Single-document validation defers unresolved imported types; the assembled application resolves them and checks their values, reporting `PLAY0520` if an example type still cannot be resolved.
+
 An example reference occupies the ordinary name slot in `given`, `given readmodel`, `when`, `when append`, `then`, or `then readmodel [exactly]`. Names may be qualified. One concrete assignment may follow the name on the same line, including a structured object or list; other assignments stay indented. There is no `with` keyword.
 
 This excerpt assumes `RegisterInvoice` declares `total` and `currency`, and `InvoiceRegistered` declares `total`. The example is partial: the step must supply any remaining required command inputs.
@@ -515,9 +517,14 @@ The minimum evaluator currently admits the RegisterProject-style vertical: decla
 ```csharp
 var semanticCompilation = semanticCompiler.Compile("Projects", documents);
 var planCompilation = SemanticExecutionPlan.Compile(semanticCompilation.Value!.Model);
-var specificationId = planCompilation.Plan!.Specifications.Keys.First();
-var run = new SemanticSpecificationRunner().Run(planCompilation.Plan, specificationId);
+if (planCompilation.Success)
+{
+    var specificationId = planCompilation.Plan!.Specifications.Keys.First();
+    var run = new SemanticSpecificationRunner().Run(planCompilation.Plan, specificationId);
+}
 ```
+
+For scoped work, use `SemanticExecutionPlan.Compile(model, selectedSlices)`, where `selectedSlices` contains the selected slice semantic identities. `Issues` still reports blocking issues; `UnselectedIssues` reports admission issues in other slices without preventing plan creation. Shared application-level issues always block. An empty selection admits only application-level declarations and reports every slice issue as unselected; an unknown slice is refused. The plan keeps the original model and revision. A specification that reaches a deferred command, query, or projection returns `SemanticUnsupported`, not guessed state. See the [execution plan API reference](interoperability.md#execution-plan-compilation).
 
 Tags are append metadata: `then` event assertions compare payload properties and ignore tags unless explicitly asserted by a future tag-aware assertion contract. A command with all production conditions false is accepted with zero facts. A rejected execution returns the unchanged world. An accepted execution commits its facts and projected state once, then evaluates the requested queries against that tentative committed state. The same normalized specification run is the conformance input for Stage and generated applications.
 

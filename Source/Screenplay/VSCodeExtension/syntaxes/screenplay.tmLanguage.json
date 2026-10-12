@@ -75,6 +75,10 @@
             "while": "^(?=\\1[ ]+\\S|[ ]*$)",
             "patterns": [
                 {
+                    "match": "^\\s*(@?[a-z_]\\w*)(\\s*=\\s*)(-?(?:0|[1-9][0-9]*))(?=\\s*(?://.*)?$)",
+                    "captures": { "1": { "name": "variable.other.screenplay" }, "2": { "name": "keyword.operator.screenplay" }, "3": { "name": "constant.numeric.screenplay" } }
+                },
+                {
                     "match": "^\\s*(@?pii|personal|@?sensitive|secret)\\s+(reason|scope|special|criminal)\\b",
                     "captures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "keyword.other.screenplay" } }
                 },

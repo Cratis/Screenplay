@@ -24,6 +24,14 @@ module Workspaces
         template MasterDetail
           list
             title "Work items"
+            toolbar main
+              item create dialog EditDialog
+                label "New work item"
+                icon add
+                presentation mode "icon"
+              item refresh navigate to WorkItemList
+                label "Refresh"
+                presentation placement "secondary"
             data WorkItemSummary[] via query AllWorkItems
             table WorkItemSummary
               column title label "Title"

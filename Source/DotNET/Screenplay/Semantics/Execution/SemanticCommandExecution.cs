@@ -307,6 +307,11 @@ internal sealed partial class SemanticCommandExecution(
         }
 
         _facts.AddRange(publications);
+        if (SemanticDeferredProjections.FindFailure(plan, _facts) is { } deferredFailure)
+        {
+            return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, deferredFailure);
+        }
+
         var tentative = world.Commit(_facts.ToImmutable(), readModels);
         var execution = SemanticEvaluator.ExecuteQueries(plan, world, tentative, _facts.ToImmutable(), request.Queries, request.Caller);
         return execution is SemanticAccepted accepted ? accepted with { Response = response } : execution;

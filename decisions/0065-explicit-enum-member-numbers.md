@@ -2,7 +2,7 @@
 id: 0065
 title: Give enum members optional explicit numbers, all or none, and carry them in a later ESM version
 status: accepted
-stage: none
+stage: implemented
 decided: 2026-10-11
 decider: Sindre Alstad Wilting
 class: contract
@@ -27,6 +27,10 @@ applies-to:
   - Documentation/screenplay/interoperability.md
   - Documentation/screenplay/diagnostics.md
 ---
+
+> **2026-10-11 — implementation note.** The pinning hint is reported by the opt-in completeness checks (`enum-pinning`, `PLAY0671` or `all`), not by ordinary compilation, so it adds no noise to models that do not ask for it. Its severity, code and eligibility are as decided below.
+
+> **2026-10-11 — ESM v12 admission.** Phase 1 shipped authoring in Screenplay 4.137.0. This admission implements optional immutable `SemanticConcept.Numbers`, canonical last-member `numbers`, binding, strict reading and programmatic validation as language/semantic 12.0 and schemaVersion 12. Positional pins bind as absence and preserve existing bytes; non-positional arrays activate v12, whose literals retain v11 lowering. The source-backed `EnumMemberNumbersCorpus.V12` and `full-esm-v12.json` pin sparse/negative identities and name-based outcomes. V11 is published and frozen; v12 is the next unused version against current main, subject to rechecking at merge under 0025 and 0066. The publishing admission merge lists v12 as released, without assigning a product release version in advance. The accepted decision text below is preserved; stage records implementation, not a verified verdict.
 
 ## Context
 

@@ -39,7 +39,7 @@ export function parsePolicy(context: ParserContext, header: SourceLine): PolicyS
             const tokens = tokenizePolicyCondition(context, text);
             // Negation is newly admitted syntax, not diagnostic-free enrichment of legacy fields.
             if (tokens.includes('not')) context = diagnosticContext;
-            const parsed = parsePolicyCondition(context, tokens, locationOf(line));
+            const parsed = parsePolicyCondition(context, tokens, locationOf(line), diagnosticContext);
             if (hasRequire) context.error(DiagnosticCodes.RepeatedPolicyRequirement, `Policy '${name}' has more than one require line; combine the conditions with and/or in one require`, locationOf(line));
             else condition = parsed;
             hasRequire = true;
@@ -66,7 +66,7 @@ function tokenizePolicyCondition(context: ParserContext, text: string): string[]
     return [...(text.match(new RegExp(pattern(`"${stringBodyPattern}"|\\(|\\)|${numeric}`).source, 'gu')) ?? [])];
 }
 
-function parsePolicyCondition(context: ParserContext, tokens: string[], location: SourceLocation): PolicyConditionSyntax | null {
+function parsePolicyCondition(context: ParserContext, tokens: string[], location: SourceLocation, expressionContext: ParserContext): PolicyConditionSyntax | null {
     const reportDiagnostics = context.sourceOptions.numericMode === 'exact' || tokens.includes('not');
     let position = 0;
     const quoted = (token: string | undefined): token is string => token !== undefined && token.startsWith('"') && token.endsWith('"');
@@ -105,7 +105,7 @@ function parsePolicyCondition(context: ParserContext, tokens: string[], location
             context.error(DiagnosticCodes.ExpectedClaimMatchTarget, "Expected 'subject' or a value after 'matches'", location);
             return null;
         }
-        return { kind: 'ClaimConditionSyntax', claim: unquote(name), matchesSubject: target === 'subject', matches: target === 'subject' ? null : parseMappingSource(target, location, context), location };
+        return { kind: 'ClaimConditionSyntax', claim: unquote(name), matchesSubject: target === 'subject', matches: target === 'subject' ? null : parseMappingSource(target, location, expressionContext), location };
     };
     const and = (): PolicyConditionSyntax | null => {
         let left = group();

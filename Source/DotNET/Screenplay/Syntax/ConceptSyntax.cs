@@ -91,6 +91,12 @@ public record ConceptSyntax(
     public FileReferenceSyntax? File { get; init; }
 
     /// <summary>
+    /// Gets the explicit int32 numbers parallel to <see cref="Values"/>, or null for positional members.
+    /// Numbering is all or none and numbers must be unique within an enumeration.
+    /// </summary>
+    public IEnumerable<int>? ValueNumbers { get; init; }
+
+    /// <summary>
     /// Gets the report-only description of this value.
     /// </summary>
     public string? Description { get; init; }

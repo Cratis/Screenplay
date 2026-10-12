@@ -498,6 +498,7 @@ internal static partial class ScreenplayParser
         }
 
         var values = new List<string>();
+        var members = new EnumerationMembers();
         string? description = null;
         var validations = new List<ValidateSyntax>();
         var directiveLocations = new Dictionary<string, SourceLocation>();
@@ -505,6 +506,13 @@ internal static partial class ScreenplayParser
         while (context.TryPeekChild(line.Indent, out var child))
         {
             context.Reader.TakeSignificant();
+            if (type == "Enum" && members.TryNumbered(context, child, out var memberName))
+            {
+                values.Add(memberName);
+                directiveLocations[DirectiveLocationKeys.ForValue("value", values, values.Count - 1)] = child.Location;
+                continue;
+            }
+
             if (DescriptionParser.TryParse(context, child, ref description, $"Concept '{name}'", directiveLocations, type == "Enum")) continue;
             if (FileReferenceParser.IsDirective(child))
             {
@@ -545,7 +553,7 @@ internal static partial class ScreenplayParser
             }
         }
 
-        return new(name, type, attributes, values, line.Location, validations) { Description = description, File = file, DirectiveLocations = directiveLocations };
+        return new(name, type, attributes, values, line.Location, validations) { Description = description, File = file, ValueNumbers = members.Finish(context, line, values.Count), DirectiveLocations = directiveLocations };
     }
 
     static PersonaSyntax ParsePersona(ParserContext context, SourceLine line)

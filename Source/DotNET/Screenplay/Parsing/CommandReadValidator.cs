@@ -52,10 +52,7 @@ internal sealed class CommandReadValidator(CommandSyntax command, ParserContext 
     {
         var properties = command.Properties.Select(property => property.Name).ToHashSet();
         var declarations = Declarations();
-        var reads = declarations.Where(read => declarations.Count(other => other.ReadModel == read.ReadModel) == 1)
-            .Select(read => read.ReadModel)
-            .Concat(declarations.Select(read => read.Alias).OfType<string>())
-            .ToHashSet(StringComparer.Ordinal);
+        var reads = CommandReadReferences.VisibleNames(declarations).ToHashSet(StringComparer.Ordinal);
 
         foreach (var requirement in command.Validations.OfType<DeclarativeValidateSyntax>()
             .SelectMany(validate => validate.Requirements ?? []))

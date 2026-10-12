@@ -32,6 +32,11 @@ sealed class SemanticQueryRun(
             return new SemanticUnsupported(original, SemanticExecutionCapability.Query, $"Query '{queryRequest.Query}' is not in the execution plan.");
         }
 
+        if (plan.UnadmittedArtifacts.Contains(query.Id) || plan.IsUnadmittedReadModel(query.ReadModel))
+        {
+            return new SemanticUnsupported(original, SemanticExecutionCapability.Query, $"Query '{query.Name}' or its read model was not admitted by scoped execution-plan compilation.");
+        }
+
         if (RefuseReducer(query.ReadModel, SemanticExecutionCapability.Query) is { } reducerRefusal)
         {
             return reducerRefusal;
@@ -64,6 +69,11 @@ sealed class SemanticQueryRun(
     {
         foreach (var instance in tentative.ReadModels)
         {
+            if (plan.IsUnadmittedReadModel(instance.ReadModel))
+            {
+                return new SemanticUnsupported(original, SemanticExecutionCapability.Projection, $"Read model '{instance.ReadModel}' was not admitted by scoped execution-plan compilation.");
+            }
+
             if (RefuseReducer(instance.ReadModel, SemanticExecutionCapability.Projection) is { } refusal)
             {
                 return refusal;

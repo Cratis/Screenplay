@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
+import { ParserContext } from './ParserContext';
 import { synthesizePersonaCaller } from '../Syntax/PersonaCallers';
 import { specificationCaseOrigins } from '../Syntax/SpecificationCaseOrigin';
 import { substituteCase } from './SpecificationCaseParser';
@@ -34,9 +36,10 @@ export function specificationExamples(application: ApplicationSyntax) {
         }
     };
     examples(application.examples, []);
-    for (const node of [...application.concepts, ...application.types]) entries.push({ name: node.name, scope: [], kind: 'type' });
+    for (const node of application.concepts) entries.push({ name: node.name, scope: [], kind: 'concept' });
+    for (const node of application.types) entries.push({ name: node.name, scope: [], kind: 'type' });
     for (const module of application.modules) { examples(module.examples, [module.name]); features(module.features, [module.name]); }
-    const resolve = (reference: string, scope: readonly string[]) => {
+    const resolveCandidates = (reference: string, scope: readonly string[]) => {
         const candidates = (reference: string) => {
             const parts = reference.split('.');
             const named = entries.filter(entry => entry.name === parts.at(-1));
@@ -51,6 +54,10 @@ export function specificationExamples(application: ApplicationSyntax) {
         let matches = candidates(reference);
         const imported = application.imports.filter(entry => entry.qualifiedName.split('.').at(-1) === reference);
         if (!matches.length && imported.length === 1) matches = candidates(imported[0].qualifiedName);
+        return matches;
+    };
+    const resolve = (reference: string, scope: readonly string[]) => {
+        const matches = resolveCandidates(reference, scope);
         return matches.length === 1 ? matches[0] : undefined;
     };
     const fixture = (reference: string, kind: string, scope: readonly string[]) => {
@@ -62,6 +69,21 @@ export function specificationExamples(application: ApplicationSyntax) {
     };
     const merge = (inherited: readonly PropertyMappingSyntax[], authored: readonly PropertyMappingSyntax[]) => [...inherited.filter(value => !authored.some(replacement => replacement.property === value.property)), ...authored];
     return {
+        validateTypes: (context: ParserContext, deferImportedTypes: boolean) => {
+            for (const entry of entries) {
+                const example = entry.example;
+                if (example === undefined || example.type === '') continue;
+                const matches = resolveCandidates(example.type, entry.scope);
+                const type = matches.length === 1 ? matches[0] : undefined;
+                if (type === undefined) {
+                    const imported = application.imports.filter(imported => imported.qualifiedName === example.type || imported.qualifiedName.split('.').at(-1) === example.type);
+                    if (deferImportedTypes && matches.length === 0 && imported.length === 1 && resolveCandidates(imported[0].qualifiedName, entry.scope).length === 0) continue;
+                    context.error(DiagnosticCodes.UnresolvedSpecificationExampleType, `Example '${example.name}' type '${example.type}' is unknown or ambiguous; qualify a declared event, command, or read model.`, example.location);
+                } else if (type.kind !== 'event' && type.kind !== 'command' && type.kind !== 'readmodel') {
+                    context.error(DiagnosticCodes.UnresolvedSpecificationExampleType, `Example '${example.name}' must name an event, command, or read model, not a ${type.kind ?? 'example'}; example inheritance is not supported.`, example.location);
+                }
+            }
+        },
         resolvedExamples: entries.filter(entry => entry.example !== undefined).flatMap(entry => {
             const type = resolve(entry.example!.type, entry.scope);
             return type?.kind === undefined ? [] : [{ example: entry.example!, kind: type.kind, name: [...type.scope, type.name].join('.'), scope: type.scope }];
@@ -94,6 +116,10 @@ export function specificationExamples(application: ApplicationSyntax) {
             return { ...step, name: effective.name, properties: merge(effective.example.values, step.properties) };
         },
     };
+}
+
+export function validateSpecificationExampleTypes(application: ApplicationSyntax, context: ParserContext, deferImportedTypes = false): void {
+    specificationExamples(application).validateTypes(context, deferImportedTypes);
 }
 
 export function specificationCommandExamples(application: ApplicationSyntax): (action: SpecificationCommandSyntax | null, scope: readonly string[]) => SpecificationCommandSyntax | null {

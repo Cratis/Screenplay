@@ -118,23 +118,8 @@ public sealed partial class SemanticModelBinder
             return valid;
         }
 
-        SemanticSpecificationCommand BindRoutedSpecificationCommand(SpecificationCommandSyntax when, SemanticCommand command)
-        {
-            var bound = BindSpecificationCommand(when, command);
-            var routes = command.Produces.Select(produced => produced.Route).Append(command.Route).OfType<SemanticCommandRoute>();
-            var routedInputs = routes.SelectMany(route => route.StreamIdParts.Select(part => part.Value).Concat(route.StreamId is { } scalar ? [scalar] : []))
-                .OfType<SemanticResolvedExpression>().Select(expression => expression.Target).ToHashSet();
-            var literals = when.Values.Where(mapping => mapping.Source is LiteralExpressionSyntax)
-                .GroupBy(mapping => mapping.Property, StringComparer.Ordinal).Where(group => group.Count() == 1)
-                .ToDictionary(group => group.Key, group => (LiteralExpressionSyntax)group.Single().Source, StringComparer.Ordinal);
-
-            return bound with
-            {
-                Values = [.. bound.Values.Select(value => routedInputs.Contains(value.TargetProperty) &&
-                    literals.TryGetValue(command.Properties.Single(property => property.Id == value.TargetProperty).Name, out var literal)
-                        ? value with { Value = BindRouteLiteral(literal) } : value)]
-            };
-        }
+        SemanticSpecificationCommand BindRoutedSpecificationCommand(SpecificationCommandSyntax when, SemanticCommand command) =>
+            BindSpecificationCommand(when, command, SemanticEventRouting.RoutedInputs(command));
 
         SemanticFixtureRoute? BindFixtureRoute(SpecificationEventSyntax fixture)
         {

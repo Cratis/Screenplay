@@ -157,7 +157,7 @@ export const keywordDocs: Record<string, string> = {
     Bool: 'Primitive type — true or false.',
     Date: 'Primitive type — a date without time.',
     DateTime: 'Primitive type — a date and time.',
-    Enum: 'An enumeration concept with a fixed set of values.',
+    Enum: 'An enumeration concept with named members. Members may all declare unique int32 numbers (draft = 1) or all omit them (zero-based positions). Never renumber or reuse a published number. Non-positional numbers select executable model (ESM) v12; consumers must explicitly admit v12. Specifications still name members.',
 };
 
 // What the words of a specification's steps mean there - where 'trigger', 'capture' and 'query' name what the

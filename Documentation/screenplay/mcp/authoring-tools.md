@@ -332,6 +332,12 @@ If edits
 overlap, replace their common containing subtree instead of sending conflicting
 parent/child operations. See [the authoring contract](../ast-authoring.md).
 
+## Number enum members
+
+Use `read-ast` to find an unnumbered enum's `ConceptSyntax` handle, then call `propose-number-enum-members` with `subject`, `expectedRevision`, `expectedCatalogRevision` and `formatting: "CanonicalizeTouchedDocuments"`. It writes `= 0..n-1` in current declaration order and never renumbers numbered, mixed or invalid enums. This opt-in refactoring is suggested by Information hint `PLAY0671` for stored enums, reported only when `screenplay_diagnostics` selects `checks: "enum-pinning"`, `PLAY0671` or `all`; it is not a diagnostic-backed correctness repair. Numbering errors `PLAY0667`–`PLAY0670` need a deliberate author decision and have no automatic repair.
+
+The proposal requires unchanged catalog assignments, retained comments and unchanged executable bytes when the original model binds. Review with `read-proposal`, then explicitly `apply`; proposing alone writes nothing. Positional pins keep the executable version, bytes and revision. Non-positional numbers bind as ESM v12; consumers must explicitly admit v12 before accepting these models.
+
 ## Extract an inline event
 
 Use `read-ast` to find the inline `EventSyntax` handle, then call

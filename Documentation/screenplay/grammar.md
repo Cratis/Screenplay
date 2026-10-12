@@ -147,7 +147,14 @@ ErasureException = "expression" | "legalObligation" | "publicTask" | "publicHeal
 ConceptDecl    = "concept", Ident, ":", PrimitiveType, { Attribute }, NL,
                    [ INDENT, { DescriptionDecl | FileDirective | AttributeReason | ComplianceSetting | ConceptValidate }, DEDENT ]
                | "concept", Ident, ":", "Enum", { Attribute }, NL,
-                   INDENT, { DescriptionDecl | FileDirective | AttributeReason | ComplianceSetting | [ "@" ], LowerIdent, NL | ConceptValidate }, DEDENT ;
+                   INDENT, { DescriptionDecl | FileDirective | AttributeReason | ComplianceSetting | EnumMember | ConceptValidate }, DEDENT ;
+
+EnumMember     = [ "@" ], LowerIdent, [ "=", EnumMemberNumber ], NL ;
+EnumMemberNumber = [ "-" ], ( "0" | NonZeroDigit, { Digit } ) ;
+NonZeroDigit   = "1".."9" ;
+(* Numbers are unique int32 values, all or none per enum. No fraction, exponent,
+   plus sign or leading zeros. -0 prints as 0. Positional pins preserve ESM bytes;
+   other numbers select ESM v12 with numbers parallel to values. *)
 
 AttributeReason = AttributeName, "reason", StringLiteral, NL ;
 ComplianceSetting = ( "pii" | "personal" ), "special", SpecialCategory, NL

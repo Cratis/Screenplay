@@ -43,7 +43,12 @@ public enum SemanticPlanIssueKind
     /// <summary>
     /// A projection reads an event-context value the reference evaluator has no occurrence context for.
     /// </summary>
-    UnsupportedEventContext = 5
+    UnsupportedEventContext = 5,
+
+    /// <summary>
+    /// A slice selection contains an identity that is not a slice in the model.
+    /// </summary>
+    InvalidSliceSelection = 6
 }
 
 /// <summary>
@@ -67,14 +72,19 @@ public sealed record SemanticExecutionPlanCompilation(
     /// Gets a value indicating whether the executable plan was created.
     /// </summary>
     public bool Success => Plan is not null && Issues.IsEmpty;
+
+    /// <summary>
+    /// Gets non-blocking capability issues owned by unselected slices; empty for whole-model compilation.
+    /// </summary>
+    public ImmutableArray<SemanticPlanIssue> UnselectedIssues { get; init; } = [];
 }
 
 /// <summary>
-/// Represents an immutable, indexed, capability-admitted portable execution plan.
+/// Represents an immutable, indexed portable execution plan with whole-model or scoped capability admission.
 /// </summary>
 public sealed class SemanticExecutionPlan
 {
-    SemanticExecutionPlan(
+    internal SemanticExecutionPlan(
         ExecutableSemanticModel model,
         ImmutableDictionary<SemanticId, SemanticCommand> commands,
         ImmutableDictionary<SemanticId, SemanticEventContract> events,
@@ -84,7 +94,8 @@ public sealed class SemanticExecutionPlan
         ImmutableDictionary<SemanticId, SemanticSpecification> specifications,
         ImmutableDictionary<string, SemanticConstraint> constraints,
         ImmutableArray<SemanticReaction> reactions,
-        ImmutableDictionary<SemanticId, SemanticCapture> captures)
+        ImmutableDictionary<SemanticId, SemanticCapture> captures,
+        ImmutableHashSet<SemanticId> unadmittedArtifacts)
     {
         Model = model;
         Commands = commands;
@@ -96,6 +107,7 @@ public sealed class SemanticExecutionPlan
         Constraints = constraints;
         Reactions = reactions;
         Captures = captures;
+        UnadmittedArtifacts = unadmittedArtifacts;
     }
 
     /// <summary>
@@ -104,7 +116,7 @@ public sealed class SemanticExecutionPlan
     public SemanticRevision Revision => Model.Revision;
 
     /// <summary>
-    /// Gets the admitted executable semantic model.
+    /// Gets the original executable semantic model, including declarations deferred by scoped compilation.
     /// </summary>
     public ExecutableSemanticModel Model { get; }
 
@@ -153,15 +165,45 @@ public sealed class SemanticExecutionPlan
     /// </summary>
     public ImmutableDictionary<SemanticId, SemanticCapture> Captures { get; }
 
+    internal ImmutableHashSet<SemanticId> UnadmittedArtifacts { get; }
+
     /// <summary>
     /// Compiles ESM into a plan only when every reachable capability is admitted.
     /// </summary>
     /// <param name="model">The validated executable semantic model.</param>
     /// <returns>The plan compilation and any blocking capability issues.</returns>
-    public static SemanticExecutionPlanCompilation Compile(ExecutableSemanticModel model)
+    public static SemanticExecutionPlanCompilation Compile(ExecutableSemanticModel model) => CompileCore(model, null);
+
+    /// <summary>
+    /// Compiles a plan for selected slice identities without changing the model or its revision.
+    /// Issues in selected slices and application-level declarations block compilation; other issues are deferred.
+    /// An empty selection defers every slice-owned issue and blocks only on application-level issues.
+    /// </summary>
+    /// <param name="model">The validated executable semantic model.</param>
+    /// <param name="selectedSlices">The selection of slice identities in the model, which may be empty.</param>
+    /// <returns>The plan compilation, blocking issues, and non-blocking issues in unselected slices.</returns>
+    public static SemanticExecutionPlanCompilation Compile(ExecutableSemanticModel model, IEnumerable<SemanticId> selectedSlices) =>
+        CompileCore(model, [.. selectedSlices]);
+
+    internal static bool IsBlockingIssue(
+        SemanticPlanIssue issue,
+        ImmutableHashSet<SemanticId>? selectedSlices,
+        IReadOnlyDictionary<SemanticId, SemanticId> owners) =>
+        issue.Kind == SemanticPlanIssueKind.InvalidSliceSelection || selectedSlices is null ||
+        !owners.TryGetValue(issue.Artifact, out var owner) || selectedSlices.Contains(owner);
+
+    internal static SemanticExecutionPlanCompilation CompileCore(ExecutableSemanticModel model, ImmutableHashSet<SemanticId>? selectedSlices)
     {
         var issues = ImmutableArray.CreateBuilder<SemanticPlanIssue>();
         var slices = AllSlices(model.Application).ToArray();
+        if (selectedSlices is not null)
+        {
+            foreach (var selected in selectedSlices.Where(selected => !slices.Any(slice => slice.Id == selected)).OrderBy(selected => selected.ToString(), StringComparer.Ordinal))
+            {
+                issues.Add(new(selected, SemanticPlanIssueKind.InvalidSliceSelection, $"Selected slice '{selected}' is not in the model."));
+            }
+        }
+
         foreach (var concept in model.Application.Concepts)
         {
             foreach (var validation in concept.Validations.Where(_ => _.Kind is not (SemanticValidationRuleKind.RulePredicate or SemanticValidationRuleKind.CodeValidation) && !SemanticValidationRules.Evaluates(_.Kind)))
@@ -193,9 +235,17 @@ public sealed class SemanticExecutionPlan
             issues.Add(new(query.Id, SemanticPlanIssueKind.UnsupportedQuery, $"Query '{query.Name}' must be an optional lookup or a collection in the minimum evaluator."));
         }
 
-        if (issues.Count > 0)
+        var owners = slices.SelectMany(
+            slice => slice.Commands.Select(command => command.Id)
+                .Concat(slice.Projections.Select(projection => projection.Id))
+                .Concat(slice.Queries.Select(query => query.Id)),
+            (slice, artifact) => (slice.Id, artifact))
+            .ToDictionary(owner => owner.artifact, owner => owner.Id);
+        var blocking = issues.Where(issue => IsBlockingIssue(issue, selectedSlices, owners)).ToImmutableArray();
+        var unselected = issues.Where(issue => !IsBlockingIssue(issue, selectedSlices, owners)).ToImmutableArray();
+        if (!blocking.IsEmpty)
         {
-            return new(null, issues.ToImmutable());
+            return new(null, blocking) { UnselectedIssues = unselected };
         }
 
         return new(
@@ -209,9 +259,14 @@ public sealed class SemanticExecutionPlan
                 slices.SelectMany(_ => _.Specifications).ToImmutableDictionary(_ => _.Id),
                 slices.SelectMany(_ => _.Constraints).ToImmutableDictionary(_ => _.Name, StringComparer.Ordinal),
                 [.. slices.SelectMany(_ => _.Reactions).OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal)],
-                slices.SelectMany(_ => _.Captures).ToImmutableDictionary(_ => _.Id)),
-            []);
+                slices.SelectMany(_ => _.Captures).ToImmutableDictionary(_ => _.Id),
+                [.. unselected.Select(issue => issue.Artifact)]),
+            []) { UnselectedIssues = unselected };
     }
+
+    internal bool IsUnadmittedReadModel(SemanticId readModel) =>
+        UnadmittedArtifacts.Contains(readModel) || Projections.Values.Any(projection =>
+            projection.Target == SemanticProjectionTargetKind.ReadModel && projection.ReadModel == readModel && UnadmittedArtifacts.Contains(projection.Id));
 
     internal SemanticEventRoute? FormatFixtureRoute(SemanticFixtureRoute? fixture)
     {

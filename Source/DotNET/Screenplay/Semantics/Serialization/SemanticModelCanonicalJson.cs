@@ -108,6 +108,7 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteString("primitive", Primitive(concept.Primitive));
         WriteStringArray(writer, "values", concept.Values);
         WriteArray(writer, "validations", concept.Validations, WriteValidation);
+        if (concept.Numbers is { } numbers) WriteArray(writer, "numbers", numbers, (output, number) => output.WriteNumberValue(number));
         writer.WriteEndObject();
     }
 

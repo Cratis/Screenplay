@@ -60,5 +60,7 @@
 | [0061](0061-per-production-route-overrides.md) | Replace the command route per event production | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |
 | [0062](0062-observer-source-and-stream-filters.md) | Filter reactions and reducers by event source and stream | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |
 | [0063](0063-admit-production-routes-and-observer-filters-as-esm-v10.md) | Join the claimed unreleased ESM v10 with production routes and observer filters | accepted | implemented | 2026-10-10 | Sindre Alstad Wilting |
-| [0065](0065-explicit-enum-member-numbers.md) | Give enum members optional explicit numbers, all or none, and carry them in a later ESM version | accepted | none | 2026-10-11 | Sindre Alstad Wilting |
+| [0064](0064-exact-number-literals-claim-esm-v11.md) | Claim ESM v11 for exact Double-mode number literal lowering | accepted | implemented | 2026-10-11 | Sindre Alstad Wilting |
+| [0065](0065-explicit-enum-member-numbers.md) | Give enum members optional explicit numbers, all or none, and carry them in a later ESM version | accepted | implemented | 2026-10-11 | Sindre Alstad Wilting |
 | [0066](0066-published-esm-versions-are-frozen.md) | Freeze an ESM version when any package exposing it is published | accepted | implemented | 2026-10-11 | Sindre Alstad Wilting |
+| [0068](0068-admit-concept-compliance-markers-as-esm-v13.md) | Admit concept compliance markers into the executable model as ESM v13 | accepted | none | 2026-10-12 | Sindre Alstad Wilting |

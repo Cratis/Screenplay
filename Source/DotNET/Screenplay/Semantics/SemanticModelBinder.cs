@@ -121,6 +121,14 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 semanticVersion = SemanticVersion.V2;
             }
 
+            if (SelectNumberVersions(application, semanticVersion) is { } numberVersions)
+            {
+                languageVersion = numberVersions.Language;
+                semanticVersion = numberVersions.Semantic;
+                application = BindingContext.PromoteV2Destinations(application);
+                descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
+            }
+
             var model = ExecutableSemanticModel.Create(languageVersion, semanticVersion, application);
             var compiledDocuments = documents;
             if (context.UsesV4)
@@ -160,6 +168,23 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
             context.Error(DiagnosticCodes.InvalidSemanticBinding, exception.Message, syntax.Location);
             return CompilationResult<SemanticCompilation>.Failed(context.Diagnostics) with { ImplementationRequirements = context.ImplementationRequirements };
         }
+    }
+
+    static (LanguageVersion Language, SemanticVersion Semantic)? SelectNumberVersions(SemanticApplication application, SemanticVersion semanticVersion)
+    {
+        if (SemanticModelValidator.UsesEnumMemberNumbers(application))
+        {
+            return (LanguageVersion.V12, SemanticVersion.V12);
+        }
+
+        // Number lowering is pure. Select v11 from the retained graph with the validator's own
+        // value walk, after examples and routed fixtures have reached their final bound shape.
+        if (!semanticVersion.IsAtLeast(SemanticVersion.V12) && SemanticModelValidator.UsesExactNumberLiterals(application, semanticVersion))
+        {
+            return (LanguageVersion.V11, SemanticVersion.V11);
+        }
+
+        return null;
     }
 
     sealed class IdentityAdmission(ApplicationSyntax application) : ScreenplaySyntaxWalker
@@ -224,6 +249,9 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         internal bool UsesV10 { get; set; }
 
         internal ImmutableArray<SemanticSourceMapEntry> SourceMapEntries => [.. _sourceMapEntries];
+
+        internal static SemanticApplication PromoteV2Destinations(SemanticApplication application) =>
+            application with { Modules = [.. application.Modules.Select(PromoteV2Destinations)] };
 
         internal SemanticApplication BindApplication()
         {

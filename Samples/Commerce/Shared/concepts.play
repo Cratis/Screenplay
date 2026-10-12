@@ -32,13 +32,13 @@ concept StreetAddress : String pii
   pii reason "Where a parcel is delivered. Needed to deliver the order; lawful basis: contract performance. Lives under the customer's subject and is erasable with their key."
 
 concept OrderStatus : Enum
-  placed
-  paid
-  cancelled
-  shipped
-  delivered
+  placed = 0
+  paid = 1
+  cancelled = 2
+  shipped = 3
+  delivered = 4
 
 concept Carrier : Enum
-  postNord
-  dhl
-  ups
+  postNord = 0
+  dhl = 1
+  ups = 2

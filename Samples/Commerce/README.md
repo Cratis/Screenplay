@@ -4,6 +4,8 @@ A webshop described in Screenplay. Merchandisers maintain a catalog. Customers s
 
 The sample shows how to compose an application from small, focused files with [file imports](../../Documentation/screenplay/imports.md). Each file tells one part of the story. There is a composite file at every level: the application, each module and each feature. A slice file holds only its slice.
 
+The order, carrier and shipment enums explicitly pin each member's current zero-based number. This preserves executable bytes and keeps stored identity stable when source order later changes. Specifications still name members; published numbers must not be renumbered or reused.
+
 ## How placement works
 
 `import "<path or glob>"` brings in `.play` files. The path is relative to the importing file. The position of the import decides where the imported files belong:

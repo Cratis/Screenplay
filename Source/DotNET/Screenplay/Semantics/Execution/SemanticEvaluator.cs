@@ -26,6 +26,11 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             return new SemanticUnsupported(world, SemanticExecutionCapability.Command, $"Command '{request.Command}' is not in the execution plan.");
         }
 
+        if (plan.UnadmittedArtifacts.Contains(command.Id))
+        {
+            return new SemanticUnsupported(world, SemanticExecutionCapability.Command, $"Command '{command.Name}' was not admitted by scoped execution-plan compilation.");
+        }
+
         if (request.Queries.IsDefault)
         {
             return new SemanticRejected(world, SemanticRejectionCategory.Contract, null, "Execution request query collection cannot be default.");
@@ -76,6 +81,11 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
         }
 
         facts = facts.AddRange(publications);
+        if (SemanticDeferredProjections.FindFailure(plan, facts) is { } deferredFailure)
+        {
+            return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, deferredFailure);
+        }
+
         return ExecuteQueries(plan, world, world.Commit(facts, readModels), facts, queries, caller);
     }
 

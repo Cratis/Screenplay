@@ -195,8 +195,8 @@ Ambiguous route/property syntax remains blocking; readiness never selects a rout
 | `search-declarations` | Optional `name`, `match`: exact/prefix/contains, kind/scope/document | Compact scoped search |
 | `declaration-details` | `address`, `kind`; optional `view` | Summary (including `description` and `documentation` wherever supported) or paged properties, occurrences, commands, specifications, produces, enum values, module/feature dependencies; explicit syntax view |
 | `processing-record` | Optional `controllerName`, `controllerContact`, `offset`, `limit`, `expectedSourceRevision` | Paged declaration-derived controller inventory; not legal advice |
-| `find-references` | `address`, `kind` | Paged resolved incoming references and ambiguities, with owners/roles |
-| `dependencies` | `address`, `kind`, direction incoming/outgoing; optional descendants/document | Direct indexed dependencies and resolution candidates |
+| `find-references` | `address`, `kind` (including `Property`) | Paged resolved incoming references, ambiguities and incomplete property links, with owners/roles |
+| `dependencies` | `address`, `kind` (including `Property`), direction incoming/outgoing; optional descendants/document | Direct indexed dependencies and resolution candidates; property outgoing follows mapping counterparts |
 | `dependency-graph` | Optional view, from/to levels, scope, direction, kinds, includeTestOnly, evidenceLimit | Inferred slice/container/context edges, ordering cycles, story-order suggestions, unresolved references or checked dependency declarations |
 | `find-fixtures` | Specification address, role, property, value, scope/document | Paged effective assignments with type, value, location and authored/example/override origin, including `when append` event payloads (`whenAppendedEvent`) and `for` destinations (`whenAppendedEventDestination`) |
 | `find-assertion-gaps` | Optional scope/document | Slices without specifications declaring a `then` assertion, including `then denied` |
@@ -217,9 +217,40 @@ available. Duplicate leaf declarations remain visible with diagnostics.
 
 Navigation `scope` includes descendants unless `descendants: false` is specified. Dependency
 aggregation uses `descendants: true` explicitly and does not imply transitive
-runtime impact. Reference coverage excludes code, expression identifiers,
-property paths, imports, profile settings and external registrations; results
-state their coverage.
+runtime impact. For a property, pass `kind: "Property"` and append its member name to the owner's
+address, for example `Projects.Registration.RegisterProject.RegisterProject.name`.
+Properties remain absent from declaration listings. Event members at that address belong to the
+current generation; historical shapes use `Owner.generationN.member` and carry `historical: true`
+in their target details.
+
+Property links cover explicit production, capture-append and projection mappings, case-insensitive
+projection AutoMap, declarative conditions, query filter and lookup parameters, command read keys,
+projection `from`, parent and removal keys, join `on` fields, screen/form bindings, and specification/example fixtures and assertions. Roles are
+`mapping-source`, `mapping-target`, `automap`, `condition`, `key`, `screen-binding`, `fixture`,
+`assertion`, `response`, `opaque` and `unclassified`. Links retain owner, location, resolution candidates and a resolved `otherEnd` when
+known. An unresolved counterpart or opaque occurrence makes the property's `complete` result false,
+with incomplete evidence retained at its source location. `dependencies` outgoing follows direct
+mapping counterparts, not transitive property chains. Nested composite paths remain incomplete
+evidence, not resolved member chains. Legacy command `reads` retains alias and qualified-view
+candidates as incomplete evidence: the binder does not admit those reads. Event-source captures
+link `$.member` through their declared `source events` inputs; external source items remain
+incomplete. Policy readers include commands gated at module, feature and command levels, including
+logical combinations of policies. These are authored links, not proof of executable admission.
+
+Constraint property keys and command stream-id mapping sources are classified as `key`; command
+response property sources are classified as `response`. Production route overrides are separate
+from event payload mappings. Both dependency directions retain all direct mapping counterparts,
+including mappings with multiple sources.
+
+Opaque text naming a property is reported as `opaque`, never resolved as code. After the typed
+indexers run, a completeness backstop scans each declaration referencing the property owner,
+including the owner itself, query/example indirections and effective policy caller contexts.
+It compares whole-word identifiers case-insensitively in the declaration's typed source text and
+comments, counting quoted text conservatively. Every occurrence not covered by a classified link
+is reported as `unclassified` incomplete evidence with owner, location and `reasons`. Same-named
+properties in unrelated declarations do not affect completeness. External code contents and
+external registrations remain outside coverage; results state their coverage. Declaration dependency graphs retain their explicit
+declaration-reference coverage; property links do not add inferred slice edges.
 
 ### Specification obligations
 
@@ -258,7 +289,7 @@ Names are case-sensitive. Property sets compare declared names, type names, coll
 
 ### Completeness diagnostics
 
-`diagnostics` accepts `checks: "data-bindings,input-surfaces,field-origins,query-keys,event-consumers,navigation"` or `"all"`. Unknown names are invalid parameters. Selected findings are warnings merged into the ordinary severity summary and paged, source-revision-bound response, including scope and document filtering. Checks run only without whole-application source errors; `completenessStatus` otherwise reports `completeness checks skipped: the model has N error(s)`. `completenessCoverage` is `structure only; a finding is a prompt to look`. See [Completeness checks](../completeness.md) for exact rules and exemptions. No executable admission or code analysis is implied.
+`diagnostics` accepts `checks: "data-bindings,input-surfaces,field-origins,query-keys,event-consumers,navigation"`, `"enum-pinning"` (or `"PLAY0671"`) or `"all"`. Unknown names are invalid parameters. Selected findings are warnings and information merged into the ordinary severity summary and paged, source-revision-bound response, including scope and document filtering. Checks run only without whole-application source errors; `completenessStatus` otherwise reports `completeness checks skipped: the model has N error(s)`. `completenessCoverage` is `structure only; a finding is a prompt to look`. See [Completeness checks](../completeness.md) for exact rules and exemptions. No executable admission or code analysis is implied.
 
 ### Scoped diagnostics
 
@@ -428,6 +459,7 @@ An unbound model returns `outcome: "unbound"`, executable diagnostics and `page:
 | `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | `line` for a `PLAY0565` concept-line repair, `pinRepairEvidence`, `expectedRepairEvidenceRevision`, includeContent; use the discovered `requiredFormatting`. `PLAY0479`, `PLAY0565` and `PLAY0653` support `PreserveTrivia` or explicit `CanonicalizeTouchedDocuments`; other repairs require `CanonicalizeTouchedDocuments` |
 | `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent, `eventNeverPersisted` (boolean, default false) |
 | `propose-move` | Expected revisions, target address, newParent address | targetHandle, newParentHandle, formatting, validation, includeContent |
+| `propose-number-enum-members` | `expectedRevision`, `expectedCatalogRevision`, unnumbered enum `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted; never renumbers numbered or mixed enums |
 | `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
 | `expand-layout` | Expected revisions | layout (`single`, `module`, `feature`, `slice`; default `slice`, one file per slice), validation, formatting, referencePolicy, includeContent |
 | `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`semantic-diff` for structural impact; `implementation-requirements` for attachments), documentId, offset, limit, expectedSourceRevision |

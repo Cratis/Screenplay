@@ -19,6 +19,10 @@ The `full-esm-*.json` files pin canonical executable semantic model (ESM) bytes,
 
 `full-esm-v10.json` pins released ESM v10: reaction system identity under 0043, production route overrides under 0061, and observer filters under 0062 and 0063. V10 first shipped in Screenplay v4.125.0; the 0063 extension shipped in v4.129.0 and is part of frozen v10 under 0066's retroactive exception. `canonical_serialization_golden_vectors.CreateSemanticModelV10()` builds on the full v9 model and the reaction-identity fixture, adding scalar, composite and standalone production overrides, source-only and source/stream reaction filters, and a reducer filter. The shared golden retains reactions with ordinally sorted roles and with no roles. `ReactionIdentityCorpus.V10`, `EventRoutesCorpus.ProductionRoutesV10` and `EventRoutesCorpus.ObserverFiltersV10` separately pin source-backed bytes and outcomes across single-file, folder, reordered and relocated forms. A model selects v10 when it uses any of these three features. Models without them keep their earlier bytes.
 
+`full-esm-v11.json` pins released ESM v11 (first shipped in Screenplay 4.135.0) under 0064, 0025 and 0066. `canonical_serialization_golden_vectors.CreateSemanticModelV11()` adds an event production carrying exact Double-mode integers and a shortest round-tripping fraction to the full v10 model. A retained non-route literal selects v11 only when its lowered decimal differs detectably from legacy conversion; unused examples, overridden values and already-lossless route inputs do not count. Programmatic v1–v10 models still accept precise decimals under their existing contracts. `NumberLiteralsCorpus.ExactLiteralsV11` separately pins source-backed bytes and accepted outcomes. The released v1–v10 goldens and corpus vectors remain unchanged.
+
+`full-esm-v12.json` pins enum member numbers under 0065, 0025 and 0066. `canonical_serialization_golden_vectors.CreateSemanticModelV12()` adds sparse and negative int32 enum identities to the full v11 model, retaining exact literal lowering and all earlier contracts. `EnumMemberNumbersCorpus.V12` pins source-backed bytes, revision and name-based accepted outcomes across single-file, folder, reordered and relocated forms. Positional pins bind as absent numbers; only non-positional numbering selects v12. Released v1–v11 goldens and corpus vectors remain unchanged.
+
 The other files pin separate serialization contracts, not ESM bytes:
 
 | File | Source |
@@ -34,7 +38,7 @@ and descriptor sidecars with these bytes.
 
 `Screenplay.CanonicalVectors.Specs.csproj` links the ESM and sidecar files as embedded resources:
 `full-esm-v1.json`, `full-esm-v2.json`, `full-esm-v3.json`, `full-esm-v4.json`, `full-esm-v5.json`, `full-esm-v6.json`, `full-esm-v7.json`,
-`full-esm-v8.json`, `full-esm-v9.json`, `full-esm-v10.json`, `policy-negation-v7.json`, `full-identity-catalog-v1.json`, `typed-contexts-v1.json`, and `unbound-handler-context-v1.json`.
+`full-esm-v8.json`, `full-esm-v9.json`, `full-esm-v10.json`, `full-esm-v11.json`, `full-esm-v12.json`, `policy-negation-v7.json`, `full-identity-catalog-v1.json`, `typed-contexts-v1.json`, and `unbound-handler-context-v1.json`.
 It does not link `full-expressions-v1.json`. The vectors project checks ESM and identity-catalog
 round trips and the presence of both descriptor sidecars. Do not edit the files by hand.
 
@@ -74,6 +78,24 @@ SCREENPLAY_REGENERATE_REACTION_IDENTITY_CORPUS=1 dotnet test Source/DotNET/Scree
 ```
 
 Each command deliberately fails after rewriting its owned vectors. Review the bytes, rebuild, then rerun without the variables.
+
+Regenerate only the v11 golden or exact-number corpus, leaving released v1–v10 vectors untouched:
+
+```bash
+SCREENPLAY_REGENERATE_GOLDEN=11 dotnet test Source/DotNET/Screenplay/Screenplay.csproj -c Debug --filter FullyQualifiedName~when_checking_for_a_regeneration_request
+SCREENPLAY_REGENERATE_NUMBER_LITERALS_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug -f net10.0 --filter FullyQualifiedName~for_NumberLiteralsCorpus
+```
+
+Each command deliberately fails after regeneration. Review the bytes, rebuild and rerun without the variables.
+
+Regenerate only the v12 golden or enum member numbers corpus, leaving released v1–v11 vectors untouched:
+
+```bash
+SCREENPLAY_REGENERATE_GOLDEN=12 dotnet test Source/DotNET/Screenplay/Screenplay.csproj -c Debug --filter FullyQualifiedName~when_checking_for_a_regeneration_request
+SCREENPLAY_REGENERATE_ENUM_MEMBER_NUMBERS_CORPUS=1 dotnet test Source/DotNET/Screenplay.CanonicalVectors.Specs/Screenplay.CanonicalVectors.Specs.csproj -c Debug -f net10.0 --filter FullyQualifiedName~for_EnumMemberNumbersCorpus
+```
+
+Each command deliberately fails after regeneration. Review the bytes, rebuild and rerun without the variables.
 
 ESM vectors carry a semantic revision; the identity catalog carries its own catalog revision. Expression
 and typed-context descriptor vectors are separate contracts, not ESM documents with semantic revisions.
