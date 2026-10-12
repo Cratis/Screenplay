@@ -176,9 +176,9 @@ export const specificationKeywordDocs: Record<string, string> = {
 };
 
 export const attributeDocs: Record<string, string> = {
-    pii: 'personal data (GDPR Art. 4(1)); renders Chronicle [PII]. Bare suffix marker; @pii is deprecated (PLAY0565). Not admitted by the executable model (PLAY0268).',
-    personal: 'Alias of pii: personal data (GDPR Art. 4(1)); renders Chronicle [PII]. No diagnostic; canonical printing writes pii.',
-    secret: 'Operational secret, not personal data: encrypted at rest without erasure and withheld from causation. Provider mapping: [Encrypted] + [NotAudited], or [PII] only with pii. Cannot be identity (PLAY0515). Not admitted by the executable model (PLAY0268).',
+    pii: 'personal data (GDPR Art. 4(1)); renders Chronicle [PII]. Bare suffix marker; @pii is deprecated (PLAY0565). Selects executable model (ESM) v13; consumers must explicitly admit it. Cannot classify identity or enum concepts. An event with personal values and an explicit subject mark refuses binding (PLAY0268) until lineage is admitted.',
+    personal: 'Alias of pii: personal data (GDPR Art. 4(1)); renders Chronicle [PII]. No diagnostic; canonical printing writes pii. Selects executable model (ESM) v13, like pii.',
+    secret: 'Operational secret, not personal data: encrypted at rest without erasure and withheld from causation. Provider mapping: [Encrypted] + [NotAudited], or [PII] only with pii. Selects executable model (ESM) v13; reference outcomes are unchanged. Cannot classify identity (PLAY0515) or enum concepts. Explicit scope is omitted next to pii. An event combining secret scope subject with an explicit subject mark refuses binding (PLAY0268).',
     sensitive: 'Deprecated spelling of secret (PLAY0565); repair to bare secret. Operational secret, not GDPR Art. 9 special-category data.',
 };
 

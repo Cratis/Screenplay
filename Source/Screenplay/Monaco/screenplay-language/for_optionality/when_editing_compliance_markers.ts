@@ -39,6 +39,13 @@ describe('when editing compliance markers', () => {
         expect(hover('  secret String', 'secret')).toBeNull();
         expect(hoverContent(['command C', '  secret scope'], 1, 'scope', 10, 15)).toBeNull();
     });
+    it('should describe v13 admission and fail-closed subject restrictions', () => {
+        expect(hover('concept Value : String pii', 'pii')).toContain('v13');
+        expect(hover('concept Value : String personal', 'personal')).toContain('v13');
+        expect(hover('concept Value : String secret', 'secret')).toContain('v13');
+        expect(hover('concept Value : String pii', 'pii')).toContain('explicit subject mark refuses binding');
+        expect(hover('concept Value : String secret', 'secret')).toContain('reference outcomes are unchanged');
+    });
     it.each(Object.entries(specialCategoryDocs))('should describe the special category %s', (category, description) => {
         expect(hover(`  pii special ${category}`, category)).toContain(description);
     });
