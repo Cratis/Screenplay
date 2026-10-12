@@ -15,7 +15,8 @@ sealed class WorkspacePropertyEdits(
     WorkspaceSyntaxIndex index,
     WorkspacePropertyPlan plan,
     IReadOnlyList<WorkspacePropertyPlan.PropertyMember> selected,
-    WorkspacePropertyRequest request)
+    WorkspacePropertyRequest request,
+    WorkspacePropertyAssertionProvenance? assertions = null)
 {
     readonly Dictionary<DocumentId, JsonNode> _roots = index.Entries.Where(entry => entry.Parent is null).ToDictionary(entry => entry.Handle.Document, entry => WorkspaceSyntaxMutation.Json(entry.Node));
     readonly HashSet<DocumentId> _touched = [];
@@ -24,7 +25,7 @@ sealed class WorkspacePropertyEdits(
     readonly Dictionary<SemanticAddress, SemanticAddress> _renames = [];
     readonly List<SemanticAddress> _retirements = [];
     readonly HashSet<(WorkspaceNodeHandle Owner, string Target, string Source)> _autoMaps = [];
-    readonly WorkspacePropertyAssertionProvenance _assertions = new(index);
+    readonly WorkspacePropertyAssertionProvenance _assertions = assertions ?? new(index);
     readonly List<WorkspacePropertyCandidate> _unavailableAssertions = [];
 
     internal WorkspacePropertyRefusal? Refusal => _unavailableAssertions.Count > 0 ? new(WorkspaceConflictKind.AmbiguousPropertyReference, [.. _unavailableAssertions.Distinct()]) : null;

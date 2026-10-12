@@ -5,7 +5,7 @@ using Cratis.Screenplay.Indexing;
 
 namespace Cratis.Screenplay.Workspaces.for_WorkspaceRefactoring.when_changing_a_property;
 
-public class with_removal_of_a_duplicate_example_assignment : given.a_projection_effect_workspace
+public class with_removal_in_an_unindexable_example_document : given.a_projection_effect_workspace
 {
     string _source;
     string _catalogRevision;
@@ -24,13 +24,12 @@ public class with_removal_of_a_duplicate_example_assignment : given.a_projection
             Target = _request.Target with { Revision = Workspace.Revision }
         };
         _catalogRevision = Workspace.IdentityCatalog.Revision.ToString();
-        var compilation = new AuthoringSnapshot(Workspace.Documents).Compilation;
-        compilation.Success.ShouldBeFalse();
-        compilation.Value.ShouldNotBeNull();
     }
 
     void Because() => Result = Workspace.ProposeProperty(_request);
 
+    [Fact] void should_have_authoring_compilation_errors() => new AuthoringSnapshot(Workspace.Documents).Compilation.Success.ShouldBeFalse();
+    [Fact] void should_retain_the_authoring_tree_despite_errors() => new AuthoringSnapshot(Workspace.Documents).Compilation.Value.ShouldNotBeNull();
     [Fact] void should_not_index_the_erroneous_document_as_editable() => WorkspaceSyntaxIndex.Create(Workspace).Entries.ShouldBeEmpty();
     [Fact] void should_refuse_the_unindexable_target() => Result.Conflicts.Select(conflict => conflict.Kind).ShouldContainOnly(WorkspaceConflictKind.UnsupportedPropertySpan);
     [Fact] void should_not_return_a_candidate_workspace() => Result.Workspace.ShouldBeNull();

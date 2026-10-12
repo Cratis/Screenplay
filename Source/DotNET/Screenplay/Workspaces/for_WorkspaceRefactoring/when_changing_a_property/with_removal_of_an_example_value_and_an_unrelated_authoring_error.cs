@@ -20,13 +20,12 @@ public class with_removal_of_an_example_value_and_an_unrelated_authoring_error :
              WorkspaceDocument.Create("unrelated", PortablePlayPath.Parse("unrelated.play"), Encoding.UTF8.GetBytes("concept Unknown MissingType"))],
             SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("Projects")));
         _catalogRevision = Workspace.IdentityCatalog.Revision.ToString();
-        var compilation = new AuthoringSnapshot(Workspace.Documents).Compilation;
-        compilation.Success.ShouldBeFalse();
-        compilation.Value.ShouldNotBeNull();
     }
 
     void Because() => Result = Workspace.ProposeProperty(Request("Audited", "remove") with { EventNeverPersisted = true });
 
+    [Fact] void should_have_authoring_compilation_errors() => new AuthoringSnapshot(Workspace.Documents).Compilation.Success.ShouldBeFalse();
+    [Fact] void should_retain_the_authoring_tree_despite_errors() => new AuthoringSnapshot(Workspace.Documents).Compilation.Value.ShouldNotBeNull();
     [Fact] void should_refuse_the_invalid_candidate() => Result.Conflicts.Select(conflict => conflict.Kind).ShouldContainOnly(WorkspaceConflictKind.CompilationFailed);
     [Fact] void should_not_return_a_candidate_workspace() => Result.Workspace.ShouldBeNull();
     [Fact] void should_not_return_a_write_plan() => Result.WritePlan.ShouldBeNull();

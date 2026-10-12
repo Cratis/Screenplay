@@ -3,15 +3,24 @@
 
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Indexing;
+using Cratis.Screenplay.Parsing;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Workspaces;
 
-sealed class WorkspacePropertyAssertionProvenance(WorkspaceSyntaxIndex index, Lazy<EffectiveSpecificationApplication?> expanded)
+sealed class WorkspacePropertyAssertionProvenance(
+    WorkspaceSyntaxIndex index,
+    Lazy<EffectiveSpecificationApplication?> expanded,
+    Lazy<IEnumerable<Diagnostic>>? compilationDiagnostics = null)
 {
     internal WorkspacePropertyAssertionProvenance(WorkspaceSyntaxIndex index)
-        : this(index, new(() => new AuthoringSnapshot(index.Workspace.Documents).Compilation.Value is { } application ? SpecificationExamples.Expand(application) : null))
+        : this(index, new AuthoringSnapshot(index.Workspace.Documents))
+    {
+    }
+
+    WorkspacePropertyAssertionProvenance(WorkspaceSyntaxIndex index, AuthoringSnapshot snapshot)
+        : this(index, new(() => snapshot.Compilation.Value is { } application ? SpecificationExamples.Expand(application) : null), new(() => snapshot.Compilation.Diagnostics))
     {
     }
 
@@ -19,13 +28,22 @@ sealed class WorkspacePropertyAssertionProvenance(WorkspaceSyntaxIndex index, La
     internal IEnumerable<SourceLocation>? Consumers(WorkspaceSyntaxEntry occurrence)
     {
         if (occurrence.Node is not PropertyMappingSyntax mapping) return [];
-        var example = WorkspacePropertyPlan.Parents(occurrence, index).Select(entry => entry.Node).OfType<SpecificationExampleSyntax>().FirstOrDefault();
+        var example = WorkspacePropertyPlan.Parents(occurrence, index).FirstOrDefault(entry => entry.Node is SpecificationExampleSyntax);
         if (example is null) return [];
         if (expanded.Value is not { } application) return null;
+        if (RelevantErrors(example, application.Diagnostics.Concat(compilationDiagnostics?.Value ?? []))) return null;
         return application.Specifications.SelectMany(specification => specification.Steps)
-            .Where(step => (step.Role == "then" || step.Role == "then readmodel") && SameExample(step.Example, example) && Inherits(step, mapping.Property))
+            .Where(step => (step.Role == "then" || step.Role == "then readmodel") && SameExample(step.Example, (SpecificationExampleSyntax)example.Node) && Inherits(step, mapping.Property))
             .Select(step => step.Authored.Location).Distinct();
     }
+
+    static string? ExampleName(SyntaxNode node) => node switch
+    {
+        SpecificationEventSyntax @event => @event.EventType,
+        SpecificationCommandSyntax command => command.CommandType,
+        SpecificationReadModelSyntax model => model.Name,
+        _ => null
+    };
 
     static bool SameExample(SpecificationExampleSyntax? resolved, SpecificationExampleSyntax authored) => resolved is not null && resolved.Name == authored.Name && resolved.Location == authored.Location;
 
@@ -38,4 +56,25 @@ sealed class WorkspacePropertyAssertionProvenance(WorkspaceSyntaxIndex index, La
         SpecificationReadModelSyntax model => model.Properties,
         _ => []
     };
+
+    bool RelevantErrors(WorkspaceSyntaxEntry example, IEnumerable<Diagnostic> diagnostics)
+    {
+        var name = ((SpecificationExampleSyntax)example.Node).Name;
+        var specifications = index.Entries.Where(entry => entry.Node is SpecificationSyntax && UsesExample(entry, name));
+        var regions = specifications.Prepend(example).ToArray();
+        return diagnostics.Any(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && regions.Any(region => Contains(region, diagnostic.Location)));
+    }
+
+    bool UsesExample(WorkspaceSyntaxEntry specification, string name) => index.Entries.Any(entry =>
+        ExampleName(entry.Node)?.Split('.')[^1] == name && WorkspacePropertyPlan.Parents(entry, index).Any(parent => parent.Handle == specification.Handle));
+
+    bool Contains(WorkspaceSyntaxEntry region, SourceLocation location)
+    {
+        if (location.Path != region.Location.Path || location.Line < region.Location.Line) return false;
+        var document = index.Workspace.Documents.Single(document => document.Id == region.Handle.Document);
+        var lines = SourceLineSplitter.Split(document.Text, path: document.Path.Value);
+        var header = lines.Single(line => line.Number == region.Location.Line);
+        var end = lines.FirstOrDefault(line => line.Number > header.Number && !line.IsBlank && line.Indent <= header.Indent)?.Number ?? int.MaxValue;
+        return location.Line < end;
+    }
 }

@@ -9,7 +9,7 @@ namespace Cratis.Screenplay.Workspaces;
 
 internal sealed partial class WorkspaceRefactoring
 {
-    internal WorkspaceAuthoringResult Property(WorkspacePropertyRequest request)
+    internal WorkspaceAuthoringResult Property(WorkspacePropertyRequest request, WorkspacePropertyAssertionProvenance? assertions = null)
     {
         var report = new WorkspacePropertyReport { Action = request.Action };
         if (request.ExpectedRevision != workspace.Revision) return PropertyFailure(WorkspaceConflictKind.StaleWorkspaceRevision, report);
@@ -18,7 +18,7 @@ internal sealed partial class WorkspaceRefactoring
 
         try
         {
-            return PropertyCore(request, report);
+            return PropertyCore(request, report, assertions);
         }
         catch (Exception exception) when (exception is InvalidWorkspaceAuthoring or InvalidSemanticContract)
         {
@@ -63,7 +63,7 @@ internal sealed partial class WorkspaceRefactoring
 
     static bool EventDecisionRequired(WorkspaceSyntaxEntry[] events, WorkspacePropertyRequest request) => events.Length > 0 && !request.NewGeneration && !request.EventNeverPersisted;
 
-    WorkspaceAuthoringResult PropertyCore(WorkspacePropertyRequest request, WorkspacePropertyReport report)
+    WorkspaceAuthoringResult PropertyCore(WorkspacePropertyRequest request, WorkspacePropertyReport report, WorkspacePropertyAssertionProvenance? assertions)
     {
         var index = WorkspaceSyntaxIndex.Create(workspace);
         var plan = new WorkspacePropertyPlan(index);
@@ -74,7 +74,7 @@ internal sealed partial class WorkspaceRefactoring
         var events = PropertyEventOwners(selections.Selected);
         if (EventDecisionRequired(events, request)) return PropertyFailure(WorkspaceConflictKind.EventContractChangeRequiresDecision, report, events.Select(owner => new WorkspacePropertyCandidate(owner.Address!, "Event", "declaration", owner.Location)));
         var generations = WorkspaceEventGenerations.Plan(events, request.NewGeneration);
-        return ProposePropertyEdits(request, new WorkspacePropertyEdits(index, plan, selections.Selected, request), generations, report);
+        return ProposePropertyEdits(request, new WorkspacePropertyEdits(index, plan, selections.Selected, request, assertions), generations, report);
     }
 
     WorkspaceAuthoringResult ProposePropertyEdits(WorkspacePropertyRequest request, WorkspacePropertyEdits edits, ImmutableArray<WorkspacePropertyGeneration> generations, WorkspacePropertyReport report)
