@@ -25,7 +25,9 @@ sealed class WorkspacePropertyEdits(
     readonly List<SemanticAddress> _retirements = [];
     readonly HashSet<(WorkspaceNodeHandle Owner, string Target, string Source)> _autoMaps = [];
     readonly WorkspacePropertyAssertionProvenance _assertions = new(index);
+    readonly List<WorkspacePropertyCandidate> _unavailableAssertions = [];
 
+    internal WorkspacePropertyRefusal? Refusal => _unavailableAssertions.Count > 0 ? new(WorkspaceConflictKind.AmbiguousPropertyReference, [.. _unavailableAssertions.Distinct()]) : null;
     internal IReadOnlyDictionary<SemanticAddress, SemanticAddress> Renames => _renames;
     internal ImmutableArray<SemanticAddress> Retirements => [.. _retirements];
 
@@ -133,10 +135,16 @@ sealed class WorkspacePropertyEdits(
     void RemoveReference(WorkspaceSyntaxEntry occurrence, ChangeSource source)
     {
         if (!Writer(source.Role)) return;
+        var consumers = _assertions.Consumers(occurrence);
+        if (consumers is null)
+        {
+            _unavailableAssertions.Add(new(source.Member.Entry.Address!, source.Member.Kind, source.Role, occurrence.Location));
+            return;
+        }
         _removed.Add(occurrence.Handle);
         _touched.Add(occurrence.Handle.Document);
         Record(source, source.Role == "mapping-target" ? "removed" : "fixtureRemoved", source.Role == "assertion");
-        foreach (var consumer in _assertions.Consumers(occurrence)) Record(source with { Role = "assertion", Location = consumer }, "fixtureRemoved", true);
+        foreach (var consumer in consumers) Record(source with { Role = "assertion", Location = consumer }, "fixtureRemoved", true);
     }
 
     void RenameReference(WorkspaceSyntaxEntry occurrence, WorkspacePropertyLink link)

@@ -80,6 +80,7 @@ internal sealed partial class WorkspaceRefactoring
     WorkspaceAuthoringResult ProposePropertyEdits(WorkspacePropertyRequest request, WorkspacePropertyEdits edits, ImmutableArray<WorkspacePropertyGeneration> generations, WorkspacePropertyReport report)
     {
         var changed = edits.Apply();
+        if (edits.Refusal is { } assertionRefusal) return PropertyFailure(assertionRefusal.Kind, report, assertionRefusal.Candidates);
         var result = new WorkspaceAuthoringTransaction(workspace, edits.Renames).Propose(new()
         {
             ExpectedRevision = request.ExpectedRevision,

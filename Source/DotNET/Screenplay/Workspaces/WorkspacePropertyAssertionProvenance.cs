@@ -8,16 +8,21 @@ using Cratis.Screenplay.Syntax.Specifications;
 
 namespace Cratis.Screenplay.Workspaces;
 
-sealed class WorkspacePropertyAssertionProvenance(WorkspaceSyntaxIndex index)
+sealed class WorkspacePropertyAssertionProvenance(WorkspaceSyntaxIndex index, Lazy<EffectiveSpecificationApplication?> expanded)
 {
-    readonly Lazy<EffectiveSpecificationApplication?> _expanded = new(() => new AuthoringSnapshot(index.Workspace.Documents).Compilation.Value is { } application ? SpecificationExamples.Expand(application) : null);
+    internal WorkspacePropertyAssertionProvenance(WorkspaceSyntaxIndex index)
+        : this(index, new(() => new AuthoringSnapshot(index.Workspace.Documents).Compilation.Value is { } application ? SpecificationExamples.Expand(application) : null))
+    {
+    }
 
-    internal IEnumerable<SourceLocation> Consumers(WorkspaceSyntaxEntry occurrence)
+    // Null means example provenance is unavailable, not that no assertion consumes the value.
+    internal IEnumerable<SourceLocation>? Consumers(WorkspaceSyntaxEntry occurrence)
     {
         if (occurrence.Node is not PropertyMappingSyntax mapping) return [];
         var example = WorkspacePropertyPlan.Parents(occurrence, index).Select(entry => entry.Node).OfType<SpecificationExampleSyntax>().FirstOrDefault();
-        if (example is null || _expanded.Value is not { } expanded) return [];
-        return expanded.Specifications.SelectMany(specification => specification.Steps)
+        if (example is null) return [];
+        if (expanded.Value is not { } application) return null;
+        return application.Specifications.SelectMany(specification => specification.Steps)
             .Where(step => (step.Role == "then" || step.Role == "then readmodel") && SameExample(step.Example, example) && Inherits(step, mapping.Property))
             .Select(step => step.Authored.Location).Distinct();
     }
