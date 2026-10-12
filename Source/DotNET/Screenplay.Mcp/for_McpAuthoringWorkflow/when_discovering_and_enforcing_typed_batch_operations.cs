@@ -61,11 +61,13 @@ public class when_discovering_and_enforcing_typed_batch_operations : given.an_au
     void should_advertise_all_public_tools() => _tools.EnumerateArray().Select(tool => tool.GetProperty("name").GetString()).ShouldContainOnly(
         ["run-specifications", "repair-capabilities", "describe-application", "find-declaration", "search-declarations", "declaration-details", "dependencies", "dependency-graph", "find-references",
         "find-fixtures", "find-assertion-gaps", "find-specification-obligations", "find-modeling-smells", "processing-record", "merged-document", "read-document", "diagnostics", "recommend-layout", "syntax-schema",
-        "open-workspace", "workspace-state", "recover-workspace", "propose-rename", "propose-move", "read-workspace", "read-ast", "propose", "propose-number-enum-members", "propose-extract-inline-event", "propose-repair", "propose-ast", "propose-source",
+        "open-workspace", "workspace-state", "recover-workspace", "propose-rename", "propose-move", "propose-property", "read-workspace", "read-ast", "propose", "propose-number-enum-members", "propose-extract-inline-event", "propose-repair", "propose-ast", "propose-source",
         "expand-layout", "read-proposal", "export-workspace", "discard-proposal", "semantic-diff", "apply"]);
     [Fact]
     void should_advertise_only_supported_extraction_formatting() => Schema("propose-extract-inline-event").GetProperty("properties").GetProperty("formatting")
         .GetProperty("enum").EnumerateArray().Select(value => value.GetString()).ToArray().ShouldEqual(["CanonicalizeTouchedDocuments"]);
+    [Fact] void should_advertise_both_property_actions() => Schema("propose-property").GetProperty("allOf").GetArrayLength().ShouldEqual(2);
+    [Fact] void should_require_property_revision_and_action_arguments() => Schema("propose-property").GetProperty("required").EnumerateArray().Select(value => value.GetString()).ShouldContainOnly("expectedRevision", "expectedCatalogRevision", "action");
     [Fact] void should_advertise_all_five_source_document_operation_shapes() => Names(_source).ShouldContainOnly("create-document", "replace-document", "move-document", "rename-document-key", "remove-document");
     [Fact] void should_advertise_source_strings_instead_of_nodes() => _source.EnumerateArray().Where(shape => NamesOf(shape) == "create-document" || NamesOf(shape) == "replace-document").All(shape => shape.GetProperty("properties").GetProperty("source").GetProperty("type").GetString() == "string" && !shape.GetProperty("properties").TryGetProperty("node", out _)).ShouldBeTrue();
     [Fact] void should_forbid_unknown_source_document_fields() => _source.EnumerateArray().All(shape => !shape.GetProperty("additionalProperties").GetBoolean()).ShouldBeTrue();

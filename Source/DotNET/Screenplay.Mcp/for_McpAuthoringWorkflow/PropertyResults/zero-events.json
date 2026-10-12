@@ -1,0 +1,176 @@
+{
+  "action": "rename",
+  "target": {
+    "address": {
+      "kind": "Property",
+      "parts": [
+        {
+          "kind": "Application",
+          "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+        },
+        {
+          "kind": "Module",
+          "key": "Projects"
+        },
+        {
+          "kind": "Feature",
+          "key": "Registration"
+        },
+        {
+          "kind": "Slice",
+          "key": "RegisterProject"
+        },
+        {
+          "kind": "Declaration",
+          "key": "RegisterProject"
+        },
+        {
+          "kind": "OwnerKind",
+          "key": "7"
+        },
+        {
+          "kind": "Member",
+          "key": "name"
+        }
+      ]
+    },
+    "kind": "Command",
+    "generation": null
+  },
+  "changed": [
+    {
+      "address": {
+        "kind": "Property",
+        "parts": [
+          {
+            "kind": "Application",
+            "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+          },
+          {
+            "kind": "Module",
+            "key": "Projects"
+          },
+          {
+            "kind": "Feature",
+            "key": "Registration"
+          },
+          {
+            "kind": "Slice",
+            "key": "RegisterProject"
+          },
+          {
+            "kind": "Declaration",
+            "key": "RegisterProject"
+          },
+          {
+            "kind": "OwnerKind",
+            "key": "7"
+          },
+          {
+            "kind": "Member",
+            "key": "name"
+          }
+        ]
+      },
+      "kind": "Command",
+      "role": "declaration",
+      "change": "renamed",
+      "location": {
+        "line": 10,
+        "column": 9,
+        "path": "application.play"
+      },
+      "weakensAssertion": false
+    },
+    {
+      "address": {
+        "kind": "Property",
+        "parts": [
+          {
+            "kind": "Application",
+            "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+          },
+          {
+            "kind": "Module",
+            "key": "Projects"
+          },
+          {
+            "kind": "Feature",
+            "key": "Registration"
+          },
+          {
+            "kind": "Slice",
+            "key": "RegisterProject"
+          },
+          {
+            "kind": "Declaration",
+            "key": "RegisterProject"
+          },
+          {
+            "kind": "OwnerKind",
+            "key": "7"
+          },
+          {
+            "kind": "Member",
+            "key": "name"
+          }
+        ]
+      },
+      "kind": "Command",
+      "role": "mapping-source",
+      "change": "mappingRewritten",
+      "location": {
+        "line": 14,
+        "column": 11,
+        "path": "application.play"
+      },
+      "weakensAssertion": false
+    }
+  ],
+  "notChanged": [],
+  "needsDecision": [],
+  "chainCandidates": [
+    {
+      "address": {
+        "kind": "Property",
+        "parts": [
+          {
+            "kind": "Application",
+            "key": "app1:20ccb167f2400bc55fae1597b1a0f4d19b40841f513bd013a7fa815e9e7f2994"
+          },
+          {
+            "kind": "Module",
+            "key": "Projects"
+          },
+          {
+            "kind": "Feature",
+            "key": "Registration"
+          },
+          {
+            "kind": "Slice",
+            "key": "RegisterProject"
+          },
+          {
+            "kind": "Declaration",
+            "key": "ProjectRegistered"
+          },
+          {
+            "kind": "OwnerKind",
+            "key": "8"
+          },
+          {
+            "kind": "Member",
+            "key": "name"
+          }
+        ]
+      },
+      "kind": "Event",
+      "role": "property",
+      "reason": "notSelected"
+    }
+  ],
+  "generations": [],
+  "deployableWithoutTransformation": true,
+  "esmVersionChange": null,
+  "esmVersionKnown": true
+}

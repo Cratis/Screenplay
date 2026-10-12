@@ -34,8 +34,9 @@ it from directory names.
 | `propose-source` | Whole `.play` text documents, including syntax-only language constructs | `Authoring` by default; optional `Executable` |
 | `propose-ast` | Focused typed node edits using `read-ast` handles, or typed whole documents | `Authoring` by default; optional `Executable` |
 | `propose` | Exact byte replacements and legacy whole-document operations | Executable-only |
+| `propose-property` | Rename or remove explicitly selected properties along proven mapping chains | `Authoring` by default; optional `Executable` |
 
-All three return proposals to review with `read-proposal` before explicit `apply`.
+These tools return proposals to review with `read-proposal` before explicit `apply`.
 Acceptance never writes files or executes specifications.
 
 ### Propose whole source documents
@@ -86,6 +87,41 @@ declarations requires explicit `retiredSemanticAddresses` and, for event contrac
 `eventRenames`. Replacement preserves the document's encoding policy, but printing
 may normalize whitespace. Review exact before/after bytes, dropped comments and
 `introducedExecutableErrors` before applying.
+
+## Plan a property change
+
+Read the original property handle with `read-ast`, then call `propose-property` with
+`expectedRevision`, `expectedCatalogRevision`, `action: "rename"` or `"remove"`,
+`target` and `expectedName`. Rename also requires `newName`. Each optional
+`alsoRename` or `alsoRemove` entry is `{ "target": <handle>, "expectedName": <name> }`;
+select only the fields you intend to change. Chain membership proves eligibility,
+not permission to change additional fields. Off-chain selections refuse atomically.
+
+Renaming just a command input repairs its mappings without renaming the event
+payload. Broken AutoMap links become explicit mappings. Removal requires no
+remaining readers and discloses removed assertion values. When the specifications
+that inherit a removed example value cannot be determined, for example because the
+example or a specification using it has errors, removal refuses with
+`AmbiguousPropertyReference` instead of reporting no weakened assertion. Opaque or incomplete
+links, historical generations, inline events, keys and unsupported spans refuse
+with original candidate locations rather than guessing.
+
+Select exactly one event mode when any selected field belongs to an event:
+`newGeneration: true` appends N+1; `eventNeverPersisted: true` edits current N in
+place, preserving renamed IDs. Both true is invalid parameters. The flags select
+no extra events. Default formatting is `PreserveTrivia`; structural changes require
+explicit `CanonicalizeTouchedDocuments` consent. Reference policy is always `Safe`.
+
+Inspect `property` in the result and retained `read-proposal`, including semantic
+diff. `generations` is always an array, ordered by canonical event address and
+deduplicated by selected owner. Each entry has `event` (a canonical address),
+`from`, `to` and `mode`. Different events keep their own revision pairs; in-place
+edits have equal revisions. `[]` describes no accepted planned event edits and is
+not a success verdict. No singular alias is emitted. `deployableWithoutTransformation`
+and `esmVersionKnown` describe the candidate, independently of source acceptance.
+New generations still require transformations before Chronicle deployment.
+
+Only `apply` writes the retained source and identity plan. See the [complete planner reference](reference.md#property-change-planner).
 
 ## Inspect inline event declarations
 
@@ -372,7 +408,7 @@ compilation diagnostics belong to the paged diagnostics view. Available typed re
 | `PLAY0479` (Information) | Write `optional` after the type. An occurrence repair changes one type; a document repair contains all spelling changes in one transaction. Both preserve syntax structure. |
 | `PLAY0516` (Information) | Move a sibling declaration or explicit file import, or pin an already placed file before a retained glob. The proposal removes the selected backward edge without new timeline findings. Own-sub-feature findings, cycle groups, unranked members and mixed/different-parent boundaries have no repair. |
 
-`PLAY0661` completes a partial command-read key when every missing part has one same-named compatible source. It preserves authored part order and requires canonical formatting consent. Queries and trigger reads are not repaired. `PLAY0660` and `PLAY0662` have no automatic repair. Read-model property and key-part rename is not supported; the rename tool refuses those handles explicitly.
+`PLAY0661` completes a partial command-read key when every missing part has one same-named compatible source. It preserves authored part order and requires canonical formatting consent. Queries and trigger reads are not repaired. `PLAY0660` and `PLAY0662` have no automatic repair. `propose-property` handles non-key read-model properties. Key-part rename remains unsupported; `propose-rename` still refuses all read-model property handles.
 
 Discovery verifies listed `PLAY0166`, `PLAY0478`, `PLAY0469`, `PLAY0471`, `PLAY0479`, `PLAY0516`, `PLAY0563`, strict-condition `PLAY0564`, `PLAY0614`, `PLAY0653` and `PLAY0661` repairs. `PLAY0614` adds the one `direction inbound|outbound` consistent with the slice's events and constructs; it is offered only when exactly one direction fits and requires individual review. Interaction repairs expand a one-line alternative or replace opaque `where` with one block-form `when`, respectively; both require individual review and refuse trailing-comment relocation.
 It checks authoring acceptance and comment preservation, plus routing safety for

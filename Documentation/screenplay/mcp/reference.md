@@ -459,6 +459,7 @@ An unbound model returns `outcome: "unbound"`, executable diagnostics and `page:
 | `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | `line` for a `PLAY0565` concept-line repair, `pinRepairEvidence`, `expectedRepairEvidenceRevision`, includeContent; use the discovered `requiredFormatting`. `PLAY0479`, `PLAY0565` and `PLAY0653` support `PreserveTrivia` or explicit `CanonicalizeTouchedDocuments`; other repairs require `CanonicalizeTouchedDocuments` |
 | `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent, `eventNeverPersisted` (boolean, default false) |
 | `propose-move` | Expected revisions, target address, newParent address | targetHandle, newParentHandle, formatting, validation, includeContent |
+| `propose-property` | `expectedRevision`, `expectedCatalogRevision`, `action`, `target`, `expectedName`; rename also `newName` | `alsoRename` or `alsoRemove`, `newGeneration`, `eventNeverPersisted`, formatting (`PreserveTrivia` default), validation (`Authoring` default), includeContent |
 | `propose-number-enum-members` | `expectedRevision`, `expectedCatalogRevision`, unnumbered enum `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted; never renumbers numbered or mixed enums |
 | `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
 | `expand-layout` | Expected revisions | layout (`single`, `module`, `feature`, `slice`; default `slice`, one file per slice), validation, formatting, referencePolicy, includeContent |
@@ -532,6 +533,63 @@ bodied reducers no longer block binding. The `implementation-requirements` respo
 attachments without admitting an executable model. Document results contain root handles. `read-ast` returns
 original occurrences, names, child counts and existing identities. Its `children`
 view selects a parent document/path. Typed content is opt-in.
+
+## Property change planner
+
+`propose-property` supports `action: "rename"` and `"remove"` on command, current
+event and non-key read-model properties. `target` and each additional selection
+are original `read-ast` handles, with exact expected names. `alsoRename` and
+`alsoRemove` contain `{target, expectedName}` objects for their matching action.
+Only explicitly selected properties change; a resolved chain does not authorize
+extra edits. Off-chain same-named fields appear in `notChanged` with `reason: "offChain"`.
+
+Reference policy is always `Safe`. Rename rewrites proven mappings and fixtures;
+it inserts an explicit projection mapping when the unselected counterpart would
+lose AutoMap. Remove refuses with remaining readers, removes writers and fixtures,
+and marks removed assertion values `weakensAssertion: true`. Unselected inputs
+remain `chainCandidates`, not implicit removals. Type changes and nested composite
+paths, read-model keys, opaque/unclassified text and unsupported spans are not
+inferred or rewritten. Inline events require extraction first.
+
+Selected event fields require exactly one of `newGeneration` or
+`eventNeverPersisted`. The flags choose one mode for all selected events and select
+no extra fields. Both true returns JSON-RPC `-32602`. The current generation alone
+can be edited in place; older generations are immutable. Advancing creates one
+new generation per selected event owner, retaining old property identities and
+assigning new ones for the new shape. Command/read-model renames retain IDs.
+
+The normal retained proposal response adds `property`, also returned by
+`read-proposal` for every view:
+
+| Member | Contract |
+| --- | --- |
+| `action`, `target` | Requested action; original property address, owner kind and optional generation |
+| `changed` | Original address, owner kind, indexed role, `change`, source `location`, `weakensAssertion` |
+| `notChanged` | Off-chain property address, kind and `reason: "offChain"` |
+| `needsDecision` | Refusal reason, subject and candidate addresses/kinds/roles/locations |
+| `chainCandidates` | Unselected chain address, kind, role and reason |
+| `generations` | Required array of `{event, from, to, mode}`; canonical EventContract addresses, stable address order, one entry per selected event owner |
+| `deployableWithoutTransformation` | False when any candidate event has several generations; no transformation is inferred |
+| `esmVersionChange` | Selected ESM version pair, or null if unchanged or unknown |
+| `esmVersionKnown` | Whether the candidate bound, independently of authoring acceptance |
+
+`change` is one of `renamed`, `removed`, `mappingRewritten`,
+`explicitMappingInserted`, `fixtureRewritten`, `fixtureRemoved`. Generation mode
+is `newGeneration` or `eventNeverPersisted`. Each event retains its own original
+revision; in-place edits report equal `from` and `to`. `generations: []` means no
+accepted planned event-contract edits, not a successful proposal. There is no
+singular `property.generation` alias. This tool had no published singular result;
+that does not establish compatibility with independent external implementations.
+
+Refusals return `success: false`, no writable partial candidate, and a
+`failureKind`: `HopNotOnChain`, `PropertyReadersExist`,
+`EventContractChangeRequiresDecision`, `HistoricalGenerationImmutable`,
+`InlineEventRequiresExtraction`, `AmbiguousPropertyReference`,
+`OpaquePropertyReference` or `UnsupportedPropertySpan`. Ordinary stale revision,
+formatting, compilation and identity-migration checks still apply. Structural
+edits need explicit canonical formatting consent; trivia preservation never falls
+back silently. Review exact bytes, identities and `view: "semantic-diff"`, then
+use the ordinary journaled `apply`.
 
 ## Handler intent inventory
 

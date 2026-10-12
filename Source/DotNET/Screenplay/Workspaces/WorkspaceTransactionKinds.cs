@@ -83,7 +83,47 @@ public enum WorkspaceConflictKind
     /// <summary>
     /// No diagnostic repair recipe matches the original workspace subject.
     /// </summary>
-    UnknownRepair = 13
+    UnknownRepair = 13,
+
+    /// <summary>
+    /// An additional selected property is outside the resolved chain.
+    /// </summary>
+    HopNotOnChain = 14,
+
+    /// <summary>
+    /// Removing a property would leave a reader.
+    /// </summary>
+    PropertyReadersExist = 15,
+
+    /// <summary>
+    /// A selected event contract requires an explicit evolution choice.
+    /// </summary>
+    EventContractChangeRequiresDecision = 16,
+
+    /// <summary>
+    /// A historical event generation cannot be edited.
+    /// </summary>
+    HistoricalGenerationImmutable = 17,
+
+    /// <summary>
+    /// An inline event must first be extracted.
+    /// </summary>
+    InlineEventRequiresExtraction = 18,
+
+    /// <summary>
+    /// An affected property reference is ambiguous or unresolved.
+    /// </summary>
+    AmbiguousPropertyReference = 19,
+
+    /// <summary>
+    /// Opaque or unclassified text prevents a safe property change.
+    /// </summary>
+    OpaquePropertyReference = 20,
+
+    /// <summary>
+    /// The property or reference span is not supported by this planner.
+    /// </summary>
+    UnsupportedPropertySpan = 21
 }
 
 /// <summary>

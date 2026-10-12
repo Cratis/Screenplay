@@ -20,7 +20,7 @@ internal sealed partial class WorkspacePropertyLinks
     static bool IncompleteProjection(PropertyProjectionScope scope, AuthoredDeclaration[] events, AuthoredDeclaration[] targets, string path) =>
         targets.Length != 1 || events.Length != 1 || scope.Nested is not null || path.Contains('.');
 
-    void ProjectMapping(PropertyProjectionScope scope, AuthoredDeclaration[] events, MappingSyntax mapping)
+    void ProjectMapping(PropertyProjectionScope scope, AuthoredDeclaration[] events, MappingSyntax mapping, WorkspaceSyntaxEntry feed)
     {
         var use = ProjectionUse(scope, mapping);
         var targets = Members(scope.Models, scope.Nested ?? mapping.Property);
@@ -29,6 +29,13 @@ internal sealed partial class WorkspacePropertyLinks
         var sources = paths.SelectMany(entry => Members(events, ((PathExpressionSyntax)entry.Node).Path)).Distinct().ToArray();
         var incomplete = IncompleteProjection(scope, events, targets, mapping.Property) ||
             paths.Any(entry => Members(events, ((PathExpressionSyntax)entry.Node).Path).Length != 1) || expression is RawExpressionSyntax;
+        _projectionEffects.Add(new(
+            feed,
+            events,
+            targets,
+            mapping,
+            [.. paths.Select(entry => new WorkspacePropertyProjectionSource(((PathExpressionSyntax)entry.Node).Path, Members(events, ((PathExpressionSyntax)entry.Node).Path)))],
+            !incomplete));
         Add(use, "mapping-target", new(mapping.Property, targets, sources is [var only] ? only : null, incomplete));
         foreach (var path in paths)
         {
