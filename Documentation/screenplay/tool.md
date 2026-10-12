@@ -71,10 +71,27 @@ screenplay path/to/invoicing.play --warnaserror
 |---|---|
 | `--scope <Module>[.<Feature>[.<Slice>]]` | Report the named scope and declarations that directly reference it |
 | `--check <name>[,<name>]\|all` | Select [completeness checks](completeness.md); repeat to combine selections. Unknown names exit `2` |
+| `--open-questions report\|fail` | Report committed open model questions; `fail` exits `1` when any selected question remains. Unreadable notes exit `2` |
 | `--warnaserror` | Warnings in the reported set fail the run - exit code `1` even with zero errors |
 | `--no-color` | Never colorize output |
 
 Colors are enabled automatically on interactive terminals; disable them with `--no-color` or by setting the `NO_COLOR` environment variable.
+
+## Report open model questions
+
+`screenplay path/to/model --open-questions report` reads the committed
+[model notes](model-notes.md) sidecar and emits host-only `info` findings with code
+`model-note.open-question`. Use `--open-questions fail` to exit `1` while open
+questions remain. Tasks and ordinary notes do not trigger this gate.
+
+Keep the model root as the input. `--scope` selects descendant and ancestor notes,
+including application notes. An unscoped report also includes orphaned questions.
+The notes report uses persisted identity state when present, so anchors follow
+renames. If `identities.json` is absent, the report says notes cannot be scoped,
+keeps all open questions visible unscoped, and marks them orphaned with reason
+`identity-state-absent`; `fail` still gates on that reported set.
+An unreadable notes file exits `2` only when the flag is given; without
+it notes are ignored. This is separate from compiler warnings and `--warnaserror`.
 
 ## Report processing purposes
 

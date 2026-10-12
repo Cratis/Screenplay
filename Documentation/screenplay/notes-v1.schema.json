@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Screenplay model notes v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schemaVersion", "applicationIdentity", "notes"],
+  "properties": {
+    "schema": { "const": "cratis.screenplay.notes" },
+    "schemaVersion": { "const": 1 },
+    "applicationIdentity": { "type": "string", "minLength": 1 },
+    "notes": { "type": "array", "maxItems": 10000, "items": { "$ref": "#/$defs/note" } }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1, "maxLength": 16384 },
+    "reference": {
+      "type": "object", "additionalProperties": false, "required": ["id"],
+      "properties": { "id": { "$ref": "#/$defs/text" }, "url": { "type": "string", "format": "uri", "pattern": "^https?://" } }
+    },
+    "anchor": {
+      "type": "object", "additionalProperties": false,
+      "properties": { "semanticId": { "type": "string", "minLength": 1 }, "application": { "const": true } },
+      "oneOf": [{ "required": ["semanticId"] }, { "required": ["application"] }]
+    },
+    "address": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "parts"],
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "parts": { "type": "array", "minItems": 1, "items": {
+          "type": "object", "additionalProperties": false, "required": ["kind", "key"],
+          "properties": { "kind": { "type": "string", "minLength": 1 }, "key": { "$ref": "#/$defs/text" } }
+        } }
+      }
+    },
+    "resolution": {
+      "type": "object", "additionalProperties": false, "required": ["by", "text", "author", "at"],
+      "properties": {
+        "by": { "enum": ["specification", "description", "decision", "external-decision", "dismissed"] },
+        "text": { "$ref": "#/$defs/text" }, "author": { "$ref": "#/$defs/text" },
+        "at": { "type": "string", "format": "date-time" },
+        "semanticId": { "type": "string", "minLength": 1 }, "ref": { "$ref": "#/$defs/reference" }
+      },
+      "allOf": [
+        { "if": { "properties": { "by": { "enum": ["specification", "description"] } } }, "then": { "required": ["semanticId"] } },
+        { "if": { "properties": { "by": { "const": "external-decision" } } }, "then": { "required": ["ref"] } }
+      ]
+    },
+    "note": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "kind", "text", "anchor", "lastAddress", "author", "createdAt", "refs", "resolution"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^note_[A-Za-z0-9_-]{22}$" },
+        "kind": { "enum": ["question", "task", "note"] },
+        "text": { "$ref": "#/$defs/text" }, "anchor": { "$ref": "#/$defs/anchor" },
+        "lastAddress": { "oneOf": [{ "$ref": "#/$defs/address" }, { "type": "null" }] },
+        "author": { "$ref": "#/$defs/text" }, "createdAt": { "type": "string", "format": "date-time" },
+        "refs": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/reference" } },
+        "resolution": { "oneOf": [{ "$ref": "#/$defs/resolution" }, { "type": "null" }] }
+      }
+    }
+  }
+}

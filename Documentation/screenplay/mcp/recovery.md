@@ -11,6 +11,7 @@ The model's `.play` files remain canonical source. The MCP server owns a reserve
 | File | Purpose | Retention |
 | --- | --- | --- |
 | `identities.json` | Versioned application identity/name, document IDs/keys/paths, and semantic/event identity catalog | Keep with the model in source control |
+| `notes.json` | Versioned, committed questions, tasks and review notes anchored to model identities | Keep with the model in source control |
 | `pending.json` | Exact before/after recovery data for one in-progress operation | Keep until application or rollback is verified |
 | Staging and backup files | Installation and recovery intermediates | Removed only when safe; retained on uncertainty |
 
@@ -18,8 +19,15 @@ The model's `.play` files remain canonical source. The MCP server owns a reserve
 source snapshots needed for recovery and is created privately. Model document
 operations cannot write into `.screenplay/`; it is not an arbitrary file API.
 
-A malformed, conflicting or unsafe state file is an error. The server never
+A malformed, conflicting or unsafe identity state file is an error. The server never
 silently discards it and derives replacement identities from source names.
+
+Model notes are nonsemantic state: an unreadable `notes.json` never blocks opening
+or source proposals. `open-workspace` and `workspace-state` report `notesRevision`
+and `notes: { status: "ok" | "absent" | "unreadable", reason, count }` (unreadable
+revisions and counts are null). Note tools refuse with `UnreadableNotes`; the server
+never auto-repairs the file. Resolve merge conflicts or restore known-good notes
+explicitly. See [model notes](../model-notes.md).
 
 ## Opening and external edits
 
@@ -46,7 +54,10 @@ if apply is interrupted, use the recovery procedure below rather than proposing 
 repair again against partially installed files. See [Fix a diagnostic](authoring-tools.md#fix-a-diagnostic).
 
 Every proposal includes `stateChange` with before/after state revisions. Source
-and identity state are installed under the same rollback envelope.
+and identity state are installed under the same rollback envelope. Notes proposals
+pin workspace, catalog and notes revisions; `read-proposal view=notes` pages their
+before/after notes. Apply stages and installs the sidecar under that same
+`pending.json` envelope, preserving original notes bytes and access settings.
 
 `workspace-state` has these views:
 
@@ -69,6 +80,13 @@ Before source mutation, apply writes a durable journal. Installation stages
 private bytes, retains original files, installs source and identity state, and
 verifies both. Only then can it discard the journal and backups.
 
+Journals carrying notes use envelope version `2`; source/identity-only journals
+continue to use version `1`. This server reads both, refuses a version-1 journal
+carrying notes, and requires a complete, consistent notes section in version 2.
+Older servers that only support version 1 refuse the newer journal instead of
+completing recovery without restoring notes. Finish an interrupted notes operation
+with the newer server version; do not downgrade or remove the marker.
+
 This detects interruption; it does **not** make multiple filesystem paths become
 visible simultaneously. Other processes can observe intermediate files. Run
 apply with exclusive writer access to a trusted model root.
@@ -87,7 +105,9 @@ To roll back an interrupted operation:
 
 Recovery preflights every affected file. Existing bytes must match a known before
 or after image; unexpected third-party content is never overwritten. It restores
-and verifies original source bytes, identity state and preserved access settings.
+and verifies original source bytes, identity state, any journaled notes sidecar,
+and preserved access settings. Reopening a server after an interrupted notes write
+uses the same explicit rollback procedure; it never regenerates or drops notes.
 The marker is removed only after verification and safe cleanup.
 
 On conflict or uncertainty, the result remains `RecoveryRequired` and adds

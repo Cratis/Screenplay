@@ -23,6 +23,9 @@ static class CommandLineInformation
         --scope reports the named scope and its direct dependent declarations after whole-application binding.
         --check selects opt-in structural completeness warnings; repeat it to combine selections.
         Completeness checks run only when the whole model has no errors.
+        --open-questions report prints host-only model-note.open-question findings from .screenplay/notes.json.
+        --open-questions fail exits 1 for open questions in the reported scope; unreadable notes exit 2.
+        Model notes are ignored unless --open-questions is supplied; --warnaserror is unchanged.
         Scoped exit codes follow the reported set; a separate line shows whole-application defects.
         Exit codes: 0 clean, 1 defects (including warnings with --warnaserror), 2 could not run.
         test runs the deterministic in-memory reference evaluator, without external services.

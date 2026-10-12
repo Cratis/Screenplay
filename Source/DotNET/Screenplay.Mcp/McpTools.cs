@@ -11,8 +11,17 @@ sealed class McpTools
 {
     readonly McpWorkspaces _workspaces;
     readonly McpSourceCache _sources = new();
+    readonly Dictionary<string, Func<JsonElement, object>> _notesTools;
 
-    internal McpTools(McpRoot? root = null) => _workspaces = new(root);
+    internal McpTools(McpRoot? root = null)
+    {
+        _workspaces = new(root);
+        _notesTools = new(StringComparer.Ordinal)
+        {
+            ["list-model-notes"] = _workspaces.ListNotes,
+            ["propose-model-notes"] = _workspaces.ProposeNotes
+        };
+    }
 
     // Whether the server was started without a fixed root and chooses one per workspace.
     internal bool DynamicRoot => _workspaces.DynamicRoot;
@@ -75,7 +84,7 @@ sealed class McpTools
                 "discard-proposal" => _workspaces.DiscardProposal(arguments),
                 "apply" => _workspaces.Apply(arguments),
                 McpVisualization.ToolName => _workspaces.Visualize(arguments),
-                _ => Read(name, arguments)
+                _ => DispatchRead(name, arguments)
             };
         }
         catch (McpFailure failure) when (failure.Code != 0)
@@ -108,6 +117,8 @@ sealed class McpTools
         "propose-property" => _workspaces.Property(arguments),
         _ => throw new McpFailure($"Unknown tool '{name}'.", -32602)
     };
+
+    object DispatchRead(string name, JsonElement arguments) => _notesTools.TryGetValue(name, out var read) ? read(arguments) : Read(name, arguments);
 
     object Read(string name, JsonElement arguments)
     {

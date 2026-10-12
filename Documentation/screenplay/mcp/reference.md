@@ -445,6 +445,83 @@ The response contains `sourceRevision`, `outcome`, `discovered` (all specificati
 
 An unbound model returns `outcome: "unbound"`, executable diagnostics and `page: null`, never an empty passing list. Failed, unsupported and unbound responses set `isError: true`; failed takes precedence over unsupported in the overall outcome. Failures include expected and actual facts, read models, scalar or record command responses and query results, with effective fixture provenance for example-based scenarios. A bound model with zero specifications has zero discovered: a pass is not a coverage verdict. See [`screenplay test`](../tool.md#run-the-models-specifications) for the same evaluator from the command line.
 
+## Model notes
+
+Notes live outside source and executable revisions in the committed
+[model notes sidecar](../model-notes.md). `open-workspace` and the `workspace-state`
+status view include `notesRevision` and `notes: { status, reason, count }`.
+Statuses are `ok`, `absent` and `unreadable`; reason is null when readable, revision
+and count are null when unreadable. The absent revision is `nrev1:absent`.
+Unreadable notes never block model opening or source edits.
+
+`list-model-notes` requires an open workspace and returns `notesRevision`, `view`
+and `page` (`revision`, `totalCount`, `offset`, `items`, `nextOffset`). Filters are:
+
+| Argument | Values and default |
+| --- | --- |
+| `anchor` | `{ semanticId }` (including an orphan's ID) or `{ address, kind }` with a dotted declaration address |
+| `scope` | Optional dotted module/feature/slice; descendants and ancestor notes |
+| `kind` | `question`, `task`, `note`; omitted selects all kinds |
+| `state` | `open` (default), `resolved`, `orphaned`, `all` |
+| `ref` | Exact reference identifier in `refs` or `resolution.ref` |
+| `view` | `items` (default) or `findings` |
+| `offset`, `limit` | Item pages; at most 200 items, also bounded by serialized bytes |
+| `expectedNotesRevision` | Optional on the first page; required when offset is greater than zero |
+
+An item carries `note`, current `address`, `state` and nullable `orphanReason`.
+Orphans retain their durable note, return a null current address and reason
+`unknown` when the catalog lacks the identity. `findings` returns one finding per
+selected unresolved question: `noteId`, `severity: "info"`,
+`code: "model-note.open-question"`, `message` and owning slice/container `address`.
+These are host findings, not PLAY diagnostics. Use `state: "all"` to include
+orphaned unresolved questions in a findings query.
+
+`propose-model-notes` pins `expectedRevision`, `expectedCatalogRevision` and
+`expectedNotesRevision`, and requires 1–200 `operations`. Each operation has
+`operation` and these additional fields:
+
+| Operation | Fields |
+| --- | --- |
+| `add` | Required kind, text, author, and exactly one anchor or target; optional refs |
+| `edit` | Required id; optional kind, text, refs (replaces the whole refs list) |
+| `resolve` | Required id and resolution: by, text, author; optional semanticId, ref. specification/description require semanticId; external-decision requires ref |
+| `reopen` | Required id; clears resolution |
+| `reanchor` | Required id and exactly one anchor or target |
+| `remove` | Required id; explicitly removes the note |
+
+Anchors are `{ semanticId }` or `{ application: true }`. A target can also be an
+address (`{ address, kind }` or the typed address used by move) or a current
+`{ revision, documentId, path }` source handle. Syntax-only targets fall back to
+their nearest identified slice/feature/module/application. Substitutions report
+the original target, resolved anchor/address and reason. Document and authoring-key
+anchors refuse. References use `{ id, url? }`; URLs must be absolute HTTP(S) and
+are never fetched. Text and author are nonempty, trimmed and at most 16384
+characters. Each note has at most 100 references. The sidecar permits at most
+10000 notes and 4 MiB UTF-8. Author is unverified free text; ID and timestamps are
+server-generated, not client inputs.
+
+The response includes `success`, `proposalId`, `notesRevision`,
+`afterNotesRevision`, `addedNotes` IDs, `substitutions`, `changeCount: 0`,
+`stateChange` and review guidance. A failed batch retains nothing and writes nothing.
+`read-proposal view=notes` returns before/after notes revisions and a page of
+`{ id, before, after }` pairs; pin `afterNotesRevision` as `expectedNotesRevision`
+on continuation. Existing `apply` journals the retained notes plan; it verifies
+notes revision and exact original bytes without requiring another notes parameter.
+Source/AST/rename/move/property proposals and proposal reviews add `orphanedNotes`
+IDs for notes their resulting catalog would orphan, plus `notes` status/reason/count.
+If notes are unreadable, `orphanedNotes` is null (unknown), not an empty proven set,
+and `notes.status` is `unreadable` with its reason. Unknown note `view` or `state`
+values are rejected as `InvalidArguments`, including direct server-side calls.
+Rename and move never rewrite
+the notes file.
+
+`UnreadableNotes` refuses note reads or writes without auto-repair.
+`NotesRevisionDrift` refuses stale notes proposals/apply; paged revision mismatch
+uses the usual stale revision error. `StaleRevision` covers workspace/catalog
+changes. `PendingOperation`, `RecoveryRequired` and `UnknownProposal` retain their
+[recovery behavior](recovery.md). Invalid operation shapes/targets are invalid
+arguments or failed requests, never successful partial batches.
+
 ## Workspace tools
 
 | Tool | Required arguments | Optional arguments |
@@ -463,9 +540,11 @@ An unbound model returns `outcome: "unbound"`, executable diagnostics and `page:
 | `propose-number-enum-members` | `expectedRevision`, `expectedCatalogRevision`, unnumbered enum `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted; never renumbers numbered or mixed enums |
 | `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
 | `expand-layout` | Expected revisions | layout (`single`, `module`, `feature`, `slice`; default `slice`, one file per slice), validation, formatting, referencePolicy, includeContent |
-| `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`semantic-diff` for structural impact; `implementation-requirements` for attachments), documentId, offset, limit, expectedSourceRevision |
+| `read-proposal` | proposalId | `expectedRepairEvidenceRevision`, view (`semantic-diff` for structural impact; `implementation-requirements` for attachments; `notes` for note before/after items), documentId, offset, limit, expectedSourceRevision, expectedNotesRevision |
 | `export-workspace` | expectedRevision | proposalId, offset, limit |
 | `workspace-state` | None | view, proposalId, expectedStateRevision, offset, limit |
+| `list-model-notes` | None | anchor, scope, kind, state, ref, view, offset, limit, expectedNotesRevision |
+| `propose-model-notes` | expectedRevision, expectedCatalogRevision, expectedNotesRevision, operations | None |
 | `discard-proposal` | proposalId | None |
 | `apply` | proposalId, expectedRevision, expectedCatalogRevision | includeContent, `expectedRepairEvidenceRevision` |
 | `recover-workspace` | operationId | None |

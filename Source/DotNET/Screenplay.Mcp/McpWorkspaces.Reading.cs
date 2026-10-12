@@ -71,8 +71,9 @@ internal sealed partial class McpWorkspaces
         {
             VerifyProposalBaseline(proposal);
         }
-        var result = ReadProposalView(proposal, arguments, view);
-        return McpJson.ToolResult(new { proposal.Validation, moveReport = proposal is McpAuthoringProposal moved ? DescribeMove(moved.Result.MoveReport) : null, property = proposal is McpAuthoringProposal property ? DescribeProperty(property.Result.PropertyReport) : null, repairEvidence = _repairEvidence.TryGetValue(proposal, out var evidence) ? evidence : null, before = McpWorkspaceTransport.Describe(proposal.Before), after = McpWorkspaceTransport.Describe(proposal.Workspace), view, result });
+        var result = view == "notes" ? NotesView(proposal, arguments) : ReadProposalView(proposal, arguments, view);
+        var notesImpact = NotesImpact(proposal);
+        return McpJson.ToolResult(new { proposal.Validation, orphanedNotes = notesImpact.OrphanedNotes, notes = notesImpact.Notes, moveReport = proposal is McpAuthoringProposal moved ? DescribeMove(moved.Result.MoveReport) : null, property = proposal is McpAuthoringProposal property ? DescribeProperty(property.Result.PropertyReport) : null, repairEvidence = _repairEvidence.TryGetValue(proposal, out var evidence) ? evidence : null, before = McpWorkspaceTransport.Describe(proposal.Before), after = McpWorkspaceTransport.Describe(proposal.Workspace), view, result });
     }
 
     internal object ExportWorkspace(JsonElement arguments)

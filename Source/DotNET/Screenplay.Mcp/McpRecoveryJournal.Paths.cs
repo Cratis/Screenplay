@@ -20,7 +20,7 @@ internal sealed partial class McpRecoveryJournal
             OperationPath(root, operationId, "backup"),
             OperationPath(root, operationId, "journal"),
             OperationPath(root, operationId, "state-rollback")
-        })
+        }.Concat(NotesPaths(root, proposal, operationId)))
         {
             yield return path;
             if (!Directory.Exists(Path.GetDirectoryName(path))) yield return Path.GetDirectoryName(path)!;
@@ -62,6 +62,15 @@ internal sealed partial class McpRecoveryJournal
         new McpManagedFiles(root).PathFor($"{operationId}-{index}.rollback");
 
     internal string RestoreStage(int index) => RestorePath(_root, Record.OperationId, index);
+
+    static IEnumerable<string> NotesPaths(McpRoot root, IMcpProposal proposal, string operationId)
+    {
+        if (proposal is not McpNotesProposal) yield break;
+        yield return new McpManagedFiles(root).PathFor(ModelNotesStore.FileName);
+        yield return OperationPath(root, operationId, "notes-stage");
+        yield return OperationPath(root, operationId, "notes-backup");
+        yield return OperationPath(root, operationId, "notes-rollback");
+    }
 
     static IEnumerable<WorkspaceWriteEntry> Differences(ScreenplayWorkspace before, ScreenplayWorkspace after)
     {

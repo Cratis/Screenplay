@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Text.Json;
+using Cratis.Screenplay.Semantics;
 
 namespace Cratis.Screenplay.Mcp;
 
@@ -32,7 +33,7 @@ internal sealed partial class McpWorkspaces
             return McpJson.ToolResult(new { exists = bytes is not null, stateRevision = revision, content = bytes is null ? null : McpPaging.Bytes(bytes, arguments, revision) });
         }
 
-        return McpJson.ToolResult(WithRootBindingConflict(new
+        var status = new
         {
             exists = persisted is not null,
             path = ".screenplay/identities.json",
@@ -41,7 +42,8 @@ internal sealed partial class McpWorkspaces
             identity = IdentityStatus(persisted),
             recovery = RecoveryStatus(),
             stateChange = proposal is null ? null : StatePlan(proposal).Describe()
-        }));
+        };
+        return McpJson.ToolResult(WithRootBindingConflict(WithNotes(status, NotesApplication(persisted))));
     }
 
     internal object Recover(JsonElement arguments)
@@ -109,6 +111,20 @@ internal sealed partial class McpWorkspaces
         catch (Exception exception)
         {
             return new { status = "Conflict", conflict = exception.Message };
+        }
+    }
+
+    ApplicationIdentity NotesApplication(byte[]? persisted)
+    {
+        if (_workspace is not null) return _workspace.IdentityCatalog.Application;
+        try
+        {
+            return persisted is null ? ApplicationIdentity.Create(Root.ApplicationName) : McpState.Deserialize(persisted).Catalog.Application;
+        }
+        catch (McpFailure)
+        {
+            // IdentityStatus already reports the conflict; notes cannot hide that status.
+            return ApplicationIdentity.Create(Root.ApplicationName);
         }
     }
 

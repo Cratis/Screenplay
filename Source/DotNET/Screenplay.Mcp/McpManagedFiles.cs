@@ -1,6 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Cratis.Screenplay.Workspaces;
+
 namespace Cratis.Screenplay.Mcp;
 
 sealed class McpManagedFiles(McpRoot root)
@@ -105,7 +107,10 @@ sealed class McpManagedFiles(McpRoot root)
     {
         if (!Equal(Read(name), expected))
         {
-            throw new McpFailure($"IdentityStateDrift: '.screenplay/{name}' changed; reopen before proposing changes.") { FailureKind = "IdentityStateDrift" };
+            var kind = DriftKind(name);
+            throw new McpFailure($"{kind}: '.screenplay/{name}' changed; reopen before proposing changes.") { FailureKind = kind };
         }
     }
+
+    static string DriftKind(string name) => name == ModelNotesStore.FileName ? "NotesRevisionDrift" : "IdentityStateDrift";
 }
