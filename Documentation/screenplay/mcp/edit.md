@@ -82,7 +82,10 @@ same-named fields are listed in `property.notChanged`, never edited.
 Rename repairs proven mappings and fixture assignments. If only one end of an
 AutoMap link is renamed, the proposal inserts an explicit mapping to preserve the
 flow. Remove refuses while readers remain; removed expected values are disclosed
-with `weakensAssertion: true`. Unselected upstream inputs remain follow-up
+with `weakensAssertion: true`. If the proposal cannot tell which `then` steps
+inherit a removed example value, it refuses rather than report the assertion as
+unaffected; fix the errors in that example or its specifications and retry.
+Unselected upstream inputs remain follow-up
 candidates rather than being deleted.
 
 For selected event fields, choose `eventNeverPersisted: true` only when the current

@@ -99,7 +99,10 @@ not permission to change additional fields. Off-chain selections refuse atomical
 
 Renaming just a command input repairs its mappings without renaming the event
 payload. Broken AutoMap links become explicit mappings. Removal requires no
-remaining readers and discloses removed assertion values. Opaque or incomplete
+remaining readers and discloses removed assertion values. When the specifications
+that inherit a removed example value cannot be determined, for example because the
+example or a specification using it has errors, removal refuses with
+`AmbiguousPropertyReference` instead of reporting no weakened assertion. Opaque or incomplete
 links, historical generations, inline events, keys and unsupported spans refuse
 with original candidate locations rather than guessing.
 
