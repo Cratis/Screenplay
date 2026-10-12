@@ -26,7 +26,7 @@ static class ContractAdmission
         new("authentication", "authentication\n  provider GitHub\n"),
         new("identity", "identity\n  department String from claim \"department\"\n", ["identity\n  department String from claim \"department\"\n" + Slice + Event + Command.Replace("value = value", "value = $identity.department", StringComparison.Ordinal)], Baseline: string.Empty),
         new("behavior", "behavior B\n  parameter command\n"),
-        new("concept", "concept Value : String\n", ["concept Status : Enum\n  draft = 1\n  issued = 4\n", "concept Status : Enum\n  draft = 0\n  issued = 1\n", "concept Value : String\n  description \"Value intent\"\n", "concept Value : String @pii\n  pii reason \"Personal data\"\n", "concept Value : String\n  validate csharp\n    ```csharp\n    return true;\n    ```\n"]),
+        new("concept", "concept Value : String\n", ["concept Status : Enum\n  draft = 1\n  issued = 4\n", "concept Status : Enum\n  draft = 0\n  issued = 1\n", "concept Value : String\n  description \"Value intent\"\n", "concept Value : String pii\n  pii reason \"Personal data\"\n", "concept Value : String pii\n  pii special health\n  pii criminal\n", "concept Value : String secret\n  secret scope namespace\n", "concept Value : String pii secret\n", "concept Value : String\n  validate csharp\n    ```csharp\n    return true;\n    ```\n"]),
         new("direction", Slice.Replace("StateChange", "Translate", StringComparison.Ordinal) + "      direction inbound\n"),
         new("domain", "domain Example\n"),
         new("eventsource", "concept Id : Uuid\neventsource Record\n  identifier Id\n"),

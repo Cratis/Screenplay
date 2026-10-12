@@ -1,0 +1,10 @@
+concept InvoiceId : Uuid
+concept HealthInformation : String pii
+  pii special health
+  pii criminal
+concept ApiKey : String secret
+  secret scope namespace
+concept PersonalSecret : String pii secret
+concept InvoiceStatus : Enum
+  draft = -1
+  issued = 4
