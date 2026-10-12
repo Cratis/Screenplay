@@ -26,6 +26,14 @@ internal sealed partial class McpRecoveryJournal
             if (!Directory.Exists(Path.GetDirectoryName(path))) yield return Path.GetDirectoryName(path)!;
         }
 
+        if (proposal is McpNotesProposal)
+        {
+            yield return new McpManagedFiles(root).PathFor(ModelNotesStore.FileName);
+            yield return OperationPath(root, operationId, "notes-stage");
+            yield return OperationPath(root, operationId, "notes-backup");
+            yield return OperationPath(root, operationId, "notes-rollback");
+        }
+
         // Rollback visits every original, including unchanged documents (and restores their access rules).
         for (var index = 0; index < proposal.Before.Documents.Length; index++)
         {

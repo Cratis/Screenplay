@@ -27,7 +27,7 @@ public static class ModelNotesAnchors
     /// <param name="document">The notes.</param>
     /// <param name="catalog">The current catalog.</param>
     /// <returns>Current items, preserving every orphan.</returns>
-    public static ImmutableArray<ModelNotesItem> Items(ModelNotesDocument document, SemanticIdentityCatalog catalog) => [.. document.Notes.Select(note =>
+    public static ImmutableArray<ModelNotesItem> Items(ModelNotesDocument document, SemanticIdentityCatalog catalog) => [.. document.Notes.OrderBy(note => note.Id, StringComparer.Ordinal).Select(note =>
     {
         var address = Resolve(note.Anchor, catalog);
         var state = address is null ? "orphaned" : State(note);
@@ -69,7 +69,7 @@ public static class ModelNotesAnchors
     /// <param name="scope">An optional dotted module/feature/slice scope.</param>
     /// <returns>The selected open questions.</returns>
     public static ImmutableArray<ModelNotesFinding> Findings(ModelNotesDocument document, SemanticIdentityCatalog catalog, string? scope = null) =>
-        [.. document.Notes.Where(note => note.Kind == "question" && note.Resolution is null)
+        [.. document.Notes.Where(note => note.Kind == "question" && note.Resolution is null).OrderBy(note => note.Id, StringComparer.Ordinal)
             .Select(note => (Note: note, Address: Owner(Resolve(note.Anchor, catalog), catalog)))
             .Where(value => InScope(value.Address, scope))
             .Select(value => new ModelNotesFinding(value.Note.Id, "info", "model-note.open-question", value.Note.Text, value.Address is null ? null : ModelNotesAddress.From(value.Address)))];

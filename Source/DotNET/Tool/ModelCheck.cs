@@ -14,6 +14,7 @@ static class ModelCheck
     {
         string? target = null;
         string? scope = null;
+        string? openQuestions = null;
         var checks = CompletenessChecks.None;
         for (var index = 0; index < args.Length; index++)
         {
@@ -33,6 +34,16 @@ static class ModelCheck
                 }
 
                 scope = args[++index];
+            }
+            else if (argument == CliCommandCatalog.OpenQuestions.Name)
+            {
+                if (openQuestions is not null || index + 1 == args.Length || (args[index + 1] != "report" && args[index + 1] != "fail"))
+                {
+                    error.WriteLine("--open-questions requires report or fail and cannot be repeated.");
+                    return 2;
+                }
+
+                openQuestions = args[++index];
             }
             else if (argument == CliCommandCatalog.Checks.Name)
             {
@@ -72,7 +83,7 @@ static class ModelCheck
 
         try
         {
-            return Check(target, isFile, scope, checks, args.Contains(CliCommandCatalog.WarnAsError.Name), output, error, useColors && !args.Contains(CliCommandCatalog.NoColor.Name));
+            return Check(target, isFile, scope, checks, openQuestions, args.Contains(CliCommandCatalog.WarnAsError.Name), output, error, useColors && !args.Contains(CliCommandCatalog.NoColor.Name));
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
@@ -81,7 +92,7 @@ static class ModelCheck
         }
     }
 
-    static int Check(string target, bool isFile, string? scope, CompletenessChecks checks, bool warnAsError, TextWriter output, TextWriter error, bool useColors)
+    static int Check(string target, bool isFile, string? scope, CompletenessChecks checks, string? openQuestions, bool warnAsError, TextWriter output, TextWriter error, bool useColors)
     {
         var snapshot = McpSnapshot.Compile(target, isFile);
         var sources = snapshot.Sources;
@@ -116,10 +127,12 @@ static class ModelCheck
             output.WriteLine($"completeness checks skipped: the model has {errorCount} error(s)");
         }
 
+        var notesExit = ModelOpenQuestions.Run(new(snapshot, target, isFile, scope, openQuestions), output, error);
+        if (notesExit == 2) return 2;
         if (sources.Count == 0)
         {
             output.WriteLine($"No .play files found beneath {target}");
-            return 0;
+            return notesExit;
         }
 
         var fallbackFile = sources.Keys.First();
@@ -166,6 +179,6 @@ static class ModelCheck
             output.WriteLine(summary);
         }
 
-        return failed ? 1 : 0;
+        return failed || notesExit == 1 ? 1 : 0;
     }
 }

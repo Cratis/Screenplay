@@ -104,7 +104,7 @@ internal sealed partial class McpWorkspaces
         new McpManagedFiles(Root).Verify(McpState.FileName, persisted);
         RefusePendingWorkspace();
         _ = McpWorkspaceTransport.ExportBytes(candidate);
-        var result = McpJson.ToolResult(WithRootBindingConflict(McpWorkspaceTransport.Describe(candidate, McpJson.Boolean(arguments, "includeContent"))));
+        var result = McpJson.ToolResult(WithRootBindingConflict(WithNotes(McpWorkspaceTransport.Describe(candidate, McpJson.Boolean(arguments, "includeContent")), candidate)));
         _workspace = candidate;
         _stateBytes = persisted;
         _proposals.Clear();
@@ -153,6 +153,7 @@ internal sealed partial class McpWorkspaces
             throw new McpFailure("StaleRevision: workspace or catalog revision no longer matches the proposal.") { FailureKind = "StaleRevision" };
         }
 
+        VerifyNotesPlan(proposal);
         var statePlan = StatePlan(proposal);
         var includeContent = McpJson.Boolean(arguments, "includeContent");
         var beforeDescription = JsonSerializer.SerializeToElement(McpWorkspaceTransport.Describe(workspace, includeContent), McpJson.Options);
@@ -166,6 +167,7 @@ internal sealed partial class McpWorkspaces
             {
                 BeforeInstall?.Invoke();
                 RefuseCompetingPending();
+                VerifyNotesPlan(proposal);
                 evidence?.Verify(Root, proposal);
             },
             evidence?.OperationId);
@@ -418,6 +420,7 @@ internal sealed partial class McpWorkspaces
             after = McpWorkspaceTransport.Describe(candidate, includeContent),
             moveReport = proposal is McpAuthoringProposal moved ? DescribeMove(moved.Result.MoveReport) : null,
             property = DescribeProperty(proposal),
+            orphanedNotes = OrphanedNotes(proposal),
             changeCount = proposal.WritePlan.Entries.Length,
             stateChange = statePlan.Describe(),
             authoringDiagnosticCount = proposal is McpAuthoringProposal authored ? authored.Result.AuthoringDiagnostics.Length : 0,

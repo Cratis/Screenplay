@@ -59,6 +59,8 @@ sealed class McpTools
                 "open-workspace" => _workspaces.Open(arguments),
                 "run-specifications" => _workspaces.RunSpecifications(arguments),
                 "workspace-state" => _workspaces.State(arguments),
+                "list-model-notes" => _workspaces.ListNotes(arguments),
+                "propose-model-notes" => _workspaces.ProposeNotes(arguments),
                 "recover-workspace" => _workspaces.Recover(arguments),
                 "propose-rename" or "propose-move" or "propose-property" => Refactor(name, arguments),
                 "propose-extract-inline-event" => _workspaces.ExtractInlineEvent(arguments),

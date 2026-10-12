@@ -5,7 +5,7 @@ using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
 
-sealed class McpDisk(McpRoot root, Action<string, string>? move = null)
+internal sealed partial class McpDisk(McpRoot root, Action<string, string>? move = null)
 {
     readonly Action<string, string> _move = move ?? ((source, destination) => File.Move(source, destination));
 
@@ -31,6 +31,7 @@ sealed class McpDisk(McpRoot root, Action<string, string>? move = null)
         {
             Stage(changes);
             McpManagedFiles.WritePrivate(journal.StateStage, state.After);
+            StageNotes(journal);
             journal.VerifyMarker();
             root.Verify(proposal.Before);
             files.Verify(McpState.FileName, state.Before);
@@ -38,9 +39,11 @@ sealed class McpDisk(McpRoot root, Action<string, string>? move = null)
 
             // Last pre-install check under the existing exclusive-writer assumption, not a kernel-atomic lock.
             verifyEvidence?.Invoke();
+            journal.VerifyNotes(applied: false);
             Backup(changes, journal);
             Install(changes, journal);
             InstallState(files, state, journal);
+            InstallNotes(files, journal);
             root.Verify(proposal.Workspace);
             files.Verify(McpState.FileName, state.After);
             journal.Complete(applied: true);

@@ -19,6 +19,11 @@ public static class CliCommandCatalog
     public static CliOption Checks { get; } = new("--check", "<name>[,<name>]|all");
 
     /// <summary>
+    /// Gets the opt-in open model question gate.
+    /// </summary>
+    public static CliOption OpenQuestions { get; } = new("--open-questions", "report|fail");
+
+    /// <summary>
     /// Gets the warnings-as-errors option.
     /// </summary>
     public static CliOption WarnAsError { get; } = new("--warnaserror");
@@ -51,7 +56,7 @@ public static class CliCommandCatalog
     /// <summary>
     /// Gets the default model-check command.
     /// </summary>
-    public static CliCommand Check { get; } = new(string.Empty, "[<file.play|folder>]", [Scope, Checks, WarnAsError, NoColor]);
+    public static CliCommand Check { get; } = new(string.Empty, "[<file.play|folder>]", [Scope, Checks, OpenQuestions, WarnAsError, NoColor]);
 
     /// <summary>
     /// Gets the reference-evaluator command.

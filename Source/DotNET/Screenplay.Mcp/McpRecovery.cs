@@ -5,7 +5,7 @@ using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
 
-sealed class McpRecovery(McpRoot root, McpRecoveryJournal journal)
+internal sealed partial class McpRecovery(McpRoot root, McpRecoveryJournal journal)
 {
     readonly McpManagedFiles _files = new(root);
 
@@ -66,6 +66,7 @@ sealed class McpRecovery(McpRoot root, McpRecoveryJournal journal)
         }
 
         RestoreState();
+        RestoreNotes();
         root.Verify(journal.Before);
         _files.Verify(McpState.FileName, journal.Record.BeforeState);
         journal.VerifyOriginalAccess();
@@ -125,6 +126,7 @@ sealed class McpRecovery(McpRoot root, McpRecoveryJournal journal)
         }
 
         _ = ReadKnown(_files.PathFor(McpState.FileName), journal.Record.BeforeState, journal.Record.AfterState);
+        PreflightNotes();
         foreach (var change in journal.Changes)
         {
             CheckArtifact(change.Stage, change.Entry.After?.Bytes.ToArray());
