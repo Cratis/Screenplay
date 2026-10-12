@@ -20,7 +20,7 @@ applies-to:
 
 ## Context
 
-[#686](https://github.com/Cratis/Screenplay/issues/686) asks whether event generations should be unnecessary while nothing is deployed. The question was raised on [PR #673](https://github.com/Cratis/Screenplay/pull/673#issuecomment-6120149966).
+[#686](https://github.com/Cratis/Screenplay/issues/686) asks whether event generations should be unnecessary while nothing is deployed. The question was raised on [PR #673](https://github.com/Cratis/Screenplay/pull/673#issuecomment-6120249738).
 
 **What exists today.**
 - [0044](0044-evolve-event-properties-through-mcp.md) requires exactly one of `newGeneration` or `eventNeverPersisted` for any change to an event property, otherwise `EventContractChangeRequiresDecision`. [0067](0067-report-every-selected-event-property-evolution.md) reports the choice per event in `property.generations[]` as `{ event, from, to, mode }`, with `mode` either `newGeneration` or `eventNeverPersisted` (`WorkspacePropertyReport.cs`, `WorkspacePropertyGeneration`). `propose-rename` uses `eventNeverPersisted` for a related purpose: it decides whether an event rename pins the previous name with `id "<previous name>"` (`WorkspaceRefactoring.cs`, `PlannedEventId`; `events.md`).
