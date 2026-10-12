@@ -14,6 +14,14 @@
         <EmbeddedResource Include="Corpus/**/*.json" />
         <EmbeddedResource Include="Corpus/**/*.txt" />
         <EmbeddedResource Include="Corpus/**/*.ts" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/full-esm-v*.json"
+                          Link="Esm/%(Filename)%(Extension)"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalCorpus.Esm.%(Filename)%(Extension)" />
+        <EmbeddedResource Include="../Screenplay/Semantics/Serialization/Golden/policy-negation-v*.json"
+                          Link="Esm/%(Filename)%(Extension)"
+                          WithCulture="false"
+                          LogicalName="Cratis.Screenplay.CanonicalCorpus.Esm.%(Filename)%(Extension)" />
         <ProjectReference Include="../Screenplay/Screenplay.csproj" />
     </ItemGroup>
 </Project>

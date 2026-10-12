@@ -178,6 +178,16 @@ A target must fail closed when it cannot realize reachable semantics. It must no
 
 ### Canonical conformance corpus
 
+For ESM-version admission checks, use the released golden bytes from `Cratis.Screenplay.CanonicalCorpus`
+instead of vendoring serializer fixtures. `EsmGoldenVectors.Versions` lists the full ESM vectors in ascending
+order. `EsmGoldenVectors.Get(version)` returns an `EsmGoldenVector` containing `Version`, immutable `Bytes`,
+and `SemanticRevision` verified by the strict ESM reader; an unavailable version throws `EsmGoldenVectorNotFound`.
+`EsmGoldenVectors.PolicyNegationV7` provides the separate byte-preserving v7 policy-negation extension.
+These resources are linked from the compiler's Golden folder in Debug and Release packages. New
+`full-esm-v<N>.json` files are included automatically at build time. Expression, identity-catalog and
+typed-context sidecars are not ESM and are excluded from this API. Availability does not grant admission:
+your consumer still decides which ESM versions and extensions it supports.
+
 `Cratis.Screenplay.CanonicalCorpus` provides source-backed vectors for consumers that compile Screenplay independently of their rendering pipeline. `RegisterProjectCorpus.LegacyV1` contains single-file, folder, reverse-ordered, and relocated forms of the same application. Each form carries exact UTF-8 bytes, stable document keys, portable display paths, and identity-catalog bytes; all compile to the pinned semantic revision, canonical ESM bytes, and normalized specification outcomes. A relocated path changes the workspace transport revision, **not** the semantic revision.
 
 `RegisterProjectCorpus.V2` names the evolved *scenario*, not the ESM schema. It pins new ESM v4 bytes and revision: generation 1 of `ProjectRegistered` carries `projectId` and `name`, while generation 2 carries only `name`; the command and expected event specify the stream with `for`, and the projection keys from the event source. The single-file and folder forms have distinct persisted catalogs; reordered and relocated forms reuse the folder catalog. All four produce the same bytes, identities and outcomes. Consumers pinned to v1–v3 must reject this v4 vector. The identity catalog retains `schemaVersion: 1` while its typed property addresses can now include a `Generation` part and its event assignments can carry revisions above 1. Readers without support for those address parts must reject the catalog rather than drop lineage. The legacy v1 corpus and v1–v3 serializer golden bytes remain unchanged. `Semantics/Serialization/Golden/full-esm-v4.json` is the source-backed mixed v4 serializer vector.

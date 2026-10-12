@@ -1,6 +1,17 @@
 # Golden vectors
 
-The `full-esm-*.json` files pin canonical executable semantic model (ESM) bytes, including each model's semantic revision:
+The `full-esm-*.json` files pin canonical executable semantic model (ESM) bytes, including each model's semantic revision.
+
+Consume the released bytes through `Cratis.Screenplay.CanonicalCorpus`, rather than copying these files.
+`EsmGoldenVectors.Versions` discovers the full vectors in ascending version order;
+`EsmGoldenVectors.Get(version)` returns an `EsmGoldenVector` with `Version`, immutable `Bytes`, and
+`SemanticRevision` verified by the strict ESM reader. Unknown versions throw `EsmGoldenVectorNotFound`.
+`EsmGoldenVectors.PolicyNegationV7` exposes the separate policy-negation extension described below.
+The package links these ESM files as embedded resources in every build configuration, without copies.
+Adding a new `full-esm-v<N>.json` automatically includes it and exposes its version in the next package build.
+Expression, identity-catalog and typed-context sidecars are separate contracts and are not part of this API.
+
+The full vectors are built from these source models:
 
 | File | Source model |
 | --- | --- |
