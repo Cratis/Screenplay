@@ -18,7 +18,7 @@ internal sealed partial class WorkspaceRefactoring
 
         try
         {
-            return PropertyCore(request, report, assertions);
+            return request.Action == "add" ? AddProperty(request, report) : PropertyCore(request, report, assertions);
         }
         catch (Exception exception) when (exception is InvalidWorkspaceAuthoring or InvalidSemanticContract)
         {
@@ -26,16 +26,34 @@ internal sealed partial class WorkspaceRefactoring
         }
     }
 
-    static bool ValidPropertyOptions(WorkspacePropertyRequest request)
-    {
-        if (request.Action is not ("rename" or "remove")) return false;
-        if (request.NewGeneration && request.EventNeverPersisted) return false;
-        if (request.AlsoRename.IsDefault || request.AlsoRemove.IsDefault) return false;
-        return request.Action == "rename" ? ValidPropertyRename(request) : ValidPropertyRemoval(request);
-    }
+    static bool ValidPropertyOptions(WorkspacePropertyRequest request) => ValidPropertyMode(request) && ValidPropertySelectionArrays(request) && ValidPropertyAction(request);
 
-    static bool ValidPropertyRename(WorkspacePropertyRequest request) => Identifier(request.NewName) && request.AlsoRemove.IsEmpty;
-    static bool ValidPropertyRemoval(WorkspacePropertyRequest request) => request.AlsoRename.IsEmpty && request.NewName is null;
+    static bool ValidPropertyMode(WorkspacePropertyRequest request) => !request.NewGeneration || !request.EventNeverPersisted;
+    static bool ValidPropertySelectionArrays(WorkspacePropertyRequest request) => !request.AlsoRename.IsDefault && !request.AlsoRemove.IsDefault;
+
+    static bool ValidPropertyAction(WorkspacePropertyRequest request) => request.Action switch
+    {
+        "add" => ValidPropertyAddition(request),
+        "rename" => ValidPropertyRename(request),
+        "remove" => ValidPropertyRemoval(request),
+        _ => false
+    };
+
+    static bool ValidPropertyAddition(WorkspacePropertyRequest request) => ValidPropertyAdditionOwner(request) && ValidPropertyAdditionShape(request) && NoOriginalPropertySelection(request) && !request.Hops.IsDefault;
+    static bool ValidPropertyAdditionOwner(WorkspacePropertyRequest request) => request.Owner is not null && request.ExpectedOwnerName is not null;
+    static bool ValidPropertyAdditionShape(WorkspacePropertyRequest request) => Identifier(request.Name) && !string.IsNullOrWhiteSpace(request.Type);
+    static bool NoOriginalPropertySelection(WorkspacePropertyRequest request) => NoOriginalPropertyTarget(request) && NoPropertyRenameSelection(request) && request.AlsoRemove.IsEmpty;
+    static bool NoOriginalPropertyTarget(WorkspacePropertyRequest request) => request.Target is null && request.ExpectedName is null;
+    static bool NoPropertyRenameSelection(WorkspacePropertyRequest request) => request.NewName is null && request.AlsoRename.IsEmpty;
+
+    static bool ValidPropertyRename(WorkspacePropertyRequest request) => ValidOriginalPropertySelection(request) && Identifier(request.NewName) && request.AlsoRemove.IsEmpty;
+    static bool ValidPropertyRemoval(WorkspacePropertyRequest request) => ValidOriginalPropertySelection(request) && request.AlsoRename.IsEmpty && request.NewName is null;
+    static bool ValidOriginalPropertySelection(WorkspacePropertyRequest request) => ValidOriginalPropertyTarget(request) && NoPropertyAdditionOptions(request);
+    static bool ValidOriginalPropertyTarget(WorkspacePropertyRequest request) => request.Target is not null && request.ExpectedName is not null;
+    static bool NoPropertyAdditionOptions(WorkspacePropertyRequest request) => NoPropertyAdditionOwner(request) && NoPropertyAdditionShape(request) && NoPropertyAdditionValues(request);
+    static bool NoPropertyAdditionOwner(WorkspacePropertyRequest request) => request.Owner is null && request.ExpectedOwnerName is null;
+    static bool NoPropertyAdditionShape(WorkspacePropertyRequest request) => request.Name is null && request.Type is null && !request.Optional;
+    static bool NoPropertyAdditionValues(WorkspacePropertyRequest request) => request.Hops.IsEmpty && request.FixtureValue is null;
 
     static WorkspaceAuthoringResult PropertyFailure(WorkspaceConflictKind kind, WorkspacePropertyReport report, IEnumerable<WorkspacePropertyCandidate>? candidates = null)
     {

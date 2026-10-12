@@ -459,7 +459,7 @@ An unbound model returns `outcome: "unbound"`, executable diagnostics and `page:
 | `propose-repair` | `expectedRevision`, `expectedCatalogRevision`, `diagnosticCode`, `subject` handle, `formatting` | `line` for a `PLAY0565` concept-line repair, `pinRepairEvidence`, `expectedRepairEvidenceRevision`, includeContent; use the discovered `requiredFormatting`. `PLAY0479`, `PLAY0565` and `PLAY0653` support `PreserveTrivia` or explicit `CanonicalizeTouchedDocuments`; other repairs require `CanonicalizeTouchedDocuments` |
 | `propose-rename` | Expected revisions, target handle, expectedName, newName | formatting, validation, includeContent, `eventNeverPersisted` (boolean, default false) |
 | `propose-move` | Expected revisions, target address, newParent address | targetHandle, newParentHandle, formatting, validation, includeContent |
-| `propose-property` | `expectedRevision`, `expectedCatalogRevision`, `action`, `target`, `expectedName`; rename also `newName` | `alsoRename` or `alsoRemove`, `newGeneration`, `eventNeverPersisted`, formatting (`PreserveTrivia` default), validation (`Authoring` default), includeContent |
+| `propose-property` | `expectedRevision`, `expectedCatalogRevision`, `action`; rename/remove: `target`, `expectedName` (rename also `newName`); add: `owner`, `expectedOwnerName`, `name`, `type` | `alsoRename` or `alsoRemove`; add: `optional`, `hops`, `fixtureValue`; `newGeneration`, `eventNeverPersisted`, formatting (`PreserveTrivia` default), validation (`Authoring` default), includeContent |
 | `propose-number-enum-members` | `expectedRevision`, `expectedCatalogRevision`, unnumbered enum `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted; never renumbers numbered or mixed enums |
 | `propose-extract-inline-event` | `expectedRevision`, `expectedCatalogRevision`, inline event `subject` handle, `formatting` | validation, includeContent; only `CanonicalizeTouchedDocuments` is admitted |
 | `expand-layout` | Expected revisions | layout (`single`, `module`, `feature`, `slice`; default `slice`, one file per slice), validation, formatting, referencePolicy, includeContent |
@@ -536,12 +536,32 @@ view selects a parent document/path. Typed content is opt-in.
 
 ## Property change planner
 
-`propose-property` supports `action: "rename"` and `"remove"` on command, current
+`propose-property` supports `action: "add"`, `"rename"` and `"remove"` on command, current
 event and non-key read-model properties. `target` and each additional selection
 are original `read-ast` handles, with exact expected names. `alsoRename` and
 `alsoRemove` contain `{target, expectedName}` objects for their matching action.
 Only explicitly selected properties change; a resolved chain does not authorize
 extra edits. Off-chain same-named fields appear in `notChanged` with `reason: "offChain"`.
+
+For add, the required fields are:
+
+| Parameter | Type and meaning |
+| --- | --- |
+| `owner` | Revision-bound `read-ast` handle of the command, current event or read-model declaration |
+| `expectedOwnerName` | Exact original declaration name |
+| `name` | New unqualified property name; existing names refuse |
+| `type` | Authored type text, such as `String` or a concept name; does not create a concept |
+| `optional` | Boolean, default false; use this flag rather than an optional suffix in `type` |
+| `hops` | Array, default empty; each entry is `{at, name}` at another declaration or `{at, value}` at a `produces`, `from` or capture `append` block |
+| `fixtureValue` | Optional literal source text; required when a non-optional addition has existing fixture or assertion occurrences |
+
+Declaration hops use the owner's added type. Mapping hops supply the target's
+value expression. AutoMap satisfies a same-named projection hop. Every selected
+event producer and read-model consumer needs a mapping decision or a compatible
+AutoMap source. Required fixture values are added to existing specification steps,
+examples and query results; optional properties do not add fixture values.
+`target`, `expectedName`, `newName`, `alsoRename` and `alsoRemove` are invalid for
+add; add-only fields are invalid for rename/remove. Off-chain hops refuse.
 
 Reference policy is always `Safe`. Rename rewrites proven mappings and fixtures;
 it inserts an explicit projection mapping when the unselected counterpart would
@@ -563,7 +583,7 @@ The normal retained proposal response adds `property`, also returned by
 
 | Member | Contract |
 | --- | --- |
-| `action`, `target` | Requested action; original property address, owner kind and optional generation |
+| `action`, `target` | Requested action; original property address for rename/remove or candidate property address for add, owner kind and optional generation |
 | `changed` | Original address, owner kind, indexed role, `change`, source `location`, `weakensAssertion` |
 | `notChanged` | Off-chain property address, kind and `reason: "offChain"` |
 | `needsDecision` | Refusal reason, subject and candidate addresses/kinds/roles/locations |
@@ -574,7 +594,8 @@ The normal retained proposal response adds `property`, also returned by
 | `esmVersionKnown` | Whether the candidate bound, independently of authoring acceptance |
 
 `change` is one of `renamed`, `removed`, `mappingRewritten`,
-`explicitMappingInserted`, `fixtureRewritten`, `fixtureRemoved`. Generation mode
+`explicitMappingInserted`, `fixtureRewritten`, `fixtureRemoved`, `added`,
+`fixtureAdded`. Generation mode
 is `newGeneration` or `eventNeverPersisted`. Each event retains its own original
 revision; in-place edits report equal `from` and `to`. `generations: []` means no
 accepted planned event-contract edits, not a successful proposal. There is no
@@ -585,7 +606,8 @@ Refusals return `success: false`, no writable partial candidate, and a
 `failureKind`: `HopNotOnChain`, `PropertyReadersExist`,
 `EventContractChangeRequiresDecision`, `HistoricalGenerationImmutable`,
 `InlineEventRequiresExtraction`, `AmbiguousPropertyReference`,
-`OpaquePropertyReference` or `UnsupportedPropertySpan`. Ordinary stale revision,
+`OpaquePropertyReference`, `UnsupportedPropertySpan`, `SourcesRequired` or
+`FixtureValueRequired`. Ordinary stale revision,
 formatting, compilation and identity-migration checks still apply. Structural
 edits need explicit canonical formatting consent; trivia preservation never falls
 back silently. Review exact bytes, identities and `view: "semantic-diff"`, then

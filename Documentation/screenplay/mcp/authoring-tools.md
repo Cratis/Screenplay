@@ -34,7 +34,7 @@ it from directory names.
 | `propose-source` | Whole `.play` text documents, including syntax-only language constructs | `Authoring` by default; optional `Executable` |
 | `propose-ast` | Focused typed node edits using `read-ast` handles, or typed whole documents | `Authoring` by default; optional `Executable` |
 | `propose` | Exact byte replacements and legacy whole-document operations | Executable-only |
-| `propose-property` | Rename or remove explicitly selected properties along proven mapping chains | `Authoring` by default; optional `Executable` |
+| `propose-property` | Add, rename or remove explicitly selected properties along proven mapping chains | `Authoring` by default; optional `Executable` |
 
 These tools return proposals to review with `read-proposal` before explicit `apply`.
 Acceptance never writes files or executes specifications.
@@ -90,7 +90,16 @@ may normalize whitespace. Review exact before/after bytes, dropped comments and
 
 ## Plan a property change
 
-Read the original property handle with `read-ast`, then call `propose-property` with
+For add, read the owner declaration handle with `read-ast` and supply
+`action: "add"`, `owner`, `expectedOwnerName`, `name` and `type`, plus both revision
+guards. Select declaration hops with `{at, name}` and mapping hops with `{at, value}`.
+AutoMap can satisfy a same-named read-model hop. A required property needs
+`fixtureValue` literal source text at every existing fixture, example and assertion;
+optional additions do not edit fixtures. Missing sources or values refuse, never
+infer. Event additions, even optional ones, use the same explicit evolution choice
+as rename/remove. See [adding a property](edit.md#add-a-property-along-a-mapping-chain).
+
+For rename/remove, read the original property handle with `read-ast`, then call `propose-property` with
 `expectedRevision`, `expectedCatalogRevision`, `action: "rename"` or `"remove"`,
 `target` and `expectedName`. Rename also requires `newName`. Each optional
 `alsoRename` or `alsoRemove` entry is `{ "target": <handle>, "expectedName": <name> }`;

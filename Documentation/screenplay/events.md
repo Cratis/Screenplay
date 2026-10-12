@@ -36,7 +36,7 @@ For projections that opt in to Chronicle's generation support, bare PDL event na
 
 ## Change an event property through MCP
 
-Use `propose-property` to rename or remove a current event property, with an
+Use `propose-property` to add, rename or remove a current event property, with an
 explicit choice between `eventNeverPersisted` and `newGeneration`. The first
 asserts that the current generation has never been stored: it edits that generation
 in place and preserves renamed property IDs. The second keeps every historical
@@ -44,7 +44,12 @@ shape and identity, appends the changed shape as generation N+1, and assigns new
 property identities there while retaining the event contract ID. Historical
 properties refuse either choice. Extract an inline event before changing its contract.
 
-Only the target and explicitly selected `alsoRename` or `alsoRemove` fields change.
+Adding even an optional property requires this choice: an in-place schema addition
+is not safe for a stored generation. Add selects an owner and explicit declaration
+or mapping `hops`; the planner never infers producer values. Required properties
+need literal fixture values. See [adding a property along its chain](mcp/edit.md#add-a-property-along-a-mapping-chain).
+
+Only the target and explicitly selected `alsoRename`, `alsoRemove` or add hops change.
 Evolution flags do not select connected events. One proposal can select several
 events with different starting generations, but uses one mode for them all. Its
 required `property.generations` array reports each selected event once, in canonical

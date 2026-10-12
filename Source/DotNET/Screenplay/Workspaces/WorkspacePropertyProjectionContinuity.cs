@@ -10,13 +10,13 @@ namespace Cratis.Screenplay.Workspaces;
 
 // Compare effective writes, not just AutoMap links. An explicit replacement and its former AutoMap
 // must be equivalent for EVERY feed and variant consuming the physical mapping slot.
-sealed class WorkspacePropertyProjectionContinuity(WorkspacePropertyPlan before, WorkspacePropertyRequest request, IReadOnlyList<WorkspacePropertyPlan.PropertyMember> selected)
+sealed class WorkspacePropertyProjectionContinuity(WorkspacePropertyPlan before, WorkspacePropertyRequest request, IReadOnlyList<WorkspacePropertyPlan.PropertyMember> selected, IReadOnlyList<WorkspacePropertyAddition>? additions = null)
 {
     internal WorkspacePropertyRefusal? Inspect(ScreenplayWorkspace candidate)
     {
         var after = new WorkspacePropertyPlan(WorkspaceSyntaxIndex.Create(candidate));
         var expected = before.Links.ProjectionEffects.Where(effect => !Removed(effect)).Select(effect => Snapshot(effect, true)).ToArray();
-        var actual = after.Links.ProjectionEffects.Select(effect => Snapshot(effect, false)).ToArray();
+        var actual = after.Links.ProjectionEffects.Where(effect => !Added(effect)).Select(effect => Snapshot(effect, false)).ToArray();
         var differences = Differences(expected, actual).Concat(Differences(actual, expected)).ToArray();
         return differences.Length == 0 ? null : new(WorkspaceConflictKind.AmbiguousPropertyReference, [.. differences.Select(OriginalCandidate).Distinct()]);
     }
@@ -26,6 +26,8 @@ sealed class WorkspacePropertyProjectionContinuity(WorkspacePropertyPlan before,
         var counts = right.GroupBy(snapshot => snapshot.Key).ToDictionary(group => group.Key, group => group.Count());
         return left.GroupBy(snapshot => snapshot.Key).Where(group => group.Count() != counts.GetValueOrDefault(group.Key)).SelectMany(group => group);
     }
+
+    bool Added(WorkspacePropertyProjectionEffect effect) => request.Action == "add" && effect.Targets is [var target] && additions!.Any(addition => target.Address == $"{addition.AuthoredAddress}.{addition.Name}");
 
     bool Removed(WorkspacePropertyProjectionEffect effect) => request.Action == "remove" && effect.Targets.Concat(effect.Sources.SelectMany(source => source.Members)).Any(IsSelected);
 
@@ -75,8 +77,9 @@ sealed class WorkspacePropertyProjectionContinuity(WorkspacePropertyPlan before,
         var members = effect.Targets.Concat(effect.Sources.SelectMany(source => source.Members));
         var member = snapshot.Planned ? members.Select(before.Member).OfType<WorkspacePropertyPlan.PropertyMember>().FirstOrDefault() :
             before.Members.FirstOrDefault(member => !before.Historical(member.Owner) && members.Any(declaration => Endpoint(member.Declaration, true) == declaration.Address));
-        member ??= selected[0];
-        return new(member.Entry.Address!, member.Kind, "mapping-target", before.LocationAtPosition(effect.Feed.Handle));
+        if (member is not null) return new(member.Entry.Address!, member.Kind, "mapping-target", before.LocationAtPosition(effect.Feed.Handle));
+        if (selected.Count > 0) return new(selected[0].Entry.Address!, selected[0].Kind, "mapping-target", before.LocationAtPosition(effect.Feed.Handle));
+        return WorkspacePropertyAddPlan.Candidate(additions![0]) with { Role = "mapping-target", Location = before.LocationAtPosition(effect.Feed.Handle) };
     }
 
     sealed record EffectSnapshot(EffectKey Key, WorkspacePropertyProjectionEffect Effect, bool Planned);

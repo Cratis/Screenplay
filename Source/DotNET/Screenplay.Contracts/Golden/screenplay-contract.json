@@ -22354,11 +22354,18 @@
         "alsoRename",
         "eventNeverPersisted",
         "expectedName",
+        "expectedOwnerName",
+        "fixtureValue",
         "formatting",
+        "hops",
         "includeContent",
+        "name",
         "newGeneration",
         "newName",
+        "optional",
+        "owner",
         "target",
+        "type",
         "validation"
       ],
       "inputSchema": {
@@ -22373,6 +22380,7 @@
           "action": {
             "type": "string",
             "enum": [
+              "add",
               "rename",
               "remove"
             ]
@@ -22477,6 +22485,93 @@
             },
             "maxItems": 256
           },
+          "owner": {
+            "type": "object",
+            "properties": {
+              "revision": {
+                "type": "string"
+              },
+              "documentId": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "revision",
+              "documentId",
+              "path"
+            ],
+            "additionalProperties": false
+          },
+          "expectedOwnerName": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "optional": {
+            "type": "boolean",
+            "default": false
+          },
+          "hops": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "string"
+                    },
+                    "documentId": {
+                      "type": "string"
+                    },
+                    "path": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "documentId",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                },
+                "name": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "at"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "required": [
+                    "name"
+                  ]
+                },
+                {
+                  "required": [
+                    "value"
+                  ]
+                }
+              ]
+            },
+            "maxItems": 256
+          },
+          "fixtureValue": {
+            "type": "string"
+          },
           "newGeneration": {
             "type": "boolean",
             "default": false
@@ -22546,6 +22641,26 @@
               "required": [
                 "target",
                 "expectedName"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "action": {
+                  "const": "add"
+                }
+              },
+              "required": [
+                "action"
+              ]
+            },
+            "then": {
+              "required": [
+                "owner",
+                "expectedOwnerName",
+                "name",
+                "type"
               ]
             }
           }

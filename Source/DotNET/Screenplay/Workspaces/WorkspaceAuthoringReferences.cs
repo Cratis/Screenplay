@@ -32,6 +32,7 @@ static class WorkspaceAuthoringReferences
         {
             migrations[rename.PreviousAddress] = rename.CurrentAddress;
         }
+        var targetMigrations = WorkspaceEventGenerationReferences.Targets(previousIndex, currentIndex, request.EventRevisionAdvancements, migrations);
         var previousBindings = new WorkspaceReferenceBindings(previousIndex).Bindings;
         var routeSelections = RouteCandidateSelections(previousIndex, currentIndex, request);
         var promotions = PropertyCandidatePromotions(previousIndex, currentIndex, request);
@@ -60,7 +61,7 @@ static class WorkspaceAuthoringReferences
 
             if (original?.Target is { } resolved)
             {
-                if (binding.Target is null || (original.Reference.Text == binding.Reference.Text && !SameTarget(resolved, binding.Target, migrations)))
+                if (binding.Target is null || (original.Reference.Text == binding.Reference.Text && !SameTarget(resolved, binding.Target, targetMigrations)))
                 {
                     throw new InvalidWorkspaceAuthoring($"Existing reference '{binding.Reference.Key}' would lose its resolved target or silently rebind unchanged reference text. Edit the reference explicitly to a valid target, or supply a semantic migration for a genuine identity rename.");
                 }
@@ -84,7 +85,7 @@ static class WorkspaceAuthoringReferences
         }
 
         var disappeared = previousBindings.Where(binding => !matched.Contains(binding.Reference.Key) && !routeSelections.Removed.Contains(binding.Reference.Key)).ToList();
-        PairRelocated(introduced, disappeared, previousIndex, currentIndex, migrations);
+        PairRelocated(introduced, disappeared, previousIndex, currentIndex, new(migrations, targetMigrations));
         if ((introduced.Count > 0 && disappeared.Count > 0) || (routeSelections.Removed.Count > 0 && disappeared.Count > 0))
         {
             throw new InvalidWorkspaceAuthoring("Reference occurrence correspondence cannot be proven for simultaneous removal/reordering and insertion. Split explicit removals and additions, or preserve the existing occurrence owners with semantic migrations.");
@@ -100,7 +101,7 @@ static class WorkspaceAuthoringReferences
         List<WorkspaceReferenceBinding> disappeared,
         WorkspaceSyntaxIndex before,
         WorkspaceSyntaxIndex after,
-        Dictionary<SemanticAddress, SemanticAddress> migrations)
+        ReferenceMigrations migrations)
     {
         foreach (var binding in introduced.ToArray())
         {
@@ -109,9 +110,9 @@ static class WorkspaceAuthoringReferences
                 candidate.Reference.Domain == binding.Reference.Domain &&
                 candidate.Reference.Member == binding.Reference.Member &&
                 string.Equals(candidate.Reference.Text, binding.Reference.Text, StringComparison.Ordinal) &&
-                Equals(Owner(candidate.Reference, before, migrations), owner) &&
+                Equals(Owner(candidate.Reference, before, migrations.Owners), owner) &&
                 candidate.Target is not null && binding.Target is not null &&
-                SameTarget(candidate.Target, binding.Target, migrations));
+                SameTarget(candidate.Target, binding.Target, migrations.Targets));
             if (match is not null)
             {
                 disappeared.Remove(match);
@@ -292,5 +293,6 @@ static class WorkspaceAuthoringReferences
         return new(migrations.GetValueOrDefault(owner.Address) ?? owner.Address, default, reference.Path[owner.Handle.Path.Length..]);
     }
 
+    sealed record ReferenceMigrations(Dictionary<SemanticAddress, SemanticAddress> Owners, Dictionary<SemanticAddress, SemanticAddress> Targets);
     sealed record ReferenceOccurrence(SemanticAddress? Owner, DocumentId Document, string Member);
 }
