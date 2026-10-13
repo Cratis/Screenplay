@@ -25,6 +25,7 @@ const surfacedCodes = new Set<string>([
     DiagnosticCodes.EventTargetOutsideOutboundTranslation,
     DiagnosticCodes.EventsSourceOutsideInboundTranslation,
     DiagnosticCodes.InvalidCaptureEventsSource,
+    DiagnosticCodes.CaptureEventsFromSeveralOrigins,
     DiagnosticCodes.InvalidAbsentReadModelStep,
     DiagnosticCodes.UnknownConstraintProperty,
     DiagnosticCodes.OmittedProductionDestination,

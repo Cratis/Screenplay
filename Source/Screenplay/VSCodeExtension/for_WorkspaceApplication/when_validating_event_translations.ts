@@ -13,6 +13,7 @@ const cases = [
     ["Translate", "direction outbound\n      projection Publisher => Published\n        from Arrived\n          id = $eventSourceId", DiagnosticCodes.OutboundTranslationInput],
     ["Translate", "capture Feed\n        source events\n          from Arrived\n        key id", DiagnosticCodes.EventsSourceOutsideInboundTranslation],
     ["Translate", "direction inbound\n      capture Feed\n        source events\n          from Changed\n        key id", DiagnosticCodes.InboundTranslationInput],
+    ["Translate", "direction inbound\n      capture Feed\n        source events\n          from Arrived\n          from Other\n        key id", DiagnosticCodes.CaptureEventsFromSeveralOrigins],
     ["Translate", "direction inbound\n      capture Feed\n        source events\n        key id", DiagnosticCodes.InvalidCaptureEventsSource],
     ["Translate", "direction inbound\n      capture Feed\n        source events\n          route /x\n        key id", DiagnosticCodes.InvalidCaptureEventsSource],
 ] as const;
@@ -21,7 +22,7 @@ describe('when surfacing event translation boundaries across workspace imports',
     for (const [kind, body, code] of cases) {
         it(`should preserve ${code} in an imported ${kind} slice with ${body}`, () => {
             const application = new WorkspaceApplication();
-            application.set('application.play', 'import Outside.Arrived from "other/store"\nmodule Sales\n  feature Orders\n    import "facts.play"\n    import "transfer.play"');
+            application.set('application.play', 'import Outside.Other from "another/store"\nimport Outside.Arrived from "other/store"\nmodule Sales\n  feature Orders\n    import "facts.play"\n    import "transfer.play"');
             application.set('facts.play', 'slice StateChange Facts\n  event Changed\n  public event Published\n  public event Second');
             const source = [`slice ${kind} Transfer`, ...(`      ${body}`).split('\n').map(line => line.slice(4))];
             application.set('transfer.play', source.join('\n'));

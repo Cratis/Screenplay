@@ -623,6 +623,7 @@ Private origins continue to use the existing invalid event/import declaration di
 | `PLAY0618` | Error | A projection or reducer targets an event (`projection X => SomeEvent`) outside an explicitly outbound Translate slice. |
 | `PLAY0619` | Error | A capture reads `source events` outside an explicitly inbound Translate slice. |
 | `PLAY0620` | Error | A `source events` block has no `from <Event>` line, a line that is not `from <Event>`, an invalid event name or a repeated event. |
+| `PLAY0687` | Error | A capture's `source events` originate from several event stores; split it into one capture per origin. |
 
 The operational edges checked are seed appends, command and reaction productions (including refusal branches), capture appends,
 projection event sources and joins/removals, reducers and constraints. Projection `all` includes every declared
@@ -643,7 +644,7 @@ section has no automatic repair because each one is a contract decision for the 
 `PLAY0607`, `PLAY0608`, `PLAY0613` and `PLAY0617` would change which events a slice publishes or produces;
 `PLAY0609`, `PLAY0611`, `PLAY0612` and `PLAY0616` would change which events a translation consumes or produces, or its
 direction; `PLAY0610`, `PLAY0615`, `PLAY0618` and `PLAY0619` would move a construct between slices or change its direction;
-`PLAY0620` is malformed `source events` input with no single intended correction.
+`PLAY0620` is malformed `source events` input with no single intended correction. `PLAY0687` requires splitting a capture by origin, with no single intended correction.
 
 ### Production routes and observer filters
 
