@@ -228,6 +228,11 @@ public sealed record SemanticEventContract(
     ImmutableArray<SemanticProperty> Properties)
 {
     /// <summary>
+    /// Gets the pinned stored event type name, or null when it equals the display name.
+    /// </summary>
+    public string? StoredName { get; init; }
+
+    /// <summary>
     /// Gets literal tags appended with every occurrence of this event.
     /// </summary>
     /// <remarks>

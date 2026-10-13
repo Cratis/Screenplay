@@ -429,7 +429,12 @@
       },
       "from": 2,
       "to": 3,
-      "mode": "newGeneration"
+      "mode": "newGeneration",
+      "mutability": {
+        "basis": "noBaseline",
+        "releaseBaselineRevision": null,
+        "admittedIn": null
+      }
     },
     {
       "event": {
@@ -459,7 +464,12 @@
       },
       "from": 1,
       "to": 2,
-      "mode": "newGeneration"
+      "mode": "newGeneration",
+      "mutability": {
+        "basis": "noBaseline",
+        "releaseBaselineRevision": null,
+        "admittedIn": null
+      }
     }
   ],
   "deployableWithoutTransformation": false,

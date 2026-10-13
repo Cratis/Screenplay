@@ -32,6 +32,7 @@ internal sealed partial class McpDisk(McpRoot root, Action<string, string>? move
             Stage(changes);
             McpManagedFiles.WritePrivate(journal.StateStage, state.After);
             StageNotes(journal);
+            StageReleaseBaseline(journal);
             journal.VerifyMarker();
             root.Verify(proposal.Before);
             files.Verify(McpState.FileName, state.Before);
@@ -40,10 +41,12 @@ internal sealed partial class McpDisk(McpRoot root, Action<string, string>? move
             // Last pre-install check under the existing exclusive-writer assumption, not a kernel-atomic lock.
             verifyEvidence?.Invoke();
             journal.VerifyNotes(applied: false);
+            journal.VerifyReleaseBaseline(applied: false);
             Backup(changes, journal);
             Install(changes, journal);
-            InstallState(files, state, journal);
+            InstallIdentityState(files, state, journal);
             InstallNotes(files, journal);
+            InstallReleaseBaseline(files, journal);
             root.Verify(proposal.Workspace);
             files.Verify(McpState.FileName, state.After);
             journal.Complete(applied: true);

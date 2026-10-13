@@ -25,6 +25,54 @@ Use its [`propose-move`](mcp/edit.md#move-a-slice-or-feature-to-another-parent) 
 for identity-preserving slice and feature moves across logical parents. This is an
 MCP proposal, reviewed and applied through `apply`, not a CLI move command.
 
+## Admit and check released event revisions
+
+Persist the workspace's `.screenplay/identities.json` before admission. At release time, run:
+
+```bash
+screenplay baseline admit path/to/model --release v1.4.0
+screenplay baseline check path/to/model
+```
+
+Admission explicitly records every current and historical event revision in
+`.screenplay/release-baseline.json`. Commit the file with the model. It adds new
+revisions and keeps matching entries with their original release labels; it never
+removes entries or re-admits a changed revision. Neither admission nor checking
+changes source, executable model bytes, or source, semantic and catalog revisions.
+Admission requires a model that binds, persisted identities and no pending recovery.
+Writes use the shared `.screenplay/pending.json` recovery journal.
+
+To baseline an earlier release, supply its canonical executable semantic model:
+
+```bash
+screenplay baseline admit path/to/model --release v1.3.0 --from-esm shipped-esm.json
+```
+
+The strict ESM reader requires the same application identity. Shipped ESM does not
+carry rename pins, so `--from-esm` requires the current stored name to match the
+shipped name; a mismatch refuses with `ShippedStoredNameMismatch`.
+
+`baseline check` exits `0` when every admitted revision matches, `1` for
+`BaselinedRevisionChanged` (with the first differing path) or
+`BaselinedRevisionMissing`, and `2` when it cannot check, including an unreadable
+baseline or a model that does not bind. A missing baseline is distinct from an
+unreadable one. Malformed JSON, merge conflicts, another application's identity,
+and a schema/hash mismatch never count as absence and are never repaired automatically.
+Admission uses the same exit codes: changed overlapping revisions exit `1`,
+invalid inputs or failed writes exit `2`.
+
+The [published JSON Schema](release-baseline-v1.schema.json) describes the sidecar.
+Composite types expand recursively. A cycle becomes `{ "kind": "ref", "ref": 1 }`
+for the nearest enclosing composite, `ref: 2` for its parent, and so on. These
+path-relative references exclude type names and identities, so renaming a recursive
+type does not change its schema hash. References outside the enclosing composite
+path make a baseline unreadable.
+
+Checking is read-only and retains persisted identities even when source removes an
+admitted event or generation. Such removals report `BaselinedRevisionMissing` with
+exit `1`, without reconciling or writing the identity catalog.
+See [released event contracts](events.md#released-event-contracts) for what is frozen.
+
 ## Verify your files
 
 Run `screenplay` from the root of your project - it searches for every file matching the `**/*.play` glob pattern beneath the current directory and reports what it finds:

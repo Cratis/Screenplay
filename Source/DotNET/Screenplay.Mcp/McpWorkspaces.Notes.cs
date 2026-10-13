@@ -47,6 +47,7 @@ internal sealed partial class McpWorkspaces
         var result = McpJson.ToolResult(new { success = true, proposalId = id, notesRevision = plan.BeforeRevision, afterNotesRevision = plan.AfterRevision, addedNotes = after.Notes.Where(note => !before.Document!.Notes.Any(original => original.Id == note.Id)).Select(note => note.Id), substitutions, changeCount = 0, stateChange = state.Describe(), review = "Read read-proposal view=notes before apply." });
         _proposals.Add(id, proposal);
         _statePlans.Add(proposal, state);
+        _baselinePlans.Add(proposal, _planningBaseline ?? ReadBaselinePlan(workspace.IdentityCatalog.Application));
         return result;
     }
 

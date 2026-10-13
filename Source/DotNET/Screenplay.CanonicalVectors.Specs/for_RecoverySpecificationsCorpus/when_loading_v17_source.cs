@@ -9,7 +9,7 @@ using Cratis.Screenplay.Semantics.Execution;
 
 namespace Cratis.Screenplay.CanonicalVectors.Specs.for_RecoverySpecificationsCorpus;
 
-public class when_loading_v16_source : Specification
+public class when_loading_v17_source : Specification
 {
     SemanticCompilation[] _forms;
 
@@ -18,20 +18,20 @@ public class when_loading_v16_source : Specification
         _forms = [.. RecoverySpecificationsCorpus.SourceForms.Select(Compile)];
         if (Environment.GetEnvironmentVariable("SCREENPLAY_REGENERATE_RECOVERY_SPECIFICATIONS_CORPUS") == "1")
         {
-            var expected = Path.Combine(Root(), "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/RecoverySpecifications/v16/expected");
+            var expected = Path.Combine(Root(), "Source/DotNET/Screenplay.CanonicalCorpus/Corpus/RecoverySpecifications/v17/expected");
             Directory.CreateDirectory(expected);
-            File.WriteAllBytes(Path.Combine(expected, "esm-v16.json"), SemanticModelSerializer.Serialize(_forms[0].Model));
+            File.WriteAllBytes(Path.Combine(expected, "esm-v17.json"), SemanticModelSerializer.Serialize(_forms[0].Model));
             File.WriteAllText(Path.Combine(expected, "semantic-revision.txt"), $"{_forms[0].Model.Revision}\n");
             Assert.Fail("Recovery specifications corpus regenerated; review, rebuild and rerun without SCREENPLAY_REGENERATE_RECOVERY_SPECIFICATIONS_CORPUS.");
         }
     }
 
-    [Fact] void should_select_v16() => _forms.All(form => form.Model.LanguageVersion == LanguageVersion.V16 && form.Model.SemanticVersion == SemanticVersion.V16).ShouldBeTrue();
+    [Fact] void should_select_v17() => _forms.All(form => form.Model.LanguageVersion == LanguageVersion.V17 && form.Model.SemanticVersion == SemanticVersion.V17).ShouldBeTrue();
 
     [Fact]
     void should_pin_bytes_revision_and_strict_round_trip()
     {
-        var vector = RecoverySpecificationsCorpus.V16;
+        var vector = RecoverySpecificationsCorpus.V17;
         foreach (var form in _forms)
         {
             form.Model.Revision.ShouldEqual(vector.SemanticRevision);
@@ -47,7 +47,7 @@ public class when_loading_v16_source : Specification
         foreach (var form in _forms)
         {
             var plan = SemanticExecutionPlan.Compile(form.Model).Plan!;
-            foreach (var expectation in RecoverySpecificationsCorpus.V16.SpecificationExpectations)
+            foreach (var expectation in RecoverySpecificationsCorpus.V17.SpecificationExpectations)
             {
                 var run = new SemanticSpecificationRunner().Run(plan, expectation.Specification);
                 Assert.True(run.Passed, string.Join('\n', run.Failures));

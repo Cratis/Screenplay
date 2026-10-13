@@ -32,7 +32,7 @@ public class when_binding_redelivery : given.a_semantic_binder
     void Because() => _bound = Bind(Source);
 
     [Fact] void should_admit_redelivery() => _bound.Success.ShouldBeTrue();
-    [Fact] void should_select_v16() => _bound.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V16);
+    [Fact] void should_select_v17() => _bound.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V17);
     [Fact] void should_bind_the_given_occurrence_position_not_the_locator_values() => Scenario.WhenRedelivered!.Given.ShouldEqual(1);
     [Fact] void should_bind_the_named_reaction_identity() => Scenario.WhenRedelivered!.Reaction.ShouldEqual(_bound.Value!.Model.Application.Modules[0].Features[0].Slices[0].Reactions[0].Id);
 

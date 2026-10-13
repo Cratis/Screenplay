@@ -14,7 +14,7 @@ namespace Cratis.Screenplay.CanonicalCorpus;
 /// </summary>
 public static class RecoverySpecificationsCorpus
 {
-    const string Prefix = "Cratis.Screenplay.CanonicalCorpus.Corpus.RecoverySpecifications.v16";
+    const string Prefix = "Cratis.Screenplay.CanonicalCorpus.Corpus.RecoverySpecifications.v17";
 
     /// <summary>
     /// Gets equivalent single, folder, reordered and relocated source forms.
@@ -39,17 +39,17 @@ public static class RecoverySpecificationsCorpus
     }
 
     /// <summary>
-    /// Gets the ESM v16 no-event assertion and recovery redelivery vector.
+    /// Gets the ESM v17 no-event assertion and recovery redelivery vector.
     /// </summary>
-    public static CanonicalCorpusVector V16 => new()
+    public static CanonicalCorpusVector V17 => new()
     {
-        Name = "recovery-specifications/v16",
+        Name = "recovery-specifications/v17",
         ApplicationName = "RecoverySpecifications",
         ApplicationIdentity = ApplicationIdentity.Create("RecoverySpecifications"),
         RuntimeStreamId = "payment-a",
         SourceForms = SourceForms,
         SpecificationExpectations = Expectations(),
-        EsmBytes = Resource("expected.esm-v16.json"),
+        EsmBytes = Resource("expected.esm-v17.json"),
         SemanticRevision = SemanticRevision.Parse(Encoding.UTF8.GetString(Resource("expected.semantic-revision.txt").AsSpan()).Trim())
     };
 

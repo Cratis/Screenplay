@@ -251,7 +251,7 @@ public class when_freezing_legacy_source_syntax_bytes
             },
             "ChaseOverdueInvoices" => slice with
             {
-                // Current shared vectors cover these v16 assertions; keep the pre-feature source bytes frozen.
+                // Current shared vectors cover these v17 assertions; keep the pre-feature source bytes frozen.
                 Specifications = slice.Specifications.Where(specification => specification.Name != "RecoveringAnUndeliveredOverdueReminder")
             },
             _ => slice

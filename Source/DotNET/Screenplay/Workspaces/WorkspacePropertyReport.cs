@@ -59,7 +59,11 @@ public sealed record WorkspacePropertyDecision(string Reason, WorkspacePropertyT
 /// <param name="From">The original generation.</param>
 /// <param name="To">The planned generation.</param>
 /// <param name="Mode">The explicit event evolution choice.</param>
-public sealed record WorkspacePropertyGeneration(SemanticAddress Event, uint From, uint To, string Mode);
+public sealed record WorkspacePropertyGeneration(SemanticAddress Event, uint From, uint To, string Mode)
+{
+    /// <summary>Gets the admitted release evidence governing this edit.</summary>
+    public WorkspaceEventMutability Mutability { get; init; } = new("noBaseline", null, null);
+}
 
 /// <summary>
 /// Reports the selected executable-model version change.

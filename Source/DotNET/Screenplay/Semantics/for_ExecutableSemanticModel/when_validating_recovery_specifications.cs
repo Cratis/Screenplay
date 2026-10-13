@@ -13,7 +13,7 @@ public class when_validating_recovery_specifications : Specification
 
     void Establish()
     {
-        _application = canonical_serialization_golden_vectors.CreateSemanticModelV16().Application;
+        _application = canonical_serialization_golden_vectors.CreateSemanticModelV17().Application;
         _slice = _application.Modules[0].Features.Single(feature => feature.Name == "RecoverySpecifications").Slices[0];
         _specification = _slice.Specifications[0];
     }
@@ -29,9 +29,9 @@ public class when_validating_recovery_specifications : Specification
     [Fact] void should_refuse_denial_beside_no_events() => Reject(_specification with { ThenDenied = true });
     [Fact] void should_refuse_no_events_without_an_action() => Reject(_specification with { WhenRedelivered = null });
     [Fact] void should_refuse_an_outcome_less_redelivery() => Reject(_specification with { ThenNoEvents = false });
-    [Fact] void should_refuse_no_events_in_prior_versions() => Validate(_slice with { Specifications = [_specification with { WhenRedelivered = null, WhenAppended = new(_slice.Events[0].Id, []) }] }, SemanticVersion.V15).ShouldBeOfExactType<InvalidSemanticContract>();
-    [Fact] void should_refuse_redelivery_in_prior_versions() => Validate(_slice with { Specifications = [_specification with { ThenNoEvents = false, ThenEvents = _specification.GivenEvents }] }, SemanticVersion.V15).ShouldBeOfExactType<InvalidSemanticContract>();
-    [Fact] void should_refuse_v16_without_either_feature() => Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V16, SemanticVersion.V16, canonical_serialization_golden_vectors.CreateSemanticModelV15().Application)).ShouldBeOfExactType<InvalidSemanticContract>();
+    [Fact] void should_refuse_no_events_in_prior_versions() => Validate(_slice with { Specifications = [_specification with { WhenRedelivered = null, WhenAppended = new(_slice.Events[0].Id, []) }] }, SemanticVersion.V16).ShouldBeOfExactType<InvalidSemanticContract>();
+    [Fact] void should_refuse_redelivery_in_prior_versions() => Validate(_slice with { Specifications = [_specification with { ThenNoEvents = false, ThenEvents = _specification.GivenEvents }] }, SemanticVersion.V16).ShouldBeOfExactType<InvalidSemanticContract>();
+    [Fact] void should_refuse_v17_without_either_feature() => Catch.Exception(() => ExecutableSemanticModel.Create(LanguageVersion.V17, SemanticVersion.V17, canonical_serialization_golden_vectors.CreateSemanticModelV16().Application)).ShouldBeOfExactType<InvalidSemanticContract>();
 
     void Reject(SemanticSpecification specification) => Validate(_slice with { Specifications = [specification] }).ShouldBeOfExactType<InvalidSemanticContract>();
 
@@ -40,7 +40,7 @@ public class when_validating_recovery_specifications : Specification
         var module = _application.Modules[0];
         var feature = module.Features.Single(feature => feature.Name == "RecoverySpecifications");
         var application = _application with { Modules = _application.Modules.SetItem(0, module with { Features = module.Features.Replace(feature, feature with { Slices = [slice] }) }) };
-        var semantic = version ?? SemanticVersion.V16;
+        var semantic = version ?? SemanticVersion.V17;
         return Catch.Exception(() => ExecutableSemanticModel.Create(new(semantic.Major, semantic.Minor), semantic, application));
     }
 }

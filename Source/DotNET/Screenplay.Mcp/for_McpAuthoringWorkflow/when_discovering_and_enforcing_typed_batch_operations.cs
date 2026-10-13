@@ -61,7 +61,7 @@ public class when_discovering_and_enforcing_typed_batch_operations : given.an_au
     void should_advertise_all_public_tools() => _tools.EnumerateArray().Select(tool => tool.GetProperty("name").GetString()).ShouldContainOnly(
         ["run-specifications", "repair-capabilities", "describe-application", "find-declaration", "search-declarations", "declaration-details", "dependencies", "dependency-graph", "find-references",
         "find-fixtures", "find-assertion-gaps", "find-specification-obligations", "find-modeling-smells", "processing-record", "merged-document", "read-document", "diagnostics", "recommend-layout", "syntax-schema",
-        "open-workspace", "list-model-notes", "propose-model-notes", "workspace-state", "recover-workspace", "propose-rename", "propose-move", "propose-property", "read-workspace", "read-ast", "propose", "propose-number-enum-members", "propose-extract-inline-event", "propose-repair", "propose-ast", "propose-source",
+        "open-workspace", "list-release-baseline", "list-model-notes", "propose-model-notes", "workspace-state", "recover-workspace", "propose-rename", "propose-move", "propose-property", "read-workspace", "read-ast", "propose", "propose-number-enum-members", "propose-extract-inline-event", "propose-repair", "propose-ast", "propose-source",
         "expand-layout", "read-proposal", "export-workspace", "discard-proposal", "semantic-diff", "apply"]);
     [Theory]
     [InlineData("repair-capabilities")]
@@ -82,8 +82,7 @@ public class when_discovering_and_enforcing_typed_batch_operations : given.an_au
     void should_describe_event_pin_warnings_in_the_public_tool_list()
     {
         var description = _tools.EnumerateArray().Single(tool => tool.GetProperty("name").GetString() == "propose-rename").GetProperty("description").GetString()!;
-        description.ShouldContain("Event pins are not yet carried to renderers; generated code uses the new name.");
-        description.ShouldContain("eventPinWarnings");
+        description.ShouldContain("Event pins are carried as storedName by ESM v16; consumers must explicitly admit that version.");
     }
 
     [Fact]

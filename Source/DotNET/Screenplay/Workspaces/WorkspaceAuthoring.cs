@@ -126,6 +126,9 @@ public sealed record ReplaceWorkspaceSyntaxDocument(DocumentId Document, Applica
 /// </summary>
 public sealed record WorkspaceAuthoringRequest
 {
+    /// <summary>Gets the independent release baseline to enforce on the complete candidate.</summary>
+    public ReleaseBaselineRead? ReleaseBaseline { get; init; }
+
     /// <summary>
     /// Gets the exact base workspace revision.
     /// </summary>
@@ -239,6 +242,12 @@ public sealed record WorkspaceAuthoringResult
     /// Gets the property planner's retained selected-set report.
     /// </summary>
     public WorkspacePropertyReport? PropertyReport { get; init; }
+
+    /// <summary>Gets mutability and stored-name pin evidence for an event rename.</summary>
+    public WorkspaceEventRenameReport? EventRenameReport { get; init; }
+
+    /// <summary>Gets the complete release-baseline refusal evidence, when checked.</summary>
+    public ReleaseBaselineResult? ReleaseBaselineResult { get; init; }
 
     /// <summary>
     /// Gets diagnostics from executable semantic compilation, independently of source acceptance.

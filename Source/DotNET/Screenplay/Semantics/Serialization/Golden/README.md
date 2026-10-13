@@ -36,6 +36,8 @@ The full vectors are built from these source models:
 
 `full-esm-v13.json` pins concept compliance under 0068, 0025 and 0066. `canonical_serialization_golden_vectors.CreateSemanticModelV13()` adds personal health/criminal data, a namespace-scoped secret and combined personal/secret markers to the full v12 model. `ConceptComplianceCorpus.V13` pins source-backed bytes, revision and reference outcomes across single-file, folder, reordered and relocated forms. Only markers select v13; reasons and event subject marks add no bytes. Personal takes precedence over secret, and no secret scope is stored next to personal. Identity/enum compliance is refused; the binder also refuses personal or explicitly subject-scoped secret values in an event with an explicit subject mark. Released v1–v12 vectors remain unchanged.
 
+`full-esm-v16.json` pins stored event type names under 0075. `canonical_serialization_golden_vectors.CreateSemanticModelV16()` adds one pinned contract to the full v15 model, retaining unpinned contracts. `StoredEventNamesCorpus.V16` pins a source-backed mixed pinned/unpinned rename and unchanged reference outcomes across equivalent forms. Existing v1–v15 golden bytes are unchanged. Only an event pin that differs from the display name selects v16; an equal-name pin omits `storedName` and preserves the earlier version and bytes.
+
 The other files pin separate serialization contracts, not ESM bytes:
 
 | File | Source |

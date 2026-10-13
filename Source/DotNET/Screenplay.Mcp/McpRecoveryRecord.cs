@@ -5,4 +5,4 @@ using System.Text.Json.Serialization;
 
 namespace Cratis.Screenplay.Mcp;
 
-sealed record McpRecoveryRecord(int Version, string OperationId, string BeforeWorkspace, string AfterWorkspace, byte[]? BeforeState, byte[] AfterState, McpRecoveryAccess[] Access, McpRecoveryAccess? StateAccess, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] McpNotesJournal? Notes = null);
+sealed record McpRecoveryRecord(int Version, string OperationId, string BeforeWorkspace, string AfterWorkspace, byte[]? BeforeState, byte[] AfterState, McpRecoveryAccess[] Access, McpRecoveryAccess? StateAccess, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] McpNotesJournal? Notes = null, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] McpReleaseBaselineJournal? ReleaseBaseline = null);

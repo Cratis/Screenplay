@@ -71,9 +71,9 @@ internal sealed partial class McpWorkspaces
         {
             VerifyProposalBaseline(proposal);
         }
-        var result = view == "notes" ? NotesView(proposal, arguments) : ReadProposalView(proposal, arguments, view);
+        var result = ProposalView(proposal, arguments, view);
         var notesImpact = NotesImpact(proposal);
-        return McpJson.ToolResult(new { proposal.Validation, eventPinWarnings = EventPinWarnings(proposal.Workspace), orphanedNotes = notesImpact.OrphanedNotes, notes = notesImpact.Notes, moveReport = proposal is McpAuthoringProposal moved ? DescribeMove(moved.Result.MoveReport) : null, property = proposal is McpAuthoringProposal property ? DescribeProperty(property.Result.PropertyReport) : null, repairEvidence = _repairEvidence.TryGetValue(proposal, out var evidence) ? evidence : null, before = McpWorkspaceTransport.Describe(proposal.Before), after = McpWorkspaceTransport.Describe(proposal.Workspace), view, result });
+        return McpJson.ToolResult(new { proposal.Validation, releaseBaselineRevision = ProposalBaseline(proposal).Read.Revision, eventPinWarnings = EventPinWarnings(proposal.Workspace), eventRename = EventRenameReport(proposal), orphanedNotes = notesImpact.OrphanedNotes, notes = notesImpact.Notes, moveReport = proposal is McpAuthoringProposal moved ? DescribeMove(moved.Result.MoveReport) : null, property = proposal is McpAuthoringProposal property ? DescribeProperty(property.Result.PropertyReport) : null, repairEvidence = _repairEvidence.TryGetValue(proposal, out var evidence) ? evidence : null, before = McpWorkspaceTransport.Describe(proposal.Before), after = McpWorkspaceTransport.Describe(proposal.Workspace), view, result });
     }
 
     internal object ExportWorkspace(JsonElement arguments)
@@ -353,6 +353,13 @@ internal sealed partial class McpWorkspaces
         "typed-contexts" => ReadTypedContextsView(workspace, arguments, view),
         "source-map" => ReadSourceMapView(workspace, arguments, view),
         _ => ReadListedView(workspace, arguments, view)
+    };
+
+    object ProposalView(IMcpProposal proposal, JsonElement arguments, string view) => view switch
+    {
+        "notes" => NotesView(proposal, arguments),
+        "release-baseline" => ReleaseBaselineView(proposal, arguments),
+        _ => ReadProposalView(proposal, arguments, view)
     };
 
     void VerifyProposalBaseline(IMcpProposal proposal)

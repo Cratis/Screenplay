@@ -133,7 +133,19 @@ public enum WorkspaceConflictKind
     /// <summary>
     /// An added required property needs a value in existing fixtures or assertions.
     /// </summary>
-    FixtureValueRequired = 23
+    FixtureValueRequired = 23,
+
+    /// <summary>A baselined current event revision requires an explicit new generation.</summary>
+    BaselinedRevisionImmutable = 24,
+
+    /// <summary>The release baseline is unreadable and an event contract edit cannot be admitted.</summary>
+    UnreadableReleaseBaseline = 25,
+
+    /// <summary>A candidate changes the resolved shape of an admitted revision.</summary>
+    BaselinedRevisionChanged = 26,
+
+    /// <summary>A candidate removes an admitted event revision.</summary>
+    BaselinedRevisionMissing = 27
 }
 
 /// <summary>

@@ -121,7 +121,7 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 semanticVersion = SemanticVersion.V2;
             }
 
-            if (SelectNumberVersions(application, semanticVersion) is { } numberVersions)
+            if (SelectBoundVersions(application, semanticVersion, context.UsesStoredEventNames) is { } numberVersions)
             {
                 languageVersion = numberVersions.Language;
                 semanticVersion = numberVersions.Semantic;
@@ -170,14 +170,13 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         }
     }
 
+    static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames) =>
+        SemanticModelValidator.UsesRecoverySpecifications(application) ? (LanguageVersion.V17, SemanticVersion.V17) :
+        usesStoredEventNames ? (LanguageVersion.V16, SemanticVersion.V16) : SelectNumberVersions(application, semanticVersion);
+
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectNumberVersions(SemanticApplication application, SemanticVersion semanticVersion)
     {
-        if (SemanticModelValidator.UsesRecoverySpecifications(application))
-        {
-            return (LanguageVersion.V16, SemanticVersion.V16);
-        }
-
-        if (application.Concepts.Any(concept => concept.Generation is not null))
+        if (SemanticModelValidator.UsesConceptGeneration(application))
         {
             return (LanguageVersion.V15, SemanticVersion.V15);
         }
@@ -267,6 +266,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         internal bool UsesPublicEvents { get; set; }
 
         internal bool UsesV10 { get; set; }
+
+        internal bool UsesStoredEventNames { get; set; }
 
         internal ImmutableArray<SemanticSourceMapEntry> SourceMapEntries => [.. _sourceMapEntries];
 

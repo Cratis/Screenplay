@@ -67,6 +67,7 @@ internal sealed partial class McpRecovery(McpRoot root, McpRecoveryJournal journ
 
         RestoreState();
         RestoreNotes();
+        RestoreReleaseBaseline();
         root.Verify(journal.Before);
         _files.Verify(McpState.FileName, journal.Record.BeforeState);
         journal.VerifyOriginalAccess();
@@ -127,6 +128,7 @@ internal sealed partial class McpRecovery(McpRoot root, McpRecoveryJournal journ
 
         _ = ReadKnown(_files.PathFor(McpState.FileName), journal.Record.BeforeState, journal.Record.AfterState);
         PreflightNotes();
+        PreflightReleaseBaseline();
         foreach (var change in journal.Changes)
         {
             CheckArtifact(change.Stage, change.Entry.After?.Bytes.ToArray());

@@ -16,7 +16,12 @@ internal sealed partial class McpRecoveryJournal
         if (Record.Notes is { } notes) _files.Verify(ModelNotesStore.FileName, applied ? notes.After : notes.Before);
     }
 
-    static int JournalVersion(IMcpProposal proposal) => proposal is McpNotesProposal ? 2 : 1;
+    static int JournalVersion(IMcpProposal proposal) => proposal switch
+    {
+        McpNotesProposal => 2,
+        McpReleaseBaselineProposal => 3,
+        _ => 1
+    };
 
     static McpNotesJournal? NotesRecord(IMcpProposal proposal, McpManagedFiles files)
     {
@@ -30,10 +35,13 @@ internal sealed partial class McpRecoveryJournal
         switch (record.Version)
         {
             case 1:
-                if (record.Notes is not null) throw new McpFailure("Version 1 recovery journals cannot carry notes.");
+                if (record.Notes is not null || record.ReleaseBaseline is not null) throw new McpFailure("Version 1 recovery journals cannot carry sidecars.");
                 break;
             case 2:
-                if (record.Notes is null) throw new McpFailure("Version 2 recovery journals require notes.");
+                if (record.Notes is null || record.ReleaseBaseline is not null) throw new McpFailure("Version 2 recovery journals require only notes.");
+                break;
+            case 3:
+                if (record.ReleaseBaseline is null || record.Notes is not null) throw new McpFailure("Version 3 recovery journals require only a release baseline.");
                 break;
             default: throw new McpFailure("Unsupported or invalid recovery journal.");
         }

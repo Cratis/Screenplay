@@ -107,7 +107,7 @@ public class when_running_recovery_specifications : given.a_v6_scenario
         _emptyAppend = Run("AppendDoesNotCascade");
     }
 
-    [Fact] void should_select_the_new_version() => _plan.Model.SemanticVersion.ShouldEqual(SemanticVersion.V16);
+    [Fact] void should_select_the_new_version() => _plan.Model.SemanticVersion.ShouldEqual(SemanticVersion.V17);
     [Fact] void should_redeliver_only_to_the_named_reaction_and_settle_its_cascade() => _redelivery.Passed.ShouldBeTrue();
     [Fact] void should_not_append_the_given_fact_again() => _redelivery.Execution.World.Facts.Length.ShouldEqual(3);
     [Fact] void should_pass_no_events_for_a_filtered_redelivery() => _filtered.Passed.ShouldBeTrue();

@@ -13,9 +13,9 @@ internal static partial class SemanticModelValidator
         ValidateFeatureVersion(
             UsesRecoverySpecifications(application),
             version,
-            SemanticVersion.V16,
-            "An ESM v16 model must contain an explicit no-event assertion or recovery redelivery.",
-            "Explicit no-event assertions and recovery redelivery require ESM v16.");
+            SemanticVersion.V17,
+            "An ESM v17 model must contain an explicit no-event assertion or recovery redelivery.",
+            "Explicit no-event assertions and recovery redelivery require ESM v17.");
 
     private sealed partial class ValidationContext
     {
