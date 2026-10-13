@@ -1,6 +1,7 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+import { nativePattern } from '../Text/patterns';
 import { exactIsIntegral } from '../Syntax/ExactMathFacts';
 import { DiagnosticCodes } from '../Diagnostics/DiagnosticCodes';
 import { CommandSyntax } from '../Syntax/Commands';
@@ -11,9 +12,11 @@ import { SpecificationSyntax } from '../Syntax/Specifications';
 import { ApplicationSyntax, FeatureSyntax, SliceSyntax } from '../Syntax/Structure';
 import { InputUse } from './InputUses';
 import { ParserContext } from './ParserContext';
+import { responseCommandResolver } from './ResponseCommandResolver';
 import { responseDateValue } from './ResponseDateValues';
 import { specificationCommandExamples } from './SpecificationCommandExamples';
 
+const bareName = nativePattern(/^[A-Za-z_]\w*$/.source);
 const primitiveTypes = new Set(['Uuid', 'String', 'Int', 'Decimal', 'Bool', 'Date', 'DateTime']);
 interface ScopedCommand { command: CommandSyntax; scope: readonly string[] }
 
@@ -38,33 +41,7 @@ export function validateResponses(application: ApplicationSyntax, context: Parse
             if (command.response?.kind === 'RecordCommandResponseSyntax') responseFields.set(command, uniqueByName(command.response.fields));
         }
     }
-    const imports = new Map<string, string[]>();
-    for (const imported of application.imports) {
-        const name = imported.qualifiedName.split('.').at(-1)!;
-        imports.set(name, [...(imports.get(name) ?? []), imported.qualifiedName]);
-    }
-    const resolved = new Map<string, CommandSyntax | null>();
-    const resolve = (name: string, from: readonly string[]): CommandSyntax | null => {
-        const key = `${from.join('.')}|${name}`;
-        if (resolved.has(key)) return resolved.get(key)!;
-        const imported = imports.get(name) ?? [];
-        const local = commands.get(name.split('.').at(-1)!) ?? [];
-        const reference = local.length === 0 && imported.length === 1 ? imported[0] : name;
-        const segments = reference.split('.');
-        let candidates = commands.get(segments.at(-1)!) ?? [];
-        if (segments.length > 1) {
-            const qualifiers = segments.slice(0, -1);
-            candidates = candidates.filter(entry => qualifiers.length <= entry.scope.length && qualifiers.every((value, index) => entry.scope[entry.scope.length - qualifiers.length + index] === value));
-        } else {
-            for (let depth = from.length; depth >= 0; depth--) {
-                const visible = candidates.filter(entry => depth <= entry.scope.length && from.slice(0, depth).every((value, index) => entry.scope[index] === value));
-                if (visible.length > 0) { candidates = visible; break; }
-            }
-        }
-        const command = candidates.length === 1 ? candidates[0].command : null;
-        resolved.set(key, command);
-        return command;
-    };
+    const resolve = responseCommandResolver([...commands.values()].flat(), application.imports);
     const concepts = uniqueByName(application.concepts);
     const conceptNames = new Set(application.concepts.map(concept => concept.name));
     const composites = new Map([...uniqueByName(application.types)].map(([name, type]) => [name, uniqueByName(type.properties)]));
@@ -168,6 +145,18 @@ export function validateResponses(application: ApplicationSyntax, context: Parse
         }
     };
     for (const { slice, scope } of slices) slice.specifications.forEach(specification => validateSpecification(specification, scope));
+    const returned = (command: CommandSyntax, name: string): boolean => command.response?.kind === 'ScalarCommandResponseSyntax'
+        ? command.response.source.property === name : responseFields.get(command)?.has(name) === true;
+    for (const use of context.continuationValues) {
+        if (!bareName.test(use.text) || use.locals.includes(use.text)) continue;
+        const scopedCommands = (names: readonly string[]): CommandSyntax[] => names.filter(name => !use.parameters.includes(name)).flatMap(name => {
+            const command = resolve(name, use.scope);
+            return command === null ? [] : [command];
+        });
+        if (scopedCommands(use.success).some(command => returned(command, use.text))) continue;
+        const failed = scopedCommands(use.failure).reverse().find(command => returned(command, use.text));
+        if (failed) context.error(DiagnosticCodes.ResponseNameUsedOnFailure, `'${use.text}' is returned by '${failed.name}' only on success`, use.location);
+    }
     for (const input of inputs) {
         if (input.isParameter === true) continue;
         const command = resolve(input.command, input.scope);

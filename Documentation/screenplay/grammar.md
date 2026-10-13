@@ -395,6 +395,10 @@ InteractionMessage = LocalizableString | Path ;
 InteractionContinuation = "on", ( "success" | "failure" | "result" ), NL,
                           INDENT, { InteractionAction }, DEDENT ;
 BindingText    = ? nonempty remainder of the line, stored verbatim ? ;
+(* Bare value operands in form on submit and execute on success resolve returned names
+   after existing form fields and behavior parameters. On failure cannot use the failed
+   command's returned names unless an outer successful response supplies them (PLAY0685).
+   Dotted paths, $-rooted bindings, literals and other opaque text remain unchanged. *)
 
 (* A plain binding needs at least one action and at most one where guard. Choices
    are only valid on click/double click/select, use strict item Condition operands,

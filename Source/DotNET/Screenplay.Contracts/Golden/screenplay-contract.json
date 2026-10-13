@@ -20467,6 +20467,17 @@
       "title": "A generated identifier has fewer than 64 random bits.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0685",
+      "name": "ResponseNameUsedOnFailure",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A command response name is used in that command\u0027s failure continuation.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [

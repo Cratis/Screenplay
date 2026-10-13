@@ -2529,7 +2529,13 @@
                       }
                     }
                   ],
-                  "response": null,
+                  "response": {
+                    "kind": "ScalarCommandResponseSyntax",
+                    "source": {
+                      "kind": "PropertyResponseSourceSyntax",
+                      "property": "invoiceId"
+                    }
+                  },
                   "stream": null,
                   "streamCandidates": [],
                   "validations": [

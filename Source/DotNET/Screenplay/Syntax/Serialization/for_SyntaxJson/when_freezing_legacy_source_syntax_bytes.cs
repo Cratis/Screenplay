@@ -289,6 +289,9 @@ public class when_freezing_legacy_source_syntax_bytes
                     },
                     "RegisterInvoice" => slice with
                     {
+                        // The living sample's continuation response has a current shared syntax vector.
+                        // Keep the pre-response sample bytes frozen rather than rewriting its baseline.
+                        Commands = slice.Commands.Select(command => command.Name == "RegisterInvoice" ? command with { Response = null } : command),
                         Specifications = slice.Specifications.Where(specification => specification.Name != "RejectingAServiceRegisteringAnInvoice")
                     },
                     _ => slice

@@ -5,6 +5,7 @@ import { enclosingChain, enclosingHeaders, fenceMap, indentOf, nearestEnclosingL
 import { refusalContext } from './refusal-context';
 import { generationCompletions } from './generation-completions';
 import { namedRuleContext } from './named-rule-context';
+import { continuationResponseCompletions } from './continuation-responses';
 import { responseCompletions } from './response-completions';
 import { dependencyTargetCompletions } from './dependency-completions';
 import { exampleCompletions } from './example-authoring';
@@ -194,6 +195,8 @@ export function planCompletions(
     if (inConcept && /^\s*(?:pii|personal|@pii)\s+special\s+\w*$/.test(textBefore)) {
         return { kind: 'entries', entries: ['racialOrEthnicOrigin', 'politicalOpinions', 'religiousOrPhilosophicalBeliefs', 'tradeUnionMembership', 'genetic', 'biometric', 'health', 'sexLifeOrSexualOrientation'].map(category => ({ label: category, insertText: category, documentation: 'GDPR Art. 9(1) special category.' })) };
     }
+    const continuationEntries = continuationResponseCompletions(lines, lineIndex, textBefore, symbols);
+    if (continuationEntries !== null) return { kind: 'entries', entries: continuationEntries };
     const responseEntries = exampleCompletions(lines, lineIndex, textBefore) ?? responseCompletions(lines, lineIndex, textBefore, scanDocument(lines));
     if (responseEntries !== null) return { kind: 'entries', entries: responseEntries };
     const keyEntries = readModelKeyCompletions(lines, lineIndex, textBefore, symbols);
