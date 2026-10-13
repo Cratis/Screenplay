@@ -54,7 +54,7 @@ module M
           value = id
       command Unkeyed
         id String identifier
-        stream Account.All
+        stream Account.Archive
         produces Recorded
           for id
           value = id

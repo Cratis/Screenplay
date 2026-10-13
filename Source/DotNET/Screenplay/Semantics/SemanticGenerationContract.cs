@@ -9,15 +9,8 @@ internal static partial class SemanticGenerationContract
 {
     internal const string DefaultAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
 
-    internal static double Bits(SemanticGeneration? generation) => generation?.Kind switch
-    {
-        null or "uuid" => 122,
-        "uuidv7" or "typeid" => 74,
-        "ulid" => 80,
-        "nanoid" => (generation.Size ?? 21) * Math.Log2((generation.Alphabet ?? DefaultAlphabet).Length),
-        "bytes" => 8 * generation.Count!.Value,
-        _ => 0
-    };
+    internal static double Bits(SemanticGeneration? generation) =>
+        GenerationEntropy.Bits(generation?.Kind, generation?.Size, generation?.Alphabet, generation?.Count) ?? 0;
 
     internal static void Validate(SemanticConcept concept)
     {

@@ -23,6 +23,8 @@ applies-to:
 <!-- Copyright (c) Cratis. All rights reserved. -->
 <!-- Licensed under the MIT license. See LICENSE file in the project root for full license information. -->
 
+> **2026-10-13 — extended by [0070](0070-derive-event-mutability-from-an-admitted-release-baseline.md).** Once a release baseline exists, 0070 derives per revision whether the `newGeneration` or `eventNeverPersisted` choice is required. Without a baseline, this record applies unchanged.
+
 > **2026-10-11 — amendment.** [0067](0067-report-every-selected-event-property-evolution.md) replaces the unimplemented singular `property.generation` report with one required ordered `property.generations` array and clarifies explicit event-property selection. The original decision text below is preserved as history; all other 0044 safeguards remain in force.
 
 ## Context

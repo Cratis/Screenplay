@@ -1,11 +1,11 @@
 eventsource Account
   identifier Uuid
-  stream All
+  stream Archive
 module M
   feature F
     slice StateChange S
       command C
         id String identifier
-        stream Account.All
+        stream Account.Archive
         produces event E
           value String = "payload"

@@ -80,6 +80,8 @@ The reference establishes givens without reactions, fires only the named reactio
 
 ### Admission and reference execution
 
+> **2026-10-13 — admission split by [0074](0074-admit-no-event-assertions-and-redelivery-before-refusal-branches.md).** Redelivery and explicit no-event assertions are admitted first in their own version (including `then no events` after `when append`); refusal branches and `$refusal` values follow in a later version, which alone keeps this record's Arc#3058 and Stage#214 prerequisites. The paragraphs below apply to that later version; for the first, 0074 governs.
+
 Reaction refusal handling, redelivery and explicit no-event assertions require a **new executable model version admitted together**. No number is assigned here. The number is assigned only at the serialized release-ready admission checkpoint under 0025, after all 0004 gate-2 evidence exists.
 
 Before that checkpoint syntax, printing, syntax JSON, validation and authoring readiness may land. Binding rejects refusal branches, refusal expressions and redelivery with PLAY0268 naming “reaction refusal handling and redelivery … not admitted by any supported executable model (ESM) version yet (#433)”. Binding also rejects `then no events` with PLAY0268 naming explicit no-event assertions, and MCP readiness names each feature as unadmitted. Existing ESM versions, canonical bytes, revisions and outcomes are unchanged.
