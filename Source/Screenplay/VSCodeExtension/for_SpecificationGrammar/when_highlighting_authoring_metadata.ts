@@ -29,6 +29,20 @@ function scopes(lines: string[]) {
     return result.flat();
 }
 
+describe('when highlighting concept generation', () => {
+    it.each(['uuid', 'uuidv7', 'ulid', 'typeid "user"', 'nanoid 21', 'bytes 16 hex', 'pattern "ORD-#{7}"', 'random 1..9', 'rule Make', 'sequence'])('should highlight generate %s only in a concept body', strategy => {
+        const tokens = scopes(['concept C : String', `  generate ${strategy}`]);
+        tokens.should.contain('keyword.other.screenplay');
+        tokens.should.contain('support.function.screenplay');
+    });
+    it('should not reserve strategy names as command properties', () => {
+        scopes(['command C', '  uuid String']).should.not.contain('support.function.screenplay');
+    });
+    it('should highlight generation modifiers', () => {
+        scopes(['concept C : String', '  generate bytes 16 hex prefix "ref_" case upper']).should.contain('keyword.other.screenplay');
+    });
+});
+
 describe('when highlighting authoring metadata', () => {
     it.each(['module M', 'feature F', 'slice StateChange S', 'command C', 'readmodel V', 'reaction R'])('should highlight fenced documentation under %s', header => {
         scopes([header, '  documentation']).should.contain('keyword.other.screenplay');

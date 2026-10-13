@@ -100,4 +100,9 @@ public record ConceptSyntax(
     /// Gets the report-only description of this value.
     /// </summary>
     public string? Description { get; init; }
+
+    /// <summary>
+    /// Gets the declared value-generation strategy, or null for the implicit UUID default.
+    /// </summary>
+    public GenerationSyntax? Generation { get; init; }
 }

@@ -499,6 +499,8 @@ internal static partial class ScreenplayParser
 
         var values = new List<string>();
         var members = new EnumerationMembers();
+        GenerationSyntax? generation = null;
+        var declaredGeneration = false;
         string? description = null;
         var validations = new List<ValidateSyntax>();
         var directiveLocations = new Dictionary<string, SourceLocation>();
@@ -533,6 +535,18 @@ internal static partial class ScreenplayParser
                     validations.Add(validate);
                 }
             }
+            else if (LineText.FirstWord(child.Content) == "generate" && !(type == "Enum" && child.Content == "generate"))
+            {
+                if (declaredGeneration) context.Error(DiagnosticCodes.DuplicateGeneration, $"Concept '{name}' declares generation more than once.", child.Location);
+                var parsed = GenerationParser.Parse(context, child, type);
+                if (!declaredGeneration)
+                {
+                    generation = parsed;
+                    directiveLocations["generate"] = child.Location;
+                }
+
+                declaredGeneration = true;
+            }
             else if (ConceptComplianceParser.TryParseDirective(context, child, name, attributes, directiveLocations))
             {
                 // Compliance directives preserve their original source anchors for trivia and repairs.
@@ -548,12 +562,12 @@ internal static partial class ScreenplayParser
             }
             else
             {
-                context.Error(DiagnosticCodes.UnknownConceptDirective, $"Unexpected '{child.Content}' in concept body - expected validate, 'file <path>' or '<attribute> reason \"<text>\"'", child.Location);
+                context.Error(DiagnosticCodes.UnknownConceptDirective, $"Unexpected '{child.Content}' in concept body - expected validate, generate, 'file <path>' or '<attribute> reason \"<text>\"'", child.Location);
                 context.SkipBlock(child.Indent);
             }
         }
 
-        return new(name, type, attributes, values, line.Location, validations) { Description = description, File = file, ValueNumbers = members.Finish(context, line, values.Count), DirectiveLocations = directiveLocations };
+        return new(name, type, attributes, values, line.Location, validations) { Generation = generation, Description = description, File = file, ValueNumbers = members.Finish(context, line, values.Count), DirectiveLocations = directiveLocations };
     }
 
     static PersonaSyntax ParsePersona(ParserContext context, SourceLine line)

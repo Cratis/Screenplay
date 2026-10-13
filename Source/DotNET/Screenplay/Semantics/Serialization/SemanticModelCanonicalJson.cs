@@ -111,6 +111,7 @@ public static partial class SemanticModelCanonicalJson
         WriteArray(writer, "validations", concept.Validations, WriteValidation);
         if (concept.Numbers is { } numbers) WriteArray(writer, "numbers", numbers, (output, number) => output.WriteNumberValue(number));
         if (concept.Compliance is { } compliance) WriteCompliance(writer, compliance);
+        if (concept.Generation is { } generation) WriteGeneration(writer, generation);
         writer.WriteEndObject();
     }
 

@@ -63,6 +63,7 @@ internal static class SyntaxKinds
         typeof(CompositeKeySyntax),
         typeof(ConceptAttributeSyntax),
         typeof(ConceptSyntax),
+        typeof(GenerationSyntax),
         typeof(ConcurrencySyntax),
         typeof(ConfirmActionSyntax),
         typeof(ContextExpressionSyntax),

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import { IdentitySyntax } from './IdentitySyntax';
+import { GenerationSyntax } from './GenerationSyntax';
 import { IdentityDetailSyntax } from './IdentityDetailSyntax';
 import { IdentitySourceSyntax } from './IdentitySourceSyntax';
 import { ClaimIdentitySourceSyntax } from './ClaimIdentitySourceSyntax';
@@ -166,9 +167,12 @@ export abstract class ScreenplaySyntaxWalker {
         this.visitNode(syntax);
     }
 
+    visitGeneration(syntax: GenerationSyntax): void { this.visitNode(syntax); }
+
     visitConcept(syntax: ConceptSyntax): void {
         this.visitNode(syntax);
         syntax.attributes.forEach(node => this.visitNode(node));
+        if (syntax.generation) this.visitGeneration(syntax.generation);
         syntax.validations?.forEach(node => this.visitValidate(node));
     }
 

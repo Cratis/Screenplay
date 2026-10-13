@@ -1,0 +1,113 @@
+---
+title: Generation strategies
+description: Look up generation syntax, exact encodings, random bits, and collision bounds.
+---
+
+Each concept has at most one `generate` line. Modifiers may occur in any order, once each; canonical printing orders strategy arguments, `alphabet`, `prefix`, `case`, then `checksum`. Every random choice uses a cryptographically secure source. The reference evaluator checks pinned fixtures rather than generating values.
+
+## Entropy and collision bounds
+
+For `b` random bits, the approximate number of draws at 1% collision probability is `sqrt(2 × 2^b × ln(1/0.99))`. Time and literal prefixes add no randomness.
+
+| Strategy | Random bits | Values at 1% collision probability |
+| --- | ---: | ---: |
+| uuid | 122 | 3.27 × 10^17 |
+| uuidv7 / typeid | 74 | 1.95 × 10^10 |
+| ulid | 80 | 1.56 × 10^11 |
+| nanoid (21, default alphabet) | 126 | 1.31 × 10^18 |
+| bytes (16) | 128 | 2.62 × 10^18 |
+| bytes (32) | 256 | 4.82 × 10^37 |
+
+Below 64 random bits, binding warns with the approximate draw count. A unique constraint on the mapped event property suppresses the warning for a non-identifier property. Composite uniqueness is not uniqueness of that property alone. A generated identifier below 64 bits is an error; freshness does not lift this limit. Rules on generated concepts remain refused pending rule-consistency admission.
+
+## uuid
+
+```screenplay
+concept Id : Uuid
+  generate uuid
+concept Reference : String
+  generate uuid prefix "ref_" case upper
+```
+
+Random version 4, RFC 9562 variant, 122 random bits. Default lowercase derived regex: `^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`. The second example prefixes that shape and uses uppercase letters. A Uuid concept accepts neither `prefix` nor `case`; implicit or explicit unmodified `uuid` writes no ESM `generation` member.
+
+## uuidv7
+
+```screenplay
+concept EventId : Uuid
+  generate uuidv7
+```
+
+Version 7, RFC variant, 74 random bits; no counter or sub-millisecond fields. Derived regex: `^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`. It exposes time and is not monotonic within a millisecond. String-backed UUIDv7 also accepts `prefix` and `case`.
+
+## ulid
+
+```screenplay
+concept CustomerId : String
+  generate ulid prefix "cus_" case lower
+```
+
+26 Crockford base32 characters; first character 0–7, uppercase by default. 80 random bits. Derived regex for this example: `^cus_[0-7][0-9a-hjkmnp-tv-z]{25}$`. ULID reveals time; do not assume strict ordering within a millisecond or mistake its 128 encoded bits for 128 random bits.
+
+## typeid
+
+```screenplay
+concept UserId : String
+  generate typeid "user"
+concept BareId : String
+  generate typeid ""
+```
+
+TypeID 0.3: lowercase Crockford base32 encoding of UUIDv7; 74 random bits. Prefix regex: `^(?:[a-z]|[a-z][a-z_]{0,61}[a-z])?$`. Empty prefix emits no underscore separator. Other prefixes are 1–63 characters; they are not subject to the modifier's 32-character limit.
+
+Derived regex for the first example: `^user_[0-7][0-9a-hjkmnp-tv-z]{9}[ef][0-9a-hjkmnp-tv-z]{2}[89abrstv][0-9a-hjkmnp-tv-z]{12}$`. Decoding must recover a UUIDv7 with the RFC variant. Case is fixed; `case`, `alphabet`, and the separate `prefix` modifier are not allowed. Like UUIDv7, it reveals time.
+
+## nanoid
+
+```screenplay
+concept PublicCode : String
+  generate nanoid
+concept BinaryCode : String
+  generate nanoid 64 alphabet "ab" prefix "code_"
+```
+
+Size is 1–256, default 21. Default alphabet has 64 symbols: `A-Za-z0-9_-`. An explicit alphabet has 2–256 distinct printable ASCII characters (the printable ASCII repertoire itself has only 95). Entropy is `size × log2(alphabet size)`, not the length of the rendered prefix. Default derived regex: `^[A-Za-z0-9_-]{21}$`; second example: `^code_[ab]{64}$`. Characters follow the alphabet exactly; there is no `case` modifier. Short codes can collide quickly even when they look unpredictable.
+
+## bytes
+
+```screenplay
+concept EncodedRandom : String
+  generate bytes 32 base64url
+concept HexReference : String
+  generate bytes 16 hex prefix "ref_" case upper
+concept Base32Reference : String
+  generate bytes 16 base32
+```
+
+Count is 1–512; entropy is exactly `8 × count`. RFC 4648 encodings omit padding. Base64url length is `ceil(8n/6)`; base32 length is `ceil(8n/5)`; hex length is `2n`. Unused trailing bits must be zero: a one-byte base64url value may be `AA` or `_w`, but not `AB` or `_x`.
+
+Derived regex for the first example: `^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$`. For the second: `^ref_[0-9A-F]{32}$`. For the third: `^[A-Z2-7]{25}[AEIMQUY4]$` (128 bits leave two unused bits). Hex defaults to lowercase; base32 defaults to uppercase. Both accept `case lower|upper`; base64url does not. A random value alone is not a credential contract: generated secrets remain unadmitted.
+
+## Modifiers
+
+| Modifier | Strategies | Contract |
+| --- | --- | --- |
+| `prefix "text"` | uuid, uuidv7, ulid, nanoid, bytes | Printable ASCII, at most 32 characters. UUIDs require String backing. Literal text is regex-escaped in derived shapes. |
+| `case lower|upper` | String uuid/uuidv7, ulid, hex/base32 bytes | Changes only the encoded portion, never the prefix. |
+| `alphabet "chars"` | nanoid | Distinct printable ASCII characters; replaces the entire alphabet. |
+| `checksum luhn|mod11|mod97` | pattern | Parsed, not yet executable. |
+
+## Parsed, not yet executable
+
+```screenplay
+concept OrderNumber : String
+  generate pattern "ORD-#{7}" checksum luhn
+concept TicketNumber : Int
+  generate random 100000..999999
+concept LegacyReference : String
+  generate rule MakeReference
+```
+
+These strategies parse and print, but binding refuses them with `PLAY0268` naming #616. `pattern` has planned digits (`#`), letters (`?`), alphanumerics (`*`), classes, repeats and UTC date segments. Short patterns carry little entropy; dates and checksums add none. UTC year boundaries affect date literals, and checksum support can be empty. Their executable shapes and entropy are not admitted yet. `random` describes an inclusive Int range; `rule` is an opaque implementation with unknown entropy. `generate sequence` is reserved and receives `PLAY0682` at binding until #619.
+
+See [choosing a strategy](choosing.md) for the decision guide and [generated values](../generated-values.md) for freshness and pinned fixtures.

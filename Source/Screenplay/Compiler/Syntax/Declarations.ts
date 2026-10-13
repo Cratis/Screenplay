@@ -5,6 +5,7 @@ import { ExpressionSyntax } from './Expressions';
 import { ValidateSyntax } from './Commands';
 import { SyntaxNode } from './SyntaxNode';
 import { EventVisibility } from './EventVisibility';
+import { GenerationSyntax } from './GenerationSyntax';
 
 export interface TypeRefSyntax extends SyntaxNode {
     readonly kind: 'TypeRefSyntax';
@@ -56,6 +57,7 @@ export interface ConceptSyntax extends SyntaxNode {
     readonly values: readonly string[];
     /** Explicit int32 numbers parallel to values; absent for positional members. */
     readonly valueNumbers?: readonly number[] | null;
+    readonly generation?: GenerationSyntax | null;
 }
 
 export interface TypeSyntax extends SyntaxNode {

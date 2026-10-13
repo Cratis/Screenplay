@@ -24,7 +24,8 @@ public sealed partial class SemanticModelBinder
             return new(_concepts[concept.Name].Id, concept.Name, primitive, [.. concept.Values], validations)
             {
                 Numbers = concept.ValueNumbers is { } numbers && SemanticModelValidator.HasNonPositionalEnumNumbers(numbers, concept.Values.Count()) ? [.. numbers] : null,
-                Compliance = BindCompliance(concept)
+                Compliance = BindCompliance(concept),
+                Generation = BindGeneration(concept)
             };
         }
 

@@ -16,7 +16,7 @@ internal static partial class SemanticModelValidator
                 ValidateTypeReference(property.Type);
                 if (property.IsGenerated && !IsAdmittedGeneratedProperty(property, command))
                 {
-                    throw new InvalidSemanticContract("A generated property requires an ESM v7 command and a required scalar UUID-backed concept without validation rules.");
+                    throw new InvalidSemanticContract("A generated property requires an ESM v7 command, a rule-free generatable scalar concept, and at least 64 random bits when it is an identifier.");
                 }
             }
         }
@@ -24,8 +24,10 @@ internal static partial class SemanticModelValidator
         bool IsAdmittedGeneratedProperty(SemanticProperty property, bool command) =>
             command && _semanticVersion.IsAtLeast(SemanticVersion.V7) &&
             property.Type is { Kind: SemanticTypeReferenceKind.Concept, IsCollection: false, IsOptional: false } type &&
-            _concepts.TryGetValue(type.Target, out var concept) && concept.Primitive == SemanticPrimitiveType.Uuid &&
-            concept.Validations.IsEmpty;
+            _concepts.TryGetValue(type.Target, out var concept) &&
+            (concept.Primitive == SemanticPrimitiveType.Uuid || (_semanticVersion.IsAtLeast(SemanticVersion.V15) && concept.Generation is not null)) &&
+            (concept.Compliance is null || concept.Generation is null) && concept.Validations.IsEmpty &&
+            (!property.IsIdentifier || (concept.Primitive is SemanticPrimitiveType.Uuid or SemanticPrimitiveType.Text && SemanticGenerationContract.Bits(concept.Generation) >= 64));
 
         void ValidateTypeReference(SemanticTypeReference type)
         {

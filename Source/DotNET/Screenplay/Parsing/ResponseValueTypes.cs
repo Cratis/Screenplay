@@ -32,7 +32,8 @@ internal sealed partial class ResponseValueTypes
     {
         if (!_known.Contains(type.Name)) return true; // Unavailable imported shapes remain unresolved.
 
-        return !type.IsOptional && !type.IsCollection && _concepts.GetValueOrDefault(type.Name)?.Type == "Uuid" && value is LiteralExpressionSyntax { Value: string uuid } && UuidValueRegex().IsMatch(uuid);
+        var concept = _concepts.GetValueOrDefault(type.Name);
+        return !type.IsOptional && !type.IsCollection && (concept?.Type == "Uuid" || concept?.Type == "String") && Compatible(value, type);
     }
 
     internal bool Compatible(ExpressionSyntax value, TypeRefSyntax type)

@@ -1,0 +1,20 @@
+concept Id : Uuid
+  generate uuidv7
+concept Receipt : String
+  generate nanoid
+concept StringUuid : String
+  generate uuid case upper prefix "ref_"
+concept SortableId : String
+  generate ulid case lower
+concept UserId : String
+  generate typeid "user"
+concept BareTypeId : String
+  generate typeid ""
+concept BinaryCode : String
+  generate nanoid 64 alphabet "ab" prefix "code_"
+concept EncodedRandom : String
+  generate bytes 32 base64url
+concept HexReference : String
+  generate bytes 16 hex case upper
+concept Base32Reference : String
+  generate bytes 16 base32 case lower

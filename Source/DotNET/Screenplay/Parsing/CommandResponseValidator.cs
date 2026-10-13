@@ -26,9 +26,9 @@ internal static class CommandResponseValidator
             foreach (var property in command.Properties.Where(property => property.IsGenerated))
             {
                 var declaredConcepts = concepts[property.Type.Name].ToArray();
-                if (property.Type.IsOptional || property.Type.IsCollection || (declaredConcepts.Length == 0 ? primitives.Contains(property.Type.Name) || compositeTypes.Contains(property.Type.Name) || readModels.Contains(property.Type.Name) : declaredConcepts.Length != 1 || declaredConcepts[0].Type != "Uuid"))
+                if (property.Type.IsOptional || property.Type.IsCollection || (declaredConcepts.Length == 0 ? primitives.Contains(property.Type.Name) || compositeTypes.Contains(property.Type.Name) || readModels.Contains(property.Type.Name) : declaredConcepts.Length != 1 || (declaredConcepts[0].Type != "Uuid" && declaredConcepts[0].Generation is null)))
                 {
-                    context.Error(DiagnosticCodes.InvalidGeneratedType, "A generated property must be a required, noncollection concept backed by Uuid.", property.Location);
+                    context.Error(DiagnosticCodes.InvalidGeneratedType, "A generated property must be a required, noncollection generatable concept.", property.Location);
                 }
             }
 

@@ -84,6 +84,15 @@
                 },
                 { "include": "#comment" },
                 { "include": "#fenced-csharp" },
+                {
+                    "begin": "^\\s*(generate)\\s+(uuidv7|uuid|ulid|typeid|nanoid|bytes|pattern|random|rule|sequence)\\b",
+                    "beginCaptures": { "1": { "name": "keyword.other.screenplay" }, "2": { "name": "support.function.screenplay" } },
+                    "end": "$",
+                    "patterns": [
+                        { "match": "\\b(prefix|case|alphabet|checksum|base64url|hex|base32|lower|upper|luhn|mod11|mod97)\\b", "name": "keyword.other.screenplay" },
+                        { "include": "#common" }
+                    ]
+                },
                 { "include": "#keywords" },
                 { "include": "#common" }
             ]

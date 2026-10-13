@@ -10,6 +10,7 @@ export * from './QueryIdentitySourceSyntax';
 export * from './CodeIdentitySourceSyntax';
 export * from './FileIdentitySourceSyntax';
 export * from './Declarations';
+export type { GenerationSyntax } from './GenerationSyntax';
 export * from './EventVisibility';
 export * from './TranslationDirection';
 export * from './EventDeclarations';
