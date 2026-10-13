@@ -194,6 +194,17 @@ The view name still qualifies a `require` path when only one instance of that vi
 
 The executable semantic model does not yet bind command `reads` or read-model paths in requirements ([#129](https://github.com/Cratis/Screenplay/issues/129)).
 
+### What `reads` guarantees
+
+Today `reads` is a declaration. It documents what the command depends on and feeds the mappings above, but nothing guards it at runtime. Code generated from it, or written by hand, reads a plain read model and does not detect that the state changed before the events were appended. Two commands that both read "no such invoice" can both succeed.
+
+[Decision 0017](https://github.com/Cratis/Screenplay/blob/main/decisions/0017-map-declared-decision-reads-to-chronicle-decision-reads.md) plans to map each `reads` to a protected decision read, so a stale read rejects the command with a `concurrencyViolation`. This is accepted but not implemented. It applies only under a future language version you opt into, so existing documents keep their meaning. It admits only views keyed on the event source whose handled event types are a finite list. Other shapes will fail binding with a reason; there is no unguarded fallback.
+
+Until then, make a rule hold explicitly:
+
+- For uniqueness, declare a `unique` [constraint](constraints.md) in the model.
+- For a rule over state, write the application code as a protected decision, a stream decision or an aggregate. See [keeping decisions correct in Arc](/arc/backend/csharp/chronicle/consistency/) and [choosing a consistency tool in Chronicle](/chronicle/dynamic-consistency-boundary/choosing/).
+
 ## Validation rules
 
 Declarative validation covers the common cases without code:
