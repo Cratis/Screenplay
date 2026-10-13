@@ -25740,7 +25740,8 @@
               "CanonicalizeTouchedDocuments",
               "PreserveExactSource",
               "PreserveTrivia"
-            ]
+            ],
+            "description": "PreserveExactSource writes your source text as supplied, including structural edits, comments, spacing and line endings; replacements retain the original BOM policy and creations use encoding. CanonicalizeTouchedDocuments reprints touched documents canonically. PreserveTrivia patches supported bounded changes and refuses structural changes."
           },
           "validation": {
             "type": "string",
