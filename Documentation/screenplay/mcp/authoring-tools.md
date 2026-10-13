@@ -552,6 +552,22 @@ see [Printing and generating](../printing.md#what-printing-does-not-keep). The
 `dropped-comments` view lists only comments that cannot be placed. An edit that
 keeps all comments reports zero dropped comments.
 
+Every proposal result carries a one-paragraph `summary`, also returned as a second
+text block after the JSON. It says which documents change, which modules, features,
+slices, commands, events, read models, screens and reactions the proposal adds or
+removes, what the authoring checks reported, how many comments are dropped and
+whether the result is executable. Use it to report a proposal; review the details
+below before apply.
+
+The proposal's `authoringDiagnosticCount` and the `after.readiness` counts answer
+different questions. `authoringDiagnosticCount` counts the checks run while
+proposing: printing, parsing, import placement and references. It includes notices
+such as `PLAY0288`, the warning that a touched document was printed canonically.
+`after.readiness` counts the diagnostics of the resulting source alone, which is what
+`apply` reports. `authoringDiagnosticSeverities` splits the proposal count into
+`errors`, `warnings` and `information` and lists the distinct `codes`; call
+`read-proposal` with `view: "diagnostics"` to page them.
+
 1. Call `read-proposal` with its ID and `view: "changes"`. Check the proposal's
    `droppedCommentCount`; when it is not zero, call `read-proposal` with
    `view: "dropped-comments"` to see each comment a changed document loses, with
