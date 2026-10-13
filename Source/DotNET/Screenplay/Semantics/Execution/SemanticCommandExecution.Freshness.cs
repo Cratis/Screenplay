@@ -16,7 +16,7 @@ internal sealed partial class SemanticCommandExecution
     // so it never makes a generated source stale; only routed facts on the same canonical source do.
     SemanticRejected? RejectReusedGeneratedSource()
     {
-        if (!plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V15)) return null;
+        if (!SemanticModelValidator.UsesConceptGeneration(plan.Model.Application)) return null;
         foreach (var property in command.Properties.Where(property => property.IsGenerated))
         {
             var generated = _commandValues[property.Id];

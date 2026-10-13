@@ -5,10 +5,13 @@ namespace Cratis.Screenplay.Semantics;
 
 internal static partial class SemanticModelValidator
 {
+    internal static bool UsesConceptGeneration(SemanticApplication application) =>
+        application.Concepts.Any(concept => concept.Generation is not null);
+
     static void ValidateGenerationVersion(SemanticApplication application, SemanticVersion version)
     {
         ValidateFeatureVersion(
-            application.Concepts.Any(concept => concept.Generation is not null),
+            UsesConceptGeneration(application),
             version,
             SemanticVersion.V15,
             "An ESM v15 model must declare a non-default generation strategy.",

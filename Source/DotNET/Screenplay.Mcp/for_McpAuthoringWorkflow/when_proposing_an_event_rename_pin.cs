@@ -6,12 +6,12 @@ namespace Cratis.Screenplay.Mcp.for_McpAuthoringWorkflow;
 public class when_proposing_an_event_rename_pin : given.an_authoring_connection
 {
     [Theory]
-    [InlineData(null, false, false, "Renamed")]
-    [InlineData(null, true, false, null)]
-    [InlineData("Original", true, false, "Original")]
-    [InlineData("Again", false, false, null)]
-    [InlineData(null, false, true, "Renamed")]
-    void should_report_added_or_retained_pins_even_when_binding_is_unavailable(string? existingPin, bool neverPersisted, bool unsupported, string? expectedPin)
+    [InlineData(null, false, false)]
+    [InlineData(null, true, false)]
+    [InlineData("Original", true, false)]
+    [InlineData("Again", false, false)]
+    [InlineData(null, false, true)]
+    void should_not_warn_that_admitted_pins_are_dropped_even_when_binding_is_unavailable(string? existingPin, bool neverPersisted, bool unsupported)
     {
         var source = "module Projects\n  feature Naming\n    slice StateChange Rename\n      command Rename\n        projectId Uuid identifier\n        produces event Renamed\n";
         if (existingPin is not null) source += $"          id \"{existingPin}\"\n";
@@ -30,14 +30,7 @@ public class when_proposing_an_event_rename_pin : given.an_authoring_connection
             eventNeverPersisted = neverPersisted
         });
         var warnings = proposal.GetProperty("eventPinWarnings");
-        warnings.GetArrayLength().ShouldEqual(expectedPin is null ? 0 : 1);
-        if (expectedPin is not null)
-        {
-            warnings[0].GetProperty("code").GetString().ShouldEqual("PLAY0686");
-            warnings[0].GetProperty("severity").GetString().ShouldEqual("Warning");
-            warnings[0].GetProperty("message").GetString().ShouldEqual($"Event 'Again' id pin '{expectedPin}' is not yet carried to renderers; generated code uses the new name 'Again'.");
-        }
-
+        warnings.GetArrayLength().ShouldEqual(0);
         var reviewed = Result("read-proposal", new { proposalId = proposal.GetProperty("proposalId").GetString() });
         reviewed.GetProperty("eventPinWarnings").GetRawText().ShouldEqual(warnings.GetRawText());
         File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldEqual(source);

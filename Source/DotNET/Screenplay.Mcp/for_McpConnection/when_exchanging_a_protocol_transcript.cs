@@ -59,8 +59,7 @@ public class when_exchanging_a_protocol_transcript : given.a_connection
     void should_describe_event_pin_warnings_in_the_protocol_tool_list()
     {
         var description = _responses[2].GetProperty("result").GetProperty("tools").EnumerateArray().Single(tool => tool.GetProperty("name").GetString() == "propose-rename").GetProperty("description").GetString()!;
-        description.ShouldContain("Event pins are not yet carried to renderers; generated code uses the new name.");
-        description.ShouldContain("eventPinWarnings");
+        description.ShouldContain("Event pins are carried as storedName by ESM v16; consumers must explicitly admit that version.");
     }
 
     [Fact] void should_return_unknown_method_error() => _responses[4].GetProperty("error").GetProperty("code").GetInt32().ShouldEqual(-32601);

@@ -1,0 +1,2 @@
+concept RecordId : Uuid
+concept Value : String
