@@ -10,6 +10,17 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// </summary>
 internal sealed partial class SemanticScopedProjection
 {
+    Level ChildLevel(SemanticProjectionChildren children, SemanticProjectionScope scope, Level level)
+    {
+        var element = _types[level.Targets[children.Property].Type.Target];
+        var elementProperties = Properties(element.Properties);
+        var identity = children.IdentifiedBy.IsSet
+            ? children.IdentifiedBy
+            : element.Properties.Single(_ => _.Name == _readModel.Properties.Single(property => property.IsIdentifier).Name).Id;
+
+        return new([.. level.Address, new(children.Property, identity)], [], elementProperties, [.. level.Ancestors.IsDefault ? [] : level.Ancestors, new(scope, level)]);
+    }
+
     internal sealed record ChildStep(SemanticId Property, SemanticId IdentifiedBy);
 
     internal sealed record Level(

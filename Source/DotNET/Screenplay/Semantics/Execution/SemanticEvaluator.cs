@@ -70,7 +70,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, $"Reducer '{reachedReducer.Name}' has opaque transitions and requires a target provider.");
         }
 
-        if (!TryProject(plan, world.Facts, world.ReadModels, facts, world.PendingChildren, out var readModels, out var pending, out var failure))
+        if (!TryProject(plan, world.Facts, new ProjectionState(world.ReadModels, world.PendingChildren), facts, out var state, out var failure))
         {
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, failure!);
         }
@@ -86,7 +86,7 @@ public sealed partial class SemanticEvaluator : ISemanticEvaluator
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, deferredFailure);
         }
 
-        return ExecuteQueries(plan, world, world.Commit(facts, readModels, pending), facts, queries, caller);
+        return ExecuteQueries(plan, world, world.Commit(facts, state.ReadModels, state.PendingChildren), facts, queries, caller);
     }
 
     // Projects from supplied snapshots without validating facts. The public establishment operation intentionally

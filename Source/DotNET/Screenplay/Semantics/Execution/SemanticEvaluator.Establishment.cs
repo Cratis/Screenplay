@@ -37,12 +37,12 @@ public sealed partial class SemanticEvaluator
 
         try
         {
-            if (!TryProject(plan, [], [], facts, [], out var readModels, out var pending, out var failure))
+            if (!TryProject(plan, [], new ProjectionState([], []), facts, out var state, out var failure))
             {
                 return new SemanticUnsupported(SemanticWorld.Empty, SemanticExecutionCapability.Projection, failure!);
             }
 
-            return new SemanticAccepted(SemanticWorld.Create(facts, readModels).WithProjectionState(readModels, pending), facts, []);
+            return new SemanticAccepted(SemanticWorld.Create(facts, state.ReadModels).WithProjectionState(state.ReadModels, state.PendingChildren), facts, []);
         }
         catch (InvalidSemanticContract exception)
         {

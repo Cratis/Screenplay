@@ -51,14 +51,9 @@ internal sealed partial class SemanticScopedProjection(
         var scope = projection.Scope!;
         var root = new Level([], [], Properties(_readModel.Properties));
         var handled = Process(scope, root);
-        if (!handled && scope.Every is { SubscribesToAllEvents: true } every && _failure is null)
+        if (!handled && _failure is null)
         {
-            // 'all' covers event types no block names, keyed by the event source identity (ProjectionFactory.cs:616-631).
-            if (EventSource() is { } key)
-            {
-                var document = RootDocument(key, true)!;
-                Apply(document.State, every.Mappings, root.Targets, _fact);
-            }
+            ApplyAllEvents(scope, root);
         }
 
         if (_failure is null && handled)
@@ -82,6 +77,16 @@ internal sealed partial class SemanticScopedProjection(
             _.Key,
             [.. _readModel.Properties.Select(property => new SemanticPropertyValue(property.Id, _.State.GetValueOrDefault(property.Id, SemanticValue.Null)))])));
         return null;
+    }
+
+    void ApplyAllEvents(SemanticProjectionScope scope, Level root)
+    {
+        // 'all' covers event types no block names, keyed by the event source identity (ProjectionFactory.cs:616-631).
+        if (scope.Every is { SubscribesToAllEvents: true } every && EventSource() is { } key)
+        {
+            var document = RootDocument(key, true)!;
+            Apply(document.State, every.Mappings, root.Targets, _fact);
+        }
     }
 
     bool Process(SemanticProjectionScope scope, Level level)
@@ -113,12 +118,7 @@ internal sealed partial class SemanticScopedProjection(
 
         foreach (var children in scope.Children)
         {
-            var element = _types[level.Targets[children.Property].Type.Target];
-            var elementProperties = Properties(element.Properties);
-            var identity = children.IdentifiedBy.IsSet
-                ? children.IdentifiedBy
-                : element.Properties.Single(_ => _.Name == _readModel.Properties.Single(property => property.IsIdentifier).Name).Id;
-            handled |= Process(children.Scope, new([.. level.Address, new(children.Property, identity)], [], elementProperties, [.. level.Ancestors.IsDefault ? [] : level.Ancestors, new(scope, level)]));
+            handled |= Process(children.Scope, ChildLevel(children, scope, level));
         }
 
         foreach (var nested in scope.Nested)
