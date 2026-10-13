@@ -46,6 +46,8 @@ module Library
         bookId Uuid
         title String
         onLoan Bool
+      readmodel ShelfLabel
+        title String
       projection AvailableBooks => AvailableBook
         from BookAddedToCatalog
           bookId = $eventSourceId
@@ -60,6 +62,22 @@ module Library
         then readmodel AvailableBook
           bookId = "33b45ad5-0114-474b-b348-0791336023f6"
           onLoan = false
+      specification LendingABookOffTheShelf
+        given readmodel AvailableBook
+          onLoan = false
+        when append BookLent
+          for "33b45ad5-0114-474b-b348-0791336023f6"
+          memberName = "Ola Brekke"
+        then readmodel AvailableBook
+          onLoan = true
+        then readmodel AvailableBook
+          title = "The Quiet Archive"
+      specification LabelingTheShelf
+        when append BookAddedToCatalog
+          for "33b45ad5-0114-474b-b348-0791336023f6"
+          title = "The Quiet Archive"
+        then readmodel ShelfLabel
+          title = "The Quiet Archive"
     slice Automation NotifyOnLoan
       reaction LoanNotifier
         when BookLent

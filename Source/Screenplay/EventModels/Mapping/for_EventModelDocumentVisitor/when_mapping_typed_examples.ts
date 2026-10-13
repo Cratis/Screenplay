@@ -61,13 +61,14 @@ describe('when mapping typed examples', () => {
             { name: 'Invoices.Registration.RegisterInvoice.InvoiceBalance', values: { total: 5000 }, exactly: true },
         ]);
     });
-    it('should carry the effective read model fixtures as the board read models', () => {
-        slice.specifications[0].givenReadModel!.values.should.deep.equal({ total: 3000 });
-        slice.specifications[0].thenReadModel!.values.should.deep.equal({ total: 5000 });
+    it('should not put read model fixtures on a board card a state change slice does not draw', () => {
+        (slice.specifications[0].givenReadModel === undefined).should.be.true;
+        (slice.specifications[0].thenReadModel === undefined).should.be.true;
     });
-    it('should render generated values but not the read models in the published board header', () => {
+    it('should render effective read model and generated values in the published board header', () => {
         const markup = headerOf(document, 0);
-        markup.should.not.contain('readmodel');
+        markup.should.contain('given readmodel Invoices.Registration.RegisterInvoice.InvoiceBalance { total = 3000 }');
+        markup.should.contain('then readmodel Invoices.Registration.RegisterInvoice.InvoiceBalance exactly { total = 5000 }');
         markup.should.contain('generated (not request inputs): receipt = &quot;22222222-2222-2222-2222-222222222222&quot;');
     });
     it('should retain inherited values that the step does not override', () => {

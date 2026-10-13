@@ -32,6 +32,7 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
     const sliceType = sliceTypes[slice.type];
     const isStateView = slice.type === 'StateView';
     const command = isStateView ? undefined : commandOf(slice, scope, owners);
+    const readModel = isStateView ? readModelOf(slice, scope, owners) : undefined;
     const document: SliceDocument = {
         id: scope.id,
         name: slice.name,
@@ -48,14 +49,13 @@ export function toSlice(slice: SliceSyntax, scope: SliceScope, sortOrder: number
             parameters: [query.by, ...query.byParts ?? [], ...query.filters].filter(parameter => parameter !== null).map(parameter => parameterOf(parameter, owners)),
         }) satisfies QueryItemDocument),
         actors: toUserExperience(slice.screens, scope.path, audience),
-        specifications: toSpecifications(slice.specifications, scope, owners, command?.id),
+        specifications: toSpecifications(slice.specifications, scope, owners, command?.id, readModel),
         commentCount: 0,
     };
     if (slice.direction != null) document.direction = slice.direction;
     if (command !== undefined) {
         document.command = command;
     }
-    const readModel = isStateView ? readModelOf(slice, scope, owners) : undefined;
     if (readModel !== undefined) {
         document.readModel = readModel;
     }
