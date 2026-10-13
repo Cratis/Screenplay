@@ -18,6 +18,8 @@ applies-to:
 <!-- Copyright (c) Cratis. All rights reserved. -->
 <!-- Licensed under the MIT license. See LICENSE file in the project root for full license information. -->
 
+> **2026-10-13 — extended by [0070](0070-derive-event-mutability-from-an-admitted-release-baseline.md).** 0070 adds a `mutability` object to each `property.generations[]` entry and an `inPlace` value to `mode`. The rest of this record is unchanged.
+
 ## Context
 
 [0044](0044-evolve-event-properties-through-mcp.md) allows explicitly selected properties throughout a resolved mapping chain. One command input can feed two event contracts, and `alsoRename` or `alsoRemove` can select properties on both. Their starting generations can differ. The singular `property.generation` result described in 0044 cannot disclose every selected event-contract change.
