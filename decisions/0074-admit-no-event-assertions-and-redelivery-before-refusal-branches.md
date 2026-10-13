@@ -1,8 +1,10 @@
 ---
 id: 0074
 title: Admit explicit no-event assertions and redelivery before reaction refusal branches
-status: proposed
+status: accepted
 stage: none
+decided: 2026-10-13
+decider: Sindre Alstad Wilting
 class: contract
 reversibility: costly
 applies-to:
@@ -21,13 +23,13 @@ applies-to:
 Those prerequisites only concern refusal branches. Arc#3058 has not started, so the joint admission holds back two features that need nothing from Arc:
 
 - `then no events` asserts that an action produced no new facts. [#699](https://github.com/Cratis/Screenplay/issues/699) needs it now: the `EventRoutes/observer-filters` corpus asserts that a reaction did **not** fire, and today that check is vacuous because a specification without `then` events never compares facts. Stage's three-way conformance for reaction filters ([Stage#297](https://github.com/Cratis/Stage/issues/297)) inherits the gap.
-- `when redelivered` delivers an existing given fact to one reaction again. A runtime already does this on recovery; a consumer needs no new capability to execute it, only to drive the named observer with a stored event.
+- `when redelivered` delivers an existing given fact to one reaction again. A runtime already does this on recovery, so it needs nothing from Arc#3058. Consumers still have to run it: Stage renders and executes redelivery specifications under its own issue ([Stage#371](https://github.com/Cratis/Stage/issues/371)), separate from refusal branches (Stage#214). 0030's other redelivery condition is met: [#490](https://github.com/Cratis/Screenplay/issues/490) is closed, so locators can state a stream or `no stream` (decision 0037, ESM v8 specification routes).
 
 0030 also rejects `then no events` after `when append` "in this increment". Since ESM v6 the facts that follow `when append` are what reactions appended (`specifications.md`, "An appended event is the action itself"), which is exactly what #699 must assert is empty.
 
 ## Decision
 
-Admit `then no events` and `when redelivered` in the next ESM version, numbered at admission under [0025](0025-allocate-esm-v7-to-responses-and-number-later-versions-at-admission.md) and frozen on publication under [0066](0066-published-esm-versions-are-frozen.md). Refusal branches and `$refusal` values stay refused with `PLAY0268` and are admitted later in their own version, once Arc#3058 lands; 0030's prerequisites apply to that later version only.
+Admit `then no events` and `when redelivered` in the next ESM version, numbered at admission under [0025](0025-allocate-esm-v7-to-responses-and-number-later-versions-at-admission.md) and frozen on publication under [0066](0066-published-esm-versions-are-frozen.md). Refusal branches and `$refusal` values stay refused with `PLAY0268` and are admitted later in their own version, once Arc#3058 lands; 0030's prerequisites apply to that later version only. Once the first version is admitted, the `PLAY0268` refusal splits: it names only reaction refusal branches and `$refusal` values, and no longer redelivery or explicit no-event assertions, which bind in the new version and stay refused below it.
 
 In the first version:
 
@@ -57,6 +59,10 @@ Holds until both #433 versions are admitted. In scope: splitting the admission, 
 **Done when:** a new ESM version binds `then no events` (including after `when append`) and `when redelivered`; the reference fails a no-event specification when a command or reaction appends a fact and passes when none does; redelivery fires only the named reaction against the located given fact; refusal branches and `$refusal` values still fail binding with `PLAY0268`; prior-version golden and corpus bytes are unchanged; the observer-filters corpus asserts its no-reaction cases with `then no events`.
 
 **Verify by:** binder, strict-reader and canonical round-trip specifications; reference-runner specifications for both features; a new golden and source-backed corpus vectors for the version; the interoperability version table check; existing golden and corpus comparisons.
+
+## Status notes
+
+**2026-10-13 — accepted with changes.** Accepted by Sindre Alstad Wilting (delegated through the coordinator after an independent review) with three changes: #490's closure is recorded, the redelivery consumer work is named (Stage#371), and the `PLAY0268` message split is stated. Redelivery stays bundled with `then no events`.
 
 ## Consequences
 
