@@ -12631,6 +12631,87 @@
                   "whenClock": null,
                   "whenQuery": null,
                   "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [],
+                  "givenCaptures": [],
+                  "givenClock": null,
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "IgnoringAZeroValuePayment",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoEvents": true,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": {
+                    "kind": "SpecificationEventSyntax",
+                    "eventType": "PaymentRecorded",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+                    },
+                    "stream": {
+                      "kind": "SpecificationStreamSyntax",
+                      "eventSource": "Payment",
+                      "stream": "Transactions",
+                      "streamId": {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "streamId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                        }
+                      },
+                      "streamIdParts": []
+                    },
+                    "values": [
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "invoiceId",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "amount",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": 0
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "method",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "transfer"
+                        }
+                      },
+                      {
+                        "kind": "PropertyMappingSyntax",
+                        "property": "receivedAt",
+                        "source": {
+                          "kind": "LiteralExpressionSyntax",
+                          "value": "2026-10-02T09:00:00Z"
+                        }
+                      }
+                    ]
+                  },
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenTrigger": null
                 }
               ],
               "type": "Automation"
@@ -12903,6 +12984,90 @@
                   "whenCapture": null,
                   "whenClock": null,
                   "whenQuery": null,
+                  "whenTrigger": null
+                },
+                {
+                  "kind": "SpecificationSyntax",
+                  "given": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "InvoiceMarkedOverdue",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "overdueAt",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-02T00:00:00Z"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "givenCaptures": [],
+                  "givenClock": {
+                    "kind": "SpecificationClockSyntax",
+                    "instant": "2026-10-02T09:00:00Z"
+                  },
+                  "givenOperationFailures": [],
+                  "givenReadModels": [],
+                  "name": "RecoveringAnUndeliveredOverdueReminder",
+                  "thenCompensated": [],
+                  "thenDenied": null,
+                  "thenErrors": [],
+                  "thenEvents": [
+                    {
+                      "kind": "SpecificationEventSyntax",
+                      "eventType": "InvoiceReminderSent",
+                      "for": {
+                        "kind": "LiteralExpressionSyntax",
+                        "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                      },
+                      "values": [
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "reminderNumber",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": 1
+                          }
+                        },
+                        {
+                          "kind": "PropertyMappingSyntax",
+                          "property": "sentAt",
+                          "source": {
+                            "kind": "LiteralExpressionSyntax",
+                            "value": "2026-10-02T09:00:00Z"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "thenEventsInAnyOrder": false,
+                  "thenNoResult": null,
+                  "thenOperations": [],
+                  "thenReadModels": [],
+                  "thenResults": [],
+                  "thenReturns": null,
+                  "when": null,
+                  "whenAppended": null,
+                  "whenCapture": null,
+                  "whenClock": null,
+                  "whenQuery": null,
+                  "whenRedelivered": {
+                    "kind": "SpecificationRedeliverySyntax",
+                    "eventType": "InvoiceMarkedOverdue",
+                    "for": {
+                      "kind": "LiteralExpressionSyntax",
+                      "value": "9c858901-8a57-4791-81fe-4c455b099bc9"
+                    },
+                    "reaction": "OverdueChaser",
+                    "values": []
+                  },
                   "whenTrigger": null
                 },
                 {

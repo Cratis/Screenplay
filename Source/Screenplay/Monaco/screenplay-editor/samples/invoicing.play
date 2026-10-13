@@ -2638,6 +2638,18 @@ module Invoicing
           method    = "transfer"
         then InvoicePaid
 
+      // A zero-value payment must not cause reconciliation to append invoice facts.
+      specification IgnoringAZeroValuePayment
+        when append PaymentRecorded
+          for "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+          stream Payment.Transactions
+            streamId = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          invoiceId  = "9c858901-8a57-4791-81fe-4c455b099bc9"
+          amount     = 0
+          method     = "transfer"
+          receivedAt = "2026-10-02T09:00:00Z"
+        then no events
+
     slice Automation ChaseOverdueInvoices
       description "Reminds the billing contact while an invoice is late"
 
@@ -2679,6 +2691,20 @@ module Invoicing
           overdueAt = "2026-10-02T00:00:00Z"
         then InvoiceReminderSent
           reminderNumber = 1
+
+      // Recovery delivers the existing overdue fact to this observer only; it does
+      // not append it again or promise once-only delivery of an external reminder.
+      specification RecoveringAnUndeliveredOverdueReminder
+        given clock "2026-10-02T09:00:00Z"
+        given InvoiceMarkedOverdue
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          overdueAt = "2026-10-02T00:00:00Z"
+        when redelivered InvoiceMarkedOverdue to OverdueChaser
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+        then InvoiceReminderSent
+          for "9c858901-8a57-4791-81fe-4c455b099bc9"
+          reminderNumber = 1
+          sentAt = "2026-10-02T09:00:00Z"
 
       // The clock is an action of its own: it reaches Monday 07:30, so the weekly
       // digest is due.
