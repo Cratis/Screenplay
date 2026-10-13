@@ -6,7 +6,7 @@ stage: none
 class: contract
 reversibility: costly
 decided: 2026-10-13
-decider: woksin (delegated via L0)
+decider: Sindre Alstad Wilting
 applies-to:
   - Source/DotNET/Screenplay/Workspaces/**
   - Source/DotNET/Screenplay/Semantics/**
