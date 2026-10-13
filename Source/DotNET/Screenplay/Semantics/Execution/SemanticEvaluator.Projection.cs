@@ -13,8 +13,20 @@ public sealed partial class SemanticEvaluator
         ImmutableArray<SemanticReadModelInstance> current,
         ImmutableArray<SemanticFact> facts,
         out ImmutableArray<SemanticReadModelInstance> readModels,
+        out string? failure) =>
+        TryProject(plan, history, current, facts, [], out readModels, out _, out failure);
+
+    internal static bool TryProject(
+        SemanticExecutionPlan plan,
+        ImmutableArray<SemanticFact> history,
+        ImmutableArray<SemanticReadModelInstance> current,
+        ImmutableArray<SemanticFact> facts,
+        ImmutableArray<SemanticScopedProjection.DeferredChild> pending,
+        out ImmutableArray<SemanticReadModelInstance> readModels,
+        out ImmutableArray<SemanticScopedProjection.DeferredChild> remaining,
         out string? failure)
     {
+        remaining = pending;
         if (SemanticDeferredProjections.FindFailure(plan, facts) is { } deferredFailure)
         {
             failure = deferredFailure;
@@ -27,7 +39,8 @@ public sealed partial class SemanticEvaluator
         var types = plan.Model.Application.Types.ToDictionary(_ => _.Id);
         var validator = new SemanticValueValidator(concepts, types);
         var observed = history.ToList();
-        var projection = new SemanticFactProjection(plan, validator, instances, observed);
+        var deferred = pending.ToList();
+        var projection = new SemanticFactProjection(plan, validator, instances, observed, deferred);
 
         foreach (var fact in facts)
         {
@@ -43,6 +56,7 @@ public sealed partial class SemanticEvaluator
 
         failure = null;
         readModels = [.. instances];
+        remaining = [.. deferred];
         return true;
     }
 }

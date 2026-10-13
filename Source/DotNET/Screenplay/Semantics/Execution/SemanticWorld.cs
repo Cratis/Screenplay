@@ -10,12 +10,16 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// </summary>
 public sealed class SemanticWorld
 {
+    internal readonly ImmutableArray<SemanticScopedProjection.DeferredChild> PendingChildren;
+
     SemanticWorld(
         ImmutableArray<SemanticFact> facts,
-        ImmutableArray<SemanticReadModelInstance> readModels)
+        ImmutableArray<SemanticReadModelInstance> readModels,
+        ImmutableArray<SemanticScopedProjection.DeferredChild> pending = default)
     {
         Facts = facts;
         ReadModels = readModels;
+        PendingChildren = pending.IsDefault ? [] : pending;
     }
 
     /// <summary>
@@ -75,10 +79,19 @@ public sealed class SemanticWorld
             ]);
     }
 
+    internal SemanticWorld WithProjectionState(
+        ImmutableArray<SemanticReadModelInstance> readModels,
+        ImmutableArray<SemanticScopedProjection.DeferredChild> pending) =>
+        new(Facts, Create([], readModels).ReadModels, pending);
+
     internal SemanticWorld Commit(
         ImmutableArray<SemanticFact> facts,
-        ImmutableArray<SemanticReadModelInstance> readModels) =>
-        Create([.. Facts, .. facts], readModels);
+        ImmutableArray<SemanticReadModelInstance> readModels,
+        ImmutableArray<SemanticScopedProjection.DeferredChild>? pending = null)
+    {
+        var committed = Create([.. Facts, .. facts], readModels);
+        return new(committed.Facts, committed.ReadModels, pending ?? PendingChildren);
+    }
 
     static bool ValidValues(ImmutableArray<SemanticPropertyValue> values) =>
         !values.IsDefault && values.All(_ => _ is { TargetProperty.IsSet: true, Value: not null });

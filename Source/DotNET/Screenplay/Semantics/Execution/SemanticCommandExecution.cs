@@ -297,7 +297,7 @@ internal sealed partial class SemanticCommandExecution(
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, $"Reducer '{reachedReducer.Name}' has opaque transitions and requires a target provider.");
         }
 
-        if (!SemanticEvaluator.TryProject(plan, world.Facts, world.ReadModels, _facts.ToImmutable(), out var readModels, out var projectionFailure))
+        if (!SemanticEvaluator.TryProject(plan, world.Facts, world.ReadModels, _facts.ToImmutable(), world.PendingChildren, out var readModels, out var pending, out var projectionFailure))
         {
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, projectionFailure!);
         }
@@ -313,7 +313,7 @@ internal sealed partial class SemanticCommandExecution(
             return new SemanticUnsupported(world, SemanticExecutionCapability.Projection, deferredFailure);
         }
 
-        var tentative = world.Commit(_facts.ToImmutable(), readModels);
+        var tentative = world.Commit(_facts.ToImmutable(), readModels, pending);
         var execution = SemanticEvaluator.ExecuteQueries(plan, world, tentative, _facts.ToImmutable(), request.Queries, request.Caller);
         return execution is SemanticAccepted accepted ? accepted with { Response = response } : execution;
     }
