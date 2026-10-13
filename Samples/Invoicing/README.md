@@ -38,7 +38,7 @@ Invoice status, payment terms and payment method pin their current zero-based po
 
 ## Recovery and no-event assertions
 
-`IgnoringAZeroValuePayment` appends a routed zero-value payment and asserts `then no events`: the payment itself is the action, and reconciliation must append nothing after it. `RecoveringAnUndeliveredOverdueReminder` delivers an existing overdue fact only to `OverdueChaser` with `when redelivered`, without appending that fact again, and asserts the reminder at the scenario's `given clock` instant. Both forms select ESM v16. Refusal branches and `$refusal` values remain preview syntax in their dedicated fixture; redelivery does not promise once-only external effects.
+`IgnoringAZeroValuePayment` appends a routed zero-value payment and asserts `then no events`: the payment itself is the action, and reconciliation must append nothing after it. `RecoveringAnUndeliveredOverdueReminder` delivers an existing overdue fact only to `OverdueChaser` with `when redelivered`, without appending that fact again, and asserts the reminder at the scenario's `given clock` instant. Both forms select ESM v17. Refusal branches and `$refusal` values remain preview syntax in their dedicated fixture; redelivery does not promise once-only external effects.
 
 ## Who uses it
 

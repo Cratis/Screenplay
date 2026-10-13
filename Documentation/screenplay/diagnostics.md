@@ -1043,7 +1043,7 @@ See [Imports](imports.md).
 
 ### Refusal branches, redelivery and no-event assertions
 
-Refusal branches and `$refusal` values remain syntax-only: source-valid models fail binding with `PLAY0268` naming those features. Redelivery and `then no events` bind and execute from ESM v16; earlier strict readers reject their canonical members.
+Refusal branches and `$refusal` values remain syntax-only: source-valid models fail binding with `PLAY0268` naming those features. Redelivery and `then no events` bind and execute from ESM v17; earlier strict readers reject their canonical members.
 
 | Code | Severity | Meaning |
 | --- | --- | --- |

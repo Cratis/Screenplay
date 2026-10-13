@@ -244,7 +244,7 @@ Both are declarations of *what happens*, not of how — a trigger can state its 
 
 ## Recovery redelivery
 
-Use `when redelivered <Event> to <Reaction>` to deliver one existing given fact to one event-trigger reaction again. ESM v16 establishes givens without running reactions, fires only the named observer (respecting its `from` and `where` filters), and settles any cascade from newly appended facts. It never appends the given fact again. `then no events` asserts no effects, while event expectations compare all newly accepted facts. An unhandled validation or constraint refusal remains assertable with `then error`. See [Redelivery specifications](specifications.md#redelivery-specifications) for locator rules and examples. This is ordinary observation, not replay or a once-only external-effect guarantee.
+Use `when redelivered <Event> to <Reaction>` to deliver one existing given fact to one event-trigger reaction again. ESM v17 establishes givens without running reactions, fires only the named observer (respecting its `from` and `where` filters), and settles any cascade from newly appended facts. It never appends the given fact again. `then no events` asserts no effects, while event expectations compare all newly accepted facts. An unhandled validation or constraint refusal remains assertable with `then error`. See [Redelivery specifications](specifications.md#redelivery-specifications) for locator rules and examples. This is ordinary observation, not replay or a once-only external-effect guarantee.
 
 ## Refusal branches (syntax-only)
 

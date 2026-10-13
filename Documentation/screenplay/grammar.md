@@ -1300,7 +1300,7 @@ RefusalBranch  = "on", "refused",
 RefusalValue   = "$refusal.", ( "reason" | "constraint" | "message" ) ;
 
 (* Refusal branches and values remain syntax-only: binding refuses them with PLAY0268.
-   "when redelivered" and "then no events" are executable from ESM v16.
+   "when redelivered" and "then no events" are executable from ESM v17.
    Branches are ordered; bare refusal excludes authorization. RefusalValue is
    a String source only in branch event mappings; constraint requires a
    "by constraint" selector. Branches cannot produce operations or inline events.

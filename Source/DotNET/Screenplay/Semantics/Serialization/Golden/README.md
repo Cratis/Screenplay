@@ -38,6 +38,8 @@ The full vectors are built from these source models:
 
 `full-esm-v16.json` pins stored event type names under 0075. `canonical_serialization_golden_vectors.CreateSemanticModelV16()` adds one pinned contract to the full v15 model, retaining unpinned contracts. `StoredEventNamesCorpus.V16` pins a source-backed mixed pinned/unpinned rename and unchanged reference outcomes across equivalent forms. Existing v1–v15 golden bytes are unchanged. Only an event pin that differs from the display name selects v16; an equal-name pin omits `storedName` and preserves the earlier version and bytes.
 
+`full-esm-v17.json` pins explicit no-event assertions and recovery redelivery under 0074. `canonical_serialization_golden_vectors.CreateSemanticModelV17()` adds both specification members to the full v16 model, retaining stored event names and every earlier contract. `RecoverySpecificationsCorpus.V17` pins source-backed bytes, revisions and reference outcomes across equivalent forms. Existing v1–v16 golden bytes are unchanged. Regenerate only this golden with `SCREENPLAY_REGENERATE_GOLDEN=17`, then rebuild and rerun without the variable.
+
 The other files pin separate serialization contracts, not ESM bytes:
 
 | File | Source |

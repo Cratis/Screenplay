@@ -136,9 +136,9 @@ specification <Name>
 - `given readmodel <ReadModelType>` — zero or more. Establishes prior read model state directly, for scenarios where expressing the state as events would be noise.
 - `given caller` or `given caller as <Persona>` — zero or one, never both. The explicit block states authentication, roles, and repeatable claim values. The persona form has no body and expands into an authenticated deterministic witness satisfying every persona policy; see [persona synthesis](personas.md#persona-callers-in-specifications). Either form satisfies the caller requirement for an authorized scenario (`PLAY0389`). It supplies no actor to reaction invocations.
 - `when <CommandType>` or `when append <EventType>` — at most one action. Append directly establishes an event occurrence, checks append-time constraints, projects it, then checks read models and queries; it does not run a command. Without `when`, provide at least one `then readmodel`, `then no readmodel`, or `then query`; `then` events and errors require an action (`PLAY0352`).
-- `when redelivered <EventType> to <Reaction>` — selects exactly one given event occurrence for one compatible event-trigger reaction. It participates in the same one-action rule and selects ESM v16. See [Redelivery specifications](#redelivery-specifications).
+- `when redelivered <EventType> to <Reaction>` — selects exactly one given event occurrence for one compatible event-trigger reaction. It participates in the same one-action rule and selects ESM v17. See [Redelivery specifications](#redelivery-specifications).
 - `then <EventType>` — zero or more. Compares the complete set of new facts, in authored order by default. From ESM v6, `when append` excludes the action's appended fact: asserted events compare the facts its reactions appended. Omit them to check only projected state or queries, or use `then no events` to assert explicitly that nothing followed.
-- `then no events` — once per specification, with no children. Selects ESM v16 and asserts that the action and its reaction cascade appended no new facts. After `when append`, it excludes the action's appended fact and asserts that nothing followed it. It counts as a success outcome and can accompany read-model, query or response assertions, but not event expectations, `then events in any order`, errors or denial (`PLAY0545`). An outcome-less specification still does not bind; omission is not an explicit no-event assertion.
+- `then no events` — once per specification, with no children. Selects ESM v17 and asserts that the action and its reaction cascade appended no new facts. After `when append`, it excludes the action's appended fact and asserts that nothing followed it. It counts as a success outcome and can accompany read-model, query or response assertions, but not event expectations, `then events in any order`, errors or denial (`PLAY0545`). An outcome-less specification still does not bind; omission is not an explicit no-event assertion.
 - `then events in any order` — once per specification. Compares all asserted events by event type, payload, and optional source without regard to order, still requiring the exact number of new facts. Without it, order matters.
 - `then readmodel <ReadModelType> [exactly]` — zero or more. The read model state after projection. By default, only asserted properties need match; `exactly` also disallows unasserted properties.
 - `then no readmodel <ReadModelType> for <key>` — zero or more. Asserts that precisely the keyed instance is absent, not that it exists with empty or null properties, and not that a query result is empty. The concrete key is required and type-checked against the view identifier. It has no children or `exactly` qualifier. Presence and absence for the same view and key conflict.
@@ -471,7 +471,7 @@ Default `Startup` and `Shutdown` signals carry no values. If a host registration
 
 ## Redelivery specifications
 
-Recovery can deliver an existing fact to one reaction without appending another fact. `when redelivered` selects ESM v16. The reference establishes givens without firing reactions, delivers only to the named reaction, then settles the ordinary cascade. This example declares the event and its observer before selecting a given occurrence:
+Recovery can deliver an existing fact to one reaction without appending another fact. `when redelivered` selects ESM v17. The reference establishes givens without firing reactions, delivers only to the named reaction, then settles the ordinary cascade. This example declares the event and its observer before selecting a given occurrence:
 
 ```screenplay
 module Billing
@@ -535,7 +535,7 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `given caller` | Explicit identity, roles, and repeated claims. |
 | `when <CommandType>` | The command under test, with its property values. |
 | `when append <EventType>` | Append an event occurrence, enforce constraints and project it; in v6, run its reaction consequences. |
-| `when redelivered <EventType> to <Reaction>` | Deliver exactly one given occurrence to one event-trigger reaction, without appending it again (ESM v16). |
+| `when redelivered <EventType> to <Reaction>` | Deliver exactly one given occurrence to one event-trigger reaction, without appending it again (ESM v17). |
 | `given clock "<instant>"` | The instant the scenario happens at. |
 | `given capture <Capture>` | An earlier record of a capture's source. |
 | `when clock "<instant>"` | The clock reaches an instant; scheduled reactions that are due run. |
@@ -544,7 +544,7 @@ Tags are append metadata: `then` event assertions compare payload properties and
 | `when query <Query>` | Perform a query with its arguments. |
 | `then result [exactly]` | One expected row of the performed query; repeat for several. |
 | `then no result` | The performed query returns nothing. |
-| `then no events` | Assert no new facts from the action and its cascade; after an append, exclude the action's fact (ESM v16). |
+| `then no events` | Assert no new facts from the action and its cascade; after an append, exclude the action's fact (ESM v17). |
 | `then events in any order` | Ignore order, but still require the exact set of new facts. |
 | `exactly` on read model or query | Compare every property rather than the default subset. |
 | `then <EventType>` | An expected new fact; if asserted, the full new fact set must match. |
