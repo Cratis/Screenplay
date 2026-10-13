@@ -63,7 +63,7 @@ and a schema/hash mismatch never count as absence and are never repaired automat
 Admission uses the same exit codes: changed overlapping revisions exit `1`,
 invalid inputs or failed writes exit `2`.
 
-The [published JSON Schema](release-baseline-v1.schema.json) describes the sidecar.
+The [published JSON Schema](https://github.com/Cratis/Screenplay/blob/main/Documentation/screenplay/release-baseline-v1.schema.json) describes the sidecar.
 Composite types expand recursively. A cycle becomes `{ "kind": "ref", "ref": 1 }`
 for the nearest enclosing composite, `ref: 2` for its parent, and so on. These
 path-relative references exclude type names and identities, so renaming a recursive
