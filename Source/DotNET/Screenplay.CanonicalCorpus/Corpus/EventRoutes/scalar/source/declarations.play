@@ -11,4 +11,4 @@ eventsource Account
     streamId String
   stream UUIDs
     streamId Uuid
-  stream All
+  stream Archive

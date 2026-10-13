@@ -172,7 +172,7 @@ public static class EventRoutesCorpus
         if (RejectionCategory(name) is not null || name == "MatchingReducer") return [];
         if (key == "production-routes")
         {
-            return name == "NoDefault" ? ["{\"sourceKind\":\"Account\",\"streamKind\":\"All\"}"] :
+            return name == "NoDefault" ? ["{\"sourceKind\":\"Account\",\"streamKind\":\"Archive\"}"] :
                 ["{\"sourceKind\":\"Account\",\"streamKind\":\"Notes\",\"streamId\":\"a|b%\"}", $"{{\"sourceKind\":\"Account\",\"streamKind\":\"Periods\",\"streamId\":\"{Uuid}|a%7Cb%25\"}}", "{\"sourceKind\":\"Account\",\"streamKind\":\"Base\",\"streamId\":\"a|b%\"}"];
         }
         if (key == "observer-filters")
@@ -180,7 +180,7 @@ public static class EventRoutesCorpus
             return name switch
             {
                 "RoutedReaction" => ["{\"sourceKind\":\"Account\",\"streamKind\":\"Notes\",\"streamId\":\"period\"}", "null"],
-                "WrongStreamReaction" => ["{\"sourceKind\":\"Account\",\"streamKind\":\"All\"}"],
+                "WrongStreamReaction" => ["{\"sourceKind\":\"Account\",\"streamKind\":\"Archive\"}"],
                 _ => ["null"]
             };
         }
@@ -193,7 +193,7 @@ public static class EventRoutesCorpus
     {
         if (name == "UnroutedFact") return "null";
         var source = key == "scalar" ? "StoredAccount" : "Account";
-        var stream = name switch { "TextInput" or "HistoryWithoutProducer" => "Notes", "UUIDInput" => "UUIDs", "UnkeyedInput" or "AnyOrderAssignment" => "All", _ => key == "scalar" ? "StoredLedger" : "Ledger" };
+        var stream = name switch { "TextInput" or "HistoryWithoutProducer" => "Notes", "UUIDInput" => "UUIDs", "UnkeyedInput" or "AnyOrderAssignment" => "Archive", _ => key == "scalar" ? "StoredLedger" : "Ledger" };
         var id = name switch
         {
             "TextInput" => "é|%",

@@ -1,5 +1,5 @@
 eventsource Account
-  stream All
+  stream Archive
 eventsource Other
   id "Account"
-  stream All
+  stream Archive

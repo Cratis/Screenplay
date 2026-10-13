@@ -2,4 +2,4 @@ eventsource Account
   identifier String
   stream Notes
     streamId String
-  stream All
+  stream Archive
