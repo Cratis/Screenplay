@@ -196,7 +196,7 @@ The executable semantic model does not yet bind command `reads` or read-model pa
 
 ### What `reads` guarantees
 
-Today `reads` is a declaration. It documents what the command depends on and feeds the mappings above, but nothing guards it at runtime. Code generated from it, or written by hand, reads a plain read model and does not detect that the state changed before the events were appended. Two commands that both read "no such invoice" can both succeed.
+Today `reads` is a declaration. It documents what the command depends on and feeds the mappings above, but nothing guards it at runtime. Nothing generated from it guards the read today, and code that reads a plain read model, by hand or otherwise, does not detect that the state changed before the events were appended. Two commands that both read "no such invoice" can both succeed.
 
 [Decision 0017](https://github.com/Cratis/Screenplay/blob/main/decisions/0017-map-declared-decision-reads-to-chronicle-decision-reads.md) plans to map each `reads` to a protected decision read, so a stale read rejects the command with a `concurrencyViolation`. This is accepted but not implemented. It applies only under a future language version you opt into, so existing documents keep their meaning. It admits only views keyed on the event source whose handled event types are a finite list. Other shapes will fail binding with a reason; there is no unguarded fallback.
 
