@@ -322,6 +322,8 @@ is `PreserveTrivia`: verified identifier patches leave comments, line endings,
 BOM and unrelated text intact. Event renames update typed consumers, including
 constraint `released by` references and screen/behavior `on event` triggers.
 
+Review `eventPinWarnings` in the proposal: event pins are not yet carried to renderers, so generated code uses the new name. See the [rename reference](reference.md) for this interim warning ([#704](https://github.com/Cratis/Screenplay/issues/704)).
+
 Event sources and streams, examples and specifications are also rename targets. Source and stream renames repair bound command and specification routes and migrate catalog entries atomically, including a source's owned streams. Existing pins stay unchanged. No pins are added automatically; add `id` with a typed edit before renaming a declaration with stored events. An unpinned rename preserves catalog identity but changes its stored name. Renaming an example updates only the steps resolved to that declaration, including qualified names and `when append`; same-named examples in other scopes remain unchanged. Renaming its underlying event, command or read model updates the example's type reference. Renaming a composite-type property updates structured keys in example bodies and step overrides. Examples remain front-end syntax and receive no ESM identity. Use `find-fixtures` to inspect effective values and origins before editing an example shared by several specifications.
 
 The planner coordinates logical fragments, repairs proven typed references and

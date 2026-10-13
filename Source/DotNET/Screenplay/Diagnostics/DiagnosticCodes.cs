@@ -3171,4 +3171,9 @@ public static class DiagnosticCodes
     /// A command response name is used in that command's failure continuation.
     /// </summary>
     public const string ResponseNameUsedOnFailure = "PLAY0685";
+
+    /// <summary>
+    /// An event identity pin is not yet carried to renderers, which use the event's current name.
+    /// </summary>
+    public const string EventIdPinNotCarriedToRenderers = "PLAY0686";
 }
