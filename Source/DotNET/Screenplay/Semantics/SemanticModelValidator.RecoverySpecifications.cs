@@ -19,14 +19,45 @@ internal static partial class SemanticModelValidator
 
     private sealed partial class ValidationContext
     {
-        void ValidateRecoverySpecification(SemanticSpecification specification)
+        static bool HasPositiveOutcome(SemanticSpecification specification)
         {
-            if (specification.ThenNoEvents && (specification.ThenEvents.Length > 0 || specification.ThenEventsInAnyOrder ||
-                specification.ThenErrors.Length > 0 || specification.ThenDenied))
+            if (specification.ThenNoEvents) return true;
+
+            return specification.ThenReturns is not null || specification.ThenEvents.Length > 0 || HasReadModelOutcome(specification);
+        }
+
+        static bool AssertsMoreThanReadState(SemanticSpecification specification, bool deniedQuery)
+        {
+            if (specification.ThenNoEvents || specification.ThenErrors.Length > 0 || specification.ThenEvents.Length > 0) return true;
+            if (specification.ThenDenied && !deniedQuery) return true;
+
+            return !HasReadModelOutcome(specification) && specification.ThenQueries.Length == 0;
+        }
+
+        static void ValidateNoEvents(SemanticSpecification specification)
+        {
+            if (!specification.ThenNoEvents) return;
+            if (HasConflictingNoEventsOutcome(specification))
             {
                 throw new InvalidSemanticContract("An explicit no-event assertion cannot accompany event, event-order, error or denial expectations.");
             }
+        }
 
+        static bool HasConflictingNoEventsOutcome(SemanticSpecification specification)
+        {
+            if (specification.ThenEvents.Length > 0 || specification.ThenEventsInAnyOrder) return true;
+
+            return specification.ThenErrors.Length > 0 || specification.ThenDenied;
+        }
+
+        void ValidateRecoverySpecification(SemanticSpecification specification)
+        {
+            ValidateNoEvents(specification);
+            ValidateRedelivery(specification);
+        }
+
+        void ValidateRedelivery(SemanticSpecification specification)
+        {
             if (specification.WhenRedelivered is not { } action) return;
             if (action.Given < 0 || action.Given >= specification.GivenEvents.Length)
             {
