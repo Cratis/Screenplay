@@ -19,12 +19,9 @@ public sealed partial class SemanticModelBinder
             UsesStoredEventNames |= storedName != current.Name;
             foreach (var declaration in declarations)
             {
-                if (declaration.Id is { } pin)
+                if (declaration.Id is { } pin && !StoredEventName.IsValid(pin))
                 {
-                    if (!StoredEventName.IsValid(pin))
-                    {
-                        Error(DiagnosticCodes.InvalidEventId, $"Event '{declaration.Name}' id pin must use an event-name identifier without surrounding whitespace.", declaration.Location);
-                    }
+                    Error(DiagnosticCodes.InvalidEventId, $"Event '{declaration.Name}' id pin must use an event-name identifier without surrounding whitespace.", declaration.Location);
                 }
 
                 if ((declaration.Id ?? declaration.Name) != storedName)
