@@ -96,7 +96,7 @@ internal static class PublicEventUsageValidator
             if (target is not { } contract) continue;
             contracts.Add((contract.Node, contract.Visibility, contract.Origin, use.Output));
             ValidateUse(slice, use.Name, use.Node, use.Output, use.Command, contract.Visibility, contract.Origin, context);
-            if (use.Node is CaptureSourceSettingSyntax && contract is { Visibility: EventVisibility.Public, Origin: { } origin })
+            if (use.Node is CaptureSourceSettingSyntax && contract is { Visibility: EventVisibility.Public, Origin: { } origin } && !string.IsNullOrWhiteSpace(origin))
             {
                 captureOrigins[use.Node] = origin;
             }

@@ -59,7 +59,7 @@ function validateSlice(application: ApplicationSyntax, slice: SliceSyntax, scope
         if (contract === undefined) continue;
         contracts.push({ node: contract, output: use.output });
         validateUse(slice, use.name, use.node, use.output, use.command, contract, context);
-        if (use.node.kind === 'CaptureSourceSettingSyntax' && contract.visibility === EventVisibility.Public && contract.origin != null) captureOrigins.set(use.node, contract.origin);
+        if (use.node.kind === 'CaptureSourceSettingSyntax' && contract.visibility === EventVisibility.Public && contract.origin != null && contract.origin.trim().length > 0) captureOrigins.set(use.node, contract.origin);
     }
     validateCaptureOrigins(slice, captureOrigins, context);
     // 'all' subscribes to every event type; 'every' maps only the projection's existing inputs.
