@@ -25,14 +25,18 @@ public sealed partial class SemanticModelBinder
             {
                 var property = properties[source.Name];
                 var concept = syntax.Concepts.SingleOrDefault(value => _concepts[value.Name].Id == property.Type.Target);
-                if (property.Type is not { Kind: SemanticTypeReferenceKind.Concept, IsCollection: false, IsOptional: false } || concept?.Type != "Uuid")
+                if (property.Type is not { Kind: SemanticTypeReferenceKind.Concept, IsCollection: false, IsOptional: false } || concept is null || (concept.Type != "Uuid" && concept.Generation is null))
                 {
-                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Generated property '{property.Name}' of command '{command.Name}' requires a required scalar UUID-backed concept; use a UUID concept or remove 'generated'.", source.Location);
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Generated property '{property.Name}' of command '{command.Name}' requires a required scalar generatable concept; declare a generation strategy or use a UUID concept.", source.Location);
                 }
                 else if ((concept.Validations ?? []).Any(validation => validation is CodeValidateSyntax ||
                     (validation is DeclarativeValidateSyntax declarative && (declarative.Rules.Any() || (declarative.Requirements ?? []).Any()))))
                 {
-                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Generated property '{property.Name}' of command '{command.Name}' uses concept '{concept.Name}' with validation rules; ESM v7 has no post-generation validation. Use a rule-free concept or remove 'generated'.", source.Location);
+                    Error(DiagnosticCodes.UnsupportedSemanticSyntax, $"Generated property '{property.Name}' of command '{command.Name}' uses concept '{concept.Name}' with validation rules; post-generation validation awaits #616 phase 2b-2. Use a rule-free concept or remove 'generated'.", source.Location);
+                }
+                else
+                {
+                    ValidateGenerationEntropy(command, source, concept);
                 }
             }
         }

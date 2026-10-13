@@ -76,6 +76,11 @@ public sealed record SemanticConcept(
     /// Gets the value's compliance classification, when declared (ESM v13).
     /// </summary>
     public SemanticConceptCompliance? Compliance { get; init; }
+
+    /// <summary>
+    /// Gets the declared non-default value-generation strategy (ESM v15).
+    /// </summary>
+    public SemanticGeneration? Generation { get; init; }
 }
 
 /// <summary>

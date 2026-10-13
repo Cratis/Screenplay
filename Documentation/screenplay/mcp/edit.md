@@ -79,7 +79,10 @@ only for other properties you intend to change on its resolved mapping chain.
 Being connected is not permission to rename or remove a field. Unrelated
 same-named fields are listed in `property.notChanged`, never edited.
 
-Rename repairs proven mappings and fixture assignments. If only one end of an
+Rename repairs proven mappings and fixture assignments, including seed event values.
+Seed values refer to the event's current generation; removing them reports
+`fixtureRemoved` with `weakensAssertion: false`, not an assertion change.
+If only one end of an
 AutoMap link is renamed, the proposal inserts an explicit mapping to preserve the
 flow. Remove refuses while readers remain; removed expected values are disclosed
 with `weakensAssertion: true`. If the proposal cannot tell which `then` steps
@@ -122,7 +125,8 @@ satisfies a same-named projection hop without an explicit `from` value.
 
 Supply `fixtureValue` as literal source text (for example `"\"Normal\""` in JSON)
 for a required property. The planner adds it to every existing command, event and
-read-model fixture, example and result assertion for the selected declarations.
+read-model fixture, example, result assertion and seed entry for the selected declarations,
+including seed entries with no existing assignments.
 `fixtureValue` is written to every fixture and assertion occurrence as-is. It does
 not evaluate your mapping expressions: a non-identity `value` hop can make the
 specifications fail even when the candidate binds. Run `run-specifications` with

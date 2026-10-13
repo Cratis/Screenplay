@@ -1,9 +1,10 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, dependencySourcesOf, Diagnostic, EventSourceReadConfidence, FeatureSyntax, OperationSyntax, parseForAuthoring, parsePlacedDocuments, SpecificationSyntax } from '@cratis/screenplay-compiler';
+import { AuthoringProductionKind, AuthoringProductionResolver, CommandSyntax, dependencySourcesOf, Diagnostic, EventSourceReadConfidence, FeatureSyntax, OperationSyntax, parseForAuthoring, parsePlacedDocuments, responseCommandResolver, SpecificationSyntax } from '@cratis/screenplay-compiler';
 import { fenceMap, indentOf, withoutComment } from './document-context';
 import { ResponseAnalysis } from './ResponseAnalysis';
+import { ContinuationResponseField } from './ContinuationResponseField';
 import { ExampleAnalysis } from './ExampleAnalysis';
 import { exampleAnalysis } from './example-analysis';
 import { personaAnalysis } from './persona-analysis';
@@ -109,6 +110,7 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
     };
     walk(parsed.value);
     walk(parsed.physicalEventSources);
+    walk(parsed.continuationValues);
     // Fragment wrappers must not turn an unread original root into confidence evidence.
     // Retain the parser's unknown-owner diagnostic at its original physical root location.
     for (const diagnostic of parsed.diagnostics) walk(diagnostic.location);
@@ -287,8 +289,25 @@ function analyze(lines: string[], otherSources: readonly (string | AuthoringDocu
             return dependencyAnalysis.completions(line, qualifier, placement);
         },
     };
+    const resolveCommand = responseCommandResolver(productions.slices.flatMap(({ slice, scope }) => slice.commands.map(command => ({ command, scope }))), parsed.value.imports);
+    const continuationResponses = new Map<number, readonly ContinuationResponseField[]>();
+    for (const use of parsed.continuationValues.filter(use => use.location.path === path)) {
+        const fields = new Map<string, ContinuationResponseField>();
+        for (const name of [...use.success].reverse().filter(name => !use.parameters.includes(name))) {
+            const command = resolveCommand(name, use.scope);
+            if (!command?.response) continue;
+            const properties = new Map(command.properties.map(property => [property.name, property.type]));
+            const response = command.response;
+            const returned = response.kind === 'ScalarCommandResponseSyntax' ? [{ name: response.source.property, source: response.source, type: null }] : response.fields;
+            for (const field of returned) {
+                const type = field.type ?? properties.get(field.source.property);
+                if (type && !use.locals.includes(field.name) && !fields.has(field.name)) fields.set(field.name, { name: field.name, type, command: command.name });
+            }
+        }
+        continuationResponses.set(use.location.line - 1, [...fields.values()]);
+    }
     const identityDetails = (parsed.value.identity?.details ?? []).map(detail => ({ name: detail.name, type: `${detail.type.name}${detail.type.isCollection ? '[]' : ''}${detail.type.isOptional ? ' optional' : ''}`, line: detail.location.line - 1 }));
-    return { identityDetails, commands, specifications, diagnostics, operationProductionLines, operations, eventSources, readModels: productions.slices.flatMap(({ slice, scope }) => (slice.readModels ?? []).map(model => ({ model, scope: scope.filter(segment => !syntheticScopes.has(segment)) }))), examples, personas: personaAnalysis(parsed.value, lines), dependencies };
+    return { identityDetails, continuationResponses, commands, specifications, diagnostics, operationProductionLines, operations, eventSources, readModels: productions.slices.flatMap(({ slice, scope }) => (slice.readModels ?? []).map(model => ({ model, scope: scope.filter(segment => !syntheticScopes.has(segment)) }))), examples, personas: personaAnalysis(parsed.value, lines), dependencies };
 }
 
 export function responseAnalysis(lines: string[], otherSources: readonly (string | AuthoringDocument)[] = [], placement?: readonly string[], path = 'current.play', isPlacementResolved = true): ResponseAnalysis & { readonly operations: OperationAnalysis; readonly eventSources: EventSourceAnalysis; readonly readModels: readonly AuthoredReadModelKeys[]; readonly examples: ExampleAnalysis; readonly personas: ReturnType<typeof personaAnalysis>; readonly dependencies: ReturnType<typeof dependencyTargetAnalysis> } {

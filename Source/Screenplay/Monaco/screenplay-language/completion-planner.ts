@@ -3,7 +3,9 @@
 
 import { enclosingChain, enclosingHeaders, fenceMap, indentOf, nearestEnclosingLine, withoutComment } from './document-context';
 import { refusalContext } from './refusal-context';
+import { generationCompletions } from './generation-completions';
 import { namedRuleContext } from './named-rule-context';
+import { continuationResponseCompletions } from './continuation-responses';
 import { responseCompletions } from './response-completions';
 import { dependencyTargetCompletions } from './dependency-completions';
 import { exampleCompletions } from './example-authoring';
@@ -185,12 +187,16 @@ export function planCompletions(
         return { kind: 'entries', entries: ['pii', 'secret'].filter(marker => !new RegExp(`\\b${marker}\\b`).test(textBefore)).map(marker => ({ label: marker, insertText: marker, documentation: marker === 'pii' ? 'personal data (GDPR Art. 4(1)); renders Chronicle [PII]' : 'Operational secret; renders [Encrypted] + [NotAudited].' })) };
     }
     const inConcept = enclosingChain(lines, fences, lineIndex, indentOf(textBefore))[0] === 'concept';
+    const generationEntries = inConcept ? generationCompletions(lines, lineIndex, textBefore) : null;
+    if (generationEntries !== null) return { kind: 'entries', entries: generationEntries };
     if (inConcept && /^\s*(?:secret|sensitive|@sensitive)\s+scope\s+\w*$/.test(textBefore)) {
         return { kind: 'entries', entries: ['subject', 'namespace', 'global'].map(scope => ({ label: scope, insertText: scope, documentation: 'Explicit secret encryption scope.' })) };
     }
     if (inConcept && /^\s*(?:pii|personal|@pii)\s+special\s+\w*$/.test(textBefore)) {
         return { kind: 'entries', entries: ['racialOrEthnicOrigin', 'politicalOpinions', 'religiousOrPhilosophicalBeliefs', 'tradeUnionMembership', 'genetic', 'biometric', 'health', 'sexLifeOrSexualOrientation'].map(category => ({ label: category, insertText: category, documentation: 'GDPR Art. 9(1) special category.' })) };
     }
+    const continuationEntries = continuationResponseCompletions(lines, lineIndex, textBefore, symbols);
+    if (continuationEntries !== null) return { kind: 'entries', entries: continuationEntries };
     const responseEntries = exampleCompletions(lines, lineIndex, textBefore) ?? responseCompletions(lines, lineIndex, textBefore, scanDocument(lines));
     if (responseEntries !== null) return { kind: 'entries', entries: responseEntries };
     const keyEntries = readModelKeyCompletions(lines, lineIndex, textBefore, symbols);

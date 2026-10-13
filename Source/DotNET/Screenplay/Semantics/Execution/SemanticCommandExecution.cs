@@ -286,6 +286,7 @@ internal sealed partial class SemanticCommandExecution(
     SemanticExecutionResult Settle(SemanticExecutionResponse? response)
     {
         // A violation is an outcome, not a failure: the command is rejected and the world is unchanged.
+        if (RejectReusedGeneratedSource() is { } reused) return reused;
         if (SemanticConstraintEnforcement.FindViolation(plan, world, _facts.ToImmutable()) is { } violated)
         {
             return SemanticEvaluator.RejectWithMessage(world, SemanticRejectionCategory.Constraint, violated.Name, SemanticConstraintEnforcement.MessageFor(violated));

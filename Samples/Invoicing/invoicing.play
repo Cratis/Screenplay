@@ -61,12 +61,14 @@ purpose PaymentDisputes
 // ------------------------------------------------------------
 
 concept InvoiceId : Uuid
+  generate uuidv7
   description "The stable identity of one invoice"
   // 'file' on a declaration says which file realizes it - realization metadata,
   // never a replacement for the declaration itself.
   file Concepts/InvoiceId.cs
 
-concept InvoiceReceiptId : Uuid
+concept InvoiceReceiptId : String
+  generate nanoid
 concept CustomerId    : Uuid
 concept PaymentId     : Uuid
 concept BatchId       : Uuid
@@ -610,7 +612,7 @@ module Invoicing
       refresh ListInvoices
 
     // Start a draft with fresh identities; generated values are never form inputs.
-    // ESM v7 fixtures make generation deterministic, not random, in a specification.
+    // ESM v15 fixtures pin UUIDv7 and NanoID shapes; creation guards the whole source.
     slice StateChange StartInvoiceDraft
       documentation
         ```markdown
@@ -642,16 +644,16 @@ module Invoicing
         description "Witnesses that creating a draft returns the generated invoice and receipt identities"
         given caller as InvoiceDraftCreator
         when StartInvoiceDraft
-          for "11111111-1111-1111-1111-111111111111"
-          generated receiptId = "22222222-2222-2222-2222-222222222222"
+          for "00112233-4455-7677-8899-aabbccddeeff"
+          generated receiptId = "ABCDEFGHIJKLMNOPQRSTU"
           customerId = "33333333-3333-3333-3333-333333333333"
         then InvoiceDraftStarted
-          for "11111111-1111-1111-1111-111111111111"
+          for "00112233-4455-7677-8899-aabbccddeeff"
           customerId = "33333333-3333-3333-3333-333333333333"
-          receiptId = "22222222-2222-2222-2222-222222222222"
+          receiptId = "ABCDEFGHIJKLMNOPQRSTU"
         then returns
-          invoiceId = "11111111-1111-1111-1111-111111111111"
-          receiptId = "22222222-2222-2222-2222-222222222222"
+          invoiceId = "00112233-4455-7677-8899-aabbccddeeff"
+          receiptId = "ABCDEFGHIJKLMNOPQRSTU"
 
       specification StartingDraftsForCustomers
         parameter customer CustomerId
@@ -659,13 +661,13 @@ module Invoicing
         case Contoso customer = "44444444-4444-4444-4444-444444444444"
         given caller as InvoiceDraftCreator
         when StartInvoiceDraft
-          for "11111111-1111-1111-1111-111111111111"
-          generated receiptId = "22222222-2222-2222-2222-222222222222"
+          for "00112233-4455-7677-8899-aabbccddeeff"
+          generated receiptId = "ABCDEFGHIJKLMNOPQRSTU"
           customerId = case.customer
         then InvoiceDraftStarted
-          for "11111111-1111-1111-1111-111111111111"
+          for "00112233-4455-7677-8899-aabbccddeeff"
           customerId = case.customer
-          receiptId = "22222222-2222-2222-2222-222222222222"
+          receiptId = "ABCDEFGHIJKLMNOPQRSTU"
 
     slice StateChange RegisterInvoice
       description "Registers a new invoice"
@@ -682,6 +684,9 @@ module Invoicing
         paymentTerms   PaymentTerms
         dueDate        Date
         isProForma     Bool
+
+        // The form's successful submit can navigate using this returned identity.
+        returns invoiceId
 
         authorize CanManageInvoice
 

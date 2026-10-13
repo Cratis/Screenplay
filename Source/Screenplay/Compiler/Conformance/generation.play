@@ -1,0 +1,32 @@
+concept Id : Uuid
+  generate uuid
+concept TimeId : Uuid
+  generate uuidv7
+concept StringId : String
+  generate uuid case upper prefix "id_"
+concept StringTimeId : String
+  generate uuidv7 prefix "event_" case lower
+concept SortableId : String
+  generate ulid case lower prefix "cus_"
+concept UserId : String
+  generate typeid "user"
+concept EmptyTypeId : String
+  generate typeid ""
+concept PublicCode : String
+  generate nanoid
+concept ShortCode : String
+  generate nanoid 16 prefix "ref_" alphabet "abcdef0123456789"
+concept RandomBytes : String
+  generate bytes 32 base64url prefix "b_"
+concept HexCode : String
+  generate bytes 16 hex case upper prefix "h_"
+concept Base32Code : String
+  generate bytes 16 base32 case lower
+concept OrderNumber : String
+  generate pattern "ORD-#{7}" checksum luhn
+concept TicketNumber : Int
+  generate random 100000..999999
+concept LegacyReference : String
+  generate rule MakeReference
+concept SequentialNumber : String
+  generate sequence

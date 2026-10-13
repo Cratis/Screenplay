@@ -225,7 +225,10 @@ in their target details.
 
 Property links cover explicit production, capture-append and projection mappings, case-insensitive
 projection AutoMap, declarative conditions, query filter and lookup parameters, command read keys,
-projection `from`, parent and removal keys, join `on` fields, screen/form bindings, and specification/example fixtures and assertions. Roles are
+projection `from`, parent and removal keys, join `on` fields, screen/form bindings,
+specification/example fixtures and assertions, and seed event assignments. Seed assignments
+have role `fixture`, are owned by the seed entry, and resolve to the event's current
+generation; the seed group's `for` event source id is not a property. Roles are
 `mapping-source`, `mapping-target`, `automap`, `condition`, `key`, `screen-binding`, `fixture`,
 `assertion`, `response`, `opaque` and `unclassified`. Links retain owner, location, resolution candidates and a resolved `otherEnd` when
 known. An unresolved counterpart or opaque occurrence makes the property's `complete` result false,
@@ -643,14 +646,18 @@ Declaration hops use the owner's added type. Mapping hops supply the target's
 value expression. AutoMap satisfies a same-named projection hop. Every selected
 event producer and read-model consumer needs a mapping decision or a compatible
 AutoMap source. Required fixture values are added to existing specification steps,
-examples and query results; optional properties do not add fixture values.
+examples, query results and every seed entry of the selected event, including entries
+without assignments; optional properties do not add fixture values. Missing required
+`fixtureValue` refuses with `FixtureValueRequired` and lists the seed occurrences.
 `target`, `expectedName`, `newName`, `alsoRename` and `alsoRemove` are invalid for
 add; add-only fields are invalid for rename/remove. Off-chain hops refuse.
 
 Reference policy is always `Safe`. Rename rewrites proven mappings and fixtures;
 it inserts an explicit projection mapping when the unselected counterpart would
 lose AutoMap. Remove refuses with remaining readers, removes writers and fixtures,
-and marks removed assertion values `weakensAssertion: true`. Unselected inputs
+and marks removed assertion values `weakensAssertion: true`. Seed assignment renames
+report `fixtureRewritten`, removals report `fixtureRemoved` with `weakensAssertion: false`,
+and required additions report `fixtureAdded`. Unselected inputs
 remain `chainCandidates`, not implicit removals. Type changes and nested composite
 paths, read-model keys, opaque/unclassified text and unsupported spans are not
 inferred or rewritten. Inline events require extraction first.

@@ -1,0 +1,49 @@
+module Billing
+  feature Creation
+    slice StateChange Start
+      event Unrelated
+      event Started
+        receipt Receipt
+      event Initialized
+      command RecordPrior
+        id Id identifier
+        produces Unrelated
+          for id
+      command Create
+        id Id generated identifier
+        receipt Receipt generated
+        enabled Bool
+        produces when enabled == true
+          Started
+            for id
+            receipt = receipt
+        produces when enabled == true
+          Initialized
+            for id
+        returns receipt
+      specification SeveralInitialFacts
+        when Create
+          for "00112233-4455-7677-8899-aabbccddeeff"
+          generated receipt = "ABCDEFGHIJKLMNOPQRSTU"
+          enabled = true
+        then Started
+          for "00112233-4455-7677-8899-aabbccddeeff"
+          receipt = "ABCDEFGHIJKLMNOPQRSTU"
+        then Initialized
+          for "00112233-4455-7677-8899-aabbccddeeff"
+      specification ReusedSource
+        given Unrelated
+          for "00112233-4455-7677-8899-aabbccddeeff"
+        when Create
+          for "00112233-4455-7677-8899-aabbccddeeff"
+          generated receipt = "ABCDEFGHIJKLMNOPQRSTU"
+          enabled = true
+        then error "A generated event source already has facts; retry the command with a fresh generated value."
+      specification SkippedProduction
+        given Unrelated
+          for "00112233-4455-7677-8899-aabbccddeeff"
+        when Create
+          for "00112233-4455-7677-8899-aabbccddeeff"
+          generated receipt = "ABCDEFGHIJKLMNOPQRSTU"
+          enabled = false
+        then returns "ABCDEFGHIJKLMNOPQRSTU"

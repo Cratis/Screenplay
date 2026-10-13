@@ -56,6 +56,14 @@ public sealed partial class SemanticModelBinder
 
         SemanticValue? BindGeneratedValue(ExpressionSyntax expression, SemanticProperty property)
         {
+            var concept = syntax.Concepts.SingleOrDefault(value => _concepts[value.Name].Id == property.Type.Target);
+            if (concept?.Type == "String")
+            {
+                if (expression is LiteralExpressionSyntax { Value: string generated }) return SemanticValue.Text(generated);
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"Generated fixture or return expectation for '{property.Name}' requires a quoted String value.", expression.Location);
+                return null;
+            }
+
             if (expression is LiteralExpressionSyntax { Value: string text } && Guid.TryParse(text, out var uuid))
             {
                 return SemanticValue.Text(uuid.ToString("D"));

@@ -658,6 +658,20 @@ direction; `PLAY0610`, `PLAY0615`, `PLAY0618` and `PLAY0619` would move a constr
 | `PLAY0669` | Error | An enum member number is outside the int32 range. |
 | `PLAY0670` | Error | An enum member number is malformed: use decimal digits with an optional minus, no leading zero, fraction, exponent or plus. |
 | `PLAY0671` | Information | Opt-in completeness hint (`enum-pinning` or `PLAY0671`; also included in `all`) for an unnumbered enum used by an event property. Ordinary compilation does not report it. The numbering refactoring pins each member's current position; this is not a correctness repair. |
+| `PLAY0672` | Error | Unknown generation strategy; use the closed strategy set. |
+| `PLAY0673` | Error | Missing or malformed generation argument or modifier value. |
+| `PLAY0674` | Error | Generation modifier not allowed for this strategy or primitive. |
+| `PLAY0675` | Error | Generation modifier repeated; write each at most once. |
+| `PLAY0676` | Error | Concept declares generation more than once. |
+| `PLAY0677` | Error | Generation strategy incompatible with the concept primitive. |
+| `PLAY0678` | Error | Prefix modifier is not printable ASCII or exceeds 32 characters. |
+| `PLAY0679` | Error | NanoID alphabet must be distinct printable ASCII of size 2..256. |
+| `PLAY0680` | Error | TypeID prefix is not empty or 1..63 lowercase letters/underscores starting and ending with a letter. |
+| `PLAY0681` | Error | NanoID size outside 1..256 or bytes count outside 1..512. |
+| `PLAY0682` | Error | Binding refuses reserved sequence generation until #619. |
+| `PLAY0683` | Warning | Generated property has fewer than 64 random bits; names the approximate 1% collision draw count. Suppressed when a unique constraint covers its mapped event property. |
+| `PLAY0684` | Error | Generated identifier has fewer than 64 random bits. |
+| `PLAY0685` | Error | A returned name is used under the returning command's `on failure`. Use it in `on success` instead; form fields and behavior parameters keep their existing meaning, and an outer successful response remains available. |
 
 Overrides reuse `PLAY0504` for route shape, mapping, destination type and duplicate-route errors. Protected sources reuse `PLAY0515`. Property paths remain refused at binding with `PLAY0268` (#574), and generated route inputs with `PLAY0273`.
 
@@ -1171,7 +1185,7 @@ For response and generated-fixture compatibility checks only, `Date` values must
 | Code | Severity | Reported when |
 |---|---|---|
 | `PLAY0482` | Error | A generated property is declared outside a command. |
-| `PLAY0483` | Error | A generated property is not a required, noncollection concept backed by `Uuid`. |
+| `PLAY0483` | Error | A generated property is not a required, noncollection generatable concept (implicit Uuid uuid or an explicit generation declaration). |
 | `PLAY0484` | Error | Property modifiers repeat or are out of order. Write `Type optional generated identifier`. |
 | `PLAY0485` | Error | A generated property is supplied as request or form input. |
 | `PLAY0486` | Error | A command response is malformed, empty, repeated or conditional. |
