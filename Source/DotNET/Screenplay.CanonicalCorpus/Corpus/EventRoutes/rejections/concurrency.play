@@ -1,10 +1,10 @@
 eventsource Account
-  stream All
+  stream Archive
 module M
   feature F
     slice StateChange S
       command C
         id String identifier
-        stream Account.All
+        stream Account.Archive
         concurrency
           eventSource
