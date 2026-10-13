@@ -3173,8 +3173,9 @@ public static class DiagnosticCodes
     public const string ResponseNameUsedOnFailure = "PLAY0685";
 
     /// <summary>
-    /// An event identity pin is not yet carried to renderers, which use the event's current name.
+    /// Retired: event identity pins are carried to renderers by ESM v16 (decision 0075).
     /// </summary>
+    [DiagnosticReservation(DiagnosticSeverity.Warning, retired: true)]
     public const string EventIdPinNotCarriedToRenderers = "PLAY0686";
 
     /// <summary>

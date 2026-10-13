@@ -1,0 +1,27 @@
+module Records
+  feature Recording
+    slice StateChange Record
+      command Record
+        id RecordId identifier
+        value Value
+        produces Renamed
+          for id
+          value = value
+        produces Recorded
+          for id
+          value = value
+      event Renamed
+        id "Original"
+        value Value
+      event Recorded
+        value Value
+      specification MixedNames
+        when Record
+          id = "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          value = "same facts"
+        then Renamed
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          value = "same facts"
+        then Recorded
+          for "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          value = "same facts"

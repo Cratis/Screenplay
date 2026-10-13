@@ -12,6 +12,7 @@ The model's `.play` files remain canonical source. The MCP server owns a reserve
 | --- | --- | --- |
 | `identities.json` | Versioned application identity/name, document IDs/keys/paths, and semantic/event identity catalog | Keep with the model in source control |
 | `notes.json` | Versioned, committed questions, tasks and review notes anchored to model identities | Keep with the model in source control |
+| `release-baseline.json` | Admitted release revisions and resolved stored event schemas | Keep with the model in source control; admit through the CLI or library, never MCP |
 | `pending.json` | Exact before/after recovery data for one in-progress operation | Keep until application or rollback is verified |
 | Staging and backup files | Installation and recovery intermediates | Removed only when safe; retained on uncertainty |
 
@@ -28,6 +29,20 @@ and `notes: { status: "ok" | "absent" | "unreadable", reason, count }` (unreadab
 revisions and counts are null). Note tools refuse with `UnreadableNotes`; the server
 never auto-repairs the file. Resolve merge conflicts or restore known-good notes
 explicitly. See [model notes](../model-notes.md).
+
+A malformed or conflicted release baseline also permits opening, reading and
+reviewing. `open-workspace` and `workspace-state` report
+`releaseBaseline: {status, revision, reason, entries, violations}`. Unreadable
+revision and entry count are null; a model that cannot bind reports an unknown
+violation count rather than a successful check. Event-contract proposals refuse
+`UnreadableReleaseBaseline`; non-contract edits proceed. Restore or review the
+sidecar explicitly; MCP never admits or repairs it.
+
+Every retained proposal pins its release-baseline evidence independently of source
+and catalog revisions. `apply` refuses `StaleReleaseBaseline` if that file changes,
+even when source is unchanged. Read the new baseline and propose again rather than
+retrying the old plan. Baseline refusals before installation have no write outcome
+to recover; interrupted source or notes installation uses the normal journal below.
 
 ## Opening and external edits
 
@@ -83,6 +98,10 @@ verifies both. Only then can it discard the journal and backups.
 Journals carrying notes use envelope version `2`; source/identity-only journals
 continue to use version `1`. This server reads both, refuses a version-1 journal
 carrying notes, and requires a complete, consistent notes section in version 2.
+Library/CLI release admissions use version `3` with only a release-baseline section;
+recovery restores its exact prior bytes or absence and access settings. MCP exposes
+no admission write tool. This server reads all three envelope versions and rejects
+inconsistent or mixed sidecar sections.
 Older servers that only support version 1 refuse the newer journal instead of
 completing recovery without restoring notes. Finish an interrupted notes operation
 with the newer server version; do not downgrade or remove the marker.

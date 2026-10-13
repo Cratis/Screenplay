@@ -38,7 +38,7 @@ public class when_exchanging_a_protocol_transcript : given.a_connection
     void should_list_all_public_tools() => _responses[2].GetProperty("result").GetProperty("tools").EnumerateArray().Select(tool => tool.GetProperty("name").GetString()).ShouldContainOnly(
         ["run-specifications", "repair-capabilities", "describe-application", "find-declaration", "search-declarations", "declaration-details", "dependencies", "dependency-graph", "find-references",
         "find-fixtures", "find-assertion-gaps", "find-specification-obligations", "find-modeling-smells", "processing-record", "merged-document", "read-document", "diagnostics", "recommend-layout", "syntax-schema",
-        "open-workspace", "list-model-notes", "propose-model-notes", "workspace-state", "recover-workspace", "propose-rename", "propose-move", "propose-property", "read-workspace", "read-ast", "propose", "propose-number-enum-members", "propose-extract-inline-event", "propose-repair", "propose-ast", "propose-source",
+        "open-workspace", "list-release-baseline", "list-model-notes", "propose-model-notes", "workspace-state", "recover-workspace", "propose-rename", "propose-move", "propose-property", "read-workspace", "read-ast", "propose", "propose-number-enum-members", "propose-extract-inline-event", "propose-repair", "propose-ast", "propose-source",
         "expand-layout", "read-proposal", "export-workspace", "discard-proposal", "semantic-diff", "apply"]);
     [Theory]
     [InlineData("repair-capabilities")]
@@ -59,8 +59,7 @@ public class when_exchanging_a_protocol_transcript : given.a_connection
     void should_describe_event_pin_warnings_in_the_protocol_tool_list()
     {
         var description = _responses[2].GetProperty("result").GetProperty("tools").EnumerateArray().Single(tool => tool.GetProperty("name").GetString() == "propose-rename").GetProperty("description").GetString()!;
-        description.ShouldContain("Event pins are not yet carried to renderers; generated code uses the new name.");
-        description.ShouldContain("eventPinWarnings");
+        description.ShouldContain("Event pins are carried as storedName by ESM v16; consumers must explicitly admit that version.");
     }
 
     [Fact] void should_return_unknown_method_error() => _responses[4].GetProperty("error").GetProperty("code").GetInt32().ShouldEqual(-32601);

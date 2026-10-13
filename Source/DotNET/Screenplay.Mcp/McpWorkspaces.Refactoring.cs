@@ -4,7 +4,6 @@
 using System.Text.Json;
 using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Semantics;
-using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
 
 namespace Cratis.Screenplay.Mcp;
@@ -71,6 +70,7 @@ internal sealed partial class McpWorkspaces
             ExpectedName = McpJson.RequiredString(arguments, "expectedName"),
             NewName = McpJson.RequiredString(arguments, "newName"),
             EventNeverPersisted = McpJson.Boolean(arguments, "eventNeverPersisted"),
+            ReleaseBaseline = _planningBaseline?.Read,
             Formatting = McpJson.Enumeration(arguments, "formatting", WorkspaceAuthoringFormatting.PreserveTrivia),
             Validation = McpJson.Enumeration(arguments, "validation", WorkspaceAuthoringValidation.Authoring)
         };
@@ -79,13 +79,6 @@ internal sealed partial class McpWorkspaces
         return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation), arguments) : Rejected(result);
     }
 
-    // Authoring proposals may be accepted even when unrelated syntax prevents semantic binding.
-    static IEnumerable<Diagnostic> EventPinWarnings(ScreenplayWorkspace workspace) =>
-        McpWorkspaceAnalysis.For(workspace).Syntax.Entries.Select(entry => entry.Node).OfType<EventSyntax>()
-            .Where(declaration => declaration.Id is not null)
-            .Select(declaration => new Diagnostic(
-                DiagnosticSeverity.Warning,
-                DiagnosticCodes.EventIdPinNotCarriedToRenderers,
-                $"Event '{declaration.Name}' id pin '{declaration.Id}' is not yet carried to renderers; generated code uses the new name '{declaration.Name}'.",
-                declaration.Location));
+    // Retain the response member for existing clients; event pins are carried by ESM v16.
+    static IEnumerable<Diagnostic> EventPinWarnings(ScreenplayWorkspace workspace) => [];
 }

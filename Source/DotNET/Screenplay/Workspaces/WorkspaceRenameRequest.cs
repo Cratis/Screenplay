@@ -41,6 +41,9 @@ public sealed record WorkspaceRenameRequest
     /// </summary>
     public bool EventNeverPersisted { get; init; }
 
+    /// <summary>Gets the independently read release baseline; null preserves legacy behavior.</summary>
+    public ReleaseBaselineRead? ReleaseBaseline { get; init; }
+
     /// <summary>
     /// Gets the explicit formatting policy. Trivia preservation never falls back to canonical printing.
     /// </summary>

@@ -20,7 +20,7 @@ internal sealed partial class McpRecoveryJournal
             OperationPath(root, operationId, "backup"),
             OperationPath(root, operationId, "journal"),
             OperationPath(root, operationId, "state-rollback")
-        }.Concat(NotesPaths(root, proposal, operationId)))
+        }.Concat(NotesPaths(root, proposal, operationId)).Concat(ReleaseBaselinePaths(root, proposal, operationId)))
         {
             yield return path;
             if (!Directory.Exists(Path.GetDirectoryName(path))) yield return Path.GetDirectoryName(path)!;

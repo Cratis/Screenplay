@@ -242,7 +242,7 @@ export const diagnosticCodes = {
     lowGenerationEntropy: 'PLAY0683',
     lowGeneratedIdentifierEntropy: 'PLAY0684',
     responseNameUsedOnFailure: 'PLAY0685',
-    // Preserve supplied C# binder warnings; ordinary editor validation does not bind the ESM.
+    // Retired by ESM v16; preserve supplied warnings from earlier native compilers.
     eventIdPinNotCarriedToRenderers: 'PLAY0686',
 } as const;
 

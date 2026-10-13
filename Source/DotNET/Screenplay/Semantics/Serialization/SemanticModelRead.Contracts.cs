@@ -193,6 +193,7 @@ internal static partial class SemanticModelRead
     sealed class EventContractState(uint schemaVersion) : IdentifiedReadState(schemaVersion)
     {
         public static readonly FieldTable<EventContractState> Fields = TableFor<EventContractState>("event contract")
+            .Add("storedName", LanguageVersion.V16.Major, (ref Utf8JsonReader reader, EventContractState state, string property) => state.StoredName = String(ref reader, property))
             .Add("contractId", (ref Utf8JsonReader reader, EventContractState state, string property) => state.ContractId = EventContractId.Parse(String(ref reader, property)))
             .Add("contractRevision", (ref Utf8JsonReader reader, EventContractState state, string property) => state.Revision = new(UInt32(ref reader, property)))
             .Add("properties", (ref Utf8JsonReader reader, EventContractState state, string property) => state.Properties = Array(ref reader, Property, property))
@@ -201,6 +202,8 @@ internal static partial class SemanticModelRead
             .Add("origin", LanguageVersion.V9.Major, (ref Utf8JsonReader reader, EventContractState state, string property) => state.Origin = String(ref reader, property))
             .Add("predecessor", (ref Utf8JsonReader reader, EventContractState state, string property) => state.ReadPredecessor(ref reader, property))
             .Add("priorRevisions", (ref Utf8JsonReader reader, EventContractState state, string property) => state.ReadPriorRevisions(ref reader, property));
+
+        public string? StoredName { get; set; }
 
         public EventContractId ContractId { get; set; }
 
@@ -246,7 +249,7 @@ internal static partial class SemanticModelRead
         public SemanticEventContract Build()
         {
             Required(HasIdentity && HasContract && HasConsistentRevisionChain && HasConsistentOrigin, "event contract");
-            return new(Id, ContractId, Revision, Name!, Properties) { Tags = Tags, Predecessor = Predecessor, PriorRevisions = PriorRevisions, Visibility = Visibility, Origin = Origin };
+            return new(Id, ContractId, Revision, Name!, Properties) { StoredName = StoredName, Tags = Tags, Predecessor = Predecessor, PriorRevisions = PriorRevisions, Visibility = Visibility, Origin = Origin };
         }
     }
 

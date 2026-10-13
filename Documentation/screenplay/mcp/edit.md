@@ -60,13 +60,19 @@ You said the rename is blocked. Show me exactly where, and propose the smallest
 change that removes the conflict. Do not do a global replace.
 ```
 
-Event renames also add `id "<previous name>"` by default to preserve stored identity.
+Without a release baseline, event renames add `id "<previous name>"` by default to preserve stored identity.
 An existing pin stays unchanged; renaming back to that identity removes it. Only
 set `eventNeverPersisted: true` on `propose-rename` when you know no events have
 been stored. That option omits a new pin and removes a redundant pin equal to the current
 name; a pin naming an earlier identity is kept.
 
-**Caution:** the event pin is not yet carried to renderers; generated code uses the new name. Review `eventPinWarnings` before applying; the pin alone does not preserve generated stored identity ([#704](https://github.com/Cratis/Screenplay/issues/704)).
+With a release baseline, an unadmitted event rename does not add a pin. If any
+revision is admitted, the rename preserves its stored name and refuses
+`eventNeverPersisted`. Review `eventRename.mutability` and `eventRename.pinAdded`
+in the proposal and retained review.
+
+
+Event pins that differ from the display name select ESM v16, which carries the stored name to consumers; equal-name pins keep the earlier version and bytes. A consumer must explicitly admit that version or refuse the model. The compatibility `eventPinWarnings` array is empty; inspect the candidate's binding diagnostics before applying.
 
 ## Change a property everywhere it flows
 
@@ -93,15 +99,20 @@ unaffected; fix the errors in that example or its specifications and retry.
 Unselected upstream inputs remain follow-up
 candidates rather than being deleted.
 
-For selected event fields, choose `eventNeverPersisted: true` only when the current
+Without a release baseline, choose `eventNeverPersisted: true` only when the current
 generation has never been stored, or choose `newGeneration: true` to keep the old
-shape and append one new generation. Historical generations cannot be edited;
+shape and append one new generation. With a baseline, unadmitted current revisions
+default to an in-place edit; admitted revisions require explicit `newGeneration`
+and refuse `eventNeverPersisted`. Historical generations cannot be edited;
 extract inline events first. New generations require a transformation before
 Chronicle deployment, which Screenplay does not yet express.
 
 Review the required `property.generations` array in the proposal and in
 `read-proposal`, including `view: "semantic-diff"`. It reports each selected event's
-own `from`, `to` and `mode`, once per event in canonical address order. An in-place
+own `from`, `to`, `mode` and `mutability`, once per event in canonical address order.
+Mutability names the `basis` (`noBaseline`, `notInBaseline` or `baselined`), the
+`releaseBaselineRevision` (null without a baseline) and original `admittedIn`
+release label (null unless admitted). An in-place
 edit has equal revisions. `[]` means no accepted planned event-contract edits,
 not that the proposal succeeded. There is no singular `property.generation` field.
 
@@ -140,7 +151,10 @@ refuse with `FixtureValueRequired`; missing producer or consumer decisions refus
 with `SourcesRequired`. Off-chain hops and existing property names refuse atomically.
 Unsupported expressions or shared parameter spans are not guessed.
 
-Even an optional event addition requires one event mode. `eventNeverPersisted`
+Without a baseline, even an optional event addition requires one event mode.
+With a baseline, an unadmitted revision defaults to `inPlace`; an admitted revision
+requires `newGeneration`. Explicit `eventNeverPersisted` remains available only
+for unadmitted revisions. `eventNeverPersisted`
 edits the highest generation in place; `newGeneration` appends the current shape
 plus the property as N+1. For the RegisterProject v2 model, these mean editing
 generation 2 or appending generation 3. Both keep ESM v4; a new generation reports
@@ -227,6 +241,23 @@ Some repairs reprint a whole file in canonical form, so whitespace can change. A
 repair that would drop a comment is refused.
 
 ## Review and apply
+
+Use `list-release-baseline` to inspect admitted revisions and their `unchanged`,
+`changed` or `missing` status. `open-workspace` and `workspace-state` summarize
+baseline status, revision, entry count and violations. Admission is a deliberate
+[CLI release step](../tool.md); MCP never admits or repairs the baseline.
+
+Every proposal checks resolved event shapes, including the concepts, types and
+enums they use. A frozen shape change refuses with `BaselinedRevisionChanged`;
+a removed admitted revision refuses with `BaselinedRevisionMissing`. Use a new
+type in an explicit new generation rather than changing a shared historical type.
+An unreadable baseline permits reading and non-contract edits, but refuses event
+contract edits with `UnreadableReleaseBaseline`.
+
+Review `read-proposal view=release-baseline` separately from `semantic-diff`, whose
+format is unchanged. Proposals record `releaseBaselineRevision`; `apply` rechecks
+contracts and refuses `StaleReleaseBaseline` when that evidence changes. You can
+also supply `expectedReleaseBaselineRevision` on proposals and apply.
 
 Make review part of every prompt that changes something:
 

@@ -108,6 +108,33 @@ sealed class WorkspaceAuthoringTransaction(
         return migrations;
     }
 
+    static WorkspaceConflictKind BaselineConflictKind(ReleaseBaselineResult check)
+    {
+        if (!check.Violations.IsEmpty)
+        {
+            return Enum.Parse<WorkspaceConflictKind>(check.Violations[0].Kind);
+        }
+
+        return check.Failure == "UnreadableReleaseBaseline" ? WorkspaceConflictKind.UnreadableReleaseBaseline : WorkspaceConflictKind.CompilationFailed;
+    }
+
+    WorkspaceAuthoringResult? ReleaseBaselineFailure(WorkspaceAuthoringRequest request, ScreenplayWorkspace candidate)
+    {
+        if (request.ReleaseBaseline is not { } baseline)
+        {
+            return null;
+        }
+
+        var check = WorkspaceReleaseBaseline.Check(workspace, candidate, baseline);
+        if (check.Success)
+        {
+            return null;
+        }
+
+        var kind = BaselineConflictKind(check);
+        return Failure(kind, check.Reason ?? $"{kind}: the candidate does not preserve every admitted revision.") with { ReleaseBaselineResult = check };
+    }
+
     WorkspaceAuthoringResult ProposeCore(WorkspaceAuthoringRequest request)
     {
         var index = WorkspaceSyntaxIndex.Create(workspace);
@@ -316,7 +343,7 @@ sealed class WorkspaceAuthoringTransaction(
             WorkspaceAuthoringReferences.Validate(workspace, candidate, request, _diagnostics, migrations);
         }
         ValidateSourceTransitions(request, index, candidate, edits, replacements, migrations);
-        return new()
+        return ReleaseBaselineFailure(request, candidate) ?? new()
         {
             Workspace = candidate,
             WritePlan = new()

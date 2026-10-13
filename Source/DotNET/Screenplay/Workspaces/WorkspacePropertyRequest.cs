@@ -103,6 +103,9 @@ public sealed record WorkspacePropertyRequest
     /// </summary>
     public bool EventNeverPersisted { get; init; }
 
+    /// <summary>Gets the independently read release baseline; null preserves legacy behavior.</summary>
+    public ReleaseBaselineRead? ReleaseBaseline { get; init; }
+
     /// <summary>
     /// Gets explicit formatting consent; unsupported trivia edits never fall back to printing.
     /// </summary>

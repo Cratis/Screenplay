@@ -13,6 +13,9 @@ public sealed partial class SemanticModelBinder
     {
         readonly HashSet<SemanticAddress> _persistedEventAddresses = [.. documents.IdentityCatalog.EventContracts.Select(value => value.Address)];
 
+        static string? StoredNameOf(EventSyntax declaration) =>
+            declaration.Id is { } pin && pin != declaration.Name ? pin : null;
+
         SemanticModule BindModule(ModuleSyntax module)
         {
             if (module.Documentation is not null)
@@ -158,19 +161,14 @@ public sealed partial class SemanticModelBinder
         {
             if (declaration.Description is not null || declaration.Documentation is not null)
             {
-                var metadata = declaration.Id is null ? "description, documentation and id" : "description and documentation";
-                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Event '{declaration.Name}' {metadata} are authoring metadata.", declaration.Location);
-            }
-
-            if (declaration.Id is { } pin)
-            {
-                Warning(DiagnosticCodes.EventIdPinNotCarriedToRenderers, $"Event '{declaration.Name}' id pin '{pin}' is not yet carried to renderers; generated code uses the new name '{declaration.Name}'.", declaration.Location);
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Event '{declaration.Name}' description and documentation are authoring metadata.", declaration.Location);
             }
         }
 
         BoundEvent BindEvent(SemanticAddress slice, EventSyntax[] declarations)
         {
             var current = declarations[^1];
+            ValidateStoredEventName(declarations);
             var address = SemanticAddress.ForEventContract(slice, current.Name);
             var semanticAssignment = documents.IdentityCatalog.ResolveSemanticAssignment(address);
             var contractAssignment = documents.IdentityCatalog.ResolveEventContract(address);
@@ -214,6 +212,7 @@ public sealed partial class SemanticModelBinder
                 current,
                 new(semanticAssignment.Id, contractAssignment.Id, revision, current.Name, latest.Properties)
                 {
+                    StoredName = StoredNameOf(current),
                     Tags = latest.Tags,
                     Visibility = current.Visibility == EventVisibility.Public || current.Origin is not null ? SemanticEventVisibility.Public : SemanticEventVisibility.Private,
                     Origin = current.Origin,
