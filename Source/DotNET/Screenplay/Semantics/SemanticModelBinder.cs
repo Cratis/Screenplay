@@ -170,9 +170,15 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         }
     }
 
-    static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames) =>
-        SemanticModelValidator.UsesRecoverySpecifications(application) ? (LanguageVersion.V17, SemanticVersion.V17) :
-        usesStoredEventNames ? (LanguageVersion.V16, SemanticVersion.V16) : SelectNumberVersions(application, semanticVersion);
+    static (LanguageVersion Language, SemanticVersion Semantic)? SelectBoundVersions(SemanticApplication application, SemanticVersion semanticVersion, bool usesStoredEventNames)
+    {
+        if (SemanticModelValidator.UsesRecoverySpecifications(application))
+        {
+            return (LanguageVersion.V17, SemanticVersion.V17);
+        }
+
+        return usesStoredEventNames ? (LanguageVersion.V16, SemanticVersion.V16) : SelectNumberVersions(application, semanticVersion);
+    }
 
     static (LanguageVersion Language, SemanticVersion Semantic)? SelectNumberVersions(SemanticApplication application, SemanticVersion semanticVersion)
     {
