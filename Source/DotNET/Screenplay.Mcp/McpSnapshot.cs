@@ -8,6 +8,7 @@ using Cratis.Screenplay.Diagnostics;
 using Cratis.Screenplay.Files;
 using Cratis.Screenplay.Indexing;
 using Cratis.Screenplay.Languages;
+using Cratis.Screenplay.Semantics;
 using Cratis.Screenplay.Syntax;
 using Cratis.Screenplay.Workspaces;
 
@@ -16,7 +17,13 @@ namespace Cratis.Screenplay.Mcp;
 // Retain the MCP/Tool internal boundary without exposing the library's authoring indexes.
 sealed class McpSnapshot : IPlayFiles
 {
-    internal McpSnapshot(AuthoringSnapshot authoring) => Authoring = authoring;
+    readonly Lazy<CompilationResult<SemanticCompilation>> _executableCompilation;
+
+    internal McpSnapshot(AuthoringSnapshot authoring, CompilationResult<SemanticCompilation>? executableCompilation = null)
+    {
+        Authoring = authoring;
+        _executableCompilation = new(() => executableCompilation ?? Bind());
+    }
 
     internal McpSnapshot(ImmutableArray<WorkspaceDocument> documents)
         : this(new AuthoringSnapshot(documents))
@@ -47,6 +54,7 @@ sealed class McpSnapshot : IPlayFiles
     internal AuthoringSnapshot Authoring { get; }
     internal IReadOnlyList<PlacedPlayDocument> Placements => Authoring.Placements;
     internal CompilationResult<ApplicationSyntax> Compilation => Authoring.Compilation;
+    internal CompilationResult<SemanticCompilation> ExecutableCompilation => _executableCompilation.Value;
     internal McpSyntaxIndex Index => Authoring.Index;
     internal DependencyGraph DependencyGraph => Authoring.DependencyGraph;
     internal bool IsCompilationCreated => Authoring.IsCompilationCreated;
@@ -65,4 +73,16 @@ sealed class McpSnapshot : IPlayFiles
     internal static McpSnapshot Compile(string target, bool isFile) => new(AuthoringSnapshot.Compile(target, isFile));
 
     internal ImmutableArray<Diagnostic> Completeness(CompletenessChecks checks) => Authoring.Completeness(checks);
+
+    CompilationResult<SemanticCompilation> Bind()
+    {
+        var syntax = Compilation;
+        if (!syntax.Success) return CompilationResult<SemanticCompilation>.Failed(syntax.Diagnostics);
+        var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("SourceInspection"));
+        var sources = Sources.Select(source => SemanticSourceDocument.Create(catalog.ResolveDocument(source.Key), source.Key, source.Key, source.Value));
+        var documents = SemanticDocumentSet.Create([.. sources], catalog);
+        var bound = new SemanticModelBinder().Bind("SourceInspection", syntax.Value!, documents);
+
+        return bound with { Diagnostics = [.. syntax.Diagnostics, .. bound.Diagnostics] };
+    }
 }

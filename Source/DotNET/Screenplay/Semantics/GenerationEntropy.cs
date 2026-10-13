@@ -16,16 +16,8 @@ public static class GenerationEntropy
     /// Calculates the exact number of random bits, including the implicit UUID default.
     /// </summary>
     /// <param name="generation">The authored strategy, or null for implicit UUID generation.</param>
-    /// <returns>The random bits, or null when the strategy's entropy is unknown.</returns>
-    public static double? Bits(GenerationSyntax? generation) => generation?.Strategy switch
-    {
-        null or "uuid" => 122,
-        "uuidv7" or "typeid" => 74,
-        "ulid" => 80,
-        "nanoid" => (generation.Size ?? 21) * Math.Log2((generation.Alphabet ?? SemanticGenerationContract.DefaultAlphabet).Length),
-        "bytes" when generation.Count is { } count => 8 * count,
-        _ => null
-    };
+    /// <returns>The finite, non-negative random bits, or null when the strategy or its inputs have unknown entropy.</returns>
+    public static double? Bits(GenerationSyntax? generation) => Bits(generation?.Strategy, generation?.Size, generation?.Alphabet, generation?.Count);
 
     /// <summary>
     /// Estimates how many values reach one percent birthday collision probability.
@@ -48,5 +40,22 @@ public static class GenerationEntropy
         var mantissa = Math.Pow(10, logarithm - exponent);
 
         return string.Create(CultureInfo.InvariantCulture, $"{mantissa:R}e{exponent:0}");
+    }
+
+    internal static double? Bits(string? strategy, int? size, string? alphabet, int? count)
+    {
+        alphabet ??= SemanticGenerationContract.DefaultAlphabet;
+        var length = size ?? 21;
+        double? bits = strategy switch
+        {
+            null or "uuid" => 122,
+            "uuidv7" or "typeid" => 74,
+            "ulid" => 80,
+            "nanoid" when length > 0 && alphabet.Length >= 2 && alphabet.Distinct().Count() == alphabet.Length => length * Math.Log2(alphabet.Length),
+            "bytes" when count is > 0 => 8d * count.Value,
+            _ => null
+        };
+
+        return bits is { } known && double.IsFinite(known) && known >= 0 ? known : null;
     }
 }

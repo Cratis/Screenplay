@@ -22,7 +22,7 @@ public class when_describing_generation : given.an_authoring_connection
         var details = Generation();
         details.GetProperty("entropyBits").GetDouble().ShouldEqual(bits);
         details.GetProperty("valuesAtOnePercentCollision").GetDouble().ShouldEqual(GenerationEntropy.ValuesAtOnePercentCollision(bits));
-        details.GetProperty("executable").GetProperty("available").GetBoolean().ShouldBeTrue();
+        details.GetProperty("executable").GetProperty("status").GetString().ShouldEqual("admitted");
         details.GetProperty("executable").GetProperty("diagnosticCodes").GetArrayLength().ShouldEqual(0);
         if (strategy.Contains("prefix", StringComparison.Ordinal)) details.GetProperty("modifiers").GetProperty("prefix").GetString().ShouldEqual("ref_");
         if (strategy.StartsWith("typeid", StringComparison.Ordinal)) details.GetProperty("modifiers").GetProperty("prefix").GetString().ShouldEqual("user");
@@ -44,7 +44,7 @@ public class when_describing_generation : given.an_authoring_connection
         details.GetProperty("entropyBits").ValueKind.ShouldEqual(JsonValueKind.Null);
         details.GetProperty("valuesAtOnePercentCollision").ValueKind.ShouldEqual(JsonValueKind.Null);
         details.GetProperty("entropyUnknownReason").GetString().ShouldContain("unknown");
-        details.GetProperty("executable").GetProperty("available").GetBoolean().ShouldBeFalse();
+        details.GetProperty("executable").GetProperty("status").GetString().ShouldEqual("refused");
         details.GetProperty("executable").GetProperty("diagnosticCodes").EnumerateArray().Select(item => item.GetString()).ShouldContain(code);
         if (argument is not null)
         {
@@ -76,11 +76,43 @@ public class when_describing_generation : given.an_authoring_connection
         count.GetRawText().ShouldContain("e615");
     }
 
-    void Start(string source)
+    [Theory]
+    [InlineData("")]
+    [InlineData("a")]
+    [InlineData("aa")]
+    void should_describe_invalid_alphabets_without_losing_parser_diagnostics(string alphabet)
+    {
+        var opened = Start($"concept Code : String\n  generate nanoid 1 alphabet \"{alphabet}\"\n");
+        var details = Generation();
+        details.GetProperty("entropyBits").ValueKind.ShouldEqual(JsonValueKind.Null);
+        details.GetProperty("valuesAtOnePercentCollision").ValueKind.ShouldEqual(JsonValueKind.Null);
+        details.GetProperty("entropyUnknownReason").GetString().ShouldContain("authored inputs");
+        details.GetProperty("executable").GetProperty("status").GetString().ShouldEqual("refused");
+        details.GetProperty("executable").GetProperty("diagnosticCodes").EnumerateArray().Select(item => item.GetString()).ShouldContainOnly("PLAY0679");
+        Page("executable-diagnostics", opened.GetProperty("revision").GetString()!).EnumerateArray().Select(item => item.GetProperty("code").GetString()).ShouldContainOnly("PLAY0679");
+    }
+
+    [Theory]
+    [InlineData("numbers exact\n", "", "PLAY0268")]
+    [InlineData("", "concept Other : String\n  generate nanoid 1 alphabet \"\"\n", "PLAY0679")]
+    void should_not_claim_admission_after_an_unrelated_model_failure(string prefix, string otherSource, string code)
+    {
+        if (otherSource.Length > 0) File.WriteAllText(Path.Combine(RootPath, "other.play"), otherSource);
+        var opened = Start($"{prefix}concept Code : String\n  generate uuid\n");
+        var details = Generation();
+        details.GetProperty("entropyBits").GetDouble().ShouldEqual(122);
+        details.GetProperty("executable").GetProperty("status").GetString().ShouldEqual("notAssessed");
+        details.GetProperty("executable").GetProperty("diagnosticCodes").GetArrayLength().ShouldEqual(0);
+        details.GetProperty("executable").GetProperty("reason").GetString().ShouldContain("whole model");
+        Page("executable-diagnostics", opened.GetProperty("revision").GetString()!).EnumerateArray().Select(item => item.GetProperty("code").GetString()).ShouldContain(code);
+    }
+
+    JsonElement Start(string source)
     {
         File.WriteAllText(Path.Combine(RootPath, "application.play"), source);
         Initialize();
-        Open();
+
+        return Open();
     }
 
     JsonElement Generation() => Result("declaration-details", new { address = "Code", kind = "Concept", view = "summary" }).GetProperty("details").GetProperty("generation");

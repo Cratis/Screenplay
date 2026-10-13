@@ -41,10 +41,8 @@ static class McpGenerationDetails
         Preview("checksum", generation.Checksum);
         Preview("range", generation.Range);
         Preview("rule", generation.Rule);
-        var catalog = SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("GenerationDetails"));
-        var sources = snapshot.Sources.Select(source => SemanticSourceDocument.Create(catalog.ResolveDocument(source.Key), source.Key, source.Key, source.Value));
-        var documents = SemanticDocumentSet.Create([.. sources], catalog);
-        var diagnostics = new SemanticModelCompiler().Compile("GenerationDetails", documents).Diagnostics
+        var compilation = snapshot.ExecutableCompilation;
+        var diagnostics = compilation.Diagnostics
             .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error &&
                 (diagnostic.Location == generation.Location || diagnostic.Location == concept.Location))
             .Select(diagnostic => diagnostic.Code).Distinct(StringComparer.Ordinal).ToArray();
@@ -56,10 +54,28 @@ static class McpGenerationDetails
             ["modifiers"] = modifiers,
             ["entropyBits"] = bits,
             ["valuesAtOnePercentCollision"] = collision?.RootElement.Clone(),
-            ["executable"] = new { available = diagnostics.Length == 0, diagnosticCodes = diagnostics }
+            ["executable"] = Admission(compilation, diagnostics)
         };
-        if (bits is null) result.Add("entropyUnknownReason", $"Entropy is unknown for generation strategy '{generation.Strategy}'.");
+        if (bits is null) result.Add("entropyUnknownReason", $"Entropy is unknown for generation strategy '{generation.Strategy}' or its authored inputs.");
         if (previewArguments.Count > 0) result.Add("previewArguments", previewArguments);
+
+        return result;
+    }
+
+    static Dictionary<string, object> Admission(CompilationResult<SemanticCompilation> compilation, string[] diagnostics)
+    {
+        var status = (diagnostics.Length > 0, compilation.Success) switch
+        {
+            (true, _) => "refused",
+            (false, true) => "admitted",
+            _ => "notAssessed"
+        };
+        var result = new Dictionary<string, object>
+        {
+            ["status"] = status,
+            ["diagnosticCodes"] = diagnostics
+        };
+        if (status == "notAssessed") result.Add("reason", "The whole model did not produce an executable model; generation admission was not established. See executable diagnostics.");
 
         return result;
     }

@@ -108,10 +108,10 @@ For `kind: "Concept"`, the `declaration-details` summary includes `generation` o
 | --- | --- |
 | `strategy` | Authored strategy name. |
 | `modifiers` | Only the authored `prefix`, `case`, `size`, `alphabet`, `count` and `encoding` values; implicit defaults are not added. |
-| `entropyBits` | Exact random bits for UUID, UUIDv7, ULID, TypeID, NanoID and bytes; null for preview strategies. Prefixes and encodings add no entropy. |
+| `entropyBits` | Exact random bits for UUID, UUIDv7, ULID, TypeID, NanoID and bytes; null for preview strategies or inputs that do not define finite, non-negative entropy, including empty/single-character alphabets and non-positive sizes/counts. Prefixes and encodings add no entropy. |
 | `entropyUnknownReason` | Present only when entropy is unknown. |
 | `valuesAtOnePercentCollision` | JSON number estimating the count at 1% birthday collision probability, or null for unknown entropy. Large counts use scientific notation and can exceed a client's floating-point range. |
-| `executable` | `available` and `diagnosticCodes`, using the compiler's error diagnostics at the concept or generation declaration. Whole-model readiness remains separate. |
+| `executable` | `status` is `admitted` only when the whole model produced an executable model and no error targets this concept/generation; `refused` when compiler errors target it; otherwise `notAssessed`, with `reason`. `diagnosticCodes` lists only errors at this concept/generation. An empty list alone does not imply admission. |
 | `previewArguments` | Authored `pattern`, `checksum`, `range` and `rule`, each as `{ "value": "…", "executable": false }`; omitted when none are set. |
 
 `propose-ast` can replace `ConceptSyntax` with a `generation` member of kind `GenerationSyntax`, or omit/null that member to remove it. `propose-source` accepts the equivalent complete source document. Both print canonical `generate` source and report compiler executable diagnostics independently of authoring acceptance. `generate sequence` reports `PLAY0682`; preview strategies and generated-concept validation rules report `PLAY0268`.

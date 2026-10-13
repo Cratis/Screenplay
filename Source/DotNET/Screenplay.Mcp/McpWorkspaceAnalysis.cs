@@ -23,7 +23,7 @@ sealed class McpWorkspaceAnalysis
     McpWorkspaceAnalysis(ScreenplayWorkspace workspace)
     {
         _authoring = WorkspaceAuthoringAnalysis.For(workspace);
-        _source = new(() => new McpSnapshot(_authoring.Source));
+        _source = new(() => new McpSnapshot(_authoring.Source, workspace.Compilation));
         _physical = new(() => WorkspacePhysicalReadView.Create(workspace));
         _handlerIntents = new(() => WorkspaceImplementationInventory.Create(Syntax));
         _namedRuleIntents = new(() => WorkspaceNamedRuleIntentInventory.Create(Syntax));
