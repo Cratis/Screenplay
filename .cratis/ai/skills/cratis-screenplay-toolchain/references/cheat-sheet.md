@@ -1,6 +1,35 @@
 <!-- cratis-ai-managed: skills/cratis-screenplay-toolchain/references/cheat-sheet.md -->
 # Screenplay cheat-sheet (tool versions: versions.md)
 
+## Contents
+
+- Samples and preview fixtures
+- Lexical and structural rules
+- Exact numeric source mode
+- Clause order inside a command (canonical)
+- Slice contents (typical)
+- `$context.` paths (command `produces`)
+- `$eventContext.` (projections)
+- PDL quick reference (most forms are compiled in `pdl-example.md` or `cheat-sheet-example.md`; `remove via join` and `$eventContext.occurred` are not)
+- Specification forms
+
+Released boundary forms: `public event X`, `event X from "store"`, Translate
+`direction inbound|outbound`, event-target `projection/reducer P => PublicEvent`,
+and capture `source events` with `from ForeignEvent` select v9. Read
+[public contracts](../../cratis-screenplay-automations-and-translations/references/public-events-and-direction.md).
+View properties use trailing `key`; multipart `by` query/read blocks remain
+PLAY0268 (#599), not v10. Read [named keys](../../cratis-screenplay-read-surface/references/named-keys.md).
+Production `stream Source.Stream` overrides and reaction/reducer `from Source[.Stream]`
+select released v10: [routes and filters](production-routes-and-filters.md).
+Qualifying non-route Double literals select published v11 at 4.135.0;
+`numbers exact` does not bind. Non-positional enum member numbers (`draft = 1`)
+select published v12 at 4.139.0; positional pins keep earlier bytes/version,
+while specifications still use names. The pinned CLI/Stage pair (`versions.md`) admits v12 and renders explicit numbers.
+Syntax/example: command-surface `references/enum-numbers.md`.
+See `versions.md` for freeze and numeric boundaries.
+
+Current pins: `versions.md` (the single table). Compile evidence below keeps its historical tool labels.
+
 The syntax lives in compiled example files next to this one (each is a Markdown file holding
 one complete `screenplay` fence). Copy shapes from them; do not write a form that none of
 them (or a compiled documentation example) shows. This file holds the prose rules; the
@@ -19,11 +48,31 @@ by `for_Documentation/when_comparing_the_grammar_against_the_parsers.cs`),
 Screenplay CI (`when_compiling_every_example.cs`) against repository main: the standalone
 compiler (4.68.0; `cratis` 3.28.2 or later bundles 4.66.0, which lacks ESM v7); older cratis bundles differ (`versions.md`).
 
+## Samples and preview fixtures
+
+Invoicing is a warning-free syntax showcase, not a runnable whole-language proof.
+The released samples policy excepts these preview families and points to dedicated
+fixtures; do not infer binder admission from the sample's coverage list:
+
+| Family | Screenplay v4.125.0 fixture |
+| --- | --- |
+| Exact numbers | `Source/Screenplay/Compiler/Conformance/exact-named-rule-intent.play` |
+| Sources/streams/command routes | `Documentation/screenplay/fixtures/source-streams.play` |
+| Specification routes | `Source/Screenplay/Compiler/Conformance/specification-streams.play` |
+| Systems/operations/specification steps | `Documentation/screenplay/fixtures/operations.play` |
+| Refusals/redelivery/no-events | `Source/Screenplay/Compiler/Conformance/reaction-refusals-redelivery.play`, `no-events.play` in that directory |
+
+Source: `v4.125.0:.cratis/ai/rules/project/samples.md`. Its preview list retains
+sources/specification routes, but the released binder/runner admits them as v8;
+its old blanket PLAY0268 wording is not the current route verdict. Other rows
+remain unadmitted. Compile and test each relevant fixture with the chosen tool.
+
 ## Lexical and structural rules
 - Spaces only, 2 per level (tabs: PLAY0006 W). Offside rule.
 - Comments: `//` only. `#` is not a comment (PLAY0058 E in a projection) despite doc examples.
-- Order is free (forward references fine) except `domain` first in the file and `description`
-  first in a body.
+- Body directives can appear in any order; singleton `description` still appears
+  at most once. Canonical printing may place it first, but the parser does not
+  require that position. Source preambles precede declarations.
 - Strings: `"..."`, escapes `\" \\ \n \r \t`; other backslashes kept (regex `"^INV-\d{6}$"` works).
 - Structured values: single-line JSON, quoted keys (`[{"sku": "A-1", "quantity": 2}]`).
 - One condition grammar (policy `require`, `produces when`, `require`, reaction `where`): `and`
@@ -39,7 +88,17 @@ compiler (4.68.0; `cratis` 3.28.2 or later bundles 4.66.0, which lacks ESM v7); 
   generated identifier` (PLAY0484); legacy `?` is PLAY0479 (information).
 - Ownership policies: `require claim "ownerId" matches subject` (subject = command identifier
   or keyed query argument) or `matches <commandProperty>`; executable; renderable only for
-  text-backed targets (Uuid-backed: STAGE-ESM-015).
+  text-backed targets at the 4.24-era Stage; Stage 4.73.1 also renders Uuid and Date claim targets (see `renderable-subset.md`; unsupported subjects: STAGE-ESM-015).
+
+## Exact numeric source mode
+
+Start each file/import barrel with `numbers exact` to retain bounded decimal
+literals without Double rounding. All assembled files must agree on mode;
+PLAY0508–PLAY0513 diagnose malformed directives, range errors and disagreement.
+Exact mode is authoring-only (`PLAY0268` on binding), not ESM v7 generated values.
+Typed JSON needs consistent `sourceOptions.numericMode: "exact"` on every root
+and `ExactNumber` literal envelopes with canonical fixed-point string values,
+never JSON numbers. Details: model-authoring `references/language-reference.md`.
 
 ## Clause order inside a command (canonical)
 description, properties, `reads`, `authorize`, `validate`, `produces`/`handler`, `concurrency`.
@@ -60,6 +119,17 @@ roles, claims, causation, `command.<p>`, `arguments.<p>`: PLAY0268. Binding is n
 a reference scenario that supplies only a clock carries no caller audit identity, so check the
 reference runner before relying on identity paths in a specification. Renderable:
 `$context.occurred` only.
+
+At 4.127.0, `$identity.id`/`.name`/`.userName` map to the same ESM kinds as
+`$context.identity`; prefer the shorter root, but the older one stays supported.
+Other built-ins parse but roles/claims/authentication status do not bind in
+produces mappings. Identity details are metadata: executable detail reads report
+PLAY0268. See command-surface `references/context.md`.
+
+Use bare `pii`/`secret` on concepts (`personal` aliases `pii`); legacy markers
+are PLAY0565 information and repeated markers are PLAY0653 warning. Event `subject`
+is report-only lineage; processing purposes/checks/reports declare use, not lawful
+processing or runtime retention. See command-surface `references/compliance.md`.
 
 ## `$eventContext.` (projections)
 `eventType{.id,.generation,.tombstone}`, `eventSourceType`, `eventSourceId`, `eventStreamType`,
