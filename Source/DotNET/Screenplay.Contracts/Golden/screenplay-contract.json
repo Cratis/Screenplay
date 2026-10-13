@@ -20478,6 +20478,17 @@
       "title": "A command response name is used in that command\u0027s failure continuation.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0686",
+      "name": "EventIdPinNotCarriedToRenderers",
+      "severity": "warning",
+      "severities": [
+        "warning"
+      ],
+      "title": "An event identity pin is not yet carried to renderers, which use the event\u0027s current name.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [
