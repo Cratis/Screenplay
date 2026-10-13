@@ -129,6 +129,14 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
                 descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
             }
 
+            if (context.UsesStoredEventNames)
+            {
+                languageVersion = LanguageVersion.V16;
+                semanticVersion = SemanticVersion.V16;
+                application = BindingContext.PromoteV2Destinations(application);
+                descriptors = SemanticTypedContextCatalog.Create(application, context.ImplementationRequirements, true);
+            }
+
             var model = ExecutableSemanticModel.Create(languageVersion, semanticVersion, application);
             var compiledDocuments = documents;
             if (context.UsesV4)
@@ -262,6 +270,8 @@ public sealed partial class SemanticModelBinder : ISemanticModelBinder
         internal bool UsesPublicEvents { get; set; }
 
         internal bool UsesV10 { get; set; }
+
+        internal bool UsesStoredEventNames { get; set; }
 
         internal ImmutableArray<SemanticSourceMapEntry> SourceMapEntries => [.. _sourceMapEntries];
 

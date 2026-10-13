@@ -36,13 +36,14 @@ public static class golden_vector_regeneration
         ["12"] = canonical_serialization_golden_vectors.CreateSemanticModelV12,
         ["13"] = canonical_serialization_golden_vectors.CreateSemanticModelV13,
         ["14"] = canonical_serialization_golden_vectors.CreateSemanticModelV14,
-        ["15"] = canonical_serialization_golden_vectors.CreateSemanticModelV15
+        ["15"] = canonical_serialization_golden_vectors.CreateSemanticModelV15,
+        ["16"] = canonical_serialization_golden_vectors.CreateSemanticModelV16
     };
 
     /// <summary>
     /// Gets a value indicating whether regeneration was explicitly requested.
     /// </summary>
-    public static bool IsRequested => Environment.GetEnvironmentVariable(Variable) == "1" || Environment.GetEnvironmentVariable(Variable) == "3" || Environment.GetEnvironmentVariable(Variable) == "4" || Environment.GetEnvironmentVariable(Variable) == "5" || Environment.GetEnvironmentVariable(Variable) == "6" || Environment.GetEnvironmentVariable(Variable) == "7" || Environment.GetEnvironmentVariable(Variable) == "8" || Environment.GetEnvironmentVariable(Variable) == "9" || Environment.GetEnvironmentVariable(Variable) == "10" || Environment.GetEnvironmentVariable(Variable) == "11" || Environment.GetEnvironmentVariable(Variable) == "12" || Environment.GetEnvironmentVariable(Variable) == "13" || Environment.GetEnvironmentVariable(Variable) == "14" || Environment.GetEnvironmentVariable(Variable) == "15";
+    public static bool IsRequested => Environment.GetEnvironmentVariable(Variable) == "1" || Environment.GetEnvironmentVariable(Variable) == "3" || Environment.GetEnvironmentVariable(Variable) == "4" || Environment.GetEnvironmentVariable(Variable) == "5" || Environment.GetEnvironmentVariable(Variable) == "6" || Environment.GetEnvironmentVariable(Variable) == "7" || Environment.GetEnvironmentVariable(Variable) == "8" || Environment.GetEnvironmentVariable(Variable) == "9" || Environment.GetEnvironmentVariable(Variable) == "10" || Environment.GetEnvironmentVariable(Variable) == "11" || Environment.GetEnvironmentVariable(Variable) == "12" || Environment.GetEnvironmentVariable(Variable) == "13" || Environment.GetEnvironmentVariable(Variable) == "14" || Environment.GetEnvironmentVariable(Variable) == "15" || Environment.GetEnvironmentVariable(Variable) == "16";
 
     /// <summary>
     /// Rewrites every golden vector from its source model when regeneration was requested.

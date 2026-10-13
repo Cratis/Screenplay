@@ -264,6 +264,7 @@ public static partial class SemanticModelCanonicalJson
         writer.WriteString("contractId", eventContract.ContractId.ToString());
         writer.WriteNumber("contractRevision", eventContract.Revision.Value);
         CanonicalJson.WriteString(writer, "name", eventContract.Name);
+        if (eventContract.StoredName is { } storedName && storedName != eventContract.Name) CanonicalJson.WriteString(writer, "storedName", storedName);
         WriteArray(writer, "properties", eventContract.Properties.OrderBy(_ => _.Id.ToString(), StringComparer.Ordinal), WriteProperty);
         if (!eventContract.Tags.IsDefaultOrEmpty) WriteStringArray(writer, "tags", eventContract.Tags);
         if (eventContract.Visibility == SemanticEventVisibility.Public) writer.WriteString("visibility", "public");
