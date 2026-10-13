@@ -14,6 +14,14 @@ public sealed partial class SemanticModelBinder
         readonly Dictionary<string, SemanticEventSource> _eventSources = new(StringComparer.Ordinal);
         ImmutableArray<SemanticConcept> _routeConcepts = [];
 
+        void RefuseReservedStreamName(EventSourceSyntax source, EventStreamSyntax stream, string storedStream)
+        {
+            if (string.Equals(storedStream, "All", StringComparison.Ordinal))
+            {
+                Error(DiagnosticCodes.InvalidSemanticBinding, $"Stream '{source.Name}.{stream.Name}' has the reserved stored name 'All'; choose a stored name other than 'All'.", stream.Location);
+            }
+        }
+
         ImmutableArray<SemanticEventSource> BindEventSources(ImmutableArray<SemanticConcept> concepts)
         {
             _routeConcepts = concepts;
@@ -38,10 +46,7 @@ public sealed partial class SemanticModelBinder
                 foreach (var stream in source.Streams)
                 {
                     var storedStream = SemanticEventRouting.StoredName(stream.Id, stream.Name);
-                    if (string.Equals(storedStream, "All", StringComparison.Ordinal))
-                    {
-                        Error(DiagnosticCodes.InvalidSemanticBinding, $"Stream '{source.Name}.{stream.Name}' has the reserved stored name 'All'; choose a stored name other than 'All'.", stream.Location);
-                    }
+                    RefuseReservedStreamName(source, stream, storedStream);
                     if (!storedStreams.Add(storedStream) || !names.Add(stream.Name))
                     {
                         Error(DiagnosticCodes.InvalidSemanticBinding, $"Stream '{source.Name}.{stream.Name}' has a duplicate stored name; choose a unique stored name within its source.", stream.Location);
