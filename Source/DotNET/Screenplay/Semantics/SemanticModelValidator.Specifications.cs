@@ -56,23 +56,24 @@ internal static partial class SemanticModelValidator
         }
 
         static bool HasAction(SemanticSpecification specification) =>
-            new object?[] { specification.When, specification.WhenAppended, specification.WhenClock, specification.WhenTrigger, specification.WhenCapture }
+            new object?[] { specification.When, specification.WhenAppended, specification.WhenClock, specification.WhenTrigger, specification.WhenCapture, specification.WhenRedelivered }
                 .Any(action => action is not null);
 
         static bool HasReadModelOutcome(SemanticSpecification specification) =>
             specification.ThenReadModels.Length > 0 || specification.ThenAbsentReadModels.Length > 0;
 
         static bool HasPositiveOutcome(SemanticSpecification specification) =>
-            specification.ThenReturns is not null || specification.ThenEvents.Length > 0 || HasReadModelOutcome(specification);
+            specification.ThenNoEvents || specification.ThenReturns is not null || specification.ThenEvents.Length > 0 || HasReadModelOutcome(specification);
 
         static bool AssertsMoreThanReadState(SemanticSpecification specification, bool deniedQuery) =>
-            specification.ThenErrors.Length > 0 || specification.ThenEvents.Length > 0 ||
+            specification.ThenNoEvents || specification.ThenErrors.Length > 0 || specification.ThenEvents.Length > 0 ||
             (specification.ThenDenied && !deniedQuery) ||
             (!HasReadModelOutcome(specification) && specification.ThenQueries.Length == 0);
 
         void ValidateSpecification(SemanticSpecification specification)
         {
             ValidateAutomationSpecification(specification);
+            ValidateRecoverySpecification(specification);
             var command = ValidateSpecificationCommand(specification);
             ValidateSpecificationAppend(specification);
             ValidateThenReturns(specification, command);

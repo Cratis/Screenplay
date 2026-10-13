@@ -468,7 +468,16 @@ public static partial class SemanticModelCanonicalJson
             writer.WritePropertyName("whenAppended");
             WriteSpecificationAppend(writer, specification.WhenAppended);
         }
+        if (specification.WhenRedelivered is { } redelivered)
+        {
+            writer.WritePropertyName("whenRedelivered");
+            writer.WriteStartObject();
+            writer.WriteString("reaction", redelivered.Reaction.ToString());
+            writer.WriteNumber("given", redelivered.Given);
+            writer.WriteEndObject();
+        }
         WriteArray(writer, "thenEvents", specification.ThenEvents, WriteSpecificationEvent);
+        if (specification.ThenNoEvents) writer.WriteBoolean("thenNoEvents", true);
         if (specification.ThenEventsInAnyOrder) writer.WriteBoolean("thenEventsInAnyOrder", true);
         WriteArray(writer, "thenReadModels", specification.ThenReadModels, WriteSpecificationReadModel);
         if (version.IsAtLeast(SemanticVersion.V5)) WriteArray(writer, "thenAbsentReadModels", specification.ThenAbsentReadModels, WriteSpecificationAbsentReadModel);

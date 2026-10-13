@@ -377,7 +377,7 @@ internal static partial class SemanticModelValidator
 
         void ValidateAutomationSpecification(SemanticSpecification specification)
         {
-            var actions = new object?[] { specification.When, specification.WhenAppended, specification.WhenClock, specification.WhenTrigger, specification.WhenCapture }
+            var actions = new object?[] { specification.When, specification.WhenAppended, specification.WhenClock, specification.WhenTrigger, specification.WhenCapture, specification.WhenRedelivered }
                 .Count(action => action is not null);
             if (actions > 1)
             {

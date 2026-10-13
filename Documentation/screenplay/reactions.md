@@ -242,6 +242,10 @@ consequence, and they are not.
 Both are declarations of *what happens*, not of how — a trigger can state its consequences and still carry a
 `file` or an inline block that implements them.
 
+## Recovery redelivery
+
+Use `when redelivered <Event> to <Reaction>` to deliver one existing given fact to one event-trigger reaction again. ESM v16 establishes givens without running reactions, fires only the named observer (respecting its `from` and `where` filters), and settles any cascade from newly appended facts. It never appends the given fact again. `then no events` asserts no effects, while event expectations compare all newly accepted facts. An unhandled validation or constraint refusal remains assertable with `then error`. See [Redelivery specifications](specifications.md#redelivery-specifications) for locator rules and examples. This is ordinary observation, not replay or a once-only external-effect guarantee.
+
 ## Refusal branches (syntax-only)
 
 > Refusal branches and `$refusal` values are authoring syntax, not yet executable. Both compilers preserve the syntax; the .NET compiler checks selectors and value scope. Binding refuses these constructs with `PLAY0268`, and MCP reports them as unadmitted. [Decision 0030](https://github.com/Cratis/Screenplay/blob/main/decisions/0030-reaction-refusals-and-redelivery.md) defines their intended behavior for admission.
@@ -288,7 +292,7 @@ Unknown members, use outside a branch's event mapping and incompatible target ty
 
 At admission, a refused command contributes no facts. Handling its refusal will stop the remaining invocations of that trigger; other reactions and cascades from accepted facts will continue. Branch productions remain subject to ordinary append constraints. A rejected branch append cannot be caught by another branch. Unhandled refusals end the scenario, retaining previously accepted facts. These are the accepted design, not current runner behavior.
 
-Infrastructure failures, exceptions, contract errors, Unsupported outcomes and concurrency conflicts are never refusals. There is no `by concurrency` form: transient concurrency must fail and retry, not be acknowledged. Refusal handling promises neither a cascade-wide transaction nor once-only external effects. To describe recovery of an existing observed fact, see [redelivery specifications](specifications.md#redelivery-specifications-syntax-only).
+Infrastructure failures, exceptions, contract errors, Unsupported outcomes and concurrency conflicts are never refusals. There is no `by concurrency` form: transient concurrency must fail and retry, not be acknowledged. Refusal handling promises neither a cascade-wide transaction nor once-only external effects. To describe recovery of an existing observed fact, see [redelivery specifications](specifications.md#redelivery-specifications).
 
 ## In the executable semantic model
 

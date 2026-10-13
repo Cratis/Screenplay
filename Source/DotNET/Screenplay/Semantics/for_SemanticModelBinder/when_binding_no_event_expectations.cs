@@ -29,6 +29,6 @@ public class when_binding_no_event_expectations : given.a_semantic_binder
     }
 
     [Fact] void should_keep_outcome_less_actions_invalid() => _omitted.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidSemanticBinding && diagnostic.Message.Contains("at least one success outcome", StringComparison.Ordinal)).ShouldBeTrue();
-    [Fact] void should_refuse_no_events_until_admission() => _explicit.Success.ShouldBeFalse();
-    [Fact] void should_name_the_unadmitted_feature() => _explicit.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message == "Explicit no-event assertions are not admitted by any supported executable model (ESM) version yet (#433).").ShouldBeTrue();
+    [Fact] void should_admit_explicit_no_events() => _explicit.Success.ShouldBeTrue();
+    [Fact] void should_select_the_new_version() => _explicit.Value!.Model.SemanticVersion.ShouldEqual(SemanticVersion.V16);
 }

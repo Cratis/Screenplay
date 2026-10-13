@@ -117,7 +117,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
 
         // Since ESM v6 an action sets reactions off, and a specification can act through the clock, a trigger or a capture.
         var acts = expected.When is not null || expected.WhenAppended is not null || expected.WhenClock is not null ||
-            expected.WhenTrigger is not null || expected.WhenCapture is not null;
+            expected.WhenTrigger is not null || expected.WhenCapture is not null || expected.WhenRedelivered is not null;
         if (plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V6) && acts)
         {
             var performed = SemanticScenario.Perform(evaluator, plan, world, expected, queries, out var actionFacts);
@@ -251,7 +251,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
 
         // In ESM v6 the appended event is the action itself, like a command's input: 'then' events are what followed it.
         var following = actionFacts >= 0 && expected.WhenAppended is not null ? accepted.Facts[actionFacts..] : accepted.Facts;
-        if (expected.WhenAppended is null || expected.ThenEvents.Length > 0)
+        if (expected.ThenNoEvents || expected.WhenAppended is null || expected.ThenEvents.Length > 0)
         {
             CompareFacts(plan, expected.ThenEvents, following, failures, expected.ThenEventsInAnyOrder);
         }

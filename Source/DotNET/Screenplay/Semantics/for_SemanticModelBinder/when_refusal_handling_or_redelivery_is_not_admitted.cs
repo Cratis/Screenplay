@@ -14,14 +14,13 @@ public class when_refusal_handling_or_redelivery_is_not_admitted : given.a_seman
     [Theory]
     [InlineData("            on refused\n              acknowledge\n")]
     [InlineData("            on refused by authorization\n              acknowledge\n")]
-    [InlineData("      specification Redelivering\n        given Approved\n          id = \"a\"\n        when redelivered Approved to Claimer\n")]
     void should_refuse_by_feature_name_without_a_version_claim(string addition)
     {
         var result = Bind(Source + addition);
         result.Success.ShouldBeFalse();
         result.Value.ShouldBeNull();
         result.Diagnostics.All(diagnostic => diagnostic.Code == DiagnosticCodes.UnsupportedSemanticSyntax && diagnostic.Message ==
-            "Reaction refusal handling and redelivery are not admitted by any supported executable model (ESM) version yet (#433).").ShouldBeTrue();
+            "Reaction refusal branches and $refusal values are not admitted by any supported executable model (ESM) version yet (#433).").ShouldBeTrue();
         result.Diagnostics.ShouldNotBeEmpty();
     }
 

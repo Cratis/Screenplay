@@ -69,6 +69,11 @@ internal static class SemanticScenario
                         },
                         clock);
                     break;
+                case { WhenRedelivered: { } redelivered }:
+                    var reaction = plan.Reactions.Single(reaction => reaction.Id == redelivered.Reaction);
+                    var givenFact = world.Facts[redelivered.Given];
+                    failure = loop.Redeliver(reaction, givenFact, clock);
+                    break;
                 case { WhenClock: { } advance }:
                     failure = Advance(plan, loop, clock!.Value, Instant(advance));
                     break;

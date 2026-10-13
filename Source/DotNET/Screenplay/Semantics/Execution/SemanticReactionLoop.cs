@@ -130,6 +130,25 @@ internal sealed class SemanticReactionLoop(ISemanticEvaluator evaluator, Semanti
     }
 
     /// <summary>
+    /// Delivers an existing fact to only the named reaction, respecting its observer filter.
+    /// </summary>
+    /// <param name="reaction">The reaction receiving the fact.</param>
+    /// <param name="fact">The existing fact, which is not appended again.</param>
+    /// <param name="occurred">When the new delivery occurs.</param>
+    /// <returns>A failure, or <c>null</c> when the delivery succeeds or is filtered out.</returns>
+    public SemanticExecutionResult? Redeliver(SemanticReaction reaction, SemanticFact fact, DateTimeOffset? occurred)
+    {
+        if (reaction.From?.Matches(plan.Model.Application, fact.Route) == false) return null;
+        var values = fact.Values.ToDictionary(value => value.TargetProperty, value => value.Value);
+        foreach (var trigger in reaction.Triggers.Where(trigger => trigger.Kind == SemanticReactionTriggerKind.Event && trigger.Source == fact.EventContract))
+        {
+            if (Fire(reaction, trigger, values, SemanticExpressionRootKind.Event, fact, occurred) is { } failure) return failure;
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// Runs one trigger of a reaction for an occurrence.
     /// </summary>
     /// <param name="reaction">The reaction.</param>

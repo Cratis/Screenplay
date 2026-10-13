@@ -64,6 +64,8 @@ Holds until both #433 versions are admitted. In scope: splitting the admission, 
 
 **2026-10-13 — accepted with changes.** Accepted by Sindre Alstad Wilting (delegated through the coordinator after an independent review) with three changes: #490's closure is recorded, the redelivery consumer work is named (Stage#371), and the `PLAY0268` message split is stated. Redelivery stays bundled with `then no events`.
 
+**2026-10-13 — implementation shape.** The first admission uses ESM v16 (language and semantic `16.0`, `schemaVersion: 16`). A specification's optional `whenRedelivered` action carries `reaction` (semantic identity) and `given` (zero-based given-event position), after command/append actions and before `thenEvents`. Optional `thenNoEvents: true` follows `thenEvents`, before `thenEventsInAnyOrder`; false is omitted. Both select v16 only when used and are refused by earlier schemas. Refusal branches and `$refusal` values retain PLAY0268. The full v16 golden and `RecoverySpecificationsCorpus.V16` pin the contract without rewriting earlier vectors.
+
 ## Consequences
 
 Authors can state "nothing followed" and recovery redelivery as executable specifications without waiting for Arc. Consumers (Stage, Studio, Arc's generator) admit #433 in two versions. Refusal branches keep 0030's guarantees and prerequisites.

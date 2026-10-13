@@ -74,7 +74,7 @@ is an authorization denial, and expected refusal facts remain event cards.
 An explicit `then no events` appears in the header rather than as a fabricated
 event or error. Redelivery and no-event expectations are labeled
 **Syntax-only (PLAY0268)**: drawing them does not make them executable or prove
-once-only delivery. See [redelivery specifications](specifications.md#redelivery-specifications-syntax-only).
+once-only delivery. See [redelivery specifications](specifications.md#redelivery-specifications).
 Specifications without these header details keep their titles.
 
 ## Ask for the board in an AI chat

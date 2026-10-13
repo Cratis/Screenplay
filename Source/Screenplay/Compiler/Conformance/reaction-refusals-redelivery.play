@@ -1,7 +1,8 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// Legacy numeric mode lets binding report the reaction's own admission issue (#433).
+// Refusal branches and $refusal values remain preview syntax refused at binding (#433).
+// Redelivery and explicit no-event assertions are executable from ESM v16.
 
 eventsource Invoice
   identifier String

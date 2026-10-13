@@ -18,8 +18,8 @@ public class when_refusal_handling_and_redelivery_are_unadmitted : Specification
     }
 
     [Fact] void should_mark_the_model_as_syntax_only() => _readiness.ModelSyntaxOnly.ShouldBeTrue();
-    [Fact] void should_name_the_unadmitted_feature() => _readiness.ModelExecutionReadiness.ShouldContain("reaction refusal handling and redelivery (#433)");
+    [Fact] void should_name_the_unadmitted_feature() => _readiness.ModelExecutionReadiness.ShouldContain("reaction refusal branches and $refusal values (#433)");
     [Fact] void should_mark_the_reaction_as_syntax_only() => _readiness.SyntaxOnly(_slice.Reactions.Single()).ShouldBeTrue();
-    [Fact] void should_mark_the_redelivery_specification_as_syntax_only() => _readiness.SyntaxOnly(_slice.Specifications.Single()).ShouldBeTrue();
+    [Fact] void should_leave_the_redelivery_specification_admitted() => _readiness.SyntaxOnly(_slice.Specifications.Single()).ShouldBeFalse();
     [Fact] void should_leave_the_unaffected_command_executable() => _readiness.SyntaxOnly(_slice.Commands.Single()).ShouldBeFalse();
 }
