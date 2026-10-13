@@ -21,6 +21,16 @@ public class when_writing_state_to_a_missing_root : for_McpConnection.given.a_co
     void Because() => McpManagedFiles.WritePrivate(_files.PathFor(McpState.FileName, create: true), _state);
 
     [Fact] void should_create_the_root() => Root.Exists.ShouldBeTrue();
+
+    [Fact]
+    void should_create_owner_only_metadata()
+    {
+        if (OperatingSystem.IsWindows()) return;
+        var directory = Path.Combine(Root.Directory.DirectoryPath, ".screenplay");
+        File.GetUnixFileMode(directory).ShouldEqual(UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        File.GetUnixFileMode(Path.Combine(directory, McpState.FileName)).ShouldEqual(UnixFileMode.UserRead | UnixFileMode.UserWrite);
+    }
+
     [Fact] void should_persist_the_identity_state() => _files.Read(McpState.FileName)!.ShouldContainOnly(_state);
     [Fact] void should_reopen_the_empty_workspace() => McpState.Deserialize(_files.Read(McpState.FileName)!).Open(Root).Documents.ShouldBeEmpty();
 }

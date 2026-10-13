@@ -19,15 +19,22 @@ sealed class McpManagedFiles(McpRoot root)
     internal static void WritePrivate(string path, byte[] bytes)
     {
         CheckExisting(path);
+        var directory = Path.GetDirectoryName(path)!;
+        if (Path.GetFileName(directory).Equals(".screenplay", StringComparison.OrdinalIgnoreCase))
+        {
+            McpRootFailures.Run(() => ModelRootMetadata.VerifyDirectory(directory, ModelRootMetadataAccess.Write));
+        }
+
         using var stream = McpFileAccess.CreatePrivate(path);
         stream.Write(bytes);
         stream.Flush(true);
     }
 
     internal string PathFor(string name, bool create = false) =>
-        McpRootFailures.Run(() => ModelRootMetadata.PathFor(root.Directory, name, create ? CreateDirectory : null));
+        McpRootFailures.Run(() => ModelRootMetadata.PathFor(root.Directory, name, ModelRootMetadataAccess.Write, create ? CreateDirectory : null));
 
-    internal byte[]? Read(string name, int maximum = MaximumStateBytes) => ReadPath(PathFor(name), maximum);
+    internal byte[]? Read(string name, int maximum = MaximumStateBytes, ModelRootMetadataAccess access = ModelRootMetadataAccess.Read) =>
+        ReadPath(McpRootFailures.Run(() => ModelRootMetadata.PathFor(root.Directory, name, access)), maximum);
 
     internal void Verify(string name, byte[]? expected)
     {

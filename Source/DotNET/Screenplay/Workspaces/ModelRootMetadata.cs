@@ -67,7 +67,7 @@ static class ModelRootMetadata
     }
 
     // createDirectory runs only when the directory is absent; read-only callers pass null and never create it.
-    internal static string PathFor(ModelRootDirectory root, string name, Action<string>? createDirectory = null)
+    internal static string PathFor(ModelRootDirectory root, string name, ModelRootMetadataAccess access, Action<string>? createDirectory = null)
     {
         if (name.Length == 0 || name == "." || name == ".." || name.Length > 128 || name.Any(character => !char.IsAsciiLetterOrDigit(character) && character is not '.' and not '-'))
         {
@@ -84,7 +84,7 @@ static class ModelRootMetadata
         if (Directory.Exists(directory))
         {
             ModelRootDirectory.CheckAncestors(directory);
-            VerifyPrivateDirectory(directory);
+            VerifyDirectory(directory, access);
         }
         else if (File.Exists(directory))
         {
@@ -96,7 +96,7 @@ static class ModelRootMetadata
         return path;
     }
 
-    internal static byte[]? Read(ModelRootDirectory root, string name, int maximum) => ReadPath(PathFor(root, name), maximum);
+    internal static byte[]? Read(ModelRootDirectory root, string name, int maximum) => ReadPath(PathFor(root, name, ModelRootMetadataAccess.Read), maximum);
 
     internal static void RefusePending(ModelRootDirectory root)
     {
@@ -108,27 +108,52 @@ static class ModelRootMetadata
         }
     }
 
-    internal static void VerifyPrivateDirectory(string path)
+    internal static void VerifyDirectory(string path, ModelRootMetadataAccess access)
     {
         if (OperatingSystem.IsWindows())
         {
-            VerifyWindowsDirectory(path);
+            VerifyWindowsDirectory(path, access);
+            return;
         }
-        else if ((File.GetUnixFileMode(path) &
-            (UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.GroupExecute |
-             UnixFileMode.OtherRead | UnixFileMode.OtherWrite | UnixFileMode.OtherExecute)) != UnixFileMode.None)
+
+        var forbidden = access == ModelRootMetadataAccess.Read
+            ? UnixFileMode.GroupWrite | UnixFileMode.OtherWrite
+            : UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.GroupExecute |
+              UnixFileMode.OtherRead | UnixFileMode.OtherWrite | UnixFileMode.OtherExecute;
+        if ((File.GetUnixFileMode(path) & forbidden) != UnixFileMode.None)
         {
-            throw new ModelRootRefused("MetadataPermissions: make .screenplay accessible only to its owner before continuing.", "MetadataPermissions");
+            var reason = access == ModelRootMetadataAccess.Read
+                ? "MetadataPermissions: .screenplay must not be writable by other users."
+                : "MetadataPermissions: make .screenplay accessible only to its owner before continuing.";
+            throw new ModelRootRefused(reason, "MetadataPermissions");
         }
     }
 
     [SupportedOSPlatform("windows")]
-    static void VerifyWindowsDirectory(string path)
+    static bool IsMachineAuthority(IdentityReference identity) =>
+        identity is SecurityIdentifier sid &&
+        (sid.IsWellKnown(WellKnownSidType.LocalSystemSid) || sid.IsWellKnown(WellKnownSidType.BuiltinAdministratorsSid));
+
+    [SupportedOSPlatform("windows")]
+    static void VerifyWindowsDirectory(string path, ModelRootMetadataAccess mode)
     {
         using var identity = WindowsIdentity.GetCurrent();
         var access = new DirectoryInfo(path).GetAccessControl(AccessControlSections.Access);
-        if (!access.AreAccessRulesProtected || access.GetAccessRules(true, true, typeof(SecurityIdentifier)).OfType<FileSystemAccessRule>()
-            .Any(rule => rule.AccessControlType == AccessControlType.Allow && !rule.IdentityReference.Equals(identity.User)))
+        var otherUsers = access.GetAccessRules(true, true, typeof(SecurityIdentifier)).OfType<FileSystemAccessRule>()
+            .Where(rule => rule.AccessControlType == AccessControlType.Allow && !rule.IdentityReference.Equals(identity.User));
+        if (mode == ModelRootMetadataAccess.Read)
+        {
+            const FileSystemRights writes = FileSystemRights.Write | FileSystemRights.Delete |
+                FileSystemRights.DeleteSubdirectoriesAndFiles | FileSystemRights.ChangePermissions | FileSystemRights.TakeOwnership;
+
+            // SYSTEM and Administrators can change any file on the machine already; their inherited
+            // rights on a checkout are not a tampering path, so reads only refuse other principals.
+            if (otherUsers.Any(rule => (rule.FileSystemRights & writes) != default && !IsMachineAuthority(rule.IdentityReference)))
+            {
+                throw new ModelRootRefused("MetadataPermissions: .screenplay must not be writable by other users.", "MetadataPermissions");
+            }
+        }
+        else if (!access.AreAccessRulesProtected || otherUsers.Any())
         {
             throw new ModelRootRefused("MetadataPermissions: .screenplay must have protected access rules granting access only to the current Windows user.", "MetadataPermissions");
         }

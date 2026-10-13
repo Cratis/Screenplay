@@ -154,7 +154,7 @@ internal sealed partial class McpRecoveryJournal
 
     internal void VerifyMarker()
     {
-        if (!McpManagedFiles.Equal(_files.Read(FileName, McpManagedFiles.MaximumJournalBytes), _bytes))
+        if (!McpManagedFiles.Equal(_files.Read(FileName, McpManagedFiles.MaximumJournalBytes, ModelRootMetadataAccess.Write), _bytes))
         {
             throw new McpFailure("RecoveryJournalDrift: the pending-operation marker changed; preserve all recovery files.");
         }
