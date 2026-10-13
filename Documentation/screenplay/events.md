@@ -113,11 +113,13 @@ Standalone events and [inline command events](commands.md#declare-an-event-inlin
 
 Markdown description fences are specific to events, including inline declarations; descriptions on other constructs use `text`. A bare description fence remains accepted with deprecation warning `PLAY0397`.
 
-Each directive can appear at most once. These are authoring metadata: binding reports `PLAY0270`, but they add no ESM bytes. The `id` string does **not** replace or rehash the portable `EventContractId`; catalog identity remains authoritative. Rendering documentation into generated XML or TypeScript comments is a separate downstream capability.
+Each directive can appear at most once. Description and documentation are authoring metadata: binding reports `PLAY0270`. Event `id` pins report warning `PLAY0686`; none of these directives adds ESM bytes yet. The `id` string does **not** replace or rehash the portable `EventContractId`; catalog identity remains authoritative. Rendering documentation into generated XML or TypeScript comments is a separate downstream capability.
 
 Leave `id` absent for a new event. Cratis convention is plain `[EventType]` without arguments; a pin exists to preserve an old persisted name on a rename, not to decorate a new declaration. A pin equal to the current name reports information diagnostic `PLAY0471` with a typed removal repair.
 
 Workspace and MCP event renames pin the previous effective name by default, because an authoring catalog does not prove whether events have been stored. If you know the event has never been persisted, set `EventNeverPersisted` on the rename request (`eventNeverPersisted: true` in MCP) to omit a new pin. That option also removes a redundant pin equal to the current name (the one `PLAY0471` reports); a pin naming an earlier, different identity is never overwritten. Renaming back to the pinned name removes the pin. Generations must agree on their effective identity; contradictory pins refuse the rename. Command, slice and module renames do not add event pins.
+
+**Caution:** an event `id` pin is not yet carried to renderers; generated code uses the new name. Binding reports warning `PLAY0686`, and MCP rename proposals expose the same caveat in `eventPinWarnings`. A pin alone does not preserve the stored event type in generated code until [#704](https://github.com/Cratis/Screenplay/issues/704) admits it to the executable model. Source and stream pins are unaffected.
 
 Rename preserves trivia by default, including when inserting or removing the pin. Unsupported source edits refuse rather than silently reformatting the document.
 

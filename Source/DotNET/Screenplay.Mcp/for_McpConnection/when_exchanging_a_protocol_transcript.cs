@@ -55,6 +55,14 @@ public class when_exchanging_a_protocol_transcript : given.a_connection
     [Fact]
     void should_describe_generation_summary_in_the_protocol_tool_list() => _responses[2].GetProperty("result").GetProperty("tools").EnumerateArray().Single(tool => tool.GetProperty("name").GetString() == "declaration-details").GetProperty("description").GetString()!.ShouldContain("concept generation strategy, authored modifiers, exact entropy bits, one-percent collision count and compiler refusal codes");
 
+    [Fact]
+    void should_describe_event_pin_warnings_in_the_protocol_tool_list()
+    {
+        var description = _responses[2].GetProperty("result").GetProperty("tools").EnumerateArray().Single(tool => tool.GetProperty("name").GetString() == "propose-rename").GetProperty("description").GetString()!;
+        description.ShouldContain("Event pins are not yet carried to renderers; generated code uses the new name.");
+        description.ShouldContain("eventPinWarnings");
+    }
+
     [Fact] void should_return_unknown_method_error() => _responses[4].GetProperty("error").GetProperty("code").GetInt32().ShouldEqual(-32601);
     [Fact] void should_return_parse_error() => _responses[5].GetProperty("error").GetProperty("code").GetInt32().ShouldEqual(-32700);
     [Fact] void should_preserve_concrete_mapping_expression() => _responses[3].GetProperty("result").GetProperty("structuredContent").GetProperty("syntax").GetProperty("modules")[0].GetProperty("features")[0].GetProperty("slices")[0].GetProperty("commands")[0].GetProperty("produces")[0].GetProperty("mappings")[1].GetProperty("source").GetProperty("path").GetString().ShouldEqual("name");

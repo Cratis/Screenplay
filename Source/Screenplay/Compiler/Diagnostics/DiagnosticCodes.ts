@@ -427,4 +427,6 @@ export const DiagnosticCodes = {
     LowGenerationEntropy: 'PLAY0683',
     LowGeneratedIdentifierEntropy: 'PLAY0684',
     ResponseNameUsedOnFailure: 'PLAY0685',
+    // C# semantic binder only; TypeScript does not bind the executable model.
+    EventIdPinNotCarriedToRenderers: 'PLAY0686',
 } as const;
