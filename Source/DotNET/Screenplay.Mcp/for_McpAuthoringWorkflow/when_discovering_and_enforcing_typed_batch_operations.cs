@@ -79,6 +79,14 @@ public class when_discovering_and_enforcing_typed_batch_operations : given.an_au
     void should_describe_generation_summary_in_the_public_tool_list() => _tools.EnumerateArray().Single(tool => tool.GetProperty("name").GetString() == "declaration-details").GetProperty("description").GetString()!.ShouldContain("concept generation strategy, authored modifiers, exact entropy bits, one-percent collision count and compiler refusal codes");
 
     [Fact]
+    void should_describe_event_pin_warnings_in_the_public_tool_list()
+    {
+        var description = _tools.EnumerateArray().Single(tool => tool.GetProperty("name").GetString() == "propose-rename").GetProperty("description").GetString()!;
+        description.ShouldContain("Event pins are not yet carried to renderers; generated code uses the new name.");
+        description.ShouldContain("eventPinWarnings");
+    }
+
+    [Fact]
     void should_advertise_only_supported_extraction_formatting() => Schema("propose-extract-inline-event").GetProperty("properties").GetProperty("formatting")
         .GetProperty("enum").EnumerateArray().Select(value => value.GetString()).ToArray().ShouldEqual(["CanonicalizeTouchedDocuments"]);
     [Fact] void should_advertise_all_three_property_actions() => Schema("propose-property").GetProperty("allOf").GetArrayLength().ShouldEqual(3);

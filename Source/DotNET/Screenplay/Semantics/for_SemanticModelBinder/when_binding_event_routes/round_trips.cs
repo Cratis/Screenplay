@@ -88,7 +88,7 @@ public class round_trips : given.a_semantic_binder
     {
         var source = """
             eventsource Account
-              stream All
+              stream Archive
             module M
               feature F
                 slice StateView S
@@ -103,10 +103,10 @@ public class round_trips : given.a_semantic_binder
                   specification History
                     when append E
                       for "other"
-                      stream Account.All
+                      stream Account.Archive
                       value = "after"
                     then E
-                      stream Account.All
+                      stream Account.Archive
                       value = "after"
             """;
         if (ambiguous)

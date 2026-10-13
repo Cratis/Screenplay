@@ -71,6 +71,8 @@ revision is admitted, the rename preserves its stored name and refuses
 `eventNeverPersisted`. Review `eventRename.mutability` and `eventRename.pinAdded`
 in the proposal and retained review.
 
+**Caution:** the event pin is not yet carried to renderers; generated code uses the new name. Review `eventPinWarnings` before applying; the pin alone does not preserve generated stored identity ([#704](https://github.com/Cratis/Screenplay/issues/704)).
+
 ## Change a property everywhere it flows
 
 ```text

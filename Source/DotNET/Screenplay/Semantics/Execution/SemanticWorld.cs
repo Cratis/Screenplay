@@ -10,12 +10,16 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// </summary>
 public sealed class SemanticWorld
 {
+    internal readonly ImmutableArray<SemanticScopedProjection.DeferredChild> PendingChildren;
+
     SemanticWorld(
         ImmutableArray<SemanticFact> facts,
-        ImmutableArray<SemanticReadModelInstance> readModels)
+        ImmutableArray<SemanticReadModelInstance> readModels,
+        ImmutableArray<SemanticScopedProjection.DeferredChild> pending = default)
     {
         Facts = facts;
         ReadModels = readModels;
+        PendingChildren = pending.IsDefault ? [] : pending;
     }
 
     /// <summary>
@@ -45,10 +49,7 @@ public sealed class SemanticWorld
         ImmutableArray<SemanticReadModelInstance> readModels)
     {
         if (facts.IsDefault || readModels.IsDefault ||
-            facts.Any(fact => fact is not { EventContract.IsSet: true, Destination: not null } || !ValidValues(fact.Values) ||
-                (fact.Context is { } context &&
-                    (context.EventSource.Type.IsCollection || context.EventSource.Type.IsOptional ||
-                     !SemanticValueRules.AreEqual(context.EventSource.Value, fact.Destination)))) ||
+            facts.Any(fact => !ValidFact(fact)) ||
             readModels.Any(readModel => readModel is not { ReadModel.IsSet: true, Key: not null } || !ValidValues(readModel.Values)))
         {
             throw new InvalidSemanticContract("Semantic world state is malformed.");
@@ -75,10 +76,28 @@ public sealed class SemanticWorld
             ]);
     }
 
+    internal SemanticWorld WithProjectionState(
+        ImmutableArray<SemanticReadModelInstance> readModels,
+        ImmutableArray<SemanticScopedProjection.DeferredChild> pending) =>
+        new(Facts, Create([], readModels).ReadModels, pending);
+
     internal SemanticWorld Commit(
         ImmutableArray<SemanticFact> facts,
-        ImmutableArray<SemanticReadModelInstance> readModels) =>
-        Create([.. Facts, .. facts], readModels);
+        ImmutableArray<SemanticReadModelInstance> readModels,
+        ImmutableArray<SemanticScopedProjection.DeferredChild>? pending = null)
+    {
+        var committed = Create([.. Facts, .. facts], readModels);
+        return new(committed.Facts, committed.ReadModels, pending ?? PendingChildren);
+    }
+
+    static bool ValidFact(SemanticFact fact) =>
+        fact is { EventContract.IsSet: true, Destination: not null } &&
+        ValidValues(fact.Values) && ValidEventSource(fact);
+
+    static bool ValidEventSource(SemanticFact fact) =>
+        fact.Context is not { } context ||
+        (!context.EventSource.Type.IsCollection && !context.EventSource.Type.IsOptional &&
+         SemanticValueRules.AreEqual(context.EventSource.Value, fact.Destination));
 
     static bool ValidValues(ImmutableArray<SemanticPropertyValue> values) =>
         !values.IsDefault && values.All(_ => _ is { TargetProperty.IsSet: true, Value: not null });

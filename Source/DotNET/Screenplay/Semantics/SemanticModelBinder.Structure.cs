@@ -154,6 +154,20 @@ public sealed partial class SemanticModelBinder
             };
         }
 
+        void ReportEventMetadata(EventSyntax declaration)
+        {
+            if (declaration.Description is not null || declaration.Documentation is not null)
+            {
+                var metadata = declaration.Id is null ? "description, documentation and id" : "description and documentation";
+                Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Event '{declaration.Name}' {metadata} are authoring metadata.", declaration.Location);
+            }
+
+            if (declaration.Id is { } pin)
+            {
+                Warning(DiagnosticCodes.EventIdPinNotCarriedToRenderers, $"Event '{declaration.Name}' id pin '{pin}' is not yet carried to renderers; generated code uses the new name '{declaration.Name}'.", declaration.Location);
+            }
+        }
+
         BoundEvent BindEvent(SemanticAddress slice, EventSyntax[] declarations)
         {
             var current = declarations[^1];
@@ -176,10 +190,7 @@ public sealed partial class SemanticModelBinder
             var revisions = new List<(EventSyntax Syntax, ImmutableArray<SemanticProperty> Properties, ImmutableArray<string> Tags)>();
             foreach (var declaration in declarations)
             {
-                if (declaration.Description is not null || declaration.Documentation is not null || declaration.Id is not null)
-                {
-                    Information(DiagnosticCodes.ReportOnlySemanticSyntax, $"Event '{declaration.Name}' description, documentation and id are authoring metadata.", declaration.Location);
-                }
+                ReportEventMetadata(declaration);
 
                 if (declaration.File is not null)
                 {

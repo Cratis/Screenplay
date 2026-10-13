@@ -54,6 +54,16 @@ public static class EventRoutesCorpus
     public static CanonicalCorpusVector ObserverFiltersV10 => Vector("observer-filters");
 
     /// <summary>
+    /// Gets an admitted source exercising ordinal stored stream names and a nonreserved pin.
+    /// </summary>
+    public static CanonicalCorpusSourceForm StoredStreamNamesSource => new()
+    {
+        Name = "stored-stream-names",
+        Documents = [Document("application", "application.play", Resource("stored-stream-names.play"))],
+        IdentityCatalogBytes = [.. SemanticIdentityCatalogSerializer.Serialize(SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("EventRoutes")))]
+    };
+
+    /// <summary>
     /// Gets the admitted schema version for a corpus key.
     /// </summary>
     /// <param name="key">The vector key.</param>

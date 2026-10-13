@@ -1014,6 +1014,8 @@ Event renames retain an existing `id` pin or insert the previous name by default
 `eventNeverPersisted: true` omits a new pin and removes a redundant pin equal to the current name; a pin naming an earlier identity is kept. A rename
 that inserts a pin also refuses comment loss or duplication.
 
+**Caution:** event pins are not yet carried to renderers; generated code uses the new name ([#704](https://github.com/Cratis/Screenplay/issues/704)). Proposal and `read-proposal` responses include `eventPinWarnings`, an array of `PLAY0686` warning diagnostics naming every pinned event in the candidate, even when unrelated syntax prevents binding. The array is empty when the candidate has no event pins. Source and stream pins are unaffected.
+
 `propose-extract-inline-event` moves a declaration into its owning slice and makes
 an implicit destination explicit. It requires canonical formatting consent,
 byte-identical canonical ESM, unchanged catalog assignments and every comment

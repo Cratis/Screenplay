@@ -50,6 +50,7 @@ const surfacedCodes = new Set<string>([
     // TypeScript runs semantic binding or opt-in completeness checks.
     // See Documentation/screenplay/editor-diagnostics.md.
     DiagnosticCodes.IndeterminateNegatedClaimTarget,
+    DiagnosticCodes.EventIdPinNotCarriedToRenderers,
     DiagnosticCodes.ConflictingScreenDataBinding,
     DiagnosticCodes.ScreenDataQueryMismatch,
     DiagnosticCodes.ActionWithoutInputSurface,

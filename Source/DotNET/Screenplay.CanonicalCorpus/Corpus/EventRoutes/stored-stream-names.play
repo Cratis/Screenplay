@@ -1,0 +1,6 @@
+eventsource Account
+  stream all
+  stream ALL
+  stream Default
+  stream All
+    id "Archive"

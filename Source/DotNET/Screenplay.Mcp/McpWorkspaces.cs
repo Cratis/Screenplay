@@ -435,6 +435,7 @@ internal sealed partial class McpWorkspaces
             after = McpWorkspaceTransport.Describe(candidate, includeContent),
             moveReport = proposal is McpAuthoringProposal moved ? DescribeMove(moved.Result.MoveReport) : null,
             property = DescribeProperty(proposal),
+            eventPinWarnings = EventPinWarnings(candidate),
             orphanedNotes = notesImpact.OrphanedNotes,
             notes = notesImpact.Notes,
             changeCount = proposal.WritePlan.Entries.Length,
