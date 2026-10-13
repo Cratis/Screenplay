@@ -1,10 +1,12 @@
 ---
 id: 0070
 title: Derive event mutability from an admitted release baseline committed beside the identity catalog
-status: proposed
+status: accepted
 stage: none
 class: contract
 reversibility: costly
+decided: 2026-10-13
+decider: woksin (delegated via L0)
 applies-to:
   - Source/DotNET/Screenplay/Workspaces/**
   - Source/DotNET/Screenplay/Semantics/**
@@ -25,7 +27,7 @@ applies-to:
 **What exists today.**
 - [0044](0044-evolve-event-properties-through-mcp.md) requires exactly one of `newGeneration` or `eventNeverPersisted` for any change to an event property, otherwise `EventContractChangeRequiresDecision`. [0067](0067-report-every-selected-event-property-evolution.md) reports the choice per event in `property.generations[]` as `{ event, from, to, mode }`, with `mode` either `newGeneration` or `eventNeverPersisted` (`WorkspacePropertyReport.cs`, `WorkspacePropertyGeneration`). `propose-rename` uses `eventNeverPersisted` for a related purpose: it decides whether an event rename pins the previous name with `id "<previous name>"` (`WorkspaceRefactoring.cs`, `PlannedEventId`; `events.md`).
 - `eventNeverPersisted` is an assertion by the caller. `events.md` states that an authoring catalog does not prove whether events have been stored. Before a release, the choice adds friction to every edit. After a release, choosing it wrongly edits a stored contract in place, and nothing refuses that edit.
-- [0015](0015-event-generations-in-the-executable-model.md) point 6 leaves immutability open. A complete property list does not prove a historical schema unchanged, because properties refer to concepts and composite types that can change underneath it. In the executable semantic model (ESM), a property's `SemanticTypeReference` names its concept or type by `SemanticId` (`SemanticValues.cs`). It does not carry that type's shape. [#609](https://github.com/Cratis/Screenplay/issues/609) tracks refusing edits to a released generation against an admitted baseline. [#71](https://github.com/Cratis/Screenplay/issues/71) is now narrowed to the transformation between generations.
+- [0015](0015-event-generations-in-the-executable-model.md) point 6 leaves immutability open. A complete property list does not prove a historical schema unchanged, because properties refer to concepts and composite types that can change underneath it. In the executable semantic model (ESM), a property's `SemanticTypeReference` names its concept or type by `SemanticId` (`SemanticValues.cs`). It does not carry that type's shape. [#609](https://github.com/Cratis/Screenplay/issues/609) tracked refusing edits to a released generation against an admitted baseline; it is closed as superseded by #686. [#71](https://github.com/Cratis/Screenplay/issues/71) is now narrowed to the transformation between generations.
 - [0053](0053-public-structural-model-comparison.md)'s structural comparison matches event generations, but it compares each property by its serialized syntax type reference (`StructuralComparison.Events.cs`, `Compare` and `Shape`). A change inside a concept, composite type or enum that an event uses is therefore invisible to it. 0053 also freezes the MCP semantic-diff JSON bytes. The word "baseline" already means the retained disk snapshot in `read-proposal view=semantic-diff` (`mcp/reference.md`).
 - `.screenplay/` is server-owned and holds `identities.json`, `pending.json` and, under [0045](0045-model-notes-sidecar.md), `notes.json`. The catalog persists each event's `EventContractId` and `EventContractRevision` (`SemanticIdentityCatalog.cs`, `EventContractIdentityAssignment`). 0045 sets the sidecar conventions and says that a file which governs meaning decides its own blocking in its own record.
 - [0066](0066-published-esm-versions-are-frozen.md) is the precedent for treating publication as the point where a contract freezes: from first publication, a contract cannot change underneath its number.
@@ -70,7 +72,7 @@ A revision's resolved schema is the shape stored events carry, with every type r
 - enums as their members, with names and numbers ([0065](0065-explicit-enum-member-numbers.md));
 - plus the event's effective `eventType`.
 
-The resolved schema excludes names of concepts, types and enums (they appear only as Chronicle titles, which Chronicle ignores), as well as descriptions, documentation, tags and property semantic IDs. A change confined to excluded content is not a contract change. It is computed from the bound ESM, so admission and checking require a model that binds executably.
+The resolved schema excludes names of concepts, types and enums (they appear only as Chronicle titles, which Chronicle ignores), as well as descriptions, documentation, tags and property semantic IDs. It also excludes concept `validate` rules, concept `generate` strategies, and concept and enum documentation: none of them changes the shape that stored events carry, and a change to one is not a contract change. A change confined to excluded content is not a contract change. It is computed from the bound ESM, so admission and checking require a model that binds executably.
 
 **Frozen means equality.** Any difference from the admitted `schemaHash`, including one that Chronicle would tolerate, is a change to a baselined revision in v1. Version 1 deliberately does not reproduce Chronicle's compatibility relation (see Options).
 
@@ -122,7 +124,7 @@ The baseline governs which edits are allowed. It does not govern what the model 
 
 - **Identities and catalog.** The baseline keys on catalog identities and never writes them. Catalog advancement (0015 point 5) and generation-qualified property identities are unchanged. Retiring a baselined event's contract ID is reported as `BaselinedRevisionMissing`, not done silently.
 - **Studio** reads the file through the published JSON Schema or the Screenplay library and shows `basis`. A coordination issue in StudioIssues is raised at implementation, as for 0045.
-- **Stage and the Cratis CLI** consume `screenplay baseline check` or the library check. Whether rendering refuses a model with violations is their decision, raised as issues at implementation.
+- **Stage and the Cratis CLI** consume `screenplay baseline check` or the library check. Stage warns about a model with violations and does not refuse to render it. The CLI `baseline check` is the gate. Both are raised as issues at implementation.
 - **Migration.** Existing models have no baseline and behave as before, with byte-identical results apart from the added `mutability` field. A team that has already shipped admits once, preferably with `--from-esm` against the shipped ESM.
 
 ## Options considered
@@ -150,7 +152,7 @@ Settle before #686 or #609 is implemented. The decision holds until superseded. 
 
 In scope: the sidecar's location, shape, revision and conventions; the resolved-schema definition and equality; per-revision `basis` and the edit behavior for each; refusals on every proposal path and at `apply`; report fields; admission and checking through the CLI and the library; blocking behavior; consumers; migration.
 
-Out of scope: the transformation construct (#71); Chronicle-side registration checks; tracking which environment runs which release; compiler diagnostics or editor display in either compiler, VS Code or Monaco; whether Stage rendering refuses a model with violations; relaxing equality toward Chronicle's compatibility relation; MCP admission; and removing entries through a tool.
+Out of scope: the transformation construct (#71); Chronicle-side registration checks; tracking which environment runs which release; compiler diagnostics or editor display in either compiler, VS Code or Monaco; Stage's refusal behavior (it warns; see Consumers); relaxing equality toward Chronicle's compatibility relation; MCP admission; and removing entries through a tool.
 
 | # | Size | Lands on |
 | --- | --- | --- |
@@ -186,13 +188,22 @@ When accepted, 0044 and 0067 gain dated pointers to this record, and their decis
 Before a release, event edits need no ceremony. After a release, stored contracts are protected by data rather than by an assertion, including against concept changes underneath them and against edits made outside MCP, when the CLI check runs in CI. Reviewers see in every report why an edit was allowed.
 
 Costs:
-- Teams must run an admission step when they ship.
+- Teams must run an admission step when they ship. Once a baseline exists, revisions that shipped but were never admitted stay freely editable in place. Run `baseline admit` in the release job, and add a check that warns about new revisions that are not yet admitted.
 - One more server-owned file has to be merged.
 - Edits made on `main` between a release and the merge of its admission commit are not protected, so admission belongs in the release job on `main`.
 - Enum additions that Chronicle would accept need a new generation until equality is relaxed.
 - Unfreezing an entry is a manual, reviewed edit.
 
 This forecloses a hidden or implicit "released" state and closes 0015 point 6 for revisions that have been admitted.
+
+## Resolved questions
+
+- `newGeneration` stays explicit for baselined revisions. It is never applied by default.
+- Compliance markers are frozen: they are part of the resolved schema.
+- MCP does not admit in v1.
+- Stage warns about violations and does not refuse. The CLI `baseline check` is the gate.
+- Frozen means equality now. Relaxing it toward Chronicle's compatibility relation is a later change.
+- #609 is closed as superseded by #686.
 
 ## Related issues
 
