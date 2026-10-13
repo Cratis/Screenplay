@@ -3176,4 +3176,9 @@ public static class DiagnosticCodes
     /// An event identity pin is not yet carried to renderers, which use the event's current name.
     /// </summary>
     public const string EventIdPinNotCarriedToRenderers = "PLAY0686";
+
+    /// <summary>
+    /// A capture's source events originate from several event stores.
+    /// </summary>
+    public const string CaptureEventsFromSeveralOrigins = "PLAY0687";
 }

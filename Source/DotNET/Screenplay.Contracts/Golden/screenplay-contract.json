@@ -20489,6 +20489,17 @@
       "title": "An event identity pin is not yet carried to renderers, which use the event\u0027s current name.",
       "reserved": false,
       "retired": false
+    },
+    {
+      "code": "PLAY0687",
+      "name": "CaptureEventsFromSeveralOrigins",
+      "severity": "error",
+      "severities": [
+        "error"
+      ],
+      "title": "A capture\u0027s source events originate from several event stores.",
+      "reserved": false,
+      "retired": false
     }
   ],
   "mcpTools": [

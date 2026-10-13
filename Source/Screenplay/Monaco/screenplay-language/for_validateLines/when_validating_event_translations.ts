@@ -6,7 +6,7 @@ import { DiagnosticCodes, parse } from '@cratis/screenplay-compiler';
 import { validateLines } from '../validation';
 import { scanDocument } from '../symbols';
 
-const contracts = 'import Outside.Arrived from "other/store"\nmodule Sales\n  feature Orders\n    slice StateChange Facts\n      event Changed\n      public event Published\n      public event Second\n';
+const contracts = 'import Outside.Other from "another/store"\nimport Outside.Arrived from "other/store"\nmodule Sales\n  feature Orders\n    slice StateChange Facts\n      event Changed\n      public event Published\n      public event Second\n';
 const cases = [
     ["StateView", "projection Publisher => Published\n        from Changed\n          id = $eventSourceId", DiagnosticCodes.EventTargetOutsideOutboundTranslation],
     ["StateView", "reducer Publisher => Changed\n        on Changed\n          file Reduce.cs", DiagnosticCodes.EventTargetOutsideOutboundTranslation],
@@ -14,6 +14,7 @@ const cases = [
     ["Translate", "direction outbound\n      projection Publisher => Published\n        from Arrived\n          id = $eventSourceId", DiagnosticCodes.OutboundTranslationInput],
     ["Translate", "capture Feed\n        source events\n          from Arrived\n        key id", DiagnosticCodes.EventsSourceOutsideInboundTranslation],
     ["Translate", "direction inbound\n      capture Feed\n        source events\n          from Changed\n        key id", DiagnosticCodes.InboundTranslationInput],
+    ["Translate", "direction inbound\n      capture Feed\n        source events\n          from Arrived\n          from Other\n        key id", DiagnosticCodes.CaptureEventsFromSeveralOrigins],
     ["Translate", "direction inbound\n      capture Feed\n        source events\n        key id", DiagnosticCodes.InvalidCaptureEventsSource],
     ["Translate", "direction inbound\n      capture Feed\n        source events\n          route /x\n        key id", DiagnosticCodes.InvalidCaptureEventsSource],
 ] as const;

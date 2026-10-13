@@ -87,6 +87,7 @@ internal static class PublicEventUsageValidator
             }
         }
 
+        var captureOrigins = new Dictionary<SyntaxNode, string>(ReferenceEqualityComparer.Instance);
         foreach (var use in collector.Uses)
         {
             // Only 'produces' is an event/operation union. Subscriptions and capture appends name events.
@@ -95,7 +96,12 @@ internal static class PublicEventUsageValidator
             if (target is not { } contract) continue;
             contracts.Add((contract.Node, contract.Visibility, contract.Origin, use.Output));
             ValidateUse(slice, use.Name, use.Node, use.Output, use.Command, contract.Visibility, contract.Origin, context);
+            if (use.Node is CaptureSourceSettingSyntax && contract is { Visibility: EventVisibility.Public, Origin: { } origin })
+            {
+                captureOrigins[use.Node] = origin;
+            }
         }
+        ValidateCaptureOrigins(slice, captureOrigins, context);
 
         // 'all' really subscribes to every event type, unlike 'every', which only maps the projection's inputs.
         foreach (var all in collector.AllEvents)
@@ -128,6 +134,18 @@ internal static class PublicEventUsageValidator
         foreach (var capture in slice.Captures)
         {
             context.Error(DiagnosticCodes.TranslationConstructDirection, "An outbound translation consumes private local events, not an external-data capture. Capture belongs to inbound translation.", capture.Location);
+        }
+    }
+
+    static void ValidateCaptureOrigins(SliceSyntax slice, Dictionary<SyntaxNode, string> captureOrigins, ParserContext context)
+    {
+        foreach (var capture in slice.Captures)
+        {
+            if (capture.Source is not { } source || !CaptureEventsSource.IsEvents(source)) continue;
+            var origins = CaptureEventsSource.Events(source).Where(captureOrigins.ContainsKey)
+                .Select(setting => captureOrigins[setting]).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToArray();
+            if (origins.Length < 2) continue;
+            context.Error(DiagnosticCodes.CaptureEventsFromSeveralOrigins, $"The 'from' events of capture '{capture.Name}' originate from several event stores ({string.Join(", ", origins)}); a capture reads one event store - split it into one capture per origin.", source.Location);
         }
     }
 

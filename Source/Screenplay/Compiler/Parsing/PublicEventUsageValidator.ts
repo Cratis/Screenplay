@@ -6,7 +6,7 @@ import { AuthoringProductionKind, AuthoringProductionResolver } from '../Syntax/
 import { EventSyntax, ImportSyntax } from '../Syntax/Declarations';
 import { eventDeclarations } from '../Syntax/EventDeclarations';
 import { EventVisibility } from '../Syntax/EventVisibility';
-import { isEventsSource } from '../Syntax/CaptureEventsSource';
+import { consumedEvents, isEventsSource } from '../Syntax/CaptureEventsSource';
 import { dependencySourcesOf } from '../Syntax/DependencySources';
 import { ApplicationSyntax, SliceSyntax } from '../Syntax/Structure';
 import { SyntaxNode } from '../Syntax/SyntaxNode';
@@ -53,12 +53,15 @@ function validateSlice(application: ApplicationSyntax, slice: SliceSyntax, scope
     if (!(slice.type === 'Translate' && slice.direction === TranslationDirection.Inbound) && !explicitOutbound) {
         for (const source of collector.eventSources) context.error(DiagnosticCodes.EventsSourceOutsideInboundTranslation, `'source events' reads another application's public events and belongs to a Translate slice with 'direction inbound', not '${slice.name}'.`, source.location);
     }
+    const captureOrigins = new Map<SyntaxNode, string>();
     for (const use of collector.uses) {
         const contract = resolve(application, use.node.kind === 'ProducesSyntax' ? resolver : events, scope, use.name, use.node, use.output, context);
         if (contract === undefined) continue;
         contracts.push({ node: contract, output: use.output });
         validateUse(slice, use.name, use.node, use.output, use.command, contract, context);
+        if (use.node.kind === 'CaptureSourceSettingSyntax' && contract.visibility === EventVisibility.Public && contract.origin != null) captureOrigins.set(use.node, contract.origin);
     }
+    validateCaptureOrigins(slice, captureOrigins, context);
     // 'all' subscribes to every event type; 'every' maps only the projection's existing inputs.
     for (const all of collector.allEvents) {
         const declarations = resolver.declarations.filter(declaration => declaration.kind === AuthoringProductionKind.Event).map(declaration => declaration.node as EventSyntax);
@@ -75,6 +78,19 @@ function validateSlice(application: ApplicationSyntax, slice: SliceSyntax, scope
     const outputs = new Set(contracts.filter(contract => contract.output && contract.node.visibility === EventVisibility.Public && contract.node.origin == null).map(contract => contract.node)).size;
     if (outputs !== 1) context.error(DiagnosticCodes.OutboundPublicEventCount, `Outbound Translate slice '${slice.name}' must produce exactly one local public event type; found ${outputs}.`, slice.location);
     for (const capture of slice.captures) context.error(DiagnosticCodes.TranslationConstructDirection, 'An outbound translation consumes private local events, not an external-data capture. Capture belongs to inbound translation.', capture.location);
+}
+
+function validateCaptureOrigins(slice: SliceSyntax, captureOrigins: Map<SyntaxNode, string>, context: ParserContext): void {
+    for (const capture of slice.captures) {
+        const source = capture.source;
+        if (source == null || !isEventsSource(source)) continue;
+        const origins = [...new Set(consumedEvents(source).flatMap(setting => {
+            const origin = captureOrigins.get(setting);
+            return origin == null ? [] : [origin];
+        }))].sort();
+        if (origins.length < 2) continue;
+        context.error(DiagnosticCodes.CaptureEventsFromSeveralOrigins, `The 'from' events of capture '${capture.name}' originate from several event stores (${origins.join(', ')}); a capture reads one event store - split it into one capture per origin.`, source.location);
+    }
 }
 
 function validateUse(slice: SliceSyntax, name: string, node: SyntaxNode, output: boolean, command: boolean, contract: EventSyntax | ImportSyntax, context: ParserContext): void {
