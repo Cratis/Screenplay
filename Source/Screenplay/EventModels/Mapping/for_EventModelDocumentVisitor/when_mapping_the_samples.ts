@@ -57,6 +57,6 @@ describe('when mapping the samples', () => {
     it('should show what sets off every specification outside a state view', () =>
         [...documents].flatMap(([sample, document]) => slicesOf(document)
             .filter(slice => slice.sliceType !== SliceType.stateView)
-            .flatMap(slice => slice.specifications.filter(specification => specification.when === undefined).map(specification => `${sample}: ${slice.name}.${specification.name}`)))
+            .flatMap(slice => slice.specifications.filter(specification => specification.when === undefined && specification.whenEvent === undefined).map(specification => `${sample}: ${slice.name}.${specification.name}`)))
             .should.deep.equal([]));
 });

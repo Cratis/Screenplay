@@ -20,8 +20,8 @@ describe('when mapping specification routes', () => {
         specification.given[0].name.should.contain('streamId = "p-1:2026-10"');
         specification.given[0].name.should.contain('for "other"');
         specification.given[0].values.should.deep.equal({ stream: 5 });
-        specification.when!.name.should.contain('stream Account.Profile');
-        specification.when!.values.should.deep.equal({ streamId: 6 });
+        specification.whenEvent!.name.should.contain('stream Account.Profile');
+        specification.whenEvent!.values.should.deep.equal({ streamId: 6 });
         specification.thenEvents[0].name.should.contain('stream Account.Partitioned');
         specification.thenEvents[0].name.should.contain('streamId = 202610');
         specification.thenEvents[1].name.should.contain('no stream');
@@ -85,7 +85,7 @@ describe('when mapping specification routes', () => {
         event.name.should.contain('<month & year>');
         document.collections[0].modules[0].features[0].slices[0].specifications[0].name.should.contain('<month & year>');
         const action = toEventModelDocument(parse(source.replace('stream Account.Profile', 'stream Account.Transactions\n            streamId = "<month & year>"')).value, 'Banking')
-            .collections[0].modules[0].features[0].slices[0].specifications[0].when!;
+            .collections[0].modules[0].features[0].slices[0].specifications[0].whenEvent!;
         action.name.should.contain('<month & year>');
         event.values.should.deep.equal({ stream: 5 });
     });

@@ -1,9 +1,9 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import { specificationCaseOrigins, ExpressionSyntax, PropertyMappingSyntax, SpecificationCallerSyntax, SpecificationEventSyntax, SpecificationRedeliverySyntax, SpecificationSyntax } from '@cratis/screenplay-compiler';
+import { specificationCaseOrigins, ExpressionSyntax, PropertyMappingSyntax, SpecificationCallerSyntax, SpecificationEventSyntax, SpecificationReadModelSyntax, SpecificationRedeliverySyntax, SpecificationSyntax } from '@cratis/screenplay-compiler';
 import { emptyGuid } from '../Document/identity';
-import { SliceSpecificationDocument, SpecificationCallerDocument, SpecificationStepDocument } from '../Document/EventModelDocument';
+import { SliceSpecificationDocument, SpecificationCallerDocument, SpecificationReadModelDocument, SpecificationStepDocument } from '../Document/EventModelDocument';
 import { expressionText } from './expressionText';
 import { EventOwners } from './EventOwners';
 import { SliceScope } from './SliceScope';
@@ -13,6 +13,8 @@ import { SliceScope } from './SliceScope';
 // or a context expression names something resolved while the application runs, so it is carried as written.
 // A State Change slice's own command is drawn once by the board: a specification's When that names it - by
 // name, or by the id it points at - is that same card, with the values the specification sets on it.
+// An appended event is the board's When event, the only card in that row, and a read model the
+// specification starts from or expects is the board's given or then read model, with its values.
 export function toSpecifications(
     specifications: readonly SpecificationSyntax[], scope: SliceScope, owners: EventOwners, commandId: string | undefined): SliceSpecificationDocument[] {
     return specifications.map(specification => {
@@ -39,9 +41,16 @@ export function toSpecifications(
         if (specification.givenCaller != null) document.caller = callerOf(specification.givenCaller);
         if (specification.givenReadModels.length) {
             document.givenReadModels = specification.givenReadModels.map(model => ({ name: model.name, values: valuesOf(model.properties), exactly: model.exactly }));
+            document.givenReadModel = readModelOf(specification.givenReadModels[0], at('given readmodel', 0), scope);
         }
         if (specification.thenReadModels.length) {
             document.thenReadModels = specification.thenReadModels.map(model => ({ name: model.name, values: valuesOf(model.properties), exactly: model.exactly }));
+            document.thenReadModel = readModelOf(specification.thenReadModels[0], at('then readmodel', 0), scope);
+        }
+        if (specification.whenAppended !== null) {
+            const appended = specification.whenAppended;
+            document.whenEvent = { id: at('when', 0), name: factName(appended), eventId: owners.idFor(appended.eventType) ?? emptyGuid, values: valuesOf(appended.values) };
+            if (appended.for != null) document.whenEvent.eventSourceId = String(valueOf(appended.for));
         }
         if (specification.whenRedelivered != null) {
             const action = specification.whenRedelivered;
@@ -69,12 +78,11 @@ export function toSpecifications(
     });
 }
 
-// What sets a specification off when it is not a command. The board has one place for the action, so the
-// kind is part of its name - 'clock 2026-10-05T08:00:00Z', 'trigger DirectoryChanged' - and the values travel
+// What sets a specification off when it is neither a command nor an appended event. The board has one
+// place for the action, so the kind is part of its name - 'clock 2026-10-05T08:00:00Z', 'trigger DirectoryChanged' - and the values travel
 // with it as a command's would.
 function actionOf(specification: SpecificationSyntax): { name: string; values: Record<string, unknown> } | undefined {
     if (specification.whenRedelivered != null) return { name: redeliveryText(specification.whenRedelivered), values: valuesOf(specification.whenRedelivered.values) };
-    if (specification.whenAppended !== null) return { name: `append ${factName(specification.whenAppended)}`, values: valuesOf(specification.whenAppended.values) };
     if (specification.whenClock !== null) return { name: `clock ${specification.whenClock.instant}`, values: {} };
     if (specification.whenTrigger !== null) return { name: `trigger ${specification.whenTrigger.trigger}`, values: valuesOf(specification.whenTrigger.values) };
     if (specification.whenCapture !== null) return { name: `capture ${specification.whenCapture.capture}`, values: valuesOf(specification.whenCapture.record) };
@@ -95,12 +103,6 @@ function specificationName(specification: SpecificationSyntax): string {
     ].filter(({ event }) => event.stream || event.noStream);
     const details = routes.map(({ event, role }) => `${role}: ${event.eventType} — ${routeDetails(event)}`);
     if (routes.length > 0) details.push(routeAvailability);
-    for (const model of specification.givenReadModels) {
-        details.push(`given readmodel ${model.name} { ${mappingText(model.properties)} }`);
-    }
-    for (const model of specification.thenReadModels) {
-        details.push(`then readmodel ${model.name}${model.exactly ? ' exactly' : ''} { ${mappingText(model.properties)} }`);
-    }
     if (specification.whenRedelivered != null) details.push(`when ${redeliveryText(specification.whenRedelivered)}`);
     if (specification.thenNoEvents) details.push('then no events');
     if (specification.whenRedelivered != null || specification.thenNoEvents) {
@@ -120,6 +122,12 @@ function specificationName(specification: SpecificationSyntax): string {
     }
     if (details.length === 0) return title;
     return `${origin === undefined ? specificationTitle(title) : title} — ${details.join(' | ')}`;
+}
+
+// The board keeps one read model per side; it shows the values on the slice's read model card when the
+// item id is that card's, which is derived from the read model's name the same way.
+function readModelOf(model: SpecificationReadModelSyntax, id: string, scope: SliceScope): SpecificationReadModelDocument {
+    return { id, readModelItemId: scope.idOf('readmodel', model.name), name: model.name, values: valuesOf(model.properties) };
 }
 
 function redeliveryText(action: SpecificationRedeliverySyntax): string {

@@ -47,10 +47,11 @@ describe('when mapping typed examples', () => {
         slice.specifications[2].when!.generatedValues!.should.deep.equal({ receipt: '22222222-2222-2222-2222-222222222222' });
         slice.specifications[0].when!.commandId!.should.equal(slice.command!.id);
     });
-    it('should expand append examples without linking the action to a command', () => {
-        slice.specifications[1].when!.name.should.equal('append Invoices.Registration.RegisterInvoice.InvoiceRegistered');
-        slice.specifications[1].when!.values.should.deep.equal({ total: 6000 });
-        (slice.specifications[1].when!.commandId === undefined).should.be.true;
+    it('should expand append examples into the when event without a command action', () => {
+        slice.specifications[1].whenEvent!.name.should.equal('Invoices.Registration.RegisterInvoice.InvoiceRegistered');
+        slice.specifications[1].whenEvent!.eventId.should.equal(slice.events[0].id);
+        slice.specifications[1].whenEvent!.values.should.deep.equal({ total: 6000 });
+        (slice.specifications[1].when === undefined).should.be.true;
     });
     it('should carry effective read model fixtures and preserve exactly matching', () => {
         slice.specifications[0].givenReadModels!.should.deep.equal([
@@ -60,10 +61,13 @@ describe('when mapping typed examples', () => {
             { name: 'Invoices.Registration.RegisterInvoice.InvoiceBalance', values: { total: 5000 }, exactly: true },
         ]);
     });
-    it('should render effective read model and generated values in the published board header', () => {
+    it('should carry the effective read model fixtures as the board read models', () => {
+        slice.specifications[0].givenReadModel!.values.should.deep.equal({ total: 3000 });
+        slice.specifications[0].thenReadModel!.values.should.deep.equal({ total: 5000 });
+    });
+    it('should render generated values but not the read models in the published board header', () => {
         const markup = headerOf(document, 0);
-        markup.should.contain('given readmodel Invoices.Registration.RegisterInvoice.InvoiceBalance { total = 3000 }');
-        markup.should.contain('then readmodel Invoices.Registration.RegisterInvoice.InvoiceBalance exactly { total = 5000 }');
+        markup.should.not.contain('readmodel');
         markup.should.contain('generated (not request inputs): receipt = &quot;22222222-2222-2222-2222-222222222222&quot;');
     });
     it('should retain inherited values that the step does not override', () => {
