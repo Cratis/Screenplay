@@ -56,14 +56,14 @@ public class when_preserving_example_and_locator_routes
     }
 
     [Fact]
-    void should_admit_routes_but_keep_redelivery_refused_independently()
+    void should_admit_routes_and_routed_redelivery()
     {
         var document = WorkspaceDocument.Create("model", PortablePlayPath.Parse("model.play"), Encoding.UTF8.GetBytes(Source));
         var workspace = ScreenplayWorkspace.Create("A", [document], SemanticIdentityCatalog.Empty(ApplicationIdentity.Create("A")));
         var errors = workspace.Compilation.Diagnostics.Where(diagnostic => diagnostic.Code == "PLAY0268").ToArray();
-        errors.Any(diagnostic => diagnostic.Message.Contains("#433", StringComparison.Ordinal) && diagnostic.Location.Line == 21).ShouldBeTrue();
+        errors.Any(diagnostic => diagnostic.Message.Contains("#433", StringComparison.Ordinal)).ShouldBeFalse();
         errors.Any(diagnostic => diagnostic.Message.Contains("#457", StringComparison.Ordinal)).ShouldBeFalse();
-        errors.Any(diagnostic => diagnostic.Location.Line is 15 or 22).ShouldBeFalse();
+        errors.Any(diagnostic => diagnostic.Location.Line is 15 or 21 or 22).ShouldBeFalse();
     }
 
     [Fact]
