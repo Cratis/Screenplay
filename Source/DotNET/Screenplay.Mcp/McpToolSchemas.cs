@@ -149,9 +149,7 @@ static class McpToolSchemas
         "target" or "subject" => McpAstSchemas.Handle(),
         "semanticRenames" or "eventRenames" => McpAstSchemas.Array(Rename()),
         "retiredSemanticAddresses" or "retiredEventAddresses" => McpAstSchemas.Array(Address()),
-        "formatting" when tool == "propose-repair" => McpAstSchemas.Choice("CanonicalizeTouchedDocuments", "PreserveTrivia"),
-        "formatting" when string.Equals(tool, "propose-extract-inline-event", StringComparison.Ordinal) || string.Equals(tool, "propose-number-enum-members", StringComparison.Ordinal) => McpAstSchemas.Choice("CanonicalizeTouchedDocuments"),
-        "formatting" => McpAstSchemas.Choice("CanonicalizeTouchedDocuments", "PreserveExactSource", "PreserveTrivia"),
+        "formatting" => Formatting(tool),
         "validation" => McpAstSchemas.Choice("Authoring", "Executable"),
         "referencePolicy" => McpAstSchemas.Choice("Safe", "Draft"),
         "view" when tool == "workspace-state" => McpAstSchemas.Choice("status", "persisted", "before", "after"),
@@ -166,6 +164,21 @@ static class McpToolSchemas
         "view" when tool == "read-ast" => McpAstSchemas.Choice("nodes", "children"),
         _ => McpAstSchemas.String()
     };
+
+    static JsonObject Formatting(string tool) => tool switch
+    {
+        "propose-source" => SourceFormatting(),
+        "propose-repair" => McpAstSchemas.Choice("CanonicalizeTouchedDocuments", "PreserveTrivia"),
+        "propose-extract-inline-event" or "propose-number-enum-members" => McpAstSchemas.Choice("CanonicalizeTouchedDocuments"),
+        _ => McpAstSchemas.Choice("CanonicalizeTouchedDocuments", "PreserveExactSource", "PreserveTrivia")
+    };
+
+    static JsonObject SourceFormatting()
+    {
+        var schema = McpAstSchemas.Choice("CanonicalizeTouchedDocuments", "PreserveExactSource", "PreserveTrivia");
+        schema["description"] = "PreserveExactSource writes your source text as supplied, including structural edits, comments, spacing and line endings; replacements retain the original BOM policy and creations use encoding. CanonicalizeTouchedDocuments reprints touched documents canonically. PreserveTrivia patches supported bounded changes and refuses structural changes.";
+        return schema;
+    }
 
     static JsonObject PropertyHop()
     {

@@ -31,7 +31,7 @@ public enum WorkspaceAuthoringValidation
 public enum WorkspaceAuthoringFormatting
 {
     /// <summary>
-    /// Reject syntax changes that require printing.
+    /// Preserve supplied source witnesses verbatim after validation; reject syntax changes without a witness that require printing.
     /// </summary>
     PreserveExactSource,
 
@@ -110,7 +110,14 @@ public sealed record MoveWorkspaceNode(WorkspaceNodeHandle Target, SyntaxNode Ex
 /// <param name="Path">The new portable path.</param>
 /// <param name="Syntax">The complete intended document syntax.</param>
 /// <param name="Encoding">The explicit UTF-8 BOM policy.</param>
-public sealed record CreateWorkspaceSyntaxDocument(string StableKey, PortablePlayPath Path, ApplicationSyntax Syntax, WorkspaceTextEncoding Encoding = WorkspaceTextEncoding.Utf8) : WorkspaceOperation;
+public sealed record CreateWorkspaceSyntaxDocument(string StableKey, PortablePlayPath Path, ApplicationSyntax Syntax, WorkspaceTextEncoding Encoding = WorkspaceTextEncoding.Utf8) : WorkspaceOperation
+{
+    /// <summary>
+    /// Gets optional supplied source text to preserve in exact mode, validated against the intended syntax in final placement.
+    /// The requested encoding determines its UTF-8 BOM policy.
+    /// </summary>
+    public string? SourceWitness { get; init; }
+}
 
 /// <summary>
 /// Replaces an existing document with typed syntax, including when its original text cannot be parsed.
@@ -118,7 +125,14 @@ public sealed record CreateWorkspaceSyntaxDocument(string StableKey, PortablePla
 /// </summary>
 /// <param name="Document">The existing document identity.</param>
 /// <param name="Syntax">The complete intended document syntax.</param>
-public sealed record ReplaceWorkspaceSyntaxDocument(DocumentId Document, ApplicationSyntax Syntax) : WorkspaceOperation;
+public sealed record ReplaceWorkspaceSyntaxDocument(DocumentId Document, ApplicationSyntax Syntax) : WorkspaceOperation
+{
+    /// <summary>
+    /// Gets optional supplied source text to preserve in exact mode, validated against the intended syntax in final placement.
+    /// The original document's UTF-8 BOM policy is retained.
+    /// </summary>
+    public string? SourceWitness { get; init; }
+}
 
 /// <summary>
 /// Represents an atomic full-language authoring request. All operations refer to the base snapshot.

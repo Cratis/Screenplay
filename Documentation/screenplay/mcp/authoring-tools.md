@@ -56,7 +56,29 @@ valid source-only model without building typed JSON:
 ]
 ```
 
-Use `formatting: "CanonicalizeTouchedDocuments"`. `validation` defaults to
+Choose the formatting mode explicitly:
+
+- `PreserveExactSource` writes your supplied text verbatim, including comments,
+  alignment, blank lines, CRLF and a missing final newline. Structural edits such
+  as adding an import or appending a feature are supported. Replacements retain
+  the original document's UTF-8 BOM policy; creations use the requested `encoding`.
+  No canonicalization warning (`PLAY0288`) is emitted.
+- `CanonicalizeTouchedDocuments` reprints touched documents canonically, normalizes
+  whitespace and reports dropped comments.
+- `PreserveTrivia` patches supported bounded changes in the original text. It
+  refuses structural changes; use `PreserveExactSource` to keep your supplied text.
+
+For example, add `import "Notifications/Notifications.play"` to the complete
+`source` of an `application.play` replacement, and create the imported document
+in the same `documents` array. With `formatting: "PreserveExactSource"`, the
+comment above the imports, aligned columns and blank lines stay exactly as you
+supplied them. The server still parses in final import placement, checks the
+intended AST, compiles the merged source and enforces identity continuity,
+references and source-transition obligations. Exact mode does not waive validation.
+`propose-ast` has no source witness and still refuses edits requiring printing in
+exact mode.
+
+`validation` defaults to
 `"Authoring"`; this example is accepted with `executableReady: false`, while
 `"Executable"` rejects it with `PLAY0268`. `referencePolicy` defaults to `"Safe"`;
 `"Draft"` reports deliberate unresolved reference debt without waiving parsing or

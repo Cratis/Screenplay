@@ -114,7 +114,7 @@ For `kind: "Concept"`, the `declaration-details` summary includes `generation` o
 | `executable` | `status` is `admitted` only when the whole model produced an executable model and no error targets this concept/generation; `refused` when compiler errors target it; otherwise `notAssessed`, with `reason`. `diagnosticCodes` lists only errors at this concept/generation. An empty list alone does not imply admission. |
 | `previewArguments` | Authored `pattern`, `checksum`, `range` and `rule`, each as `{ "value": "…", "executable": false }`; omitted when none are set. |
 
-`propose-ast` can replace `ConceptSyntax` with a `generation` member of kind `GenerationSyntax`, or omit/null that member to remove it. `propose-source` accepts the equivalent complete source document. Both print canonical `generate` source and report compiler executable diagnostics independently of authoring acceptance. `generate sequence` reports `PLAY0682`; preview strategies and generated-concept validation rules report `PLAY0268`.
+`propose-ast` can replace `ConceptSyntax` with a `generation` member of kind `GenerationSyntax`, or omit/null that member to remove it. `propose-source` accepts the equivalent complete source document. With `CanonicalizeTouchedDocuments`, both print canonical `generate` source; `propose-source` with `PreserveExactSource` retains the supplied text. Both report compiler executable diagnostics independently of authoring acceptance. `generate sequence` reports `PLAY0682`; preview strategies and generated-concept validation rules report `PLAY0268`.
 
 `read-workspace` with `view: "repairs"` offers these revision-bound actions:
 
@@ -1044,10 +1044,22 @@ Source acceptance is not executable readiness or proof of business correctness.
 Explicit valid reference edits differ from an untouched reference changing meaning.
 
 Formatting policies are `PreserveExactSource`, `PreserveTrivia`, and
-`CanonicalizeTouchedDocuments`. Verified trivia patches cover identifiers, literal
+`CanonicalizeTouchedDocuments`. For `propose-source`, `PreserveExactSource` writes
+supplied text verbatim after final-placement parse, intended-AST equality, merged
+compilation and the usual identity, reference, source-transition and release-baseline
+checks. Comments, alignment, blank lines, CRLF and a missing final newline are kept;
+replacement BOM policy comes from the original, creation BOM policy from `encoding`.
+It emits no `PLAY0288`. For example, replacing `application.play` with source that
+adds `import "Notifications/Notifications.play"`, alongside creation of that file,
+does not reformat the supplied surrounding text. `propose-ast` has no source witness
+and exact mode still refuses edits requiring printing.
+
+Verified `PreserveTrivia` patches cover identifiers, literal
 values, whole property mappings and event-pin insertion/removal, and must reparse
 to the intended AST; unsupported patches reject rather than silently canonicalizing.
-Canonicalization retains attached comments and parsed member order, normalizes
+Structural `propose-source` changes in trivia mode are refused with guidance to
+use `PreserveExactSource`. `CanonicalizeTouchedDocuments` reprints canonically,
+retains attached comments and parsed member order, normalizes
 whitespace, and reports any unplaceable comments in `droppedCommentCount`.
 Repairs, extraction and pin-inserting event renames refuse comment loss or
 duplication; other explicitly canonicalized edits may disclose dropped comments.

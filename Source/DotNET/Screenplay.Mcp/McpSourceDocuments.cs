@@ -115,13 +115,16 @@ static class McpSourceDocuments
             if (parsed.Success && parsed.Value is ApplicationSyntax syntax)
             {
                 documents.Add(operation is AddWorkspaceDocument
-                    ? new CreateWorkspaceSyntaxDocument(document.StableKey, document.Path, syntax, document.Encoding)
-                    : new ReplaceWorkspaceSyntaxDocument(document.Id, syntax));
+                    ? new CreateWorkspaceSyntaxDocument(document.StableKey, document.Path, syntax, document.Encoding) { SourceWitness = Witness(document, generatedLayout) }
+                    : new ReplaceWorkspaceSyntaxDocument(document.Id, syntax) { SourceWitness = Witness(document, generatedLayout) });
             }
         }
 
         return (documents.ToImmutable(), diagnostics.ToImmutable());
     }
+
+    // Generated layouts are printed canonically; only author-supplied text is kept verbatim in exact mode.
+    static string? Witness(WorkspaceDocument document, bool generatedLayout) => generatedLayout ? null : document.Text;
 
     static WorkspaceOperation ReadDocument(JsonElement value)
     {

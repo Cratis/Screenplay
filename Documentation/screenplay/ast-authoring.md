@@ -366,9 +366,23 @@ operation. Neither path guesses identity continuity.
 canonical printing and whitespace normalization in changed documents. Parsed comments
 stay with their syntax owners, including after a typed-JSON replacement. Untouched
 source stays byte-identical; touched documents preserve their UTF-8 BOM policy.
-`PreserveExactSource` rejects syntax changes requiring printing. `PreserveTrivia`
-applies only byte patches whose result reparses to the complete intended AST;
-unsupported changes reject without a canonicalization fallback.
+For MCP `propose-source`, `PreserveExactSource` writes the supplied text verbatim,
+including structural edits, comments, aligned columns, blank lines, CRLF and a
+missing final newline. Replacements keep the original UTF-8 BOM policy; creations
+use the requested `encoding`. It emits no normalization warning (`PLAY0288`).
+For example, send the complete `application.play` source with one added
+`import "Notifications/Notifications.play"` and create that file in the same
+proposal; the supplied surrounding text is not reprinted.
+
+The typed create/replace document operations carry an optional `SourceWitness`.
+Exact mode validates it in final placement against the intended syntax, then runs
+the same merged compilation, identity, reference, source-transition and
+release-baseline checks as canonical mode. A mismatched witness is rejected.
+`propose-ast` has no witness and `PreserveExactSource` still rejects syntax changes
+requiring printing. `CanonicalizeTouchedDocuments` reprints canonically even when
+source is supplied. `PreserveTrivia` applies only byte patches whose result
+reparses to the complete intended AST; structural source changes are refused with
+guidance to choose `PreserveExactSource`, never silently canonicalized.
 
 `PreserveTrivia` patches these changes in place:
 
