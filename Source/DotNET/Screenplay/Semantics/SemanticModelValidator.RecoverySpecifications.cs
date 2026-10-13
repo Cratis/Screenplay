@@ -26,9 +26,12 @@ internal static partial class SemanticModelValidator
             return specification.ThenReturns is not null || specification.ThenEvents.Length > 0 || HasReadModelOutcome(specification);
         }
 
+        static bool AssertsActionOutcome(SemanticSpecification specification) =>
+            specification.ThenNoEvents || specification.ThenErrors.Length > 0 || specification.ThenEvents.Length > 0;
+
         static bool AssertsMoreThanReadState(SemanticSpecification specification, bool deniedQuery)
         {
-            if (specification.ThenNoEvents || specification.ThenErrors.Length > 0 || specification.ThenEvents.Length > 0) return true;
+            if (AssertsActionOutcome(specification)) return true;
             if (specification.ThenDenied && !deniedQuery) return true;
 
             return !HasReadModelOutcome(specification) && specification.ThenQueries.Length == 0;

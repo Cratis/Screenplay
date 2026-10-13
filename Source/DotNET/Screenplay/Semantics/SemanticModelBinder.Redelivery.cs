@@ -18,11 +18,17 @@ public sealed partial class SemanticModelBinder
 
         static bool RequiresSpecificationAction(SpecificationSyntax specification, bool deniedQuery)
         {
-            if (specification.ThenNoEvents || specification.ThenEvents.Any() || specification.ThenErrors.Any()) return true;
+            if (AssertsActionOutcome(specification)) return true;
             if (specification.ThenDenied is not null && !deniedQuery) return true;
 
-            return !(specification.ThenReadModels?.Any() ?? false) && !specification.ThenAbsentReadModels.Any() && !specification.ThenQueries.Any();
+            return !AssertsReadState(specification);
         }
+
+        static bool AssertsActionOutcome(SpecificationSyntax specification) =>
+            specification.ThenNoEvents || specification.ThenEvents.Any() || specification.ThenErrors.Any();
+
+        static bool AssertsReadState(SpecificationSyntax specification) =>
+            (specification.ThenReadModels?.Any() ?? false) || specification.ThenAbsentReadModels.Any() || specification.ThenQueries.Any();
 
         static bool HasConflictingNoEventsOutcome(SpecificationSyntax specification) =>
             specification.ThenEvents.Any() || specification.ThenEventsInAnyOrder || HasRejectedOutcome(specification);
