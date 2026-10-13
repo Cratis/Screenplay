@@ -10,11 +10,13 @@ namespace Cratis.Screenplay.Semantics.Execution;
 /// <param name="validator">The value validator for the plan's concepts and types.</param>
 /// <param name="instances">The read-model instances, updated in place.</param>
 /// <param name="observed">The facts observed so far.</param>
+/// <param name="pending">The pending child occurrences.</param>
 sealed class SemanticFactProjection(
     SemanticExecutionPlan plan,
     SemanticValueValidator validator,
     List<SemanticReadModelInstance> instances,
-    List<SemanticFact> observed)
+    List<SemanticFact> observed,
+    List<SemanticScopedProjection.DeferredChild> pending)
 {
     /// <summary>
     /// Projects one fact through every projection.
@@ -46,7 +48,7 @@ sealed class SemanticFactProjection(
     {
         try
         {
-            return new SemanticScopedProjection(plan, projection, validator, observed).Apply(instances, fact);
+            return new SemanticScopedProjection(plan, projection, validator, observed, pending).Apply(instances, fact);
         }
         catch (OverflowException) when (plan.Model.SemanticVersion.IsAtLeast(SemanticVersion.V6))
         {

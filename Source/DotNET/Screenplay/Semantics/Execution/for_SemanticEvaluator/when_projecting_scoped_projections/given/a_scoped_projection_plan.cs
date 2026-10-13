@@ -19,6 +19,7 @@ public class a_scoped_projection_plan : for_SemanticModelBinder.when_binding_pro
     protected void Plan(string body, string header = "projection Orders => OrderView")
     {
         _result = BindProjection(header, body);
+        Errors.Select(diagnostic => $"{diagnostic.Code}: {diagnostic.Message}").ShouldBeEmpty();
         _compilation = SemanticExecutionPlan.Compile(_result.Value!.Model);
     }
 

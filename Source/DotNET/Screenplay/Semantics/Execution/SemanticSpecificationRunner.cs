@@ -209,7 +209,7 @@ public sealed class SemanticSpecificationRunner(ISemanticEvaluator evaluator) : 
 
         try
         {
-            world = SemanticWorld.Create(facts, [.. readModels]);
+            world = accepted.World.WithProjectionState([.. readModels], accepted.World.PendingChildren);
             return accepted;
         }
         catch (InvalidSemanticContract exception)
