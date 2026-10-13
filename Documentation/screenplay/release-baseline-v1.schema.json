@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Screenplay release baseline v1",
+  "description": "Committed admitted event revisions. The reader additionally validates application identity, unique event/revision keys and resolved schema hashes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schemaVersion", "applicationIdentity", "entries"],
+  "properties": {
+    "schema": { "const": "cratis.screenplay.release-baseline" },
+    "schemaVersion": { "const": 1 },
+    "applicationIdentity": { "type": "string", "minLength": 1 },
+    "entries": { "type": "array", "maxItems": 10000, "items": { "$ref": "#/$defs/entry" } }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1, "maxLength": 16384 },
+    "address": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "parts"],
+      "properties": {
+        "kind": { "const": "Event" },
+        "parts": { "type": "array", "minItems": 1, "items": {
+          "type": "object", "additionalProperties": false, "required": ["kind", "key"],
+          "properties": { "kind": { "type": "string", "minLength": 1 }, "key": { "$ref": "#/$defs/text" } }
+        } }
+      }
+    },
+    "compliance": {
+      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "properties": {
+        "personal": {
+          "type": "object", "additionalProperties": false, "required": ["criminal"],
+          "properties": {
+            "special": { "enum": ["racialOrEthnicOrigin", "politicalOpinions", "religiousOrPhilosophicalBeliefs", "tradeUnionMembership", "genetic", "biometric", "health", "sexLifeOrSexualOrientation"] },
+            "criminal": { "type": "boolean" }
+          }
+        },
+        "secret": {
+          "type": "object", "additionalProperties": false,
+          "properties": { "scope": { "enum": ["subject", "namespace", "global"] } }
+        }
+      },
+      "if": { "required": ["personal", "secret"] },
+      "then": { "properties": { "secret": { "maxProperties": 0 } } }
+    },
+    "property": {
+      "type": "object", "additionalProperties": false, "required": ["name", "optional", "collection", "type"],
+      "properties": {
+        "name": { "$ref": "#/$defs/text" }, "optional": { "type": "boolean" }, "collection": { "type": "boolean" },
+        "type": { "$ref": "#/$defs/type" }
+      }
+    },
+    "type": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "primitive"],
+          "properties": {
+            "kind": { "const": "primitive" },
+            "primitive": { "enum": ["Uuid", "Text", "WholeNumber", "DecimalNumber", "Boolean", "Date", "DateTime"] },
+            "compliance": { "$ref": "#/$defs/compliance" }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "members"],
+          "properties": {
+            "kind": { "const": "enum" },
+            "members": { "type": "array", "minItems": 1, "items": {
+              "type": "object", "additionalProperties": false, "required": ["name", "number"],
+              "properties": { "name": { "$ref": "#/$defs/text" }, "number": { "type": "integer", "minimum": -2147483648, "maximum": 2147483647 } }
+            } }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "properties"],
+          "properties": { "kind": { "const": "composite" }, "properties": { "type": "array", "items": { "$ref": "#/$defs/property" } } }
+        }
+      ]
+    },
+    "schema": {
+      "type": "object", "additionalProperties": false, "required": ["eventType", "properties"],
+      "properties": { "eventType": { "$ref": "#/$defs/text" }, "properties": { "type": "array", "items": { "$ref": "#/$defs/property" } } }
+    },
+    "entry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["event", "revision", "eventType", "schemaHash", "schema", "lastAddress", "admittedIn", "admittedAt"],
+      "properties": {
+        "event": { "type": "string", "minLength": 1 }, "revision": { "type": "integer", "minimum": 1, "maximum": 4294967294 },
+        "eventType": { "$ref": "#/$defs/text" }, "schemaHash": { "type": "string", "pattern": "^rsh1:[0-9a-f]{64}$" },
+        "schema": { "$ref": "#/$defs/schema" }, "lastAddress": { "$ref": "#/$defs/address" },
+        "admittedIn": { "$ref": "#/$defs/text" }, "admittedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

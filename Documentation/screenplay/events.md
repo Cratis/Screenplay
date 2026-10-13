@@ -15,7 +15,7 @@ Events are immutable, past-tense facts — the record of something that happened
   ...
 ```
 
-Without `generation`, an event is generation 1 and prints exactly as before. To show an evolved event, declare **each full shape** with its own number, beginning at 1 and continuing without gaps or duplicates. Declarations with the same name in the same owning slice (module, feature path and slice) identify one event contract: its address and `EventContractId` do not include the generation number. A same-named event in another slice has a different address, not another generation of this contract. The current ESM binder treats same-named events across slices as ambiguous, and the identity catalog rejects colliding legacy IDs; do not use cross-slice declarations to express lineage. Generations use numbers from 1 through 4294967294; Chronicle reserves 4294967295 for an unspecified generation. The previous generation of N is always N−1. References to an event name resolve to its current (highest) generation in that slice; property checks use that shape, not the historical ones. The executable model stores one contract with current revision N and complete prior revisions 1..N−1, each with its predecessor (generation 1 has none). Each revision owns separate property identities, even for same-named properties. A lone `generation 1` marker behaves like an unmarked event and retains its previous ESM version. A multi-generation contract selects ESM v4. Bare references use the current revision only; a `produces` mapping, `then` assertion, projection mapping, or constraint naming a removed property fails binding with `PLAY0273`, and `given` historical-shape consumption reports `PLAY0449` with the event and revision. No historical fact is silently converted or replayed. A target without explicit migration support must reject an evolved contract; Chronicle registration needs migrations, which Screenplay does not yet express. Complete historical declarations alone do not prove schema immutability across edits to referenced concepts or types (see #71).
+Without `generation`, an event is generation 1 and prints exactly as before. To show an evolved event, declare **each full shape** with its own number, beginning at 1 and continuing without gaps or duplicates. Declarations with the same name in the same owning slice (module, feature path and slice) identify one event contract: its address and `EventContractId` do not include the generation number. A same-named event in another slice has a different address, not another generation of this contract. The current ESM binder treats same-named events across slices as ambiguous, and the identity catalog rejects colliding legacy IDs; do not use cross-slice declarations to express lineage. Generations use numbers from 1 through 4294967294; Chronicle reserves 4294967295 for an unspecified generation. The previous generation of N is always N−1. References to an event name resolve to its current (highest) generation in that slice; property checks use that shape, not the historical ones. The executable model stores one contract with current revision N and complete prior revisions 1..N−1, each with its predecessor (generation 1 has none). Each revision owns separate property identities, even for same-named properties. A lone `generation 1` marker behaves like an unmarked event and retains its previous ESM version. A multi-generation contract selects ESM v4. Bare references use the current revision only; a `produces` mapping, `then` assertion, projection mapping, or constraint naming a removed property fails binding with `PLAY0273`, and `given` historical-shape consumption reports `PLAY0449` with the event and revision. No historical fact is silently converted or replayed. A target without explicit migration support must reject an evolved contract; Chronicle registration needs migrations, which Screenplay does not yet express. Complete historical declarations alone do not prove schema immutability across edits to referenced concepts or types; use the release baseline check below. Transformations between generations remain tracked in #71.
 
 ```screenplay
 event ProjectRegistered generation 1
@@ -29,6 +29,30 @@ event ProjectRegistered generation 2
 The optional `file` line names the repository relative file this declaration is realized by, so a document can be navigated back to the code it describes. It is additive - it never stands in for any part of the declaration. See [File references](file-references.md).
 
 For an existing catalog, advance a contract only with `SemanticIdentityCatalog.PlanEventRevisionAdvancement(previous, expectedRevision, documentKeys, semanticAddresses, eventAddresses, advancements)`. Supply the complete current addresses and an explicit `(event address, new revision)` advancement. The plan checks the exact previous catalog revision, retains the contract id, carries generation-1 property IDs to revision-qualified addresses, and refuses backward or stale advancement. A fresh compile can bootstrap all property identities for each declared revision and record revision N in its returned `SemanticCompilation.Documents.IdentityCatalog`; persist that catalog before subsequent edits. Workspace transactions can supply the same explicit advancement through `WorkspaceTransactionRequest.EventRevisionAdvancements`, checked against `ExpectedCatalogRevision`. Newly introduced events receive their declared revision without an advancement. Declaring fewer generations than a persisted catalog records fails binding.
+
+## Released event contracts
+
+At release time, explicitly [admit the shipped revisions](tool.md#admit-and-check-released-event-revisions)
+with `screenplay baseline admit <root> --release <label>` and commit
+`.screenplay/release-baseline.json`. Run `screenplay baseline check <root>` in CI
+before accepting later edits. The file keys on persisted event contract identities
+and revision numbers, never on names or display addresses.
+
+Each entry freezes the resolved stored shape: property names, optional and
+collection flags, expanded primitives and composite members, concept compliance
+markers, enum member names and numbers, and the effective stored event name
+(`id` pin when present, otherwise the declaration name). Equality is exact in v1,
+even for changes Chronicle might tolerate. A changed referenced concept, composite
+or enum affects every admitted revision that uses it, including historical ones.
+Declare a new type or concept and use it in a new generation instead of changing
+the old shared type underneath stored events.
+
+Concept/type/enum names, descriptions, documentation, tags, semantic property IDs,
+concept validation rules and generation strategies do not change a stored shape.
+The baseline itself is not part of the language or executable model and changes
+none of their revisions. Ordinary compilation and reading remain available when
+it is malformed; the baseline check and admission fail closed. No tool removes
+entries: unfreezing requires a deliberate reviewed edit to the sidecar.
 
 ### Chronicle projection registration
 

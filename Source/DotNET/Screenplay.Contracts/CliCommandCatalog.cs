@@ -93,6 +93,18 @@ public static class CliCommandCatalog
     /// </summary>
     public static CliCommand Report { get; } = new("report", "processing [<file.play|folder>]", [ProcessingFormat, ControllerName, ControllerContact]);
 
+    /// <summary>Gets the release admission label option.</summary>
+    public static CliOption Release { get; } = new("--release", "<label>");
+
+    /// <summary>Gets the strictly read shipped ESM option.</summary>
+    public static CliOption FromEsm { get; } = new("--from-esm", "<file>");
+
+    /// <summary>Gets the deliberate release admission command.</summary>
+    public static CliCommand BaselineAdmit { get; } = new("baseline admit", "<root>", [Release, FromEsm]);
+
+    /// <summary>Gets the stored contract equality gate.</summary>
+    public static CliCommand BaselineCheck { get; } = new("baseline check", "<root>", []);
+
     /// <summary>
     /// Gets the help command.
     /// </summary>
@@ -106,14 +118,14 @@ public static class CliCommandCatalog
     /// <summary>
     /// Gets all dispatched commands.
     /// </summary>
-    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Report, Help, Version];
+    public static IReadOnlyList<CliCommand> All { get; } = [Check, Test, Mcp, Contract, Report, BaselineAdmit, BaselineCheck, Help, Version];
 
     /// <summary>
     /// Resolves the first argument using the owning definitions.
     /// </summary>
     /// <param name="arguments">The process arguments.</param>
     /// <returns>The selected command, or the default check command.</returns>
-    public static CliCommand Resolve(string[] arguments) => All.FirstOrDefault(command => command.Name == arguments.FirstOrDefault() || command.Aliases.Contains(arguments.FirstOrDefault() ?? string.Empty)) ?? Check;
+    public static CliCommand Resolve(string[] arguments) => All.FirstOrDefault(command => command.Name == arguments.FirstOrDefault() || command.Name == string.Join(' ', arguments.Take(2)) || command.Aliases.Contains(arguments.FirstOrDefault() ?? string.Empty)) ?? Check;
 }
 
 /// <summary>

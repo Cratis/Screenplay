@@ -26297,6 +26297,21 @@
       "aliases": []
     },
     {
+      "name": "baseline admit",
+      "usage": "screenplay baseline admit \u003Croot\u003E [--release \u003Clabel\u003E] [--from-esm \u003Cfile\u003E]",
+      "options": [
+        "--from-esm",
+        "--release"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "baseline check",
+      "usage": "screenplay baseline check \u003Croot\u003E",
+      "options": [],
+      "aliases": []
+    },
+    {
       "name": "help",
       "usage": "screenplay help",
       "options": [],
