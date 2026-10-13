@@ -53,6 +53,39 @@ public class when_admitting_and_checking : given.a_release_workspace
         Output.ToString().ShouldContain("BaselinedRevisionMissing");
     }
 
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    void should_report_an_externally_removed_admitted_event_or_generation_without_reconciling_identities(bool generation, bool document)
+    {
+        var source = generation
+            ? Source.Replace("event Recorded", "event Recorded generation 1", StringComparison.Ordinal) + "      event Recorded generation 2\n        value String\n        note String?\n"
+            : Source;
+        File.WriteAllText(Path.Combine(Root, "application.play"), source);
+        var root = new McpRoot(Root);
+        Workspace = ScreenplayWorkspace.Create("Model", root.Read(), Semantics.SemanticIdentityCatalog.Empty(Workspace.IdentityCatalog.Application));
+        Assert.True(Workspace.Compilation.Success, string.Join('\n', Workspace.Compilation.Diagnostics.Select(diagnostic => diagnostic.Message)));
+        File.WriteAllBytes(IdentityPath, McpState.Serialize(Workspace));
+        Admit();
+        var identities = File.ReadAllBytes(IdentityPath);
+        var baseline = File.ReadAllBytes(BaselinePath);
+        var removed = generation
+            ? source.Replace("      event Recorded generation 1\n        value String\n", string.Empty, StringComparison.Ordinal)
+            : source.Replace("      event Recorded\n        value String\n", string.Empty, StringComparison.Ordinal);
+        if (document) File.Delete(Path.Combine(Root, "application.play"));
+        else File.WriteAllText(Path.Combine(Root, "application.play"), removed);
+        Run("baseline", "check", Root).ShouldEqual(1);
+        Output.ToString().ShouldContain("BaselinedRevisionMissing");
+        Output.ToString().ShouldContain("revision 1");
+        File.ReadAllBytes(IdentityPath).ShouldEqual(identities);
+        File.ReadAllBytes(BaselinePath).ShouldEqual(baseline);
+        if (document) File.Exists(Path.Combine(Root, "application.play")).ShouldBeFalse();
+        else File.ReadAllText(Path.Combine(Root, "application.play")).ShouldEqual(removed);
+        File.Exists(Path.Combine(Root, ".screenplay", "pending.json")).ShouldBeFalse();
+        Assert.Throws<McpFailure>(() => McpState.Deserialize(identities).Open(root));
+    }
+
     [Fact]
     void should_fail_closed_for_unreadable_baselines()
     {

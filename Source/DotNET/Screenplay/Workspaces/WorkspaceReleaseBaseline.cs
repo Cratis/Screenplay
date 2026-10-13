@@ -1,7 +1,6 @@
 // Copyright (c) Cratis. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Collections.Immutable;
 using System.Text.Json;
 using Cratis.Screenplay.Syntax;
 
@@ -17,22 +16,10 @@ public static class WorkspaceReleaseBaseline
     /// <returns>The shared structural verdict.</returns>
     public static ReleaseBaselineResult Check(ScreenplayWorkspace before, ScreenplayWorkspace candidate, ReleaseBaselineRead baseline)
     {
-        if (baseline.Status == "absent") return new(null, []);
-        if (baseline.Status != "unreadable")
-        {
-            if (!candidate.Compilation.Success && baseline.Document is { } document && document.ApplicationIdentity == candidate.IdentityCatalog.Application.ToString())
-            {
-                var revisions = WorkspaceSyntaxIndex.Create(candidate).Entries
-                    .Where(entry => entry.Node is EventSyntax && entry.EventContractId is not null)
-                    .Select(entry => (entry.EventContractId!.Value.ToString(), ((EventSyntax)entry.Node).Generation)).ToHashSet();
-                var missing = document.Entries.Where(entry => !revisions.Contains((entry.Event, entry.Revision)))
-                    .Select(entry => new ReleaseBaselineViolation("BaselinedRevisionMissing", entry.Event, entry.Revision)).ToImmutableArray();
-                if (!missing.IsEmpty) return new(null, missing);
-            }
-
-            return ReleaseBaseline.Check(candidate, baseline);
-        }
-        return ContractsEqual(before, candidate) ? new(null, []) : new(null, [], "UnreadableReleaseBaseline", baseline.Reason);
+        if (baseline.Status == "absent" || ReferenceEquals(before, candidate) || ContractsEqual(before, candidate)) return new(null, []);
+        return baseline.Status == "unreadable"
+            ? new(null, [], "UnreadableReleaseBaseline", baseline.Reason)
+            : ReleaseBaseline.Check(candidate, baseline);
     }
 
     static bool ContractsEqual(ScreenplayWorkspace before, ScreenplayWorkspace after)

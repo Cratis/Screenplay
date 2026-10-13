@@ -18,13 +18,14 @@ public sealed record ReleaseSchema(string EventType, ImmutableArray<ReleaseSchem
 /// <param name="Type">The expanded value shape.</param>
 public sealed record ReleaseSchemaProperty(string Name, bool Optional, bool Collection, ReleaseSchemaType Type);
 
-/// <summary>An expanded primitive, enumeration or composite value.</summary>
-/// <param name="Kind">primitive, enum or composite.</param>
+/// <summary>An expanded primitive, enumeration, composite value or recursive reference.</summary>
+/// <param name="Kind">primitive, enum, composite or ref.</param>
 /// <param name="Primitive">The primitive name, when primitive.</param>
 /// <param name="Compliance">The concept compliance marker, when present.</param>
 /// <param name="Members">The enum members, when enum.</param>
 /// <param name="Properties">The composite members, when composite.</param>
-public sealed record ReleaseSchemaType(string Kind, string? Primitive = null, SemanticConceptCompliance? Compliance = null, ImmutableArray<ReleaseSchemaMember>? Members = null, ImmutableArray<ReleaseSchemaProperty>? Properties = null);
+/// <param name="Ref">The enclosing composite distance, when ref: 1 is the nearest composite.</param>
+public sealed record ReleaseSchemaType(string Kind, string? Primitive = null, SemanticConceptCompliance? Compliance = null, ImmutableArray<ReleaseSchemaMember>? Members = null, ImmutableArray<ReleaseSchemaProperty>? Properties = null, int? Ref = null);
 
 /// <summary>A stored enum member.</summary>
 /// <param name="Name">The member name.</param>

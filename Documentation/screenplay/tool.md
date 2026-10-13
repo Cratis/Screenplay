@@ -62,6 +62,15 @@ Admission uses the same exit codes: changed overlapping revisions exit `1`,
 invalid inputs or failed writes exit `2`.
 
 The [published JSON Schema](release-baseline-v1.schema.json) describes the sidecar.
+Composite types expand recursively. A cycle becomes `{ "kind": "ref", "ref": 1 }`
+for the nearest enclosing composite, `ref: 2` for its parent, and so on. These
+path-relative references exclude type names and identities, so renaming a recursive
+type does not change its schema hash. References outside the enclosing composite
+path make a baseline unreadable.
+
+Checking is read-only and retains persisted identities even when source removes an
+admitted event or generation. Such removals report `BaselinedRevisionMissing` with
+exit `1`, without reconciling or writing the identity catalog.
 See [released event contracts](events.md#released-event-contracts) for what is frozen.
 
 ## Verify your files

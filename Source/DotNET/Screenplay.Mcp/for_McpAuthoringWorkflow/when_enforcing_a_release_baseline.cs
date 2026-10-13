@@ -114,6 +114,42 @@ public class when_enforcing_a_release_baseline : given.an_authoring_connection
         changed.GetProperty("path").GetString().ShouldNotBeNull();
     }
 
+    [Fact]
+    void should_apply_notes_on_a_nonbinding_model_with_a_valid_baseline()
+    {
+        Start();
+        Admit();
+        const string source = "numbers exact\n" + Source;
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), source);
+        var opened = Open();
+        opened.GetProperty("releaseBaseline").GetProperty("checkFailure").GetString().ShouldEqual("ModelDoesNotBind");
+        var identities = File.ReadAllBytes(Path.Combine(RootPath, ".screenplay", McpState.FileName));
+        var proposal = Result("propose-model-notes", new
+        {
+            expectedRevision = opened.GetProperty("revision").GetString(),
+            expectedCatalogRevision = opened.GetProperty("catalogRevision").GetString(),
+            expectedNotesRevision = opened.GetProperty("notesRevision").GetString(),
+            operations = new[] { new { operation = "add", kind = "task", text = "Review execution readiness.", author = "sindre", anchor = new { application = true } } }
+        });
+        Result("read-proposal", new { proposalId = proposal.GetProperty("proposalId").GetString(), view = "release-baseline" }).GetProperty("result").GetProperty("releaseBaseline").GetProperty("checkFailure").ValueKind.ShouldEqual(JsonValueKind.Null);
+        Apply(opened, proposal).GetProperty("success").GetBoolean().ShouldBeTrue();
+        File.ReadAllText(Path.Combine(RootPath, "application.play")).ShouldEqual(source);
+        File.ReadAllBytes(Path.Combine(RootPath, ".screenplay", McpState.FileName)).ShouldEqual(identities);
+        File.Exists(Path.Combine(RootPath, ".screenplay", "notes.json")).ShouldBeTrue();
+    }
+
+    [Fact]
+    void should_propose_and_apply_a_noncontract_edit_on_a_nonbinding_model()
+    {
+        Start();
+        Admit();
+        const string source = "numbers exact\n" + Source;
+        File.WriteAllText(Path.Combine(RootPath, "application.play"), source);
+        var opened = Open();
+        var proposal = Result("propose-source", SourceArguments(opened, source + "// reviewed\n"));
+        Apply(opened, proposal).GetProperty("success").GetBoolean().ShouldBeTrue();
+    }
+
     JsonElement Start()
     {
         File.WriteAllText(Path.Combine(RootPath, "application.play"), Source);

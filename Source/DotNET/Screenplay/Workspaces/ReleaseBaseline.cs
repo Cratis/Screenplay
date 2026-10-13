@@ -18,8 +18,17 @@ public static class ReleaseBaseline
     public static ReleaseBaselineResult Check(ScreenplayWorkspace candidate, ReleaseBaselineRead baseline)
     {
         if (baseline.Status == "unreadable") return new(null, [], "UnreadableReleaseBaseline", baseline.Reason);
-        if (!candidate.Compilation.Success) return new(null, [], "ModelDoesNotBind", "Release baseline checks require an executable model.");
         if (baseline.Document!.ApplicationIdentity != candidate.IdentityCatalog.Application.ToString()) return new(null, [], "UnreadableReleaseBaseline", "Another application's identity.");
+        if (!candidate.Compilation.Success)
+        {
+            var revisions = WorkspaceSyntaxIndex.Create(candidate).Entries
+                .Where(entry => entry.Node is EventSyntax && entry.EventContractId is not null)
+                .Select(entry => (entry.EventContractId!.Value.ToString(), ((EventSyntax)entry.Node).Generation)).ToHashSet();
+            var missing = baseline.Document.Entries.Where(entry => !revisions.Contains((entry.Event, entry.Revision)))
+                .Select(entry => new ReleaseBaselineViolation("BaselinedRevisionMissing", entry.Event, entry.Revision)).ToImmutableArray();
+            if (!missing.IsEmpty) return new(null, missing);
+            return new(null, [], "ModelDoesNotBind", "Release baseline checks require an executable model.");
+        }
         var current = Resolve(candidate, candidate.Compilation.Value!.Model);
         return new(null, Violations(baseline.Document.Entries, current));
     }
@@ -35,6 +44,7 @@ public static class ReleaseBaseline
     {
         var check = Check(workspace, baseline);
         if (check.Failure is not null) return check;
+        if (!workspace.Compilation.Success) return new(null, [], "ModelDoesNotBind", "Release admission requires an executable model.");
         if (string.IsNullOrWhiteSpace(release) || release != release.Trim() || release.Length > 16384 || at == default || at.Offset != TimeSpan.Zero)
         {
             return new(null, [], "InvalidAdmission", "Admission requires a nonempty trimmed release label and a UTC instant.");

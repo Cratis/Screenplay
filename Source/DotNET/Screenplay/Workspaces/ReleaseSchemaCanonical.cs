@@ -16,7 +16,7 @@ public static class ReleaseSchemaCanonical
     /// <param name="eventType">The effective stored name.</param>
     /// <param name="properties">The revision properties.</param>
     /// <returns>The expanded schema.</returns>
-    public static ReleaseSchema Resolve(SemanticApplication application, string eventType, ImmutableArray<SemanticProperty> properties) => new(eventType, Properties(application, properties));
+    public static ReleaseSchema Resolve(SemanticApplication application, string eventType, ImmutableArray<SemanticProperty> properties) => new(eventType, Properties(application, properties, []));
 
     /// <summary>Serializes a schema without whitespace, in stable member order.</summary>
     /// <param name="schema">The resolved schema.</param>
@@ -31,25 +31,32 @@ public static class ReleaseSchemaCanonical
     internal static ReleaseSchema Normalize(ReleaseSchema schema)
     {
         ModelNotesValidation.Text(schema.EventType);
-        return schema with { Properties = NormalizeProperties(schema.Properties) };
+        return schema with { Properties = NormalizeProperties(schema.Properties, 0) };
     }
 
-    static ImmutableArray<ReleaseSchemaProperty> Properties(SemanticApplication application, ImmutableArray<SemanticProperty> properties) =>
-        [.. properties.OrderBy(property => property.Name, StringComparer.Ordinal).Select(property => new ReleaseSchemaProperty(property.Name, property.Type.IsOptional, property.Type.IsCollection, Type(application, property.Type)))];
+    static ImmutableArray<ReleaseSchemaProperty> Properties(SemanticApplication application, ImmutableArray<SemanticProperty> properties, ImmutableArray<SemanticId> path) =>
+        [.. properties.OrderBy(property => property.Name, StringComparer.Ordinal).Select(property => new ReleaseSchemaProperty(property.Name, property.Type.IsOptional, property.Type.IsCollection, Type(application, property.Type, path)))];
 
-    static ReleaseSchemaType Type(SemanticApplication application, SemanticTypeReference reference) => reference.Kind switch
+    static ReleaseSchemaType Type(SemanticApplication application, SemanticTypeReference reference, ImmutableArray<SemanticId> path) => reference.Kind switch
     {
         SemanticTypeReferenceKind.Primitive => new("primitive", reference.Primitive.ToString()),
         SemanticTypeReferenceKind.Concept => Concept(application.Concepts.Single(concept => concept.Id == reference.Target)),
-        SemanticTypeReferenceKind.CompositeType => new("composite", Properties: Properties(application, application.Types.Single(type => type.Id == reference.Target).Properties)),
+        SemanticTypeReferenceKind.CompositeType => Composite(application, reference.Target, path),
         _ => throw new InvalidReleaseBaseline("Unresolved stored type.")
     };
+
+    static ReleaseSchemaType Composite(SemanticApplication application, SemanticId target, ImmutableArray<SemanticId> path)
+    {
+        var ancestor = path.IndexOf(target);
+        if (ancestor >= 0) return new("ref", Ref: path.Length - ancestor);
+        return new("composite", Properties: Properties(application, application.Types.Single(type => type.Id == target).Properties, path.Add(target)));
+    }
 
     static ReleaseSchemaType Concept(SemanticConcept concept) => concept.Values.IsEmpty
         ? new("primitive", concept.Primitive.ToString(), concept.Compliance)
         : new("enum", Members: [.. concept.Values.Select((name, index) => new ReleaseSchemaMember(name, concept.Numbers is { } numbers ? numbers[index] : index)).OrderBy(member => member.Number).ThenBy(member => member.Name, StringComparer.Ordinal)]);
 
-    static ImmutableArray<ReleaseSchemaProperty> NormalizeProperties(ImmutableArray<ReleaseSchemaProperty> properties)
+    static ImmutableArray<ReleaseSchemaProperty> NormalizeProperties(ImmutableArray<ReleaseSchemaProperty> properties, int depth)
     {
         if (properties.IsDefault || properties.Select(property => property.Name).Distinct(StringComparer.Ordinal).Count() != properties.Length)
         {
@@ -59,15 +66,16 @@ public static class ReleaseSchemaCanonical
         return [.. properties.OrderBy(property => property.Name, StringComparer.Ordinal).Select(property =>
         {
             ModelNotesValidation.Text(property.Name);
-            return property with { Type = NormalizeType(property.Type) };
+            return property with { Type = NormalizeType(property.Type, depth) };
         })];
     }
 
-    static ReleaseSchemaType NormalizeType(ReleaseSchemaType type) => type.Kind switch
+    static ReleaseSchemaType NormalizeType(ReleaseSchemaType type, int depth) => type.Kind switch
     {
-        "primitive" when type.Members is null && type.Properties is null => NormalizePrimitive(type),
-        "enum" when type.Primitive is null && type.Compliance is null && type.Properties is null && type.Members is { } members => type with { Members = NormalizeMembers(members) },
-        "composite" when type.Primitive is null && type.Compliance is null && type.Members is null && type.Properties is { } properties => type with { Properties = NormalizeProperties(properties) },
+        "primitive" when type.Ref is null && type.Members is null && type.Properties is null => NormalizePrimitive(type),
+        "enum" when type.Ref is null && type.Primitive is null && type.Compliance is null && type.Properties is null && type.Members is { } members => type with { Members = NormalizeMembers(members) },
+        "composite" when type.Ref is null && type.Primitive is null && type.Compliance is null && type.Members is null && type.Properties is { } properties => type with { Properties = NormalizeProperties(properties, depth + 1) },
+        "ref" when type.Primitive is null && type.Compliance is null && type.Members is null && type.Properties is null && type.Ref is > 0 && type.Ref <= depth => type,
         _ => throw new InvalidReleaseBaseline("Invalid resolved stored type.")
     };
 

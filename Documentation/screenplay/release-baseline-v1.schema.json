@@ -71,6 +71,11 @@
         {
           "type": "object", "additionalProperties": false, "required": ["kind", "properties"],
           "properties": { "kind": { "const": "composite" }, "properties": { "type": "array", "items": { "$ref": "#/$defs/property" } } }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "ref"],
+          "description": "Recursive reference to an enclosing composite: ref 1 is the nearest composite, ref 2 its parent. The reader validates that the distance is within the composite path. Names and semantic IDs are excluded.",
+          "properties": { "kind": { "const": "ref" }, "ref": { "type": "integer", "minimum": 1 } }
         }
       ]
     },

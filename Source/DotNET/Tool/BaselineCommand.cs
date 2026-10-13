@@ -22,7 +22,8 @@ static class BaselineCommand
             var files = new McpManagedFiles(root);
             var stateBytes = files.Read(McpState.FileName);
             if (stateBytes is null) return Fail(error, "PersistedIdentitiesRequired: release baselines require .screenplay/identities.json.");
-            var workspace = McpState.Deserialize(stateBytes).Open(root);
+            var state = McpState.Deserialize(stateBytes);
+            var workspace = options.Action == "check" ? state.OpenForReleaseBaselineCheck(root) : state.Open(root);
             var before = files.Read(ReleaseBaselineStore.FileName, ReleaseBaselineStore.MaximumBytes);
             var baseline = ReleaseBaselineStore.ReadBytes(before, workspace.IdentityCatalog.Application);
             if (options.Action == "check") return Report(ReleaseBaseline.Check(workspace, baseline), output, error);
