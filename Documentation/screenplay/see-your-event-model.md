@@ -72,9 +72,8 @@ append or another command. Refusal outcomes retain their ordinary presentation:
 `then error` carries a validation or constraint refusal message, `then denied`
 is an authorization denial, and expected refusal facts remain event cards.
 An explicit `then no events` appears in the header rather than as a fabricated
-event or error. Redelivery and no-event expectations are labeled
-**Syntax-only (PLAY0268)**: drawing them does not make them executable or prove
-once-only delivery. See [redelivery specifications](specifications.md#redelivery-specifications).
+event or error. Redelivery and no-event expectations appear on the board as executable
+assertions; drawing them does not prove once-only delivery. See [redelivery specifications](specifications.md#redelivery-specifications).
 Specifications without these header details keep their titles.
 
 ## Ask for the board in an AI chat
