@@ -61,7 +61,7 @@ public class contracts : given.a_semantic_binder
     [Fact]
     void should_refuse_a_fixture_without_an_unambiguous_source_identifier_type()
     {
-        var result = Bind("eventsource Account\n  stream All\nmodule M\n  feature F\n    slice StateView S\n      event E\n        value String\n      specification History\n        when append E\n          for \"other\"\n          stream Account.All\n          value = \"after\"\n        then E\n          value = \"after\"\n");
+        var result = Bind("eventsource Account\n  stream Archive\nmodule M\n  feature F\n    slice StateView S\n      event E\n        value String\n      specification History\n        when append E\n          for \"other\"\n          stream Account.Archive\n          value = \"after\"\n        then E\n          value = \"after\"\n");
         result.Success.ShouldBeFalse();
         result.Diagnostics.Any(diagnostic => diagnostic.Code == DiagnosticCodes.InvalidSemanticBinding && diagnostic.Message.Contains("identifier on its event source", StringComparison.Ordinal)).ShouldBeTrue();
     }
@@ -82,7 +82,7 @@ public class contracts : given.a_semantic_binder
     {
         var declaration = type.Length == 0 ? string.Empty : $"    streamId {type}\n";
         var route = mapping.Length == 0 ? string.Empty : $"          {mapping}\n";
-        var result = Bind("eventsource Account\n  stream All\n" + declaration + "module M\n  feature F\n    slice StateChange S\n      command C\n        id String identifier\n        stream Account.All\n" + route);
+        var result = Bind("eventsource Account\n  stream Archive\n" + declaration + "module M\n  feature F\n    slice StateChange S\n      command C\n        id String identifier\n        stream Account.Archive\n" + route);
         result.Success.ShouldBeTrue();
         result.Value!.Model.Application.Modules.Single().Features.Single().Slices.Single().Commands.Single().Route.ShouldNotBeNull();
     }

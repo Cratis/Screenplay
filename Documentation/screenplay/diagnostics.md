@@ -91,7 +91,7 @@ conditions are reported without a code until the compiler checks them too.
 Event-source declarations and command stream routes are admitted by ESM v8.
 Property-path mappings and handler commands remain refused with `PLAY0268`. Binding reports `PLAY0273`
 for generated mappings, stored-name collisions (including pin-versus-name), the reserved stored source name
-`Default`, or a routed fixture whose source identifier type cannot be resolved.
+`Default`, the reserved stored stream name `All` (including `id "All"`), or a routed fixture whose source identifier type cannot be resolved. Reserved-name checks are binding-only; authoring validation still accepts the declarations. For `All`, [rename the stream without retaining that stored-name pin](event-sources.md#rename-a-source-or-stream).
 A stream reference selects a classification, never the identity destination supplied by `for`.
 Handler commands may author routes without declaring their returned events.
 
@@ -789,7 +789,7 @@ itself what an unresolvable one means.
 | `PLAY0270` | Information | Source syntax, including a valid persona, compliance reasons and event subject marks, is realization or authoring/operational metadata rather than portable behavior. |
 | `PLAY0271` | Information or error | Source syntax keeps its legacy meaning and cannot be strengthened into ESM v1 implicitly. |
 | `PLAY0272` | Error | Source syntax requires an explicit reviewed semantic migration before binding. |
-| `PLAY0273` | Error | Syntax and identity information cannot produce a coherent semantic compilation, including an event-source `for` assertion without one unambiguous required scalar command destination type or a `produces` mapping, `then` event expectation, projection mapping, or constraint naming a property absent from the current event revision, or an authorization policy, property rule or requirement referencing a generated value before generation. |
+| `PLAY0273` | Error | Syntax and identity information cannot produce a coherent semantic compilation, including reserved stored source `Default` or stream `All` names (also through `id` pins), stored-name collisions, an event-source `for` assertion without one unambiguous required scalar command destination type or a `produces` mapping, `then` event expectation, projection mapping, or constraint naming a property absent from the current event revision, or an authorization policy, property rule or requirement referencing a generated value before generation. |
 | `PLAY0274` | Error | A syntax location cannot be mapped to a supplied semantic source document. |
 
 ### Specification event-source assertions

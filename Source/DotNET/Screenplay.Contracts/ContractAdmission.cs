@@ -62,7 +62,7 @@ static class ContractAdmission
                 Slice + Event + Command.Replace("value String", "value String\n        id Uuid identifier", StringComparison.Ordinal).Replace("value = value", "for id\n          value = value", StringComparison.Ordinal),
                 "concept Id : Uuid\n" + Slice + "      command Record\n        id Id generated\n",
                 "concept Id : Uuid\n" + Slice + "      command Record\n        id Id\n        returns id\n",
-                "eventsource Account\n  identifier String\n  stream All\n" + Slice + "      command Record\n        id String identifier\n        produces event Recorded\n          stream Account.All\n",
+                "eventsource Account\n  identifier String\n  stream Archive\n" + Slice + "      command Record\n        id String identifier\n        produces event Recorded\n          stream Account.Archive\n",
                 "system Outside\n" + Slice + "      operation External\n        uses Outside\n        execute\n          implementation\n            hint \"External work\"\n      command Run\n        produces External\n"
             ]),
         new("constraint", Slice + Event + "      constraint Unique\n        unique value on Recorded\n", [Slice + Event + "      constraint Unique\n        description \"Constraint intent\"\n        unique value on Recorded\n"]),
@@ -82,7 +82,7 @@ static class ContractAdmission
                 Slice + ReadModel + "      query All => View[]\n",
                 Slice + "      readmodel FilteredView\n        itemId String\n        status String\n        category String optional\n      query Filtered => FilteredView[]\n        filter status String\n        filter category String optional\n"
             ]),
-        new("reaction", Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      reaction FollowUp\n        when Recorded\n          value\n          produces FollowedUp\n            value = value\n      event FollowedUp\n        value String\n", ["eventsource Account\n  identifier String\n  stream All\n" + Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      reaction FollowUp\n        from Account.All\n        when Recorded\n"]),
+        new("reaction", Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      reaction FollowUp\n        when Recorded\n          value\n          produces FollowedUp\n            value = value\n      event FollowedUp\n        value String\n", ["eventsource Account\n  identifier String\n  stream Archive\n" + Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      reaction FollowUp\n        from Account.Archive\n        when Recorded\n"]),
         new("runs", Slice.Replace("StateChange", "Automation", StringComparison.Ordinal) + Event + "      command C\n      reaction FollowUp\n        runs as system\n        when Recorded\n          invokes C\n"),
         new("readmodel", Slice + Event + ReadModel + Projection + KeyedQuery, [Slice + ReadModel]),
         new("reducer", Slice + Event + ReadModel + KeyedQuery + "      reducer View => View\n        on Recorded\n          ```csharp\n          return context.State;\n          ```\n", [Slice + Event + ReadModel + "      reducer View => View\n        on Recorded\n"]),

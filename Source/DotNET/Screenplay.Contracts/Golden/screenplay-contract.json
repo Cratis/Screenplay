@@ -1601,7 +1601,7 @@
           ]
         },
         {
-          "source": "eventsource Account\n  identifier String\n  stream All\nmodule M\n  feature F\n    slice StateChange S\n      command Record\n        id String identifier\n        produces event Recorded\n          stream Account.All\n",
+          "source": "eventsource Account\n  identifier String\n  stream Archive\nmodule M\n  feature F\n    slice StateChange S\n      command Record\n        id String identifier\n        produces event Recorded\n          stream Account.Archive\n",
           "minimumSemanticVersion": "10.0",
           "diagnostic": null,
           "diagnostics": [],
@@ -9900,7 +9900,7 @@
           ]
         },
         {
-          "source": "eventsource Account\n  identifier String\n  stream All\nmodule M\n  feature F\n    slice Automation S\n      event Recorded\n        value String\n      reaction FollowUp\n        from Account.All\n        when Recorded\n",
+          "source": "eventsource Account\n  identifier String\n  stream Archive\nmodule M\n  feature F\n    slice Automation S\n      event Recorded\n        value String\n      reaction FollowUp\n        from Account.Archive\n        when Recorded\n",
           "minimumSemanticVersion": "10.0",
           "diagnostic": null,
           "diagnostics": [],
