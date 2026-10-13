@@ -265,14 +265,14 @@ sealed class WorkspaceAuthoringTransaction(
         {
             var document = candidates[replacement.Document];
             intendedDocuments[document.Id] = replacement.Syntax;
-            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, document.Encoding, replacement.Syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == document.Id)), validatePlacement: false, candidates: index.StreamCandidates);
+            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, document.Encoding, replacement.Syntax, request.Formatting, _diagnostics, document, index.Placement(workspace.Documents.Single(original => original.Id == document.Id)), validatePlacement: false, candidates: index.StreamCandidates, sourceWitness: replacement.SourceWitness);
         }
 
         foreach (var creation in creations)
         {
             var document = WorkspaceDocument.Create(creation.StableKey, creation.Path, []);
             intendedDocuments[document.Id] = creation.Syntax;
-            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, creation.Encoding, creation.Syntax, request.Formatting, _diagnostics, validatePlacement: false);
+            candidates[document.Id] = WorkspaceAuthoringPrinter.Print(document.Id, document.StableKey, document.Path, creation.Encoding, creation.Syntax, request.Formatting, _diagnostics, validatePlacement: false, sourceWitness: creation.SourceWitness);
         }
 
         var ordered = candidates.Values.OrderBy(document => document.Id.ToString(), StringComparer.Ordinal).ToImmutableArray();

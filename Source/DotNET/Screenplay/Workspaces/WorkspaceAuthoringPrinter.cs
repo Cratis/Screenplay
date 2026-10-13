@@ -26,7 +26,8 @@ static class WorkspaceAuthoringPrinter
         WorkspaceDocument? original = null,
         PlayPlacement? placement = null,
         bool validatePlacement = true,
-        CommandStreamCandidates? candidates = null)
+        CommandStreamCandidates? candidates = null,
+        string? sourceWitness = null)
     {
         ImplementationInvariants.ValidateAuthoring(intended);
         if (formatting == WorkspaceAuthoringFormatting.PreserveTrivia && original is not null)
@@ -34,7 +35,7 @@ static class WorkspaceAuthoringPrinter
             return WorkspaceTriviaPrinter.Print(original, intended, placement, validatePlacement, candidates);
         }
 
-        if (formatting != WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments)
+        if (formatting != WorkspaceAuthoringFormatting.CanonicalizeTouchedDocuments && !(formatting == WorkspaceAuthoringFormatting.PreserveExactSource && sourceWitness is not null))
         {
             throw new InvalidWorkspaceAuthoring("Typed syntax edits require explicit CanonicalizeTouchedDocuments permission; untouched documents remain exact.");
         }
@@ -51,7 +52,8 @@ static class WorkspaceAuthoringPrinter
 
         // The codec validates structural content, but omits server-owned source positions. Print the
         // admitted original so authoring edits can retain locations carried from the parsed document.
-        var text = new ScreenplayPrinter().Print(intended);
+        var exact = formatting == WorkspaceAuthoringFormatting.PreserveExactSource;
+        var text = exact ? sourceWitness! : new ScreenplayPrinter().Print(intended);
         if (validatePlacement)
         {
             Validate(text, path, checkedSyntax, placement ?? PlayPlacement.Document, diagnostics);
@@ -62,6 +64,11 @@ static class WorkspaceAuthoringPrinter
             ? [0xef, 0xbb, 0xbf, .. utf8.GetBytes(text)]
             : utf8.GetBytes(text);
         var printed = WorkspaceDocument.Create(id, key, path, bytes);
+        if (exact)
+        {
+            return printed;
+        }
+
         var dropped = original is null ? [] : WorkspaceDroppedComments.Between(original, printed);
         diagnostics.Add(Diagnostic.Warning(
             DiagnosticCodes.AuthoringSourceNormalization,

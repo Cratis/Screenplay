@@ -108,7 +108,7 @@ internal sealed partial class McpWorkspaces
             RetiredSemanticAddresses = McpIdentityChanges.RetiredSemanticAddresses(arguments),
             RetiredEventAddresses = McpIdentityChanges.RetiredEventAddresses(arguments)
         };
-        var result = workspace.ProposeAuthoring(request);
+        var result = WithExactSourceGuidance(workspace.ProposeAuthoring(request), request.Formatting, source);
         return result.Accepted ? Store(new McpAuthoringProposal(workspace, result, request.Validation, request.ReferencePolicy), arguments, layout) : Rejected(result);
     }
 
@@ -185,4 +185,13 @@ internal sealed partial class McpWorkspaces
 
         return (nodes.ToImmutable(), documents.ToImmutable());
     }
+
+    // A source proposal already carries the author's final text, so a structural PreserveTrivia refusal names the mode that keeps it.
+    static WorkspaceAuthoringResult WithExactSourceGuidance(WorkspaceAuthoringResult result, WorkspaceAuthoringFormatting formatting, bool source) =>
+        !source || formatting != WorkspaceAuthoringFormatting.PreserveTrivia ? result : result with
+        {
+            Conflicts = [.. result.Conflicts.Select(conflict => conflict.Message.Contains("not structural change", StringComparison.Ordinal)
+                ? conflict with { Message = $"{conflict.Message} Use PreserveExactSource to keep the supplied source text." }
+                : conflict)]
+        };
 }
