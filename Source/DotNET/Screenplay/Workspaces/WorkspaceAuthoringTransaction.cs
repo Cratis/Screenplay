@@ -321,12 +321,11 @@ sealed class WorkspaceAuthoringTransaction(
             var check = WorkspaceReleaseBaseline.Check(workspace, candidate, baseline);
             if (!check.Success)
             {
-                var kind = check.Failure switch
+                var kind = check.Violations.IsEmpty ? check.Failure switch
                 {
-                    null => Enum.Parse<WorkspaceConflictKind>(check.Violations[0].Kind),
                     "UnreadableReleaseBaseline" => WorkspaceConflictKind.UnreadableReleaseBaseline,
                     _ => WorkspaceConflictKind.CompilationFailed
-                };
+                } : Enum.Parse<WorkspaceConflictKind>(check.Violations[0].Kind);
                 return Failure(kind, check.Reason ?? $"{kind}: the candidate does not preserve every admitted revision.") with { ReleaseBaselineResult = check };
             }
         }

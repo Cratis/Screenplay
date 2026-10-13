@@ -32,6 +32,8 @@ public class when_checking_proposal_contracts : given.a_baseline_workspace
         check.Violations.Single().Kind.ShouldEqual("BaselinedRevisionMissing");
         check.Violations.Single().Revision.ShouldEqual(1U);
         ReleaseBaseline.Check(candidate, Read(Baseline)).Violations.Single().ShouldEqual(check.Violations.Single());
+        check.Failure.ShouldEqual("ModelDoesNotBind");
+        check.Kind.ShouldEqual("BaselinedRevisionMissing");
         ReleaseBaseline.Admit(candidate, Read(Baseline), "v2", At).Failure.ShouldEqual("ModelDoesNotBind");
     }
 

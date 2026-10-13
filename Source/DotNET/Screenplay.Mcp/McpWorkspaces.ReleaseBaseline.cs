@@ -39,7 +39,7 @@ internal sealed partial class McpWorkspaces
         var items = baseline.Document?.Entries.Select(entry =>
         {
             var violation = check?.Violations.SingleOrDefault(value => value.Event == entry.Event && value.Revision == entry.Revision);
-            return new { entry.Event, entry.Revision, entry.EventType, entry.LastAddress, entry.AdmittedIn, entry.AdmittedAt, status = check?.Failure is not null ? "unknown" : violation?.Kind switch { "BaselinedRevisionChanged" => "changed", "BaselinedRevisionMissing" => "missing", _ => "unchanged" }, path = violation?.Path };
+            return new { entry.Event, entry.Revision, entry.EventType, entry.LastAddress, entry.AdmittedIn, entry.AdmittedAt, status = violation?.Kind switch { "BaselinedRevisionChanged" => "changed", "BaselinedRevisionMissing" => "missing", _ => check?.Failure is not null ? "unknown" : "unchanged" }, path = violation?.Path };
         });
         return McpJson.ToolResult(new { releaseBaseline = DescribeBaseline(baseline, check), page = items is null ? null : McpPaging.Page(items, arguments, baseline.Revision!) });
     }
@@ -83,7 +83,7 @@ internal sealed partial class McpWorkspaces
         CheckBaselinePin(arguments, current.Read);
         if (!SameBaseline(plan, current)) throw new McpFailure("StaleReleaseBaseline: the baseline changed since this proposal; propose again.") { FailureKind = "StaleReleaseBaseline" };
         var check = WorkspaceReleaseBaseline.Check(proposal.Before, proposal.Workspace, current.Read);
-        if (!check.Success) throw new McpFailure($"{check.Failure ?? check.Violations[0].Kind}: release baseline check failed.") { FailureKind = check.Failure ?? check.Violations[0].Kind };
+        if (!check.Success) throw new McpFailure($"{check.Kind}: release baseline check failed.") { FailureKind = check.Kind };
     }
 
     BaselinePlan ProposalBaseline(IMcpProposal proposal) => _baselinePlans.TryGetValue(proposal, out var plan) ? plan : throw new McpFailure("No retained release baseline evidence.");

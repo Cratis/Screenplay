@@ -71,4 +71,7 @@ public sealed record ReleaseBaselineResult(ReleaseBaselineDocument? Document, Im
 {
     /// <summary>Gets whether the operation succeeded.</summary>
     public bool Success => Failure is null && Violations.IsEmpty;
+
+    /// <summary>Gets the kind to report: the first proven violation, otherwise the refusal.</summary>
+    public string? Kind => Violations.IsEmpty ? Failure : Violations[0].Kind;
 }

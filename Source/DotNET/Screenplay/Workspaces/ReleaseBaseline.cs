@@ -26,8 +26,7 @@ public static class ReleaseBaseline
                 .Select(entry => (entry.EventContractId!.Value.ToString(), ((EventSyntax)entry.Node).Generation)).ToHashSet();
             var missing = baseline.Document.Entries.Where(entry => !revisions.Contains((entry.Event, entry.Revision)))
                 .Select(entry => new ReleaseBaselineViolation("BaselinedRevisionMissing", entry.Event, entry.Revision)).ToImmutableArray();
-            if (!missing.IsEmpty) return new(null, missing);
-            return new(null, [], "ModelDoesNotBind", "Release baseline checks require an executable model.");
+            return new(null, missing, "ModelDoesNotBind", "Release baseline checks require an executable model; only missing revisions were verified.");
         }
         var current = Resolve(candidate, candidate.Compilation.Value!.Model);
         return new(null, Violations(baseline.Document.Entries, current));

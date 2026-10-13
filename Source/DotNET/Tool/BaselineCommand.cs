@@ -55,8 +55,10 @@ static class BaselineCommand
 
     static int Report(ReleaseBaselineResult result, TextWriter output, TextWriter error)
     {
-        if (result.Failure is not null) return Fail(error, $"{result.Failure}: {result.Reason}");
         foreach (var violation in result.Violations) output.WriteLine($"{violation.Kind}: {violation.Event} revision {violation.Revision}{(violation.Path is null ? string.Empty : " at " + violation.Path)}");
+        if (result.Failure is not null && result.Violations.IsEmpty) return Fail(error, $"{result.Failure}: {result.Reason}");
+        if (result.Failure is not null) error.WriteLine($"{result.Failure}: {result.Reason}");
+
         return result.Violations.IsEmpty ? 0 : 1;
     }
 

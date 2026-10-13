@@ -408,7 +408,7 @@ internal sealed partial class McpWorkspaces
         var baselineCheck = WorkspaceReleaseBaseline.Check(proposal.Before, candidate, baselinePlan.Read);
         if (!baselineCheck.Success)
         {
-            return McpJson.ToolResult(new { success = false, failureKind = baselineCheck.Failure ?? baselineCheck.Violations[0].Kind, baselineCheck.Reason, violations = baselineCheck.Violations }, true);
+            return McpJson.ToolResult(new { success = false, failureKind = baselineCheck.Kind, baselineCheck.Reason, violations = baselineCheck.Violations }, true);
         }
 
         if (_proposals.Count >= 16)
